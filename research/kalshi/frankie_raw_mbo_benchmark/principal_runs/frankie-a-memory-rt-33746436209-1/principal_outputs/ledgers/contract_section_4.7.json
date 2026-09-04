@@ -14267,8 +14267,4795 @@
       "ledger_id": "contract_section_4.7",
       "prev_hash": "bd7c556d676d4e7937e6a4927580053cfeafb227f4f322542d16c9bd89f7ae33",
       "sequence": 14
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 6077,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 6735.137576313,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.023338108"
+            },
+            "value": 1.108299749
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 5409,
+              "family": "ow-59ace24da4a485c605b6",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 7049.192474526,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.027152715"
+            },
+            "value": 1.303233957
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 1794,
+              "family": "ow-3807a1115b13f5c8685a",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 2198.202380952,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.022661441"
+            },
+            "value": 1.225307905
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 1557,
+              "family": "ow-8b55dfd64daf3077e3d2",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 2229.547086466,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=0.931622429"
+            },
+            "value": 1.431950601
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 636,
+              "family": "ow-3a98bbe15cb2bf0c14ba",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 772.9,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.063938619"
+            },
+            "value": 1.215251572
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 662,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 730.7,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.067321178"
+            },
+            "value": 1.103776435
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 594,
+              "family": "ow-a4883ca90d4145520c5e",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 688.671428571,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=0.978881988"
+            },
+            "value": 1.159379509
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 532,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 566.316666667,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=0.976190476"
+            },
+            "value": 1.064505013
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 471,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 537.642857143,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.126819127"
+            },
+            "value": 1.141492266
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 458,
+              "family": "ow-8c934d067bc463c01ce0",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 537.833333333,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.161425577"
+            },
+            "value": 1.174308588
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "episode_rule": "an episode opens at every removal of resting quantity (C, removing F, M reprice-away, M size-down) at (side, price); it resolves at the FIRST later arrival at the same price or one tick either side (new-ID add = NEW_ID_ADD, or a same-ID modify = RESHAPED_RESIDUAL_*), one attribution per episode; the modify that moved an order never restores its own episode; an episode still pending at the cutoff is censored at the cutoff",
+        "groups_delivered_at_cutoff": 36497,
+        "member_group_indices": [
+          36465,
+          36465,
+          36465,
+          36465,
+          36465,
+          36465,
+          36465,
+          36468,
+          36469,
+          36471,
+          36473,
+          36476,
+          36477,
+          36478,
+          36479,
+          36480,
+          36482,
+          36483,
+          36484,
+          36485,
+          36486,
+          36487,
+          36488,
+          36489,
+          36490,
+          36491,
+          36492,
+          36493,
+          36495,
+          36496,
+          7042,
+          7044,
+          7075,
+          7136,
+          7154,
+          7731,
+          7778,
+          7787,
+          7830,
+          29281
+        ],
+        "population": {
+          "by_price_relation": {
+            "NEIGHBOUR_1_TICK": 8599,
+            "SAME_PRICE": 13211
+          },
+          "by_refill_kind": {
+            "NEW_ID_ADD": 17729,
+            "RESHAPED_RESIDUAL_REPRICE": 4045,
+            "RESHAPED_RESIDUAL_SIZE_UP": 36
+          },
+          "by_removal_kind": {
+            "C": 16163,
+            "F": 2014,
+            "M_REPRICE_AWAY": 4111,
+            "M_SIZE_DOWN": 160
+          },
+          "episodes": 22448,
+          "pending_censored_at_cutoff": 638,
+          "resolved": 21810,
+          "touch_displacements": 36,
+          "touch_restorations": 34,
+          "touch_still_displaced": {
+            "A": true,
+            "B": true
+          }
+        },
+        "result": "COMPUTED",
+        "section": "4.7",
+        "strata": [
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 15,
+              "mean": 1.998683561,
+              "min": 1,
+              "n": 6077,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 2,
+              "p99": 10,
+              "sum": 12146.0
+            },
+            "family": "ow-40540069fe5aeddc127b",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.084961642,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.108299749,
+              "n": 6077,
+              "ratio_of_aggregate_sums": 1.023338108
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 5591,
+              "RESHAPED_RESIDUAL_REPRICE": 485,
+              "RESHAPED_RESIDUAL_SIZE_UP": 1
+            },
+            "removal_kinds": {
+              "C": 6196
+            },
+            "removed_quantity": {
+              "max": 30,
+              "mean": 1.953101859,
+              "min": 1,
+              "n": 6077,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 2,
+              "p99": 10,
+              "sum": 11869.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 119,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 6077,
+              "final_survival": 0.015255253,
+              "final_time_ns": 3607958001032,
+              "n": 6196,
+              "time_ns_at_S0.05": 96530823350,
+              "time_ns_at_S0.1": 19590725012,
+              "time_ns_at_S0.25": 3168152861,
+              "time_ns_at_S0.5": 707703211,
+              "time_ns_at_S0.75": 126364522,
+              "time_ns_at_S0.9": 663787
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 23,
+              "mean": 2.531706415,
+              "min": 1,
+              "n": 5409,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 5,
+              "p99": 20,
+              "sum": 13694.0
+            },
+            "family": "ow-59ace24da4a485c605b6",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.276081242,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.303233957,
+              "n": 5409,
+              "ratio_of_aggregate_sums": 1.027152715
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 4698,
+              "RESHAPED_RESIDUAL_REPRICE": 710,
+              "RESHAPED_RESIDUAL_SIZE_UP": 1
+            },
+            "removal_kinds": {
+              "C": 5520
+            },
+            "removed_quantity": {
+              "max": 23,
+              "mean": 2.464780921,
+              "min": 1,
+              "n": 5409,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 5,
+              "p99": 20,
+              "sum": 13332.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 111,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 5409,
+              "final_survival": 0.012884514,
+              "final_time_ns": 3585716388918,
+              "n": 5520,
+              "time_ns_at_S0.05": 74510360636,
+              "time_ns_at_S0.1": 19544263452,
+              "time_ns_at_S0.25": 3007991366,
+              "time_ns_at_S0.5": 509069808,
+              "time_ns_at_S0.75": 67415260,
+              "time_ns_at_S0.9": 620663
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "M",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 3.345596433,
+              "min": 1,
+              "n": 1794,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 10,
+              "sum": 6002.0
+            },
+            "family": "ow-3807a1115b13f5c8685a",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.202646463,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.225307905,
+              "n": 1794,
+              "ratio_of_aggregate_sums": 1.022661441
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 513,
+              "RESHAPED_RESIDUAL_REPRICE": 1281
+            },
+            "removal_kinds": {
+              "M_REPRICE_AWAY": 1805,
+              "M_SIZE_DOWN": 4
+            },
+            "removed_quantity": {
+              "max": 10,
+              "mean": 3.271460424,
+              "min": 1,
+              "n": 1794,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 10,
+              "sum": 5869.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 15,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 1794,
+              "final_survival": 0.002498096,
+              "final_time_ns": 3396232853912,
+              "n": 1809,
+              "time_ns_at_S0.05": 112868236176,
+              "time_ns_at_S0.1": 42561657168,
+              "time_ns_at_S0.25": 11192702129,
+              "time_ns_at_S0.5": 1533909343,
+              "time_ns_at_S0.75": 3210493,
+              "time_ns_at_S0.9": 57355
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "M",
+            "arrived_quantity": {
+              "max": 21,
+              "mean": 3.403982017,
+              "min": 1,
+              "n": 1557,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 20,
+              "sum": 5300.0
+            },
+            "family": "ow-8b55dfd64daf3077e3d2",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.500328172,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.431950601,
+              "n": 1557,
+              "ratio_of_aggregate_sums": 0.931622429
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 813,
+              "RESHAPED_RESIDUAL_REPRICE": 744
+            },
+            "removal_kinds": {
+              "M_REPRICE_AWAY": 1554,
+              "M_SIZE_DOWN": 29
+            },
+            "removed_quantity": {
+              "max": 20,
+              "mean": 3.653821452,
+              "min": 1,
+              "n": 1557,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 20,
+              "sum": 5689.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 26,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 1557,
+              "final_survival": 0.00934612,
+              "final_time_ns": 3585361890144,
+              "n": 1583,
+              "time_ns_at_S0.05": 124787885823,
+              "time_ns_at_S0.1": 50792973615,
+              "time_ns_at_S0.25": 8200633943,
+              "time_ns_at_S0.5": 1321542122,
+              "time_ns_at_S0.75": 9046576,
+              "time_ns_at_S0.9": 188283
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "TFCN",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 1.308176101,
+              "min": 1,
+              "n": 636,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 8,
+              "sum": 832.0
+            },
+            "family": "ow-3a98bbe15cb2bf0c14ba",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.151312953,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.215251572,
+              "n": 636,
+              "ratio_of_aggregate_sums": 1.063938619
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 574,
+              "RESHAPED_RESIDUAL_REPRICE": 62
+            },
+            "removal_kinds": {
+              "C": 335,
+              "F": 335
+            },
+            "removed_quantity": {
+              "max": 10,
+              "mean": 1.229559748,
+              "min": 1,
+              "n": 636,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 782.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 34,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 636,
+              "final_survival": 0.044760915,
+              "final_time_ns": 3579948038429,
+              "n": 670,
+              "time_ns_at_S0.05": 2228122742586,
+              "time_ns_at_S0.1": 118393065073,
+              "time_ns_at_S0.25": 7298517414,
+              "time_ns_at_S0.5": 558845587,
+              "time_ns_at_S0.75": 332534,
+              "time_ns_at_S0.9": 139967
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 8,
+              "mean": 1.149546828,
+              "min": 1,
+              "n": 662,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 4,
+              "sum": 761.0
+            },
+            "family": "ow-7b10d38a8b61511bc611",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.036455257,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.103776435,
+              "n": 662,
+              "ratio_of_aggregate_sums": 1.067321178
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 625,
+              "RESHAPED_RESIDUAL_REPRICE": 37
+            },
+            "removal_kinds": {
+              "C": 667
+            },
+            "removed_quantity": {
+              "max": 5,
+              "mean": 1.077039275,
+              "min": 1,
+              "n": 662,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 713.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 5,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 662,
+              "final_survival": 0.0060096,
+              "final_time_ns": 3577151260480,
+              "n": 667,
+              "time_ns_at_S0.05": 20901659593,
+              "time_ns_at_S0.1": 6147068419,
+              "time_ns_at_S0.25": 895390533,
+              "time_ns_at_S0.5": 1196258,
+              "time_ns_at_S0.75": 311926,
+              "time_ns_at_S0.9": 146315
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "TFCN",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 1.326599327,
+              "min": 1,
+              "n": 594,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 9,
+              "sum": 788.0
+            },
+            "family": "ow-a4883ca90d4145520c5e",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.180497522,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.159379509,
+              "n": 594,
+              "ratio_of_aggregate_sums": 0.978881988
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 562,
+              "RESHAPED_RESIDUAL_REPRICE": 32
+            },
+            "removal_kinds": {
+              "C": 303,
+              "F": 303
+            },
+            "removed_quantity": {
+              "max": 12,
+              "mean": 1.355218855,
+              "min": 1,
+              "n": 594,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 8,
+              "sum": 805.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 12,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 594,
+              "final_survival": 0.005951616,
+              "final_time_ns": 3552146159067,
+              "n": 606,
+              "time_ns_at_S0.05": 191250946097,
+              "time_ns_at_S0.1": 72901570826,
+              "time_ns_at_S0.25": 7820624560,
+              "time_ns_at_S0.5": 204575792,
+              "time_ns_at_S0.75": 479535,
+              "time_ns_at_S0.9": 170514
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 1.233082707,
+              "min": 1,
+              "n": 532,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 5,
+              "sum": 656.0
+            },
+            "family": "ow-7b10d38a8b61511bc611",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.088314536,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.064505013,
+              "n": 532,
+              "ratio_of_aggregate_sums": 0.976190476
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 392,
+              "RESHAPED_RESIDUAL_REPRICE": 140
+            },
+            "removal_kinds": {
+              "C": 535
+            },
+            "removed_quantity": {
+              "max": 20,
+              "mean": 1.263157895,
+              "min": 1,
+              "n": 532,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 672.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 3,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 532,
+              "final_survival": 0.005607477,
+              "final_time_ns": 3560803442105,
+              "n": 535,
+              "time_ns_at_S0.05": 5965410531,
+              "time_ns_at_S0.1": 1429956704,
+              "time_ns_at_S0.25": 7550768,
+              "time_ns_at_S0.5": 1733996,
+              "time_ns_at_S0.75": 443398,
+              "time_ns_at_S0.9": 155136
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 8,
+              "mean": 1.1507431,
+              "min": 1,
+              "n": 471,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 542.0
+            },
+            "family": "ow-40540069fe5aeddc127b",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.014673139,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.141492266,
+              "n": 471,
+              "ratio_of_aggregate_sums": 1.126819127
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 451,
+              "RESHAPED_RESIDUAL_REPRICE": 20
+            },
+            "removal_kinds": {
+              "C": 472
+            },
+            "removed_quantity": {
+              "max": 7,
+              "mean": 1.021231423,
+              "min": 1,
+              "n": 471,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 1,
+              "sum": 481.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 1,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 471,
+              "final_survival": 0.0,
+              "final_time_ns": 1620103738033,
+              "n": 472,
+              "time_ns_at_S0.05": 16458484999,
+              "time_ns_at_S0.1": 6116961904,
+              "time_ns_at_S0.25": 708339654,
+              "time_ns_at_S0.5": 1256861,
+              "time_ns_at_S0.75": 159278,
+              "time_ns_at_S0.9": 60320
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 9,
+              "mean": 1.209606987,
+              "min": 1,
+              "n": 458,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 554.0
+            },
+            "family": "ow-8c934d067bc463c01ce0",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.012883012,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.174308588,
+              "n": 458,
+              "ratio_of_aggregate_sums": 1.161425577
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 438,
+              "RESHAPED_RESIDUAL_REPRICE": 20
+            },
+            "removal_kinds": {
+              "C": 459
+            },
+            "removed_quantity": {
+              "max": 3,
+              "mean": 1.041484716,
+              "min": 1,
+              "n": 458,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 477.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 1,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 458,
+              "final_survival": 0.0,
+              "final_time_ns": 1616743572168,
+              "n": 459,
+              "time_ns_at_S0.05": 30285984352,
+              "time_ns_at_S0.1": 12569498807,
+              "time_ns_at_S0.25": 1817164913,
+              "time_ns_at_S0.5": 3950223,
+              "time_ns_at_S0.75": 467017,
+              "time_ns_at_S0.9": 135444
+            },
+            "touch_state": "AT_TOUCH"
+          }
+        ],
+        "touch_restoration_time_ns": {
+          "max": 1850097476139,
+          "mean": 56193412020.76471,
+          "min": 69976,
+          "n": 34,
+          "p10": 236184,
+          "p25": 423804,
+          "p50": 1639709,
+          "p75": 1416822240,
+          "p90": 3091801621,
+          "p99": 1850097476139,
+          "sum": 1910576008706.0
+        },
+        "touch_rule": "the touch is displaced when a group leaves a side's best price worse than the previous group's; restored when a later group's best price returns to or improves on it",
+        "turn": 16
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "411af2bc4cf8b8fcdcb6d91ebdfcf1fc379d66988a6922bce1481d7bbcdb00ad",
+      "ledger_id": "contract_section_4.7",
+      "prev_hash": "faed68699a78b5228b7654561f005fbf0ba3e137614239167c36c55a0a843b14",
+      "sequence": 15
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 6435,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 7137.898687424,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.022262572"
+            },
+            "value": 1.109230565
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 5800,
+              "family": "ow-59ace24da4a485c605b6",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 7529.475411034,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.022259205"
+            },
+            "value": 1.298185416
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 1854,
+              "family": "ow-3807a1115b13f5c8685a",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 2260.002380952,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.02172823"
+            },
+            "value": 1.21898726
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 1633,
+              "family": "ow-8b55dfd64daf3077e3d2",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 2340.713753133,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=0.94273202"
+            },
+            "value": 1.43338258
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 711,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 780.7,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.064304462"
+            },
+            "value": 1.098030942
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 680,
+              "family": "ow-3a98bbe15cb2bf0c14ba",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 873.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.121681416"
+            },
+            "value": 1.283823529
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 626,
+              "family": "ow-a4883ca90d4145520c5e",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 719.671428571,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=0.977353993"
+            },
+            "value": 1.14963487
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 553,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 585.216666667,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=0.964387464"
+            },
+            "value": 1.058257987
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 512,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 577.80952381,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.112380952"
+            },
+            "value": 1.128534226
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 497,
+              "family": "ow-8c934d067bc463c01ce0",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 576.333333333,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.147001934"
+            },
+            "value": 1.159624413
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "episode_rule": "an episode opens at every removal of resting quantity (C, removing F, M reprice-away, M size-down) at (side, price); it resolves at the FIRST later arrival at the same price or one tick either side (new-ID add = NEW_ID_ADD, or a same-ID modify = RESHAPED_RESIDUAL_*), one attribution per episode; the modify that moved an order never restores its own episode; an episode still pending at the cutoff is censored at the cutoff",
+        "groups_delivered_at_cutoff": 38778,
+        "member_group_indices": [
+          38716,
+          38717,
+          38718,
+          38725,
+          38729,
+          38730,
+          38731,
+          38732,
+          38733,
+          38734,
+          38742,
+          38744,
+          38745,
+          38746,
+          38747,
+          38750,
+          38751,
+          38753,
+          38754,
+          38755,
+          38756,
+          38757,
+          38758,
+          38759,
+          38760,
+          38761,
+          38762,
+          38763,
+          38765,
+          38777,
+          7042,
+          7044,
+          7075,
+          7136,
+          7154,
+          7731,
+          7778,
+          7787,
+          7830,
+          29281
+        ],
+        "population": {
+          "by_price_relation": {
+            "NEIGHBOUR_1_TICK": 9178,
+            "SAME_PRICE": 14042
+          },
+          "by_refill_kind": {
+            "NEW_ID_ADD": 18981,
+            "RESHAPED_RESIDUAL_REPRICE": 4203,
+            "RESHAPED_RESIDUAL_SIZE_UP": 36
+          },
+          "by_removal_kind": {
+            "C": 17225,
+            "F": 2181,
+            "M_REPRICE_AWAY": 4275,
+            "M_SIZE_DOWN": 167
+          },
+          "episodes": 23848,
+          "pending_censored_at_cutoff": 628,
+          "resolved": 23220,
+          "touch_displacements": 36,
+          "touch_restorations": 34,
+          "touch_still_displaced": {
+            "A": true,
+            "B": true
+          }
+        },
+        "result": "COMPUTED",
+        "section": "4.7",
+        "strata": [
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 15,
+              "mean": 2.012276612,
+              "min": 1,
+              "n": 6435,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 2,
+              "p99": 10,
+              "sum": 12949.0
+            },
+            "family": "ow-40540069fe5aeddc127b",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.086967993,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.109230565,
+              "n": 6435,
+              "ratio_of_aggregate_sums": 1.022262572
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 5931,
+              "RESHAPED_RESIDUAL_REPRICE": 503,
+              "RESHAPED_RESIDUAL_SIZE_UP": 1
+            },
+            "removal_kinds": {
+              "C": 6559
+            },
+            "removed_quantity": {
+              "max": 30,
+              "mean": 1.968453768,
+              "min": 1,
+              "n": 6435,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 2,
+              "p99": 10,
+              "sum": 12667.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 124,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 6435,
+              "final_survival": 0.015676516,
+              "final_time_ns": 4373733213022,
+              "n": 6559,
+              "time_ns_at_S0.05": 114457065351,
+              "time_ns_at_S0.1": 21734683595,
+              "time_ns_at_S0.25": 3200005643,
+              "time_ns_at_S0.5": 709004327,
+              "time_ns_at_S0.75": 132259108,
+              "time_ns_at_S0.9": 697248
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 23,
+              "mean": 2.541724138,
+              "min": 1,
+              "n": 5800,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 5,
+              "p99": 20,
+              "sum": 14742.0
+            },
+            "family": "ow-59ace24da4a485c605b6",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.27592621,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.298185416,
+              "n": 5800,
+              "ratio_of_aggregate_sums": 1.022259205
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 5047,
+              "RESHAPED_RESIDUAL_REPRICE": 752,
+              "RESHAPED_RESIDUAL_SIZE_UP": 1
+            },
+            "removal_kinds": {
+              "C": 5881
+            },
+            "removed_quantity": {
+              "max": 23,
+              "mean": 2.48637931,
+              "min": 1,
+              "n": 5800,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 5,
+              "p99": 20,
+              "sum": 14421.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 81,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 5800,
+              "final_survival": 0.009900037,
+              "final_time_ns": 4351491600908,
+              "n": 5881,
+              "time_ns_at_S0.05": 90431056671,
+              "time_ns_at_S0.1": 22768141382,
+              "time_ns_at_S0.25": 3248898216,
+              "time_ns_at_S0.5": 531418435,
+              "time_ns_at_S0.75": 89683763,
+              "time_ns_at_S0.9": 663385
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "M",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 3.297195254,
+              "min": 1,
+              "n": 1854,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 10,
+              "sum": 6113.0
+            },
+            "family": "ow-3807a1115b13f5c8685a",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.197259031,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.21898726,
+              "n": 1854,
+              "ratio_of_aggregate_sums": 1.02172823
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 551,
+              "RESHAPED_RESIDUAL_REPRICE": 1303
+            },
+            "removal_kinds": {
+              "M_REPRICE_AWAY": 1863,
+              "M_SIZE_DOWN": 5
+            },
+            "removed_quantity": {
+              "max": 10,
+              "mean": 3.227076591,
+              "min": 1,
+              "n": 1854,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 10,
+              "sum": 5983.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 14,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 1854,
+              "final_survival": 0.00440643,
+              "final_time_ns": 4162008065902,
+              "n": 1868,
+              "time_ns_at_S0.05": 122381072245,
+              "time_ns_at_S0.1": 44718880199,
+              "time_ns_at_S0.25": 12375745692,
+              "time_ns_at_S0.5": 1672274775,
+              "time_ns_at_S0.75": 4005917,
+              "time_ns_at_S0.9": 59642
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "M",
+            "arrived_quantity": {
+              "max": 21,
+              "mean": 3.42743417,
+              "min": 1,
+              "n": 1633,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 20,
+              "sum": 5597.0
+            },
+            "family": "ow-8b55dfd64daf3077e3d2",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.49065056,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.43338258,
+              "n": 1633,
+              "ratio_of_aggregate_sums": 0.94273202
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 869,
+              "RESHAPED_RESIDUAL_REPRICE": 764
+            },
+            "removal_kinds": {
+              "M_REPRICE_AWAY": 1632,
+              "M_SIZE_DOWN": 31
+            },
+            "removed_quantity": {
+              "max": 20,
+              "mean": 3.635639927,
+              "min": 1,
+              "n": 1633,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 20,
+              "sum": 5937.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 30,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 1633,
+              "final_survival": 0.012280959,
+              "final_time_ns": 4351137102134,
+              "n": 1663,
+              "time_ns_at_S0.05": 133567473285,
+              "time_ns_at_S0.1": 55894918062,
+              "time_ns_at_S0.25": 9511965856,
+              "time_ns_at_S0.5": 1537942700,
+              "time_ns_at_S0.75": 10015257,
+              "time_ns_at_S0.9": 216439
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 8,
+              "mean": 1.140646976,
+              "min": 1,
+              "n": 711,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 4,
+              "sum": 811.0
+            },
+            "family": "ow-7b10d38a8b61511bc611",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.03372648,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.098030942,
+              "n": 711,
+              "ratio_of_aggregate_sums": 1.064304462
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 672,
+              "RESHAPED_RESIDUAL_REPRICE": 39
+            },
+            "removal_kinds": {
+              "C": 717
+            },
+            "removed_quantity": {
+              "max": 5,
+              "mean": 1.071729958,
+              "min": 1,
+              "n": 711,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 762.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 6,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 711,
+              "final_survival": 0.007650926,
+              "final_time_ns": 4342926472470,
+              "n": 717,
+              "time_ns_at_S0.05": 25355015256,
+              "time_ns_at_S0.1": 7422624096,
+              "time_ns_at_S0.25": 960225187,
+              "time_ns_at_S0.5": 1209550,
+              "time_ns_at_S0.75": 310868,
+              "time_ns_at_S0.9": 145905
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "TFCN",
+            "arrived_quantity": {
+              "max": 42,
+              "mean": 1.491176471,
+              "min": 1,
+              "n": 680,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 10,
+              "sum": 1014.0
+            },
+            "family": "ow-3a98bbe15cb2bf0c14ba",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.162142113,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.283823529,
+              "n": 680,
+              "ratio_of_aggregate_sums": 1.121681416
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 614,
+              "RESHAPED_RESIDUAL_REPRICE": 66
+            },
+            "removal_kinds": {
+              "C": 356,
+              "F": 356
+            },
+            "removed_quantity": {
+              "max": 40,
+              "mean": 1.329411765,
+              "min": 1,
+              "n": 680,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 6,
+              "sum": 904.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 32,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 680,
+              "final_survival": 0.041513897,
+              "final_time_ns": 4345723250419,
+              "n": 712,
+              "time_ns_at_S0.05": 1678483781196,
+              "time_ns_at_S0.1": 118392993778,
+              "time_ns_at_S0.25": 6891514257,
+              "time_ns_at_S0.5": 564792961,
+              "time_ns_at_S0.75": 349939,
+              "time_ns_at_S0.9": 142865
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "TFCN",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 1.309904153,
+              "min": 1,
+              "n": 626,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 9,
+              "sum": 820.0
+            },
+            "family": "ow-a4883ca90d4145520c5e",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.172280877,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.14963487,
+              "n": 626,
+              "ratio_of_aggregate_sums": 0.977353993
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 590,
+              "RESHAPED_RESIDUAL_REPRICE": 36
+            },
+            "removal_kinds": {
+              "C": 318,
+              "F": 318
+            },
+            "removed_quantity": {
+              "max": 12,
+              "mean": 1.340255591,
+              "min": 1,
+              "n": 626,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 8,
+              "sum": 839.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 10,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 626,
+              "final_survival": 0.01048218,
+              "final_time_ns": 4317921371057,
+              "n": 636,
+              "time_ns_at_S0.05": 299705737136,
+              "time_ns_at_S0.1": 75257775247,
+              "time_ns_at_S0.25": 8322100140,
+              "time_ns_at_S0.5": 250256061,
+              "time_ns_at_S0.75": 467956,
+              "time_ns_at_S0.9": 166073
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 1.224231465,
+              "min": 1,
+              "n": 553,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 5,
+              "sum": 677.0
+            },
+            "family": "ow-7b10d38a8b61511bc611",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.093870522,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.058257987,
+              "n": 553,
+              "ratio_of_aggregate_sums": 0.964387464
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 409,
+              "RESHAPED_RESIDUAL_REPRICE": 144
+            },
+            "removal_kinds": {
+              "C": 556
+            },
+            "removed_quantity": {
+              "max": 20,
+              "mean": 1.269439421,
+              "min": 1,
+              "n": 553,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 702.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 3,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 553,
+              "final_survival": 0.005395683,
+              "final_time_ns": 4326578654095,
+              "n": 556,
+              "time_ns_at_S0.05": 7311337150,
+              "time_ns_at_S0.1": 1731151618,
+              "time_ns_at_S0.25": 12440204,
+              "time_ns_at_S0.5": 1748376,
+              "time_ns_at_S0.75": 434198,
+              "time_ns_at_S0.9": 154823
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 8,
+              "mean": 1.140625,
+              "min": 1,
+              "n": 512,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 584.0
+            },
+            "family": "ow-40540069fe5aeddc127b",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.016153274,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.128534226,
+              "n": 512,
+              "ratio_of_aggregate_sums": 1.112380952
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 490,
+              "RESHAPED_RESIDUAL_REPRICE": 22
+            },
+            "removal_kinds": {
+              "C": 514
+            },
+            "removed_quantity": {
+              "max": 7,
+              "mean": 1.025390625,
+              "min": 1,
+              "n": 512,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 525.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 2,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 512,
+              "final_survival": 0.002594034,
+              "final_time_ns": 1914626252062,
+              "n": 514,
+              "time_ns_at_S0.05": 16458484999,
+              "time_ns_at_S0.1": 6116961904,
+              "time_ns_at_S0.25": 728892125,
+              "time_ns_at_S0.5": 1241631,
+              "time_ns_at_S0.75": 161767,
+              "time_ns_at_S0.9": 57242
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 9,
+              "mean": 1.193158954,
+              "min": 1,
+              "n": 497,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 593.0
+            },
+            "family": "ow-8c934d067bc463c01ce0",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.012622479,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.159624413,
+              "n": 497,
+              "ratio_of_aggregate_sums": 1.147001934
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 476,
+              "RESHAPED_RESIDUAL_REPRICE": 21
+            },
+            "removal_kinds": {
+              "C": 498
+            },
+            "removed_quantity": {
+              "max": 3,
+              "mean": 1.040241449,
+              "min": 1,
+              "n": 497,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 517.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 1,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 497,
+              "final_survival": 0.002008032,
+              "final_time_ns": 2200677434847,
+              "n": 498,
+              "time_ns_at_S0.05": 30285915792,
+              "time_ns_at_S0.1": 14390647270,
+              "time_ns_at_S0.25": 1889799028,
+              "time_ns_at_S0.5": 3950223,
+              "time_ns_at_S0.75": 396006,
+              "time_ns_at_S0.9": 136084
+            },
+            "touch_state": "AT_TOUCH"
+          }
+        ],
+        "touch_restoration_time_ns": {
+          "max": 1850097476139,
+          "mean": 56193412020.76471,
+          "min": 69976,
+          "n": 34,
+          "p10": 236184,
+          "p25": 423804,
+          "p50": 1639709,
+          "p75": 1416822240,
+          "p90": 3091801621,
+          "p99": 1850097476139,
+          "sum": 1910576008706.0
+        },
+        "touch_rule": "the touch is displaced when a group leaves a side's best price worse than the previous group's; restored when a later group's best price returns to or improves on it",
+        "turn": 17
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "9652930b223ddd4514700da8c906d48e6c1a4fe43ec85e158c8e07c7e06308db",
+      "ledger_id": "contract_section_4.7",
+      "prev_hash": "411af2bc4cf8b8fcdcb6d91ebdfcf1fc379d66988a6922bce1481d7bbcdb00ad",
+      "sequence": 16
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 6946,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 7658.782020757,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.017637437"
+            },
+            "value": 1.102617625
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 6045,
+              "family": "ow-59ace24da4a485c605b6",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 7830.85160151,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.021648736"
+            },
+            "value": 1.295426237
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 1910,
+              "family": "ow-3807a1115b13f5c8685a",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 2330.202380952,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.020655738"
+            },
+            "value": 1.220001247
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 1752,
+              "family": "ow-8b55dfd64daf3077e3d2",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 2507.313753133,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=0.95137354"
+            },
+            "value": 1.431115156
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 736,
+              "family": "ow-3a98bbe15cb2bf0c14ba",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 926.8,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.078470825"
+            },
+            "value": 1.25923913
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 761,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 830.7,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.058968059"
+            },
+            "value": 1.091590013
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 670,
+              "family": "ow-a4883ca90d4145520c5e",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 772.004761905,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=0.978723404"
+            },
+            "value": 1.152245913
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 568,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 602.216666667,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=0.967921897"
+            },
+            "value": 1.06024061
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 542,
+              "family": "ow-8c934d067bc463c01ce0",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 620.833333333,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.13321492"
+            },
+            "value": 1.145448954
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 539,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 612.80952381,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.121376812"
+            },
+            "value": 1.136937892
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "episode_rule": "an episode opens at every removal of resting quantity (C, removing F, M reprice-away, M size-down) at (side, price); it resolves at the FIRST later arrival at the same price or one tick either side (new-ID add = NEW_ID_ADD, or a same-ID modify = RESHAPED_RESIDUAL_*), one attribution per episode; the modify that moved an order never restores its own episode; an episode still pending at the cutoff is censored at the cutoff",
+        "groups_delivered_at_cutoff": 41059,
+        "member_group_indices": [
+          41001,
+          41002,
+          41002,
+          41006,
+          41007,
+          41008,
+          41009,
+          41010,
+          41015,
+          41017,
+          41018,
+          41019,
+          41020,
+          41021,
+          41022,
+          41023,
+          41033,
+          41034,
+          41035,
+          41036,
+          41037,
+          41038,
+          41039,
+          41045,
+          41048,
+          41053,
+          41054,
+          41057,
+          41057,
+          41058,
+          7042,
+          7044,
+          7075,
+          7136,
+          7154,
+          7731,
+          7778,
+          7787,
+          7830,
+          29281
+        ],
+        "population": {
+          "by_price_relation": {
+            "NEIGHBOUR_1_TICK": 9675,
+            "SAME_PRICE": 14888
+          },
+          "by_refill_kind": {
+            "NEW_ID_ADD": 20155,
+            "RESHAPED_RESIDUAL_REPRICE": 4372,
+            "RESHAPED_RESIDUAL_SIZE_UP": 36
+          },
+          "by_removal_kind": {
+            "C": 18266,
+            "F": 2309,
+            "M_REPRICE_AWAY": 4465,
+            "M_SIZE_DOWN": 170
+          },
+          "episodes": 25210,
+          "pending_censored_at_cutoff": 647,
+          "resolved": 24563,
+          "touch_displacements": 36,
+          "touch_restorations": 34,
+          "touch_still_displaced": {
+            "A": true,
+            "B": true
+          }
+        },
+        "result": "COMPUTED",
+        "section": "4.7",
+        "strata": [
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 15,
+              "mean": 2.060034552,
+              "min": 1,
+              "n": 6946,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 2,
+              "p99": 10,
+              "sum": 14309.0
+            },
+            "family": "ow-40540069fe5aeddc127b",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.084980188,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.102617625,
+              "n": 6946,
+              "ratio_of_aggregate_sums": 1.017637437
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 6412,
+              "RESHAPED_RESIDUAL_REPRICE": 533,
+              "RESHAPED_RESIDUAL_SIZE_UP": 1
+            },
+            "removal_kinds": {
+              "C": 7057
+            },
+            "removed_quantity": {
+              "max": 30,
+              "mean": 2.02433055,
+              "min": 1,
+              "n": 6946,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 2,
+              "p99": 10,
+              "sum": 14061.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 111,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 6946,
+              "final_survival": 0.013501404,
+              "final_time_ns": 5667320227340,
+              "n": 7057,
+              "time_ns_at_S0.05": 137035103858,
+              "time_ns_at_S0.1": 26206416898,
+              "time_ns_at_S0.25": 3604788147,
+              "time_ns_at_S0.5": 706963047,
+              "time_ns_at_S0.75": 149123378,
+              "time_ns_at_S0.9": 811830
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 23,
+              "mean": 2.560628619,
+              "min": 1,
+              "n": 6045,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 5,
+              "p99": 20,
+              "sum": 15479.0
+            },
+            "family": "ow-59ace24da4a485c605b6",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.273777501,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.295426237,
+              "n": 6045,
+              "ratio_of_aggregate_sums": 1.021648736
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 5231,
+              "RESHAPED_RESIDUAL_REPRICE": 813,
+              "RESHAPED_RESIDUAL_SIZE_UP": 1
+            },
+            "removal_kinds": {
+              "C": 6130
+            },
+            "removed_quantity": {
+              "max": 23,
+              "mean": 2.5063689,
+              "min": 1,
+              "n": 6045,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 5,
+              "p99": 20,
+              "sum": 15151.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 85,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 6045,
+              "final_survival": 0.01158253,
+              "final_time_ns": 5645078615226,
+              "n": 6130,
+              "time_ns_at_S0.05": 108699296675,
+              "time_ns_at_S0.1": 27095748037,
+              "time_ns_at_S0.25": 3446772322,
+              "time_ns_at_S0.5": 536665454,
+              "time_ns_at_S0.75": 97167871,
+              "time_ns_at_S0.9": 686727
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "M",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 3.259685864,
+              "min": 1,
+              "n": 1910,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 10,
+              "sum": 6226.0
+            },
+            "family": "ow-3807a1115b13f5c8685a",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.199345509,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.220001247,
+              "n": 1910,
+              "ratio_of_aggregate_sums": 1.020655738
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 588,
+              "RESHAPED_RESIDUAL_REPRICE": 1322
+            },
+            "removal_kinds": {
+              "M_REPRICE_AWAY": 1918,
+              "M_SIZE_DOWN": 7
+            },
+            "removed_quantity": {
+              "max": 10,
+              "mean": 3.193717277,
+              "min": 1,
+              "n": 1910,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 10,
+              "sum": 6100.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 15,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 1910,
+              "final_survival": 0.005576201,
+              "final_time_ns": 5455595080220,
+              "n": 1925,
+              "time_ns_at_S0.05": 160464586586,
+              "time_ns_at_S0.1": 50718486123,
+              "time_ns_at_S0.25": 14267688692,
+              "time_ns_at_S0.5": 1793431335,
+              "time_ns_at_S0.75": 6770610,
+              "time_ns_at_S0.9": 67346
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "M",
+            "arrived_quantity": {
+              "max": 21,
+              "mean": 3.439497717,
+              "min": 1,
+              "n": 1752,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 20,
+              "sum": 6026.0
+            },
+            "family": "ow-8b55dfd64daf3077e3d2",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.479741616,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.431115156,
+              "n": 1752,
+              "ratio_of_aggregate_sums": 0.95137354
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 945,
+              "RESHAPED_RESIDUAL_REPRICE": 807
+            },
+            "removal_kinds": {
+              "M_REPRICE_AWAY": 1751,
+              "M_SIZE_DOWN": 31
+            },
+            "removed_quantity": {
+              "max": 20,
+              "mean": 3.615296804,
+              "min": 1,
+              "n": 1752,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 20,
+              "sum": 6334.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 30,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 1752,
+              "final_survival": 0.012955043,
+              "final_time_ns": 5644724116452,
+              "n": 1782,
+              "time_ns_at_S0.05": 169720775105,
+              "time_ns_at_S0.1": 62156622485,
+              "time_ns_at_S0.25": 11084529266,
+              "time_ns_at_S0.5": 1721634679,
+              "time_ns_at_S0.75": 10647870,
+              "time_ns_at_S0.9": 281699
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "TFCN",
+            "arrived_quantity": {
+              "max": 42,
+              "mean": 1.456521739,
+              "min": 1,
+              "n": 736,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 10,
+              "sum": 1072.0
+            },
+            "family": "ow-3a98bbe15cb2bf0c14ba",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.180768305,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.25923913,
+              "n": 736,
+              "ratio_of_aggregate_sums": 1.078470825
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 670,
+              "RESHAPED_RESIDUAL_REPRICE": 66
+            },
+            "removal_kinds": {
+              "C": 384,
+              "F": 384
+            },
+            "removed_quantity": {
+              "max": 40,
+              "mean": 1.350543478,
+              "min": 1,
+              "n": 736,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 6,
+              "sum": 994.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 32,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 736,
+              "final_survival": 0.038047624,
+              "final_time_ns": 5639310264737,
+              "n": 768,
+              "time_ns_at_S0.05": 1480703255169,
+              "time_ns_at_S0.1": 229100336738,
+              "time_ns_at_S0.25": 8116497680,
+              "time_ns_at_S0.5": 626456775,
+              "time_ns_at_S0.75": 361606,
+              "time_ns_at_S0.9": 142865
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 8,
+              "mean": 1.132720105,
+              "min": 1,
+              "n": 761,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 4,
+              "sum": 862.0
+            },
+            "family": "ow-7b10d38a8b61511bc611",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.032621954,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.091590013,
+              "n": 761,
+              "ratio_of_aggregate_sums": 1.058968059
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 720,
+              "RESHAPED_RESIDUAL_REPRICE": 41
+            },
+            "removal_kinds": {
+              "C": 767
+            },
+            "removed_quantity": {
+              "max": 5,
+              "mean": 1.069645204,
+              "min": 1,
+              "n": 761,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 814.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 6,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 761,
+              "final_survival": 0.005404765,
+              "final_time_ns": 5636513486788,
+              "n": 767,
+              "time_ns_at_S0.05": 27216068633,
+              "time_ns_at_S0.1": 8710920029,
+              "time_ns_at_S0.25": 1005339779,
+              "time_ns_at_S0.5": 1325325,
+              "time_ns_at_S0.75": 313818,
+              "time_ns_at_S0.9": 147082
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "TFCN",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 1.304477612,
+              "min": 1,
+              "n": 670,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 9,
+              "sum": 874.0
+            },
+            "family": "ow-a4883ca90d4145520c5e",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.173522509,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.152245913,
+              "n": 670,
+              "ratio_of_aggregate_sums": 0.978723404
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 632,
+              "RESHAPED_RESIDUAL_REPRICE": 38
+            },
+            "removal_kinds": {
+              "C": 340,
+              "F": 340
+            },
+            "removed_quantity": {
+              "max": 12,
+              "mean": 1.332835821,
+              "min": 1,
+              "n": 670,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 8,
+              "sum": 893.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 10,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 670,
+              "final_survival": 0.012456747,
+              "final_time_ns": 5611508385375,
+              "n": 680,
+              "time_ns_at_S0.05": 270901255972,
+              "time_ns_at_S0.1": 82689505890,
+              "time_ns_at_S0.25": 8670526870,
+              "time_ns_at_S0.5": 227550529,
+              "time_ns_at_S0.75": 412010,
+              "time_ns_at_S0.9": 166073
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 1.221830986,
+              "min": 1,
+              "n": 568,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 5,
+              "sum": 694.0
+            },
+            "family": "ow-7b10d38a8b61511bc611",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.092318714,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.06024061,
+              "n": 568,
+              "ratio_of_aggregate_sums": 0.967921897
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 423,
+              "RESHAPED_RESIDUAL_REPRICE": 145
+            },
+            "removal_kinds": {
+              "C": 571
+            },
+            "removed_quantity": {
+              "max": 20,
+              "mean": 1.262323944,
+              "min": 1,
+              "n": 568,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 717.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 3,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 568,
+              "final_survival": 0.00525394,
+              "final_time_ns": 5620165668413,
+              "n": 571,
+              "time_ns_at_S0.05": 7986609869,
+              "time_ns_at_S0.1": 1955169879,
+              "time_ns_at_S0.25": 13968877,
+              "time_ns_at_S0.5": 1799889,
+              "time_ns_at_S0.75": 432261,
+              "time_ns_at_S0.9": 154949
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 9,
+              "mean": 1.177121771,
+              "min": 1,
+              "n": 542,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 638.0
+            },
+            "family": "ow-8c934d067bc463c01ce0",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.012234034,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.145448954,
+              "n": 542,
+              "ratio_of_aggregate_sums": 1.13321492
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 521,
+              "RESHAPED_RESIDUAL_REPRICE": 21
+            },
+            "removal_kinds": {
+              "C": 545
+            },
+            "removed_quantity": {
+              "max": 3,
+              "mean": 1.038745387,
+              "min": 1,
+              "n": 542,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 563.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 3,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 542,
+              "final_survival": 0.002446483,
+              "final_time_ns": 3494264449165,
+              "n": 545,
+              "time_ns_at_S0.05": 31988432877,
+              "time_ns_at_S0.1": 17918876424,
+              "time_ns_at_S0.25": 2357720971,
+              "time_ns_at_S0.5": 4466869,
+              "time_ns_at_S0.75": 463195,
+              "time_ns_at_S0.9": 142045
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 8,
+              "mean": 1.148423006,
+              "min": 1,
+              "n": 539,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 619.0
+            },
+            "family": "ow-40540069fe5aeddc127b",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.01556108,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.136937892,
+              "n": 539,
+              "ratio_of_aggregate_sums": 1.121376812
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 516,
+              "RESHAPED_RESIDUAL_REPRICE": 23
+            },
+            "removal_kinds": {
+              "C": 541
+            },
+            "removed_quantity": {
+              "max": 7,
+              "mean": 1.024118738,
+              "min": 1,
+              "n": 539,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 552.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 2,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 539,
+              "final_survival": 0.003696858,
+              "final_time_ns": 3208213266380,
+              "n": 541,
+              "time_ns_at_S0.05": 16460599802,
+              "time_ns_at_S0.1": 6988782145,
+              "time_ns_at_S0.25": 845582776,
+              "time_ns_at_S0.5": 1343146,
+              "time_ns_at_S0.75": 174544,
+              "time_ns_at_S0.9": 60662
+            },
+            "touch_state": "AT_TOUCH"
+          }
+        ],
+        "touch_restoration_time_ns": {
+          "max": 1850097476139,
+          "mean": 56193412020.76471,
+          "min": 69976,
+          "n": 34,
+          "p10": 236184,
+          "p25": 423804,
+          "p50": 1639709,
+          "p75": 1416822240,
+          "p90": 3091801621,
+          "p99": 1850097476139,
+          "sum": 1910576008706.0
+        },
+        "touch_rule": "the touch is displaced when a group leaves a side's best price worse than the previous group's; restored when a later group's best price returns to or improves on it",
+        "turn": 18
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "7fbfe358ac99580834bc7a11537865f367fd025805288e1294759f4904de7c70",
+      "ledger_id": "contract_section_4.7",
+      "prev_hash": "9652930b223ddd4514700da8c906d48e6c1a4fe43ec85e158c8e07c7e06308db",
+      "sequence": 17
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 7484,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 8227.496306471,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.017237963"
+            },
+            "value": 1.099344776
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 6338,
+              "family": "ow-59ace24da4a485c605b6",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 8193.205569764,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.021823655"
+            },
+            "value": 1.292711513
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 1952,
+              "family": "ow-3807a1115b13f5c8685a",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 2388.602380952,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.020638504"
+            },
+            "value": 1.223669253
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 1830,
+              "family": "ow-8b55dfd64daf3077e3d2",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 2612.344308688,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=0.950249509"
+            },
+            "value": 1.427510551
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 810,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 885.842857143,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.056386651"
+            },
+            "value": 1.093633157
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 772,
+              "family": "ow-3a98bbe15cb2bf0c14ba",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 962.8,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.075728155"
+            },
+            "value": 1.247150259
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 704,
+              "family": "ow-a4883ca90d4145520c5e",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 807.704761905,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=0.959162304"
+            },
+            "value": 1.1473079
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 587,
+              "family": "ow-8c934d067bc463c01ce0",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 673.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.127035831"
+            },
+            "value": 1.146507666
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 576,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 610.216666667,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=0.968275862"
+            },
+            "value": 1.059403935
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 551,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 625.50952381,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.11033275"
+            },
+            "value": 1.135225996
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "episode_rule": "an episode opens at every removal of resting quantity (C, removing F, M reprice-away, M size-down) at (side, price); it resolves at the FIRST later arrival at the same price or one tick either side (new-ID add = NEW_ID_ADD, or a same-ID modify = RESHAPED_RESIDUAL_*), one attribution per episode; the modify that moved an order never restores its own episode; an episode still pending at the cutoff is censored at the cutoff",
+        "groups_delivered_at_cutoff": 43340,
+        "member_group_indices": [
+          43283,
+          43287,
+          43288,
+          43289,
+          43290,
+          43291,
+          43297,
+          43298,
+          43298,
+          43299,
+          43303,
+          43305,
+          43307,
+          43309,
+          43311,
+          43312,
+          43314,
+          43316,
+          43318,
+          43320,
+          43322,
+          43323,
+          43326,
+          43328,
+          43329,
+          43330,
+          43333,
+          43335,
+          43337,
+          43339,
+          7042,
+          7044,
+          7075,
+          7136,
+          7154,
+          7731,
+          7778,
+          7787,
+          7830,
+          29281
+        ],
+        "population": {
+          "by_price_relation": {
+            "NEIGHBOUR_1_TICK": 10049,
+            "SAME_PRICE": 15794
+          },
+          "by_refill_kind": {
+            "NEW_ID_ADD": 21313,
+            "RESHAPED_RESIDUAL_REPRICE": 4489,
+            "RESHAPED_RESIDUAL_SIZE_UP": 41
+          },
+          "by_removal_kind": {
+            "C": 19341,
+            "F": 2402,
+            "M_REPRICE_AWAY": 4609,
+            "M_SIZE_DOWN": 187
+          },
+          "episodes": 26539,
+          "pending_censored_at_cutoff": 696,
+          "resolved": 25843,
+          "touch_displacements": 36,
+          "touch_restorations": 34,
+          "touch_still_displaced": {
+            "A": true,
+            "B": true
+          }
+        },
+        "result": "COMPUTED",
+        "section": "4.7",
+        "strata": [
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 15,
+              "mean": 2.057990379,
+              "min": 1,
+              "n": 7484,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 2,
+              "p99": 10,
+              "sum": 15402.0
+            },
+            "family": "ow-40540069fe5aeddc127b",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.082106813,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.099344776,
+              "n": 7484,
+              "ratio_of_aggregate_sums": 1.017237963
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 6933,
+              "RESHAPED_RESIDUAL_REPRICE": 547,
+              "RESHAPED_RESIDUAL_SIZE_UP": 4
+            },
+            "removal_kinds": {
+              "C": 7616
+            },
+            "removed_quantity": {
+              "max": 30,
+              "mean": 2.023115981,
+              "min": 1,
+              "n": 7484,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 2,
+              "p99": 10,
+              "sum": 15141.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 132,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 7484,
+              "final_survival": 0.014958703,
+              "final_time_ns": 7059428550511,
+              "n": 7616,
+              "time_ns_at_S0.05": 157527123541,
+              "time_ns_at_S0.1": 30089894407,
+              "time_ns_at_S0.25": 3868118994,
+              "time_ns_at_S0.5": 673082032,
+              "time_ns_at_S0.75": 151156150,
+              "time_ns_at_S0.9": 924974
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 23,
+              "mean": 2.570842537,
+              "min": 1,
+              "n": 6338,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 5,
+              "p99": 20,
+              "sum": 16294.0
+            },
+            "family": "ow-59ace24da4a485c605b6",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.270887858,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.292711513,
+              "n": 6338,
+              "ratio_of_aggregate_sums": 1.021823655
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 5486,
+              "RESHAPED_RESIDUAL_REPRICE": 851,
+              "RESHAPED_RESIDUAL_SIZE_UP": 1
+            },
+            "removal_kinds": {
+              "C": 6424
+            },
+            "removed_quantity": {
+              "max": 23,
+              "mean": 2.515935626,
+              "min": 1,
+              "n": 6338,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 5,
+              "p99": 20,
+              "sum": 15946.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 86,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 6338,
+              "final_survival": 0.007677663,
+              "final_time_ns": 7037186938397,
+              "n": 6424,
+              "time_ns_at_S0.05": 130470457025,
+              "time_ns_at_S0.1": 32348301336,
+              "time_ns_at_S0.25": 3649075329,
+              "time_ns_at_S0.5": 552866198,
+              "time_ns_at_S0.75": 99977031,
+              "time_ns_at_S0.9": 706077
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "M",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 3.242827869,
+              "min": 1,
+              "n": 1952,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 10,
+              "sum": 6330.0
+            },
+            "family": "ow-3807a1115b13f5c8685a",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.203030749,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.223669253,
+              "n": 1952,
+              "ratio_of_aggregate_sums": 1.020638504
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 615,
+              "RESHAPED_RESIDUAL_REPRICE": 1335,
+              "RESHAPED_RESIDUAL_SIZE_UP": 2
+            },
+            "removal_kinds": {
+              "M_REPRICE_AWAY": 1962,
+              "M_SIZE_DOWN": 10
+            },
+            "removed_quantity": {
+              "max": 10,
+              "mean": 3.177254098,
+              "min": 1,
+              "n": 1952,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 10,
+              "sum": 6202.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 20,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 1952,
+              "final_survival": 0.007864747,
+              "final_time_ns": 6847703403391,
+              "n": 1972,
+              "time_ns_at_S0.05": 198459634483,
+              "time_ns_at_S0.1": 56653180539,
+              "time_ns_at_S0.25": 15726404890,
+              "time_ns_at_S0.5": 1860804491,
+              "time_ns_at_S0.75": 7069528,
+              "time_ns_at_S0.9": 76979
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "M",
+            "arrived_quantity": {
+              "max": 21,
+              "mean": 3.433879781,
+              "min": 1,
+              "n": 1830,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 20,
+              "sum": 6284.0
+            },
+            "family": "ow-8b55dfd64daf3077e3d2",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.477261043,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.427510551,
+              "n": 1830,
+              "ratio_of_aggregate_sums": 0.950249509
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 992,
+              "RESHAPED_RESIDUAL_REPRICE": 838
+            },
+            "removal_kinds": {
+              "M_REPRICE_AWAY": 1823,
+              "M_SIZE_DOWN": 38
+            },
+            "removed_quantity": {
+              "max": 20,
+              "mean": 3.613661202,
+              "min": 1,
+              "n": 1830,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 20,
+              "sum": 6613.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 31,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 1830,
+              "final_survival": 0.012526624,
+              "final_time_ns": 7036832439623,
+              "n": 1861,
+              "time_ns_at_S0.05": 238517683506,
+              "time_ns_at_S0.1": 76430553280,
+              "time_ns_at_S0.25": 13684609927,
+              "time_ns_at_S0.5": 1882470318,
+              "time_ns_at_S0.75": 10758035,
+              "time_ns_at_S0.9": 301912
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 8,
+              "mean": 1.133333333,
+              "min": 1,
+              "n": 810,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 4,
+              "sum": 918.0
+            },
+            "family": "ow-7b10d38a8b61511bc611",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.037246506,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.093633157,
+              "n": 810,
+              "ratio_of_aggregate_sums": 1.056386651
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 768,
+              "RESHAPED_RESIDUAL_REPRICE": 42
+            },
+            "removal_kinds": {
+              "C": 815
+            },
+            "removed_quantity": {
+              "max": 7,
+              "mean": 1.072839506,
+              "min": 1,
+              "n": 810,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 869.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 5,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 810,
+              "final_survival": 0.005889571,
+              "final_time_ns": 7028621809959,
+              "n": 815,
+              "time_ns_at_S0.05": 27597175822,
+              "time_ns_at_S0.1": 9895186513,
+              "time_ns_at_S0.25": 1106264420,
+              "time_ns_at_S0.5": 1347065,
+              "time_ns_at_S0.75": 327371,
+              "time_ns_at_S0.9": 157275
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "TFCN",
+            "arrived_quantity": {
+              "max": 42,
+              "mean": 1.435233161,
+              "min": 1,
+              "n": 772,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 10,
+              "sum": 1108.0
+            },
+            "family": "ow-3a98bbe15cb2bf0c14ba",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.171422104,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.247150259,
+              "n": 772,
+              "ratio_of_aggregate_sums": 1.075728155
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 700,
+              "RESHAPED_RESIDUAL_REPRICE": 72
+            },
+            "removal_kinds": {
+              "C": 404,
+              "F": 404
+            },
+            "removed_quantity": {
+              "max": 40,
+              "mean": 1.334196891,
+              "min": 1,
+              "n": 772,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 6,
+              "sum": 1030.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 36,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 772,
+              "final_survival": 0.040388205,
+              "final_time_ns": 7031418587908,
+              "n": 808,
+              "time_ns_at_S0.05": 1678483781196,
+              "time_ns_at_S0.1": 274159452744,
+              "time_ns_at_S0.25": 9987795383,
+              "time_ns_at_S0.5": 672265589,
+              "time_ns_at_S0.75": 375420,
+              "time_ns_at_S0.9": 145167
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "TFCN",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 1.301136364,
+              "min": 1,
+              "n": 704,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 9,
+              "sum": 916.0
+            },
+            "family": "ow-a4883ca90d4145520c5e",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.188145597,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.1473079,
+              "n": 704,
+              "ratio_of_aggregate_sums": 0.959162304
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 664,
+              "RESHAPED_RESIDUAL_REPRICE": 40
+            },
+            "removal_kinds": {
+              "C": 357,
+              "F": 357
+            },
+            "removed_quantity": {
+              "max": 12,
+              "mean": 1.356534091,
+              "min": 1,
+              "n": 704,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 9,
+              "sum": 955.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 10,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 704,
+              "final_survival": 0.012223071,
+              "final_time_ns": 7003616708546,
+              "n": 714,
+              "time_ns_at_S0.05": 299705737136,
+              "time_ns_at_S0.1": 82689505890,
+              "time_ns_at_S0.25": 8670536652,
+              "time_ns_at_S0.5": 227563061,
+              "time_ns_at_S0.75": 421494,
+              "time_ns_at_S0.9": 169069
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 9,
+              "mean": 1.178875639,
+              "min": 1,
+              "n": 587,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 692.0
+            },
+            "family": "ow-8c934d067bc463c01ce0",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.019471835,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.146507666,
+              "n": 587,
+              "ratio_of_aggregate_sums": 1.127035831
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 566,
+              "RESHAPED_RESIDUAL_REPRICE": 21
+            },
+            "removal_kinds": {
+              "C": 589
+            },
+            "removed_quantity": {
+              "max": 6,
+              "mean": 1.045996593,
+              "min": 1,
+              "n": 587,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 614.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 2,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 587,
+              "final_survival": 0.001886437,
+              "final_time_ns": 4886372772336,
+              "n": 589,
+              "time_ns_at_S0.05": 35868988060,
+              "time_ns_at_S0.1": 18889577352,
+              "time_ns_at_S0.25": 2507133171,
+              "time_ns_at_S0.5": 4792772,
+              "time_ns_at_S0.75": 456594,
+              "time_ns_at_S0.9": 142045
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 1.21875,
+              "min": 1,
+              "n": 576,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 5,
+              "sum": 702.0
+            },
+            "family": "ow-7b10d38a8b61511bc611",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.091128073,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.059403935,
+              "n": 576,
+              "ratio_of_aggregate_sums": 0.968275862
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 430,
+              "RESHAPED_RESIDUAL_REPRICE": 146
+            },
+            "removal_kinds": {
+              "C": 579
+            },
+            "removed_quantity": {
+              "max": 20,
+              "mean": 1.258680556,
+              "min": 1,
+              "n": 576,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 725.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 3,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 576,
+              "final_survival": 0.005181347,
+              "final_time_ns": 7012273991584,
+              "n": 579,
+              "time_ns_at_S0.05": 8778079898,
+              "time_ns_at_S0.1": 2069613516,
+              "time_ns_at_S0.25": 20302929,
+              "time_ns_at_S0.5": 1890331,
+              "time_ns_at_S0.75": 443398,
+              "time_ns_at_S0.9": 154949
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 8,
+              "mean": 1.150635209,
+              "min": 1,
+              "n": 551,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 634.0
+            },
+            "family": "ow-40540069fe5aeddc127b",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.024893246,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.135225996,
+              "n": 551,
+              "ratio_of_aggregate_sums": 1.11033275
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 528,
+              "RESHAPED_RESIDUAL_REPRICE": 23
+            },
+            "removal_kinds": {
+              "C": 553
+            },
+            "removed_quantity": {
+              "max": 7,
+              "mean": 1.036297641,
+              "min": 1,
+              "n": 551,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 571.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 2,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 551,
+              "final_survival": 0.003616637,
+              "final_time_ns": 4600321589551,
+              "n": 553,
+              "time_ns_at_S0.05": 18968215898,
+              "time_ns_at_S0.1": 8490463287,
+              "time_ns_at_S0.25": 1091231272,
+              "time_ns_at_S0.5": 1586944,
+              "time_ns_at_S0.75": 194840,
+              "time_ns_at_S0.9": 60819
+            },
+            "touch_state": "AT_TOUCH"
+          }
+        ],
+        "touch_restoration_time_ns": {
+          "max": 1850097476139,
+          "mean": 56193412020.76471,
+          "min": 69976,
+          "n": 34,
+          "p10": 236184,
+          "p25": 423804,
+          "p50": 1639709,
+          "p75": 1416822240,
+          "p90": 3091801621,
+          "p99": 1850097476139,
+          "sum": 1910576008706.0
+        },
+        "touch_rule": "the touch is displaced when a group leaves a side's best price worse than the previous group's; restored when a later group's best price returns to or improves on it",
+        "turn": 19
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "6b32fc0332970daeab172a6806a7e3b6958107b56b281fa630232705725642ba",
+      "ledger_id": "contract_section_4.7",
+      "prev_hash": "7fbfe358ac99580834bc7a11537865f367fd025805288e1294759f4904de7c70",
+      "sequence": 18
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 7505,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 8247.096306471,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.016524029"
+            },
+            "value": 1.098880254
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 6412,
+              "family": "ow-59ace24da4a485c605b6",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 8288.276998336,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.023696096"
+            },
+            "value": 1.292619619
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 1952,
+              "family": "ow-3807a1115b13f5c8685a",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 2388.602380952,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=1.020638504"
+            },
+            "value": 1.223669253
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 1831,
+              "family": "ow-8b55dfd64daf3077e3d2",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 2613.344308688,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=0.950257031"
+            },
+            "value": 1.427277066
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 810,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 885.842857143,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.056386651"
+            },
+            "value": 1.093633157
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 774,
+              "family": "ow-3a98bbe15cb2bf0c14ba",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 964.8,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.075581395"
+            },
+            "value": 1.246511628
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 706,
+              "family": "ow-a4883ca90d4145520c5e",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 809.704761905,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=0.959247649"
+            },
+            "value": 1.146890598
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 590,
+              "family": "ow-8c934d067bc463c01ce0",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 677.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.128038898"
+            },
+            "value": 1.147457627
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 576,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 610.216666667,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=BEHIND_TOUCH; ratio_of_aggregate_sums=0.968275862"
+            },
+            "value": 1.059403935
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 553,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "mean over resolved episodes of arrived_quantity/removed_quantity (first arrival only)",
+              "inclusion_rule": "resolved episodes",
+              "missingness_rule": "pending episodes are censored in the survival view and excluded here",
+              "numerator": 627.50952381,
+              "phase": "PRE_SETTLEMENT",
+              "population": "resolved episodes in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "touch_state=AT_TOUCH; ratio_of_aggregate_sums=1.109947644"
+            },
+            "value": 1.134736933
+          }
+        ],
+        "cutoff_is_staged_invocation": false,
+        "episode_rule": "an episode opens at every removal of resting quantity (C, removing F, M reprice-away, M size-down) at (side, price); it resolves at the FIRST later arrival at the same price or one tick either side (new-ID add = NEW_ID_ADD, or a same-ID modify = RESHAPED_RESIDUAL_*), one attribution per episode; the modify that moved an order never restores its own episode; an episode still pending at the cutoff is censored at the cutoff",
+        "groups_delivered_at_cutoff": 43569,
+        "member_group_indices": [
+          43511,
+          43518,
+          43519,
+          43520,
+          43521,
+          43522,
+          43523,
+          43529,
+          43531,
+          43533,
+          43534,
+          43535,
+          43536,
+          43537,
+          43538,
+          43539,
+          43546,
+          43547,
+          43548,
+          43549,
+          43552,
+          43554,
+          43556,
+          43558,
+          43560,
+          43563,
+          43564,
+          43564,
+          43565,
+          43566,
+          7042,
+          7044,
+          7075,
+          7136,
+          7154,
+          7731,
+          7778,
+          7787,
+          7830,
+          29281
+        ],
+        "population": {
+          "by_price_relation": {
+            "NEIGHBOUR_1_TICK": 10079,
+            "SAME_PRICE": 15895
+          },
+          "by_refill_kind": {
+            "NEW_ID_ADD": 21419,
+            "RESHAPED_RESIDUAL_REPRICE": 4514,
+            "RESHAPED_RESIDUAL_SIZE_UP": 41
+          },
+          "by_removal_kind": {
+            "C": 19444,
+            "F": 2411,
+            "M_REPRICE_AWAY": 4625,
+            "M_SIZE_DOWN": 188
+          },
+          "episodes": 26668,
+          "pending_censored_at_cutoff": 694,
+          "resolved": 25974,
+          "touch_displacements": 36,
+          "touch_restorations": 34,
+          "touch_still_displaced": {
+            "A": true,
+            "B": true
+          }
+        },
+        "result": "COMPUTED",
+        "section": "4.7",
+        "strata": [
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 15,
+              "mean": 2.057428381,
+              "min": 1,
+              "n": 7505,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 2,
+              "p99": 10,
+              "sum": 15441.0
+            },
+            "family": "ow-40540069fe5aeddc127b",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.082356225,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.098880254,
+              "n": 7505,
+              "ratio_of_aggregate_sums": 1.016524029
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 6954,
+              "RESHAPED_RESIDUAL_REPRICE": 547,
+              "RESHAPED_RESIDUAL_SIZE_UP": 4
+            },
+            "removal_kinds": {
+              "C": 7636
+            },
+            "removed_quantity": {
+              "max": 30,
+              "mean": 2.023984011,
+              "min": 1,
+              "n": 7505,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 2,
+              "p99": 10,
+              "sum": 15190.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 131,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 7505,
+              "final_survival": 0.014968739,
+              "final_time_ns": 7190360502861,
+              "n": 7636,
+              "time_ns_at_S0.05": 155685454935,
+              "time_ns_at_S0.1": 30164661140,
+              "time_ns_at_S0.25": 3898815296,
+              "time_ns_at_S0.5": 673102126,
+              "time_ns_at_S0.75": 151025869,
+              "time_ns_at_S0.9": 932045
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 23,
+              "mean": 2.580474111,
+              "min": 1,
+              "n": 6412,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 5,
+              "p99": 20,
+              "sum": 16546.0
+            },
+            "family": "ow-59ace24da4a485c605b6",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.268923523,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.292619619,
+              "n": 6412,
+              "ratio_of_aggregate_sums": 1.023696096
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 5557,
+              "RESHAPED_RESIDUAL_REPRICE": 854,
+              "RESHAPED_RESIDUAL_SIZE_UP": 1
+            },
+            "removal_kinds": {
+              "C": 6501
+            },
+            "removed_quantity": {
+              "max": 23,
+              "mean": 2.520742358,
+              "min": 1,
+              "n": 6412,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 2,
+              "p90": 5,
+              "p99": 20,
+              "sum": 16163.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 89,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 6412,
+              "final_survival": 0.008057554,
+              "final_time_ns": 7168118890747,
+              "n": 6501,
+              "time_ns_at_S0.05": 137310069278,
+              "time_ns_at_S0.1": 33845089615,
+              "time_ns_at_S0.25": 3736648091,
+              "time_ns_at_S0.5": 558842876,
+              "time_ns_at_S0.75": 100249596,
+              "time_ns_at_S0.9": 729926
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "M",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 3.242827869,
+              "min": 1,
+              "n": 1952,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 10,
+              "sum": 6330.0
+            },
+            "family": "ow-3807a1115b13f5c8685a",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.203030749,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.223669253,
+              "n": 1952,
+              "ratio_of_aggregate_sums": 1.020638504
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 615,
+              "RESHAPED_RESIDUAL_REPRICE": 1335,
+              "RESHAPED_RESIDUAL_SIZE_UP": 2
+            },
+            "removal_kinds": {
+              "M_REPRICE_AWAY": 1962,
+              "M_SIZE_DOWN": 10
+            },
+            "removed_quantity": {
+              "max": 10,
+              "mean": 3.177254098,
+              "min": 1,
+              "n": 1952,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 10,
+              "sum": 6202.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 20,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 1952,
+              "final_survival": 0.008065663,
+              "final_time_ns": 6978635355741,
+              "n": 1972,
+              "time_ns_at_S0.05": 206176359676,
+              "time_ns_at_S0.1": 56653180539,
+              "time_ns_at_S0.25": 15726404890,
+              "time_ns_at_S0.5": 1860804491,
+              "time_ns_at_S0.75": 7069528,
+              "time_ns_at_S0.9": 76979
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "M",
+            "arrived_quantity": {
+              "max": 21,
+              "mean": 3.432550519,
+              "min": 1,
+              "n": 1831,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 20,
+              "sum": 6285.0
+            },
+            "family": "ow-8b55dfd64daf3077e3d2",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.477020036,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.427277066,
+              "n": 1831,
+              "ratio_of_aggregate_sums": 0.950257031
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 993,
+              "RESHAPED_RESIDUAL_REPRICE": 838
+            },
+            "removal_kinds": {
+              "M_REPRICE_AWAY": 1823,
+              "M_SIZE_DOWN": 38
+            },
+            "removed_quantity": {
+              "max": 20,
+              "mean": 3.612233752,
+              "min": 1,
+              "n": 1831,
+              "p10": 1,
+              "p25": 1,
+              "p50": 2,
+              "p75": 5,
+              "p90": 8,
+              "p99": 20,
+              "sum": 6614.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 30,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 1831,
+              "final_survival": 0.012648003,
+              "final_time_ns": 7167764391973,
+              "n": 1861,
+              "time_ns_at_S0.05": 238517683506,
+              "time_ns_at_S0.1": 76430553280,
+              "time_ns_at_S0.25": 13684609927,
+              "time_ns_at_S0.5": 1882470318,
+              "time_ns_at_S0.75": 10758035,
+              "time_ns_at_S0.9": 301912
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 8,
+              "mean": 1.133333333,
+              "min": 1,
+              "n": 810,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 4,
+              "sum": 918.0
+            },
+            "family": "ow-7b10d38a8b61511bc611",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.037246506,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.093633157,
+              "n": 810,
+              "ratio_of_aggregate_sums": 1.056386651
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 768,
+              "RESHAPED_RESIDUAL_REPRICE": 42
+            },
+            "removal_kinds": {
+              "C": 815
+            },
+            "removed_quantity": {
+              "max": 7,
+              "mean": 1.072839506,
+              "min": 1,
+              "n": 810,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 869.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 5,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 810,
+              "final_survival": 0.005889571,
+              "final_time_ns": 7159553762309,
+              "n": 815,
+              "time_ns_at_S0.05": 27597175822,
+              "time_ns_at_S0.1": 9895186513,
+              "time_ns_at_S0.25": 1106264420,
+              "time_ns_at_S0.5": 1347065,
+              "time_ns_at_S0.75": 327371,
+              "time_ns_at_S0.9": 157275
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "TFCN",
+            "arrived_quantity": {
+              "max": 42,
+              "mean": 1.434108527,
+              "min": 1,
+              "n": 774,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 10,
+              "sum": 1110.0
+            },
+            "family": "ow-3a98bbe15cb2bf0c14ba",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.170930233,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.246511628,
+              "n": 774,
+              "ratio_of_aggregate_sums": 1.075581395
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 700,
+              "RESHAPED_RESIDUAL_REPRICE": 74
+            },
+            "removal_kinds": {
+              "C": 404,
+              "F": 404
+            },
+            "removed_quantity": {
+              "max": 40,
+              "mean": 1.333333333,
+              "min": 1,
+              "n": 774,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 6,
+              "sum": 1032.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 34,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 774,
+              "final_survival": 0.040378651,
+              "final_time_ns": 7162350540258,
+              "n": 808,
+              "time_ns_at_S0.05": 1678483781196,
+              "time_ns_at_S0.1": 274159452744,
+              "time_ns_at_S0.25": 9987795383,
+              "time_ns_at_S0.5": 672265589,
+              "time_ns_at_S0.75": 375420,
+              "time_ns_at_S0.9": 145167
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "TFCN",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 1.300283286,
+              "min": 1,
+              "n": 706,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 9,
+              "sum": 918.0
+            },
+            "family": "ow-a4883ca90d4145520c5e",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.187642949,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.146890598,
+              "n": 706,
+              "ratio_of_aggregate_sums": 0.959247649
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 666,
+              "RESHAPED_RESIDUAL_REPRICE": 40
+            },
+            "removal_kinds": {
+              "C": 358,
+              "F": 358
+            },
+            "removed_quantity": {
+              "max": 12,
+              "mean": 1.355524079,
+              "min": 1,
+              "n": 706,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 9,
+              "sum": 957.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 10,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 706,
+              "final_survival": 0.012290503,
+              "final_time_ns": 7134548660896,
+              "n": 716,
+              "time_ns_at_S0.05": 299705737136,
+              "time_ns_at_S0.1": 82689505890,
+              "time_ns_at_S0.25": 8748036101,
+              "time_ns_at_S0.5": 227563061,
+              "time_ns_at_S0.75": 421494,
+              "time_ns_at_S0.9": 169069
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 9,
+              "mean": 1.179661017,
+              "min": 1,
+              "n": 590,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 696.0
+            },
+            "family": "ow-8c934d067bc463c01ce0",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.019418729,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.147457627,
+              "n": 590,
+              "ratio_of_aggregate_sums": 1.128038898
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 569,
+              "RESHAPED_RESIDUAL_REPRICE": 21
+            },
+            "removal_kinds": {
+              "C": 591
+            },
+            "removed_quantity": {
+              "max": 6,
+              "mean": 1.045762712,
+              "min": 1,
+              "n": 590,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 617.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 1,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 590,
+              "final_survival": 0.001692047,
+              "final_time_ns": 5017304724686,
+              "n": 591,
+              "time_ns_at_S0.05": 35868988060,
+              "time_ns_at_S0.1": 18889470071,
+              "time_ns_at_S0.25": 2544277377,
+              "time_ns_at_S0.5": 4990034,
+              "time_ns_at_S0.75": 456594,
+              "time_ns_at_S0.9": 142046
+            },
+            "touch_state": "AT_TOUCH"
+          },
+          {
+            "action_string": "CN",
+            "arrived_quantity": {
+              "max": 10,
+              "mean": 1.21875,
+              "min": 1,
+              "n": 576,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 2,
+              "p99": 5,
+              "sum": 702.0
+            },
+            "family": "ow-7b10d38a8b61511bc611",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.091128073,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.059403935,
+              "n": 576,
+              "ratio_of_aggregate_sums": 0.968275862
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 430,
+              "RESHAPED_RESIDUAL_REPRICE": 146
+            },
+            "removal_kinds": {
+              "C": 579
+            },
+            "removed_quantity": {
+              "max": 20,
+              "mean": 1.258680556,
+              "min": 1,
+              "n": 576,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 725.0
+            },
+            "side": "A",
+            "time_to_first_refill": {
+              "censored": 3,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 576,
+              "final_survival": 0.005181347,
+              "final_time_ns": 7143205943934,
+              "n": 579,
+              "time_ns_at_S0.05": 8778079898,
+              "time_ns_at_S0.1": 2069613516,
+              "time_ns_at_S0.25": 20302929,
+              "time_ns_at_S0.5": 1890331,
+              "time_ns_at_S0.75": 443398,
+              "time_ns_at_S0.9": 154949
+            },
+            "touch_state": "BEHIND_TOUCH"
+          },
+          {
+            "action_string": "C",
+            "arrived_quantity": {
+              "max": 8,
+              "mean": 1.150090416,
+              "min": 1,
+              "n": 553,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 5,
+              "sum": 636.0
+            },
+            "family": "ow-40540069fe5aeddc127b",
+            "phase": "PRE_SETTLEMENT",
+            "ratio_pair": {
+              "difference": 0.024789289,
+              "difference_label": "COMPLEMENTARY_SCOPE_DIFFERENCE",
+              "kind": "RATIO_PAIR",
+              "mean_of_member_ratios": 1.134736933,
+              "n": 553,
+              "ratio_of_aggregate_sums": 1.109947644
+            },
+            "refill_kinds": {
+              "NEW_ID_ADD": 530,
+              "RESHAPED_RESIDUAL_REPRICE": 23
+            },
+            "removal_kinds": {
+              "C": 556
+            },
+            "removed_quantity": {
+              "max": 7,
+              "mean": 1.036166365,
+              "min": 1,
+              "n": 553,
+              "p10": 1,
+              "p25": 1,
+              "p50": 1,
+              "p75": 1,
+              "p90": 1,
+              "p99": 2,
+              "sum": 573.0
+            },
+            "side": "B",
+            "time_to_first_refill": {
+              "censored": 3,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 553,
+              "final_survival": 0.003657074,
+              "final_time_ns": 4731253541901,
+              "n": 556,
+              "time_ns_at_S0.05": 20798086330,
+              "time_ns_at_S0.1": 8841768332,
+              "time_ns_at_S0.25": 1199222587,
+              "time_ns_at_S0.5": 1774647,
+              "time_ns_at_S0.75": 202530,
+              "time_ns_at_S0.9": 60819
+            },
+            "touch_state": "AT_TOUCH"
+          }
+        ],
+        "touch_restoration_time_ns": {
+          "max": 1850097476139,
+          "mean": 56193412020.76471,
+          "min": 69976,
+          "n": 34,
+          "p10": 236184,
+          "p25": 423804,
+          "p50": 1639709,
+          "p75": 1416822240,
+          "p90": 3091801621,
+          "p99": 1850097476139,
+          "sum": 1910576008706.0
+        },
+        "touch_rule": "the touch is displaced when a group leaves a side's best price worse than the previous group's; restored when a later group's best price returns to or improves on it",
+        "turn": 20
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "b695ead2d1bca23edb4d55ac5a2b17b743d77b10b735dee2c1c1c9bcf4474451",
+      "ledger_id": "contract_section_4.7",
+      "prev_hash": "6b32fc0332970daeab172a6806a7e3b6958107b56b281fa630232705725642ba",
+      "sequence": 19
     }
   ],
-  "head_hash": "faed68699a78b5228b7654561f005fbf0ba3e137614239167c36c55a0a843b14",
+  "head_hash": "b695ead2d1bca23edb4d55ac5a2b17b743d77b10b735dee2c1c1c9bcf4474451",
   "ledger_id": "contract_section_4.7"
 }

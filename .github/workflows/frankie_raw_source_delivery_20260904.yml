@@ -1,0 +1,155 @@
+name: Frankie raw source delivery 20260904
+
+# THE RAW DBN REACHES THE PRINCIPAL, so he can run the traversal himself. Greg, 2026-09-04:
+# "The whole pipeline is already supposed to be his... i want him running trav from the
+# beginning." The delivered exact ledgers are the box's traversal OUTPUT - grouping, the
+# reconstructed order book and the FIFO priority are all the traversal's work. To do that work
+# himself he needs the source object, and the source is NOT at the run prefix: a full
+# list-objects-v2 of the A_MEMORY Sunday prefix returns six objects and none of them is a
+# .dbn.zst. The canonical sources live under their own prefix, named by
+# raw_mbo_source_manifest.DEFAULT_SOURCE_URI_PREFIX and by the launch workflow's SOURCE_PREFIX.
+#
+# This presigns the named source objects for seven days and publishes a small manifest as a run
+# artifact. It reads S3 and writes nothing there. The presigned URLs are credentials: they go
+# into the manifest file and the artifact, never into the log - the presign loop runs under
+# `set +x` and every printed line carries names, sizes and digests only.
+#
+# The sizes and sha256s below are the PINNED witnesses copied from the launch workflow's own
+# source check, so a wrong or truncated object fails here rather than silently becoming a
+# short traversal in a session.
+
+on:
+  # A workflow carrying only workflow_dispatch is never registered on a non-default branch and
+  # the dispatch API returns 404 for it (see frankie_ledger_delivery_20260902.yml). This push
+  # trigger registers it, and firing on its own path is read-only and presigns the same default
+  # object the dispatch names.
+  push:
+    branches:
+      - chatgpt/frankie-raw-mbo-benchmark-20260828
+    paths:
+      - '.github/workflows/frankie_raw_source_delivery_20260904.yml'
+  workflow_dispatch:
+    inputs:
+      names:
+        description: >-
+          Space-separated source object names to presign, e.g.
+          "glbx-mdp3-20211003.mbo.dbn.zst". An empty input never arrives - GitHub substitutes
+          this default - so the default IS the Sunday object rather than a sentinel.
+        type: string
+        default: glbx-mdp3-20211003.mbo.dbn.zst
+
+env:
+  AWS_DEFAULT_REGION: us-east-2
+  S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
+  BUCKET: bento-568968024170-us-east-2-an
+  SOURCE_PREFIX: nymex/ng_mbo_5y_v0/native/20211001_20211101
+  PRESIGN_SECONDS: '604800'
+
+jobs:
+  deliver_sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      WANTED_NAMES: ${{ inputs.names || 'glbx-mdp3-20211003.mbo.dbn.zst' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+
+      - name: List what S3 holds under the source prefix
+        shell: bash
+        run: |
+          set -euo pipefail
+          aws s3api list-objects-v2 --bucket "$BUCKET" --prefix "$SOURCE_PREFIX" \
+            --query 'Contents[].{Key:Key,Size:Size}' --output json > ./source_listing.json
+          python3 -c 'import json; rows = json.load(open("source_listing.json")) or []; [print(str(r["Size"]).rjust(15), r["Key"]) for r in rows]'
+
+      - name: Presign each named source
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          # The URLs are secrets for seven days; nothing echoes them. Each object is named
+          # explicitly, so a missing one fails here rather than reading as MISSING in a session.
+          : > ./presigned_sources.tsv
+          count=0
+          for name in $WANTED_NAMES; do
+            key="${SOURCE_PREFIX}/${name}"
+            size="$(aws s3api head-object --bucket "$BUCKET" --key "$key" \
+              --query 'ContentLength' --output text)"
+            url="$(aws s3 presign "s3://${BUCKET}/${key}" --expires-in "$PRESIGN_SECONDS" \
+              --endpoint-url "$S3_ENDPOINT_URL")"
+            printf '%s\t%s\t%s\n' "$name" "$size" "$url" >> ./presigned_sources.tsv
+            printf 'presigned %s (%s bytes)\n' "$name" "$size"
+            count=$((count + 1))
+          done
+          test "$count" -gt 0
+          echo "PRESIGNED_COUNT=$count" >> "$GITHUB_ENV"
+
+      - name: Build the source manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The pinned witnesses, copied verbatim from the launch workflow's source check. A
+          # session verifies the downloaded bytes against these; they are NOT read from the
+          # object itself, which is the whole point of an independent witness.
+          cat > ./pinned.tsv <<'PINNED'
+          glbx-mdp3-20211001.mbo.dbn.zst	25628861	e6b4ec01bd9b34d57cb22c770b5d49c756e7f41a658f081823d923004a0121b2
+          glbx-mdp3-20211003.mbo.dbn.zst	973355	4380bd9ba83a5badc4839e12785aa464817b87e3fac11176b951e7b474446d88
+          glbx-mdp3-20211004.mbo.dbn.zst	34300424	8ed47cc0a68cf40cae9fde45e158142978076e60d3f9fc7cf940196babfddc0a
+          glbx-mdp3-20211005.mbo.dbn.zst	36192430	a4a12f9578da762412884e7f559a123361eaa3a153bec0db59dfb3ba6224a874
+          PINNED
+          python3 - <<'PY'
+          import json
+          import os
+
+          pinned = {}
+          for line in open("pinned.tsv"):
+              parts = line.split()
+              if len(parts) == 3:
+                  pinned[parts[0]] = {"pinned_bytes": int(parts[1]), "pinned_sha256": parts[2]}
+          objects = {}
+          for line in open("presigned_sources.tsv"):
+              name, size, url = line.rstrip("\n").split("\t")
+              entry = {"key": f"{os.environ['SOURCE_PREFIX']}/{name}", "content_length": int(size), "url": url}
+              witness = pinned.get(name)
+              if witness is None:
+                  raise SystemExit(f"{name} has no pinned witness; refusing to deliver an unwitnessed source")
+              if witness["pinned_bytes"] != int(size):
+                  raise SystemExit(f"{name}: S3 says {size} bytes, the pinned witness says {witness['pinned_bytes']}")
+              entry.update(witness)
+              objects[name] = entry
+          body = {
+              "schema": "FRANKIE_RAW_SOURCE_DELIVERY_MANIFEST_V1",
+              "bucket": os.environ["BUCKET"],
+              "source_prefix": os.environ["SOURCE_PREFIX"],
+              "presign_seconds": int(os.environ["PRESIGN_SECONDS"]),
+              "objects": objects,
+          }
+          with open("source_delivery_manifest.json", "w") as fh:
+              json.dump(body, fh, indent=2, sort_keys=True)
+          for name, entry in sorted(objects.items()):
+              print(f"{entry['content_length']:>12} {name} sha256 {entry['pinned_sha256']}")
+          PY
+          rm -f ./presigned_sources.tsv ./pinned.tsv
+          {
+            echo "Raw source delivery from \`s3://${BUCKET}/${SOURCE_PREFIX}\`"
+            echo ""
+            echo "Objects presigned: ${PRESIGNED_COUNT}, retained 7 days."
+            echo "In a session: download the artifact, then curl each \`url\` and verify against"
+            echo "\`pinned_sha256\` before decoding. The digest is the independent witness."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish the source manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: frankie-raw-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            source_delivery_manifest.json
+            source_listing.json
+          retention-days: 7
+          if-no-files-found: error

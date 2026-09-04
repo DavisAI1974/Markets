@@ -2143,8 +2143,861 @@
       "ledger_id": "contract_section_4.15",
       "prev_hash": "737409c8958570b750cc51df6103602b77d30adb1c9ae0274a51b143d914e297",
       "sequence": 14
+    },
+    {
+      "body": {
+        "assignment_distance": {
+          "max": 0.993251773,
+          "mean": 0.0590772,
+          "min": 0.0,
+          "n": 5000,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p90": 0.405465108,
+          "p99": 0.405465108,
+          "sum": 295.385999746
+        },
+        "averages": [],
+        "cluster_version": "FRK_LEADER_L1_LOG1P_R1.0_V1",
+        "clusters": 122,
+        "cutoff_is_staged_invocation": true,
+        "discovery_frozen": false,
+        "distance": "L1",
+        "feature_schema": [
+          "log1p(component_count)",
+          "log1p(A)",
+          "log1p(C)",
+          "log1p(M)",
+          "log1p(T)",
+          "log1p(F)",
+          "log1p(side B)",
+          "log1p(side A)",
+          "log1p(distinct prices)",
+          "log1p(price span ticks)"
+        ],
+        "groups_delivered_at_cutoff": 36497,
+        "member_group_indices": [
+          3,
+          4,
+          18,
+          23,
+          28,
+          1,
+          227,
+          352,
+          208,
+          605,
+          265,
+          370,
+          2441,
+          609,
+          3731,
+          248,
+          2272,
+          4189,
+          3272,
+          4747,
+          4499,
+          5089,
+          6854,
+          8956,
+          11167,
+          12188,
+          973,
+          2680,
+          2225,
+          2492
+        ],
+        "note": "discovery is not frozen; no cluster description or prevalence average is licensed before the stream end",
+        "radius": 1.0,
+        "result": "COMPUTED",
+        "rule": "leader clustering in causal order: a member joins the nearest existing leader within the radius, else founds a new cluster whose id is content-derived from its features; singletons preserved; no outcome or later response in the features",
+        "schema_hash": "48627cc61afe35076d12f37de6484c82261717177515e65b7c31db22dcee3f78",
+        "section": "4.15",
+        "singleton_clusters": 61,
+        "top_clusters": [
+          {
+            "cluster_id": "cl-efe4ffb97e63",
+            "first_group": 3,
+            "members": 8423
+          },
+          {
+            "cluster_id": "cl-3fb62a2ea58b",
+            "first_group": 4,
+            "members": 8137
+          },
+          {
+            "cluster_id": "cl-73e964eb83a3",
+            "first_group": 18,
+            "members": 7325
+          },
+          {
+            "cluster_id": "cl-228f53d534c0",
+            "first_group": 23,
+            "members": 7072
+          },
+          {
+            "cluster_id": "cl-758aa2dd062d",
+            "first_group": 28,
+            "members": 2213
+          },
+          {
+            "cluster_id": "cl-b882cced369b",
+            "first_group": 1,
+            "members": 1949
+          },
+          {
+            "cluster_id": "cl-c50d79f9bc18",
+            "first_group": 227,
+            "members": 400
+          },
+          {
+            "cluster_id": "cl-fd2d422e55fa",
+            "first_group": 352,
+            "members": 374
+          },
+          {
+            "cluster_id": "cl-96072ad0b69a",
+            "first_group": 208,
+            "members": 70
+          },
+          {
+            "cluster_id": "cl-fd8ffb7ec0bf",
+            "first_group": 605,
+            "members": 62
+          },
+          {
+            "cluster_id": "cl-d800d45bbd21",
+            "first_group": 265,
+            "members": 48
+          },
+          {
+            "cluster_id": "cl-c9cc3353e104",
+            "first_group": 370,
+            "members": 40
+          }
+        ],
+        "turn": 16
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "e3d9c906bb0d7c201d9dd01010630cba0a04679ded3b748449e0230150ea4f70",
+      "ledger_id": "contract_section_4.15",
+      "prev_hash": "a384692149779dd34622292b5201d5d703749e122d1a363174150d711d01ed3d",
+      "sequence": 15
+    },
+    {
+      "body": {
+        "assignment_distance": {
+          "max": 0.993251773,
+          "mean": 0.063460935,
+          "min": 0.0,
+          "n": 5000,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p90": 0.405465108,
+          "p99": 0.405465108,
+          "sum": 317.304676123
+        },
+        "averages": [],
+        "cluster_version": "FRK_LEADER_L1_LOG1P_R1.0_V1",
+        "clusters": 129,
+        "cutoff_is_staged_invocation": true,
+        "discovery_frozen": false,
+        "distance": "L1",
+        "feature_schema": [
+          "log1p(component_count)",
+          "log1p(A)",
+          "log1p(C)",
+          "log1p(M)",
+          "log1p(T)",
+          "log1p(F)",
+          "log1p(side B)",
+          "log1p(side A)",
+          "log1p(distinct prices)",
+          "log1p(price span ticks)"
+        ],
+        "groups_delivered_at_cutoff": 38778,
+        "member_group_indices": [
+          3,
+          4,
+          18,
+          23,
+          28,
+          1,
+          227,
+          352,
+          208,
+          605,
+          265,
+          370,
+          2441,
+          609,
+          3731,
+          248,
+          2272,
+          4189,
+          3272,
+          4747,
+          4499,
+          5089,
+          6854,
+          8956,
+          11167,
+          12188,
+          973,
+          2492,
+          2680,
+          2225
+        ],
+        "note": "discovery is not frozen; no cluster description or prevalence average is licensed before the stream end",
+        "radius": 1.0,
+        "result": "COMPUTED",
+        "rule": "leader clustering in causal order: a member joins the nearest existing leader within the radius, else founds a new cluster whose id is content-derived from its features; singletons preserved; no outcome or later response in the features",
+        "schema_hash": "48627cc61afe35076d12f37de6484c82261717177515e65b7c31db22dcee3f78",
+        "section": "4.15",
+        "singleton_clusters": 67,
+        "top_clusters": [
+          {
+            "cluster_id": "cl-efe4ffb97e63",
+            "first_group": 3,
+            "members": 8976
+          },
+          {
+            "cluster_id": "cl-3fb62a2ea58b",
+            "first_group": 4,
+            "members": 8706
+          },
+          {
+            "cluster_id": "cl-73e964eb83a3",
+            "first_group": 18,
+            "members": 7783
+          },
+          {
+            "cluster_id": "cl-228f53d534c0",
+            "first_group": 23,
+            "members": 7528
+          },
+          {
+            "cluster_id": "cl-758aa2dd062d",
+            "first_group": 28,
+            "members": 2301
+          },
+          {
+            "cluster_id": "cl-b882cced369b",
+            "first_group": 1,
+            "members": 2026
+          },
+          {
+            "cluster_id": "cl-c50d79f9bc18",
+            "first_group": 227,
+            "members": 423
+          },
+          {
+            "cluster_id": "cl-fd2d422e55fa",
+            "first_group": 352,
+            "members": 401
+          },
+          {
+            "cluster_id": "cl-96072ad0b69a",
+            "first_group": 208,
+            "members": 70
+          },
+          {
+            "cluster_id": "cl-fd8ffb7ec0bf",
+            "first_group": 605,
+            "members": 64
+          },
+          {
+            "cluster_id": "cl-d800d45bbd21",
+            "first_group": 265,
+            "members": 51
+          },
+          {
+            "cluster_id": "cl-c9cc3353e104",
+            "first_group": 370,
+            "members": 42
+          }
+        ],
+        "turn": 17
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "d3bfb77e34ded0c2935a7b7d5b68237ff0f82c54b0d4c83a4a53e8dbafccff69",
+      "ledger_id": "contract_section_4.15",
+      "prev_hash": "e3d9c906bb0d7c201d9dd01010630cba0a04679ded3b748449e0230150ea4f70",
+      "sequence": 16
+    },
+    {
+      "body": {
+        "assignment_distance": {
+          "max": 0.875468737,
+          "mean": 0.063635066,
+          "min": 0.0,
+          "n": 5000,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p90": 0.405465108,
+          "p99": 0.405465108,
+          "sum": 318.175329696
+        },
+        "averages": [],
+        "cluster_version": "FRK_LEADER_L1_LOG1P_R1.0_V1",
+        "clusters": 132,
+        "cutoff_is_staged_invocation": true,
+        "discovery_frozen": false,
+        "distance": "L1",
+        "feature_schema": [
+          "log1p(component_count)",
+          "log1p(A)",
+          "log1p(C)",
+          "log1p(M)",
+          "log1p(T)",
+          "log1p(F)",
+          "log1p(side B)",
+          "log1p(side A)",
+          "log1p(distinct prices)",
+          "log1p(price span ticks)"
+        ],
+        "groups_delivered_at_cutoff": 41059,
+        "member_group_indices": [
+          3,
+          4,
+          18,
+          23,
+          28,
+          1,
+          227,
+          352,
+          208,
+          605,
+          265,
+          370,
+          2441,
+          609,
+          248,
+          3731,
+          4189,
+          2272,
+          3272,
+          4747,
+          4499,
+          11167,
+          973,
+          5089,
+          6854,
+          8956,
+          12188,
+          13293,
+          27111,
+          2225
+        ],
+        "note": "discovery is not frozen; no cluster description or prevalence average is licensed before the stream end",
+        "radius": 1.0,
+        "result": "COMPUTED",
+        "rule": "leader clustering in causal order: a member joins the nearest existing leader within the radius, else founds a new cluster whose id is content-derived from its features; singletons preserved; no outcome or later response in the features",
+        "schema_hash": "48627cc61afe35076d12f37de6484c82261717177515e65b7c31db22dcee3f78",
+        "section": "4.15",
+        "singleton_clusters": 67,
+        "top_clusters": [
+          {
+            "cluster_id": "cl-efe4ffb97e63",
+            "first_group": 3,
+            "members": 9637
+          },
+          {
+            "cluster_id": "cl-3fb62a2ea58b",
+            "first_group": 4,
+            "members": 9125
+          },
+          {
+            "cluster_id": "cl-73e964eb83a3",
+            "first_group": 18,
+            "members": 8356
+          },
+          {
+            "cluster_id": "cl-228f53d534c0",
+            "first_group": 23,
+            "members": 7868
+          },
+          {
+            "cluster_id": "cl-758aa2dd062d",
+            "first_group": 28,
+            "members": 2428
+          },
+          {
+            "cluster_id": "cl-b882cced369b",
+            "first_group": 1,
+            "members": 2091
+          },
+          {
+            "cluster_id": "cl-c50d79f9bc18",
+            "first_group": 227,
+            "members": 447
+          },
+          {
+            "cluster_id": "cl-fd2d422e55fa",
+            "first_group": 352,
+            "members": 432
+          },
+          {
+            "cluster_id": "cl-96072ad0b69a",
+            "first_group": 208,
+            "members": 70
+          },
+          {
+            "cluster_id": "cl-fd8ffb7ec0bf",
+            "first_group": 605,
+            "members": 64
+          },
+          {
+            "cluster_id": "cl-d800d45bbd21",
+            "first_group": 265,
+            "members": 53
+          },
+          {
+            "cluster_id": "cl-c9cc3353e104",
+            "first_group": 370,
+            "members": 45
+          }
+        ],
+        "turn": 18
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "5c9a23b9c029fd2fff37ad3156832bc4061e4cc86d530e04e2ac7d01cb7615e5",
+      "ledger_id": "contract_section_4.15",
+      "prev_hash": "d3bfb77e34ded0c2935a7b7d5b68237ff0f82c54b0d4c83a4a53e8dbafccff69",
+      "sequence": 17
+    },
+    {
+      "body": {
+        "assignment_distance": {
+          "max": 0.875468737,
+          "mean": 0.055478192,
+          "min": 0.0,
+          "n": 5000,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p90": 0.405465108,
+          "p99": 0.405465108,
+          "sum": 277.390957637
+        },
+        "averages": [],
+        "cluster_version": "FRK_LEADER_L1_LOG1P_R1.0_V1",
+        "clusters": 133,
+        "cutoff_is_staged_invocation": true,
+        "discovery_frozen": false,
+        "distance": "L1",
+        "feature_schema": [
+          "log1p(component_count)",
+          "log1p(A)",
+          "log1p(C)",
+          "log1p(M)",
+          "log1p(T)",
+          "log1p(F)",
+          "log1p(side B)",
+          "log1p(side A)",
+          "log1p(distinct prices)",
+          "log1p(price span ticks)"
+        ],
+        "groups_delivered_at_cutoff": 43340,
+        "member_group_indices": [
+          3,
+          4,
+          18,
+          23,
+          28,
+          1,
+          227,
+          352,
+          208,
+          605,
+          265,
+          370,
+          2441,
+          609,
+          248,
+          3731,
+          2272,
+          4189,
+          3272,
+          4747,
+          4499,
+          11167,
+          973,
+          2492,
+          12188,
+          5089,
+          6854,
+          8956,
+          13293,
+          27111
+        ],
+        "note": "discovery is not frozen; no cluster description or prevalence average is licensed before the stream end",
+        "radius": 1.0,
+        "result": "COMPUTED",
+        "rule": "leader clustering in causal order: a member joins the nearest existing leader within the radius, else founds a new cluster whose id is content-derived from its features; singletons preserved; no outcome or later response in the features",
+        "schema_hash": "48627cc61afe35076d12f37de6484c82261717177515e65b7c31db22dcee3f78",
+        "section": "4.15",
+        "singleton_clusters": 67,
+        "top_clusters": [
+          {
+            "cluster_id": "cl-efe4ffb97e63",
+            "first_group": 3,
+            "members": 10291
+          },
+          {
+            "cluster_id": "cl-3fb62a2ea58b",
+            "first_group": 4,
+            "members": 9533
+          },
+          {
+            "cluster_id": "cl-73e964eb83a3",
+            "first_group": 18,
+            "members": 8977
+          },
+          {
+            "cluster_id": "cl-228f53d534c0",
+            "first_group": 23,
+            "members": 8239
+          },
+          {
+            "cluster_id": "cl-758aa2dd062d",
+            "first_group": 28,
+            "members": 2525
+          },
+          {
+            "cluster_id": "cl-b882cced369b",
+            "first_group": 1,
+            "members": 2149
+          },
+          {
+            "cluster_id": "cl-c50d79f9bc18",
+            "first_group": 227,
+            "members": 470
+          },
+          {
+            "cluster_id": "cl-fd2d422e55fa",
+            "first_group": 352,
+            "members": 454
+          },
+          {
+            "cluster_id": "cl-96072ad0b69a",
+            "first_group": 208,
+            "members": 70
+          },
+          {
+            "cluster_id": "cl-fd8ffb7ec0bf",
+            "first_group": 605,
+            "members": 69
+          },
+          {
+            "cluster_id": "cl-d800d45bbd21",
+            "first_group": 265,
+            "members": 55
+          },
+          {
+            "cluster_id": "cl-c9cc3353e104",
+            "first_group": 370,
+            "members": 47
+          }
+        ],
+        "turn": 19
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "ae30a4e2289e46591148704fdea2479575bebaf1049d691aea8f68871a7eeb95",
+      "ledger_id": "contract_section_4.15",
+      "prev_hash": "5c9a23b9c029fd2fff37ad3156832bc4061e4cc86d530e04e2ac7d01cb7615e5",
+      "sequence": 18
+    },
+    {
+      "body": {
+        "assignment_distance": {
+          "max": 0.875468737,
+          "mean": 0.05367401,
+          "min": 0.0,
+          "n": 5000,
+          "p10": 0.0,
+          "p25": 0.0,
+          "p50": 0.0,
+          "p75": 0.0,
+          "p90": 0.405465108,
+          "p99": 0.405465108,
+          "sum": 268.370047692
+        },
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "FRK_LEADER_L1_LOG1P_R1.0_V1",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 43569,
+              "family": "OPEN_WORLD_CLUSTER",
+              "formula": "members in cluster / groups",
+              "inclusion_rule": "all groups; description written only after discovery froze at the stream end",
+              "missingness_rule": "none",
+              "numerator": 10318.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "all delivered groups",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "N/A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "cl-efe4ffb97e63"
+            },
+            "value": 0.236819757
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "FRK_LEADER_L1_LOG1P_R1.0_V1",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 43569,
+              "family": "OPEN_WORLD_CLUSTER",
+              "formula": "members in cluster / groups",
+              "inclusion_rule": "all groups; description written only after discovery froze at the stream end",
+              "missingness_rule": "none",
+              "numerator": 9608.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "all delivered groups",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "N/A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "cl-3fb62a2ea58b"
+            },
+            "value": 0.220523767
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "FRK_LEADER_L1_LOG1P_R1.0_V1",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 43569,
+              "family": "OPEN_WORLD_CLUSTER",
+              "formula": "members in cluster / groups",
+              "inclusion_rule": "all groups; description written only after discovery froze at the stream end",
+              "missingness_rule": "none",
+              "numerator": 9002.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "all delivered groups",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "N/A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "cl-73e964eb83a3"
+            },
+            "value": 0.206614795
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "FRK_LEADER_L1_LOG1P_R1.0_V1",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 43569,
+              "family": "OPEN_WORLD_CLUSTER",
+              "formula": "members in cluster / groups",
+              "inclusion_rule": "all groups; description written only after discovery froze at the stream end",
+              "missingness_rule": "none",
+              "numerator": 8316.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "all delivered groups",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "N/A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "cl-228f53d534c0"
+            },
+            "value": 0.190869655
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "FRK_LEADER_L1_LOG1P_R1.0_V1",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 43569,
+              "family": "OPEN_WORLD_CLUSTER",
+              "formula": "members in cluster / groups",
+              "inclusion_rule": "all groups; description written only after discovery froze at the stream end",
+              "missingness_rule": "none",
+              "numerator": 2540.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "all delivered groups",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "N/A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "cl-758aa2dd062d"
+            },
+            "value": 0.058298331
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "FRK_LEADER_L1_LOG1P_R1.0_V1",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 43569,
+              "family": "OPEN_WORLD_CLUSTER",
+              "formula": "members in cluster / groups",
+              "inclusion_rule": "all groups; description written only after discovery froze at the stream end",
+              "missingness_rule": "none",
+              "numerator": 2150.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "all delivered groups",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "N/A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "cl-b882cced369b"
+            },
+            "value": 0.049347013
+          }
+        ],
+        "cluster_version": "FRK_LEADER_L1_LOG1P_R1.0_V1",
+        "clusters": 133,
+        "cutoff_is_staged_invocation": false,
+        "discovery_frozen": true,
+        "distance": "L1",
+        "feature_schema": [
+          "log1p(component_count)",
+          "log1p(A)",
+          "log1p(C)",
+          "log1p(M)",
+          "log1p(T)",
+          "log1p(F)",
+          "log1p(side B)",
+          "log1p(side A)",
+          "log1p(distinct prices)",
+          "log1p(price span ticks)"
+        ],
+        "groups_delivered_at_cutoff": 43569,
+        "member_group_indices": [
+          3,
+          4,
+          18,
+          23,
+          28,
+          1,
+          227,
+          352,
+          605,
+          208,
+          265,
+          370,
+          2441,
+          609,
+          248,
+          3731,
+          2272,
+          4189,
+          3272,
+          4747,
+          4499,
+          11167,
+          973,
+          2492,
+          12188,
+          5089,
+          6854,
+          8956,
+          13293,
+          27111
+        ],
+        "radius": 1.0,
+        "result": "COMPUTED",
+        "rule": "leader clustering in causal order: a member joins the nearest existing leader within the radius, else founds a new cluster whose id is content-derived from its features; singletons preserved; no outcome or later response in the features",
+        "schema_hash": "48627cc61afe35076d12f37de6484c82261717177515e65b7c31db22dcee3f78",
+        "section": "4.15",
+        "singleton_clusters": 67,
+        "top_clusters": [
+          {
+            "cluster_id": "cl-efe4ffb97e63",
+            "first_group": 3,
+            "members": 10318
+          },
+          {
+            "cluster_id": "cl-3fb62a2ea58b",
+            "first_group": 4,
+            "members": 9608
+          },
+          {
+            "cluster_id": "cl-73e964eb83a3",
+            "first_group": 18,
+            "members": 9002
+          },
+          {
+            "cluster_id": "cl-228f53d534c0",
+            "first_group": 23,
+            "members": 8316
+          },
+          {
+            "cluster_id": "cl-758aa2dd062d",
+            "first_group": 28,
+            "members": 2540
+          },
+          {
+            "cluster_id": "cl-b882cced369b",
+            "first_group": 1,
+            "members": 2150
+          },
+          {
+            "cluster_id": "cl-c50d79f9bc18",
+            "first_group": 227,
+            "members": 471
+          },
+          {
+            "cluster_id": "cl-fd2d422e55fa",
+            "first_group": 352,
+            "members": 454
+          },
+          {
+            "cluster_id": "cl-fd8ffb7ec0bf",
+            "first_group": 605,
+            "members": 76
+          },
+          {
+            "cluster_id": "cl-96072ad0b69a",
+            "first_group": 208,
+            "members": 70
+          },
+          {
+            "cluster_id": "cl-d800d45bbd21",
+            "first_group": 265,
+            "members": 55
+          },
+          {
+            "cluster_id": "cl-c9cc3353e104",
+            "first_group": 370,
+            "members": 47
+          }
+        ],
+        "turn": 20
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "26514a00f0ecae4747211f69ab91dc676f527ef979bac0c078fe94f1a853f877",
+      "ledger_id": "contract_section_4.15",
+      "prev_hash": "ae30a4e2289e46591148704fdea2479575bebaf1049d691aea8f68871a7eeb95",
+      "sequence": 19
     }
   ],
-  "head_hash": "a384692149779dd34622292b5201d5d703749e122d1a363174150d711d01ed3d",
+  "head_hash": "26514a00f0ecae4747211f69ab91dc676f527ef979bac0c078fe94f1a853f877",
   "ledger_id": "contract_section_4.15"
 }

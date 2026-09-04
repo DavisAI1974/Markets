@@ -282,8 +282,78 @@
       "ledger_id": "output_frankie_reasoning_movie",
       "prev_hash": "e352cd0730a1515c4c71a1c430e56597ca0204967981a7dac749da740d9c607e",
       "sequence": 14
+    },
+    {
+      "body": {
+        "helper_invocations": [],
+        "knowledge_retrievals": [],
+        "reasoning": "Turn 16 at F_LAST cutoff 1633302013969569876: 36497 groups / 47946 records delivered, phases {'PRE_OPEN': 203, 'PRE_SETTLEMENT': 36294}. Substrate: 14408 completed seconds, class census {'NO_DIRECTION': 13833, 'BUY': 272, 'SELL': 301, 'EXCLUDED_AT_MID': 2}, window census {'NO_DIRECTION': 11401, 'LONG': 1528, 'SHORT': 1479}; reconciliation with delivered substrate rows agree=14408 disagree=0. Detector: judged 14398, warm-up 11399, promoted 45, own-vs-delivered candidate matches 45/45. Queue: 16127 resolved lifecycles, 502 resting; replenishment episodes 22448 (638 pending); touch displacements 36, restorations 34. Absorption group-scoped census {'INDETERMINATE': 130, 'DELIVERED_THROUGH_PRICE': 835, 'ABSORBED_WITHOUT_PRICE_MOVE': 145, 'ACCOMPANIED_BY_WITHDRAWAL': 216}; contact runways closed 1195. Ladder touch states {'UNDEFINED_ONE_SIDE_EMPTY': 1, 'UNCHANGED': 31453, 'EXPANSION': 1893, 'COMPRESSION': 3150}, touch migrations 5132. Mirror pairs 36220 (unmatched 277); delivered mirror rows so far {'PENDING': 36497}; delivered lineage rows so far 0. Candidates: 45 with statuses {'COMPLETED_BY_OPPOSITE_CANDIDATE': 14, 'COMPLETED_DECAY': 14, 'EXTENDED_BY_SUCCESSOR': 16, 'OPEN': 1}; precursor labels {'H+N': 25, 'PRIOR': 19, 'T0': 1}; chain depths {0: 15, 1: 10, 2: 6, 3: 3, 4: 3, 5: 3, 6: 2, 7: 1, 8: 1, 9: 1}. Every section entry at this cutoff rests on groups delivered at or before it; whole-day statements are deferred to the stream-end cutoff. Hypotheses kept alive: (1) the pre-birth threshold-crossing alert leads promotion (tested by 4.11 alert precision); (2) delivered pressure is rare versus withdrawal (4.8); (3) touch restoration is faster than behind-touch refill (4.7); (4) no directional response at the horizons (4.16).",
+        "role": "REAL_TIME_FRANKIE",
+        "turn": 16
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "d4cb6369fb20ef13a6b261d3295d1b80f141c845134f5188fbf8df12f0950c9d",
+      "ledger_id": "output_frankie_reasoning_movie",
+      "prev_hash": "d618ace32a4990beef94bd09b5ada54f07e4ffce350f56082e5e9f9ee29036f5",
+      "sequence": 15
+    },
+    {
+      "body": {
+        "helper_invocations": [],
+        "knowledge_retrievals": [],
+        "reasoning": "Turn 17 at F_LAST cutoff 1633302779744781866: 38778 groups / 51005 records delivered, phases {'PRE_OPEN': 203, 'PRE_SETTLEMENT': 38575}. Substrate: 15174 completed seconds, class census {'NO_DIRECTION': 14546, 'BUY': 307, 'SELL': 319, 'EXCLUDED_AT_MID': 2}, window census {'NO_DIRECTION': 11772, 'LONG': 1820, 'SHORT': 1582}; reconciliation with delivered substrate rows agree=15174 disagree=0. Detector: judged 15164, warm-up 11399, promoted 54, own-vs-delivered candidate matches 54/54. Queue: 17189 resolved lifecycles, 563 resting; replenishment episodes 23848 (628 pending); touch displacements 36, restorations 34. Absorption group-scoped census {'INDETERMINATE': 136, 'DELIVERED_THROUGH_PRICE': 886, 'ABSORBED_WITHOUT_PRICE_MOVE': 148, 'ACCOMPANIED_BY_WITHDRAWAL': 234}; contact runways closed 1267. Ladder touch states {'UNDEFINED_ONE_SIDE_EMPTY': 1, 'UNCHANGED': 33418, 'EXPANSION': 2027, 'COMPRESSION': 3332}, touch migrations 5452. Mirror pairs 38492 (unmatched 286); delivered mirror rows so far {'PENDING': 38778}; delivered lineage rows so far 0. Candidates: 54 with statuses {'COMPLETED_BY_OPPOSITE_CANDIDATE': 15, 'COMPLETED_DECAY': 15, 'EXTENDED_BY_SUCCESSOR': 23, 'OPEN': 1}; precursor labels {'H+N': 32, 'PRIOR': 21, 'T0': 1}; chain depths {0: 16, 1: 12, 2: 8, 3: 4, 4: 4, 5: 4, 6: 3, 7: 1, 8: 1, 9: 1}. Every section entry at this cutoff rests on groups delivered at or before it; whole-day statements are deferred to the stream-end cutoff. Hypotheses kept alive: (1) the pre-birth threshold-crossing alert leads promotion (tested by 4.11 alert precision); (2) delivered pressure is rare versus withdrawal (4.8); (3) touch restoration is faster than behind-touch refill (4.7); (4) no directional response at the horizons (4.16).",
+        "role": "REAL_TIME_FRANKIE",
+        "turn": 17
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "1d47041533ec29528260b794e17b185418e21e091e6de2210d5c5a1ae72fb1d5",
+      "ledger_id": "output_frankie_reasoning_movie",
+      "prev_hash": "d4cb6369fb20ef13a6b261d3295d1b80f141c845134f5188fbf8df12f0950c9d",
+      "sequence": 16
+    },
+    {
+      "body": {
+        "helper_invocations": [],
+        "knowledge_retrievals": [],
+        "reasoning": "Turn 18 at F_LAST cutoff 1633304073331796184: 41059 groups / 53963 records delivered, phases {'PRE_OPEN': 203, 'PRE_SETTLEMENT': 40856}. Substrate: 16468 completed seconds, class census {'NO_DIRECTION': 15786, 'BUY': 331, 'SELL': 349, 'EXCLUDED_AT_MID': 2}, window census {'NO_DIRECTION': 12508, 'LONG': 2039, 'SHORT': 1921}; reconciliation with delivered substrate rows agree=16468 disagree=0. Detector: judged 16458, warm-up 11399, promoted 70, own-vs-delivered candidate matches 70/70. Queue: 18230 resolved lifecycles, 609 resting; replenishment episodes 25210 (647 pending); touch displacements 36, restorations 34. Absorption group-scoped census {'INDETERMINATE': 148, 'DELIVERED_THROUGH_PRICE': 950, 'ABSORBED_WITHOUT_PRICE_MOVE': 148, 'ACCOMPANIED_BY_WITHDRAWAL': 245}; contact runways closed 1342. Ladder touch states {'UNDEFINED_ONE_SIDE_EMPTY': 1, 'UNCHANGED': 35367, 'EXPANSION': 2181, 'COMPRESSION': 3510}, touch migrations 5793. Mirror pairs 40757 (unmatched 302); delivered mirror rows so far {'PENDING': 41059}; delivered lineage rows so far 0. Candidates: 70 with statuses {'COMPLETED_BY_OPPOSITE_CANDIDATE': 17, 'COMPLETED_DECAY': 26, 'EXTENDED_BY_SUCCESSOR': 27}; precursor labels {'H+N': 41, 'PRIOR': 28, 'T0': 1}; chain depths {0: 26, 1: 16, 2: 9, 3: 5, 4: 4, 5: 4, 6: 3, 7: 1, 8: 1, 9: 1}. Every section entry at this cutoff rests on groups delivered at or before it; whole-day statements are deferred to the stream-end cutoff. Hypotheses kept alive: (1) the pre-birth threshold-crossing alert leads promotion (tested by 4.11 alert precision); (2) delivered pressure is rare versus withdrawal (4.8); (3) touch restoration is faster than behind-touch refill (4.7); (4) no directional response at the horizons (4.16).",
+        "role": "REAL_TIME_FRANKIE",
+        "turn": 18
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "0c5483a929f82d8938dc59d8d7c7d0ec08530a8c785fd087ed6dd3c1077df9f3",
+      "ledger_id": "output_frankie_reasoning_movie",
+      "prev_hash": "1d47041533ec29528260b794e17b185418e21e091e6de2210d5c5a1ae72fb1d5",
+      "sequence": 17
+    },
+    {
+      "body": {
+        "helper_invocations": [],
+        "knowledge_retrievals": [],
+        "reasoning": "Turn 19 at F_LAST cutoff 1633305465440119355: 43340 groups / 56759 records delivered, phases {'PRE_OPEN': 203, 'PRE_SETTLEMENT': 43137}. Substrate: 17860 completed seconds, class census {'NO_DIRECTION': 17121, 'BUY': 365, 'SELL': 372, 'EXCLUDED_AT_MID': 2}, window census {'NO_DIRECTION': 13236, 'LONG': 2409, 'SHORT': 2215}; reconciliation with delivered substrate rows agree=17860 disagree=0. Detector: judged 17850, warm-up 11399, promoted 88, own-vs-delivered candidate matches 88/88. Queue: 19305 resolved lifecycles, 598 resting; replenishment episodes 26539 (696 pending); touch displacements 36, restorations 34. Absorption group-scoped census {'INDETERMINATE': 156, 'DELIVERED_THROUGH_PRICE': 992, 'ABSORBED_WITHOUT_PRICE_MOVE': 153, 'ACCOMPANIED_BY_WITHDRAWAL': 261}; contact runways closed 1405. Ladder touch states {'UNDEFINED_ONE_SIDE_EMPTY': 1, 'UNCHANGED': 37383, 'EXPANSION': 2303, 'COMPRESSION': 3653}, touch migrations 6061. Mirror pairs 43033 (unmatched 307); delivered mirror rows so far {'PENDING': 43340}; delivered lineage rows so far 0. Candidates: 88 with statuses {'COMPLETED_BY_OPPOSITE_CANDIDATE': 21, 'COMPLETED_DECAY': 34, 'EXTENDED_BY_SUCCESSOR': 32, 'OPEN': 1}; precursor labels {'H+N': 54, 'PRIOR': 33, 'T0': 1}; chain depths {0: 35, 1: 21, 2: 12, 3: 6, 4: 4, 5: 4, 6: 3, 7: 1, 8: 1, 9: 1}. Every section entry at this cutoff rests on groups delivered at or before it; whole-day statements are deferred to the stream-end cutoff. Hypotheses kept alive: (1) the pre-birth threshold-crossing alert leads promotion (tested by 4.11 alert precision); (2) delivered pressure is rare versus withdrawal (4.8); (3) touch restoration is faster than behind-touch refill (4.7); (4) no directional response at the horizons (4.16).",
+        "role": "REAL_TIME_FRANKIE",
+        "turn": 19
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "9d5d842a739f944176824d7919b4ead26f18897bf2de05eae756e332702020f4",
+      "ledger_id": "output_frankie_reasoning_movie",
+      "prev_hash": "0c5483a929f82d8938dc59d8d7c7d0ec08530a8c785fd087ed6dd3c1077df9f3",
+      "sequence": 18
+    },
+    {
+      "body": {
+        "helper_invocations": [],
+        "knowledge_retrievals": [],
+        "reasoning": "Turn 20 at F_LAST cutoff 1633305596372071705: 43569 groups / 57027 records delivered, phases {'PRE_OPEN': 203, 'PRE_SETTLEMENT': 43366}. Substrate: 17991 completed seconds, class census {'NO_DIRECTION': 17246, 'BUY': 370, 'SELL': 373, 'EXCLUDED_AT_MID': 2}, window census {'NO_DIRECTION': 13267, 'LONG': 2489, 'SHORT': 2235}; reconciliation with delivered substrate rows agree=17991 disagree=0. Detector: judged 17981, warm-up 11399, promoted 91, own-vs-delivered candidate matches 91/91. Queue: 19408 resolved lifecycles, 597 resting; replenishment episodes 26668 (694 pending); touch displacements 36, restorations 34. Absorption group-scoped census {'INDETERMINATE': 157, 'DELIVERED_THROUGH_PRICE': 993, 'ABSORBED_WITHOUT_PRICE_MOVE': 160, 'ACCOMPANIED_BY_WITHDRAWAL': 261}; contact runways closed 1414. Ladder touch states {'UNDEFINED_ONE_SIDE_EMPTY': 1, 'UNCHANGED': 37594, 'EXPANSION': 2311, 'COMPRESSION': 3663}, touch migrations 6079. Mirror pairs 43262 (unmatched 307); delivered mirror rows so far {'PENDING': 43569, 'UNMATCHED': 43569}; delivered lineage rows so far 21651. Candidates: 91 with statuses {'COMPLETED_BY_OPPOSITE_CANDIDATE': 22, 'COMPLETED_DECAY': 35, 'EXTENDED_BY_SUCCESSOR': 33, 'CENSORED_STREAM_END': 1}; precursor labels {'H+N': 55, 'PRIOR': 35, 'T0': 1}; chain depths {0: 36, 1: 22, 2: 13, 3: 6, 4: 4, 5: 4, 6: 3, 7: 1, 8: 1, 9: 1}. Every section entry at this cutoff rests on groups delivered at or before it; whole-day statements are deferred to the stream-end cutoff. Hypotheses kept alive: (1) the pre-birth threshold-crossing alert leads promotion (tested by 4.11 alert precision); (2) delivered pressure is rare versus withdrawal (4.8); (3) touch restoration is faster than behind-touch refill (4.7); (4) no directional response at the horizons (4.16).",
+        "role": "REAL_TIME_FRANKIE",
+        "turn": 20
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "3d25d8e30fb25e7d9b78e47d1bc5ed733ad317897f648877e2f0f2196610e5db",
+      "ledger_id": "output_frankie_reasoning_movie",
+      "prev_hash": "9d5d842a739f944176824d7919b4ead26f18897bf2de05eae756e332702020f4",
+      "sequence": 19
     }
   ],
-  "head_hash": "d618ace32a4990beef94bd09b5ada54f07e4ffce350f56082e5e9f9ee29036f5",
+  "head_hash": "3d25d8e30fb25e7d9b78e47d1bc5ed733ad317897f648877e2f0f2196610e5db",
   "ledger_id": "output_frankie_reasoning_movie"
 }
