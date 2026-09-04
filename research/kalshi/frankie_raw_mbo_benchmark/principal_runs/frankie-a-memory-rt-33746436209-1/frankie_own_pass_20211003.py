@@ -994,6 +994,32 @@ class Pass:
         # ---- census (sampled lists)
         if self.groups <= 2000 or self.groups % 7 == 0:
             walk_census(row, "", self.census, set())
+        # ---- cascade invariant (25+ component groups with fills): terminal cancel run on the filled side
+        if comp >= 25 and any(a["action"] == "F" for a in raw):
+            ci = getattr(self, "cascade_invariant", None) or {"tested": 0, "violations": 0, "deepest_fill_run": 0, "members": [], "exemplars": []}
+            fill_sides = Counter(a["side"] for a in raw if a["action"] == "F" and a["side"] in ("A", "B"))
+            nodes_l = [f"{a['action']}|{a['side']}" for a in raw]
+            runs_l = []
+            i2 = 0
+            while i2 < len(nodes_l):
+                j2 = i2
+                while j2 + 1 < len(nodes_l) and nodes_l[j2 + 1] == nodes_l[i2]:
+                    j2 += 1
+                runs_l.append((nodes_l[i2], j2 - i2 + 1))
+                i2 = j2 + 1
+            fill_runs = [ln for nd, ln in runs_l if nd.startswith("F|")]
+            cancel_runs = [(nd, ln) for nd, ln in runs_l if nd.startswith("C|")]
+            ci["tested"] += 1
+            ci["deepest_fill_run"] = max(ci["deepest_fill_run"], max(fill_runs) if fill_runs else 0)
+            ci["members"].append(gi)
+            terminal_cancel = cancel_runs[-1] if cancel_runs else None
+            filled_side = fill_sides.most_common(1)[0][0] if fill_sides else None
+            ok = bool(terminal_cancel and filled_side and terminal_cancel[0] == f"C|{filled_side}")
+            if not ok:
+                ci["violations"] += 1
+                if len(ci["exemplars"]) < 8:
+                    ci["exemplars"].append({"group_index": gi, "action_string": astr[:60], "terminal_cancel_run": terminal_cancel, "filled_side": filled_side, "runs": runs_l[:12]})
+            self.cascade_invariant = ci
         # ---- compact record
         self.group_recs.append({"gi": gi, "recv": recv, "fam": fam, "astr": astr, "phase": phase, "comp": comp, "side": side_or,
                                 "mid": mid, "imb": imb, "cl": assigned, "cld": fnum(best_d), "traded": traded, "spread": spread})
@@ -1251,6 +1277,8 @@ class Pass:
             self.same_family_runs[(r["family"], r["len"])] += 1
         self.cand_reconcile["delivered"] = len(self.delivered_candidates) + self.cand_reconcile["matched"]
         self.cand_reconcile["delivered_only"] = sorted(self.delivered_candidates)[:50]
+        out = sum(1 for o in self.resolved if o["exit_group"] != o["birth_group"])
+        self.outlive_tally = {"resolved": len(self.resolved), "outliving": out, "share": out / max(1, len(self.resolved)), "basis": "every resolved lifecycle in the run, exit group vs birth group"}
 
 
 # ====================================================================== emitters
@@ -2023,10 +2051,11 @@ def run(args: dict[str, Any]) -> None:
     receipt = stream.stream_receipt()
     (out_dir.parent / "stream_receipt.json").write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     tallies = build_tallies(P, receipt)
-    (work / "tallies.json").write_text(json.dumps(tallies, indent=1, sort_keys=True, default=str), encoding="utf-8")
-    (work / "candidates.json").write_text(json.dumps([_cand_public(c) | {"stages": c["stages"], "horizons": c["horizons"], "change_points": c["change_points"]} for c in P.candidates], indent=1, default=str), encoding="utf-8")
-    (work / "census.json").write_text(json.dumps(P.census, indent=1, default=str), encoding="utf-8")
-    (work / "resolved_orders_sample.json").write_text(json.dumps(P.resolved[:2000], indent=None, default=str), encoding="utf-8")
+    (work / "tallies.json").write_text(json.dumps(sanitize_keys(tallies), indent=1, sort_keys=True, default=str), encoding="utf-8")
+    (work / "candidates.json").write_text(json.dumps(sanitize_keys([_cand_public(c) | {"stages": c["stages"], "horizons": c["horizons"], "change_points": c["change_points"]} for c in P.candidates]), indent=1, default=str), encoding="utf-8")
+    (work / "census.json").write_text(json.dumps(sanitize_keys(P.census), indent=1, default=str), encoding="utf-8")
+    (work / "resolved_orders_sample.json").write_text(json.dumps(sanitize_keys(P.resolved[:2000]), indent=None, default=str), encoding="utf-8")
+    (work / "measurement_inputs.json").write_text(json.dumps(sanitize_keys({"touch_migrations": P.touch_migrations, "last_group_recv_ns": P.last_delivered_group_recv, "contact_runways": P.contact_runways[:200], "touch_restorations": P.touch_restorations[:200]}), indent=1, default=str), encoding="utf-8")
     say(f"DONE groups={P.groups} candidates={len(P.candidates)} f20={receipt['falsifier_f20']['verdict']} elapsed {time.time() - started:.0f}s")
 
 
@@ -2053,8 +2082,9 @@ def build_tallies(P: Pass, receipt: dict[str, Any]) -> dict[str, Any]:
         "detector": {"counters": P.det.counters(), "alerts": len(P.det.alerts), "reconcile": P.cand_reconcile}, "candidates_n": len(P.candidates), "candidate_status": dict(Counter(c["status"] for c in P.candidates)),
         "candidate_labels": dict(Counter(c["precursor_label"] for c in P.candidates)), "candidate_orient": dict(Counter(c["orientation"] for c in P.candidates)), "chain_depths": dict(Counter(c["depth"] for c in P.candidates)),
         "delivered_lifecycle_counts": dict(P.delivered_lifecycle_counts), "delivered_lineage_in_stream": P.delivered_lineage_in_stream, "delivered_episode_outcomes": dict(Counter(e["recognition_outcome"] for e in P.delivered_episode_rows)),
+        "deep_strings": sorted(((len(a), a, n) for a, n in P.astr_counts.items()), reverse=True)[:10], "cascade_invariant": getattr(P, "cascade_invariant", None), "outlive": getattr(P, "outlive_tally", None),
         "delivered_episode_orientations": dict(Counter(e["orientation"] for e in P.delivered_episode_rows)), "withheld": getattr(P, "withheld_summary", None), "drained": dict(getattr(P, "drained", {})),
-        "f20": receipt["falsifier_f20"], "lifecycle_rows_in_stream": P.lifecycle_rows_seen, "touch_restorations": qs([t["duration_ns"] for t in P.touch_restorations]), "touch_displacements": P.touch_displacements,
+        "last_group_recv_ns": P.last_delivered_group_recv, "f20": receipt["falsifier_f20"], "lifecycle_rows_in_stream": P.lifecycle_rows_seen, "touch_restorations": qs([t["duration_ns"] for t in P.touch_restorations]), "touch_displacements": P.touch_displacements,
     }
 
 

@@ -1,6 +1,0 @@
-{
-  "empty_reason": "no answer-wall surface was opened at any cutoff; the runner's calculation_result.json and every sealed layer were never read by this pass (a valid run's ledger is empty)",
-  "entries": [],
-  "head_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "ledger_id": "output_answer_wall_access_receipts"
-}
