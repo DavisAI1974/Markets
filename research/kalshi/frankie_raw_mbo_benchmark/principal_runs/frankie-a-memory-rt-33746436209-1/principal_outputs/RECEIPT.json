@@ -1,0 +1,161 @@
+{
+  "arm": "A_MEMORY",
+  "contract_sha256": "822d2cfdf8e78bfde0566f1a67929cc81a02611193167cf94a2171364b897865",
+  "delivery_receipt_sha256": "3420045aecc9c225ce77bf47a184cc2b262685177998f51ff94585b0b3149d1b",
+  "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+  "ledgers": {
+    "contract_section_4.0": {
+      "entry_count": 8,
+      "head_hash": "a829782d770587e21b9483b3036b84260e3dc00970808ab4401f96b788fe496e"
+    },
+    "contract_section_4.0b": {
+      "entry_count": 8,
+      "head_hash": "78a7c36086c6d856914bf5f141600a0bdfa6ec6c1526957cb2c57d2db1cef720"
+    },
+    "contract_section_4.1": {
+      "entry_count": 8,
+      "head_hash": "22ebf0753455ce7a4d5b2c798302610c575cd6c0144484f486301e7964475ea0"
+    },
+    "contract_section_4.10": {
+      "entry_count": 8,
+      "head_hash": "d83ad5214f6a8bd86ae79b35d71b35d00b7a76979592467ec3f144874e08e64a"
+    },
+    "contract_section_4.11": {
+      "entry_count": 8,
+      "head_hash": "43d0e6cdf8dbcbda5f513f50492abbf0aab9c21ae9fcf59c8b671f76ad0d7490"
+    },
+    "contract_section_4.12": {
+      "entry_count": 8,
+      "head_hash": "ab0030c917e20cb6b4ddb34e72005d3d70312b99bb232701b933f64cb4901840"
+    },
+    "contract_section_4.13": {
+      "entry_count": 8,
+      "head_hash": "1408787e4311d53bf331162993c1fcc7d042340e298cd6ce5d14ccef33e29a4f"
+    },
+    "contract_section_4.14": {
+      "entry_count": 8,
+      "head_hash": "66c3fc1835f67872557561453382dc2f8b296c39756f996e61747167afc9e437"
+    },
+    "contract_section_4.15": {
+      "entry_count": 8,
+      "head_hash": "56a49bbdf578e5cd1d6eae292a0d951bb585beb643a1325f598b626e45567794"
+    },
+    "contract_section_4.16": {
+      "entry_count": 8,
+      "head_hash": "6aa6e9e8c9bd9d17a4e8c876a1a9072e3cd45d0d85ee4dfcdca62a9a1e2931dc"
+    },
+    "contract_section_4.2": {
+      "entry_count": 8,
+      "head_hash": "98802ddeba2244164bef181551a3959482edb4e18d174bc8ae1ff53170975404"
+    },
+    "contract_section_4.3": {
+      "entry_count": 8,
+      "head_hash": "1bae49aa6968b6207d362300d5c5295d0496fc3cf8dc6a497d39f146a4ccc96c"
+    },
+    "contract_section_4.4": {
+      "entry_count": 8,
+      "head_hash": "ec5ff354e5cf06c74276be2ddc9fb977f9dd880012d6a70081521e1f1d7bde7c"
+    },
+    "contract_section_4.5": {
+      "entry_count": 8,
+      "head_hash": "7265ae39abdd416083f99d905a0553d28f59a80883ca1b23851a80ef83b85be0"
+    },
+    "contract_section_4.6": {
+      "entry_count": 8,
+      "head_hash": "541c3cce009b03da42eeedefc64fc4b8a077e16455cb645a7584e93e539d0ac8"
+    },
+    "contract_section_4.7": {
+      "entry_count": 8,
+      "head_hash": "0268702ec86fad12905a131de682d5d15a93a0f8d1e4f89fbf975d14d1a2b537"
+    },
+    "contract_section_4.8": {
+      "entry_count": 8,
+      "head_hash": "366b7e153bb90ad68baecbe6e54a374b5c998bd427a70c4bb445a40444d0c873"
+    },
+    "contract_section_4.9": {
+      "entry_count": 8,
+      "head_hash": "b882bc22f893820737befd62f4308b66432b6faddaf311c85f23d2f28dbeba3a"
+    },
+    "output_answer_wall_access_receipts": {
+      "entry_count": 0,
+      "head_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "output_candidate_discoveries": {
+      "entry_count": 0,
+      "head_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "output_first_locks_and_no_locks": {
+      "entry_count": 0,
+      "head_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "output_frankie_reasoning_movie": {
+      "entry_count": 8,
+      "head_hash": "a1136768f172b158bccc547c58fdd219230e346ba2764b75e80aa0354b92f939"
+    },
+    "output_knowledge_retrieval_receipts": {
+      "entry_count": 71,
+      "head_hash": "b6de055ab5a1bdfbb5e24f407279a2b7fa5f40a67b377bc398f3317097be2eb2"
+    },
+    "output_negative_sparse_inconclusive_ledger": {
+      "entry_count": 40,
+      "head_hash": "012070ca33311440f330058186cbfc993705d5f872664b52fb963f685c25846c"
+    },
+    "output_probability_movie": {
+      "entry_count": 8,
+      "head_hash": "7f4e19a4baaeb8c98f75cb337f96d7be5513cd6d8e248ad2a1585404236b658c"
+    },
+    "output_provider_invocation_response_receipts": {
+      "entry_count": 8,
+      "head_hash": "a384c59ce0d628ee7bf1662911b3ad517996463fbf2a25f7d374a697c7d682c7"
+    },
+    "output_source_state_manifest_code_model_run_hashes": {
+      "entry_count": 1,
+      "head_hash": "8ac05ebb419e3d32809d11216f67e0aa2d8cf9128347d1693a1ba3070ade4a1c"
+    },
+    "output_state_and_state_delta_movie": {
+      "entry_count": 8,
+      "head_hash": "76e2099507c1275e3437e1f2a1263786b39f66ed2a086a56115b3c1db26addd9"
+    }
+  },
+  "missing_ledger_ids": [
+    "raw_mbo_classification",
+    "knowledge_verification"
+  ],
+  "receipt_sha256": "7d2b091eb65e32f1f807a5639752e7a50978f9bb9f678013ad0500199a3e5149",
+  "registry_sha256": "239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1",
+  "required_ledger_ids": [
+    "output_state_and_state_delta_movie",
+    "output_frankie_reasoning_movie",
+    "output_probability_movie",
+    "output_candidate_discoveries",
+    "output_first_locks_and_no_locks",
+    "output_negative_sparse_inconclusive_ledger",
+    "output_knowledge_retrieval_receipts",
+    "output_provider_invocation_response_receipts",
+    "output_answer_wall_access_receipts",
+    "output_source_state_manifest_code_model_run_hashes",
+    "contract_section_4.0",
+    "contract_section_4.0b",
+    "contract_section_4.1",
+    "contract_section_4.2",
+    "contract_section_4.3",
+    "contract_section_4.4",
+    "contract_section_4.5",
+    "contract_section_4.6",
+    "contract_section_4.7",
+    "contract_section_4.8",
+    "contract_section_4.9",
+    "contract_section_4.10",
+    "contract_section_4.11",
+    "contract_section_4.12",
+    "contract_section_4.13",
+    "contract_section_4.14",
+    "contract_section_4.15",
+    "contract_section_4.16",
+    "raw_mbo_classification",
+    "knowledge_verification"
+  ],
+  "role": "REAL_TIME_FRANKIE",
+  "run_id": "frankie-a-memory-rt-33746436209-1",
+  "schema": "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_OUTPUTS_RECEIPT_V1"
+}

@@ -1,0 +1,191 @@
+{
+  "empty_reason": null,
+  "entries": [
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298413318097271
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 2282,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate has reached any horizon or change point yet"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.16",
+        "turn": 1
+      },
+      "cutoff_recv_ns": 1633298413318097271,
+      "entry_hash": "d7fdc45813f8d5e94654d16c16a2d4de2fdcbef53a81e437ecaff22818318543",
+      "ledger_id": "contract_section_4.16",
+      "prev_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sequence": 0
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298449136124134
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 4563,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate has reached any horizon or change point yet"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.16",
+        "turn": 2
+      },
+      "cutoff_recv_ns": 1633298449136124134,
+      "entry_hash": "7f9298fdf3d0db46de3a0c430aa61455ae553340ac5c277d6fafb7a5f0f20345",
+      "ledger_id": "contract_section_4.16",
+      "prev_hash": "d7fdc45813f8d5e94654d16c16a2d4de2fdcbef53a81e437ecaff22818318543",
+      "sequence": 1
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298458819212131
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 6844,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate has reached any horizon or change point yet"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.16",
+        "turn": 3
+      },
+      "cutoff_recv_ns": 1633298458819212131,
+      "entry_hash": "7f6b1d9c916150ce0edc500ce947c2398215f9996fdfb23346bcc14f105ed53c",
+      "ledger_id": "contract_section_4.16",
+      "prev_hash": "7f9298fdf3d0db46de3a0c430aa61455ae553340ac5c277d6fafb7a5f0f20345",
+      "sequence": 2
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298467489465095
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 9125,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate has reached any horizon or change point yet"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.16",
+        "turn": 4
+      },
+      "cutoff_recv_ns": 1633298467489465095,
+      "entry_hash": "b2818b6a624ec455cb2d2ab1a5971a185671cd2782064a22451ab87828afc657",
+      "ledger_id": "contract_section_4.16",
+      "prev_hash": "7f6b1d9c916150ce0edc500ce947c2398215f9996fdfb23346bcc14f105ed53c",
+      "sequence": 3
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298495252279199
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 11406,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate has reached any horizon or change point yet"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.16",
+        "turn": 5
+      },
+      "cutoff_recv_ns": 1633298495252279199,
+      "entry_hash": "0cd6ecca700505943b08a8b6152a01268afa57db0523ff17824e3b1d035f887f",
+      "ledger_id": "contract_section_4.16",
+      "prev_hash": "b2818b6a624ec455cb2d2ab1a5971a185671cd2782064a22451ab87828afc657",
+      "sequence": 4
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298539321423187
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 13687,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate has reached any horizon or change point yet"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.16",
+        "turn": 6
+      },
+      "cutoff_recv_ns": 1633298539321423187,
+      "entry_hash": "2b7127a26932c1c05489f2908b9dd34c66fe4267bebdc2fc08f60b4fe183b2ce",
+      "ledger_id": "contract_section_4.16",
+      "prev_hash": "0cd6ecca700505943b08a8b6152a01268afa57db0523ff17824e3b1d035f887f",
+      "sequence": 5
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298618241396322
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 15968,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate has reached any horizon or change point yet"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.16",
+        "turn": 7
+      },
+      "cutoff_recv_ns": 1633298618241396322,
+      "entry_hash": "695890d12fc0d0cdc46607c58a8d658e689a40ba2da944ae8925672b3e609ff4",
+      "ledger_id": "contract_section_4.16",
+      "prev_hash": "2b7127a26932c1c05489f2908b9dd34c66fe4267bebdc2fc08f60b4fe183b2ce",
+      "sequence": 6
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298727046687558
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 18249,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate has reached any horizon or change point yet"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.16",
+        "turn": 8
+      },
+      "cutoff_recv_ns": 1633298727046687558,
+      "entry_hash": "6aa6e9e8c9bd9d17a4e8c876a1a9072e3cd45d0d85ee4dfcdca62a9a1e2931dc",
+      "ledger_id": "contract_section_4.16",
+      "prev_hash": "695890d12fc0d0cdc46607c58a8d658e689a40ba2da944ae8925672b3e609ff4",
+      "sequence": 7
+    }
+  ],
+  "head_hash": "6aa6e9e8c9bd9d17a4e8c876a1a9072e3cd45d0d85ee4dfcdca62a9a1e2931dc",
+  "ledger_id": "contract_section_4.16"
+}
