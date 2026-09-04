@@ -45,6 +45,7 @@ def batch(c: TrunkConfig, b=2, t=12, seed=0):
             [torch.full((b, 1), -1), torch.zeros(b, t - 1, dtype=torch.long)], dim=1
         ),
         "qsv": torch.randn(b, t, c.qsv_dim, generator=g),
+        "qsv_mask": torch.ones(b, t, dtype=torch.bool),
         "label": torch.randint(0, 2, (b,), generator=g).float(),
         "dipole": torch.randn(b, t, 4, generator=g),
     }
