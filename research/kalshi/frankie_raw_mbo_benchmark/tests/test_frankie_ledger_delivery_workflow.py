@@ -68,9 +68,12 @@ class StructureTest(unittest.TestCase):
 
 
 class TriggerTest(unittest.TestCase):
-    def test_dispatch_defaults_to_the_pinned_sunday_run_not_the_newest(self):
+    def test_dispatch_defaults_to_the_pinned_a_memory_sunday_not_the_newest(self):
+        # D86 retired A_CLEAN. The default names the A_MEMORY Sunday even though it has not
+        # delivered yet: a default that resolved to the A_MEMORY CANARY would reintroduce the
+        # exact defect this pin exists to prevent - a report on a push-CI canary.
         inputs = triggers()["workflow_dispatch"]["inputs"]
-        self.assertEqual(inputs["run_id"]["default"], "33630348943")
+        self.assertEqual(inputs["run_id"]["default"], "33746436209")
         self.assertEqual(inputs["prefix"]["default"], "")
 
     def test_the_push_trigger_is_filtered_to_this_branch_and_its_own_path(self):
@@ -80,7 +83,7 @@ class TriggerTest(unittest.TestCase):
 
     def test_the_pinned_run_is_the_default_on_a_push_as_well(self):
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("inputs.run_id || '33630348943'", text)
+        self.assertIn("inputs.run_id || '33746436209'", text)
 
 
 class DeliveryStepsTest(unittest.TestCase):

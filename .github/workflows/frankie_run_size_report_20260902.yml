@@ -29,9 +29,11 @@ on:
       prefix:
         description: >-
           S3 prefix of the run to report on, WITHOUT the bucket, e.g.
-          nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-clean/full/<sha>/<run>-<attempt>.
+          nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/<sha>/<run>-<attempt>.
           Leave empty to report on the most recently modified calculation_result.json under
-          the a-clean tree, which is the usual case right after a run.
+          the a-memory tree, which is the usual case right after a run. D86 retired A_CLEAN,
+          so the root is the A_MEMORY tree: pointing it at the whole benchmark tree would let
+          `newest` resolve to a retired arm's run.
         type: string
         default: ''
       run_id:
@@ -51,7 +53,7 @@ env:
   AWS_REGION: us-east-2
   S3_ENDPOINT_URL: https://s3.us-east-2.amazonaws.com
   BUCKET: bento-568968024170-us-east-2-an
-  ROOT_PREFIX: nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-clean
+  ROOT_PREFIX: nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory
 
 jobs:
   size-report:

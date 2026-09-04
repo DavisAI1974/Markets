@@ -30,17 +30,21 @@ on:
       prefix:
         description: >-
           S3 prefix of the run to deliver, WITHOUT the bucket, e.g.
-          nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-clean/full/<sha>/<run>-<attempt>.
-          Leave empty to resolve `run_id` by scanning the a-clean tree.
+          nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/<sha>/<run>-<attempt>.
+          Leave empty to resolve `run_id` by scanning the whole benchmark tree.
         type: string
         default: ''
       run_id:
         description: >-
-          The GitHub run id whose ledgers to deliver. PINNED to the confirmed Sunday run
-          33630348943 by default, never the newest: the size report took the newest once and
-          reported on a push-CI canary. Ignored when `prefix` is given.
+          The GitHub run id whose ledgers to deliver. PINNED, never the newest: the size
+          report took the newest once and reported on a push-CI canary. D86 retired A_CLEAN,
+          so the default names the A_MEMORY Sunday 33746436209 rather than the A_CLEAN Sunday
+          33630348943 it used to name. That run has not delivered its ledgers, so the default
+          FAILS at the locate step until Sunday attempt 2 lands - which is the true state, and
+          is why the default is not pointed at the A_MEMORY canary to make it pass. Ignored
+          when `prefix` is given.
         type: string
-        default: '33630348943'
+        default: '33746436209'
 
 permissions:
   contents: read
@@ -64,7 +68,7 @@ jobs:
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
       WANTED_PREFIX: ${{ inputs.prefix || '' }}
-      WANTED_RUN_ID: ${{ inputs.run_id || '33630348943' }}
+      WANTED_RUN_ID: ${{ inputs.run_id || '33746436209' }}
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
