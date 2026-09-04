@@ -1,0 +1,6 @@
+{
+  "empty_reason": "no candidate became lawful at any cutoff reached; the detector promoted nothing (its counters are in every 4.0b entry)",
+  "entries": [],
+  "head_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "ledger_id": "output_candidate_discoveries"
+}

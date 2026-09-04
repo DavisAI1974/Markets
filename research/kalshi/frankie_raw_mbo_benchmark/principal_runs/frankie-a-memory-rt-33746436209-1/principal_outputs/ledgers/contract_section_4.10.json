@@ -1,0 +1,99 @@
+{
+  "empty_reason": null,
+  "entries": [
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298413318097271
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 2282,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 10808,
+          "description": "no candidate promoted yet; detector has judged 10798 seconds"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.10",
+        "turn": 1
+      },
+      "cutoff_recv_ns": 1633298413318097271,
+      "entry_hash": "ea516455e109db58e98e57f270813513ffc085fff0a727ab146b6df2c2f91262",
+      "ledger_id": "contract_section_4.10",
+      "prev_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sequence": 0
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298449136124134
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 4563,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 10844,
+          "description": "no candidate promoted yet; detector has judged 10834 seconds"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.10",
+        "turn": 2
+      },
+      "cutoff_recv_ns": 1633298449136124134,
+      "entry_hash": "091e074c04792a3189ac488930ff37dc80a994a5fd8eada923c5b3284fb34ebd",
+      "ledger_id": "contract_section_4.10",
+      "prev_hash": "ea516455e109db58e98e57f270813513ffc085fff0a727ab146b6df2c2f91262",
+      "sequence": 1
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298458819212131
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 6844,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 10853,
+          "description": "no candidate promoted yet; detector has judged 10843 seconds"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.10",
+        "turn": 3
+      },
+      "cutoff_recv_ns": 1633298458819212131,
+      "entry_hash": "cace48f5385fc2a6018ae0b8760a4fa4036483410739e5db0c6d793a6f031ce4",
+      "ledger_id": "contract_section_4.10",
+      "prev_hash": "091e074c04792a3189ac488930ff37dc80a994a5fd8eada923c5b3284fb34ebd",
+      "sequence": 2
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298467489465095
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 9125,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 10862,
+          "description": "no candidate promoted yet; detector has judged 10852 seconds"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.10",
+        "turn": 4
+      },
+      "cutoff_recv_ns": 1633298467489465095,
+      "entry_hash": "cc1df418726b702eb71c6fbb6f184883261dffd65e1cc54214d25d692080b2c2",
+      "ledger_id": "contract_section_4.10",
+      "prev_hash": "cace48f5385fc2a6018ae0b8760a4fa4036483410739e5db0c6d793a6f031ce4",
+      "sequence": 3
+    }
+  ],
+  "head_hash": "cc1df418726b702eb71c6fbb6f184883261dffd65e1cc54214d25d692080b2c2",
+  "ledger_id": "contract_section_4.10"
+}

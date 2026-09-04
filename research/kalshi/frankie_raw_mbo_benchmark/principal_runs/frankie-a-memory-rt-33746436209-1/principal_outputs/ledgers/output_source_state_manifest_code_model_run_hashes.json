@@ -1,0 +1,26 @@
+{
+  "empty_reason": null,
+  "entries": [
+    {
+      "body": {
+        "code_sha256": "a648ec9275f97da7f96a111e96f1c8ef22f1baa16e2bd29348e0b5bc0d3021fc",
+        "contract_sha256": "822d2cfdf8e78bfde0566f1a67929cc81a02611193167cf94a2171364b897865",
+        "knowledge_manifest_sha256": "131ae230f99dd26ce1b08804cfcaa309c328c42cb4129e661209b4dd23852f33",
+        "mission_sha256": "e14f28812bf9be09dfbd74c40a7fda181dfda16effa0a9e39dee45a9bf9b559e",
+        "model_identity": "claude-fable-5-1",
+        "phase": "START",
+        "run_id": "frankie-a-memory-rt-33746436209-1",
+        "session_id": "session_014m3YsXKuT773qhNQLuWahu",
+        "source_manifest_sha256": "a98a454ef5a88d6f3ee1213370d6df530ab2946ec9cde47171b0d7aa19f4e2ba",
+        "state_sha256": "bc3e0796eb2b2f4ad39c1c59e4956a7d19d9a074783cacd78d6bd507bd575d56"
+      },
+      "cutoff_recv_ns": 1633298413318097271,
+      "entry_hash": "0949f4b2d3eb8703be5c2c82f88f15cc9e3c40d8d0b078c5c738ce3631a30f42",
+      "ledger_id": "output_source_state_manifest_code_model_run_hashes",
+      "prev_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sequence": 0
+    }
+  ],
+  "head_hash": "0949f4b2d3eb8703be5c2c82f88f15cc9e3c40d8d0b078c5c738ce3631a30f42",
+  "ledger_id": "output_source_state_manifest_code_model_run_hashes"
+}

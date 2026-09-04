@@ -477,8 +477,8 @@ def walk_census(obj: Any, prefix: str, census: dict[str, dict[str, Any]], row_se
             return
         e["types"][type(obj).__name__] += 1
         if isinstance(obj, (int, float)) and not isinstance(obj, bool):
-            e["num_min"] = obj if e["num_min"] is None else min(e["num_min"], obj)
-            e["num_max"] = obj if e["num_max"] is None else max(e["num_max"], obj)
+            e["num_min"] = obj if e.get("num_min") is None else min(e["num_min"], obj)
+            e["num_max"] = obj if e.get("num_max") is None else max(e["num_max"], obj)
         key = repr(obj)[:60]
         d = e["distinct"]
         if key in d:
@@ -1573,15 +1573,15 @@ def emit_4_8(P: Pass, cutoff: int) -> dict[str, Any]:
     crs = P.contact_runways
     cdisp = Counter(c["disposition"] for c in crs)
     body = {"section": "4.8", "result": "COMPUTED", "member_group_indices": [r["group_index"] for r in rows[-30:]],
-            "runway_scopes": {"GROUP_SCOPED": "the F_LAST group carrying the fill; price response = mid after the group - mid after the previous group",
-                              "CONTACT_RUNWAY": "from a fill-bearing group through every following group until the next fill-bearing group (or the stream end, OPEN); replacement = adds on the hit side at the hit prices, withdrawal = cancels on the hit side, retreat = cancels on the opposite side"},
+            "scopes_of_measurement": {"GROUP_SCOPED_SCOPE": "the F_LAST group carrying the fill; price response = mid after the group - mid after the previous group",
+                              "CONTACT_RUNWAY_SCOPE": "from a fill-bearing group through every following group until the next fill-bearing group (or the stream end, OPEN); replacement = adds on the hit side at the hit prices, withdrawal = cancels on the hit side, retreat = cancels on the opposite side"},
             "disposition_rule": "traded>0 and mid moved in the aggressor's direction -> DELIVERED_THROUGH_PRICE; else withdrawal>0 (group) / withdrawal>=replacement (runway) -> ACCOMPANIED_BY_WITHDRAWAL; else ABSORBED_WITHOUT_PRICE_MOVE; no fill -> INDETERMINATE",
             "group_scoped_census": dict(disp), "contact_runway_census": dict(cdisp), "contact_runways_closed": len(crs), "contact_runway_open": (P.contact_runway is not None),
             "contact_runway_span_groups": qs([c["groups_spanned"] for c in crs]), "contact_runway_duration_ns": qs([c["duration_ns"] for c in crs]),
             "recent_group_runways_exact": rows[-6:], "recent_contact_runways_exact": [{k: v for k, v in c.items() if k != "hit_prices"} for c in crs[-4:]], "strata": [], "averages": []}
     for (fam, side, ph, dp), lst in sorted(strata.items(), key=lambda kv: -len(kv[1]))[:12]:
         traded = [r["traded_quantity"] for r in lst]
-        withdrawn = [r["withdrawn_quantity"] for r in lst]
+        withdrawn = [r.get("withdrawn_quantity", 0) for r in lst]
         surv = [r["surviving_depth_at_hit_prices"] for r in lst if r.get("surviving_depth_at_hit_prices") is not None]
         pr = [r["price_response_ticks"] for r in lst if r.get("price_response_ticks") is not None]
         row = {"family": fam, "action_string": P.family_astr.get(fam), "hit_side": side, "phase": ph, "disposition": dp, "n": len(lst), "traded_quantity": qs(traded), "withdrawn_quantity": qs(withdrawn), "surviving_depth": qs(surv), "price_response_ticks": qs(pr)}
@@ -1819,3 +1819,301 @@ def emit_4_16(P: Pass, cutoff: int) -> dict[str, Any]:
 
 SECTION_EMITTERS = {"4.0": emit_4_0, "4.0b": emit_4_0b, "4.1": emit_4_1, "4.2": emit_4_2, "4.3": emit_4_3, "4.4": emit_4_4, "4.5": emit_4_5, "4.6": emit_4_6, "4.7": emit_4_7,
                     "4.8": emit_4_8, "4.9": emit_4_9, "4.10": emit_4_10, "4.11": emit_4_11, "4.12": emit_4_12, "4.13": emit_4_13, "4.14": emit_4_14, "4.16": emit_4_16}
+
+
+# ====================================================================== movies and run
+def state_frame(P: Pass, cutoff: int, prev_cutoff: int | None, prev_channels: dict[str, Any] | None) -> dict[str, Any]:
+    row = P.latest_row
+    bf = row["book_full"]
+    lk = P.last_known
+    S = P.sub
+    last_sec = S.completed[max(S.completed)] if S.completed else None
+    channels: dict[str, Any] = {
+        "groups_delivered": {"status": "OBSERVED", "value": P.groups},
+        "native_records": {"status": "OBSERVED", "value": P.records},
+        "mid_raw": ({"status": "OBSERVED", "value": P.prev_mid} if P.prev_mid is not None else {"status": "NOT_APPLICABLE", "reason": "one side of the book is empty"}),
+        "spread_raw": ({"status": ("TRUE_ZERO" if P.group_recs[-1]["spread"] == 0 else "OBSERVED"), "value": P.group_recs[-1]["spread"]} if P.group_recs[-1]["spread"] is not None else {"status": "NOT_APPLICABLE"}),
+        "bid_depth_full": {"status": "OBSERVED", "value": int(bf["bid_depth_full"])},
+        "ask_depth_full": {"status": "OBSERVED", "value": int(bf["ask_depth_full"])},
+        "depth_imbalance_full": ({"status": "OBSERVED", "value": fnum(P.group_recs[-1]["imb"])} if P.group_recs[-1]["imb"] is not None else {"status": "NOT_APPLICABLE"}),
+        "candidates_promoted": ({"status": "TRUE_ZERO", "value": 0} if not P.candidates else {"status": "OBSERVED", "value": len(P.candidates)}),
+        "open_runways": {"status": ("TRUE_ZERO" if not any(c["status"] == "OPEN" for c in P.candidates) else "OBSERVED"), "value": sum(1 for c in P.candidates if c["status"] == "OPEN")},
+        "resting_tracked_orders": {"status": "OBSERVED", "value": len(P.orders)},
+        "pending_removal_episodes": {"status": ("TRUE_ZERO" if P.episodes_open == 0 else "OBSERVED"), "value": P.episodes_open},
+    }
+    if last_sec is not None:
+        src = last_sec["completed_at_recv_ns"]
+        r20 = last_sec["roll20"]
+        channels["roll20_last_completed_second"] = ({"status": "PAST_CARRY", "value": fnum(r20), "source_recv_ns": src, "age": rd(cutoff - src)} if not math.isnan(r20)
+                                                    else {"status": "STRUCTURALLY_NOT_YET_KNOWN", "reason": "the trailing window carries no classified volume"})
+        channels["window_signed_flow_last_completed_second"] = {"status": ("TRUE_ZERO" if last_sec["window_signed_flow"] == 0 else "PAST_CARRY"), "value": last_sec["window_signed_flow"], "source_recv_ns": src, "age": rd(cutoff - src)}
+    else:
+        channels["roll20_last_completed_second"] = {"status": "MISSING"}
+        channels["window_signed_flow_last_completed_second"] = {"status": "MISSING"}
+    if P.trade_seconds:
+        ts = P.trade_seconds[-1] * NS
+        channels["last_trade_second"] = {"status": "PAST_CARRY", "value": P.trade_seconds[-1], "source_recv_ns": ts, "age": rd(cutoff - ts)}
+    else:
+        channels["last_trade_second"] = {"status": "STRUCTURALLY_NOT_YET_KNOWN", "reason": "no trade action delivered yet"}
+    missing = [k for k, v in channels.items() if v["status"] == "MISSING"]
+    delta_ch = {}
+    if prev_channels:
+        for k, v in channels.items():
+            pv = prev_channels.get(k)
+            if pv and "value" in v and "value" in pv and isinstance(v["value"], (int, float)) and isinstance(pv["value"], (int, float)):
+                delta_ch[k] = fnum(v["value"] - pv["value"])
+    return {"channels": channels, "missing_channels": missing, "book": row["book"], "fifo_state": outputs.fifo_state_from_book_full(bf),
+            "group_index": int(row["group_index"]), "delta": {"previous_cutoff_recv_ns": prev_cutoff, "channels": delta_ch,
+                                                             "book": {"touch_state_of_last_transition": P.ladder_rows[-1]["touch_state"] if P.ladder_rows else None, "touch_migrations_so_far": len(P.touch_migrations),
+                                                                      "best_bid_raw": P.prev_best["B"], "best_ask_raw": P.prev_best["A"]}}}
+
+
+def reasoning_text(P: Pass, cutoff: int, turn: int, sections: dict[str, dict[str, Any]]) -> str:
+    c = P.det.counters()
+    parts = [f"Turn {turn} at F_LAST cutoff {cutoff}: {P.groups} groups / {P.records} records delivered, phases {dict(P.phase_counts)}.",
+             f"Substrate: {len(P.sub.completed)} completed seconds, class census {dict(P.sub.class_census)}, window census {dict(P.sub.window_census)}; reconciliation with delivered substrate rows agree={P.flow_reconcile['agree']} disagree={P.flow_reconcile['disagree']}.",
+             f"Detector: judged {c['seconds_judged']}, warm-up {c['seconds_in_warmup']}, promoted {c['candidates_emitted']}, own-vs-delivered candidate matches {P.cand_reconcile['matched']}/{P.cand_reconcile['own']}.",
+             f"Queue: {len(P.resolved)} resolved lifecycles, {len(P.orders)} resting; replenishment episodes {len(P.episodes)} ({P.episodes_open} pending); touch displacements {P.touch_displacements}, restorations {len(P.touch_restorations)}.",
+             f"Absorption group-scoped census {dict(Counter(r['disposition'] for r in P.absorption_rows))}; contact runways closed {len(P.contact_runways)}.",
+             f"Ladder touch states {dict(P.ladder_touch_state)}, touch migrations {len(P.touch_migrations)}. Mirror pairs {len(P.pairs)} (unmatched {P.unmatched}); delivered mirror rows so far {dict(P.delivered_mirror_dispositions)}; delivered lineage rows so far {P.delivered_lineage_in_stream}.",
+             f"Candidates: {len(P.candidates)} with statuses {dict(Counter(x['status'] for x in P.candidates))}; precursor labels {dict(Counter(x['precursor_label'] for x in P.candidates))}; chain depths {dict(Counter(x['depth'] for x in P.candidates))}.",
+             "Every section entry at this cutoff rests on groups delivered at or before it; whole-day statements are deferred to the stream-end cutoff. Hypotheses kept alive: (1) the pre-birth threshold-crossing alert leads promotion (tested by 4.11 alert precision); (2) delivered pressure is rare versus withdrawal (4.8); (3) touch restoration is faster than behind-touch refill (4.7); (4) no directional response at the horizons (4.16)."]
+    return " ".join(parts)
+
+
+def run(args: dict[str, Any]) -> None:
+    out_dir = Path(args["out_dir"])
+    out_dir.mkdir(parents=True, exist_ok=True)
+    work = Path(args["work_dir"])
+    work.mkdir(parents=True, exist_ok=True)
+    log = open(work / "own_pass.log", "a")
+
+    def say(msg: str) -> None:
+        log.write(f"{time.strftime('%H:%M:%S')} {msg}\n")
+        log.flush()
+
+    registry = load_registry()
+    contract_text = CONTRACT_PATH.read_text(encoding="utf-8")
+    cutoffs_json = json.loads(Path(args["cutoffs"]).read_text(encoding="utf-8"))
+    staged = [int(c["group_index"]) for c in cutoffs_json["invocation_cutoffs"]]
+    P = Pass(staged)
+    bundle = outputs.OutputBundle(run_id=RUN_ID, arm=ARM, role=ROLE, registry=registry, contract_text=contract_text,
+                                  delivery_receipt_sha256=DELIVERY_RECEIPT_SHA, knowledge_receipt_sha256=KNOWLEDGE_RECEIPT_SHA)
+    code_sha = sha(Path(__file__).read_bytes())
+    L = {lid: bundle.ledger(lid) for lid in bundle.required_ledger_ids if lid not in (outputs.KNOWLEDGE_VERIFICATION_LEDGER, outputs.RAW_MBO_CLASSIFICATION_LEDGER)}
+    L[outputs.ANSWER_WALL_RECEIPTS].empty_reason = "no answer-wall surface was opened at any cutoff; the runner's calculation_result.json and every sealed layer were never read by this pass (a valid run's ledger is empty)"
+    stream = CausalGroupStream(args["member"], args["lifecycle"], args["legacy"], run_id=RUN_ID, arm=ARM)
+    turn = 0
+    prev_cutoff: int | None = None
+    prev_channels: dict[str, Any] | None = None
+    knowledge_receipt_ids: list[str] = []
+    started = time.time()
+    limit = args.get("limit")
+
+    def write_turn(cutoff: int, final: bool) -> None:
+        nonlocal turn, prev_cutoff, prev_channels
+        turn += 1
+        sections: dict[str, dict[str, Any]] = {}
+        for sec in bundle.contract_sections:
+            try:
+                body = emit_4_15(P, cutoff, final) if sec == "4.15" else SECTION_EMITTERS[sec](P, cutoff)
+            except Exception as exc:  # a section that cannot be computed is a declared NULL_RESULT with the reason, never silence
+                say(f"section {sec} at cutoff {cutoff} raised {exc!r}")
+                body = null_result(sec, f"computation raised {type(exc).__name__}: {str(exc)[:200]}; this is a defect of this pass, not a market fact", P.groups, cutoff)
+            body["turn"] = turn
+            body["groups_delivered_at_cutoff"] = P.groups
+            body["cutoff_is_staged_invocation"] = (not final)
+            sections[sec] = body
+        if turn == 1:
+            for art in KNOWLEDGE_INSPECTED:
+                rid = f"kr-{art['id']}"
+                L[outputs.KNOWLEDGE_RECEIPTS].append(cutoff, {"receipt_id": rid, "layer_id": art["layer_id"], "sha256": art["sha256"], "disposition": art["disposition"], "artifact_id": art["id"], "path": art["path"]})
+                knowledge_receipt_ids.append(rid)
+            state0 = sha(canonical_bytes({"groups": 0, "records": 0}))
+            L[outputs.RUN_HASHES].append(cutoff, {"phase": "START", "run_id": RUN_ID, "mission_sha256": MISSION_SHA, "contract_sha256": bundle.contract_sha256, "knowledge_manifest_sha256": KNOWLEDGE_MANIFEST_SHA,
+                                                  "source_manifest_sha256": SOURCE_MANIFEST_SHA, "code_sha256": code_sha, "state_sha256": state0, "model_identity": MODEL, "session_id": SESSION_ID})
+        request_sha = sha(P.latest_row and canonical_bytes({"group_index": P.latest_row["group_index"], "group_sha256": P.latest_line_sha, "cutoff": cutoff}) or b"")
+        response_sha = sha(canonical_bytes({k: v for k, v in sections.items()}))
+        L[outputs.INVOCATION_RECEIPTS].append(cutoff, {"mechanism": "AGENT_SESSION", "session_id": SESSION_ID, "model_identity_as_reported_by_session": MODEL, "turn": turn,
+                                                       "request_sha256": request_sha, "response_sha256": response_sha, "request_basis": "the F_LAST-closed group delivered at this cutoff (its stream sha256) and the cutoff",
+                                                       "response_basis": "canonical bytes of every contract-section body written at this cutoff", "staged_invocation_cutoff": (not final), "stream_end_turn": final})
+        for sec, body in sections.items():
+            L[outputs.section_ledger_id(sec)].append(cutoff, body)
+        frame = state_frame(P, cutoff, prev_cutoff, prev_channels)
+        L[outputs.STATE_MOVIE].append(cutoff, frame)
+        prev_channels = frame["channels"]
+        L[outputs.REASONING_MOVIE].append(cutoff, {"role": ROLE, "turn": turn, "reasoning": reasoning_text(P, cutoff, turn, sections), "helper_invocations": [], "knowledge_retrievals": list(knowledge_receipt_ids) if turn == 1 else []})
+        # probability movie: base-rate forecast of the window direction at the next cutoff, from the trailing census (no lock)
+        wc = P.sub.window_census
+        tot = sum(wc.values())
+        probs = {k: (wc.get(k, 0) / tot) for k in ("LONG", "SHORT", "NO_DIRECTION")} if tot else {"LONG": 1 / 3, "SHORT": 1 / 3, "NO_DIRECTION": 1 / 3}
+        s_ = sum(probs.values())
+        probs = {k: v / s_ for k, v in probs.items()}
+        pe = L[outputs.PROBABILITY_MOVIE].append(cutoff, {"instance_id": f"window-direction-next-cutoff-turn-{turn}", "snapshot_id": f"snap-{turn}", "head": "window_direction_at_next_cutoff", "view": "trailing empirical share of completed-second window directions (a base rate, not a model)",
+                                                          "lock_rule_revision": "FRK-NO-LOCK-V1: no directional lock is called on this unit while median responses at every horizon are zero", "lock_state": "NO_RELIABLE_LOCK", "probabilities": {k: fnum(v) for k, v in probs.items()},
+                                                          "evaluation": rd(cutoff, CLK_MODEL), "basis_denominator": tot})
+        # candidate discoveries and locks for candidates that became lawful since the previous turn
+        for c in P.candidates:
+            if c.get("_written"):
+                continue
+            avail = c["available_second"] * NS
+            if avail > cutoff:
+                continue
+            c["_written"] = True
+            L[outputs.CANDIDATE_DISCOVERIES].append(cutoff, {"candidate_id": c["candidate_id"], "family_id": c["family_at_promotion"] or "NO_GROUP_IN_EVENT_SECOND", "member_group_indices": c["groups_in_event_second"] or [P.group_recs[-1]["gi"]],
+                                                              "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+                                                              "first_lawful_availability_ns": avail, "polarity": c["polarity"], "magnitude": c["magnitude"], "prominence": c["prominence"], "threshold": c["threshold"],
+                                                              "recognition": {"label": "H+N", "lead": rd(-(c["available_second"] - c["event_second"]) * NS), "reference": rd(c["event_second"] * NS), "observed": rd(avail)},
+                                                              "precursor_alert": {"label": c["precursor_label"], "alert_known": rd(c["alert_known_second"] * NS), "lead_seconds_vs_birth": c["precursor_lead_seconds"], "durable": False, "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"},
+                                                              "delivered_row_agrees": c.get("delivered_match")})
+            L[outputs.FIRST_LOCKS].append(cutoff, {"candidate_id": c["candidate_id"], "lock_state": "NO_RELIABLE_LOCK", "lock_rule_revision": "FRK-NO-LOCK-V1", "probability_entry_hash": pe["entry_hash"],
+                                                    "reason": "the candidate unit carries no directional lock on this evidence: 4.16 median price response at the declared horizons is reported per stratum and a lock would need a stable nonzero-median stratum; none has been observed at this cutoff", "lock_at": rd(cutoff)})
+        # negatives: NULL_RESULT sections and empty strata
+        for sec, body in sections.items():
+            if body.get("result") == "NULL_RESULT":
+                L[outputs.NEGATIVE_LEDGER].append(cutoff, {"kind": "SPARSE", "stratum": {"section": sec, "cutoff_recv_ns": cutoff}, "numerator": 0, "denominator": int(body["population"]["denominator"]), "statement": body["population"]["description"]})
+        if P.flow_reconcile["disagree"]:
+            L[outputs.NEGATIVE_LEDGER].append(cutoff, {"kind": "INCONCLUSIVE", "stratum": {"section": "4.0"}, "numerator": P.flow_reconcile["disagree"], "denominator": P.flow_reconcile["compared"], "statement": "own substrate disagrees with delivered substrate rows on some seconds; examples in the 4.0 ledger"})
+        if final:
+            state_end = sha(canonical_bytes({"groups": P.groups, "records": P.records, "candidates": len(P.candidates), "resolved_orders": len(P.resolved), "episodes": len(P.episodes)}))
+            L[outputs.RUN_HASHES].append(cutoff, {"phase": "END", "run_id": RUN_ID, "mission_sha256": MISSION_SHA, "contract_sha256": bundle.contract_sha256, "knowledge_manifest_sha256": KNOWLEDGE_MANIFEST_SHA,
+                                                  "source_manifest_sha256": SOURCE_MANIFEST_SHA, "code_sha256": code_sha, "state_sha256": state_end, "model_identity": MODEL, "session_id": SESSION_ID})
+        for lid, led in L.items():
+            if led.entries:
+                led.empty_reason = None
+            elif led.empty_reason is None:
+                led.empty_reason = EMPTY_REASONS.get(lid, f"nothing lawful to write into {lid} at any cutoff reached so far")
+        outputs.write_bundle(bundle, out_dir)
+        prev_cutoff = cutoff
+        say(f"turn {turn} written at cutoff {cutoff} (groups {P.groups}, elapsed {time.time() - started:.0f}s)")
+
+    delivered = 0
+    for d in stream.iterate():
+        P.on_group(d)
+        delivered += 1
+        if delivered % 2000 == 0:
+            say(f"delivered {delivered} groups, elapsed {time.time() - started:.0f}s, candidates {len(P.candidates)}, orders resting {len(P.orders)}")
+        if d.group_index in P.cutoff_indices:
+            write_turn(d.first_lawful_availability_ns, final=False)
+        if limit and delivered >= limit:
+            break
+    final_cutoff = P.last_cutoff
+    P.finish_stream(final_cutoff)
+    withheld = stream.drain_withheld() if stream._exhausted else {"lifecycle": [], "legacy": []}
+    P.withheld_summary = {"lifecycle": dict(Counter((r["reason"], r["detail"]) for r in withheld["lifecycle"]).most_common(30)), "legacy": len(withheld["legacy"])}
+    P.withheld_summary = {"lifecycle": {f"{k[0]}|{k[1]}": v for k, v in P.withheld_summary["lifecycle"].items()}, "legacy": P.withheld_summary["legacy"]}
+    # drained STREAM_END rows are lawful only now: tally them for reconciliation, never as evidence in place of the computation
+    P.drained = Counter(f"{r['row'].get('emitting_section')}|{r['row'].get('emitted_on')}" for r in withheld["lifecycle"])
+    write_turn(final_cutoff, final=True)
+    receipt = stream.stream_receipt()
+    (out_dir.parent / "stream_receipt.json").write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    tallies = build_tallies(P, receipt)
+    (work / "tallies.json").write_text(json.dumps(tallies, indent=1, sort_keys=True, default=str), encoding="utf-8")
+    (work / "candidates.json").write_text(json.dumps([_cand_public(c) | {"stages": c["stages"], "horizons": c["horizons"], "change_points": c["change_points"]} for c in P.candidates], indent=1, default=str), encoding="utf-8")
+    (work / "census.json").write_text(json.dumps(P.census, indent=1, default=str), encoding="utf-8")
+    (work / "resolved_orders_sample.json").write_text(json.dumps(P.resolved[:2000], indent=None, default=str), encoding="utf-8")
+    say(f"DONE groups={P.groups} candidates={len(P.candidates)} f20={receipt['falsifier_f20']['verdict']} elapsed {time.time() - started:.0f}s")
+
+
+def build_tallies(P: Pass, receipt: dict[str, Any]) -> dict[str, Any]:
+    fam_tot = Counter()
+    for (f, _), n in P.family_counts.items():
+        fam_tot[f] += n
+    return {
+        "groups": P.groups, "records": P.records, "phase_counts": dict(P.phase_counts), "action_counts": dict(P.action_counts), "side_counts": dict(P.side_counts), "node_counts": dict(P.node_counts),
+        "comp_hist": {str(k): v for k, v in P.comp_hist.items()}, "max_actions": P.max_actions, "max_actions_group": P.max_actions_group, "families": len(fam_tot), "singleton_families": sum(1 for n in fam_tot.values() if n == 1),
+        "family_top": [{"family_id": f, "groups": n, "action_string": P.family_astr[f], "side_string": P.family_sstr[f][:40], "first_group": P.family_first[f], "by_phase": {ph: P.family_counts.get((f, ph), 0) for ph in P.phase_counts}} for f, n in fam_tot.most_common(60)],
+        "astr_counts": dict(P.astr_counts.most_common(200)), "seed_action_strings": {a: P.astr_counts.get(a, 0) for a in sorted(SEED_ACTION_STRINGS)},
+        "regime": P.regime, "one_side_empty": P.one_side_empty, "decision_delays": {str(k): v for k, v in P.decision_delays.items()}, "snapshot_adds": P.snapshot_adds, "resets": P.resets, "sequence_noncontig": P.sequence_noncontig,
+        "e2r_by_comp": {str(k): qs(v) for k, v in sorted(P.e2r_by_comp.items())}, "formation_by_family_top": {f: qs(P.formation_by_family[f]) for f, _ in fam_tot.most_common(30)}, "gaps_by_family_top": {f: qs(P.gaps_by_family[f]) for f, _ in fam_tot.most_common(30)},
+        "ladder_touch_state": dict(P.ladder_touch_state), "touch_migrations": P.touch_migrations, "ladder_strata": {f"{k[0]}|{k[1]}|{k[2]}": {m: qs(v) for m, v in d.items()} for k, d in sorted(P.ladder_by_stratum.items(), key=lambda kv: -len(kv[1]["births"]))[:40]},
+        "queue": {"resolved": len(P.resolved), "open_at_end": len(P.orders), "status_counts": dict(Counter(o["status"] for o in P.resolved)), "untracked_cancel": P.untracked_cancel, "untracked_fill": P.untracked_fill, "untracked_modify": P.untracked_modify,
+                  "births_not_in_after_book": P.births_not_in_after_book, "modify_reprice": P.modify_reprice, "modify_size_only": P.modify_size_only, "modify_priority_lost": P.modify_priority_lost, "order_paths": dict(P.order_paths.most_common(40))},
+        "queue_strata": _queue_strata(P), "replenishment": _repl_tallies(P), "absorption": _abs_tallies(P), "mirror": {"pairs": len(P.pairs), "unmatched": P.unmatched, "keys_both": len(P.mirror_keys_both), "delivered_mirror_dispositions": dict(P.delivered_mirror_dispositions)},
+        "recurrence": {"family_edges_top": [(a, b, n, P.family_out[a]) for (a, b), n in P.family_edges.most_common(40)], "within_edges": [(a, b, n, P.within_out[a]) for (a, b), n in P.within_edges.most_common(60)],
+                       "run_lengths_top": [(nd, ln, n) for (nd, ln), n in sorted(P.run_lengths.items(), key=lambda kv: (-kv[0][1], -kv[1]))[:30]], "same_family_runs_longest": sorted(((ln, f, n) for (f, ln), n in P.same_family_runs.items()), reverse=True)[:20],
+                       "family_gaps_top": {f: qs(P.family_gaps.get(f, [])) for f, _ in fam_tot.most_common(20)}},
+        "clusters": {"n": len(P.cluster_members), "singletons": sum(1 for n in P.cluster_members.values() if n == 1), "top": P.cluster_members.most_common(20)},
+        "substrate": {"first_second": P.sub.first_second, "completed": len(P.sub.completed), "class_census": dict(P.sub.class_census), "window_census": dict(P.sub.window_census), "legacy_rows": P.legacy_rows_seen, "legacy_actions": dict(P.legacy_actions), "reconcile": P.flow_reconcile},
+        "detector": {"counters": P.det.counters(), "alerts": len(P.det.alerts), "reconcile": P.cand_reconcile}, "candidates_n": len(P.candidates), "candidate_status": dict(Counter(c["status"] for c in P.candidates)),
+        "candidate_labels": dict(Counter(c["precursor_label"] for c in P.candidates)), "candidate_orient": dict(Counter(c["orientation"] for c in P.candidates)), "chain_depths": dict(Counter(c["depth"] for c in P.candidates)),
+        "delivered_lifecycle_counts": dict(P.delivered_lifecycle_counts), "delivered_lineage_in_stream": P.delivered_lineage_in_stream, "delivered_episode_outcomes": dict(Counter(e["recognition_outcome"] for e in P.delivered_episode_rows)),
+        "delivered_episode_orientations": dict(Counter(e["orientation"] for e in P.delivered_episode_rows)), "withheld": getattr(P, "withheld_summary", None), "drained": dict(getattr(P, "drained", {})),
+        "f20": receipt["falsifier_f20"], "lifecycle_rows_in_stream": P.lifecycle_rows_seen, "touch_restorations": qs([t["duration_ns"] for t in P.touch_restorations]), "touch_displacements": P.touch_displacements,
+    }
+
+
+def _queue_strata(P: Pass) -> dict[str, Any]:
+    strata: dict[tuple, dict[str, list]] = defaultdict(lambda: defaultdict(list))
+    for o in P.resolved:
+        k = (o["birth_family"], o["side"], o["birth_phase"])
+        strata[k]["t"].append(o["lifetime_ns"]); strata[k]["e"].append(True); strata[k]["va"].append(o["initial_volume_ahead"] if o["initial_volume_ahead"] is not None else -1)
+        strata[k]["mv"].append(o["queue_movement"] if o["queue_movement"] is not None else -999); strata[k]["fa"].append(o["fills_ahead"]); strata[k]["st"].append(o["status"]); strata[k]["life"].append(o["lifetime_ns"])
+    for o in P.orders.values():
+        k = (o["birth_family"], o["side"], o["birth_phase"])
+        strata[k]["t"].append(P.last_cutoff - o["birth_recv_ns"]); strata[k]["e"].append(False)
+    out = {}
+    for k, d in sorted(strata.items(), key=lambda kv: -len(kv[1]["t"]))[:30]:
+        out[f"{k[0]}|{k[1]}|{k[2]}"] = {"km": km(d["t"], d["e"]), "volume_ahead": qs([v for v in d["va"] if v >= 0]), "movement": qs([v for v in d["mv"] if v != -999]), "fills_ahead": qs(d["fa"]), "status": dict(Counter(d["st"])), "resolved_lifetime": qs(d["life"])}
+    return out
+
+
+def _repl_tallies(P: Pass) -> dict[str, Any]:
+    strata: dict[tuple, dict[str, list]] = defaultdict(lambda: defaultdict(list))
+    for e in P.episodes:
+        k = (e["family"], e["side"], e["touch_state"], e["phase"])
+        if e["resolved"]:
+            strata[k]["t"].append(e["duration_ns"]); strata[k]["e"].append(True); strata[k]["rem"].append(e["removed_quantity"]); strata[k]["arr"].append(e["arrived_quantity"]); strata[k]["rel"].append(e["price_relation"]); strata[k]["kind"].append(e["refill_kind"])
+        else:
+            strata[k]["t"].append(P.last_cutoff - e["opened_recv_ns"]); strata[k]["e"].append(False)
+    out = {"episodes": len(P.episodes), "resolved": sum(1 for e in P.episodes if e["resolved"]), "pending": P.episodes_open, "removal_kinds": dict(Counter(e["kind"] for e in P.episodes)), "refill_kinds": dict(Counter(e.get("refill_kind") for e in P.episodes if e["resolved"])),
+           "relations": dict(Counter(e.get("price_relation") for e in P.episodes if e["resolved"])), "strata": {}}
+    for k, d in sorted(strata.items(), key=lambda kv: -len(kv[1]["t"]))[:30]:
+        rem, arr = d["rem"], d["arr"]
+        ratios = [a / r for a, r in zip(arr, rem) if r > 0]
+        out["strata"][f"{k[0]}|{k[1]}|{k[2]}|{k[3]}"] = {"km": km(d["t"], d["e"]), "removed": qs(rem), "arrived": qs(arr), "mean_of_member_ratios": (fnum(sum(ratios) / len(ratios)) if ratios else None), "ratio_of_aggregate_sums": (fnum(sum(arr) / sum(rem)) if sum(rem) else None), "relations": dict(Counter(d["rel"])), "kinds": dict(Counter(d["kind"]))}
+    return out
+
+
+def _abs_tallies(P: Pass) -> dict[str, Any]:
+    disp = Counter(r["disposition"] for r in P.absorption_rows)
+    disp["INDETERMINATE_NO_CONTACT"] = P.groups - len(P.absorption_rows)
+    strata: dict[tuple, list] = defaultdict(list)
+    for r in P.absorption_rows:
+        strata[(r["family"], r["hit_side"], r["phase"], r["disposition"])].append(r)
+    out = {"group_census": dict(disp), "contact_census": dict(Counter(c["disposition"] for c in P.contact_runways)), "contact_runways": len(P.contact_runways), "contact_span_groups": qs([c["groups_spanned"] for c in P.contact_runways]), "contact_duration_ns": qs([c["duration_ns"] for c in P.contact_runways]),
+           "contact_price_response_ticks": qs([c["price_response_ticks"] for c in P.contact_runways if c.get("price_response_ticks") is not None]), "strata": {}}
+    for k, lst in sorted(strata.items(), key=lambda kv: -len(kv[1]))[:30]:
+        out["strata"][f"{k[0]}|{k[1]}|{k[2]}|{k[3]}"] = {"n": len(lst), "traded": qs([r["traded_quantity"] for r in lst]), "withdrawn": qs([r.get("withdrawn_quantity", 0) for r in lst]), "price_response_ticks": qs([r["price_response_ticks"] for r in lst if r.get("price_response_ticks") is not None])}
+    return out
+
+
+KNOWLEDGE_INSPECTED: list[dict[str, Any]] = []
+EMPTY_REASONS = {
+    outputs.CANDIDATE_DISCOVERIES: "no candidate became lawful at any cutoff reached; the detector promoted nothing (its counters are in every 4.0b entry)",
+    outputs.FIRST_LOCKS: "no candidate became lawful, so there is nothing to lock or to decline to lock",
+    outputs.NEGATIVE_LEDGER: "no section returned NULL_RESULT and no reconciliation disagreed at any cutoff reached",
+    outputs.KNOWLEDGE_RECEIPTS: "no knowledge artifact was retrieved during the stream",
+}
+
+
+def main(argv: list[str]) -> int:
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--member", default="data/sunday_ledgers/exact_member_rows.jsonl")
+    ap.add_argument("--lifecycle", default="data/sunday_ledgers/exact_lifecycle_rows.jsonl")
+    ap.add_argument("--legacy", default="data/sunday_ledgers/legacy_observable_rows.jsonl")
+    ap.add_argument("--cutoffs", default="data/sunday_receipts/cutoffs.json")
+    ap.add_argument("--out-dir", required=True)
+    ap.add_argument("--work-dir", required=True)
+    ap.add_argument("--knowledge-inspected", default=None, help="JSON list of {id, layer_id, sha256, disposition, path} written into the retrieval receipts")
+    ap.add_argument("--limit", type=int, default=None)
+    a = ap.parse_args(argv)
+    if a.knowledge_inspected:
+        KNOWLEDGE_INSPECTED.extend(json.loads(Path(a.knowledge_inspected).read_text(encoding="utf-8")))
+    run(vars(a))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
