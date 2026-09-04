@@ -1008,8 +1008,1243 @@
       "ledger_id": "contract_section_4.0b",
       "prev_hash": "98200c3c17f28bee5dccbd13cd4e5e5b39300e59af8439e63671ab05444c28ef",
       "sequence": 6
+    },
+    {
+      "body": {
+        "considered_second_events": 0,
+        "cutoff_is_staged_invocation": true,
+        "detector_counters": {
+          "candidates_emitted": 0,
+          "candidates_pending_in_window": 0,
+          "rejected_below_threshold": 0,
+          "rejected_in_refractory": 0,
+          "rejected_in_refractory_at_release": 0,
+          "rejected_not_local_max": 0,
+          "rejected_zero_magnitude": 0,
+          "seconds_in_warmup": 11112,
+          "seconds_judged": 11112,
+          "seconds_observed": 11122,
+          "seconds_without_finite_flow": 0,
+          "suppressed_by_prominence": 0
+        },
+        "detector_parameters": {
+          "baseline_lag_seconds": 9,
+          "baseline_points": 21,
+          "baseline_start_seconds": 30,
+          "flow_reading": "roll20 = (b-s)/(b+s) over the trailing 20 s inclusive, NaN when the window carries no classified volume",
+          "implementation": "REAL_TIME_FRANKIE's own implementation of the declared rules; reconciled against the delivered candidate rows, never substituted by them",
+          "local_radius_seconds": 5,
+          "min_threshold_observations": 600,
+          "peak_quantile": 0.85,
+          "prominence_rule": "|flow| minus the median of |flow| over t-30..t-10 (21 points), causal",
+          "refractory_seconds": 45,
+          "selection_rule": "CAUSAL_WINDOWED_PROMINENCE",
+          "threshold_observation_cap": 86400,
+          "threshold_rule": "TRAILING_CAUSAL_QUANTILE",
+          "warmup_seconds": 900,
+          "zero_flow_guard": 1e-12
+        },
+        "groups_delivered_at_cutoff": 18249,
+        "member_group_indices": [
+          18229,
+          18230,
+          18231,
+          18232,
+          18233,
+          18234,
+          18235,
+          18236,
+          18237,
+          18238,
+          18239,
+          18240,
+          18241,
+          18242,
+          18243,
+          18244,
+          18245,
+          18246,
+          18247,
+          18248
+        ],
+        "note": "these are counts and ratios of exact counts, never means; promoted is the population 4.10-4.16 report on",
+        "partition_identity": {
+          "formula": "warmup + no_finite_flow + zero_magnitude + below_threshold + not_local_max + in_refractory + suppressed_by_prominence + in_refractory_at_release + emitted + pending == judged",
+          "holds": true,
+          "named_outcomes_plus_pending": 11112,
+          "seconds_judged": 11112
+        },
+        "promotion_rate": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 0,
+          "formula": "candidates_emitted / considered",
+          "numerator": 0,
+          "value": null
+        },
+        "reconciliation_with_delivered_candidate_rows": {
+          "delivered_not_yet_matched": [],
+          "delivered_rows_seen_in_stream": 0,
+          "matched_on_event_second": 0,
+          "own_candidates": 0,
+          "own_only_event_seconds": []
+        },
+        "rejection_share_by_reason": {
+          "rejected_below_threshold": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_below_threshold / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_in_refractory": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_in_refractory / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_in_refractory_at_release": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_in_refractory_at_release / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_not_local_max": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_not_local_max / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_zero_magnitude": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_zero_magnitude / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "suppressed_by_prominence": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "suppressed_by_prominence / considered",
+            "numerator": 0,
+            "value": null
+          }
+        },
+        "result": "COMPUTED",
+        "searched_seconds": 0,
+        "searched_share_of_observed": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 11122,
+          "formula": "searched / seconds_observed",
+          "numerator": 0,
+          "value": 0.0
+        },
+        "section": "4.0b",
+        "threshold_crossing_alerts_emitted": 0,
+        "trailing_bar_now": null,
+        "turn": 8,
+        "unit": "DIPOLE_FLOW_EVENT (a locally prominent spike in the per-second roll20 signed aggressor imbalance)"
+      },
+      "cutoff_recv_ns": 1633298727046687558,
+      "entry_hash": "78a7c36086c6d856914bf5f141600a0bdfa6ec6c1526957cb2c57d2db1cef720",
+      "ledger_id": "contract_section_4.0b",
+      "prev_hash": "8dd219bd0c82d97aaae8378e93585348c6f5a11a456c5b1779cad6f41a13905a",
+      "sequence": 7
+    },
+    {
+      "body": {
+        "considered_second_events": 0,
+        "cutoff_is_staged_invocation": true,
+        "detector_counters": {
+          "candidates_emitted": 0,
+          "candidates_pending_in_window": 0,
+          "rejected_below_threshold": 0,
+          "rejected_in_refractory": 0,
+          "rejected_in_refractory_at_release": 0,
+          "rejected_not_local_max": 0,
+          "rejected_zero_magnitude": 0,
+          "seconds_in_warmup": 11228,
+          "seconds_judged": 11228,
+          "seconds_observed": 11238,
+          "seconds_without_finite_flow": 0,
+          "suppressed_by_prominence": 0
+        },
+        "detector_parameters": {
+          "baseline_lag_seconds": 9,
+          "baseline_points": 21,
+          "baseline_start_seconds": 30,
+          "flow_reading": "roll20 = (b-s)/(b+s) over the trailing 20 s inclusive, NaN when the window carries no classified volume",
+          "implementation": "REAL_TIME_FRANKIE's own implementation of the declared rules; reconciled against the delivered candidate rows, never substituted by them",
+          "local_radius_seconds": 5,
+          "min_threshold_observations": 600,
+          "peak_quantile": 0.85,
+          "prominence_rule": "|flow| minus the median of |flow| over t-30..t-10 (21 points), causal",
+          "refractory_seconds": 45,
+          "selection_rule": "CAUSAL_WINDOWED_PROMINENCE",
+          "threshold_observation_cap": 86400,
+          "threshold_rule": "TRAILING_CAUSAL_QUANTILE",
+          "warmup_seconds": 900,
+          "zero_flow_guard": 1e-12
+        },
+        "groups_delivered_at_cutoff": 20530,
+        "member_group_indices": [
+          20510,
+          20511,
+          20512,
+          20513,
+          20514,
+          20515,
+          20516,
+          20517,
+          20518,
+          20519,
+          20520,
+          20521,
+          20522,
+          20523,
+          20524,
+          20525,
+          20526,
+          20527,
+          20528,
+          20529
+        ],
+        "note": "these are counts and ratios of exact counts, never means; promoted is the population 4.10-4.16 report on",
+        "partition_identity": {
+          "formula": "warmup + no_finite_flow + zero_magnitude + below_threshold + not_local_max + in_refractory + suppressed_by_prominence + in_refractory_at_release + emitted + pending == judged",
+          "holds": true,
+          "named_outcomes_plus_pending": 11228,
+          "seconds_judged": 11228
+        },
+        "promotion_rate": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 0,
+          "formula": "candidates_emitted / considered",
+          "numerator": 0,
+          "value": null
+        },
+        "reconciliation_with_delivered_candidate_rows": {
+          "delivered_not_yet_matched": [],
+          "delivered_rows_seen_in_stream": 0,
+          "matched_on_event_second": 0,
+          "own_candidates": 0,
+          "own_only_event_seconds": []
+        },
+        "rejection_share_by_reason": {
+          "rejected_below_threshold": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_below_threshold / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_in_refractory": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_in_refractory / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_in_refractory_at_release": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_in_refractory_at_release / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_not_local_max": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_not_local_max / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_zero_magnitude": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_zero_magnitude / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "suppressed_by_prominence": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "suppressed_by_prominence / considered",
+            "numerator": 0,
+            "value": null
+          }
+        },
+        "result": "COMPUTED",
+        "searched_seconds": 0,
+        "searched_share_of_observed": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 11238,
+          "formula": "searched / seconds_observed",
+          "numerator": 0,
+          "value": 0.0
+        },
+        "section": "4.0b",
+        "threshold_crossing_alerts_emitted": 0,
+        "trailing_bar_now": null,
+        "turn": 9,
+        "unit": "DIPOLE_FLOW_EVENT (a locally prominent spike in the per-second roll20 signed aggressor imbalance)"
+      },
+      "cutoff_recv_ns": 1633298843554132312,
+      "entry_hash": "33da70784f2cceb5e7d91a3e938d33f99708a19d9527b117c6cc33d12fb76540",
+      "ledger_id": "contract_section_4.0b",
+      "prev_hash": "78a7c36086c6d856914bf5f141600a0bdfa6ec6c1526957cb2c57d2db1cef720",
+      "sequence": 8
+    },
+    {
+      "body": {
+        "considered_second_events": 0,
+        "cutoff_is_staged_invocation": true,
+        "detector_counters": {
+          "candidates_emitted": 0,
+          "candidates_pending_in_window": 0,
+          "rejected_below_threshold": 0,
+          "rejected_in_refractory": 0,
+          "rejected_in_refractory_at_release": 0,
+          "rejected_not_local_max": 0,
+          "rejected_zero_magnitude": 0,
+          "seconds_in_warmup": 11383,
+          "seconds_judged": 11383,
+          "seconds_observed": 11393,
+          "seconds_without_finite_flow": 0,
+          "suppressed_by_prominence": 0
+        },
+        "detector_parameters": {
+          "baseline_lag_seconds": 9,
+          "baseline_points": 21,
+          "baseline_start_seconds": 30,
+          "flow_reading": "roll20 = (b-s)/(b+s) over the trailing 20 s inclusive, NaN when the window carries no classified volume",
+          "implementation": "REAL_TIME_FRANKIE's own implementation of the declared rules; reconciled against the delivered candidate rows, never substituted by them",
+          "local_radius_seconds": 5,
+          "min_threshold_observations": 600,
+          "peak_quantile": 0.85,
+          "prominence_rule": "|flow| minus the median of |flow| over t-30..t-10 (21 points), causal",
+          "refractory_seconds": 45,
+          "selection_rule": "CAUSAL_WINDOWED_PROMINENCE",
+          "threshold_observation_cap": 86400,
+          "threshold_rule": "TRAILING_CAUSAL_QUANTILE",
+          "warmup_seconds": 900,
+          "zero_flow_guard": 1e-12
+        },
+        "groups_delivered_at_cutoff": 22811,
+        "member_group_indices": [
+          22791,
+          22792,
+          22793,
+          22794,
+          22795,
+          22796,
+          22797,
+          22798,
+          22799,
+          22800,
+          22801,
+          22802,
+          22803,
+          22804,
+          22805,
+          22806,
+          22807,
+          22808,
+          22809,
+          22810
+        ],
+        "note": "these are counts and ratios of exact counts, never means; promoted is the population 4.10-4.16 report on",
+        "partition_identity": {
+          "formula": "warmup + no_finite_flow + zero_magnitude + below_threshold + not_local_max + in_refractory + suppressed_by_prominence + in_refractory_at_release + emitted + pending == judged",
+          "holds": true,
+          "named_outcomes_plus_pending": 11383,
+          "seconds_judged": 11383
+        },
+        "promotion_rate": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 0,
+          "formula": "candidates_emitted / considered",
+          "numerator": 0,
+          "value": null
+        },
+        "reconciliation_with_delivered_candidate_rows": {
+          "delivered_not_yet_matched": [],
+          "delivered_rows_seen_in_stream": 0,
+          "matched_on_event_second": 0,
+          "own_candidates": 0,
+          "own_only_event_seconds": []
+        },
+        "rejection_share_by_reason": {
+          "rejected_below_threshold": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_below_threshold / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_in_refractory": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_in_refractory / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_in_refractory_at_release": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_in_refractory_at_release / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_not_local_max": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_not_local_max / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "rejected_zero_magnitude": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "rejected_zero_magnitude / considered",
+            "numerator": 0,
+            "value": null
+          },
+          "suppressed_by_prominence": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 0,
+            "formula": "suppressed_by_prominence / considered",
+            "numerator": 0,
+            "value": null
+          }
+        },
+        "result": "COMPUTED",
+        "searched_seconds": 0,
+        "searched_share_of_observed": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 11393,
+          "formula": "searched / seconds_observed",
+          "numerator": 0,
+          "value": 0.0
+        },
+        "section": "4.0b",
+        "threshold_crossing_alerts_emitted": 0,
+        "trailing_bar_now": null,
+        "turn": 10,
+        "unit": "DIPOLE_FLOW_EVENT (a locally prominent spike in the per-second roll20 signed aggressor imbalance)"
+      },
+      "cutoff_recv_ns": 1633298998928924813,
+      "entry_hash": "4f33c69fc52dbefa3467651ef7eb6db1db2a381cb913bae9bd0b931cadc00f80",
+      "ledger_id": "contract_section_4.0b",
+      "prev_hash": "33da70784f2cceb5e7d91a3e938d33f99708a19d9527b117c6cc33d12fb76540",
+      "sequence": 9
+    },
+    {
+      "body": {
+        "considered_second_events": 420,
+        "cutoff_is_staged_invocation": true,
+        "detector_counters": {
+          "candidates_emitted": 6,
+          "candidates_pending_in_window": 19,
+          "rejected_below_threshold": 167,
+          "rejected_in_refractory": 57,
+          "rejected_in_refractory_at_release": 3,
+          "rejected_not_local_max": 14,
+          "rejected_zero_magnitude": 31,
+          "seconds_in_warmup": 11399,
+          "seconds_judged": 11890,
+          "seconds_observed": 11900,
+          "seconds_without_finite_flow": 71,
+          "suppressed_by_prominence": 123
+        },
+        "detector_parameters": {
+          "baseline_lag_seconds": 9,
+          "baseline_points": 21,
+          "baseline_start_seconds": 30,
+          "flow_reading": "roll20 = (b-s)/(b+s) over the trailing 20 s inclusive, NaN when the window carries no classified volume",
+          "implementation": "REAL_TIME_FRANKIE's own implementation of the declared rules; reconciled against the delivered candidate rows, never substituted by them",
+          "local_radius_seconds": 5,
+          "min_threshold_observations": 600,
+          "peak_quantile": 0.85,
+          "prominence_rule": "|flow| minus the median of |flow| over t-30..t-10 (21 points), causal",
+          "refractory_seconds": 45,
+          "selection_rule": "CAUSAL_WINDOWED_PROMINENCE",
+          "threshold_observation_cap": 86400,
+          "threshold_rule": "TRAILING_CAUSAL_QUANTILE",
+          "warmup_seconds": 900,
+          "zero_flow_guard": 1e-12
+        },
+        "groups_delivered_at_cutoff": 25092,
+        "member_group_indices": [
+          25072,
+          25073,
+          25074,
+          25075,
+          25076,
+          25077,
+          25078,
+          25079,
+          25080,
+          25081,
+          25082,
+          25083,
+          25084,
+          25085,
+          25086,
+          25087,
+          25088,
+          25089,
+          25090,
+          25091
+        ],
+        "note": "these are counts and ratios of exact counts, never means; promoted is the population 4.10-4.16 report on",
+        "partition_identity": {
+          "formula": "warmup + no_finite_flow + zero_magnitude + below_threshold + not_local_max + in_refractory + suppressed_by_prominence + in_refractory_at_release + emitted + pending == judged",
+          "holds": true,
+          "named_outcomes_plus_pending": 11890,
+          "seconds_judged": 11890
+        },
+        "promotion_rate": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 420,
+          "formula": "candidates_emitted / considered",
+          "numerator": 6,
+          "value": 0.014285714
+        },
+        "reconciliation_with_delivered_candidate_rows": {
+          "delivered_not_yet_matched": [
+            1633299044,
+            1633299091,
+            1633299180,
+            1633299265,
+            1633299366,
+            1633299411
+          ],
+          "delivered_rows_seen_in_stream": 6,
+          "matched_on_event_second": 6,
+          "own_candidates": 6,
+          "own_only_event_seconds": []
+        },
+        "rejection_share_by_reason": {
+          "rejected_below_threshold": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 420,
+            "formula": "rejected_below_threshold / considered",
+            "numerator": 167,
+            "value": 0.397619048
+          },
+          "rejected_in_refractory": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 420,
+            "formula": "rejected_in_refractory / considered",
+            "numerator": 57,
+            "value": 0.135714286
+          },
+          "rejected_in_refractory_at_release": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 420,
+            "formula": "rejected_in_refractory_at_release / considered",
+            "numerator": 3,
+            "value": 0.007142857
+          },
+          "rejected_not_local_max": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 420,
+            "formula": "rejected_not_local_max / considered",
+            "numerator": 14,
+            "value": 0.033333333
+          },
+          "rejected_zero_magnitude": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 420,
+            "formula": "rejected_zero_magnitude / considered",
+            "numerator": 31,
+            "value": 0.073809524
+          },
+          "suppressed_by_prominence": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 420,
+            "formula": "suppressed_by_prominence / considered",
+            "numerator": 123,
+            "value": 0.292857143
+          }
+        },
+        "result": "COMPUTED",
+        "searched_seconds": 491,
+        "searched_share_of_observed": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 11900,
+          "formula": "searched / seconds_observed",
+          "numerator": 491,
+          "value": 0.041260504
+        },
+        "section": "4.0b",
+        "threshold_crossing_alerts_emitted": 18,
+        "trailing_bar_now": 1.0,
+        "turn": 11,
+        "unit": "DIPOLE_FLOW_EVENT (a locally prominent spike in the per-second roll20 signed aggressor imbalance)"
+      },
+      "cutoff_recv_ns": 1633299505523516424,
+      "entry_hash": "768a1e18bed575aad7550af462ac862cdb5539a98ddd45eb213275fe96b8a95f",
+      "ledger_id": "contract_section_4.0b",
+      "prev_hash": "4f33c69fc52dbefa3467651ef7eb6db1db2a381cb913bae9bd0b931cadc00f80",
+      "sequence": 10
+    },
+    {
+      "body": {
+        "considered_second_events": 793,
+        "cutoff_is_staged_invocation": true,
+        "detector_counters": {
+          "candidates_emitted": 13,
+          "candidates_pending_in_window": 17,
+          "rejected_below_threshold": 366,
+          "rejected_in_refractory": 81,
+          "rejected_in_refractory_at_release": 6,
+          "rejected_not_local_max": 14,
+          "rejected_zero_magnitude": 50,
+          "seconds_in_warmup": 11399,
+          "seconds_judged": 12335,
+          "seconds_observed": 12345,
+          "seconds_without_finite_flow": 143,
+          "suppressed_by_prominence": 246
+        },
+        "detector_parameters": {
+          "baseline_lag_seconds": 9,
+          "baseline_points": 21,
+          "baseline_start_seconds": 30,
+          "flow_reading": "roll20 = (b-s)/(b+s) over the trailing 20 s inclusive, NaN when the window carries no classified volume",
+          "implementation": "REAL_TIME_FRANKIE's own implementation of the declared rules; reconciled against the delivered candidate rows, never substituted by them",
+          "local_radius_seconds": 5,
+          "min_threshold_observations": 600,
+          "peak_quantile": 0.85,
+          "prominence_rule": "|flow| minus the median of |flow| over t-30..t-10 (21 points), causal",
+          "refractory_seconds": 45,
+          "selection_rule": "CAUSAL_WINDOWED_PROMINENCE",
+          "threshold_observation_cap": 86400,
+          "threshold_rule": "TRAILING_CAUSAL_QUANTILE",
+          "warmup_seconds": 900,
+          "zero_flow_guard": 1e-12
+        },
+        "groups_delivered_at_cutoff": 27373,
+        "member_group_indices": [
+          27353,
+          27354,
+          27355,
+          27356,
+          27357,
+          27358,
+          27359,
+          27360,
+          27361,
+          27362,
+          27363,
+          27364,
+          27365,
+          27366,
+          27367,
+          27368,
+          27369,
+          27370,
+          27371,
+          27372
+        ],
+        "note": "these are counts and ratios of exact counts, never means; promoted is the population 4.10-4.16 report on",
+        "partition_identity": {
+          "formula": "warmup + no_finite_flow + zero_magnitude + below_threshold + not_local_max + in_refractory + suppressed_by_prominence + in_refractory_at_release + emitted + pending == judged",
+          "holds": true,
+          "named_outcomes_plus_pending": 12335,
+          "seconds_judged": 12335
+        },
+        "promotion_rate": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 793,
+          "formula": "candidates_emitted / considered",
+          "numerator": 13,
+          "value": 0.016393443
+        },
+        "reconciliation_with_delivered_candidate_rows": {
+          "delivered_not_yet_matched": [
+            1633299044,
+            1633299091,
+            1633299180,
+            1633299265,
+            1633299366,
+            1633299411,
+            1633299486,
+            1633299577,
+            1633299638,
+            1633299685,
+            1633299735,
+            1633299783,
+            1633299838
+          ],
+          "delivered_rows_seen_in_stream": 13,
+          "matched_on_event_second": 13,
+          "own_candidates": 13,
+          "own_only_event_seconds": []
+        },
+        "rejection_share_by_reason": {
+          "rejected_below_threshold": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 793,
+            "formula": "rejected_below_threshold / considered",
+            "numerator": 366,
+            "value": 0.461538462
+          },
+          "rejected_in_refractory": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 793,
+            "formula": "rejected_in_refractory / considered",
+            "numerator": 81,
+            "value": 0.102143758
+          },
+          "rejected_in_refractory_at_release": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 793,
+            "formula": "rejected_in_refractory_at_release / considered",
+            "numerator": 6,
+            "value": 0.007566204
+          },
+          "rejected_not_local_max": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 793,
+            "formula": "rejected_not_local_max / considered",
+            "numerator": 14,
+            "value": 0.017654477
+          },
+          "rejected_zero_magnitude": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 793,
+            "formula": "rejected_zero_magnitude / considered",
+            "numerator": 50,
+            "value": 0.063051702
+          },
+          "suppressed_by_prominence": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 793,
+            "formula": "suppressed_by_prominence / considered",
+            "numerator": 246,
+            "value": 0.310214376
+          }
+        },
+        "result": "COMPUTED",
+        "searched_seconds": 936,
+        "searched_share_of_observed": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 12345,
+          "formula": "searched / seconds_observed",
+          "numerator": 936,
+          "value": 0.07582017
+        },
+        "section": "4.0b",
+        "threshold_crossing_alerts_emitted": 29,
+        "trailing_bar_now": 1.0,
+        "turn": 12,
+        "unit": "DIPOLE_FLOW_EVENT (a locally prominent spike in the per-second roll20 signed aggressor imbalance)"
+      },
+      "cutoff_recv_ns": 1633299950655145332,
+      "entry_hash": "3999a26ec1edb9e8942734d72ffa3e75137d70e8adeeee94d6fb50950a8b9eea",
+      "ledger_id": "contract_section_4.0b",
+      "prev_hash": "768a1e18bed575aad7550af462ac862cdb5539a98ddd45eb213275fe96b8a95f",
+      "sequence": 11
+    },
+    {
+      "body": {
+        "considered_second_events": 1140,
+        "cutoff_is_staged_invocation": true,
+        "detector_counters": {
+          "candidates_emitted": 19,
+          "candidates_pending_in_window": 0,
+          "rejected_below_threshold": 570,
+          "rejected_in_refractory": 95,
+          "rejected_in_refractory_at_release": 6,
+          "rejected_not_local_max": 14,
+          "rejected_zero_magnitude": 58,
+          "seconds_in_warmup": 11399,
+          "seconds_judged": 12705,
+          "seconds_observed": 12715,
+          "seconds_without_finite_flow": 166,
+          "suppressed_by_prominence": 378
+        },
+        "detector_parameters": {
+          "baseline_lag_seconds": 9,
+          "baseline_points": 21,
+          "baseline_start_seconds": 30,
+          "flow_reading": "roll20 = (b-s)/(b+s) over the trailing 20 s inclusive, NaN when the window carries no classified volume",
+          "implementation": "REAL_TIME_FRANKIE's own implementation of the declared rules; reconciled against the delivered candidate rows, never substituted by them",
+          "local_radius_seconds": 5,
+          "min_threshold_observations": 600,
+          "peak_quantile": 0.85,
+          "prominence_rule": "|flow| minus the median of |flow| over t-30..t-10 (21 points), causal",
+          "refractory_seconds": 45,
+          "selection_rule": "CAUSAL_WINDOWED_PROMINENCE",
+          "threshold_observation_cap": 86400,
+          "threshold_rule": "TRAILING_CAUSAL_QUANTILE",
+          "warmup_seconds": 900,
+          "zero_flow_guard": 1e-12
+        },
+        "groups_delivered_at_cutoff": 29654,
+        "member_group_indices": [
+          29634,
+          29635,
+          29636,
+          29637,
+          29638,
+          29639,
+          29640,
+          29641,
+          29642,
+          29643,
+          29644,
+          29645,
+          29646,
+          29647,
+          29648,
+          29649,
+          29650,
+          29651,
+          29652,
+          29653
+        ],
+        "note": "these are counts and ratios of exact counts, never means; promoted is the population 4.10-4.16 report on",
+        "partition_identity": {
+          "formula": "warmup + no_finite_flow + zero_magnitude + below_threshold + not_local_max + in_refractory + suppressed_by_prominence + in_refractory_at_release + emitted + pending == judged",
+          "holds": true,
+          "named_outcomes_plus_pending": 12705,
+          "seconds_judged": 12705
+        },
+        "promotion_rate": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 1140,
+          "formula": "candidates_emitted / considered",
+          "numerator": 19,
+          "value": 0.016666667
+        },
+        "reconciliation_with_delivered_candidate_rows": {
+          "delivered_not_yet_matched": [
+            1633299044,
+            1633299091,
+            1633299180,
+            1633299265,
+            1633299366,
+            1633299411,
+            1633299486,
+            1633299577,
+            1633299638,
+            1633299685,
+            1633299735,
+            1633299783,
+            1633299838,
+            1633299928,
+            1633299973,
+            1633300080,
+            1633300125,
+            1633300191,
+            1633300241
+          ],
+          "delivered_rows_seen_in_stream": 19,
+          "matched_on_event_second": 19,
+          "own_candidates": 19,
+          "own_only_event_seconds": []
+        },
+        "rejection_share_by_reason": {
+          "rejected_below_threshold": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1140,
+            "formula": "rejected_below_threshold / considered",
+            "numerator": 570,
+            "value": 0.5
+          },
+          "rejected_in_refractory": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1140,
+            "formula": "rejected_in_refractory / considered",
+            "numerator": 95,
+            "value": 0.083333333
+          },
+          "rejected_in_refractory_at_release": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1140,
+            "formula": "rejected_in_refractory_at_release / considered",
+            "numerator": 6,
+            "value": 0.005263158
+          },
+          "rejected_not_local_max": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1140,
+            "formula": "rejected_not_local_max / considered",
+            "numerator": 14,
+            "value": 0.012280702
+          },
+          "rejected_zero_magnitude": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1140,
+            "formula": "rejected_zero_magnitude / considered",
+            "numerator": 58,
+            "value": 0.050877193
+          },
+          "suppressed_by_prominence": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1140,
+            "formula": "suppressed_by_prominence / considered",
+            "numerator": 378,
+            "value": 0.331578947
+          }
+        },
+        "result": "COMPUTED",
+        "searched_seconds": 1306,
+        "searched_share_of_observed": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 12715,
+          "formula": "searched / seconds_observed",
+          "numerator": 1306,
+          "value": 0.102713331
+        },
+        "section": "4.0b",
+        "threshold_crossing_alerts_emitted": 40,
+        "trailing_bar_now": 1.0,
+        "turn": 13,
+        "unit": "DIPOLE_FLOW_EVENT (a locally prominent spike in the per-second roll20 signed aggressor imbalance)"
+      },
+      "cutoff_recv_ns": 1633300320102307848,
+      "entry_hash": "d6995733ce1bb5f2a14a202b9a41881f360578aefa78e621f91e3810954922de",
+      "ledger_id": "contract_section_4.0b",
+      "prev_hash": "3999a26ec1edb9e8942734d72ffa3e75137d70e8adeeee94d6fb50950a8b9eea",
+      "sequence": 12
+    },
+    {
+      "body": {
+        "considered_second_events": 1644,
+        "cutoff_is_staged_invocation": true,
+        "detector_counters": {
+          "candidates_emitted": 28,
+          "candidates_pending_in_window": 5,
+          "rejected_below_threshold": 780,
+          "rejected_in_refractory": 125,
+          "rejected_in_refractory_at_release": 8,
+          "rejected_not_local_max": 14,
+          "rejected_zero_magnitude": 70,
+          "seconds_in_warmup": 11399,
+          "seconds_judged": 13290,
+          "seconds_observed": 13300,
+          "seconds_without_finite_flow": 247,
+          "suppressed_by_prominence": 614
+        },
+        "detector_parameters": {
+          "baseline_lag_seconds": 9,
+          "baseline_points": 21,
+          "baseline_start_seconds": 30,
+          "flow_reading": "roll20 = (b-s)/(b+s) over the trailing 20 s inclusive, NaN when the window carries no classified volume",
+          "implementation": "REAL_TIME_FRANKIE's own implementation of the declared rules; reconciled against the delivered candidate rows, never substituted by them",
+          "local_radius_seconds": 5,
+          "min_threshold_observations": 600,
+          "peak_quantile": 0.85,
+          "prominence_rule": "|flow| minus the median of |flow| over t-30..t-10 (21 points), causal",
+          "refractory_seconds": 45,
+          "selection_rule": "CAUSAL_WINDOWED_PROMINENCE",
+          "threshold_observation_cap": 86400,
+          "threshold_rule": "TRAILING_CAUSAL_QUANTILE",
+          "warmup_seconds": 900,
+          "zero_flow_guard": 1e-12
+        },
+        "groups_delivered_at_cutoff": 31935,
+        "member_group_indices": [
+          31915,
+          31916,
+          31917,
+          31918,
+          31919,
+          31920,
+          31921,
+          31922,
+          31923,
+          31924,
+          31925,
+          31926,
+          31927,
+          31928,
+          31929,
+          31930,
+          31931,
+          31932,
+          31933,
+          31934
+        ],
+        "note": "these are counts and ratios of exact counts, never means; promoted is the population 4.10-4.16 report on",
+        "partition_identity": {
+          "formula": "warmup + no_finite_flow + zero_magnitude + below_threshold + not_local_max + in_refractory + suppressed_by_prominence + in_refractory_at_release + emitted + pending == judged",
+          "holds": true,
+          "named_outcomes_plus_pending": 13290,
+          "seconds_judged": 13290
+        },
+        "promotion_rate": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 1644,
+          "formula": "candidates_emitted / considered",
+          "numerator": 28,
+          "value": 0.01703163
+        },
+        "reconciliation_with_delivered_candidate_rows": {
+          "delivered_not_yet_matched": [
+            1633299044,
+            1633299091,
+            1633299180,
+            1633299265,
+            1633299366,
+            1633299411,
+            1633299486,
+            1633299577,
+            1633299638,
+            1633299685,
+            1633299735,
+            1633299783,
+            1633299838,
+            1633299928,
+            1633299973,
+            1633300080,
+            1633300125,
+            1633300191,
+            1633300241,
+            1633300363
+          ],
+          "delivered_rows_seen_in_stream": 28,
+          "matched_on_event_second": 28,
+          "own_candidates": 28,
+          "own_only_event_seconds": []
+        },
+        "rejection_share_by_reason": {
+          "rejected_below_threshold": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1644,
+            "formula": "rejected_below_threshold / considered",
+            "numerator": 780,
+            "value": 0.474452555
+          },
+          "rejected_in_refractory": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1644,
+            "formula": "rejected_in_refractory / considered",
+            "numerator": 125,
+            "value": 0.076034063
+          },
+          "rejected_in_refractory_at_release": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1644,
+            "formula": "rejected_in_refractory_at_release / considered",
+            "numerator": 8,
+            "value": 0.00486618
+          },
+          "rejected_not_local_max": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1644,
+            "formula": "rejected_not_local_max / considered",
+            "numerator": 14,
+            "value": 0.008515815
+          },
+          "rejected_zero_magnitude": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1644,
+            "formula": "rejected_zero_magnitude / considered",
+            "numerator": 70,
+            "value": 0.042579075
+          },
+          "suppressed_by_prominence": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 1644,
+            "formula": "suppressed_by_prominence / considered",
+            "numerator": 614,
+            "value": 0.373479319
+          }
+        },
+        "result": "COMPUTED",
+        "searched_seconds": 1891,
+        "searched_share_of_observed": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 13300,
+          "formula": "searched / seconds_observed",
+          "numerator": 1891,
+          "value": 0.142180451
+        },
+        "section": "4.0b",
+        "threshold_crossing_alerts_emitted": 55,
+        "trailing_bar_now": 1.0,
+        "turn": 14,
+        "unit": "DIPOLE_FLOW_EVENT (a locally prominent spike in the per-second roll20 signed aggressor imbalance)"
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "756cd07e16a2430315b636abd87fb3c77485812cbce527710e0ccf1f1cc3d258",
+      "ledger_id": "contract_section_4.0b",
+      "prev_hash": "d6995733ce1bb5f2a14a202b9a41881f360578aefa78e621f91e3810954922de",
+      "sequence": 13
+    },
+    {
+      "body": {
+        "considered_second_events": 2008,
+        "cutoff_is_staged_invocation": true,
+        "detector_counters": {
+          "candidates_emitted": 34,
+          "candidates_pending_in_window": 12,
+          "rejected_below_threshold": 964,
+          "rejected_in_refractory": 135,
+          "rejected_in_refractory_at_release": 8,
+          "rejected_not_local_max": 14,
+          "rejected_zero_magnitude": 105,
+          "seconds_in_warmup": 11399,
+          "seconds_judged": 13700,
+          "seconds_observed": 13710,
+          "seconds_without_finite_flow": 293,
+          "suppressed_by_prominence": 736
+        },
+        "detector_parameters": {
+          "baseline_lag_seconds": 9,
+          "baseline_points": 21,
+          "baseline_start_seconds": 30,
+          "flow_reading": "roll20 = (b-s)/(b+s) over the trailing 20 s inclusive, NaN when the window carries no classified volume",
+          "implementation": "REAL_TIME_FRANKIE's own implementation of the declared rules; reconciled against the delivered candidate rows, never substituted by them",
+          "local_radius_seconds": 5,
+          "min_threshold_observations": 600,
+          "peak_quantile": 0.85,
+          "prominence_rule": "|flow| minus the median of |flow| over t-30..t-10 (21 points), causal",
+          "refractory_seconds": 45,
+          "selection_rule": "CAUSAL_WINDOWED_PROMINENCE",
+          "threshold_observation_cap": 86400,
+          "threshold_rule": "TRAILING_CAUSAL_QUANTILE",
+          "warmup_seconds": 900,
+          "zero_flow_guard": 1e-12
+        },
+        "groups_delivered_at_cutoff": 34216,
+        "member_group_indices": [
+          34196,
+          34197,
+          34198,
+          34199,
+          34200,
+          34201,
+          34202,
+          34203,
+          34204,
+          34205,
+          34206,
+          34207,
+          34208,
+          34209,
+          34210,
+          34211,
+          34212,
+          34213,
+          34214,
+          34215
+        ],
+        "note": "these are counts and ratios of exact counts, never means; promoted is the population 4.10-4.16 report on",
+        "partition_identity": {
+          "formula": "warmup + no_finite_flow + zero_magnitude + below_threshold + not_local_max + in_refractory + suppressed_by_prominence + in_refractory_at_release + emitted + pending == judged",
+          "holds": true,
+          "named_outcomes_plus_pending": 13700,
+          "seconds_judged": 13700
+        },
+        "promotion_rate": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 2008,
+          "formula": "candidates_emitted / considered",
+          "numerator": 34,
+          "value": 0.016932271
+        },
+        "reconciliation_with_delivered_candidate_rows": {
+          "delivered_not_yet_matched": [
+            1633299044,
+            1633299091,
+            1633299180,
+            1633299265,
+            1633299366,
+            1633299411,
+            1633299486,
+            1633299577,
+            1633299638,
+            1633299685,
+            1633299735,
+            1633299783,
+            1633299838,
+            1633299928,
+            1633299973,
+            1633300080,
+            1633300125,
+            1633300191,
+            1633300241,
+            1633300363
+          ],
+          "delivered_rows_seen_in_stream": 34,
+          "matched_on_event_second": 34,
+          "own_candidates": 34,
+          "own_only_event_seconds": []
+        },
+        "rejection_share_by_reason": {
+          "rejected_below_threshold": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 2008,
+            "formula": "rejected_below_threshold / considered",
+            "numerator": 964,
+            "value": 0.480079681
+          },
+          "rejected_in_refractory": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 2008,
+            "formula": "rejected_in_refractory / considered",
+            "numerator": 135,
+            "value": 0.067231076
+          },
+          "rejected_in_refractory_at_release": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 2008,
+            "formula": "rejected_in_refractory_at_release / considered",
+            "numerator": 8,
+            "value": 0.003984064
+          },
+          "rejected_not_local_max": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 2008,
+            "formula": "rejected_not_local_max / considered",
+            "numerator": 14,
+            "value": 0.006972112
+          },
+          "rejected_zero_magnitude": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 2008,
+            "formula": "rejected_zero_magnitude / considered",
+            "numerator": 105,
+            "value": 0.052290837
+          },
+          "suppressed_by_prominence": {
+            "basis": "RATIO_OF_EXACT_COUNTS",
+            "denominator": 2008,
+            "formula": "suppressed_by_prominence / considered",
+            "numerator": 736,
+            "value": 0.366533865
+          }
+        },
+        "result": "COMPUTED",
+        "searched_seconds": 2301,
+        "searched_share_of_observed": {
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "denominator": 13710,
+          "formula": "searched / seconds_observed",
+          "numerator": 2301,
+          "value": 0.167833698
+        },
+        "section": "4.0b",
+        "threshold_crossing_alerts_emitted": 65,
+        "trailing_bar_now": 1.0,
+        "turn": 15,
+        "unit": "DIPOLE_FLOW_EVENT (a locally prominent spike in the per-second roll20 signed aggressor imbalance)"
+      },
+      "cutoff_recv_ns": 1633301315945525951,
+      "entry_hash": "6384ba2ffdbf38c86d5d791602831c0f227e129ddcfe5e8bb1eb2e34c6aceb20",
+      "ledger_id": "contract_section_4.0b",
+      "prev_hash": "756cd07e16a2430315b636abd87fb3c77485812cbce527710e0ccf1f1cc3d258",
+      "sequence": 14
     }
   ],
-  "head_hash": "8dd219bd0c82d97aaae8378e93585348c6f5a11a456c5b1779cad6f41a13905a",
+  "head_hash": "6384ba2ffdbf38c86d5d791602831c0f227e129ddcfe5e8bb1eb2e34c6aceb20",
   "ledger_id": "contract_section_4.0b"
 }

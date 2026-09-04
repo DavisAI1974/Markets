@@ -168,8 +168,1847 @@
       "ledger_id": "contract_section_4.13",
       "prev_hash": "1a2cb51df35c2d6dbe377510a0a698d8e194a883f7d7075a6d3a8d1d79a6f69a",
       "sequence": 6
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298727046687558
+        },
+        "cutoff_is_staged_invocation": true,
+        "delivered_lineage_rows_attached_so_far": 0,
+        "groups_delivered_at_cutoff": 18249,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate promoted yet, so no exhaustion lineage node exists"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.13",
+        "turn": 8
+      },
+      "cutoff_recv_ns": 1633298727046687558,
+      "entry_hash": "1408787e4311d53bf331162993c1fcc7d042340e298cd6ce5d14ccef33e29a4f",
+      "ledger_id": "contract_section_4.13",
+      "prev_hash": "ccb8f04de45dbce39ef13fef525ae8b7c5781048311de18a308cccebe025178a",
+      "sequence": 7
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298843554132312
+        },
+        "cutoff_is_staged_invocation": true,
+        "delivered_lineage_rows_attached_so_far": 0,
+        "groups_delivered_at_cutoff": 20530,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate promoted yet, so no exhaustion lineage node exists"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.13",
+        "turn": 9
+      },
+      "cutoff_recv_ns": 1633298843554132312,
+      "entry_hash": "52477b29b5ebcd8c7eaab79d2466aaaa9958aaf0bb00712af937bf9afb8a38f0",
+      "ledger_id": "contract_section_4.13",
+      "prev_hash": "1408787e4311d53bf331162993c1fcc7d042340e298cd6ce5d14ccef33e29a4f",
+      "sequence": 8
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298998928924813
+        },
+        "cutoff_is_staged_invocation": true,
+        "delivered_lineage_rows_attached_so_far": 0,
+        "groups_delivered_at_cutoff": 22811,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate promoted yet, so no exhaustion lineage node exists"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.13",
+        "turn": 10
+      },
+      "cutoff_recv_ns": 1633298998928924813,
+      "entry_hash": "7961ad4c6c80421ac5668c8792001a5a6b6604bac730b68898232d4ae55c7e83",
+      "ledger_id": "contract_section_4.13",
+      "prev_hash": "52477b29b5ebcd8c7eaab79d2466aaaa9958aaf0bb00712af937bf9afb8a38f0",
+      "sequence": 9
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299505523516424,
+              "denominator": 1,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 47.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=FLIP; parent_status=COMPLETED_BY_OPPOSITE_CANDIDATE"
+            },
+            "value": 47.0
+          }
+        ],
+        "chains_exact": [
+          {
+            "candidate_id": "frk-dip-18904-1633299044",
+            "children": [
+              "frk-dip-18904-1633299091"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299091",
+            "children": [],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633299044",
+            "polarity": 1,
+            "status": "COMPLETED_DECAY",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299180",
+            "children": [],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299265",
+            "children": [],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299366",
+            "children": [],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299411",
+            "children": [],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": 1,
+            "status": "OPEN",
+            "transition": null
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "delivered_lineage_rows_attached_so_far": 0,
+        "depth_distribution": {
+          "D0": 5,
+          "D1": 1
+        },
+        "descendants": 1,
+        "groups_delivered_at_cutoff": 25092,
+        "lineage_rule": "D is exhaustion-chain depth on the candidate unit: a candidate born while an earlier candidate's runway is still OPEN is that runway's qualifying successor (D = parent D + 1); transition SAME/FLIP by polarity; the parent runway closes as EXTENDED_BY_SUCCESSOR (SAME) or COMPLETED_BY_OPPOSITE_CANDIDATE (FLIP); no maximum depth; roots with no successor are D0 and are OPEN, COMPLETED or CENSORED at the stream end",
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763
+        ],
+        "nodes": 6,
+        "observed_max_depth": 1,
+        "result": "COMPUTED",
+        "roots": 5,
+        "section": "4.13",
+        "status_counts": {
+          "COMPLETED_BY_OPPOSITE_CANDIDATE": 1,
+          "COMPLETED_DECAY": 4,
+          "OPEN": 1
+        },
+        "strata": [
+          {
+            "interstage_delay_seconds": {
+              "max": 47,
+              "mean": 47.0,
+              "min": 47,
+              "n": 1,
+              "p10": 47,
+              "p25": 47,
+              "p50": 47,
+              "p75": 47,
+              "p90": 47,
+              "p99": 47,
+              "sum": 47.0
+            },
+            "n": 1,
+            "parent_depths": {
+              "0": 1
+            },
+            "parent_status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "polarity": 1,
+            "transition": "FLIP"
+          }
+        ],
+        "transition_counts": {
+          "FLIP": 1
+        },
+        "turn": 11
+      },
+      "cutoff_recv_ns": 1633299505523516424,
+      "entry_hash": "cc3b2ce9921d0fc392a4573e084f16e7569867e5bf10c0eb4b4e77b881c4267f",
+      "ledger_id": "contract_section_4.13",
+      "prev_hash": "7961ad4c6c80421ac5668c8792001a5a6b6604bac730b68898232d4ae55c7e83",
+      "sequence": 10
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299950655145332,
+              "denominator": 3,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 186.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=FLIP; parent_status=COMPLETED_BY_OPPOSITE_CANDIDATE"
+            },
+            "value": 62.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299950655145332,
+              "denominator": 2,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 130.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=-1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=FLIP; parent_status=COMPLETED_BY_OPPOSITE_CANDIDATE"
+            },
+            "value": 65.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299950655145332,
+              "denominator": 2,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 97.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=-1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=SAME; parent_status=EXTENDED_BY_SUCCESSOR"
+            },
+            "value": 48.5
+          }
+        ],
+        "chains_exact": [
+          {
+            "candidate_id": "frk-dip-18904-1633299044",
+            "children": [
+              "frk-dip-18904-1633299091"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299091",
+            "children": [],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633299044",
+            "polarity": 1,
+            "status": "COMPLETED_DECAY",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299180",
+            "children": [],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299265",
+            "children": [],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299366",
+            "children": [],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299411",
+            "children": [
+              "frk-dip-18904-1633299486"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": 1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299486",
+            "children": [
+              "frk-dip-18904-1633299577"
+            ],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633299411",
+            "polarity": -1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299577",
+            "children": [],
+            "depth": 2,
+            "parent_id": "frk-dip-18904-1633299486",
+            "polarity": 1,
+            "status": "COMPLETED_DECAY",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299638",
+            "children": [
+              "frk-dip-18904-1633299685"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299685",
+            "children": [
+              "frk-dip-18904-1633299735"
+            ],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633299638",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299735",
+            "children": [
+              "frk-dip-18904-1633299783"
+            ],
+            "depth": 2,
+            "parent_id": "frk-dip-18904-1633299685",
+            "polarity": -1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299783",
+            "children": [
+              "frk-dip-18904-1633299838"
+            ],
+            "depth": 3,
+            "parent_id": "frk-dip-18904-1633299735",
+            "polarity": 1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299838",
+            "children": [],
+            "depth": 4,
+            "parent_id": "frk-dip-18904-1633299783",
+            "polarity": -1,
+            "status": "OPEN",
+            "transition": "FLIP"
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "delivered_lineage_rows_attached_so_far": 0,
+        "depth_distribution": {
+          "D0": 6,
+          "D1": 3,
+          "D2": 2,
+          "D3": 1,
+          "D4": 1
+        },
+        "descendants": 7,
+        "groups_delivered_at_cutoff": 27373,
+        "lineage_rule": "D is exhaustion-chain depth on the candidate unit: a candidate born while an earlier candidate's runway is still OPEN is that runway's qualifying successor (D = parent D + 1); transition SAME/FLIP by polarity; the parent runway closes as EXTENDED_BY_SUCCESSOR (SAME) or COMPLETED_BY_OPPOSITE_CANDIDATE (FLIP); no maximum depth; roots with no successor are D0 and are OPEN, COMPLETED or CENSORED at the stream end",
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "nodes": 13,
+        "observed_max_depth": 4,
+        "result": "COMPUTED",
+        "roots": 6,
+        "section": "4.13",
+        "status_counts": {
+          "COMPLETED_BY_OPPOSITE_CANDIDATE": 5,
+          "COMPLETED_DECAY": 5,
+          "EXTENDED_BY_SUCCESSOR": 2,
+          "OPEN": 1
+        },
+        "strata": [
+          {
+            "interstage_delay_seconds": {
+              "max": 91,
+              "mean": 62.0,
+              "min": 47,
+              "n": 3,
+              "p10": 47,
+              "p25": 48,
+              "p50": 48,
+              "p75": 91,
+              "p90": 91,
+              "p99": 91,
+              "sum": 186.0
+            },
+            "n": 3,
+            "parent_depths": {
+              "0": 1,
+              "1": 1,
+              "2": 1
+            },
+            "parent_status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "polarity": 1,
+            "transition": "FLIP"
+          },
+          {
+            "interstage_delay_seconds": {
+              "max": 75,
+              "mean": 65.0,
+              "min": 55,
+              "n": 2,
+              "p10": 55,
+              "p25": 55,
+              "p50": 75,
+              "p75": 75,
+              "p90": 75,
+              "p99": 75,
+              "sum": 130.0
+            },
+            "n": 2,
+            "parent_depths": {
+              "0": 1,
+              "3": 1
+            },
+            "parent_status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "polarity": -1,
+            "transition": "FLIP"
+          },
+          {
+            "interstage_delay_seconds": {
+              "max": 50,
+              "mean": 48.5,
+              "min": 47,
+              "n": 2,
+              "p10": 47,
+              "p25": 47,
+              "p50": 50,
+              "p75": 50,
+              "p90": 50,
+              "p99": 50,
+              "sum": 97.0
+            },
+            "n": 2,
+            "parent_depths": {
+              "0": 1,
+              "1": 1
+            },
+            "parent_status": "EXTENDED_BY_SUCCESSOR",
+            "polarity": -1,
+            "transition": "SAME"
+          }
+        ],
+        "transition_counts": {
+          "FLIP": 5,
+          "SAME": 2
+        },
+        "turn": 12
+      },
+      "cutoff_recv_ns": 1633299950655145332,
+      "entry_hash": "0d4827ac6e98d7c8b5799b30975f53efe548696f3c540923f9ffca65ae34a89e",
+      "ledger_id": "contract_section_4.13",
+      "prev_hash": "cc3b2ce9921d0fc392a4573e084f16e7569867e5bf10c0eb4b4e77b881c4267f",
+      "sequence": 11
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300320102307848,
+              "denominator": 4,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 231.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=FLIP; parent_status=COMPLETED_BY_OPPOSITE_CANDIDATE"
+            },
+            "value": 57.75
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300320102307848,
+              "denominator": 4,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 253.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=-1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=SAME; parent_status=EXTENDED_BY_SUCCESSOR"
+            },
+            "value": 63.25
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300320102307848,
+              "denominator": 3,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 175.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=-1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=FLIP; parent_status=COMPLETED_BY_OPPOSITE_CANDIDATE"
+            },
+            "value": 58.333333333
+          }
+        ],
+        "chains_exact": [
+          {
+            "candidate_id": "frk-dip-18904-1633299366",
+            "children": [],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299411",
+            "children": [
+              "frk-dip-18904-1633299486"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": 1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299486",
+            "children": [
+              "frk-dip-18904-1633299577"
+            ],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633299411",
+            "polarity": -1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299577",
+            "children": [],
+            "depth": 2,
+            "parent_id": "frk-dip-18904-1633299486",
+            "polarity": 1,
+            "status": "COMPLETED_DECAY",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299638",
+            "children": [
+              "frk-dip-18904-1633299685"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299685",
+            "children": [
+              "frk-dip-18904-1633299735"
+            ],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633299638",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299735",
+            "children": [
+              "frk-dip-18904-1633299783"
+            ],
+            "depth": 2,
+            "parent_id": "frk-dip-18904-1633299685",
+            "polarity": -1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299783",
+            "children": [
+              "frk-dip-18904-1633299838"
+            ],
+            "depth": 3,
+            "parent_id": "frk-dip-18904-1633299735",
+            "polarity": 1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299838",
+            "children": [
+              "frk-dip-18904-1633299928"
+            ],
+            "depth": 4,
+            "parent_id": "frk-dip-18904-1633299783",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299928",
+            "children": [
+              "frk-dip-18904-1633299973"
+            ],
+            "depth": 5,
+            "parent_id": "frk-dip-18904-1633299838",
+            "polarity": -1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299973",
+            "children": [],
+            "depth": 6,
+            "parent_id": "frk-dip-18904-1633299928",
+            "polarity": 1,
+            "status": "COMPLETED_DECAY",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300080",
+            "children": [
+              "frk-dip-18904-1633300125"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": 1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300125",
+            "children": [
+              "frk-dip-18904-1633300191"
+            ],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633300080",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300191",
+            "children": [],
+            "depth": 2,
+            "parent_id": "frk-dip-18904-1633300125",
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300241",
+            "children": [],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "OPEN",
+            "transition": null
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "delivered_lineage_rows_attached_so_far": 0,
+        "depth_distribution": {
+          "D0": 8,
+          "D1": 4,
+          "D2": 3,
+          "D3": 1,
+          "D4": 1,
+          "D5": 1,
+          "D6": 1
+        },
+        "descendants": 11,
+        "groups_delivered_at_cutoff": 29654,
+        "lineage_rule": "D is exhaustion-chain depth on the candidate unit: a candidate born while an earlier candidate's runway is still OPEN is that runway's qualifying successor (D = parent D + 1); transition SAME/FLIP by polarity; the parent runway closes as EXTENDED_BY_SUCCESSOR (SAME) or COMPLETED_BY_OPPOSITE_CANDIDATE (FLIP); no maximum depth; roots with no successor are D0 and are OPEN, COMPLETED or CENSORED at the stream end",
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "nodes": 19,
+        "observed_max_depth": 6,
+        "result": "COMPUTED",
+        "roots": 8,
+        "section": "4.13",
+        "status_counts": {
+          "COMPLETED_BY_OPPOSITE_CANDIDATE": 7,
+          "COMPLETED_DECAY": 7,
+          "EXTENDED_BY_SUCCESSOR": 4,
+          "OPEN": 1
+        },
+        "strata": [
+          {
+            "interstage_delay_seconds": {
+              "max": 91,
+              "mean": 57.75,
+              "min": 45,
+              "n": 4,
+              "p10": 45,
+              "p25": 47,
+              "p50": 48,
+              "p75": 48,
+              "p90": 91,
+              "p99": 91,
+              "sum": 231.0
+            },
+            "n": 4,
+            "parent_depths": {
+              "0": 1,
+              "1": 1,
+              "2": 1,
+              "5": 1
+            },
+            "parent_status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "polarity": 1,
+            "transition": "FLIP"
+          },
+          {
+            "interstage_delay_seconds": {
+              "max": 90,
+              "mean": 63.25,
+              "min": 47,
+              "n": 4,
+              "p10": 47,
+              "p25": 50,
+              "p50": 66,
+              "p75": 66,
+              "p90": 90,
+              "p99": 90,
+              "sum": 253.0
+            },
+            "n": 4,
+            "parent_depths": {
+              "0": 1,
+              "1": 2,
+              "4": 1
+            },
+            "parent_status": "EXTENDED_BY_SUCCESSOR",
+            "polarity": -1,
+            "transition": "SAME"
+          },
+          {
+            "interstage_delay_seconds": {
+              "max": 75,
+              "mean": 58.333333333,
+              "min": 45,
+              "n": 3,
+              "p10": 45,
+              "p25": 55,
+              "p50": 55,
+              "p75": 75,
+              "p90": 75,
+              "p99": 75,
+              "sum": 175.0
+            },
+            "n": 3,
+            "parent_depths": {
+              "0": 2,
+              "3": 1
+            },
+            "parent_status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "polarity": -1,
+            "transition": "FLIP"
+          }
+        ],
+        "transition_counts": {
+          "FLIP": 7,
+          "SAME": 4
+        },
+        "turn": 13
+      },
+      "cutoff_recv_ns": 1633300320102307848,
+      "entry_hash": "ba78ea93fddc71e4c70a3f7382a2c6e27ab55f34e355eef9e4816fb0f13eb395",
+      "ledger_id": "contract_section_4.13",
+      "prev_hash": "0d4827ac6e98d7c8b5799b30975f53efe548696f3c540923f9ffca65ae34a89e",
+      "sequence": 12
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300905784605734,
+              "denominator": 9,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 605.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=-1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=SAME; parent_status=EXTENDED_BY_SUCCESSOR"
+            },
+            "value": 67.222222222
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300905784605734,
+              "denominator": 4,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 231.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=FLIP; parent_status=COMPLETED_BY_OPPOSITE_CANDIDATE"
+            },
+            "value": 57.75
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300905784605734,
+              "denominator": 4,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 243.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=-1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=FLIP; parent_status=COMPLETED_BY_OPPOSITE_CANDIDATE"
+            },
+            "value": 60.75
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300905784605734,
+              "denominator": 1,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 54.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=SAME; parent_status=EXTENDED_BY_SUCCESSOR"
+            },
+            "value": 54.0
+          }
+        ],
+        "chains_exact": [
+          {
+            "candidate_id": "frk-dip-18904-1633299928",
+            "children": [
+              "frk-dip-18904-1633299973"
+            ],
+            "depth": 5,
+            "parent_id": "frk-dip-18904-1633299838",
+            "polarity": -1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633299973",
+            "children": [],
+            "depth": 6,
+            "parent_id": "frk-dip-18904-1633299928",
+            "polarity": 1,
+            "status": "COMPLETED_DECAY",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300080",
+            "children": [
+              "frk-dip-18904-1633300125"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": 1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300125",
+            "children": [
+              "frk-dip-18904-1633300191"
+            ],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633300080",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300191",
+            "children": [],
+            "depth": 2,
+            "parent_id": "frk-dip-18904-1633300125",
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300241",
+            "children": [
+              "frk-dip-18904-1633300363"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300363",
+            "children": [],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633300241",
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300434",
+            "children": [
+              "frk-dip-18904-1633300502"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": 1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300502",
+            "children": [
+              "frk-dip-18904-1633300567"
+            ],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633300434",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300567",
+            "children": [
+              "frk-dip-18904-1633300616"
+            ],
+            "depth": 2,
+            "parent_id": "frk-dip-18904-1633300502",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300616",
+            "children": [
+              "frk-dip-18904-1633300666"
+            ],
+            "depth": 3,
+            "parent_id": "frk-dip-18904-1633300567",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300666",
+            "children": [
+              "frk-dip-18904-1633300732"
+            ],
+            "depth": 4,
+            "parent_id": "frk-dip-18904-1633300616",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300732",
+            "children": [],
+            "depth": 5,
+            "parent_id": "frk-dip-18904-1633300666",
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300777",
+            "children": [
+              "frk-dip-18904-1633300831"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": 1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300831",
+            "children": [],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633300777",
+            "polarity": 1,
+            "status": "OPEN",
+            "transition": "SAME"
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "delivered_lineage_rows_attached_so_far": 0,
+        "depth_distribution": {
+          "D0": 10,
+          "D1": 7,
+          "D2": 4,
+          "D3": 2,
+          "D4": 2,
+          "D5": 2,
+          "D6": 1
+        },
+        "descendants": 18,
+        "groups_delivered_at_cutoff": 31935,
+        "lineage_rule": "D is exhaustion-chain depth on the candidate unit: a candidate born while an earlier candidate's runway is still OPEN is that runway's qualifying successor (D = parent D + 1); transition SAME/FLIP by polarity; the parent runway closes as EXTENDED_BY_SUCCESSOR (SAME) or COMPLETED_BY_OPPOSITE_CANDIDATE (FLIP); no maximum depth; roots with no successor are D0 and are OPEN, COMPLETED or CENSORED at the stream end",
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "nodes": 28,
+        "observed_max_depth": 6,
+        "result": "COMPUTED",
+        "roots": 10,
+        "section": "4.13",
+        "status_counts": {
+          "COMPLETED_BY_OPPOSITE_CANDIDATE": 8,
+          "COMPLETED_DECAY": 9,
+          "EXTENDED_BY_SUCCESSOR": 10,
+          "OPEN": 1
+        },
+        "strata": [
+          {
+            "interstage_delay_seconds": {
+              "max": 122,
+              "mean": 67.222222222,
+              "min": 47,
+              "n": 9,
+              "p10": 49,
+              "p25": 50,
+              "p50": 65,
+              "p75": 66,
+              "p90": 90,
+              "p99": 122,
+              "sum": 605.0
+            },
+            "n": 9,
+            "parent_depths": {
+              "0": 2,
+              "1": 3,
+              "2": 1,
+              "3": 1,
+              "4": 2
+            },
+            "parent_status": "EXTENDED_BY_SUCCESSOR",
+            "polarity": -1,
+            "transition": "SAME"
+          },
+          {
+            "interstage_delay_seconds": {
+              "max": 91,
+              "mean": 57.75,
+              "min": 45,
+              "n": 4,
+              "p10": 45,
+              "p25": 47,
+              "p50": 48,
+              "p75": 48,
+              "p90": 91,
+              "p99": 91,
+              "sum": 231.0
+            },
+            "n": 4,
+            "parent_depths": {
+              "0": 1,
+              "1": 1,
+              "2": 1,
+              "5": 1
+            },
+            "parent_status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "polarity": 1,
+            "transition": "FLIP"
+          },
+          {
+            "interstage_delay_seconds": {
+              "max": 75,
+              "mean": 60.75,
+              "min": 45,
+              "n": 4,
+              "p10": 45,
+              "p25": 55,
+              "p50": 68,
+              "p75": 68,
+              "p90": 75,
+              "p99": 75,
+              "sum": 243.0
+            },
+            "n": 4,
+            "parent_depths": {
+              "0": 3,
+              "3": 1
+            },
+            "parent_status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "polarity": -1,
+            "transition": "FLIP"
+          },
+          {
+            "interstage_delay_seconds": {
+              "max": 54,
+              "mean": 54.0,
+              "min": 54,
+              "n": 1,
+              "p10": 54,
+              "p25": 54,
+              "p50": 54,
+              "p75": 54,
+              "p90": 54,
+              "p99": 54,
+              "sum": 54.0
+            },
+            "n": 1,
+            "parent_depths": {
+              "0": 1
+            },
+            "parent_status": "EXTENDED_BY_SUCCESSOR",
+            "polarity": 1,
+            "transition": "SAME"
+          }
+        ],
+        "transition_counts": {
+          "FLIP": 8,
+          "SAME": 10
+        },
+        "turn": 14
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "0cb91e7a79b64acdb2137057fa7230e8d2c7fba04600e68412aa6a4d18399a49",
+      "ledger_id": "contract_section_4.13",
+      "prev_hash": "ba78ea93fddc71e4c70a3f7382a2c6e27ab55f34e355eef9e4816fb0f13eb395",
+      "sequence": 13
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633301315945525951,
+              "denominator": 10,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 669.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=-1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=SAME; parent_status=EXTENDED_BY_SUCCESSOR"
+            },
+            "value": 66.9
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633301315945525951,
+              "denominator": 6,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 338.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=FLIP; parent_status=COMPLETED_BY_OPPOSITE_CANDIDATE"
+            },
+            "value": 56.333333333
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633301315945525951,
+              "denominator": 4,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 243.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=-1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=FLIP; parent_status=COMPLETED_BY_OPPOSITE_CANDIDATE"
+            },
+            "value": 60.75
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633301315945525951,
+              "denominator": 2,
+              "family": "EXHAUSTION_CHAIN_CANDIDATE_LINEAGE",
+              "formula": "sum(child event second - parent event second) / descendants",
+              "inclusion_rule": "descendants only",
+              "missingness_rule": "roots have no interstage delay and are excluded by construction",
+              "numerator": 99.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "descendants in stratum",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "polarity=1",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "transition=SAME; parent_status=EXTENDED_BY_SUCCESSOR"
+            },
+            "value": 49.5
+          }
+        ],
+        "chains_exact": [
+          {
+            "candidate_id": "frk-dip-18904-1633300363",
+            "children": [],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633300241",
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300434",
+            "children": [
+              "frk-dip-18904-1633300502"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": 1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300502",
+            "children": [
+              "frk-dip-18904-1633300567"
+            ],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633300434",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300567",
+            "children": [
+              "frk-dip-18904-1633300616"
+            ],
+            "depth": 2,
+            "parent_id": "frk-dip-18904-1633300502",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300616",
+            "children": [
+              "frk-dip-18904-1633300666"
+            ],
+            "depth": 3,
+            "parent_id": "frk-dip-18904-1633300567",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300666",
+            "children": [
+              "frk-dip-18904-1633300732"
+            ],
+            "depth": 4,
+            "parent_id": "frk-dip-18904-1633300616",
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300732",
+            "children": [],
+            "depth": 5,
+            "parent_id": "frk-dip-18904-1633300666",
+            "polarity": -1,
+            "status": "COMPLETED_DECAY",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300777",
+            "children": [
+              "frk-dip-18904-1633300831"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": 1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300831",
+            "children": [],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633300777",
+            "polarity": 1,
+            "status": "COMPLETED_DECAY",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300912",
+            "children": [
+              "frk-dip-18904-1633300962"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633300962",
+            "children": [
+              "frk-dip-18904-1633301007"
+            ],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633300912",
+            "polarity": 1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": "FLIP"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633301007",
+            "children": [],
+            "depth": 2,
+            "parent_id": "frk-dip-18904-1633300962",
+            "polarity": 1,
+            "status": "COMPLETED_DECAY",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633301080",
+            "children": [
+              "frk-dip-18904-1633301144"
+            ],
+            "depth": 0,
+            "parent_id": null,
+            "polarity": -1,
+            "status": "EXTENDED_BY_SUCCESSOR",
+            "transition": null
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633301144",
+            "children": [
+              "frk-dip-18904-1633301201"
+            ],
+            "depth": 1,
+            "parent_id": "frk-dip-18904-1633301080",
+            "polarity": -1,
+            "status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "transition": "SAME"
+          },
+          {
+            "candidate_id": "frk-dip-18904-1633301201",
+            "children": [],
+            "depth": 2,
+            "parent_id": "frk-dip-18904-1633301144",
+            "polarity": 1,
+            "status": "OPEN",
+            "transition": "FLIP"
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "delivered_lineage_rows_attached_so_far": 0,
+        "depth_distribution": {
+          "D0": 12,
+          "D1": 9,
+          "D2": 6,
+          "D3": 2,
+          "D4": 2,
+          "D5": 2,
+          "D6": 1
+        },
+        "descendants": 22,
+        "groups_delivered_at_cutoff": 34216,
+        "lineage_rule": "D is exhaustion-chain depth on the candidate unit: a candidate born while an earlier candidate's runway is still OPEN is that runway's qualifying successor (D = parent D + 1); transition SAME/FLIP by polarity; the parent runway closes as EXTENDED_BY_SUCCESSOR (SAME) or COMPLETED_BY_OPPOSITE_CANDIDATE (FLIP); no maximum depth; roots with no successor are D0 and are OPEN, COMPLETED or CENSORED at the stream end",
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "nodes": 34,
+        "observed_max_depth": 6,
+        "result": "COMPUTED",
+        "roots": 12,
+        "section": "4.13",
+        "status_counts": {
+          "COMPLETED_BY_OPPOSITE_CANDIDATE": 10,
+          "COMPLETED_DECAY": 11,
+          "EXTENDED_BY_SUCCESSOR": 12,
+          "OPEN": 1
+        },
+        "strata": [
+          {
+            "interstage_delay_seconds": {
+              "max": 122,
+              "mean": 66.9,
+              "min": 47,
+              "n": 10,
+              "p10": 49,
+              "p25": 50,
+              "p50": 65,
+              "p75": 66,
+              "p90": 90,
+              "p99": 122,
+              "sum": 669.0
+            },
+            "n": 10,
+            "parent_depths": {
+              "0": 3,
+              "1": 3,
+              "2": 1,
+              "3": 1,
+              "4": 2
+            },
+            "parent_status": "EXTENDED_BY_SUCCESSOR",
+            "polarity": -1,
+            "transition": "SAME"
+          },
+          {
+            "interstage_delay_seconds": {
+              "max": 91,
+              "mean": 56.333333333,
+              "min": 45,
+              "n": 6,
+              "p10": 47,
+              "p25": 47,
+              "p50": 50,
+              "p75": 57,
+              "p90": 91,
+              "p99": 91,
+              "sum": 338.0
+            },
+            "n": 6,
+            "parent_depths": {
+              "0": 2,
+              "1": 2,
+              "2": 1,
+              "5": 1
+            },
+            "parent_status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "polarity": 1,
+            "transition": "FLIP"
+          },
+          {
+            "interstage_delay_seconds": {
+              "max": 75,
+              "mean": 60.75,
+              "min": 45,
+              "n": 4,
+              "p10": 45,
+              "p25": 55,
+              "p50": 68,
+              "p75": 68,
+              "p90": 75,
+              "p99": 75,
+              "sum": 243.0
+            },
+            "n": 4,
+            "parent_depths": {
+              "0": 3,
+              "3": 1
+            },
+            "parent_status": "COMPLETED_BY_OPPOSITE_CANDIDATE",
+            "polarity": -1,
+            "transition": "FLIP"
+          },
+          {
+            "interstage_delay_seconds": {
+              "max": 54,
+              "mean": 49.5,
+              "min": 45,
+              "n": 2,
+              "p10": 45,
+              "p25": 45,
+              "p50": 54,
+              "p75": 54,
+              "p90": 54,
+              "p99": 54,
+              "sum": 99.0
+            },
+            "n": 2,
+            "parent_depths": {
+              "0": 1,
+              "1": 1
+            },
+            "parent_status": "EXTENDED_BY_SUCCESSOR",
+            "polarity": 1,
+            "transition": "SAME"
+          }
+        ],
+        "transition_counts": {
+          "FLIP": 10,
+          "SAME": 12
+        },
+        "turn": 15
+      },
+      "cutoff_recv_ns": 1633301315945525951,
+      "entry_hash": "849f1bba7dc8f3c812237a4a731b909463e2abbfa1b458fa91e06fc80cca4f12",
+      "ledger_id": "contract_section_4.13",
+      "prev_hash": "0cb91e7a79b64acdb2137057fa7230e8d2c7fba04600e68412aa6a4d18399a49",
+      "sequence": 14
     }
   ],
-  "head_hash": "ccb8f04de45dbce39ef13fef525ae8b7c5781048311de18a308cccebe025178a",
+  "head_hash": "849f1bba7dc8f3c812237a4a731b909463e2abbfa1b458fa91e06fc80cca4f12",
   "ledger_id": "contract_section_4.13"
 }
