@@ -281,7 +281,8 @@ def test_direct_tensor_mutation_fails_closed_on_every_read():
     t = target()
     idx = tuple((t.states == int(TargetState.PRESENT)).nonzero()[0])
     t.values[idx] += 1.0
-    for read in (lambda: t.mask, t.to_batch_fields, t.receipt, t.check_integrity):
+    for read in (lambda: t.mask, lambda: t.coverage, t.state_counts,
+                 t.to_batch_fields, t.receipt, t.check_integrity):
         with pytest.raises(IntegrityError, match="mutated"):
             read()
 
@@ -396,3 +397,24 @@ def test_known_answer_hash_is_stable():
         as_of_ts_recv_ns=AS_OF, values=values, states=states, ts_recv_ns=ts,
     )
     assert t.target_hash == KNOWN_HASH
+
+
+def test_every_public_derived_read_is_guarded():
+    """Inventory methods/properties so a derived read cannot silently skip
+    the integrity check. Raw dataclass fields are governed storage and are
+    intentionally classified separately from derived reads."""
+    from dipole_target import IntegrityError
+    public = {
+        n for n in dir(DipoleTarget)
+        if not n.startswith("_") and n not in
+        {"spec", "source_manifest_hash", "source_prefix_hash", "as_of_ts_recv_ns",
+         "values", "states", "ts_recv_ns", "target_hash"}
+    }
+    assert public == {"mask", "coverage", "state_counts", "to_batch_fields",
+                      "receipt", "check_integrity"}
+    t = target()
+    t.states[0, 0, 0] = int(TargetState.ABLATED)
+    for name in public:
+        attr = getattr(type(t), name)
+        with pytest.raises(IntegrityError):
+            getattr(t, name)() if callable(attr) else getattr(t, name)

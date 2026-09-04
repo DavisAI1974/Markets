@@ -33,10 +33,10 @@ hash          target_hash is sha256 over canonical metadata plus the bytes
               little-endian before hashing so the digest is portable. A
               supplied hash that does not match is rejected.
 mutability    tensors are cloned and detached on construction so no caller
-              alias can reach them. Every result-bearing read (mask,
-              to_batch_fields, receipt) recomputes the hash first and
-              fails closed if the tensors were mutated in place. Reads
-              return clones.
+              alias can reach them. Every derived/result-bearing read (mask,
+              coverage, state_counts, to_batch_fields, receipt) recomputes
+              the hash first and fails closed if the tensors were mutated in
+              place. Batch-field reads return clones.
 
 Loss coverage
 -------------
@@ -349,6 +349,7 @@ class DipoleTarget:
     def receipt(self) -> dict[str, Any]:
         """Everything a lock file needs to identify this target exactly."""
         self.check_integrity()
+        counts = {st.name: int((self.states == int(st)).sum()) for st in TargetState}
         return {
             "schema_version": self.spec.schema_version,
             "spec_hash": self.spec.spec_hash,
@@ -357,8 +358,8 @@ class DipoleTarget:
             "source_prefix_hash": self.source_prefix_hash,
             "as_of_ts_recv_ns": self.as_of_ts_recv_ns,
             "shape": list(self.values.shape),
-            "state_counts": self.state_counts(),
-            "coverage": self.coverage,
+            "state_counts": counts,
+            "coverage": float(self.mask.mean()),
         }
 
 
