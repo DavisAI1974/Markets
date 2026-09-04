@@ -1642,8 +1642,417 @@
       "ledger_id": "output_state_and_state_delta_movie",
       "prev_hash": "3698fd62211f3675f09346a54003577e5b8f6a1f82e798421317f41f53255cbf",
       "sequence": 3
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 742,
+          "ask_depth_n": 23,
+          "ask_levels": [
+            {
+              "front_order_age_s": 7.6488e-05,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.721,
+              "price_raw": 5721000000,
+              "queue_age_median_s": 7.6488e-05,
+              "queue_age_p90_s": 7.6488e-05,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 27.665252067,
+              "front_order_size": 1,
+              "largest_order_share": 0.6666666666666666,
+              "order_count": 2,
+              "price": 5.722,
+              "price_raw": 5722000000,
+              "queue_age_median_s": 16.8403924255,
+              "queue_age_p90_s": 25.500280138700003,
+              "side": "A",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 11.555783056,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.723,
+              "price_raw": 5723000000,
+              "queue_age_median_s": 11.555783056,
+              "queue_age_p90_s": 11.555783056,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 19.105504848,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.725,
+              "price_raw": 5725000000,
+              "queue_age_median_s": 19.105504848,
+              "queue_age_p90_s": 19.105504848,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 19.674498945,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.726,
+              "price_raw": 5726000000,
+              "queue_age_median_s": 13.3952066595,
+              "queue_age_p90_s": 18.4186404879,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 10.082317859,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.727,
+              "price_raw": 5727000000,
+              "queue_age_median_s": 8.899467636,
+              "queue_age_p90_s": 9.8457478144,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 30.394352861,
+              "front_order_size": 2,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 4,
+              "price": 5.728,
+              "price_raw": 5728000000,
+              "queue_age_median_s": 28.720249705,
+              "queue_age_p90_s": 30.083828617100004,
+              "side": "A",
+              "size": 6
+            },
+            {
+              "front_order_age_s": 32.159091703,
+              "front_order_size": 5,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.729,
+              "price_raw": 5729000000,
+              "queue_age_median_s": 32.159091703,
+              "queue_age_p90_s": 32.159091703,
+              "side": "A",
+              "size": 5
+            },
+            {
+              "front_order_age_s": 17.9627394,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.731,
+              "price_raw": 5731000000,
+              "queue_age_median_s": 17.9627394,
+              "queue_age_p90_s": 17.9627394,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 31.160775095,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.732,
+              "price_raw": 5732000000,
+              "queue_age_median_s": 31.160775095,
+              "queue_age_p90_s": 31.160775095,
+              "side": "A",
+              "size": 1
+            }
+          ],
+          "ask_order_count_full": 228,
+          "ask_price_level_count_full": 187,
+          "best_ask": 5.721,
+          "best_bid": 5.706,
+          "bid_depth_full": 920,
+          "bid_depth_n": 18,
+          "bid_levels": [
+            {
+              "front_order_age_s": 0.000698641,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.706,
+              "price_raw": 5706000000,
+              "queue_age_median_s": 0.0006871819999999999,
+              "queue_age_p90_s": 0.0006963491999999999,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 0.001736805,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.705,
+              "price_raw": 5705000000,
+              "queue_age_median_s": 0.001736805,
+              "queue_age_p90_s": 0.001736805,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 0.707853563,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.704,
+              "price_raw": 5704000000,
+              "queue_age_median_s": 0.707853563,
+              "queue_age_p90_s": 0.707853563,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 0.708269223,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.703,
+              "price_raw": 5703000000,
+              "queue_age_median_s": 0.35440708649999997,
+              "queue_age_p90_s": 0.6374967957,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 7.172401085,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.702,
+              "price_raw": 5702000000,
+              "queue_age_median_s": 6.6775917555,
+              "queue_age_p90_s": 7.0734392191,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 0.000500977,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.7,
+              "price_raw": 5700000000,
+              "queue_age_median_s": 0.000500977,
+              "queue_age_p90_s": 0.000500977,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 9.208978385,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.698,
+              "price_raw": 5698000000,
+              "queue_age_median_s": 9.208978385,
+              "queue_age_p90_s": 9.208978385,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 0.0003874,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.697,
+              "price_raw": 5697000000,
+              "queue_age_median_s": 0.0003874,
+              "queue_age_p90_s": 0.0003874,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 8.159969777,
+              "front_order_size": 6,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.696,
+              "price_raw": 5696000000,
+              "queue_age_median_s": 8.159969777,
+              "queue_age_p90_s": 8.159969777,
+              "side": "B",
+              "size": 6
+            },
+            {
+              "front_order_age_s": 0.000351831,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.694,
+              "price_raw": 5694000000,
+              "queue_age_median_s": 0.000351831,
+              "queue_age_p90_s": 0.000351831,
+              "side": "B",
+              "size": 1
+            }
+          ],
+          "bid_order_count_full": 359,
+          "bid_price_level_count_full": 276,
+          "depth_imbalance_full": 0.10709987966305656,
+          "depth_imbalance_n": -0.12195121951219512,
+          "mid": 5.7135,
+          "spread": 0.01499999999999968,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 742
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 920
+          },
+          "candidates_promoted": {
+            "status": "TRUE_ZERO",
+            "value": 0
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.10709988
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 11406
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 252279199
+            },
+            "source_recv_ns": 1633298495000000000,
+            "status": "PAST_CARRY",
+            "value": 1633298495
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5713500000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 15693
+          },
+          "open_runways": {
+            "status": "TRUE_ZERO",
+            "value": 0
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 419
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 372
+          },
+          "roll20_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 252279199
+            },
+            "source_recv_ns": 1633298495000000000,
+            "status": "PAST_CARRY",
+            "value": 0.235294118
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 15000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 252279199
+            },
+            "source_recv_ns": 1633298495000000000,
+            "status": "PAST_CARRY",
+            "value": 16.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5721000000,
+            "best_bid_raw": 5706000000,
+            "touch_migrations_so_far": 1880,
+            "touch_state_of_last_transition": "COMPRESSION"
+          },
+          "channels": {
+            "ask_depth_full": -18.0,
+            "bid_depth_full": 64.0,
+            "candidates_promoted": 0.0,
+            "depth_imbalance_full": 0.047693939,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 28.0,
+            "mid_raw": 17500000.0,
+            "native_records": 2996.0,
+            "open_runways": 0.0,
+            "pending_removal_episodes": -19.0,
+            "resting_tracked_orders": 24.0,
+            "roll20_last_completed_second": 0.093265132,
+            "spread_raw": -1000000.0,
+            "window_signed_flow_last_completed_second": -33.0
+          },
+          "previous_cutoff_recv_ns": 1633298467489465095
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "ac9084ba72087509814e44f0ee80c1b5c2f406c6617a83bd7eff10ddae7a1f67",
+          "level_count": 463,
+          "order_count": 587,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260793341,
+                  "priority_recv_ns": 1633298495252202711,
+                  "priority_sequence": 109457,
+                  "size": 1,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5721000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260793328,
+                  "priority_recv_ns": 1633298495251580558,
+                  "priority_sequence": 109424,
+                  "size": 1,
+                  "volume_ahead": 0
+                },
+                {
+                  "order_id": 786260793329,
+                  "priority_recv_ns": 1633298495251603476,
+                  "priority_sequence": 109425,
+                  "size": 1,
+                  "volume_ahead": 1
+                }
+              ],
+              "price_raw": 5706000000
+            }
+          }
+        },
+        "group_index": 11405,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633298495252279199,
+      "entry_hash": "d7c1c533783fa7c112ba0e28892a75459716f186b8a35dc96034836aad8edea7",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "83b2365210582668e2dd2eab347762c522e77d7908d862b9397a089a8454cfc4",
+      "sequence": 4
     }
   ],
-  "head_hash": "83b2365210582668e2dd2eab347762c522e77d7908d862b9397a089a8454cfc4",
+  "head_hash": "d7c1c533783fa7c112ba0e28892a75459716f186b8a35dc96034836aad8edea7",
   "ledger_id": "output_state_and_state_delta_movie"
 }

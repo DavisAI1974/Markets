@@ -92,8 +92,31 @@
       "ledger_id": "contract_section_4.11",
       "prev_hash": "b762a3afaa8e97449c2642d7c32ede284de66a1041b4eeff7119915ae391ccfc",
       "sequence": 3
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298495252279199
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 11406,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate promoted yet; 0 threshold-crossing alerts emitted, none yet followed by a promotion"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.11",
+        "turn": 5
+      },
+      "cutoff_recv_ns": 1633298495252279199,
+      "entry_hash": "d9e854c9573a869afc004f09e169a5e52577070105746ed0133161630d71ff0c",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "4864dd69f6cbcfc54b42387d949534c48b172b29f6d847f57f9426669f5fcdb7",
+      "sequence": 4
     }
   ],
-  "head_hash": "4864dd69f6cbcfc54b42387d949534c48b172b29f6d847f57f9426669f5fcdb7",
+  "head_hash": "d9e854c9573a869afc004f09e169a5e52577070105746ed0133161630d71ff0c",
   "ledger_id": "contract_section_4.11"
 }

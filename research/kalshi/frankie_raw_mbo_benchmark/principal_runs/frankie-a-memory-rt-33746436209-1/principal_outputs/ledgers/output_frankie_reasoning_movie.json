@@ -128,8 +128,22 @@
       "ledger_id": "output_frankie_reasoning_movie",
       "prev_hash": "811a9d729594ebf694c777b93e0e0fe4532ec72ebd7d429b396e819a46dc8980",
       "sequence": 3
+    },
+    {
+      "body": {
+        "helper_invocations": [],
+        "knowledge_retrievals": [],
+        "reasoning": "Turn 5 at F_LAST cutoff 1633298495252279199: 11406 groups / 15693 records delivered, phases {'PRE_OPEN': 203, 'PRE_SETTLEMENT': 11203}. Substrate: 10890 completed seconds, class census {'NO_DIRECTION': 10831, 'BUY': 34, 'SELL': 25}, window census {'NO_DIRECTION': 10795, 'LONG': 86, 'SHORT': 9}; reconciliation with delivered substrate rows agree=10890 disagree=0. Detector: judged 10880, warm-up 10880, promoted 0, own-vs-delivered candidate matches 0/0. Queue: 4984 resolved lifecycles, 372 resting; replenishment episodes 6871 (419 pending); touch displacements 35, restorations 33. Absorption group-scoped census {'INDETERMINATE': 40, 'DELIVERED_THROUGH_PRICE': 189, 'ABSORBED_WITHOUT_PRICE_MOVE': 54, 'ACCOMPANIED_BY_WITHDRAWAL': 54}; contact runways closed 296. Ladder touch states {'UNDEFINED_ONE_SIDE_EMPTY': 1, 'UNCHANGED': 9558, 'EXPANSION': 554, 'COMPRESSION': 1293}, touch migrations 1880. Mirror pairs 11272 (unmatched 134); delivered mirror rows so far {'PENDING': 11406}; delivered lineage rows so far 0. Candidates: 0 with statuses {}; precursor labels {}; chain depths {}. Every section entry at this cutoff rests on groups delivered at or before it; whole-day statements are deferred to the stream-end cutoff. Hypotheses kept alive: (1) the pre-birth threshold-crossing alert leads promotion (tested by 4.11 alert precision); (2) delivered pressure is rare versus withdrawal (4.8); (3) touch restoration is faster than behind-touch refill (4.7); (4) no directional response at the horizons (4.16).",
+        "role": "REAL_TIME_FRANKIE",
+        "turn": 5
+      },
+      "cutoff_recv_ns": 1633298495252279199,
+      "entry_hash": "c4d17e9cd7bd34bd40767f99075e1f9a8136791c7759dcabd651e5d22526f764",
+      "ledger_id": "output_frankie_reasoning_movie",
+      "prev_hash": "47a470b7d8e669f27c3367c1b6504e595610ea72b61bb774b504fda2fb5f2540",
+      "sequence": 4
     }
   ],
-  "head_hash": "47a470b7d8e669f27c3367c1b6504e595610ea72b61bb774b504fda2fb5f2540",
+  "head_hash": "c4d17e9cd7bd34bd40767f99075e1f9a8136791c7759dcabd651e5d22526f764",
   "ledger_id": "output_frankie_reasoning_movie"
 }
