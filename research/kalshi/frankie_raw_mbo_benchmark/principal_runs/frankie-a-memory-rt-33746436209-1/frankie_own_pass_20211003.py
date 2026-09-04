@@ -585,6 +585,8 @@ class Pass:
         self.flow_reconcile = {"compared": 0, "agree": 0, "disagree": 0, "examples": []}
         self.cand_reconcile = {"delivered": 0, "own": 0, "matched": 0, "own_only": [], "delivered_only": []}
         self.delivered_lifecycle_counts: Counter = Counter()
+        self.delivered_mirror_dispositions: Counter = Counter()
+        self.delivered_lineage_in_stream = 0
         self.delivered_episode_rows: list[dict[str, Any]] = []
         self.per_second_side: dict[int, dict[str, int]] = defaultdict(lambda: Counter())
         self.imb_in_second: dict[int, float] = {}
@@ -663,6 +665,10 @@ class Pass:
                 self.delivered_candidates[int(lr["event_second"])] = lr
             elif sec == "episode":
                 self.delivered_episode_rows.append({k: lr.get(k) for k in ("candidate_id", "orientation", "recognition_outcome", "detection_lag_seconds")})
+            elif sec == "mirror":
+                self.delivered_mirror_dispositions[str(lr.get("disposition"))] += 1
+            elif sec == "lineage":
+                self.delivered_lineage_in_stream += 1
         # legacy sidecar -> substrate
         for lg in d.legacy_rows:
             self.legacy_rows_seen += 1
@@ -1407,6 +1413,7 @@ def emit_4_3(P: Pass, cutoff: int) -> dict[str, Any]:
 def emit_4_4(P: Pass, cutoff: int) -> dict[str, Any]:
     if not P.pairs:
         return null_result("4.4", f"no member has yet met an earlier member with the swapped side string; unmatched so far {P.unmatched}", P.groups, cutoff,
+                           delivered_mirror_rows_attached_so_far=dict(P.delivered_mirror_dispositions),
                            matching_rule="partner = the most recent earlier delivered member whose (action_string, side_string) is the side-swapped key of this member; distance = receive-clock gap; pre-event covariates only")
     by_or: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for p in P.pairs:
@@ -1415,6 +1422,7 @@ def emit_4_4(P: Pass, cutoff: int) -> dict[str, Any]:
     body = {"section": "4.4", "result": "COMPUTED", "member_group_indices": [p["member_group"] for p in P.pairs[-30:]] + [p["anchor_group"] for p in P.pairs[-10:]],
             "matching_rule": "partner = the most recent earlier delivered member whose (action_string, side_string) equals this member's side-swapped key; the pair is formed at this member's F_LAST from lawful pre-event covariates only; matching distance = receive-clock gap; every member without such a partner is unmatched and counted",
             "pairs": len(P.pairs), "unmatched": P.unmatched, "keys_with_both_orientations": len(P.mirror_keys_both),
+            "delivered_mirror_rows_attached_so_far": dict(P.delivered_mirror_dispositions),
             "recent_pairs_exact": P.pairs[-8:], "averages": []}
     for (astr, orient, ph), lst in top:
         fd = [p["formation_diff_ns"] for p in lst]
@@ -1714,7 +1722,7 @@ def emit_4_12(P: Pass, cutoff: int) -> dict[str, Any]:
 def emit_4_13(P: Pass, cutoff: int) -> dict[str, Any]:
     C = P.candidates
     if not C:
-        return null_result("4.13", "no candidate promoted yet, so no exhaustion lineage node exists", 0, cutoff)
+        return null_result("4.13", "no candidate promoted yet, so no exhaustion lineage node exists", 0, cutoff, delivered_lineage_rows_attached_so_far=P.delivered_lineage_in_stream)
     depth = Counter(f"D{c['depth']}" for c in C)
     roots = [c for c in C if c["depth"] == 0]
     desc = [c for c in C if c["depth"] > 0]
@@ -1724,6 +1732,7 @@ def emit_4_13(P: Pass, cutoff: int) -> dict[str, Any]:
         strata[(c["transition"], c["polarity"], parent["status"])].append({"interstage_delay_seconds": c["event_second"] - parent["event_second"], "parent_depth": parent["depth"]})
     body = {"section": "4.13", "result": "COMPUTED", "member_group_indices": sorted({g for c in C for g in c["groups_in_event_second"]})[:40] or members_of(P.group_recs[-5:]),
             "lineage_rule": "D is exhaustion-chain depth on the candidate unit: a candidate born while an earlier candidate's runway is still OPEN is that runway's qualifying successor (D = parent D + 1); transition SAME/FLIP by polarity; the parent runway closes as EXTENDED_BY_SUCCESSOR (SAME) or COMPLETED_BY_OPPOSITE_CANDIDATE (FLIP); no maximum depth; roots with no successor are D0 and are OPEN, COMPLETED or CENSORED at the stream end",
+            "delivered_lineage_rows_attached_so_far": P.delivered_lineage_in_stream,
             "nodes": len(C), "depth_distribution": dict(depth), "observed_max_depth": max(c["depth"] for c in C), "roots": len(roots), "descendants": len(desc), "status_counts": dict(Counter(c["status"] for c in C)),
             "transition_counts": dict(Counter(c["transition"] for c in desc)), "chains_exact": [{"candidate_id": c["candidate_id"], "depth": c["depth"], "parent_id": c["parent_id"], "transition": c["transition"], "polarity": c["polarity"], "status": c["status"], "children": c["children"]} for c in C[-15:]],
             "strata": [], "averages": []}
