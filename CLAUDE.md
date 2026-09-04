@@ -1,10 +1,91 @@
-# CLAUDE.md - DavisAI Markets / Kalshi (Updated 2026-09-03, Session 125)
+# CLAUDE.md - DavisAI Markets / Kalshi (Updated 2026-09-04, Session 127)
 
-**NEXT ACTION:** read `research/kalshi/DROP_IN_S126.md`, then
-`research/kalshi/SESSION_HANDOFF_2026-09-03_S125.md`. **ITEM ZERO IS GREG'S**: the Sunday run
-traversed and uploaded nothing because the box instance role has no S3 write; check the box
-volume for the ledgers BEFORE re-running anything, because a completed traversal on a disk is an
-undelivered run, not a failed one, and re-running burns the spend twice.
+**NEXT ACTION:** read `research/kalshi/DROP_IN_S128.md`, then
+`research/kalshi/SESSION_HANDOFF_2026-09-04_S127.md`. **ITEM ZERO IS THE RESULT HASH**: the box's
+`calculation_result.json` declares a `result_hash` that does not recompute, so `read-back` refuses
+to attach any daily artifact to its run's result - that blocks every day, not just Sunday. Do NOT
+fix it by relaxing the check.
+
+## S127 - FRANKIE RAN, FILED 18 FINDINGS, AND OVERTURNED FOUR OF HIS OWN LESSONS
+
+**Branch = `chatgpt/frankie-raw-mbo-benchmark-20260828`. 2,701 tests / 6,474 subtests, exit 0.
+D61 hash unchanged.**
+
+**HE RAN.** First real principal run on this lineage. 43,569 of 43,569 groups through
+`CausalGroupStream`, **all eighteen contract sections computed by him** at twenty turns (the 19
+staged cutoffs plus the stream-end cutoff where close-occasion rows first become lawful), a
+**30-of-30 output bundle that validates**, and **18 findings F-45..F-62**, artifact sha256
+`086e5339...`. **F-20 PASS** from his own stream receipt - `withheld_no_own_clock` 0 and
+`withheld_close_occasion` 0 against 43,569 and 65,960. He wrote his own instruments and imports
+none of the coordinator's calculation code.
+
+**S125 SECTION 2 AND DROP_IN_S126 ITEM ZERO ARE WRONG AND SUPERSEDED: SUNDAY DELIVERED.** All
+three ledgers fetched and VERIFIED against the box's own `PLAIN_SIZES` and `PLAIN_SHA256SUMS`
+(member 10,756,276,521 bytes, sha256 `f73e9537...`). No role permission was ever needed. **Do not
+re-run the Sunday traversal.**
+
+**THE RECONCILIATION IS WHY THE REST IS TRUSTABLE.** His per-second substrate agrees with the
+delivered one on **17,991 of 17,991 seconds, 0 disagreements**; his own detector's 91 candidates
+match the delivered ones **91 of 91** on the same event second. **He traversed the raw DBN
+himself** - 973,355 bytes, sha256 verified against the launch workflow's pinned witness, 57,027
+records - grouped to the same 43,569 F_LAST groups, and his independently reconstructed order book
+reproduces the delivered `book_full`'s best price, depth, order count and level count **on both
+sides at all 43,569 groups, zero disagreements**. **The one difference is his and he says so
+(F-61):** 118 of 87,138 touch-queue comparisons, every one at a TFM group - a MODIFY restating a
+post-fill residual keeps priority and his rule re-queued it. He scoped the consequence to his own
+4.6 numbers.
+
+**FOUR SERVED LESSONS REFUTED, WITH HIS NUMBERS.** The touch is **not** static - **6,079 touch
+migrations** on the full book against the old reading of 8 (F-46). Runways **do** complete once a
+completion rule is fed - 35 decay, 22 by an opposite candidate, 33 extended, 1 censored, against
+"0 completed, 91 censored" (F-49). Chains run to **D9**, not flat D0/D1, once succession is defined
+on the exhaustion candidate (F-58). Delivered pressure is the **majority** among groups that
+actually traded, 993 to 261, not a 99:1 rarity - the old denominator pooled single-action groups
+(F-59). Also **F-62**: the TFMN lifecycle the mission names is PRESENT, 12 groups with exemplars,
+where memory records it absent. Verdicts over the 93 served lessons: **24 VERIFIED, 8 REFUTED, 61
+NOT_TESTED_ON_THIS_SLICE** - all 90 brain plays are NOT_TESTED because they key on
+forecaster-harness channels this stream does not carry, which is scope, not doubt.
+
+**9a: KEEP EVERYTHING.** 661 classifications over every censused field and all 55 registry layers -
+181 LOAD_BEARING, 311 REDUNDANT, 92 DEGENERATE_ON_THIS_SLICE, 73 RETAINED_UNREAD, 4 CANNOT_JUDGE -
+and **zero elimination recommendations**. `book_full` with its per-level FIFO queues is the most
+load-bearing block on the surface; the top-N projection is not a substitute because the touch moves
+between levels it does not carry. **Five fields are defective AS CARRIED and recommended for
+repair, not removal** (F-53).
+
+**THE ONE REAL DEFECT IS NOT HIS: THE RESULT DOES NOT HASH TO ITSELF.** It declares
+`c406eee7...` and recomputes to `41d980e1...`. Ruled out by execution: not delivery corruption
+(byte-identical to what the box wrote), not a hashing mismatch (all three `canonical_hash`
+implementations agree), not version skew (the launcher at the run's commit is identical to HEAD),
+not serialization (it round-trips identically), and no variant of the hashed subset reproduces the
+declared value. **This is the F-feed-6 shape S122 recorded as fixed.** It blocks attaching findings
+to the result; it does not invalidate his artifact.
+
+**THE CARRY IS REAL AND IT FIRED.** Pushing his artifact triggered the A-memory carry
+automatically, with no human in the path, and it refused for the documented reason:
+`SeedBuildError: A-memory findings for 20211003 arrived before prior roster day(s) ['20211001']`.
+**Sunday cannot carry until Oct 1 runs.** Working as designed - do not relax it.
+
+**WHAT LANDED IN CODE.** **F-20 is wired into the stream receipt**, so it is produced by every run
+rather than by a separate dispatch someone must remember - and zero counters on an unsupplied
+ledger read `NO_LIFECYCLE_LEDGER`, on a truncated stream `INCOMPLETE_STREAM`, because a measure
+handed nothing must not look like one that found nothing. **The knowledge is READ, not merely
+delivered**: the pass loads all 71 delivered artifacts, verifies each against its receipted sha256
+and byte count, refuses on mismatch, parses the brain in full, and writes the retrieval receipts
+from what actually loaded - `build_knowledge_delivery` had had no production caller for four
+sessions, and the emitter now builds it. **The middle verdict is no longer UNVERIFIED** but
+`NOT_TESTED_ON_THIS_SLICE`, per S124: NEW marks recency, not doubt. New workflow
+`frankie_raw_source_delivery_20260904.yml` presigns the raw DBN against pinned witnesses.
+
+**THE CADENCE IS A GROUP COUNT, NOT AN EVENT (F-51).** The launcher installs `_GroupCadence` -
+`cadence = records * 0.8 / TARGET_SPAWNS`, 2,281 on Sunday - and every cutoff is an exact multiple
+of it. `CandidateEventCadence`, which fires on a recognition or change point and whose docstring
+says "there is no clock in here to schedule on", is built and unused by the launch path. 91
+candidates promoted, none caused a decision point. Weekday fix, never a Sunday re-run.
+
+**D100: SUNDAY IS NOT RE-RUN FOR THE STREAM_END CADENCE - IT IS REPORTED.** 65,962 of 395,447
+lifecycle rows are emitted at stream end and **65,220 of those (98.9%) are just lineage and
+mirror**, so 4.13 and 4.4 exist at no decision point. Only 742 are genuinely end-of-stream.
 
 ## S125 - THE CANARY WAS ACCEPTED AND SUNDAY DELIVERED NOTHING (read `SESSION_HANDOFF_2026-09-03_S125.md` + `DROP_IN_S126.md`)
 
@@ -1376,6 +1457,20 @@ DATA next (Greg): forward-curve cache back ($0.07; curve_regime was 'unknown' al
 FORECAST temps via the IEM MOS archive** (forecast-vs-realized DELTA = the driver; back-fill the walked
 winter). NEXT = G11 (Sun Jan 18 reopen -> Fri Jan 30; MLK thin; Feb->Mar roll ~Jan 26-27 INSIDE — check
 first) blind on s99.2; then the net-of-fee coach replay (the money question). START A FRESH SESSION.
+
+**One-line state (S127):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **2,701 tests /
+6,474 subtests, exit 0**, decisions 100. **FRANKIE RAN AND FILED** - 43,569 of 43,569 groups, all
+eighteen sections computed by him at twenty turns, a 30-of-30 bundle that validates, **18 findings
+F-45..F-62**, artifact `086e5339...`, **F-20 PASS**. **He also traversed the raw DBN himself and
+his order book matches the delivered one at all 43,569 groups, zero disagreements** - the one
+difference is his own FIFO rule after a partial fill and he says so (F-61). **Four served lessons
+refuted with numbers**: the touch is not static (6,079 migrations vs 8), runways do complete (35
+decay / 22 opposed / 33 extended), chains run to D9, delivered pressure is the majority among
+groups that traded. **9a: KEEP EVERYTHING**, 661 classifications, zero eliminations, five fields
+defective as carried. **Sunday DELIVERED - S125 section 2 and DROP_IN_S126 item zero are wrong and
+superseded; do not re-traverse Sunday.** **ITEM ZERO for S128: the result does not hash to itself**,
+which blocks attaching any daily artifact to its run. The carry fired automatically and correctly
+refused - Oct 1 must run first. Keys do not rotate.
 
 **One-line state (S123):** branch `chatgpt/frankie-raw-mbo-benchmark-20260828`, **1,997 benchmark
 tests / 2,706 across three trees**, decisions 91. **THE WIRING IS FINISHED - Tasks A-I implemented,

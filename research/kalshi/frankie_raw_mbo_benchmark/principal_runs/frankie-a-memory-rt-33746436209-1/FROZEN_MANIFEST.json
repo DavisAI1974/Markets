@@ -1,0 +1,210 @@
+{
+  "arm": "A_MEMORY",
+  "file_count": 49,
+  "files": {
+    "KNOWLEDGE_BUNDLE.md": {
+      "bytes": 248922,
+      "sha256": "6f9dbb37c3d86ec109320516c283a11c75eb51e4f094e8d63474802cf3756231"
+    },
+    "KNOWLEDGE_PRECALL_RECEIPT.json": {
+      "bytes": 26380,
+      "sha256": "4bf8ff5b1add63da8f12111bfddd7e9f3362966d7fa1dc8f9ab0cf4c7f523e7f"
+    },
+    "KNOWLEDGE_RECEIPT.json": {
+      "bytes": 251310,
+      "sha256": "c70d26fb876147ef1e2fb00fd426a947f02a73e5b56dcaa148b812e9cff532c4"
+    },
+    "__pycache__/frankie_own_finalize_20211003.cpython-311.pyc": {
+      "bytes": 113371,
+      "sha256": "9a3c9efad64246b3f7a2ed529d9af554d5cd4e9793491404bb14f6e91f6c9d39"
+    },
+    "cadence_and_stream_end_measurements.json": {
+      "bytes": 6736,
+      "sha256": "1df0b9f1b29a895afbf81015fe69a6691bc3daedd1704ed00094cbbb0c83ce09"
+    },
+    "cutoffs.json": {
+      "bytes": 6094,
+      "sha256": "4b869d1f44a97a08196cd428ac10a34f36f3f55d70f22d6e50116cc7be9f80d9"
+    },
+    "delivery_receipt.json": {
+      "bytes": 4775,
+      "sha256": "b6a11a2d9742c2290f968442875965daeb327d8d0c244630929c0e23a5170439"
+    },
+    "findings_own.json": {
+      "bytes": 74689,
+      "sha256": "1421b5b92d87b44a4d4d31182103f44ed1e720753bcb99b3aa94c6fb031f846d"
+    },
+    "frankie_findings_report.md": {
+      "bytes": 104377,
+      "sha256": "69ab0ac6b7b2cad494af288a69bd21de1b9cfcbc25c4501e1977b509f9af7d91"
+    },
+    "frankie_own_artifact_20211003.py": {
+      "bytes": 6542,
+      "sha256": "891fbd6d54636ead0aa30c6275ff42dab1c7a8792c7e27d9adee0aa03c66a4e3"
+    },
+    "frankie_own_finalize_20211003.py": {
+      "bytes": 66149,
+      "sha256": "8f7b962dc08c6cdf1feb06f29a8605990691d657197686ca93a46c4f6d6d8eb1"
+    },
+    "frankie_own_findings_20211003.py": {
+      "bytes": 43003,
+      "sha256": "788a393ee65351690a126646eb4581021696e3441b20f6ae7b1437ae6a751ab5"
+    },
+    "frankie_own_pass_20211003.py": {
+      "bytes": 152043,
+      "sha256": "a3ba4510953cd17809d64594f984a904fc2e4b628f3cbc4426c286ce832f1e28"
+    },
+    "frankie_own_raw_traversal_20211003.py": {
+      "bytes": 10059,
+      "sha256": "021b053161142b2b7b42e2960eab1b4546002354c285263a9d36f54fbd90ab88"
+    },
+    "frankie_principal_findings.json": {
+      "bytes": 103884,
+      "sha256": "086e5339dad64d6326e51a143b3c7351efe28825cfa1809575fdf302a1d7080e"
+    },
+    "principal_outputs/RECEIPT.json": {
+      "bytes": 6317,
+      "sha256": "0d1aff2cc30a502665761dc791a1ee7da0dba2cc262a698d7ee0acda6bf5fe02"
+    },
+    "principal_outputs/ledgers/contract_section_4.0.json": {
+      "bytes": 539940,
+      "sha256": "b3fc7c3a98a3fa13cc70a91dbca6feebb4fd7b7ef4461216e0efa0ded9b0c7f5"
+    },
+    "principal_outputs/ledgers/contract_section_4.0b.json": {
+      "bytes": 112095,
+      "sha256": "070fde2283a2b2f087a5d9e649fadb25dca899fdc476e612795e8b2bcd5c09ac"
+    },
+    "principal_outputs/ledgers/contract_section_4.1.json": {
+      "bytes": 74444,
+      "sha256": "c675265c059f58cb3a9406b1731cb81924dbe9762367e1e7c96c3ec34bbfad88"
+    },
+    "principal_outputs/ledgers/contract_section_4.10.json": {
+      "bytes": 779008,
+      "sha256": "f7aa7c6d6ef3371bc28a6ba5152c3a3a43c81bf18663a0de528e7c1ebe6fc9cf"
+    },
+    "principal_outputs/ledgers/contract_section_4.11.json": {
+      "bytes": 127983,
+      "sha256": "8fa303317e2a3fc4fd258a0fc5d92181718f42c40422caa89d7e872dcb0adead"
+    },
+    "principal_outputs/ledgers/contract_section_4.12.json": {
+      "bytes": 839156,
+      "sha256": "6d1c82d1db64d296deb9b43c0fadd7e43f6607c28375ebf16b6fc3e827d8f2cb"
+    },
+    "principal_outputs/ledgers/contract_section_4.13.json": {
+      "bytes": 136997,
+      "sha256": "26f861947b8979960df5724f9a5ebb7c1fd75aa3ccab6103b0ed9f6e9be8168d"
+    },
+    "principal_outputs/ledgers/contract_section_4.14.json": {
+      "bytes": 594093,
+      "sha256": "6754140a124643ad1750bf5255544a6b40c58f3104efae8fb39383f9b49dcba6"
+    },
+    "principal_outputs/ledgers/contract_section_4.15.json": {
+      "bytes": 84083,
+      "sha256": "ec962735120a311f3fbe14fcc0b7cb774c2f4d65a59b763d0fec70ca472ba001"
+    },
+    "principal_outputs/ledgers/contract_section_4.16.json": {
+      "bytes": 538431,
+      "sha256": "7f72d8431dcc55fd8d2f396f24668d8a58249a84c242b04db9f46003ee124de3"
+    },
+    "principal_outputs/ledgers/contract_section_4.2.json": {
+      "bytes": 252689,
+      "sha256": "5bb7c07ea13c5b16a4551a64d5be3e328080861a75de6b450f5a00573116cd72"
+    },
+    "principal_outputs/ledgers/contract_section_4.3.json": {
+      "bytes": 912815,
+      "sha256": "e7a14774a81bdf72bb4d315a9d0fcdbdf4d79f8cb238fc615cd6dc44ab74b05d"
+    },
+    "principal_outputs/ledgers/contract_section_4.4.json": {
+      "bytes": 649722,
+      "sha256": "13daf0b9d08a13cba2046340e8366c04f5296700b98e36028f70c5f145309861"
+    },
+    "principal_outputs/ledgers/contract_section_4.5.json": {
+      "bytes": 758593,
+      "sha256": "40da253d8f1193556a9185c1898dcbe318658b418889233d9c029d40d8ce22c9"
+    },
+    "principal_outputs/ledgers/contract_section_4.6.json": {
+      "bytes": 988285,
+      "sha256": "26bcef48902fb761d682bc38fc529202021acfe8ce0c8fcce193b850e6a03ac1"
+    },
+    "principal_outputs/ledgers/contract_section_4.7.json": {
+      "bytes": 671650,
+      "sha256": "2f395a9aa0f6df3fa0b376c121a9fd5cfa7eb465d973d711e9dd6a113b97d260"
+    },
+    "principal_outputs/ledgers/contract_section_4.8.json": {
+      "bytes": 838607,
+      "sha256": "3689d659d239884c20491d105e183bc1e65895c1116c0b08c1adae98ea4ec208"
+    },
+    "principal_outputs/ledgers/contract_section_4.9.json": {
+      "bytes": 919420,
+      "sha256": "4e41968b402d3feeac4b3f9ea87a5b1ed1adfe9d6b0f6948c41153874367f8cb"
+    },
+    "principal_outputs/ledgers/knowledge_verification.json": {
+      "bytes": 129840,
+      "sha256": "e0537b5cab54189e2308adcea582d737976327c9f51b31d53e7328f8756bba48"
+    },
+    "principal_outputs/ledgers/output_answer_wall_access_receipts.json": {
+      "bytes": 347,
+      "sha256": "61f1a89cde93c1e189cd457261e7b783aee21153c6d09e5e1cc5a654d78b6bdb"
+    },
+    "principal_outputs/ledgers/output_candidate_discoveries.json": {
+      "bytes": 177637,
+      "sha256": "15a54524370439b1fbc55babc3ae9f18e618d60a9b6363b5d227c6a61cedbe71"
+    },
+    "principal_outputs/ledgers/output_first_locks_and_no_locks.json": {
+      "bytes": 85579,
+      "sha256": "98c10da6ace027d30ca212a600bd35a75c4affe93315c0db02da7559f03df262"
+    },
+    "principal_outputs/ledgers/output_frankie_reasoning_movie.json": {
+      "bytes": 53374,
+      "sha256": "44d98c3cebed5cf685a73c14a1e0667cf3878a6533d32db0a555a6ad0da9e2fd"
+    },
+    "principal_outputs/ledgers/output_knowledge_retrieval_receipts.json": {
+      "bytes": 62203,
+      "sha256": "bba020093f643d75fb9ede53b956da2d81735e0b8c8ad0b36ab2f5e0fee9006f"
+    },
+    "principal_outputs/ledgers/output_negative_sparse_inconclusive_ledger.json": {
+      "bytes": 31410,
+      "sha256": "d6709a2b440eb79d5f23e6c6ad63a2ebe1d3a55d9038b20b6a2ed078fcd74d24"
+    },
+    "principal_outputs/ledgers/output_probability_movie.json": {
+      "bytes": 21433,
+      "sha256": "66755b5ffca6f880eeda778018b7ffa4447a015716c2161aace3d8945a4cd4b2"
+    },
+    "principal_outputs/ledgers/output_provider_invocation_response_receipts.json": {
+      "bytes": 20293,
+      "sha256": "6b196abe4949e41ebe7df789e8c5913fb899d3b65761e2b860a3547970fc7330"
+    },
+    "principal_outputs/ledgers/output_source_state_manifest_code_model_run_hashes.json": {
+      "bytes": 2424,
+      "sha256": "cb96abc00feb1c84bb5219715884f193c7f88d919002e70383ffa69d43c1c815"
+    },
+    "principal_outputs/ledgers/output_state_and_state_delta_movie.json": {
+      "bytes": 278418,
+      "sha256": "3612258ae9639930ff3a877d0ec181f3d8cbb63d15d2ef90bc1801dd33f48bea"
+    },
+    "principal_outputs/ledgers/raw_mbo_classification.json": {
+      "bytes": 541436,
+      "sha256": "44b691bb93dfceceb67df44eba17e7542843e15c75e0577e851143e8d6a87241"
+    },
+    "raw_traversal_reconciliation.json": {
+      "bytes": 17380,
+      "sha256": "ba6bceb34ecb9a5132767ed383b33c1138426f3b532997ff555c394d10dac76c"
+    },
+    "stream_receipt.json": {
+      "bytes": 1093890,
+      "sha256": "d5788967ea3dad679a8436d2ab7ce9e66f3463838d89b54fe46708b3c8b0488c"
+    },
+    "sunday_spawn_prompt.md": {
+      "bytes": 158950,
+      "sha256": "8ff55bb2a5bb6a0e3549b0260d38b0e9237b26a020ab5d8fad8372e77a6d7705"
+    }
+  },
+  "frozen_at_commit": "see the commit that adds this file",
+  "note": "Mission section 9: freeze RT before the one-way handoff. Every file this run produced, hashed. The findings artifact and its output bundle are evidence and are never rewritten; a later day appends its own run directory beside this one.",
+  "principal": "claude-fable-5-1",
+  "role": "REAL_TIME_FRANKIE",
+  "run_id": "frankie-a-memory-rt-33746436209-1",
+  "schema": "FRANKIE_RUN_FREEZE_MANIFEST_V1",
+  "source_day": "20211003",
+  "total_bytes": 13717276
+}
