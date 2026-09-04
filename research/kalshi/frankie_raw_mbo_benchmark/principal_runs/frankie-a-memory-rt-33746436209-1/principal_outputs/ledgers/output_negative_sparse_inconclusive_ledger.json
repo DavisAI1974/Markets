@@ -425,8 +425,433 @@
       "ledger_id": "output_negative_sparse_inconclusive_ledger",
       "prev_hash": "704aa3f470d1d0a7a54b77431724bfdcaed4e4395aad4736e07293053abbf084",
       "sequence": 24
+    },
+    {
+      "body": {
+        "denominator": 10934,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet; detector has judged 10924 seconds",
+        "stratum": {
+          "cutoff_recv_ns": 1633298539321423187,
+          "section": "4.10"
+        }
+      },
+      "cutoff_recv_ns": 1633298539321423187,
+      "entry_hash": "764f33d813863effd0111ac92833d7fda4ce97fb055ffc5086fbd74a5ae6d3e7",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "cd7b7bb0f5d79960c0a75abea338900edcb64c8fd8832072c11814d2e557f971",
+      "sequence": 25
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet; 0 threshold-crossing alerts emitted, none yet followed by a promotion",
+        "stratum": {
+          "cutoff_recv_ns": 1633298539321423187,
+          "section": "4.11"
+        }
+      },
+      "cutoff_recv_ns": 1633298539321423187,
+      "entry_hash": "b6e1dc04312046dae24d52e2013ad811d706ac0a4b16582945d098f02a444e70",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "764f33d813863effd0111ac92833d7fda4ce97fb055ffc5086fbd74a5ae6d3e7",
+      "sequence": 26
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate has reached its availability second yet, so no runway stage exists",
+        "stratum": {
+          "cutoff_recv_ns": 1633298539321423187,
+          "section": "4.12"
+        }
+      },
+      "cutoff_recv_ns": 1633298539321423187,
+      "entry_hash": "9b21e08b0cfdb989d038515365f8f9896956e1c33fefbbe4dd9e9a72e45357e7",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "b6e1dc04312046dae24d52e2013ad811d706ac0a4b16582945d098f02a444e70",
+      "sequence": 27
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet, so no exhaustion lineage node exists",
+        "stratum": {
+          "cutoff_recv_ns": 1633298539321423187,
+          "section": "4.13"
+        }
+      },
+      "cutoff_recv_ns": 1633298539321423187,
+      "entry_hash": "6eeb5d3572121c67f9694b17102838a0d551a2d649d7680ef334f018ce296501",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "9b21e08b0cfdb989d038515365f8f9896956e1c33fefbbe4dd9e9a72e45357e7",
+      "sequence": 28
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate has reached any horizon or change point yet",
+        "stratum": {
+          "cutoff_recv_ns": 1633298539321423187,
+          "section": "4.16"
+        }
+      },
+      "cutoff_recv_ns": 1633298539321423187,
+      "entry_hash": "84e7ab875360db8cab9f04c9665c033f2ad2ecdd14e216c57254b38c214cfd4b",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "6eeb5d3572121c67f9694b17102838a0d551a2d649d7680ef334f018ce296501",
+      "sequence": 29
+    },
+    {
+      "body": {
+        "denominator": 11013,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet; detector has judged 11003 seconds",
+        "stratum": {
+          "cutoff_recv_ns": 1633298618241396322,
+          "section": "4.10"
+        }
+      },
+      "cutoff_recv_ns": 1633298618241396322,
+      "entry_hash": "de29a6d626084a7f0d44ff5f8ce1cabb0d6b10a73906488c04cead4ad83dc8b3",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "84e7ab875360db8cab9f04c9665c033f2ad2ecdd14e216c57254b38c214cfd4b",
+      "sequence": 30
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet; 0 threshold-crossing alerts emitted, none yet followed by a promotion",
+        "stratum": {
+          "cutoff_recv_ns": 1633298618241396322,
+          "section": "4.11"
+        }
+      },
+      "cutoff_recv_ns": 1633298618241396322,
+      "entry_hash": "2119ae6ea49b8ade9346a2cef6d385f4ee6e6568ecd69fa302ffde82c8fed9f8",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "de29a6d626084a7f0d44ff5f8ce1cabb0d6b10a73906488c04cead4ad83dc8b3",
+      "sequence": 31
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate has reached its availability second yet, so no runway stage exists",
+        "stratum": {
+          "cutoff_recv_ns": 1633298618241396322,
+          "section": "4.12"
+        }
+      },
+      "cutoff_recv_ns": 1633298618241396322,
+      "entry_hash": "dcafd1d9be0fb2fbe2992e680ec9247c73cedfc694983f8178f1f1768dd46308",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "2119ae6ea49b8ade9346a2cef6d385f4ee6e6568ecd69fa302ffde82c8fed9f8",
+      "sequence": 32
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet, so no exhaustion lineage node exists",
+        "stratum": {
+          "cutoff_recv_ns": 1633298618241396322,
+          "section": "4.13"
+        }
+      },
+      "cutoff_recv_ns": 1633298618241396322,
+      "entry_hash": "3f5a546dbfccd4cf422f8704fe44010b9935fb8545b726f39a82dd04dade872b",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "dcafd1d9be0fb2fbe2992e680ec9247c73cedfc694983f8178f1f1768dd46308",
+      "sequence": 33
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate has reached any horizon or change point yet",
+        "stratum": {
+          "cutoff_recv_ns": 1633298618241396322,
+          "section": "4.16"
+        }
+      },
+      "cutoff_recv_ns": 1633298618241396322,
+      "entry_hash": "9bb3ddfb6c3779cfc2877201907dcf4894341371b5c6597018ecd30526c436df",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "3f5a546dbfccd4cf422f8704fe44010b9935fb8545b726f39a82dd04dade872b",
+      "sequence": 34
+    },
+    {
+      "body": {
+        "denominator": 11122,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet; detector has judged 11112 seconds",
+        "stratum": {
+          "cutoff_recv_ns": 1633298727046687558,
+          "section": "4.10"
+        }
+      },
+      "cutoff_recv_ns": 1633298727046687558,
+      "entry_hash": "434445dd8b35a3d06bc5aff2f0fcab860f4036792c2474118d1b5febc3ecdae3",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "9bb3ddfb6c3779cfc2877201907dcf4894341371b5c6597018ecd30526c436df",
+      "sequence": 35
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet; 0 threshold-crossing alerts emitted, none yet followed by a promotion",
+        "stratum": {
+          "cutoff_recv_ns": 1633298727046687558,
+          "section": "4.11"
+        }
+      },
+      "cutoff_recv_ns": 1633298727046687558,
+      "entry_hash": "9e45422cb9fa05ee5faface67510eb92045a9aded90fb59f84aff92e93f389d2",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "434445dd8b35a3d06bc5aff2f0fcab860f4036792c2474118d1b5febc3ecdae3",
+      "sequence": 36
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate has reached its availability second yet, so no runway stage exists",
+        "stratum": {
+          "cutoff_recv_ns": 1633298727046687558,
+          "section": "4.12"
+        }
+      },
+      "cutoff_recv_ns": 1633298727046687558,
+      "entry_hash": "be4069c3e2ef059bf0070bff635909d328285998f3085351b5f28623d6e08d5a",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "9e45422cb9fa05ee5faface67510eb92045a9aded90fb59f84aff92e93f389d2",
+      "sequence": 37
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet, so no exhaustion lineage node exists",
+        "stratum": {
+          "cutoff_recv_ns": 1633298727046687558,
+          "section": "4.13"
+        }
+      },
+      "cutoff_recv_ns": 1633298727046687558,
+      "entry_hash": "3902444b8b772f426f779acbc11fc731302e085cb21be18e9e87295293c3f6d5",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "be4069c3e2ef059bf0070bff635909d328285998f3085351b5f28623d6e08d5a",
+      "sequence": 38
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate has reached any horizon or change point yet",
+        "stratum": {
+          "cutoff_recv_ns": 1633298727046687558,
+          "section": "4.16"
+        }
+      },
+      "cutoff_recv_ns": 1633298727046687558,
+      "entry_hash": "012070ca33311440f330058186cbfc993705d5f872664b52fb963f685c25846c",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "3902444b8b772f426f779acbc11fc731302e085cb21be18e9e87295293c3f6d5",
+      "sequence": 39
+    },
+    {
+      "body": {
+        "denominator": 11238,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet; detector has judged 11228 seconds",
+        "stratum": {
+          "cutoff_recv_ns": 1633298843554132312,
+          "section": "4.10"
+        }
+      },
+      "cutoff_recv_ns": 1633298843554132312,
+      "entry_hash": "08a9d9827da645aa5b80242b5f4323e3eaca26bdc01e338f147d22e9df5285c4",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "012070ca33311440f330058186cbfc993705d5f872664b52fb963f685c25846c",
+      "sequence": 40
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet; 0 threshold-crossing alerts emitted, none yet followed by a promotion",
+        "stratum": {
+          "cutoff_recv_ns": 1633298843554132312,
+          "section": "4.11"
+        }
+      },
+      "cutoff_recv_ns": 1633298843554132312,
+      "entry_hash": "32c069e1bae14e6c48c6674290ffa093ccee4902445057efe7176b89ad8f090f",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "08a9d9827da645aa5b80242b5f4323e3eaca26bdc01e338f147d22e9df5285c4",
+      "sequence": 41
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate has reached its availability second yet, so no runway stage exists",
+        "stratum": {
+          "cutoff_recv_ns": 1633298843554132312,
+          "section": "4.12"
+        }
+      },
+      "cutoff_recv_ns": 1633298843554132312,
+      "entry_hash": "78572c621edd173583331e11aea520c1db9b109dbb8f137c53c5bd6259849086",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "32c069e1bae14e6c48c6674290ffa093ccee4902445057efe7176b89ad8f090f",
+      "sequence": 42
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet, so no exhaustion lineage node exists",
+        "stratum": {
+          "cutoff_recv_ns": 1633298843554132312,
+          "section": "4.13"
+        }
+      },
+      "cutoff_recv_ns": 1633298843554132312,
+      "entry_hash": "87d18be982fa7a71bed5c7e6f5091c9fe5a22fdfb82e65fd628aea8cabe69db4",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "78572c621edd173583331e11aea520c1db9b109dbb8f137c53c5bd6259849086",
+      "sequence": 43
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate has reached any horizon or change point yet",
+        "stratum": {
+          "cutoff_recv_ns": 1633298843554132312,
+          "section": "4.16"
+        }
+      },
+      "cutoff_recv_ns": 1633298843554132312,
+      "entry_hash": "50850117779e4063010d63fddb0c742029c8cc1f9a1504f4e40123d5215381c3",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "87d18be982fa7a71bed5c7e6f5091c9fe5a22fdfb82e65fd628aea8cabe69db4",
+      "sequence": 44
+    },
+    {
+      "body": {
+        "denominator": 11393,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet; detector has judged 11383 seconds",
+        "stratum": {
+          "cutoff_recv_ns": 1633298998928924813,
+          "section": "4.10"
+        }
+      },
+      "cutoff_recv_ns": 1633298998928924813,
+      "entry_hash": "f8be84790bb6c203cff90471f9c9816207e2154f669c21c680355a855d10bce3",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "50850117779e4063010d63fddb0c742029c8cc1f9a1504f4e40123d5215381c3",
+      "sequence": 45
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet; 0 threshold-crossing alerts emitted, none yet followed by a promotion",
+        "stratum": {
+          "cutoff_recv_ns": 1633298998928924813,
+          "section": "4.11"
+        }
+      },
+      "cutoff_recv_ns": 1633298998928924813,
+      "entry_hash": "1200f3e07a610b8d3c70fc570dea7dd49ee8aa4abaf57d3fbba18296b1d3032d",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "f8be84790bb6c203cff90471f9c9816207e2154f669c21c680355a855d10bce3",
+      "sequence": 46
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate has reached its availability second yet, so no runway stage exists",
+        "stratum": {
+          "cutoff_recv_ns": 1633298998928924813,
+          "section": "4.12"
+        }
+      },
+      "cutoff_recv_ns": 1633298998928924813,
+      "entry_hash": "08a3a39cc874c496f886381cbecb409934d668d2a2ad39dd7e664a2568780e2f",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "1200f3e07a610b8d3c70fc570dea7dd49ee8aa4abaf57d3fbba18296b1d3032d",
+      "sequence": 47
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate promoted yet, so no exhaustion lineage node exists",
+        "stratum": {
+          "cutoff_recv_ns": 1633298998928924813,
+          "section": "4.13"
+        }
+      },
+      "cutoff_recv_ns": 1633298998928924813,
+      "entry_hash": "94e48948d91f1860fa4f1150ebe61d65ea3540695060e903a9dc91e9dabb6690",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "08a3a39cc874c496f886381cbecb409934d668d2a2ad39dd7e664a2568780e2f",
+      "sequence": 48
+    },
+    {
+      "body": {
+        "denominator": 0,
+        "kind": "SPARSE",
+        "numerator": 0,
+        "statement": "no candidate has reached any horizon or change point yet",
+        "stratum": {
+          "cutoff_recv_ns": 1633298998928924813,
+          "section": "4.16"
+        }
+      },
+      "cutoff_recv_ns": 1633298998928924813,
+      "entry_hash": "7bdcc8ceeef5395dd724a73bb72fb16a2e15d236f2aea4d34ae72753da8bbe2f",
+      "ledger_id": "output_negative_sparse_inconclusive_ledger",
+      "prev_hash": "94e48948d91f1860fa4f1150ebe61d65ea3540695060e903a9dc91e9dabb6690",
+      "sequence": 49
     }
   ],
-  "head_hash": "cd7b7bb0f5d79960c0a75abea338900edcb64c8fd8832072c11814d2e557f971",
+  "head_hash": "7bdcc8ceeef5395dd724a73bb72fb16a2e15d236f2aea4d34ae72753da8bbe2f",
   "ledger_id": "output_negative_sparse_inconclusive_ledger"
 }
