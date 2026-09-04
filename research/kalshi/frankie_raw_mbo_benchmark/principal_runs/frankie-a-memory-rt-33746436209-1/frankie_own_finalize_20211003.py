@@ -567,3 +567,80 @@ def raw_mbo_entries(census: dict[str, Any], T: dict[str, Any], groups: int) -> l
     E.append({"field_or_group": "WHOLE_SURFACE_VERDICT", "classification": LB, "evidence": "KEEP EVERYTHING. No field group and no registry layer meets the zero-value bar. The only candidates that came close are five fields that are defective as carried (book_regime price truncation; the anchor-window aggressor tallies stuck at 0) and they should be FIXED, not dropped; the redundant projections (book top-N, the legacy ten-level sizes, the age fields) are cheap audit columns whose value is that a reader can check the derivation. book_full with its FIFO identities is the single most load-bearing block: 4.6, 4.7, 4.9 and the fifo_state frames rest on it. Size was never an argument here.",
               "read_by_sections": ["4.0", "4.0b", "4.1", "4.2", "4.3", "4.4", "4.5", "4.6", "4.7", "4.8", "4.9", "4.10", "4.11", "4.12", "4.13", "4.14", "4.15", "4.16"], "action": "ADVISE_ONLY_NOTHING_REMOVED", "elimination_recommendations": []})
     return E
+
+
+# ------------------------------------------------------------------ main
+LATER_INSPECTIONS = [
+    {"id": "keep_research_kalshi_ng_exhaustion_frankie_data_feed_inventory_20260824_md", "reason": "INSPECTED after the stream started: sections 1-9 read to map the 55 registry layers onto the feed families for the 9a classification"},
+    {"id": "keep_research_kalshi_ng_exhaustion_frankie_source_file_inventory_20260824_md", "reason": "INSPECTED: sections A-C read for the same purpose; no number from it was used"},
+    {"id": "native_positive_discovery_addendum", "reason": "INSPECTED: the standing research directive and the D-depth / PRIOR-T0-H+N definitions were read and applied to my 4.11 and 4.13 designs"},
+    {"id": "a_memory_member_first_positive_findings", "reason": "INSPECTED: its 2021-10-03 column (135 action strings; TFFACCN 6, TFFCCAN 7, TFFFACCCN 1, TFFFCCCAN 1, TFTFFCCCN 2+4) is tested against my own counts in the knowledge-verification ledger"},
+    {"id": "keep_research_kalshi_knowledge_ng_brain_json", "reason": "INSPECTED IN PART: meta and the 90-play index, plus the eight play bodies that touch native MBO mechanics (flow.*, direction.absorption_is_reversal, timing.subsecond_reversal_exhaustion, exit.recruitment_reversal, tape.heavy_buy_aggression...); every one of them keys on tape_conditions / phase fields of the forecaster harness that this stream does not carry, so none was testable here; the other 82 play bodies were not opened"},
+]
+
+
+def main() -> int:
+    registry = load_registry()
+    contract_text = outputs.CONTRACT_PATH.read_text(encoding="utf-8")
+    T = json.loads((WORK / "tallies.json").read_text())
+    C = json.loads((WORK / "candidates.json").read_text())
+    census = json.loads((WORK / "census.json").read_text())
+    cutoffs = json.loads(Path("data/sunday_receipts/cutoffs.json").read_text())["invocation_cutoffs"]
+    seed = json.loads(Path("research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json").read_text())
+    kreceipt = json.loads(Path("data/sunday_receipts/knowledge/KNOWLEDGE_RECEIPT.json").read_text())
+    enrich(T, C)
+    bundle = rebuild_bundle(registry, contract_text)
+    hashes = bundle.ledgers[outputs.RUN_HASHES].entries
+    end_cutoff = hashes[-1]["cutoff_recv_ns"]
+    assert hashes[-1]["body"]["phase"] == "END"
+    gi_ex = last_body("4.1")["member_group_indices"]
+    # knowledge verification
+    KV = bundle.ledger(outputs.KNOWLEDGE_VERIFICATION_LEDGER)
+    allv = verdicts(T, C, end_cutoff, gi_ex) + capsule_verdicts(T, end_cutoff, gi_ex) + proof_verdicts(seed["entries"], end_cutoff)
+    for v in allv:
+        KV.append(end_cutoff, v)
+    # raw MBO classification
+    RM = bundle.ledger(outputs.RAW_MBO_CLASSIFICATION_LEDGER)
+    for e in raw_mbo_entries(census, T, T["groups"]):
+        RM.append(end_cutoff, e)
+    # later knowledge retrievals, receipted at the end cutoff
+    arts = {a["id"]: a for a in kreceipt["artifacts"]}
+    layer_of = {}
+    for Lr in kreceipt["layers"]:
+        for f in Lr["files"]:
+            if f.get("artifact_id"):
+                layer_of.setdefault(f["artifact_id"], Lr["layer_id"])
+            layer_of.setdefault(f["path"], Lr["layer_id"])
+    KR = bundle.ledger(outputs.KNOWLEDGE_RECEIPTS)
+    new_receipt_ids = []
+    for li in LATER_INSPECTIONS:
+        a = arts[li["id"]]
+        rid = f"kr-late-{a['id']}"
+        KR.append(end_cutoff, {"receipt_id": rid, "layer_id": layer_of.get(a["id"]) or layer_of.get(a["path"]) or "UNRESOLVED_LAYER", "sha256": a["sha256"], "disposition": "INSPECTED", "artifact_id": a["id"], "path": a["path"], "reason": li["reason"]})
+        new_receipt_ids.append(rid)
+    # measurements and the closing reasoning entry
+    cad = cadence_measurement(C, cutoffs, T["detector"]["alerts"], T["touch_migrations"], T.get("last_group_recv_ns") or end_cutoff)
+    se = stream_end_measurement(T)
+    (WORK / "measurements.json").write_text(json.dumps({"cadence": cad, "stream_end": se}, indent=1, default=str))
+    RZ = bundle.ledger(outputs.REASONING_MOVIE)
+    RZ.append(end_cutoff, {"role": "REAL_TIME_FRANKIE", "turn": "STREAM_END_CLOSING", "helper_invocations": [], "knowledge_retrievals": new_receipt_ids,
+                           "reasoning": ("Closing synthesis after the whole stream. Reconciliation is load-bearing: my per-second substrate against the delivered flow rows agree={agree} disagree={disagree}; my candidates against the delivered candidate rows matched {matched}/{own}. "
+                                         "Two measurements were made on lines of inquiry the coordinator pointed out and I verified independently from the evidence and the repository: (1) the 19 staged cutoffs are every multiple of 2,281 = int(57,027 x 0.8 / 20) groups, a count cadence installed by the launcher (native_a_arm_launch._GroupCadence) while an event-driven cadence (native_replay_driver.CandidateEventCadence) exists unused; my promotions waited {wait_p50} s at the median for the next staged cutoff ({beyond} beyond the last one); "
+                                         "(2) the delivered lineage rows attached to no group before the stream end ({lineage_in_stream} in-stream) and the delivered mirror rows in-stream were {mirror}; my own 4.4 pairing and 4.13 chain lineage were available at every cutoff. "
+                                         "Knowledge verification and the 9a classification are appended at this cutoff. KEEP EVERYTHING is my 9a answer, with five defective-as-carried fields named for repair.").format(
+                                             agree=T["substrate"]["reconcile"]["agree"], disagree=T["substrate"]["reconcile"]["disagree"], matched=T["detector"]["reconcile"]["matched"], own=T["detector"]["reconcile"]["own"],
+                                             wait_p50=cad["events"]["PROMOTION"]["wait_to_next_staged_cutoff_seconds"].get("p50"), beyond=cad["events"]["PROMOTION"]["beyond_last_staged_cutoff"], lineage_in_stream=T["delivered_lineage_in_stream"], mirror=T["mirror"]["delivered_mirror_dispositions"]),
+                           "cadence_measurement": cad, "stream_end_measurement": {k: v for k, v in se.items() if k != "per_cutoff"}})
+    for lid, led in bundle.ledgers.items():
+        if led.entries:
+            led.empty_reason = None
+    receipt = outputs.write_bundle(bundle, OUT_DIR)
+    validated = outputs.validate_output_bundle_dir(OUT_DIR, registry=registry, contract_text=contract_text, knowledge_receipt_sha256=KR_SHA, delivery_receipt_sha256=DR_SHA)
+    assert validated["receipt_sha256"] == receipt["receipt_sha256"]
+    print("BUNDLE VALID", validated["receipt_sha256"], "ledgers", len(validated["ledgers"]), "verdicts", len(allv))
+    (WORK / "validated_receipt.json").write_text(json.dumps(validated, indent=1))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

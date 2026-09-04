@@ -1822,6 +1822,19 @@ SECTION_EMITTERS = {"4.0": emit_4_0, "4.0b": emit_4_0b, "4.1": emit_4_1, "4.2": 
 
 
 # ====================================================================== movies and run
+def sanitize_keys(obj: Any) -> Any:
+    """Every mapping key becomes a string (None -> "null", ints -> str) so canonical JSON can sort it; values untouched."""
+    if isinstance(obj, dict):
+        return {("null" if k is None else str(k)): sanitize_keys(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [sanitize_keys(v) for v in obj]
+    if isinstance(obj, tuple):
+        return [sanitize_keys(v) for v in obj]
+    if isinstance(obj, float) and (obj != obj or obj in (float("inf"), float("-inf"))):
+        return None
+    return obj
+
+
 def state_frame(P: Pass, cutoff: int, prev_cutoff: int | None, prev_channels: dict[str, Any] | None) -> dict[str, Any]:
     row = P.latest_row
     bf = row["book_full"]
@@ -1920,6 +1933,7 @@ def run(args: dict[str, Any]) -> None:
             except Exception as exc:  # a section that cannot be computed is a declared NULL_RESULT with the reason, never silence
                 say(f"section {sec} at cutoff {cutoff} raised {exc!r}")
                 body = null_result(sec, f"computation raised {type(exc).__name__}: {str(exc)[:200]}; this is a defect of this pass, not a market fact", P.groups, cutoff)
+            body = sanitize_keys(body)
             body["turn"] = turn
             body["groups_delivered_at_cutoff"] = P.groups
             body["cutoff_is_staged_invocation"] = (not final)
@@ -1940,6 +1954,7 @@ def run(args: dict[str, Any]) -> None:
         for sec, body in sections.items():
             L[outputs.section_ledger_id(sec)].append(cutoff, body)
         frame = state_frame(P, cutoff, prev_cutoff, prev_channels)
+        frame = sanitize_keys(frame)
         L[outputs.STATE_MOVIE].append(cutoff, frame)
         prev_channels = frame["channels"]
         L[outputs.REASONING_MOVIE].append(cutoff, {"role": ROLE, "turn": turn, "reasoning": reasoning_text(P, cutoff, turn, sections), "helper_invocations": [], "knowledge_retrievals": list(knowledge_receipt_ids) if turn == 1 else []})
