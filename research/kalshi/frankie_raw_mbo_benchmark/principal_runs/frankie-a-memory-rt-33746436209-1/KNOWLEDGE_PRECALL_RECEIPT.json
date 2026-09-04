@@ -1,0 +1,528 @@
+{
+  "arm": "A_MEMORY",
+  "context_receipt": {
+    "arm": "A_MEMORY",
+    "context_bundle_bytes": 229246,
+    "context_bundle_sha256": "97c06f5c754c55c7cea1c326be309b4a193536143371f6b9f6cc56b6ff04f372",
+    "external_bindings": [],
+    "loaded_artifacts": [
+      {
+        "authority": "BINDING_CURRENT_MISSION",
+        "bytes": 34562,
+        "id": "native_rt_mission",
+        "path": "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md",
+        "sha256": "e14f28812bf9be09dfbd74c40a7fda181dfda16effa0a9e39dee45a9bf9b559e"
+      },
+      {
+        "authority": "BINDING_CURRENT_CALCULATION_CONTRACT",
+        "bytes": 21908,
+        "id": "native_calculation_contract",
+        "path": "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md",
+        "sha256": "822d2cfdf8e78bfde0566f1a67929cc81a02611193167cf94a2171364b897865"
+      },
+      {
+        "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
+        "bytes": 5380,
+        "id": "a_memory_promoted_positive_knowledge",
+        "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md",
+        "sha256": "bc84a77d33393c7d04185fcbfa82794cef0efd45b4fd31f0b2ee245cfb8d9131"
+      },
+      {
+        "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
+        "bytes": 166700,
+        "id": "seed_a_memory_20260902",
+        "path": "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json",
+        "sha256": "4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a"
+      }
+    ],
+    "manifest_hash": "7b796cc8d3026cf9d6905a16b1dfa50884c01d27034299c95351e8983c5f3a9b",
+    "manifest_version": "native-raw-mbo-a-arms-20260828-v1",
+    "missing_required_artifacts": [],
+    "profile_id": "RT_A_MEMORY_SECOND_PASS",
+    "receipt_hash": "2fb60c0a4201350ad200941c11a89945a02d6831b4cfba970089a0f633593128",
+    "retrieval_catalog": [
+      {
+        "authority": "DETAILED_POSITIVE_PROVENANCE",
+        "bytes": 16870,
+        "id": "native_positive_discovery_addendum",
+        "path": "research/kalshi/agents/frankie_native_raw_mbo_rt_positive_discovery_addendum_20260828.md",
+        "sha256": "ea8b1243e8da25b34c4c2edc383a7bb5893a4b1dfbfd94292024ff312d58ff65"
+      },
+      {
+        "authority": "POSITIVE_NATIVE_EVIDENCE",
+        "bytes": 17287,
+        "id": "a_memory_actual_rt_positive_report",
+        "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md",
+        "sha256": "2854c9b96d759c61c4afa750e5106c824fa81462e5a5d61ff55240f9cbda9df5"
+      },
+      {
+        "authority": "POSITIVE_NATIVE_EVIDENCE",
+        "bytes": 12114,
+        "id": "a_memory_member_first_positive_findings",
+        "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md",
+        "sha256": "7b9bd3f11c28780900d76cfefd273ac7e9591c8e450b9b86b06a04fb8c32cde6"
+      },
+      {
+        "authority": "POSITIVE_NATIVE_EVIDENCE_RECEIPT",
+        "bytes": 3196,
+        "id": "a_memory_member_first_recalculation_receipt",
+        "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_RECALCULATION_RECEIPT_20260828.json",
+        "sha256": "094c32a4177edee9c16e92a288427d6e5d3777f23db8d2f954f0c6d5f310a7c1"
+      },
+      {
+        "authority": "BINDING_CURRENT",
+        "bytes": 7763,
+        "id": "keep_research_kalshi_ng_exhaustion_frankie_data_feed_inventory_20260824_md",
+        "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md",
+        "sha256": "31ff5a9d7e5d2f22cc2740f1f8010d36f37a32d2e17bee2b6794140823bddbec"
+      },
+      {
+        "authority": "BINDING_CURRENT",
+        "bytes": 13190,
+        "id": "keep_research_kalshi_ng_exhaustion_frankie_source_file_inventory_20260824_md",
+        "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md",
+        "sha256": "1603a4bc329c6aabd9f62ee76c755651c1059a609c7cf8a52d21217a78cce24e"
+      },
+      {
+        "authority": "CURRENT_BRAIN",
+        "bytes": 1739115,
+        "id": "keep_research_kalshi_knowledge_ng_brain_json",
+        "path": "research/kalshi/knowledge/ng_brain.json",
+        "sha256": "bf473faef4d5a1b8fc68a214616e6c6163f0db1794ac98818a5401225563da57"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 7321,
+        "id": "keep_research_ng_exhaustion_chain_study_contract_20260817_json",
+        "path": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+        "sha256": "c226eff3f99347dc41f9ec32e04eaeb0d3451ee92fa5408fdf66c097e668ac79"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 2617,
+        "id": "keep_research_ng_exhaustion_chain_phase1_54w_base_freeze_20260817_json",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json",
+        "sha256": "ab497ee95e4eede611c0bfdac677ec7324096cc47d838b7d69755f35983c4cb6"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 2872,
+        "id": "keep_research_ng_exhaustion_chain_phase1_54w_execution_protocol_20260817_json",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json",
+        "sha256": "5dddfbf77f1a60e30f567f2e91001cbdf7094a59aaa7e294a882ec7e4cd958d5"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 3139,
+        "id": "keep_research_ng_exhaustion_chain_phase1_causal_protocol_20260817_json",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json",
+        "sha256": "1dff5c5e22510d7770d6967aa494ec7c5b1e4f4f45a64d247ce0b174a442474d"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 4359,
+        "id": "keep_research_ng_exhaustion_chain_phase1_discovery_protocol_20260817_json",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+        "sha256": "635e041b4a78eea44116af1fc89352b762edd19c4b3cbd12e1c323729f35d37d"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 2798,
+        "id": "keep_research_ng_exhaustion_chain_phase1_mechanism_addendum_20260817_json",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
+        "sha256": "49036a33fd80a01da8a864f31c4dffb4faeb5934da16d832774c3d1c76709056"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 482,
+        "id": "keep_research_ng_exhaustion_chain_phase1_55w_reconcile_launch_20260817_json",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILE_LAUNCH_20260817.json",
+        "sha256": "171acfe17f29217e83706f2aa1c3303d473f8f35b6959984fc93cdb72aadcecd"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 11140,
+        "id": "keep_research_ng_exhaustion_chain_phase2_final_freeze_20260818_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+        "sha256": "49133cbcbfcdf589201724ee1dc60fc0c0cb059593736a5ac97caa30c68093a1"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 14018,
+        "id": "keep_research_ng_exhaustion_chain_phase2_all_agent_findings_20260818_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
+        "sha256": "d3e273b934ef31312cf1fc5ddd67345da3efd4809f4da3cc770b8f3f80ef6d7b"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 8166,
+        "id": "keep_research_ng_exhaustion_chain_phase2_findings_20260817_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md",
+        "sha256": "0e217af8983a5492bb6bff64f109b9b8b92622cc2d694b386784fd0d37c52bbc"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 5781,
+        "id": "keep_research_ng_exhaustion_chain_phase2_timing_context_findings_20260818_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md",
+        "sha256": "fe1810198c249390a383434eec74c90aa854a07bfaefa26f5159c6b98af2eb18"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 6255,
+        "id": "keep_research_ng_exhaustion_chain_phase2_module_novelty_findings_20260818_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md",
+        "sha256": "fe9ea9cd380e8ccfb3b861065ed3e5369fd1cded1aadfccd10337ea238f54e14"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 9732,
+        "id": "keep_research_ng_exhaustion_chain_phase2_postexit_recurrence_findings_20260818_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md",
+        "sha256": "da4f5c991251668344290ac10f319aabfa5df52e8f0b7321da0eefbea864d1eb"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 3185,
+        "id": "keep_research_ng_exhaustion_chain_phase2_parallel_recurrence_reconciliation_20260818_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md",
+        "sha256": "9e68f222832a3136b750016a9253df213bf4b4dfe44a973c07b659fa55b1b7bf"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 5561,
+        "id": "keep_research_ng_exhaustion_chain_phase2_findings_addendum_pox_20260818_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_ADDENDUM_POX_20260818.md",
+        "sha256": "3a745e98378c6abb64327175e35efbc8e36ff1eb2150c3bc842ef7731854011c"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 6300,
+        "id": "keep_research_ng_exhaustion_chain_phase2_pox_branch_reconciliation_v2_20260818_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_BRANCH_RECONCILIATION_V2_20260818.md",
+        "sha256": "83028f75d80b787742bb4cacb9eb8935f1992bac3b5a0f734bf38fb6159efe48"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 4113,
+        "id": "keep_research_ng_exhaustion_chain_phase2_pox_same_postexit_reexpression_20260818_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md",
+        "sha256": "08f94ea20901768fa64b82c39b023b3fab9845106cf1d17b14e5a74e3fd74d81"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 7251,
+        "id": "keep_research_ng_exhaustion_chain_phase2_reappearance_watch_map_20260818_json",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json",
+        "sha256": "5c22e5ce72e3a0863b16cbf469b6d491edadf1e161c494ca6d4a753e058da15c"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 4158,
+        "id": "keep_research_ng_exhaustion_chain_phase2_finalization_checklist_20260818_json",
+        "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json",
+        "sha256": "82a95aadd0b0e4593c35197fdd98b8c8d22dda919d7d8220f924524a744e7845"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 7252,
+        "id": "keep_research_ng_exhaustion_chain_step1_original_file_map_20260820_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md",
+        "sha256": "8d2d268401e18410a9d77473c703d239b7fc1adc020d40e0b85c25415b328246"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 10291,
+        "id": "keep_research_ng_exhaustion_chain_step1_5y_v4_native_census_protocol_20260820_md",
+        "path": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md",
+        "sha256": "3f717ad70d56c9ee3e0a002b9ff4de22d1d7cd209485ef7c7f3c1d6165ef69d1"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 6035,
+        "id": "keep_research_ng_exhaustion_chain_step1_5y_v4_native_census_protocol_20260820_json",
+        "path": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json",
+        "sha256": "cc40727f275303dd1978bdf4e47bdfc19821d3d530c846e173d0f8eb953cef02"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 6464,
+        "id": "keep_research_ng_exhaustion_chain_canonical_54w_merge_20260817_py",
+        "path": "research/ng_exhaustion_chain_canonical_54w_merge_20260817.py",
+        "sha256": "842f2ca650f28b602e9b7f07208a692b092ae5e65aa574ebd79d1b5a84da1e8a"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 5920,
+        "id": "keep_research_ng_exhaustion_chain_canonical_54w_shard_20260817_py",
+        "path": "research/ng_exhaustion_chain_canonical_54w_shard_20260817.py",
+        "sha256": "f6a80d415ba71aee7ec002d3d97f0a17b13ecd3ea88883999a8edc180f5136d3"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 22371,
+        "id": "keep_research_ng_exhaustion_chain_canonical_table_20260817_py",
+        "path": "research/ng_exhaustion_chain_canonical_table_20260817.py",
+        "sha256": "4325776b4d70bfa3808bce1b9473d6da75cc18c8cbe00be3cf5652f849573ffa"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 11897,
+        "id": "keep_research_ng_exhaustion_chain_phase1_discovery_20260817_py",
+        "path": "research/ng_exhaustion_chain_phase1_discovery_20260817.py",
+        "sha256": "e64d05a25aee66047750fe1923162c3694c6fc3179d979352b95853806a04cc9"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 6725,
+        "id": "keep_research_ng_exhaustion_chain_phase1_causal_54w_20260817_py",
+        "path": "research/ng_exhaustion_chain_phase1_causal_54w_20260817.py",
+        "sha256": "9325f8a83d2e567d785af197468e2d865a8b44273c938408f58ea157e8652c6b"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 4460,
+        "id": "keep_research_ng_exhaustion_chain_phase1_continuity_54w_20260817_py",
+        "path": "research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py",
+        "sha256": "57897aa5af54c5afe6206117c9bf27cf961e6b9b413f7e26bea5b31948a0b94b"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 9210,
+        "id": "keep_research_ng_exhaustion_chain_phase1_falsifier_54w_20260817_py",
+        "path": "research/ng_exhaustion_chain_phase1_falsifier_54w_20260817.py",
+        "sha256": "45718cfff65b8a1b5a09d7f05c9ab8af4dc6071b2483b710171c82c3546ebb79"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 8172,
+        "id": "keep_research_ng_exhaustion_chain_phase1_lineage_54w_20260817_py",
+        "path": "research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py",
+        "sha256": "16be2b7249e6cd74951670421308baf3e8c942d95b0f85aeb4228b51b201af3b"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 10492,
+        "id": "keep_research_ng_exhaustion_chain_phase1_structural_54w_20260817_py",
+        "path": "research/ng_exhaustion_chain_phase1_structural_54w_20260817.py",
+        "sha256": "2b93cfeb39cc73409f04b9d9fc61e0fe02f79823fd1df064ae819a82c27d05d9"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 20813,
+        "id": "keep_research_ng_exhaustion_chain_phase1_reconcile_55w_20260817_py",
+        "path": "research/ng_exhaustion_chain_phase1_reconcile_55w_20260817.py",
+        "sha256": "c0b226dae18b46d88ae6933cc8a450331210abf3e33f4a0d93281df3f5ddfdf9"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 11949,
+        "id": "keep_research_ng_exhaustion_chain_phase2_characterize_20260817_py",
+        "path": "research/ng_exhaustion_chain_phase2_characterize_20260817.py",
+        "sha256": "389594824363d69daa1df85a0b36400d7caec3d6ce06e89949b3be59de664055"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 6609,
+        "id": "keep_research_ng_exhaustion_chain_phase2_parallel_agents_20260818_py",
+        "path": "research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py",
+        "sha256": "ffc4781a693fa354185e1a240f4b7275b8248de3c336d33a858bac1d318150d9"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 2440,
+        "id": "keep_research_ng_exhaustion_chain_state_enrich_20260817_py",
+        "path": "research/ng_exhaustion_chain_state_enrich_20260817.py",
+        "sha256": "30d220ae15786ef73e4d3a729723f932bbefdf00c238c3bb48778498c315ae9c"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 4776,
+        "id": "keep_research_ng_exhaustion_week_chain_state_roster_20260817_py",
+        "path": "research/ng_exhaustion_week_chain_state_roster_20260817.py",
+        "sha256": "ebe7f9525aaa48dff4374989e68c7cdc65e91f1d6145f3d3bb31aa684e4ec069"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 10767,
+        "id": "keep_research_ng_exhaustion_week_continuous_roster_20260817_py",
+        "path": "research/ng_exhaustion_week_continuous_roster_20260817.py",
+        "sha256": "638a13b8154863deb3816e4406d4f0cd4a9a74a860cfecce2f74c440f840a0ca"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 20557,
+        "id": "keep_research_ng_exhaustion_brain_proposal_index_20260818_md",
+        "path": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md",
+        "sha256": "47ad3db18b936050d26a7c21534c2648d43ff830db91f0c04e889d029c478f23"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 2665,
+        "id": "keep_research_ng_exhaustion_brain_proposal_index_addendum_20260820_md",
+        "path": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_ADDENDUM_20260820.md",
+        "sha256": "cc67e9d38de3433bde4d7ed0541c71350821819d714e2fbad6a933078f36a1c7"
+      },
+      {
+        "authority": "CURRENT_BRAIN+FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 14248,
+        "id": "keep_research_ng_exhaustion_v4_brain_trade_proposal_clean_source_current_20260820_md",
+        "path": "research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
+        "sha256": "39b936ed132fa1b066a37ed5a20432e5c9ccee96ab699fc54607720a26e1cd58"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 18591,
+        "id": "keep_research_ng_exhaustion_v3_v4_brain_trade_proposal_addendum_20260820_md",
+        "path": "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md",
+        "sha256": "07cc6b9209e79f75f540a8a3b191f7fd9de99f6138d4e97ee247702a70f076e2"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 6212,
+        "id": "keep_research_ng_exhaustion_v3_v4_brain_trade_proposal_final_addendum_20260820_md",
+        "path": "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md",
+        "sha256": "c585312bf731a3c7ff47d26013c08ce411c3356620eed06d928bc1485c378e7f"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 15263,
+        "id": "keep_research_kalshi_knowledge_ng_brain_exhaustion_chain_phase2_proposal_20260818_json",
+        "path": "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+        "sha256": "c734c8c19c0974650960308b5f836c9ed26ea5b3debfc832a604a99f695b4739"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 9289,
+        "id": "keep_research_kalshi_knowledge_ng_brain_exhaustion_chain_birth_v2_proposal_20260819_json",
+        "path": "research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+        "sha256": "9251176dbb5657ab22107c8ab3e4c27a260a7ea995f3c745491a778e21066b14"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 10176,
+        "id": "keep_research_kalshi_knowledge_ng_brain_exhaustion_entry_timing_extension_20260818_json",
+        "path": "research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json",
+        "sha256": "1b9f161bfb5e775e75bf49996a6448355bb0cbb6f9ecf670a5c27a1c582bc9b0"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 6262,
+        "id": "keep_research_kalshi_knowledge_ng_brain_exhaustion_pox_focused_proposal_20260819_json",
+        "path": "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json",
+        "sha256": "925deedaec7687eed64e7b37aa9ed4c9515af8081f4fbbe5c856b3e5b59dcb3f"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 3923,
+        "id": "keep_research_ng_exhaustion_v4_interpretation_correction_20260820_md",
+        "path": "research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md",
+        "sha256": "e8e74ffd603faf6e9e75c9659a6e434e7a8da982bee7224ef4fabdd867f10b8f"
+      },
+      {
+        "authority": "CURRENT_BRAIN+FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 8161,
+        "id": "keep_research_ng_exhaustion_v4_continuous_adaptive_walkforward_contract_20260820_md",
+        "path": "research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md",
+        "sha256": "f6759964d9d65a2f0322e7b74834c27a11460094a7f6af43b5d0de5a03f3278b"
+      },
+      {
+        "authority": "CURRENT_BRAIN+FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 17183,
+        "id": "keep_research_ng_exhaustion_d0_d5_v4_geometric_self_adaptation_contract_20260820_md",
+        "path": "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+        "sha256": "00875cb7ea460e7f91cf2733cca47b9855bbb6bf2656da960c06c9311faf8e09"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 9441,
+        "id": "keep_research_ng_exhaustion_d0_d5_v4_geometric_self_adaptation_contract_20260820_json",
+        "path": "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+        "sha256": "e36d82e245a718624bb21a14ae1cd5d172b64630d38580d7fe4e66d9357909db"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 2218,
+        "id": "keep_research_ng_exhaustion_event_mark_clock_open_boundary_20260819_md",
+        "path": "research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md",
+        "sha256": "b3c0f05a3d43a384b7445553000234c08dcd8ba31c6ee75bc955c3547da07a2a"
+      },
+      {
+        "authority": "CURRENT_BRAIN+FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 7565,
+        "id": "keep_research_ng_exhaustion_v4_clean_source_prelaunch_gates_20260820_md",
+        "path": "research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md",
+        "sha256": "ac6018f9379f747d5a75108ab70bc4d129a589a327a9fbbbaf9031d79ab1180d"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 5256,
+        "id": "keep_research_ng_exhaustion_continuous_instance_timing_correction_20260820_md",
+        "path": "research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md",
+        "sha256": "553c119d0809f5f36f98752ec601adef75eb04b1c80515885487c9a6a460ca24"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 2942,
+        "id": "keep_research_ng_exhaustion_continuous_live_information_correction_20260819_md",
+        "path": "research/NG_EXHAUSTION_CONTINUOUS_LIVE_INFORMATION_CORRECTION_20260819.md",
+        "sha256": "b7d75c3f34e468c5a84503d80f2a964ba7a07653e16983050daf1844a9db98ce"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 4639,
+        "id": "keep_research_ng_exhaustion_full_causal_information_correction_20260819_md",
+        "path": "research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md",
+        "sha256": "fc08cbe26dd25f74f0438d218d201a370aef6448ef6da3df32647e6438c5bb16"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 4731,
+        "id": "keep_research_ng_exhaustion_prior_model_price_correction_20260819_md",
+        "path": "research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md",
+        "sha256": "67280c2bdf3204c3ac93a52fd44df86ee951a1f17b62b3b284e7a3b4d77b7845"
+      },
+      {
+        "authority": "FROZEN_LEARNED_KNOWLEDGE",
+        "bytes": 2493,
+        "id": "keep_research_ng_exhaustion_polarity_not_primary_target_correction_20260819_md",
+        "path": "research/NG_EXHAUSTION_POLARITY_NOT_PRIMARY_TARGET_CORRECTION_20260819.md",
+        "sha256": "d449ed24c0d2a6f51d11cd49fa734eef42d0d06440e50acb7bd0bc1f1b3b1cc7"
+      },
+      {
+        "authority": "EXTRA_AGENT_CARRYFORWARD",
+        "bytes": 6553,
+        "id": "keep_research_ng_exhaustion_v3_nonauthoritative_results_extra_agent_v4_carryforward_20260820_md",
+        "path": "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md",
+        "sha256": "b3fa5af108ffac6272aec5310edcdda83c80ce558541d56c1aafbe4a2eb933c4"
+      },
+      {
+        "authority": "EXTRA_AGENT_CARRYFORWARD",
+        "bytes": 14357,
+        "id": "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_md",
+        "path": "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md",
+        "sha256": "a99cfaad0eab23f19b17b59a98a16481c4ae9283bd5c66ced9f7e3cdd1d6f7ad"
+      },
+      {
+        "authority": "EXTRA_AGENT_CARRYFORWARD",
+        "bytes": 4332,
+        "id": "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_json",
+        "path": "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json",
+        "sha256": "16f894dbb4be6857b8fa4cc01add3d4c8020a7a4c97b5efcc3c3564397f6eb6b"
+      }
+    ],
+    "role": "REAL_TIME_FRANKIE",
+    "schema": "FRANKIE_NATIVE_RAW_MBO_CONTEXT_RECEIPT_V1",
+    "unregistered_required_artifacts": []
+  },
+  "manifest_hash": "7b796cc8d3026cf9d6905a16b1dfa50884c01d27034299c95351e8983c5f3a9b",
+  "model_visible_context_bytes": 248922,
+  "model_visible_context_sha256": "6f9dbb37c3d86ec109320516c283a11c75eb51e4f094e8d63474802cf3756231",
+  "pre_call_receipt_hash": "3f4accb5fcc1ef1c2f71e419d8f13edb57c2d017524ec9997cfaef339f015a03",
+  "profile_id": "RT_A_MEMORY_SECOND_PASS",
+  "retrieval_index_bytes": 19586,
+  "retrieval_index_sha256": "114789e845e2f863dfa3915b8cb4f9219869e097744439ac3bdb16f79463da63",
+  "role": "REAL_TIME_FRANKIE",
+  "schema": "FRANKIE_NATIVE_RAW_MBO_PRINCIPAL_KNOWLEDGE_PRECALL_V1",
+  "verified_external_proofs": []
+}

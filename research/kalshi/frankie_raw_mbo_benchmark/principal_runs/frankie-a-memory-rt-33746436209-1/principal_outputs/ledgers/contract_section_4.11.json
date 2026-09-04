@@ -184,8 +184,3225 @@
       "ledger_id": "contract_section_4.11",
       "prev_hash": "81545974ccb44c69593b87c6ae41e11d7e80a03155e16de1c0662c932552e050",
       "sequence": 7
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298843554132312
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 20530,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate promoted yet; 0 threshold-crossing alerts emitted, none yet followed by a promotion"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.11",
+        "turn": 9
+      },
+      "cutoff_recv_ns": 1633298843554132312,
+      "entry_hash": "f957fa1c29f78877c741cea653172e83de7bd762f17e300f2921c36027ef248d",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "43d0e6cdf8dbcbda5f513f50492abbf0aab9c21ae9fcf59c8b671f76ad0d7490",
+      "sequence": 8
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298998928924813
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 22811,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate promoted yet; 0 threshold-crossing alerts emitted, none yet followed by a promotion"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.11",
+        "turn": 10
+      },
+      "cutoff_recv_ns": 1633298998928924813,
+      "entry_hash": "9a393310647138e821c4f3ed3930551dbe0075f8517cd0082c0b5d6dbfb9d340",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "f957fa1c29f78877c741cea653172e83de7bd762f17e300f2921c36027ef248d",
+      "sequence": 9
+    },
+    {
+      "body": {
+        "alert_precision": {
+          "alerts": 18,
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "followed_by_promotion": 6,
+          "value": 0.333333333
+        },
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299505523516424,
+              "denominator": 2,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 24.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=1; p50=24 max=24"
+            },
+            "value": 24.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299505523516424,
+              "denominator": 2,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -50.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=1; p50=-50 max=-50"
+            },
+            "value": -50.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299505523516424,
+              "denominator": 4,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 11.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=1; p50=11 max=11"
+            },
+            "value": 11.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299505523516424,
+              "denominator": 4,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -66.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=3; p50=-10 max=-6"
+            },
+            "value": -22.0
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "first_call_rule": {
+          "rule": "a later horizon never replaces the promotion",
+          "superseded_calls": 0
+        },
+        "groups_delivered_at_cutoff": 25092,
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763
+        ],
+        "population": {
+          "candidates": 6,
+          "censored_windows": 0,
+          "missed": 0,
+          "precursor_labels": {
+            "H+N": 4,
+            "PRIOR": 2
+          },
+          "promotion_labels": {
+            "H+N": 6
+          }
+        },
+        "prior_lead_span_seconds": {
+          "max": 24,
+          "mean": 17.5,
+          "min": 11,
+          "n": 2,
+          "p10": 11,
+          "p25": 11,
+          "p50": 24,
+          "p75": 24,
+          "p90": 24,
+          "p99": 24,
+          "sum": 35.0
+        },
+        "promotion_lag_seconds": {
+          "max": 50,
+          "mean": 30.666666667,
+          "min": 6,
+          "n": 6,
+          "p10": 10,
+          "p25": 10,
+          "p50": 50,
+          "p75": 50,
+          "p90": 50,
+          "p99": 50,
+          "sum": 184.0
+        },
+        "recent_candidates_exact": [
+          {
+            "alert_second": 1633299044,
+            "available_second": 1633299094,
+            "candidate_id": "frk-dip-18904-1633299044",
+            "event_second": 1633299044,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633299091,
+            "available_second": 1633299141,
+            "candidate_id": "frk-dip-18904-1633299091",
+            "event_second": 1633299091,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633299168,
+            "available_second": 1633299198,
+            "candidate_id": "frk-dip-18904-1633299180",
+            "event_second": 1633299180,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 11,
+            "promotion_lag_seconds": 18
+          },
+          {
+            "alert_second": 1633299265,
+            "available_second": 1633299275,
+            "candidate_id": "frk-dip-18904-1633299265",
+            "event_second": 1633299265,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -10,
+            "promotion_lag_seconds": 10
+          },
+          {
+            "alert_second": 1633299366,
+            "available_second": 1633299372,
+            "candidate_id": "frk-dip-18904-1633299366",
+            "event_second": 1633299366,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -6,
+            "promotion_lag_seconds": 6
+          },
+          {
+            "alert_second": 1633299386,
+            "available_second": 1633299461,
+            "candidate_id": "frk-dip-18904-1633299411",
+            "event_second": 1633299411,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 24,
+            "promotion_lag_seconds": 50
+          }
+        ],
+        "reconciliation_with_delivered_episode_rows": {
+          "delivered_episode_rows_seen": 12,
+          "delivered_outcomes": {
+            "H+N": 6,
+            "null": 6
+          }
+        },
+        "result": "COMPUTED",
+        "rule": "the promotion (the detector's own emission) is the first DURABLE lawful call: H+N with N = available - event seconds, never superseded. The earliest lawful PRE-BIRTH signal tested is the threshold-crossing alert: the first second of the contiguous above-bar run that ends at the event second, knowable at alert+1; PRIOR if alert+1 < event, T0 if equal, else H+N. Its precision (alerts followed by a promoted candidate / all alerts) is reported beside every lead because an alert that fires without a promotion is a false alarm on this unit",
+        "section": "4.11",
+        "turn": 11
+      },
+      "cutoff_recv_ns": 1633299505523516424,
+      "entry_hash": "e50f1f4cf7574b665e2ce9a853732b7b94c868246a171a9ce7b8fc33ac1e73cb",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "9a393310647138e821c4f3ed3930551dbe0075f8517cd0082c0b5d6dbfb9d340",
+      "sequence": 10
+    },
+    {
+      "body": {
+        "alert_precision": {
+          "alerts": 29,
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "followed_by_promotion": 13,
+          "value": 0.448275862
+        },
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299950655145332,
+              "denominator": 4,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 24.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=1; p50=24 max=24"
+            },
+            "value": 24.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299950655145332,
+              "denominator": 4,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -113.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=3; p50=-50 max=-13"
+            },
+            "value": -37.666666667
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299950655145332,
+              "denominator": 9,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 34.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=5; p50=6 max=11"
+            },
+            "value": 6.8
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633299950655145332,
+              "denominator": 9,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -116.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=4; p50=-10 max=-6"
+            },
+            "value": -29.0
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "first_call_rule": {
+          "rule": "a later horizon never replaces the promotion",
+          "superseded_calls": 0
+        },
+        "groups_delivered_at_cutoff": 27373,
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "population": {
+          "candidates": 13,
+          "censored_windows": 0,
+          "missed": 0,
+          "precursor_labels": {
+            "H+N": 7,
+            "PRIOR": 6
+          },
+          "promotion_labels": {
+            "H+N": 13
+          }
+        },
+        "prior_lead_span_seconds": {
+          "max": 24,
+          "mean": 9.666666667,
+          "min": 4,
+          "n": 6,
+          "p10": 6,
+          "p25": 6,
+          "p50": 7,
+          "p75": 11,
+          "p90": 24,
+          "p99": 24,
+          "sum": 58.0
+        },
+        "promotion_lag_seconds": {
+          "max": 50,
+          "mean": 36.692307692,
+          "min": 6,
+          "n": 13,
+          "p10": 10,
+          "p25": 18,
+          "p50": 45,
+          "p75": 50,
+          "p90": 50,
+          "p99": 50,
+          "sum": 477.0
+        },
+        "recent_candidates_exact": [
+          {
+            "alert_second": 1633299265,
+            "available_second": 1633299275,
+            "candidate_id": "frk-dip-18904-1633299265",
+            "event_second": 1633299265,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -10,
+            "promotion_lag_seconds": 10
+          },
+          {
+            "alert_second": 1633299366,
+            "available_second": 1633299372,
+            "candidate_id": "frk-dip-18904-1633299366",
+            "event_second": 1633299366,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -6,
+            "promotion_lag_seconds": 6
+          },
+          {
+            "alert_second": 1633299386,
+            "available_second": 1633299461,
+            "candidate_id": "frk-dip-18904-1633299411",
+            "event_second": 1633299411,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 24,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633299481,
+            "available_second": 1633299531,
+            "candidate_id": "frk-dip-18904-1633299486",
+            "event_second": 1633299486,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 4,
+            "promotion_lag_seconds": 45
+          },
+          {
+            "alert_second": 1633299577,
+            "available_second": 1633299590,
+            "candidate_id": "frk-dip-18904-1633299577",
+            "event_second": 1633299577,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -13,
+            "promotion_lag_seconds": 13
+          },
+          {
+            "alert_second": 1633299630,
+            "available_second": 1633299680,
+            "candidate_id": "frk-dip-18904-1633299638",
+            "event_second": 1633299638,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 7,
+            "promotion_lag_seconds": 42
+          },
+          {
+            "alert_second": 1633299678,
+            "available_second": 1633299733,
+            "candidate_id": "frk-dip-18904-1633299685",
+            "event_second": 1633299685,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 6,
+            "promotion_lag_seconds": 48
+          },
+          {
+            "alert_second": 1633299728,
+            "available_second": 1633299780,
+            "candidate_id": "frk-dip-18904-1633299735",
+            "event_second": 1633299735,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 6,
+            "promotion_lag_seconds": 45
+          },
+          {
+            "alert_second": 1633299783,
+            "available_second": 1633299833,
+            "candidate_id": "frk-dip-18904-1633299783",
+            "event_second": 1633299783,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633299838,
+            "available_second": 1633299888,
+            "candidate_id": "frk-dip-18904-1633299838",
+            "event_second": 1633299838,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          }
+        ],
+        "reconciliation_with_delivered_episode_rows": {
+          "delivered_episode_rows_seen": 26,
+          "delivered_outcomes": {
+            "H+N": 13,
+            "null": 13
+          }
+        },
+        "result": "COMPUTED",
+        "rule": "the promotion (the detector's own emission) is the first DURABLE lawful call: H+N with N = available - event seconds, never superseded. The earliest lawful PRE-BIRTH signal tested is the threshold-crossing alert: the first second of the contiguous above-bar run that ends at the event second, knowable at alert+1; PRIOR if alert+1 < event, T0 if equal, else H+N. Its precision (alerts followed by a promoted candidate / all alerts) is reported beside every lead because an alert that fires without a promotion is a false alarm on this unit",
+        "section": "4.11",
+        "turn": 12
+      },
+      "cutoff_recv_ns": 1633299950655145332,
+      "entry_hash": "53cce628657ac6d99a79459743cb8d95a3dcbeb76f7b1d6de273352628f37aff",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "e50f1f4cf7574b665e2ce9a853732b7b94c868246a171a9ce7b8fc33ac1e73cb",
+      "sequence": 11
+    },
+    {
+      "body": {
+        "alert_precision": {
+          "alerts": 40,
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "followed_by_promotion": 19,
+          "value": 0.475
+        },
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300320102307848,
+              "denominator": 6,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 38.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=2; p50=24 max=24"
+            },
+            "value": 19.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300320102307848,
+              "denominator": 6,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -127.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=4; p50=-14 max=-13"
+            },
+            "value": -31.75
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300320102307848,
+              "denominator": 13,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 37.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=6; p50=6 max=11"
+            },
+            "value": 6.166666667
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300320102307848,
+              "denominator": 13,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -266.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=7; p50=-50 max=-6"
+            },
+            "value": -38.0
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "first_call_rule": {
+          "rule": "a later horizon never replaces the promotion",
+          "superseded_calls": 0
+        },
+        "groups_delivered_at_cutoff": 29654,
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "population": {
+          "candidates": 19,
+          "censored_windows": 0,
+          "missed": 0,
+          "precursor_labels": {
+            "H+N": 11,
+            "PRIOR": 8
+          },
+          "promotion_labels": {
+            "H+N": 19
+          }
+        },
+        "prior_lead_span_seconds": {
+          "max": 24,
+          "mean": 9.375,
+          "min": 3,
+          "n": 8,
+          "p10": 4,
+          "p25": 6,
+          "p50": 7,
+          "p75": 11,
+          "p90": 14,
+          "p99": 24,
+          "sum": 75.0
+        },
+        "promotion_lag_seconds": {
+          "max": 50,
+          "mean": 38.789473684,
+          "min": 6,
+          "n": 19,
+          "p10": 13,
+          "p25": 42,
+          "p50": 48,
+          "p75": 50,
+          "p90": 50,
+          "p99": 50,
+          "sum": 737.0
+        },
+        "recent_candidates_exact": [
+          {
+            "alert_second": 1633299678,
+            "available_second": 1633299733,
+            "candidate_id": "frk-dip-18904-1633299685",
+            "event_second": 1633299685,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 6,
+            "promotion_lag_seconds": 48
+          },
+          {
+            "alert_second": 1633299728,
+            "available_second": 1633299780,
+            "candidate_id": "frk-dip-18904-1633299735",
+            "event_second": 1633299735,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 6,
+            "promotion_lag_seconds": 45
+          },
+          {
+            "alert_second": 1633299783,
+            "available_second": 1633299833,
+            "candidate_id": "frk-dip-18904-1633299783",
+            "event_second": 1633299783,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633299838,
+            "available_second": 1633299888,
+            "candidate_id": "frk-dip-18904-1633299838",
+            "event_second": 1633299838,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633299928,
+            "available_second": 1633299978,
+            "candidate_id": "frk-dip-18904-1633299928",
+            "event_second": 1633299928,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633299958,
+            "available_second": 1633300023,
+            "candidate_id": "frk-dip-18904-1633299973",
+            "event_second": 1633299973,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 14,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300080,
+            "available_second": 1633300094,
+            "candidate_id": "frk-dip-18904-1633300080",
+            "event_second": 1633300080,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -14,
+            "promotion_lag_seconds": 14
+          },
+          {
+            "alert_second": 1633300125,
+            "available_second": 1633300175,
+            "candidate_id": "frk-dip-18904-1633300125",
+            "event_second": 1633300125,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300187,
+            "available_second": 1633300237,
+            "candidate_id": "frk-dip-18904-1633300191",
+            "event_second": 1633300191,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 3,
+            "promotion_lag_seconds": 46
+          },
+          {
+            "alert_second": 1633300241,
+            "available_second": 1633300291,
+            "candidate_id": "frk-dip-18904-1633300241",
+            "event_second": 1633300241,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          }
+        ],
+        "reconciliation_with_delivered_episode_rows": {
+          "delivered_episode_rows_seen": 38,
+          "delivered_outcomes": {
+            "H+N": 19,
+            "null": 19
+          }
+        },
+        "result": "COMPUTED",
+        "rule": "the promotion (the detector's own emission) is the first DURABLE lawful call: H+N with N = available - event seconds, never superseded. The earliest lawful PRE-BIRTH signal tested is the threshold-crossing alert: the first second of the contiguous above-bar run that ends at the event second, knowable at alert+1; PRIOR if alert+1 < event, T0 if equal, else H+N. Its precision (alerts followed by a promoted candidate / all alerts) is reported beside every lead because an alert that fires without a promotion is a false alarm on this unit",
+        "section": "4.11",
+        "turn": 13
+      },
+      "cutoff_recv_ns": 1633300320102307848,
+      "entry_hash": "3e93b123b9c6b170f3257f7438ba99705118ac3cfc03927dbfb9d782bc4cff16",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "53cce628657ac6d99a79459743cb8d95a3dcbeb76f7b1d6de273352628f37aff",
+      "sequence": 12
+    },
+    {
+      "body": {
+        "alert_precision": {
+          "alerts": 55,
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "followed_by_promotion": 28,
+          "value": 0.509090909
+        },
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300905784605734,
+              "denominator": 9,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 50.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=3; p50=14 max=24"
+            },
+            "value": 16.666666667
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300905784605734,
+              "denominator": 9,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -227.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=6; p50=-50 max=-13"
+            },
+            "value": -37.833333333
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300905784605734,
+              "denominator": 19,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 43.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=8; p50=6 max=11"
+            },
+            "value": 5.375
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633300905784605734,
+              "denominator": 19,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -445.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=11; p50=-50 max=-6"
+            },
+            "value": -40.454545455
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "first_call_rule": {
+          "rule": "a later horizon never replaces the promotion",
+          "superseded_calls": 0
+        },
+        "groups_delivered_at_cutoff": 31935,
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "population": {
+          "candidates": 28,
+          "censored_windows": 0,
+          "missed": 0,
+          "precursor_labels": {
+            "H+N": 17,
+            "PRIOR": 11
+          },
+          "promotion_labels": {
+            "H+N": 28
+          }
+        },
+        "prior_lead_span_seconds": {
+          "max": 24,
+          "mean": 8.454545455,
+          "min": 3,
+          "n": 11,
+          "p10": 3,
+          "p25": 4,
+          "p50": 6,
+          "p75": 12,
+          "p90": 14,
+          "p99": 24,
+          "sum": 93.0
+        },
+        "promotion_lag_seconds": {
+          "max": 50,
+          "mean": 40.678571429,
+          "min": 6,
+          "n": 28,
+          "p10": 14,
+          "p25": 42,
+          "p50": 50,
+          "p75": 50,
+          "p90": 50,
+          "p99": 50,
+          "sum": 1139.0
+        },
+        "recent_candidates_exact": [
+          {
+            "alert_second": 1633300241,
+            "available_second": 1633300291,
+            "candidate_id": "frk-dip-18904-1633300241",
+            "event_second": 1633300241,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300359,
+            "available_second": 1633300390,
+            "candidate_id": "frk-dip-18904-1633300363",
+            "event_second": 1633300363,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 3,
+            "promotion_lag_seconds": 27
+          },
+          {
+            "alert_second": 1633300434,
+            "available_second": 1633300484,
+            "candidate_id": "frk-dip-18904-1633300434",
+            "event_second": 1633300434,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300502,
+            "available_second": 1633300552,
+            "candidate_id": "frk-dip-18904-1633300502",
+            "event_second": 1633300502,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300563,
+            "available_second": 1633300613,
+            "candidate_id": "frk-dip-18904-1633300567",
+            "event_second": 1633300567,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 3,
+            "promotion_lag_seconds": 46
+          },
+          {
+            "alert_second": 1633300616,
+            "available_second": 1633300666,
+            "candidate_id": "frk-dip-18904-1633300616",
+            "event_second": 1633300616,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300666,
+            "available_second": 1633300716,
+            "candidate_id": "frk-dip-18904-1633300666",
+            "event_second": 1633300666,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300732,
+            "available_second": 1633300761,
+            "candidate_id": "frk-dip-18904-1633300732",
+            "event_second": 1633300732,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -29,
+            "promotion_lag_seconds": 29
+          },
+          {
+            "alert_second": 1633300764,
+            "available_second": 1633300827,
+            "candidate_id": "frk-dip-18904-1633300777",
+            "event_second": 1633300777,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 12,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300831,
+            "available_second": 1633300881,
+            "candidate_id": "frk-dip-18904-1633300831",
+            "event_second": 1633300831,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          }
+        ],
+        "reconciliation_with_delivered_episode_rows": {
+          "delivered_episode_rows_seen": 56,
+          "delivered_outcomes": {
+            "H+N": 28,
+            "null": 28
+          }
+        },
+        "result": "COMPUTED",
+        "rule": "the promotion (the detector's own emission) is the first DURABLE lawful call: H+N with N = available - event seconds, never superseded. The earliest lawful PRE-BIRTH signal tested is the threshold-crossing alert: the first second of the contiguous above-bar run that ends at the event second, knowable at alert+1; PRIOR if alert+1 < event, T0 if equal, else H+N. Its precision (alerts followed by a promoted candidate / all alerts) is reported beside every lead because an alert that fires without a promotion is a false alarm on this unit",
+        "section": "4.11",
+        "turn": 14
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "4a2c8618225e5b00d66e7ee61d836b2c14a4f34b3998b93026532aeb8c8f219c",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "3e93b123b9c6b170f3257f7438ba99705118ac3cfc03927dbfb9d782bc4cff16",
+      "sequence": 13
+    },
+    {
+      "body": {
+        "alert_precision": {
+          "alerts": 65,
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "followed_by_promotion": 33,
+          "value": 0.507692308
+        },
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633301315945525951,
+              "denominator": 12,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 94.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=4; p50=24 max=44"
+            },
+            "value": 23.5
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633301315945525951,
+              "denominator": 12,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -327.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=8; p50=-50 max=-13"
+            },
+            "value": -40.875
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633301315945525951,
+              "denominator": 22,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 43.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=8; p50=6 max=11"
+            },
+            "value": 5.375
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633301315945525951,
+              "denominator": 22,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=T0; n=1; p50=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633301315945525951,
+              "denominator": 22,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -517.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=13; p50=-50 max=-6"
+            },
+            "value": -39.769230769
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "first_call_rule": {
+          "rule": "a later horizon never replaces the promotion",
+          "superseded_calls": 0
+        },
+        "groups_delivered_at_cutoff": 34216,
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "population": {
+          "candidates": 34,
+          "censored_windows": 0,
+          "missed": 0,
+          "precursor_labels": {
+            "H+N": 21,
+            "PRIOR": 12,
+            "T0": 1
+          },
+          "promotion_labels": {
+            "H+N": 34
+          }
+        },
+        "prior_lead_span_seconds": {
+          "max": 44,
+          "mean": 11.416666667,
+          "min": 3,
+          "n": 12,
+          "p10": 3,
+          "p25": 4,
+          "p50": 7,
+          "p75": 12,
+          "p90": 24,
+          "p99": 44,
+          "sum": 137.0
+        },
+        "promotion_lag_seconds": {
+          "max": 50,
+          "mean": 40.676470588,
+          "min": 6,
+          "n": 34,
+          "p10": 14,
+          "p25": 29,
+          "p50": 50,
+          "p75": 50,
+          "p90": 50,
+          "p99": 50,
+          "sum": 1383.0
+        },
+        "recent_candidates_exact": [
+          {
+            "alert_second": 1633300666,
+            "available_second": 1633300716,
+            "candidate_id": "frk-dip-18904-1633300666",
+            "event_second": 1633300666,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300732,
+            "available_second": 1633300761,
+            "candidate_id": "frk-dip-18904-1633300732",
+            "event_second": 1633300732,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -29,
+            "promotion_lag_seconds": 29
+          },
+          {
+            "alert_second": 1633300764,
+            "available_second": 1633300827,
+            "candidate_id": "frk-dip-18904-1633300777",
+            "event_second": 1633300777,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 12,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300831,
+            "available_second": 1633300881,
+            "candidate_id": "frk-dip-18904-1633300831",
+            "event_second": 1633300831,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300912,
+            "available_second": 1633300934,
+            "candidate_id": "frk-dip-18904-1633300912",
+            "event_second": 1633300912,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -22,
+            "promotion_lag_seconds": 22
+          },
+          {
+            "alert_second": 1633300962,
+            "available_second": 1633301012,
+            "candidate_id": "frk-dip-18904-1633300962",
+            "event_second": 1633300962,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633300962,
+            "available_second": 1633301057,
+            "candidate_id": "frk-dip-18904-1633301007",
+            "event_second": 1633301007,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 44,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633301079,
+            "available_second": 1633301102,
+            "candidate_id": "frk-dip-18904-1633301080",
+            "event_second": 1633301080,
+            "polarity": -1,
+            "precursor_label": "T0",
+            "precursor_lead_span_seconds": 0,
+            "promotion_lag_seconds": 22
+          },
+          {
+            "alert_second": 1633301144,
+            "available_second": 1633301194,
+            "candidate_id": "frk-dip-18904-1633301144",
+            "event_second": 1633301144,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633301201,
+            "available_second": 1633301251,
+            "candidate_id": "frk-dip-18904-1633301201",
+            "event_second": 1633301201,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          }
+        ],
+        "reconciliation_with_delivered_episode_rows": {
+          "delivered_episode_rows_seen": 68,
+          "delivered_outcomes": {
+            "H+N": 34,
+            "null": 34
+          }
+        },
+        "result": "COMPUTED",
+        "rule": "the promotion (the detector's own emission) is the first DURABLE lawful call: H+N with N = available - event seconds, never superseded. The earliest lawful PRE-BIRTH signal tested is the threshold-crossing alert: the first second of the contiguous above-bar run that ends at the event second, knowable at alert+1; PRIOR if alert+1 < event, T0 if equal, else H+N. Its precision (alerts followed by a promoted candidate / all alerts) is reported beside every lead because an alert that fires without a promotion is a false alarm on this unit",
+        "section": "4.11",
+        "turn": 15
+      },
+      "cutoff_recv_ns": 1633301315945525951,
+      "entry_hash": "554e6cb7d623419c80c95de8e46dd0954ff7f43e134facaa594fecea338d4996",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "4a2c8618225e5b00d66e7ee61d836b2c14a4f34b3998b93026532aeb8c8f219c",
+      "sequence": 14
+    },
+    {
+      "body": {
+        "alert_precision": {
+          "alerts": 83,
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "followed_by_promotion": 44,
+          "value": 0.530120482
+        },
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 18,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 114.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=7; p50=12 max=44"
+            },
+            "value": 16.285714286
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 18,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -477.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=11; p50=-50 max=-13"
+            },
+            "value": -43.363636364
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 27,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 54.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=12; p50=4 max=11"
+            },
+            "value": 4.5
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 27,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=T0; n=1; p50=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302013969569876,
+              "denominator": 27,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -530.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=14; p50=-50 max=-6"
+            },
+            "value": -37.857142857
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "first_call_rule": {
+          "rule": "a later horizon never replaces the promotion",
+          "superseded_calls": 0
+        },
+        "groups_delivered_at_cutoff": 36497,
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "population": {
+          "candidates": 45,
+          "censored_windows": 0,
+          "missed": 0,
+          "precursor_labels": {
+            "H+N": 25,
+            "PRIOR": 19,
+            "T0": 1
+          },
+          "promotion_labels": {
+            "H+N": 45
+          }
+        },
+        "prior_lead_span_seconds": {
+          "max": 44,
+          "mean": 8.842105263,
+          "min": 1,
+          "n": 19,
+          "p10": 2,
+          "p25": 3,
+          "p50": 6,
+          "p75": 11,
+          "p90": 14,
+          "p99": 44,
+          "sum": 168.0
+        },
+        "promotion_lag_seconds": {
+          "max": 50,
+          "mean": 41.155555556,
+          "min": 6,
+          "n": 45,
+          "p10": 14,
+          "p25": 42,
+          "p50": 50,
+          "p75": 50,
+          "p90": 50,
+          "p99": 50,
+          "sum": 1852.0
+        },
+        "recent_candidates_exact": [
+          {
+            "alert_second": 1633301380,
+            "available_second": 1633301430,
+            "candidate_id": "frk-dip-18904-1633301380",
+            "event_second": 1633301380,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633301416,
+            "available_second": 1633301475,
+            "candidate_id": "frk-dip-18904-1633301425",
+            "event_second": 1633301425,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 8,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633301467,
+            "available_second": 1633301520,
+            "candidate_id": "frk-dip-18904-1633301470",
+            "event_second": 1633301470,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 2,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633301523,
+            "available_second": 1633301573,
+            "candidate_id": "frk-dip-18904-1633301523",
+            "event_second": 1633301523,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633301561,
+            "available_second": 1633301618,
+            "candidate_id": "frk-dip-18904-1633301568",
+            "event_second": 1633301568,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 6,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633301623,
+            "available_second": 1633301673,
+            "candidate_id": "frk-dip-18904-1633301630",
+            "event_second": 1633301630,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 6,
+            "promotion_lag_seconds": 43
+          },
+          {
+            "alert_second": 1633301672,
+            "available_second": 1633301725,
+            "candidate_id": "frk-dip-18904-1633301675",
+            "event_second": 1633301675,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 2,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633301757,
+            "available_second": 1633301770,
+            "candidate_id": "frk-dip-18904-1633301757",
+            "event_second": 1633301757,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -13,
+            "promotion_lag_seconds": 13
+          },
+          {
+            "alert_second": 1633301830,
+            "available_second": 1633301852,
+            "candidate_id": "frk-dip-18904-1633301832",
+            "event_second": 1633301832,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 1,
+            "promotion_lag_seconds": 20
+          },
+          {
+            "alert_second": 1633301878,
+            "available_second": 1633301928,
+            "candidate_id": "frk-dip-18904-1633301878",
+            "event_second": 1633301878,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          }
+        ],
+        "reconciliation_with_delivered_episode_rows": {
+          "delivered_episode_rows_seen": 90,
+          "delivered_outcomes": {
+            "H+N": 45,
+            "null": 45
+          }
+        },
+        "result": "COMPUTED",
+        "rule": "the promotion (the detector's own emission) is the first DURABLE lawful call: H+N with N = available - event seconds, never superseded. The earliest lawful PRE-BIRTH signal tested is the threshold-crossing alert: the first second of the contiguous above-bar run that ends at the event second, knowable at alert+1; PRIOR if alert+1 < event, T0 if equal, else H+N. Its precision (alerts followed by a promoted candidate / all alerts) is reported beside every lead because an alert that fires without a promotion is a false alarm on this unit",
+        "section": "4.11",
+        "turn": 16
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "566e4b9f9f0361b7c1562e0d222c9970cb772d61e7bc8d789dd4a2cc658fcd3c",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "554e6cb7d623419c80c95de8e46dd0954ff7f43e134facaa594fecea338d4996",
+      "sequence": 15
+    },
+    {
+      "body": {
+        "alert_precision": {
+          "alerts": 101,
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "followed_by_promotion": 53,
+          "value": 0.524752475
+        },
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 25,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 134.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=9; p50=12 max=44"
+            },
+            "value": 14.888888889
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 25,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -652.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=16; p50=-50 max=-7"
+            },
+            "value": -40.75
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 29,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 54.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=12; p50=4 max=11"
+            },
+            "value": 4.5
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 29,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=T0; n=1; p50=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633302779744781866,
+              "denominator": 29,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -599.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=16; p50=-50 max=-6"
+            },
+            "value": -37.4375
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "first_call_rule": {
+          "rule": "a later horizon never replaces the promotion",
+          "superseded_calls": 0
+        },
+        "groups_delivered_at_cutoff": 38778,
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "population": {
+          "candidates": 54,
+          "censored_windows": 0,
+          "missed": 0,
+          "precursor_labels": {
+            "H+N": 32,
+            "PRIOR": 21,
+            "T0": 1
+          },
+          "promotion_labels": {
+            "H+N": 54
+          }
+        },
+        "prior_lead_span_seconds": {
+          "max": 44,
+          "mean": 8.952380952,
+          "min": 1,
+          "n": 21,
+          "p10": 2,
+          "p25": 3,
+          "p50": 6,
+          "p75": 11,
+          "p90": 14,
+          "p99": 44,
+          "sum": 188.0
+        },
+        "promotion_lag_seconds": {
+          "max": 50,
+          "mean": 40.518518519,
+          "min": 6,
+          "n": 54,
+          "p10": 14,
+          "p25": 29,
+          "p50": 50,
+          "p75": 50,
+          "p90": 50,
+          "p99": 50,
+          "sum": 2188.0
+        },
+        "recent_candidates_exact": [
+          {
+            "alert_second": 1633301878,
+            "available_second": 1633301928,
+            "candidate_id": "frk-dip-18904-1633301878",
+            "event_second": 1633301878,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633301972,
+            "available_second": 1633302022,
+            "candidate_id": "frk-dip-18904-1633301972",
+            "event_second": 1633301972,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633302065,
+            "available_second": 1633302083,
+            "candidate_id": "frk-dip-18904-1633302065",
+            "event_second": 1633302065,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -18,
+            "promotion_lag_seconds": 18
+          },
+          {
+            "alert_second": 1633302118,
+            "available_second": 1633302168,
+            "candidate_id": "frk-dip-18904-1633302126",
+            "event_second": 1633302126,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 7,
+            "promotion_lag_seconds": 42
+          },
+          {
+            "alert_second": 1633302172,
+            "available_second": 1633302222,
+            "candidate_id": "frk-dip-18904-1633302172",
+            "event_second": 1633302172,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633302203,
+            "available_second": 1633302267,
+            "candidate_id": "frk-dip-18904-1633302217",
+            "event_second": 1633302217,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 13,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633302305,
+            "available_second": 1633302312,
+            "candidate_id": "frk-dip-18904-1633302305",
+            "event_second": 1633302305,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -7,
+            "promotion_lag_seconds": 7
+          },
+          {
+            "alert_second": 1633302422,
+            "available_second": 1633302472,
+            "candidate_id": "frk-dip-18904-1633302422",
+            "event_second": 1633302422,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633302661,
+            "available_second": 1633302711,
+            "candidate_id": "frk-dip-18904-1633302661",
+            "event_second": 1633302661,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633302737,
+            "available_second": 1633302756,
+            "candidate_id": "frk-dip-18904-1633302737",
+            "event_second": 1633302737,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -19,
+            "promotion_lag_seconds": 19
+          }
+        ],
+        "reconciliation_with_delivered_episode_rows": {
+          "delivered_episode_rows_seen": 106,
+          "delivered_outcomes": {
+            "H+N": 54,
+            "null": 52
+          }
+        },
+        "result": "COMPUTED",
+        "rule": "the promotion (the detector's own emission) is the first DURABLE lawful call: H+N with N = available - event seconds, never superseded. The earliest lawful PRE-BIRTH signal tested is the threshold-crossing alert: the first second of the contiguous above-bar run that ends at the event second, knowable at alert+1; PRIOR if alert+1 < event, T0 if equal, else H+N. Its precision (alerts followed by a promoted candidate / all alerts) is reported beside every lead because an alert that fires without a promotion is a false alarm on this unit",
+        "section": "4.11",
+        "turn": 17
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "7f79ea58647b05525a6273a782aae0d3cac3e19b65bf27464cb8ae1d1adebde6",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "566e4b9f9f0361b7c1562e0d222c9970cb772d61e7bc8d789dd4a2cc658fcd3c",
+      "sequence": 16
+    },
+    {
+      "body": {
+        "alert_precision": {
+          "alerts": 127,
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "followed_by_promotion": 69,
+          "value": 0.543307087
+        },
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 34,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 146.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=12; p50=8 max=44"
+            },
+            "value": 12.166666667
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 34,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -952.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=22; p50=-50 max=-7"
+            },
+            "value": -43.272727273
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 36,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 89.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=16; p50=6 max=21"
+            },
+            "value": 5.5625
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 36,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=T0; n=1; p50=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633304073331796184,
+              "denominator": 36,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -749.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=19; p50=-50 max=-6"
+            },
+            "value": -39.421052632
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "first_call_rule": {
+          "rule": "a later horizon never replaces the promotion",
+          "superseded_calls": 0
+        },
+        "groups_delivered_at_cutoff": 41059,
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "population": {
+          "candidates": 70,
+          "censored_windows": 0,
+          "missed": 0,
+          "precursor_labels": {
+            "H+N": 41,
+            "PRIOR": 28,
+            "T0": 1
+          },
+          "promotion_labels": {
+            "H+N": 70
+          }
+        },
+        "prior_lead_span_seconds": {
+          "max": 44,
+          "mean": 8.392857143,
+          "min": 1,
+          "n": 28,
+          "p10": 2,
+          "p25": 3,
+          "p50": 6,
+          "p75": 8,
+          "p90": 14,
+          "p99": 44,
+          "sum": 235.0
+        },
+        "promotion_lag_seconds": {
+          "max": 50,
+          "mean": 42.471428571,
+          "min": 6,
+          "n": 70,
+          "p10": 18,
+          "p25": 43,
+          "p50": 50,
+          "p75": 50,
+          "p90": 50,
+          "p99": 50,
+          "sum": 2973.0
+        },
+        "recent_candidates_exact": [
+          {
+            "alert_second": 1633303216,
+            "available_second": 1633303288,
+            "candidate_id": "frk-dip-18904-1633303238",
+            "event_second": 1633303238,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 21,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633303314,
+            "available_second": 1633303364,
+            "candidate_id": "frk-dip-18904-1633303314",
+            "event_second": 1633303314,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633303423,
+            "available_second": 1633303473,
+            "candidate_id": "frk-dip-18904-1633303423",
+            "event_second": 1633303423,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633303534,
+            "available_second": 1633303584,
+            "candidate_id": "frk-dip-18904-1633303534",
+            "event_second": 1633303534,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633303571,
+            "available_second": 1633303629,
+            "candidate_id": "frk-dip-18904-1633303579",
+            "event_second": 1633303579,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 7,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633303636,
+            "available_second": 1633303686,
+            "candidate_id": "frk-dip-18904-1633303638",
+            "event_second": 1633303638,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 1,
+            "promotion_lag_seconds": 48
+          },
+          {
+            "alert_second": 1633303727,
+            "available_second": 1633303777,
+            "candidate_id": "frk-dip-18904-1633303727",
+            "event_second": 1633303727,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633303765,
+            "available_second": 1633303822,
+            "candidate_id": "frk-dip-18904-1633303772",
+            "event_second": 1633303772,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 6,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633303826,
+            "available_second": 1633303876,
+            "candidate_id": "frk-dip-18904-1633303828",
+            "event_second": 1633303828,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 1,
+            "promotion_lag_seconds": 48
+          },
+          {
+            "alert_second": 1633303886,
+            "available_second": 1633303936,
+            "candidate_id": "frk-dip-18904-1633303886",
+            "event_second": 1633303886,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          }
+        ],
+        "reconciliation_with_delivered_episode_rows": {
+          "delivered_episode_rows_seen": 140,
+          "delivered_outcomes": {
+            "H+N": 70,
+            "null": 70
+          }
+        },
+        "result": "COMPUTED",
+        "rule": "the promotion (the detector's own emission) is the first DURABLE lawful call: H+N with N = available - event seconds, never superseded. The earliest lawful PRE-BIRTH signal tested is the threshold-crossing alert: the first second of the contiguous above-bar run that ends at the event second, knowable at alert+1; PRIOR if alert+1 < event, T0 if equal, else H+N. Its precision (alerts followed by a promoted candidate / all alerts) is reported beside every lead because an alert that fires without a promotion is a false alarm on this unit",
+        "section": "4.11",
+        "turn": 18
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "72f24df2a2822a74e984caf1dbb076ed3ba6dc07988632469f7a6fd15f631473",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "7f79ea58647b05525a6273a782aae0d3cac3e19b65bf27464cb8ae1d1adebde6",
+      "sequence": 17
+    },
+    {
+      "body": {
+        "alert_precision": {
+          "alerts": 158,
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "followed_by_promotion": 87,
+          "value": 0.550632911
+        },
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 42,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 189.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=14; p50=8 max=44"
+            },
+            "value": 13.5
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 42,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -1212.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=28; p50=-50 max=-7"
+            },
+            "value": -43.285714286
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 46,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 100.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=19; p50=4 max=21"
+            },
+            "value": 5.263157895
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 46,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=T0; n=1; p50=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305465440119355,
+              "denominator": 46,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -1036.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=26; p50=-50 max=-6"
+            },
+            "value": -39.846153846
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "first_call_rule": {
+          "rule": "a later horizon never replaces the promotion",
+          "superseded_calls": 0
+        },
+        "groups_delivered_at_cutoff": 43340,
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "population": {
+          "candidates": 88,
+          "censored_windows": 0,
+          "missed": 0,
+          "precursor_labels": {
+            "H+N": 54,
+            "PRIOR": 33,
+            "T0": 1
+          },
+          "promotion_labels": {
+            "H+N": 88
+          }
+        },
+        "prior_lead_span_seconds": {
+          "max": 44,
+          "mean": 8.757575758,
+          "min": 1,
+          "n": 33,
+          "p10": 1,
+          "p25": 3,
+          "p50": 6,
+          "p75": 8,
+          "p90": 21,
+          "p99": 44,
+          "sum": 289.0
+        },
+        "promotion_lag_seconds": {
+          "max": 50,
+          "mean": 42.352272727,
+          "min": 6,
+          "n": 88,
+          "p10": 18,
+          "p25": 44,
+          "p50": 50,
+          "p75": 50,
+          "p90": 50,
+          "p99": 50,
+          "sum": 3727.0
+        },
+        "recent_candidates_exact": [
+          {
+            "alert_second": 1633304488,
+            "available_second": 1633304580,
+            "candidate_id": "frk-dip-18904-1633304530",
+            "event_second": 1633304530,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 41,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633304643,
+            "available_second": 1633304653,
+            "candidate_id": "frk-dip-18904-1633304646",
+            "event_second": 1633304646,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 2,
+            "promotion_lag_seconds": 7
+          },
+          {
+            "alert_second": 1633304700,
+            "available_second": 1633304750,
+            "candidate_id": "frk-dip-18904-1633304700",
+            "event_second": 1633304700,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633304790,
+            "available_second": 1633304797,
+            "candidate_id": "frk-dip-18904-1633304790",
+            "event_second": 1633304790,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -7,
+            "promotion_lag_seconds": 7
+          },
+          {
+            "alert_second": 1633304869,
+            "available_second": 1633304919,
+            "candidate_id": "frk-dip-18904-1633304869",
+            "event_second": 1633304869,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633304911,
+            "available_second": 1633304964,
+            "candidate_id": "frk-dip-18904-1633304914",
+            "event_second": 1633304914,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 2,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633304984,
+            "available_second": 1633305034,
+            "candidate_id": "frk-dip-18904-1633304984",
+            "event_second": 1633304984,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633305059,
+            "available_second": 1633305109,
+            "candidate_id": "frk-dip-18904-1633305059",
+            "event_second": 1633305059,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633305199,
+            "available_second": 1633305249,
+            "candidate_id": "frk-dip-18904-1633305199",
+            "event_second": 1633305199,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633305259,
+            "available_second": 1633305309,
+            "candidate_id": "frk-dip-18904-1633305259",
+            "event_second": 1633305259,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          }
+        ],
+        "reconciliation_with_delivered_episode_rows": {
+          "delivered_episode_rows_seen": 176,
+          "delivered_outcomes": {
+            "H+N": 88,
+            "null": 88
+          }
+        },
+        "result": "COMPUTED",
+        "rule": "the promotion (the detector's own emission) is the first DURABLE lawful call: H+N with N = available - event seconds, never superseded. The earliest lawful PRE-BIRTH signal tested is the threshold-crossing alert: the first second of the contiguous above-bar run that ends at the event second, knowable at alert+1; PRIOR if alert+1 < event, T0 if equal, else H+N. Its precision (alerts followed by a promoted candidate / all alerts) is reported beside every lead because an alert that fires without a promotion is a false alarm on this unit",
+        "section": "4.11",
+        "turn": 19
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "4e2136d3785bcd8d1005d4fe5a33a48096c7fb69669c163e4cfae682847a0563",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "72f24df2a2822a74e984caf1dbb076ed3ba6dc07988632469f7a6fd15f631473",
+      "sequence": 18
+    },
+    {
+      "body": {
+        "alert_precision": {
+          "alerts": 160,
+          "basis": "RATIO_OF_EXACT_COUNTS",
+          "followed_by_promotion": 89,
+          "value": 0.55625
+        },
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 44,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 233.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=15; p50=8 max=44"
+            },
+            "value": 15.533333333
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 44,
+              "family": "polarity=1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -1262.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity 1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=29; p50=-50 max=-7"
+            },
+            "value": -43.517241379
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 47,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 110.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=PRIOR; n=20; p50=6 max=21"
+            },
+            "value": 5.5
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 47,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=T0; n=1; p50=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633305596372071705,
+              "denominator": 47,
+              "family": "polarity=-1",
+              "formula": "sum(precursor alert-to-birth span in seconds) / candidates with this label",
+              "inclusion_rule": "all candidates carry a label",
+              "missingness_rule": "labels are reported separately; a mean over successful pre-birth calls only is not the population detection time",
+              "numerator": -1036.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "candidates of polarity -1",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "SAME_AND_FLIP_NOT_POOLED_HERE",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "label=H+N; n=26; p50=-50 max=-6"
+            },
+            "value": -39.846153846
+          }
+        ],
+        "cutoff_is_staged_invocation": false,
+        "first_call_rule": {
+          "rule": "a later horizon never replaces the promotion",
+          "superseded_calls": 0
+        },
+        "groups_delivered_at_cutoff": 43569,
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615,
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763,
+          25437,
+          25438,
+          25439,
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "population": {
+          "candidates": 91,
+          "censored_windows": 1,
+          "missed": 0,
+          "precursor_labels": {
+            "H+N": 55,
+            "PRIOR": 35,
+            "T0": 1
+          },
+          "promotion_labels": {
+            "H+N": 91
+          }
+        },
+        "prior_lead_span_seconds": {
+          "max": 44,
+          "mean": 9.8,
+          "min": 1,
+          "n": 35,
+          "p10": 1,
+          "p25": 3,
+          "p50": 6,
+          "p75": 11,
+          "p90": 24,
+          "p99": 44,
+          "sum": 343.0
+        },
+        "promotion_lag_seconds": {
+          "max": 50,
+          "mean": 42.604395604,
+          "min": 6,
+          "n": 91,
+          "p10": 18,
+          "p25": 45,
+          "p50": 50,
+          "p75": 50,
+          "p90": 50,
+          "p99": 50,
+          "sum": 3877.0
+        },
+        "recent_candidates_exact": [
+          {
+            "alert_second": 1633304790,
+            "available_second": 1633304797,
+            "candidate_id": "frk-dip-18904-1633304790",
+            "event_second": 1633304790,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -7,
+            "promotion_lag_seconds": 7
+          },
+          {
+            "alert_second": 1633304869,
+            "available_second": 1633304919,
+            "candidate_id": "frk-dip-18904-1633304869",
+            "event_second": 1633304869,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633304911,
+            "available_second": 1633304964,
+            "candidate_id": "frk-dip-18904-1633304914",
+            "event_second": 1633304914,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 2,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633304984,
+            "available_second": 1633305034,
+            "candidate_id": "frk-dip-18904-1633304984",
+            "event_second": 1633304984,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633305059,
+            "available_second": 1633305109,
+            "candidate_id": "frk-dip-18904-1633305059",
+            "event_second": 1633305059,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633305199,
+            "available_second": 1633305249,
+            "candidate_id": "frk-dip-18904-1633305199",
+            "event_second": 1633305199,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633305259,
+            "available_second": 1633305309,
+            "candidate_id": "frk-dip-18904-1633305259",
+            "event_second": 1633305259,
+            "polarity": -1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633305461,
+            "available_second": 1633305511,
+            "candidate_id": "frk-dip-18904-1633305461",
+            "event_second": 1633305461,
+            "polarity": 1,
+            "precursor_label": "H+N",
+            "precursor_lead_span_seconds": -50,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633305461,
+            "available_second": 1633305556,
+            "candidate_id": "frk-dip-18904-1633305506",
+            "event_second": 1633305506,
+            "polarity": 1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 44,
+            "promotion_lag_seconds": 50
+          },
+          {
+            "alert_second": 1633305540,
+            "available_second": 1633305601,
+            "candidate_id": "frk-dip-18904-1633305551",
+            "event_second": 1633305551,
+            "polarity": -1,
+            "precursor_label": "PRIOR",
+            "precursor_lead_span_seconds": 10,
+            "promotion_lag_seconds": 50
+          }
+        ],
+        "reconciliation_with_delivered_episode_rows": {
+          "delivered_episode_rows_seen": 182,
+          "delivered_outcomes": {
+            "H+N": 91,
+            "null": 91
+          }
+        },
+        "result": "COMPUTED",
+        "rule": "the promotion (the detector's own emission) is the first DURABLE lawful call: H+N with N = available - event seconds, never superseded. The earliest lawful PRE-BIRTH signal tested is the threshold-crossing alert: the first second of the contiguous above-bar run that ends at the event second, knowable at alert+1; PRIOR if alert+1 < event, T0 if equal, else H+N. Its precision (alerts followed by a promoted candidate / all alerts) is reported beside every lead because an alert that fires without a promotion is a false alarm on this unit",
+        "section": "4.11",
+        "turn": 20
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "d9e593c8e6ab30e5ea9104c85b357a6091e3842a6302fddfa19bef9e84d6b0e6",
+      "ledger_id": "contract_section_4.11",
+      "prev_hash": "4e2136d3785bcd8d1005d4fe5a33a48096c7fb69669c163e4cfae682847a0563",
+      "sequence": 19
     }
   ],
-  "head_hash": "43d0e6cdf8dbcbda5f513f50492abbf0aab9c21ae9fcf59c8b671f76ad0d7490",
+  "head_hash": "d9e593c8e6ab30e5ea9104c85b357a6091e3842a6302fddfa19bef9e84d6b0e6",
   "ledger_id": "contract_section_4.11"
 }

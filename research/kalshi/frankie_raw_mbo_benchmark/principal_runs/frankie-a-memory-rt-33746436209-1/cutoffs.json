@@ -1,0 +1,180 @@
+{
+  "run_id": "frankie-a-memory-rt-33746436209-1",
+  "arm": "A_MEMORY",
+  "invocation_cutoffs": [
+    {
+      "clock_model_evaluation_ns": 1633298413318097271,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633298413318097271,
+      "group_index": 2281,
+      "recv_ns": 1633298413318097271,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633298449136124134,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633298449136124134,
+      "group_index": 4562,
+      "recv_ns": 1633298449136124134,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633298458819212131,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633298458819212131,
+      "group_index": 6843,
+      "recv_ns": 1633298458819212131,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633298467489465095,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633298467489465095,
+      "group_index": 9124,
+      "recv_ns": 1633298467489465095,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633298495252279199,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633298495252279199,
+      "group_index": 11405,
+      "recv_ns": 1633298495252279199,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633298539321423187,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633298539321423187,
+      "group_index": 13686,
+      "recv_ns": 1633298539321423187,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633298618241396322,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633298618241396322,
+      "group_index": 15967,
+      "recv_ns": 1633298618241396322,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633298727046687558,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633298727046687558,
+      "group_index": 18248,
+      "recv_ns": 1633298727046687558,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633298843554132312,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633298843554132312,
+      "group_index": 20529,
+      "recv_ns": 1633298843554132312,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633298998928924813,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633298998928924813,
+      "group_index": 22810,
+      "recv_ns": 1633298998928924813,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633299505523516424,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633299505523516424,
+      "group_index": 25091,
+      "recv_ns": 1633299505523516424,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633299950655145332,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633299950655145332,
+      "group_index": 27372,
+      "recv_ns": 1633299950655145332,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633300320102307848,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633300320102307848,
+      "group_index": 29653,
+      "recv_ns": 1633300320102307848,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633300905784605734,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633300905784605734,
+      "group_index": 31934,
+      "recv_ns": 1633300905784605734,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633301315945525951,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633301315945525951,
+      "group_index": 34215,
+      "recv_ns": 1633301315945525951,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633302013969569876,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633302013969569876,
+      "group_index": 36496,
+      "recv_ns": 1633302013969569876,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633302779744781866,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633302779744781866,
+      "group_index": 38777,
+      "recv_ns": 1633302779744781866,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633304073331796184,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633304073331796184,
+      "group_index": 41058,
+      "recv_ns": 1633304073331796184,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    },
+    {
+      "clock_model_evaluation_ns": 1633305465440119355,
+      "continuity_segment": 18904,
+      "first_lawful_availability_ns": 1633305465440119355,
+      "group_index": 43339,
+      "recv_ns": 1633305465440119355,
+      "session_phase": "PRE_SETTLEMENT",
+      "source_day": "20211003"
+    }
+  ],
+  "source_manifest_sha256": "17d490c5c30426106b554452826e368408f5d1d0d58cc8902a52c1ec708c7e7e",
+  "code_commit": "bcf554d0ca433cd1c43f320c31adca3c69895f7d",
+  "basis": "identity receipt + staged invocation cutoffs only; no calculation layer of the result is read by the pass"
+}

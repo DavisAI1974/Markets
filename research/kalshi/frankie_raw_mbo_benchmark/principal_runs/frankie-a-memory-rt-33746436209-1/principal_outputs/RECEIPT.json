@@ -5,123 +5,128 @@
   "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
   "ledgers": {
     "contract_section_4.0": {
-      "entry_count": 8,
-      "head_hash": "a829782d770587e21b9483b3036b84260e3dc00970808ab4401f96b788fe496e"
+      "entry_count": 20,
+      "head_hash": "c195f4c45c36835f3f44e0b2709e0f9059548e758f948c203d697dab4db22d68"
     },
     "contract_section_4.0b": {
-      "entry_count": 8,
-      "head_hash": "78a7c36086c6d856914bf5f141600a0bdfa6ec6c1526957cb2c57d2db1cef720"
+      "entry_count": 20,
+      "head_hash": "d9411a43d430525ae4b383cae8ead34c61d309b308770ae63ca2a001e7b21021"
     },
     "contract_section_4.1": {
-      "entry_count": 8,
-      "head_hash": "22ebf0753455ce7a4d5b2c798302610c575cd6c0144484f486301e7964475ea0"
+      "entry_count": 20,
+      "head_hash": "52689b76c77ab5826c6d605134b6415acf231bea18916a0a48164d001c3664e7"
     },
     "contract_section_4.10": {
-      "entry_count": 8,
-      "head_hash": "d83ad5214f6a8bd86ae79b35d71b35d00b7a76979592467ec3f144874e08e64a"
+      "entry_count": 20,
+      "head_hash": "c6e96ae53eb0e613f2fea31f1f7e7f70ec1940c975655a53610075b5b37d5c1d"
     },
     "contract_section_4.11": {
-      "entry_count": 8,
-      "head_hash": "43d0e6cdf8dbcbda5f513f50492abbf0aab9c21ae9fcf59c8b671f76ad0d7490"
+      "entry_count": 20,
+      "head_hash": "d9e593c8e6ab30e5ea9104c85b357a6091e3842a6302fddfa19bef9e84d6b0e6"
     },
     "contract_section_4.12": {
-      "entry_count": 8,
-      "head_hash": "ab0030c917e20cb6b4ddb34e72005d3d70312b99bb232701b933f64cb4901840"
+      "entry_count": 20,
+      "head_hash": "d6737b54bf4d074a5c74a9b22dc225206ff6feaa35a5c4e689898637659b471a"
     },
     "contract_section_4.13": {
-      "entry_count": 8,
-      "head_hash": "1408787e4311d53bf331162993c1fcc7d042340e298cd6ce5d14ccef33e29a4f"
+      "entry_count": 20,
+      "head_hash": "334da9ecbfdb02358acdc3d4875c6e60a95bcfd2f1edadf4ea21a68b7060e4ac"
     },
     "contract_section_4.14": {
-      "entry_count": 8,
-      "head_hash": "66c3fc1835f67872557561453382dc2f8b296c39756f996e61747167afc9e437"
+      "entry_count": 20,
+      "head_hash": "454fbecf6998a55035c672e6ffaea3308a4e0b56e3328b11a557de44cb27eab0"
     },
     "contract_section_4.15": {
-      "entry_count": 8,
-      "head_hash": "56a49bbdf578e5cd1d6eae292a0d951bb585beb643a1325f598b626e45567794"
+      "entry_count": 20,
+      "head_hash": "26514a00f0ecae4747211f69ab91dc676f527ef979bac0c078fe94f1a853f877"
     },
     "contract_section_4.16": {
-      "entry_count": 8,
-      "head_hash": "6aa6e9e8c9bd9d17a4e8c876a1a9072e3cd45d0d85ee4dfcdca62a9a1e2931dc"
+      "entry_count": 20,
+      "head_hash": "d53159f1d64b935fc94fc44d5c8ea433e4f8860d950f945165345ce066a09a0e"
     },
     "contract_section_4.2": {
-      "entry_count": 8,
-      "head_hash": "98802ddeba2244164bef181551a3959482edb4e18d174bc8ae1ff53170975404"
+      "entry_count": 20,
+      "head_hash": "4c3e53088581bb4e5ef71e19ae2f2836a99f3c95f605b2020bc73075016c9544"
     },
     "contract_section_4.3": {
-      "entry_count": 8,
-      "head_hash": "1bae49aa6968b6207d362300d5c5295d0496fc3cf8dc6a497d39f146a4ccc96c"
+      "entry_count": 20,
+      "head_hash": "d86b72235413cd5fb752d8cb4bd2c154ed6b334c0dc9f8f350b78b130aacfc79"
     },
     "contract_section_4.4": {
-      "entry_count": 8,
-      "head_hash": "ec5ff354e5cf06c74276be2ddc9fb977f9dd880012d6a70081521e1f1d7bde7c"
+      "entry_count": 20,
+      "head_hash": "d4e119216be3d482169b1342a1b8a04e0dc5c6033dd5fe4f23c527f0f0c9ed8b"
     },
     "contract_section_4.5": {
-      "entry_count": 8,
-      "head_hash": "7265ae39abdd416083f99d905a0553d28f59a80883ca1b23851a80ef83b85be0"
+      "entry_count": 20,
+      "head_hash": "e633130de3d7050e8b40167ca708efa24f0260420deb768e735943010e3a6b5a"
     },
     "contract_section_4.6": {
-      "entry_count": 8,
-      "head_hash": "541c3cce009b03da42eeedefc64fc4b8a077e16455cb645a7584e93e539d0ac8"
+      "entry_count": 20,
+      "head_hash": "2da68e3c5f5f5e1a6b01f3be1b321b8b7ad9ed70bc5bcd4602dea2b83982b138"
     },
     "contract_section_4.7": {
-      "entry_count": 8,
-      "head_hash": "0268702ec86fad12905a131de682d5d15a93a0f8d1e4f89fbf975d14d1a2b537"
+      "entry_count": 20,
+      "head_hash": "b695ead2d1bca23edb4d55ac5a2b17b743d77b10b735dee2c1c1c9bcf4474451"
     },
     "contract_section_4.8": {
-      "entry_count": 8,
-      "head_hash": "366b7e153bb90ad68baecbe6e54a374b5c998bd427a70c4bb445a40444d0c873"
+      "entry_count": 20,
+      "head_hash": "2981a55d17fa244808309ea9836f82cb9dcd0efa5fbf4efb7c023ecd190d41fb"
     },
     "contract_section_4.9": {
-      "entry_count": 8,
-      "head_hash": "b882bc22f893820737befd62f4308b66432b6faddaf311c85f23d2f28dbeba3a"
+      "entry_count": 20,
+      "head_hash": "021307bd9e538692eb28f8b766c71e460dbb159906ce5833a90d32826982d17f"
+    },
+    "knowledge_verification": {
+      "entry_count": 93,
+      "head_hash": "f2d64368cb68756bcfca6fd38bc026412a2bbcca9de2178f09eb5d09c87c09c3"
     },
     "output_answer_wall_access_receipts": {
       "entry_count": 0,
       "head_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "output_candidate_discoveries": {
-      "entry_count": 0,
-      "head_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "entry_count": 90,
+      "head_hash": "22b5b4308928ec235d96e17f86ff9bfec3c58fda8f37d47c433b580b30cd63bc"
     },
     "output_first_locks_and_no_locks": {
-      "entry_count": 0,
-      "head_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      "entry_count": 90,
+      "head_hash": "bcaf33bc31f4d86c04e0d6ea93b5642caa32084612689636dc4e47fba5f4a950"
     },
     "output_frankie_reasoning_movie": {
-      "entry_count": 8,
-      "head_hash": "a1136768f172b158bccc547c58fdd219230e346ba2764b75e80aa0354b92f939"
+      "entry_count": 21,
+      "head_hash": "0a7986f207f2ddeaa1a62d39e8106712263747847405a7d95ab91b5cd214005d"
     },
     "output_knowledge_retrieval_receipts": {
-      "entry_count": 71,
-      "head_hash": "b6de055ab5a1bdfbb5e24f407279a2b7fa5f40a67b377bc398f3317097be2eb2"
+      "entry_count": 76,
+      "head_hash": "06dc4293eda80e94a6f063917ce7240ac77464961acceffc18b9bc8926415d33"
     },
     "output_negative_sparse_inconclusive_ledger": {
-      "entry_count": 40,
-      "head_hash": "012070ca33311440f330058186cbfc993705d5f872664b52fb963f685c25846c"
+      "entry_count": 50,
+      "head_hash": "7bdcc8ceeef5395dd724a73bb72fb16a2e15d236f2aea4d34ae72753da8bbe2f"
     },
     "output_probability_movie": {
-      "entry_count": 8,
-      "head_hash": "7f4e19a4baaeb8c98f75cb337f96d7be5513cd6d8e248ad2a1585404236b658c"
+      "entry_count": 20,
+      "head_hash": "0f8ee4a73ab0e34ef6b75a0c6d1fb87dfc7049d790f7bd2c80e238f13fa62aa9"
     },
     "output_provider_invocation_response_receipts": {
-      "entry_count": 8,
-      "head_hash": "a384c59ce0d628ee7bf1662911b3ad517996463fbf2a25f7d374a697c7d682c7"
+      "entry_count": 20,
+      "head_hash": "8ffe8b10c43da958bcf46465518db47c68adbb1e54c2053f4d9516e76d218b8e"
     },
     "output_source_state_manifest_code_model_run_hashes": {
-      "entry_count": 1,
-      "head_hash": "8ac05ebb419e3d32809d11216f67e0aa2d8cf9128347d1693a1ba3070ade4a1c"
+      "entry_count": 2,
+      "head_hash": "94b2668f4ba688afd0200898db93e0f8b2a1deded661921d91b1e2222ab1495f"
     },
     "output_state_and_state_delta_movie": {
-      "entry_count": 8,
-      "head_hash": "76e2099507c1275e3437e1f2a1263786b39f66ed2a086a56115b3c1db26addd9"
+      "entry_count": 20,
+      "head_hash": "5330b75e957dc2baf5aad194f01f48ad5c7d29b527ff89e381deee62ec1d521e"
+    },
+    "raw_mbo_classification": {
+      "entry_count": 661,
+      "head_hash": "dc570c11d83298003758e38fc2b5e4a39155571d1931612dadc032b82dc44cd4"
     }
   },
-  "missing_ledger_ids": [
-    "raw_mbo_classification",
-    "knowledge_verification"
-  ],
-  "receipt_sha256": "7d2b091eb65e32f1f807a5639752e7a50978f9bb9f678013ad0500199a3e5149",
+  "missing_ledger_ids": [],
+  "receipt_sha256": "ac42944ad51bd00213b42e7274f17db5c1526c5b8c68fe608b0a2e52ff8d0074",
   "registry_sha256": "239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1",
   "required_ledger_ids": [
     "output_state_and_state_delta_movie",

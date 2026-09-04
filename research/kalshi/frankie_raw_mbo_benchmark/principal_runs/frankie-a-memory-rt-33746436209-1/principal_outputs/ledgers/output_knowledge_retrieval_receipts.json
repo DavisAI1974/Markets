@@ -1065,8 +1065,88 @@
       "ledger_id": "output_knowledge_retrieval_receipts",
       "prev_hash": "4767a4cad17d83dac56115831cdcb95000e5f9e25c58001a09491afc76f4c6e4",
       "sequence": 70
+    },
+    {
+      "body": {
+        "artifact_id": "keep_research_kalshi_ng_exhaustion_frankie_data_feed_inventory_20260824_md",
+        "disposition": "INSPECTED",
+        "layer_id": "learned_structure_proposal_index_material",
+        "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md",
+        "reason": "INSPECTED after the stream started: sections 1-9 read to map the 55 registry layers onto the feed families for the 9a classification",
+        "receipt_id": "kr-late-keep_research_kalshi_ng_exhaustion_frankie_data_feed_inventory_20260824_md",
+        "sha256": "31ff5a9d7e5d2f22cc2740f1f8010d36f37a32d2e17bee2b6794140823bddbec"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "aeecb1d4f863f84912802464eb882ffc798cc127e26c464b02d3665b8f3a5be8",
+      "ledger_id": "output_knowledge_retrieval_receipts",
+      "prev_hash": "b6de055ab5a1bdfbb5e24f407279a2b7fa5f40a67b377bc398f3317097be2eb2",
+      "sequence": 71
+    },
+    {
+      "body": {
+        "artifact_id": "keep_research_kalshi_ng_exhaustion_frankie_source_file_inventory_20260824_md",
+        "disposition": "INSPECTED",
+        "layer_id": "learned_structure_proposal_index_material",
+        "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md",
+        "reason": "INSPECTED: sections A-C read for the same purpose; no number from it was used",
+        "receipt_id": "kr-late-keep_research_kalshi_ng_exhaustion_frankie_source_file_inventory_20260824_md",
+        "sha256": "1603a4bc329c6aabd9f62ee76c755651c1059a609c7cf8a52d21217a78cce24e"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "7daadf39d43fb0f4be3421c4dc1b761f8dc0e8eb6b3237fb6ebe61a75670d902",
+      "ledger_id": "output_knowledge_retrieval_receipts",
+      "prev_hash": "aeecb1d4f863f84912802464eb882ffc798cc127e26c464b02d3665b8f3a5be8",
+      "sequence": 72
+    },
+    {
+      "body": {
+        "artifact_id": "native_positive_discovery_addendum",
+        "disposition": "INSPECTED",
+        "layer_id": "UNRESOLVED_LAYER",
+        "path": "research/kalshi/agents/frankie_native_raw_mbo_rt_positive_discovery_addendum_20260828.md",
+        "reason": "INSPECTED: the standing research directive and the D-depth / PRIOR-T0-H+N definitions were read and applied to my 4.11 and 4.13 designs",
+        "receipt_id": "kr-late-native_positive_discovery_addendum",
+        "sha256": "ea8b1243e8da25b34c4c2edc383a7bb5893a4b1dfbfd94292024ff312d58ff65"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "877d527e8b05dc5e2d6269bfef409ef5d7eea095f010cb49b6226b7399148892",
+      "ledger_id": "output_knowledge_retrieval_receipts",
+      "prev_hash": "7daadf39d43fb0f4be3421c4dc1b761f8dc0e8eb6b3237fb6ebe61a75670d902",
+      "sequence": 73
+    },
+    {
+      "body": {
+        "artifact_id": "a_memory_member_first_positive_findings",
+        "disposition": "INSPECTED",
+        "layer_id": "UNRESOLVED_LAYER",
+        "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md",
+        "reason": "INSPECTED: its 2021-10-03 column (135 action strings; TFFACCN 6, TFFCCAN 7, TFFFACCCN 1, TFFFCCCAN 1, TFTFFCCCN 2+4) is tested against my own counts in the knowledge-verification ledger",
+        "receipt_id": "kr-late-a_memory_member_first_positive_findings",
+        "sha256": "7b9bd3f11c28780900d76cfefd273ac7e9591c8e450b9b86b06a04fb8c32cde6"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "596588c280b661aa59a3d32f2d8f02119a7f26b35daaefd0e0b86ce0821f0fbe",
+      "ledger_id": "output_knowledge_retrieval_receipts",
+      "prev_hash": "877d527e8b05dc5e2d6269bfef409ef5d7eea095f010cb49b6226b7399148892",
+      "sequence": 74
+    },
+    {
+      "body": {
+        "artifact_id": "keep_research_kalshi_knowledge_ng_brain_json",
+        "disposition": "INSPECTED",
+        "layer_id": "authoritative_s135_construction",
+        "path": "research/kalshi/knowledge/ng_brain.json",
+        "reason": "INSPECTED IN PART: meta and the 90-play index, plus the eight play bodies that touch native MBO mechanics (flow.*, direction.absorption_is_reversal, timing.subsecond_reversal_exhaustion, exit.recruitment_reversal, tape.heavy_buy_aggression...); every one of them keys on tape_conditions / phase fields of the forecaster harness that this stream does not carry, so none was testable here; the other 82 play bodies were not opened",
+        "receipt_id": "kr-late-keep_research_kalshi_knowledge_ng_brain_json",
+        "sha256": "bf473faef4d5a1b8fc68a214616e6c6163f0db1794ac98818a5401225563da57"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "06dc4293eda80e94a6f063917ce7240ac77464961acceffc18b9bc8926415d33",
+      "ledger_id": "output_knowledge_retrieval_receipts",
+      "prev_hash": "596588c280b661aa59a3d32f2d8f02119a7f26b35daaefd0e0b86ce0821f0fbe",
+      "sequence": 75
     }
   ],
-  "head_hash": "b6de055ab5a1bdfbb5e24f407279a2b7fa5f40a67b377bc398f3317097be2eb2",
+  "head_hash": "06dc4293eda80e94a6f063917ce7240ac77464961acceffc18b9bc8926415d33",
   "ledger_id": "output_knowledge_retrieval_receipts"
 }

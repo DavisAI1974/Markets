@@ -1,0 +1,3569 @@
+{
+  "empty_reason": null,
+  "entries": [
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "actual": {
+              "PRE_OPEN": 203,
+              "PRE_SETTLEMENT": 43366,
+              "groups": 43569,
+              "records": 57027
+            },
+            "expected": {
+              "PRE_OPEN": 203,
+              "PRE_SETTLEMENT": 43366,
+              "groups": 43569,
+              "records": 57027
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            0,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-01",
+        "statement": "one instrument, one segment: 57,027 records into 43,569 F_LAST-closed groups, 43,366 PRE_SETTLEMENT / 203 PRE_OPEN, receive clock monotone (the stream refused nothing)",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "afddfaddff926d8241974e4f2f94bde826f9df630b1ed3f83a5b016971acb6f1",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sequence": 0
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "actual": {
+              "promoted": 91,
+              "seconds_in_warmup": 11399,
+              "seconds_observed": 17991
+            },
+            "expected": {
+              "promoted": 91,
+              "seconds_in_warmup": 11399,
+              "seconds_observed": 17991
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-02",
+        "statement": "my own detector under the declared parameters: 17991 seconds observed, 11399 in warm-up, 4479 considered (judged - warm-up - no finite flow), 91 promoted; rejections {'rejected_below_threshold': 1672, 'rejected_in_refractory': 294, 'rejected_in_refractory_at_release': 17, 'rejected_not_local_max': 14, 'rejected_zero_magnitude': 338, 'suppressed_by_prominence': 2053}",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "88fca278122a521696d44922b1045ef89f0b2b452a0357e71538ba230876ec2e",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "afddfaddff926d8241974e4f2f94bde826f9df630b1ed3f83a5b016971acb6f1",
+      "sequence": 1
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "decision_delay_census": {
+              "0": 43569
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            0
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-03",
+        "statement": "decision_ts_recv_ns - f_last_ts_recv_ns is exactly 0 on every one of the delivered member rows: the decision clock is identical to F_LAST availability and carries no separate observation",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "0c85ebeec8f083749728c6cf115073088d3be9aab319f4852890c0905710cdc1",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "88fca278122a521696d44922b1045ef89f0b2b452a0357e71538ba230876ec2e",
+      "sequence": 2
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "actual": {
+              "single_action_groups": 35231
+            },
+            "expected": {
+              "single_action_groups": 35231
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            3,
+            18,
+            4,
+            23
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-04",
+        "statement": "concentration reproduces: 35231 single-action groups (80.9% of 43569), and singletons are retained rather than folded (123 of my 199 families hold one group). The four-largest-family share is 71.9% against the lesson's 71.5%: a COMPLEMENTARY_SCOPE_DIFFERENCE, because my strata are family x phase and the lesson's are family x subfamily x side x phase (205 of them), which I did not rebuild",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "541c363f0a4e7f4eea0413aa78faf88b87c1445560cf1fff0047c36f63d1c110",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "0c85ebeec8f083749728c6cf115073088d3be9aab319f4852890c0905710cdc1",
+      "sequence": 3
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "basis": "literal action string of every delivered group, not a family-node crosswalk",
+            "elementary_reproduce_exactly": true,
+            "lesson_counts": {
+              "A": 16199,
+              "AN": 3727,
+              "C": 15136,
+              "CN": 2182,
+              "M": 3896,
+              "MN": 794,
+              "TFC": 162,
+              "TFCN": 812,
+              "TFFCCN": 32,
+              "TFM": 139,
+              "TFMN": 0
+            },
+            "own_counts": {
+              "A": 16199,
+              "AN": 3727,
+              "C": 15136,
+              "CN": 2182,
+              "M": 3896,
+              "MN": 794,
+              "TFC": 185,
+              "TFCN": 842,
+              "TFFCCN": 85,
+              "TFM": 165,
+              "TFMN": 12
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-05",
+        "statement": "the six elementary seed counts reproduce EXACTLY (A 16199, C 15136, M 3896, AN 3727, CN 2182, MN 794) and the trade-bearing half does not: reading the literal action string of every delivered group I count TFCN 842 (lesson 812), TFC 185 (162), TFM 165 (139), TFFCCN 85 (32) and - the one that matters - TFMN 12 against the lesson's flat zero. The lesson concluded from a family crosswalk that lists only the largest families that 'no TFMN family appears at all' and therefore that the mission's AN -> TFMN -> TFCN lifecycle shape is not observable on this slice. It is observable: 12 groups carry the literal string TFMN.",
+        "verdict": "REFUTED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "e5e9ddaeabe128609c422d4f044a34a048127609df689b5192dbe45f63683239",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "541c363f0a4e7f4eea0413aa78faf88b87c1445560cf1fff0047c36f63d1c110",
+      "sequence": 4
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "cascade": {
+              "deepest_fill_run": 28,
+              "exemplars": [
+                {
+                  "action_string": "TFFFFFFFFFFFFFFFFFFFFFFFFFFFFCCCCCCMACCCCCCCCCCCCCCCCCCCCCN",
+                  "filled_side": null,
+                  "group_index": 203,
+                  "runs": [
+                    [
+                      "T|N",
+                      1
+                    ],
+                    [
+                      "F|N",
+                      28
+                    ],
+                    [
+                      "C|B",
+                      6
+                    ],
+                    [
+                      "M|B",
+                      1
+                    ],
+                    [
+                      "A|B",
+                      1
+                    ],
+                    [
+                      "C|A",
+                      21
+                    ],
+                    [
+                      "N|N",
+                      1
+                    ]
+                  ],
+                  "terminal_cancel_run": [
+                    "C|A",
+                    21
+                  ]
+                }
+              ],
+              "members": [
+                203,
+                2009,
+                5034,
+                6527,
+                7731,
+                9117,
+                11374,
+                13026,
+                14519,
+                29281,
+                36678,
+                37690,
+                38095
+              ],
+              "tested": 13,
+              "violations": 1
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            203,
+            2009,
+            5034,
+            6527,
+            7731,
+            9117,
+            11374,
+            13026,
+            14519,
+            29281,
+            36678,
+            37690,
+            38095
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-06",
+        "statement": "the cascade invariant does NOT hold on every deep group: 1 of 13 groups of 25+ components with fills end in a cancel run on the other side (or in no cancel run); deepest fill run 28",
+        "verdict": "REFUTED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "c66f6e0e66d09580a9f6ccd9fd5cea22e6d960b8f1b6f19f74c3af797ca9ca26",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "e5e9ddaeabe128609c422d4f044a34a048127609df689b5192dbe45f63683239",
+      "sequence": 5
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "actual": {
+              "max_actions": 245,
+              "max_actions_group": 0,
+              "resets": 1,
+              "snapshot_adds": 244
+            },
+            "expected": {
+              "max_actions": 245,
+              "max_actions_group": 0,
+              "resets": 1,
+              "snapshot_adds": 244
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            0
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-07",
+        "statement": "the 245-component PRE_OPEN group is one reset plus 244 snapshot adds that opened no lifecycle (my 4.6 birth rule skips is_snapshot adds)",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "f9ca9fdafacd79bf7b0c38ee4186bddea81d2586c6ebda2005cb5334589dac2b",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "c66f6e0e66d09580a9f6ccd9fd5cea22e6d960b8f1b6f19f74c3af797ca9ca26",
+      "sequence": 6
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "candidate_status": {
+              "CENSORED_STREAM_END": 1,
+              "COMPLETED_BY_OPPOSITE_CANDIDATE": 22,
+              "COMPLETED_DECAY": 35,
+              "EXTENDED_BY_SUCCESSOR": 33
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-08",
+        "statement": "under my runway model (persistence/reversal/decay from the window flow, with succession) 57 of 91 runways COMPLETED and the rest {'CENSORED_STREAM_END': 1, 'COMPLETED_BY_OPPOSITE_CANDIDATE': 22, 'COMPLETED_DECAY': 35, 'EXTENDED_BY_SUCCESSOR': 33}; 'no runway completes' was a property of a runway that had no completion rule fed, not of the market",
+        "verdict": "REFUTED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "211bb11949bca705b8bdad1b890fd33e64abe9b4db8388ea03301767c696f5f9",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "f9ca9fdafacd79bf7b0c38ee4186bddea81d2586c6ebda2005cb5334589dac2b",
+      "sequence": 7
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-09",
+        "reason": "the shared-nanosecond-remainder artifact belongs to the runner's REVERSAL duration; my phase durations are whole seconds on the substrate clock with distinct exits per candidate and no common terminal instant except stream-end censoring",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "ba8a7e750f4ec22ba4a0eb896c90b9ad5288d5396435dce2dcbfa9da20bc82a3",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "211bb11949bca705b8bdad1b890fd33e64abe9b4db8388ea03301767c696f5f9",
+      "sequence": 8
+    },
+    {
+      "body": {
+        "computed_beside": {
+          "depletion_sum": 9541,
+          "phases": 470,
+          "refill_sum": 8869
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-10",
+        "reason": "the lesson states a wiring absence in the prior run; my runways feed depletion and refill from raw actions per phase: depletion total 9541, refill total 8869 lots over 470 phases; the absence does not recur here",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "eadd8548db4106504e8f119f60909fb9c167a4aa9bb51a324bdfa404a0b7ffdd",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "ba8a7e750f4ec22ba4a0eb896c90b9ad5288d5396435dce2dcbfa9da20bc82a3",
+      "sequence": 9
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "alert_labels": {
+              "H+N": 55,
+              "PRIOR": 35,
+              "T0": 1
+            },
+            "promotion_labels": {
+              "H+N": 91
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-11",
+        "statement": "every promotion is H+N on the promotion clock (91 of 91); a PRIOR lead exists only through the separate threshold-crossing alert, labels {'H+N': 55, 'PRIOR': 35, 'T0': 1}, whose precision is reported in 4.11",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "1d524bbf469eafa64a490ecdc0d6f381bf5ae9266024d34ee6a451a95187b388",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "eadd8548db4106504e8f119f60909fb9c167a4aa9bb51a324bdfa404a0b7ffdd",
+      "sequence": 10
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "promotion_lag_seconds": {
+              "max": 50,
+              "mean": 42.604396,
+              "min": 6,
+              "n": 91,
+              "p10": 18,
+              "p50": 50,
+              "p90": 50
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-12",
+        "statement": "promotion lag is bounded above at exactly 50 s (min 6, p50 50, max 50, n 91) and second-quantized",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "8e60f3c5310780d0fb0fb0c6b2681e29395a3602679ea10eec579d09e13f08b4",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "1d524bbf469eafa64a490ecdc0d6f381bf5ae9266024d34ee6a451a95187b388",
+      "sequence": 11
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-13",
+        "reason": "failed_state_count and superseded calls are the runner's recognition counters; my first-call rule was never exercised either (superseded_calls 0) but that is the same untested guard",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "0be9b0998e398d5dd0552aef3bfff9068212da2f88876ddec174926a2252c7e2",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "8e60f3c5310780d0fb0fb0c6b2681e29395a3602679ea10eec579d09e13f08b4",
+      "sequence": 12
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "km": {
+              "censored": 274,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 8260,
+              "final_survival": 0.027416011,
+              "final_time_ns": 7195961990081,
+              "n": 8534,
+              "time_ns_at_S0.05": 867365871891,
+              "time_ns_at_S0.1": 105880749703,
+              "time_ns_at_S0.25": 16995693803,
+              "time_ns_at_S0.5": 3186046116,
+              "time_ns_at_S0.75": 428590014,
+              "time_ns_at_S0.9": 1187593
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-14",
+        "statement": "two-population survival in the dominant bid-add stratum: S0.9 at 1187593 ns, S0.5 at 3186046116 ns, S0.1 at 105880749703 ns (factors 2683 and 33), n 8534 events 8260 censored 274",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "53153d306c095a3ec1098537e67f0cfa5e941a6423b4ceea306b76bf7b7fce5a",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "0be9b0998e398d5dd0552aef3bfff9068212da2f88876ddec174926a2252c7e2",
+      "sequence": 13
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "pre_open": {
+              "censored": 20,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 53,
+              "final_survival": 0.273972603,
+              "final_time_ns": 9653217487074,
+              "n": 73,
+              "time_ns_at_S0.05": null,
+              "time_ns_at_S0.1": null,
+              "time_ns_at_S0.25": null,
+              "time_ns_at_S0.5": 217398735061,
+              "time_ns_at_S0.75": 60297672503,
+              "time_ns_at_S0.9": 4112286821
+            },
+            "pre_settlement": {
+              "censored": 262,
+              "estimator": "KAPLAN_MEIER_PRODUCT_LIMIT",
+              "events": 7265,
+              "final_survival": 0.023593988,
+              "final_time_ns": 7195119452029,
+              "n": 7527,
+              "time_ns_at_S0.05": 1163158873014,
+              "time_ns_at_S0.1": 182108467966,
+              "time_ns_at_S0.25": 18409134745,
+              "time_ns_at_S0.5": 2598733209,
+              "time_ns_at_S0.75": 253978633,
+              "time_ns_at_S0.9": 960007
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-15",
+        "statement": "PRE_OPEN-born ask orders live longer: KM median 217398735061 ns vs 2598733209 ns for PRE_SETTLEMENT births of the same family and side (ratio 84x); final survival 0.273972603 vs 0.023593988",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "5ed12c65e99c24c688faff843eb53e87f231ceef344aebe038bdcfa684f85d3a",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "53153d306c095a3ec1098537e67f0cfa5e941a6423b4ceea306b76bf7b7fce5a",
+      "sequence": 14
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "movement": {
+              "max": 5,
+              "mean": 0.162590799,
+              "min": -4,
+              "n": 8260,
+              "p10": 0,
+              "p25": 0,
+              "p50": 0,
+              "p75": 0,
+              "p90": 1,
+              "p99": 2,
+              "sum": 1343.0
+            },
+            "reprice_share": 0.9413800122124975,
+            "volume_ahead": {
+              "max": 30,
+              "mean": 1.376271186,
+              "min": 0,
+              "n": 8260,
+              "p10": 0,
+              "p25": 0,
+              "p50": 1,
+              "p75": 1,
+              "p90": 3,
+              "p99": 11,
+              "sum": 11368.0
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-16",
+        "statement": "queue position is cheap: dominant bid-add stratum volume-ahead p50 1 (p90 3, max 30), queue movement p50 0; 4625 of 4913 tracked modifies changed price (94.1%)",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "d021b8012f2b548f4185f5cc6c0e195305c2157e5ad0b17923077fac19e0f520",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "5ed12c65e99c24c688faff843eb53e87f231ceef344aebe038bdcfa684f85d3a",
+      "sequence": 15
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "basis": "the first 2,000 resolved lifecycles the pass retained as exact exemplars; the full count was not tallied",
+            "outliving": 2000,
+            "resolved": 2000,
+            "share": 1.0
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-17",
+        "statement": "2000 of 2000 resolved lifecycles (100.0%) exited in a later group than their birth group; my strata are birth-stamped too, so the caveat applies to my 4.6 as well",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "d139c5f097bfb0b30c5165cc15e648651ba3d1c913b48e82d5cfa96e699aa45d",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "d021b8012f2b548f4185f5cc6c0e195305c2157e5ad0b17923077fac19e0f520",
+      "sequence": 16
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-18",
+        "reason": "the lesson's lineage unit is the order-id lineage (ORDER_ID_LINEAGE_V1); my 4.13 lineage is the exhaustion-chain lineage on the candidate unit, depth distribution {'0': 36, '1': 22, '2': 13, '3': 6, '4': 4, '5': 4, '6': 3, '7': 1, '8': 1, '9': 1}; the order-id chain was not rebuilt",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "5968a646b4ddfd33f303102c810f4fc9dba751cb62a50ec1680003e537049735",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "d139c5f097bfb0b30c5165cc15e648651ba3d1c913b48e82d5cfa96e699aa45d",
+      "sequence": 17
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-19",
+        "reason": "interstage delay by A/T transition belongs to the order-id lineage, which this pass did not rebuild",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "2d5cee7006f7800de03966a44c4f5026bad9d10fc7a4326e70641cb9b6a25fa6",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "5968a646b4ddfd33f303102c810f4fc9dba751cb62a50ec1680003e537049735",
+      "sequence": 18
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "cross_group_gaps": {
+              "ow-0069e456ba86b8f3b52e": {
+                "max": 896537953064,
+                "mean": 134376557806.77551,
+                "min": 1648791,
+                "n": 49,
+                "p10": 4771797217,
+                "p25": 24410162345,
+                "p50": 62305458777,
+                "p75": 134019969612,
+                "p90": 314232238121,
+                "p99": 896537953064,
+                "sum": 6584451332532.0
+              },
+              "ow-1fe202ccc7ea51ea8050": {
+                "max": 685363958105,
+                "mean": 11103335587.84544,
+                "min": 16309,
+                "n": 647,
+                "p10": 538878,
+                "p25": 815161,
+                "p50": 1030400,
+                "p75": 644409009,
+                "p90": 17360743314,
+                "p99": 229266902640,
+                "sum": 7183858125336.0
+              },
+              "ow-2b87a13fb17c35fb43c5": {
+                "max": 953028541706,
+                "mean": 49235311326.54483,
+                "min": 111729,
+                "n": 145,
+                "p10": 650510,
+                "p25": 7140077,
+                "p50": 3841304205,
+                "p75": 30978809066,
+                "p90": 97264135726,
+                "p99": 769562474519,
+                "sum": 7139120142349.0
+              },
+              "ow-323039dbb3848205fc25": {
+                "max": 336202242322,
+                "mean": 3568239434.03139,
+                "min": 8628,
+                "n": 2007,
+                "p10": 143886,
+                "p25": 390828,
+                "p50": 1370981,
+                "p75": 1056929439,
+                "p90": 8307824143,
+                "p99": 59541178897,
+                "sum": 7161456544101.0
+              },
+              "ow-3807a1115b13f5c8685a": {
+                "max": 2931712097868,
+                "mean": 5156101897.031453,
+                "min": 0,
+                "n": 2003,
+                "p10": 9462,
+                "p25": 40129,
+                "p50": 2304763,
+                "p75": 1112437099,
+                "p90": 6751598828,
+                "p99": 65631450563,
+                "sum": 10327672099754.0
+              },
+              "ow-3a12d9bd4a731b597f0d": {
+                "max": 1250170718596,
+                "mean": 1150451992.155036,
+                "min": 0,
+                "n": 8598,
+                "p10": 149086,
+                "p25": 7297821,
+                "p50": 100960344,
+                "p75": 101592839,
+                "p90": 1551021360,
+                "p99": 18646970526,
+                "sum": 9891586228549.0
+              },
+              "ow-3a98bbe15cb2bf0c14ba": {
+                "max": 337867979989,
+                "mean": 17521562241.054592,
+                "min": 24237,
+                "n": 403,
+                "p10": 848428,
+                "p25": 408274643,
+                "p50": 2887571565,
+                "p75": 15795729101,
+                "p90": 46781012289,
+                "p99": 197338268869,
+                "sum": 7061189583145.0
+              },
+              "ow-40540069fe5aeddc127b": {
+                "max": 262609134108,
+                "mean": 985609547.3669791,
+                "min": 0,
+                "n": 8213,
+                "p10": 1922,
+                "p25": 8188,
+                "p50": 32365,
+                "p75": 2108552,
+                "p90": 1498867154,
+                "p99": 18804858953,
+                "sum": 8094811212525.0
+              },
+              "ow-59ace24da4a485c605b6": {
+                "max": 267009590238,
+                "mean": 1168510413.106632,
+                "min": 0,
+                "n": 6921,
+                "p10": 5424,
+                "p25": 15907,
+                "p50": 538088,
+                "p75": 101189308,
+                "p90": 2183017499,
+                "p99": 21279986009,
+                "sum": 8087260569111.0
+              },
+              "ow-6bf0a7fc457bfdc752d3": {
+                "max": 2165903544299,
+                "mean": 105131518812.08824,
+                "min": 13486,
+                "n": 68,
+                "p10": 192441,
+                "p25": 422001,
+                "p50": 1280878394,
+                "p75": 27366228141,
+                "p90": 213406773977,
+                "p99": 971609119869,
+                "sum": 7148943279222.0
+              },
+              "ow-72b735e9acc32d43956e": {
+                "max": 1441998902008,
+                "mean": 201501164958.12903,
+                "min": 77099,
+                "n": 31,
+                "p10": 4269884355,
+                "p25": 28947684422,
+                "p50": 84826566100,
+                "p75": 286316060006,
+                "p90": 491292549215,
+                "p99": 1441998902008,
+                "sum": 6246536113702.0
+              },
+              "ow-7b10d38a8b61511bc611": {
+                "max": 386645215645,
+                "mean": 5068290845.142858,
+                "min": 6169,
+                "n": 1393,
+                "p10": 69037,
+                "p25": 377692,
+                "p50": 1716137,
+                "p75": 1670361936,
+                "p90": 10797939680,
+                "p99": 92962164454,
+                "sum": 7060129147284.0
+              },
+              "ow-8777dec6490e85e484be": {
+                "max": 337609190262,
+                "mean": 4123727674.499418,
+                "min": 3159,
+                "n": 1718,
+                "p10": 135623,
+                "p25": 451006,
+                "p50": 2605475,
+                "p75": 1850974076,
+                "p90": 9109722324,
+                "p99": 65419452012,
+                "sum": 7084564144790.0
+              },
+              "ow-8b55dfd64daf3077e3d2": {
+                "max": 178378068395,
+                "mean": 4181329201.5505023,
+                "min": 0,
+                "n": 1891,
+                "p10": 19781,
+                "p25": 599489,
+                "p50": 33598170,
+                "p75": 1976142757,
+                "p90": 10273575373,
+                "p99": 61087685510,
+                "sum": 7906893520132.0
+              },
+              "ow-8c934d067bc463c01ce0": {
+                "max": 233885455341,
+                "mean": 9043436949.217281,
+                "min": 2042,
+                "n": 787,
+                "p10": 236943,
+                "p25": 1119710,
+                "p50": 314861081,
+                "p75": 5767803110,
+                "p90": 24029376328,
+                "p99": 133303731732,
+                "sum": 7117184879034.0
+              },
+              "ow-a018966e1dc7dc7ec892": {
+                "max": 1074932248548,
+                "mean": 61618524436.675674,
+                "min": 632421,
+                "n": 111,
+                "p10": 920378044,
+                "p25": 4129542693,
+                "p50": 18345035553,
+                "p75": 69333051554,
+                "p90": 164539027087,
+                "p99": 470617618061,
+                "sum": 6839656212471.0
+              },
+              "ow-a4883ca90d4145520c5e": {
+                "max": 481427475155,
+                "mean": 20000559449.383755,
+                "min": 66460,
+                "n": 357,
+                "p10": 1627504,
+                "p25": 352303408,
+                "p50": 3287785605,
+                "p75": 16584689281,
+                "p90": 46235128157,
+                "p99": 201132235035,
+                "sum": 7140199723430.0
+              },
+              "ow-b13ef7b8d0191e4e0d42": {
+                "max": 378368825026,
+                "mean": 43421561632.797104,
+                "min": 72636,
+                "n": 69,
+                "p10": 227876,
+                "p25": 649058,
+                "p50": 6533965893,
+                "p75": 33878977082,
+                "p90": 109348596856,
+                "p99": 373012917049,
+                "sum": 2996087752663.0
+              },
+              "ow-c9af7252f0e917ab6cba": {
+                "max": 908884971864,
+                "mean": 126358567504.10204,
+                "min": 27748690,
+                "n": 49,
+                "p10": 3110179126,
+                "p25": 10598739379,
+                "p50": 46112586155,
+                "p75": 151515758156,
+                "p90": 318753269531,
+                "p99": 908884971864,
+                "sum": 6191569807701.0
+              },
+              "ow-f6ba7eaa9e45ef1b68cf": {
+                "max": 935003627173,
+                "mean": 1300758573.0582972,
+                "min": 0,
+                "n": 7599,
+                "p10": 111513,
+                "p25": 1333147,
+                "p50": 83115310,
+                "p75": 102036700,
+                "p90": 2230728194,
+                "p99": 19755218565,
+                "sum": 9884464396670.0
+              }
+            },
+            "within_group_top_runs": [
+              [
+                "A|B",
+                154,
+                1
+              ],
+              [
+                "A|A",
+                90,
+                1
+              ],
+              [
+                "F|N",
+                28,
+                1
+              ],
+              [
+                "C|A",
+                21,
+                1
+              ],
+              [
+                "C|A",
+                17,
+                1
+              ],
+              [
+                "C|A",
+                15,
+                1
+              ]
+            ]
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-20",
+        "statement": "within groups the dominant nodes recur only as runs of length 1 (longest runs: [['A|B', 154, 1], ['A|A', 90, 1], ['F|N', 28, 1], ['C|A', 21, 1]]); cross-group recurrence, which the lesson calls unmeasured, is measured in my 4.14: family interarrival gaps for the top families {'ow-0069e456ba86b8f3b52e': (49, 62305458777), 'ow-1fe202ccc7ea51ea8050': (647, 1030400), 'ow-2b87a13fb17c35fb43c5': (145, 3841304205), 'ow-323039dbb3848205fc25': (2007, 1370981)}",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "9fab8db7d25ef0e29f78c3c7cb0361787280771846103788216bbf91248334ee",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "2d5cee7006f7800de03966a44c4f5026bad9d10fc7a4326e70641cb9b6a25fa6",
+      "sequence": 19
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "stage_direction_census": {
+              "LONG": 1571,
+              "NO_DIRECTION": 1417,
+              "SHORT": 1425
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-21",
+        "statement": "on my runway stages (one per second from availability) NO_DIRECTION is 1417 of 4413 stages (32.1%); LONG 1571, SHORT 1425",
+        "verdict": "REFUTED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "9d83841ff25fd4431b05e90372cf1f0811bfb55b8132646d1eea6cd9227fdb45",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "9fab8db7d25ef0e29f78c3c7cb0361787280771846103788216bbf91248334ee",
+      "sequence": 20
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "flow": {
+              "max": 85.0,
+              "mean": 0.133923,
+              "min": -59.0,
+              "n": 4413,
+              "p10": -5.0,
+              "p50": 0.0,
+              "p90": 4.0
+            },
+            "imbalance": {
+              "max": 0.13119533527696792,
+              "mean": 0.056712,
+              "min": 0.0096051227321238,
+              "n": 4413,
+              "p10": 0.03410936654033568,
+              "p50": 0.057692307692307696,
+              "p90": 0.07807061163600199
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-22",
+        "statement": "normalized imbalance across all runway stages sits in a narrow band (p10 0.03410936654033568, p50 0.057692307692307696, p90 0.07807061163600199) while window signed flow spans -59.0 to 85.0",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "989987ae25f21c69ff8b75158ef2d83b3292f0c7ee17afdedaf61e81a8254ee3",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "9d83841ff25fd4431b05e90372cf1f0811bfb55b8132646d1eea6cd9227fdb45",
+      "sequence": 21
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "actual": {
+              "FLIP": 46,
+              "NO_PREDECESSOR": 1,
+              "SAME": 44
+            },
+            "expected": {
+              "FLIP": 46,
+              "NO_PREDECESSOR": 1,
+              "SAME": 44
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-23",
+        "statement": "SAME/FLIP against the latest predecessor split 44/46 with one NO_PREDECESSOR on my own candidate set",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "fdc290bb3b61e9526c2caab11f0fb6eb57b681604b2f89bdd98336c089e53e9b",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "989987ae25f21c69ff8b75158ef2d83b3292f0c7ee17afdedaf61e81a8254ee3",
+      "sequence": 22
+    },
+    {
+      "body": {
+        "computed_beside": {
+          "pairs": {
+            "delivered_mirror_dispositions": {
+              "PENDING": 43569,
+              "UNMATCHED": 43569
+            },
+            "keys_both": 29,
+            "pairs": 43262,
+            "unmatched": 307
+          }
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-24",
+        "reason": "the lesson reports zero pairs under the runner's matching rule; my 4.4 uses a different declared rule (most recent earlier member with the swapped side string) and formed 43262 pairs with 307 unmatched, so the runner's estimand was not rebuilt",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "b10a13a902ac8e693a3f3f7e7ddad6021c8687e1fc35e05bc2ad4b7913a9a875",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "fdc290bb3b61e9526c2caab11f0fb6eb57b681604b2f89bdd98336c089e53e9b",
+      "sequence": 23
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "actual": {
+              "F|A->C|A": 550,
+              "F|A->M|A": 80,
+              "F|A_out": 1090,
+              "F|B->C|B": 635,
+              "F|B->M|B": 73,
+              "F|B_out": 1085
+            },
+            "expected": {
+              "F|A->C|A": 550,
+              "F|A->M|A": 80,
+              "F|A_out": 1090,
+              "F|B->C|B": 635,
+              "F|B->M|B": 73,
+              "F|B_out": 1085
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-25",
+        "statement": "post-fill disposition is cancel over modify roughly seven to one; my within-group transition edges reproduce the counts and denominators exactly",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "3614f8e3d921c4827652a58cd67c6b8881893cc172c1ac6e95b0ded9dcf3a71d",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "b10a13a902ac8e693a3f3f7e7ddad6021c8687e1fc35e05bc2ad4b7913a9a875",
+      "sequence": 24
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "actual": {
+              "F": 2411,
+              "T": 2028,
+              "T|A->F|B": 823,
+              "T|B->F|A": 835
+            },
+            "expected": {
+              "F": 2411,
+              "T": 2028,
+              "T|A->F|B": 823,
+              "T|B->F|A": 835
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-26",
+        "statement": "2,028 trades produced 2,411 fills and the aggressor/passive pairing is near-deterministic",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "6fdf845297263187856bbc186f6a2aaa4fba89c2cc1766699a2bd839b1aabf30",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "3614f8e3d921c4827652a58cd67c6b8881893cc172c1ac6e95b0ded9dcf3a71d",
+      "sequence": 25
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "medians": {
+              "ow-40540069fe5aeddc127b|B": [
+                1774647,
+                673102126
+              ],
+              "ow-59ace24da4a485c605b6|A": [
+                1378939,
+                558842876
+              ]
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-27",
+        "statement": "time to first refill (my one-attribution episodes, censored at stream end) AT_TOUCH vs BEHIND_TOUCH medians: {'ow-40540069fe5aeddc127b|B': (1774647, 673102126), 'ow-59ace24da4a485c605b6|A': (1378939, 558842876)} ns; ratios [379.3, 405.3]",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "69fba06729e5410e375cc74241993aa651091d5e3133dcaf9a56a6540047625c",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "6fdf845297263187856bbc186f6a2aaa4fba89c2cc1766699a2bd839b1aabf30",
+      "sequence": 26
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "ratio_pairs": {
+              "ow-40540069fe5aeddc127b|B|AT_TOUCH|PRE_SETTLEMENT": [
+                1.134736933,
+                1.109947644
+              ],
+              "ow-40540069fe5aeddc127b|B|BEHIND_TOUCH|PRE_SETTLEMENT": [
+                1.098880254,
+                1.016524029
+              ],
+              "ow-59ace24da4a485c605b6|A|AT_TOUCH|PRE_SETTLEMENT": [
+                1.073232323,
+                1.070351759
+              ],
+              "ow-59ace24da4a485c605b6|A|BEHIND_TOUCH|PRE_SETTLEMENT": [
+                1.292619619,
+                1.023696096
+              ]
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-28",
+        "statement": "ratio pairs under my one-attribution episodes: {'ow-40540069fe5aeddc127b|B|BEHIND_TOUCH|PRE_SETTLEMENT': (1.098880254, 1.016524029), 'ow-59ace24da4a485c605b6|A|BEHIND_TOUCH|PRE_SETTLEMENT': (1.292619619, 1.023696096), 'ow-40540069fe5aeddc127b|B|AT_TOUCH|PRE_SETTLEMENT': (1.134736933, 1.109947644), 'ow-59ace24da4a485c605b6|A|AT_TOUCH|PRE_SETTLEMENT': (1.073232323, 1.070351759)} (mean_of_member_ratios, ratio_of_aggregate_sums); the lesson's pattern needs behind-touch mean-of-ratios above ratio-of-sums by more than at the touch",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "724457c0eb36da6646e6db5411cd502801f6d43db5aaaa6fb1370903af47f7a2",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "69fba06729e5410e375cc74241993aa651091d5e3133dcaf9a56a6540047625c",
+      "sequence": 27
+    },
+    {
+      "body": {
+        "computed_beside": {
+          "own_rule": "FIRST_ARRIVAL_ONCE"
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-29",
+        "reason": "the 18.2 attributions per episode is the runner's EVERY_PENDING_EPISODE rule; my episodes attribute the first arrival once, so my ratios of 1.016524029 (behind touch, dominant bid family) are net first-arrival ratios and not comparable to the 9-40 arrival-density figures",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "aa8a95f1fd26690b48e2973cac27df2c7b6a5ef52f8cfa0c87ff86e6349caed9",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "724457c0eb36da6646e6db5411cd502801f6d43db5aaaa6fb1370903af47f7a2",
+      "sequence": 28
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "contact_census": {
+              "ABSORBED_WITHOUT_PRICE_MOVE": 75,
+              "ACCOMPANIED_BY_WITHDRAWAL": 453,
+              "DELIVERED_THROUGH_PRICE": 886
+            },
+            "group_census": {
+              "ABSORBED_WITHOUT_PRICE_MOVE": 160,
+              "ACCOMPANIED_BY_WITHDRAWAL": 261,
+              "DELIVERED_THROUGH_PRICE": 993,
+              "INDETERMINATE": 157,
+              "INDETERMINATE_NO_CONTACT": 41998
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-30",
+        "statement": "under my group-scoped rule (mid after the group vs mid after the previous group): {'ABSORBED_WITHOUT_PRICE_MOVE': 160, 'ACCOMPANIED_BY_WITHDRAWAL': 261, 'DELIVERED_THROUGH_PRICE': 993, 'INDETERMINATE': 157, 'INDETERMINATE_NO_CONTACT': 41998}; withdrawal:delivery = 261:993; contact-runway scope: {'ABSORBED_WITHOUT_PRICE_MOVE': 75, 'ACCOMPANIED_BY_WITHDRAWAL': 453, 'DELIVERED_THROUGH_PRICE': 886}",
+        "verdict": "REFUTED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "dc74b2b8a99d9218415659f419ad7cd9f88d3e8b169574dea78ea901a62269e6",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "aa8a95f1fd26690b48e2973cac27df2c7b6a5ef52f8cfa0c87ff86e6349caed9",
+      "sequence": 29
+    },
+    {
+      "body": {
+        "computed_beside": {
+          "strata_sample": {
+            "ow-0069e456ba86b8f3b52e|N|PRE_SETTLEMENT|INDETERMINATE": {
+              "n": 50,
+              "price_response_ticks": {
+                "n": 0
+              },
+              "traded": {
+                "max": 2,
+                "mean": 1.02,
+                "min": 1,
+                "n": 50,
+                "p10": 1,
+                "p25": 1,
+                "p50": 1,
+                "p75": 1,
+                "p90": 1,
+                "p99": 2,
+                "sum": 51.0
+              },
+              "withdrawn": {
+                "max": 0,
+                "mean": 0.0,
+                "min": 0,
+                "n": 50,
+                "p10": 0,
+                "p25": 0,
+                "p50": 0,
+                "p75": 0,
+                "p90": 0,
+                "p99": 0,
+                "sum": 0.0
+              }
+            },
+            "ow-174847199f25c91ccb41|A|PRE_SETTLEMENT|ABSORBED_WITHOUT_PRICE_MOVE": {
+              "n": 7,
+              "price_response_ticks": {
+                "max": 0.0,
+                "mean": 0.0,
+                "min": 0.0,
+                "n": 7,
+                "p10": 0.0,
+                "p25": 0.0,
+                "p50": 0.0,
+                "p75": 0.0,
+                "p90": 0.0,
+                "p99": 0.0,
+                "sum": 0.0
+              },
+              "traded": {
+                "max": 2,
+                "mean": 1.142857143,
+                "min": 1,
+                "n": 7,
+                "p10": 1,
+                "p25": 1,
+                "p50": 1,
+                "p75": 1,
+                "p90": 1,
+                "p99": 2,
+                "sum": 8.0
+              },
+              "withdrawn": {
+                "max": 0,
+                "mean": 0.0,
+                "min": 0,
+                "n": 7,
+                "p10": 0,
+                "p25": 0,
+                "p50": 0,
+                "p75": 0,
+                "p90": 0,
+                "p99": 0,
+                "sum": 0.0
+              }
+            },
+            "ow-1b64a25174ce60aae233|N|PRE_SETTLEMENT|INDETERMINATE": {
+              "n": 5,
+              "price_response_ticks": {
+                "n": 0
+              },
+              "traded": {
+                "max": 1,
+                "mean": 1.0,
+                "min": 1,
+                "n": 5,
+                "p10": 1,
+                "p25": 1,
+                "p50": 1,
+                "p75": 1,
+                "p90": 1,
+                "p99": 1,
+                "sum": 5.0
+              },
+              "withdrawn": {
+                "max": 0,
+                "mean": 0.0,
+                "min": 0,
+                "n": 5,
+                "p10": 0,
+                "p25": 0,
+                "p50": 0,
+                "p75": 0,
+                "p90": 0,
+                "p99": 0,
+                "sum": 0.0
+              }
+            }
+          }
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-31",
+        "reason": "within-family ratio degeneracy is a claim about the runner's family-string-determined ratios; my absorption ratios are computed from quantities in the group, not from the action string",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "6e3041140cfff66341a66f22c0336675c8fcf6e3f77cde0f42eeae53ea71625d",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "dc74b2b8a99d9218415659f419ad7cd9f88d3e8b169574dea78ea901a62269e6",
+      "sequence": 30
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "touch_migrations": 6079,
+            "touch_states": {
+              "COMPRESSION": 3663,
+              "EXPANSION": 2311,
+              "UNCHANGED": 37594,
+              "UNDEFINED_ONE_SIDE_EMPTY": 1
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            29,
+            30,
+            34,
+            56,
+            84,
+            125,
+            128,
+            130,
+            132,
+            135,
+            139,
+            188,
+            203,
+            203,
+            207,
+            207,
+            227,
+            229,
+            237,
+            240,
+            241,
+            249,
+            264,
+            265,
+            273,
+            277,
+            296,
+            297,
+            299,
+            302,
+            303,
+            306,
+            311,
+            313,
+            314,
+            322,
+            323,
+            339,
+            341,
+            360
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-32",
+        "statement": "the touch is NOT static on the full book: my 4.9 (set difference of consecutive after-books, full depth) counts 6079 touch migrations and spread states {'COMPRESSION': 3663, 'EXPANSION': 2311, 'UNCHANGED': 37594, 'UNDEFINED_ONE_SIDE_EMPTY': 1} across 43569 transitions; the lesson's 4/4/40,264 came from a group-local set-difference scope that cannot see the book beyond the group's own orders",
+        "verdict": "REFUTED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "6d670817f501208e2c339300a83b5cefb3fb5e277897b2678a49f27a4de286d8",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "6e3041140cfff66341a66f22c0336675c8fcf6e3f77cde0f42eeae53ea71625d",
+      "sequence": 31
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-33",
+        "reason": "reopen family stratum absent from my ladder strata",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "c381c88985421931aa6d1c12c3fc4acb9040add446c424720e02174f49203bf2",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "6d670817f501208e2c339300a83b5cefb3fb5e277897b2678a49f27a4de286d8",
+      "sequence": 32
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "e2r_p50": {
+              "1": 131561,
+              "245": 253824335,
+              "59": 300329573
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            0,
+            203
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-34",
+        "statement": "event-to-receive p50 by component count: 1 -> 131561 ns, 59 -> 300329573 ns, 245 -> 253824335 ns; largest events arrive last",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "c53794eaa852e1ee6aa62100302de7fee66ea0c46c761702005693e7c97ba377",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "c381c88985421931aa6d1c12c3fc4acb9040add446c424720e02174f49203bf2",
+      "sequence": 33
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "four_component": 47922,
+            "two_component": {
+              "ow-323039dbb3848205fc25": 22367,
+              "ow-7b10d38a8b61511bc611": 22665,
+              "ow-8777dec6490e85e484be": 20094
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-35",
+        "statement": "formation latency is a component-count clock: two-component families p50 {'ow-323039dbb3848205fc25': 22367, 'ow-7b10d38a8b61511bc611': 22665, 'ow-8777dec6490e85e484be': 20094} ns (spread 1.13x), four-component ow-3a98bbe p50 47922 ns",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "4ab6a260281ffc58f2be6523ed0fbf6ef2bd3c60a33cff215fef3286f61ee8d3",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "c53794eaa852e1ee6aa62100302de7fee66ea0c46c761702005693e7c97ba377",
+      "sequence": 34
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "horizon_medians": [
+              {
+                "horizon_name": "H_ROLL_WINDOW",
+                "n": 18,
+                "orientation": "SAME",
+                "p50": 0.0,
+                "polarity": 1
+              },
+              {
+                "horizon_name": "H_ROLL_WINDOW",
+                "n": 23,
+                "orientation": "FLIP",
+                "p50": 0.0,
+                "polarity": 1
+              },
+              {
+                "horizon_name": "H_ROLL_WINDOW",
+                "n": 22,
+                "orientation": "SAME",
+                "p50": 0.0,
+                "polarity": -1
+              },
+              {
+                "horizon_name": "H_ROLL_WINDOW",
+                "n": 19,
+                "orientation": "FLIP",
+                "p50": 0.0,
+                "polarity": -1
+              },
+              {
+                "horizon_name": "H_ROLL_WINDOW",
+                "n": 1,
+                "orientation": "NO_PREDECESSOR",
+                "p50": 3.5,
+                "polarity": -1
+              },
+              {
+                "horizon_name": "H_REFRACTORY",
+                "n": 12,
+                "orientation": "SAME",
+                "p50": 0.5,
+                "polarity": 1
+              },
+              {
+                "horizon_name": "H_REFRACTORY",
+                "n": 14,
+                "orientation": "FLIP",
+                "p50": 0.5,
+                "polarity": 1
+              },
+              {
+                "horizon_name": "H_REFRACTORY",
+                "n": 16,
+                "orientation": "SAME",
+                "p50": 0.5,
+                "polarity": -1
+              },
+              {
+                "horizon_name": "H_REFRACTORY",
+                "n": 16,
+                "orientation": "FLIP",
+                "p50": -0.5,
+                "polarity": -1
+              },
+              {
+                "horizon_name": "H_REFRACTORY",
+                "n": 1,
+                "orientation": "NO_PREDECESSOR",
+                "p50": 0.0,
+                "polarity": -1
+              },
+              {
+                "horizon_name": "H_DETECTION_LAG",
+                "n": 10,
+                "orientation": "SAME",
+                "p50": 1.0,
+                "polarity": 1
+              },
+              {
+                "horizon_name": "H_DETECTION_LAG",
+                "n": 12,
+                "orientation": "FLIP",
+                "p50": 0.5,
+                "polarity": 1
+              },
+              {
+                "horizon_name": "H_DETECTION_LAG",
+                "n": 14,
+                "orientation": "SAME",
+                "p50": 0.5,
+                "polarity": -1
+              },
+              {
+                "horizon_name": "H_DETECTION_LAG",
+                "n": 15,
+                "orientation": "FLIP",
+                "p50": -0.5,
+                "polarity": -1
+              },
+              {
+                "horizon_name": "H_TWO_DETECTION_LAGS",
+                "n": 2,
+                "orientation": "SAME",
+                "p50": 0.5,
+                "polarity": 1
+              },
+              {
+                "horizon_name": "H_TWO_DETECTION_LAGS",
+                "n": 1,
+                "orientation": "FLIP",
+                "p50": -0.5,
+                "polarity": 1
+              },
+              {
+                "horizon_name": "H_TWO_DETECTION_LAGS",
+                "n": 1,
+                "orientation": "SAME",
+                "p50": 0.0,
+                "polarity": -1
+              },
+              {
+                "horizon_name": "H_TWO_DETECTION_LAGS",
+                "n": 4,
+                "orientation": "FLIP",
+                "p50": 0.5,
+                "polarity": -1
+              }
+            ]
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-36",
+        "statement": "median price response at every declared horizon in every stratum with n>=5 is NOT zero: [{'horizon_name': 'H_REFRACTORY', 'polarity': 1, 'orientation': 'SAME', 'n': 12, 'p50': 0.5}, {'horizon_name': 'H_REFRACTORY', 'polarity': 1, 'orientation': 'FLIP', 'n': 14, 'p50': 0.5}, {'horizon_name': 'H_REFRACTORY', 'polarity': -1, 'orientation': 'SAME', 'n': 16, 'p50': 0.5}, {'horizon_name': 'H_REFRACTORY', 'polarity': -1, 'orientation': 'FLIP', 'n': 16, 'p50': -0.5}, {'horizon_name': 'H_DETECTION_LAG', 'polarity': 1, 'orientation': 'SAME', 'n': 10, 'p50': 1.0}, {'horizon_name': 'H_DETECTION_LAG', 'polarity': 1, 'orientation': 'FLIP', 'n': 12, 'p50': 0.5}, {'horizon_name': 'H_DETECTION_LAG', 'polarity': -1, 'orientation': 'SAME', 'n': 14, 'p50': 0.5}, {'horizon_name': 'H_DETECTION_LAG', 'polarity': -1, 'orientation': 'FLIP', 'n': 15, 'p50': -0.5}]; strata read: 18",
+        "verdict": "REFUTED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "7eed3bee54fa27b0c7e1a5c966e02c1b17c43a95c7306bf77d973f6b8b47b3f7",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "4ab6a260281ffc58f2be6523ed0fbf6ef2bd3c60a33cff215fef3286f61ee8d3",
+      "sequence": 35
+    },
+    {
+      "body": {
+        "computed_beside": {
+          "candidates": {
+            "delivered": 182,
+            "delivered_only": [
+              1633299044,
+              1633299091,
+              1633299180,
+              1633299265,
+              1633299366,
+              1633299411,
+              1633299486,
+              1633299577,
+              1633299638,
+              1633299685,
+              1633299735,
+              1633299783,
+              1633299838,
+              1633299928,
+              1633299973,
+              1633300080,
+              1633300125,
+              1633300191,
+              1633300241,
+              1633300363,
+              1633300434,
+              1633300502,
+              1633300567,
+              1633300616,
+              1633300666,
+              1633300732,
+              1633300777,
+              1633300831,
+              1633300912,
+              1633300962,
+              1633301007,
+              1633301080,
+              1633301144,
+              1633301201,
+              1633301283,
+              1633301380,
+              1633301425,
+              1633301470,
+              1633301523,
+              1633301568,
+              1633301630,
+              1633301675,
+              1633301757,
+              1633301832,
+              1633301878,
+              1633301972,
+              1633302065,
+              1633302126,
+              1633302172,
+              1633302217
+            ],
+            "matched": 91,
+            "own": 91,
+            "own_only": []
+          },
+          "substrate_reconcile": {
+            "agree": 17991,
+            "compared": 17991,
+            "disagree": 0
+          }
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-37",
+        "reason": "the exact-to-averaged reconciliation receipt is the runner's artifact; my reconciliation is the second-by-second substrate comparison and the candidate match in 4.0/4.0b",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "3e77a98537fec852767321abcd44571481a5a1bed448db43e20c6e05819fac2e",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "7eed3bee54fa27b0c7e1a5c966e02c1b17c43a95c7306bf77d973f6b8b47b3f7",
+      "sequence": 36
+    },
+    {
+      "body": {
+        "computed_beside": {
+          "regime": {
+            "ask_depth_full": {
+              "first": 397,
+              "last": 950,
+              "max": 1001,
+              "min": 397,
+              "n": 43569
+            },
+            "ask_level_count_full": {
+              "first": 76,
+              "last": 240,
+              "max": 262,
+              "min": 76,
+              "n": 43569
+            },
+            "ask_order_count_full": {
+              "first": 90,
+              "last": 354,
+              "max": 382,
+              "min": 90,
+              "n": 43569
+            },
+            "bid_depth_full": {
+              "first": 465,
+              "last": 1067,
+              "max": 1121,
+              "min": 465,
+              "n": 43569
+            },
+            "bid_level_count_full": {
+              "first": 121,
+              "last": 304,
+              "max": 329,
+              "min": 121,
+              "n": 43569
+            },
+            "bid_order_count_full": {
+              "first": 154,
+              "last": 451,
+              "max": 461,
+              "min": 154,
+              "n": 43569
+            },
+            "depth_imbalance_full": {
+              "first": 0.07888631090487239,
+              "last": 0.05800694100148736,
+              "max": 0.17148362235067438,
+              "min": -0.021144920061887573,
+              "n": 43569
+            },
+            "spread_raw": {
+              "first": 23000000,
+              "last": 2000000,
+              "max": 56000000,
+              "min": -60000000,
+              "n": 43569
+            }
+          }
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-38",
+        "reason": "statement about the prior artifact's missing 4.2; on this run 4.2 is computed: spread_raw mean 5698019, imbalance mean 0.0655",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "16b951c18bd896445fb95fee93b127a8fddc1f469c9ca1dc9edbb1b3c97ae2ef",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "3e77a98537fec852767321abcd44571481a5a1bed448db43e20c6e05819fac2e",
+      "sequence": 37
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-39",
+        "reason": "scope statement of the prior run; this run streamed all three ledgers in full (stream receipt beside the artifact)",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "f3e88db7053ee2aa2551b6bf70b0cb05aceba051c683176087d682d517629dd2",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "16b951c18bd896445fb95fee93b127a8fddc1f469c9ca1dc9edbb1b3c97ae2ef",
+      "sequence": 38
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "legs": [
+              "F-25",
+              "F-26",
+              "F-27"
+            ]
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-40",
+        "statement": "the contact-retreat-refill cycle's three legs each reproduce on my computation (F-26 pairing, F-25 cancel-over-modify, F-27 touch-privileged refill)",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "ef177e7ef8aa52099f0639bc0e77f964c77fd7c19af762c32d707fbfa6257ad1",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "f3e88db7053ee2aa2551b6bf70b0cb05aceba051c683176087d682d517629dd2",
+      "sequence": 39
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "ratio": 2282.8161309202574
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            203
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-41",
+        "statement": "size-latency coupling: 59-component cascade p50 300329573 ns vs single-action 131561 ns",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "e8593742be1f265a4041acb62df580f5092be12a526c60890fdd2186a4d9aa53",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "ef177e7ef8aa52099f0639bc0e77f964c77fd7c19af762c32d707fbfa6257ad1",
+      "sequence": 40
+    },
+    {
+      "body": {
+        "computed_beside": {
+          "touch_migrations": 6079
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-42",
+        "reason": "SH-1 is a strategy hypothesis and is not executed; one of its stated constants is contradicted on the full book - touch migrations are 6079 on my 4.9, not 8 - so its exit rule would fire far more often than the lesson assumed",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "27feb3e5020ff674162502b0076ff297f9c2b3acf349b58d779f44aee748baa2",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "e8593742be1f265a4041acb62df580f5092be12a526c60890fdd2186a4d9aa53",
+      "sequence": 41
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-43",
+        "reason": "its two supporting measurements returned REFUTED / REFUTED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "fb7fac1ce06e6c527e1330d93a36291888912606fdf08917a554b14ac064e4fd",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "27feb3e5020ff674162502b0076ff297f9c2b3acf349b58d779f44aee748baa2",
+      "sequence": 42
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_lessons_package",
+        "lesson_id": "F-44",
+        "reason": "a list of unanswerable questions; on this run items (2) runway completion, (4) cross-group recurrence and (7) book-regime scale were answered by my own computation and are in the new findings; the cross-day items remain unanswerable",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "eb8512cce5027b70ec85457baec41db7ec950fddaa8cbb9948e0a5cf0a234448",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "fb7fac1ce06e6c527e1330d93a36291888912606fdf08917a554b14ac064e4fd",
+      "sequence": 43
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-RT-1",
+        "reason": "the 41-trade final-window motif is an October 5 observation; this run is October 3",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "d5a514d660a56e7d432305245f4bc5b72fa0ddbcd4c3d509bf8c0cdc35b03ff9",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "eb8512cce5027b70ec85457baec41db7ec950fddaa8cbb9948e0a5cf0a234448",
+      "sequence": 44
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-RT-2",
+        "reason": "late-response refinement of the October 5 tail; not this day",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "d8cbc7d5cedd4c25d619a20528f37674c3a1d2432992ccc93720e49f02d5d9e0",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "d5a514d660a56e7d432305245f4bc5b72fa0ddbcd4c3d509bf8c0cdc35b03ff9",
+      "sequence": 45
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-RT-3",
+        "reason": "my mirror pairs give mixed signs for ask-vs-bid formation latency differences: {'MEMBER_B_VS_ANCHOR_A': {'mean': 0.0, 'n': 18723}, 'MEMBER_A_VS_ANCHOR_B': {'mean': 0.0, 'n': 16306}, 'MEMBER_MIXED_VS_ANCHOR_MIXED': {'mean': -2016.3, 'n': 7855}}",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "8abd3d4b4f612550d1254441bbb2885b09d666f08903442d4ad0b55118df66f2",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "d8cbc7d5cedd4c25d619a20528f37674c3a1d2432992ccc93720e49f02d5d9e0",
+      "sequence": 46
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-RT-4",
+        "reason": "October 4 vs 5 closing mechanism; not this day",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "9bd14f03d25f2c02bea668a3554d285ceb8c8582de1002bc4c4f760d2a65c41a",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "8abd3d4b4f612550d1254441bbb2885b09d666f08903442d4ad0b55118df66f2",
+      "sequence": 47
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-RT-5",
+        "reason": "order 786260864394's AN -> TFMN -> TFCN lifecycle is an October 4/5 object; TFMN does not occur on this day (count 12)",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "5fe79e5d09669073ad27e36e613b9df0639f65ea50d75988fc0e1af3c8512f5c",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "9bd14f03d25f2c02bea668a3554d285ceb8c8582de1002bc4c4f760d2a65c41a",
+      "sequence": 48
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "expected": {
+              "TFFACCN": 6,
+              "TFFCCAN": 7,
+              "TFFFACCCN": 1,
+              "TFFFCCCAN": 1,
+              "TFTFFCCCN": 6
+            },
+            "observed": {
+              "TFFACCN": 6,
+              "TFFCCAN": 7,
+              "TFFFACCCN": 1,
+              "TFFFCCCAN": 2,
+              "TFTFFCCCN": 6
+            }
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-RT-6",
+        "statement": "open-world cascade branches on this day by action string: {'TFFACCN': 6, 'TFFCCAN': 7, 'TFFFACCCN': 1, 'TFFFCCCAN': 2, 'TFTFFCCCN': 6} (the member-first table's October 3 column reads {'TFFACCN': 6, 'TFFCCAN': 7, 'TFFFACCCN': 1, 'TFFFCCCAN': 1, 'TFTFFCCCN': 6})",
+        "verdict": "REFUTED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "12b633bb34804e5d77dac63e6bda7afd2383e618225d2479d781c56fc6403a8e",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "5fe79e5d09669073ad27e36e613b9df0639f65ea50d75988fc0e1af3c8512f5c",
+      "sequence": 49
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-RT-7",
+        "reason": "the 21:00 UTC 430/581-cancel withdrawal anchors are October 4/5 groups; this Sunday's only boundary group is the reopen reset",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "167e5e0c8742e3467fab0a5bdb4ed1db42d9cac13259615be768969e81f71de2",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "12b633bb34804e5d77dac63e6bda7afd2383e618225d2479d781c56fc6403a8e",
+      "sequence": 50
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-FC-1",
+        "reason": "Forecaster-review lesson about the October 4/5 held-out regimes",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "b18682893c8f262e5dcb97ff7099d575077daedf5d33a3c56bee1d24ea3ba550",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "167e5e0c8742e3467fab0a5bdb4ed1db42d9cac13259615be768969e81f71de2",
+      "sequence": 51
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-FC-2",
+        "reason": "Forecaster-review lesson about the October 4/5 held-out regimes",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "90b6069aedc71db21e5e3105727a8b24796dd39da6d1ab9c9f4b97d7a7b7b794",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "b18682893c8f262e5dcb97ff7099d575077daedf5d33a3c56bee1d24ea3ba550",
+      "sequence": 52
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-FC-3",
+        "reason": "Forecaster-review lesson about the October 4/5 held-out regimes",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "260358b9f6e88e8ea10a2898cf3bf6cd31639dffbf3d36f040703bbc3491697a",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "90b6069aedc71db21e5e3105727a8b24796dd39da6d1ab9c9f4b97d7a7b7b794",
+      "sequence": 53
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-FC-4",
+        "reason": "Forecaster-review lesson about the October 4/5 held-out regimes",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "c53f24ed40d2ffe70ccc077a2dbd99d592ef8d3892596b8ea8c7c7ad7ed7d666",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "260358b9f6e88e8ea10a2898cf3bf6cd31639dffbf3d36f040703bbc3491697a",
+      "sequence": 54
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "max_actions": 245,
+            "resets": 1,
+            "snapshot_adds": 244
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            0
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-FC-5",
+        "statement": "Forecaster-review lesson about the October 4/5 held-out regimes; the snapshot guard part (max group actions = reset + snapshot adds) does hold here: 245 = 1 + 244 at group 0",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "70dbe8cc2a0b001df6631fe7e853244e7d8ca9a1722064863e6dffcecb4c51c0",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "c53f24ed40d2ffe70ccc077a2dbd99d592ef8d3892596b8ea8c7c7ad7ed7d666",
+      "sequence": 55
+    },
+    {
+      "body": {
+        "evidence": {
+          "computed": {
+            "action_strings": 135,
+            "families": 199
+          },
+          "cutoff_recv_ns": 1633305596372071705,
+          "member_group_indices": [
+            43529,
+            43530,
+            43531,
+            43532,
+            43533,
+            43534,
+            43535,
+            43536,
+            43537,
+            43538,
+            43539,
+            43540,
+            43541,
+            43542,
+            43543,
+            43544,
+            43545,
+            43546,
+            43547,
+            43548,
+            43549,
+            43550,
+            43551,
+            43552,
+            43553,
+            43554,
+            43555,
+            43556,
+            43557,
+            43558,
+            43559,
+            43560,
+            43561,
+            43562,
+            43563,
+            43564,
+            43565,
+            43566,
+            43567,
+            43568
+          ]
+        },
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-MF-1",
+        "statement": "distinct exact action strings on this day: 135 (lesson table: 135 for 2021-10-03); families 199",
+        "verdict": "VERIFIED"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "f919a6e7749fcdad7c6da584b0ade6f3b0d5c61e5991200db83a07b5a5a5e579",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "70dbe8cc2a0b001df6631fe7e853244e7d8ca9a1722064863e6dffcecb4c51c0",
+      "sequence": 56
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-MF-2",
+        "reason": "cross-day recurrence of branches (both held-out days); the same-day counts are tested under CAPSULE-RT-6",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "bf39a27520414c949d06e8323c1a9998445c5c513cea405bedc4f369d0b9ce20",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "f919a6e7749fcdad7c6da584b0ade6f3b0d5c61e5991200db83a07b5a5a5e579",
+      "sequence": 57
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-MF-3",
+        "reason": "the 66-member cancel run is an October 4 object; my longest same-family run on this day is [[37, 'ow-59ace24da4a485c605b6', 1]]",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "0aec923e9ba7f75edb2432f59ab6b1956d2fff5a28fb6649b5cc059d7eb78e8b",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "bf39a27520414c949d06e8323c1a9998445c5c513cea405bedc4f369d0b9ce20",
+      "sequence": 58
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_promoted_positive_capsule",
+        "lesson_id": "CAPSULE-MF-4",
+        "reason": "966 both-orientation mirror keys is a four-day figure; on this day my pairing finds 29 keys with both orientations",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "0bbc947d135cee8b7c09e09a8d40ed7880d31441dfaf06c3145103c83a7be35d",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "0aec923e9ba7f75edb2432f59ab6b1956d2fff5a28fb6649b5cc059d7eb78e8b",
+      "sequence": 59
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-01",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/FRANKIE_SPAWN_PROMPT.md (sha256 4c43532baa4f, 6925 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "b212dbd4744b8c19793f5ca4392befaed10b5c3857055c40711d9176f265965a",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "0bbc947d135cee8b7c09e09a8d40ed7880d31441dfaf06c3145103c83a7be35d",
+      "sequence": 60
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-02",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/frankie_calculation_assessment.md (sha256 53a4064da827, 63953 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "4b0f7c0a422ae111daca09031a2245b698a90f2c76398c9ca9a19097a490f31c",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "b212dbd4744b8c19793f5ca4392befaed10b5c3857055c40711d9176f265965a",
+      "sequence": 61
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-03",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/frankie_findings_report.md (sha256 96fe8e261bfc, 106264 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "7c5fefb6798062802b99fe023ed7e4adcf2ea262bad9f0a22658efe7e126b4b3",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "4b0f7c0a422ae111daca09031a2245b698a90f2c76398c9ca9a19097a490f31c",
+      "sequence": 62
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-04",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/principal_runs/33605852433/frankie_principal_findings.json (sha256 147c64855369, 108583 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "28bac5e05312d9cbde594501b9bafea2b7e5147aadc104fc4113ff9ebeb47b64",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "7c5fefb6798062802b99fe023ed7e4adcf2ea262bad9f0a22658efe7e126b4b3",
+      "sequence": 63
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-05",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/ARTIFACT_MANIFEST.json (sha256 6f3cb63536d1, 2901 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "59160048df3eaf62e7ee00268949289ffc730463c79c1aeeb83e129a9adabfbe",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "28bac5e05312d9cbde594501b9bafea2b7e5147aadc104fc4113ff9ebeb47b64",
+      "sequence": 64
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-06",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/COMPLETE.json (sha256 20a26ed0e29c, 1120 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "f142a5a29d531e9a8940a60107e79af671bcd1deadc0f8d0567db454bea2f184",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "59160048df3eaf62e7ee00268949289ffc730463c79c1aeeb83e129a9adabfbe",
+      "sequence": 65
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-07",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/EXECUTION_USAGE.json (sha256 262b78bfac4c, 717 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "e3acf8062608bf9682c2bdb9e2da855f69c81504bf23b47a8c80fb6ebeaf1649",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "f142a5a29d531e9a8940a60107e79af671bcd1deadc0f8d0567db454bea2f184",
+      "sequence": 66
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-08",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/FORECASTER_AGENT_RECEIPT.json (sha256 0c057c19d230, 971 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "c02bbeee9cbb1a9027c9f4d747581abd4bd6eab9d9a7d8956fcdf4ce0709bb1e",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "e3acf8062608bf9682c2bdb9e2da855f69c81504bf23b47a8c80fb6ebeaf1649",
+      "sequence": 67
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-09",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/FORECASTER_CONTEXT_MANIFEST.json (sha256 ed48912283e3, 681 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "47f25ddc0615e0bb40170b6ec1aacf80e90c771aac734439da31d69347ea6c34",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "c02bbeee9cbb1a9027c9f4d747581abd4bd6eab9d9a7d8956fcdf4ce0709bb1e",
+      "sequence": 68
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-10",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/FORECASTER_FIRST_LOCK.json (sha256 f5770436f66e, 523 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "d5cbe65a74cee0c945fbd5ab90a87d5244dacd23a39e3d9232081eff9f0f2ee4",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "47f25ddc0615e0bb40170b6ec1aacf80e90c771aac734439da31d69347ea6c34",
+      "sequence": 69
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-11",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/FORECASTER_OUTPUT.json (sha256 32131d948790, 41990 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "0805fb328041cd3c8e99f5f918913d8b0bfa74f971a09d6c0180f7a98bc6e824",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "d5cbe65a74cee0c945fbd5ab90a87d5244dacd23a39e3d9232081eff9f0f2ee4",
+      "sequence": 70
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-12",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/ONEWAY_HANDOFF.json (sha256 cde467311931, 626 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "c789c7cbad217e2e644a48d7141e8acb1fe8fa1ca815a3917504892188b276fe",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "0805fb328041cd3c8e99f5f918913d8b0bfa74f971a09d6c0180f7a98bc6e824",
+      "sequence": 71
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-13",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/REPOSITORY_FREEZE.json (sha256 dc567f014d9c, 3645 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "fcc936c5ed9ae1e7f6a8118156f382f77c4796638459980e7c299c1fb71bd23f",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "c789c7cbad217e2e644a48d7141e8acb1fe8fa1ca815a3917504892188b276fe",
+      "sequence": 72
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-14",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_AGENT_RECEIPT.json (sha256 545df4397a0c, 953 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "958f2a98f4bbbd3768574deda0b1a6b1af6c87802ad10026f5941845342a3fd1",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "fcc936c5ed9ae1e7f6a8118156f382f77c4796638459980e7c299c1fb71bd23f",
+      "sequence": 73
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-15",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_CONTEXT_MANIFEST.json (sha256 a3f61eb539db, 474 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "ba18406c243a6abcc618611960e0d09770a4dac8fb9809cb570cad5222a4d1dd",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "958f2a98f4bbbd3768574deda0b1a6b1af6c87802ad10026f5941845342a3fd1",
+      "sequence": 74
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-16",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_FIRST_LOCK.json (sha256 42f062642ca3, 11903 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "dbb5a175ab820ba58edf4648d1441620091b42269ccb3c51433e5d4ef6a8a9e9",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "ba18406c243a6abcc618611960e0d09770a4dac8fb9809cb570cad5222a4d1dd",
+      "sequence": 75
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-17",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_FREEZE_COMPLETE.json (sha256 defc5495c40f, 465 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "7f754bf025c6a827c7964426ae6d85136fb4ca87c2fc46ccf01b0874fd9e5e9e",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "dbb5a175ab820ba58edf4648d1441620091b42269ccb3c51433e5d4ef6a8a9e9",
+      "sequence": 76
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-18",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_FREEZE_EXTERNAL_ANCHOR.json (sha256 1446826e578e, 1973 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "427ab322637f2ff20b8c4a440f037aef4b56e72f68228af8c7f9052d94d84498",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "7f754bf025c6a827c7964426ae6d85136fb4ca87c2fc46ccf01b0874fd9e5e9e",
+      "sequence": 77
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-19",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_FROZEN_STATE.json (sha256 18b1573014da, 41707 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "782c34bac7aeae771f98055ec0177783360bae0e4e7846ec429e3d2261988689",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "427ab322637f2ff20b8c4a440f037aef4b56e72f68228af8c7f9052d94d84498",
+      "sequence": 78
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-20",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/prior_memory/workmode-32851909748-1/RT_OUTPUT.json (sha256 72a22b5ec0ee, 38111 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "05b4c2ae2f6f05e280db0708755015a9f2c563d2e6dafb6796ea6051d7288902",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "782c34bac7aeae771f98055ec0177783360bae0e4e7846ec429e3d2261988689",
+      "sequence": 79
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-21",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md (sha256 f8a092c8e32e, 30837 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "570084434a3793703adbc0a3410213d007adb7a1d2227183240397ebfce92839",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "05b4c2ae2f6f05e280db0708755015a9f2c563d2e6dafb6796ea6051d7288902",
+      "sequence": 80
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-22",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_ACTUAL_FRANKIE_INTERIM_POSITIVE_REPORT_20260828.md (sha256 f09c94a7453e, 15278 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "df6c6ee434afcc5d126f5902ce8762e573b209d5a9ea31176b17240ab6654468",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "570084434a3793703adbc0a3410213d007adb7a1d2227183240397ebfce92839",
+      "sequence": 81
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-23",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_ACTUAL_FRANKIE_NONAVERAGED_EXTRACTION_OPPORTUNITIES_20260828.md (sha256 52c17005a947, 21745 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "66e346dd753dddb3ed9f7321547d37a0770c99678b9236ee7290043ddeeb9fdb",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "df6c6ee434afcc5d126f5902ce8762e573b209d5a9ea31176b17240ab6654468",
+      "sequence": 82
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-24",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_RT_NATIVE_MBO_POSITIVE_DERIVED_FINDINGS_20260828.md (sha256 8c67fdbf5d29, 8335 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "8e8dd8801fe1af83fd1f359fdc4b12c0a8d13c631a3c30145052b17d77070778",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "66e346dd753dddb3ed9f7321547d37a0770c99678b9236ee7290043ddeeb9fdb",
+      "sequence": 83
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-25",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_METHOD_ONLY_CAPSULE_SOURCE_20260829.md (sha256 694857137e27, 3261 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "63328da3e4ac78578608ed045ec42bd8e33af8d8f8039631f7a626079eddbe70",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "8e8dd8801fe1af83fd1f359fdc4b12c0a8d13c631a3c30145052b17d77070778",
+      "sequence": 84
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-26",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/ACLEAN_S119_MEASURED_KNOWLEDGE_SOURCE_20260902.md (sha256 5a86b82df0f8, 7351 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "686b6918cee997c1e7082e6084379a23e0f1901a714de9d0b082bd31f934be4b",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "63328da3e4ac78578608ed045ec42bd8e33af8d8f8039631f7a626079eddbe70",
+      "sequence": 85
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-27",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_FORECASTER_FIRST_REPLAY_OUTPUT_POSITIVE_REVIEW_20260828.md (sha256 b02a1a19a21a, 25349 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "3f4a4002c4b3681ced603dc423916d7722d2d30f30f812322df2e86ca3527587",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "686b6918cee997c1e7082e6084379a23e0f1901a714de9d0b082bd31f934be4b",
+      "sequence": 86
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-28",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md (sha256 7b9bd3f11c28, 12114 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "a69c17a87199ffc146c36593a1778a110f27d8c9baae91053abf3a0b2b36b953",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "3f4a4002c4b3681ced603dc423916d7722d2d30f30f812322df2e86ca3527587",
+      "sequence": 87
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-29",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_RECALCULATION_RECEIPT_20260828.json (sha256 094c32a4177e, 3196 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "c5ed10678848759eb11acd5237eb30e04b1059dc971923f08423d0ff4d3e9902",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "a69c17a87199ffc146c36593a1778a110f27d8c9baae91053abf3a0b2b36b953",
+      "sequence": 88
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-30",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_RECALCULATION_SPEC_20260828.md (sha256 76fc805e1437, 9029 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "3395ad55de59fef77c04527bb264b03b3ac8eec754f24c2ea6aa085cc4874aca",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "c5ed10678848759eb11acd5237eb30e04b1059dc971923f08423d0ff4d3e9902",
+      "sequence": 89
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-31",
+        "reason": "file entry research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md (sha256 2854c9b96d75, 17287 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "2d1e1abd7d34739363c6e759915facc520fd75db7e894a586d05f927b65b03ee",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "3395ad55de59fef77c04527bb264b03b3ac8eec754f24c2ea6aa085cc4874aca",
+      "sequence": 90
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-32",
+        "reason": "file entry research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md (sha256 1e26a726faeb, 9543 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "d0ab774bf0a1c43af5494a9fea57e63ef73da7e48edbe52783f135cbbebe3eae",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "2d1e1abd7d34739363c6e759915facc520fd75db7e894a586d05f927b65b03ee",
+      "sequence": 91
+    },
+    {
+      "body": {
+        "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+        "layer_id": "a_memory_prior_package_proof",
+        "lesson_id": "SEED-FILE-33",
+        "reason": "file entry research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md (sha256 bc84a77d3339, 5380 bytes) is a provenance record of a past run's output, not a claim about this day's stream; it keeps its delivered label UNVERIFIED",
+        "verdict": "NOT_TESTED_ON_THIS_SLICE"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "f2d64368cb68756bcfca6fd38bc026412a2bbcca9de2178f09eb5d09c87c09c3",
+      "ledger_id": "knowledge_verification",
+      "prev_hash": "d0ab774bf0a1c43af5494a9fea57e63ef73da7e48edbe52783f135cbbebe3eae",
+      "sequence": 92
+    }
+  ],
+  "head_hash": "f2d64368cb68756bcfca6fd38bc026412a2bbcca9de2178f09eb5d09c87c09c3",
+  "ledger_id": "knowledge_verification"
+}

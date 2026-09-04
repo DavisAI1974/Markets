@@ -1,0 +1,283 @@
+{
+ "cadence": {
+  "staged_cutoffs": 19,
+  "staged_group_indices": [
+   2281,
+   4562,
+   6843,
+   9124,
+   11405,
+   13686,
+   15967,
+   18248,
+   20529,
+   22810,
+   25091,
+   27372,
+   29653,
+   31934,
+   34215,
+   36496,
+   38777,
+   41058,
+   43339
+  ],
+  "cadence_arithmetic": "57,027 records x 0.8 / 20 = 2,281 groups; every staged cutoff is a multiple of 2,281",
+  "events": {
+   "PROMOTION": {
+    "events": 91,
+    "beyond_last_staged_cutoff": 3,
+    "wait_to_next_staged_cutoff_seconds": {
+     "n": 88,
+     "min": 23.744781866,
+     "p10": 85.969569876,
+     "p50": 381.945525951,
+     "p90": 1040.440119355,
+     "max": 1382.440119355,
+     "mean": 470.348577
+    },
+    "cutoffs_that_would_have_carried_one": 9
+   },
+   "CHANGE_POINT": {
+    "events": 356,
+    "beyond_last_staged_cutoff": 7,
+    "wait_to_next_staged_cutoff_seconds": {
+     "n": 349,
+     "min": 1.440119355,
+     "p10": 56.945525951,
+     "p50": 356.523516424,
+     "p90": 978.440119355,
+     "max": 1301.440119355,
+     "mean": 431.692757
+    },
+    "cutoffs_that_would_have_carried_one": 9
+   },
+   "TOUCH_MIGRATION": {
+    "events": 6079,
+    "beyond_last_staged_cutoff": 18,
+    "wait_to_next_staged_cutoff_seconds": {
+     "n": 6061,
+     "min": 0.0,
+     "p10": 3.126303077,
+     "p50": 47.272155612,
+     "p90": 642.922389642,
+     "max": 1368.843351714,
+     "mean": 201.017371
+    },
+    "cutoffs_that_would_have_carried_one": 19
+   }
+  },
+  "event_driven_decision_points_on_promotions": 91,
+  "first_promotion_availability_ns": 1633299094000000000,
+  "last_group_recv_ns": 1633305596372071705,
+  "staged_cutoffs_with_no_new_promotion_since_previous": 10,
+  "alerts_total": 160
+ },
+ "stream_end": {
+  "per_cutoff": [
+   {
+    "cutoff_recv_ns": 1633298413318097271,
+    "own_mirror_pairs": 2235,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 2282
+    },
+    "own_lineage_nodes": 0,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633298449136124134,
+    "own_mirror_pairs": 4490,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 4563
+    },
+    "own_lineage_nodes": 0,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633298458819212131,
+    "own_mirror_pairs": 6751,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 6844
+    },
+    "own_lineage_nodes": 0,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633298467489465095,
+    "own_mirror_pairs": 9003,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 9125
+    },
+    "own_lineage_nodes": 0,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633298495252279199,
+    "own_mirror_pairs": 11272,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 11406
+    },
+    "own_lineage_nodes": 0,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633298539321423187,
+    "own_mirror_pairs": 13533,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 13687
+    },
+    "own_lineage_nodes": 0,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633298618241396322,
+    "own_mirror_pairs": 15805,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 15968
+    },
+    "own_lineage_nodes": 0,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633298727046687558,
+    "own_mirror_pairs": 18075,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 18249
+    },
+    "own_lineage_nodes": 0,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633298843554132312,
+    "own_mirror_pairs": 20349,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 20530
+    },
+    "own_lineage_nodes": 0,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633298998928924813,
+    "own_mirror_pairs": 22616,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 22811
+    },
+    "own_lineage_nodes": 0,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633299505523516424,
+    "own_mirror_pairs": 24884,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 25092
+    },
+    "own_lineage_nodes": 6,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633299950655145332,
+    "own_mirror_pairs": 27158,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 27373
+    },
+    "own_lineage_nodes": 13,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633300320102307848,
+    "own_mirror_pairs": 29412,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 29654
+    },
+    "own_lineage_nodes": 19,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633300905784605734,
+    "own_mirror_pairs": 31680,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 31935
+    },
+    "own_lineage_nodes": 28,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633301315945525951,
+    "own_mirror_pairs": 33949,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 34218
+    },
+    "own_lineage_nodes": 34,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633302013969569876,
+    "own_mirror_pairs": 36220,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 36497
+    },
+    "own_lineage_nodes": 45,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633302779744781866,
+    "own_mirror_pairs": 38492,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 38778
+    },
+    "own_lineage_nodes": 54,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633304073331796184,
+    "own_mirror_pairs": 40757,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 41059
+    },
+    "own_lineage_nodes": 70,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633305465440119355,
+    "own_mirror_pairs": 43033,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 43340
+    },
+    "own_lineage_nodes": 88,
+    "delivered_lineage_rows_attached": 0
+   },
+   {
+    "cutoff_recv_ns": 1633305596372071705,
+    "own_mirror_pairs": 43262,
+    "delivered_mirror_rows_attached": {
+     "PENDING": 43569,
+     "UNMATCHED": 43569
+    },
+    "own_lineage_nodes": 91,
+    "delivered_lineage_rows_attached": 21651
+   }
+  ],
+  "drained_at_stream_end_by_section": {},
+  "withheld_summary": {
+   "legacy": 0,
+   "lifecycle": {}
+  },
+  "delivered_lifecycle_counts_in_stream": {
+   "absorption": 43569,
+   "candidate": 91,
+   "detector_coverage": 1,
+   "episode": 182,
+   "exhaustion": 1,
+   "flow_substrate": 17992,
+   "ladder": 87138,
+   "lineage": 21651,
+   "mirror": 87138,
+   "queue": 20005,
+   "recurrence": 43569,
+   "replenishment": 73480,
+   "response": 630
+  },
+  "cutoffs_with_zero_delivered_lineage": 19,
+  "cutoffs_with_only_pending_mirror": 19
+ }
+}

@@ -1,0 +1,1039 @@
+{
+ "source": "data/sunday_source/glbx-mdp3-20211003.mbo.dbn.zst",
+ "records": 57027,
+ "groups": 43569,
+ "actions": {
+  "R": 1,
+  "A": 20249,
+  "M": 4939,
+  "C": 19444,
+  "T": 2028,
+  "F": 2411,
+  "N": 7955
+ },
+ "clears": 1,
+ "snapshot_adds": 244,
+ "missing_reference": {
+  "C": 2116,
+  "F": 17,
+  "M": 107
+ },
+ "comparison": {
+  "groups_compared": 43569,
+  "best_B_agree": 43569,
+  "depth_B_agree": 43569,
+  "orders_B_agree": 43569,
+  "levels_B_agree": 43569,
+  "touch_fifo_B_agree": 43527,
+  "best_A_agree": 43569,
+  "depth_A_agree": 43569,
+  "orders_A_agree": 43569,
+  "levels_A_agree": 43569,
+  "touch_fifo_A_agree": 43493,
+  "touch_fifo_A_differ": 76,
+  "touch_fifo_B_differ": 42
+ },
+ "first_disagreements": [
+  {
+   "group_index": 2176,
+   "side": "A",
+   "field": "touch_fifo",
+   "mine": [
+    786260781965,
+    786260781845
+   ],
+   "delivered": [
+    786260781845,
+    786260781965
+   ],
+   "action_string": "TFM"
+  },
+  {
+   "group_index": 2177,
+   "side": "A",
+   "field": "touch_fifo",
+   "mine": [
+    786260781965,
+    786260781845
+   ],
+   "delivered": [
+    786260781845,
+    786260781965
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 2178,
+   "side": "A",
+   "field": "touch_fifo",
+   "mine": [
+    786260781965,
+    786260781845
+   ],
+   "delivered": [
+    786260781845,
+    786260781965
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 19066,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803756,
+    786260803522
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803756
+   ],
+   "action_string": "TFM"
+  },
+  {
+   "group_index": 19067,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803756,
+    786260803522
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803756
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19068,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803756,
+    786260803522,
+    786260803817
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803756,
+    786260803817
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19069,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803756,
+    786260803522,
+    786260803817
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803756,
+    786260803817
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19070,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803756,
+    786260803522,
+    786260803817
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803756,
+    786260803817
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19071,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803522,
+    786260803817
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803817
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 19072,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803522,
+    786260803817
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803817
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19073,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803522,
+    786260803817
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803817
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19074,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803522,
+    786260803817
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803817
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19075,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803522,
+    786260803817
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803817
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19076,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803522,
+    786260803817
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803817
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19077,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260803617,
+    786260803522,
+    786260803817
+   ],
+   "delivered": [
+    786260803522,
+    786260803617,
+    786260803817
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19350,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "TFM"
+  },
+  {
+   "group_index": 19351,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "M"
+  },
+  {
+   "group_index": 19352,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "M"
+  },
+  {
+   "group_index": 19353,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19354,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "M"
+  },
+  {
+   "group_index": 19355,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 19356,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 19357,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19358,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 19359,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "M"
+  },
+  {
+   "group_index": 19360,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "M"
+  },
+  {
+   "group_index": 19361,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "M"
+  },
+  {
+   "group_index": 19362,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 19363,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 19364,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 19365,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "M"
+  },
+  {
+   "group_index": 19366,
+   "side": "B",
+   "field": "touch_fifo",
+   "mine": [
+    786260800991,
+    786260804013,
+    786260800137
+   ],
+   "delivered": [
+    786260800137,
+    786260800991,
+    786260804013
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 29281,
+   "side": "A",
+   "field": "touch_fifo",
+   "mine": [
+    786260808614,
+    786260796233
+   ],
+   "delivered": [
+    786260796233,
+    786260808614
+   ],
+   "action_string": "TFFTFTFTFTFTFFTFTFTTFTTTFAACCCCCCCCCCCMN"
+  },
+  {
+   "group_index": 29282,
+   "side": "A",
+   "field": "touch_fifo",
+   "mine": [
+    786260808614,
+    786260796233
+   ],
+   "delivered": [
+    786260796233,
+    786260808614
+   ],
+   "action_string": "A"
+  },
+  {
+   "group_index": 29283,
+   "side": "A",
+   "field": "touch_fifo",
+   "mine": [
+    786260808614,
+    786260796233
+   ],
+   "delivered": [
+    786260796233,
+    786260808614
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 29284,
+   "side": "A",
+   "field": "touch_fifo",
+   "mine": [
+    786260808614,
+    786260796233
+   ],
+   "delivered": [
+    786260796233,
+    786260808614
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 29285,
+   "side": "A",
+   "field": "touch_fifo",
+   "mine": [
+    786260808614,
+    786260796233
+   ],
+   "delivered": [
+    786260796233,
+    786260808614
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 29286,
+   "side": "A",
+   "field": "touch_fifo",
+   "mine": [
+    786260808614,
+    786260796233
+   ],
+   "delivered": [
+    786260796233,
+    786260808614
+   ],
+   "action_string": "M"
+  },
+  {
+   "group_index": 29287,
+   "side": "A",
+   "field": "touch_fifo",
+   "mine": [
+    786260808614,
+    786260796233
+   ],
+   "delivered": [
+    786260796233,
+    786260808614
+   ],
+   "action_string": "C"
+  },
+  {
+   "group_index": 29288,
+   "side": "A",
+   "field": "touch_fifo",
+   "mine": [
+    786260808614,
+    786260796233
+   ],
+   "delivered": [
+    786260796233,
+    786260808614
+   ],
+   "action_string": "C"
+  }
+ ],
+ "sampled_groups": [
+  {
+   "group_index": 0,
+   "components": 245,
+   "recv_ns": 1633287605008387796,
+   "action_string": "RAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+   "group_index_delivered": 0,
+   "components_delivered": 245,
+   "mine": {
+    "B": {
+     "best": 5530000000,
+     "depth": 465,
+     "orders": 154,
+     "levels": 121,
+     "touch_ids": [
+      786259181529
+     ]
+    },
+    "A": {
+     "best": 5553000000,
+     "depth": 397,
+     "orders": 90,
+     "levels": 76,
+     "touch_ids": [
+      786260673880
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 1,
+   "components": 1,
+   "recv_ns": 1633295134328323349,
+   "action_string": "M",
+   "group_index_delivered": 1,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5530000000,
+     "depth": 465,
+     "orders": 154,
+     "levels": 122,
+     "touch_ids": [
+      786259181529
+     ]
+    },
+    "A": {
+     "best": 5553000000,
+     "depth": 397,
+     "orders": 90,
+     "levels": 76,
+     "touch_ids": [
+      786260673880
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 2,
+   "components": 1,
+   "recv_ns": 1633295149698910601,
+   "action_string": "M",
+   "group_index_delivered": 2,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5530000000,
+     "depth": 465,
+     "orders": 154,
+     "levels": 122,
+     "touch_ids": [
+      786259181529
+     ]
+    },
+    "A": {
+     "best": 5553000000,
+     "depth": 397,
+     "orders": 90,
+     "levels": 76,
+     "touch_ids": [
+      786260673880
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 3,
+   "components": 1,
+   "recv_ns": 1633295704785843156,
+   "action_string": "A",
+   "group_index_delivered": 3,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5530000000,
+     "depth": 490,
+     "orders": 155,
+     "levels": 123,
+     "touch_ids": [
+      786259181529
+     ]
+    },
+    "A": {
+     "best": 5553000000,
+     "depth": 397,
+     "orders": 90,
+     "levels": 76,
+     "touch_ids": [
+      786260673880
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 4,
+   "components": 1,
+   "recv_ns": 1633295704827667482,
+   "action_string": "A",
+   "group_index_delivered": 4,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5530000000,
+     "depth": 490,
+     "orders": 155,
+     "levels": 123,
+     "touch_ids": [
+      786259181529
+     ]
+    },
+    "A": {
+     "best": 5553000000,
+     "depth": 398,
+     "orders": 91,
+     "levels": 77,
+     "touch_ids": [
+      786260673880
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 5000,
+   "components": 1,
+   "recv_ns": 1633298454059642940,
+   "action_string": "C",
+   "group_index_delivered": 5000,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5660000000,
+     "depth": 925,
+     "orders": 360,
+     "levels": 280,
+     "touch_ids": [
+      786260786235,
+      786260786244,
+      786260786273
+     ]
+    },
+    "A": {
+     "best": 5669000000,
+     "depth": 731,
+     "orders": 215,
+     "levels": 186,
+     "touch_ids": [
+      786260786231
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 10000,
+   "components": 1,
+   "recv_ns": 1633298478966527305,
+   "action_string": "A",
+   "group_index_delivered": 10000,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5695000000,
+     "depth": 918,
+     "orders": 357,
+     "levels": 278,
+     "touch_ids": [
+      786260791945,
+      786260791947
+     ]
+    },
+    "A": {
+     "best": 5699000000,
+     "depth": 829,
+     "orders": 263,
+     "levels": 210,
+     "touch_ids": [
+      786260791408
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 15000,
+   "components": 1,
+   "recv_ns": 1633298585012998849,
+   "action_string": "C",
+   "group_index_delivered": 15000,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5724000000,
+     "depth": 926,
+     "orders": 353,
+     "levels": 275,
+     "touch_ids": [
+      786260796079
+     ]
+    },
+    "A": {
+     "best": 5727000000,
+     "depth": 852,
+     "orders": 289,
+     "levels": 219,
+     "touch_ids": [
+      786260797760
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 20000,
+   "components": 1,
+   "recv_ns": 1633298817777381874,
+   "action_string": "A",
+   "group_index_delivered": 20000,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5729000000,
+     "depth": 945,
+     "orders": 374,
+     "levels": 281,
+     "touch_ids": [
+      786260804678,
+      786260804695
+     ]
+    },
+    "A": {
+     "best": 5737000000,
+     "depth": 912,
+     "orders": 317,
+     "levels": 235,
+     "touch_ids": [
+      786260804656,
+      786260804659,
+      786260803786
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 25000,
+   "components": 1,
+   "recv_ns": 1633299417462741881,
+   "action_string": "A",
+   "group_index_delivered": 25000,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5725000000,
+     "depth": 1032,
+     "orders": 414,
+     "levels": 302,
+     "touch_ids": [
+      786260810818
+     ]
+    },
+    "A": {
+     "best": 5730000000,
+     "depth": 927,
+     "orders": 326,
+     "levels": 251,
+     "touch_ids": [
+      786260811078,
+      786260811107
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 30000,
+   "components": 1,
+   "recv_ns": 1633300388314949810,
+   "action_string": "C",
+   "group_index_delivered": 30000,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5752000000,
+     "depth": 937,
+     "orders": 401,
+     "levels": 304,
+     "touch_ids": [
+      786260816209
+     ]
+    },
+    "A": {
+     "best": 5755000000,
+     "depth": 821,
+     "orders": 295,
+     "levels": 221,
+     "touch_ids": [
+      786260817558
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 35000,
+   "components": 1,
+   "recv_ns": 1633301429663052648,
+   "action_string": "A",
+   "group_index_delivered": 35000,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5719000000,
+     "depth": 931,
+     "orders": 394,
+     "levels": 290,
+     "touch_ids": [
+      786260825229,
+      786260825239
+     ]
+    },
+    "A": {
+     "best": 5722000000,
+     "depth": 829,
+     "orders": 316,
+     "levels": 238,
+     "touch_ids": [
+      786260823736
+     ]
+    }
+   }
+  },
+  {
+   "group_index": 40000,
+   "components": 1,
+   "recv_ns": 1633303348272131778,
+   "action_string": "A",
+   "group_index_delivered": 40000,
+   "components_delivered": 1,
+   "mine": {
+    "B": {
+     "best": 5723000000,
+     "depth": 1025,
+     "orders": 427,
+     "levels": 303,
+     "touch_ids": [
+      786260844283,
+      786260844285,
+      786260844392
+     ]
+    },
+    "A": {
+     "best": 5727000000,
+     "depth": 962,
+     "orders": 364,
+     "levels": 251,
+     "touch_ids": [
+      786260844154
+     ]
+    }
+   }
+  }
+ ],
+ "rule": "my book: A adds to the back of its level's FIFO, C removes (partial C reduces), M keeps place only when price is unchanged and size does not increase (else it re-joins the back), F consumes from the named order, R clears; comparison is against the delivered book_full AFTER the same group's messages"
+}

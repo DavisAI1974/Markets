@@ -1158,7 +1158,7 @@ class Pass:
                 parent = cand
                 break
         cand = {**c, "status": "OPEN", "orientation": orientation, "predecessor_id": (pred["candidate_id"] if pred else None),
-                "alert_second": a, "alert_known_second": alert_known_second, "precursor_label": label, "precursor_lead_seconds": lead_s,
+                "alert_second": a, "alert_known_second": alert_known_second, "precursor_label": label, "precursor_lead_span_seconds": lead_s,
                 "promotion_label": "H+N", "promotion_lag_seconds": c["available_second"] - e,
                 "phases": [{"phase": "BIRTH", "entered_second": e, "exited_second": c["available_second"], "seconds": c["available_second"] - e,
                             "depletion": 0, "refill": 0, "flow_sum": 0.0, "n": 0}],
@@ -1644,7 +1644,7 @@ def emit_4_9(P: Pass, cutoff: int) -> dict[str, Any]:
 
 def _cand_public(c: dict[str, Any]) -> dict[str, Any]:
     keep = ("candidate_id", "event_second", "available_second", "polarity", "magnitude", "prominence", "threshold", "baseline", "status", "orientation", "predecessor_id", "alert_second",
-            "alert_known_second", "precursor_label", "precursor_lead_seconds", "promotion_label", "promotion_lag_seconds", "sign_reversals", "depth", "parent_id", "transition", "children",
+            "alert_known_second", "precursor_label", "precursor_lead_span_seconds", "promotion_label", "promotion_lag_seconds", "sign_reversals", "depth", "parent_id", "transition", "children",
             "termination", "delivered_match", "family_at_promotion", "groups_in_event_second", "window_truncated", "searched_span_seconds", "observations_behind_threshold")
     out = {k: c.get(k) for k in keep}
     out["phases"] = [{k: v for k, v in p.items() if k not in ("imb_sum", "imb_n")} | {"imbalance_mean": (fnum(p["imb_sum"] / p["imb_n"]) if p.get("imb_n") else None)} for p in c["phases"]]
@@ -1689,15 +1689,15 @@ def emit_4_11(P: Pass, cutoff: int) -> dict[str, Any]:
     if not C:
         return null_result("4.11", f"no candidate promoted yet; {len(alerts)} threshold-crossing alerts emitted, none yet followed by a promotion", len(alerts), cutoff)
     labels = Counter(c["precursor_label"] for c in C)
-    leads = [c["precursor_lead_seconds"] for c in C if c["precursor_label"] == "PRIOR"]
+    leads = [c["precursor_lead_span_seconds"] for c in C if c["precursor_label"] == "PRIOR"]
     alert_seconds_used = {c["alert_second"] for c in C}
     followed = sum(1 for a in alerts if a in alert_seconds_used)
     body = {"section": "4.11", "result": "COMPUTED", "member_group_indices": sorted({g for c in C for g in c["groups_in_event_second"]})[:40] or members_of(P.group_recs[-5:]),
             "rule": "the promotion (the detector's own emission) is the first DURABLE lawful call: H+N with N = available - event seconds, never superseded. The earliest lawful PRE-BIRTH signal tested is the threshold-crossing alert: the first second of the contiguous above-bar run that ends at the event second, knowable at alert+1; PRIOR if alert+1 < event, T0 if equal, else H+N. Its precision (alerts followed by a promoted candidate / all alerts) is reported beside every lead because an alert that fires without a promotion is a false alarm on this unit",
             "population": {"candidates": len(C), "precursor_labels": dict(labels), "promotion_labels": {"H+N": len(C)}, "missed": 0, "censored_windows": sum(1 for c in C if c.get("window_truncated"))},
-            "prior_lead_seconds": qs(leads), "promotion_lag_seconds": qs([c["promotion_lag_seconds"] for c in C]),
+            "prior_lead_span_seconds": qs(leads), "promotion_lag_seconds": qs([c["promotion_lag_seconds"] for c in C]),
             "alert_precision": {"alerts": len(alerts), "followed_by_promotion": followed, "value": (fnum(followed / len(alerts)) if alerts else None), "basis": "RATIO_OF_EXACT_COUNTS"},
-            "first_call_rule": {"superseded_calls": 0, "rule": "a later horizon never replaces the promotion"}, "recent_candidates_exact": [{k: c.get(k) for k in ("candidate_id", "event_second", "available_second", "alert_second", "precursor_label", "precursor_lead_seconds", "promotion_lag_seconds", "polarity")} for c in C[-10:]],
+            "first_call_rule": {"superseded_calls": 0, "rule": "a later horizon never replaces the promotion"}, "recent_candidates_exact": [{k: c.get(k) for k in ("candidate_id", "event_second", "available_second", "alert_second", "precursor_label", "precursor_lead_span_seconds", "promotion_lag_seconds", "polarity")} for c in C[-10:]],
             "reconciliation_with_delivered_episode_rows": {"delivered_episode_rows_seen": len(P.delivered_episode_rows), "delivered_outcomes": dict(Counter(e["recognition_outcome"] for e in P.delivered_episode_rows))},
             "averages": []}
     for pol in (1, -1):
@@ -1708,9 +1708,9 @@ def emit_4_11(P: Pass, cutoff: int) -> dict[str, Any]:
             ss = [c for c in sub if c["precursor_label"] == lab]
             if not ss:
                 continue
-            vals = [c["precursor_lead_seconds"] for c in ss]
+            vals = [c["precursor_lead_span_seconds"] for c in ss]
             q = qs(vals)
-            body["averages"].append(average(q["mean"], numerator=q["sum"], formula="sum(precursor lead seconds) / candidates with this label", population=f"candidates of polarity {pol}", denominator=len(sub), family=f"polarity={pol}",
+            body["averages"].append(average(q["mean"], numerator=q["sum"], formula="sum(precursor alert-to-birth span in seconds) / candidates with this label", population=f"candidates of polarity {pol}", denominator=len(sub), family=f"polarity={pol}",
                                             subfamily=f"label={lab}; n={len(ss)}; p50={q['p50']} max={q['max']}", side="SAME_AND_FLIP_NOT_POOLED_HERE", phase=phase_of(P), status="RESOLVED", cutoff=cutoff,
                                             missingness="labels are reported separately; a mean over successful pre-birth calls only is not the population detection time", inclusion="all candidates carry a label"))
     return body
@@ -1835,12 +1835,12 @@ def emit_4_16(P: Pass, cutoff: int) -> dict[str, Any]:
                 fr = [c["horizons"][h]["flow_response"] for c in sub if c["horizons"][h]["flow_response"] is not None]
                 bk = [c["horizons"][h]["full_book_response"] for c in sub]
                 qr = [c["horizons"][h]["queue_response_touch_orders"] for c in sub]
-                row = {"horizon": h, "at": rd(cutoff), "polarity": pol, "orientation": orient, "n": len(sub), "price_response_ticks": qs(pr), "flow_response": qs(fr), "full_book_response": qs(bk), "queue_response_touch_orders": qs(qr)}
+                row = {"horizon_name": h, "at": rd(cutoff), "polarity": pol, "orientation": orient, "n": len(sub), "price_response_ticks": qs(pr), "flow_response": qs(fr), "full_book_response": qs(bk), "queue_response_touch_orders": qs(qr)}
                 body["tables"].append(row)
                 if pr:
                     q = qs(pr)
                     body["averages"].append(average(q["mean"], numerator=q["sum"], formula="sum(mid at horizon - mid at availability, ticks) / candidates observed at the horizon", population="candidates at risk and observed at this horizon", denominator=len(sub), family=f"polarity={pol}",
-                                                    subfamily=f"horizon={h}; p10={q['p10']} p50={q['p50']} p90={q['p90']}; flow_response mean={qs(fr).get('mean')}", side=orient, phase=phase_of(P), status="RESOLVED", cutoff=cutoff,
+                                                    subfamily=f"horizon_name={h}; p10={q['p10']} p50={q['p50']} p90={q['p90']}; flow_response mean={qs(fr).get('mean')}", side=orient, phase=phase_of(P), status="RESOLVED", cutoff=cutoff,
                                                     missingness="candidates whose horizon has not matured are censored with their count", inclusion="observed at the horizon"))
     return body
 
@@ -2007,7 +2007,7 @@ def run(args: dict[str, Any]) -> None:
                                                               "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
                                                               "first_lawful_availability_ns": avail, "polarity": c["polarity"], "magnitude": c["magnitude"], "prominence": c["prominence"], "threshold": c["threshold"],
                                                               "recognition": {"label": "H+N", "lead": rd(-(c["available_second"] - c["event_second"]) * NS), "reference": rd(c["event_second"] * NS), "observed": rd(avail)},
-                                                              "precursor_alert": {"label": c["precursor_label"], "alert_known": rd(c["alert_known_second"] * NS), "lead_seconds_vs_birth": c["precursor_lead_seconds"], "durable": False, "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"},
+                                                              "precursor_alert": {"label": c["precursor_label"], "alert_known": rd(c["alert_known_second"] * NS), "lead_span_seconds_vs_birth": c["precursor_lead_span_seconds"], "durable": False, "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"},
                                                               "delivered_row_agrees": c.get("delivered_match")})
             L[outputs.FIRST_LOCKS].append(cutoff, {"candidate_id": c["candidate_id"], "lock_state": "NO_RELIABLE_LOCK", "lock_rule_revision": "FRK-NO-LOCK-V1", "probability_entry_hash": pe["entry_hash"],
                                                     "reason": "the candidate unit carries no directional lock on this evidence: 4.16 median price response at the declared horizons is reported per stratum and a lock would need a stable nonzero-median stratum; none has been observed at this cutoff", "lock_at": rd(cutoff)})

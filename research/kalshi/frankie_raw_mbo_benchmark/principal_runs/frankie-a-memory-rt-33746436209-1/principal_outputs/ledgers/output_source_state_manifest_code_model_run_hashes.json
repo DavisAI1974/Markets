@@ -3,7 +3,7 @@
   "entries": [
     {
       "body": {
-        "code_sha256": "80a045a37eb4e1e4cef1dc31fcbf2e00424b4eb7a0754a7b99646bddfc2a8b76",
+        "code_sha256": "a3ba4510953cd17809d64594f984a904fc2e4b628f3cbc4426c286ce832f1e28",
         "contract_sha256": "822d2cfdf8e78bfde0566f1a67929cc81a02611193167cf94a2171364b897865",
         "knowledge_manifest_sha256": "131ae230f99dd26ce1b08804cfcaa309c328c42cb4129e661209b4dd23852f33",
         "mission_sha256": "e14f28812bf9be09dfbd74c40a7fda181dfda16effa0a9e39dee45a9bf9b559e",
@@ -15,12 +15,31 @@
         "state_sha256": "bc3e0796eb2b2f4ad39c1c59e4956a7d19d9a074783cacd78d6bd507bd575d56"
       },
       "cutoff_recv_ns": 1633298413318097271,
-      "entry_hash": "8ac05ebb419e3d32809d11216f67e0aa2d8cf9128347d1693a1ba3070ade4a1c",
+      "entry_hash": "09ca9b0b39354983c325b336f717db46e7ed0b04417ad5c39ac58dd5df87384f",
       "ledger_id": "output_source_state_manifest_code_model_run_hashes",
       "prev_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "sequence": 0
+    },
+    {
+      "body": {
+        "code_sha256": "a3ba4510953cd17809d64594f984a904fc2e4b628f3cbc4426c286ce832f1e28",
+        "contract_sha256": "822d2cfdf8e78bfde0566f1a67929cc81a02611193167cf94a2171364b897865",
+        "knowledge_manifest_sha256": "131ae230f99dd26ce1b08804cfcaa309c328c42cb4129e661209b4dd23852f33",
+        "mission_sha256": "e14f28812bf9be09dfbd74c40a7fda181dfda16effa0a9e39dee45a9bf9b559e",
+        "model_identity": "claude-fable-5-1",
+        "phase": "END",
+        "run_id": "frankie-a-memory-rt-33746436209-1",
+        "session_id": "session_014m3YsXKuT773qhNQLuWahu",
+        "source_manifest_sha256": "a98a454ef5a88d6f3ee1213370d6df530ab2946ec9cde47171b0d7aa19f4e2ba",
+        "state_sha256": "9ee2a6c5849df3564131b69fa4d99124749bcc983c6ae5c3d9e26ca73351e2b7"
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "94b2668f4ba688afd0200898db93e0f8b2a1deded661921d91b1e2222ab1495f",
+      "ledger_id": "output_source_state_manifest_code_model_run_hashes",
+      "prev_hash": "09ca9b0b39354983c325b336f717db46e7ed0b04417ad5c39ac58dd5df87384f",
+      "sequence": 1
     }
   ],
-  "head_hash": "8ac05ebb419e3d32809d11216f67e0aa2d8cf9128347d1693a1ba3070ade4a1c",
+  "head_hash": "94b2668f4ba688afd0200898db93e0f8b2a1deded661921d91b1e2222ab1495f",
   "ledger_id": "output_source_state_manifest_code_model_run_hashes"
 }

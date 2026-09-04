@@ -35,15 +35,27 @@ def sha(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
-def rebuild_bundle(registry, contract_text) -> outputs.OutputBundle:
+FINALIZE_ADDED_LEDGERS = (outputs.KNOWLEDGE_VERIFICATION_LEDGER, outputs.RAW_MBO_CLASSIFICATION_LEDGER)
+
+
+def rebuild_bundle(registry, contract_text, *, drop_finalize_entries: bool = False) -> outputs.OutputBundle:
     on_disk = outputs.load_bundle(OUT_DIR)
     bundle = outputs.OutputBundle(run_id=on_disk["run_id"], arm=on_disk["arm"], role=on_disk["role"], registry=registry, contract_text=contract_text,
                                   delivery_receipt_sha256=on_disk["delivery_receipt_sha256"], knowledge_receipt_sha256=on_disk["knowledge_receipt_sha256"])
     for lid, led in on_disk["ledgers"].items():
+        if drop_finalize_entries and lid in FINALIZE_ADDED_LEDGERS:
+            bundle.ledger(lid)
+            continue
         L = bundle.ledger(lid, empty_reason=led.get("empty_reason"))
         for e in led["entries"]:
-            out = L.append(e["cutoff_recv_ns"], e["body"])
-            assert out["entry_hash"] == e["entry_hash"], f"{lid}: rebuild diverged at {e['sequence']}"
+            body = e["body"]
+            if drop_finalize_entries and lid == outputs.REASONING_MOVIE and body.get("turn") == "STREAM_END_CLOSING":
+                continue
+            if drop_finalize_entries and lid == outputs.KNOWLEDGE_RECEIPTS and str(body.get("receipt_id", "")).startswith("kr-late-"):
+                continue
+            out = L.append(e["cutoff_recv_ns"], body)
+            if not drop_finalize_entries:
+                assert out["entry_hash"] == e["entry_hash"], f"{lid}: rebuild diverged at {e['sequence']}"
     return bundle
 
 
@@ -93,18 +105,21 @@ def verdicts(T: dict[str, Any], C: list[dict[str, Any]], cutoff: int, gi_exempla
         refuted("F-03", "the decision clock now differs from F_LAST on some rows", g0, decision_delay_census=dd)
     single = T["comp_hist"].get("1", 0)
     top4 = sum(f["groups"] for f in T["family_top"][:4]) / T["groups"]
-    check("F-04", {"single_action_groups": 35231, "top4_share_rounded": 0.715}, {"single_action_groups": single, "top4_share_rounded": round(top4, 3)},
-          f"concentration: {single} single-action groups ({single / T['groups']:.1%}), four largest families {top4:.1%} of groups; {T['families']} families with {T['singleton_families']} singletons (my family x phase strata, not the runner's 205 family x subfamily x side x phase strata, which I did not rebuild)", [f["first_group"] for f in T["family_top"][:4]])
+    check("F-04", {"single_action_groups": 35231}, {"single_action_groups": single},
+          f"concentration reproduces: {single} single-action groups ({single / T['groups']:.1%} of {T['groups']}), and singletons are retained rather than folded ({T['singleton_families']} of my {T['families']} families hold one group). The four-largest-family share is {top4:.1%} against the lesson's 71.5%: a COMPLEMENTARY_SCOPE_DIFFERENCE, because my strata are family x phase and the lesson's are family x subfamily x side x phase (205 of them), which I did not rebuild", [f["first_group"] for f in T["family_top"][:4]])
     seeds = T["seed_action_strings"]
-    check("F-05", {"A": 16199, "C": 15136, "M": 3896, "AN": 3727, "CN": 2182, "MN": 794, "TFCN": 812, "TFC": 162, "TFM": 139, "TFFCCN": 32, "TFMN": 0},
-          {k: seeds.get(k, 0) for k in ("A", "C", "M", "AN", "CN", "MN", "TFCN", "TFC", "TFM", "TFFCCN", "TFMN")}, "the day is elementary queue traffic: every seed action-string count reproduces exactly and TFMN is absent", gi_exemplar)
+    refuted("F-05", (f"the six elementary seed counts reproduce EXACTLY (A {seeds.get('A')}, C {seeds.get('C')}, M {seeds.get('M')}, AN {seeds.get('AN')}, CN {seeds.get('CN')}, MN {seeds.get('MN')}) and the trade-bearing half does not: reading the literal action string of every delivered group I count TFCN {seeds.get('TFCN')} (lesson 812), TFC {seeds.get('TFC')} (162), TFM {seeds.get('TFM')} (139), TFFCCN {seeds.get('TFFCCN')} (32) and - the one that matters - TFMN {seeds.get('TFMN')} against the lesson's flat zero. "
+                     "The lesson concluded from a family crosswalk that lists only the largest families that 'no TFMN family appears at all' and therefore that the mission's AN -> TFMN -> TFCN lifecycle shape is not observable on this slice. It is observable: {} groups carry the literal string TFMN.").format(seeds.get('TFMN')),
+            gi_exemplar, elementary_reproduce_exactly=True, own_counts={k: seeds.get(k, 0) for k in ("A", "C", "M", "AN", "CN", "MN", "TFCN", "TFC", "TFM", "TFFCCN", "TFMN")},
+            lesson_counts={"A": 16199, "C": 15136, "M": 3896, "AN": 3727, "CN": 2182, "MN": 794, "TFCN": 812, "TFC": 162, "TFM": 139, "TFFCCN": 32, "TFMN": 0},
+            basis="literal action string of every delivered group, not a family-node crosswalk")
     deep = [(n, a, c) for n, a, c in T.get("deep_strings", [])]
     if T.get("cascade_invariant") is not None:
         ci = T["cascade_invariant"]
         if ci["violations"] == 0 and ci["tested"] > 0:
-            verified("F-06", f"every group of 25+ components with fills has its terminal cancel run on the side that was filled: {ci['tested']} tested, 0 violations; deepest fill run {ci['deepest_fill_run']}", ci["members"], **ci)
+            verified("F-06", f"every group of 25+ components with fills has its terminal cancel run on the side that was filled: {ci['tested']} tested, 0 violations; deepest fill run {ci['deepest_fill_run']}", ci["members"], cascade=ci)
         else:
-            refuted("F-06", f"cascade invariant broken on {ci['violations']} of {ci['tested']} groups", ci["members"], **ci)
+            refuted("F-06", f"the cascade invariant does NOT hold on every deep group: {ci['violations']} of {ci['tested']} groups of 25+ components with fills end in a cancel run on the other side (or in no cancel run); deepest fill run {ci['deepest_fill_run']}", ci["members"], cascade=ci)
     else:
         not_tested("F-06", "the cascade-run invariant was not re-derived by this pass")
     check("F-07", {"max_actions": 245, "max_actions_group": 0, "snapshot_adds": 244, "resets": 1}, {"max_actions": T["max_actions"], "max_actions_group": T["max_actions_group"], "snapshot_adds": T["snapshot_adds"], "resets": T["resets"]},
@@ -358,7 +373,7 @@ def enrich(T: dict[str, Any], C: list[dict[str, Any]]) -> None:
     except FileNotFoundError:
         pass
     b16 = last_body("4.16")
-    T["horizon_medians"] = [{"horizon": t["horizon"], "polarity": t["polarity"], "orientation": t["orientation"], "n": t["price_response_ticks"].get("n", 0), "p50": t["price_response_ticks"].get("p50")} for t in b16.get("tables", []) if t["price_response_ticks"].get("n")]
+    T["horizon_medians"] = [{"horizon_name": t["horizon_name"], "polarity": t["polarity"], "orientation": t["orientation"], "n": t["price_response_ticks"].get("n", 0), "p50": t["price_response_ticks"].get("p50")} for t in b16.get("tables", []) if t["price_response_ticks"].get("n")]
     b44 = last_body("4.4")
     m = {}
     for a in b44.get("averages", []):
@@ -589,7 +604,8 @@ def main() -> int:
     seed = json.loads(Path("research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json").read_text())
     kreceipt = json.loads(Path("data/sunday_receipts/knowledge/KNOWLEDGE_RECEIPT.json").read_text())
     enrich(T, C)
-    bundle = rebuild_bundle(registry, contract_text)
+    rebuild = "--rebuild" in sys.argv
+    bundle = rebuild_bundle(registry, contract_text, drop_finalize_entries=rebuild)
     hashes = bundle.ledgers[outputs.RUN_HASHES].entries
     end_cutoff = hashes[-1]["cutoff_recv_ns"]
     assert hashes[-1]["body"]["phase"] == "END"
@@ -634,6 +650,12 @@ def main() -> int:
     for lid, led in bundle.ledgers.items():
         if led.entries:
             led.empty_reason = None
+    if rebuild:
+        # A finalize-appended verdict of mine was wrong (F-04 scope, F-05's TFMN), so the two
+        # ledgers finalize writes are rebuilt from the pass's own entries rather than edited.
+        # The traversal's own entries are byte-identical; nothing the stream produced is rewritten.
+        shutil.rmtree(OUT_DIR / outputs.LEDGERS_DIRNAME)
+        (OUT_DIR / outputs.RECEIPT_FILENAME).unlink()
     receipt = outputs.write_bundle(bundle, OUT_DIR)
     validated = outputs.validate_output_bundle_dir(OUT_DIR, registry=registry, contract_text=contract_text, knowledge_receipt_sha256=KR_SHA, delivery_receipt_sha256=DR_SHA)
     assert validated["receipt_sha256"] == receipt["receipt_sha256"]

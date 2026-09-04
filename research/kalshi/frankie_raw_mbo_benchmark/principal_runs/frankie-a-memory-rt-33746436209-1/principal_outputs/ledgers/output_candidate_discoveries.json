@@ -1,6 +1,4980 @@
 {
-  "empty_reason": "no candidate became lawful at any cutoff reached; the detector promoted nothing (its counters are in every 4.0b entry)",
-  "entries": [],
-  "head_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "empty_reason": null,
+  "entries": [
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299044",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299044",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633299094000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          23609,
+          23610,
+          23611,
+          23612,
+          23613,
+          23614,
+          23615
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299045000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.736842105263158,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299094000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299044000000000
+          }
+        },
+        "threshold": 0.7142857142857143
+      },
+      "cutoff_recv_ns": 1633299505523516424,
+      "entry_hash": "8378ef95ee6ebbe7261246e30eba87f89cfe85443ea96b11f2731495bdabb27b",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "sequence": 0
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299091",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299091",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-8777dec6490e85e484be",
+        "first_lawful_availability_ns": 1633299141000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          25091
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299092000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6666666666666667,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299141000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299091000000000
+          }
+        },
+        "threshold": 0.7333333333333333
+      },
+      "cutoff_recv_ns": 1633299505523516424,
+      "entry_hash": "df3297d45315ab2cc560bac97c90f395f61c8e04ec8637ac118c4de8ad9d8532",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "8378ef95ee6ebbe7261246e30eba87f89cfe85443ea96b11f2731495bdabb27b",
+      "sequence": 1
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299180",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299180",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633299198000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          25091
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299169000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 11,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.2857142857142857,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -18000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299198000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299180000000000
+          }
+        },
+        "threshold": 0.7777777777777778
+      },
+      "cutoff_recv_ns": 1633299505523516424,
+      "entry_hash": "8b304d1755cd5b4be99b08f082359b11359e380736af97893387c0df13bf4f5b",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "df3297d45315ab2cc560bac97c90f395f61c8e04ec8637ac118c4de8ad9d8532",
+      "sequence": 2
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299265",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299265",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633299275000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          25091
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299266000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -10,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.4,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -10000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299275000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299265000000000
+          }
+        },
+        "threshold": 0.8260869565217391
+      },
+      "cutoff_recv_ns": 1633299505523516424,
+      "entry_hash": "3aec8b36948a6cc89a4bdd4f3eb00f59a94e701803a39a18f22670d0a07e0609",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "8b304d1755cd5b4be99b08f082359b11359e380736af97893387c0df13bf4f5b",
+      "sequence": 3
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299366",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299366",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633299372000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          24744,
+          24745,
+          24746,
+          24747,
+          24748,
+          24749,
+          24750,
+          24751,
+          24752,
+          24753,
+          24754,
+          24755,
+          24756,
+          24757,
+          24758,
+          24759,
+          24760,
+          24761,
+          24762,
+          24763
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299367000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -6,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -6000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299372000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299366000000000
+          }
+        },
+        "threshold": 0.8846153846153846
+      },
+      "cutoff_recv_ns": 1633299505523516424,
+      "entry_hash": "322d95be34563f4bfd01a8a74aedf2e34fd36ca3e0e4ba8b1bac2a7b8599a57a",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "3aec8b36948a6cc89a4bdd4f3eb00f59a94e701803a39a18f22670d0a07e0609",
+      "sequence": 4
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299411",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299411",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633299461000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          25091
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299387000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 24,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299461000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299411000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633299505523516424,
+      "entry_hash": "07eb37a36fd6cbfc9932788595160f3e84092898eb24f3196ee21542aa29bb84",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "322d95be34563f4bfd01a8a74aedf2e34fd36ca3e0e4ba8b1bac2a7b8599a57a",
+      "sequence": 5
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299486",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299486",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633299531000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          27372
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299482000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 4,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -45000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299531000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299486000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633299950655145332,
+      "entry_hash": "596a6ed8318c2f1931854f2cf31bdf4d4fea51051f579193b7e5d224e8a5174b",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "07eb37a36fd6cbfc9932788595160f3e84092898eb24f3196ee21542aa29bb84",
+      "sequence": 6
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299577",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299577",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633299590000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          25437,
+          25438,
+          25439
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299578000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -13,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.5,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -13000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299590000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299577000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633299950655145332,
+      "entry_hash": "5f182ade1f84daa2ce4f58f2d34d8c0ff0bed69f0f586a6ba1a2d0d0d1091088",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "596a6ed8318c2f1931854f2cf31bdf4d4fea51051f579193b7e5d224e8a5174b",
+      "sequence": 7
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299638",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299638",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633299680000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          27372
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299631000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 7,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -42000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299680000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299638000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633299950655145332,
+      "entry_hash": "2d58e63bebe94cb3f890caf337c4ea36e63942514e0f8a191f453162f90c1a33",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "5f182ade1f84daa2ce4f58f2d34d8c0ff0bed69f0f586a6ba1a2d0d0d1091088",
+      "sequence": 8
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299685",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299685",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633299733000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          25659,
+          25660,
+          25661,
+          25662,
+          25663,
+          25664,
+          25665,
+          25666,
+          25667,
+          25668
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299679000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 6,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -48000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299733000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299685000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633299950655145332,
+      "entry_hash": "54373397068ba3cbafabe969d5824e3bec4023b3d6289b19c27765e5a305a650",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "2d58e63bebe94cb3f890caf337c4ea36e63942514e0f8a191f453162f90c1a33",
+      "sequence": 9
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299735",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299735",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-40540069fe5aeddc127b",
+        "first_lawful_availability_ns": 1633299780000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          27372
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299729000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 6,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6666666666666667,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -45000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299780000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299735000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633299950655145332,
+      "entry_hash": "4989f6ed41d826e491d05c78cee1aea6313957366e26ab514c1c52b7055269ad",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "54373397068ba3cbafabe969d5824e3bec4023b3d6289b19c27765e5a305a650",
+      "sequence": 10
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299783",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299783",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633299833000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          26050,
+          26051,
+          26052,
+          26053,
+          26054,
+          26055,
+          26056
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299784000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299833000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299783000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633299950655145332,
+      "entry_hash": "37baa48a832657df5399bafa3aa04bead23cc48d6785253f50833916f26c4f1d",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "4989f6ed41d826e491d05c78cee1aea6313957366e26ab514c1c52b7055269ad",
+      "sequence": 11
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299838",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299838",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633299888000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          27372
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299839000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.4,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299888000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299838000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633299950655145332,
+      "entry_hash": "bb919f954d359e247d398f593025a06d4920bb98b86b68df61e2f691f6c33ae2",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "37baa48a832657df5399bafa3aa04bead23cc48d6785253f50833916f26c4f1d",
+      "sequence": 12
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299928",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299928",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633299978000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          29653
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299929000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.9230769230769231,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299978000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299928000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300320102307848,
+      "entry_hash": "e43f0b2dd8f6930cbc88c95c4d84adff1965d5ba206f9196eed62121e93b8089",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "bb919f954d359e247d398f593025a06d4920bb98b86b68df61e2f691f6c33ae2",
+      "sequence": 13
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633299973",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633299973",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633300023000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          29653
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299959000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 14,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300023000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633299973000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300320102307848,
+      "entry_hash": "1f99094593e851f43d762c2beaf2886959b02c5ecd86e99f3bfc97f73e8c20f4",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "e43f0b2dd8f6930cbc88c95c4d84adff1965d5ba206f9196eed62121e93b8089",
+      "sequence": 14
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300080",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300080",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-40540069fe5aeddc127b",
+        "first_lawful_availability_ns": 1633300094000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          29653
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300081000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -14,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6666666666666667,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -14000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300094000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300080000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300320102307848,
+      "entry_hash": "e9c23c5444d0990ab483eb051aee6a346a1fc9158def4f2af90fd3af1d5d0e4c",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "1f99094593e851f43d762c2beaf2886959b02c5ecd86e99f3bfc97f73e8c20f4",
+      "sequence": 15
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300125",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300125",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633300175000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          29653
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300126000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300175000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300125000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300320102307848,
+      "entry_hash": "2be9bf0e4c38eb360ee34b3a672ef448f581595836e9271354caf4e8cf76e979",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "e9c23c5444d0990ab483eb051aee6a346a1fc9158def4f2af90fd3af1d5d0e4c",
+      "sequence": 16
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300191",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300191",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633300237000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          29653
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300188000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 3,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.4,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -46000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300237000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300191000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300320102307848,
+      "entry_hash": "a13188623b3e3d807d243c9d22cdc03b4133e4a3d35f27a68ca1c8c1c96eacad",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "2be9bf0e4c38eb360ee34b3a672ef448f581595836e9271354caf4e8cf76e979",
+      "sequence": 17
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300241",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300241",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633300291000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          29011,
+          29012
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300242000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.875,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300291000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300241000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300320102307848,
+      "entry_hash": "5924bae2d1a86cbe1a0eb9ef92fe46f87088b8bfe1b7ee6a1f7d80baa0f20b93",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "a13188623b3e3d807d243c9d22cdc03b4133e4a3d35f27a68ca1c8c1c96eacad",
+      "sequence": 18
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300363",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300363",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633300390000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          29866,
+          29867,
+          29868,
+          29869
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300360000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 3,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.7058823529411764,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -27000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300390000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300363000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "30204f517cf8bd121f5a4fc446c39af1183902a35a18530dc24ff950bb96fbcf",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "5924bae2d1a86cbe1a0eb9ef92fe46f87088b8bfe1b7ee6a1f7d80baa0f20b93",
+      "sequence": 19
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300434",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300434",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633300484000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          30306,
+          30307
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300435000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6666666666666667,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300484000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300434000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "36fbf8f6791bd95219c023138396f8dbbf5609090a742bdd8b0a7b7433c57363",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "30204f517cf8bd121f5a4fc446c39af1183902a35a18530dc24ff950bb96fbcf",
+      "sequence": 20
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300502",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300502",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-8777dec6490e85e484be",
+        "first_lawful_availability_ns": 1633300552000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          30505
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300503000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6153846153846154,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300552000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300502000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "8eca716a6dca7d7b212c93c0a207307dede771326c5765db6110650e51912c00",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "36fbf8f6791bd95219c023138396f8dbbf5609090a742bdd8b0a7b7433c57363",
+      "sequence": 21
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300567",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300567",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633300613000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          31934
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300564000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 3,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.8888888888888888,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -46000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300613000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300567000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "8d0106d62f40a31763e8eef0f06220b073774a42e00784bb34f072f6ba6d08f1",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "8eca716a6dca7d7b212c93c0a207307dede771326c5765db6110650e51912c00",
+      "sequence": 22
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300616",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300616",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633300666000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          31934
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300617000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6666666666666667,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300666000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300616000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "94f9b58fd951199267f76f3c391faafde3207fbc093844b57a805b045458e0d7",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "8d0106d62f40a31763e8eef0f06220b073774a42e00784bb34f072f6ba6d08f1",
+      "sequence": 23
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300666",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300666",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633300716000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          30994,
+          30995,
+          30996,
+          30997,
+          30998
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300667000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300716000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300666000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "fb3008ebcffc275f43bacbe94845ade94b45dca520c73ec9ff21be592febc71c",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "94f9b58fd951199267f76f3c391faafde3207fbc093844b57a805b045458e0d7",
+      "sequence": 24
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300732",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300732",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633300761000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          31934
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300733000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -29,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6666666666666667,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -29000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300761000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300732000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "b468e505a7ab71b3c0b947885b0e94f3160466e988f07ca3dd82349cd62314bd",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "fb3008ebcffc275f43bacbe94845ade94b45dca520c73ec9ff21be592febc71c",
+      "sequence": 25
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300777",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300777",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633300827000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          31934
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300765000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 12,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300827000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300777000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "a4a9b2ab802e9ad4406b841fdb848ef21611198ff603154724767a1aa1aa0306",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "b468e505a7ab71b3c0b947885b0e94f3160466e988f07ca3dd82349cd62314bd",
+      "sequence": 26
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300831",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300831",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633300881000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          31383,
+          31384,
+          31385,
+          31386,
+          31387,
+          31388,
+          31389,
+          31390,
+          31391,
+          31392,
+          31393,
+          31394,
+          31395,
+          31396,
+          31397,
+          31398,
+          31399,
+          31400,
+          31401,
+          31402
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300832000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300881000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300831000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "7b2fa8002e69743a18c5dd2efc1de29a59de2f84120c00953bd92b2ad9b47557",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "a4a9b2ab802e9ad4406b841fdb848ef21611198ff603154724767a1aa1aa0306",
+      "sequence": 27
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300912",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300912",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633300934000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          34215
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300913000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -22,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.7692307692307692,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -22000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300934000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300912000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633301315945525951,
+      "entry_hash": "e3f0c21a0ddb4698d80b63643a98830bea1785aa0c3341d3c355dac124ac6162",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "7b2fa8002e69743a18c5dd2efc1de29a59de2f84120c00953bd92b2ad9b47557",
+      "sequence": 28
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633300962",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633300962",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633301012000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          32130
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300963000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.5,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301012000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300962000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633301315945525951,
+      "entry_hash": "f2c2e36c0f25ff8817990edbdd6b67ba11336936bcf6e6141db2836a69a1dd05",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "e3f0c21a0ddb4698d80b63643a98830bea1785aa0c3341d3c355dac124ac6162",
+      "sequence": 29
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301007",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301007",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3807a1115b13f5c8685a",
+        "first_lawful_availability_ns": 1633301057000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          32184
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633300963000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 44,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301057000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301007000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633301315945525951,
+      "entry_hash": "985ed0a154981ad7006100f104cb600b5dfd4fbac705cbe7225d54ee51ce2243",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "f2c2e36c0f25ff8817990edbdd6b67ba11336936bcf6e6141db2836a69a1dd05",
+      "sequence": 30
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301080",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301080",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633301102000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          32341,
+          32342,
+          32343,
+          32344
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301080000000000
+          },
+          "durable": false,
+          "label": "T0",
+          "lead_span_seconds_vs_birth": 0,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -22000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301102000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301080000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633301315945525951,
+      "entry_hash": "182d0a2ea2978fb0bcce8dccafa17100c7b77edd5d02d0523b8e9da9c6e27d28",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "985ed0a154981ad7006100f104cb600b5dfd4fbac705cbe7225d54ee51ce2243",
+      "sequence": 31
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301144",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301144",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-8b55dfd64daf3077e3d2",
+        "first_lawful_availability_ns": 1633301194000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          34215
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301145000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.2857142857142857,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301194000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301144000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633301315945525951,
+      "entry_hash": "a6f675f209533f197529a57afbfa2252b675aec44634a250104c425595ab221f",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "182d0a2ea2978fb0bcce8dccafa17100c7b77edd5d02d0523b8e9da9c6e27d28",
+      "sequence": 32
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301201",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301201",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633301251000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          34215
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301202000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301251000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301201000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633301315945525951,
+      "entry_hash": "02f5476a9bc7f33c62eb27e4155fba895501dcf5ceae3e3766bb4acf643e304c",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "a6f675f209533f197529a57afbfa2252b675aec44634a250104c425595ab221f",
+      "sequence": 33
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301283",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301283",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633301326000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36496
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301277000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 6,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.5,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -43000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301326000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301283000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "e3a9332088b64fadd846241581137aa807b743904ba966b27b232da81a6212e3",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "02f5476a9bc7f33c62eb27e4155fba895501dcf5ceae3e3766bb4acf643e304c",
+      "sequence": 34
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301380",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301380",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633301430000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36496
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301381000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.7692307692307692,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301430000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301380000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "64a8341dc8c6b4edd05248dffd628080b674c5f849eba10a3dbd1821a90d72db",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "e3a9332088b64fadd846241581137aa807b743904ba966b27b232da81a6212e3",
+      "sequence": 35
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301425",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301425",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-40540069fe5aeddc127b",
+        "first_lawful_availability_ns": 1633301475000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36496
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301417000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 8,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.4,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301475000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301425000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "9b5e0c987af7af25cd271deca53bbf8e095d36537e3159149d63dcbfff840edc",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "64a8341dc8c6b4edd05248dffd628080b674c5f849eba10a3dbd1821a90d72db",
+      "sequence": 36
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301470",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301470",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-8b55dfd64daf3077e3d2",
+        "first_lawful_availability_ns": 1633301520000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36496
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301468000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 2,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301520000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301470000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "cd8ff1be7a1a8a8bba3cf5e0b45ee4764ddd6b9773e3a2737409272c2bde2d67",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "9b5e0c987af7af25cd271deca53bbf8e095d36537e3159149d63dcbfff840edc",
+      "sequence": 37
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301523",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301523",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633301573000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36496
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301524000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.8,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301573000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301523000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "2afc2388c6df254ba390d98961952c1589dd5557711a62332e2fc8ed6a1f5c09",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "cd8ff1be7a1a8a8bba3cf5e0b45ee4764ddd6b9773e3a2737409272c2bde2d67",
+      "sequence": 38
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301568",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301568",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-40540069fe5aeddc127b",
+        "first_lawful_availability_ns": 1633301618000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36064,
+          36065
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301562000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 6,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301618000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301568000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "6540946ead2f9c348e5b9416a1e3441c048b651804a8defc12b4df23c0d108da",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "2afc2388c6df254ba390d98961952c1589dd5557711a62332e2fc8ed6a1f5c09",
+      "sequence": 39
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301630",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301630",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633301673000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36496
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301624000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 6,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -43000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301673000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301630000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "294d5f921724d6733a9d6bbd3aeb209a117477a22c319f03c862a65ed5fd76f2",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "6540946ead2f9c348e5b9416a1e3441c048b651804a8defc12b4df23c0d108da",
+      "sequence": 40
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301675",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301675",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633301725000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36496
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301673000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 2,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6666666666666667,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301725000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301675000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "2f753ae73bbfcd29981ee250ad94e9c67143f08b99f356a8c5b221c61627ee9f",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "294d5f921724d6733a9d6bbd3aeb209a117477a22c319f03c862a65ed5fd76f2",
+      "sequence": 41
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301757",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301757",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-8b55dfd64daf3077e3d2",
+        "first_lawful_availability_ns": 1633301770000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36496
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301758000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -13,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -13000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301770000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301757000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "6632bd001a66268ff7e1e993f252e7fb5091485c832881f55d1398a6c86ddcf8",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "2f753ae73bbfcd29981ee250ad94e9c67143f08b99f356a8c5b221c61627ee9f",
+      "sequence": 42
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301832",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301832",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-a64490c46039fdefea7c",
+        "first_lawful_availability_ns": 1633301852000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36496
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301831000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 1,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.4,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -20000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301852000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301832000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "e6f83ad0a9bcaf0ecc8b2ff6f04497e8e5d025d98e99af9c0179c74ec98e4aff",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "6632bd001a66268ff7e1e993f252e7fb5091485c832881f55d1398a6c86ddcf8",
+      "sequence": 43
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301878",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301878",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-40540069fe5aeddc127b",
+        "first_lawful_availability_ns": 1633301928000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36496
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301879000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301928000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301878000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "f1e201f4261afb1b87bcea1b19cf74cd52675851708eb4f83e8f60ac3f708a5c",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "e6f83ad0a9bcaf0ecc8b2ff6f04497e8e5d025d98e99af9c0179c74ec98e4aff",
+      "sequence": 44
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633301972",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633301972",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-8b55dfd64daf3077e3d2",
+        "first_lawful_availability_ns": 1633302022000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36392,
+          36393,
+          36394
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301973000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302022000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633301972000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "f346fcec651a51232e99b2ff0319e417314448611e89a4c571e023b2c97d3398",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "f1e201f4261afb1b87bcea1b19cf74cd52675851708eb4f83e8f60ac3f708a5c",
+      "sequence": 45
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633302065",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633302065",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-8b55dfd64daf3077e3d2",
+        "first_lawful_availability_ns": 1633302083000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          36658
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302066000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -18,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -18000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302083000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302065000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "60e0287450ee77d35a1d443232dbe3632073928c2c15595f620194abd596649f",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "f346fcec651a51232e99b2ff0319e417314448611e89a4c571e023b2c97d3398",
+      "sequence": 46
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633302126",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633302126",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633302168000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          38777
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302119000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 7,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.18518518518518523,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -42000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302168000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302126000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "c05314ae8cd7601f02eb813436fdc3c0da15841a65248a8b6ed93ba1ed42c9d2",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "60e0287450ee77d35a1d443232dbe3632073928c2c15595f620194abd596649f",
+      "sequence": 47
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633302172",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633302172",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633302222000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          37443,
+          37444,
+          37445,
+          37446
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302173000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.8571428571428572,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302222000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302172000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "d50f4aca61650038cb9b70c81c1ee16dd6b9123a34e4d08de969de0ee0d60981",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "c05314ae8cd7601f02eb813436fdc3c0da15841a65248a8b6ed93ba1ed42c9d2",
+      "sequence": 48
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633302217",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633302217",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633302267000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          38777
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302204000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 13,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.33333333333333337,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302267000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302217000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "5a552de04f0137430a2aec58c6efd2d184494eaf64ccc6e46fa9f57f08127175",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "d50f4aca61650038cb9b70c81c1ee16dd6b9123a34e4d08de969de0ee0d60981",
+      "sequence": 49
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633302305",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633302305",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633302312000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          37953,
+          37954,
+          37955,
+          37956
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302306000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -7,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.8115942028985508,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -7000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302312000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302305000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "ade7d6f3bcef17c15d7d81456388576d775956c92204e803bc1ac38c0b6f24e6",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "5a552de04f0137430a2aec58c6efd2d184494eaf64ccc6e46fa9f57f08127175",
+      "sequence": 50
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633302422",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633302422",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633302472000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          38300,
+          38301,
+          38302,
+          38303,
+          38304,
+          38305,
+          38306,
+          38307,
+          38308,
+          38309,
+          38310,
+          38311,
+          38312,
+          38313,
+          38314,
+          38315,
+          38316,
+          38317,
+          38318,
+          38319
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302423000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302472000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302422000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "8d107945a937c9a10ff27db908113ca5665a4e6f2d4359a7e006f85e3ee61c4d",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "ade7d6f3bcef17c15d7d81456388576d775956c92204e803bc1ac38c0b6f24e6",
+      "sequence": 51
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633302661",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633302661",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633302711000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          38532,
+          38533,
+          38534,
+          38535,
+          38536,
+          38537,
+          38538
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302662000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302711000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302661000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "32852b0ae90df93bdfe7fa4881daad5b6acfda8be20e4890687b0046adc4ba71",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "8d107945a937c9a10ff27db908113ca5665a4e6f2d4359a7e006f85e3ee61c4d",
+      "sequence": 52
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633302737",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633302737",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-8b55dfd64daf3077e3d2",
+        "first_lawful_availability_ns": 1633302756000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          38676,
+          38677,
+          38678,
+          38679,
+          38680,
+          38681,
+          38682,
+          38683,
+          38684,
+          38685,
+          38686,
+          38687,
+          38688,
+          38689,
+          38690,
+          38691,
+          38692,
+          38693,
+          38694,
+          38695
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302738000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -19,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -19000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302756000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302737000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "6d91b0942349ec658c272c7e5eaf72f057e5cecffb00815ee8f9764467ffce89",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "32852b0ae90df93bdfe7fa4881daad5b6acfda8be20e4890687b0046adc4ba71",
+      "sequence": 53
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633302787",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633302787",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633302832000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          41058
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302781000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 6,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -45000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302832000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302787000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "87d227be9d75054f4bca0be9043086dcc7e8ef8ec08d42c281ba60050cee26c1",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "6d91b0942349ec658c272c7e5eaf72f057e5cecffb00815ee8f9764467ffce89",
+      "sequence": 54
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633302840",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633302840",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633302884000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          38910
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302835000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 5,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -44000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302884000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302840000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "2ac40b4b41d4a3300048ff3fbf1902c7b1252647af7b58edc863d1098f808245",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "87d227be9d75054f4bca0be9043086dcc7e8ef8ec08d42c281ba60050cee26c1",
+      "sequence": 55
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633302980",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633302980",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633303030000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          39430,
+          39431,
+          39432,
+          39433,
+          39434,
+          39435,
+          39436,
+          39437,
+          39438,
+          39439,
+          39440,
+          39441,
+          39442,
+          39443,
+          39444,
+          39445,
+          39446,
+          39447,
+          39448,
+          39449
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302981000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303030000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633302980000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "81576585fea0cd7b27dd731a7d37a1c55dc7087a4feeaba252fde30a5e887e44",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "2ac40b4b41d4a3300048ff3fbf1902c7b1252647af7b58edc863d1098f808245",
+      "sequence": 56
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303033",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303033",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633303083000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          39510,
+          39511,
+          39512,
+          39513,
+          39514,
+          39515,
+          39516,
+          39517,
+          39518,
+          39519,
+          39520,
+          39521,
+          39522,
+          39523,
+          39524,
+          39525,
+          39526,
+          39527,
+          39528,
+          39529
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303034000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303083000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303033000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "2b80349365b7e3f849fbc17f308515607071559803bf3f5af27b6f1acc9eba6f",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "81576585fea0cd7b27dd731a7d37a1c55dc7087a4feeaba252fde30a5e887e44",
+      "sequence": 57
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303145",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303145",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633303195000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          39657,
+          39658,
+          39659,
+          39660,
+          39661,
+          39662,
+          39663,
+          39664,
+          39665,
+          39666,
+          39667,
+          39668,
+          39669,
+          39670,
+          39671,
+          39672,
+          39673,
+          39674,
+          39675,
+          39676
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303146000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303195000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303145000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "9edd00e2d743ec62abd1e1c866c807054e0544337070efd8157dbaf2cc078b8d",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "2b80349365b7e3f849fbc17f308515607071559803bf3f5af27b6f1acc9eba6f",
+      "sequence": 58
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303193",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303193",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633303243000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          39700,
+          39701,
+          39702,
+          39703,
+          39704,
+          39705,
+          39706,
+          39707,
+          39708,
+          39709,
+          39710,
+          39711,
+          39712,
+          39713,
+          39714,
+          39715,
+          39716,
+          39717,
+          39718,
+          39719
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303194000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303243000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303193000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "7f9578c50fb9ed68c9165f56664ab5d55ec14e996c4fca62b81907bc5916fb42",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "9edd00e2d743ec62abd1e1c866c807054e0544337070efd8157dbaf2cc078b8d",
+      "sequence": 59
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303238",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303238",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633303288000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          39860,
+          39861,
+          39862,
+          39863
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303217000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 21,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303288000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303238000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "a4387f162e40d014be8fb399dc653ba8e86d525dd0fe39488a2fd38497c4f297",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "7f9578c50fb9ed68c9165f56664ab5d55ec14e996c4fca62b81907bc5916fb42",
+      "sequence": 60
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303314",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303314",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633303364000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          39979,
+          39980,
+          39981,
+          39982,
+          39983,
+          39984,
+          39985,
+          39986,
+          39987,
+          39988,
+          39989,
+          39990,
+          39991
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303315000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303364000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303314000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "153ac90f7da373fc5e861f8040fee2ca57bef1c9f07ac03d5cb04ae224415757",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "a4387f162e40d014be8fb399dc653ba8e86d525dd0fe39488a2fd38497c4f297",
+      "sequence": 61
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303423",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303423",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633303473000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          40046,
+          40047,
+          40048,
+          40049,
+          40050,
+          40051,
+          40052,
+          40053,
+          40054,
+          40055,
+          40056,
+          40057,
+          40058,
+          40059,
+          40060,
+          40061,
+          40062,
+          40063
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303424000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303473000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303423000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "a3148a75c2db5ca3fba38ced3a0d6318742e462618706ec053159d443afa24eb",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "153ac90f7da373fc5e861f8040fee2ca57bef1c9f07ac03d5cb04ae224415757",
+      "sequence": 62
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303534",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303534",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633303584000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          40142
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303535000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303584000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303534000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "347afcfd6fcf78e84fd317ebcbc5656f3d1722de732b2cfd097ba1d4378123e0",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "a3148a75c2db5ca3fba38ced3a0d6318742e462618706ec053159d443afa24eb",
+      "sequence": 63
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303579",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303579",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-40540069fe5aeddc127b",
+        "first_lawful_availability_ns": 1633303629000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          41058
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303572000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 7,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303629000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303579000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "6880d8536ae9d1daa5c15c7fe6f5af2c18f8d7ae6162038667d334e24f15aad6",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "347afcfd6fcf78e84fd317ebcbc5656f3d1722de732b2cfd097ba1d4378123e0",
+      "sequence": 64
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303638",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303638",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633303686000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          40538,
+          40539,
+          40540,
+          40541,
+          40542,
+          40543,
+          40544,
+          40545
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303637000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 1,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.8333333333333334,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -48000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303686000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303638000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "52d3210551244efefd2f5e44bfb05735729039a95f0f093c79e500f815719273",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "6880d8536ae9d1daa5c15c7fe6f5af2c18f8d7ae6162038667d334e24f15aad6",
+      "sequence": 65
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303727",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303727",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-8b55dfd64daf3077e3d2",
+        "first_lawful_availability_ns": 1633303777000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          40558,
+          40559,
+          40560,
+          40561,
+          40562,
+          40563,
+          40564,
+          40565,
+          40566,
+          40567,
+          40568,
+          40569,
+          40570,
+          40571,
+          40572,
+          40573,
+          40574,
+          40575,
+          40576,
+          40577
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303728000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303777000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303727000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "c8560c0940b612171c22a1562e529b0d68c0110a88e10acc3878bea28bc85ca2",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "52d3210551244efefd2f5e44bfb05735729039a95f0f093c79e500f815719273",
+      "sequence": 66
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303772",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303772",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633303822000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          40689,
+          40690
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303766000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 6,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303822000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303772000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "aedb872baf5563f43743ea559f208c96dff21562b85f83c0304a0ea58cc03831",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "c8560c0940b612171c22a1562e529b0d68c0110a88e10acc3878bea28bc85ca2",
+      "sequence": 67
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303828",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303828",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633303876000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          40738,
+          40739,
+          40740
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303827000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 1,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -48000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303876000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303828000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "d9c064bde32b0c0b1902b6fbefab895c61278855f5cf1fa81c68235c1b1f74ad",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "aedb872baf5563f43743ea559f208c96dff21562b85f83c0304a0ea58cc03831",
+      "sequence": 68
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633303886",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633303886",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633303936000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          40940,
+          40941,
+          40942,
+          40943
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303887000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.875,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303936000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633303886000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "863fac6a532d99033225b518dc020efc5ef5c06f7cf81c73687700b0c11ad418",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "d9c064bde32b0c0b1902b6fbefab895c61278855f5cf1fa81c68235c1b1f74ad",
+      "sequence": 69
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304033",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304033",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633304083000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          40995,
+          40996,
+          40997,
+          40998
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304034000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304083000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304033000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "c8a3324096ca4bb399940aa85afc78a2777cbd2dd28e0224e80dd48636e1b349",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "863fac6a532d99033225b518dc020efc5ef5c06f7cf81c73687700b0c11ad418",
+      "sequence": 70
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304078",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304078",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633304128000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43339
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304070000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 8,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304128000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304078000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "941351d4c173a1b2864fa1a68635aedbadc51581e333928b68b73ca4c31a7162",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "c8a3324096ca4bb399940aa85afc78a2777cbd2dd28e0224e80dd48636e1b349",
+      "sequence": 71
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304135",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304135",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-40540069fe5aeddc127b",
+        "first_lawful_availability_ns": 1633304185000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          41084,
+          41085
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304136000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304185000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304135000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "b7770adbe7c9a94bdcd698f7bc51fd4e05efa5efe23e1466c70cd72ebc05e83c",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "941351d4c173a1b2864fa1a68635aedbadc51581e333928b68b73ca4c31a7162",
+      "sequence": 72
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304193",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304193",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633304243000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          41114,
+          41115,
+          41116,
+          41117,
+          41118,
+          41119,
+          41120,
+          41121,
+          41122,
+          41123,
+          41124,
+          41125,
+          41126,
+          41127,
+          41128,
+          41129,
+          41130
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304194000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304243000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304193000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "2542599bda85afdc7d86c442905ac234cb57b913a46223605124a35561806eee",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "b7770adbe7c9a94bdcd698f7bc51fd4e05efa5efe23e1466c70cd72ebc05e83c",
+      "sequence": 73
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304238",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304238",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3807a1115b13f5c8685a",
+        "first_lawful_availability_ns": 1633304288000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          41229
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304237000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 1,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.4,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304288000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304238000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "23f13fc2077b8101fcf630a3e4f476276d7f2657d6d722d7fdbe0c0bfb17739a",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "2542599bda85afdc7d86c442905ac234cb57b913a46223605124a35561806eee",
+      "sequence": 74
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304328",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304328",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-40540069fe5aeddc127b",
+        "first_lawful_availability_ns": 1633304338000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          41454,
+          41455,
+          41456,
+          41457,
+          41458,
+          41459,
+          41460,
+          41461,
+          41462,
+          41463,
+          41464,
+          41465,
+          41466,
+          41467,
+          41468,
+          41469,
+          41470,
+          41471,
+          41472,
+          41473
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304329000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -10,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.8,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -10000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304338000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304328000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "5a6952380f1ed046fb55851e98ac5cc5ad0eaf56e4fe80651aa95c598f90e2c6",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "23f13fc2077b8101fcf630a3e4f476276d7f2657d6d722d7fdbe0c0bfb17739a",
+      "sequence": 75
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304375",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304375",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633304425000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43339
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304376000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6666666666666667,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304425000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304375000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "47aea0eee65bfa91997e4bda7b23aba2f7ecb7bf73bf9c25622f3263a049bc6e",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "5a6952380f1ed046fb55851e98ac5cc5ad0eaf56e4fe80651aa95c598f90e2c6",
+      "sequence": 76
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304485",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304485",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a98bbe15cb2bf0c14ba",
+        "first_lawful_availability_ns": 1633304515000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43339
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304486000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -30,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -30000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304515000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304485000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "c9dceee2d552afd941e8259175eb591e363c57aabffb30a123ba09e6207fe2a6",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "47aea0eee65bfa91997e4bda7b23aba2f7ecb7bf73bf9c25622f3263a049bc6e",
+      "sequence": 77
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304530",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304530",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633304580000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          41846,
+          41847,
+          41848,
+          41849,
+          41850,
+          41851,
+          41852,
+          41853,
+          41854,
+          41855,
+          41856,
+          41857,
+          41858,
+          41859,
+          41860
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304489000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 41,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304580000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304530000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "696275cf3abdaae9c3c9cf97f2348a69091019ee3ef49194b8df146b15774e3e",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "c9dceee2d552afd941e8259175eb591e363c57aabffb30a123ba09e6207fe2a6",
+      "sequence": 78
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304646",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304646",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633304653000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43339
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304644000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 2,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -7000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304653000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304646000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "1a3e002d0f741a4fd6e902ac4938e40fdb761cf45ea07cdbbc65afe05981631b",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "696275cf3abdaae9c3c9cf97f2348a69091019ee3ef49194b8df146b15774e3e",
+      "sequence": 79
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304700",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304700",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633304750000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          42268,
+          42269,
+          42270
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304701000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.7272727272727273,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304750000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304700000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "87528977024f53a8f98b09388e1244bd0627b02db3aa9dc96a5396001d98fe0c",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "1a3e002d0f741a4fd6e902ac4938e40fdb761cf45ea07cdbbc65afe05981631b",
+      "sequence": 80
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304790",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304790",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633304797000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43339
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304791000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -7,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.8571428571428572,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -7000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304797000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304790000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "d248183f84e9bf59c9430ace2bccf96bd5bf25d9c62b38f7cfce293f2ad311d1",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "87528977024f53a8f98b09388e1244bd0627b02db3aa9dc96a5396001d98fe0c",
+      "sequence": 81
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304869",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304869",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633304919000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          42738,
+          42739,
+          42740,
+          42741,
+          42742,
+          42743,
+          42744,
+          42745,
+          42746,
+          42747,
+          42748,
+          42749,
+          42750,
+          42751,
+          42752,
+          42753,
+          42754,
+          42755,
+          42756,
+          42757
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304870000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304919000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304869000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "52553a549ec770170a9663b6a16b6b74e46965854ffd3a39a1a3d79bf763369b",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "d248183f84e9bf59c9430ace2bccf96bd5bf25d9c62b38f7cfce293f2ad311d1",
+      "sequence": 82
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304914",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304914",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633304964000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43339
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304912000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 2,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304964000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304914000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "c048d1e6f4aae8e492ba84ba161c632f24b2adcc5771511e8d2fded2196d7781",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "52553a549ec770170a9663b6a16b6b74e46965854ffd3a39a1a3d79bf763369b",
+      "sequence": 83
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633304984",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633304984",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-8b55dfd64daf3077e3d2",
+        "first_lawful_availability_ns": 1633305034000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43015,
+          43016,
+          43017
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304985000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305034000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633304984000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "43596b0c152900e3d0d96011c28f18286abfd69ed9e40bdc5ccd80cf02ed6efe",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "c048d1e6f4aae8e492ba84ba161c632f24b2adcc5771511e8d2fded2196d7781",
+      "sequence": 84
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633305059",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633305059",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-3a12d9bd4a731b597f0d",
+        "first_lawful_availability_ns": 1633305109000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43035,
+          43036,
+          43037,
+          43038,
+          43039,
+          43040,
+          43041,
+          43042,
+          43043,
+          43044,
+          43045
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305060000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305109000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305059000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "edd3322e064660070b454e0a1ca212c5ee81f03304556b17297172b2f330c9fc",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "43596b0c152900e3d0d96011c28f18286abfd69ed9e40bdc5ccd80cf02ed6efe",
+      "sequence": 85
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633305199",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633305199",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633305249000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43142,
+          43143,
+          43144,
+          43145,
+          43146,
+          43147,
+          43148,
+          43149,
+          43150,
+          43151,
+          43152,
+          43153,
+          43154,
+          43155,
+          43156
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305200000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305249000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305199000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "557b6bff537814d23c719dbabbb411f507693dafb5ed5252432a0c099dc9b459",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "edd3322e064660070b454e0a1ca212c5ee81f03304556b17297172b2f330c9fc",
+      "sequence": 86
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633305259",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633305259",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633305309000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43339
+        ],
+        "polarity": -1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305260000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.6666666666666667,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305309000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305259000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "c3104caccd89d2c3f8bf0a5dc6356938b5d5f3c6c3163f9f9eefcddc4f5057ff",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "557b6bff537814d23c719dbabbb411f507693dafb5ed5252432a0c099dc9b459",
+      "sequence": 87
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633305461",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633305461",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+        "first_lawful_availability_ns": 1633305511000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43278,
+          43279,
+          43280,
+          43281,
+          43282,
+          43283,
+          43284,
+          43285,
+          43286
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305462000000000
+          },
+          "durable": false,
+          "label": "H+N",
+          "lead_span_seconds_vs_birth": -50,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 1.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305511000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305461000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "c14f87d5d868124696d68939cff605d6deb68e4bc9199413346f86cbe9c0ad7d",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "c3104caccd89d2c3f8bf0a5dc6356938b5d5f3c6c3163f9f9eefcddc4f5057ff",
+      "sequence": 88
+    },
+    {
+      "body": {
+        "candidate_id": "frk-dip-18904-1633305506",
+        "delivered_row_agrees": {
+          "available_second_agrees": true,
+          "candidate_id": "dip-18904-1633305506",
+          "magnitude_delta": 0.0,
+          "polarity_agrees": true
+        },
+        "falsifier": "a second stream in which the same trailing bar and windowed-prominence rule does not reproduce this spike, or a delivered candidate row at this event second with the opposite polarity",
+        "family_id": "ow-59ace24da4a485c605b6",
+        "first_lawful_availability_ns": 1633305556000000000,
+        "magnitude": 1.0,
+        "member_group_indices": [
+          43418,
+          43419,
+          43420,
+          43421,
+          43422,
+          43423,
+          43424,
+          43425,
+          43426,
+          43427
+        ],
+        "polarity": 1,
+        "precursor_alert": {
+          "alert_known": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305462000000000
+          },
+          "durable": false,
+          "label": "PRIOR",
+          "lead_span_seconds_vs_birth": 44,
+          "why_not_durable": "an above-bar crossing is not always followed by a promotion; its precision is reported in 4.11"
+        },
+        "prominence": 0.0,
+        "recognition": {
+          "label": "H+N",
+          "lead": {
+            "clock": "clock_receive_time",
+            "observed_ns": -50000000000
+          },
+          "observed": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305556000000000
+          },
+          "reference": {
+            "clock": "clock_receive_time",
+            "observed_ns": 1633305506000000000
+          }
+        },
+        "threshold": 1.0
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "22b5b4308928ec235d96e17f86ff9bfec3c58fda8f37d47c433b580b30cd63bc",
+      "ledger_id": "output_candidate_discoveries",
+      "prev_hash": "c14f87d5d868124696d68939cff605d6deb68e4bc9199413346f86cbe9c0ad7d",
+      "sequence": 89
+    }
+  ],
+  "head_hash": "22b5b4308928ec235d96e17f86ff9bfec3c58fda8f37d47c433b580b30cd63bc",
   "ledger_id": "output_candidate_discoveries"
 }

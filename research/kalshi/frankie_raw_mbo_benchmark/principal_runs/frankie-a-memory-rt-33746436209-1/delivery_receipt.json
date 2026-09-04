@@ -1,0 +1,101 @@
+{
+  "all_ledgers_verified": true,
+  "bucket": "bento-568968024170-us-east-2-an",
+  "fetched_at": "2026-09-04T02:36:28Z",
+  "ledgers": {
+    "exact_lifecycle_and_runway_ledger": {
+      "file": "exact_lifecycle_rows.jsonl",
+      "gz_bytes_expected": 25581893,
+      "gz_bytes_observed": 25581893,
+      "local_path": "data/sunday_ledgers/exact_lifecycle_rows.jsonl",
+      "object": "exact_lifecycle_rows.jsonl.gz",
+      "plain_bytes_expected": 300309453,
+      "plain_bytes_observed": 300309453,
+      "plain_sha256_expected": "1e511353a6f82a667f43129bba6ffa5d7dc4c61441adcd8c321a43453e03baee",
+      "plain_sha256_observed": "1e511353a6f82a667f43129bba6ffa5d7dc4c61441adcd8c321a43453e03baee",
+      "status": "VERIFIED"
+    },
+    "exact_member_ledger": {
+      "file": "exact_member_rows.jsonl",
+      "gz_bytes_expected": 1705613663,
+      "gz_bytes_observed": 1705613663,
+      "local_path": "data/sunday_ledgers/exact_member_rows.jsonl",
+      "object": "exact_member_rows.jsonl.gz",
+      "plain_bytes_expected": 10756276521,
+      "plain_bytes_observed": 10756276521,
+      "plain_sha256_expected": "f73e95378c04f117863b173bd389675029006fffc309a07992edcc4de4ad5325",
+      "plain_sha256_observed": "f73e95378c04f117863b173bd389675029006fffc309a07992edcc4de4ad5325",
+      "status": "VERIFIED"
+    },
+    "legacy_observable_rows": {
+      "file": "legacy_observable_rows.jsonl",
+      "gz_bytes_expected": 2198595,
+      "gz_bytes_observed": 2198595,
+      "local_path": "data/sunday_ledgers/legacy_observable_rows.jsonl",
+      "object": "legacy_observable_rows.jsonl.gz",
+      "plain_bytes_expected": 29329182,
+      "plain_bytes_observed": 29329182,
+      "plain_sha256_expected": "3c75f8b4b779c0ab1e59f9ea28fe12739b7b668edb3763a0c1aecaac3dc7bafa",
+      "plain_sha256_observed": "3c75f8b4b779c0ab1e59f9ea28fe12739b7b668edb3763a0c1aecaac3dc7bafa",
+      "status": "VERIFIED"
+    }
+  },
+  "manifest_sha256": "d6455e85d495af91fc92321bb5c966eec47fbcd5e2d0f6d50ede359329937b17",
+  "objects": {
+    "calculation_result.json": {
+      "bytes_observed": 29089413,
+      "content_length_expected": 29089413,
+      "error": null,
+      "key": "nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1/calculation_result.json",
+      "local_path": "data/sunday_ledgers/calculation_result.json",
+      "sha256_expected": "91e47d0d1533b6745888bcc17e4231f998ed78dc9735c7e2f0dcab8bd65971a9",
+      "sha256_observed": "91e47d0d1533b6745888bcc17e4231f998ed78dc9735c7e2f0dcab8bd65971a9",
+      "status": "VERIFIED"
+    },
+    "exact_lifecycle_rows.jsonl.gz": {
+      "bytes_observed": 25581893,
+      "content_length_expected": 25581893,
+      "error": null,
+      "key": "nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1/ledgers/exact_lifecycle_rows.jsonl.gz",
+      "local_path": "data/sunday_ledgers/exact_lifecycle_rows.jsonl.gz",
+      "sha256_expected": null,
+      "sha256_observed": null,
+      "status": "VERIFIED"
+    },
+    "exact_member_rows.jsonl.gz": {
+      "bytes_observed": 1705613663,
+      "content_length_expected": 1705613663,
+      "error": null,
+      "key": "nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1/ledgers/exact_member_rows.jsonl.gz",
+      "local_path": "data/sunday_ledgers/exact_member_rows.jsonl.gz",
+      "sha256_expected": null,
+      "sha256_observed": null,
+      "status": "VERIFIED"
+    },
+    "legacy_observable_rows.jsonl.gz": {
+      "bytes_observed": 2198595,
+      "content_length_expected": 2198595,
+      "error": null,
+      "key": "nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1/ledgers/legacy_observable_rows.jsonl.gz",
+      "local_path": "data/sunday_ledgers/legacy_observable_rows.jsonl.gz",
+      "sha256_expected": null,
+      "sha256_observed": null,
+      "status": "VERIFIED"
+    },
+    "small_artifacts.tar.gz": {
+      "bytes_observed": 760560,
+      "content_length_expected": 760560,
+      "error": null,
+      "key": "nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1/small_artifacts.tar.gz",
+      "local_path": "data/sunday_ledgers/small_artifacts.tar.gz",
+      "sha256_expected": null,
+      "sha256_observed": null,
+      "status": "VERIFIED"
+    }
+  },
+  "out_dir": "data/sunday_ledgers",
+  "receipt_sha256": "3420045aecc9c225ce77bf47a184cc2b262685177998f51ff94585b0b3149d1b",
+  "run_id": "33746436209",
+  "run_prefix": "nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1",
+  "schema": "FRANKIE_LEDGER_DELIVERY_RECEIPT_V1"
+}

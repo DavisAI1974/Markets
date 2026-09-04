@@ -3285,8 +3285,4917 @@
       "ledger_id": "output_state_and_state_delta_movie",
       "prev_hash": "f5e252b54894dd9d3a2d66f3540781770b255c05ffeefbe088e309624226f130",
       "sequence": 7
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 917,
+          "ask_depth_n": 15,
+          "ask_levels": [
+            {
+              "front_order_age_s": 6.462875038,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.734,
+              "price_raw": 5734000000,
+              "queue_age_median_s": 3.498584408,
+              "queue_age_p90_s": 5.870016912,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 18.525705889,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.735,
+              "price_raw": 5735000000,
+              "queue_age_median_s": 10.685833033,
+              "queue_age_p90_s": 16.9577313178,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 0.533986382,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.736,
+              "price_raw": 5736000000,
+              "queue_age_median_s": 0.533986382,
+              "queue_age_p90_s": 0.533986382,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 14.999085329,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.737,
+              "price_raw": 5737000000,
+              "queue_age_median_s": 14.999085329,
+              "queue_age_p90_s": 14.999085329,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 71.188403666,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.738,
+              "price_raw": 5738000000,
+              "queue_age_median_s": 35.8611697665,
+              "queue_age_p90_s": 64.1229568861,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 71.188804731,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.739,
+              "price_raw": 5739000000,
+              "queue_age_median_s": 71.188804731,
+              "queue_age_p90_s": 71.188804731,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 71.189786732,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.74,
+              "price_raw": 5740000000,
+              "queue_age_median_s": 71.189786732,
+              "queue_age_p90_s": 71.189786732,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 83.792776711,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.741,
+              "price_raw": 5741000000,
+              "queue_age_median_s": 77.4915213805,
+              "queue_age_p90_s": 82.5325256449,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 105.50871937,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.742,
+              "price_raw": 5742000000,
+              "queue_age_median_s": 55.985203977999994,
+              "queue_age_p90_s": 95.6040162916,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 105.961234137,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.743,
+              "price_raw": 5743000000,
+              "queue_age_median_s": 105.961234137,
+              "queue_age_p90_s": 105.961234137,
+              "side": "A",
+              "size": 1
+            }
+          ],
+          "ask_order_count_full": 319,
+          "ask_price_level_count_full": 236,
+          "best_ask": 5.734,
+          "best_bid": 5.731,
+          "bid_depth_full": 985,
+          "bid_depth_n": 32,
+          "bid_levels": [
+            {
+              "front_order_age_s": 0.534619883,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.731,
+              "price_raw": 5731000000,
+              "queue_age_median_s": 0.534619883,
+              "queue_age_p90_s": 0.534619883,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 10.812957741,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.728,
+              "price_raw": 5728000000,
+              "queue_age_median_s": 10.812957741,
+              "queue_age_p90_s": 10.812957741,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 0.533888556,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.727,
+              "price_raw": 5727000000,
+              "queue_age_median_s": 0.533888556,
+              "queue_age_p90_s": 0.533888556,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 35.147840328,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.726,
+              "price_raw": 5726000000,
+              "queue_age_median_s": 33.5181537005,
+              "queue_age_p90_s": 34.8219030025,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 188.789002553,
+              "front_order_size": 1,
+              "largest_order_share": 0.25,
+              "order_count": 4,
+              "price": 5.725,
+              "price_raw": 5725000000,
+              "queue_age_median_s": 36.290595647,
+              "queue_age_p90_s": 143.38218321230002,
+              "side": "B",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 0.533234656,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.723,
+              "price_raw": 5723000000,
+              "queue_age_median_s": 0.533234656,
+              "queue_age_p90_s": 0.533234656,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 208.868677556,
+              "front_order_size": 8,
+              "largest_order_share": 0.5714285714285714,
+              "order_count": 3,
+              "price": 5.72,
+              "price_raw": 5720000000,
+              "queue_age_median_s": 189.030436814,
+              "queue_age_p90_s": 204.9010294076,
+              "side": "B",
+              "size": 14
+            },
+            {
+              "front_order_age_s": 217.160862997,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.716,
+              "price_raw": 5716000000,
+              "queue_age_median_s": 217.160862997,
+              "queue_age_p90_s": 217.160862997,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 236.945345201,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.711,
+              "price_raw": 5711000000,
+              "queue_age_median_s": 236.945345201,
+              "queue_age_p90_s": 236.945345201,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 259.740039259,
+              "front_order_size": 5,
+              "largest_order_share": 0.8333333333333334,
+              "order_count": 2,
+              "price": 5.71,
+              "price_raw": 5710000000,
+              "queue_age_median_s": 130.104373332,
+              "queue_age_p90_s": 233.8129060736,
+              "side": "B",
+              "size": 6
+            }
+          ],
+          "bid_order_count_full": 383,
+          "bid_price_level_count_full": 288,
+          "depth_imbalance_full": 0.035751840168243953,
+          "depth_imbalance_n": 0.3617021276595745,
+          "mid": 5.7325,
+          "spread": 0.0030000000000001137,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 917
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 985
+          },
+          "candidates_promoted": {
+            "status": "TRUE_ZERO",
+            "value": 0
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.03575184
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 20530
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 6554132312
+            },
+            "source_recv_ns": 1633298837000000000,
+            "status": "PAST_CARRY",
+            "value": 1633298837
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5732500000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 27396
+          },
+          "open_runways": {
+            "status": "TRUE_ZERO",
+            "value": 0
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 449
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 489
+          },
+          "roll20_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 554132312
+            },
+            "source_recv_ns": 1633298843000000000,
+            "status": "PAST_CARRY",
+            "value": 0.384615385
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 3000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 554132312
+            },
+            "source_recv_ns": 1633298843000000000,
+            "status": "PAST_CARRY",
+            "value": 5.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5734000000,
+            "best_bid_raw": 5731000000,
+            "touch_migrations_so_far": 3033,
+            "touch_state_of_last_transition": "COMPRESSION"
+          },
+          "channels": {
+            "ask_depth_full": 34.0,
+            "bid_depth_full": 17.0,
+            "candidates_promoted": 0.0,
+            "depth_imbalance_full": -0.010169284,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 110.0,
+            "mid_raw": -10500000.0,
+            "native_records": 2754.0,
+            "open_runways": 0.0,
+            "pending_removal_episodes": 8.0,
+            "resting_tracked_orders": 33.0,
+            "roll20_last_completed_second": 0.684615385,
+            "spread_raw": -1000000.0,
+            "window_signed_flow_last_completed_second": 11.0
+          },
+          "previous_cutoff_recv_ns": 1633298727046687558
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "b0830f51ea521ff93ca95414c283f994323c5a5c3fbaa31aac98f69cf025d649",
+          "level_count": 524,
+          "order_count": 702,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260805118,
+                  "priority_recv_ns": 1633298837091257274,
+                  "priority_sequence": 140799,
+                  "size": 1,
+                  "volume_ahead": 0
+                },
+                {
+                  "order_id": 786260805198,
+                  "priority_recv_ns": 1633298843019838534,
+                  "priority_sequence": 141071,
+                  "size": 1,
+                  "volume_ahead": 1
+                }
+              ],
+              "price_raw": 5734000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260805197,
+                  "priority_recv_ns": 1633298843019512429,
+                  "priority_sequence": 141067,
+                  "size": 1,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5731000000
+            }
+          }
+        },
+        "group_index": 20529,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633298843554132312,
+      "entry_hash": "f402b33d511e9545c242967e61125d4f92c15574307fb04be454834dc8c209db",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "76e2099507c1275e3437e1f2a1263786b39f66ed2a086a56115b3c1db26addd9",
+      "sequence": 8
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 961,
+          "ask_depth_n": 14,
+          "ask_levels": [
+            {
+              "front_order_age_s": 1.9483e-05,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.714,
+              "price_raw": 5714000000,
+              "queue_age_median_s": 1.9483e-05,
+              "queue_age_p90_s": 1.9483e-05,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 6.066168464,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.715,
+              "price_raw": 5715000000,
+              "queue_age_median_s": 6.066168464,
+              "queue_age_p90_s": 6.066168464,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 11.822899386,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.716,
+              "price_raw": 5716000000,
+              "queue_age_median_s": 8.6071911225,
+              "queue_age_p90_s": 11.179757733299999,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 11.823598899,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.717,
+              "price_raw": 5717000000,
+              "queue_age_median_s": 8.607628148,
+              "queue_age_p90_s": 11.180404748800001,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 11.824230253,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.718,
+              "price_raw": 5718000000,
+              "queue_age_median_s": 11.824230253,
+              "queue_age_p90_s": 11.824230253,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 21.106529697,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.719,
+              "price_raw": 5719000000,
+              "queue_age_median_s": 21.106529697,
+              "queue_age_p90_s": 21.106529697,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 21.107036635,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.72,
+              "price_raw": 5720000000,
+              "queue_age_median_s": 21.107036635,
+              "queue_age_p90_s": 21.107036635,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 30.170642204,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.722,
+              "price_raw": 5722000000,
+              "queue_age_median_s": 15.0919128205,
+              "queue_age_p90_s": 27.1548963273,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 30.171305522,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.723,
+              "price_raw": 5723000000,
+              "queue_age_median_s": 30.171305522,
+              "queue_age_p90_s": 30.171305522,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 30.172053709,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.724,
+              "price_raw": 5724000000,
+              "queue_age_median_s": 30.171787414,
+              "queue_age_p90_s": 30.17200045,
+              "side": "A",
+              "size": 2
+            }
+          ],
+          "ask_order_count_full": 345,
+          "ask_price_level_count_full": 258,
+          "best_ask": 5.714,
+          "best_bid": 5.71,
+          "bid_depth_full": 991,
+          "bid_depth_n": 25,
+          "bid_levels": [
+            {
+              "front_order_age_s": 0.016446195,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.71,
+              "price_raw": 5710000000,
+              "queue_age_median_s": 0.016446195,
+              "queue_age_p90_s": 0.016446195,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 1.803734697,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.709,
+              "price_raw": 5709000000,
+              "queue_age_median_s": 1.803734697,
+              "queue_age_p90_s": 1.803734697,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 153.827251941,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.708,
+              "price_raw": 5708000000,
+              "queue_age_median_s": 153.827251941,
+              "queue_age_p90_s": 153.827251941,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 495.594684869,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.707,
+              "price_raw": 5707000000,
+              "queue_age_median_s": 495.594684869,
+              "queue_age_p90_s": 495.594684869,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 369.504967451,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.706,
+              "price_raw": 5706000000,
+              "queue_age_median_s": 369.504967451,
+              "queue_age_p90_s": 369.504967451,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 503.678382419,
+              "front_order_size": 1,
+              "largest_order_share": 0.8333333333333334,
+              "order_count": 2,
+              "price": 5.705,
+              "price_raw": 5705000000,
+              "queue_age_median_s": 449.96248417699996,
+              "queue_age_p90_s": 492.9352027706,
+              "side": "B",
+              "size": 6
+            },
+            {
+              "front_order_age_s": 504.384499177,
+              "front_order_size": 1,
+              "largest_order_share": 0.6666666666666666,
+              "order_count": 2,
+              "price": 5.704,
+              "price_raw": 5704000000,
+              "queue_age_median_s": 258.984722927,
+              "queue_age_p90_s": 455.304543927,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 504.384914837,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.703,
+              "price_raw": 5703000000,
+              "queue_age_median_s": 504.384914837,
+              "queue_age_p90_s": 504.384914837,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 412.710857778,
+              "front_order_size": 5,
+              "largest_order_share": 0.7142857142857143,
+              "order_count": 2,
+              "price": 5.702,
+              "price_raw": 5702000000,
+              "queue_age_median_s": 277.490981824,
+              "queue_age_p90_s": 385.6668825872,
+              "side": "B",
+              "size": 7
+            },
+            {
+              "front_order_age_s": 197.806720934,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.7,
+              "price_raw": 5700000000,
+              "queue_age_median_s": 58.503650896,
+              "queue_age_p90_s": 169.9461069264,
+              "side": "B",
+              "size": 3
+            }
+          ],
+          "bid_order_count_full": 395,
+          "bid_price_level_count_full": 298,
+          "depth_imbalance_full": 0.015368852459016393,
+          "depth_imbalance_n": 0.28205128205128205,
+          "mid": 5.712,
+          "spread": 0.004000000000000448,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 961
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 991
+          },
+          "candidates_promoted": {
+            "status": "TRUE_ZERO",
+            "value": 0
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.015368852
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 22811
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 928924813
+            },
+            "source_recv_ns": 1633298998000000000,
+            "status": "PAST_CARRY",
+            "value": 1633298998
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5712000000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 30337
+          },
+          "open_runways": {
+            "status": "TRUE_ZERO",
+            "value": 0
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 477
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 527
+          },
+          "roll20_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 928924813
+            },
+            "source_recv_ns": 1633298998000000000,
+            "status": "PAST_CARRY",
+            "value": -1.0
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 4000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 928924813
+            },
+            "source_recv_ns": 1633298998000000000,
+            "status": "PAST_CARRY",
+            "value": -13.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5714000000,
+            "best_bid_raw": 5710000000,
+            "touch_migrations_so_far": 3317,
+            "touch_state_of_last_transition": "EXPANSION"
+          },
+          "channels": {
+            "ask_depth_full": 44.0,
+            "bid_depth_full": 6.0,
+            "candidates_promoted": 0.0,
+            "depth_imbalance_full": -0.020382988,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 161.0,
+            "mid_raw": -20500000.0,
+            "native_records": 2941.0,
+            "open_runways": 0.0,
+            "pending_removal_episodes": 28.0,
+            "resting_tracked_orders": 38.0,
+            "roll20_last_completed_second": -1.384615385,
+            "spread_raw": 1000000.0,
+            "window_signed_flow_last_completed_second": -18.0
+          },
+          "previous_cutoff_recv_ns": 1633298843554132312
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "12fda084a522fd09c05bff815113d4a226e2d92bf87e131de86ef4a2c91470b2",
+          "level_count": 556,
+          "order_count": 740,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260808006,
+                  "priority_recv_ns": 1633298998928905330,
+                  "priority_sequence": 148747,
+                  "size": 1,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5714000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260807975,
+                  "priority_recv_ns": 1633298998912478618,
+                  "priority_sequence": 148557,
+                  "size": 1,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5710000000
+            }
+          }
+        },
+        "group_index": 22810,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633298998928924813,
+      "entry_hash": "1b2935ef246467ccee4c7453edfa87365456a97a3477836d1418ddb144de1be0",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "f402b33d511e9545c242967e61125d4f92c15574307fb04be454834dc8c209db",
+      "sequence": 9
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 926,
+          "ask_depth_n": 25,
+          "ask_levels": [
+            {
+              "front_order_age_s": 90.050285757,
+              "front_order_size": 1,
+              "largest_order_share": 0.25,
+              "order_count": 7,
+              "price": 5.73,
+              "price_raw": 5730000000,
+              "queue_age_median_s": 56.712134876,
+              "queue_age_p90_s": 87.66267056219999,
+              "side": "A",
+              "size": 8
+            },
+            {
+              "front_order_age_s": 138.985113159,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.731,
+              "price_raw": 5731000000,
+              "queue_age_median_s": 138.985113159,
+              "queue_age_p90_s": 138.985113159,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 116.269418367,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.732,
+              "price_raw": 5732000000,
+              "queue_age_median_s": 116.269418367,
+              "queue_age_p90_s": 116.269418367,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 358.343857036,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 3,
+              "price": 5.735,
+              "price_raw": 5735000000,
+              "queue_age_median_s": 303.370152697,
+              "queue_age_p90_s": 347.3491161682,
+              "side": "A",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 604.312435896,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.736,
+              "price_raw": 5736000000,
+              "queue_age_median_s": 599.691802074,
+              "queue_age_p90_s": 603.3883091316001,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 282.670975313,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.737,
+              "price_raw": 5737000000,
+              "queue_age_median_s": 282.670975313,
+              "queue_age_p90_s": 282.670975313,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 245.908180401,
+              "front_order_size": 3,
+              "largest_order_share": 0.75,
+              "order_count": 2,
+              "price": 5.74,
+              "price_raw": 5740000000,
+              "queue_age_median_s": 220.5342568535,
+              "queue_age_p90_s": 240.83339569150002,
+              "side": "A",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 767.478103482,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.742,
+              "price_raw": 5742000000,
+              "queue_age_median_s": 708.6367399850001,
+              "queue_age_p90_s": 755.7098307826001,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 767.930618249,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.743,
+              "price_raw": 5743000000,
+              "queue_age_median_s": 767.930618249,
+              "queue_age_p90_s": 767.930618249,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 771.873232238,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.746,
+              "price_raw": 5746000000,
+              "queue_age_median_s": 771.873232238,
+              "queue_age_p90_s": 771.873232238,
+              "side": "A",
+              "size": 1
+            }
+          ],
+          "ask_order_count_full": 330,
+          "ask_price_level_count_full": 252,
+          "best_ask": 5.73,
+          "best_bid": 5.729,
+          "bid_depth_full": 1046,
+          "bid_depth_n": 19,
+          "bid_levels": [
+            {
+              "front_order_age_s": 5.1901e-05,
+              "front_order_size": 3,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.729,
+              "price_raw": 5729000000,
+              "queue_age_median_s": 5.1901e-05,
+              "queue_age_p90_s": 5.1901e-05,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 61.418055423,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.726,
+              "price_raw": 5726000000,
+              "queue_age_median_s": 61.418055423,
+              "queue_age_p90_s": 61.418055423,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 165.133190685,
+              "front_order_size": 3,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.725,
+              "price_raw": 5725000000,
+              "queue_age_median_s": 165.133190685,
+              "queue_age_p90_s": 165.133190685,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 88.17832061,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.722,
+              "price_raw": 5722000000,
+              "queue_age_median_s": 88.17832061,
+              "queue_age_p90_s": 88.17832061,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 370.401121632,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.721,
+              "price_raw": 5721000000,
+              "queue_age_median_s": 202.4254985345,
+              "queue_age_p90_s": 336.80599701250003,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 472.181576781,
+              "front_order_size": 1,
+              "largest_order_share": 0.25,
+              "order_count": 4,
+              "price": 5.72,
+              "price_raw": 5720000000,
+              "queue_age_median_s": 417.32725535,
+              "queue_age_p90_s": 467.2727953755,
+              "side": "B",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 453.658534594,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.719,
+              "price_raw": 5719000000,
+              "queue_age_median_s": 453.658534594,
+              "queue_age_p90_s": 453.658534594,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 331.080849804,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.718,
+              "price_raw": 5718000000,
+              "queue_age_median_s": 196.24902623900002,
+              "queue_age_p90_s": 304.114485091,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 481.19827012,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.715,
+              "price_raw": 5715000000,
+              "queue_age_median_s": 481.19827012,
+              "queue_age_p90_s": 481.19827012,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 476.836059399,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.714,
+              "price_raw": 5714000000,
+              "queue_age_median_s": 476.836059399,
+              "queue_age_p90_s": 476.836059399,
+              "side": "B",
+              "size": 1
+            }
+          ],
+          "bid_order_count_full": 421,
+          "bid_price_level_count_full": 309,
+          "depth_imbalance_full": 0.060851926977687626,
+          "depth_imbalance_n": -0.13636363636363635,
+          "mid": 5.7295,
+          "spread": 0.001000000000000334,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 926
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 1046
+          },
+          "candidates_promoted": {
+            "status": "OBSERVED",
+            "value": 6
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.060851927
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 25092
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 523516424
+            },
+            "source_recv_ns": 1633299505000000000,
+            "status": "PAST_CARRY",
+            "value": 1633299505
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5729500000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 33193
+          },
+          "open_runways": {
+            "status": "OBSERVED",
+            "value": 1
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 483
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 539
+          },
+          "roll20_last_completed_second": {
+            "reason": "the trailing window carries no classified volume",
+            "status": "STRUCTURALLY_NOT_YET_KNOWN"
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 1000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 523516424
+            },
+            "source_recv_ns": 1633299505000000000,
+            "status": "TRUE_ZERO",
+            "value": 0.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5730000000,
+            "best_bid_raw": 5729000000,
+            "touch_migrations_so_far": 3614,
+            "touch_state_of_last_transition": "COMPRESSION"
+          },
+          "channels": {
+            "ask_depth_full": -35.0,
+            "bid_depth_full": 55.0,
+            "candidates_promoted": 6.0,
+            "depth_imbalance_full": 0.045483075,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 507.0,
+            "mid_raw": 17500000.0,
+            "native_records": 2856.0,
+            "open_runways": 1.0,
+            "pending_removal_episodes": 6.0,
+            "resting_tracked_orders": 12.0,
+            "spread_raw": -3000000.0,
+            "window_signed_flow_last_completed_second": 13.0
+          },
+          "previous_cutoff_recv_ns": 1633298998928924813
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "e02be54846b17217eedc580bcdf192619dff6b38bb2bb9a8d722ee7ea66987a2",
+          "level_count": 561,
+          "order_count": 751,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260811107,
+                  "priority_recv_ns": 1633299415473230667,
+                  "priority_sequence": 156853,
+                  "size": 1,
+                  "volume_ahead": 0
+                },
+                {
+                  "order_id": 786260811126,
+                  "priority_recv_ns": 1633299419452589325,
+                  "priority_sequence": 156889,
+                  "size": 1,
+                  "volume_ahead": 1
+                },
+                {
+                  "order_id": 786260811155,
+                  "priority_recv_ns": 1633299445560985215,
+                  "priority_sequence": 156994,
+                  "size": 1,
+                  "volume_ahead": 2
+                },
+                {
+                  "order_id": 786260811160,
+                  "priority_recv_ns": 1633299448811381548,
+                  "priority_sequence": 157007,
+                  "size": 1,
+                  "volume_ahead": 3
+                },
+                {
+                  "order_id": 786260811172,
+                  "priority_recv_ns": 1633299457473975434,
+                  "priority_sequence": 157030,
+                  "size": 1,
+                  "volume_ahead": 4
+                },
+                {
+                  "order_id": 786260811187,
+                  "priority_recv_ns": 1633299470831393852,
+                  "priority_sequence": 157048,
+                  "size": 2,
+                  "volume_ahead": 5
+                },
+                {
+                  "order_id": 786260811192,
+                  "priority_recv_ns": 1633299478638392306,
+                  "priority_sequence": 157053,
+                  "size": 1,
+                  "volume_ahead": 7
+                }
+              ],
+              "price_raw": 5730000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260811229,
+                  "priority_recv_ns": 1633299505523464523,
+                  "priority_sequence": 157128,
+                  "size": 3,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5729000000
+            }
+          }
+        },
+        "group_index": 25091,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633299505523516424,
+      "entry_hash": "c2b7f0687747733108fe5237feaa64622cfa9ed54968099f6dbda27becbbc16c",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "1b2935ef246467ccee4c7453edfa87365456a97a3477836d1418ddb144de1be0",
+      "sequence": 10
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 904,
+          "ask_depth_n": 25,
+          "ask_levels": [
+            {
+              "front_order_age_s": 0.10255538,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.739,
+              "price_raw": 5739000000,
+              "queue_age_median_s": 0.10253506949999999,
+              "queue_age_p90_s": 0.10255131790000001,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 691.039809309,
+              "front_order_size": 1,
+              "largest_order_share": 0.2,
+              "order_count": 5,
+              "price": 5.74,
+              "price_raw": 5740000000,
+              "queue_age_median_s": 66.245169893,
+              "queue_age_p90_s": 448.4927085446,
+              "side": "A",
+              "size": 5
+            },
+            {
+              "front_order_age_s": 1212.60973239,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.742,
+              "price_raw": 5742000000,
+              "queue_age_median_s": 639.6737364015,
+              "queue_age_p90_s": 1098.0225331923002,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1213.062247157,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.743,
+              "price_raw": 5743000000,
+              "queue_age_median_s": 1213.062247157,
+              "queue_age_p90_s": 1213.062247157,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 1217.004861146,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 3,
+              "price": 5.746,
+              "price_raw": 5746000000,
+              "queue_age_median_s": 38.844459601,
+              "queue_age_p90_s": 981.3727808369999,
+              "side": "A",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 925.88346278,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.747,
+              "price_raw": 5747000000,
+              "queue_age_median_s": 512.6281232245,
+              "queue_age_p90_s": 843.2323948689,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1219.970243082,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.748,
+              "price_raw": 5748000000,
+              "queue_age_median_s": 1219.970243082,
+              "queue_age_p90_s": 1219.970243082,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 1210.798125491,
+              "front_order_size": 2,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.75,
+              "price_raw": 5750000000,
+              "queue_age_median_s": 1210.798125491,
+              "queue_age_p90_s": 1210.798125491,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1378.219194241,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.752,
+              "price_raw": 5752000000,
+              "queue_age_median_s": 1378.219194241,
+              "queue_age_p90_s": 1378.219194241,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 1271.543411106,
+              "front_order_size": 5,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.753,
+              "price_raw": 5753000000,
+              "queue_age_median_s": 1271.543411106,
+              "queue_age_p90_s": 1271.543411106,
+              "side": "A",
+              "size": 5
+            }
+          ],
+          "ask_order_count_full": 319,
+          "ask_price_level_count_full": 243,
+          "best_ask": 5.739,
+          "best_bid": 5.731,
+          "bid_depth_full": 1073,
+          "bid_depth_n": 22,
+          "bid_levels": [
+            {
+              "front_order_age_s": 2.869815,
+              "front_order_size": 2,
+              "largest_order_share": 0.6666666666666666,
+              "order_count": 2,
+              "price": 5.731,
+              "price_raw": 5731000000,
+              "queue_age_median_s": 2.8697417385,
+              "queue_age_p90_s": 2.8698003477,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 98.956969664,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.73,
+              "price_raw": 5730000000,
+              "queue_age_median_s": 75.473803189,
+              "queue_age_p90_s": 94.260336369,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 35.148091115,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.729,
+              "price_raw": 5729000000,
+              "queue_age_median_s": 35.148091115,
+              "queue_age_p90_s": 35.148091115,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 100.003565252,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.728,
+              "price_raw": 5728000000,
+              "queue_age_median_s": 86.636513017,
+              "queue_age_p90_s": 97.330154805,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 100.003836558,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.727,
+              "price_raw": 5727000000,
+              "queue_age_median_s": 80.5077494275,
+              "queue_age_p90_s": 96.10461913190001,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 106.152744457,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.726,
+              "price_raw": 5726000000,
+              "queue_age_median_s": 106.152437039,
+              "queue_age_p90_s": 106.1526829734,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 119.700342045,
+              "front_order_size": 1,
+              "largest_order_share": 0.25,
+              "order_count": 4,
+              "price": 5.725,
+              "price_raw": 5725000000,
+              "queue_age_median_s": 112.8170119895,
+              "queue_age_p90_s": 119.18192549100002,
+              "side": "B",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 1.468993411,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.723,
+              "price_raw": 5723000000,
+              "queue_age_median_s": 1.468993411,
+              "queue_age_p90_s": 1.468993411,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 3.564885654,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.722,
+              "price_raw": 5722000000,
+              "queue_age_median_s": 3.564885654,
+              "queue_age_p90_s": 3.564885654,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 223.460239895,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.721,
+              "price_raw": 5721000000,
+              "queue_age_median_s": 173.3433445585,
+              "queue_age_p90_s": 213.4368608277,
+              "side": "B",
+              "size": 2
+            }
+          ],
+          "bid_order_count_full": 442,
+          "bid_price_level_count_full": 318,
+          "depth_imbalance_full": 0.08548305513404147,
+          "depth_imbalance_n": -0.06382978723404255,
+          "mid": 5.734999999999999,
+          "spread": 0.008000000000000007,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 904
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 1073
+          },
+          "candidates_promoted": {
+            "status": "OBSERVED",
+            "value": 13
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.085483055
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 27373
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 12655145332
+            },
+            "source_recv_ns": 1633299938000000000,
+            "status": "PAST_CARRY",
+            "value": 1633299938
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5735000000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 35948
+          },
+          "open_runways": {
+            "status": "OBSERVED",
+            "value": 1
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 492
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 549
+          },
+          "roll20_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 655145332
+            },
+            "source_recv_ns": 1633299950000000000,
+            "status": "PAST_CARRY",
+            "value": -1.0
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 8000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 655145332
+            },
+            "source_recv_ns": 1633299950000000000,
+            "status": "PAST_CARRY",
+            "value": -3.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5739000000,
+            "best_bid_raw": 5731000000,
+            "touch_migrations_so_far": 3830,
+            "touch_state_of_last_transition": "EXPANSION"
+          },
+          "channels": {
+            "ask_depth_full": -22.0,
+            "bid_depth_full": 27.0,
+            "candidates_promoted": 7.0,
+            "depth_imbalance_full": 0.024631128,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 433.0,
+            "mid_raw": 5500000.0,
+            "native_records": 2755.0,
+            "open_runways": 0.0,
+            "pending_removal_episodes": 9.0,
+            "resting_tracked_orders": 10.0,
+            "spread_raw": 7000000.0,
+            "window_signed_flow_last_completed_second": -3.0
+          },
+          "previous_cutoff_recv_ns": 1633299505523516424
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "dfce8322aa3fe792a81ef6605b265b66b95bcc58cf3de5b3c8df7efaeb8ec27a",
+          "level_count": 561,
+          "order_count": 761,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260813725,
+                  "priority_recv_ns": 1633299950552589952,
+                  "priority_sequence": 163137,
+                  "size": 1,
+                  "volume_ahead": 0
+                },
+                {
+                  "order_id": 786260813726,
+                  "priority_recv_ns": 1633299950552630573,
+                  "priority_sequence": 163138,
+                  "size": 1,
+                  "volume_ahead": 1
+                }
+              ],
+              "price_raw": 5739000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260813686,
+                  "priority_recv_ns": 1633299947785330332,
+                  "priority_sequence": 163030,
+                  "size": 2,
+                  "volume_ahead": 0
+                },
+                {
+                  "order_id": 786260813687,
+                  "priority_recv_ns": 1633299947785476855,
+                  "priority_sequence": 163034,
+                  "size": 1,
+                  "volume_ahead": 2
+                }
+              ],
+              "price_raw": 5731000000
+            }
+          }
+        },
+        "group_index": 27372,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633299950655145332,
+      "entry_hash": "efdb37c80ca613af215fed586f20d6a68b116d6777aee532f8d5cea554eb5072",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "c2b7f0687747733108fe5237feaa64622cfa9ed54968099f6dbda27becbbc16c",
+      "sequence": 11
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 784,
+          "ask_depth_n": 37,
+          "ask_levels": [
+            {
+              "front_order_age_s": 0.05565951,
+              "front_order_size": 3,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.762,
+              "price_raw": 5762000000,
+              "queue_age_median_s": 0.05565951,
+              "queue_age_p90_s": 0.05565951,
+              "side": "A",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 0.628286131,
+              "front_order_size": 5,
+              "largest_order_share": 0.8333333333333334,
+              "order_count": 2,
+              "price": 5.763,
+              "price_raw": 5763000000,
+              "queue_age_median_s": 0.3691486045,
+              "queue_age_p90_s": 0.5764586257,
+              "side": "A",
+              "size": 6
+            },
+            {
+              "front_order_age_s": 0.046975776,
+              "front_order_size": 6,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.764,
+              "price_raw": 5764000000,
+              "queue_age_median_s": 0.046975776,
+              "queue_age_p90_s": 0.046975776,
+              "side": "A",
+              "size": 6
+            },
+            {
+              "front_order_age_s": 8.018198073,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.766,
+              "price_raw": 5766000000,
+              "queue_age_median_s": 8.018198073,
+              "queue_age_p90_s": 8.018198073,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 8.156597078,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.767,
+              "price_raw": 5767000000,
+              "queue_age_median_s": 7.898075208,
+              "queue_age_p90_s": 8.104892704000001,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1.613961562,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.771,
+              "price_raw": 5771000000,
+              "queue_age_median_s": 1.613961562,
+              "queue_age_p90_s": 1.613961562,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 1774.413392834,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.777,
+              "price_raw": 5777000000,
+              "queue_age_median_s": 891.2850390485,
+              "queue_age_p90_s": 1597.7877220769,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1796.779785059,
+              "front_order_size": 3,
+              "largest_order_share": 0.75,
+              "order_count": 2,
+              "price": 5.779,
+              "price_raw": 5779000000,
+              "queue_age_median_s": 900.6270748335,
+              "queue_age_p90_s": 1617.5492430139,
+              "side": "A",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 0.046941876,
+              "front_order_size": 10,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.781,
+              "price_raw": 5781000000,
+              "queue_age_median_s": 0.046941876,
+              "queue_age_p90_s": 0.046941876,
+              "side": "A",
+              "size": 10
+            },
+            {
+              "front_order_age_s": 2304.16569715,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.782,
+              "price_raw": 5782000000,
+              "queue_age_median_s": 1156.1611669065,
+              "queue_age_p90_s": 2074.5647911013,
+              "side": "A",
+              "size": 2
+            }
+          ],
+          "ask_order_count_full": 279,
+          "ask_price_level_count_full": 215,
+          "best_ask": 5.762,
+          "best_bid": 5.759,
+          "bid_depth_full": 978,
+          "bid_depth_n": 15,
+          "bid_levels": [
+            {
+              "front_order_age_s": 0.001754321,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.759,
+              "price_raw": 5759000000,
+              "queue_age_median_s": 0.001754321,
+              "queue_age_p90_s": 0.001754321,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 8.142794192,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.758,
+              "price_raw": 5758000000,
+              "queue_age_median_s": 8.142794192,
+              "queue_age_p90_s": 8.142794192,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 8.148015134,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.756,
+              "price_raw": 5756000000,
+              "queue_age_median_s": 8.148015134,
+              "queue_age_p90_s": 8.148015134,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 8.161653049,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.755,
+              "price_raw": 5755000000,
+              "queue_age_median_s": 8.161653049,
+              "queue_age_p90_s": 8.161653049,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 8.416447595,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.754,
+              "price_raw": 5754000000,
+              "queue_age_median_s": 8.145957842,
+              "queue_age_p90_s": 8.362349644399998,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 16.239751354,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.753,
+              "price_raw": 5753000000,
+              "queue_age_median_s": 16.239751354,
+              "queue_age_p90_s": 16.239751354,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 75.22951182,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.752,
+              "price_raw": 5752000000,
+              "queue_age_median_s": 62.9006523455,
+              "queue_age_p90_s": 72.7637399251,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 87.999200068,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.751,
+              "price_raw": 5751000000,
+              "queue_age_median_s": 80.978424005,
+              "queue_age_p90_s": 86.59504485539999,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 74.421980895,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.749,
+              "price_raw": 5749000000,
+              "queue_age_median_s": 74.421980895,
+              "queue_age_p90_s": 74.421980895,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 8.178604483,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.748,
+              "price_raw": 5748000000,
+              "queue_age_median_s": 8.178604483,
+              "queue_age_p90_s": 8.178604483,
+              "side": "B",
+              "size": 1
+            }
+          ],
+          "bid_order_count_full": 428,
+          "bid_price_level_count_full": 316,
+          "depth_imbalance_full": 0.11010215664018161,
+          "depth_imbalance_n": -0.4230769230769231,
+          "mid": 5.7605,
+          "spread": 0.0029999999999992255,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 784
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 978
+          },
+          "candidates_promoted": {
+            "status": "OBSERVED",
+            "value": 19
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.110102157
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 29654
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 102307848
+            },
+            "source_recv_ns": 1633300320000000000,
+            "status": "PAST_CARRY",
+            "value": 1633300320
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5760500000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 39030
+          },
+          "open_runways": {
+            "status": "OBSERVED",
+            "value": 1
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 581
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 497
+          },
+          "roll20_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 102307848
+            },
+            "source_recv_ns": 1633300320000000000,
+            "status": "PAST_CARRY",
+            "value": 0.779816514
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 3000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 102307848
+            },
+            "source_recv_ns": 1633300320000000000,
+            "status": "PAST_CARRY",
+            "value": 85.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5762000000,
+            "best_bid_raw": 5759000000,
+            "touch_migrations_so_far": 4175,
+            "touch_state_of_last_transition": "COMPRESSION"
+          },
+          "channels": {
+            "ask_depth_full": -120.0,
+            "bid_depth_full": -95.0,
+            "candidates_promoted": 6.0,
+            "depth_imbalance_full": 0.024619102,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 382.0,
+            "mid_raw": 25500000.0,
+            "native_records": 3082.0,
+            "open_runways": 0.0,
+            "pending_removal_episodes": 89.0,
+            "resting_tracked_orders": -52.0,
+            "roll20_last_completed_second": 1.779816514,
+            "spread_raw": -5000000.0,
+            "window_signed_flow_last_completed_second": 88.0
+          },
+          "previous_cutoff_recv_ns": 1633299950655145332
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "73961e39d805e84bfb27a4c031011e356cbc372244a9b09b9e9f3b1b946593e1",
+          "level_count": 531,
+          "order_count": 707,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260817040,
+                  "priority_recv_ns": 1633300320046648338,
+                  "priority_sequence": 172985,
+                  "size": 3,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5762000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260817049,
+                  "priority_recv_ns": 1633300320100553527,
+                  "priority_sequence": 173013,
+                  "size": 1,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5759000000
+            }
+          }
+        },
+        "group_index": 29653,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633300320102307848,
+      "entry_hash": "5bc2ca472276ed7c910a262c6ab167b0975caebf2347246f122f4f76610c5fc8",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "efdb37c80ca613af215fed586f20d6a68b116d6777aee532f8d5cea554eb5072",
+      "sequence": 12
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 827,
+          "ask_depth_n": 15,
+          "ask_levels": [
+            {
+              "front_order_age_s": 8.802404836,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.745,
+              "price_raw": 5745000000,
+              "queue_age_median_s": 7.5503120274999995,
+              "queue_age_p90_s": 8.551986274299999,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 38.442825266,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.746,
+              "price_raw": 5746000000,
+              "queue_age_median_s": 38.442825266,
+              "queue_age_p90_s": 38.442825266,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 44.472720139,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.75,
+              "price_raw": 5750000000,
+              "queue_age_median_s": 44.472720139,
+              "queue_age_p90_s": 44.472720139,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 157.123438217,
+              "front_order_size": 2,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.751,
+              "price_raw": 5751000000,
+              "queue_age_median_s": 157.123438217,
+              "queue_age_p90_s": 157.123438217,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 91.164548845,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.752,
+              "price_raw": 5752000000,
+              "queue_age_median_s": 91.164548845,
+              "queue_age_p90_s": 91.164548845,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 8.801464618,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.753,
+              "price_raw": 5753000000,
+              "queue_age_median_s": 8.801464618,
+              "queue_age_p90_s": 8.801464618,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 193.308896907,
+              "front_order_size": 3,
+              "largest_order_share": 0.75,
+              "order_count": 2,
+              "price": 5.754,
+              "price_raw": 5754000000,
+              "queue_age_median_s": 126.4877250945,
+              "queue_age_p90_s": 179.9446625445,
+              "side": "A",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 182.444598489,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.757,
+              "price_raw": 5757000000,
+              "queue_age_median_s": 182.444598489,
+              "queue_age_p90_s": 182.444598489,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 154.881950215,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.758,
+              "price_raw": 5758000000,
+              "queue_age_median_s": 154.881950215,
+              "queue_age_p90_s": 154.881950215,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 389.183748648,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.762,
+              "price_raw": 5762000000,
+              "queue_age_median_s": 389.183748648,
+              "queue_age_p90_s": 389.183748648,
+              "side": "A",
+              "size": 1
+            }
+          ],
+          "ask_order_count_full": 303,
+          "ask_price_level_count_full": 227,
+          "best_ask": 5.745,
+          "best_bid": 5.738,
+          "bid_depth_full": 922,
+          "bid_depth_n": 21,
+          "bid_levels": [
+            {
+              "front_order_age_s": 4.257995271,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.738,
+              "price_raw": 5738000000,
+              "queue_age_median_s": 4.257995271,
+              "queue_age_p90_s": 4.257995271,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 10.299623371,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.737,
+              "price_raw": 5737000000,
+              "queue_age_median_s": 8.2486775935,
+              "queue_age_p90_s": 9.8894342155,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 32.400030457,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.735,
+              "price_raw": 5735000000,
+              "queue_age_median_s": 31.663928308,
+              "queue_age_p90_s": 32.2528100272,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 38.379390561,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.734,
+              "price_raw": 5734000000,
+              "queue_age_median_s": 27.843899601,
+              "queue_age_p90_s": 36.272292369,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 933.943068073,
+              "front_order_size": 3,
+              "largest_order_share": 0.6,
+              "order_count": 3,
+              "price": 5.733,
+              "price_raw": 5733000000,
+              "queue_age_median_s": 467.692268722,
+              "queue_age_p90_s": 840.6929082027999,
+              "side": "B",
+              "size": 5
+            },
+            {
+              "front_order_age_s": 690.160736748,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.731,
+              "price_raw": 5731000000,
+              "queue_age_median_s": 690.160736748,
+              "queue_age_p90_s": 690.160736748,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 1054.086430066,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.73,
+              "price_raw": 5730000000,
+              "queue_age_median_s": 530.013169196,
+              "queue_age_p90_s": 949.271777892,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1055.133025654,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.728,
+              "price_raw": 5728000000,
+              "queue_age_median_s": 1028.949763477,
+              "queue_age_p90_s": 1049.8963732186,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1055.13329696,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.727,
+              "price_raw": 5727000000,
+              "queue_age_median_s": 1055.13329696,
+              "queue_age_p90_s": 1055.13329696,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 1061.281897441,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.726,
+              "price_raw": 5726000000,
+              "queue_age_median_s": 546.8411289905,
+              "queue_age_p90_s": 958.3937437509001,
+              "side": "B",
+              "size": 2
+            }
+          ],
+          "bid_order_count_full": 397,
+          "bid_price_level_count_full": 292,
+          "depth_imbalance_full": 0.05431675242995998,
+          "depth_imbalance_n": 0.16666666666666666,
+          "mid": 5.7415,
+          "spread": 0.006999999999999673,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 827
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 922
+          },
+          "candidates_promoted": {
+            "status": "OBSERVED",
+            "value": 28
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.054316752
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 31935
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 3784605734
+            },
+            "source_recv_ns": 1633300902000000000,
+            "status": "PAST_CARRY",
+            "value": 1633300902
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5741500000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 41975
+          },
+          "open_runways": {
+            "status": "OBSERVED",
+            "value": 1
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 614
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 492
+          },
+          "roll20_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 784605734
+            },
+            "source_recv_ns": 1633300905000000000,
+            "status": "PAST_CARRY",
+            "value": 0.066666667
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 7000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 784605734
+            },
+            "source_recv_ns": 1633300905000000000,
+            "status": "PAST_CARRY",
+            "value": 1.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5745000000,
+            "best_bid_raw": 5738000000,
+            "touch_migrations_so_far": 4467,
+            "touch_state_of_last_transition": "COMPRESSION"
+          },
+          "channels": {
+            "ask_depth_full": 43.0,
+            "bid_depth_full": -56.0,
+            "candidates_promoted": 9.0,
+            "depth_imbalance_full": -0.055785405,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 582.0,
+            "mid_raw": -19000000.0,
+            "native_records": 2945.0,
+            "open_runways": 0.0,
+            "pending_removal_episodes": 33.0,
+            "resting_tracked_orders": -5.0,
+            "roll20_last_completed_second": -0.713149847,
+            "spread_raw": 4000000.0,
+            "window_signed_flow_last_completed_second": -84.0
+          },
+          "previous_cutoff_recv_ns": 1633300320102307848
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "8e3fff2aae5a2b7ccb2f9ad4d9981e034d5131bde332af020d6ed91b9cf51df4",
+          "level_count": 519,
+          "order_count": 700,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260820606,
+                  "priority_recv_ns": 1633300896982200898,
+                  "priority_sequence": 182854,
+                  "size": 1,
+                  "volume_ahead": 0
+                },
+                {
+                  "order_id": 786260820636,
+                  "priority_recv_ns": 1633300899486386515,
+                  "priority_sequence": 182964,
+                  "size": 1,
+                  "volume_ahead": 1
+                }
+              ],
+              "price_raw": 5745000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260820664,
+                  "priority_recv_ns": 1633300901526610463,
+                  "priority_sequence": 183017,
+                  "size": 1,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5738000000
+            }
+          }
+        },
+        "group_index": 31934,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633300905784605734,
+      "entry_hash": "2b14de3f4ad2270140fc259ce8b499ee7ace8905f9235257cf4bb50d0f551707",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "5bc2ca472276ed7c910a262c6ab167b0975caebf2347246f122f4f76610c5fc8",
+      "sequence": 13
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 849,
+          "ask_depth_n": 23,
+          "ask_levels": [
+            {
+              "front_order_age_s": 0.000869855,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.717,
+              "price_raw": 5717000000,
+              "queue_age_median_s": 0.000545222,
+              "queue_age_p90_s": 0.0008049284,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 9.781254396,
+              "front_order_size": 2,
+              "largest_order_share": 0.5,
+              "order_count": 3,
+              "price": 5.718,
+              "price_raw": 5718000000,
+              "queue_age_median_s": 7.591269843,
+              "queue_age_p90_s": 9.343257485399999,
+              "side": "A",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 16.382434688,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.72,
+              "price_raw": 5720000000,
+              "queue_age_median_s": 16.3432831125,
+              "queue_age_p90_s": 16.374604372900002,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 66.698510334,
+              "front_order_size": 1,
+              "largest_order_share": 0.25,
+              "order_count": 4,
+              "price": 5.722,
+              "price_raw": 5722000000,
+              "queue_age_median_s": 35.321153756,
+              "queue_age_p90_s": 61.693250880300006,
+              "side": "A",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 67.2926431,
+              "front_order_size": 1,
+              "largest_order_share": 0.25,
+              "order_count": 4,
+              "price": 5.723,
+              "price_raw": 5723000000,
+              "queue_age_median_s": 47.903316650499995,
+              "queue_age_p90_s": 67.1792686507,
+              "side": "A",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 67.293503962,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.724,
+              "price_raw": 5724000000,
+              "queue_age_median_s": 67.293503962,
+              "queue_age_p90_s": 67.293503962,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 67.295209378,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.725,
+              "price_raw": 5725000000,
+              "queue_age_median_s": 67.295209378,
+              "queue_age_p90_s": 67.295209378,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 70.691324651,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.726,
+              "price_raw": 5726000000,
+              "queue_age_median_s": 40.2356249355,
+              "queue_age_p90_s": 64.6001847079,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 72.609387845,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.727,
+              "price_raw": 5727000000,
+              "queue_age_median_s": 52.0404562465,
+              "queue_age_p90_s": 68.4956015253,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 73.455151446,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.729,
+              "price_raw": 5729000000,
+              "queue_age_median_s": 73.455151446,
+              "queue_age_p90_s": 73.455151446,
+              "side": "A",
+              "size": 1
+            }
+          ],
+          "ask_order_count_full": 329,
+          "ask_price_level_count_full": 241,
+          "best_ask": 5.717,
+          "best_bid": 5.713,
+          "bid_depth_full": 920,
+          "bid_depth_n": 21,
+          "bid_levels": [
+            {
+              "front_order_age_s": 0.001173399,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.713,
+              "price_raw": 5713000000,
+              "queue_age_median_s": 0.0006441805,
+              "queue_age_p90_s": 0.0010675553,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 2299.095687941,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.712,
+              "price_raw": 5712000000,
+              "queue_age_median_s": 2299.095687941,
+              "queue_age_p90_s": 2299.095687941,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 2146.276556186,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.711,
+              "price_raw": 5711000000,
+              "queue_age_median_s": 2146.276556186,
+              "queue_age_p90_s": 2146.276556186,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 446.306928359,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.71,
+              "price_raw": 5710000000,
+              "queue_age_median_s": 232.267519895,
+              "queue_age_p90_s": 403.4990466662,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 2318.820335835,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.709,
+              "price_raw": 5709000000,
+              "queue_age_median_s": 2318.820335835,
+              "queue_age_p90_s": 2318.820335835,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 2308.58454857,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.708,
+              "price_raw": 5708000000,
+              "queue_age_median_s": 2308.58454857,
+              "queue_age_p90_s": 2308.58454857,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 82.650034435,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.707,
+              "price_raw": 5707000000,
+              "queue_age_median_s": 82.650034435,
+              "queue_age_p90_s": 82.650034435,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 2820.694983557,
+              "front_order_size": 1,
+              "largest_order_share": 0.625,
+              "order_count": 4,
+              "price": 5.705,
+              "price_raw": 5705000000,
+              "queue_age_median_s": 1912.543162897,
+              "queue_age_p90_s": 2788.4654446118,
+              "side": "B",
+              "size": 8
+            },
+            {
+              "front_order_age_s": 2821.401100315,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.704,
+              "price_raw": 5704000000,
+              "queue_age_median_s": 2564.707512762,
+              "queue_age_p90_s": 2770.0623828044,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 2821.401515975,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.703,
+              "price_raw": 5703000000,
+              "queue_age_median_s": 1434.148741159,
+              "queue_age_p90_s": 2543.9509610118002,
+              "side": "B",
+              "size": 2
+            }
+          ],
+          "bid_order_count_full": 387,
+          "bid_price_level_count_full": 288,
+          "depth_imbalance_full": 0.04013566986998304,
+          "depth_imbalance_n": -0.045454545454545456,
+          "mid": 5.715,
+          "spread": 0.0039999999999995595,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 849
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 920
+          },
+          "candidates_promoted": {
+            "status": "OBSERVED",
+            "value": 34
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.04013567
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 34216
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 945525951
+            },
+            "source_recv_ns": 1633301315000000000,
+            "status": "PAST_CARRY",
+            "value": 1633301315
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5715000000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 44964
+          },
+          "open_runways": {
+            "status": "OBSERVED",
+            "value": 1
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 603
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 508
+          },
+          "roll20_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 945525951
+            },
+            "source_recv_ns": 1633301315000000000,
+            "status": "PAST_CARRY",
+            "value": -0.818181818
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 4000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 945525951
+            },
+            "source_recv_ns": 1633301315000000000,
+            "status": "PAST_CARRY",
+            "value": -9.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5717000000,
+            "best_bid_raw": 5713000000,
+            "touch_migrations_so_far": 4801,
+            "touch_state_of_last_transition": "COMPRESSION"
+          },
+          "channels": {
+            "ask_depth_full": 22.0,
+            "bid_depth_full": -2.0,
+            "candidates_promoted": 6.0,
+            "depth_imbalance_full": -0.014181082,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 413.0,
+            "mid_raw": -26500000.0,
+            "native_records": 2989.0,
+            "open_runways": 0.0,
+            "pending_removal_episodes": -11.0,
+            "resting_tracked_orders": 16.0,
+            "roll20_last_completed_second": -0.884848485,
+            "spread_raw": -3000000.0,
+            "window_signed_flow_last_completed_second": -10.0
+          },
+          "previous_cutoff_recv_ns": 1633300905784605734
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "60a90a8ee0d63a447c0be28bf83633c14a8718c93df0e6c350b36831fee2d158",
+          "level_count": 529,
+          "order_count": 716,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260824223,
+                  "priority_recv_ns": 1633301315944656096,
+                  "priority_sequence": 193029,
+                  "size": 1,
+                  "volume_ahead": 0
+                },
+                {
+                  "order_id": 786260824229,
+                  "priority_recv_ns": 1633301315945305362,
+                  "priority_sequence": 193061,
+                  "size": 1,
+                  "volume_ahead": 1
+                }
+              ],
+              "price_raw": 5717000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260824219,
+                  "priority_recv_ns": 1633301315944352552,
+                  "priority_sequence": 193022,
+                  "size": 1,
+                  "volume_ahead": 0
+                },
+                {
+                  "order_id": 786260824230,
+                  "priority_recv_ns": 1633301315945410989,
+                  "priority_sequence": 193067,
+                  "size": 1,
+                  "volume_ahead": 1
+                }
+              ],
+              "price_raw": 5713000000
+            }
+          }
+        },
+        "group_index": 34215,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633301315945525951,
+      "entry_hash": "8914f0dc6644838b3f209f0d4f3fb83c5af3a3ccbcc9c9df724b169332802e5f",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "2b14de3f4ad2270140fc259ce8b499ee7ace8905f9235257cf4bb50d0f551707",
+      "sequence": 14
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 830,
+          "ask_depth_n": 41,
+          "ask_levels": [
+            {
+              "front_order_age_s": 315.45210313,
+              "front_order_size": 29,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.73,
+              "price_raw": 5730000000,
+              "queue_age_median_s": 315.45210313,
+              "queue_age_p90_s": 315.45210313,
+              "side": "A",
+              "size": 29
+            },
+            {
+              "front_order_age_s": 213.739934846,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.732,
+              "price_raw": 5732000000,
+              "queue_age_median_s": 213.739934846,
+              "queue_age_p90_s": 213.739934846,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 559.447183728,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.735,
+              "price_raw": 5735000000,
+              "queue_age_median_s": 559.447183728,
+              "queue_age_p90_s": 559.447183728,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 450.981785916,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.736,
+              "price_raw": 5736000000,
+              "queue_age_median_s": 450.981785916,
+              "queue_age_p90_s": 450.981785916,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 545.283252574,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.737,
+              "price_raw": 5737000000,
+              "queue_age_median_s": 397.433684248,
+              "queue_age_p90_s": 515.7133389088,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 0.000445038,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.738,
+              "price_raw": 5738000000,
+              "queue_age_median_s": 0.000445038,
+              "queue_age_p90_s": 0.000445038,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 252.969435543,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.739,
+              "price_raw": 5739000000,
+              "queue_age_median_s": 252.969435543,
+              "queue_age_p90_s": 252.969435543,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 517.851466328,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.74,
+              "price_raw": 5740000000,
+              "queue_age_median_s": 517.851466328,
+              "queue_age_p90_s": 517.851466328,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 856.786096528,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.742,
+              "price_raw": 5742000000,
+              "queue_age_median_s": 856.786096528,
+              "queue_age_p90_s": 856.786096528,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 1106.406683281,
+              "front_order_size": 1,
+              "largest_order_share": 0.6666666666666666,
+              "order_count": 2,
+              "price": 5.745,
+              "price_raw": 5745000000,
+              "queue_age_median_s": 1014.5183980314999,
+              "queue_age_p90_s": 1088.0290262310998,
+              "side": "A",
+              "size": 3
+            }
+          ],
+          "ask_order_count_full": 301,
+          "ask_price_level_count_full": 230,
+          "best_ask": 5.73,
+          "best_bid": 5.728,
+          "bid_depth_full": 964,
+          "bid_depth_n": 17,
+          "bid_levels": [
+            {
+              "front_order_age_s": 0.000180594,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.728,
+              "price_raw": 5728000000,
+              "queue_age_median_s": 0.000180594,
+              "queue_age_p90_s": 0.000180594,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 0.000901848,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.726,
+              "price_raw": 5726000000,
+              "queue_age_median_s": 0.000621639,
+              "queue_age_p90_s": 0.0008458062,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 0.001312479,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.72,
+              "price_raw": 5720000000,
+              "queue_age_median_s": 0.001312479,
+              "queue_age_p90_s": 0.001312479,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 9.881491825,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.719,
+              "price_raw": 5719000000,
+              "queue_age_median_s": 9.881491825,
+              "queue_age_p90_s": 9.881491825,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 9.904462672,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.718,
+              "price_raw": 5718000000,
+              "queue_age_median_s": 4.9523932145,
+              "queue_age_p90_s": 8.9140487805,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 440.667295828,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.717,
+              "price_raw": 5717000000,
+              "queue_age_median_s": 440.667295828,
+              "queue_age_p90_s": 440.667295828,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 357.395976029,
+              "front_order_size": 1,
+              "largest_order_share": 0.6666666666666666,
+              "order_count": 2,
+              "price": 5.715,
+              "price_raw": 5715000000,
+              "queue_age_median_s": 279.264205217,
+              "queue_age_p90_s": 341.7696218666,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 14.229963936,
+              "front_order_size": 2,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.714,
+              "price_raw": 5714000000,
+              "queue_age_median_s": 14.229963936,
+              "queue_age_p90_s": 14.229963936,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 638.57323838,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.713,
+              "price_raw": 5713000000,
+              "queue_age_median_s": 319.885319244,
+              "queue_age_p90_s": 574.8356545528001,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 653.972140774,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.711,
+              "price_raw": 5711000000,
+              "queue_age_median_s": 653.972140774,
+              "queue_age_p90_s": 653.972140774,
+              "side": "B",
+              "size": 1
+            }
+          ],
+          "bid_order_count_full": 409,
+          "bid_price_level_count_full": 300,
+          "depth_imbalance_full": 0.07469342251950947,
+          "depth_imbalance_n": -0.41379310344827586,
+          "mid": 5.729,
+          "spread": 0.002000000000000668,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 830
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 964
+          },
+          "candidates_promoted": {
+            "status": "OBSERVED",
+            "value": 45
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.074693423
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 36497
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 969569876
+            },
+            "source_recv_ns": 1633302013000000000,
+            "status": "PAST_CARRY",
+            "value": 1633302013
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5729000000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 47946
+          },
+          "open_runways": {
+            "status": "OBSERVED",
+            "value": 1
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 638
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 502
+          },
+          "roll20_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 969569876
+            },
+            "source_recv_ns": 1633302013000000000,
+            "status": "PAST_CARRY",
+            "value": 1.0
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 2000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 969569876
+            },
+            "source_recv_ns": 1633302013000000000,
+            "status": "PAST_CARRY",
+            "value": 9.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5730000000,
+            "best_bid_raw": 5728000000,
+            "touch_migrations_so_far": 5132,
+            "touch_state_of_last_transition": "COMPRESSION"
+          },
+          "channels": {
+            "ask_depth_full": -19.0,
+            "bid_depth_full": 44.0,
+            "candidates_promoted": 11.0,
+            "depth_imbalance_full": 0.034557753,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 698.0,
+            "mid_raw": 14000000.0,
+            "native_records": 2982.0,
+            "open_runways": 0.0,
+            "pending_removal_episodes": 35.0,
+            "resting_tracked_orders": -6.0,
+            "roll20_last_completed_second": 1.818181818,
+            "spread_raw": -2000000.0,
+            "window_signed_flow_last_completed_second": 18.0
+          },
+          "previous_cutoff_recv_ns": 1633301315945525951
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "14e4897725ae050250d23d197270801c77df029b1cc6ffab6a0778882987a435",
+          "level_count": 530,
+          "order_count": 710,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260830516,
+                  "priority_recv_ns": 1633301698517466746,
+                  "priority_sequence": 207506,
+                  "size": 29,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5730000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260833626,
+                  "priority_recv_ns": 1633302013969389282,
+                  "priority_sequence": 215299,
+                  "size": 1,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5728000000
+            }
+          }
+        },
+        "group_index": 36496,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633302013969569876,
+      "entry_hash": "3df5ef1743d06b8ea10e483a4f465522c8d4b7d1137e2c2234d97cf27fce671f",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "8914f0dc6644838b3f209f0d4f3fb83c5af3a3ccbcc9c9df724b169332802e5f",
+      "sequence": 15
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 947,
+          "ask_depth_n": 20,
+          "ask_levels": [
+            {
+              "front_order_age_s": 0.001732513,
+              "front_order_size": 7,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.732,
+              "price_raw": 5732000000,
+              "queue_age_median_s": 0.001732513,
+              "queue_age_p90_s": 0.001732513,
+              "side": "A",
+              "size": 7
+            },
+            {
+              "front_order_age_s": 0.551360346,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.733,
+              "price_raw": 5733000000,
+              "queue_age_median_s": 0.551360346,
+              "queue_age_p90_s": 0.551360346,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 137.298722051,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.734,
+              "price_raw": 5734000000,
+              "queue_age_median_s": 137.298722051,
+              "queue_age_p90_s": 137.298722051,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 137.298887186,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.735,
+              "price_raw": 5735000000,
+              "queue_age_median_s": 136.6780565905,
+              "queue_age_p90_s": 137.17472106690002,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 310.659520961,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.736,
+              "price_raw": 5736000000,
+              "queue_age_median_s": 310.659520961,
+              "queue_age_p90_s": 310.659520961,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 310.660040885,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.737,
+              "price_raw": 5737000000,
+              "queue_age_median_s": 87.199189104,
+              "queue_age_p90_s": 265.9678705288,
+              "side": "A",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 447.124262862,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.738,
+              "price_raw": 5738000000,
+              "queue_age_median_s": 447.124262862,
+              "queue_age_p90_s": 447.124262862,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 451.987025991,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.739,
+              "price_raw": 5739000000,
+              "queue_age_median_s": 451.987025991,
+              "queue_age_p90_s": 451.987025991,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 451.987190582,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.74,
+              "price_raw": 5740000000,
+              "queue_age_median_s": 451.987190582,
+              "queue_age_p90_s": 451.987190582,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 480.306687489,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.741,
+              "price_raw": 5741000000,
+              "queue_age_median_s": 464.20271958399996,
+              "queue_age_p90_s": 477.085893908,
+              "side": "A",
+              "size": 2
+            }
+          ],
+          "ask_order_count_full": 345,
+          "ask_price_level_count_full": 242,
+          "best_ask": 5.732,
+          "best_bid": 5.728,
+          "bid_depth_full": 1021,
+          "bid_depth_n": 18,
+          "bid_levels": [
+            {
+              "front_order_age_s": 50.584952608,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.728,
+              "price_raw": 5728000000,
+              "queue_age_median_s": 25.293248229,
+              "queue_age_p90_s": 45.5266117322,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 354.396370306,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.727,
+              "price_raw": 5727000000,
+              "queue_age_median_s": 354.396370306,
+              "queue_age_p90_s": 354.396370306,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 357.014562107,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.726,
+              "price_raw": 5726000000,
+              "queue_age_median_s": 357.014562107,
+              "queue_age_p90_s": 357.014562107,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 357.018722027,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.725,
+              "price_raw": 5725000000,
+              "queue_age_median_s": 357.018722027,
+              "queue_age_p90_s": 357.018722027,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 374.574038997,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 3,
+              "price": 5.724,
+              "price_raw": 5724000000,
+              "queue_age_median_s": 357.02094128,
+              "queue_age_p90_s": 371.06341945360003,
+              "side": "B",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 439.006287791,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.722,
+              "price_raw": 5722000000,
+              "queue_age_median_s": 439.006287791,
+              "queue_age_p90_s": 439.006287791,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 443.031075433,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.721,
+              "price_raw": 5721000000,
+              "queue_age_median_s": 352.074897185,
+              "queue_age_p90_s": 424.8398397834,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 443.032033406,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.72,
+              "price_raw": 5720000000,
+              "queue_age_median_s": 392.607589241,
+              "queue_age_p90_s": 432.947144573,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 443.032391071,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.719,
+              "price_raw": 5719000000,
+              "queue_age_median_s": 357.014983371,
+              "queue_age_p90_s": 425.828909531,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 775.679674662,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.718,
+              "price_raw": 5718000000,
+              "queue_age_median_s": 775.679674662,
+              "queue_age_p90_s": 775.679674662,
+              "side": "B",
+              "size": 1
+            }
+          ],
+          "bid_order_count_full": 426,
+          "bid_price_level_count_full": 306,
+          "depth_imbalance_full": 0.037601626016260166,
+          "depth_imbalance_n": -0.05263157894736842,
+          "mid": 5.73,
+          "spread": 0.004000000000000448,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 947
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 1021
+          },
+          "candidates_promoted": {
+            "status": "OBSERVED",
+            "value": 54
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.037601626
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 38778
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 42744781866
+            },
+            "source_recv_ns": 1633302737000000000,
+            "status": "PAST_CARRY",
+            "value": 1633302737
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5730000000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 51005
+          },
+          "open_runways": {
+            "status": "OBSERVED",
+            "value": 1
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 628
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 563
+          },
+          "roll20_last_completed_second": {
+            "reason": "the trailing window carries no classified volume",
+            "status": "STRUCTURALLY_NOT_YET_KNOWN"
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 4000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 744781866
+            },
+            "source_recv_ns": 1633302779000000000,
+            "status": "TRUE_ZERO",
+            "value": 0.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5732000000,
+            "best_bid_raw": 5728000000,
+            "touch_migrations_so_far": 5452,
+            "touch_state_of_last_transition": "COMPRESSION"
+          },
+          "channels": {
+            "ask_depth_full": 117.0,
+            "bid_depth_full": 57.0,
+            "candidates_promoted": 9.0,
+            "depth_imbalance_full": -0.037091797,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 724.0,
+            "mid_raw": 1000000.0,
+            "native_records": 3059.0,
+            "open_runways": 0.0,
+            "pending_removal_episodes": -10.0,
+            "resting_tracked_orders": 61.0,
+            "spread_raw": 2000000.0,
+            "window_signed_flow_last_completed_second": -9.0
+          },
+          "previous_cutoff_recv_ns": 1633302013969569876
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "2c47140f6c341e322e4467912ddbe01c43de11297b0dfd9e9cbff87bcece6a79",
+          "level_count": 548,
+          "order_count": 771,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260839140,
+                  "priority_recv_ns": 1633302779743049353,
+                  "priority_sequence": 227338,
+                  "size": 7,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5732000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260837677,
+                  "priority_recv_ns": 1633302729159829258,
+                  "priority_sequence": 225614,
+                  "size": 1,
+                  "volume_ahead": 0
+                },
+                {
+                  "order_id": 786260839141,
+                  "priority_recv_ns": 1633302779743238016,
+                  "priority_sequence": 227341,
+                  "size": 1,
+                  "volume_ahead": 1
+                }
+              ],
+              "price_raw": 5728000000
+            }
+          }
+        },
+        "group_index": 38777,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633302779744781866,
+      "entry_hash": "4702551b3c8c7592293f6bf6b454ac0897ede17de1dfbdffdc721965355e9e22",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "3df5ef1743d06b8ea10e483a4f465522c8d4b7d1137e2c2234d97cf27fce671f",
+      "sequence": 16
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 976,
+          "ask_depth_n": 17,
+          "ask_levels": [
+            {
+              "front_order_age_s": 224.403382242,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.721,
+              "price_raw": 5721000000,
+              "queue_age_median_s": 137.063038558,
+              "queue_age_p90_s": 206.93531350519999,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 344.851057507,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.722,
+              "price_raw": 5722000000,
+              "queue_age_median_s": 284.627297923,
+              "queue_age_p90_s": 332.80630559020005,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 515.295981653,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.723,
+              "price_raw": 5723000000,
+              "queue_age_median_s": 515.295981653,
+              "queue_age_p90_s": 515.295981653,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 523.196864158,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.724,
+              "price_raw": 5724000000,
+              "queue_age_median_s": 523.196864158,
+              "queue_age_p90_s": 523.196864158,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 523.197677076,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.725,
+              "price_raw": 5725000000,
+              "queue_age_median_s": 523.197677076,
+              "queue_age_p90_s": 523.197677076,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 566.694436297,
+              "front_order_size": 2,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.726,
+              "price_raw": 5726000000,
+              "queue_age_median_s": 566.694436297,
+              "queue_age_p90_s": 566.694436297,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 333.925589197,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.727,
+              "price_raw": 5727000000,
+              "queue_age_median_s": 333.925589197,
+              "queue_age_p90_s": 333.925589197,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 621.655897476,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.728,
+              "price_raw": 5728000000,
+              "queue_age_median_s": 548.0536972694999,
+              "queue_age_p90_s": 606.9354574347,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 856.601063706,
+              "front_order_size": 1,
+              "largest_order_share": 0.25,
+              "order_count": 4,
+              "price": 5.729,
+              "price_raw": 5729000000,
+              "queue_age_median_s": 634.1213767419999,
+              "queue_age_p90_s": 792.5272370577,
+              "side": "A",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 879.823390335,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.73,
+              "price_raw": 5730000000,
+              "queue_age_median_s": 879.823390335,
+              "queue_age_p90_s": 879.823390335,
+              "side": "A",
+              "size": 1
+            }
+          ],
+          "ask_order_count_full": 373,
+          "ask_price_level_count_full": 257,
+          "best_ask": 5.721,
+          "best_bid": 5.716,
+          "bid_depth_full": 1060,
+          "bid_depth_n": 21,
+          "bid_levels": [
+            {
+              "front_order_age_s": 6.980009377,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.716,
+              "price_raw": 5716000000,
+              "queue_age_median_s": 6.980009377,
+              "queue_age_p90_s": 6.980009377,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 210.182209954,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.715,
+              "price_raw": 5715000000,
+              "queue_age_median_s": 210.182209954,
+              "queue_age_p90_s": 210.182209954,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 461.07244394,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.714,
+              "price_raw": 5714000000,
+              "queue_age_median_s": 461.07244394,
+              "queue_age_p90_s": 461.07244394,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 461.074617461,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.713,
+              "price_raw": 5713000000,
+              "queue_age_median_s": 461.074617461,
+              "queue_age_p90_s": 461.074617461,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 473.699617073,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.712,
+              "price_raw": 5712000000,
+              "queue_age_median_s": 473.699617073,
+              "queue_age_p90_s": 473.699617073,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 478.985543333,
+              "front_order_size": 1,
+              "largest_order_share": 0.625,
+              "order_count": 4,
+              "price": 5.711,
+              "price_raw": 5711000000,
+              "queue_age_median_s": 462.237488721,
+              "queue_age_p90_s": 474.4404448139,
+              "side": "B",
+              "size": 8
+            },
+            {
+              "front_order_age_s": 479.121022091,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.71,
+              "price_raw": 5710000000,
+              "queue_age_median_s": 476.8281411945,
+              "queue_age_p90_s": 478.6624459117,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 5076.206606068,
+              "front_order_size": 1,
+              "largest_order_share": 0.25,
+              "order_count": 4,
+              "price": 5.709,
+              "price_raw": 5709000000,
+              "queue_age_median_s": 2418.5330477585,
+              "queue_age_p90_s": 4346.5063150252,
+              "side": "B",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 2720.716546588,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.708,
+              "price_raw": 5708000000,
+              "queue_age_median_s": 2720.716546588,
+              "queue_age_p90_s": 2720.716546588,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 220.961571142,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.707,
+              "price_raw": 5707000000,
+              "queue_age_median_s": 220.961571142,
+              "queue_age_p90_s": 220.961571142,
+              "side": "B",
+              "size": 1
+            }
+          ],
+          "bid_order_count_full": 444,
+          "bid_price_level_count_full": 309,
+          "depth_imbalance_full": 0.0412573673870334,
+          "depth_imbalance_n": 0.10526315789473684,
+          "mid": 5.718500000000001,
+          "spread": 0.004999999999999893,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 976
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 1060
+          },
+          "candidates_promoted": {
+            "status": "OBSERVED",
+            "value": 70
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.041257367
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 41059
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 4331796184
+            },
+            "source_recv_ns": 1633304069000000000,
+            "status": "PAST_CARRY",
+            "value": 1633304069
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5718500000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 53963
+          },
+          "open_runways": {
+            "status": "TRUE_ZERO",
+            "value": 0
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 647
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 609
+          },
+          "roll20_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 331796184
+            },
+            "source_recv_ns": 1633304073000000000,
+            "status": "PAST_CARRY",
+            "value": -1.0
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 5000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 331796184
+            },
+            "source_recv_ns": 1633304073000000000,
+            "status": "PAST_CARRY",
+            "value": -1.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5721000000,
+            "best_bid_raw": 5716000000,
+            "touch_migrations_so_far": 5793,
+            "touch_state_of_last_transition": "EXPANSION"
+          },
+          "channels": {
+            "ask_depth_full": 29.0,
+            "bid_depth_full": 39.0,
+            "candidates_promoted": 16.0,
+            "depth_imbalance_full": 0.003655741,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 1332.0,
+            "mid_raw": -11500000.0,
+            "native_records": 2958.0,
+            "open_runways": -1.0,
+            "pending_removal_episodes": 19.0,
+            "resting_tracked_orders": 46.0,
+            "spread_raw": 1000000.0,
+            "window_signed_flow_last_completed_second": -1.0
+          },
+          "previous_cutoff_recv_ns": 1633302779744781866
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "ad7626d3cec2b32977870fde29f62a67f96db506d0537327ac2f31e37410506c",
+          "level_count": 566,
+          "order_count": 817,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260847684,
+                  "priority_recv_ns": 1633303848928413942,
+                  "priority_sequence": 247047,
+                  "size": 1,
+                  "volume_ahead": 0
+                },
+                {
+                  "order_id": 786260848233,
+                  "priority_recv_ns": 1633304023609101310,
+                  "priority_sequence": 248234,
+                  "size": 1,
+                  "volume_ahead": 1
+                }
+              ],
+              "price_raw": 5721000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260848457,
+                  "priority_recv_ns": 1633304066351786807,
+                  "priority_sequence": 248730,
+                  "size": 1,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5716000000
+            }
+          }
+        },
+        "group_index": 41058,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633304073331796184,
+      "entry_hash": "5792361a467b2734b8ab6bda5561fb500c6a405486db2c3fa686a5edae38d13c",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "4702551b3c8c7592293f6bf6b454ac0897ede17de1dfbdffdc721965355e9e22",
+      "sequence": 17
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 946,
+          "ask_depth_n": 19,
+          "ask_levels": [
+            {
+              "front_order_age_s": 0.040943995,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.731,
+              "price_raw": 5731000000,
+              "queue_age_median_s": 0.040943995,
+              "queue_age_p90_s": 0.040943995,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 655.908730514,
+              "front_order_size": 2,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.732,
+              "price_raw": 5732000000,
+              "queue_age_median_s": 655.908730514,
+              "queue_age_p90_s": 655.908730514,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 690.276086807,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.733,
+              "price_raw": 5733000000,
+              "queue_age_median_s": 690.276086807,
+              "queue_age_p90_s": 690.276086807,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 739.97049047,
+              "front_order_size": 1,
+              "largest_order_share": 0.6666666666666666,
+              "order_count": 2,
+              "price": 5.734,
+              "price_raw": 5734000000,
+              "queue_age_median_s": 738.0745913569999,
+              "queue_age_p90_s": 739.5913106474,
+              "side": "A",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 747.087034419,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.735,
+              "price_raw": 5735000000,
+              "queue_age_median_s": 587.7121068275001,
+              "queue_age_p90_s": 715.2120489007001,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 2996.35485845,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.736,
+              "price_raw": 5736000000,
+              "queue_age_median_s": 687.143483579,
+              "queue_age_p90_s": 2534.5125834758,
+              "side": "A",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 2996.355378374,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.737,
+              "price_raw": 5737000000,
+              "queue_age_median_s": 1505.897164732,
+              "queue_age_p90_s": 2698.2637356456,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 3132.819600351,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.738,
+              "price_raw": 5738000000,
+              "queue_age_median_s": 1586.1036687380001,
+              "queue_age_p90_s": 2823.4764140284,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 3137.68236348,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.739,
+              "price_raw": 5739000000,
+              "queue_age_median_s": 1845.7455937225,
+              "queue_age_p90_s": 2879.2950095285,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 3137.682528071,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.74,
+              "price_raw": 5740000000,
+              "queue_age_median_s": 3137.682528071,
+              "queue_age_p90_s": 3137.682528071,
+              "side": "A",
+              "size": 1
+            }
+          ],
+          "ask_order_count_full": 356,
+          "ask_price_level_count_full": 243,
+          "best_ask": 5.731,
+          "best_bid": 5.728,
+          "bid_depth_full": 1066,
+          "bid_depth_n": 20,
+          "bid_levels": [
+            {
+              "front_order_age_s": 226.141523286,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.728,
+              "price_raw": 5728000000,
+              "queue_age_median_s": 113.091091975,
+              "queue_age_p90_s": 203.53143702379998,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 317.888562575,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.727,
+              "price_raw": 5727000000,
+              "queue_age_median_s": 316.075055331,
+              "queue_age_p90_s": 317.52586112619997,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 1134.139420896,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.726,
+              "price_raw": 5726000000,
+              "queue_age_median_s": 1132.210883274,
+              "queue_age_p90_s": 1133.7537133716,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 850.708789832,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.725,
+              "price_raw": 5725000000,
+              "queue_age_median_s": 850.708789832,
+              "queue_age_p90_s": 850.708789832,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 3.43935363,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.724,
+              "price_raw": 5724000000,
+              "queue_age_median_s": 3.43935363,
+              "queue_age_p90_s": 3.43935363,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 660.506286315,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.72,
+              "price_raw": 5720000000,
+              "queue_age_median_s": 442.645551614,
+              "queue_age_p90_s": 616.9341393748,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1248.162077941,
+              "front_order_size": 1,
+              "largest_order_share": 0.25,
+              "order_count": 4,
+              "price": 5.719,
+              "price_raw": 5719000000,
+              "queue_age_median_s": 716.9772096755,
+              "queue_age_p90_s": 1239.611527831,
+              "side": "B",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 1602.290533125,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.715,
+              "price_raw": 5715000000,
+              "queue_age_median_s": 1018.856320172,
+              "queue_age_p90_s": 1485.6036905344,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1853.180767111,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.714,
+              "price_raw": 5714000000,
+              "queue_age_median_s": 928.310030009,
+              "queue_age_p90_s": 1668.2066196906,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1853.182940632,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.713,
+              "price_raw": 5713000000,
+              "queue_age_median_s": 1853.182940632,
+              "queue_age_p90_s": 1853.182940632,
+              "side": "B",
+              "size": 1
+            }
+          ],
+          "bid_order_count_full": 450,
+          "bid_price_level_count_full": 303,
+          "depth_imbalance_full": 0.05964214711729622,
+          "depth_imbalance_n": 0.02564102564102564,
+          "mid": 5.7295,
+          "spread": 0.0030000000000001137,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 946
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 1066
+          },
+          "candidates_promoted": {
+            "status": "OBSERVED",
+            "value": 88
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.059642147
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 43340
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 2440119355
+            },
+            "source_recv_ns": 1633305463000000000,
+            "status": "PAST_CARRY",
+            "value": 1633305463
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5729500000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 56759
+          },
+          "open_runways": {
+            "status": "OBSERVED",
+            "value": 1
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 696
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 598
+          },
+          "roll20_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 440119355
+            },
+            "source_recv_ns": 1633305465000000000,
+            "status": "PAST_CARRY",
+            "value": 1.0
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 3000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 440119355
+            },
+            "source_recv_ns": 1633305465000000000,
+            "status": "PAST_CARRY",
+            "value": 3.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5731000000,
+            "best_bid_raw": 5728000000,
+            "touch_migrations_so_far": 6061,
+            "touch_state_of_last_transition": "EXPANSION"
+          },
+          "channels": {
+            "ask_depth_full": -30.0,
+            "bid_depth_full": 6.0,
+            "candidates_promoted": 18.0,
+            "depth_imbalance_full": 0.01838478,
+            "groups_delivered": 2281.0,
+            "last_trade_second": 1394.0,
+            "mid_raw": 11000000.0,
+            "native_records": 2796.0,
+            "open_runways": 1.0,
+            "pending_removal_episodes": 49.0,
+            "resting_tracked_orders": -11.0,
+            "roll20_last_completed_second": 2.0,
+            "spread_raw": -2000000.0,
+            "window_signed_flow_last_completed_second": 4.0
+          },
+          "previous_cutoff_recv_ns": 1633304073331796184
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "08d54a288921243ea7dd7f291634eed0fdff70a7bc84e41e18430ab0349ccd60",
+          "level_count": 546,
+          "order_count": 806,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260855060,
+                  "priority_recv_ns": 1633305465399175360,
+                  "priority_sequence": 264722,
+                  "size": 1,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5731000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260854349,
+                  "priority_recv_ns": 1633305239298596069,
+                  "priority_sequence": 262916,
+                  "size": 1,
+                  "volume_ahead": 0
+                },
+                {
+                  "order_id": 786260855200,
+                  "priority_recv_ns": 1633305465399458691,
+                  "priority_sequence": 264729,
+                  "size": 1,
+                  "volume_ahead": 1
+                }
+              ],
+              "price_raw": 5728000000
+            }
+          }
+        },
+        "group_index": 43339,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633305465440119355,
+      "entry_hash": "61779a711ebb1fe75dbe57dee01977a036fe92ca35286007b0b25e013e35fb30",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "5792361a467b2734b8ab6bda5561fb500c6a405486db2c3fa686a5edae38d13c",
+      "sequence": 18
+    },
+    {
+      "body": {
+        "book": {
+          "ask_depth_full": 950,
+          "ask_depth_n": 20,
+          "ask_levels": [
+            {
+              "front_order_age_s": 7.347150169,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.731,
+              "price_raw": 5731000000,
+              "queue_age_median_s": 7.347150169,
+              "queue_age_p90_s": 7.347150169,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 786.840682864,
+              "front_order_size": 2,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.732,
+              "price_raw": 5732000000,
+              "queue_age_median_s": 786.840682864,
+              "queue_age_p90_s": 786.840682864,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 870.90244282,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 3,
+              "price": 5.734,
+              "price_raw": 5734000000,
+              "queue_age_median_s": 867.110644594,
+              "queue_age_p90_s": 870.1440831748,
+              "side": "A",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 878.018986769,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.735,
+              "price_raw": 5735000000,
+              "queue_age_median_s": 718.6440591774999,
+              "queue_age_p90_s": 846.1440012507,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 3127.2868108,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.736,
+              "price_raw": 5736000000,
+              "queue_age_median_s": 818.075435929,
+              "queue_age_p90_s": 2665.4445358258,
+              "side": "A",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 3127.287330724,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.737,
+              "price_raw": 5737000000,
+              "queue_age_median_s": 1636.829117082,
+              "queue_age_p90_s": 2829.1956879956006,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 3263.751552701,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.738,
+              "price_raw": 5738000000,
+              "queue_age_median_s": 3263.751552701,
+              "queue_age_p90_s": 3263.751552701,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 3268.61431583,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.739,
+              "price_raw": 5739000000,
+              "queue_age_median_s": 1976.6775460725,
+              "queue_age_p90_s": 3010.2269618785,
+              "side": "A",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 3268.614480421,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.74,
+              "price_raw": 5740000000,
+              "queue_age_median_s": 3268.614480421,
+              "queue_age_p90_s": 3268.614480421,
+              "side": "A",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 3296.933977328,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.741,
+              "price_raw": 5741000000,
+              "queue_age_median_s": 3280.830009423,
+              "queue_age_p90_s": 3293.7131837469997,
+              "side": "A",
+              "size": 2
+            }
+          ],
+          "ask_order_count_full": 354,
+          "ask_price_level_count_full": 240,
+          "best_ask": 5.731,
+          "best_bid": 5.729,
+          "bid_depth_full": 1067,
+          "bid_depth_n": 19,
+          "bid_levels": [
+            {
+              "front_order_age_s": 111.211314544,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.729,
+              "price_raw": 5729000000,
+              "queue_age_median_s": 111.211314544,
+              "queue_age_p90_s": 111.211314544,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 357.073475636,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.728,
+              "price_raw": 5728000000,
+              "queue_age_median_s": 357.073475636,
+              "queue_age_p90_s": 357.073475636,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 448.820514925,
+              "front_order_size": 1,
+              "largest_order_share": 0.3333333333333333,
+              "order_count": 3,
+              "price": 5.727,
+              "price_raw": 5727000000,
+              "queue_age_median_s": 447.007007681,
+              "queue_age_p90_s": 448.45781347620004,
+              "side": "B",
+              "size": 3
+            },
+            {
+              "front_order_age_s": 1265.071373246,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.726,
+              "price_raw": 5726000000,
+              "queue_age_median_s": 1263.1428356239999,
+              "queue_age_p90_s": 1264.6856657216001,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 981.640742182,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.725,
+              "price_raw": 5725000000,
+              "queue_age_median_s": 981.640742182,
+              "queue_age_p90_s": 981.640742182,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 134.37130598,
+              "front_order_size": 1,
+              "largest_order_share": 1.0,
+              "order_count": 1,
+              "price": 5.724,
+              "price_raw": 5724000000,
+              "queue_age_median_s": 134.37130598,
+              "queue_age_p90_s": 134.37130598,
+              "side": "B",
+              "size": 1
+            },
+            {
+              "front_order_age_s": 791.438238665,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.72,
+              "price_raw": 5720000000,
+              "queue_age_median_s": 573.577503964,
+              "queue_age_p90_s": 747.8660917248001,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1379.094030291,
+              "front_order_size": 1,
+              "largest_order_share": 0.25,
+              "order_count": 4,
+              "price": 5.719,
+              "price_raw": 5719000000,
+              "queue_age_median_s": 847.9091620255,
+              "queue_age_p90_s": 1370.5434801810002,
+              "side": "B",
+              "size": 4
+            },
+            {
+              "front_order_age_s": 1733.222485475,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.715,
+              "price_raw": 5715000000,
+              "queue_age_median_s": 1149.788272522,
+              "queue_age_p90_s": 1616.5356428844,
+              "side": "B",
+              "size": 2
+            },
+            {
+              "front_order_age_s": 1984.112719461,
+              "front_order_size": 1,
+              "largest_order_share": 0.5,
+              "order_count": 2,
+              "price": 5.714,
+              "price_raw": 5714000000,
+              "queue_age_median_s": 1059.241982359,
+              "queue_age_p90_s": 1799.1385720406001,
+              "side": "B",
+              "size": 2
+            }
+          ],
+          "bid_order_count_full": 451,
+          "bid_price_level_count_full": 304,
+          "depth_imbalance_full": 0.05800694100148736,
+          "depth_imbalance_n": -0.02564102564102564,
+          "mid": 5.73,
+          "spread": 0.0019999999999997797,
+          "top_n": 10
+        },
+        "channels": {
+          "ask_depth_full": {
+            "status": "OBSERVED",
+            "value": 950
+          },
+          "bid_depth_full": {
+            "status": "OBSERVED",
+            "value": 1067
+          },
+          "candidates_promoted": {
+            "status": "OBSERVED",
+            "value": 91
+          },
+          "depth_imbalance_full": {
+            "status": "OBSERVED",
+            "value": 0.058006941
+          },
+          "groups_delivered": {
+            "status": "OBSERVED",
+            "value": 43569
+          },
+          "last_trade_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 372071705
+            },
+            "source_recv_ns": 1633305596000000000,
+            "status": "PAST_CARRY",
+            "value": 1633305596
+          },
+          "mid_raw": {
+            "status": "OBSERVED",
+            "value": 5730000000.0
+          },
+          "native_records": {
+            "status": "OBSERVED",
+            "value": 57027
+          },
+          "open_runways": {
+            "status": "TRUE_ZERO",
+            "value": 0
+          },
+          "pending_removal_episodes": {
+            "status": "OBSERVED",
+            "value": 694
+          },
+          "resting_tracked_orders": {
+            "status": "OBSERVED",
+            "value": 597
+          },
+          "roll20_last_completed_second": {
+            "reason": "the trailing window carries no classified volume",
+            "status": "STRUCTURALLY_NOT_YET_KNOWN"
+          },
+          "spread_raw": {
+            "status": "OBSERVED",
+            "value": 2000000
+          },
+          "window_signed_flow_last_completed_second": {
+            "age": {
+              "clock": "clock_receive_time",
+              "observed_ns": 372071705
+            },
+            "source_recv_ns": 1633305596000000000,
+            "status": "TRUE_ZERO",
+            "value": 0.0
+          }
+        },
+        "delta": {
+          "book": {
+            "best_ask_raw": 5731000000,
+            "best_bid_raw": 5729000000,
+            "touch_migrations_so_far": 6079,
+            "touch_state_of_last_transition": "COMPRESSION"
+          },
+          "channels": {
+            "ask_depth_full": 4.0,
+            "bid_depth_full": 1.0,
+            "candidates_promoted": 3.0,
+            "depth_imbalance_full": -0.001635206,
+            "groups_delivered": 229.0,
+            "last_trade_second": 133.0,
+            "mid_raw": 500000.0,
+            "native_records": 268.0,
+            "open_runways": -1.0,
+            "pending_removal_episodes": -2.0,
+            "resting_tracked_orders": -1.0,
+            "spread_raw": -1000000.0,
+            "window_signed_flow_last_completed_second": -3.0
+          },
+          "previous_cutoff_recv_ns": 1633305465440119355
+        },
+        "fifo_state": {
+          "basis": "TOUCH_FIFO_IDENTITIES_PLUS_FULL_BOOK_SHA256: the fifo_queue identities at the bid and ask touch, because queue-position and priority questions read the front of the queue, plus the sha256 of the complete book_full snapshot with its level and order counts, because that proves the whole FIFO state at this cutoff without carrying every level in every frame - the full book_full stays on the member row",
+          "book_full_sha256": "ef82eb248cf42245172a285562459b85b5288a7f445dc83983bcdeef6c7b7063",
+          "level_count": 544,
+          "order_count": 805,
+          "touch": {
+            "ask": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260855060,
+                  "priority_recv_ns": 1633305589024921536,
+                  "priority_sequence": 266479,
+                  "size": 1,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5731000000
+            },
+            "bid": {
+              "fifo_queue": [
+                {
+                  "order_id": 786260855382,
+                  "priority_recv_ns": 1633305485160757161,
+                  "priority_sequence": 265105,
+                  "size": 1,
+                  "volume_ahead": 0
+                }
+              ],
+              "price_raw": 5729000000
+            }
+          }
+        },
+        "group_index": 43568,
+        "missing_channels": []
+      },
+      "cutoff_recv_ns": 1633305596372071705,
+      "entry_hash": "5330b75e957dc2baf5aad194f01f48ad5c7d29b527ff89e381deee62ec1d521e",
+      "ledger_id": "output_state_and_state_delta_movie",
+      "prev_hash": "61779a711ebb1fe75dbe57dee01977a036fe92ca35286007b0b25e013e35fb30",
+      "sequence": 19
     }
   ],
-  "head_hash": "76e2099507c1275e3437e1f2a1263786b39f66ed2a086a56115b3c1db26addd9",
+  "head_hash": "5330b75e957dc2baf5aad194f01f48ad5c7d29b527ff89e381deee62ec1d521e",
   "ledger_id": "output_state_and_state_delta_movie"
 }

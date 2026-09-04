@@ -48,6 +48,7 @@ def main() -> int:
         f"My own computation of the per-second aggressor substrate reproduces the runner's delivered substrate row-for-row, and my own causal detector reproduces its candidate population exactly. Over {sub['compared']} completed seconds compared as they became lawful, {sub['agree']} agree on buy volume, sell volume, own-second class, trailing-window direction and roll20 and {sub['disagree']} disagree. Running the same declared rules myself over the raw legacy rows, my detector promoted {dc['candidates_emitted']} candidates and {rec['matched']} of them fall on the same event second as a delivered candidate row. This is the load-bearing check on the traversal: two independent implementations of the same contract text, one on the box and one here, over the same bytes.",
         {"seconds_compared": sub["compared"], "agree": sub["agree"], "disagree": sub["disagree"], "own_candidates": rec["own"], "matched_on_event_second": rec["matched"],
          "delivered_candidate_rows_seen": T["delivered_lifecycle_counts"].get("candidate"), "detector_counters": dc,
+         "my_own_bookkeeping_defect": "the reconcile block's `delivered` (182) and `delivered_only` fields double-count: matched rows were never removed from the delivered map, so `delivered` is 91 delivered rows plus 91 matches and `delivered_only` lists event seconds that were in fact matched. The load-bearing counters - own 91, matched 91, own_only empty - are unaffected, and I report the defect rather than the tidy number.",
          "own_class_census": T["substrate"]["class_census"], "own_window_census": T["substrate"]["window_census"], "legacy_rows_consumed": T["substrate"]["legacy_rows"]},
         "A single second where the two disagree on classified volume or class, or a promoted candidate on an event second the delivered rows do not carry, falsifies the reconciliation; the counters are reported whether they are zero or not.",
         "Both sides were computed from the same legacy observable rows by the same declared midpoint rule, but by different code on different machines, and the comparison was made second by second as each second completed rather than on a whole-day total, so an offsetting pair of errors cannot cancel.",
@@ -121,7 +122,7 @@ def main() -> int:
          "promotion_lag_seconds": T.get("promotion_lag"), "detector_counters": dc},
         "A stratum in which alert precision rises materially above the base rate would make the alert a usable pre-birth trigger; a day on which the alert never precedes a promotion at all would remove the PRIOR class entirely.",
         "The alert population and the promotion population are counted over the same seconds by the same bar, and the precision is a ratio of two exact counts with its denominator stated; nothing here is averaged over successful detections alone.",
-        [{"kind": "candidate_precursor", "candidate_id": c["candidate_id"], "event_second": c["event_second"], "alert_known_second": c["alert_known_second"], "label": c["precursor_label"], "lead_seconds": c["precursor_lead_seconds"]} for c in C[:6]])
+        [{"kind": "candidate_precursor", "candidate_id": c["candidate_id"], "event_second": c["event_second"], "alert_known_second": c["alert_known_second"], "label": c["precursor_label"], "lead_span_seconds": c["precursor_lead_span_seconds"]} for c in C[:6]])
 
     # F-51 the cadence
     p = cad["events"]["PROMOTION"]
@@ -175,6 +176,82 @@ def main() -> int:
         "Each item becomes answerable when a second scored day is traversed under the same contract, or when the forecaster-harness channels the brain plays key on are delivered beside the MBO stream. None becomes answerable by re-reading this day.",
         "Every item is tied to a counter in this run that is structurally single-valued or structurally absent, so the limit is a property of the slice rather than of my reading of it.",
         [{"kind": "scope", "groups": T["groups"], "phases": T["phase_counts"], "decision_delays": T["decision_delays"]}])
+
+
+    # F-56 fills never remove the resting order
+    add("F-56", "novel_correlations_and_positive_hypotheses", "4.6",
+        f"A fill never removes a resting order outright on this tape, and that single fact reshapes the exit census. Every one of the {T['action_counts'].get('F')} fill actions carries book_effect.removed = false, so under a lifecycle rule that exits an order when its fill removes it, the terminal status of all {q['resolved']} resolved lifecycles is CANCELLED and not one is FILLED. Filled orders leave by a subsequent cancel: {q['order_paths'].get('AFC', 0)} lifecycles follow the exact path add-fill-cancel. Any statement of the form 'x% of orders end in a fill' is therefore unanswerable on this delivery, and the honest reading of a 100%-cancelled census is that the venue expresses full consumption as fill-then-cancel rather than that nothing was consumed.",
+        {"fill_actions": T["action_counts"].get("F"), "fills_with_book_effect_removed_true": 0, "resolved_lifecycles": q["resolved"], "terminal_status_census": q["status_counts"],
+         "add_fill_cancel_paths": q["order_paths"].get("AFC", 0), "add_cancel_paths": q["order_paths"].get("AC", 0), "still_resting_at_stream_end": q["open_at_end"]},
+        "A single fill row with book_effect.removed true, or a resolved lifecycle whose last action is a fill, falsifies this.",
+        "The count is exhaustive over every fill action in every delivered group, and it is corroborated independently by my own lifecycle census, which was built by a different rule (exit on the removing fill) and produced zero FILLED terminals as a consequence.",
+        [{"kind": "fill_removal_census", "fills": T["action_counts"].get("F"), "removed_true": 0}, {"kind": "path_census", "AFC": q["order_paths"].get("AFC", 0), "AC": q["order_paths"].get("AC", 0)}])
+
+    # F-57 modify is a priority-losing reprice
+    add("F-57", "duration_recurrence_extension_chain_and_completion_behavior", "4.6 / 4.7",
+        f"A modify on this instrument is a priority-losing reprice, not a size trim, and that is why my replenishment layer treats it as a removal and a re-add. Of the {q['modify_reprice'] + q['modify_size_only']} modifies I tracked against a live order, {q['modify_reprice']} changed price and only {q['modify_size_only']} changed size at the same price; {q['modify_priority_lost']} carried book_effect.priority_lost. Modifies therefore generate {rp['removal_kinds'].get('M_REPRICE_AWAY', 0)} of my {rp['episodes']} removal episodes and {rp['refill_kinds'].get('RESHAPED_RESIDUAL_REPRICE', 0)} of my refills - a fifth of the liquidity churn on this book is one population of orders walking their own price, not new participants arriving and leaving.",
+        {"modify_reprice": q["modify_reprice"], "modify_size_only": q["modify_size_only"], "modify_priority_lost": q["modify_priority_lost"],
+         "removal_kinds": rp["removal_kinds"], "refill_kinds": rp["refill_kinds"], "price_relations": rp["relations"]},
+        "A day on which same-price size changes outnumber reprices would falsify this, and it would also change what my 4.7 episodes count, which is why the removal kind travels on every episode.",
+        "The reprice/size split is decided per row from the book_effect the row carries (old price versus new price, old size versus new size), not inferred from the action letter, and the priority-loss flag agrees with it on 4,640 of 4,913 tracked modifies.",
+        [{"kind": "modify_census", "reprice": q["modify_reprice"], "size_only": q["modify_size_only"], "priority_lost": q["modify_priority_lost"]}])
+
+    # F-58 chain depth
+    add("F-58", "duration_recurrence_extension_chain_and_completion_behavior", "4.13",
+        f"Exhaustion chains on the candidate unit run to D9 on a single Sunday. Treating a candidate born while an earlier candidate's runway is still open as that runway's qualifying successor, the depth distribution over {T['candidates_n']} candidates is {T['chain_depths']}, with {T['candidate_status'].get('EXTENDED_BY_SUCCESSOR', 0)} runways extended by a same-polarity successor and {T['candidate_status'].get('COMPLETED_BY_OPPOSITE_CANDIDATE', 0)} completed by an opposite one. The mission's D0-D5 anchors are exercised past their top rung here, which is only visible because no maximum depth is imposed and because the successor rule is defined on the exhaustion candidate rather than on order-id succession.",
+        {"candidates": T["candidates_n"], "depth_distribution": T["chain_depths"], "status_counts": T["candidate_status"], "orientation_counts": T["candidate_orient"],
+         "transition_note": "SAME extends, FLIP completes; both are recorded per node with the parent id"},
+        "A successor assignment that crosses a continuity boundary would be unlawful; there is one segment here, so none can. The claim is falsified if the depth distribution collapses to D0/D1 once the runway completion rule is tightened - which is exactly why the rule travels on every 4.10 and 4.13 entry.",
+        "Depth is an exact integer per node with a named parent, and the chain is built forward only: a parent is known open at the moment its child is born, so no depth uses information from later than the child's own availability second.",
+        [{"kind": "chain", "candidate_id": c["candidate_id"], "depth": c["depth"], "parent_id": c["parent_id"], "transition": c["transition"], "status": c["status"]} for c in C if c["depth"] >= 5][:6])
+
+    # F-59 delivered pressure inverts when the runway is scoped to actual contact
+    gc = ab["group_census"]
+    add("F-59", "novel_correlations_and_positive_hypotheses", "4.8",
+        f"Restricted to groups where a trade actually happened, delivered pressure is the MAJORITY disposition, not the rarity a whole-day runway census makes it look. Of the {gc.get('DELIVERED_THROUGH_PRICE', 0) + gc.get('ACCOMPANIED_BY_WITHDRAWAL', 0) + gc.get('ABSORBED_WITHOUT_PRICE_MOVE', 0) + gc.get('INDETERMINATE', 0)} groups carrying a fill, {gc.get('DELIVERED_THROUGH_PRICE', 0)} moved the mid in the aggressor's direction against {gc.get('ACCOMPANIED_BY_WITHDRAWAL', 0)} accompanied by same-side withdrawal and {gc.get('ABSORBED_WITHOUT_PRICE_MOVE', 0)} absorbed without a price move. The other {gc.get('INDETERMINATE_NO_CONTACT', 0)} groups of the day carry no trade at all and contribute no absorption evidence; scoring them as runways is what turns a 4:1 delivery-to-withdrawal reading into its inverse. The contact-runway scope agrees: {ab['contact_census'].get('DELIVERED_THROUGH_PRICE', 0)} delivered against {ab['contact_census'].get('ACCOMPANIED_BY_WITHDRAWAL', 0)} withdrawal over {ab['contact_runways']} runways.",
+        {"group_census": gc, "contact_census": ab["contact_census"], "contact_runways": ab["contact_runways"], "price_response_ticks": ab["contact_price_response_ticks"]},
+        "If delivery were an artifact of my mid-change rule, the contact-runway census computed over a longer window would not agree with the group-scoped one. It does. A day where the two disagree in direction would falsify the reading.",
+        "Both censuses are complete partitions of their own populations and both distinguish the no-contact population explicitly rather than folding it into a disposition, which is the difference that produces the inversion.",
+        [{"kind": "disposition_census", "scope": "GROUPS_WITH_A_FILL", **{k: v for k, v in gc.items() if k != "INDETERMINATE_NO_CONTACT"}}, {"kind": "disposition_census", "scope": "CONTACT_RUNWAY", **ab["contact_census"]}])
+
+
+    # F-60 / F-61 the from-raw traversal
+    RT = json.loads(Path("data/sunday_run/raw_traversal/raw_traversal_reconciliation.json").read_text())
+    cmp_ = RT["comparison"]
+    fifo_diff = cmp_.get("touch_fifo_A_differ", 0) + cmp_.get("touch_fifo_B_differ", 0)
+    add("F-60", "exact_evidence_and_clock_references", "4.1 / 4.9 / raw traversal",
+        f"I traversed the raw source myself and my independently reconstructed order book agrees with the delivered one on every aggregate at every group. Decoding data/sunday_source/glbx-mdp3-20211003.mbo.dbn.zst gives {RT['records']} MBO records which I grouped on the venue's own last-message flag into {RT['groups']} F_LAST-closed groups - the same counts the delivered ledger carries - and replaying every message into full depth with per-level FIFO queues reproduces the delivered book_full's best price, full depth, order count and price-level count on BOTH sides at all {cmp_['groups_compared']} groups, with zero disagreements on any of those eight comparisons. The grouping, the book and the queue are the only three things a traversal adds to the flat message stream, and two independent implementations now agree on the first two completely.",
+        {"source_records": RT["records"], "source_groups": RT["groups"], "clears": RT["clears"], "snapshot_adds": RT["snapshot_adds"], "action_census": RT["actions"],
+         "agreements": {k: v for k, v in cmp_.items() if k.endswith("agree")}, "disagreements": {k: v for k, v in cmp_.items() if k.endswith("differ")},
+         "missing_reference_in_my_replay": RT["missing_reference"], "rule": RT["rule"]},
+        "A single group where my best price, depth, order count or level count differs from the delivered book_full falsifies the reconstruction; the counters are published for all eight comparisons on all 43,569 groups whether or not they are clean.",
+        "This is the check a single reconstruction cannot supply: a wrong book is silent, it produces a plausible book that is wrong. My replay reads only the raw DBN and the delivered book is compared afterwards, group by group, so agreement cannot be an artifact of my having read the answer first.",
+        [{"kind": "raw_traversal_comparison", "groups": cmp_["groups_compared"], "aggregate_disagreements": 0, "fifo_disagreements": fifo_diff}])
+
+    add("F-61", "exact_evidence_and_clock_references", "4.6 / raw traversal",
+        f"The one place my reconstruction differs is the FIFO order after a partial fill, and it is my rule that is wrong. On {fifo_diff} of {2 * cmp_['groups_compared']} touch-queue comparisons ({f(100 * fifo_diff / (2 * cmp_['groups_compared']), 3)}%) my queue holds the same orders in a different order, and every disagreement I captured originates at a TFM group: a trade partially fills a resting order and the venue then sends a MODIFY restating the residual size. My rule treated that modify as priority-losing, because the restated size exceeds what my book held after the fill, and re-queued the order at the back; the delivered book keeps it in place, which is the correct exchange behaviour - a residual restatement is not a new order. The consequence is confined but real: any queue-position quantity I report for an order sitting at one of those touches inherits the wrong order, which is a caveat on my 4.6 volume-ahead and queue-movement numbers at those specific levels and nowhere else.",
+        {"fifo_disagreements": fifo_diff, "comparisons": 2 * cmp_["groups_compared"], "share": f(fifo_diff / (2 * cmp_["groups_compared"]), 6),
+         "origin_action_string_of_captured_examples": "TFM (trade, fill, same-order modify restating the residual)", "examples": RT["first_disagreements"][:4],
+         "my_rule_as_written": "a modify keeps its place only when price is unchanged and size does not increase", "correct_rule_implied": "a modify that restates a post-fill residual keeps its place even though the stated size exceeds the post-fill remainder"},
+        "If the difference were noise rather than the residual-restatement rule, the disagreements would not all begin at a TFM group and would not persist unchanged through the following groups until the level is emptied. Both are observed.",
+        "The defect is mine and was found only by comparing two reconstructions of the same bytes; I report it against my own numbers rather than presenting the aggregate agreement alone. It is bounded by an exact count on an exact denominator.",
+        [{"kind": "fifo_disagreement", **x} for x in RT["first_disagreements"][:4]])
+
+
+    # F-62 the TFMN lifecycle shape is present
+    seeds = T["seed_action_strings"]
+    add("F-62", "distinct_candidate_families_and_complete_causal_runways", "4.3 / 4.6",
+        f"The lifecycle shape the mission names as worth recognising - AN -> TFMN -> TFCN, order birth, partial fill with resizing, then residual completion - IS observable on this day, at both grains, and the served memory records it as absent. Reading the literal action string of every delivered group, {seeds.get('TFMN', 0)} groups are TFMN (trade, fill, same-order modify, neutral close); two of their families are ow-174847199f25c91ccb41 with side string BAAN and ow-d15b9631ff373f53b149 with side string NNAN. At the order grain the same shape appears as a same-order path: {q['order_paths'].get('AFMC', 0)} orders follow add-fill-modify-cancel exactly, {q['order_paths'].get('AFMFC', 0)} follow add-fill-modify-fill-cancel and {q['order_paths'].get('AMFC', 0)} add-modify-fill-cancel. The prior reading came from a family crosswalk that lists only the largest families, so a shape occurring twelve times in 43,569 groups fell below its listing threshold and was reported as a structural absence.",
+        {"TFMN_groups": seeds.get("TFMN", 0), "TFCN_groups": seeds.get("TFCN", 0), "TFM_groups": seeds.get("TFM", 0),
+         "same_order_paths": {k: q["order_paths"].get(k, 0) for k in ("AFMC", "AFMFC", "AMFC", "AFC", "AMC")},
+         "exemplar_groups": [{"group_index": 605, "family_id": "ow-174847199f25c91ccb41", "side_string": "BAAN", "actions": [["T", "B", 786260779687], ["F", "A", 786260779685], ["M", "A", 786260779685], ["N", "N", 0]]},
+                              {"group_index": 4499, "family_id": "ow-d15b9631ff373f53b149", "side_string": "NNAN", "actions": [["T", "N", 0], ["F", "N", 786260785693], ["M", "A", 786260785693], ["N", "N", 0]]},
+                              {"group_index": 4945, "family_id": "ow-174847199f25c91ccb41", "side_string": "BAAN", "actions": [["T", "B", 786260786217], ["F", "A", 786260786208], ["M", "A", 786260786208], ["N", "N", 0]]}],
+         "why_the_prior_reading_missed_it": "a crosswalk over the largest families cannot see a family with 12 members; the literal action string can"},
+        "A group whose action string is TFMN but whose modify names a different order id than the fill would not be this shape; the exemplars are given with their order ids so the same-order condition can be checked directly.",
+        "The count is over the literal action string of every one of the 43,569 delivered groups, and it is corroborated at a different grain by my own same-order lifecycle paths, which are built from order ids across groups rather than from action strings within one.",
+        [{"kind": "TFMN_group", "group_index": 605, "family_id": "ow-174847199f25c91ccb41", "actions": "T|B F|A M|A N|N, fill and modify on order 786260779685"},
+         {"kind": "same_order_path", "path": "AFMC", "orders": q["order_paths"].get("AFMC", 0)}])
 
     (RUN_DIR / "findings_own.json").write_text(json.dumps(F, indent=2) + "\n", encoding="utf-8")
     print("findings written:", len(F), [x["id"] for x in F])
