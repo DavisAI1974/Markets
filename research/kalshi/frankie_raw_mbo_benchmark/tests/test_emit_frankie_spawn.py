@@ -816,3 +816,20 @@ class DeliveryReceiptGateTest(StopRuleTests):
             self.assertIn("IGNORE_AS_EVIDENCE", text)
             self.assertIn("preserved for later phases", text)
             self.assertIn("44 A_MEMORY seed findings remain in scope", text)
+
+
+class F20ReachesFrankieTest(StopRuleTests):
+    """F-20 is wired into the stream receipt Frankie's own run writes. The prompt must tell
+    him so, and tell him to REPORT the verdict - otherwise the block is produced and read by
+    nothing, the S119 shape."""
+
+    def test_the_prompt_names_the_f20_block_and_requires_its_verdict_in_the_report(self):
+        text = self._emit()
+        for needle in (
+            "F-20 is answered by that receipt, not by a separate pass",
+            "`falsifier_f20`",
+            "withheld_no_own_clock",
+            "withheld_close_occasion",
+            "Report that verdict and both totals",
+        ):
+            self.assertIn(needle, text, needle)

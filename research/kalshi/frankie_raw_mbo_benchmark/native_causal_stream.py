@@ -114,6 +114,9 @@ __all__ = ["NOT_ON_THIS_ROW"]  # re-exported for readers of the delivery: the de
 NS_PER_SECOND = 1_000_000_000
 CAUSAL_CLOCK = "ts_recv_ns"
 STREAM_RECEIPT_SCHEMA = "FRANKIE_NATIVE_RAW_MBO_CAUSAL_STREAM_RECEIPT_V1"
+F20_BEFORE_WIRING = {"withheld_no_own_clock": 43_569, "withheld_close_occasion": 65_960}
+"""F-20's before-numbers on the Sunday ledgers, recorded so the receipt states what it beat.
+The verdict never reads these; they are the record, not the rule."""
 GENESIS_PREVIOUS_RECEIPT_SHA256 = hashlib.sha256(b"").hexdigest()
 """The first group has no predecessor receipt. The chain starts from the hash of nothing,
 declared here rather than left as a magic string in the first receipt."""
@@ -673,10 +676,49 @@ class CausalGroupStream:
                 "groups_with_row_own": self._groups_with_row_own_clocks,
                 "groups_with_derived_from_legacy_clocks": self._groups_with_derived_clocks,
             },
+            # F-20, WIRED INTO THE STREAM. The falsifier is that no lifecycle row is withheld
+            # for want of a clock of its own or for being a close-occasion row. Its verdict is
+            # stated here, in the receipt every run writes and every artifact cites by hash, so
+            # it is produced whether or not anyone remembers a separate pass; a workflow that
+            # judges it reads this block rather than recomputing the rule (O1: one copy).
+            "falsifier_f20": self._falsifier_f20(),
             "receipt_sha256": "",
         }
         receipt["receipt_sha256"] = canonical_hash(receipt, omit="receipt_sha256")
         return receipt
+
+    def _falsifier_f20(self) -> dict[str, Any]:
+        life = self._lifecycle
+        no_clock = dict(sorted(life.withheld_no_own_clock.items()))
+        close_occasion = dict(sorted(life.withheld_close_occasion.items()))
+        no_clock_total = sum(no_clock.values())
+        close_total = sum(close_occasion.values())
+        # Zero counters on a ledger nobody supplied, or on a stream cut short, are not a
+        # PASS: a measure handed nothing is indistinguishable from one that found nothing
+        # (S119, seven of sixteen). The verdict says which of those it is.
+        if life.path is None:
+            verdict = "NO_LIFECYCLE_LEDGER"
+        elif not self._exhausted:
+            verdict = "INCOMPLETE_STREAM"
+        elif no_clock_total == 0 and close_total == 0:
+            verdict = "PASS"
+        else:
+            verdict = "FAIL"
+        return {
+            "falsifier": "F-20",
+            "rule": ("PASS iff the whole stream was consumed with a lifecycle ledger supplied and "
+                     "withheld_no_own_clock and withheld_close_occasion both total zero"),
+            "verdict": verdict,
+            "stream_complete": self._exhausted,
+            "lifecycle_ledger_supplied": life.path is not None,
+            "withheld_no_own_clock_total": no_clock_total,
+            "withheld_close_occasion_total": close_total,
+            "withheld_no_own_clock": no_clock,
+            "withheld_close_occasion": close_occasion,
+            "lifecycle_rows_read": life.rows_read,
+            "lifecycle_rows_attached": life.rows_attached,
+            "before_wiring": dict(F20_BEFORE_WIRING),
+        }
 
 
 def main(argv: list[str] | None = None) -> int:

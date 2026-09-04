@@ -244,6 +244,52 @@ class SidecarAttachmentTest(unittest.TestCase):
             self.assertEqual(receipt["lifecycle_ledger"]["withheld_close_occasion"], {"lineage|STREAM_END": 1})
             self.assertEqual(stream.drain_withheld()["lifecycle"][0]["reason"], "CLOSE_OCCASION")
 
+    def test_f20_verdict_fails_on_a_single_row_withheld_for_want_of_a_clock(self):
+        rows = [
+            {"emitting_section": "mirror", "emitted_on": "GROUP_CLOSE", "member_id": "grp-20211003-0"},
+            {"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE, "clock": "ts_recv_ns"},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            stream = self._stream(Path(tmp), lifecycle=rows)
+            list(stream.iterate())
+            f20 = stream.stream_receipt()["falsifier_f20"]
+            self.assertEqual(f20["verdict"], "FAIL")
+            self.assertEqual(f20["withheld_no_own_clock_total"], 1)
+            self.assertEqual(f20["withheld_no_own_clock"], {"mirror": 1})
+            self.assertEqual(f20["withheld_close_occasion_total"], 0)
+
+    def test_f20_verdict_is_not_pass_when_no_lifecycle_ledger_was_supplied(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            stream = self._stream(Path(tmp), lifecycle=None)
+            list(stream.iterate())
+            f20 = stream.stream_receipt()["falsifier_f20"]
+            self.assertEqual(f20["verdict"], "NO_LIFECYCLE_LEDGER")
+            self.assertFalse(f20["lifecycle_ledger_supplied"])
+            self.assertEqual(f20["withheld_no_own_clock_total"], 0)
+
+    def test_f20_verdict_is_not_pass_on_a_stream_cut_short(self):
+        rows = [{"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE, "clock": "ts_recv_ns"}]
+        with tempfile.TemporaryDirectory() as tmp:
+            stream = self._stream(Path(tmp), lifecycle=rows)
+            stream.next_group()  # one group, then close without exhausting
+            receipt = stream.stream_receipt()
+            self.assertFalse(receipt["complete"])
+            self.assertEqual(receipt["falsifier_f20"]["verdict"], "INCOMPLETE_STREAM")
+            self.assertFalse(receipt["falsifier_f20"]["stream_complete"])
+
+    def test_f20_verdict_fails_on_a_single_close_occasion_row(self):
+        rows = [
+            {"emitting_section": "lineage", "emitted_on": "STREAM_END", "entered_recv_ns": BASE,
+             "exited_recv_ns": None, "status": "CENSORED_STREAM_END", "clock": "ts_recv_ns"},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            stream = self._stream(Path(tmp), lifecycle=rows)
+            list(stream.iterate())
+            f20 = stream.stream_receipt()["falsifier_f20"]
+            self.assertEqual(f20["verdict"], "FAIL")
+            self.assertEqual(f20["withheld_close_occasion_total"], 1)
+            self.assertEqual(f20["withheld_close_occasion"], {"lineage|STREAM_END": 1})
+
     def test_a_lifecycle_row_beyond_the_last_cutoff_is_withheld_and_counted(self):
         rows = [{"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE + 40 * NS, "clock": "ts_recv_ns"}]
         with tempfile.TemporaryDirectory() as tmp:
@@ -522,6 +568,29 @@ class RealLedgersStreamTest(unittest.TestCase):
         self.assertEqual(life["rows_attached"], life["rows_read"])
         self.assertGreater(life["rows_read"], 0)
         self.assertEqual(stream.drain_withheld()["lifecycle"], [])
+
+    def test_f20_verdict_is_carried_by_the_stream_receipt_itself(self):
+        """F-20 is wired INTO the stream, never a separate pass. The receipt every run writes
+        - Frankie's own included - states the falsifier's verdict, so the judgment is produced
+        whether anyone remembers to run a workflow or not. PASS iff both counters are zero."""
+        stream = CausalGroupStream(
+            self.ledgers["exact_member_rows"], self.ledgers["exact_lifecycle_rows"],
+            self.ledgers["legacy_observable_rows"], run_id="stream-fixture", arm="A_CLEAN",
+        )
+        list(stream.iterate())
+        receipt = stream.stream_receipt()
+        f20 = receipt["falsifier_f20"]
+        self.assertEqual(f20["falsifier"], "F-20")
+        self.assertEqual(f20["verdict"], "PASS")
+        self.assertEqual(f20["withheld_no_own_clock_total"], 0)
+        self.assertEqual(f20["withheld_close_occasion_total"], 0)
+        self.assertEqual(f20["withheld_no_own_clock"], {})
+        self.assertEqual(f20["withheld_close_occasion"], {})
+        # the verdict is under the hash: an edited verdict no longer recomputes
+        self.assertEqual(receipt["receipt_sha256"], canonical_hash(receipt, omit="receipt_sha256"))
+        tampered = dict(receipt)
+        tampered["falsifier_f20"] = dict(f20, verdict="FAIL")
+        self.assertNotEqual(receipt["receipt_sha256"], canonical_hash(tampered, omit="receipt_sha256"))
 
     def test_f20_every_real_row_was_placed_by_its_own_stamp_and_the_receipt_says_so(self):
         stream = CausalGroupStream(
