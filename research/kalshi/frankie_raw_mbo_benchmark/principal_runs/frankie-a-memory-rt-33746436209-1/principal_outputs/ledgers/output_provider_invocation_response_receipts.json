@@ -76,8 +76,65 @@
       "ledger_id": "output_provider_invocation_response_receipts",
       "prev_hash": "56b96fa575d4b5dd1b678df7c4638b7f152305196f35c4d370b41f138c6b6eab",
       "sequence": 3
+    },
+    {
+      "body": {
+        "mechanism": "AGENT_SESSION",
+        "model_identity_as_reported_by_session": "claude-fable-5-1",
+        "request_basis": "the F_LAST-closed group delivered at this cutoff (its stream sha256) and the cutoff",
+        "request_sha256": "2cf06be152086c471a0e0e9d486b6af2379357b785d049f4289b6f3921b66b2e",
+        "response_basis": "canonical bytes of every contract-section body written at this cutoff",
+        "response_sha256": "0ffc166e607ba251f0d014e0e31bf1d7f0bed8c8a6d7824fdd6a617deee12032",
+        "session_id": "session_014m3YsXKuT773qhNQLuWahu",
+        "staged_invocation_cutoff": true,
+        "stream_end_turn": false,
+        "turn": 5
+      },
+      "cutoff_recv_ns": 1633298495252279199,
+      "entry_hash": "1bc94ef573bc8f9a473fc6f35032324cb95c5afc2adc8df2c94c3eacdbd3b2b8",
+      "ledger_id": "output_provider_invocation_response_receipts",
+      "prev_hash": "153e8933d834e16dbd61b389c8a7d222425e5ccdfd9bdd97685fda2807f5dffe",
+      "sequence": 4
+    },
+    {
+      "body": {
+        "mechanism": "AGENT_SESSION",
+        "model_identity_as_reported_by_session": "claude-fable-5-1",
+        "request_basis": "the F_LAST-closed group delivered at this cutoff (its stream sha256) and the cutoff",
+        "request_sha256": "726e268df176883bd405158c6b08e2feaede5cad04d150ab093447ffac0a4b39",
+        "response_basis": "canonical bytes of every contract-section body written at this cutoff",
+        "response_sha256": "8d538bf431c6202a48459ed47feed741a51ed852ce2ff4ae9892d8d82cfabbed",
+        "session_id": "session_014m3YsXKuT773qhNQLuWahu",
+        "staged_invocation_cutoff": true,
+        "stream_end_turn": false,
+        "turn": 6
+      },
+      "cutoff_recv_ns": 1633298539321423187,
+      "entry_hash": "8b37a940fd799971acd01b5cb979d461fb872d58a1a092d68b0a9368e7fa44ca",
+      "ledger_id": "output_provider_invocation_response_receipts",
+      "prev_hash": "1bc94ef573bc8f9a473fc6f35032324cb95c5afc2adc8df2c94c3eacdbd3b2b8",
+      "sequence": 5
+    },
+    {
+      "body": {
+        "mechanism": "AGENT_SESSION",
+        "model_identity_as_reported_by_session": "claude-fable-5-1",
+        "request_basis": "the F_LAST-closed group delivered at this cutoff (its stream sha256) and the cutoff",
+        "request_sha256": "dd1ad59e6023c586bbf6b97fb50d499b714fc0925e161f1dc8e1cd6ae1c0b864",
+        "response_basis": "canonical bytes of every contract-section body written at this cutoff",
+        "response_sha256": "cf19d1fb09d879f99976d32df7b1446eebd90d4133dfaf7ee31bff234090a1ba",
+        "session_id": "session_014m3YsXKuT773qhNQLuWahu",
+        "staged_invocation_cutoff": true,
+        "stream_end_turn": false,
+        "turn": 7
+      },
+      "cutoff_recv_ns": 1633298618241396322,
+      "entry_hash": "0d6c18e57e8986d40c2260425236dac4349e5fe1a59e0c6a9664ae95ca77c23d",
+      "ledger_id": "output_provider_invocation_response_receipts",
+      "prev_hash": "8b37a940fd799971acd01b5cb979d461fb872d58a1a092d68b0a9368e7fa44ca",
+      "sequence": 6
     }
   ],
-  "head_hash": "153e8933d834e16dbd61b389c8a7d222425e5ccdfd9bdd97685fda2807f5dffe",
+  "head_hash": "0d6c18e57e8986d40c2260425236dac4349e5fe1a59e0c6a9664ae95ca77c23d",
   "ledger_id": "output_provider_invocation_response_receipts"
 }

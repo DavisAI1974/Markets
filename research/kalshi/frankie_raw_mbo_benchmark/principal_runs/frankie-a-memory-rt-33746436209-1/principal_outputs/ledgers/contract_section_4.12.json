@@ -92,8 +92,77 @@
       "ledger_id": "contract_section_4.12",
       "prev_hash": "ef375020279f23839428b9927c18248cf9128d17bd5b2568634968e6be102b4d",
       "sequence": 3
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298495252279199
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 11406,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate has reached its availability second yet, so no runway stage exists"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.12",
+        "turn": 5
+      },
+      "cutoff_recv_ns": 1633298495252279199,
+      "entry_hash": "0c6fb2f3f3c629f1c72339f964c52ada0b86fd54c3471b4ea636128469da48e0",
+      "ledger_id": "contract_section_4.12",
+      "prev_hash": "eb8f8baefe5b10fcb4d7d09657d8a08293ac5b612e037882a96085c206c1c746",
+      "sequence": 4
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298539321423187
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 13687,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate has reached its availability second yet, so no runway stage exists"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.12",
+        "turn": 6
+      },
+      "cutoff_recv_ns": 1633298539321423187,
+      "entry_hash": "0f71826d47bf36187d65b77c5b4de3064a4dceb414c877105326b9317b83f3ae",
+      "ledger_id": "contract_section_4.12",
+      "prev_hash": "0c6fb2f3f3c629f1c72339f964c52ada0b86fd54c3471b4ea636128469da48e0",
+      "sequence": 5
+    },
+    {
+      "body": {
+        "cutoff": {
+          "clock": "clock_receive_time",
+          "observed_ns": 1633298618241396322
+        },
+        "cutoff_is_staged_invocation": true,
+        "groups_delivered_at_cutoff": 15968,
+        "member_group_indices": [],
+        "population": {
+          "denominator": 0,
+          "description": "no candidate has reached its availability second yet, so no runway stage exists"
+        },
+        "result": "NULL_RESULT",
+        "section": "4.12",
+        "turn": 7
+      },
+      "cutoff_recv_ns": 1633298618241396322,
+      "entry_hash": "323c1710818e60f8e16b4784fa81a9a49531017b723d427d353e57a534f10639",
+      "ledger_id": "contract_section_4.12",
+      "prev_hash": "0f71826d47bf36187d65b77c5b4de3064a4dceb414c877105326b9317b83f3ae",
+      "sequence": 6
     }
   ],
-  "head_hash": "eb8f8baefe5b10fcb4d7d09657d8a08293ac5b612e037882a96085c206c1c746",
+  "head_hash": "323c1710818e60f8e16b4784fa81a9a49531017b723d427d353e57a534f10639",
   "ledger_id": "contract_section_4.12"
 }
