@@ -1222,7 +1222,11 @@ def _v_raw_mbo(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> 
 # Knowledge verification: one verdict per delivered lesson
 # --------------------------------------------------------------------------------------
 
-KNOWLEDGE_VERDICTS = ("VERIFIED", "UNVERIFIED", "REFUTED")
+#: S124 (Greg): NEW means recent, not unverified, and the served findings are VERIFIED. This
+#: ledger is per-day testing of each served lesson against the stream - confirmed, refuted, or
+#: not exercised on this slice. Absence of an instance is a result, never a demotion; VETOED is
+#: the only label that stops service and it is not written here.
+KNOWLEDGE_VERDICTS = ("VERIFIED", "NOT_TESTED_ON_THIS_SLICE", "REFUTED")
 
 
 def _v_knowledge_verification(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
@@ -1235,7 +1239,7 @@ def _v_knowledge_verification(entries: Sequence[Mapping[str, Any]], ctx: Validat
         if ctx.knowledge_receipt_sha256 is not None and cited != ctx.knowledge_receipt_sha256:
             _fail(where, f"knowledge_receipt_sha256 {cited} does not cite the knowledge-delivery receipt {ctx.knowledge_receipt_sha256} this run was validated against")
         verdict = _choice(body, "verdict", KNOWLEDGE_VERDICTS, where)
-        if verdict == "UNVERIFIED":
+        if verdict == "NOT_TESTED_ON_THIS_SLICE":
             _text(body, "reason", where)
             continue
         evidence = _mapping(body, "evidence", where)

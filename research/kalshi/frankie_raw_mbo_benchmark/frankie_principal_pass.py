@@ -1113,6 +1113,7 @@ def run_stream(args: argparse.Namespace) -> int:
                                   delivery_receipt_sha256=delivery["receipt_sha256"], knowledge_receipt_sha256=knowledge["receipt_sha256"])
     L = {lid: bundle.ledger(lid) for lid in bundle.required_ledger_ids}
     bundle.ledger(outputs.ANSWER_WALL_RECEIPTS, empty_reason="no answer wall was accessed; the run holds only the three delivered ledgers and the receipted knowledge")
+    bundle.ledger(outputs.KNOWLEDGE_VERIFICATION_LEDGER, empty_reason="verdicts are appended by `finalize` after the whole day's tallies exist; the stream phase states nothing about the lessons")
 
     stream = CausalGroupStream(ledger_dir / "exact_member_rows.jsonl", ledger_dir / "exact_lifecycle_rows.jsonl",
                                ledger_dir / "legacy_observable_rows.jsonl", run_id=run_id, arm=arm)
@@ -1273,13 +1274,14 @@ def run_finalize(args: argparse.Namespace) -> int:
             target.append(e["cutoff_recv_ns"], e["body"])
             last_cutoff = max(last_cutoff, e["cutoff_recv_ns"])
     kv = bundle.ledger(outputs.KNOWLEDGE_VERIFICATION_LEDGER)
+    kv.empty_reason = None
     existing = {e["body"]["lesson_id"] for e in kv.entries}
     for v in verification["verdicts"]:
         if v["lesson_id"] in existing:
             continue
         entry = {"lesson_id": v["lesson_id"], "layer_id": v.get("layer_id", "a_memory_prior_lessons_package"),
                  "knowledge_receipt_sha256": knowledge["receipt_sha256"], "verdict": v["verdict"], "statement": v.get("statement", "")}
-        if v["verdict"] == "UNVERIFIED":
+        if v["verdict"] == "NOT_TESTED_ON_THIS_SLICE":
             entry["reason"] = v["reason"]
         else:
             entry["evidence"] = {"member_group_indices": v["member_group_indices"], "cutoff_recv_ns": last_cutoff, "computed": v.get("computed")}

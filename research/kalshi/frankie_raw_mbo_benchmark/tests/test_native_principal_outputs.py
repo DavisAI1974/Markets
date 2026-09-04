@@ -1245,7 +1245,7 @@ class KnowledgeVerificationTest(LedgerRuleCase):
         self.check(self.LEDGER, [
             (C2, verification_body()),
             (C2, verification_body(lesson_id="second", verdict="REFUTED", evidence={"member_group_indices": [4570], "cutoff_recv_ns": C2 - 5})),
-            (C2, verification_body(lesson_id="third", verdict="UNVERIFIED", evidence=None, reason="no member of the lesson's stratum closed on this slice")),
+            (C2, verification_body(lesson_id="third", verdict="NOT_TESTED_ON_THIS_SLICE", evidence=None, reason="no member of the lesson's stratum closed on this slice")),
         ])
 
     def test_lesson_id_is_any_non_empty_string_and_the_rest_is_required(self):
@@ -1258,7 +1258,7 @@ class KnowledgeVerificationTest(LedgerRuleCase):
         self.refused(self.LEDGER, [(C2, verification_body(evidence={"member_group_indices": [], "cutoff_recv_ns": C2}))], "member")
         self.refused(self.LEDGER, [(C2, verification_body(evidence={"member_group_indices": [1]}))], "cutoff")
         self.refused(self.LEDGER, [(C2, verification_body(evidence={"member_group_indices": [1], "cutoff_recv_ns": C3}))], "after")
-        self.refused(self.LEDGER, [(C2, verification_body(verdict="UNVERIFIED", evidence=None))], "reason")
+        self.refused(self.LEDGER, [(C2, verification_body(verdict="NOT_TESTED_ON_THIS_SLICE", evidence=None))], "reason")
         self.refused(self.LEDGER, [(C2, verification_body(verdict="REFUTED", evidence=None))], "evidence")
 
     def test_when_the_delivery_receipt_is_known_every_verdict_must_cite_it(self):
