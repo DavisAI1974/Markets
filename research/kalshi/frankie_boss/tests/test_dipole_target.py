@@ -21,6 +21,7 @@ B, T = 3, 5
 H = "a" * 64
 H2 = "b" * 64
 AS_OF = 1_700_000_000_000_000_000
+KNOWN_HASH = "7160577665181ef08da0f77423dda824b135bb5da4e79289ff20bdf1ae00a457"
 
 
 def spec(**kw):
@@ -259,3 +260,139 @@ def test_masked_mse_equals_plain_mse_when_all_present():
     assert torch.allclose(
         masked_mse(x, y, torch.ones_like(x)), torch.nn.functional.mse_loss(x, y)
     )
+
+
+# ---------------------------------------------------------- integrity
+
+
+def test_caller_alias_mutation_cannot_reach_the_target():
+    v, s, ts = tensors()
+    t = target(values=v, states=s, ts_recv_ns=ts)
+    old = t.target_hash
+    idx = tuple((s == int(TargetState.PRESENT)).nonzero()[0])
+    v[idx] += 1.0          # mutate the caller's tensor, not the target's
+    t.check_integrity()    # unaffected
+    assert t.target_hash == old and t._compute_hash() == old
+    assert t.receipt()["target_hash"] == old
+
+
+def test_direct_tensor_mutation_fails_closed_on_every_read():
+    from dipole_target import IntegrityError
+    t = target()
+    idx = tuple((t.states == int(TargetState.PRESENT)).nonzero()[0])
+    t.values[idx] += 1.0
+    for read in (lambda: t.mask, t.to_batch_fields, t.receipt, t.check_integrity):
+        with pytest.raises(IntegrityError, match="mutated"):
+            read()
+
+
+def test_state_and_timestamp_mutation_are_also_detected():
+    from dipole_target import IntegrityError
+    t = target()
+    t.states[0, 0, 0] = int(TargetState.ABLATED)
+    with pytest.raises(IntegrityError):
+        t.receipt()
+    t2 = target()
+    t2.ts_recv_ns[0, 0] -= 1
+    with pytest.raises(IntegrityError):
+        t2.receipt()
+
+
+def test_state_counts_fails_closed_after_mutation():
+    from dipole_target import IntegrityError
+    t = target()
+    t.states[0, 0, 0] = int(TargetState.ABLATED)
+    with pytest.raises(IntegrityError):
+        t.state_counts()
+
+
+def test_batch_fields_are_clones():
+    t = target()
+    f = t.to_batch_fields()
+    f["dipole"][0, 0, 0] = 123.0
+    f["dipole_ts_recv_ns"][0, 0] = 1
+    t.check_integrity()    # governed copy untouched
+    assert f["dipole"].data_ptr() != t.values.data_ptr()
+
+
+# --------------------------------------------------------- mask validity
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        torch.full((2, 3, 4), -1.0),
+        torch.full((2, 3, 4), float("nan")),
+        torch.full((2, 3, 4), float("inf")),
+        torch.full((2, 3, 4), 0.5),
+        torch.full((2, 3, 4), 2.0),
+    ],
+    ids=["negative", "nan", "inf", "fractional", "two"],
+)
+def test_masked_mse_rejects_non_binary_masks(bad):
+    x = torch.randn(2, 3, 4)
+    with pytest.raises(SchemaError):
+        masked_mse(x, x, bad)
+
+
+def test_bool_mask_is_accepted():
+    from dipole_target import validate_mask
+    m = torch.rand(2, 3, 4) > 0.5
+    assert validate_mask(m) is m
+    x = torch.randn(2, 3, 4)
+    if m.any():
+        masked_mse(x, x, m)
+
+
+# ------------------------------------------------------ builder_code_sha
+
+
+@pytest.mark.parametrize("bad", ["abc", "C" * 40, "g" * 40, "c" * 41, "c" * 63])
+def test_builder_code_sha_must_be_lowercase_hex_sha(bad):
+    with pytest.raises(SchemaError, match="builder_code_sha"):
+        spec(builder_code_sha=bad)
+
+
+def test_builder_code_sha_accepts_sha1_and_sha256():
+    assert spec(builder_code_sha="c" * 40).builder_code_sha == "c" * 40
+    assert spec(builder_code_sha="c" * 64).builder_code_sha == "c" * 64
+
+
+# ------------------------------------------------------------ byte order
+
+
+def test_hash_uses_little_endian_bytes_explicitly():
+    """Recompute the digest by hand with forced little-endian numpy views
+    and require equality. On a big-endian host this is the test that
+    would catch a native-order hash."""
+    import hashlib
+    import numpy as np
+    from causal_packet import canonical_bytes
+    t = target()
+    h = hashlib.sha256()
+    h.update(canonical_bytes({
+        "spec": t.spec.to_dict(),
+        "source_manifest_hash": t.source_manifest_hash,
+        "source_prefix_hash": t.source_prefix_hash,
+        "as_of_ts_recv_ns": t.as_of_ts_recv_ns,
+        "shape": list(t.values.shape),
+    }))
+    h.update(t.values.numpy().astype("<f4").tobytes())
+    h.update(t.states.numpy().astype(np.int8).tobytes())
+    h.update(t.ts_recv_ns.numpy().astype("<i8").tobytes())
+    assert h.hexdigest() == t.target_hash
+
+
+def test_known_answer_hash_is_stable():
+    """Pinned digest for a fixed input. Changes here mean the hash
+    contract changed and every lock file built before is stale."""
+    k = 2
+    values = torch.tensor([[[1.0, 0.0], [0.5, -0.25]]], dtype=torch.float32)
+    states = torch.tensor([[[0, 1], [0, 0]]], dtype=torch.int8)
+    ts = torch.tensor([[AS_OF - 2, AS_OF - 1]], dtype=torch.int64)
+    t = DipoleTarget(
+        spec=spec(target_names=("a", "b"), target_units=("u", "u")),
+        source_manifest_hash=H, source_prefix_hash=H2,
+        as_of_ts_recv_ns=AS_OF, values=values, states=states, ts_recv_ns=ts,
+    )
+    assert t.target_hash == KNOWN_HASH

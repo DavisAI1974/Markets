@@ -28,9 +28,15 @@ states        every (b, t, k) entry is PRESENT, MISSING, INVALID, or
               ABLATED. Values are finite where PRESENT and exactly 0.0
               elsewhere, so a zero can never be mistaken for a value:
               the state says which it is, not the number.
-hash          target_hash is sha256 over canonical metadata plus the raw
-              little-endian bytes of values, states, and timestamps. A
+hash          target_hash is sha256 over canonical metadata plus the bytes
+              of values, states, and timestamps, explicitly converted to
+              little-endian before hashing so the digest is portable. A
               supplied hash that does not match is rejected.
+mutability    tensors are cloned and detached on construction so no caller
+              alias can reach them. Every result-bearing read (mask,
+              to_batch_fields, receipt) recomputes the hash first and
+              fails closed if the tensors were mutated in place. Reads
+              return clones.
 
 Loss coverage
 -------------
@@ -58,6 +64,8 @@ except ImportError:  # Direct execution with this directory on PYTHONPATH.
 
 __all__ = [
     "SCHEMA_VERSION",
+    "IntegrityError",
+    "validate_mask",
     "DipoleTargetSpec",
     "DipoleTarget",
     "TargetState",
@@ -71,6 +79,10 @@ _HEX64 = 64
 
 class SchemaError(ValueError):
     """Any violation of DIPOLE_TEACHER_SCHEMA_V1."""
+
+
+class IntegrityError(SchemaError):
+    """A DipoleTarget's tensors no longer match its target_hash."""
 
 
 class TargetState(IntEnum):
@@ -96,6 +108,42 @@ def _require_nonempty_str(value: Any, label: str) -> str:
     return value
 
 
+def _require_code_sha(value: Any, label: str) -> str:
+    """git sha1 (40) or sha256 (64), lowercase hex. The field is named
+    *_sha, so it is validated as one."""
+    if not isinstance(value, str) or len(value) not in (40, _HEX64):
+        raise SchemaError(f"{label} must be a 40- or 64-char lowercase hex sha")
+    if value != value.lower():
+        raise SchemaError(f"{label} must be lowercase hex")
+    try:
+        int(value, 16)
+    except ValueError as e:
+        raise SchemaError(f"{label} is not hex: {value!r}") from e
+    return value
+
+
+def _le_bytes(t: torch.Tensor) -> bytes:
+    """Tensor bytes in explicit little-endian order, independent of host."""
+    a = t.detach().cpu().contiguous().numpy()
+    if a.dtype.itemsize > 1:
+        a = a.astype(a.dtype.newbyteorder("<"), copy=False)
+    return a.tobytes()
+
+
+def validate_mask(mask: torch.Tensor, label: str = "mask") -> torch.Tensor:
+    """A presence mask is bool, or numeric with every element exactly 0 or 1.
+    Anything else is a weight, not a mask, and is rejected."""
+    if not torch.is_tensor(mask):
+        raise SchemaError(f"{label} must be a tensor")
+    if mask.dtype == torch.bool:
+        return mask
+    if not torch.isfinite(mask).all():
+        raise SchemaError(f"{label} contains non-finite values")
+    if not ((mask == 0) | (mask == 1)).all():
+        raise SchemaError(f"{label} must contain only 0 or 1")
+    return mask
+
+
 @dataclass(frozen=True)
 class DipoleTargetSpec:
     """The meaning of the K columns. Immutable; shared by every batch of a run."""
@@ -114,7 +162,7 @@ class DipoleTargetSpec:
             )
         _require_nonempty_str(self.registry_id, "registry_id")
         _require_nonempty_str(self.normalizer_id, "normalizer_id")
-        _require_nonempty_str(self.builder_code_sha, "builder_code_sha")
+        _require_code_sha(self.builder_code_sha, "builder_code_sha")
         names = tuple(self.target_names)
         units = tuple(self.target_units)
         if not names:
@@ -183,6 +231,11 @@ class DipoleTarget:
         v, s, ts = self.values, self.states, self.ts_recv_ns
         if not (torch.is_tensor(v) and torch.is_tensor(s) and torch.is_tensor(ts)):
             raise SchemaError("values, states and ts_recv_ns must be tensors")
+        # Break every caller alias. The contract owns these tensors.
+        v, s, ts = (x.detach().clone().contiguous() for x in (v, s, ts))
+        object.__setattr__(self, "values", v)
+        object.__setattr__(self, "states", s)
+        object.__setattr__(self, "ts_recv_ns", ts)
         if v.dim() != 3:
             raise SchemaError(f"values must be (B, T, K), got {tuple(v.shape)}")
         if v.shape[-1] != self.spec.width:
@@ -252,14 +305,25 @@ class DipoleTarget:
             )
         )
         for t in (self.values, self.states, self.ts_recv_ns):
-            h.update(t.detach().cpu().contiguous().numpy().tobytes())
+            h.update(_le_bytes(t))
         return h.hexdigest()
+
+    def check_integrity(self) -> None:
+        """Fail closed if the tensors no longer match target_hash. Called
+        by every result-bearing read; cheap relative to a training step."""
+        current = self._compute_hash()
+        if current != self.target_hash:
+            raise IntegrityError(
+                f"DipoleTarget tensors were mutated after construction: hash "
+                f"{self.target_hash[:12]}... now {current[:12]}..."
+            )
 
     # ------------------------------------------------------------- views
 
     @property
     def mask(self) -> torch.Tensor:
-        """(B, T, K) float32, 1.0 where PRESENT."""
+        """(B, T, K) float32, 1.0 where PRESENT. Fresh tensor each call."""
+        self.check_integrity()
         return (self.states == int(TargetState.PRESENT)).to(self.values.dtype)
 
     @property
@@ -268,19 +332,23 @@ class DipoleTarget:
         return float(self.mask.mean())
 
     def state_counts(self) -> dict[str, int]:
+        self.check_integrity()
         return {st.name: int((self.states == int(st)).sum()) for st in TargetState}
 
     def to_batch_fields(self) -> dict[str, torch.Tensor]:
         """The three tensors the training runner consumes, keyed the way
-        teacher.run_experiment expects them."""
+        teacher.run_experiment expects them. Returns clones: a downstream
+        in-place edit cannot reach the governed copy."""
+        self.check_integrity()
         return {
-            "dipole": self.values,
+            "dipole": self.values.clone(),
             "dipole_mask": self.mask,
-            "dipole_ts_recv_ns": self.ts_recv_ns,
+            "dipole_ts_recv_ns": self.ts_recv_ns.clone(),
         }
 
     def receipt(self) -> dict[str, Any]:
         """Everything a lock file needs to identify this target exactly."""
+        self.check_integrity()
         return {
             "schema_version": self.spec.schema_version,
             "spec_hash": self.spec.spec_hash,
@@ -305,6 +373,7 @@ def masked_mse(pred: torch.Tensor, target: torch.Tensor, mask: torch.Tensor) -> 
             f"masked_mse shape mismatch: pred {tuple(pred.shape)} target "
             f"{tuple(target.shape)} mask {tuple(mask.shape)}"
         )
+    mask = validate_mask(mask).to(pred.dtype)
     n = mask.sum()
     if float(n) == 0.0:
         raise SchemaError("masked_mse: no PRESENT entries; refusing to report a zero loss")

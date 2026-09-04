@@ -382,3 +382,26 @@ def test_harness_reports_coverage_and_masks_the_aux_loss():
     for arm in ("plain_aux", "random", "dipole", "shuffled"):
         assert abs(cov[arm] - expected) < 1e-6   # derangement keeps the total
     assert cov["none"] == 1.0
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [torch.full((B, T, TD), -1.0), torch.full((B, T, TD), float("nan")),
+     torch.full((B, T, TD), float("inf")), torch.full((B, T, TD), 0.5)],
+    ids=["negative", "nan", "inf", "fractional"],
+)
+def test_make_targets_rejects_non_binary_masks(bad):
+    from dipole_target import SchemaError
+    b = batch(0)
+    with pytest.raises(SchemaError, match="dipole_mask"):
+        make_targets("dipole", numeric=b["numeric"], dipole=b["dipole"],
+                     dipole_mask=bad, generator=gen(), plain_aux=proj())
+
+
+def test_make_targets_accepts_bool_mask():
+    b = batch(0)
+    m = torch.rand(B, T, TD, generator=gen(5)) > 0.5
+    t = make_targets("dipole", numeric=b["numeric"], dipole=b["dipole"],
+                     dipole_mask=m, generator=gen(), plain_aux=proj())
+    assert t.mask.dtype == b["dipole"].dtype
+    assert torch.equal(t.mask, m.float())

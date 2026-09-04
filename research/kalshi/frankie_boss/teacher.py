@@ -68,9 +68,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 try:  # Package import in Markets.
-    from .dipole_target import masked_mse
+    from .dipole_target import masked_mse, validate_mask
 except ImportError:  # Direct execution with this directory on PYTHONPATH.
-    from dipole_target import masked_mse
+    from dipole_target import masked_mse, validate_mask
 
 __all__ = [
     "ARMS",
@@ -202,7 +202,9 @@ def make_targets(
                 f"dipole_mask {tuple(dipole_mask.shape)} must match dipole "
                 f"{tuple(dipole.shape)}"
             )
-        mask = dipole_mask.to(device=dipole.device, dtype=dipole.dtype)
+        mask = validate_mask(dipole_mask, "dipole_mask").to(
+            device=dipole.device, dtype=dipole.dtype
+        )
     if arm == "none":
         return None
     if arm == "dipole":
