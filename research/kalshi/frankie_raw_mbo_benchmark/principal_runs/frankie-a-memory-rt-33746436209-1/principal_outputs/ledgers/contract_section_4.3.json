@@ -3356,8 +3356,1130 @@
       "ledger_id": "contract_section_4.3",
       "prev_hash": "4d88df42a4382681d1d07633090c1ac9df7102dd64b4d68b1bc25c67ee4251e2",
       "sequence": 2
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 203,
+              "family": "ow-f6ba7eaa9e45ef1b68cf",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 73.0,
+              "phase": "PRE_OPEN",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=A"
+            },
+            "value": 0.359605911
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1742,
+              "family": "ow-f6ba7eaa9e45ef1b68cf",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-f6ba7eaa9e45ef1b68cf",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 1669.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=A"
+            },
+            "value": 0.18706568
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1742,
+              "family": "ow-f6ba7eaa9e45ef1b68cf",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 203,
+              "family": "ow-59ace24da4a485c605b6",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 21.0,
+              "phase": "PRE_OPEN",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=C"
+            },
+            "value": 0.103448276
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1578,
+              "family": "ow-59ace24da4a485c605b6",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-59ace24da4a485c605b6",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 1557.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=C"
+            },
+            "value": 0.174512441
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1578,
+              "family": "ow-59ace24da4a485c605b6",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 203,
+              "family": "ow-3a12d9bd4a731b597f0d",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 65.0,
+              "phase": "PRE_OPEN",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=A"
+            },
+            "value": 0.320197044
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1545,
+              "family": "ow-3a12d9bd4a731b597f0d",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-3a12d9bd4a731b597f0d",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 1480.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=A"
+            },
+            "value": 0.165882089
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1545,
+              "family": "ow-3a12d9bd4a731b597f0d",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 203,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 22.0,
+              "phase": "PRE_OPEN",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=C"
+            },
+            "value": 0.108374384
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1404,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 1382.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=C"
+            },
+            "value": 0.154898005
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1404,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-323039dbb3848205fc25",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 677.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "AN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=AN"
+            },
+            "value": 0.075879848
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 677,
+              "family": "ow-323039dbb3848205fc25",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 17287724.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "AN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=21533 p90=35502 max=145704"
+            },
+            "value": 25535.781388479
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 498.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "AN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=CN"
+            },
+            "value": 0.055817081
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 498,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 12323348.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "AN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=20974 p90=37350 max=91136"
+            },
+            "value": 24745.678714859
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-8777dec6490e85e484be",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 402.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "BN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=AN"
+            },
+            "value": 0.045057162
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 402,
+              "family": "ow-8777dec6490e85e484be",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 8524254.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "BN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=18574 p90=32455 max=69678"
+            },
+            "value": 21204.611940299
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 203,
+              "family": "ow-8b55dfd64daf3077e3d2",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 14.0,
+              "phase": "PRE_OPEN",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=M"
+            },
+            "value": 0.068965517
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 355,
+              "family": "ow-8b55dfd64daf3077e3d2",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-8b55dfd64daf3077e3d2",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 341.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=M"
+            },
+            "value": 0.03822013
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 355,
+              "family": "ow-8b55dfd64daf3077e3d2",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-1fe202ccc7ea51ea8050",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 226.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "AN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=MN"
+            },
+            "value": 0.025330643
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 226,
+              "family": "ow-1fe202ccc7ea51ea8050",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 4924613.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "AN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=20221 p90=29177 max=75474"
+            },
+            "value": 21790.32300885
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 203,
+              "family": "ow-3807a1115b13f5c8685a",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 7.0,
+              "phase": "PRE_OPEN",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=M"
+            },
+            "value": 0.034482759
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 224,
+              "family": "ow-3807a1115b13f5c8685a",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_OPEN",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-3807a1115b13f5c8685a",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 217.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=M"
+            },
+            "value": 0.024321901
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 224,
+              "family": "ow-3807a1115b13f5c8685a",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 0.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=0 p90=0 max=0"
+            },
+            "value": 0.0
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-8c934d067bc463c01ce0",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 160.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "BN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=CN"
+            },
+            "value": 0.017933199
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 160,
+              "family": "ow-8c934d067bc463c01ce0",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 3660957.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "BN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=21204 p90=40055 max=66005"
+            },
+            "value": 22880.98125
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 8922,
+              "family": "ow-3a98bbe15cb2bf0c14ba",
+              "formula": "groups in family and phase / groups in phase",
+              "inclusion_rule": "all delivered groups",
+              "missingness_rule": "none; every group has a family",
+              "numerator": 59.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "F_LAST-closed groups in the phase",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "BAAN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "OPEN",
+              "subfamily": "action_string=TFCN"
+            },
+            "value": 0.006612867
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 59,
+              "family": "ow-3a98bbe15cb2bf0c14ba",
+              "formula": "sum(formation_latency_ns) / groups in family",
+              "inclusion_rule": "all groups in the family",
+              "missingness_rule": "single-component groups carry formation latency 0 by construction",
+              "numerator": 3776160.0,
+              "phase": "PRE_SETTLEMENT",
+              "population": "groups in family (all phases)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "BAAN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "formation_latency_ns quantiles p50=49383 p90=115096 max=128322"
+            },
+            "value": 64002.711864407
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "deepest_action_strings": [
+          [
+            245,
+            "RAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            1
+          ],
+          [
+            59,
+            "TFFFFFFFFFFFFFFFFFFFFFFFFFFFFCCCCCCMACCCCCCCCCCCCCCCCCCCCCN",
+            1
+          ],
+          [
+            50,
+            "TFTFTFTFTTFTTFFTTFTTFTFTFTFFTFTTTFCCCCCCCCCCCCCCCN",
+            1
+          ],
+          [
+            47,
+            "TFTFFFTFFTFTFFTFTFTFTFTFTFTFFCCCCCCCCCCCCCCCCCN",
+            1
+          ],
+          [
+            30,
+            "TFFTFTFTFTFTTFTTTTTFACCCCCCCCN",
+            1
+          ],
+          [
+            29,
+            "TFFTFTFTFFTFTFTFTFCCCCCCCCCCN",
+            1
+          ],
+          [
+            26,
+            "TFFFTFFTFFFTFFTFFCCCCCCCCN",
+            1
+          ],
+          [
+            24,
+            "TFTFTTTFTFFFFTFACCCCCCMN",
+            1
+          ]
+        ],
+        "descriptor": "family_id is the adapter's content-derived id of the versioned descriptor (action/side sequence, fill disposition, order-id graph, price multiplicity, terminal); the literal action string and side string are read beside it",
+        "families": 82,
+        "groups_delivered_at_cutoff": 9125,
+        "groups_matching_no_seed_action_string": 39,
+        "lifecycle_shape_AN_TFMN_TFCN": {
+          "AN": 1079,
+          "TFCN": 116,
+          "TFMN": 7
+        },
+        "member_group_indices": [
+          4,
+          23,
+          3,
+          18,
+          241,
+          462,
+          299,
+          28,
+          1189,
+          1,
+          303,
+          621,
+          227,
+          2150,
+          229,
+          357,
+          2272,
+          3368,
+          208,
+          370,
+          2441,
+          6854,
+          248,
+          352,
+          605
+        ],
+        "open_world_action_strings": 37,
+        "result": "COMPUTED",
+        "section": "4.3",
+        "seed_crosswalk_by_action_string": {
+          "A": 3287,
+          "AN": 1079,
+          "C": 2982,
+          "CN": 658,
+          "M": 579,
+          "MN": 250,
+          "TFACN": 5,
+          "TFC": 30,
+          "TFCN": 116,
+          "TFFCC": 1,
+          "TFFCCN": 12,
+          "TFFCM": 8,
+          "TFFCMN": 3,
+          "TFFFCCCN": 4,
+          "TFFFFCCCCN": 2,
+          "TFM": 50,
+          "TFMN": 7,
+          "TFTFCCN": 6,
+          "TFTFCMN": 1,
+          "TN": 6
+        },
+        "singleton_families": 46,
+        "top_families": [
+          {
+            "action_string": "A",
+            "family_id": "ow-f6ba7eaa9e45ef1b68cf",
+            "first_group": 4,
+            "groups": 1742,
+            "side_string": "A"
+          },
+          {
+            "action_string": "C",
+            "family_id": "ow-59ace24da4a485c605b6",
+            "first_group": 23,
+            "groups": 1578,
+            "side_string": "A"
+          },
+          {
+            "action_string": "A",
+            "family_id": "ow-3a12d9bd4a731b597f0d",
+            "first_group": 3,
+            "groups": 1545,
+            "side_string": "B"
+          },
+          {
+            "action_string": "C",
+            "family_id": "ow-40540069fe5aeddc127b",
+            "first_group": 18,
+            "groups": 1404,
+            "side_string": "B"
+          },
+          {
+            "action_string": "AN",
+            "family_id": "ow-323039dbb3848205fc25",
+            "first_group": 241,
+            "groups": 677,
+            "side_string": "AN"
+          },
+          {
+            "action_string": "CN",
+            "family_id": "ow-7b10d38a8b61511bc611",
+            "first_group": 462,
+            "groups": 498,
+            "side_string": "AN"
+          },
+          {
+            "action_string": "AN",
+            "family_id": "ow-8777dec6490e85e484be",
+            "first_group": 299,
+            "groups": 402,
+            "side_string": "BN"
+          },
+          {
+            "action_string": "M",
+            "family_id": "ow-8b55dfd64daf3077e3d2",
+            "first_group": 28,
+            "groups": 355,
+            "side_string": "A"
+          },
+          {
+            "action_string": "MN",
+            "family_id": "ow-1fe202ccc7ea51ea8050",
+            "first_group": 1189,
+            "groups": 226,
+            "side_string": "AN"
+          },
+          {
+            "action_string": "M",
+            "family_id": "ow-3807a1115b13f5c8685a",
+            "first_group": 1,
+            "groups": 224,
+            "side_string": "B"
+          },
+          {
+            "action_string": "CN",
+            "family_id": "ow-8c934d067bc463c01ce0",
+            "first_group": 303,
+            "groups": 160,
+            "side_string": "BN"
+          },
+          {
+            "action_string": "TFCN",
+            "family_id": "ow-3a98bbe15cb2bf0c14ba",
+            "first_group": 621,
+            "groups": 59,
+            "side_string": "BAAN"
+          },
+          {
+            "action_string": "TFCN",
+            "family_id": "ow-a4883ca90d4145520c5e",
+            "first_group": 227,
+            "groups": 43,
+            "side_string": "ABBN"
+          },
+          {
+            "action_string": "TFM",
+            "family_id": "ow-6bf0a7fc457bfdc752d3",
+            "first_group": 2150,
+            "groups": 32,
+            "side_string": "BAA"
+          },
+          {
+            "action_string": "MN",
+            "family_id": "ow-2b87a13fb17c35fb43c5",
+            "first_group": 229,
+            "groups": 24,
+            "side_string": "BN"
+          },
+          {
+            "action_string": "TFC",
+            "family_id": "ow-a018966e1dc7dc7ec892",
+            "first_group": 357,
+            "groups": 18,
+            "side_string": "ABB"
+          },
+          {
+            "action_string": "TFM",
+            "family_id": "ow-be63cd4f6034b5dd26a9",
+            "first_group": 2272,
+            "groups": 11,
+            "side_string": "NNB"
+          },
+          {
+            "action_string": "TFCN",
+            "family_id": "ow-cfe843eaab70d95e30bf",
+            "first_group": 3368,
+            "groups": 11,
+            "side_string": "NNBN"
+          },
+          {
+            "action_string": "TFM",
+            "family_id": "ow-b13ef7b8d0191e4e0d42",
+            "first_group": 208,
+            "groups": 7,
+            "side_string": "ABB"
+          },
+          {
+            "action_string": "TFC",
+            "family_id": "ow-7782499653b14d86fb42",
+            "first_group": 370,
+            "groups": 7,
+            "side_string": "NNB"
+          },
+          {
+            "action_string": "TFFCCN",
+            "family_id": "ow-72b735e9acc32d43956e",
+            "first_group": 2441,
+            "groups": 6,
+            "side_string": "ABBBBN"
+          },
+          {
+            "action_string": "TFFCM",
+            "family_id": "ow-a43b3ab94d7243f86dfd",
+            "first_group": 6854,
+            "groups": 6,
+            "side_string": "BBABA"
+          },
+          {
+            "action_string": "TN",
+            "family_id": "ow-a64490c46039fdefea7c",
+            "first_group": 248,
+            "groups": 5,
+            "side_string": "AN"
+          },
+          {
+            "action_string": "TFC",
+            "family_id": "ow-c9af7252f0e917ab6cba",
+            "first_group": 352,
+            "groups": 5,
+            "side_string": "BAA"
+          },
+          {
+            "action_string": "TFMN",
+            "family_id": "ow-174847199f25c91ccb41",
+            "first_group": 605,
+            "groups": 5,
+            "side_string": "BAAN"
+          }
+        ],
+        "turn": 4
+      },
+      "cutoff_recv_ns": 1633298467489465095,
+      "entry_hash": "ed78ffad7f39bb91963c3bff6ecce30f515d7819aa6f3ff816bed4085ccf6f81",
+      "ledger_id": "contract_section_4.3",
+      "prev_hash": "16b7eb65e2c37f9d4eea669a224e01fff78c763dac6d6a2f2715d1bfd0d9fb89",
+      "sequence": 3
     }
   ],
-  "head_hash": "16b7eb65e2c37f9d4eea669a224e01fff78c763dac6d6a2f2715d1bfd0d9fb89",
+  "head_hash": "ed78ffad7f39bb91963c3bff6ecce30f515d7819aa6f3ff816bed4085ccf6f81",
   "ledger_id": "contract_section_4.3"
 }

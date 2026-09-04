@@ -2667,8 +2667,897 @@
       "ledger_id": "contract_section_4.14",
       "prev_hash": "db8bd4a202a8b82b6b2f9c094e70fd9787ccae9479b8c10f15ddaa27b68b822c",
       "sequence": 2
+    },
+    {
+      "body": {
+        "averages": [
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1741,
+              "family": "ow-f6ba7eaa9e45ef1b68cf",
+              "formula": "sum(gap between consecutive members' F_LAST receive) / recurrences",
+              "inclusion_rule": "consecutive members on the receive clock",
+              "missingness_rule": "the first member has no gap",
+              "numerator": 2762661351010.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "recurrences of the family (members after the first)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "gap p50=9030558 p90=101464965 max=935003627173"
+            },
+            "value": 1586824440.557151
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1577,
+              "family": "ow-59ace24da4a485c605b6",
+              "formula": "sum(gap between consecutive members' F_LAST receive) / recurrences",
+              "inclusion_rule": "consecutive members on the receive clock",
+              "missingness_rule": "the first member has no gap",
+              "numerator": 965214598119.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "recurrences of the family (members after the first)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "gap p50=190363 p90=60783706 max=267009590238"
+            },
+            "value": 612057449.6632847
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1544,
+              "family": "ow-3a12d9bd4a731b597f0d",
+              "formula": "sum(gap between consecutive members' F_LAST receive) / recurrences",
+              "inclusion_rule": "consecutive members on the receive clock",
+              "missingness_rule": "the first member has no gap",
+              "numerator": 2762703100182.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "recurrences of the family (members after the first)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "gap p50=1432285 p90=101836167 max=1250170718596"
+            },
+            "value": 1789315479.392487
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 1403,
+              "family": "ow-40540069fe5aeddc127b",
+              "formula": "sum(gap between consecutive members' F_LAST receive) / recurrences",
+              "inclusion_rule": "consecutive members on the receive clock",
+              "missingness_rule": "the first member has no gap",
+              "numerator": 966131438412.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "recurrences of the family (members after the first)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "B",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "gap p50=171959 p90=97935483 max=262609134108"
+            },
+            "value": 688618273.9928724
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 676,
+              "family": "ow-323039dbb3848205fc25",
+              "formula": "sum(gap between consecutive members' F_LAST receive) / recurrences",
+              "inclusion_rule": "consecutive members on the receive clock",
+              "missingness_rule": "the first member has no gap",
+              "numerator": 67001242615.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "recurrences of the family (members after the first)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "AN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "gap p50=758916 p90=164667226 max=5315546937"
+            },
+            "value": 99114264.22337279
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 497,
+              "family": "ow-7b10d38a8b61511bc611",
+              "formula": "sum(gap between consecutive members' F_LAST receive) / recurrences",
+              "inclusion_rule": "consecutive members on the receive clock",
+              "missingness_rule": "the first member has no gap",
+              "numerator": 66125308551.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "recurrences of the family (members after the first)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "AN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "gap p50=776075 p90=128584683 max=7484279953"
+            },
+            "value": 133048910.56539236
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 401,
+              "family": "ow-8777dec6490e85e484be",
+              "formula": "sum(gap between consecutive members' F_LAST receive) / recurrences",
+              "inclusion_rule": "consecutive members on the receive clock",
+              "missingness_rule": "the first member has no gap",
+              "numerator": 66892834746.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "recurrences of the family (members after the first)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "BN",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "gap p50=772775 p90=490840353 max=7483121306"
+            },
+            "value": 166815049.24189526
+          },
+          {
+            "strata": {
+              "causal_clock": "clock_receive_time",
+              "cluster_version": "NO_CLUSTER_STRATUM",
+              "continuity_segment": 18904,
+              "cutoff_recv_ns": 1633298467489465095,
+              "denominator": 354,
+              "family": "ow-8b55dfd64daf3077e3d2",
+              "formula": "sum(gap between consecutive members' F_LAST receive) / recurrences",
+              "inclusion_rule": "consecutive members on the receive clock",
+              "missingness_rule": "the first member has no gap",
+              "numerator": 920248015315.0,
+              "phase": "PRE_OPEN+PRE_SETTLEMENT",
+              "population": "recurrences of the family (members after the first)",
+              "session": "CME_GLOBEX_SUNDAY_REOPEN_20211003",
+              "side_or_mirror_orientation": "A",
+              "source_day": "20211003",
+              "source_role": "SCORED_FINDINGS_DAY",
+              "status": "RESOLVED",
+              "subfamily": "gap p50=2586790 p90=847844459 max=178378068395"
+            },
+            "value": 2599570664.7316384
+          }
+        ],
+        "cross_group_family_edges_top": [
+          {
+            "conditional_probability": 0.47338403,
+            "count": 747,
+            "from": "ow-59ace24da4a485c605b6",
+            "outgoing_denominator": 1578,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-59ace24da4a485c605b6"
+          },
+          {
+            "conditional_probability": 0.430911681,
+            "count": 605,
+            "from": "ow-40540069fe5aeddc127b",
+            "outgoing_denominator": 1404,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-40540069fe5aeddc127b"
+          },
+          {
+            "conditional_probability": 0.346727899,
+            "count": 604,
+            "from": "ow-f6ba7eaa9e45ef1b68cf",
+            "outgoing_denominator": 1742,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-f6ba7eaa9e45ef1b68cf"
+          },
+          {
+            "conditional_probability": 0.313268608,
+            "count": 484,
+            "from": "ow-3a12d9bd4a731b597f0d",
+            "outgoing_denominator": 1545,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-3a12d9bd4a731b597f0d"
+          },
+          {
+            "conditional_probability": 0.222732491,
+            "count": 388,
+            "from": "ow-f6ba7eaa9e45ef1b68cf",
+            "outgoing_denominator": 1742,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-3a12d9bd4a731b597f0d"
+          },
+          {
+            "conditional_probability": 0.249838188,
+            "count": 386,
+            "from": "ow-3a12d9bd4a731b597f0d",
+            "outgoing_denominator": 1545,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-f6ba7eaa9e45ef1b68cf"
+          },
+          {
+            "conditional_probability": 0.19804822,
+            "count": 345,
+            "from": "ow-f6ba7eaa9e45ef1b68cf",
+            "outgoing_denominator": 1742,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-59ace24da4a485c605b6"
+          },
+          {
+            "conditional_probability": 0.220064725,
+            "count": 340,
+            "from": "ow-3a12d9bd4a731b597f0d",
+            "outgoing_denominator": 1545,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-40540069fe5aeddc127b"
+          },
+          {
+            "conditional_probability": 0.18504436,
+            "count": 292,
+            "from": "ow-59ace24da4a485c605b6",
+            "outgoing_denominator": 1578,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-f6ba7eaa9e45ef1b68cf"
+          },
+          {
+            "conditional_probability": 0.180911681,
+            "count": 254,
+            "from": "ow-40540069fe5aeddc127b",
+            "outgoing_denominator": 1404,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-3a12d9bd4a731b597f0d"
+          },
+          {
+            "conditional_probability": 0.10042735,
+            "count": 141,
+            "from": "ow-40540069fe5aeddc127b",
+            "outgoing_denominator": 1404,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-8777dec6490e85e484be"
+          },
+          {
+            "conditional_probability": 0.321695761,
+            "count": 129,
+            "from": "ow-8777dec6490e85e484be",
+            "outgoing_denominator": 401,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-3a12d9bd4a731b597f0d"
+          },
+          {
+            "conditional_probability": 0.187592319,
+            "count": 127,
+            "from": "ow-323039dbb3848205fc25",
+            "outgoing_denominator": 677,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-f6ba7eaa9e45ef1b68cf"
+          },
+          {
+            "conditional_probability": 0.186115214,
+            "count": 126,
+            "from": "ow-323039dbb3848205fc25",
+            "outgoing_denominator": 677,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-59ace24da4a485c605b6"
+          },
+          {
+            "conditional_probability": 0.246987952,
+            "count": 123,
+            "from": "ow-7b10d38a8b61511bc611",
+            "outgoing_denominator": 498,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-323039dbb3848205fc25"
+          },
+          {
+            "conditional_probability": 0.234939759,
+            "count": 117,
+            "from": "ow-7b10d38a8b61511bc611",
+            "outgoing_denominator": 498,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-7b10d38a8b61511bc611"
+          },
+          {
+            "conditional_probability": 0.169867061,
+            "count": 115,
+            "from": "ow-323039dbb3848205fc25",
+            "outgoing_denominator": 677,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-323039dbb3848205fc25"
+          },
+          {
+            "conditional_probability": 0.309859155,
+            "count": 110,
+            "from": "ow-8b55dfd64daf3077e3d2",
+            "outgoing_denominator": 355,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-8b55dfd64daf3077e3d2"
+          },
+          {
+            "conditional_probability": 0.076210826,
+            "count": 107,
+            "from": "ow-40540069fe5aeddc127b",
+            "outgoing_denominator": 1404,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-f6ba7eaa9e45ef1b68cf"
+          },
+          {
+            "conditional_probability": 0.153618907,
+            "count": 104,
+            "from": "ow-323039dbb3848205fc25",
+            "outgoing_denominator": 677,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "ow-7b10d38a8b61511bc611"
+          }
+        ],
+        "cutoff_is_staged_invocation": true,
+        "family_interarrival_top": {
+          "ow-323039dbb3848205fc25": {
+            "action_string": "AN",
+            "interarrival_gap_ns": {
+              "max": 5315546937,
+              "mean": 99114264.22337279,
+              "min": 8628,
+              "n": 676,
+              "p10": 146993,
+              "p25": 212528,
+              "p50": 758916,
+              "p75": 1623399,
+              "p90": 164667226,
+              "p99": 1828241818,
+              "sum": 67001242615.0
+            },
+            "recurrences": 676
+          },
+          "ow-3a12d9bd4a731b597f0d": {
+            "action_string": "A",
+            "interarrival_gap_ns": {
+              "max": 1250170718596,
+              "mean": 1789315479.392487,
+              "min": 0,
+              "n": 1544,
+              "p10": 29645,
+              "p25": 160932,
+              "p50": 1432285,
+              "p75": 95946312,
+              "p90": 101836167,
+              "p99": 21047800466,
+              "sum": 2762703100182.0
+            },
+            "recurrences": 1544
+          },
+          "ow-40540069fe5aeddc127b": {
+            "action_string": "C",
+            "interarrival_gap_ns": {
+              "max": 262609134108,
+              "mean": 688618273.9928724,
+              "min": 0,
+              "n": 1403,
+              "p10": 6727,
+              "p25": 24699,
+              "p50": 171959,
+              "p75": 949406,
+              "p90": 97935483,
+              "p99": 3290298976,
+              "sum": 966131438412.0
+            },
+            "recurrences": 1403
+          },
+          "ow-59ace24da4a485c605b6": {
+            "action_string": "C",
+            "interarrival_gap_ns": {
+              "max": 267009590238,
+              "mean": 612057449.6632847,
+              "min": 0,
+              "n": 1577,
+              "p10": 5350,
+              "p25": 12719,
+              "p50": 190363,
+              "p75": 1738243,
+              "p90": 60783706,
+              "p99": 2371894449,
+              "sum": 965214598119.0
+            },
+            "recurrences": 1577
+          },
+          "ow-7b10d38a8b61511bc611": {
+            "action_string": "CN",
+            "interarrival_gap_ns": {
+              "max": 7484279953,
+              "mean": 133048910.56539236,
+              "min": 11199,
+              "n": 497,
+              "p10": 54687,
+              "p25": 188679,
+              "p50": 776075,
+              "p75": 1725241,
+              "p90": 128584683,
+              "p99": 2395214155,
+              "sum": 66125308551.0
+            },
+            "recurrences": 497
+          },
+          "ow-8777dec6490e85e484be": {
+            "action_string": "AN",
+            "interarrival_gap_ns": {
+              "max": 7483121306,
+              "mean": 166815049.24189526,
+              "min": 3159,
+              "n": 401,
+              "p10": 119805,
+              "p25": 187897,
+              "p50": 772775,
+              "p75": 3665068,
+              "p90": 490840353,
+              "p99": 2225904882,
+              "sum": 66892834746.0
+            },
+            "recurrences": 401
+          },
+          "ow-8b55dfd64daf3077e3d2": {
+            "action_string": "M",
+            "interarrival_gap_ns": {
+              "max": 178378068395,
+              "mean": 2599570664.7316384,
+              "min": 2966,
+              "n": 354,
+              "p10": 11020,
+              "p25": 331544,
+              "p50": 2586790,
+              "p75": 201845400,
+              "p90": 847844459,
+              "p99": 68032818958,
+              "sum": 920248015315.0
+            },
+            "recurrences": 354
+          },
+          "ow-f6ba7eaa9e45ef1b68cf": {
+            "action_string": "A",
+            "interarrival_gap_ns": {
+              "max": 935003627173,
+              "mean": 1586824440.557151,
+              "min": 0,
+              "n": 1741,
+              "p10": 43451,
+              "p25": 359722,
+              "p50": 9030558,
+              "p75": 99224977,
+              "p90": 101464965,
+              "p99": 14649550229,
+              "sum": 2762661351010.0
+            },
+            "recurrences": 1741
+          }
+        },
+        "groups_delivered_at_cutoff": 9125,
+        "member_group_indices": [
+          9085,
+          9086,
+          9087,
+          9088,
+          9089,
+          9090,
+          9091,
+          9092,
+          9093,
+          9094,
+          9095,
+          9096,
+          9097,
+          9098,
+          9099,
+          9100,
+          9101,
+          9102,
+          9103,
+          9104,
+          9105,
+          9106,
+          9107,
+          9108,
+          9109,
+          9110,
+          9111,
+          9112,
+          9113,
+          9114,
+          9115,
+          9116,
+          9117,
+          9118,
+          9119,
+          9120,
+          9121,
+          9122,
+          9123,
+          9124
+        ],
+        "result": "COMPUTED",
+        "same_family_run_lengths": {
+          "longest": [
+            [
+              33,
+              "ow-59ace24da4a485c605b6",
+              1
+            ],
+            [
+              31,
+              "ow-59ace24da4a485c605b6",
+              3
+            ],
+            [
+              30,
+              "ow-59ace24da4a485c605b6",
+              1
+            ],
+            [
+              27,
+              "ow-59ace24da4a485c605b6",
+              1
+            ],
+            [
+              26,
+              "ow-59ace24da4a485c605b6",
+              1
+            ],
+            [
+              25,
+              "ow-40540069fe5aeddc127b",
+              1
+            ],
+            [
+              24,
+              "ow-59ace24da4a485c605b6",
+              1
+            ],
+            [
+              19,
+              "ow-8b55dfd64daf3077e3d2",
+              1
+            ]
+          ],
+          "runs": 6161
+        },
+        "same_order_paths_top": [
+          {
+            "n": 3358,
+            "path": "AC"
+          },
+          {
+            "n": 363,
+            "path": "AFC"
+          },
+          {
+            "n": 176,
+            "path": "AMC"
+          },
+          {
+            "n": 58,
+            "path": "AMMC"
+          },
+          {
+            "n": 15,
+            "path": "AMFC"
+          },
+          {
+            "n": 12,
+            "path": "AMMMC"
+          },
+          {
+            "n": 7,
+            "path": "AMMMMMMMMMMM"
+          },
+          {
+            "n": 5,
+            "path": "AFMFC"
+          },
+          {
+            "n": 5,
+            "path": "AMMMMC"
+          },
+          {
+            "n": 4,
+            "path": "AMMFC"
+          }
+        ],
+        "scopes": {
+          "CROSS_GROUP": "interarrival gaps between consecutive members of one family on the F_LAST receive clock, family-to-family transition edges between consecutive groups, and maximal runs of consecutive same-family groups",
+          "WITHIN_GROUP": "node = action|side; maximal homogeneous runs and transition edges inside groups"
+        },
+        "section": "4.14",
+        "turn": 4,
+        "within_group_edges_top": [
+          {
+            "conditional_probability": 0.88426528,
+            "count": 680,
+            "from": "A|A",
+            "outgoing_denominator": 769,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "N|N"
+          },
+          {
+            "conditional_probability": 0.843615495,
+            "count": 588,
+            "from": "C|A",
+            "outgoing_denominator": 697,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "N|N"
+          },
+          {
+            "conditional_probability": 0.711504425,
+            "count": 402,
+            "from": "A|B",
+            "outgoing_denominator": 565,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "N|N"
+          },
+          {
+            "conditional_probability": 1.0,
+            "count": 244,
+            "from": "M|A",
+            "outgoing_denominator": 244,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "N|N"
+          },
+          {
+            "conditional_probability": 0.680115274,
+            "count": 236,
+            "from": "C|B",
+            "outgoing_denominator": 347,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "N|N"
+          },
+          {
+            "conditional_probability": 0.807692308,
+            "count": 168,
+            "from": "T|B",
+            "outgoing_denominator": 208,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "F|A"
+          },
+          {
+            "conditional_probability": 0.27079646,
+            "count": 153,
+            "from": "A|B",
+            "outgoing_denominator": 565,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "A|B"
+          },
+          {
+            "conditional_probability": 0.877419355,
+            "count": 136,
+            "from": "T|A",
+            "outgoing_denominator": 155,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "F|B"
+          },
+          {
+            "conditional_probability": 0.147776184,
+            "count": 103,
+            "from": "C|A",
+            "outgoing_denominator": 697,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "C|A"
+          },
+          {
+            "conditional_probability": 0.462264151,
+            "count": 98,
+            "from": "F|B",
+            "outgoing_denominator": 212,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "C|B"
+          },
+          {
+            "conditional_probability": 0.11573472,
+            "count": 89,
+            "from": "A|A",
+            "outgoing_denominator": 769,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "A|A"
+          },
+          {
+            "conditional_probability": 0.236311239,
+            "count": 82,
+            "from": "C|B",
+            "outgoing_denominator": 347,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "C|B"
+          },
+          {
+            "conditional_probability": 0.334782609,
+            "count": 77,
+            "from": "F|A",
+            "outgoing_denominator": 230,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "C|A"
+          },
+          {
+            "conditional_probability": 0.239130435,
+            "count": 55,
+            "from": "F|A",
+            "outgoing_denominator": 230,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "T|B"
+          },
+          {
+            "conditional_probability": 0.20754717,
+            "count": 44,
+            "from": "F|B",
+            "outgoing_denominator": 212,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "F|B"
+          },
+          {
+            "conditional_probability": 1.0,
+            "count": 40,
+            "from": "T|N",
+            "outgoing_denominator": 40,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "F|N"
+          },
+          {
+            "conditional_probability": 0.179245283,
+            "count": 38,
+            "from": "F|B",
+            "outgoing_denominator": 212,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "T|A"
+          },
+          {
+            "conditional_probability": 0.160869565,
+            "count": 37,
+            "from": "F|A",
+            "outgoing_denominator": 230,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "M|A"
+          },
+          {
+            "conditional_probability": 0.436619718,
+            "count": 31,
+            "from": "F|N",
+            "outgoing_denominator": 71,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "F|N"
+          },
+          {
+            "conditional_probability": 0.130434783,
+            "count": 30,
+            "from": "F|A",
+            "outgoing_denominator": 230,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "F|A"
+          },
+          {
+            "conditional_probability": 0.848484848,
+            "count": 28,
+            "from": "M|B",
+            "outgoing_denominator": 33,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "N|N"
+          },
+          {
+            "conditional_probability": 0.120192308,
+            "count": 25,
+            "from": "T|B",
+            "outgoing_denominator": 208,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "F|B"
+          },
+          {
+            "conditional_probability": 0.117924528,
+            "count": 25,
+            "from": "F|B",
+            "outgoing_denominator": 212,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "F|A"
+          },
+          {
+            "conditional_probability": 0.281690141,
+            "count": 20,
+            "from": "F|N",
+            "outgoing_denominator": 71,
+            "statistic_kind": "CONDITIONAL_PROBABILITY",
+            "to": "C|B"
+          }
+        ],
+        "within_group_run_lengths_top": [
+          {
+            "length": 154,
+            "node": "A|B",
+            "runs": 1
+          },
+          {
+            "length": 90,
+            "node": "A|A",
+            "runs": 1
+          },
+          {
+            "length": 28,
+            "node": "F|N",
+            "runs": 1
+          },
+          {
+            "length": 21,
+            "node": "C|A",
+            "runs": 1
+          },
+          {
+            "length": 17,
+            "node": "C|A",
+            "runs": 1
+          },
+          {
+            "length": 15,
+            "node": "C|A",
+            "runs": 1
+          },
+          {
+            "length": 10,
+            "node": "C|B",
+            "runs": 1
+          },
+          {
+            "length": 8,
+            "node": "C|B",
+            "runs": 1
+          },
+          {
+            "length": 8,
+            "node": "C|A",
+            "runs": 1
+          },
+          {
+            "length": 7,
+            "node": "C|B",
+            "runs": 2
+          },
+          {
+            "length": 7,
+            "node": "C|A",
+            "runs": 1
+          },
+          {
+            "length": 6,
+            "node": "C|A",
+            "runs": 5
+          }
+        ]
+      },
+      "cutoff_recv_ns": 1633298467489465095,
+      "entry_hash": "f98522fa726faeba88c714726f272cdb73a48f3e38017bd668f9d023b0fdabf7",
+      "ledger_id": "contract_section_4.14",
+      "prev_hash": "297ee04630e34d3cef5cd481e5a1cf265380892c2a58463e6859de9163035f38",
+      "sequence": 3
     }
   ],
-  "head_hash": "297ee04630e34d3cef5cd481e5a1cf265380892c2a58463e6859de9163035f38",
+  "head_hash": "f98522fa726faeba88c714726f272cdb73a48f3e38017bd668f9d023b0fdabf7",
   "ledger_id": "contract_section_4.14"
 }

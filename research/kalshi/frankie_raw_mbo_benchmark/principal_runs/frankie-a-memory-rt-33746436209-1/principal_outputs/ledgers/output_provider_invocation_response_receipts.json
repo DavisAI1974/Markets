@@ -57,8 +57,27 @@
       "ledger_id": "output_provider_invocation_response_receipts",
       "prev_hash": "18b4f057eabec9387941b3c7a090315f969e2d9949388df06d21f7118a74528e",
       "sequence": 2
+    },
+    {
+      "body": {
+        "mechanism": "AGENT_SESSION",
+        "model_identity_as_reported_by_session": "claude-fable-5-1",
+        "request_basis": "the F_LAST-closed group delivered at this cutoff (its stream sha256) and the cutoff",
+        "request_sha256": "af529339503d4941b73cd96850e82fa6cd691b932100d37a497d44d72cb99f3a",
+        "response_basis": "canonical bytes of every contract-section body written at this cutoff",
+        "response_sha256": "75059e9e40fdf4ecb11dbea5db5d19a3e4745c71276647bbd844086e843e18b9",
+        "session_id": "session_014m3YsXKuT773qhNQLuWahu",
+        "staged_invocation_cutoff": true,
+        "stream_end_turn": false,
+        "turn": 4
+      },
+      "cutoff_recv_ns": 1633298467489465095,
+      "entry_hash": "153e8933d834e16dbd61b389c8a7d222425e5ccdfd9bdd97685fda2807f5dffe",
+      "ledger_id": "output_provider_invocation_response_receipts",
+      "prev_hash": "56b96fa575d4b5dd1b678df7c4638b7f152305196f35c4d370b41f138c6b6eab",
+      "sequence": 3
     }
   ],
-  "head_hash": "56b96fa575d4b5dd1b678df7c4638b7f152305196f35c4d370b41f138c6b6eab",
+  "head_hash": "153e8933d834e16dbd61b389c8a7d222425e5ccdfd9bdd97685fda2807f5dffe",
   "ledger_id": "output_provider_invocation_response_receipts"
 }

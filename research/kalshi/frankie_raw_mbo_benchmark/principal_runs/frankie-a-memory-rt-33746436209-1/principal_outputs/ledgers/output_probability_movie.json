@@ -75,8 +75,33 @@
       "ledger_id": "output_probability_movie",
       "prev_hash": "6f9cf9e5b0add7af4781d9d763fa0a20aab660ae1048e10abe294fcfb64bc640",
       "sequence": 2
+    },
+    {
+      "body": {
+        "basis_denominator": 10862,
+        "evaluation": {
+          "clock": "clock_model_evaluation",
+          "observed_ns": 1633298467489465095
+        },
+        "head": "window_direction_at_next_cutoff",
+        "instance_id": "window-direction-next-cutoff-turn-4",
+        "lock_rule_revision": "FRK-NO-LOCK-V1: no directional lock is called on this unit while median responses at every horizon are zero",
+        "lock_state": "NO_RELIABLE_LOCK",
+        "probabilities": {
+          "LONG": 0.005984165,
+          "NO_DIRECTION": 0.993831707,
+          "SHORT": 0.000184128
+        },
+        "snapshot_id": "snap-4",
+        "view": "trailing empirical share of completed-second window directions (a base rate, not a model)"
+      },
+      "cutoff_recv_ns": 1633298467489465095,
+      "entry_hash": "ba25527683c3b6303157e9941dc61dd5a4915a44c6719c1b3c2765dd6c36b1b5",
+      "ledger_id": "output_probability_movie",
+      "prev_hash": "979627ba8a0ded84c0e68d02e3ca84d2c4040a140c68ec6d7ff013cb8f0338cc",
+      "sequence": 3
     }
   ],
-  "head_hash": "979627ba8a0ded84c0e68d02e3ca84d2c4040a140c68ec6d7ff013cb8f0338cc",
+  "head_hash": "ba25527683c3b6303157e9941dc61dd5a4915a44c6719c1b3c2765dd6c36b1b5",
   "ledger_id": "output_probability_movie"
 }
