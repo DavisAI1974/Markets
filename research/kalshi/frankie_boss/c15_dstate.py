@@ -238,6 +238,19 @@ class ReceiptDChain:
                 anchor_dir: int | None, far_best_price_raw: int | None,
                 book_integrity: bool) -> DReceiptOutput:
         self._chain.validate_result_bearing(receipt)
+        return self._advance_bound(receipt, session_id, anchor_dir,
+                                   far_best_price_raw, book_integrity)
+
+    def advance_probe(self, receipt: RecordGroupReceipt, *, session_id: str,
+                      anchor_dir: int | None, far_best_price_raw: int | None,
+                      book_integrity: bool) -> DReceiptOutput:
+        """Mechanics lane with the same trusted-chain check and no promotion."""
+        self._chain.validate_probe(receipt)
+        return self._advance_bound(receipt, session_id, anchor_dir,
+                                   far_best_price_raw, book_integrity)
+
+    def _advance_bound(self, receipt, session_id, anchor_dir,
+                       far_best_price_raw, book_integrity):
         if (receipt.instrument_id, receipt.publisher_id) != (self._instrument, self._publisher):
             raise ValueError("receipt publisher/instrument does not match consumer")
         observation = DObservation(receipt.instrument_group_ordinal,
@@ -251,3 +264,74 @@ class ReceiptDChain:
         return DReceiptOutput(output, self._code_sha, self._config_hash,
                               receipt.terminal_prefix_hash, receipt.receipt_hash,
                               _hash(SCHEMA + "/RECEIPT", bound))
+
+    def export_state(self):
+        """Exact bounded geometry; the outer C15 checkpoint supplies authority."""
+        state = {key: ([value.numerator, value.denominator]
+                       if isinstance(value, Fraction) else value)
+                 for key, value in asdict(self._machine._state).items()}
+        payload = dict(schema=SCHEMA, code_sha=self._code_sha,
+                       config_hash=self._config_hash,
+                       machine=dict(state=state, ordinal=self._machine._ordinal,
+                                    member=self._machine._member,
+                                    session=self._machine._session))
+        return {**payload, "state_hash": _hash(SCHEMA + "/STATE", payload)}
+
+    @classmethod
+    def restore(cls, chain, payload, **config):
+        """Restore only inside a hash-bound, trusted outer checkpoint envelope."""
+        machine = cls(chain, **config)
+        if (type(payload) is not dict or set(payload) !=
+                {"schema", "code_sha", "config_hash", "machine", "state_hash"}):
+            raise ValueError("invalid D checkpoint fields")
+        body = {k: v for k, v in payload.items() if k != "state_hash"}
+        if (payload["schema"] != SCHEMA or payload["code_sha"] != machine._code_sha
+                or payload["config_hash"] != machine._config_hash
+                or payload["state_hash"] != _hash(SCHEMA + "/STATE", body)):
+            raise ValueError("D checkpoint identity mismatch")
+        raw = payload["machine"]
+        if type(raw) is not dict or set(raw) != {"state", "ordinal", "member", "session"}:
+            raise ValueError("invalid D machine checkpoint")
+        _int(raw["ordinal"], "ordinal", -1)
+        if raw["ordinal"] + 1 != chain.instrument_next_ordinal(machine._instrument):
+            raise ValueError("D checkpoint and prefix ordinal disagree")
+        values = raw["state"]
+        if type(values) is not dict or set(values) != set(asdict(DState())):
+            raise ValueError("invalid D state fields")
+        values = dict(values)
+        for key in ("E", "E_prev", "pull_depth", "m_last", "m_prev", "p_last", "p_prev"):
+            value = values[key]
+            if value is not None:
+                if (type(value) is not list or len(value) != 2
+                        or any(type(x) is not int for x in value) or value[1] <= 0):
+                    raise ValueError("invalid D rational")
+                values[key] = Fraction(*value)
+        for key in ("age", "n_ext"):
+            _int(values[key], key)
+        for key in ("g_E", "g_E_prev", "duration_last"):
+            if values[key] is not None:
+                _int(values[key], key)
+        for key in ("armed", "broken"):
+            if type(values[key]) is not bool:
+                raise ValueError("invalid D boolean")
+        if raw["ordinal"] >= 0:
+            DObservation(raw["ordinal"], raw["member"], raw["session"],
+                         values["anchor_dir"], None, True)
+        elif raw["member"] is not None or raw["session"] is not None or values != asdict(DState()):
+            raise ValueError("nonempty initial D state")
+        state = DState(**values)
+        if (state.pull_depth is None or state.pull_depth < 0
+                or (state.anchor_dir is None) != (state.E is None)
+                or (state.broken and (state.armed or state.n_ext))
+                or (state.n_ext >= 1 and any(x is None or x <= 0 for x in
+                    (state.m_last, state.p_last, state.duration_last)))
+                or (state.n_ext >= 2 and any(x is None or x <= 0 for x in
+                    (state.m_prev, state.p_prev)))):
+            raise ValueError("inconsistent D geometry")
+        machine._machine._state = state
+        machine._machine._ordinal = raw["ordinal"]
+        machine._machine._member = raw["member"]
+        machine._machine._session = raw["session"]
+        if machine.export_state() != payload:
+            raise ValueError("noncanonical D checkpoint")
+        return machine

@@ -571,15 +571,24 @@ class RecordPrefixChain:
         instrument. Authority comes from the chain having minted it, not
         from the receipt's self-hash.
         """
-        if not isinstance(receipt, RecordGroupReceipt):
-            raise ReceiptError("expected a RecordGroupReceipt")
-        receipt.verify()
         if self._scope.kind is not ScopeKind.RESULT_BEARING:
             raise ResultBearingError(
                 f"scope {self._scope.kind.value} cannot enter a result-bearing path"
             )
+        return self._validate_context(receipt)
+
+    def validate_probe(self, receipt: RecordGroupReceipt) -> RecordGroupReceipt:
+        """Bind mechanics evidence to this PROBE_ONLY chain, never promote it."""
+        if self._scope.kind is not ScopeKind.PROBE_ONLY:
+            raise ResultBearingError("probe consumer requires a PROBE_ONLY chain")
+        return self._validate_context(receipt)
+
+    def _validate_context(self, receipt: RecordGroupReceipt) -> RecordGroupReceipt:
+        if not isinstance(receipt, RecordGroupReceipt):
+            raise ReceiptError("expected a RecordGroupReceipt")
+        receipt.verify()
         if (
-            receipt.scope_kind is not ScopeKind.RESULT_BEARING
+            receipt.scope_kind is not self._scope.kind
             or receipt.scope_id != self._scope.scope_id
             or receipt.adapter_revision != self._scope.adapter_revision
         ):

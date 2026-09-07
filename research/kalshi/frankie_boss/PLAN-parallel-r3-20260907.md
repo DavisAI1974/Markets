@@ -1,5 +1,20 @@
 # Parallel BOSS foundations — 2026-09-07
 
+## Current owner correction — complete evidence
+
+Greg superseded the C15R2 reduction choices after this batch's clearance:
+no silent data loss, no history caps, top-three selection, normalization,
+clipping, averages/smoothing, warmup suppression or truncated geometry in the
+new C15 path. Preserving an archive without delivering/using the evidence is
+not sufficient. See `SPEC-c15-full-evidence-20260907.md` and the full-evidence
+handoff/audit for current acceptance and remaining model-consumption work.
+
+The 19-column C15R2 builder direction, normalizer and D-summary below are
+historical research contracts, not the current integration plan. The original
+Claude documents remain intact as provenance. No Frankie input, calculation,
+adapter or replay implementation was changed by this correction. OSS remains
+deferred until the end of the build.
+
 Base: `beb548b86b777dc69bf834950b30cc28000e16ef`.
 Contract: `parallel_r3_contracts/CLAUDE_BOSS_CONTRACT_ADDENDUM_R3_20260907.md`, rev 1.
 

@@ -50,7 +50,7 @@ class ListSource:
 
 def mean_spec():
     def fn(w: CausalWindow):
-        vals = w.values("book", "mid")
+        vals = tuple(r.payload["mid"] for r in w.latest_records("book"))
         return {
             "n": len(vals),
             "mean": sum(vals) / len(vals) if vals else float("nan"),

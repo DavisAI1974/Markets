@@ -22,9 +22,8 @@ try:
 except ImportError:  # direct execution from the package directory
     from qsv_registry import QSV_FEATURE_REGISTRY
 
-SCHEMA_VERSION = "boss_state_serialization/1"
-FLOAT_SIGNIFICAND = 12
-FLOAT_POLICY = "decimal-significand-12/1"
+SCHEMA_VERSION = "boss_state_serialization/2"
+FLOAT_POLICY = "exact-integer-and-float-roundtrip-decimal/2"
 
 
 class ValueState(str, Enum):
@@ -69,6 +68,7 @@ class SequenceRow:
     categorical: tuple[CategoricalField, ...]
     venue: str
     instrument: str
+    independent_clocks: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "numeric", tuple(self.numeric))
@@ -128,15 +128,41 @@ class SerializedState:
 def _canon_float(value: float | int) -> str:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise ValueError("present numeric value must be int or float")
-    x = float(value)
-    if not math.isfinite(x):
+    if isinstance(value, float) and not math.isfinite(value):
         raise ValueError("present numeric value must be finite")
-    if x == 0.0:
-        return "0E+0"
-    d = Decimal(repr(x))
-    exp = d.adjusted()
-    quant = Decimal(1).scaleb(exp - (FLOAT_SIGNIFICAND - 1))
-    return f"{d.quantize(quant).normalize():E}"
+    # Work from decimal digits without Decimal context rounding or int->float.
+    # All integer digits and the float's round-trip representation survive.
+    sign, digits, exponent = Decimal(str(value)).as_tuple()
+    digits = list(digits)
+    while len(digits) > 1 and digits[-1] == 0:
+        digits.pop()
+        exponent += 1
+    if all(d == 0 for d in digits):
+        return ("-" if sign else "") + "0E+0"
+    coefficient = str(digits[0])
+    if len(digits) > 1:
+        coefficient += "." + "".join(str(d) for d in digits[1:])
+    return ("-" if sign else "") + coefficient + f"E{exponent + len(digits) - 1:+d}"
+
+
+def _parse_number(text, kind):
+    if type(text) is not str:
+        raise ValueError("serialized numeric value must be a decimal string")
+    value = Decimal(text)
+    if not value.is_finite():
+        raise ValueError("present numeric value must be finite")
+    if kind == "int":
+        if value != value.to_integral_value():
+            raise ValueError("integer field contains a noninteger value")
+        return int(value)
+    if kind != "float":
+        raise ValueError("numeric value_type must be int or float")
+    result = float(value)
+    if not math.isfinite(result):
+        raise ValueError("numeric value is outside finite float64")
+    if Decimal(str(result)) != value:
+        raise ValueError("float decimal would lose precision or underflow")
+    return result
 
 
 def _validate_field_names(fields, kind: str) -> None:
@@ -183,7 +209,9 @@ def _validate_snapshot(snapshot: StateSnapshot) -> None:
             raise ValueError("event_time_ns must be integer")
         if isinstance(row.ingest_time_ns, bool) or not isinstance(row.ingest_time_ns, int):
             raise ValueError("ingest_time_ns must be integer")
-        if row.ingest_time_ns < row.event_time_ns:
+        if type(row.independent_clocks) is not bool:
+            raise ValueError("independent_clocks must be boolean")
+        if row.ingest_time_ns < row.event_time_ns and not row.independent_clocks:
             raise ValueError(
                 "ingest_time_ns cannot precede event_time_ns in a trusted snapshot"
             )
@@ -248,6 +276,7 @@ def _numeric_dict(field: NumericField) -> dict:
         "name": field.name,
         "unit": field.unit,
         "state": field.state.value,
+        "value_type": type(field.value).__name__ if field.state is ValueState.PRESENT else None,
         "value": (
             _canon_float(field.value)
             if field.state is ValueState.PRESENT
@@ -276,6 +305,8 @@ def _body(snapshot: StateSnapshot, schema_version: str) -> dict:
                 _canon_float(v) if s is ValueState.PRESENT else None
                 for v, s in zip(snapshot.qsv.values, snapshot.qsv.states)
             ],
+            "value_types": [type(v).__name__ if s is ValueState.PRESENT else None
+                            for v, s in zip(snapshot.qsv.values, snapshot.qsv.states)],
         }
     return {
         "schema_version": schema_version,
@@ -291,6 +322,7 @@ def _body(snapshot: StateSnapshot, schema_version: str) -> dict:
                 "index": row.index,
                 "event_time_ns": row.event_time_ns,
                 "ingest_time_ns": row.ingest_time_ns,
+                "independent_clocks": row.independent_clocks,
                 "numeric": [_numeric_dict(f) for f in row.numeric],
                 "categorical": [_categorical_dict(f) for f in row.categorical],
                 "venue": row.venue,
@@ -311,8 +343,8 @@ def serialize_state(
     *,
     schema_version: str = SCHEMA_VERSION,
 ) -> SerializedState:
-    if not isinstance(schema_version, str) or not schema_version:
-        raise ValueError("schema_version must be non-empty")
+    if schema_version != SCHEMA_VERSION:
+        raise ValueError("unsupported schema_version; exact v2 data cannot be mislabeled")
     _validate_snapshot(snapshot)
     text = json.dumps(
         _body(snapshot, schema_version),
@@ -338,15 +370,19 @@ def _expect_keys(raw: object, expected: set[str], label: str) -> dict:
 
 
 def _parse_numeric(raw: dict) -> NumericField:
-    raw = _expect_keys(raw, {"name", "unit", "state", "value"}, "numeric")
+    raw = _expect_keys(raw, {"name", "unit", "state", "value", "value_type"}, "numeric")
     state = ValueState(raw["state"])
-    value = float(raw["value"]) if state is ValueState.PRESENT else None
+    if state is not ValueState.PRESENT and (raw["value"] is not None or raw["value_type"] is not None):
+        raise ValueError("non-present numeric payload must not be silently discarded")
+    value = _parse_number(raw["value"], raw["value_type"]) if state is ValueState.PRESENT else None
     return NumericField(raw["name"], raw["unit"], state, value)
 
 
 def _parse_categorical(raw: dict) -> CategoricalField:
     raw = _expect_keys(raw, {"name", "state", "value"}, "categorical")
     state = ValueState(raw["state"])
+    if state is not ValueState.PRESENT and raw["value"] is not None:
+        raise ValueError("non-present categorical payload must not be silently discarded")
     return CategoricalField(
         raw["name"], state, raw["value"] if state is ValueState.PRESENT else None
     )
@@ -376,6 +412,7 @@ def parse_serialized_state(text: str) -> StateSnapshot:
         "index",
         "event_time_ns",
         "ingest_time_ns",
+        "independent_clocks",
         "numeric",
         "categorical",
         "venue",
@@ -387,6 +424,7 @@ def parse_serialized_state(text: str) -> StateSnapshot:
             index=r["index"],
             event_time_ns=r["event_time_ns"],
             ingest_time_ns=r["ingest_time_ns"],
+            independent_clocks=r["independent_clocks"],
             numeric=tuple(_parse_numeric(f) for f in r["numeric"]),
             categorical=tuple(_parse_categorical(f) for f in r["categorical"]),
             venue=r["venue"],
@@ -403,19 +441,24 @@ def parse_serialized_state(text: str) -> StateSnapshot:
     if qsv_raw is not None:
         qsv_raw = _expect_keys(
             qsv_raw,
-            {"registry_id", "names", "states", "mask", "values"},
+            {"registry_id", "names", "states", "mask", "values", "value_types"},
             "QSV",
         )
         states = tuple(ValueState(s) for s in qsv_raw["states"])
+        if any(len(qsv_raw[k]) != len(states) for k in ("names", "mask", "values", "value_types")):
+            raise ValueError("QSV arrays must have identical widths; no zip truncation")
         expected_mask = [1 if s is ValueState.PRESENT else 0 for s in states]
         if qsv_raw["mask"] != expected_mask:
             raise ValueError("QSV mask does not agree with value states")
+        if any(s is not ValueState.PRESENT and (v is not None or kind is not None)
+               for s, v, kind in zip(states, qsv_raw["values"], qsv_raw["value_types"])):
+            raise ValueError("non-present QSV payload must not be silently discarded")
         qsv = QSVState(
             registry_id=qsv_raw["registry_id"],
             names=tuple(qsv_raw["names"]),
             values=tuple(
-                float(v) if s is ValueState.PRESENT else None
-                for v, s in zip(qsv_raw["values"], states)
+                _parse_number(v, kind) if s is ValueState.PRESENT else None
+                for v, s, kind in zip(qsv_raw["values"], states, qsv_raw["value_types"])
             ),
             states=states,
         )

@@ -92,18 +92,22 @@ def skewed():
     ]
 
 
-def test_skewed_row_is_quarantined_not_admitted():
+def test_skewed_received_row_is_retained_with_original_clocks():
     s = src(skewed())
     got = s.fetch("ES", T0 + 10 * NS)
-    assert {r.key for r in got} == {"ok"}, "a row visible before it happened is lookahead"
-    assert s.stats.quarantined_skew == 1
+    assert {r.key for r in got} == {"ok", "bad"}
+    assert got[1].event_time == T0 + 6 * NS
+    assert got[1].ingest_time == T0 + 2 * NS
+    assert got[1].independent_clocks
+    assert s.stats.retained_skew == 1
+    assert s.stats.quarantined_skew == 0
 
 
-def test_quarantine_is_reported_not_silent():
+def test_retained_skew_is_reported_not_silent():
     s = src(skewed())
     s.fetch("ES", T0 + 10 * NS)
     defects = s.defects()
-    assert defects and "quarantined" in defects[0]
+    assert defects and "retained" in defects[0]
 
 
 def test_high_skew_rate_flags_the_feed():
@@ -112,11 +116,12 @@ def test_high_skew_rate_flags_the_feed():
     assert any("clock discipline is unsound" in d for d in s.defects())
 
 
-def test_tolerance_admits_small_inversions():
+def test_tolerance_cannot_drop_or_rewrite_received_inversions():
     s = src(skewed(), policy=SkewPolicy(tolerance_ns=5 * NS))
     got = s.fetch("ES", T0 + 10 * NS)
-    assert {r.key for r in got} == {"ok"}, "still excluded: Record itself rejects it"
-    assert s.stats.quarantined_skew == 1
+    assert {r.key for r in got} == {"ok", "bad"}
+    assert s.stats.retained_skew == 1
+    assert s.stats.quarantined_skew == 0
 
 
 def test_adapter_plugs_into_the_packet_builder():
@@ -340,10 +345,10 @@ def tbatch(c, b=2, t=6):
     )
 
 
-def test_default_qsv_dim_is_the_named_registry_and_branch_is_dormant():
+def test_default_qsv_dim_is_the_named_registry_and_branch_is_enabled():
     c = TrunkConfig()
     assert c.qsv_dim == len(QSV_FEATURE_REGISTRY)
-    assert c.use_qsv is False
+    assert c.use_qsv is True
 
 
 def test_wrong_qsv_width_is_caught_with_a_registry_hint():

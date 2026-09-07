@@ -21,8 +21,8 @@ Design commitments
    is invisible to an event_time filter and is pure lookahead.
 
 2. RESTATEMENTS RESOLVE AS-OF. When a logical key has several versions,
-   the packet takes the newest version whose ingest_time <= as_of --
-   not the newest version, and not the first.
+   the packet retains every version whose ingest_time <= as_of.
+   latest_records() explicitly queries the current fact without deleting history.
 
 3. INCOMPLETENESS IS RECORDED, NOT FILLED. If a source watermark trails
    as_of, the packet is stamped degraded with the lag. It does not
@@ -33,9 +33,9 @@ Design commitments
    that can only see the filtered records. There is no path to the
    full series.
 
-5. CANONICAL BYTES. Floats are quantized to a fixed significand before
-   hashing so that BLAS/thread nondeterminism cannot change the packet
-   hash. The quantization is part of the stamped spec.
+5. EXACT EVIDENCE. V2 binds typed, bit-exact source payloads and features.
+   Legacy canonical_bytes remains unchanged for prior prefix identities;
+   it cannot erase precision from the new exact bindings.
 
 6. FULL STAMP. The packet records code_version, feature_spec_version,
    model_version AND calibrator_version. The last one exists because an
@@ -49,7 +49,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from decimal import Decimal
 from typing import Any, Callable, Iterable, Mapping, Protocol, Sequence
 
@@ -73,7 +73,7 @@ __all__ = [
 # from different BLAS builds, thread counts and reduction orders.
 FLOAT_SIGNIFICAND = 12
 
-SCHEMA_VERSION = "causal_packet/1"
+SCHEMA_VERSION = "causal_packet/2"
 
 
 class LeakageError(RuntimeError):
@@ -83,6 +83,19 @@ class LeakageError(RuntimeError):
 # --------------------------------------------------------------------------
 # Records and sources
 # --------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class CaptureClockContract:
+    source_name: str
+    adapter_version: str = "databento_mbo/2"
+    receive_field: str = "ts_recv_ns"
+    event_field: str = "ts_event_ns"
+
+    def __post_init__(self):
+        if (not self.source_name or self.adapter_version != "databento_mbo/2"
+                or self.receive_field != "ts_recv_ns" or self.event_field != "ts_event_ns"):
+            raise ValueError("unsupported independent-clock adapter contract")
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,9 +114,20 @@ class Record:
     ingest_time: int
     payload: Mapping[str, Any]
     version: int = 0
+    independent_clocks: bool = False
+    clock_contract: CaptureClockContract | None = None
 
     def __post_init__(self) -> None:
-        if self.ingest_time < self.event_time:
+        try:
+            from .c15_journal import freeze
+        except ImportError:
+            from c15_journal import freeze
+        object.__setattr__(self, "payload", freeze(dict(self.payload)))
+        if type(self.independent_clocks) is not bool:
+            raise TypeError("independent_clocks must be boolean")
+        if self.independent_clocks != isinstance(self.clock_contract, CaptureClockContract):
+            raise ValueError("independent clocks require a named adapter clock contract")
+        if self.ingest_time < self.event_time and not self.independent_clocks:
             # Not fatal in principle (clock skew), but it means the ledger
             # is claiming the system knew something before it happened.
             # Refuse rather than quietly admit a lookahead vector.
@@ -135,12 +159,12 @@ class Source(Protocol):
 @dataclass(frozen=True, slots=True)
 class Watermark:
     source: str
-    value: int
+    value: int | None
     as_of: int
 
     @property
-    def lag_ns(self) -> int:
-        return max(0, self.as_of - self.value)
+    def lag_ns(self) -> int | None:
+        return None if self.value is None else max(0, self.as_of - self.value)
 
 
 class IncompletenessPolicy:
@@ -153,6 +177,11 @@ class IncompletenessPolicy:
     def evaluate(self, watermarks: Sequence[Watermark]) -> list[str]:
         breaches: list[str] = []
         for wm in watermarks:
+            if wm.value is None:
+                breaches.append(f"{wm.source}: authoritative completeness watermark unavailable")
+                continue
+            if wm.value > wm.as_of:
+                breaches.append(f"{wm.source}: completeness watermark exceeds as_of")
             limit = self.max_lag_ns.get(wm.source)
             if limit is not None and wm.lag_ns > limit:
                 breaches.append(
@@ -171,8 +200,8 @@ class IncompletenessPolicy:
 class CausalWindow:
     """The only view of source data a feature function is allowed.
 
-    Holds records already filtered to ingest_time <= as_of with
-    restatements resolved. Exposes no way to reach beyond as_of, and
+    Holds every record already filtered to ingest_time <= as_of, including
+    earlier restatements. Current-fact resolution is an explicit query. Exposes no way to reach beyond as_of, and
     tracks which sources were actually read so provenance lands in the
     packet rather than being asserted by hand.
     """
@@ -204,12 +233,25 @@ class CausalWindow:
 
     def values(
         self, source: str, field_name: str, lookback_ns: int | None = None
-    ) -> tuple[float, ...]:
+    ) -> tuple[Any, ...]:
+        """One value per record, in record order; absent fields stay None.
+
+        No float coercion: integer IDs, timestamps and raw prices stay exact.
+        Inspect records() to distinguish absent fields from explicit nulls.
+        """
         return tuple(
-            float(r.payload[field_name])
+            r.payload.get(field_name)
             for r in self.records(source, lookback_ns)
-            if field_name in r.payload
         )
+
+    def latest_records(self, source: str) -> tuple[Record, ...]:
+        """Explicit current-fact query; records() keeps every known version."""
+        return tuple(PacketBuilder._resolve(self.records(source), self.as_of))
+
+    def field_entries(self, source: str, field_name: str):
+        """Lossless field view: record identity, explicit presence and value."""
+        return tuple((r, field_name in r.payload, r.payload.get(field_name))
+                     for r in self.records(source))
 
 
 FeatureFn = Callable[[CausalWindow], Mapping[str, Any]]
@@ -302,6 +344,13 @@ class PacketStamp:
     schema_version: str = SCHEMA_VERSION
     float_significand: int = FLOAT_SIGNIFICAND
 
+    def __post_init__(self):
+        try:
+            from .c15_journal import freeze
+        except ImportError:
+            from c15_journal import freeze
+        object.__setattr__(self, "feature_spec_versions", freeze(dict(self.feature_spec_versions)))
+
     def as_dict(self) -> dict[str, Any]:
         return {
             "code_version": self.code_version,
@@ -323,8 +372,29 @@ class CausalPacket:
     stamp: PacketStamp
     degraded: tuple[str, ...] = ()
     record_counts: Mapping[str, int] = field(default_factory=dict)
+    source_records: Mapping[str, tuple[Record, ...]] = field(default_factory=dict)
+    resolved_record_counts: Mapping[str, int] = field(default_factory=dict)
+
+    def __post_init__(self):
+        try:
+            from .c15_journal import freeze
+        except ImportError:
+            from c15_journal import freeze
+        from types import MappingProxyType
+        for name in ("features", "provenance", "record_counts", "resolved_record_counts"):
+            object.__setattr__(self, name, freeze(dict(getattr(self, name))))
+        object.__setattr__(self, "source_records", MappingProxyType({
+            k: tuple(v) for k, v in self.source_records.items()}))
+        object.__setattr__(self, "watermarks", tuple(self.watermarks))
+        object.__setattr__(self, "degraded", tuple(self.degraded))
 
     def as_dict(self) -> dict[str, Any]:
+        # Typed encoding binds every raw bit without changing the legacy
+        # canonical_bytes authority used by prefix/checkpoint contracts.
+        try:
+            from .c15_journal import pack
+        except ImportError:
+            from c15_journal import pack
         return {
             "entity": self.entity,
             "as_of": self.as_of,
@@ -335,6 +405,15 @@ class CausalPacket:
             ],
             "provenance": {k: list(v) for k, v in sorted(self.provenance.items())},
             "record_counts": dict(sorted(self.record_counts.items())),
+            "resolved_record_counts": dict(sorted(self.resolved_record_counts.items())),
+            "source_records": {name: [pack({
+                "key": r.key, "event_time": r.event_time,
+                "ingest_time": r.ingest_time, "version": r.version,
+                "independent_clocks": r.independent_clocks,
+                "clock_contract": asdict(r.clock_contract) if r.clock_contract else None,
+                "payload": dict(r.payload),
+            }) for r in rows] for name, rows in sorted(self.source_records.items())},
+            "exact_features": pack(dict(self.features)),
             "degraded": list(self.degraded),
             "stamp": self.stamp.as_dict(),
         }
@@ -394,13 +473,32 @@ class PacketBuilder:
     ) -> CausalPacket:
         by_source: dict[str, list[Record]] = {}
         watermarks: list[Watermark] = []
+        source_defects: list[str] = []
         for name, src in self.sources.items():
             raw = src.fetch(entity, as_of)
+            raw = tuple(raw)
+            for r in raw:
+                if r.ingest_time <= as_of and r.independent_clocks:
+                    try:
+                        from .databento_adapter import DatabentoMBOSource
+                    except ImportError:
+                        from databento_adapter import DatabentoMBOSource
+                    if (not isinstance(src, DatabentoMBOSource)
+                            or r.clock_contract != src.clock_contract
+                            or r.clock_contract.source_name != name):
+                        raise LeakageError("independent clocks are not bound to the declared source adapter")
             # Defense in depth: never trust the adapter's own filtering.
-            by_source[name] = self._resolve(raw, as_of)
+            by_source[name] = sorted(
+                (r for r in raw if r.ingest_time <= as_of),
+                key=lambda r: (r.ingest_time, r.event_time, r.key, r.version,
+                               self._exact_record_key(r)),
+            )
+            defects = getattr(src, "defects", None)
+            if defects is not None:
+                source_defects.extend(defects())
             watermarks.append(Watermark(name, src.watermark(entity, as_of), as_of))
 
-        degraded = tuple(self.policy.evaluate(watermarks))
+        degraded = tuple(source_defects + self.policy.evaluate(watermarks))
 
         features: dict[str, Any] = {}
         provenance: dict[str, tuple[str, ...]] = {}
@@ -436,4 +534,14 @@ class PacketBuilder:
             stamp=stamp,
             degraded=degraded,
             record_counts={k: len(v) for k, v in by_source.items()},
+            source_records={k: tuple(v) for k, v in by_source.items()},
+            resolved_record_counts={k: len(self._resolve(v, as_of)) for k, v in by_source.items()},
         )
+
+    @staticmethod
+    def _exact_record_key(record: Record) -> bytes:
+        try:
+            from .c15_journal import pack
+        except ImportError:
+            from c15_journal import pack
+        return canonical_bytes(pack(dict(record.payload)))

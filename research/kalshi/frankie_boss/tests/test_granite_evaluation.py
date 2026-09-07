@@ -9,6 +9,7 @@ from research.kalshi.frankie_boss.granite_evaluation import (
     DecodeOutput, EvaluationPair, evaluate,
 )
 from research.kalshi.frankie_boss.state_serialization import serialize_state
+from research.kalshi.frankie_boss.granite_output_schema import SCHEMA_VERSION
 from test_state_serialization import snapshot
 
 TRAINING_HASHES = frozenset({'f' * 64})
@@ -16,7 +17,7 @@ TRAINING_HASHES = frozenset({'f' * 64})
 
 def payload(state, i):
     return {
-        'schema_version': 'BOSS_GRANITE_OUTPUT_SCHEMA_V1',
+        'schema_version': SCHEMA_VERSION,
         'snapshot_hash': state.hash,
         'evidence_refs': [],
         'contradictions': [],

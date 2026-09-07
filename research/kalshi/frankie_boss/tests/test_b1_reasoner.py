@@ -26,7 +26,7 @@ def inputs(b=2, t=4, seed=11):
 def model(**kw):
     torch.manual_seed(31)
     trunk = Trunk(TrunkConfig(d_model=8, n_heads=2, n_layers=1, window=3,
-                             n_numeric=3, categorical_cardinalities=(4,)))
+                             n_numeric=3, categorical_cardinalities=(4,), use_qsv=False))
     return B1Reasoner(trunk, B1Config(**kw)).eval()
 
 
@@ -154,7 +154,7 @@ def test_h2_review_regression_unchanged_trunk_batch_numerics(width, length):
     torch.manual_seed(31)
     m = B1Reasoner(
         Trunk(TrunkConfig(d_model=width, n_heads=2, n_layers=1, window=3,
-                          n_numeric=3, categorical_cardinalities=(4,))),
+                          n_numeric=3, categorical_cardinalities=(4,), use_qsv=False)),
         B1Config(halt_policy="CONVERGENCE", k_max=2, k_fixed=2),
     ).eval()
     x = dict(numeric=torch.randn(32, length, 3),

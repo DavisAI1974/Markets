@@ -126,11 +126,10 @@ def test_snapshot_copies_source_versions_instead_of_retaining_mutable_mapping():
     assert serialize_state(s).text == before
 
 
-def test_serializer_schema_version_participates_in_identity():
-    s = snapshot()
-    a = serialize_state(s, schema_version="boss_state_serialization/1")
-    b = serialize_state(s, schema_version="boss_state_serialization/test-alt")
-    assert a.hash != b.hash
+@pytest.mark.parametrize("version", ["boss_state_serialization/1", "boss_state_serialization/test-alt"])
+def test_serializer_cannot_mislabel_exact_v2_as_another_schema(version):
+    with pytest.raises(ValueError, match="schema_version"):
+        serialize_state(snapshot(), schema_version=version)
 
 
 def test_parser_rejects_unsupported_schema_version():

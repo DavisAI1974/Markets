@@ -106,20 +106,14 @@ def test_extra_top_level_key_is_l1_even_if_other_types_are_wrong():
     ("evidence_refs", [{"row": 0, "field": 1}]),
     ("evidence_refs", [{"row": 0, "field": "mid", "extra": 1}]),
     ("evidence_refs", [{"field": "mid"}]),
-    ("evidence_refs", [{"row": 0, "field": "mid"}] * 17),
     ("contradictions", None), ("contradictions", [{}]),
-    ("contradictions", [{"a": {"row": 0, "field": "mid"},
-                         "b": {"row": 0, "field": "mid"}, "note": "x" * 201}]),
-    ("missing_evidence", [1]), ("missing_evidence", ["x" * 121]),
-    ("missing_evidence", [""] * 9), ("missing_evidence", ""),
-    ("hypotheses", []), ("hypotheses", None),
-    ("hypotheses", [{"label": "x" * 41, "support": [], "against": []}]),
+    ("missing_evidence", [1]), ("missing_evidence", ""),
+    ("hypotheses", None),
     ("hypotheses", [{"label": "x", "support": {}, "against": []}]),
     ("hypotheses", [{"label": "x", "support": [], "against": [], "extra": 1}]),
-    ("hypotheses", [{"label": "x", "support": [], "against": []}] * 5),
     ("evidence_verdict", "BUY"), ("evidence_verdict", []), ("evidence_verdict", True),
 ])
-def test_wrong_types_caps_enums_and_nested_keys_are_l2(key, bad):
+def test_wrong_types_enums_and_nested_keys_are_l2(key, bad):
     state = snapshot()
     value = {**valid_output(state), key: bad}
     assert not validate_schema(value)
@@ -146,7 +140,7 @@ def test_every_nested_ref_must_resolve(location, bad_ref):
     assert score(json.dumps(value), state) == (0.6, Verdict.L3)
 
 
-def test_exact_caps_are_valid_and_support_has_no_invented_cap():
+def test_previous_caps_and_longer_outputs_are_all_valid_under_v2():
     state = snapshot()
     value = valid_output(state)
     ref = {"row": 0, "field": "mid"}
@@ -156,7 +150,23 @@ def test_exact_caps_are_valid_and_support_has_no_invented_cap():
     value["hypotheses"] = [{"label": "x" * 40, "support": [ref] * 17, "against": []}] * 4
     assert score(json.dumps(value), state) == (1.0, Verdict.L4)
     value["contradictions"].append(value["contradictions"][0])
-    assert score(json.dumps(value), state) == (0.4, Verdict.L2)
+    assert score(json.dumps(value), state) == (1.0, Verdict.L4)
+
+
+@pytest.mark.parametrize("key,uncapped", [
+    ("evidence_refs", [{"row": 0, "field": "mid"}] * 17),
+    ("contradictions", [{"a": {"row": 0, "field": "mid"},
+                         "b": {"row": 0, "field": "mid"}, "note": "x" * 201}]),
+    ("missing_evidence", ["x" * 121]), ("missing_evidence", [""] * 9),
+    ("hypotheses", []),
+    ("hypotheses", [{"label": "x" * 41, "support": [], "against": []}]),
+    ("hypotheses", [{"label": "x", "support": [], "against": []}] * 5),
+])
+def test_former_reduction_fixtures_are_preserved_and_accepted(key, uncapped):
+    state = snapshot()
+    value = {**valid_output(state), key: uncapped}
+    assert validate_schema(value)
+    assert score(json.dumps(value), state) == (1.0, Verdict.L4)
 
 
 def test_numeric_categorical_metadata_missing_and_ablated_names_resolve():
