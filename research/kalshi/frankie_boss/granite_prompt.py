@@ -92,6 +92,9 @@ def build_prompt(snapshot: SerializedState) -> GranitePrompt:
             raise ValueError('answer wall: training or outcome vocabulary in state')
     prompt = GranitePrompt(PROMPT_VERSION, SYSTEM_TEXT, snapshot.text, snapshot.hash)
     for value in (prompt.text, *source_strings):
-        if any(name in value.lower() for name in BLD1_FIELD_NAMES):
+        lowered = value.lower()
+        identifiers = set(re.findall(r'[a-z0-9_]+', lowered))
+        if any(name in lowered if '_' in name else name in identifiers
+               for name in BLD1_FIELD_NAMES):
             raise ValueError('answer wall: prohibited BLD-1 vocabulary')
     return prompt

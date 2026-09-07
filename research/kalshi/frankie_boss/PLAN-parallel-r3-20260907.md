@@ -20,7 +20,7 @@ preserved. This scoped plan records this tranche only.
   BOSS suite 309 passed and one existing CUDA skip across two fresh processes.
 - [x] L-B1: completed under Claude H2 ruling (2026-09-07). Batched execution,
   exact cross-example gradient independence, 1e-4 float32 bound, and explicit
-  margin/depth agreement. All three original fixtures retained. 47 passed;
+  margin/depth agreement. All three original fixtures retained. 49 passed;
   single-packet audited decision entry rejects metadata batch broadcasting.
   Verify A1-A8 and H1-H7,
   actual gradients, unchanged B0, graph once, frozen examples, and receipts.
@@ -44,7 +44,7 @@ preserved. This scoped plan records this tranche only.
   supplied fixed format/content/latency gates. No generation or training.
 - [x] Prompt builder completed under Claude P7 ruling: output field renamed
   to `evidence_verdict`; no BLD-1 exception list. Canonical state text is included
-  byte-for-byte. 46 focused checks pass. Parser/evaluator: 126 pass with L4-only
+  byte-for-byte. 55 focused checks pass. Parser/evaluator: 126 pass with L4-only
   content and verdict denominators, valid and total counts both reported.
   A matching snapshot hash binds output to a snapshot; it does not itself
   prove the input snapshot excludes answer/outcome content.
@@ -85,3 +85,8 @@ and implemented in the follow-up branch. OSS remains deferred.
 Greg directs urgency: use targeted regression checks, avoid unnecessary broad
 reruns and A/B experiments, and prioritize the working model. No additional
 full-suite run is required merely to package these reviewed component bytes.
+
+Claude full review R1/R2 completed: interior-depth fixture, precise identifier
+wall, and eval-mode serving guard. See R3_REVIEW_CORRECTIONS_20260907.md; only
+the two affected files rerun, 104 passed. Full review clears the corrected
+branch for push; the earlier no-push status above is historical.

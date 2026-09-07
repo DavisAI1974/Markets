@@ -4,7 +4,7 @@ from b1_reasoner import B1Config, B1Reasoner, convergence_halt
 
 import inspect
 import subprocess
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 
 import pytest
@@ -164,8 +164,6 @@ def test_h2_review_regression_unchanged_trunk_batch_numerics(width, length):
              parent=torch.full((32, length), -1, dtype=torch.long))
     single = {key: value[:1] for key, value in x.items()}
     with torch.no_grad():
-        h0 = m.trunk.represent(**x)[:1]
-        h0_single = m.trunk.represent(**single)
         batched = forward(m, x)
         alone = forward(m, single)
     assert_h2_agreement(batched, alone, m.config.conv_tau)
@@ -345,3 +343,33 @@ def test_audited_decision_rejects_metadata_broadcast_to_multiple_packets():
               if k in ("venue_id", "instrument_id", "parent")})
     with pytest.raises(ValueError, match="exactly one packet"):
         m.forward_decision(**x, packet_hash="a" * 64)
+
+
+def test_h2c_interior_convergence_depth_is_batch_independent():
+    m = model(halt_policy="CONVERGENCE", conv_tau=0, k_max=8, k_fixed=8)
+    x = inputs(b=32)
+    single = {key: value[:1] for key, value in x.items()}
+    with torch.no_grad():
+        trace = forward(m, single).receipt.r_trace[0]
+        candidates = []
+        for j in range(1, len(trace) - 2):
+            if not trace[j] > trace[j + 1] > 0:
+                continue
+            tau = (trace[j] * trace[j + 1]) ** 0.5
+            if (all(r - tau > .01 * tau for r in trace[:j + 1])
+                    and tau - trace[j + 1] > .01 * tau):
+                candidates.append((j + 2, tau))
+        assert candidates, "fixture has no interior first crossing with a 1% margin"
+        expected_depth, tau = candidates[0]
+        m.config = replace(m.config, conv_tau=tau)
+        alone = forward(m, single)
+        batch = forward(m, x)
+    assert 1 < expected_depth < m.config.k_max
+    assert alone.receipt.depth_used == (expected_depth,)
+    assert alone.receipt.stop_reason == ("CONVERGED",)
+    assert_h2_agreement(batch, alone, tau)
+
+
+def test_audited_decision_requires_eval_mode():
+    with pytest.raises(ValueError, match="eval mode"):
+        model().train().forward_decision(**inputs(b=1), packet_hash="a" * 64)

@@ -219,6 +219,8 @@ class B1Reasoner(nn.Module):
         ``forward`` permits batches for training and shadow evaluation. Packet
         hash determinism in A3/H5 is guaranteed for this batch-one path.
         """
+        if self.training:
+            raise ValueError("audited decision requires eval mode")
         numeric = args[0] if args else kwargs.get("numeric")
         if not isinstance(numeric, torch.Tensor) or numeric.ndim != 3 or numeric.shape[0] != 1:
             raise ValueError("audited decision requires exactly one packet")

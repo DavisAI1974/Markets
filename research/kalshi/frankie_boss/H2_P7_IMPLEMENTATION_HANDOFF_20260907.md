@@ -1,5 +1,9 @@
 # H2/P7 implementation and Claude review package
 
+Update: read `R3_REVIEW_CORRECTIONS_20260907.md` for the completed full review,
+R1/R2 corrections, and current 49 B1 / 55 prompt checks. Details below record
+the original c0716cc7 review submission.
+
 Owner: Greg Davis. Date: 2026-09-07.
 Repository: DavisAI1974/Markets.
 Branch: `codex/boss-h2-p7-rulings-20260907` (local; not pushed).

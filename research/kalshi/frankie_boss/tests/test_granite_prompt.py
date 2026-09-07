@@ -81,3 +81,36 @@ def test_p8_no_model_or_arbitrary_prompt_arguments():
     assert tuple(inspect.signature(build_prompt).parameters) == ('snapshot',)
     with pytest.raises(TypeError):
         build_prompt(snapshot().text)
+
+
+def test_book_update_count_is_not_the_bld1_date_field():
+    state = parse_serialized_state(snapshot().text)
+    row = state.rows[0]
+    state = replace(state, rows=(replace(row, numeric=(
+        replace(row.numeric[0], name="book_update_count"),)),))
+    serialized = serialize_state(state)
+    assert build_prompt(serialized).snapshot_text == serialized.text
+
+
+def test_consolidated_feed_source_name_is_allowed():
+    state = replace(parse_serialized_state(snapshot().text),
+                    source_versions={"consolidated_feed": "1"})
+    serialized = serialize_state(state)
+    assert build_prompt(serialized).snapshot_text == serialized.text
+
+
+def test_exact_date_field_still_fails():
+    state = parse_serialized_state(snapshot().text)
+    row = state.rows[0]
+    state = replace(state, rows=(replace(row, numeric=(
+        replace(row.numeric[0], name="date"),)),))
+    with pytest.raises(ValueError, match="answer wall"):
+        build_prompt(serialize_state(state))
+
+
+@pytest.mark.parametrize("name", [n for n in BLD1_FIELD_NAMES if "_" in n])
+def test_specific_bld1_names_still_rejected_inside_longer_identifiers(name):
+    state = replace(parse_serialized_state(snapshot().text),
+                    source_versions={"prefix_" + name + "_suffix": "1"})
+    with pytest.raises(ValueError, match="answer wall"):
+        build_prompt(serialize_state(state))
