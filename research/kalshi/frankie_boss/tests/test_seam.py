@@ -345,10 +345,10 @@ def tbatch(c, b=2, t=6):
     )
 
 
-def test_default_qsv_dim_is_the_named_registry_and_branch_is_enabled():
+def test_default_qsv_dim_is_the_named_registry_and_branch_is_dormant():
     c = TrunkConfig()
     assert c.qsv_dim == len(QSV_FEATURE_REGISTRY)
-    assert c.use_qsv is True
+    assert c.use_qsv is False
 
 
 def test_wrong_qsv_width_is_caught_with_a_registry_hint():

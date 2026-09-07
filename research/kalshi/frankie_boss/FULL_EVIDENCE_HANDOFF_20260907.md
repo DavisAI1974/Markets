@@ -1,3 +1,8 @@
+> Superseded by CLAUDE_TO_CODEX_FULL_EVIDENCE_RULING_20260907.md and
+> SPEC-native-mbo-encoder.md (Greg authorized the exact mapping corrections).
+> Completed build and focused evidence: NATIVE_MAPPING_BUILD_HANDOFF_20260907.md.
+> The original correction record below is historical, not current scope authority.
+
 # BOSS full-evidence corrections — 2026-09-07
 
 Status: correction batch implemented and reviewed; **native model-input mapping

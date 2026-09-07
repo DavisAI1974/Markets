@@ -35,7 +35,7 @@ def test_extra_qsv_values_are_rejected_instead_of_zipped_away():
         parse_serialized_state(json.dumps(raw))
 
 
-def test_reporting_has_no_evidence_list_or_text_caps():
+def test_model_output_caps_reject_oversize_prose_without_touching_evidence():
     state = serialize_state(snapshot())
     value = valid_output(state)
     ref = {"row": 0, "field": "mid"}
@@ -43,7 +43,7 @@ def test_reporting_has_no_evidence_list_or_text_caps():
     value["contradictions"] = [{"a": dict(ref), "b": dict(ref), "note": "x" * 1000} for _ in range(20)]
     value["missing_evidence"] = ["y" * 1000 for _ in range(20)]
     value["hypotheses"] = [{"label": "z" * 1000, "support": [dict(ref)], "against": []} for _ in range(20)]
-    assert score(json.dumps(value), state) == (1.0, Verdict.L4)
+    assert score(json.dumps(value), state) == (0.4, Verdict.L2)
 
 
 @pytest.mark.parametrize('value', ['1E-4000', '1.00000000000000000001E+0'])

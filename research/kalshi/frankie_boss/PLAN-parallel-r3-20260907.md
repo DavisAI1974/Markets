@@ -1,5 +1,10 @@
 # Parallel BOSS foundations — 2026-09-07
 
+> Current authority: approved CLAUDE_TO_CODEX_FULL_EVIDENCE_RULING_20260907.md.
+> C15R2 teacher contracts are restored downstream of complete raw evidence;
+> see NATIVE_MAPPING_BUILD_HANDOFF_20260907.md for the completed native mapping.
+> The supersession note and implementation history below predate that ruling.
+
 ## Current owner correction — complete evidence
 
 Greg superseded the C15R2 reduction choices after this batch's clearance:

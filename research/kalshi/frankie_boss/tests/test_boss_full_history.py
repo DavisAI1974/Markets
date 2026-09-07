@@ -61,12 +61,12 @@ def test_received_skewed_rows_count_and_defects_reach_packet_without_future_leak
 
 def config(**kwargs):
     return TrunkConfig(d_model=8, n_heads=2, n_layers=1, n_numeric=2,
-                       categorical_cardinalities=(3,), use_delta_memory=False, **kwargs)
+                       categorical_cardinalities=(3,), use_delta_memory=False, **dict(dict(use_qsv=True), **kwargs))
 
 
-def test_default_attention_uses_rows_beyond_128_and_remains_causal():
+def test_explicit_complete_attention_uses_rows_beyond_128_and_remains_causal():
     torch.manual_seed(47)
-    c = config()
+    c = config(window=None)
     assert c.window is None and c.use_qsv
     model = Trunk(c).eval()
     t = 140
@@ -119,50 +119,8 @@ def test_partial_numeric_and_categorical_rows_survive_and_extra_columns_raise():
         enc(torch.zeros(1, 1, 2), torch.zeros(1, 1, 2, dtype=torch.long), qsv)
 
 
-def test_history_replays_every_packet_and_resume_is_exact():
-    from full_history import FullHistoryRunner
-    torch.manual_seed(12)
-    c = config()
-    model = Trunk(c).eval()
-    runner = FullHistoryRunner(model)
-    def chunk(n):
-        return dict(numeric=torch.randn(1, n, 2), categorical=torch.zeros(1, n, 1, dtype=torch.long),
-                    venue_id=torch.zeros(1, n, dtype=torch.long), instrument_id=torch.zeros(1, n, dtype=torch.long),
-                    parent=torch.full((1, n), -1, dtype=torch.long), qsv=torch.randn(1, n, c.qsv_dim))
-    first = chunk(139)
-    runner.append(first, row_ids=[str(i) for i in range(139)], packet_hash='a'*64)
-    before = runner.run()
-    # Caller mutation cannot rewrite previous history.
-    first['numeric'].fill_(1e10)
-    checkpoint = runner.export()
-    restored = FullHistoryRunner.restore(model, checkpoint, expected_input_hash=before.receipt.input_hash, expected_model_hash=before.receipt.model_hash)
-    assert restored.run().receipt == before.receipt
-    last = chunk(1)
-    for r in (runner, restored):
-        r.append(last, row_ids=['139'], packet_hash='b'*64)
-    out, resumed = runner.run(), restored.run()
-    assert out.receipt.consumed_rows == 140
-    assert out.receipt == resumed.receipt
-    for key in out.heads:
-        assert torch.equal(out.heads[key], resumed.heads[key])
-    # Compare exactly against the actual complete-prefix model call.
-    with torch.no_grad():
-        direct = model(**runner.export()['inputs'])
-    assert torch.equal(out.heads['p_up'], direct['p_up'])
-    # Change only an early row in the full prefix, keeping the last packet fixed.
-    altered = runner.export()['inputs']
-    altered['numeric'][:, 0, 0] += 100
-    assert not torch.equal(model(**altered)['p_up'], out.heads['p_up'])
 
 
-def test_history_forbids_windowed_or_ablated_models_and_unmapped_inputs():
-    from full_history import FullHistoryRunner
-    with pytest.raises(ValueError, match='finite attention'):
-        FullHistoryRunner(Trunk(config(window=128)).eval())
-    model = Trunk(config()).eval()
-    model.encoder.ablate_qsv()
-    with pytest.raises(ValueError, match='unablated QSV'):
-        FullHistoryRunner(model)
 
 
 def test_graph_rejects_future_or_invalid_ancestry():
@@ -199,44 +157,6 @@ def test_field_entries_distinguish_absent_null_and_zero():
     assert [(present, value) for _, present, value in entries] == [(False, None), (True, None), (True, 0)]
 
 
-def test_b1_history_masks_packet_membership_model_binding_and_failed_retry():
-    from b1_reasoner import B1Reasoner, B1Config
-    from full_history import FullHistoryRunner
-    torch.manual_seed(17)
-    c = config()
-    model = B1Reasoner(Trunk(c), B1Config(k_max=1, k_fixed=1)).eval()
-    runner = FullHistoryRunner(model)
-    def row():
-        return dict(numeric=torch.tensor([[[1., float('nan')]]]), numeric_mask=torch.tensor([[[1, 0]]]),
-                    categorical=torch.zeros(1, 1, 1, dtype=torch.long), venue_id=torch.zeros(1, 1, dtype=torch.long),
-                    instrument_id=torch.zeros(1, 1, dtype=torch.long), parent=torch.full((1, 1), -1, dtype=torch.long),
-                    qsv=torch.full((1, 1, c.qsv_dim), float('nan')), qsv_mask=torch.zeros(1, 1))
-    runner.append(row(), row_ids=['r0'], packet_hash='a'*64)
-    original = model.forward_decision
-    def fail(**kwargs):
-        raise RuntimeError('simulated failure')
-    model.forward_decision = fail
-    with pytest.raises(RuntimeError):
-        runner.run()
-    with pytest.raises(ValueError, match='retained'):
-        runner.append(row(), row_ids=['r1'], packet_hash='b'*64)
-    model.forward_decision = original
-    first = runner.run()
-    runner.append(row(), row_ids=['r1'], packet_hash='b'*64)
-    output = runner.run()
-    assert output.recurrence_receipt is not None
-    assert output.receipt.packet_ranges == (('a'*64, 0, 1), ('b'*64, 1, 2))
-    checkpoint = runner.export()
-    restored = FullHistoryRunner.restore(model, checkpoint, expected_input_hash=output.receipt.input_hash, expected_model_hash=output.receipt.model_hash)
-    assert restored.run().receipt == output.receipt
-    with torch.no_grad():
-        model.trunk.heads.p_up.bias.add_(1)
-    changed = restored.run()
-    assert changed.receipt.model_hash != output.receipt.model_hash
-    assert changed.receipt.input_hash == output.receipt.input_hash
-    checkpoint['packet_ranges'] = (('a'*64, 0, 2), ('b'*64, 2, 2))
-    with pytest.raises(ValueError, match='membership'):
-        FullHistoryRunner.restore(model, checkpoint, expected_input_hash=output.receipt.input_hash, expected_model_hash=output.receipt.model_hash)
 
 
 def test_operator_fetch_history_retains_counts_without_packet_leakage():

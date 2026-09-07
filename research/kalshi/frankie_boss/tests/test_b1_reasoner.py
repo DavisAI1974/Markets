@@ -14,6 +14,24 @@ from causal_packet import canonical_bytes
 from trunk import Trunk, TrunkConfig
 
 
+@pytest.fixture(params=('v1_control', 'v2'), autouse=True)
+def trunk_lineage(request, monkeypatch):
+    """Run A1-A8/H1-H7 against the pinned control and the v2 extension."""
+    if request.param == 'v1_control':
+        import importlib.util
+        import hashlib
+        import sys
+        path=Path(__file__).resolve().parents[4]/'tests/fixtures/boss_control_beb548b8/trunk_v1.py'
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == '82d2a3ac73cc7d2f7d03d39fd0ef9c96d615f1c611084d702a4a506bbe573c33'
+        name='_boss_b1_control_v1'
+        spec=importlib.util.spec_from_file_location(name,path)
+        control=importlib.util.module_from_spec(spec)
+        sys.modules[name]=control
+        spec.loader.exec_module(control)
+        monkeypatch.setattr(sys.modules[__name__],'Trunk',control.Trunk)
+        monkeypatch.setattr(sys.modules[__name__],'TrunkConfig',control.TrunkConfig)
+
+
 def inputs(b=2, t=4, seed=11):
     g = torch.Generator().manual_seed(seed)
     return dict(numeric=torch.randn(b, t, 3, generator=g),

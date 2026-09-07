@@ -39,7 +39,6 @@ import torch.nn.functional as F
 
 from research.refrag.qsv_registry import QSV_FEATURE_REGISTRY
 
-TRUNK_SCHEMA = "BOSS_TRUNK_V2"
 __all__ = [
     "TrunkConfig",
     "FieldEncoder",
@@ -57,14 +56,14 @@ class TrunkConfig:
 
     n_numeric / categorical_cardinalities describe the event fields.
     qsv_dim is governed by ReFRAG's named OD/QSV feature registry.  The
-    use_qsv flag is dormant by default and remains exactly ablatable.
-    window=None is an explicit complete-attention experiment.
+    separate use_qsv flag keeps the branch dormant by default without lying
+    about the registered vector shape.
     """
 
     d_model: int = 256
     n_heads: int = 4
     n_layers: int = 4
-    window: int | None = 128
+    window: int = 128
     n_numeric: int = 16
     categorical_cardinalities: tuple[int, ...] = (8, 32)
     qsv_dim: int = field(default_factory=lambda: len(QSV_FEATURE_REGISTRY))
@@ -76,8 +75,6 @@ class TrunkConfig:
     use_qsv: bool = False
 
     def __post_init__(self) -> None:
-        if self.window is not None and (type(self.window) is not int or self.window < 1):
-            raise ValueError("window must be None (complete causal history) or positive")
         if self.d_model % self.n_heads:
             raise ValueError("d_model must divide by n_heads")
         if self.qsv_dim != len(QSV_FEATURE_REGISTRY):
@@ -106,14 +103,10 @@ class FieldEncoder(nn.Module):
         super().__init__()
         self.cfg = cfg
         self.numeric = nn.Linear(cfg.n_numeric, cfg.d_model)
-        self.numeric_missing = nn.Linear(cfg.n_numeric, cfg.d_model, bias=False)
         self.cats = nn.ModuleList(
             [nn.Embedding(c, cfg.d_model) for c in cfg.categorical_cardinalities]
         )
-        self.categorical_missing = nn.Parameter(torch.empty(len(self.cats), cfg.d_model))
-        nn.init.normal_(self.categorical_missing, std=0.02)
         self.qsv = nn.Linear(cfg.qsv_dim, cfg.d_model) if cfg.use_qsv else None
-        self.qsv_missing = nn.Linear(cfg.qsv_dim, cfg.d_model, bias=False) if cfg.use_qsv else None
         self._qsv_ablated = False
         self.norm = nn.LayerNorm(cfg.d_model)
 
@@ -122,25 +115,11 @@ class FieldEncoder(nn.Module):
         numeric: torch.Tensor,        # (B, T, n_numeric)
         categorical: torch.Tensor,    # (B, T, n_cat) long
         qsv: torch.Tensor | None = None,   # (B, T, qsv_dim)
-        qsv_mask: torch.Tensor | None = None,  # (B,T), (B,T,1) or (B,T,qsv_dim), 1 = present
-        numeric_mask: torch.Tensor | None = None,
-        categorical_mask: torch.Tensor | None = None,
+        qsv_mask: torch.Tensor | None = None,  # (B, T) or (B, T, 1), 1 = present
     ) -> torch.Tensor:
-        if numeric.ndim != 3 or numeric.shape[-1] != self.cfg.n_numeric:
-            raise ValueError("numeric shape must be (B,T,n_numeric)")
-        if categorical.shape != numeric.shape[:-1] + (len(self.cats),):
-            raise ValueError("categorical shape must include exactly every configured column")
-        present_numeric = self._field_mask(numeric, numeric_mask, "numeric")
-        if not torch.isfinite(numeric[present_numeric]).all():
-            raise ValueError("present numeric values must be finite")
-        h = self.numeric(torch.where(present_numeric, numeric, torch.zeros_like(numeric)))
-        h = h + self.numeric_missing((~present_numeric).to(numeric.dtype))
-        present_categorical = self._field_mask(categorical, categorical_mask, "categorical")
+        h = self.numeric(numeric)
         for i, emb in enumerate(self.cats):
-            present = present_categorical[..., i]
-            ids = torch.where(present, categorical[..., i], torch.zeros_like(categorical[..., i]))
-            contribution = emb(ids)
-            h = h + torch.where(present.unsqueeze(-1), contribution, self.categorical_missing[i])
+            h = h + emb(categorical[..., i])
         if self.qsv is None and qsv is not None:
             raise ValueError("qsv tensor supplied while use_qsv is False")
         if self.qsv is not None:
@@ -163,11 +142,11 @@ class FieldEncoder(nn.Module):
             else:
                 if qsv_mask.dim() == 2:
                     availability = qsv_mask.unsqueeze(-1)
-                elif qsv_mask.dim() == 3 and qsv_mask.shape[-1] in (1, self.cfg.qsv_dim):
+                elif qsv_mask.dim() == 3 and qsv_mask.shape[-1] == 1:
                     availability = qsv_mask
                 else:
-                    raise ValueError("qsv_mask must have shape (B,T), (B,T,1) or (B,T,qsv_dim)")
-                if availability.shape[:-1] != qsv.shape[:-1]:
+                    raise ValueError("qsv_mask must have shape (B,T) or (B,T,1)")
+                if availability.shape != qsv.shape[:-1] + (1,):
                     raise ValueError("qsv_mask batch/time shape must match qsv")
                 if not torch.isfinite(availability).all() or not torch.all(
                     (availability == 0) | (availability == 1)
@@ -184,25 +163,12 @@ class FieldEncoder(nn.Module):
                 )
                 contrib = self.qsv(safe_qsv)
                 contrib = torch.where(
-                    present_values.any(dim=-1, keepdim=True).expand_as(contrib),
+                    present.expand_as(contrib),
                     contrib,
                     torch.zeros_like(contrib),
                 )
-                # Distinguish an unavailable measurement from a measured zero.
-                # Only absent coordinates are substituted, never their row.
-                contrib = contrib + self.qsv_missing((~present_values).to(qsv.dtype))
             h = h + contrib
         return self.norm(h)
-
-    @staticmethod
-    def _field_mask(values, mask, name):
-        if mask is None:
-            return torch.ones_like(values, dtype=torch.bool)
-        if (mask.shape != values.shape or mask.device != values.device
-                or not torch.isfinite(mask).all()
-                or not ((mask == 0) | (mask == 1)).all()):
-            raise ValueError(f"{name}_mask must be finite 0/1 per field, same shape/device")
-        return mask.to(torch.bool)
 
     def ablate_qsv(self) -> None:
         """Zero the QSV projection in place. Ablation must be exact --
@@ -292,9 +258,9 @@ class GatedDeltaCell(nn.Module):
 
 
 class SlidingWindowAttention(nn.Module):
-    """Full causal attention by default; finite windows are historical experiments.
+    """Exact attention over the recent window. Causal, always.
 
-    The mask permits the present and every preceding row by default.
+    The mask is built to be strictly lower-triangular within the window.
     A packet is a point-in-time object; if this layer could see forward
     even one step, the leakage protection upstream would be decorative.
     """
@@ -311,7 +277,7 @@ class SlidingWindowAttention(nn.Module):
     def _mask(self, t: int, device) -> torch.Tensor:
         idx = torch.arange(t, device=device)
         dist = idx[:, None] - idx[None, :]
-        return (dist >= 0) if self.w is None else (dist >= 0) & (dist < self.w)
+        return (dist >= 0) & (dist < self.w)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         b, t, d = x.shape
@@ -354,10 +320,6 @@ class TemporalGraphBranch(nn.Module):
     ) -> torch.Tensor:
         h = x + self.venue(venue_id) + self.instrument(instrument_id)
         b, t, d = h.shape
-        if parent.shape != (b, t) or parent.dtype != torch.long:
-            raise ValueError("parent must be long (B,T)")
-        if ((parent < -1) | (parent >= torch.arange(t, device=parent.device))).any():
-            raise ValueError("parent must be -1 or an earlier row; future ancestry is forbidden")
         idx = parent.clamp(min=0)
         gathered = torch.gather(h, 1, idx.unsqueeze(-1).expand(b, t, d))
         gathered = gathered * (parent >= 0).unsqueeze(-1).to(h.dtype)
@@ -441,12 +403,10 @@ class Trunk(nn.Module):
         parent: torch.Tensor,
         qsv: torch.Tensor | None = None,
         qsv_mask: torch.Tensor | None = None,
-        numeric_mask: torch.Tensor | None = None,
-        categorical_mask: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """Hidden states. Exposed separately so teacher supervision can
         attach to intermediate representations without the heads."""
-        h = self.encoder(numeric, categorical, qsv, qsv_mask, numeric_mask, categorical_mask)
+        h = self.encoder(numeric, categorical, qsv, qsv_mask)
         h = self.graph(h, venue_id, instrument_id, parent)
         for i, attn in enumerate(self.attn):
             h = attn(h)

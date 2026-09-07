@@ -15,13 +15,13 @@ from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import (
 try:
     from .causal_prefix_records import RecordInput, RecordPrefixChain
     from .c15_journal import EvidenceJournal, SCHEMA, evidence_hash, pack, unpack
-    from .c15_observer import observe_book
+    from .c15_observer import observe_book, order_rank
     from .c15_registry import implementation_identity
     from .mbo_resume_state import export_adapter_state, restore_adapter_state
 except ImportError:
     from causal_prefix_records import RecordInput, RecordPrefixChain
     from c15_journal import EvidenceJournal, SCHEMA, evidence_hash, pack, unpack
-    from c15_observer import observe_book
+    from c15_observer import observe_book, order_rank
     from c15_registry import implementation_identity
     from mbo_resume_state import export_adapter_state, restore_adapter_state
 
@@ -86,6 +86,7 @@ class C15Builder:
             book = self.adapter.books.setdefault(msg.instrument_id, InstrumentBook(msg.instrument_id))
             old = book.orders.get(msg.order_id)
             before = None if old is None else asdict(old)
+            rank_before = order_rank(book, old)
             # This is the existing V4MboAdapter dispatch using the same public
             # InstrumentBook.apply, retaining its ApplyEffect instead of dropping it.
             effect, frame, legacy = book.apply(msg)
@@ -100,6 +101,7 @@ class C15Builder:
                             source_member_index=source_member_index, session_id=session_id,
                             normalized=msg.public_dict(), effect=asdict(effect),
                             order_before=before, order_after=None if new is None else asdict(new),
+                            rank_before=rank_before, rank_after=order_rank(book, new),
                             observation=observation, frame=frame, legacy_rows=legacy,
                             receipt=None if receipt is None else receipt.public_dict(),
                             integrity=dict(book.integrity),

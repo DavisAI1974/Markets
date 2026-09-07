@@ -19,3 +19,11 @@ def observe_book(book):
                 last_recv_ns=book.last_recv_ns,
                 last_event_ns=book.last_event_ns,
                 priority_time_semantics="adapter-observed; consult action history for origin")
+
+
+def order_rank(book, order):
+    """Read exact rank from the authoritative current book, without rebuilding it."""
+    if order is None:
+        return None
+    prices = sorted(book.levels[order.side], reverse=order.side == 'B')
+    return prices.index(order.price_raw) + 1
