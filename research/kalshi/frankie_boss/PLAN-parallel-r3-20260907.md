@@ -1,0 +1,84 @@
+# Parallel BOSS foundations — 2026-09-07
+
+Base: `beb548b86b777dc69bf834950b30cc28000e16ef`.
+Contract: `parallel_r3_contracts/CLAUDE_BOSS_CONTRACT_ADDENDUM_R3_20260907.md`, rev 1.
+
+The user authorized concurrent implementation after Claude resolved the shared
+contracts. Each lane owns new files in a separate worktree. No existing Frankie
+input, calculation, plane, adapter, replay, Memory A artifact, or last-run
+behavior may change. No provider, market-data, training, or AWS run is part of
+this tranche. Unit tests use synthetic examples and real Torch where needed.
+
+The repository's older `tasks/plan.md` concerns other unfinished work and is
+preserved. This scoped plan records this tranche only.
+
+## Lanes and acceptance
+
+- [x] Prefix: apply Claude patch 0005 to the four preserved additive files;
+  reproduce tests, close fresh adversarial findings, and commit before L-D.
+  Commit `17e4b46a`; independent review approved. 70 prefix tests; complete
+  BOSS suite 309 passed and one existing CUDA skip across two fresh processes.
+- [ ] L-B1: draft recurrence/halting wrapper and tests. H2 blocked by upstream
+  trunk batch-size floating-point differences: 37 passed, 3 failed. Claude
+  ruling required; ordinary regressions retained without skips or tolerance.
+  Verify A1-A8 and H1-H7,
+  actual gradients, unchanged B0, graph once, frozen examples, and receipts.
+  Own `b1_reasoner.py`, `tests/test_b1_reasoner.py`.
+- [x] L-NORM: exclusive-window median/MAD normalizer and tests. N1-N8 passed;
+  60 new tests, independent review approved, lane commit `26ad8529`. Verify
+  explicit freeze, strict restore, immutable frozen statistics, bounded state.
+  Own `c15_normalizer.py`, `tests/test_c15_normalizer.py`.
+- [x] L-D: after prefix commit, D1-D6 pure state machine and tests. 37 new
+  tests, independent review approved. Verified
+  T-A through T-D, causal receipt consumption, reset/freeze/break semantics.
+  Own `c15_dstate.py`, `tests/test_c15_dstate.py`. C1 implementation deferred.
+- [x] Review each new lane independently, fix required findings, commit accepted
+  slices locally, and assemble separately reviewable patches for Claude.
+
+## Added by the owner's Granite plan during this tranche
+
+- [x] L-GRANITE parser: exact output schema, deterministic L0-L4 reward, one
+  runtime/training scoring authority, and snapshot-reference validation.
+- [x] L-GRANITE evaluator: pure paired-output pass/fail metrics under the
+  supplied fixed format/content/latency gates. No generation or training.
+- [ ] Prompt builder blocked on plan P7: the required schema itself names
+  `disposition`, which is in BLD1_FIELD_NAMES, while P7 bans every BLD-1 field
+  name anywhere in the prompt text. Preserve a concrete ruling for Claude.
+  A matching snapshot hash binds output to a snapshot; it does not itself
+  prove the input snapshot excludes answer/outcome content.
+
+## Deferred boundary
+
+Observer, replay wiring, full 19-column builder, and checkpoint integration
+remain outside this tranche. Granite runtime/fusion and experiment
+orchestration are not implemented. Pure parser/evaluator additions come only
+from the separately supplied Granite plan. C15 remains Partial;
+component tests do not establish production integration or market benefit.
+No push is authorized by this tranche's supplied review instructions.
+
+## Verification environment
+
+The old scratch Torch installation had a truncated `libtorch_cpu.so`
+(340676608 bytes, expected 433155401). A separate intact official
+`torch==2.5.1+cpu` installation restored real execution without modifying
+repository files or the old environment. The known checkpoint test asserts
+Torch is absent from `sys.modules`; run its entire file in a fresh process
+apart from Torch-dependent tests. Do not skip or rewrite that check.
+
+## Review findings already closed
+
+Patch 0005's initially green tests missed mutable normalized action payloads,
+impossible restored cursor/member/receipt histories, and signed/whitespace SHA
+strings. Ten new regression cases failed before fixes. The foundation now
+owns immutable validated action mappings, strict ASCII hex validation, and
+cross-checked restart state. An unkeyed state hash is an integrity check;
+authenticity still belongs to the existing outer trusted checkpoint envelope.
+
+## Final component review and execution direction
+
+Granite parser (86 new checks) and evaluator (39 new checks) independently
+passed with 20 serializer checks: 145 passed. Both approved and committed.
+B1 H2 and prompt P7 remain narrow Claude rulings. OSS is deferred.
+Greg directs urgency: use targeted regression checks, avoid unnecessary broad
+reruns and A/B experiments, and prioritize the working model. No additional
+full-suite run is required merely to package these reviewed component bytes.
