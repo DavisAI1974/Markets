@@ -18,9 +18,10 @@ preserved. This scoped plan records this tranche only.
   reproduce tests, close fresh adversarial findings, and commit before L-D.
   Commit `17e4b46a`; independent review approved. 70 prefix tests; complete
   BOSS suite 309 passed and one existing CUDA skip across two fresh processes.
-- [ ] L-B1: draft recurrence/halting wrapper and tests. H2 blocked by upstream
-  trunk batch-size floating-point differences: 37 passed, 3 failed. Claude
-  ruling required; ordinary regressions retained without skips or tolerance.
+- [x] L-B1: completed under Claude H2 ruling (2026-09-07). Batched execution,
+  exact cross-example gradient independence, 1e-4 float32 bound, and explicit
+  margin/depth agreement. All three original fixtures retained. 47 passed;
+  single-packet audited decision entry rejects metadata batch broadcasting.
   Verify A1-A8 and H1-H7,
   actual gradients, unchanged B0, graph once, frozen examples, and receipts.
   Own `b1_reasoner.py`, `tests/test_b1_reasoner.py`.
@@ -41,9 +42,10 @@ preserved. This scoped plan records this tranche only.
   runtime/training scoring authority, and snapshot-reference validation.
 - [x] L-GRANITE evaluator: pure paired-output pass/fail metrics under the
   supplied fixed format/content/latency gates. No generation or training.
-- [ ] Prompt builder blocked on plan P7: the required schema itself names
-  `disposition`, which is in BLD1_FIELD_NAMES, while P7 bans every BLD-1 field
-  name anywhere in the prompt text. Preserve a concrete ruling for Claude.
+- [x] Prompt builder completed under Claude P7 ruling: output field renamed
+  to `evidence_verdict`; no BLD-1 exception list. Canonical state text is included
+  byte-for-byte. 46 focused checks pass. Parser/evaluator: 126 pass with L4-only
+  content and verdict denominators, valid and total counts both reported.
   A matching snapshot hash binds output to a snapshot; it does not itself
   prove the input snapshot excludes answer/outcome content.
 
@@ -78,7 +80,8 @@ authenticity still belongs to the existing outer trusted checkpoint envelope.
 
 Granite parser (86 new checks) and evaluator (39 new checks) independently
 passed with 20 serializer checks: 145 passed. Both approved and committed.
-B1 H2 and prompt P7 remain narrow Claude rulings. OSS is deferred.
+B1 H2 and prompt P7 are resolved in CLAUDE_TO_CODEX_H2_P7_RULINGS_20260907.md
+and implemented in the follow-up branch. OSS remains deferred.
 Greg directs urgency: use targeted regression checks, avoid unnecessary broad
 reruns and A/B experiments, and prioritize the working model. No additional
 full-suite run is required merely to package these reviewed component bytes.
