@@ -14,7 +14,6 @@ import math
 import re
 from typing import Iterable
 
-from .granite_output_schema import validate_schema
 from .granite_parser import Verdict, parse_json_object, score
 from .state_serialization import SerializedState
 
@@ -46,8 +45,8 @@ class ModelMetrics:
     snapshot_hash_unverified_count: int
     schema_valid_count: int
     distinct_content_strings: int
-    disposition_counts: tuple[tuple[str, int], ...]
-    max_disposition_share: float | None
+    evidence_verdict_counts: tuple[tuple[str, int], ...]
+    max_evidence_verdict_share: float | None
     total_decode_seconds: float
 
 
@@ -55,7 +54,7 @@ class ModelMetrics:
 class EvaluationReport:
     """Local gates only; a passing report grants no data or promotion authority.
 
-    Disposition shares use schema-valid (L3/L4) output count as denominator.
+    Evidence verdict shares use fully valid (L4) output count as denominator.
     Missing/unparseable hash echoes reduce L4 acceptance, but are not counted
     as foreign hashes; they are reported as unverified echoes. Zero observed
     mismatches therefore does not prove zero mismatches among unverified outputs.
@@ -80,7 +79,7 @@ class EvaluationReport:
 def _metrics(pairs: tuple[EvaluationPair, ...], side: str) -> ModelMetrics:
     accepted = mismatched = unverified = valid = 0
     strings: set[str] = set()
-    dispositions: Counter[str] = Counter()
+    evidence_verdicts: Counter[str] = Counter()
     seconds = []
     for pair in pairs:
         output = getattr(pair, side)
@@ -90,11 +89,11 @@ def _metrics(pairs: tuple[EvaluationPair, ...], side: str) -> ModelMetrics:
         unverified += obj is None or 'snapshot_hash' not in obj
         if obj is not None:
             mismatched += 'snapshot_hash' in obj and obj['snapshot_hash'] != pair.snapshot.hash
-            if validate_schema(obj):
+            if verdict is Verdict.L4:
                 valid += 1
                 strings.update(item['note'] for item in obj['contradictions'])
                 strings.update(obj['missing_evidence'])
-                dispositions[obj['disposition']] += 1
+                evidence_verdicts[obj['evidence_verdict']] += 1
         seconds.append(output.decode_seconds)
     try:
         total = math.fsum(seconds)
@@ -104,8 +103,8 @@ def _metrics(pairs: tuple[EvaluationPair, ...], side: str) -> ModelMetrics:
         raise ValueError('aggregate decode time must be finite')
     return ModelMetrics(
         accepted, accepted / len(pairs), mismatched, mismatched / len(pairs),
-        unverified, valid, len(strings), tuple(sorted(dispositions.items())),
-        max(dispositions.values()) / valid if valid else None, total,
+        unverified, valid, len(strings), tuple(sorted(evidence_verdicts.items())),
+        max(evidence_verdicts.values()) / valid if valid else None, total,
     )
 
 
@@ -154,8 +153,8 @@ def evaluate(
         failures.append('snapshot_hash')
     if 5 * tuned.distinct_content_strings < 3 * base.distinct_content_strings:
         failures.append('content_diversity')
-    if not tuned.schema_valid_count or 10 * max(dict(tuned.disposition_counts).values()) > 9 * tuned.schema_valid_count:
-        failures.append('disposition_collapse')
+    if not tuned.schema_valid_count or 10 * max(dict(tuned.evidence_verdict_counts).values()) > 9 * tuned.schema_valid_count:
+        failures.append('evidence_verdict_collapse')
     if tuned.total_decode_seconds > 1.2 * base.total_decode_seconds:
         failures.append('latency')
     return EvaluationReport(

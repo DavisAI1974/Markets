@@ -12,9 +12,9 @@ from collections.abc import Iterator
 SCHEMA_VERSION = "BOSS_GRANITE_OUTPUT_SCHEMA_V1"
 REQUIRED_KEYS = frozenset({
     "schema_version", "snapshot_hash", "evidence_refs", "contradictions",
-    "missing_evidence", "hypotheses", "disposition",
+    "missing_evidence", "hypotheses", "evidence_verdict",
 })
-DISPOSITIONS = frozenset({"CONSISTENT", "CONFLICTED", "INSUFFICIENT"})
+EVIDENCE_VERDICTS = frozenset({"CONSISTENT", "CONFLICTED", "INSUFFICIENT"})
 
 
 def _keys(value: object, keys: set[str] | frozenset[str]) -> bool:
@@ -69,7 +69,7 @@ cap. No additional limit is silently imposed on those hypothesis lists.
                and _refs(item["support"]) and _refs(item["against"])
                for item in hypotheses):
         return False
-    return type(value["disposition"]) is str and value["disposition"] in DISPOSITIONS
+    return type(value["evidence_verdict"]) is str and value["evidence_verdict"] in EVIDENCE_VERDICTS
 
 
 def iter_refs(value: dict) -> Iterator[dict]:

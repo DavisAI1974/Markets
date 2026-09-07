@@ -22,7 +22,7 @@ def payload(state, i):
         'contradictions': [],
         'missing_evidence': [f'missing-{i}'],
         'hypotheses': [{'label': 'uncertain', 'support': [], 'against': []}],
-        'disposition': ('CONSISTENT', 'CONFLICTED')[i % 2],
+        'evidence_verdict': ('CONSISTENT', 'CONFLICTED')[i % 2],
     }
 
 
@@ -119,15 +119,15 @@ def test_notes_and_missing_evidence_form_one_distinct_union():
     assert run(items).tuned.distinct_content_strings == 200
 
 
-def test_disposition_ninety_percent_boundary_and_collapse():
+def test_evidence_verdict_ninety_percent_boundary_and_collapse():
     items = pairs(200, 200)
     for i in range(200):
-        alter(items, 'tuned', i, disposition='CONSISTENT' if i < 180 else 'CONFLICTED')
+        alter(items, 'tuned', i, evidence_verdict='CONSISTENT' if i < 180 else 'CONFLICTED')
     assert run(items).passed
-    alter(items, 'tuned', 180, disposition='CONSISTENT')
+    alter(items, 'tuned', 180, evidence_verdict='CONSISTENT')
     result = run(items)
-    assert result.tuned.max_disposition_share == .905
-    assert 'disposition_collapse' in result.failures
+    assert result.tuned.max_evidence_verdict_share == .905
+    assert 'evidence_verdict_collapse' in result.failures
 
 
 def test_latency_uses_total_decode_times_not_mean_sample_ratios():
@@ -188,21 +188,21 @@ def test_fixed_equal_integer_token_budget_required(budget):
         run(items)
 
 
-def test_no_schema_valid_outputs_fail_disposition_gate_without_crashing():
+def test_no_schema_valid_outputs_fail_evidence_verdict_gate_without_crashing():
     report = run(pairs(0, 0))
     assert report.tuned.schema_valid_count == 0
-    assert report.tuned.max_disposition_share is None
-    assert 'disposition_collapse' in report.failures
+    assert report.tuned.max_evidence_verdict_share is None
+    assert 'evidence_verdict_collapse' in report.failures
 
 
-def test_disposition_denominator_excludes_malformed_outputs():
+def test_evidence_verdict_denominator_excludes_malformed_outputs():
     items = pairs(200, 190)
     for i in range(190):
-        alter(items, 'tuned', i, disposition='CONSISTENT' if i < 172 else 'CONFLICTED')
+        alter(items, 'tuned', i, evidence_verdict='CONSISTENT' if i < 172 else 'CONFLICTED')
     report = run(items)
     assert report.tuned.schema_valid_count == 190
-    assert report.tuned.max_disposition_share == 172 / 190
-    assert 'disposition_collapse' in report.failures
+    assert report.tuned.max_evidence_verdict_share == 172 / 190
+    assert 'evidence_verdict_collapse' in report.failures
 
 
 def test_malformed_schema_does_not_inflate_content_diversity():
@@ -213,13 +213,16 @@ def test_malformed_schema_does_not_inflate_content_diversity():
     assert report.tuned.distinct_content_strings == 199
 
 
-def test_schema_valid_bad_reference_content_is_counted_but_not_accepted():
+def test_l3_bad_reference_excluded_from_content_and_verdict_denominator():
     items = pairs(200, 200)
     alter(items, 'tuned', 0, evidence_refs=[{'row': 1000, 'field': 'mid'}])
     report = run(items)
-    assert report.tuned.schema_valid_count == 200
+    assert report.tuned.schema_valid_count == 199
     assert report.tuned.l4_count == 199
-    assert report.tuned.distinct_content_strings == 200
+    assert report.tuned.distinct_content_strings == 199
+
+    assert report.sample_count == 200
+    assert sum(dict(report.tuned.evidence_verdict_counts).values()) == 199
 
 
 def test_non_string_echo_counts_as_mismatch_even_at_l2():

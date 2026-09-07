@@ -34,14 +34,14 @@ def valid_output(state):
         "evidence_refs": [{"row": 0, "field": "mid"}],
         "contradictions": [], "missing_evidence": [],
         "hypotheses": [{"label": "consistent", "support": [], "against": []}],
-        "disposition": "CONSISTENT",
+        "evidence_verdict": "CONSISTENT",
     }
 
 
 def test_ladder_is_deterministic_and_strictly_increasing():
     state = snapshot()
     valid = valid_output(state)
-    wrong_types = {**valid, "disposition": "BUY"}
+    wrong_types = {**valid, "evidence_verdict": "BUY"}
     foreign = {**valid, "snapshot_hash": "b" * 64}
     fixtures = ["[]", "{}", json.dumps(wrong_types), json.dumps(foreign), json.dumps(valid)]
     expected = [(0.0, Verdict.L0), (0.2, Verdict.L1), (0.4, Verdict.L2),
@@ -93,7 +93,7 @@ def test_every_top_level_key_is_required(key):
 
 def test_extra_top_level_key_is_l1_even_if_other_types_are_wrong():
     state = snapshot()
-    value = {**valid_output(state), "extra": 1, "disposition": False}
+    value = {**valid_output(state), "extra": 1, "evidence_verdict": False}
     assert score(json.dumps(value), state) == (0.2, Verdict.L1)
 
 
@@ -117,7 +117,7 @@ def test_extra_top_level_key_is_l1_even_if_other_types_are_wrong():
     ("hypotheses", [{"label": "x", "support": {}, "against": []}]),
     ("hypotheses", [{"label": "x", "support": [], "against": [], "extra": 1}]),
     ("hypotheses", [{"label": "x", "support": [], "against": []}] * 5),
-    ("disposition", "BUY"), ("disposition", []), ("disposition", True),
+    ("evidence_verdict", "BUY"), ("evidence_verdict", []), ("evidence_verdict", True),
 ])
 def test_wrong_types_caps_enums_and_nested_keys_are_l2(key, bad):
     state = snapshot()
@@ -205,3 +205,12 @@ def test_parser_result_exposes_no_bld1_fields_and_does_not_modify_input():
     assert set(dir(Verdict)).isdisjoint(BLD1_FIELD_NAMES)
     assert result == (1.0, Verdict.L4)
     assert state == snapshot()
+
+
+def test_p6_schema_keys_have_no_bld1_collision_and_old_field_rejected():
+    from research.kalshi.frankie_boss.granite_output_schema import REQUIRED_KEYS
+    assert REQUIRED_KEYS.isdisjoint(BLD1_FIELD_NAMES)
+    state = snapshot()
+    old = valid_output(state)
+    old["disposition"] = old.pop("evidence_verdict")
+    assert score(json.dumps(old), state) == (0.2, Verdict.L1)
