@@ -56,7 +56,8 @@ def test_inventory_import_does_not_require_torch_or_package_initialization():
     import pathlib
     import subprocess
     import sys
-    directory = pathlib.Path(__file__).resolve().parents[1]
+    import bedrock_inventory
+    directory = pathlib.Path(bedrock_inventory.__file__).resolve().parent
     code = ("import sys; sys.path.insert(0, sys.argv[1]); sys.modules['torch'] = None; "
             "import bedrock_inventory; "
             "assert 'research.kalshi.frankie_boss' not in sys.modules")
