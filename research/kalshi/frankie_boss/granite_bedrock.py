@@ -9,7 +9,7 @@ import json
 import math
 import threading
 
-from .granite_shadow import GraniteIdentity, ShadowReceipt, ShadowResponse, serve_shadow
+from .granite_shadow import GraniteIdentity, ShadowReceipt, ShadowResponse, serve_shadow, serve_native_shadow
 
 
 def _json(value):
@@ -93,7 +93,29 @@ class BedrockShadowService:
                 raise ValueError('thinking mode unsupported by text-only Converse adapter')
             self._config_hash = config.config_hash
 
+    @property
+    def enabled(self):
+        return self._enabled
+
+    @property
+    def identity(self):
+        return self._identity
+
+    @property
+    def config_hash(self):
+        if not self._enabled:
+            return None
+        if self._config.config_hash != self._config_hash:
+            raise ValueError('SDK/config identity changed; construct a new service')
+        return self._config_hash
+
     async def critique(self, snapshot, *, request_id):
+        return await self._critique(snapshot, request_id=request_id, serve=serve_shadow)
+
+    async def critique_native(self, snapshot, *, request_id):
+        return await self._critique(snapshot, request_id=request_id, serve=serve_native_shadow)
+
+    async def _critique(self, snapshot, *, request_id, serve):
         if not self._enabled:
             return None
         config, identity = self._config, self._identity
@@ -156,7 +178,7 @@ class BedrockShadowService:
                 raise
             return await future
 
-        shadow = await serve_shadow(snapshot, identity, request_id=request_id,
+        shadow = await serve(snapshot, identity, request_id=request_id,
                                     timeout_seconds=config.request_timeout, transport=transport)
         return BedrockReceipt(shadow, self._config_hash,
                               _hash({'config_hash': self._config_hash,

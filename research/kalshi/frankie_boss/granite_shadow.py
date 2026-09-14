@@ -131,6 +131,32 @@ async def serve_shadow(
         raise ValueError('identity does not match local prompt/schema/parser')
     request = ShadowRequest(request_id, identity, snapshot.text, snapshot.hash,
                             prompt.text, float(timeout_seconds))
+    return await _serve_request(request, snapshot, transport, granite_parser.runtime_score)
+
+
+async def serve_native_shadow(snapshot, identity: GraniteIdentity, *, request_id: str,
+                              timeout_seconds: float, transport, max_prompt_bytes=None) -> ShadowReceipt:
+    """Serve exact native evidence with its distinct prompt/parser identity."""
+    from .granite_context import build_native_prompt, native_parser_code_hash, score_native
+    if type(timeout_seconds) not in (int, float) or not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
+        raise ValueError('timeout_seconds must be finite and positive')
+    if not isinstance(request_id, str) or not request_id.strip():
+        raise ValueError('request_id must be explicit')
+    if not isinstance(identity, GraniteIdentity):
+        raise TypeError('identity must be GraniteIdentity')
+    identity.__post_init__()
+    prompt = build_native_prompt(snapshot, max_prompt_bytes=max_prompt_bytes)
+    if (identity.system_prompt_hash != prompt.system_prompt_hash
+            or identity.schema_version != SCHEMA_VERSION
+            or identity.parser_code_hash != native_parser_code_hash()):
+        raise ValueError('identity does not match native prompt/schema/parser')
+    request = ShadowRequest(request_id, identity, snapshot.text, snapshot.hash,
+                            prompt.text, float(timeout_seconds))
+    return await _serve_request(request, snapshot, transport, score_native)
+
+
+async def _serve_request(request, snapshot, transport, scorer):
+    identity, timeout_seconds = request.identity, request.timeout_seconds
 
     async def invoke() -> ShadowResponse:
         return await transport(request)
@@ -158,6 +184,6 @@ async def serve_shadow(
         return ShadowReceipt(request, 'malformed_response')
     if response.request_hash != request.request_hash or response.identity_hash != identity.identity_hash:
         return ShadowReceipt(request, 'binding_mismatch', response)
-    _, verdict = granite_parser.runtime_score(response.text, snapshot)
+    _, verdict = scorer(response.text, snapshot)
     return ShadowReceipt(request, 'accepted' if verdict is granite_parser.Verdict.L4 else 'rejected',
                          response, verdict.name)

@@ -50,3 +50,18 @@ Sources checked 2026-09-14:
 - https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_Converse.html
 - https://docs.aws.amazon.com/bedrock/latest/userguide/bedrock-marketplace-model-reference.html
 - https://docs.aws.amazon.com/botocore/latest/reference/config.html
+
+## Full native context service
+
+The additive `critique_native` path uses `serve_native_shadow` with the native
+mapper's exact text, prompt hash and parser bundle hash. The same bounded worker,
+SDK call, response evidence and timeout semantics serve both schema versions.
+The V2 path remains unchanged. Public read-only enabled, identity and config_hash
+properties allow the operational controller to preflight independently pinned
+service configuration; SDK drift invalidates the config property.
+
+The authorized AWS inventory on 2026-09-14 found no deployed Granite endpoint in
+us-east-1/us-east-2. Exact Granite 4.2 uses GraniteForCausalLM, which the documented
+Bedrock import architectures and Marketplace list do not currently support. The
+exact-model operational route therefore requires the additive SageMaker transport;
+the existence of this Converse service is not claimed as Granite availability.
