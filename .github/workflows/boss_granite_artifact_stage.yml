@@ -1,4 +1,5 @@
 name: BOSS Granite exact artifact staging
+# Bounded immutable-download recovery after run 34901189040 timed out.
 
 on:
   push:

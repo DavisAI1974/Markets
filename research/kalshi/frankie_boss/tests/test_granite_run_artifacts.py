@@ -188,3 +188,27 @@ def test_wrong_well_formed_account_cannot_touch_s3():
         def create_bucket(self,**kw):pytest.fail('wrong account must not touch S3')
     with pytest.raises(ValueError,match='approved account'):
         m.ensure_scoped_bucket(Client(),'000000000000')
+
+
+def test_transient_download_retries_same_pinned_file(tmp_path):
+    calls = []
+    row = {'path': 'config.json', 'size': 1, 'sha256': 'a'*64}
+    def download(given, directory):
+        assert given is row and directory == tmp_path
+        calls.append(1)
+        if len(calls) == 1:
+            raise TimeoutError('read stalled')
+        return tmp_path/'config.json'
+    assert m.download_verified_file(row, tmp_path, downloader=download) == tmp_path/'config.json'
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize('failure', [ValueError('hash mismatch'), TimeoutError('stalled')])
+def test_download_retry_does_not_hide_corruption_or_retry_forever(tmp_path, failure):
+    calls = []
+    def download(*args):
+        calls.append(1)
+        raise failure
+    with pytest.raises(type(failure)):
+        m.download_verified_file({'path':'config.json'}, tmp_path, downloader=download)
+    assert len(calls) == (3 if isinstance(failure, TimeoutError) else 1)

@@ -9,6 +9,8 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import http.client
+import urllib.error
 import urllib.request
 
 REPOSITORY = 'ibm-granite/granite-4.2-8b'
@@ -220,7 +222,23 @@ def save_receipt(path, receipt):
     temporary.replace(path)
 
 
-def stage(client, bucket, manifest, directory, receipt_path, *, fetch=download_file):
+def download_verified_file(row, directory, *, attempts=3, downloader=None):
+    """Bounded network recovery reuses the same pinned partial-file protocol."""
+    if type(attempts) is not int or not 1 <= attempts <= 5:
+        raise ValueError('one to five download attempts required')
+    downloader = downloader or download_file
+    for attempt in range(attempts):
+        try:
+            return downloader(row, directory)
+        except (TimeoutError, ConnectionError, http.client.IncompleteRead, urllib.error.URLError) as exc:
+            if isinstance(exc, urllib.error.HTTPError) and exc.code not in (408, 429, 500, 502, 503, 504):
+                raise
+            if attempt + 1 == attempts:
+                raise
+            print('retrying immutable artifact download', row['path'], attempt + 2, flush=True)
+
+
+def stage(client, bucket, manifest, directory, receipt_path, *, fetch=download_verified_file):
     """Upload one verified file at a time; existing objects are verified, not replaced."""
     prefix = prefix_for(manifest)
     directory = Path(directory)
