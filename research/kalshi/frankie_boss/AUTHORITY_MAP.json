@@ -1,0 +1,399 @@
+{
+  "schema": "BOSS_STATIC_AUTHORITY_MAP_V1",
+  "runtime_arbitration": false,
+  "scope": "Static ownership documentation and source collision checks; no permissions or runtime dispatch.",
+  "semantics": "Writer means the semantic admission owner of this surface, not every caller of its public API. Generic EvidenceJournal owns physical append IO; each supplied journal path has one declared semantic owner. Reader lists identify primary readers, not every transitive consumer.",
+  "corrections": [
+    "Protected legacy BLD-1 eleven-field model emission and additive BOSS twelve-field deterministic projection are distinct interfaces; disposition remains required in BOSS.",
+    "Granite is required in the final build. Historical shadow names do not make it optional. Critiques and native forecasts remain producer evidence, never independent Frankie-agent findings.",
+    "Native BOSS has no knowledge store or Memory A writer. This is not a claim that the whole repository or the separate agent lineage has no memory writer."
+  ],
+  "stores": [
+    {
+      "id": "raw_market_evidence",
+      "location": "Caller-supplied C15Builder journal_path; never a fixed deployment path.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/c15_builder.py",
+        "symbol": "C15Builder"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/context_session.py",
+          "symbol": "ContextSessionRunner"
+        },
+        {
+          "path": "research/kalshi/frankie_boss/c15_builder.py",
+          "symbol": "C15Builder.evidence_stream"
+        }
+      ],
+      "identity": "C15_FULL_EVIDENCE_V1 envelope/hash chain, source prefix, export_state/restore expected_hash.",
+      "protection": "Append-only complete raw/applied/failed accounting; explicit causal cursor.",
+      "attribution": "Source observations and deterministic C15 accounting, not agent findings."
+    },
+    {
+      "id": "native_context_receipts",
+      "location": "Derived in memory from the selected source prefix; retained in original forecast/controller artifacts.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/context_session.py",
+        "symbol": "ContextSessionRunner._prepare"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/native_forecast_refresh.py",
+          "symbol": "NativeForecastRefresh"
+        },
+        {
+          "path": "research/kalshi/frankie_boss/granite_context.py",
+          "symbol": "map_native_context"
+        }
+      ],
+      "identity": "ContextReceipt input/model/registry/source/packet hashes and complete selected/excluded row counts.",
+      "protection": "Declared recency context; no brain, knowledge or Memory A input.",
+      "attribution": "Deterministic native context selection; no agent authorship."
+    },
+    {
+      "id": "forecast_history",
+      "location": "Caller-supplied RollingForecastBook path.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/rolling_forecast.py",
+        "symbol": "RollingForecastBook"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/frankie_forecast_consumer.py",
+          "symbol": "consume_forecast"
+        },
+        {
+          "path": "research/kalshi/frankie_boss/frankie_controller.py",
+          "symbol": "FrankieForecastController"
+        }
+      ],
+      "identity": "BOSS_ROLLING_FORECAST_V1 count/head_hash checkpoint, candidate/artifact and revision chain.",
+      "protection": "Single semantic writer; retained revisions and original immutable artifact bytes.",
+      "attribution": "B1/native decoder forecasts are producer outputs; not principal-agent calculations."
+    },
+    {
+      "id": "controller_history",
+      "location": "Caller-supplied ControllerJournal path.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/controller_journal.py",
+        "symbol": "ControllerJournal"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/frankie_controller.py",
+          "symbol": "FrankieForecastController"
+        }
+      ],
+      "identity": "BOSS_FRANKIE_CONTROLLER_JOURNAL_V1 count/head_hash; request/configuration/code/route/snapshot/native/critic links.",
+      "protection": "Durable transitions and explicit unknown-call recovery; replay never invokes providers.",
+      "attribution": "Native and Granite producer evidence is retained and attributed separately from Frankie agent findings."
+    },
+    {
+      "id": "qsv_production",
+      "location": "Caller-supplied QSVProducerStore path.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/qsv_producer.py",
+        "symbol": "QSVProducerStore"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/context_qsv.py",
+          "symbol": "QSVContext"
+        }
+      ],
+      "identity": "BOSS_QSV_PRODUCTION_V1 checkpoint plus source/configuration/encoder hashes and per-row masks.",
+      "protection": "Append-only production artifacts; unavailable is not observed zero.",
+      "attribution": "Declared source observations plus deterministic QSV transform."
+    },
+    {
+      "id": "experiment_plan",
+      "location": "Immutable typed plan value, durably retained by RevealLedger and PairedExperimentRunner.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/experiment_locks.py",
+        "symbol": "ExperimentPlan"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/experiment_reveal.py",
+          "symbol": "RevealLedger"
+        },
+        {
+          "path": "research/kalshi/frankie_boss/experiment_runner.py",
+          "symbol": "PairedExperimentRunner"
+        }
+      ],
+      "identity": "ExperimentPlan/ArmLock/Pairing hashes; FrozenOutputs binds pre-reveal outputs.",
+      "protection": "Lock before execution/reveal; no extra plan journal invented.",
+      "attribution": "Declared experiment configuration, not empirical acceptance."
+    },
+    {
+      "id": "experiment_reveal",
+      "location": "Caller-supplied RevealLedger path.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/experiment_reveal.py",
+        "symbol": "RevealLedger"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/experiment_runner.py",
+          "symbol": "PairedExperimentRunner._verify_reveal"
+        }
+      ],
+      "identity": "BOSS_EXPERIMENT_REVEAL_V1 count/head_hash, plan/frozen-output bindings.",
+      "protection": "Reveal requires explicit authorization; append-only outcome witness.",
+      "attribution": "Outcome evidence stays separate from pre-reveal agent input."
+    },
+    {
+      "id": "experiment_execution_scoring",
+      "location": "Caller-supplied PairedExperimentRunner path.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/experiment_runner.py",
+        "symbol": "PairedExperimentRunner"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/experiment_runner.py",
+          "symbol": "PairedExperimentRunner._state"
+        }
+      ],
+      "identity": "BOSS_PAIRED_EXECUTION_V1 checkpoint, shared input/arm/implementation/reveal/scorer bindings.",
+      "protection": "Frozen inputs and retained outcomes; no automatic scored-history feedback into selection.",
+      "attribution": "Paired runner/scorer results are evaluator evidence, not agent discoveries."
+    },
+    {
+      "id": "execution_outbox_and_kill",
+      "location": "Caller-supplied ExecutionLedger path and its derived writer-lock/kill sidecars.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/execution_ledger.py",
+        "symbol": "ExecutionLedger"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/execution_ledger.py",
+          "symbol": "ExecutionLedger.state"
+        },
+        {
+          "path": "research/kalshi/frankie_boss/execution_ledger.py",
+          "symbol": "ExecutionLedger.killed"
+        }
+      ],
+      "identity": "BOSS_EXECUTION_LEDGER_V1 checkpoint, wire/policy/account/observation hashes and latched kill marker.",
+      "protection": "Exclusive writer lease; outbox and explicit reconciliation; registry grants no order authorization.",
+      "attribution": "Execution policy/provider observations; no inference of trading authorization."
+    },
+    {
+      "id": "benchmark_progress",
+      "location": "Caller-supplied checkpoint file.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/benchmark_checkpoint.py",
+        "symbol": "write_checkpoint_atomic"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/benchmark_checkpoint.py",
+          "symbol": "load_checkpoint"
+        }
+      ],
+      "identity": "Checkpoint hash chain, stable run/controller/memory-mode/source identity.",
+      "protection": "Atomic checkpoint replacement; memory_mode is metadata, not memory-content write authority.",
+      "attribution": "Progress accounting only."
+    },
+    {
+      "id": "legacy_canonical_brain",
+      "location": "Legacy knowledge/ng_brain.json and merge forward-test store, outside BOSS.",
+      "writer": {
+        "path": "research/kalshi/merge_gate.py",
+        "symbol": "cmd_settle"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/merge_gate.py",
+          "symbol": "admit_play"
+        },
+        {
+          "path": "research/kalshi/brain_view.py",
+          "symbol": "build"
+        }
+      ],
+      "identity": "Legacy admission/register/due/settle evidence and canonical content; not a BOSS C15 checkpoint.",
+      "protection": "Designated admission authority is merge_gate. Historical maintenance writers exist outside BOSS and are not legitimized or executed by this map. BOSS has no writer/importer.",
+      "attribution": "Canonical legacy brain content remains distinct from derived cognitive records."
+    },
+    {
+      "id": "legacy_play_index",
+      "location": "Generated brain_view view/play_index, never a second canonical store.",
+      "writer": {
+        "path": "research/kalshi/brain_view.py",
+        "symbol": "build"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/brain_view.py",
+          "symbol": "cmd_view"
+        }
+      ],
+      "identity": "Derived from canonical brain by role/phase/window view rules.",
+      "protection": "Derived index only; no canonical admission authority.",
+      "attribution": "Legacy retrieval/index projection, not newly learned findings."
+    },
+    {
+      "id": "legacy_cognitive_records",
+      "location": "Caller-supplied MemoryRecord sets and derived working selection, outside native BOSS.",
+      "writer": {
+        "path": "research/kalshi/frankie_cognition.py",
+        "symbol": "MemoryRecord"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_cognition.py",
+          "symbol": "select_active_memories"
+        },
+        {
+          "path": "research/kalshi/frankie_cognition.py",
+          "symbol": "validate_working_memory"
+        }
+      ],
+      "identity": "record_hash, selection hash, withdrawal audit and knowable_at/created_at.",
+      "protection": "Derived cognitive model; WRITE_CANONICAL forbidden; no BOSS knowledge input.",
+      "attribution": "Declared authority/source on every record; derived selection is not canonical brain admission."
+    },
+    {
+      "id": "frozen_sunday_memory_a",
+      "location": "Frozen prior bundle selected for Sunday comparison; deployment/run path supplied independently.",
+      "writer": null,
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_raw_mbo_benchmark/emit_frankie_spawn.py",
+          "symbol": "_verified_knowledge",
+          "commit": "996d121cb4b8f723c28c5eb61772fed6719c9c14"
+        }
+      ],
+      "identity": "SHA256 4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a from run33746436209.",
+      "protection": "Immutable comparison input; no BOSS writer. Never substitute refreshed carry containing Sunday findings.",
+      "attribution": "Prior memory evidence is disclosed as prior memory, never independent current-run discoveries."
+    },
+    {
+      "id": "agent_memory_carry",
+      "location": "Separate pinned agent lineage seed output, selected by its own --seed argument/default.",
+      "writer": {
+        "path": "research/kalshi/frankie_raw_mbo_benchmark/build_a_memory_seed.py",
+        "symbol": "main",
+        "commit": "996d121cb4b8f723c28c5eb61772fed6719c9c14"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_raw_mbo_benchmark/register_a_memory_knowledge.py",
+          "symbol": "seed_artifact",
+          "commit": "996d121cb4b8f723c28c5eb61772fed6719c9c14"
+        }
+      ],
+      "identity": "Seed source-file digests, mission pin, knowledge registration/bundle/receipt hashes.",
+      "protection": "Agent lineage writer exists; it preserves original44 VERIFIED findings and carries separately admitted NEW findings. This does not permit modifying frozen comparison memory.",
+      "attribution": "Only admitted agent findings with original attribution/provenance; producer forecasts never become findings automatically."
+    }
+  ],
+  "legacy_maintenance_examples": [
+    {
+      "path": "research/kalshi/brain_backfill.py",
+      "symbol": "cmd_apply"
+    },
+    {
+      "path": "research/kalshi/brain_conditions.py",
+      "symbol": "cmd_apply"
+    },
+    {
+      "path": "research/kalshi/adjudicate_g20_merge.py",
+      "symbol": null
+    }
+  ],
+  "collision_check": {
+    "scan_root": "research/kalshi/frankie_boss",
+    "exclude_directories": [
+      "tests",
+      "provenance",
+      "__pycache__"
+    ],
+    "detects": [
+      "New direct EvidenceJournal constructors including import aliases and module aliases.",
+      "Append calls on file-local constructor aliases or explicit journal/_journal attributes outside listed semantic methods.",
+      "Direct sqlite3.connect bypasses outside EvidenceJournal.__init__.",
+      "Protected knowledge/MemoryA path writes/deletes/renames using literal path fragments, path variables and simple local aliases; BOSS imports of legacy admission/cognition modules."
+    ],
+    "limitations": [
+      "Static source checks, not a Python security sandbox or whole-repository single-writer proof.",
+      "Cannot resolve arbitrary dynamic paths, reflection, runtime reassignment, interprocedural aliases, subprocess IO or external code.",
+      "Dynamic journal path identity remains the callers checkpoint/lease responsibility; public owner APIs may be called by orchestrators.",
+      "Tests parse AST and read pinned external Git blobs; they never import legacy modules with top-level side effects."
+    ],
+    "protected_path_markers": [
+      "ng_brain.json",
+      "knowledge",
+      "a_memory",
+      "memory_a",
+      "memorya"
+    ],
+    "forbidden_imports": [
+      "merge_gate",
+      "brain_view",
+      "frankie_cognition",
+      "build_a_memory_seed"
+    ],
+    "journal_constructors": {
+      "c15_builder.py": [
+        "C15Builder.__init__",
+        "C15Builder.restore"
+      ],
+      "rolling_forecast.py": [
+        "RollingForecastBook.__init__"
+      ],
+      "controller_journal.py": [
+        "ControllerJournal.__init__"
+      ],
+      "qsv_producer.py": [
+        "QSVProducerStore.__init__"
+      ],
+      "experiment_reveal.py": [
+        "RevealLedger.__init__"
+      ],
+      "experiment_runner.py": [
+        "PairedExperimentRunner.__init__",
+        "PairedExperimentRunner._verify_reveal"
+      ],
+      "execution_ledger.py": [
+        "ExecutionLedger.__init__"
+      ]
+    },
+    "journal_appends": {
+      "c15_builder.py": [
+        "C15Builder.apply"
+      ],
+      "rolling_forecast.py": [
+        "RollingForecastBook.bind_refresh",
+        "RollingForecastBook.publish"
+      ],
+      "controller_journal.py": [
+        "ControllerJournal._append"
+      ],
+      "qsv_producer.py": [
+        "QSVProducerStore.produce"
+      ],
+      "experiment_reveal.py": [
+        "RevealLedger.__init__",
+        "RevealLedger._append"
+      ],
+      "experiment_runner.py": [
+        "PairedExperimentRunner.__init__",
+        "PairedExperimentRunner._append"
+      ],
+      "execution_ledger.py": [
+        "ExecutionLedger._append"
+      ]
+    },
+    "physical_connects": {
+      "c15_journal.py": [
+        "EvidenceJournal.__init__"
+      ]
+    }
+  }
+}
