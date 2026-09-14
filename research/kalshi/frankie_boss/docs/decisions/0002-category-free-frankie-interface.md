@@ -19,11 +19,19 @@ Ranking and optional internal calibrated probability do not become categorical
 confidence or trading authority. Publish the sole valid candidate or the highest
 ranked comparable candidate, without an absolute floor. Calibration absence is not
 a fatal defect. Existing caller metadata still determines trade disposition/plays.
+Following the owner's authorization to apply Claude R5, the defects list is
+explicitly fatal-only; non-fatal gaps are recorded in reasoning via
+report_nonfatal_gaps. They may accompany a valid CALL. Safety abstention preserves
+incoming play history in reasoning while leaving the complete zero safety fields.
 
 Both standalone entry points default to invoking the exact legacy callback before
-native imports or ledger reads. Enabled projection restores the trusted artifact
-and regenerates the projection to prevent coherent but fabricated numeric payloads
-from borrowing a valid artifact digest. A typed record alone is a validated value,
+native imports or ledger reads. Enabled projection reads the trusted stored artifact
+without executing its decoder and checks the projection against its stored values.
+Independent artifact/publication roots and a deep copy of caller metadata are
+captured before the proposal loader runs. A proposal cannot supply its own trust
+root or mutate those captured metadata. Transport stamps include a metadata hash
+and caller_supplied_unverified origin status; no source authenticity is invented.
+A typed record alone is a validated value,
 not proof that the verified projection entry point was called.
 
 The enabled consumer reads a retained receipt from a verified single-writer ledger
@@ -42,7 +50,16 @@ deploy or wire a live service. Single-session S121 representability checks remai
 no implicit cumulative multi-session forecast, unsupported DST crossing or invented
 path interpolation. Historical revisions remain readable after later updates.
 
-Runtime pinning deliberately rejects incompatible restores. Full journal verification
-and repeated artifact reconstruction favor correctness at this software boundary;
-throughput is unmeasured. No fitted weights, calibration evidence or B2_GATED
+Runtime pinning deliberately rejects incompatible new queries/reproduction, while
+structural historical reads preserve exact V1 bytes and identities across runtime
+drift. New native publications attest actual producer reproduction through the
+trusted ledger; the stamp says publisher_verified, not reproduced in this runtime.
+Legacy receipts without that claim remain unknown.
+
+Standalone category-free accounting is exact: net = gap + terminal. Sessions crossing
+the next S121 20:00 boundary fail explicitly; no alternative clock or split is implied.
+Valid immediate-STOP two-point native curves remain accepted.
+
+Full journal verification remains in place. Bounded synthetic timing is recorded
+separately; production throughput is unmeasured. No fitted weights, calibration evidence or B2_GATED
 production completion follows from synthetic tests.

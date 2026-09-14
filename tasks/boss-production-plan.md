@@ -24,14 +24,16 @@ at every horizon; no categorical publication threshold):
    twelve-field interface with null confidence. The enabled adapter and verified
    rolling-ledger consumer are built; production controller/service wiring is open.
    No synthetic artifact is presented as a trained forecast. See
-   research/kalshi/frankie_boss/CLAUDE_NATIVE_FORECAST_REVIEW_HANDOFF_20260914.md.
+   research/kalshi/frankie_boss/CLAUDE_REVIEW_FIXES_HANDOFF_20260914.md.
    Forecasts use a separate ledger, never forecast rows inside C15 input.
 
 Verification: focused pytest files test_forecast_confidence.py and
 test_rolling_forecast.py and test_forecast_refresh.py, then existing seam/B1/context
-suites in an LF checkout. Current native/consumer verification: 951 passed,
-1 CUDA-only skip, plus 11 checkpoint dependency-isolation tests in a separate
-process (962 passed total). This supersedes the historical 871-pass checkpoint.
+suites in an LF checkout. Current verification after Claude's required and optional
+corrections: 982 passed, 1 CUDA-only skip, plus 11 checkpoint dependency-isolation
+tests in a separate process (993 passed total). The earlier 871- and 962-pass
+checkpoints remain historical. The successor handoff also records bounded synthetic
+journal/refresh timings; those do not establish production throughput acceptance.
 Each slice changes at most three implementation/test files and receives review.
 The task index stays in boss-production-todo.md to preserve unrelated tasks/plan.md.
 

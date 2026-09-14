@@ -10,7 +10,7 @@ Implementation checkpoint: native decoder, immutable query artifacts and same-fo
 rolling generation are now built with synthetic verification. The protected boundary
 now has an owner-approved separate versioned twelve-field contract with null
 confidence, enabled projection and a verified rolling-ledger consumer. See
-CLAUDE_NATIVE_FORECAST_REVIEW_HANDOFF_20260914.md and ADR-0002 for scope and remaining
+CLAUDE_REVIEW_FIXES_HANDOFF_20260914.md and ADR-0002 for scope and remaining
 acceptance gates; the architecture specification below does not imply empirical approval.
 
 ## Owner revision: rolling best-supported forecasts (2026-09-14)
@@ -174,16 +174,26 @@ Do not add artificial wiggles to evade the existing A-86 linearity validator.
 ### As-of and time semantics
 
 - Bind each call to one session, instrument, event cutoff, receive cutoff and source prefix.
-- Before open, forecast both gap and path.
+- Before open, forecast both gap and path using an explicitly recorded, causal
+  prior-close reference. New-publication validation requires that reference;
+  historical artifact parsing must not backfill or rewrite an earlier omission.
 - After open, use the gap only if both anchors were available by the receive cutoff.
   Certified known path points are observations, identified internally as such; do
-  not score them as successful forecasts. At as-of, anchor the future decoder to
-  the certified current mark, with an explicitly versioned residual parameterization.
+  not score them as successful forecasts. Anchor the residual path to the latest
+  certified mark, or opening until a later mark is available. The anchor may precede
+  the global cutoff; its age is a fifth session coordinate alongside time-to-open,
+  duration, USD scale and tick size. New knots begin strictly after the cutoff.
+  Queries in uncertified past intervals fail instead of interpolating a price.
+- Current generation declares a uniform zero-origin tick grid and validates
+  certified prices against it exactly using their decimal representation. Variable
+  schedules, off-grid references or offset grids require an explicit new convention.
 - Missing necessary anchors, unsupported session mappings or a completed-session
   request with no forecast horizon are unavailable-forecast states, not high confidence.
 - Use timezone-aware absolute times internally. Serialize ET only at the protected
   boundary. Preserve S121's 20:00 wrap and terminal next-day 20:00/24:00 sentinel.
   Here `24:00` is the S121 close sentinel, not ordinary midnight.
+  A session crossing the next 20:00 boundary (for example 18:00 to next-day 17:00)
+  is not representable; reject explicitly rather than inventing a split or new clock.
 - Verify each authoritative session against that representable clock. DST/holiday
   or early-close ambiguity must fail explicitly, not be mapped onto an invented schedule.
 
@@ -450,6 +460,26 @@ is withdrawn. Do not route informational calibration diagnostics through a fatal
 packet-defect path that would erase a valid forecast. Enabled compatibility and
 diagnostic transport require separate integration tests; no thirteenth field is added.
 
+The category-free defects list is explicitly fatal-only. Non-fatal gaps such as
+absent calibration belong in reasoning through report_nonfatal_gaps and may accompany
+a valid CALL. Safety abstention also preserves incoming play history in reasoning
+while keeping the complete zero safety payload. Immediate STOP can legitimately
+produce two native endpoints; a two-point curve is not decorative interpolation.
+
+The enabled bridge takes expected artifact/publication identities and metadata
+independently of its proposal loader. Metadata is validated and deeply captured
+before that loader runs. Its hash and caller_supplied_unverified origin status are
+explicit in the transport; this is not an authenticated Frankie population receipt.
+Standalone category-free accounting requires exactly net = gap + terminal.
+
+Artifact structural reads and digest checks never execute the decoder. Archived
+V1 bytes, digests and stored points remain readable across code/runtime changes.
+query() and verify_reproduction() still require the frozen runtime/architecture.
+Every new freeze performs reproduction before returning. Native publications also
+bind a producer attestation to the reproduced content and runtime through the trusted
+ledger. publisher_verified is a producer claim, not current-runtime reproduction;
+legacy artifacts without the attestation remain unknown. Parsing never invents one.
+
 Implemented rolling-layer contracts are `ForecastTarget`, `ForecastCandidate`,
 `RollingForecastBook`, `RefreshIntent`, `RefreshPolicy` and `ForecastRefreshLoop`.
 Each refresh durably binds its complete target registry, source cutoffs/hash, arm,
@@ -508,7 +538,7 @@ A CRLF conversion changes the audited byte hash; do not change the expected hash
 to make that checkout pass. Use a separate LF checkout for these checks.
 
 Implemented software verification is recorded in
-CLAUDE_NATIVE_FORECAST_REVIEW_HANDOFF_20260914.md and its predecessor handoffs.
+CLAUDE_REVIEW_FIXES_HANDOFF_20260914.md and its predecessor handoffs.
 Acceptance cases below are complete only to the extent recorded there.
 No training, data run or empirical calibration is claimed.
 

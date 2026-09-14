@@ -1,5 +1,10 @@
 # BOSS next-chat handoff — 2026-09-14
 
+Current successor: [CLAUDE_REVIEW_FIXES_HANDOFF_20260914.md](CLAUDE_REVIEW_FIXES_HANDOFF_20260914.md).
+Read it first for the owner-authorized required and optional Claude review fixes,
+their verification checkpoint and the next unfinished work. The prior continuation
+and restart instructions below are historical; do not redo completed native builds.
+
 Later continuation: native decoder, frozen artifacts, same-forward rolling generation,
 and the owner-approved category-free adapter and ledger consumer are implemented.
 Read CLAUDE_NATIVE_FORECAST_REVIEW_HANDOFF_20260914.md first, then
