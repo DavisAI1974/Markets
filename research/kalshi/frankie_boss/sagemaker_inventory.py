@@ -1,11 +1,13 @@
 """Read-only prerequisites for exact Granite deployment; no resource creation."""
 import json
+import hashlib
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 IMAGE_TAG = '0.20.2-gpu-py312-cu130-ubuntu22.04-sagemaker'
 ENDPOINT_QUOTA = 'L-F8D7F460'
 ENDPOINT_QUOTA_NAME = 'ml.g6e.2xlarge for endpoint usage'
+ENDPOINT_PREFIX = 'frankie-granite42-'
 
 
 def pages(operation, key, *, args=None, token_key='NextToken', max_pages=20, stop_when=None):
@@ -96,10 +98,31 @@ def prices(client, region):
 def image(client):
     response = client.batch_get_image(registryId='763104351884', repositoryName='vllm',
                                      imageIds=[{'imageTag': IMAGE_TAG}])
-    return {'status': 'complete' if response.get('images') and not response.get('failures') else 'unresolved',
-            'images': [{'imageId': item['imageId'], 'registryId': item['registryId'],
-                        'repositoryName': item['repositoryName']} for item in response.get('images', [])],
+    # Preserve exact registry bytes, not only a tag/digest assertion.
+    # https://docs.aws.amazon.com/AmazonECR/latest/APIReference/API_BatchGetImage.html
+    images = []
+    for item in response.get('images', []):
+        manifest = item.get('imageManifest')
+        verified = (type(manifest) is str and
+                    'sha256:' + hashlib.sha256(manifest.encode('utf-8')).hexdigest() ==
+                    item['imageId'].get('imageDigest'))
+        images.append({key: item.get(key) for key in (
+            'imageId', 'registryId', 'repositoryName', 'imageManifest', 'imageManifestMediaType')})
+        images[-1]['manifest_digest_verified'] = verified
+    return {'status': 'complete' if len(images) == 1 and images[0]['manifest_digest_verified'] and not response.get('failures') else 'unresolved',
+            'images': images,
             'failure_codes': [item.get('failureCode') for item in response.get('failures', [])]}
+
+
+def endpoints(client):
+    # AWS offers substring matching; enforce the owned prefix after pagination.
+    # https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_ListEndpoints.html
+    result = pages(client.list_endpoints, 'Endpoints',
+                   args={'NameContains': ENDPOINT_PREFIX, 'MaxResults': 100})
+    result['items'] = [item for item in result['items']
+                       if item['EndpointName'].startswith(ENDPOINT_PREFIX)]
+    result['scope'] = ENDPOINT_PREFIX
+    return result
 
 
 def main(argv=None):
@@ -132,8 +155,7 @@ def main(argv=None):
             ('gpu_quotas', lambda: quotas(client('service-quotas', region))),
             ('gpu_prices', lambda: prices(client('pricing', 'us-east-1'), region)),
             ('image_digest', lambda: image(client('ecr', region))),
-            ('existing_boss_endpoints', lambda: pages(client('sagemaker', region).list_endpoints, 'Endpoints',
-                                                       args={'NameContains': 'boss', 'MaxResults': 100})),
+            ('existing_granite_endpoints', lambda: endpoints(client('sagemaker', region))),
         ):
             entries[name] = safe(collect)
             save()

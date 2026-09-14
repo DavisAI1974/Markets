@@ -124,3 +124,39 @@ def test_image_missing_is_not_success():
             assert kwargs['imageIds'] == [{'imageTag': module.IMAGE_TAG}]
             return {'images': [], 'failures': [{'failureCode': 'ImageNotFound', 'failureReason': 'private'}]}
     assert module.image(Client()) == {'status': 'unresolved', 'images': [], 'failure_codes': ['ImageNotFound']}
+
+
+def test_endpoints_use_granite_prefix_and_exclude_substring_collisions():
+    class Client:
+        def list_endpoints(self, **kwargs):
+            assert kwargs['NameContains'] == 'frankie-granite42-'
+            return {'Endpoints': [{'EndpointName': 'frankie-granite42-run', 'EndpointStatus': 'InService'},
+                                  {'EndpointName': 'other-frankie-granite42-run', 'EndpointStatus': 'Failed'}]}
+    result = module.endpoints(Client())
+    assert result['status'] == 'complete'
+    assert result['scope'] == 'frankie-granite42-'
+    assert [item['EndpointName'] for item in result['items']] == ['frankie-granite42-run']
+
+
+def test_image_retains_and_verifies_actual_registry_manifest():
+    import hashlib
+    manifest = '{"schemaVersion":2,"config":{"digest":"sha256:config"}}'
+    digest = 'sha256:' + hashlib.sha256(manifest.encode()).hexdigest()
+    class Client:
+        def batch_get_image(self, **kwargs):
+            return {'images': [{'imageId': {'imageDigest': digest}, 'registryId': '763104351884',
+                               'repositoryName': 'vllm', 'imageManifest': manifest,
+                               'imageManifestMediaType': 'application/vnd.docker.distribution.manifest.v2+json'}]}
+    result = module.image(Client())
+    assert result['status'] == 'complete'
+    assert result['images'][0]['imageManifest'] == manifest
+    assert result['images'][0]['manifest_digest_verified'] is True
+
+
+def test_image_digest_mismatch_cannot_be_resolved():
+    class Client:
+        def batch_get_image(self, **kwargs):
+            return {'images': [{'imageId': {'imageDigest': 'sha256:' + '0' * 64},
+                               'registryId': '763104351884', 'repositoryName': 'vllm',
+                               'imageManifest': '{}'}]}
+    assert module.image(Client())['status'] == 'unresolved'
