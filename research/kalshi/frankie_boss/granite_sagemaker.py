@@ -158,6 +158,11 @@ class SageMakerShadowService:
         return await self._critique(snapshot, request_id, serve_native_shadow,
                                     max_prompt_bytes=max_prompt_bytes)
 
+    async def critique_compact(self, snapshot, *, request_id, max_prompt_bytes=None):
+        from .granite_context_route import serve_compact_shadow
+        return await self._critique(snapshot, request_id, serve_compact_shadow,
+                                    max_prompt_bytes=max_prompt_bytes)
+
     async def _critique(self, snapshot, request_id, serve, **kwargs):
         if not self.enabled:
             return None

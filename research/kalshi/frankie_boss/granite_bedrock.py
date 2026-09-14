@@ -119,7 +119,12 @@ class BedrockShadowService:
     async def critique_native(self, snapshot, *, request_id):
         return await self._critique(snapshot, request_id=request_id, serve=serve_native_shadow)
 
-    async def _critique(self, snapshot, *, request_id, serve):
+    async def critique_compact(self, snapshot, *, request_id, max_prompt_bytes=None):
+        from .granite_context_route import serve_compact_shadow
+        return await self._critique(snapshot, request_id=request_id, serve=serve_compact_shadow,
+                                    max_prompt_bytes=max_prompt_bytes)
+
+    async def _critique(self, snapshot, *, request_id, serve, **kwargs):
         if not self._enabled:
             return None
         config, identity = self._config, self._identity
@@ -183,7 +188,7 @@ class BedrockShadowService:
             return await future
 
         shadow = await serve(snapshot, identity, request_id=request_id,
-                                    timeout_seconds=config.request_timeout, transport=transport)
+                                    timeout_seconds=config.request_timeout, transport=transport, **kwargs)
         return BedrockReceipt(shadow, self._config_hash,
                               _hash({'config_hash': self._config_hash,
                                      'request_hash': shadow.request.request_hash}),
