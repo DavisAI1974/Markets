@@ -81,7 +81,7 @@ rewind or random access. The runner's own `calculation_result.json` is not your 
   seeds it (D88). From day two the memory is your own prior-day frozen outputs plus
   the seed. The seed is
   `research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json`
-  (SHA-256 `4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a`).
+  (SHA-256 `b814bb58f03d506f1643a162ff0ca1e94e17a7f8e90d533d844e86b1995b4f07`).
   You never receive the old reduced market rows themselves.
 
 Load retained knowledge only through the hash-bound manifest at

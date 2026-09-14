@@ -107,7 +107,8 @@ class HistoricalSeedFindingsTest(unittest.TestCase):
 
         seed = build_seed(REPO_ROOT)
 
-        carried = seed["finding_memory"]["findings"]
+        carried = [row for row in seed["finding_memory"]["findings"]
+                   if row["provenance"]["artifact_path"] == historical_path.relative_to(REPO_ROOT).as_posix()]
         self.assertEqual(len(historical["findings"]), 44)
         self.assertEqual(len(carried), 44)
         for expected, actual in zip(historical["findings"], carried, strict=True):
@@ -115,23 +116,31 @@ class HistoricalSeedFindingsTest(unittest.TestCase):
             self.assertEqual(actual["status"], "VERIFIED")
             self.assertTrue(actual["served"])
         self.assertEqual(
-            [row["id"] for row in served_memory_findings(seed)],
+            [row["id"] for row in served_memory_findings(seed) if row in carried],
             [row["id"] for row in historical["findings"]],
         )
 
 
 class FindingsCarryTest(unittest.TestCase):
-    def test_a_later_day_is_refused_until_every_prior_day_has_an_artifact(self) -> None:
+    def test_a_later_day_is_admitted_without_inventing_an_earlier_run(self) -> None:
         first_day, second_day = (row[0] for row in EXPECTED_ROSTER[:2])
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             write_artifact(root, artifact(
                 source_day=second_day,
-                run_id="memory-day-two-too-early",
+                run_id="memory-day-two",
                 findings=[finding("F-OUT-OF-ORDER")],
             ))
-            with self.assertRaisesRegex(SeedBuildError, f"{second_day}.*{first_day}"):
-                build_finding_memory(root)
+            memory = build_finding_memory(root)
+            by_day = {row["source_day"]: row for row in memory["days"]}
+            self.assertEqual(by_day[first_day]["artifact_status"], "MISSING")
+            self.assertEqual(by_day[first_day]["artifact_count"], 0)
+            self.assertEqual(by_day[first_day]["finding_ids_observed"], [])
+            self.assertEqual(by_day[first_day]["new_finding_ids"], [])
+            self.assertEqual(by_day[second_day]["artifact_status"], "PRESENT_WITH_FINDINGS")
+            self.assertEqual(memory["findings"][0]["id"], "F-OUT-OF-ORDER")
+            self.assertEqual(memory["findings"][0]["provenance"]["source_day"], second_day)
+            self.assertEqual(memory["totals"]["artifacts_present"], 1)
 
             write_artifact(root, artifact(
                 source_day=first_day,

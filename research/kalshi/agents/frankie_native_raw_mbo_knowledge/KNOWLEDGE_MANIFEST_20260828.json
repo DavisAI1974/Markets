@@ -14,7 +14,7 @@
       "roles": [
         "REAL_TIME_FRANKIE"
       ],
-      "sha256": "e14f28812bf9be09dfbd74c40a7fda181dfda16effa0a9e39dee45a9bf9b559e"
+      "sha256": "429a50abbf0886d9babd791306a1e0167cc980296ce8eb479333f54718985305"
     },
     {
       "arms": [
@@ -1203,7 +1203,7 @@
         "A_MEMORY"
       ],
       "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
-      "bytes": 166700,
+      "bytes": 244923,
       "id": "seed_a_memory_20260902",
       "kind": "JSON",
       "load_mode": "ALWAYS_LOAD",
@@ -1212,7 +1212,7 @@
         "REAL_TIME_FRANKIE",
         "FORECASTER_FRANKIE"
       ],
-      "sha256": "4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a"
+      "sha256": "b814bb58f03d506f1643a162ff0ca1e94e17a7f8e90d533d844e86b1995b4f07"
     }
   ],
   "external_bindings": [
@@ -1230,7 +1230,7 @@
       "sha256": "b487acfbbea8ac8a82f42ceb555e8334057e4004740af91b9127cd2ba71e1cf8"
     }
   ],
-  "manifest_hash": "7b796cc8d3026cf9d6905a16b1dfa50884c01d27034299c95351e8983c5f3a9b",
+  "manifest_hash": "9d2d57a91c6fe22232429608ccc72e192c2016b1ead13cf143cf12a350c4ea31",
   "profiles": {
     "FORECASTER_A_CLEAN_REVIEW": {
       "always_load": [

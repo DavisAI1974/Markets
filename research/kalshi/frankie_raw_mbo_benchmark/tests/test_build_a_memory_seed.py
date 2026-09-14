@@ -317,9 +317,16 @@ class CommandLineTest(unittest.TestCase):
         args = ["--repo-root", str(REPO_ROOT), "--seed", str(stale_seed), "--mission", str(stale_mission)]
         self.assertEqual(seed_main(["--check", *args]), 1)
         self.assertEqual(seed_main(["--write", *args]), 0)
+        self.assertEqual(
+            mission_seed_sha256(stale_mission.read_text(encoding="utf-8")),
+            hashlib.sha256(stale_seed.read_bytes()).hexdigest(),
+        )
         self.assertEqual(seed_main(["--check", *args]), 0)
         self.assertEqual(stale_seed.read_text(encoding="utf-8"), (REPO_ROOT / SEED_PATH).read_text(encoding="utf-8"))
         self.assertEqual(mission_seed_sha256(stale_mission.read_text(encoding="utf-8")), sha256_of(SEED_PATH))
+        # A text-equivalent CRLF copy has different evidence bytes and must fail check.
+        stale_seed.write_bytes(stale_seed.read_bytes().replace(b"\n", b"\r\n"))
+        self.assertEqual(seed_main(["--check", *args]), 1)
 
     def test_a_stale_mission_pin_alone_fails_check(self) -> None:
         temporary = tempfile.TemporaryDirectory()

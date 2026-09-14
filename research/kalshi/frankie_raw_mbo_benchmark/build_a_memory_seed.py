@@ -20,7 +20,8 @@ that addition does not change their ids, content, dates, or A_CLEAN source prove
 **Derived, never typed.** The historical day-one file seed remains frozen by its provenance
 rules. From day two only admitted findings accumulate: every A_MEMORY findings artifact under
 `principal_runs/` is read, exact duplicate ids are ignored, and an id whose content changes is
-refused. Empty artifacts prove a day ran but add no memory entry. The source-day bound comes
+refused. Missing earlier days do not prevent admission; they remain explicitly MISSING.
+Empty artifacts prove a day ran but add no memory entry. The source-day bound comes
 from `raw_mbo_source_manifest.EXPECTED_ROSTER`, never a typed count.
 
 **The mission pins the seed.** The mission's memory paragraph names the seed's path and
@@ -285,16 +286,6 @@ def build_finding_memory(root: Path | str = REPO_ROOT) -> dict[str, Any]:
     }
     artifacts = _finding_artifacts(root)
     for _position, run_id, path, body in artifacts:
-        missing_prior_days = [
-            source_day
-            for source_day in expected_days[:_position]
-            if by_day[source_day]["artifact_status"] == "MISSING"
-        ]
-        if missing_prior_days:
-            raise SeedBuildError(
-                f"A-memory findings for {body['source_day']} arrived before prior roster day(s) "
-                f"{missing_prior_days}; freeze and promote each daily artifact in order"
-            )
         rows = body.get("findings")
         if not isinstance(rows, list):
             raise SeedBuildError(f"{path} findings must be a list")
@@ -718,17 +709,17 @@ def main(argv: list[str] | None = None) -> int:
     entries = rendered.count('"status": "UNVERIFIED"')
     if args.write:
         seed_target.parent.mkdir(parents=True, exist_ok=True)
-        seed_target.write_text(rendered, encoding="utf-8")
+        seed_target.write_text(rendered, encoding="utf-8", newline="\n")
         try:
             pinned = pin_mission(mission_text, digest)
         except SeedBuildError as exc:
             print(f"REFUSED: {exc}", file=sys.stderr)
             return 1
-        mission_target.write_text(pinned, encoding="utf-8")
+        mission_target.write_text(pinned, encoding="utf-8", newline="\n")
         print(f"wrote {seed_target} ({entries} entries, sha256 {digest}); mission pinned at {mission_target}")
         return 0
     stale: list[str] = []
-    if not seed_target.is_file() or seed_target.read_text(encoding="utf-8") != rendered:
+    if not seed_target.is_file() or seed_target.read_bytes() != rendered.encode("utf-8"):
         stale.append(f"seed {seed_target} is not the generated one")
     try:
         if mission_seed_sha256(mission_text) != digest:
