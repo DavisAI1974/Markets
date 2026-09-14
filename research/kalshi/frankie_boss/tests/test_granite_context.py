@@ -58,6 +58,34 @@ def test_exact_context_roundtrip_and_named_references(tmp_path):
     assert score_native(json.dumps(output), snapshot)[1].name == 'L4'
 
 
+@pytest.mark.parametrize('compact', [False, True])
+@pytest.mark.parametrize('row', [-1, -(10**100), 1, 0])
+@pytest.mark.parametrize('location', ['evidence', 'contradiction_a', 'contradiction_b', 'support', 'against'])
+def test_all_reference_rows_have_explicit_bounds(tmp_path, compact, row, location):
+    from granite_context_compact import compact_native_context, score_compact
+    snapshot = map_native_context(**case(tmp_path))
+    scorer = score_native
+    if compact:
+        snapshot = compact_native_context(snapshot)
+        scorer = score_compact
+    output = valid_output(snapshot)
+    valid = {'row': 0, 'field': '/record/price'}
+    reference = dict(valid, row=row)
+    output['evidence_refs'] = [valid]
+    output['contradictions'] = []
+    output['hypotheses'] = [{'label': 'test', 'support': [], 'against': []}]
+    if location == 'evidence':
+        output['evidence_refs'] = [reference]
+    elif location.startswith('contradiction_'):
+        pair = {'a': valid, 'b': valid, 'note': 'test'}
+        pair[location[-1]] = reference
+        output['contradictions'] = [pair]
+    else:
+        output['hypotheses'][0][location] = [reference]
+    score, verdict = scorer(json.dumps(output), snapshot)
+    assert (score, verdict.name) == ((1.0, 'L4') if row == 0 else (0.6, 'L3'))
+
+
 @pytest.mark.parametrize('field', ['expected_input_hash', 'expected_packet_hash', 'expected_qsv_binding'])
 def test_wrong_trusted_bindings_reject(tmp_path, field):
     args = case(tmp_path, qsv=True)

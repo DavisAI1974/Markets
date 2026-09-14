@@ -306,7 +306,7 @@ def score_compact(output_text, snapshot):
         return 0.6, native.Verdict.L3
     original = snapshot.native()
     fields = json.loads(original.text)['field_paths']
-    if any(ref['row'] >= len(fields) or ref['field'] not in fields[ref['row']] for ref in native.iter_refs(value)):
+    if any(not 0 <= ref['row'] < len(fields) or ref['field'] not in fields[ref['row']] for ref in native.iter_refs(value)):
         return 0.6, native.Verdict.L3
     return 1.0, native.Verdict.L4
 

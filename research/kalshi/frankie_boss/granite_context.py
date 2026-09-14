@@ -289,7 +289,7 @@ def score_native(output_text, snapshot):
     if value['snapshot_hash'] != snapshot.hash:
         return 0.6, Verdict.L3
     rows = len(snapshot.payloads())
-    if any(ref['row'] >= rows or ref['field'] not in snapshot.fields(ref['row']) for ref in iter_refs(value)):
+    if any(not 0 <= ref['row'] < rows or ref['field'] not in snapshot.fields(ref['row']) for ref in iter_refs(value)):
         return 0.6, Verdict.L3
     return 1.0, Verdict.L4
 
