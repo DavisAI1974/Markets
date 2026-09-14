@@ -10,8 +10,9 @@
 - [x] Native gap/path/endogenous-time decoder and immutable query-artifact software (synthetic only)
 - [x] Same-forward native B1 producer into the rolling ledger; active-target revisions and retry identity
 - [x] Category-free twelve-field draft and standalone disabled-route proof on both control lineages
-- [ ] Owner-approved versioned nullable confidence field and enabled Frankie consumer wiring
-- [ ] Protected Frankie integration and disabled identity proof
+- [x] Owner-approved versioned nullable confidence field and enabled standalone ledger consumer
+- [x] Separate adapter disabled identity proof on both B0/B1 control lineages
+- [ ] Production Frankie controller/service wiring and deployment acceptance
 - [ ] Production source conformance/wiring software
 - [ ] Six B2/C1 teacher columns with preserved C15R2 control
 - [ ] Granite frozen serving and shadow policy

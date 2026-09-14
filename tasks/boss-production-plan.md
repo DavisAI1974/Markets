@@ -20,16 +20,18 @@ at every horizon; no categorical publication threshold):
 3. Explicit cadence at every horizon, with durable whole-request intent binding
    before generation. Test partial/material retries and failure before first output.
 4. Native decoder, frozen query artifacts and same-forward rolling producer are
-   implemented with synthetic tests. The category-free twelve-field Frankie draft
-   is guarded pending an explicitly approved versioned nullable confidence field.
+   implemented with synthetic tests. The owner approved the separate versioned
+   twelve-field interface with null confidence. The enabled adapter and verified
+   rolling-ledger consumer are built; production controller/service wiring is open.
    No synthetic artifact is presented as a trained forecast. See
-   research/kalshi/frankie_boss/NATIVE_FORECAST_BUILD_HANDOFF_20260914.md.
+   research/kalshi/frankie_boss/CLAUDE_NATIVE_FORECAST_REVIEW_HANDOFF_20260914.md.
    Forecasts use a separate ledger, never forecast rows inside C15 input.
 
 Verification: focused pytest files test_forecast_confidence.py and
 test_rolling_forecast.py and test_forecast_refresh.py, then existing seam/B1/context
-suites in an LF checkout. Completed broad synthetic verification: 871 passed,
-1 CUDA-only skip (checkpoint dependency-isolation tests in a separate process).
+suites in an LF checkout. Current native/consumer verification: 951 passed,
+1 CUDA-only skip, plus 11 checkpoint dependency-isolation tests in a separate
+process (962 passed total). This supersedes the historical 871-pass checkpoint.
 Each slice changes at most three implementation/test files and receives review.
 The task index stays in boss-production-todo.md to preserve unrelated tasks/plan.md.
 
@@ -37,9 +39,10 @@ The task index stays in boss-production-todo.md to preserve unrelated tasks/plan
    source/cursor binding, real native model consumption and trusted retry/restore.
    Verify focused context tests with enabled, absent and ablated QSV; mutations and
    future/wrong source snapshots must fail. No invented MBO-to-bar transformation.
-2. Protected Frankie bridge: off by default, byte-identical disabled outputs, typed
-   BLD-1 projection only. Existing model heads do not emit the four BLD-1 forecasts.
-   Resolve the forecast-head/calibration contract before enabled forecast integration.
+2. Protected Frankie integration: separate category-free adapter and ledger consumer
+   are off by default, with disabled identity tests. Original BLD-1 still requires its
+   enum and is unchanged. Production controller/service wiring must explicitly select
+   the approved nullable contract; calibration absence is not a publication cutoff.
 3. Production source conformance/wiring: preserve every native record and declared
    defects. Synthetic conformance tests first; real throughput/context validation is
    a separate parked mechanics run, not software acceptance.

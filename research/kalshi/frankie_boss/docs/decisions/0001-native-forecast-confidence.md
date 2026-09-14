@@ -2,9 +2,9 @@
 
 ## Status
 
-Revised by owner, 2026-09-14. Native decoder design remains proposed. Internal
-diagnostics and rolling selection are implemented with synthetic tests; no
-empirical or production approval is implied.
+Revised by owner, 2026-09-14. Native decoder, artifacts, rolling producer and
+category-free consumer are implemented with synthetic tests; no empirical or
+production approval is implied. ADR-0002 resolves the legacy enum compatibility.
 
 ## Context
 
@@ -35,8 +35,8 @@ All registered horizons receive append-only revisions at stable absolute targets
 Explicit cadence can increase update frequency as targets approach; material data
 can refresh all active targets. Freeze the whole refresh intent before generation,
 including full registry and generation hashes, so partial retries cannot change scope.
-Legacy BLD-1 confidence compatibility remains unresolved and the protected projector
-is unchanged. Do not silently label every selected forecast high.
+ADR-0002 resolves compatibility through an approved separate nullable contract;
+the protected BLD-1 projector is unchanged. Never label every selected forecast high.
 
 The owner's research notes add mandatory timestamp-resolvability evidence before
 timing labels, internal ordered quantiles with per-horizon coverage curves,

@@ -1,9 +1,10 @@
 # BOSS next-chat handoff — 2026-09-14
 
-Later continuation: native decoder, frozen artifacts and same-forward rolling
-generation are now implemented. Read NATIVE_FORECAST_BUILD_HANDOFF_20260914.md
-before acting on the historical next steps below. The category-free Frankie draft
-is reviewed but enabled projection still awaits an explicit interface decision.
+Later continuation: native decoder, frozen artifacts, same-forward rolling generation,
+and the owner-approved category-free adapter and ledger consumer are implemented.
+Read CLAUDE_NATIVE_FORECAST_REVIEW_HANDOFF_20260914.md first, then
+NATIVE_FORECAST_BUILD_HANDOFF_20260914.md for the previous checkpoint. The sections
+below describe historical state. Production controller wiring remains separate.
 
 ## Restart decision
 

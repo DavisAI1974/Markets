@@ -8,8 +8,9 @@ The prior build workbook and historical handoffs are reference material, not per
 
 Implementation checkpoint: native decoder, immutable query artifacts and same-forward
 rolling generation are now built with synthetic verification. The protected boundary
-has a reviewed category-free draft, not enabled projection. See
-NATIVE_FORECAST_BUILD_HANDOFF_20260914.md for exact completed scope and remaining
+now has an owner-approved separate versioned twelve-field contract with null
+confidence, enabled projection and a verified rolling-ledger consumer. See
+CLAUDE_NATIVE_FORECAST_REVIEW_HANDOFF_20260914.md and ADR-0002 for scope and remaining
 acceptance gates; the architecture specification below does not imply empirical approval.
 
 ## Owner revision: rolling best-supported forecasts (2026-09-14)
@@ -81,7 +82,7 @@ label; it is not repaired by shifting or rescaling the path.
 | `overnight_gap_usd` | same | Conditional P50 gap before open; certified observed gap once causally available |
 | `session_path_p50_curve` | `path_p50_curve` | Native, endogenous-time conditional P50 cumulative-from-open values |
 | `session_net_usd` | `guessed_net_usd` | Gap output plus native path terminal, calculated once |
-| Internal ranking score and optional calibrated probability | Legacy `confidence` compatibility unresolved | Ranking chooses among comparable candidates; no categorical field is added to the new API |
+| Internal ranking score and optional calibrated probability | Approved separate contract uses `confidence: null`; original BLD-1 enum unchanged | Ranking chooses among comparable candidates; no categorical label or publication floor |
 
 **Median limitation:** before the open, the sum of marginal medians need not be the
 median of the sum. Therefore the public net is a coherent central full-day forecast,
@@ -261,8 +262,9 @@ Publication uses the sole valid candidate or the greatest comparable ranking sco
 There is no absolute score floor. Calibrated probability, when supported, remains
 an internal measurement. Highest-ranked does not imply high absolute reliability.
 The existing projector's required enum is a legacy compatibility issue, not a
-reason to reintroduce categories or label every selected candidate high. Enabled
-Frankie wiring remains pending an explicit compatible boundary decision.
+reason to reintroduce categories or label every selected candidate high. ADR-0002
+records the approved separate nullable contract. The enabled software consumer is
+built; production controller/service wiring and deployment acceptance remain open.
 
 ### Eligibility and failure states
 
@@ -505,9 +507,10 @@ Byte-pinned fixtures require an LF checkout. On Windows, verify with
 A CRLF conversion changes the audited byte hash; do not change the expected hash
 to make that checkout pass. Use a separate LF checkout for these checks.
 
-Implemented software verification is recorded in ROLLING_FORECAST_BUILD_HANDOFF_20260914.md.
-Native-head and bridge acceptance cases below remain pending unless that handoff
-explicitly records them. No training, data run or empirical calibration is claimed.
+Implemented software verification is recorded in
+CLAUDE_NATIVE_FORECAST_REVIEW_HANDOFF_20260914.md and its predecessor handoffs.
+Acceptance cases below are complete only to the extent recorded there.
+No training, data run or empirical calibration is claimed.
 
 Required implementation acceptance cases:
 

@@ -1,5 +1,10 @@
 # Native forecast software checkpoint — 2026-09-14
 
+Historical checkpoint: the owner subsequently approved the separate versioned
+twelve-field interface with null confidence. Its enabled adapter and verified
+ledger consumer are described in CLAUDE_NATIVE_FORECAST_REVIEW_HANDOFF_20260914.md.
+That successor supersedes the pending-decision and draft-only status below.
+
 Continues verified `9582660584c026394ec42175487aa08922a828a8` in the LF checkout
 named by NEXT_CHAT_HANDOFF_20260914.md. Repository `DavisAI1974/Markets`; remote
 branch `codex/boss-full-evidence-20260907`; local branch
