@@ -102,6 +102,10 @@ class BedrockShadowService:
         return self._identity
 
     @property
+    def request_timeout(self):
+        return self._config.request_timeout if self._enabled else None
+
+    @property
     def config_hash(self):
         if not self._enabled:
             return None

@@ -142,6 +142,10 @@ class SageMakerShadowService:
         return self._identity
 
     @property
+    def request_timeout(self):
+        return self._config.request_timeout if self._enabled else None
+
+    @property
     def config_hash(self):
         if self.enabled and self._config.config_hash != self._config_hash:
             raise ValueError('SDK/config identity changed; construct a new service')

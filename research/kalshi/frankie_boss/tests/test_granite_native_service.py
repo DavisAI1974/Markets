@@ -32,6 +32,7 @@ def test_native_full_prompt_reaches_real_boto3_converse(tmp_path):
                           aws_access_key_id='offline', aws_secret_access_key='offline')
     service = build_bedrock_service(enabled=True, config=config(), identity=pin, client_factory=lambda cfg: client)
     assert service.enabled and service.identity == pin and service.config_hash == config().config_hash
+    assert service.request_timeout == config().request_timeout
     with Stubber(client) as stub:
         stub.add_response('converse', {
             'output': {'message': {'role': 'assistant', 'content': [{'text': output}]}},
