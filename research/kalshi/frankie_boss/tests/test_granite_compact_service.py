@@ -68,8 +68,10 @@ def test_compact_exact_prompt_reaches_real_sdk(tmp_path, provider):
 @pytest.mark.parametrize('change', ['parser', 'prompt', 'capacity'])
 def test_compact_refuses_wrong_pins_and_size_before_sdk(tmp_path, provider, change):
     state, pin, _ = compact_case(tmp_path)
-    if change != 'capacity':
-        pin = replace(pin, **{change + ('_code_hash' if change == 'parser' else ''): 'f'*64}) if change == 'parser' else replace(pin, system_prompt_hash='f'*64)
+    if change == 'parser':
+        pin = replace(pin, parser_code_hash='f'*64)
+    elif change == 'prompt':
+        pin = replace(pin, system_prompt_hash='f'*64)
     factory = lambda cfg: pytest.fail('invalid request reached SDK factory')
     service = (build_bedrock_service(enabled=True, config=bedrock_config(), identity=pin, client_factory=factory)
         if provider == 'bedrock' else
@@ -88,3 +90,26 @@ def test_compact_route_exact_inverse_and_explicit_encoding(tmp_path):
     assert context_route('native_v1').encode(native) == native
     for invalid in (None, '', 'auto', 'COMPACT_V1'):
         with pytest.raises(ValueError): context_route(invalid)
+
+
+def test_route_imports_in_package_and_standalone_modes(tmp_path):
+    import importlib
+    native, _, _ = native_case(tmp_path)
+    for name in ('research.kalshi.frankie_boss.granite_context_route', 'granite_context_route'):
+        route = importlib.import_module(name).context_route('compact_v1')
+        assert route.native(route.encode(native)).text == native.text
+
+
+def test_encoding_checks_exact_inverse_before_admission(tmp_path, monkeypatch):
+    from research.kalshi.frankie_boss.granite_context_route import context_route
+    native, _, _ = native_case(tmp_path)
+    foreign_dir = tmp_path/'foreign'; foreign_dir.mkdir()
+    foreign, _, _ = native_case(foreign_dir)
+    body = json.loads(foreign.text)
+    body['source_as_of'] += 1
+    from research.kalshi.frankie_boss.granite_context import NativeContext
+    foreign = NativeContext(json.dumps(body, sort_keys=True, separators=(',', ':')))
+    compact_foreign = compact.compact_native_context(foreign)
+    monkeypatch.setattr(compact, 'compact_native_context', lambda snapshot, **kwargs: compact_foreign)
+    with pytest.raises(ValueError, match='inverse verification'):
+        context_route('compact_v1').encode(native)

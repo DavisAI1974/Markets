@@ -27,15 +27,17 @@ def native_model_pin(bridge):
 class FrankieForecastController:
     def __init__(self, *, enabled=False, legacy=None, bridge=None, journal=None,
                  critic=None, expected_native_hash=None, expected_critic_config_hash=None,
-                 expected_critic_identity_hash=None):
+                 expected_critic_identity_hash=None, context_encoding='native_v1'):
         if type(enabled) is not bool:
             raise ValueError('explicit boolean enable flag required')
         self.enabled, self.legacy = enabled, legacy
         if not enabled:
             return
+        from research.kalshi.frankie_boss.granite_context_route import context_route
+        self.context_encoding = context_route(context_encoding).encoding
         if (critic is None or getattr(critic, 'enabled', False) is not True
-                or not callable(getattr(critic, 'critique_native', None))):
-            raise ValueError('enabled native-context critic required')
+                or not callable(getattr(critic, context_route(self.context_encoding).method, None))):
+            raise ValueError('enabled critic for selected context encoding required')
         self.bridge, self.journal, self.critic = bridge, journal, critic
         self.expected_native_hash = expected_native_hash
         self.expected_critic_config_hash = expected_critic_config_hash
@@ -62,23 +64,21 @@ class FrankieForecastController:
             raise ValueError('native model differs from independently trusted pin')
 
     def _configuration(self):
-        from research.kalshi.frankie_boss import granite_context
-        from research.kalshi.frankie_boss.granite_output_schema import SCHEMA_VERSION
-        identity = self.critic.identity
-        if (identity.system_prompt_hash != hashlib.sha256(granite_context.SYSTEM_TEXT.encode()).hexdigest()
-                or identity.parser_code_hash != granite_context.native_parser_code_hash()
-                or identity.schema_version != SCHEMA_VERSION):
-            raise ValueError('critic does not pin native-context prompt/parser/schema')
+        from research.kalshi.frankie_boss.granite_context_route import context_route
+        route = context_route(self.context_encoding)
+        route.validate_identity(self.critic.identity)
         source = inspect.getsourcefile(type(self.critic))
         if source is None:
             raise ValueError('critic implementation source identity required')
-        return dict(native_hash=self.expected_native_hash,critic_config_hash=self.expected_critic_config_hash,
+        return dict(context_encoding=self.context_encoding,
+            native_hash=self.expected_native_hash,critic_config_hash=self.expected_critic_config_hash,
             critic_identity_hash=self.expected_critic_identity_hash,
             critic_timeout=self.critic.request_timeout,
             targets=tuple(asdict(t) for t in self.bridge.targets),policy=asdict(self.bridge.policy),
             entity=self.bridge.context.entity,
             code={name:Path(__file__).with_name(name).read_bytes() for name in
-                  ('frankie_controller.py','controller_journal.py','granite_context.py','granite_shadow.py')},
+                  ('frankie_controller.py','controller_journal.py','granite_context.py',
+                   'granite_context_compact.py','granite_context_route.py','granite_shadow.py')},
             transport_code=Path(source).read_bytes())
 
     def _snapshot(self, publications, *, as_of, source_as_of, source_hash, through_cursor):
@@ -116,10 +116,13 @@ class FrankieForecastController:
         snapshot = mapper.map_native_context(tokens=tokens,receipt=receipt,entity=runner.entity,
             registry=runner.model.trunk.registry,expected_input_hash=input_hash,
             expected_packet_hash=packet,source_as_of=source_as_of,expected_qsv_binding=qsv_binding)
-        return snapshot,mapper.build_native_prompt(snapshot),asdict(receipt),packet
+        from research.kalshi.frankie_boss.granite_context_route import context_route
+        route = context_route(self.context_encoding)
+        encoded = route.encode(snapshot)
+        return encoded,route.build_prompt(encoded),asdict(receipt),packet,snapshot.hash
 
     def _critic_result(self, receipt, *, snapshot, prompt, attempt_id):
-        from research.kalshi.frankie_boss.granite_context import score_native
+        from research.kalshi.frankie_boss.granite_context_route import context_route
         shadow = receipt.shadow
         request = shadow.request
         if (receipt.config_hash != self.expected_critic_config_hash
@@ -140,7 +143,7 @@ class FrankieForecastController:
             if (response is None or response.request_hash != request.request_hash
                     or response.identity_hash != self.expected_critic_identity_hash):
                 raise ValueError('critic response lacks exact request identity')
-            _,verdict = score_native(response.text,snapshot)
+            _,verdict = context_route(self.context_encoding).score(response.text,snapshot)
             if shadow.verdict != verdict.name or (shadow.status == 'accepted') != (verdict.name == 'L4'):
                 raise ValueError('critic status differs from independently parsed output')
         return asdict(receipt)
@@ -235,7 +238,7 @@ class FrankieForecastController:
             result = dict(request_id=request_id,request_hash=state['request_hash'],status='idle',records=())
             self.journal.record(request_id,'RESULT',result)
             return result
-        snapshot,prompt,context_receipt,packet_hash = self._snapshot(publications,as_of=as_of,
+        snapshot,prompt,context_receipt,packet_hash,native_snapshot_hash = self._snapshot(publications,as_of=as_of,
             source_as_of=source_as_of,source_hash=source_hash,through_cursor=through_cursor)
         unchanged()
         if state['critic_result'] is None:
@@ -244,11 +247,14 @@ class FrankieForecastController:
                 raise ValueError('critic completion unknown; explicit recovery attempt required')
             attempt_id = recovery_attempt_id or evidence_hash(dict(request_id=request_id,request_hash=state['request_hash']))
             critic_intent = dict(attempt_id=attempt_id,supersedes=previous['attempt_id'] if previous else None,
+                context_encoding=self.context_encoding,native_snapshot_hash=native_snapshot_hash,
                 snapshot_hash=snapshot.hash,snapshot_text=snapshot.text,prompt_text=prompt.text,
                 context=context_receipt,packet_hash=packet_hash,config_hash=self.expected_critic_config_hash,
                 identity_hash=self.expected_critic_identity_hash)
             state = self.journal.record(request_id,'CRITIC_INTENT',critic_intent)
-            receipt = await self.critic.critique_native(snapshot,request_id=attempt_id)
+            from research.kalshi.frankie_boss.granite_context_route import context_route
+            method = getattr(self.critic, context_route(self.context_encoding).method)
+            receipt = await method(snapshot,request_id=attempt_id)
             unchanged()
             payload = self._critic_result(receipt,snapshot=snapshot,prompt=prompt,attempt_id=attempt_id)
             state = self.journal.record(request_id,'CRITIC_RESULT',dict(

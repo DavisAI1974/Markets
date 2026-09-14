@@ -13,8 +13,32 @@ def _copy(value):
     return unpack(pack(value))
 
 
+def _critic_context(state, intent):
+    """Validate the recorded route and recover native source bindings before use."""
+    from research.kalshi.frankie_boss.granite_context_route import context_route
+    config = state['intent']['configuration']
+    route = context_route(config.get('context_encoding', 'native_v1'))
+    if intent.get('context_encoding', 'native_v1') != route.encoding:
+        raise ValueError('critic encoding differs from controller configuration')
+    snapshot = route.parse(intent['snapshot_text'], expected_hash=intent['snapshot_hash'])
+    native = route.native(snapshot)
+    if (('native_snapshot_hash' in intent or route.encoding == 'compact_v1')
+            and intent.get('native_snapshot_hash') != native.hash):
+        raise ValueError('critic encoding differs from exact native snapshot')
+    prompt = route.build_prompt(snapshot)
+    if intent['prompt_text'] != prompt.text:
+        raise ValueError('critic prompt differs from selected encoding')
+    body = json.loads(native.text)
+    source = state['intent']['request']
+    if (unpack(body['receipt']) != intent['context'] or body['packet_hash'] != intent['packet_hash']
+            or body['source_as_of'] != source['source_as_of']
+            or intent['context']['as_of'] != source['as_of']
+            or intent['context']['source_prefix_hash'] != source['source_hash']):
+        raise ValueError('critic snapshot differs from controller source intent')
+    return route, snapshot, prompt
+
+
 def _critic_links(state, payload):
-    from research.kalshi.frankie_boss.granite_context import parse_native_context, build_native_prompt, score_native
     from research.kalshi.frankie_boss.granite_shadow import GraniteIdentity, ShadowRequest
     intent = state['critic_intent']
     config = state['intent']['configuration']
@@ -29,8 +53,7 @@ def _critic_links(state, payload):
             raise ValueError('invalid shadow receipt fields')
         request = ShadowRequest(**{**shadow['request'],
             'identity':GraniteIdentity(**shadow['request']['identity'])})
-        snapshot = parse_native_context(intent['snapshot_text'],expected_hash=intent['snapshot_hash'])
-        prompt = build_native_prompt(snapshot)
+        route, snapshot, prompt = _critic_context(state, intent)
         call_hash = hashlib.sha256(json.dumps(dict(config_hash=receipt['config_hash'],
             request_hash=request.request_hash),sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
         if (receipt['config_hash'] != config['critic_config_hash'] or receipt['call_hash'] != call_hash
@@ -41,13 +64,6 @@ def _critic_links(state, payload):
                 or request.snapshot_text != snapshot.text or request.snapshot_hash != snapshot.hash
                 or request.prompt_text != prompt.text or intent['prompt_text'] != prompt.text):
             raise ValueError('critic completion differs from durable request')
-        body = json.loads(snapshot.text)
-        source = state['intent']['request']
-        if (unpack(body['receipt']) != intent['context'] or body['packet_hash'] != intent['packet_hash']
-                or body['source_as_of'] != source['source_as_of']
-                or intent['context']['as_of'] != source['as_of']
-                or intent['context']['source_prefix_hash'] != source['source_hash']):
-            raise ValueError('critic snapshot differs from controller source intent')
         if shadow['status'] not in ('accepted','rejected','timeout','transport_error','malformed_response','binding_mismatch'):
             raise ValueError('unsupported stored critic status')
         if shadow['status'] in ('accepted','rejected'):
@@ -56,7 +72,7 @@ def _critic_links(state, payload):
                     or response['request_hash'] != request.request_hash
                     or response['identity_hash'] != config['critic_identity_hash']):
                 raise ValueError('critic response identity mismatch')
-            _,verdict = score_native(response['text'],snapshot)
+            _,verdict = route.score(response['text'],snapshot)
             if shadow['verdict'] != verdict.name or (shadow['status'] == 'accepted') != (verdict.name == 'L4'):
                 raise ValueError('stored critic status differs from parser verdict')
     except (KeyError,TypeError,json.JSONDecodeError) as exc:
@@ -166,6 +182,7 @@ class ControllerJournal:
                         or payload['attempt_id'] in state['attempts']
                         or payload.get('supersedes') != (old['attempt_id'] if old else None)):
                     raise ValueError('critic attempt requires explicit unknown-call recovery identity')
+                _critic_context(state, payload)
                 state['critic_intent'] = payload
                 state['attempts'] += (payload['attempt_id'],)
             elif step == 'CRITIC_RESULT':
