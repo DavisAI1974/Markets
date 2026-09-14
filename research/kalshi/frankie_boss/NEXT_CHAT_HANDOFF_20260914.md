@@ -1,5 +1,10 @@
 # BOSS next-chat handoff — 2026-09-14
 
+Later continuation: native decoder, frozen artifacts and same-forward rolling
+generation are now implemented. Read NATIVE_FORECAST_BUILD_HANDOFF_20260914.md
+before acting on the historical next steps below. The category-free Frankie draft
+is reviewed but enabled projection still awaits an explicit interface decision.
+
 ## Restart decision
 
 Start a fresh chat for the native forecast-head and protected-integration phase.

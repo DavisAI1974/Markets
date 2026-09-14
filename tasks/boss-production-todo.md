@@ -7,6 +7,10 @@
 - [x] Internal confidence diagnostics without categorical publication labels (39 synthetic tests; G15 empirical acceptance remains open)
 - [x] Best comparable candidate selection and durable revisions at every horizon (synthetic software only)
 - [x] Explicit all-horizon refresh cadence and durable pre-generation retry intent
+- [x] Native gap/path/endogenous-time decoder and immutable query-artifact software (synthetic only)
+- [x] Same-forward native B1 producer into the rolling ledger; active-target revisions and retry identity
+- [x] Category-free twelve-field draft and standalone disabled-route proof on both control lineages
+- [ ] Owner-approved versioned nullable confidence field and enabled Frankie consumer wiring
 - [ ] Protected Frankie integration and disabled identity proof
 - [ ] Production source conformance/wiring software
 - [ ] Six B2/C1 teacher columns with preserved C15R2 control

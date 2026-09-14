@@ -19,9 +19,12 @@ at every horizon; no categorical publication threshold):
    idempotency, restart, source/arm isolation and retained alternatives.
 3. Explicit cadence at every horizon, with durable whole-request intent binding
    before generation. Test partial/material retries and failure before first output.
-4. Native decoder and protected integration remain subsequent work; no synthetic
-   artifact is presented as a trained forecast. Reuse the existing C15 exact journal
-   primitive in a separate forecast ledger, never write forecast rows into C15 input.
+4. Native decoder, frozen query artifacts and same-forward rolling producer are
+   implemented with synthetic tests. The category-free twelve-field Frankie draft
+   is guarded pending an explicitly approved versioned nullable confidence field.
+   No synthetic artifact is presented as a trained forecast. See
+   research/kalshi/frankie_boss/NATIVE_FORECAST_BUILD_HANDOFF_20260914.md.
+   Forecasts use a separate ledger, never forecast rows inside C15 input.
 
 Verification: focused pytest files test_forecast_confidence.py and
 test_rolling_forecast.py and test_forecast_refresh.py, then existing seam/B1/context

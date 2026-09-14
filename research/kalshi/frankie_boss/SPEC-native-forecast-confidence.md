@@ -6,6 +6,12 @@ Code baseline: `25db5c8b6c5e9da2872f1870c77fca82dee1731f`.
 Authority: the owner's request to design the missing forecast and confidence.
 The prior build workbook and historical handoffs are reference material, not permission to run experiments.
 
+Implementation checkpoint: native decoder, immutable query artifacts and same-forward
+rolling generation are now built with synthetic verification. The protected boundary
+has a reviewed category-free draft, not enabled projection. See
+NATIVE_FORECAST_BUILD_HANDOFF_20260914.md for exact completed scope and remaining
+acceptance gates; the architecture specification below does not imply empirical approval.
+
 ## Owner revision: rolling best-supported forecasts (2026-09-14)
 
 The owner's subsequent instructions replace the earlier categorical policy:
