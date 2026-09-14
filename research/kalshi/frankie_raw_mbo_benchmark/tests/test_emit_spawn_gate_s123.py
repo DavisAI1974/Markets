@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,7 +14,8 @@ from research.kalshi.frankie_raw_mbo_benchmark import native_layer_crosswalk as 
 from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import canonical_hash
 from research.kalshi.frankie_raw_mbo_benchmark.tests.test_emit_frankie_spawn import (
     _delivery_receipt,
-    _repo_with_docs,
+    MISSION_PATH,
+    CONTRACT_PATH,
     _result,
 )
 
@@ -54,7 +56,9 @@ class EmitSpawnGateTest(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.TemporaryDirectory()
         self.root = Path(self._tmp.name)
-        self.root, mission_sha, contract_sha = _repo_with_docs(self.root)
+        self.repo_root = emitter.REPO_ROOT
+        mission_sha = hashlib.sha256((self.repo_root / MISSION_PATH).read_bytes()).hexdigest()
+        contract_sha = hashlib.sha256((self.repo_root / CONTRACT_PATH).read_bytes()).hexdigest()
         self.result_body = _result(mission_sha, contract_sha)
         identity = self.result_body["layers"]["identity_receipt"]
         identity.update(arm="A_MEMORY", run_id="frankie-a-memory-fixture")
@@ -89,60 +93,15 @@ class EmitSpawnGateTest(unittest.TestCase):
         self._tmp.cleanup()
 
     def _knowledge(self, delivered: bool) -> tuple[Path, dict]:
-        layers = []
-        if delivered:
-            layers = [
-                {
-                    "layer_id": entry["layer_id"],
-                    "group_id": "binding_common_controls",
-                    "status": "DELIVERED",
-                    "files": [{
-                        "path": entry["source_paths"][0],
-                        "sha256": "b" * 64,
-                        "bytes": 1,
-                    }],
-                    "missing": [],
-                }
-                for entry in self.registry["groups"][0]["entries"]
-            ]
-        artifacts = [
-            {
-                "id": row["layer_id"],
-                "load_mode": "ALWAYS_LOAD",
-                "path": row["files"][0]["path"],
-                "sha256": row["files"][0]["sha256"],
-                "bytes": row["files"][0]["bytes"],
-            }
-            for row in layers
-        ]
-        body = {
-            "schema": knowledge_delivery.KNOWLEDGE_RECEIPT_SCHEMA,
-            "profile_id": "RT_A_MEMORY_SECOND_PASS",
-            "arm": "A_MEMORY",
-            "role": "REAL_TIME_FRANKIE",
-            "manifest_path": "fixture/KNOWLEDGE_MANIFEST.json",
-            "manifest_hash": "1" * 64,
-            "manifest_file_sha256": "2" * 64,
-            "spec_path": "fixture/PROFILE.json",
-            "spec_file_sha256": "3" * 64,
-            "registry_sha256": self.registry["registry_sha256"],
-            "bundle_filename": knowledge_delivery.KNOWLEDGE_BUNDLE_FILENAME,
-            "model_visible_context_sha256": "4" * 64,
-            "model_visible_context_bytes": 123,
-            "context_bundle_sha256": "4" * 64,
-            "totals": {
-                "layers": len(layers),
-                "delivered": len(layers),
-                "artifacts": len(artifacts),
-                "always_load": len(artifacts),
-                "retrieval": 0,
-            },
-            "layers": layers,
-            "artifacts": artifacts,
-            "receipt_sha256": "",
-        }
-        body["receipt_sha256"] = canonical_hash(body, omit="receipt_sha256")
-        return _write_json(self.root, "knowledge_receipt.json", body), body
+        delivery = knowledge_delivery.build_knowledge_delivery(repo_root=self.repo_root)
+        paths = knowledge_delivery.write_knowledge_delivery(delivery, self.root)
+        body = json.loads(paths["receipt"].read_text(encoding="utf-8"))
+        if not delivered:
+            # Even a self-consistent edited receipt must fail the actual corpus gate.
+            body["layers"] = []
+            body["receipt_sha256"] = canonical_hash(body, omit="receipt_sha256")
+            paths["receipt"].write_text(json.dumps(body), encoding="utf-8")
+        return paths["receipt"], body
 
     def _emit(self, knowledge: Path, captured: dict) -> str:
         def compute(*args, **kwargs):
@@ -156,7 +115,7 @@ class EmitSpawnGateTest(unittest.TestCase):
         ):
             return emitter.emit(
                 self.result,
-                repo_root=self.root,
+                repo_root=self.repo_root,
                 delivery_receipt=self.delivery,
                 stream_receipt=self.stream,
                 knowledge_receipt=knowledge,
@@ -218,7 +177,7 @@ class EmitSpawnGateTest(unittest.TestCase):
         ):
             emitter.emit(
                 self.result,
-                repo_root=self.root,
+                repo_root=self.repo_root,
                 delivery_receipt=self.delivery,
                 stream_receipt=self.stream,
                 knowledge_receipt=None,
@@ -229,34 +188,14 @@ class EmitSpawnGateTest(unittest.TestCase):
 
         self.assertIn("applicable input layer", str(caught.exception))
 
-    def test_refusal_preserves_every_computed_offender_and_status(self) -> None:
-        knowledge, knowledge_body = self._knowledge(delivered=False)
-        delivery_body = json.loads(self.delivery.read_text(encoding="utf-8"))
-        body = xw.crosswalk(
-            self.registry,
-            arm="A_MEMORY",
-            result=self.result_body,
-            delivery_receipt=delivery_body,
-            stream_receipt=self.stream_body,
-            knowledge_receipt=knowledge_body,
-            outputs_receipt=self.outputs_body,
-            sealed_proof=self.sealed_body,
-            ledger_dir=self.root / "delivered",
-        )
-        offenders = [
-            f"{row['layer_id']}={row['status']}"
-            for row in body["layers"]
-            if row["arm_applicable"]
-            and row["policy"] in xw.INPUT_POLICIES
-            and row["status"] not in xw.ACCOUNTED_INPUT_STATUSES
-        ]
-        self.assertGreater(len(offenders), 1)
-
+    def test_receipt_omissions_refuse_before_computed_layer_gate(self) -> None:
+        knowledge, _ = self._knowledge(delivered=False)
+        captured: dict = {}
         with self.assertRaises(emitter.EmitError) as caught:
-            self._emit(knowledge, {})
-
-        for offender in offenders:
-            self.assertIn(offender, str(caught.exception))
+            self._emit(knowledge, captured)
+        self.assertIn("knowledge delivery refused", str(caught.exception))
+        self.assertIn("differs from pinned corpus", str(caught.exception))
+        self.assertNotIn("registry_arg", captured)
 
 
 if __name__ == "__main__":
