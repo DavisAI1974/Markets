@@ -9,12 +9,13 @@ from __future__ import annotations
 import re
 from collections.abc import Iterator
 
-SCHEMA_VERSION = "BOSS_GRANITE_OUTPUT_SCHEMA_V1"
-REQUIRED_KEYS = frozenset({
-    "schema_version", "snapshot_hash", "evidence_refs", "contradictions",
-    "missing_evidence", "hypotheses", "evidence_verdict",
-})
-EVIDENCE_VERDICTS = frozenset({"CONSISTENT", "CONFLICTED", "INSUFFICIENT"})
+try:
+    from .granite_contract import EVIDENCE_VERDICTS, LIMITS, REQUIRED_KEYS, SCHEMA_VERSION
+except ImportError:
+    from granite_contract import EVIDENCE_VERDICTS, LIMITS, REQUIRED_KEYS, SCHEMA_VERSION
+
+__all__ = ["SCHEMA_VERSION", "REQUIRED_KEYS", "EVIDENCE_VERDICTS", "LIMITS",
+           "validate_schema", "iter_refs"]
 
 
 def _keys(value: object, keys: set[str] | frozenset[str]) -> bool:
@@ -37,8 +38,10 @@ def _refs(value: object) -> bool:
 def validate_schema(value: object) -> bool:
     """Check exact keys, JSON types, caps and enums, without trusting references.
 
-The plan caps evidence_refs at 16, but specifies no separate support/against
-cap. No additional limit is silently imposed on those hypothesis lists.
+Every cap is read from granite_contract.LIMITS, the same object the prompts are
+rendered from. The plan caps evidence_refs but specifies no separate
+support/against cap. No additional limit is silently imposed on those
+hypothesis lists.
 """
     if not _keys(value, REQUIRED_KEYS):
         return False
@@ -47,25 +50,26 @@ cap. No additional limit is silently imposed on those hypothesis lists.
     digest = value["snapshot_hash"]
     if type(digest) is not str or re.fullmatch(r"[0-9a-f]{64}", digest) is None:
         return False
-    if not _refs(value["evidence_refs"]) or len(value["evidence_refs"]) > 16:
+    if not _refs(value["evidence_refs"]) or len(value["evidence_refs"]) > LIMITS.max_evidence_refs:
         return False
     contradictions = value["contradictions"]
-    if type(contradictions) is not list or len(contradictions) > 8:
+    if type(contradictions) is not list or len(contradictions) > LIMITS.max_contradictions:
         return False
     if not all(_keys(item, {"a", "b", "note"})
                and _ref(item["a"]) and _ref(item["b"])
-               and _text(item["note"], 200) for item in contradictions):
+               and _text(item["note"], LIMITS.note_chars) for item in contradictions):
         return False
     missing = value["missing_evidence"]
-    if type(missing) is not list or len(missing) > 8:
+    if type(missing) is not list or len(missing) > LIMITS.max_missing_evidence:
         return False
-    if not all(_text(item, 120) for item in missing):
+    if not all(_text(item, LIMITS.missing_evidence_chars) for item in missing):
         return False
     hypotheses = value["hypotheses"]
-    if type(hypotheses) is not list or not 1 <= len(hypotheses) <= 4:
+    if (type(hypotheses) is not list
+            or not LIMITS.min_hypotheses <= len(hypotheses) <= LIMITS.max_hypotheses):
         return False
     if not all(_keys(item, {"label", "support", "against"})
-               and _text(item["label"], 40)
+               and _text(item["label"], LIMITS.label_chars)
                and _refs(item["support"]) and _refs(item["against"])
                for item in hypotheses):
         return False

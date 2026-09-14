@@ -7,3 +7,7 @@
 # Pin them to the committed LF bytes on every platform so the vault hash is checkout-invariant.
 research/kalshi/agents/refine_gold_s105/** -text
 research/kalshi/agents/*.md text eol=lf
+
+# Granite prompt fixtures are byte-frozen (sha256 asserted by tests/test_granite_contract.py);
+# the same autocrlf rewrite would break them on a Windows checkout.
+research/kalshi/frankie_boss/tests/fixtures/granite_prompts/** -text
