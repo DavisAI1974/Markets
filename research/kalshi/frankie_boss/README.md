@@ -33,6 +33,12 @@ The trunk contains one shared `TemporalGraphBranch`. There are not three graph m
 
 ## Internal heads to BLD-1
 
+The proposed native forecast and confidence design is in
+[SPEC-native-forecast-confidence.md](SPEC-native-forecast-confidence.md).
+It specifies the missing native decoders and a separately governed confidence
+policy; it is not an implemented or calibrated forecast checkpoint. The existing
+projector remains unchanged, and the proposed numeric bands live outside it.
+
 Only these learned quantities have deliberately specified public semantics:
 
 | Internal quantity | BLD-1 destination | Semantics |

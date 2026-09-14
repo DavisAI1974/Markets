@@ -2,7 +2,8 @@
 
 - [x] Governed QSV artifact-to-native/B1 attachment and retry/restore tests (11 new focused checks)
 - [ ] QSV producer-side production wiring and throughput validation
-- [ ] Forecast-head and confidence-label contract resolved
+- [x] Forecast-head and confidence-label proposed design documented (SPEC-native-forecast-confidence.md)
+- [ ] Forecast design reviewed; heads/bridge implemented and empirical calibration bindings completed
 - [ ] Protected Frankie integration and disabled identity proof
 - [ ] Production source conformance/wiring software
 - [ ] Six B2/C1 teacher columns with preserved C15R2 control
