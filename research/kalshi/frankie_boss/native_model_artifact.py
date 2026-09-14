@@ -67,6 +67,9 @@ def _construct(config):
             raise ValueError('invalid trunk configuration type or dimension')
     if type(config['qsv_ablated']) is not bool:
         raise ValueError('explicit QSV ablation required')
+    if (type(config['registry']) is not dict or
+            set(config['registry']) != {f.name for f in fields(NativeRegistry)}):
+        raise ValueError('complete native registry configuration required')
     registry = NativeRegistry(**config['registry'])
     with torch.random.fork_rng(devices=[]), torch.device('cpu'):
         native = NativeTrunk(registry, **trunk).double().eval()

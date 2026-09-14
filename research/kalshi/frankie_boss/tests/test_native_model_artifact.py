@@ -64,6 +64,14 @@ def test_config_runtime_and_effective_settings_are_bound():
     with pytest.raises(ValueError): NativeModelSnapshot.capture(original)
 
 
+def test_no_default_registry_fields():
+    snapshot = NativeModelSnapshot.capture(model())
+    config = unpack(__import__('json').loads(snapshot.configuration))
+    config['registry'] = {}
+    with pytest.raises(ValueError, match='registry configuration'):
+        replace(snapshot, configuration=canonical_bytes(pack(config))).restore()
+
+
 @pytest.mark.parametrize('change', ['training', 'float32', 'nonfinite', 'setting'])
 def test_noncanonical_model_refused(change):
     original = model()
