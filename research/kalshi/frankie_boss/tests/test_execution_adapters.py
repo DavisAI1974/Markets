@@ -70,7 +70,7 @@ def venue_fixture(venue, *, max_price=99, price=None, **pin_changes):
 
 
 def receipt(wire, account, source, body, *, status=None, received_ns=RECEIVED):
-    default = 201 if source in ('kalshi.create_order', 'tastytrade.submit_order') else 200
+    default = 201 if source in ('kalshi.create_order', 'tastytrade.submit_order', 'tastytrade.dry_run') else 200
     return TransportReceipt(wire.digest, account, source, default if status is None else status, body, received_ns)
 
 
@@ -236,11 +236,11 @@ def test_preflight_is_a_distinct_type_bound_to_the_wire():
     assert type(pre) is PreflightRequest and pre.path == TASTYTRADE_DRY_RUN_PATH.format(account='5WT12345')
     assert pre.body == wire.body and pre.wire_hash == wire.digest
     body = json.dumps({'data': {'order': tasty_order(wire), 'warnings': [], 'errors': []}}).encode()
-    ok = parse_tastytrade_preflight(TransportReceipt(wire.digest, args['intent'].account, 'tastytrade.dry_run', 200, body, RECEIVED), preflight=pre)
+    ok = parse_tastytrade_preflight(TransportReceipt(wire.digest, args['intent'].account, 'tastytrade.dry_run', 201, body, RECEIVED), preflight=pre)
     assert (ok.errors, ok.warnings) == (0, 0)
     warned = json.dumps({'data': {'order': tasty_order(wire), 'warnings': [{'code': 'x', 'message': 'y'}], 'errors': []}}).encode()
     with pytest.raises(ValueError, match='unhandled warnings'):
-        parse_tastytrade_preflight(TransportReceipt(wire.digest, args['intent'].account, 'tastytrade.dry_run', 200, warned, RECEIVED), preflight=pre)
+        parse_tastytrade_preflight(TransportReceipt(wire.digest, args['intent'].account, 'tastytrade.dry_run', 201, warned, RECEIVED), preflight=pre)
 
 
 # --- 2. provider bytes -> typed facts ----------------------------------------------
@@ -270,7 +270,7 @@ def test_kalshi_create_ack_and_get_order_facts_bind_bytes_ids_and_clocks():
     ({'client_order_id': 'other'}, 'client_order_id'), ({'fill_count': '3.00'}, 'conflict'),
     ({'fill_count': '0.50', 'remaining_count': '1.50'}, 'finer than'), ({'fill_count': 0}, 'wrong JSON type'),
     ({'ts_ms': '11000'}, 'wrong JSON type'), ({'order_id': 'a b'}, 'plain identifier'),
-    ({'fill_count': '2.00', 'remaining_count': '0.00'}, 'conflicting counts'),
+    ({'fill_count': '2.00', 'remaining_count': '1.00'}, 'do not sum'),
     ({'fill_count': '1.00'}, 'do not sum'), ({'fill_count': '1e0'}, 'canonical'),
     ({'ts_ms': 13_000}, 'later than the trusted receive clock')])
 def test_kalshi_create_malformed_or_conflicting_bodies_refuse(body_changes, message):
@@ -344,7 +344,7 @@ def test_tastytrade_submit_and_get_facts_enumerate_fills_not_acknowledgement_siz
     (dict(status='Live', remaining='1'), 'do not reconcile'),                 # size-remaining implies a fill nobody enumerated
     (dict(status='Filled', remaining='0'), 'without enumerated fills'),
     (dict(status='Rejected', remaining='0', fills=('1',)), 'Rejected status with enumerated fills'),
-    (dict(status='In Flight'), 'unknown tastytrade order status'),
+    (dict(status='Unrecognized Status'), 'unknown tastytrade order status'),
     (dict(status='Expired', remaining='0'), 'no ledger vocabulary'),
     (dict(status='Live', remaining='0', fills=('1', '1', '1')), 'exceed the order size'),
 ])
@@ -604,7 +604,7 @@ def test_review_preflight_refuses_foreign_account():
     args, instrument, pin = venue_fixture('tastytrade')
     wire = translate(args['intent'], instrument, pin)
     pre = preflight_request(wire, pin)
-    rcpt = TransportReceipt(wire.digest, AccountKey('tastytrade', 'live', 'OTHER'), 'tastytrade.dry_run', 200,
+    rcpt = TransportReceipt(wire.digest, AccountKey('tastytrade', 'live', 'OTHER'), 'tastytrade.dry_run', 201,
                             tasty_submit_body(wire), RECEIVED)
     with pytest.raises(ValueError):
         parse_tastytrade_preflight(rcpt, preflight=pre)
@@ -653,3 +653,42 @@ def test_review_preflight_requires_the_matching_returned_order(change):
     rcpt = receipt(wire, pin.account, 'tastytrade.dry_run', json.dumps(body).encode())
     with pytest.raises(ValueError):
         parse_tastytrade_preflight(rcpt, preflight=preflight_request(wire, pin))
+
+
+@pytest.mark.parametrize('tif,fill,remaining,status', [
+    ('immediate_or_cancel','0.00','0.00','CANCELED'),
+    ('immediate_or_cancel','1.00','0.00','CANCELED'),
+    ('immediate_or_cancel','2.00','0.00','FILLED'),
+    ('fill_or_kill','0.00','0.00','CANCELED'),
+    ('fill_or_kill','2.00','0.00','FILLED'),
+    ('good_till_canceled','2.00','0.00','FILLED')])
+def test_documented_immediate_create_terminal_outcomes(tif,fill,remaining,status):
+    args,instrument,pin=venue_fixture('kalshi')
+    intent=replace(args['intent'],tif=tif)
+    wire=translate(intent,instrument,pin)
+    rcpt=receipt(wire,pin.account,'kalshi.create_order',kalshi_create_body(wire,fill,remaining))
+    fact=parse_order_response(rcpt,intent=intent,wire=wire,pin=pin,expected_source=rcpt.source)
+    assert fact.status==status and fact.remaining_quantity==0
+
+
+@pytest.mark.parametrize('tif,fill,remaining', [('immediate_or_cancel','0.00','2.00'),('fill_or_kill','1.00','0.00')])
+def test_contradictory_immediate_create_outcomes_refuse(tif,fill,remaining):
+    args,instrument,pin=venue_fixture('kalshi')
+    intent=replace(args['intent'],tif=tif);wire=translate(intent,instrument,pin)
+    rcpt=receipt(wire,pin.account,'kalshi.create_order',kalshi_create_body(wire,fill,remaining))
+    with pytest.raises(ValueError):parse_order_response(rcpt,intent=intent,wire=wire,pin=pin,expected_source=rcpt.source)
+
+
+def test_tastytrade_in_flight_is_nonterminal():
+    args,instrument,pin=venue_fixture('tastytrade');wire=translate(args['intent'],instrument,pin)
+    rcpt=receipt(wire,pin.account,'tastytrade.get_order',tasty_get_body(wire,'In Flight'))
+    fact=parse_order_response(rcpt,intent=args['intent'],wire=wire,pin=pin,expected_source=rcpt.source)
+    assert fact.status=='ACKNOWLEDGED' and fact.remaining_quantity==2
+
+
+def test_tastytrade_preflight_requires_documented_201():
+    args,instrument,pin=venue_fixture('tastytrade');wire=translate(args['intent'],instrument,pin)
+    pre=preflight_request(wire,pin)
+    rcpt=receipt(wire,pin.account,'tastytrade.dry_run',tasty_submit_body(wire),status=201)
+    assert parse_tastytrade_preflight(rcpt,preflight=pre).errors==0
+    with pytest.raises(ValueError):parse_tastytrade_preflight(replace(rcpt,http_status=200),preflight=pre)

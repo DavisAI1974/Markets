@@ -91,10 +91,10 @@ Sources and shapes read:
 
 | source | HTTP | body read | provider status -> ledger |
 |---|---|---|---|
-| `kalshi.create_order` | 201 | top-level `order_id`, `client_order_id`, `fill_count`, `remaining_count`, `ts_ms` (ms) | `created`: ACKNOWLEDGED if fill 0, PARTIAL if 0<fill<size, refuse if fill==size (conflicting) |
+| `kalshi.create_order` | 201 | top-level `order_id`, `client_order_id`, `fill_count`, `remaining_count`, `ts_ms` (ms) | `created`: ACKNOWLEDGED if fill 0, PARTIAL if 0<fill<size, FILLED when the entire size fills; IOC/FOK terminal outcomes follow the sent TIF |
 | `kalshi.get_order`, `kalshi.historical_order` | 200 | `order` object: `order_id`, `client_order_id`, `ticker`, `book_side`, `status`, `yes_price_dollars`, `fill_count_fp`, `remaining_count_fp`, `initial_count_fp`, `last_update_time` (`https://docs.kalshi.com/api-reference/orders/get-order`) | `resting` -> ACKNOWLEDGED/PARTIAL by counts; `executed` -> FILLED (counts must agree); `canceled` -> CANCELED |
 | `tastytrade.submit_order` | 201 | `data.order` (+ `data.errors` must be empty) | see below |
-| `tastytrade.get_order` | 200 | `data` order object (`.../getAccountsAccountNumberOrdersId/`) | `Received`/`Routed`/`Live`/`Cancel Requested` -> ACKNOWLEDGED/PARTIAL by enumerated fills; `Filled` -> FILLED; `Cancelled` -> CANCELED; `Rejected` -> REJECTED; `Expired` refused (gap 1); anything else refused |
+| `tastytrade.get_order` | 200 | `data` order object (`.../getAccountsAccountNumberOrdersId/`) | `Received`/`Routed`/`In Flight`/`Live`/`Cancel Requested` -> ACKNOWLEDGED/PARTIAL by enumerated fills; `Filled` -> FILLED; `Cancelled` -> CANCELED; `Rejected` -> REJECTED; `Expired` refused (gap 1); anything else refused |
 
 tastytrade filled quantity is the sum of the single leg's enumerated `fills[]`
 `quantity` values deduplicated by `fill-id`; it must reconcile with `size` minus the single leg's
@@ -175,7 +175,7 @@ test_execution_policy.py test_execution_ledger.py test_execution_adapters.py -q`
 Imported Claude commit `5e09b38c24722b96ec98f146f902d1feac19448b` onto the
 current BOSS integration history, without reapplying the Granite contract.
 The original 146 policy/ledger/adapter tests passed before changes. Sixteen
-new regression cases first failed against that import; all 162 now pass.
+new regression cases first failed against that import; all 162 passed at that checkpoint.
 
 Review corrections:
 
@@ -199,3 +199,18 @@ No existing policy, ledger, or contract acceptance rule changed. All tests use
 synthetic responses and fake transports; authenticated account/position snapshots,
 real provider calls, Expired ledger vocabulary and operational controller wiring
 remain outside this slice. This is software integration, not trading readiness.
+
+
+Independent provider-schema review corrected three additional mismatches:
+[tastytrade dry runs](https://developer.tastytrade.com/reference/orders/postAccountsAccountNumberOrdersDryRun/)
+require HTTP 201; normal [In Flight](https://developer.tastytrade.com/docs/concepts/order-lifecycle/)
+is nonterminal; Kalshi immediate-or-cancel/fill-or-kill acknowledgements are
+classified from the sent TIF and exact counts. Complete fills are FILLED for all
+supported TIFs. IOC residual cancellation is CANCELED (partial fills retained);
+FOK accepts only all-filled or zero-filled canceled outcomes. A terminal order
+fact still cannot release reservations without independent reflected-account evidence.
+A former test wrongly called a full immediate fill contradictory; it now checks
+full fill plus nonzero remaining, and positive full-fill cases are retained.
+
+Final execution policy/ledger/adapter verification: **172 passed in 21.45s**. Independent correction review: 20 targeted passes, no remaining blocker.
+

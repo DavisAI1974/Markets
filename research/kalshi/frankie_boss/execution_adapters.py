@@ -68,7 +68,7 @@ TASTYTRADE_ACTION = {'Future': {('buy', 'open'): 'Buy', ('buy', 'close'): 'Buy',
                      'Future Option': {('buy', 'open'): 'Buy to Open', ('buy', 'close'): 'Buy to Close',
                                        ('sell', 'open'): 'Sell to Open', ('sell', 'close'): 'Sell to Close'}}
 TASTYTRADE_SOURCES = ('tastytrade.submit_order', 'tastytrade.get_order')
-TASTYTRADE_NONTERMINAL = ('Received', 'Routed', 'Live', 'Cancel Requested')
+TASTYTRADE_NONTERMINAL = ('Received', 'Routed', 'In Flight', 'Live', 'Cancel Requested')
 TASTYTRADE_TERMINAL = {'Filled': 'FILLED', 'Cancelled': 'CANCELED', 'Rejected': 'REJECTED'}
 # Documented terminal status with no ledger vocabulary; refused, see SPEC (contract gap 1).
 TASTYTRADE_UNREPRESENTABLE = ('Expired',)
@@ -403,6 +403,14 @@ def _kalshi_order(receipt, *, intent, wire, pin):
     if initial != Fraction(sent['count']) or filled > initial or remaining > initial:
         raise ValueError(f'{name}: counts conflict with the sent order size')
     status = KALSHI_STATUS.get(provider_status)
+    if name == 'kalshi.create_order':
+        tif = sent['time_in_force']
+        if tif in ('immediate_or_cancel', 'fill_or_kill'):
+            if remaining != 0 or (tif == 'fill_or_kill' and filled not in (0, initial)):
+                raise ValueError(f'{name}: immediate order outcome conflicts with time in force')
+            status = 'FILLED' if filled == initial else 'CANCELED'
+        elif filled == initial and remaining == 0:
+            status = 'FILLED'
     if status is None:
         if filled + remaining != initial:
             raise ValueError(f'{name}: resting counts do not sum to the order size')
@@ -627,8 +635,8 @@ def parse_tastytrade_preflight(receipt: TransportReceipt, *, preflight: Prefligh
     if (receipt.source != 'tastytrade.dry_run' or receipt.wire_hash != preflight.wire_hash
             or receipt.account != preflight.account):
         raise ValueError('preflight receipt must bind the dry-run of this exact wire')
-    if receipt.http_status != 200:
-        raise ValueError('dry-run did not return a 200 preflight body')
+    if receipt.http_status != 201:
+        raise ValueError('dry-run did not return a 201 preflight body')
     data = _require(_json_object(receipt.body, 'dry_run'), 'data', dict, 'dry_run')
     warnings, errors = _require(data, 'warnings', list, 'dry_run'), _require(data, 'errors', list, 'dry_run')
     if warnings or errors:
