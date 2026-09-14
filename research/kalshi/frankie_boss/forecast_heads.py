@@ -40,6 +40,7 @@ class NativeForecastHeads(nn.Module):
         self.path_median = mlp(d_model + 2, 1)
         self.path_tails = mlp(d_model + 2, 2)
         self.time_decoder = mlp(d_model + 2, 2)
+        self.session_projection = nn.Linear(4, d_model, bias=False, dtype=torch.float64)
 
     def freeze_medians(self):
         """Enforce the staged auxiliary-fit boundary, including stale gradients.
@@ -47,10 +48,24 @@ class NativeForecastHeads(nn.Module):
         The control trunk remains external; callers must also freeze that trunk.
         This method does not fit anything or create an optimizer.
         """
-        for module in (self.gap_median, self.path_median, self.time_decoder):
+        for module in (self.gap_median, self.path_median, self.time_decoder, self.session_projection):
             for parameter in module.parameters():
                 parameter.requires_grad_(False)
                 parameter.grad = None
+
+    def condition(self, z, session_features):
+        """Known session metadata: time-to-open/duration in days, USD scale, tick.
+
+        These are declared forecast coordinates, not transformations of raw input.
+        """
+        self._state(z)
+        if (type(session_features) is not tuple or len(session_features) != 4):
+            raise ValueError('four declared session features required')
+        for value in session_features:
+            finite_number(value, 'session feature')
+        result = z + self.session_projection(z.new_tensor(session_features))
+        self._state(result)
+        return result
 
     def _state(self, z):
         if (not isinstance(z, torch.Tensor) or z.shape != (self.d_model,)
