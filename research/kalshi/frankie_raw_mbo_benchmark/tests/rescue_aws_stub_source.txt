@@ -11,6 +11,9 @@ import json
 import os
 import sys
 
+# Bash command substitutions compare these simulated AWS values byte-for-byte.
+sys.stdout.reconfigure(newline="\n")
+
 STATE = os.environ["SIM_STATE"]
 FAIL_AT = os.environ.get("SIM_FAIL_AT", "")
 BOX = "i-08cee7171c0a76a04"

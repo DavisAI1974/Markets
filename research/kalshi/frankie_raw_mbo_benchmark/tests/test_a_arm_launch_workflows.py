@@ -16,12 +16,13 @@ import ast
 import re
 import subprocess
 import sys
-import tempfile
 import textwrap
 import unittest
 from pathlib import Path
 
 import yaml
+
+from research.kalshi.frankie_raw_mbo_benchmark.tests.bash_support import run_bash
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 WORKFLOWS = {
@@ -45,12 +46,7 @@ class LaunchWorkflowStructureTest(unittest.TestCase):
                 if not body:
                     continue
                 with self.subTest(arm=arm, step=step.get("name")):
-                    with tempfile.NamedTemporaryFile("w", suffix=".sh") as handle:
-                        handle.write(body)
-                        handle.flush()
-                        result = subprocess.run(
-                            ["bash", "-n", handle.name], capture_output=True, text=True
-                        )
+                    result = run_bash(body, syntax_only=True)
                     self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_every_embedded_python_heredoc_compiles(self):

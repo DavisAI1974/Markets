@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import ast
 import re
-import subprocess
-import tempfile
 import textwrap
 import unittest
 from pathlib import Path
 
 import yaml
+
+from research.kalshi.frankie_raw_mbo_benchmark.tests.bash_support import run_bash
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 WORKFLOW = REPO_ROOT / ".github/workflows/frankie_ledger_delivery_20260902.yml"
@@ -48,10 +48,7 @@ class StructureTest(unittest.TestCase):
                 continue
             checked += 1
             with self.subTest(step=step.get("name")):
-                with tempfile.NamedTemporaryFile("w", suffix=".sh") as handle:
-                    handle.write(body)
-                    handle.flush()
-                    result = subprocess.run(["bash", "-n", handle.name], capture_output=True, text=True)
+                result = run_bash(body, syntax_only=True)
                 self.assertEqual(result.returncode, 0, result.stderr)
         self.assertGreater(checked, 0)
 

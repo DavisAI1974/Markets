@@ -21,12 +21,15 @@ from __future__ import annotations
 import json
 import os
 import re
-import subprocess
+import shlex
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 import yaml
+
+from research.kalshi.frankie_raw_mbo_benchmark.tests.bash_support import run_bash
 
 REPO = Path(__file__).resolve().parents[4]
 WORKFLOW = REPO / ".github/workflows/frankie_box_volume_rescue_20260902.yml"
@@ -50,12 +53,25 @@ class RescueFailurePathTests(unittest.TestCase):
     def _run(self, fail: str):
         with tempfile.TemporaryDirectory() as raw:
             work = Path(raw)
+            stub_source = work / "aws_stub.py"
+            stub_source.write_bytes(STUB_SOURCE.read_bytes())
             stub = work / "aws"
-            stub.write_text(STUB_SOURCE.read_text(encoding="utf-8"), encoding="utf-8")
+            stub.write_text(
+                f'#!/bin/sh\nexec {shlex.quote(Path(sys.executable).as_posix())} '
+                f'{shlex.quote(stub_source.as_posix())} "$@"\n',
+                encoding="utf-8", newline="\n",
+            )
             stub.chmod(0o755)
             napper = work / "sleep"
-            napper.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            napper.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8", newline="\n")
             napper.chmod(0o755)
+            # Use the same interpreter as pytest, including on Windows without python3.
+            python = work / "python3"
+            python.write_text(
+                f'#!/bin/sh\nexec {shlex.quote(Path(sys.executable).as_posix())} "$@"\n',
+                encoding="utf-8", newline="\n",
+            )
+            python.chmod(0o755)
 
             state = work / "state.json"
             state.write_text(json.dumps({
@@ -65,17 +81,18 @@ class RescueFailurePathTests(unittest.TestCase):
             }), encoding="utf-8")
 
             env = dict(
-                os.environ, PATH=f"{work}:{os.environ['PATH']}",
+                os.environ,
+                MSYS_NO_PATHCONV="1", MSYS2_ARG_CONV_EXCL="*",
                 SIM_STATE=str(state), SIM_FAIL_AT=("" if fail == "none" else fail),
                 INSTANCE_ID=BOX, VOLUME=VOLUME, ROOT_DEV=ROOT_DEV,
                 AZ="us-east-2b", SUBNET="subnet-0e68", SGS="sg-0001", CONFIRM="RESCUE",
                 PROFILE_ARN="arn:aws:iam::568968024170:instance-profile/Ssm",
                 ROOT_DELETE_ON_TERMINATION="True",
                 CLEAR_PATH="/opt/frankie-a-arm-run",
-                GITHUB_STEP_SUMMARY=str(work / "summary.md"),
+                GITHUB_STEP_SUMMARY=(work / "summary.md").as_posix(),
             )
-            proc = subprocess.run(["bash", "-c", _step("Move the disk")], cwd=work, env=env,
-                                  capture_output=True, text=True, timeout=300)
+            proc = run_bash('export PATH="$PWD:$PATH"\n' + _step("Move the disk"),
+                            cwd=work, env=env, timeout=300)
             return json.loads(state.read_text(encoding="utf-8")), proc
 
     def _assert_disk_returned(self, fail: str):
@@ -124,8 +141,7 @@ class ClearPathGuardTests(unittest.TestCase):
 
     def _guard(self, path: str) -> int:
         env = dict(os.environ, CONFIRM="RESCUE", CLEAR_PATH=path, VOLUME=VOLUME)
-        return subprocess.run(["bash", "-c", _step("Refuse an unarmed")],
-                              env=env, capture_output=True, text=True).returncode
+        return run_bash(_step("Refuse an unarmed"), env=env).returncode
 
     def test_the_intended_paths_are_accepted(self):
         for path in ("/opt/frankie-a-arm-run",
@@ -164,10 +180,9 @@ class ClearPathGuardTests(unittest.TestCase):
     def test_the_box_side_backstop_refuses_dot_dot_on_its_own(self):
         body = re.search(r"<<'SH'\n(.*?)\nSH\n", _step("Move the disk"), re.S).group(1)
         fragment = body[body.index("target='"):body.index("if [ -d")]
-        proc = subprocess.run(
-            ["bash", "-c", fragment.replace("__CLEAR_PATH__", "/opt/frankie-a-arm-run/../../etc")
-             + "\necho REACHED_THE_CLEAR"],
-            capture_output=True, text=True)
+        proc = run_bash(
+            fragment.replace("__CLEAR_PATH__", "/opt/frankie-a-arm-run/../../etc")
+            + "\necho REACHED_THE_CLEAR")
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("RESCUE_FATAL=path_contains_dotdot", proc.stdout)
         self.assertNotIn("REACHED_THE_CLEAR", proc.stdout)
@@ -237,11 +252,11 @@ class DeviceSelectionTests(unittest.TestCase):
                 "EOF\n"
                 "  ;;\n"
                 "  *) exit 0 ;;\n"
-                "esac\n", encoding="utf-8")
+                "esac\n", encoding="utf-8", newline="\n")
             (work / "lsblk").chmod(0o755)
-            env = dict(os.environ, PATH=f"{work}:{os.environ['PATH']}")
-            return subprocess.run(["bash", "-c", f'disk=/dev/nvme1n1\n{fragment}\necho "PICKED=$dev"'],
-                                  env=env, capture_output=True, text=True)
+            return run_bash(
+                'export PATH="$PWD:$PATH"\n'
+                + f'disk=/dev/nvme1n1\n{fragment}\necho "PICKED=$dev"', cwd=work)
 
     def test_the_partition_is_selected_as_a_clean_device_path(self):
         proc = self._run_with_stub_lsblk(self._fragment())

@@ -23,9 +23,9 @@ class NativeFrankieKnowledgeRegistryTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
-        (self.root / "mission.md").write_text("mission\n", encoding="utf-8")
-        (self.root / "capsule.md").write_text("capsule\n", encoding="utf-8")
-        (self.root / "evidence.md").write_text("evidence\n", encoding="utf-8")
+        (self.root / "mission.md").write_bytes(b"mission\n")
+        (self.root / "capsule.md").write_bytes(b"capsule\n")
+        (self.root / "evidence.md").write_bytes(b"evidence\n")
         artifacts = []
         for artifact_id, path, load_mode in (
             ("mission", "mission.md", "ALWAYS_LOAD"),
@@ -121,7 +121,7 @@ class NativeFrankieKnowledgeRegistryTests(unittest.TestCase):
             load_and_validate_manifest(self.manifest_path, self.root)
 
     def test_fails_closed_when_registered_bytes_drift(self) -> None:
-        (self.root / "capsule.md").write_text("changed\n", encoding="utf-8")
+        (self.root / "capsule.md").write_bytes(b"changed\n")
         with self.assertRaisesRegex(KnowledgeRegistryError, "SHA-256 drift"):
             load_and_validate_manifest(self.manifest_path, self.root)
 
