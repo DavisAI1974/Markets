@@ -11,6 +11,7 @@ from research.kalshi.frankie_boss.execution_controller import (
 )
 from research.kalshi.frankie_boss.execution_adapters import parse_order_response
 import json
+import threading
 
 
 def setup_controller(tmp_path, venue='kalshi', environment='replay'):
@@ -329,5 +330,58 @@ def test_uncertain_ledger_return_write_still_latches_and_preserves_original_erro
         with pytest.raises(OSError, match='uncertain journal'):
             send_kalshi(c, prepared)
         assert (tmp_path/'orders.sqlite.kill').is_file()
+    finally:
+        ledger.close()
+
+
+def test_prepared_envelope_tamper_stops_before_transport(tmp_path):
+    c, ledger, inputs, account, pin = setup_controller(tmp_path)
+    try:
+        prepared = prepared_for(c, inputs, account)
+        artifact = next(c.store.path.iterdir())
+        artifact.write_bytes(b'tampered prepared evidence')
+        with pytest.raises(ValueError, match='immutable'):
+            send_kalshi(c, prepared, lambda _: pytest.fail('tampered evidence sent'))
+        assert ledger.checkpoint()['count'] == 0
+    finally:
+        ledger.close()
+
+
+def test_blocked_transport_does_not_block_durable_kill(tmp_path):
+    c, ledger, inputs, account, pin = setup_controller(tmp_path)
+    try:
+        prepared = prepared_for(c, inputs, account)
+        completed = threading.Event()
+        def stop():
+            ledger.latch_kill('synthetic operator kill')
+            completed.set()
+        def transport(wire):
+            thread = threading.Thread(target=stop)
+            thread.start()
+            assert completed.wait(2), 'kill waited for the in-flight operation'
+            thread.join()
+            assert (tmp_path/'orders.sqlite.kill').is_file()
+            return receipt(wire, inputs.intent.account, 'kalshi.create_order', kalshi_create_body(wire))
+        send_kalshi(c, prepared, transport)
+        assert ledger.killed and ledger.reservations()
+    finally:
+        ledger.close()
+
+
+@pytest.mark.parametrize('mode', ['wire', 'account', 'transport', 'prepared'])
+def test_changed_dispatch_binding_never_calls_sender(tmp_path, mode):
+    c, ledger, inputs, account, pin = setup_controller(tmp_path)
+    try:
+        prepared = prepared_for(c, inputs, account)
+        changed = prepared
+        if mode == 'wire':
+            changed = replace(prepared, wire=replace(prepared.wire, body=b'other order'))
+        if mode == 'account':
+            changed = replace(prepared, account_evidence=replace(account, witnesses=(b'new witness',)))
+        with pytest.raises(ValueError):
+            c.dispatch_once(changed, expected_prepared_hash='b'*64 if mode=='prepared' else changed.digest,
+                transport=lambda _: pytest.fail('changed identity sent'),
+                transport_hash='b'*64 if mode=='transport' else H, now=lambda: 10)
+        assert ledger.checkpoint()['count'] == 0
     finally:
         ledger.close()
