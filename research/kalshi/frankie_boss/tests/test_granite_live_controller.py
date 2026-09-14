@@ -129,8 +129,9 @@ def test_capacity_counts_complete_template_and_refuses_oversize(tmp_path,monkeyp
             return Tokenizer()
         def apply_chat_template(self,messages,**kwargs):
             assert messages == [dict(role='user',content=fixture.prompt.text)]
-            assert kwargs == dict(tokenize=True,add_generation_prompt=True,enable_thinking=False)
-            return [17,18,19]
+            assert kwargs == dict(tokenize=True,add_generation_prompt=True,enable_thinking=False,
+                                  return_dict=False,truncation=False,padding=False,return_tensors=None)
+            return [17,18,19] if kwargs.get('return_dict',True) is False else {'input_ids':[17,18,19]}
     monkeypatch.setitem(sys.modules,'transformers',SimpleNamespace(AutoTokenizer=Tokenizer))
     try:
         if output_tokens == 4096:

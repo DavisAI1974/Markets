@@ -42,3 +42,14 @@ separate from this connectivity test. Preserve that attribution in the actual
 emitted prompt and evidence receipts.
 
 Verification before the first hosted attempt: 106 combined coordinator/live-helper/lifecycle/startup/artifact checks passed locally. Independent reviewer reran all 28 coordinator checks and approved the bounded workflow. These are software checks; actual hosted acceptance is recorded separately.
+
+Run 34905678210 verified all staged model bytes and bootstrap, then failed before
+resource creation: Transformers 5.8.0 returns BatchEncoding by default. Admission
+now explicitly requests a flat token-ID list, no padding or truncation, and records
+those invocation settings. Local verification with all eight hash-verified real
+tokenizer files and the retained Linux prompt reproduced the default return and
+confirmed the explicit list contains the identical 2,284 IDs. The 106 regression
+checks pass. This is tokenizer verification, not hosted model acceptance.
+The independent cleanup step now records no_creation_intent even when admission
+fails before a deployment ledger exists. A deliberate workflow change schedules
+the corrected bounded attempt; the first attempt created no GPU resources.

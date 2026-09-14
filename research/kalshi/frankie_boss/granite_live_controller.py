@@ -81,8 +81,9 @@ def measure_fixture(fixture, tokenizer_directory, *, output_tokens=1200):
     for row in rows:
         artifacts.verify_file(directory/row['path'], row)
     tokenizer = AutoTokenizer.from_pretrained(str(directory), local_files_only=True, trust_remote_code=False)
-    ids = tokenizer.apply_chat_template([{'role':'user','content':fixture.prompt.text}], tokenize=True,
-                                        add_generation_prompt=True, enable_thinking=False)
+    invocation = dict(tokenize=True,add_generation_prompt=True,enable_thinking=False,
+                      return_dict=False,truncation=False,padding=False,return_tensors=None)
+    ids = tokenizer.apply_chat_template([{'role':'user','content':fixture.prompt.text}], **invocation)
     if type(ids) is not list or not ids or any(type(token) is not int or token < 0 for token in ids):
         raise ValueError('tokenizer did not return exact complete token IDs')
     positional_limit = artifacts.strict_json((directory/'config.json').read_bytes())['max_position_embeddings']
@@ -90,7 +91,7 @@ def measure_fixture(fixture, tokenizer_directory, *, output_tokens=1200):
     if type(positional_limit) is not int or required > positional_limit:
         raise ValueError('complete input and output exceed model positional limit')
     tokenizer_manifest = dict(schema='GRANITE_TOKENIZER_MANIFEST_V1', files=rows, versions=versions,
-        invocation=dict(message_roles=['user'],add_generation_prompt=True,enable_thinking=False,tokenize=True))
+        invocation=dict(message_roles=['user'],**invocation))
     result = dict(schema='GRANITE_TOKEN_ADMISSION_V1', prompt_sha256=fixture.manifest['prompt_sha256'],
         input_tokens=len(ids), output_tokens=output_tokens, max_model_len=required,
         positional_limit=positional_limit, token_ids_sha256=_sha(artifacts.canonical(ids)),

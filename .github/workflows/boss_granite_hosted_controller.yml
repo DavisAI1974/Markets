@@ -58,7 +58,7 @@ jobs:
           AWS_EC2_METADATA_DISABLED: 'true'
           AWS_DEFAULT_REGION: us-east-1
         run: |
-          if test -f work/granite-hosted/deployment-ledger.json; then
+          if test -d work/granite-hosted; then
             python -m research.kalshi.frankie_boss.granite_coordinator cleanup --directory work/granite-hosted
           fi
       - name: Retain original inputs runtime provider output failures and cleanup
