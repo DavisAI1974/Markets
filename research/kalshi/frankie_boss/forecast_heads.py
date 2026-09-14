@@ -40,7 +40,7 @@ class NativeForecastHeads(nn.Module):
         self.path_median = mlp(d_model + 2, 1)
         self.path_tails = mlp(d_model + 2, 2)
         self.time_decoder = mlp(d_model + 2, 2)
-        self.session_projection = nn.Linear(4, d_model, bias=False, dtype=torch.float64)
+        self.session_projection = nn.Linear(5, d_model, bias=False, dtype=torch.float64)
 
     def freeze_medians(self):
         """Enforce the staged auxiliary-fit boundary, including stale gradients.
@@ -54,13 +54,13 @@ class NativeForecastHeads(nn.Module):
                 parameter.grad = None
 
     def condition(self, z, session_features):
-        """Known session metadata: time-to-open/duration in days, USD scale, tick.
+        """Time-to-open/duration in days, USD scale, tick and anchor age in days.
 
         These are declared forecast coordinates, not transformations of raw input.
         """
         self._state(z)
-        if (type(session_features) is not tuple or len(session_features) != 4):
-            raise ValueError('four declared session features required')
+        if (type(session_features) is not tuple or len(session_features) != 5):
+            raise ValueError('five declared session features required')
         for value in session_features:
             finite_number(value, 'session feature')
         result = z + self.session_projection(z.new_tensor(session_features))
@@ -110,9 +110,10 @@ class NativeForecastHeads(nn.Module):
         self._state(z)
         if (not isinstance(policy, KnotPolicy) or type(duration_ns) is not int
                 or type(start_ns) is not int or not 0 <= start_ns < duration_ns
-                or duration_ns > 2**53 or duration_ns % policy.quantum_ns
-                or start_ns % policy.quantum_ns):
+                or duration_ns > 2**53 or duration_ns % policy.quantum_ns):
             raise ValueError('session offsets must be exactly representable on the locked quantum')
+        # The causal cutoff is a virtual seed and need not lie on the output grid.
+        # Only emitted future knots are rounded; certified observations stay exact.
         times = [start_ns]; previous_delay = 0.
         while True:
             step = self.next_time(z, times[-1] / duration_ns, previous_delay)

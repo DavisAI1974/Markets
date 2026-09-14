@@ -203,7 +203,7 @@ class NativeForecastArtifact(HashedContract):
         z = decoder.condition(torch.tensor(self.representation, dtype=torch.float64), self.session.features)
         s = self.session
         times = decoder.knots(z, duration_ns=s.duration_ns,
-            start_ns=s.anchor_ns-s.open_ns, policy=s.knot_policy)
+            start_ns=max(s.open_ns, s.event_cutoff_ns)-s.open_ns, policy=s.knot_policy)
         expected_times = ((s.open_ns,) + tuple(m.event_ns for m in s.known_marks)
                           + tuple(s.open_ns+t for t in times[1:]))
         if tuple(p.time_ns for p in self.points) != expected_times:
@@ -224,7 +224,7 @@ class NativeForecastArtifact(HashedContract):
             raise ValueError('query must be absolute integer UTC ns inside the session')
         if time_ns == s.open_ns:
             return (0., 0., 0.)
-        if time_ns <= s.anchor_ns:
+        if time_ns <= s.event_cutoff_ns:
             marks = {m.event_ns: m for m in s.known_marks}
             if time_ns not in marks:
                 raise ValueError('past query has no certified observed mark; interpolation is forbidden')
@@ -278,6 +278,7 @@ class NativeForecastArtifact(HashedContract):
 
 
 def freeze_forecast(decoder, representation, session, *, native_model_hash, input_hash, arm_hash, context_receipt=None):
+    session.validate_for_publication()
     decoder._state(representation)
     snapshot = DecoderSnapshot.capture(decoder)
     # Generate using the same frozen weights used by subsequent audit queries.
@@ -288,7 +289,7 @@ def freeze_forecast(decoder, representation, session, *, native_model_hash, inpu
     with torch.no_grad():
         gap = (session.observed_gap,) * 3 if observed else tuple(frozen.gap(z).tolist())
         times = frozen.knots(z, duration_ns=session.duration_ns,
-            start_ns=session.anchor_ns-session.open_ns, policy=session.knot_policy)
+            start_ns=max(session.open_ns, session.event_cutoff_ns)-session.open_ns, policy=session.knot_policy)
         points = [ForecastPoint(session.open_ns, (0., 0., 0.), observed)]
         points.extend(ForecastPoint(m.event_ns, (session.movement(m),)*3, True) for m in session.known_marks)
         anchor = (session.anchor_ns-session.open_ns)/session.duration_ns

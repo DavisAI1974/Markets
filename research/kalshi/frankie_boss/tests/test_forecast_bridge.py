@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import pytest
 import torch
 from forecast_bridge import prepare_frankie_forecast, route_frankie_forecast, LegacyConfidenceCompatibilityError
-from forecast_session import ForecastSession
+from forecast_session import ForecastSession, PriceObservation
 from forecast_heads import KnotPolicy
 from forecast_artifact import freeze_forecast
 from frankie_contract import BLD1_FIELD_NAMES, FrankieProjector, validate_bld1, ContractError
@@ -17,7 +17,8 @@ def artifact(*, dst=False):
     opening = int(datetime(2026, 11, 1 if dst else 2, 0 if dst else 1, tzinfo=timezone.utc).timestamp()) * 10**9
     closing = opening + (25 if dst else 24)*3600*10**9
     s = ForecastSession('SYN', 'S', opening, closing, opening-10**9, opening-10**9,
-                        2., .01, H, H, H, KnotPolicy(1000000, 4))
+                        2., .01, H, H, H, KnotPolicy(1000000, 4),
+                        prior_close=PriceObservation(opening-2*10**9, opening-2*10**9, 100., H))
     m = decoder()
     with torch.no_grad():
         for p in m.time_decoder.parameters(): p.zero_()

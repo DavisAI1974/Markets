@@ -7,7 +7,7 @@ from c15_journal import evidence_hash
 from context_session import ContextSessionRunner
 from forecast_artifact import NativeForecastArtifact
 from forecast_refresh import RefreshPolicy
-from forecast_session import ForecastSession
+from forecast_session import ForecastSession, PriceObservation
 from forecast_heads import NativeForecastHeads, KnotPolicy
 from rolling_forecast import ForecastTarget, RollingForecastBook
 from native_forecast_refresh import NativeForecastRefresh, session_registry_hash
@@ -28,7 +28,8 @@ def build_refresh(tmp_path):
     book = RollingForecastBook(tmp_path/'forecasts.sqlite', create=True)
     sessions = tuple((ForecastTarget('SYN', str(i), 2000+i*2000),
         ForecastSession('SYN', str(i), 1000+i*2000, 2000+i*2000, 1, 2,
-            2., .01, H, H, builder.chain.prefix_hash, KnotPolicy(1, 8))) for i in range(3))
+            2., .01, H, H, builder.chain.prefix_hash, KnotPolicy(1, 8),
+            prior_close=PriceObservation(0, 0, 100., H))) for i in range(3))
     bridge = NativeForecastRefresh(runner, decoder, book, tuple(t for t, s in sessions), RefreshPolicy(((10000, 1),)))
     return bridge, sessions
 

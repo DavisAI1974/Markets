@@ -78,12 +78,25 @@ class ForecastSession(HashedContract):
             if self.prior_close is None or self.opening is None or self.opening.event_ns != self.open_ns:
                 raise ValueError('postopen requires certified prior close and opening anchors')
             times = (self.open_ns,) + tuple(m.event_ns for m in self.known_marks)
-            if (any(a >= b for a, b in zip(times, times[1:])) or times[-1] != self.event_cutoff_ns
-                    or any((t - self.open_ns) % self.knot_policy.quantum_ns for t in times)):
-                raise ValueError('observed path must be ordered and end at the exact current anchor')
+            if any(a >= b for a, b in zip(times, times[1:])) or times[-1] > self.event_cutoff_ns:
+                raise ValueError('observed path must be ordered and available by the cutoff')
             finite_number(self.observed_gap, 'observed gap')
             for mark in self.known_marks:
                 finite_number(self.movement(mark), 'observed movement')
+
+    def validate_for_publication(self):
+        """Current generation policy; never retroactively imposed on archived reads.
+
+        This version declares one uniform, zero-origin tick grid for certified
+        prices. Variable tick schedules/offset grids require a new convention.
+        """
+        from fractions import Fraction
+        if self.prior_close is None:
+            raise ValueError('new forecasts require a certified prior close reference')
+        observations = (self.prior_close,) + (() if self.opening is None else (self.opening,)) + self.known_marks
+        tick = Fraction(str(self.tick_size))
+        if any((Fraction(str(mark.price))/tick).denominator != 1 for mark in observations):
+            raise ValueError('certified price is outside the declared uniform tick grid')
 
     @property
     def duration_ns(self):
@@ -93,11 +106,12 @@ class ForecastSession(HashedContract):
     def features(self):
         day_ns = 86_400_000_000_000
         return ((self.open_ns-self.receive_cutoff_ns)/day_ns, self.duration_ns/day_ns,
-                self.usd_per_price_unit, self.tick_size)
+                self.usd_per_price_unit, self.tick_size,
+                max(0, self.event_cutoff_ns-self.anchor_ns)/day_ns)
 
     @property
     def anchor_ns(self):
-        return max(self.open_ns, self.event_cutoff_ns)
+        return self.known_marks[-1].event_ns if self.known_marks else self.open_ns
 
     @property
     def observed_gap(self):

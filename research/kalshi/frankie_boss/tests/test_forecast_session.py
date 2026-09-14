@@ -12,7 +12,8 @@ H = 'a' * 64
 
 def session(**changes):
     base = ForecastSession('SYN', 'session', 1000, 2000, 500, 500,
-                           2., .01, H, H, H, KnotPolicy(1, 8))
+                           2., .01, H, H, H, KnotPolicy(1, 8),
+                           prior_close=PriceObservation(400, 401, 100., H))
     return replace(base, **changes)
 
 

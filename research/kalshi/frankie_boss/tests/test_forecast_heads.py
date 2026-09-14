@@ -53,8 +53,8 @@ def test_tail_only_optimizer_cannot_move_frozen_medians():
 
 def test_known_session_metadata_conditions_each_decoder():
     m = decoder(); z = torch.ones(4, dtype=torch.float64)
-    first = m.condition(z, (1., 1., 2., .01))
-    later = m.condition(z, (3., 1., 2., .01))
+    first = m.condition(z, (1., 1., 2., .01, 0.))
+    later = m.condition(z, (3., 1., 2., .01, 0.))
     assert not torch.equal(m.gap(first), m.gap(later))
     assert not torch.equal(m.path(first, .7), m.path(later, .7))
     assert not torch.equal(m.next_time(first, .2, .1), m.next_time(later, .2, .1))

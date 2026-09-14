@@ -90,6 +90,7 @@ class NativeForecastRefresh:
         if tuple(t for t, _ in sessions) != active:
             raise ValueError('provide every active target in the frozen registry order')
         for target, session in sessions:
+            session.validate_for_publication()
             if target.instrument != session.instrument or target.target_ns != session.close_ns:
                 raise ValueError('native target must be the declared single-session close')
             if (session.event_cutoff_ns, session.receive_cutoff_ns, session.source_hash) != (
