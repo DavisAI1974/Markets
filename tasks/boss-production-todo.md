@@ -26,7 +26,8 @@
 - [x] Deterministic execution policy and durable synthetic outbox/reconciliation (73 focused tests)
 - [x] Typed Kalshi/tastytrade adapters with documented provider parsing and fake-transport reconciliation (f1fffd23; 172 passes)
 - [x] Operational execution controller with pinned account/reflection evidence and durable receipts (bc18611d; 215 selected execution checks)
-- [ ] Authenticated transport/provider/account facts, heartbeat/recovery and cancel/flatten operation
+- [x] Scoped auth preparation and single-use transport interface, fresh Kalshi send signatures and tastytrade OAuth preparation (1e6f4c35; 250 selected execution checks)
+- [ ] Concrete HTTP/secret-store clients, authenticated provider/account facts, heartbeat/recovery and cancel/flatten operation
 - [x] Lossless compact-context codec and explicit expansion admission bounds
 - [x] Compact-context service/controller routing software; actual model acceptance tracked separately
 - [x] Committed-file BOSS exporter and separate receiver protocol (receiver 2b4bae18; recorded 2,127 passes)
@@ -45,21 +46,30 @@ Coordinator software 29f505b2 joins exact tokenizer admission, startup/resource
 verification, real controller invocation and finally/CI cleanup. First real hosted
 attempt 34905678210 failed at tokenizer return-shape admission before resource
 creation. Fix 3e0a01ed was independently reviewed and verified with the actual
-pinned tokenizer: 2,284 complete input IDs. Corrected run 34906771361 is in progress;
-no successful inference is claimed yet.
+pinned tokenizer: 2,284 complete input IDs. Corrected run 34906771361 passed Linux
+admission (2,284 input + 1,200 output tokens), then exceeded the 20-minute endpoint
+startup deadline. No startup/runtime/provider receipt or inference was obtained.
+Python finally and independent CI cleanup both confirmed endpoint, endpoint
+configuration and model absence. The 119 transient delete ValidationExceptions
+remain in the cleanup ledger. CloudWatch reported that the log group did not
+exist; the underlying provisioning/startup cause is not established. Preserve
+these failures and improve/read diagnostics before considering another GPU attempt.
 Execution adapters are integrated at f1fffd23 after independent review and 172
 passing tests. Reviewed production artifact/configuration bindings are integrated
 at 5f18fa32 (131 selected checks). Execution controller bc18611d passed 215 selected
 checks, including failure retention and independent kill on inaccessible state.
-Authentication/transport implementation is in progress; no provider orders were sent.
+Auth preparation/transport interfaces are reviewed at 1e6f4c35; 250 selected
+execution tests passed, plus 35 independent focused transport checks. Concrete
+HTTP and secret-store implementations and account collection remain open.
+No provider orders were sent.
 
 The user selected `attributed_input`: Frankie sees clearly attributed BOSS/Granite
 input while working. Finish the build before launching Sunday. Source recovery is
 preparation only; no rerun is scheduled. The old task completed its derivative
 workbook through 993298d5/receiver2b4bae18. The current task's combined workbook
 preserves its eight historical sheets, tables, chart and scores and adds current
-status through 5f18fa32 plus the source crosswalk. Later code/results require a
-subsequent snapshot update. The original workbook remains unchanged.
+status through 1e6f4c35 plus the source crosswalk and failed-hosting/confirmed-cleanup
+outcome. The original workbook remains unchanged.
 
 ## Historical baseline below (superseded where current evidence above differs)
 

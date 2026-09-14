@@ -53,3 +53,13 @@ checks pass. This is tokenizer verification, not hosted model acceptance.
 The independent cleanup step now records no_creation_intent even when admission
 fails before a deployment ledger exists. A deliberate workflow change schedules
 the corrected bounded attempt; the first attempt created no GPU resources.
+
+Corrected run 34906771361 (frozen source 3e0a01ed) passed the real Linux tokenizer
+admission, then timed out waiting for endpoint startup after 20 minutes. No startup
+receipt, provider response or controller inference was obtained. Container log
+collection reported ResourceNotFoundException for the log group; this does not
+establish the underlying provisioning cause. Both Python finally and independent
+CI cleanup confirmed endpoint/configuration/model absence with status deleted.
+The ledger retains 119 transient DeleteEndpoint ValidationExceptions before
+confirmed removal. This is a failed hosted attempt with successful cleanup, not
+model acceptance. Retain/read better provisioning diagnostics before another run.
