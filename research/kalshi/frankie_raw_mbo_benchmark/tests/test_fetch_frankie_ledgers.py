@@ -217,6 +217,8 @@ class FetchTest(unittest.TestCase):
     def test_a_wrong_plain_sha_is_a_sha_mismatch_and_a_refusal(self):
         m = manifest()
         m["plain_sha256"]["exact_lifecycle_rows.jsonl"] = "0" * 64
+        from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import canonical_hash
+        m["manifest_sha256"] = canonical_hash(m, omit="manifest_sha256")
         receipt, error, _, _ = self._fetch(m=m)
         self.assertIsNotNone(error)
         self.assertEqual(receipt["ledgers"]["exact_lifecycle_and_runway_ledger"]["status"], "SHA_MISMATCH")
@@ -225,6 +227,8 @@ class FetchTest(unittest.TestCase):
     def test_a_wrong_plain_length_is_a_length_mismatch_even_when_the_gzip_arrived_whole(self):
         m = manifest()
         m["plain_sizes"]["legacy_observable_rows.jsonl"] += 1
+        from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import canonical_hash
+        m["manifest_sha256"] = canonical_hash(m, omit="manifest_sha256")
         receipt, error, _, _ = self._fetch(m=m)
         self.assertIsNotNone(error)
         self.assertEqual(receipt["ledgers"]["legacy_observable_rows"]["status"], "LENGTH_MISMATCH")
@@ -281,6 +285,8 @@ class CommandLineTest(unittest.TestCase):
             root = Path(tmp)
             m = manifest()
             m["plain_sha256"]["exact_member_rows.jsonl"] = "0" * 64
+            from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import canonical_hash
+            m["manifest_sha256"] = canonical_hash(m, omit="manifest_sha256")
             (root / "m.json").write_text(json.dumps(m))
             out = io.StringIO()
             with redirect_stdout(out):
@@ -292,3 +298,35 @@ class CommandLineTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ManifestIntegrityTest(unittest.TestCase):
+    def test_stale_manifest_refused_before_download(self):
+        body = manifest()
+        body['run_id'] = 'altered'
+        calls = []
+        with tempfile.TemporaryDirectory() as root:
+            with self.assertRaises(DeliveryError):
+                fetch(body, root, downloader=lambda *args: calls.append(1))
+        self.assertEqual(calls, [])
+
+    def test_unsafe_extra_object_refused_even_with_recomputed_hash(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import canonical_hash
+        body = manifest()
+        body['objects']['../escaped'] = dict(next(iter(body['objects'].values())))
+        body['manifest_sha256'] = canonical_hash(body, omit='manifest_sha256')
+        calls = []
+        with tempfile.TemporaryDirectory() as root:
+            with self.assertRaises(DeliveryError):
+                fetch(body, root, downloader=lambda *args: calls.append(1))
+        self.assertEqual(calls, [])
+
+    def test_failed_download_does_not_persist_presigned_url(self):
+        def fail(url, dest):
+            raise OSError('request failed: ' + url)
+        with tempfile.TemporaryDirectory() as root:
+            with self.assertRaises(DeliveryError):
+                fetch(manifest(), root, downloader=fail)
+            receipt = (Path(root)/'FRANKIE_LEDGER_DELIVERY_RECEIPT.json').read_text()
+            self.assertNotIn('X-Amz-Signature', receipt)
+            self.assertNotIn('SECRET', receipt)

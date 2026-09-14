@@ -242,7 +242,7 @@ def _emit_prompt_unit(*args, **kwargs) -> str:
         kwargs["knowledge_receipt"] = _prompt_test_knowledge_receipt(
             result_path.parent, arm=result["layers"]["identity_receipt"]["arm"]
         )
-    with patch.object(emitter, "crosswalk", return_value=_accounted_prompt_test_crosswalk()):
+    with patch.object(emitter, "crosswalk", return_value=_accounted_prompt_test_crosswalk()), patch.object(emitter, "_verified_knowledge", side_effect=lambda path, receipt, root: receipt):
         return emit(*args, **kwargs)
 
 
@@ -272,6 +272,11 @@ def _delivery_receipt(root: Path, *, statuses=None, mutate=None) -> Path:
         "all_ledgers_verified": all(v["status"] == "VERIFIED" for v in ledgers.values()),
         "receipt_sha256": "",
     }
+    result_file = root / 'calculation_result.json'
+    if result_file.is_file():
+        raw = result_file.read_bytes()
+        body['objects']['calculation_result.json'] = {'status': 'VERIFIED', 'bytes_observed': len(raw),
+            'sha256_observed': hashlib.sha256(raw).hexdigest(), 'sha256_expected': hashlib.sha256(raw).hexdigest()}
     body["receipt_sha256"] = canonical_hash(body, omit="receipt_sha256")
     if mutate:
         mutate(body)
@@ -662,7 +667,7 @@ class DeliveryReceiptGateTest(StopRuleTests):
         head = text.index("## The evidence")
         evidence = text[head:text.index("## ", head + 4)]
         for name in EXACT_LEDGERS:
-            self.assertIn(f"delivered/{LEDGER_FILES[name]}", evidence, name)
+            self.assertIn(f"delivered/{LEDGER_FILES[name]}", evidence.replace("\\", "/"), name)
         self.assertIn("native_causal_stream", evidence)
         self.assertIn("CausalGroupStream", evidence)
 
@@ -833,3 +838,30 @@ class F20ReachesFrankieTest(StopRuleTests):
             "Report that verdict and both totals",
         ):
             self.assertIn(needle, text, needle)
+
+
+class DeliveryRecheckTest(unittest.TestCase):
+    def test_bytes_changed_after_fetch_are_refused(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            receipt = _delivery_receipt(root)
+            body = json.loads(receipt.read_text())
+            Path(body['ledgers'][EXACT_LEDGERS[0]]['local_path']).write_bytes(b'changed')
+            with self.assertRaises(EmitError):
+                emitter._load_delivery_receipt(receipt)
+
+
+class ResultObjectIntegrityTest(unittest.TestCase):
+    def test_changed_result_same_length_is_not_the_verified_object(self):
+        old = b'{"verdict":"ACCEPTED"}'
+        receipt = {'objects': {'calculation_result.json': {'status': 'VERIFIED', 'bytes_observed': len(old), 'sha256_observed': hashlib.sha256(old).hexdigest()}}}
+        emitter._verify_result_bytes(old, receipt)
+        with self.assertRaises(EmitError):
+            emitter._verify_result_bytes(old.replace(b'ACCEPTED', b'REJECTED'), receipt)
+
+
+class TerminalAccountingPromptTest(StopRuleTests):
+    def test_requires_whole_sidecar_accounting_and_no_runner_adoption(self):
+        text = self._emit()
+        for phrase in ('drain_withheld()', 'every sidecar row', 'runner-generated', 'confidence_basis', 'Do not seed hypotheses'):
+            self.assertIn(phrase, text)

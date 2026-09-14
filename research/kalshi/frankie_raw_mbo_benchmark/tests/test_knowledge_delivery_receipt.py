@@ -374,3 +374,26 @@ class ValidateKnowledgeUseTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class KnowledgeBoundaryIntegrityTest(unittest.TestCase):
+    def test_changed_inline_bytes_cannot_receive_old_artifact_identity(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.native_frankie_knowledge_registry import build_context_bundle
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root/'artifact.md').write_bytes(b'NEW')
+            row = {'id': 'one', 'path': 'artifact.md', 'sha256': hashlib.sha256(b'OLD').hexdigest(), 'bytes': 3, 'load_mode': 'ALWAYS_LOAD', 'authority': 'synthetic'}
+            manifest = {'profiles': {'p': {'always_load': ['one'], 'retrieval_catalog': [], 'external_bindings': [], 'arm': 'A_MEMORY', 'role': 'REAL_TIME_FRANKIE'}}, 'artifacts': [row], 'external_bindings': [], 'version': 1, 'manifest_hash': 'a'*64}
+            with self.assertRaises(KnowledgeRegistryError):
+                build_context_bundle(manifest, 'p', root)
+
+    def test_actual_bundle_and_receipt_must_match_pinned_corpus(self):
+        from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import validate_delivered_knowledge
+        delivery = build_knowledge_delivery()
+        self.assertEqual(validate_delivered_knowledge(delivery.receipt, delivery.model_visible_context)['receipt_sha256'], delivery.receipt['receipt_sha256'])
+        with self.assertRaises(KnowledgeDeliveryError):
+            validate_delivered_knowledge(delivery.receipt, delivery.model_visible_context+b'changed')
+        changed = dict(delivery.receipt, memory_findings=[])
+        changed['receipt_sha256'] = canonical_hash(changed, omit='receipt_sha256')
+        with self.assertRaises(KnowledgeDeliveryError):
+            validate_delivered_knowledge(changed, delivery.model_visible_context)

@@ -350,8 +350,10 @@ class DeliveredLedgersMustBeReadTest(unittest.TestCase):
     def _body(self, **overrides):
         body = dict(LoadPrincipalArtifactTest.GOOD)
         body["evidence_read"] = dict(self.READ_ALL)
-        body["delivery_receipt_sha256"] = "d" * 64
-        body["stream_receipt_sha256"] = "5" * 64
+        body["delivery_receipt_sha256"] = DELIVERY
+        body["run_id"] = "run-1"
+        body["arm"] = "A_MEMORY"
+        body["stream_receipt_sha256"] = STREAM
         body.update(overrides)
         return body
 
@@ -370,7 +372,7 @@ class DeliveredLedgersMustBeReadTest(unittest.TestCase):
             outputs_dir = Path(tmp) / "outputs"
             receipt = write_bundle(
                 build_bundle(
-                    delivery_receipt_sha256="d" * 64, knowledge_receipt_sha256="e" * 64,
+                    delivery_receipt_sha256=DELIVERY, knowledge_receipt_sha256="e" * 64,
                 ),
                 outputs_dir,
             )
@@ -378,8 +380,8 @@ class DeliveredLedgersMustBeReadTest(unittest.TestCase):
                 tmp, self._body(outputs_receipt_sha256=receipt["receipt_sha256"]),
                 outputs_dir=outputs_dir, knowledge_receipt_sha256="e" * 64,
             )
-        self.assertEqual(execution["delivery_receipt_sha256"], "d" * 64)
-        self.assertEqual(execution["stream_receipt_sha256"], "5" * 64)
+        self.assertEqual(execution["delivery_receipt_sha256"], DELIVERY)
+        self.assertEqual(execution["stream_receipt_sha256"], STREAM)
         self.assertTrue(execution["principal_read_any_exact_rows"])
 
     def test_not_read_on_a_delivered_ledger_is_refused_by_name(self):
@@ -418,9 +420,16 @@ from research.kalshi.frankie_raw_mbo_benchmark.tests.outputs_bundle_fixture impo
     write_bundle,
 )
 
-DELIVERY = "d" * 64
+from research.kalshi.frankie_raw_mbo_benchmark.tests.test_staging_stream_integrity import receipt_pair
+from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import canonical_hash as receipt_hash
+_, DELIVERY_BODY, STREAM_BODY = receipt_pair()
+DELIVERY_BODY['run_id'] = 'run-1'
+DELIVERY_BODY['receipt_sha256'] = receipt_hash(DELIVERY_BODY, omit='receipt_sha256')
+STREAM_BODY['run_id'] = 'run-1'
+STREAM_BODY['receipt_sha256'] = receipt_hash(STREAM_BODY, omit='receipt_sha256')
+DELIVERY = DELIVERY_BODY['receipt_sha256']
 KNOWLEDGE = "e" * 64
-STREAM = "5" * 64
+STREAM = STREAM_BODY['receipt_sha256']
 
 
 def delivered_artifact(**overrides) -> dict:
@@ -431,6 +440,7 @@ def delivered_artifact(**overrides) -> dict:
     """
     body = dict(LoadPrincipalArtifactTest.GOOD)
     body["arm"] = "A_MEMORY"
+    body["run_id"] = "run-1"
     body["evidence_read"] = {name: "READ" for name in (
         "exact_member_ledger", "exact_lifecycle_and_runway_ledger", "legacy_observable_rows",
     )}
@@ -461,6 +471,7 @@ def write_knowledge_gate_inputs(root: Path) -> dict:
 
     delivery = build_knowledge_delivery(arm="A_MEMORY", role="REAL_TIME_FRANKIE")
     written = write_knowledge_delivery(delivery, root)
+    _write_consumption_receipts(root)
     prompt = root / "FRANKIE_SPAWN_PROMPT.md"
     prompt.write_bytes(
         ("# prompt\n" + render_knowledge_block(delivery.receipt)).encode("utf-8")
@@ -849,14 +860,14 @@ class ReadBackCliTest(unittest.TestCase):
         return artifact_path, result_path
 
     def _argv(self, artifact_path, result_path, *extra):
-        return [
+        return _with_consumption_argv([
             "read-back", "--artifact", str(artifact_path), "--result", str(result_path),
             "--outputs-dir", str(self.outputs_dir),
             "--knowledge-receipt", str(self.knowledge["receipt"]),
             "--knowledge-bundle", str(self.knowledge["bundle"]),
             "--prompt", str(self.knowledge["prompt"]),
             *extra,
-        ]
+        ])
 
     def test_read_back_prints_a_summary_and_writes_the_result(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -901,19 +912,9 @@ class ReadBackCliTest(unittest.TestCase):
 
 
 def fixture_delivery_receipt() -> dict:
-    """A FRANKIE_LEDGER_DELIVERY_RECEIPT_V1 that passes the crosswalk's own hash check."""
-    from research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers import RECEIPT_SCHEMA
-    from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
-        canonical_hash,
-    )
-    body = {
-        "schema": RECEIPT_SCHEMA, "run_id": "readback-fixture", "run_prefix": "fixture/prefix",
-        "bucket": "fixture-bucket", "manifest_sha256": "f" * 64,
-        "fetched_at": "2026-09-02T00:00:00Z", "out_dir": "fixture", "ledgers": {}, "objects": {},
-        "all_ledgers_verified": True, "receipt_sha256": "",
-    }
-    body["receipt_sha256"] = canonical_hash(body, omit="receipt_sha256")
-    return body
+    """The actual synthetic delivery witness used by these admission fixtures."""
+    import copy
+    return copy.deepcopy(DELIVERY_BODY)
 
 
 def fixture_knowledge_receipt(sha256: str) -> dict:
@@ -1026,25 +1027,15 @@ class ReadBackReportTest(unittest.TestCase):
                 )
         self.assertIn("knowledge", str(caught.exception))
 
-    def test_a_crosswalk_that_cannot_be_computed_is_non_fatal_and_stated_in_the_report(self):
-        """The receipt file binds to the citation (same sha) and is still not a delivery
-        receipt the crosswalk can read; the findings are the deliverable, so the read-back
-        completes and the report says what happened to the crosswalk."""
+    def test_a_malformed_delivery_cannot_be_downgraded_to_a_report_warning(self):
         with tempfile.TemporaryDirectory() as tmp:
             artifact_path, result_path = self._stage(tmp)
-            broken_path = Path(tmp) / "broken_receipt.json"
-            broken_path.write_text(json.dumps({
-                "schema": "NOT_A_DELIVERY_RECEIPT", "receipt_sha256": self.delivery["receipt_sha256"],
-            }))
-            summary = read_back(
-                artifact_path, result_path=result_path, outputs_dir=self.outputs_dir,
-                delivery_receipt=broken_path, knowledge_receipt=self.knowledge_path,
-            )
-            self.assertTrue(Path(summary["result_path"]).exists())
-            text = Path(summary["report_path"]).read_text()
-        self.assertIn("## Layer crosswalk", text)
-        self.assertIn("could not be computed", text)
-        self.assertIn("NOT_A_DELIVERY_RECEIPT", text)
+            broken_path = Path(tmp) / 'broken_receipt.json'
+            broken_path.write_text(json.dumps({'schema': 'NOT_A_DELIVERY_RECEIPT', 'receipt_sha256': self.delivery['receipt_sha256']}))
+            with self.assertRaises(StagingError):
+                read_back(artifact_path, result_path=result_path, outputs_dir=self.outputs_dir,
+                          delivery_receipt=broken_path, knowledge_receipt=self.knowledge_path)
+            self.assertFalse(result_path.with_name('calculation_result_with_findings.json').exists())
 
     def test_the_cli_accepts_the_receipt_files(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1291,6 +1282,8 @@ class ReadBackHandoffTest(unittest.TestCase):
                  "--knowledge-receipt", str(knowledge["receipt"]),
                  "--knowledge-bundle", str(knowledge["bundle"]),
                  "--prompt", str(knowledge["prompt"]),
+                 "--delivery-receipt", str(knowledge["receipt"].parent / "FRANKIE_LEDGER_DELIVERY_RECEIPT.json"),
+                 "--stream-receipt", str(knowledge["receipt"].parent / "FRANKIE_STREAM_RECEIPT.json"),
                  "--handoff-dir", str(handoff_dir), "--no-report"],
                 capture_output=True, text=True, cwd=str(Path(__file__).resolve().parents[4]),
             )
@@ -1376,7 +1369,7 @@ class CanonicalReadBackSurfaceTest(unittest.TestCase):
             flags,
             {
                 "--artifact", "--result", "--outputs-dir", "--delivery-receipt",
-                "--knowledge-receipt", "--knowledge-bundle", "--prompt",
+                "--knowledge-receipt", "--knowledge-bundle", "--prompt", "--stream-receipt",
             },
         )
         self.assertNotIn("--arm", flags, "the arm is bound off the run, not remembered")
@@ -1636,3 +1629,50 @@ class DefaultKnowledgeReadGateTest(unittest.TestCase):
             with self.assertRaises(StagingError) as caught:
                 self._load(directory, knowledge_use)
         self.assertIn(undelivered, str(caught.exception))
+
+
+# Older tests isolate output, knowledge and handoff behavior. Supply independently
+# constructed synthetic byte witnesses through the real new gate; never mock it.
+_raw_load_principal_artifact = load_principal_artifact
+_raw_read_back = read_back
+_raw_staging_main = staging_main
+
+
+def _write_consumption_receipts(root):
+    root = Path(root)
+    delivery = root/'FRANKIE_LEDGER_DELIVERY_RECEIPT.json'
+    stream = root/'FRANKIE_STREAM_RECEIPT.json'
+    if not delivery.exists(): delivery.write_text(json.dumps(DELIVERY_BODY), encoding='utf-8')
+    if not stream.exists(): stream.write_text(json.dumps(STREAM_BODY), encoding='utf-8')
+    return delivery, stream
+
+
+def load_principal_artifact(path, **kwargs):
+    kwargs.setdefault('delivery_receipt', DELIVERY_BODY)
+    kwargs.setdefault('stream_receipt', STREAM_BODY)
+    return _raw_load_principal_artifact(path, **kwargs)
+
+
+def read_back(path, **kwargs):
+    delivery, stream = _write_consumption_receipts(Path(path).parent)
+    kwargs.setdefault('delivery_receipt', delivery)
+    kwargs.setdefault('stream_receipt', stream)
+    # A pre-delivery fixture must stay pre-delivery.
+    if Path(path).exists() and json.loads(Path(path).read_text()).get('delivery_receipt_sha256') is None:
+        kwargs.pop('delivery_receipt', None)
+        kwargs.pop('stream_receipt', None)
+    return _raw_read_back(path, **kwargs)
+
+
+def _with_consumption_argv(argv):
+    argv = list(argv)
+    if '--artifact' in argv:
+        root = Path(argv[argv.index('--artifact')+1]).parent
+        delivery, stream = _write_consumption_receipts(root)
+        if '--delivery-receipt' not in argv: argv.extend(['--delivery-receipt', str(delivery)])
+        if '--stream-receipt' not in argv: argv.extend(['--stream-receipt', str(stream)])
+    return argv
+
+
+def staging_main(argv):
+    return _raw_staging_main(_with_consumption_argv(argv))

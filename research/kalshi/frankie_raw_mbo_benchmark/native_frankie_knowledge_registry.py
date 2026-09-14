@@ -252,6 +252,8 @@ def build_context_bundle(
     for artifact_id in profile["always_load"]:
         row = by_id[artifact_id]
         raw = _safe_path(root, row["path"]).read_bytes()
+        if len(raw) != row['bytes'] or hashlib.sha256(raw).hexdigest() != row['sha256']:
+            raise KnowledgeRegistryError(f'inline artifact bytes changed before assembly: {artifact_id}')
         chunks.extend(
             [
                 f"\n===== BEGIN KNOWLEDGE {artifact_id} {row['sha256']} =====\n".encode(),

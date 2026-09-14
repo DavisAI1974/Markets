@@ -923,6 +923,20 @@ def write_knowledge_delivery(delivery: KnowledgeDelivery, out_dir: Path | str) -
     return {"bundle": bundle, "receipt": receipt, "pre_call": pre_call}
 
 
+def validate_delivered_knowledge(receipt: Mapping[str, Any], bundle: bytes, *,
+                                 repo_root: Path | str = REPO_ROOT) -> dict[str, Any]:
+    """Bind actual delivered bytes and the entire receipt to the current pinned corpus.
+
+    This verifies availability and identity, not whether an agent understood a file.
+    Rebuilding also checks retrieval files; declaring DELIVERED in a receipt is insufficient.
+    """
+    checked = _require_knowledge_receipt(receipt)
+    expected = build_knowledge_delivery(arm=checked['arm'], role=checked['role'], repo_root=repo_root)
+    if checked != expected.receipt or bundle != expected.model_visible_context:
+        raise KnowledgeDeliveryError('delivered knowledge receipt or bundle differs from pinned corpus')
+    return checked
+
+
 def serialized_principal_input(prompt_bytes: bytes, model_visible_context: bytes) -> bytes:
     """The principal's input as the read gate sees it: the prompt file and the bundle file.
 

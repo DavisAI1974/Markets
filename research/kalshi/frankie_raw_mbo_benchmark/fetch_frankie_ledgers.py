@@ -31,6 +31,7 @@ import datetime as _dt
 import gzip
 import hashlib
 import json
+import re
 import shutil
 import sys
 import urllib.request
@@ -134,6 +135,8 @@ def build_manifest(
     by_name: dict[str, Mapping[str, Any]] = {}
     for row in listing:
         key = str(row["Key"])
+        if PurePosixPath(key).name in by_name:
+            raise DeliveryError('duplicate object basename in run listing')
         by_name[PurePosixPath(key).name] = {"key": key, "content_length": int(row["Size"])}
     expected = _expected_objects(by_name)
     objects: dict[str, dict[str, Any]] = {}
@@ -184,7 +187,39 @@ def load_manifest(path: Path | str) -> dict[str, Any]:
     for key in ("run_id", "run_prefix", "bucket", "expires_at", "objects", "plain_sizes", "plain_sha256"):
         if key not in body:
             raise DeliveryError(f"manifest lacks {key}")
-    return body
+    return validate_manifest(body)
+
+
+def validate_manifest(body: Mapping[str, Any]) -> dict[str, Any]:
+    """Own and validate the complete manifest before opening any download target."""
+    try:
+        body = json.loads(json.dumps(body))
+        if body.get('schema') != MANIFEST_SCHEMA or body.get('manifest_sha256') != canonical_hash(body, omit='manifest_sha256'):
+            raise DeliveryError('manifest fails its schema or manifest_sha256')
+        objects = body['objects']
+        if type(objects) is not dict or set(objects) != set(_expected_objects(objects)):
+            raise DeliveryError('manifest object roster is not exactly the required delivery')
+        if body.get('ledger_files') != LEDGER_FILES:
+            raise DeliveryError('manifest ledger filenames differ')
+        for name, obj in objects.items():
+            if Path(name).name != name or '/' in name or '\\' in name:
+                raise DeliveryError('manifest object name is not a basename')
+            if (not str(obj['key']).startswith(str(body['run_prefix']).rstrip('/') + '/')
+                    or PurePosixPath(obj['key']).name != name
+                    or '..' in PurePosixPath(obj['key']).parts
+                    or not str(obj['url']).startswith('https://')
+                    or type(obj['content_length']) is not int or obj['content_length'] < 0):
+                raise DeliveryError('manifest object identity or length is invalid')
+        for plain in LEDGER_FILES.values():
+            if type(body['plain_sizes'][plain]) is not int or body['plain_sizes'][plain] < 0:
+                raise DeliveryError('manifest plain length invalid')
+            if re.fullmatch('[0-9a-f]{64}', body['plain_sha256'][plain]) is None:
+                raise DeliveryError('manifest plain digest invalid')
+        return body
+    except (KeyError, TypeError, ValueError) as exc:
+        if isinstance(exc, DeliveryError):
+            raise
+        raise DeliveryError('malformed delivery manifest') from exc
 
 
 def redacted_summary(manifest: Mapping[str, Any]) -> str:
@@ -241,6 +276,7 @@ def fetch(
     receipt_path: Path | str | None = None,
 ) -> dict[str, Any]:
     """Download every object, verify, gunzip the ledgers, write the receipt, refuse on any miss."""
+    manifest = validate_manifest(manifest)
     download = downloader or _urllib_download
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -258,7 +294,8 @@ def fetch(
         try:
             download(obj["url"], dest)
         except Exception as exc:  # noqa: BLE001 - the reason travels in the receipt
-            entry["error"] = f"{type(exc).__name__}: {exc}"
+            # Exception messages may contain the presigned URL and its bearer credentials.
+            entry["error"] = type(exc).__name__
             objects[name] = entry
             continue
         observed = dest.stat().st_size
@@ -268,9 +305,8 @@ def fetch(
         # Older manifests carry no object_sha256 block; they verify by length alone, as before.
         expected_sha = (manifest.get("object_sha256") or {}).get(name)
         entry["sha256_expected"] = str(expected_sha).lower() if expected_sha else None
-        entry["sha256_observed"] = None
+        _, entry["sha256_observed"] = _hash_file(dest)
         if entry["status"] == VERIFIED and entry["sha256_expected"] is not None:
-            _, entry["sha256_observed"] = _hash_file(dest)
             if entry["sha256_observed"] != entry["sha256_expected"]:
                 entry["status"] = SHA_MISMATCH
         objects[name] = entry

@@ -32,6 +32,7 @@ one arm, A_MEMORY (D86), nothing to remember:
         --result <run>/calculation_result.json \\
         --outputs-dir <run>/principal_outputs \\
         --delivery-receipt <run>/FRANKIE_LEDGER_DELIVERY_RECEIPT.json \\
+        --stream-receipt <run>/FRANKIE_STREAM_RECEIPT.json \\
         --knowledge-receipt <run>/KNOWLEDGE_RECEIPT.json \
         --knowledge-bundle <run>/KNOWLEDGE_BUNDLE.md \
         --prompt <run>/FRANKIE_SPAWN_PROMPT.md
@@ -41,7 +42,8 @@ It prints a JSON summary naming every hash and path it produced - `result_path`
 `crosswalk_sha256`, `handoff` (ONEWAY_HANDOFF / RT_FIRST_LOCK / RT_CONTEXT_MANIFEST, each
 path and receipt hash), `first_lock` or the stated reason there is none - or `REFUSED: <why>`
 and exit 1, having written nothing. Optional: `--out`, `--handoff-dir`, `--no-report`, and
-the `*-sha256` forms of the two receipts when only the hash is in hand. The knowledge read
+the `*-sha256` forms add independent expected pins; delivered runs still require
+the actual delivery and complete stream receipt files, including terminal accounting. The knowledge read
 gate is wired at `KNOWLEDGE_USE_GATE`; the canonical command supplies the
 exact receipt, knowledge bundle and prompt bytes it validates.
 """
@@ -224,6 +226,38 @@ EXACT_LEDGERS = (
 READ_STATUSES = ("READ", "PARTIAL", "NOT_READ")
 
 
+def _validate_consumption(artifact, delivery, stream, *, expected_run_id=None):
+    """Compare actual stream physical-byte witnesses with verified delivery witnesses."""
+    from research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers import RECEIPT_SCHEMA
+    from research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream import STREAM_RECEIPT_SCHEMA
+    from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import canonical_hash as receipt_hash
+    if any(artifact.get('evidence_read', {}).get(name) != 'READ' for name in EXACT_LEDGERS):
+        raise StagingError('delivered evidence requires READ for every ledger; PARTIAL is incomplete')
+    for value, schema, citation in ((delivery, RECEIPT_SCHEMA, 'delivery_receipt_sha256'),
+                                     (stream, STREAM_RECEIPT_SCHEMA, 'stream_receipt_sha256')):
+        if (not isinstance(value, Mapping) or value.get('schema') != schema
+                or value.get('receipt_sha256') != receipt_hash(value, omit='receipt_sha256')
+                or artifact.get(citation) != value['receipt_sha256']):
+            raise StagingError(f'actual verified {citation} receipt is required')
+    run_id = artifact.get('run_id')
+    if (not isinstance(run_id, str) or not run_id or stream.get('run_id') != run_id
+            or delivery.get('run_id') != run_id
+            or (expected_run_id is not None and run_id != expected_run_id)
+            or stream.get('arm') != artifact.get('arm')):
+        raise StagingError('delivery or stream receipt belongs to another run or arm')
+    if stream.get('complete') is not True or stream.get('withheld_consumed') is not True:
+        raise StagingError('stream must exhaust and terminal withheld rows must be consumed')
+    for name, lane in zip(EXACT_LEDGERS, ('member_ledger', 'lifecycle_ledger', 'legacy_ledger')):
+        delivered = delivery.get('ledgers', {}).get(name, {})
+        consumed = stream.get(lane, {})
+        size, digest = consumed.get('observed_bytes'), consumed.get('observed_sha256')
+        if (delivered.get('status') != 'VERIFIED' or type(size) is not int or size < 0
+                or not isinstance(digest, str) or _SHA256_RE.fullmatch(digest) is None
+                or size != delivered.get('plain_bytes_expected') or size != delivered.get('plain_bytes_observed')
+                or digest != delivered.get('plain_sha256_expected') or digest != delivered.get('plain_sha256_observed')):
+            raise StagingError(f'{name}: consumed bytes do not match verified delivery')
+
+
 def load_principal_artifact(
     path: Path,
     *,
@@ -237,6 +271,9 @@ def load_principal_artifact(
     knowledge_receipt: Mapping[str, Any] | None = None,
     model_visible_context: bytes | None = None,
     serialized_principal_input: bytes | None = None,
+    delivery_receipt: Mapping[str, Any] | None = None,
+    stream_receipt: Mapping[str, Any] | None = None,
+    expected_run_id: str | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     """Read back what the spawn produced, or fail hard.
 
@@ -279,7 +316,8 @@ def load_principal_artifact(
             "and must not be recorded as zero findings"
         )
     try:
-        body = json.loads(path.read_text())
+        artifact_bytes = path.read_bytes()
+        body = json.loads(artifact_bytes)
     except json.JSONDecodeError as exc:
         raise StagingError(f"principal artifact at {path} is not valid JSON: {exc}") from exc
     if not isinstance(body, Mapping):
@@ -398,13 +436,17 @@ def load_principal_artifact(
         outputs_dir=outputs_dir,
         knowledge_receipt_sha256=knowledge_receipt_sha256,
     )
+    if cited_delivery is not None:
+        _validate_consumption(body, delivery_receipt, stream_receipt, expected_run_id=expected_run_id)
+    if path.read_bytes() != artifact_bytes:
+        raise StagingError('principal artifact changed during validation')
 
     execution = {
         "principal": body["principal"],
         "arm": body["arm"],
         "role": body["role"],
         "artifact_path": str(path),
-        "artifact_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "artifact_sha256": hashlib.sha256(artifact_bytes).hexdigest(),
         "evidence_result_hash": expected_evidence_hash,
         "actual_principal_invocation": True,
         "controller_only": False,
@@ -689,6 +731,7 @@ def read_back(
     knowledge_receipt_sha256: str | None = None,
     delivery_receipt_sha256: str | None = None,
     delivery_receipt: Path | str | None = None,
+    stream_receipt: Path | str | None = None,
     knowledge_receipt: Path | str | None = None,
     knowledge_bundle: Path | str | None = None,
     prompt: Path | str | None = None,
@@ -729,6 +772,7 @@ def read_back(
     artifact_path = Path(artifact_path)
     result_path = Path(result_path)
     delivery_body = _load_receipt_file(delivery_receipt, label="delivery receipt")
+    stream_body = _load_receipt_file(stream_receipt, label="stream receipt")
     knowledge_body = _load_receipt_file(knowledge_receipt, label="knowledge receipt")
     model_visible_context = _load_exact_bytes(knowledge_bundle, label="knowledge bundle")
     prompt_bytes = _load_exact_bytes(prompt, label="spawn prompt")
@@ -792,6 +836,9 @@ def read_back(
         knowledge_receipt=knowledge_body,
         model_visible_context=model_visible_context,
         serialized_principal_input=principal_input,
+        delivery_receipt=delivery_body,
+        stream_receipt=stream_body,
+        expected_run_id=result['layers']['identity_receipt'].get('run_id'),
     )
     try:
         updated = NativeCalculationRun.attach_principal_findings_to_result(
@@ -1041,6 +1088,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     rb.add_argument("--knowledge-receipt-sha256", default=None, help="the knowledge-delivery receipt every verdict must cite")
     rb.add_argument("--delivery-receipt-sha256", default=None, help="the ledger-delivery receipt the artifact must cite")
     rb.add_argument("--delivery-receipt", type=Path, default=None, help="FRANKIE_LEDGER_DELIVERY_RECEIPT_V1 file; bound by hash to the artifact's citation and fed to the crosswalk")
+    rb.add_argument('--stream-receipt', type=Path, default=None, help='complete causal stream receipt after drain_withheld; required for delivered runs')
     rb.add_argument("--knowledge-receipt", type=Path, default=None, help="FRANKIE_KNOWLEDGE_DELIVERY_RECEIPT_V1 file; its hash is the one the verdicts must cite, and it feeds the crosswalk")
     rb.add_argument("--knowledge-bundle", type=Path, default=None, help="the exact model-visible KNOWLEDGE_BUNDLE.md delivered to the principal")
     rb.add_argument("--prompt", type=Path, default=None, help="the exact FRANKIE_SPAWN_PROMPT.md delivered beside the knowledge bundle")
@@ -1056,6 +1104,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             knowledge_receipt_sha256=args.knowledge_receipt_sha256,
             delivery_receipt_sha256=args.delivery_receipt_sha256,
             delivery_receipt=args.delivery_receipt,
+            stream_receipt=args.stream_receipt,
             knowledge_receipt=args.knowledge_receipt,
             knowledge_bundle=args.knowledge_bundle,
             prompt=args.prompt,

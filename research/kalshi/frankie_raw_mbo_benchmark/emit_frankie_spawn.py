@@ -39,6 +39,7 @@ from typing import Any, Mapping
 
 from research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers import (
     RECEIPT_SCHEMA as DELIVERY_RECEIPT_SCHEMA,
+    _hash_file,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import (
     SHA256_RE,
@@ -48,6 +49,8 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_key_alias import read_aver
 from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import (
     KnowledgeDeliveryError,
     render_knowledge_block,
+    validate_delivered_knowledge,
+    KNOWLEDGE_BUNDLE_FILENAME,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_layer_crosswalk import (
     CrosswalkError,
@@ -147,11 +150,36 @@ def _load_delivery_receipt(path: Path | str | None) -> dict[str, Any]:
                 "arrive whole and matching the box's PLAIN_SHA256SUMS is not evidence"
             )
         local = entry.get("local_path")
-        if not isinstance(local, str) or not Path(local).exists():
+        if not isinstance(local, str) or not Path(local).is_file():
             raise EmitError(f"delivery receipt: {name} names no local_path that exists ({local!r})")
         if not isinstance(entry.get("plain_sha256_observed"), str) or SHA256_RE.fullmatch(entry["plain_sha256_observed"]) is None:
             raise EmitError(f"delivery receipt: {name} carries no observed plain sha256")
+        current_size, current_sha = _hash_file(Path(local))
+        if (current_sha != entry['plain_sha256_observed']
+                or current_sha != entry.get('plain_sha256_expected')
+                or current_size != entry.get('plain_bytes_observed')
+                or current_size != entry.get('plain_bytes_expected')):
+            raise EmitError(f'delivery receipt: {name} bytes changed since verified fetch')
     return dict(body)
+
+
+def _verify_result_bytes(raw: bytes, receipt: Mapping[str, Any]) -> None:
+    obj = (receipt.get('objects') or {}).get('calculation_result.json')
+    if (not isinstance(obj, Mapping) or obj.get('status') != 'VERIFIED'
+            or obj.get('sha256_observed') != hashlib.sha256(raw).hexdigest()
+            or obj.get('bytes_observed') != len(raw)):
+        raise EmitError('calculation result bytes differ from the verified delivery object')
+    expected = obj.get('sha256_expected')
+    if expected is not None and expected != obj['sha256_observed']:
+        raise EmitError('calculation result differs from box digest')
+
+
+def _verified_knowledge(path: Path | str, receipt: Mapping[str, Any], repo_root: Path) -> dict[str, Any]:
+    try:
+        bundle = Path(path).parent / KNOWLEDGE_BUNDLE_FILENAME
+        return validate_delivered_knowledge(receipt, bundle.read_bytes(), repo_root=repo_root)
+    except (OSError, KnowledgeDeliveryError) as exc:
+        raise EmitError(f'knowledge delivery refused: {exc}') from exc
 
 
 def emit(
@@ -172,12 +200,16 @@ def emit(
     repo_root = Path(repo_root or REPO_ROOT)
     result_path = Path(result_path)
     try:
-        result = json.loads(result_path.read_text(encoding="utf-8"))
+        result_bytes = result_path.read_bytes()
+        result = json.loads(result_bytes)
     except (OSError, json.JSONDecodeError) as exc:
         raise EmitError(f"cannot read the evidence at {result_path}: {exc}") from exc
     receipt = _load_delivery_receipt(delivery_receipt)
+    _verify_result_bytes(result_bytes, receipt)
     stream_receipt_body = _load_json_object(stream_receipt, "stream receipt")
     knowledge_receipt_body = _load_json_object(knowledge_receipt, "knowledge receipt")
+    if knowledge_receipt_body is not None:
+        knowledge_receipt_body = _verified_knowledge(knowledge_receipt, knowledge_receipt_body, repo_root)
     outputs_receipt_body = _load_json_object(outputs_receipt, "outputs receipt")
     sealed_proof_body = _load_json_object(sealed_proof, "sealed-absence proof")
     delivered = {name: receipt["ledgers"][name] for name in EXACT_LEDGERS}
@@ -368,6 +400,10 @@ def emit(
     add("rows whose own clocks are at or before that group's cutoff. There is no random access:")
     add("peek, seek, rewind and indexing raise. Its closing `stream_receipt()` is the proof of")
     add("what you consumed; write it beside your artifact and cite its sha256 below.")
+    add("After iterate() exhausts, call drain_withheld() and account for every sidecar row")
+    add("before declaring agent output complete. Terminal withheld rows remain outside the")
+    add("causal observations at earlier cutoffs; record their exact reasons, never backfill")
+    add("them into an earlier decision. A complete traversal alone is not complete delivery.")
     add("")
     add("**F-20 is answered by that receipt, not by a separate pass.** Its `falsifier_f20` block")
     add("states the verdict: PASS iff `withheld_no_own_clock` and `withheld_close_occasion` both")
@@ -387,6 +423,12 @@ def emit(
     add("  for the section 6 gates; it may be compared AFTER you file against what you computed,")
     add("  never read first, never adopted. A finding that agrees with it is not thereby")
     add("  confirmed and one that disagrees is not thereby wrong; the stream decides.")
+    add("Lifecycle per-section rows are runner-generated outputs, not your own calculations")
+    add("or discoveries. Preserve their provenance and independently compute your results")
+    add("from the lawful source observations; never promote runner conclusions as findings.")
+    add("Do not seed hypotheses from a coordinator's suggestions or from runner conclusions.")
+    add("If a coordinator supplies a pointer, attribute it explicitly in confidence_basis")
+    add("and distinguish that suggestion from the observations you independently verified.")
     add(f"- Verdict `{verdict}`, failed gates {_lookup(result, 'failed_gates') or 'none'}, "
         f"completion `{_lookup(result, 'completion_status')}`")
     add(f"- Source traversed: `{Path(str(_lookup(result, 'slice.sources')[0])).name}`")
