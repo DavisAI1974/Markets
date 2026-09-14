@@ -26,10 +26,14 @@ def _hash(value: object) -> str:
 
 
 def parser_code_hash() -> str:
-    """Digest the local parser and its schema dependency as one versioned bundle."""
-    from . import granite_output_schema
+    """Digest the parser, its schema, and the contract the schema reads, as one bundle.
+
+    granite_contract is included so a contract edit that leaves the prompt bytes
+    unchanged still moves this identity.
+    """
+    from . import granite_contract, granite_output_schema
     return _hash({module.__name__: hashlib.sha256(Path(module.__file__).read_bytes()).hexdigest()
-                  for module in (granite_parser, granite_output_schema)})
+                  for module in (granite_parser, granite_output_schema, granite_contract)})
 
 
 @dataclass(frozen=True)
