@@ -159,9 +159,13 @@ class BuildKnowledgeDeliveryTest(unittest.TestCase):
         self.assertIn(b"FRANKIE_A_MEMORY_SEED_V1", self.delivery.model_visible_context)
 
     def test_the_44_verified_seed_findings_are_delivered_to_a_memory(self) -> None:
-        findings = self.receipt["memory_findings"]
+        delivered = self.receipt["memory_findings"]
+        seed = json.loads((REPO_ROOT / A_MEMORY_SEED_PATH).read_bytes())
+        self.assertEqual(delivered, [row for row in seed["finding_memory"]["findings"] if row["served"]])
+        historical_ids = [f"F-{number:02d}" for number in range(1, 45)]
+        findings = [row for row in delivered if row["id"] in historical_ids]
         self.assertEqual(len(findings), 44)
-        self.assertEqual([row["id"] for row in findings], [f"F-{number:02d}" for number in range(1, 45)])
+        self.assertEqual([row["id"] for row in findings], historical_ids)
         self.assertTrue(all(row["status"] == "VERIFIED" for row in findings))
         self.assertTrue(all(row["served"] is True for row in findings))
 
