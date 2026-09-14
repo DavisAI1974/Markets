@@ -19,7 +19,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
-from contextlib import redirect_stdout
+from contextlib import ExitStack, redirect_stdout
 from pathlib import Path
 
 from research.kalshi.frankie_raw_mbo_benchmark import native_a_arm_launch as launcher
@@ -30,6 +30,8 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream import (
     CAUSAL_CLOCKS_DERIVED_FROM_LEGACY,
     CAUSAL_CLOCKS_ROW_OWN,
     GENESIS_PREVIOUS_RECEIPT_SHA256,
+    LIFECYCLE,
+    LEGACY,
     NOT_ON_THIS_ROW,
     STREAM_RECEIPT_SCHEMA,
     CausalGroupStream,
@@ -105,10 +107,10 @@ def three_groups(root: Path) -> Path:
 
 class DeliversByteIdenticalRowsInOrderTest(unittest.TestCase):
     def test_each_delivered_group_is_the_ledger_line_exactly(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             path = three_groups(Path(tmp))
             lines = path.read_bytes().splitlines(keepends=True)
-            stream = CausalGroupStream(path, run_id="t", arm="A_CLEAN")
+            stream = resources.enter_context(CausalGroupStream(path, run_id="t", arm="A_CLEAN"))
             for expected in lines:
                 delivery = stream.next_group()
                 self.assertEqual(delivery.group, json.loads(expected))
@@ -118,8 +120,8 @@ class DeliversByteIdenticalRowsInOrderTest(unittest.TestCase):
                 stream.next_group()
 
     def test_the_availability_stamp_is_the_rows_own_f_last_receive_clock(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = CausalGroupStream(three_groups(Path(tmp)), run_id="t", arm="A_CLEAN")
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(CausalGroupStream(three_groups(Path(tmp)), run_id="t", arm="A_CLEAN"))
             first = stream.next_group()
             self.assertEqual(first.first_lawful_availability_ns, BASE)
             self.assertEqual(
@@ -129,41 +131,41 @@ class DeliversByteIdenticalRowsInOrderTest(unittest.TestCase):
             self.assertEqual(first.group_index, 0)
 
     def test_iterate_yields_every_group_once_in_order(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = CausalGroupStream(three_groups(Path(tmp)), run_id="t", arm="A_CLEAN")
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(CausalGroupStream(three_groups(Path(tmp)), run_id="t", arm="A_CLEAN"))
             self.assertEqual([d.group_index for d in stream.iterate()], [0, 1, 2])
 
 
 class RefusesDisorderTest(unittest.TestCase):
     def test_a_ledger_whose_receive_clock_moves_backwards_is_refused(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             path = write_ledger(
                 Path(tmp) / "m.jsonl",
                 [member_row(0, BASE), member_row(1, BASE + 4 * NS), member_row(2, BASE + 2 * NS)],
             )
-            stream = CausalGroupStream(path, run_id="t", arm="A_CLEAN")
+            stream = resources.enter_context(CausalGroupStream(path, run_id="t", arm="A_CLEAN"))
             stream.next_group()
             stream.next_group()
             with self.assertRaisesRegex(CausalStreamError, "backwards"):
                 stream.next_group()
 
     def test_a_group_not_closed_by_f_last_is_refused(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             path = write_ledger(Path(tmp) / "m.jsonl", [member_row(0, BASE, f_last=False)])
             with self.assertRaisesRegex(CausalStreamError, "F_LAST"):
-                CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+                resources.enter_context(CausalGroupStream(path, run_id="t", arm="A_CLEAN")).next_group()
 
     def test_a_row_declaring_another_availability_clock_is_refused(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             path = write_ledger(Path(tmp) / "m.jsonl", [member_row(0, BASE, clock="ts_event_ns")])
             with self.assertRaisesRegex(CausalStreamError, "causal_availability_clock"):
-                CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+                resources.enter_context(CausalGroupStream(path, run_id="t", arm="A_CLEAN")).next_group()
 
 
 class NoRandomAccessTest(unittest.TestCase):
     def test_every_way_of_looking_ahead_or_back_raises(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = CausalGroupStream(three_groups(Path(tmp)), run_id="t", arm="A_CLEAN")
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(CausalGroupStream(three_groups(Path(tmp)), run_id="t", arm="A_CLEAN"))
             stream.next_group()
             for attempt in (
                 lambda: stream.peek(),
@@ -179,8 +181,8 @@ class NoRandomAccessTest(unittest.TestCase):
             self.assertEqual(stream.next_group().group_index, 1)
 
     def test_withheld_rows_cannot_be_read_before_the_stream_is_exhausted(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = CausalGroupStream(three_groups(Path(tmp)), run_id="t", arm="A_CLEAN")
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(CausalGroupStream(three_groups(Path(tmp)), run_id="t", arm="A_CLEAN"))
             stream.next_group()
             with self.assertRaisesRegex(CausalStreamError, "exhausted"):
                 stream.drain_withheld()
@@ -200,8 +202,8 @@ class SidecarAttachmentTest(unittest.TestCase):
             {"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE, "clock": "ts_recv_ns"},
             {"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE + 4 * NS, "clock": "ts_recv_ns"},
         ]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), lifecycle=rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), lifecycle=rows))
             first = stream.next_group()
             self.assertEqual([r["recv_ns"] for r in first.lifecycle_rows], [BASE])
             second = stream.next_group()
@@ -214,8 +216,8 @@ class SidecarAttachmentTest(unittest.TestCase):
             {"emitting_section": "mirror", "emitted_on": "GROUP_CLOSE", "member_id": "grp-20211003-0"},
             {"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE, "clock": "ts_recv_ns"},
         ]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), lifecycle=rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), lifecycle=rows))
             deliveries = list(stream.iterate())
             self.assertEqual(sum(len(d.lifecycle_rows) for d in deliveries), 1)
             receipt = stream.stream_receipt()
@@ -236,8 +238,8 @@ class SidecarAttachmentTest(unittest.TestCase):
             {"emitting_section": "lineage", "emitted_on": "STREAM_END", "entered_recv_ns": BASE,
              "exited_recv_ns": None, "status": "CENSORED_STREAM_END", "clock": "ts_recv_ns"},
         ]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), lifecycle=rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), lifecycle=rows))
             deliveries = list(stream.iterate())
             self.assertEqual(sum(len(d.lifecycle_rows) for d in deliveries), 0)
             receipt = stream.stream_receipt()
@@ -249,8 +251,8 @@ class SidecarAttachmentTest(unittest.TestCase):
             {"emitting_section": "mirror", "emitted_on": "GROUP_CLOSE", "member_id": "grp-20211003-0"},
             {"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE, "clock": "ts_recv_ns"},
         ]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), lifecycle=rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), lifecycle=rows))
             list(stream.iterate())
             f20 = stream.stream_receipt()["falsifier_f20"]
             self.assertEqual(f20["verdict"], "FAIL")
@@ -259,8 +261,8 @@ class SidecarAttachmentTest(unittest.TestCase):
             self.assertEqual(f20["withheld_close_occasion_total"], 0)
 
     def test_f20_verdict_is_not_pass_when_no_lifecycle_ledger_was_supplied(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), lifecycle=None)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), lifecycle=None))
             list(stream.iterate())
             f20 = stream.stream_receipt()["falsifier_f20"]
             self.assertEqual(f20["verdict"], "NO_LIFECYCLE_LEDGER")
@@ -269,8 +271,8 @@ class SidecarAttachmentTest(unittest.TestCase):
 
     def test_f20_verdict_is_not_pass_on_a_stream_cut_short(self):
         rows = [{"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE, "clock": "ts_recv_ns"}]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), lifecycle=rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), lifecycle=rows))
             stream.next_group()  # one group, then close without exhausting
             receipt = stream.stream_receipt()
             self.assertFalse(receipt["complete"])
@@ -282,8 +284,8 @@ class SidecarAttachmentTest(unittest.TestCase):
             {"emitting_section": "lineage", "emitted_on": "STREAM_END", "entered_recv_ns": BASE,
              "exited_recv_ns": None, "status": "CENSORED_STREAM_END", "clock": "ts_recv_ns"},
         ]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), lifecycle=rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), lifecycle=rows))
             list(stream.iterate())
             f20 = stream.stream_receipt()["falsifier_f20"]
             self.assertEqual(f20["verdict"], "FAIL")
@@ -292,8 +294,8 @@ class SidecarAttachmentTest(unittest.TestCase):
 
     def test_a_lifecycle_row_beyond_the_last_cutoff_is_withheld_and_counted(self):
         rows = [{"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE + 40 * NS, "clock": "ts_recv_ns"}]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), lifecycle=rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), lifecycle=rows))
             list(stream.iterate())
             receipt = stream.stream_receipt()
             self.assertEqual(receipt["lifecycle_ledger"]["withheld_beyond_last_cutoff"], 1)
@@ -305,8 +307,8 @@ class SidecarAttachmentTest(unittest.TestCase):
             {"emitting_section": "flow_substrate", "emitted_on": "SECOND_COMPLETE", "second": second, "clock": "ts_recv_ns"},
             {"emitting_section": "flow_substrate", "emitted_on": "SECOND_COMPLETE", "second": second + 7, "clock": "ts_recv_ns"},
         ]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), lifecycle=rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), lifecycle=rows))
             first = stream.next_group()      # cutoff BASE, inside `second`: not yet ended
             self.assertEqual(first.lifecycle_rows, ())
             second_delivery = stream.next_group()   # cutoff BASE + 4s: `second` ended, second+7 has not
@@ -317,8 +319,8 @@ class SidecarAttachmentTest(unittest.TestCase):
     def test_a_candidate_is_lawful_at_its_own_available_second(self):
         rows = [{"emitting_section": "candidate", "emitted_on": "CANDIDATE_LAWFUL",
                  "event_second": BASE // NS, "available_second": BASE // NS + 4}]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), lifecycle=rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), lifecycle=rows))
             first = stream.next_group()
             self.assertEqual(first.lifecycle_rows, ())
             second = stream.next_group()
@@ -330,8 +332,8 @@ class SidecarAttachmentTest(unittest.TestCase):
             {"ts_recv": (BASE + 4 * NS) / 1e9, "action": "T", "census_view": "LEGACY_CONTROL"},
             {"ts_recv": (BASE + 9 * NS) / 1e9, "action": "C", "census_view": "LEGACY_CONTROL"},
         ]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), legacy=legacy)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), legacy=legacy))
             deliveries = list(stream.iterate())
             self.assertEqual([[r["action"] for r in d.legacy_rows] for d in deliveries], [["A"], ["T"], []])
             receipt = stream.stream_receipt()
@@ -395,8 +397,8 @@ class EmittedAtRecvNsResolvesFirstTest(unittest.TestCase):
             {"emitting_section": "mirror", "emitted_on": "STREAM_END", "member_id": "grp-2",
              "emitted_at_recv_ns": BASE + 8 * NS},
         ]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), rows))
             deliveries = list(stream.iterate())
             self.assertEqual([len(d.lifecycle_rows) for d in deliveries], [1, 0, 1])
             life = stream.stream_receipt()["lifecycle_ledger"]
@@ -410,8 +412,8 @@ class EmittedAtRecvNsResolvesFirstTest(unittest.TestCase):
             {"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "recv_ns": BASE + 4 * NS,
              "clock": "ts_recv_ns", "emitted_at_recv_ns": BASE + 4 * NS},
         ]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), rows))
             list(stream.iterate())
             resolution = stream.stream_receipt()["lifecycle_ledger"]["availability_resolution"]
             self.assertEqual(resolution["EMITTED_AT_RECV_NS"], 1)
@@ -419,8 +421,8 @@ class EmittedAtRecvNsResolvesFirstTest(unittest.TestCase):
 
     def test_a_stamp_beyond_the_last_cutoff_is_withheld_and_counted_like_any_clock(self):
         rows = [{"emitting_section": "ladder", "emitted_on": "GROUP_CLOSE", "emitted_at_recv_ns": BASE + 40 * NS}]
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = self._stream(Path(tmp), rows)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(self._stream(Path(tmp), rows))
             list(stream.iterate())
             life = stream.stream_receipt()["lifecycle_ledger"]
             self.assertEqual(life["withheld_beyond_last_cutoff"], 1)
@@ -432,8 +434,8 @@ class DeliveryReceiptTest(unittest.TestCase):
 
     def test_every_delivery_carries_a_validated_registry_receipt_chained_to_the_previous(self):
         registry = load_registry()
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = CausalGroupStream(three_groups(Path(tmp)), run_id="run-1", arm="A_CLEAN", registry=registry)
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(CausalGroupStream(three_groups(Path(tmp)), run_id="run-1", arm="A_CLEAN", registry=registry))
             previous = GENESIS_PREVIOUS_RECEIPT_SHA256
             for delivery in stream.iterate():
                 receipt = delivery.receipt
@@ -449,19 +451,19 @@ class DeliveryReceiptTest(unittest.TestCase):
             self.assertEqual(stream.stream_receipt()["last_delivery_receipt_sha256"], previous)
 
     def test_the_group_hash_is_over_the_bytes_actually_delivered(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             path = three_groups(Path(tmp))
             first_line = path.read_bytes().splitlines(keepends=True)[0]
-            delivery = CausalGroupStream(path, run_id="r", arm="A_CLEAN").next_group()
+            delivery = resources.enter_context(CausalGroupStream(path, run_id="r", arm="A_CLEAN")).next_group()
             self.assertEqual(delivery.group_sha256, hashlib.sha256(first_line).hexdigest())
             self.assertEqual(delivery.bytes_delivered, len(first_line))
 
 
 class StreamReceiptTest(unittest.TestCase):
     def test_the_receipt_counts_groups_bytes_hash_and_ordered_cutoffs(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             path = three_groups(Path(tmp))
-            stream = CausalGroupStream(path, run_id="r", arm="A_CLEAN")
+            stream = resources.enter_context(CausalGroupStream(path, run_id="r", arm="A_CLEAN"))
             list(stream.iterate())
             receipt = stream.stream_receipt()
             self.assertEqual(receipt["schema"], STREAM_RECEIPT_SCHEMA)
@@ -474,8 +476,8 @@ class StreamReceiptTest(unittest.TestCase):
             self.assertEqual(receipt["receipt_sha256"], canonical_hash(receipt, omit="receipt_sha256"))
 
     def test_a_receipt_taken_before_exhaustion_says_so(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            stream = CausalGroupStream(three_groups(Path(tmp)), run_id="r", arm="A_CLEAN")
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            stream = resources.enter_context(CausalGroupStream(three_groups(Path(tmp)), run_id="r", arm="A_CLEAN"))
             stream.next_group()
             receipt = stream.stream_receipt()
             self.assertFalse(receipt["complete"])
@@ -626,7 +628,7 @@ class RealLedgersStreamTest(unittest.TestCase):
 
 class CommandLineTest(unittest.TestCase):
     def test_the_module_prints_the_stream_receipt_over_a_whole_ledger(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             path = three_groups(Path(tmp))
             out = io.StringIO()
             with redirect_stdout(out):
@@ -637,12 +639,12 @@ class CommandLineTest(unittest.TestCase):
             self.assertTrue(receipt["complete"])
 
     def test_a_gzipped_member_ledger_is_refused_rather_than_read_as_text(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             path = Path(tmp) / "m.jsonl.gz"
             with gzip.open(path, "wb") as handle:
                 handle.write(sink_line(member_row(0, BASE)))
             with self.assertRaisesRegex(CausalStreamError, "gunzip"):
-                CausalGroupStream(path, run_id="r", arm="A_CLEAN").next_group()
+                resources.enter_context(CausalGroupStream(path, run_id="r", arm="A_CLEAN")).next_group()
 
 
 class CausalClocksOnDeliveryTest(unittest.TestCase):
@@ -658,9 +660,9 @@ class CausalClocksOnDeliveryTest(unittest.TestCase):
         return row
 
     def test_a_row_carrying_its_own_causal_clocks_is_delivered_as_row_own(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             path = write_ledger(Path(tmp) / "m.jsonl", [self._row_with_causal_clocks(0, BASE)])
-            delivery = CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+            delivery = resources.enter_context(CausalGroupStream(path, run_id="t", arm="A_CLEAN")).next_group()
             self.assertEqual(delivery.causal_clocks_basis, CAUSAL_CLOCKS_ROW_OWN)
             self.assertEqual(delivery.causal_clocks, delivery.group["causal_clocks"])
             self.assertEqual(set(delivery.causal_clocks), set(CAUSAL_CLOCK_LAYER_IDS))
@@ -669,8 +671,8 @@ class CausalClocksOnDeliveryTest(unittest.TestCase):
         """The delivered Sunday ledger predates the field. The stream derives what the legacy
         five-field object can support and declares the rest absent, so the ledger stays
         deliverable and the crosswalk can still find the clocks by name."""
-        with tempfile.TemporaryDirectory() as tmp:
-            delivery = CausalGroupStream(three_groups(Path(tmp)), run_id="t", arm="A_CLEAN").next_group()
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            delivery = resources.enter_context(CausalGroupStream(three_groups(Path(tmp)), run_id="t", arm="A_CLEAN")).next_group()
             self.assertEqual(delivery.causal_clocks_basis, CAUSAL_CLOCKS_DERIVED_FROM_LEGACY)
             clocks = delivery.causal_clocks
             self.assertEqual(set(clocks), set(CAUSAL_CLOCK_LAYER_IDS))
@@ -686,35 +688,35 @@ class CausalClocksOnDeliveryTest(unittest.TestCase):
             self.assertEqual(delivery.causal_clock_chain["model_evaluation_ns"], BASE)
 
     def test_a_row_with_a_partial_causal_clocks_object_is_refused_not_patched(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             row = member_row(0, BASE)
             row["causal_clocks"] = {CLOCK_EVENT_TIME: {"clock": EVENT_CLOCK}}
             path = write_ledger(Path(tmp) / "m.jsonl", [row])
             with self.assertRaisesRegex(CausalStreamError, "causal_clocks"):
-                CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+                resources.enter_context(CausalGroupStream(path, run_id="t", arm="A_CLEAN")).next_group()
 
     def test_a_disordered_row_own_object_is_refused_not_delivered(self):
         """A row whose feature clock precedes its event_known_by is not a row the stream
         can hand over as causal, whatever its five-field `clocks` object says."""
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             row = self._row_with_causal_clocks(0, BASE)
             row["causal_clocks"]["clock_feature_availability"]["value_ns"] = BASE - 1
             path = write_ledger(Path(tmp) / "m.jsonl", [row])
             with self.assertRaisesRegex(CausalStreamError, "clock_event_known_by"):
-                CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+                resources.enter_context(CausalGroupStream(path, run_id="t", arm="A_CLEAN")).next_group()
 
     def test_the_delivered_chain_is_checked_and_reported_on_every_delivery(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             path = write_ledger(Path(tmp) / "m.jsonl", [self._row_with_causal_clocks(0, BASE)])
-            delivery = CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+            delivery = resources.enter_context(CausalGroupStream(path, run_id="t", arm="A_CLEAN")).next_group()
             self.assertEqual(delivery.causal_clock_chain["event_known_by_ns"], BASE)
             self.assertEqual(delivery.causal_clock_chain["feature_availability_ns"], BASE)
             self.assertIsNone(delivery.causal_clock_chain["model_evaluation_ns"])
 
     def test_the_registry_receipt_still_carries_exactly_four_clock_keys(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             path = write_ledger(Path(tmp) / "m.jsonl", [self._row_with_causal_clocks(0, BASE)])
-            delivery = CausalGroupStream(path, run_id="t", arm="A_CLEAN").next_group()
+            delivery = resources.enter_context(CausalGroupStream(path, run_id="t", arm="A_CLEAN")).next_group()
             self.assertEqual(
                 set(delivery.receipt["clocks"]),
                 {"event_time_ns", "receive_time_ns", "availability_time_ns", "decision_time_ns"},
@@ -722,15 +724,127 @@ class CausalClocksOnDeliveryTest(unittest.TestCase):
             self.assertTrue(delivery.gate["all_causal_layers_delivered"])
 
     def test_the_stream_receipt_declares_the_carrier_and_counts_both_bases(self):
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
             rows = [self._row_with_causal_clocks(0, BASE), member_row(1, BASE + 4 * NS)]
-            stream = CausalGroupStream(write_ledger(Path(tmp) / "m.jsonl", rows), run_id="t", arm="A_CLEAN")
+            stream = resources.enter_context(CausalGroupStream(write_ledger(Path(tmp) / "m.jsonl", rows), run_id="t", arm="A_CLEAN"))
             list(stream.iterate())
             declared = stream.stream_receipt()["causal_clock_layers"]
             self.assertEqual(declared["carrier"], "member.causal_clocks")
             self.assertEqual(declared["layer_ids"], list(CAUSAL_CLOCK_LAYER_IDS))
             self.assertEqual(declared["groups_with_row_own"], 1)
             self.assertEqual(declared["groups_with_derived_from_legacy_clocks"], 1)
+
+
+
+class AuditIntegrityRegressionTest(unittest.TestCase):
+    def test_duplicate_and_skipped_group_indices_refuse_without_changing_source(self):
+        for indices in ((0,0),(0,2),(1,2)):
+            with self.subTest(indices=indices), tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+                path=write_ledger(Path(tmp)/'member.jsonl',[member_row(i,BASE+j*NS) for j,i in enumerate(indices)])
+                before=path.read_bytes()
+                with CausalGroupStream(path,run_id='audit',arm='A_CLEAN') as stream:
+                    with self.assertRaisesRegex(CausalStreamError,'group_index'):
+                        list(stream.iterate())
+                    self.assertFalse(stream.stream_receipt()['complete'])
+                self.assertEqual(path.read_bytes(),before)
+
+    def test_future_head_does_not_hide_lawful_sidecar_or_leak_future_rows(self):
+        for kind in (LIFECYCLE, LEGACY):
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                member = three_groups(root)
+                times = [BASE + 100 * NS, BASE + 4 * NS, BASE, BASE]
+                rows = [{"id": i, **({"emitted_at_recv_ns": t} if kind == LIFECYCLE else {"ts_recv": t / NS})}
+                        for i, t in enumerate(times)]
+                sidecar = write_ledger(root / "sidecar.jsonl", rows)
+                before = sidecar.read_bytes()
+                with CausalGroupStream(member, sidecar if kind == LIFECYCLE else None,
+                                      sidecar if kind == LEGACY else None, run_id="audit", arm="A_CLEAN") as stream:
+                    deliveries = list(stream.iterate())
+                    attached = [getattr(d, kind + "_rows") for d in deliveries]
+                    self.assertEqual([[r["id"] for r in group] for group in attached], [[2, 3], [1], []])
+                    withheld = stream.drain_withheld()[kind]
+                    self.assertEqual([r["row"]["id"] for r in withheld], [0])
+                    receipt = stream.stream_receipt()[kind + "_ledger"]
+                    self.assertEqual(receipt["rows_read"], 4)
+                    self.assertEqual(receipt["rows_attached"], 3)
+                    self.assertEqual(receipt["withheld_beyond_last_cutoff"], 1)
+                    self.assertTrue(receipt["retention_identity_holds"])
+                self.assertEqual(sidecar.read_bytes(), before)
+
+    def test_real_producer_disordered_legacy_rows_are_all_accounted(self):
+        from .test_native_layer_crosswalk import honest_gate_fixture
+        fixture = honest_gate_fixture()
+        receipt = fixture["stream_receipt"]
+        self.assertTrue(receipt["complete"])
+        for kind in ("member_ledger", "lifecycle_ledger", "legacy_ledger"):
+            ledger = receipt[kind]
+            path = Path(ledger["path"])
+            self.assertEqual(ledger["observed_sha256"], hashlib.sha256(path.read_bytes()).hexdigest())
+            self.assertEqual(ledger["observed_bytes"], path.stat().st_size)
+            if kind != "member_ledger":
+                self.assertTrue(ledger["retention_identity_holds"])
+                self.assertEqual(ledger["pending_unplaced"], 0)
+
+    def test_sidecar_index_keeps_integer_nanosecond_precision_above_sqlite_range(self):
+        from ..native_causal_stream import _Sidecar
+        with tempfile.TemporaryDirectory() as tmp:
+            clock = 2 ** 80
+            rows = [{"emitted_at_recv_ns": clock + 1, "id": "future"},
+                    {"emitted_at_recv_ns": clock, "id": "now"}]
+            path = write_ledger(Path(tmp) / "life.jsonl", rows)
+            sidecar = _Sidecar(path, kind=LIFECYCLE)
+            try:
+                self.assertEqual([row["id"] for _, row in sidecar.take_lawful(clock, None)], ["now"])
+                self.assertEqual([row["id"] for _, row in sidecar.take_lawful(clock + 1, clock)], ["future"])
+                self.assertEqual(sidecar.receipt()["pending_unplaced"], 0)
+            finally:
+                sidecar.release()
+
+    def test_nonfinite_legacy_head_refuses_before_delivery(self):
+        for clock in (float("nan"), float("inf"), float("-inf")):
+            with self.subTest(clock=clock), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                member = three_groups(root)
+                legacy = root / "legacy.jsonl"
+                legacy.write_bytes((json.dumps({"ts_recv": clock}) + "\n" + json.dumps({"ts_recv": BASE / NS}) + "\n").encode())
+                before = legacy.read_bytes()
+                with self.assertRaisesRegex(CausalStreamError, "sidecar availability"):
+                    with CausalGroupStream(member, None, legacy, run_id="audit", arm="A_CLEAN"):
+                        self.fail("nonfinite clocks must be refused before delivery")
+                self.assertEqual(legacy.read_bytes(), before)
+
+    def test_physical_hashes_include_blank_lines_and_withheld_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            member = three_groups(root)
+            member.write_bytes(b"\n" + member.read_bytes() + b" \n")
+            life = write_ledger(root / "life.jsonl", [{"emitted_at_recv_ns": BASE}, {"emitted_at_recv_ns": BASE + 100 * NS}])
+            life.write_bytes(b"\n" + life.read_bytes())
+            legacy = write_ledger(root / "legacy.jsonl", [{"ts_recv": BASE / NS}, {"unknown": "retained"}])
+            with CausalGroupStream(member, life, legacy, run_id="audit", arm="A_CLEAN") as stream:
+                list(stream.iterate())
+                before = stream.stream_receipt()
+                self.assertFalse(before["withheld_consumed"])
+                withheld = stream.drain_withheld()
+                self.assertEqual(len(withheld[LIFECYCLE]), 1)
+                self.assertEqual(len(withheld[LEGACY]), 1)
+                receipt = stream.stream_receipt()
+                self.assertTrue(receipt["complete"])
+                self.assertTrue(receipt["withheld_consumed"])
+                for key, path in (("member_ledger", member), ("lifecycle_ledger", life), ("legacy_ledger", legacy)):
+                    self.assertEqual(receipt[key]["observed_bytes"], len(path.read_bytes()))
+                    self.assertEqual(receipt[key]["observed_sha256"], hashlib.sha256(path.read_bytes()).hexdigest())
+
+    def test_partial_close_releases_all_handles_without_claiming_completion(self):
+        with tempfile.TemporaryDirectory() as tmp, ExitStack() as resources:
+            root=Path(tmp);member=three_groups(root)
+            sidecar=write_ledger(root/'sidecar.jsonl',[{'emitted_at_recv_ns':BASE+100*NS}])
+            with CausalGroupStream(member,sidecar,run_id='audit',arm='A_CLEAN') as stream:
+                stream.next_group()
+            self.assertTrue(stream._member.closed)
+            self.assertIsNone(stream._lifecycle._handle)
+            self.assertFalse(stream.stream_receipt()['complete'])
 
 
 if __name__ == "__main__":

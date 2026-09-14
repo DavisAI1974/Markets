@@ -61,9 +61,13 @@ fact about that ledger as written and is reported rather than hidden:
 
 A legacy row carries `ts_recv` in float SECONDS, as `_legacy_control_row` wrote it
 (`msg.ts_recv_ns / 1e9`), so it is compared in the same arithmetic: attached when
-`ts_recv <= cutoff_ns / 1e9`. Division by 1e9 is monotone, so the ledger's own ordering is
-preserved exactly; two rows closer than float resolution (~100 ns at this epoch) are not
-separable by the row's own clock, and that is a property of the row, stated here.
+`ts_recv <= cutoff_ns / 1e9`. Two rows closer than float resolution (~100 ns at this epoch)
+are not separable by the row's own clock, and that is a property of the row, stated here.
+Physical sidecar emission order can differ from availability order. A private disk index
+selects every lawful row at each cutoff, preserving original source order within that
+delivery and retaining future rows. It never changes source files or row bytes. Full-file
+physical hashes include blank lines and withheld rows; the receipt separately records
+whether the caller collected the terminal withheld rows.
 
 **Nothing withheld is dropped.** Every sidecar row read is attached, or withheld under a
 named reason and counted, and the stream receipt proves `read == attached + withheld +
@@ -82,6 +86,9 @@ handed over, not a per-field extraction, and says so.
 from __future__ import annotations
 
 import argparse
+import math
+import sqlite3
+import tempfile
 import hashlib
 import json
 import sys
@@ -256,18 +263,26 @@ def _open_jsonl(path: Path):
 
 
 class _Sidecar:
-    """A forward-only reader over a lifecycle or legacy ledger with one pending row.
+    """Disk-indexed lawful delivery; source files and every row's bytes stay unchanged.
 
-    Head-of-line: the file is in emission order, so a row whose availability is beyond the
-    current cutoff blocks the rows behind it until a later group's cutoff reaches it. Rows
-    that cannot be placed on the clock are withheld under a named reason and counted.
+    Physical emission order need not be availability order. The private SQLite queue
+    indexes lifecycle clocks as arbitrary-precision integer nanoseconds and legacy
+    clocks as finite float seconds, using precisely the existing clock comparison.
+    Queries select only lawful rows, then preserve source ordinal within each delivery.
+    Future rows remain on disk; unknown clocks remain explicitly withheld. Index loading
+    is operator-side validation, never principal visibility. SQLite cache and sort memory
+    are bounded; no queued-row limit or numeric timestamp coercion is imposed.
     """
 
     def __init__(self, path: Path | None, *, kind: str) -> None:
         self.kind = kind
         self.path = path
         self._handle = _open_jsonl(path) if path is not None else None
-        self._pending: tuple[bytes, dict[str, Any]] | None = None
+        self._pending_count = 0
+        self._queue = None
+        self._queue_dir = None
+        self.observed_bytes = 0
+        self._observed_digest = hashlib.sha256()
         self.rows_read = 0
         self.rows_attached = 0
         self.bytes_attached = 0
@@ -280,12 +295,85 @@ class _Sidecar:
         self.placed_by_stamp = 0
         self.placed_by_rule: dict[str, int] = {}
         self.exhausted = path is None
+        try:
+            self._index_source()
+        except BaseException:
+            self.release()
+            raise
+
+    def _index_source(self) -> None:
+        if self._handle is None:
+            return
+        self._queue_dir = tempfile.TemporaryDirectory(prefix="frankie-sidecar-")
+        self._queue = sqlite3.connect(str(Path(self._queue_dir.name) / "queue.sqlite"))
+        convert = int if self.kind == LIFECYCLE else float
+
+        def compare(left: str, right: str) -> int:
+            a, b = convert(left), convert(right)
+            return (a > b) - (a < b)
+
+        self._queue.create_collation("availability_clock", compare)
+        self._queue.execute("PRAGMA cache_size=-2048")
+        self._queue.execute("PRAGMA temp_store=FILE")
+        self._queue.execute("CREATE TABLE pending (ordinal INTEGER PRIMARY KEY, available TEXT COLLATE availability_clock, raw BLOB NOT NULL)")
+        self._queue.execute("CREATE INDEX pending_available ON pending(available)")
+        while True:
+            item = self._read_next()
+            if item is None:
+                break
+            line, row = item
+            if self.kind == LIFECYCLE:
+                _, available = lifecycle_availability(row)
+            else:
+                value = row.get("ts_recv")
+                available = (float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None)
+            if available is not None and isinstance(available, float) and not math.isfinite(available):
+                raise CausalStreamError(f"sidecar availability is nonfinite at {self.path}:{self.rows_read}")
+            self._queue.execute("INSERT INTO pending VALUES (?, ?, ?)",
+                                (self.rows_read, None if available is None else str(available), line))
+            self._pending_count += 1
+        self._queue.commit()
+
+    def _items(self, cutoff_ns: int | None = None):
+        if self._queue is None:
+            return
+        if cutoff_ns is None:
+            cursor = self._queue.execute("SELECT ordinal, raw FROM pending ORDER BY ordinal")
+        else:
+            cutoff = str(cutoff_ns if self.kind == LIFECYCLE else cutoff_ns / 1e9)
+            # INDEXED BY prevents a full source-order scan for a small lawful prefix.
+            cursor = self._queue.execute(
+                "SELECT ordinal, raw FROM pending INDEXED BY pending_available "
+                "WHERE available IS NULL OR available <= ? COLLATE availability_clock ORDER BY ordinal", (cutoff,))
+        try:
+            for ordinal, line in cursor:
+                yield ordinal, line, json.loads(line)
+        finally:
+            cursor.close()
+
+    def _placed(self, ordinal: int) -> None:
+        self._queue.execute("DELETE FROM pending WHERE ordinal = ?", (ordinal,))
+        self._pending_count -= 1
+
+    def release(self) -> None:
+        """Release resources without claiming unplaced rows were delivered or withheld."""
+        if self._handle is not None:
+            self._handle.close()
+            self._handle = None
+        if self._queue is not None:
+            self._queue.close()
+            self._queue = None
+        if self._queue_dir is not None:
+            self._queue_dir.cleanup()
+            self._queue_dir = None
 
     def _read_next(self) -> tuple[bytes, dict[str, Any]] | None:
         if self._handle is None:
             return None
         while True:
             line = self._handle.readline()
+            self.observed_bytes += len(line)
+            self._observed_digest.update(line)
             if not line:
                 self._handle.close()
                 self._handle = None
@@ -301,12 +389,8 @@ class _Sidecar:
 
     def take_lawful(self, cutoff_ns: int, previous_cutoff_ns: int | None) -> list[tuple[bytes, dict[str, Any]]]:
         taken: list[tuple[bytes, dict[str, Any]]] = []
-        while True:
-            item = self._pending if self._pending is not None else self._read_next()
-            self._pending = None
-            if item is None:
-                return taken
-            line, row = item
+        for ordinal, line, row in self._items(cutoff_ns):
+            self._placed(ordinal)
             if self.kind == LIFECYCLE:
                 rule, available = lifecycle_availability(row)
                 section = str(row.get("emitting_section"))
@@ -331,8 +415,7 @@ class _Sidecar:
                 lawful = verdict
                 late = previous_cutoff_ns is not None and _legacy_lawful(row, previous_cutoff_ns) is True
             if not lawful:
-                self._pending = (line, row)
-                return taken
+                raise CausalStreamError("sidecar availability index selected an unlawful row")
             if late:
                 self.late_arrivals += 1
             if rule == "EMITTED_AT_RECV_NS":
@@ -342,19 +425,14 @@ class _Sidecar:
             self.rows_attached += 1
             self.bytes_attached += len(line)
             taken.append((line, row))
+        if self._queue is not None:
+            self._queue.commit()
+        return taken
 
     def close(self) -> None:
         """Account for everything not yet placed. Called once the member stream is done."""
-        if self._pending is not None:
-            line, row = self._pending
-            self._pending = None
-            self.withheld_beyond_last_cutoff += 1
-            self._withhold(line, row, "BEYOND_LAST_CUTOFF", "availability after the last delivered cutoff")
-        while True:
-            item = self._read_next()
-            if item is None:
-                break
-            line, row = item
+        for ordinal, line, row in self._items():
+            self._placed(ordinal)
             if self.kind == LIFECYCLE:
                 rule, _available = lifecycle_availability(row)
                 section = str(row.get("emitting_section"))
@@ -373,9 +451,7 @@ class _Sidecar:
                 continue
             self.withheld_beyond_last_cutoff += 1
             self._withhold(line, row, "BEYOND_LAST_CUTOFF", "availability after the last delivered cutoff")
-        if self._handle is not None:
-            self._handle.close()
-            self._handle = None
+        self.release()
 
     def receipt(self) -> dict[str, Any]:
         withheld_total = (
@@ -383,11 +459,13 @@ class _Sidecar:
             + sum(self.withheld_close_occasion.values())
             + self.withheld_beyond_last_cutoff
         )
-        pending = 1 if self._pending is not None else 0
+        pending = self._pending_count
         return {
             "path": None if self.path is None else str(self.path),
             "supplied": self.path is not None,
             "exhausted": self.exhausted,
+            "observed_bytes": self.observed_bytes,
+            "observed_sha256": self._observed_digest.hexdigest(),
             "rows_read": self.rows_read,
             "rows_attached": self.rows_attached,
             "bytes_attached": self.bytes_attached,
@@ -397,6 +475,8 @@ class _Sidecar:
             "withheld_beyond_last_cutoff": self.withheld_beyond_last_cutoff,
             "withheld_total": withheld_total,
             "pending_unplaced": pending,
+            "delivery_order": "LAWFUL_CUTOFF_THEN_SOURCE_ORDINAL",
+            "availability_index": "EXACT_INTEGER_NS" if self.kind == LIFECYCLE else "EXISTING_FLOAT_SECONDS",
             "retention_identity_holds": self.rows_read == self.rows_attached + withheld_total + pending,
             # F-20: attached rows by how they were placed. A fresh ledger reads every row under
             # the stamp and an empty fallback; a pre-stamp ledger reads the reverse, visibly.
@@ -431,8 +511,16 @@ class CausalGroupStream:
         self._layer_ids_by_group = self._causal_layers_for_arm()
         self.member_path = Path(member_ledger_path)
         self._member = _open_jsonl(self.member_path)
-        self._lifecycle = _Sidecar(None if lifecycle_ledger_path is None else Path(lifecycle_ledger_path), kind=LIFECYCLE)
-        self._legacy = _Sidecar(None if legacy_ledger_path is None else Path(legacy_ledger_path), kind=LEGACY)
+        self._lifecycle = _Sidecar(None, kind=LIFECYCLE)
+        self._legacy = _Sidecar(None, kind=LEGACY)
+        try:
+            self._lifecycle = _Sidecar(None if lifecycle_ledger_path is None else Path(lifecycle_ledger_path), kind=LIFECYCLE)
+            self._legacy = _Sidecar(None if legacy_ledger_path is None else Path(legacy_ledger_path), kind=LEGACY)
+        except BaseException:
+            self._member.close()
+            self._lifecycle.release()
+            self._legacy.release()
+            raise
         self._last_recv_ns: int | None = None
         self._last_cutoff_ns: int | None = None
         self._previous_receipt_sha256 = GENESIS_PREVIOUS_RECEIPT_SHA256
@@ -440,6 +528,9 @@ class CausalGroupStream:
         self._groups = 0
         self._bytes = 0
         self._digest = hashlib.sha256()
+        self._member_observed_bytes = 0
+        self._member_observed_digest = hashlib.sha256()
+        self._withheld_consumed = False
         self._member_bytes = 0
         self._member_digest = hashlib.sha256()
         self._exhausted = False
@@ -491,27 +582,53 @@ class CausalGroupStream:
     def _read_member(self) -> tuple[bytes, dict[str, Any]] | None:
         while True:
             line = self._member.readline()
+            self._member_observed_bytes += len(line)
+            self._member_observed_digest.update(line)
             if not line:
                 return None
             if line.strip():
                 return line, json.loads(line)
 
+    def close(self) -> None:
+        """Release resources; partial/error streams never become complete by closing."""
+        self._member.close()
+        self._lifecycle.release()
+        self._legacy.release()
+        self._closed = True
+
+    def __enter__(self) -> "CausalGroupStream":
+        return self
+
+    def __exit__(self, *_exc: Any) -> None:
+        self.close()
+
     def next_group(self) -> GroupDelivery:
+        try:
+            return self._next_group()
+        except EndOfStream:
+            raise
+        except BaseException:
+            self.close()
+            raise
+
+    def _next_group(self) -> GroupDelivery:
         if self._closed:
             raise CausalStreamError("the stream is closed; its receipt has been taken")
         if self._exhausted:
             raise EndOfStream("no further F_LAST-closed group")
         item = self._read_member()
         if item is None:
-            self._exhausted = True
             self._member.close()
             self._lifecycle.close()
             self._legacy.close()
+            self._exhausted = True
             raise EndOfStream("no further F_LAST-closed group")
         line, row = item
         index = _int_or_none(row.get("group_index"))
         if index is None or index < 0:
             raise CausalStreamError("a member row carries no non-negative integer group_index")
+        if index != self._groups:
+            raise CausalStreamError(f"group_index {index} is not the next contiguous index {self._groups}")
         if row.get("causal_availability_clock") != CAUSAL_CLOCK:
             raise CausalStreamError(
                 f"group {index} declares causal_availability_clock="
@@ -635,16 +752,12 @@ class CausalGroupStream:
                 "withheld rows are released only once the stream is exhausted; reading them "
                 "earlier would be a look-ahead"
             )
+        self._withheld_consumed = True
         return {LIFECYCLE: list(self._lifecycle.withheld), LEGACY: list(self._legacy.withheld)}
 
     def stream_receipt(self) -> dict[str, Any]:
         """Close the stream and account for everything delivered and withheld."""
-        if not self._closed:
-            self._closed = True
-            if not self._exhausted:
-                self._member.close()
-                self._lifecycle.close()
-                self._legacy.close()
+        self.close()
         receipt: dict[str, Any] = {
             "schema": STREAM_RECEIPT_SCHEMA,
             "run_id": self.run_id,
@@ -652,10 +765,13 @@ class CausalGroupStream:
             "registry_sha256": self.registry_sha256,
             "causal_clock": CAUSAL_CLOCK,
             "complete": self._exhausted,
+            "withheld_consumed": self._withheld_consumed,
             "groups_delivered": self._groups,
             "bytes_delivered": self._bytes,
             "sha256_delivered": self._digest.hexdigest(),
             "member_ledger": {
+                "observed_bytes": self._member_observed_bytes,
+                "observed_sha256": self._member_observed_digest.hexdigest(),
                 "path": str(self.member_path),
                 "rows_delivered": self._groups,
                 "bytes": self._member_bytes,
