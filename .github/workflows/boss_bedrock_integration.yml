@@ -7,6 +7,8 @@ on:
       - .github/workflows/boss_bedrock_integration.yml
       - research/kalshi/frankie_boss/bedrock_inventory.py
       - research/kalshi/frankie_boss/tests/test_bedrock_inventory.py
+      - research/kalshi/frankie_boss/sagemaker_inventory.py
+      - research/kalshi/frankie_boss/tests/test_sagemaker_inventory.py
 
 permissions:
   contents: read
@@ -38,7 +40,14 @@ jobs:
         run: |
           mkdir -p work/inventory-tests
           cp research/kalshi/frankie_boss/tests/test_bedrock_inventory.py work/inventory-tests/
-          python -m pytest work/inventory-tests/test_bedrock_inventory.py -q
+          cp research/kalshi/frankie_boss/tests/test_sagemaker_inventory.py work/inventory-tests/
+          python -m pytest work/inventory-tests/ -q
+      - name: Inventory exact Granite deployment prerequisites
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: python research/kalshi/frankie_boss/sagemaker_inventory.py --regions us-east-1 us-east-2 --output work/sagemaker-inventory.json
       - name: Inventory model and endpoint metadata only
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -50,6 +59,8 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: boss-bedrock-inventory-${{ github.run_id }}
-          path: work/bedrock-inventory.json
+          path: |
+            work/bedrock-inventory.json
+            work/sagemaker-inventory.json
           if-no-files-found: warn
           retention-days: 14
