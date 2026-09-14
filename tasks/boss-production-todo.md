@@ -3,7 +3,7 @@
 - [x] Governed QSV artifact-to-native/B1 attachment and retry/restore tests (11 new focused checks)
 - [ ] QSV producer-side production wiring and throughput validation
 - [x] Native forecast and category-free confidence/selection design documented (SPEC-native-forecast-confidence.md)
-- [ ] Forecast design reviewed; heads/bridge implemented and empirical calibration bindings completed
+- [ ] Empirical calibration bindings and acceptance completed (forecast design, heads and bridge software are built)
 - [x] Internal confidence diagnostics without categorical publication labels (39 synthetic tests; G15 empirical acceptance remains open)
 - [x] Best comparable candidate selection and durable revisions at every horizon (synthetic software only)
 - [x] Explicit all-horizon refresh cadence and durable pre-generation retry intent
@@ -12,6 +12,8 @@
 - [x] Category-free twelve-field draft and standalone disabled-route proof on both control lineages
 - [x] Owner-approved versioned nullable confidence field and enabled standalone ledger consumer
 - [x] Separate adapter disabled identity proof on both B0/B1 control lineages
+- [x] Claude R1-R5 and O2-O6 corrections: historical reads, independent roots, causal anchors/reference, gap reporting and contract edge cases
+- [x] Claude O1 bounded synthetic timing harness; production throughput acceptance remains open
 - [ ] Production Frankie controller/service wiring and deployment acceptance
 - [ ] Production source conformance/wiring software
 - [ ] Six B2/C1 teacher columns with preserved C15R2 control

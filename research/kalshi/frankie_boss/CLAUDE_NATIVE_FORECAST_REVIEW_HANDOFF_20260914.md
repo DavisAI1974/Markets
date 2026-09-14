@@ -1,5 +1,10 @@
 # Native forecast and category-free Frankie review handoff
 
+Successor: [CLAUDE_REVIEW_FIXES_HANDOFF_20260914.md](CLAUDE_REVIEW_FIXES_HANDOFF_20260914.md).
+The owner authorized all required and optional Claude review fixes. Read the successor
+for current trust, historical-read, session and reporting semantics and final verification.
+This document records the pre-review implementation and is historical where superseded.
+
 Repository: DavisAI1974/Markets. Remote branch: codex/boss-full-evidence-20260907.
 Local branch: codex/boss-forecast-build-20260914. Checkout:
 C:/Users/A/Documents/Codex/2026-09-14/b1-s-required-checks-passed-on/work/Markets-forecast-verify.

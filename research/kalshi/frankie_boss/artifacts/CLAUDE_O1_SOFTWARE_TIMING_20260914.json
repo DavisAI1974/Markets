@@ -1,0 +1,275 @@
+{
+  "scope": "synthetic software only; no production throughput claim",
+  "python": "3.13.7 (tags/v3.13.7:bcee1c3, Aug 14 2025, 14:15:11) [MSC v.1944 64 bit (AMD64)]",
+  "torch": "2.9.1+cpu",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "cpu": "AVX2",
+  "threads": 4,
+  "interop_threads": 4,
+  "runtime_hash": "032a32490005472f886387a28976d88c5acf8c15dd0006b473fa71f29517771e",
+  "repeats": 5,
+  "percentile_method": "nearest rank; five samples give an observed maximum at p95",
+  "cases": [
+    {
+      "rows": 32,
+      "t_ctx": 8,
+      "targets": 3,
+      "payload_bytes": 41973,
+      "evidence_journal_bytes": 327680,
+      "timed_forecast_journal_bytes": 1581056,
+      "timed_forecast_journal_entries": 24,
+      "forecast_entries_after_instrumented_refresh": 28,
+      "metrics": {
+        "context_prepare": {
+          "samples_ms": [
+            171.0232,
+            247.9167,
+            146.1771,
+            147.0791,
+            138.4628
+          ],
+          "median_ms": 147.0791,
+          "p95_ms": 247.9167
+        },
+        "event_cutoff_scan": {
+          "samples_ms": [
+            135.6667,
+            140.0888,
+            123.3734,
+            121.276,
+            125.1711
+          ],
+          "median_ms": 125.1711,
+          "p95_ms": 140.0888
+        },
+        "full_refresh_three_targets": {
+          "samples_ms": [
+            561.815,
+            563.733,
+            563.9346,
+            617.8064,
+            614.9894
+          ],
+          "median_ms": 563.9346,
+          "p95_ms": 617.8064
+        },
+        "structural_parse": {
+          "samples_ms": [
+            2.4122,
+            2.414,
+            2.4044,
+            2.3909,
+            3.5595
+          ],
+          "median_ms": 2.4122,
+          "p95_ms": 3.5595
+        },
+        "reproduction": {
+          "samples_ms": [
+            9.4499,
+            7.2168,
+            7.8722,
+            7.17,
+            7.4059
+          ],
+          "median_ms": 7.4059,
+          "p95_ms": 9.4499
+        },
+        "consume_with_ledger_verification": {
+          "samples_ms": [
+            40.0347,
+            40.7875,
+            39.5334,
+            38.3181,
+            38.1443
+          ],
+          "median_ms": 39.5334,
+          "p95_ms": 40.7875
+        }
+      },
+      "instrumented_refresh": {
+        "evidence_entries_visited": 128,
+        "decoder_captures": 10,
+        "decoder_restores": 6
+      },
+      "instrumented_consume": {
+        "forecast_entries_visited": 24
+      },
+      "failures": 0
+    },
+    {
+      "rows": 128,
+      "t_ctx": 8,
+      "targets": 3,
+      "payload_bytes": 42005,
+      "evidence_journal_bytes": 1282048,
+      "timed_forecast_journal_bytes": 1581056,
+      "timed_forecast_journal_entries": 24,
+      "forecast_entries_after_instrumented_refresh": 28,
+      "metrics": {
+        "context_prepare": {
+          "samples_ms": [
+            521.4893,
+            525.1356,
+            522.1038,
+            512.889,
+            545.5441
+          ],
+          "median_ms": 522.1038,
+          "p95_ms": 545.5441
+        },
+        "event_cutoff_scan": {
+          "samples_ms": [
+            513.9928,
+            515.4537,
+            514.7902,
+            498.5579,
+            656.8254
+          ],
+          "median_ms": 514.7902,
+          "p95_ms": 656.8254
+        },
+        "full_refresh_three_targets": {
+          "samples_ms": [
+            1353.3636,
+            1335.7609,
+            1354.2062,
+            1406.4454,
+            1352.1458
+          ],
+          "median_ms": 1353.3636,
+          "p95_ms": 1406.4454
+        },
+        "structural_parse": {
+          "samples_ms": [
+            2.5928,
+            2.587,
+            2.516,
+            2.4206,
+            3.1034
+          ],
+          "median_ms": 2.587,
+          "p95_ms": 3.1034
+        },
+        "reproduction": {
+          "samples_ms": [
+            9.1256,
+            7.2404,
+            6.9217,
+            7.7461,
+            7.0985
+          ],
+          "median_ms": 7.2404,
+          "p95_ms": 9.1256
+        },
+        "consume_with_ledger_verification": {
+          "samples_ms": [
+            40.0572,
+            42.4646,
+            40.4372,
+            42.7087,
+            40.6789
+          ],
+          "median_ms": 40.6789,
+          "p95_ms": 42.7087
+        }
+      },
+      "instrumented_refresh": {
+        "evidence_entries_visited": 512,
+        "decoder_captures": 10,
+        "decoder_restores": 6
+      },
+      "instrumented_consume": {
+        "forecast_entries_visited": 24
+      },
+      "failures": 0
+    },
+    {
+      "rows": 512,
+      "t_ctx": 8,
+      "targets": 3,
+      "payload_bytes": 42007,
+      "evidence_journal_bytes": 5214208,
+      "timed_forecast_journal_bytes": 1581056,
+      "timed_forecast_journal_entries": 24,
+      "forecast_entries_after_instrumented_refresh": 28,
+      "metrics": {
+        "context_prepare": {
+          "samples_ms": [
+            2090.2596,
+            2139.7976,
+            2339.6981,
+            2042.3112,
+            2007.9512
+          ],
+          "median_ms": 2090.2596,
+          "p95_ms": 2339.6981
+        },
+        "event_cutoff_scan": {
+          "samples_ms": [
+            2133.9525,
+            2035.7393,
+            2098.7137,
+            2206.3583,
+            2228.1252
+          ],
+          "median_ms": 2133.9525,
+          "p95_ms": 2228.1252
+        },
+        "full_refresh_three_targets": {
+          "samples_ms": [
+            4407.9105,
+            4430.1747,
+            4569.277,
+            4965.4725,
+            5703.3999
+          ],
+          "median_ms": 4569.277,
+          "p95_ms": 5703.3999
+        },
+        "structural_parse": {
+          "samples_ms": [
+            2.5674,
+            2.4615,
+            2.4347,
+            2.4494,
+            3.6605
+          ],
+          "median_ms": 2.4615,
+          "p95_ms": 3.6605
+        },
+        "reproduction": {
+          "samples_ms": [
+            8.9743,
+            7.9517,
+            10.777,
+            8.465,
+            9.913
+          ],
+          "median_ms": 8.9743,
+          "p95_ms": 10.777
+        },
+        "consume_with_ledger_verification": {
+          "samples_ms": [
+            52.1146,
+            45.5432,
+            48.1368,
+            42.3631,
+            43.6798
+          ],
+          "median_ms": 45.5432,
+          "p95_ms": 52.1146
+        }
+      },
+      "instrumented_refresh": {
+        "evidence_entries_visited": 2048,
+        "decoder_captures": 10,
+        "decoder_restores": 6
+      },
+      "instrumented_consume": {
+        "forecast_entries_visited": 24
+      },
+      "failures": 0
+    }
+  ]
+}
