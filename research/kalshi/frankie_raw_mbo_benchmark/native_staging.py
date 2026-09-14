@@ -57,6 +57,8 @@ import json
 from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 
+from research.kalshi.frankie_raw_mbo_benchmark.native_boss_attachment import AttachmentRequest
+
 from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import (
     LAYER_IDENTITY,
     CalculationRunError,
@@ -738,6 +740,7 @@ def read_back(
     render_report: bool = True,
     handoff_dir: Path | str | None = None,
     knowledge_use_gate: KnowledgeUseGate | None = None,
+    boss_attachment: AttachmentRequest | None = None,
 ) -> dict[str, Any]:
     """Close the loop: a finished `calculation_result.json` receives the principal's findings.
 
@@ -846,6 +849,21 @@ def read_back(
         )
     except CalculationRunError as exc:
         raise StagingError(f"the runner refused the findings: {exc}") from exc
+    boss_combined = None
+    boss_target = target.with_suffix('.boss.json')
+    if boss_attachment is not None:
+        from research.kalshi.frankie_raw_mbo_benchmark.native_boss_attachment import AttachmentError, combined_readback_receipt
+        try:
+            boss_combined = combined_readback_receipt(
+                boss_attachment, result_path=result_path, delivery_receipt=delivery_receipt,
+                artifact_path=artifact_path, execution=execution,
+                updated_result_hash=updated['result_hash'], prompt_bytes=prompt_bytes,
+                bundle_bytes=model_visible_context, principal_input=principal_input,
+                knowledge_receipt=knowledge_body)
+        except (AttachmentError, ValueError) as exc:
+            raise StagingError(f'BOSS combined read-back refused: {exc}') from exc
+        if boss_target.exists() or boss_target.is_symlink():
+            raise StagingError('BOSS combined read-back already exists; nothing is overwritten')
     # The handoff is BUILT before anything is written, so a refusal writes nothing; the
     # target files are checked here for the same reason (write_handoff's O_EXCL still holds).
     handoff_objects, handoff_note = _handoff_for_read_back(
@@ -874,6 +892,10 @@ def read_back(
             name: {"path": str(path), "receipt_hash": handoff_objects[name]["receipt_hash"]}
             for name, path in zip(HANDOFF_FILES, written_paths)
         }
+    if boss_combined is not None:
+        with boss_target.open('xb') as handle:
+            handle.write(json.dumps(boss_combined, sort_keys=True, separators=(',', ':'),
+                                    ensure_ascii=True, allow_nan=False).encode('utf-8'))
     first_lock, first_lock_note = _first_lock_summary(handoff_objects)
     report: Path | None = None
     crosswalk_body: dict[str, Any] | None = None
@@ -885,7 +907,7 @@ def read_back(
         report = _render_report_beside(
             artifact_path, crosswalk=crosswalk_body, crosswalk_note=crosswalk_note
         )
-    return {
+    summary = {
         "schema": READ_BACK_SCHEMA,
         "principal": execution["principal"],
         "arm": execution["arm"],
@@ -909,6 +931,10 @@ def read_back(
         "first_lock": first_lock,
         "first_lock_note": first_lock_note,
     }
+    if boss_combined is not None:
+        summary['boss_attachment'] = {'path': str(boss_target),
+                                     'receipt_sha256': boss_combined['receipt_sha256']}
+    return summary
 
 
 # ------------------------------------------------------------------------------------------
@@ -1094,8 +1120,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     rb.add_argument("--prompt", type=Path, default=None, help="the exact FRANKIE_SPAWN_PROMPT.md delivered beside the knowledge bundle")
     rb.add_argument("--handoff-dir", type=Path, default=None, help="where to write ONEWAY_HANDOFF / RT_FIRST_LOCK / RT_CONTEXT_MANIFEST (default: beside the result with findings; never over an earlier trio)")
     rb.add_argument("--no-report", action="store_true", help="do not render the findings report (and its crosswalk) beside the artifact")
+    rb.add_argument('--boss-attachment-request', type=Path, default=None,
+                    help='independent BOSS attachment pins and explicit exposure mode')
     args = parser.parse_args(argv)
     try:
+        from research.kalshi.frankie_raw_mbo_benchmark.native_boss_attachment import load_request
         summary = read_back(
             args.artifact,
             result_path=args.result,
@@ -1111,6 +1140,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             render_report=not args.no_report,
             handoff_dir=args.handoff_dir,
             knowledge_use_gate=KNOWLEDGE_USE_GATE,
+            boss_attachment=load_request(args.boss_attachment_request),
         )
     except (StagingError, OSError, ValueError) as exc:
         print(f"REFUSED: {exc}")

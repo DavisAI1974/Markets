@@ -37,6 +37,8 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping
 
+from research.kalshi.frankie_raw_mbo_benchmark.native_boss_attachment import AttachmentRequest
+
 from research.kalshi.frankie_raw_mbo_benchmark.fetch_frankie_ledgers import (
     RECEIPT_SCHEMA as DELIVERY_RECEIPT_SCHEMA,
     _hash_file,
@@ -190,6 +192,7 @@ def emit(
     sealed_proof: Path | str | None = None,
     ledger_dir: Path | str | None = None,
     repo_root: Path | None = None, evidence_uri: str | None = None,
+    boss_attachment: AttachmentRequest | None = None,
 ) -> str:
     """Render the prompt for one Frankie run. Returns text; raises EmitError on any gap.
 
@@ -734,7 +737,16 @@ def emit(
     add("exhaustion** - 4.5 through 4.9 and 4.12 through 4.14 are market mechanics in their")
     add("own right, and several have never been studied on native MBO at all.")
     add("")
-    return "\n".join(lines)
+    text = "\n".join(lines)
+    if boss_attachment is not None:
+        from research.kalshi.frankie_raw_mbo_benchmark.native_boss_attachment import AttachmentError, verify_attachment
+        try:
+            verified = verify_attachment(boss_attachment, result_path=result_path,
+                                         delivery_receipt=delivery_receipt)
+            text += verified.input_block()
+        except AttachmentError as exc:
+            raise EmitError(f'BOSS attachment refused: {exc}') from exc
+    return text
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -752,6 +764,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--ledger-dir", default=None)
     parser.add_argument("--evidence-uri", default=None, help="durable S3 URI, for the record")
     parser.add_argument("--output", default=None)
+    parser.add_argument('--boss-attachment-request', default=None,
+                        help='independent BOSS attachment pins and explicit attributed_input mode')
     args = parser.parse_args(argv)
     knowledge_receipt = args.knowledge_receipt
     if knowledge_receipt is None:
@@ -770,6 +784,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"knowledge delivery built: receipt {delivery.receipt['receipt_sha256']} and bundle "
               f"{len(delivery.model_visible_context):,} bytes written beside the prompt", file=sys.stderr)
     try:
+        from research.kalshi.frankie_raw_mbo_benchmark.native_boss_attachment import load_request
         text = emit(
             args.result,
             delivery_receipt=args.delivery_receipt,
@@ -779,12 +794,17 @@ def main(argv: list[str] | None = None) -> int:
             sealed_proof=args.sealed_proof,
             ledger_dir=args.ledger_dir,
             evidence_uri=args.evidence_uri,
+            boss_attachment=load_request(args.boss_attachment_request),
         )
-    except EmitError as exc:
+    except (EmitError, ValueError) as exc:
         print(f"REFUSED: {exc}", file=sys.stderr)
         return 2
     if args.output:
-        Path(args.output).write_text(text, encoding="utf-8")
+        if args.boss_attachment_request is not None:
+            # Integrated read-back binds these exact bytes, including LF on Windows.
+            Path(args.output).write_bytes(text.encode('utf-8'))
+        else:
+            Path(args.output).write_text(text, encoding="utf-8")
     else:
         print(text)
     return 0
