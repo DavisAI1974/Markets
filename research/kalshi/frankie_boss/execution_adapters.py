@@ -125,8 +125,19 @@ def _identifier(value, name) -> str:
 
 
 def _json_object(body: bytes, name: str) -> dict:
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f'{name}: duplicate JSON key {key!r}')
+            result[key] = value
+        return result
+
+    def invalid_constant(value):
+        raise ValueError(f'{name}: nonfinite JSON constant {value}')
+
     try:
-        value = json.loads(body.decode('utf-8'))
+        value = json.loads(body.decode('utf-8'), object_pairs_hook=unique_object, parse_constant=invalid_constant)
     except (UnicodeDecodeError, ValueError) as exc:
         raise ValueError(f'{name}: response is not a JSON document') from exc
     if type(value) is not dict:
@@ -188,7 +199,7 @@ class TastytradePin(Contract):
         super().__post_init__()
         if self.account.venue != 'tastytrade':
             raise ValueError('tastytrade pin requires a tastytrade account key')
-        if _IDENTIFIER.fullmatch(self.account.account_id) is None:
+        if re.fullmatch(r'[A-Za-z0-9_-]+', self.account.account_id) is None:
             raise ValueError('tastytrade account number must be a plain identifier')
         if self.instrument_type not in TASTYTRADE_ACTION:
             raise ValueError('instrument-type must be Future or Future Option')
@@ -273,14 +284,15 @@ class PreflightRequest(Contract):
     method: str
     path: str
     body: bytes
+    account: AccountKey
 
 
 def preflight_request(wire: WireRequest, pin: TastytradePin) -> PreflightRequest:
     _typed(wire, WireRequest, 'wire'); _typed(pin, TastytradePin, 'pin')
-    if wire.adapter_hash != pin.digest or wire.path != TASTYTRADE_ORDERS_PATH.format(account=pin.account.account_id):
+    if wire.method != 'POST' or wire.adapter_hash != pin.digest or wire.path != TASTYTRADE_ORDERS_PATH.format(account=pin.account.account_id):
         raise ValueError('preflight must mirror a wire produced under this pin')
     return PreflightRequest(wire.digest, pin.digest, 'POST',
-                            TASTYTRADE_DRY_RUN_PATH.format(account=pin.account.account_id), wire.body)
+                            TASTYTRADE_DRY_RUN_PATH.format(account=pin.account.account_id), wire.body, pin.account)
 
 
 # --------------------------------------------------------------------------------
@@ -388,7 +400,7 @@ def _kalshi_order(receipt, *, intent, wire, pin):
         raise ValueError(f'{name}: client_order_id does not echo the sent client identity')
     filled = _parse_decimal(filled_text, name + '.fill_count')
     remaining = _parse_decimal(remaining_text, name + '.remaining_count')
-    if initial != Fraction(sent['count']) or filled > initial:
+    if initial != Fraction(sent['count']) or filled > initial or remaining > initial:
         raise ValueError(f'{name}: counts conflict with the sent order size')
     status = KALSHI_STATUS.get(provider_status)
     if status is None:
@@ -397,11 +409,34 @@ def _kalshi_order(receipt, *, intent, wire, pin):
         status = _status_from_counts(filled, initial, nonterminal_names='resting/created', name=name)
     elif status == 'FILLED' and (filled != initial or remaining != 0):
         raise ValueError(f'{name}: executed status conflicts with counts')
+    elif status == 'CANCELED' and filled + remaining > initial:
+        raise ValueError(f'{name}: canceled counts exceed the sent order size')
     working = remaining if status in ('ACKNOWLEDGED', 'PARTIAL') else Fraction(0)
     per = pin.quantity_units_per_contract
     return OrderFact('kalshi', name, wire.digest, receipt.body_hash, provider_id, wire.client_id, provider_status, status,
                      _units(filled, per, 'fill_count'), _units(working, per, 'remaining_count'),
                      _units(initial, per, 'initial count'), event_ns, receipt.received_ns)
+
+
+def _tastytrade_shape(order, sent, account, name):
+    if _require(order, 'account-number', str, name) != account.account_id:
+        raise ValueError(f'{name}: account-number differs from the pinned account')
+    for key in ('order-type', 'time-in-force', 'price-effect'):
+        if _require(order, key, str, name) != sent[key]:
+            raise ValueError(f'{name}: {key} differs from the sent wire')
+    if _parse_decimal(_require(order, 'price', str, name), name + '.price') != Fraction(sent['price']):
+        raise ValueError(f'{name}: price differs from the sent wire')
+    legs = _require(order, 'legs', list, name)
+    if len(legs) != 1 or type(legs[0]) is not dict:
+        raise ValueError(f'{name}: exactly one leg is representable')
+    leg, sent_leg = legs[0], sent['legs'][0]
+    for key in ('instrument-type', 'symbol', 'action'):
+        if _require(leg, key, str, name) != sent_leg[key]:
+            raise ValueError(f'{name}: leg {key} differs from the sent wire')
+    initial = _parse_decimal(_require(order, 'size', str, name), name + '.size')
+    if initial != Fraction(sent_leg['quantity']) or _parse_decimal(_require(leg, 'quantity', str, name), name + '.leg.quantity') != initial:
+        raise ValueError(f'{name}: order size differs from the sent quantity')
+    return initial, leg
 
 
 def _tastytrade_order(receipt, *, intent, wire, pin):
@@ -427,22 +462,10 @@ def _tastytrade_order(receipt, *, intent, wire, pin):
     provider_id = _identifier(_require(order, 'id', str, name), name + '.id')
     if _require(order, 'external-identifier', str, name) != wire.client_id:
         raise ValueError(f'{name}: external-identifier does not echo the sent client identity')
-    if _require(order, 'account-number', str, name) != pin.account.account_id:
-        raise ValueError(f'{name}: account-number differs from the pinned account')
-    for key in ('order-type', 'time-in-force', 'price', 'price-effect'):
-        if _require(order, key, str, name) != sent[key]:
-            raise ValueError(f'{name}: {key} differs from the sent wire')
-    legs = _require(order, 'legs', list, name)
-    if len(legs) != 1 or type(legs[0]) is not dict:
-        raise ValueError(f'{name}: exactly one leg is representable')
-    leg, sent_leg = legs[0], sent['legs'][0]
-    for key in ('instrument-type', 'symbol', 'action'):
-        if _require(leg, key, str, name) != sent_leg[key]:
-            raise ValueError(f'{name}: leg {key} differs from the sent wire')
-    initial = _parse_decimal(_require(order, 'size', str, name), name + '.size')
-    if initial != Fraction(sent_leg['quantity']) or _parse_decimal(_require(leg, 'quantity', str, name), name + '.leg.quantity') != initial:
-        raise ValueError(f'{name}: order size differs from the sent quantity')
-    remaining = _parse_decimal(_require(order, 'remaining-quantity', str, name), name + '.remaining-quantity')
+    initial, leg = _tastytrade_shape(order, sent, pin.account, name)
+    remaining = _parse_decimal(_require(leg, 'remaining-quantity', str, name), name + '.leg.remaining-quantity')
+    if 'remaining-quantity' in order and _parse_decimal(order['remaining-quantity'], name + '.remaining-quantity') != remaining:
+        raise ValueError(f'{name}: order and leg remaining quantities conflict')
     seen, filled = set(), Fraction(0)
     for fill in _require(leg, 'fills', list, name):
         if type(fill) is not dict:
@@ -460,7 +483,7 @@ def _tastytrade_order(receipt, *, intent, wire, pin):
         status = _status_from_counts(filled, initial, nonterminal_names='/'.join(TASTYTRADE_NONTERMINAL), name=name)
     else:
         status = TASTYTRADE_TERMINAL[provider_status]
-        if status == 'FILLED' and filled != initial:
+        if status == 'FILLED' and (filled != initial or remaining != 0):
             raise ValueError(f'{name}: Filled status without enumerated fills for the whole size')
         if status == 'REJECTED' and filled != 0:
             raise ValueError(f'{name}: Rejected status with enumerated fills')
@@ -520,10 +543,16 @@ def parse_kalshi_fills(pages, *, intent: Intent, wire: WireRequest, pin: KalshiP
         raise ValueError('no pages: absence of evidence is not an empty fill set')
     sent = json.loads(wire.body.decode())
     expected_cursor, fills, seen, last_ns = '', Fraction(0), [], 0
+    requested_cursors = set()
     for index, page in enumerate(pages):
         if len(page) != 2 or type(page[0]) is not str or type(page[1]) is not bytes:
             raise ValueError('each page is (request_cursor, response_bytes)')
         cursor, body = page
+        if index and not expected_cursor:
+            raise ValueError('page supplied after the terminal page')
+        if cursor in requested_cursors:
+            raise ValueError('page cursor cycle')
+        requested_cursors.add(cursor)
         if cursor != expected_cursor:
             raise ValueError(f'page {index} was requested with cursor {cursor!r}, chain expected {expected_cursor!r}')
         obj = _json_object(body, 'kalshi.get_fills')
@@ -571,7 +600,8 @@ def observation(fact: OrderFact, *, intent: Intent, wire: WireRequest, receipt: 
     sha256_digest(account_snapshot_hash, 'account_snapshot_hash')
     if (fact.request_hash != wire.digest or wire.intent_hash != intent.digest or receipt.wire_hash != wire.digest
             or fact.response_hash != receipt.body_hash or fact.received_ns != receipt.received_ns
-            or fact.client_id != wire.client_id or fact.source != receipt.source):
+            or fact.client_id != wire.client_id or fact.source != receipt.source
+            or receipt.account != intent.account or fact.venue != intent.account.venue):
         raise ValueError('fact, receipt, wire and intent are not one bound chain')
     return Observation(_identifier(observation_id, 'observation_id'), intent.intent_id, intent.digest, intent.account,
                        fact.provider_id, fact.client_id, fact.status, fact.filled_quantity, fact.remaining_quantity,
@@ -594,7 +624,8 @@ class PreflightReceipt(Contract):
 def parse_tastytrade_preflight(receipt: TransportReceipt, *, preflight: PreflightRequest) -> PreflightReceipt:
     """Dry-run evidence bound to the exact order bytes; any error or warning refuses."""
     _typed(receipt, TransportReceipt, 'receipt'); _typed(preflight, PreflightRequest, 'preflight')
-    if receipt.source != 'tastytrade.dry_run' or receipt.wire_hash != preflight.wire_hash:
+    if (receipt.source != 'tastytrade.dry_run' or receipt.wire_hash != preflight.wire_hash
+            or receipt.account != preflight.account):
         raise ValueError('preflight receipt must bind the dry-run of this exact wire')
     if receipt.http_status != 200:
         raise ValueError('dry-run did not return a 200 preflight body')
@@ -602,4 +633,9 @@ def parse_tastytrade_preflight(receipt: TransportReceipt, *, preflight: Prefligh
     warnings, errors = _require(data, 'warnings', list, 'dry_run'), _require(data, 'errors', list, 'dry_run')
     if warnings or errors:
         raise ValueError(f'dry-run reported {len(errors)} errors and {len(warnings)} unhandled warnings')
+    order = _require(data, 'order', dict, 'dry_run')
+    sent = _json_object(preflight.body, 'preflight request')
+    if _require(order, 'external-identifier', str, 'dry_run') != sent['external-identifier']:
+        raise ValueError('dry-run external-identifier differs from the sent wire')
+    _tastytrade_shape(order, sent, preflight.account, 'dry_run')
     return PreflightReceipt(preflight.wire_hash, receipt.body_hash, 0, 0, receipt.received_ns)

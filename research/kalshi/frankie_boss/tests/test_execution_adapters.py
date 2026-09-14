@@ -559,3 +559,97 @@ def test_policy_still_gates_the_adapter_pin(tmp_path):
     untrusted = replace(args['policy'], trusted_adapters=('b' * 64,))
     args = {**args, 'policy': untrusted, 'intent': replace(args['intent'], policy_hash=untrusted.digest)}
     assert 'adapter_pin' in codes(evaluate(**args))
+
+# Review regressions: bindings, provider schema, and contradictory retained evidence.
+
+def test_review_tastytrade_remaining_quantity_comes_from_the_documented_leg():
+    args, instrument, pin = venue_fixture('tastytrade')
+    wire = translate(args['intent'], instrument, pin)
+    order = tasty_order(wire)
+    del order['remaining-quantity']
+    rcpt = receipt(wire, args['intent'].account, 'tastytrade.get_order', json.dumps({'data': order}).encode())
+    fact = parse_order_response(rcpt, intent=args['intent'], wire=wire, pin=pin, expected_source=rcpt.source)
+    assert fact.remaining_quantity == 2
+
+
+@pytest.mark.parametrize('kind', ['duplicate', 'nan'])
+def test_review_ambiguous_json_refuses(kind):
+    args, instrument, pin = venue_fixture('kalshi')
+    wire = translate(args['intent'], instrument, pin)
+    body = kalshi_create_body(wire)
+    prefix = b'"fill_count":"2.00",' if kind == 'duplicate' else b'"extra":NaN,'
+    rcpt = receipt(wire, args['intent'].account, 'kalshi.create_order', b'{' + prefix + body[1:])
+    with pytest.raises(ValueError):
+        parse_order_response(rcpt, intent=args['intent'], wire=wire, pin=pin, expected_source=rcpt.source)
+
+
+@pytest.mark.parametrize('kind', ['terminal_restart', 'cycle'])
+def test_review_pagination_cannot_restart_or_cycle(kind):
+    args, instrument, pin = venue_fixture('kalshi')
+    wire = translate(args['intent'], instrument, pin)
+    pages = (('', fills_page(wire, '')), ('', fills_page(wire, '')))
+    if kind == 'cycle':
+        pages = (('', fills_page(wire, 'a')), ('a', fills_page(wire, 'a')), ('a', fills_page(wire, '')))
+    with pytest.raises(ValueError):
+        parse_kalshi_fills(pages, intent=args['intent'], wire=wire, pin=pin, provider_id='ord-1', received_ns=RECEIVED)
+
+
+@pytest.mark.parametrize('account_id', ['../other', 'other/orders', '..'])
+def test_review_account_must_be_one_path_segment(account_id):
+    with pytest.raises(ValueError):
+        tasty_pin(account=AccountKey('tastytrade', 'replay', account_id))
+
+
+def test_review_preflight_refuses_foreign_account():
+    args, instrument, pin = venue_fixture('tastytrade')
+    wire = translate(args['intent'], instrument, pin)
+    pre = preflight_request(wire, pin)
+    rcpt = TransportReceipt(wire.digest, AccountKey('tastytrade', 'live', 'OTHER'), 'tastytrade.dry_run', 200,
+                            tasty_submit_body(wire), RECEIVED)
+    with pytest.raises(ValueError):
+        parse_tastytrade_preflight(rcpt, preflight=pre)
+
+
+def test_review_observation_refuses_changed_receipt_account():
+    args, instrument, pin = venue_fixture('kalshi')
+    wire = translate(args['intent'], instrument, pin)
+    rcpt = receipt(wire, args['intent'].account, 'kalshi.create_order', kalshi_create_body(wire))
+    fact = parse_order_response(rcpt, intent=args['intent'], wire=wire, pin=pin, expected_source=rcpt.source)
+    with pytest.raises(ValueError):
+        bind(fact, args, wire, replace(rcpt, account=AccountKey('kalshi', 'live', 'OTHER')), 'obs/1')
+
+
+@pytest.mark.parametrize('venue', ['kalshi', 'tastytrade'])
+def test_review_terminal_status_cannot_hide_impossible_remaining(venue):
+    args, instrument, pin = venue_fixture(venue)
+    wire = translate(args['intent'], instrument, pin)
+    if venue == 'kalshi':
+        source, body = 'kalshi.get_order', kalshi_order_body(wire, status='canceled', remaining='999.00')
+    else:
+        source, body = 'tastytrade.get_order', tasty_get_body(wire, status='Filled', remaining='1', fills=('2',))
+    rcpt = receipt(wire, args['intent'].account, source, body)
+    with pytest.raises(ValueError):
+        parse_order_response(rcpt, intent=args['intent'], wire=wire, pin=pin, expected_source=source)
+
+
+def test_review_tastytrade_equivalent_decimal_price_is_not_a_conflict():
+    args, instrument, pin = venue_fixture('tastytrade')
+    wire = translate(args['intent'], instrument, pin)
+    body = tasty_get_body(wire, price='0.0510')
+    rcpt = receipt(wire, args['intent'].account, 'tastytrade.get_order', body)
+    assert parse_order_response(rcpt, intent=args['intent'], wire=wire, pin=pin, expected_source=rcpt.source).status == 'ACKNOWLEDGED'
+
+@pytest.mark.parametrize('change', ['missing', 'wrong_account', 'wrong_body'])
+def test_review_preflight_requires_the_matching_returned_order(change):
+    args, instrument, pin = venue_fixture('tastytrade')
+    wire = translate(args['intent'], instrument, pin)
+    body = json.loads(tasty_submit_body(wire))
+    if change == 'missing':
+        del body['data']['order']
+    elif change == 'wrong_account':
+        body['data']['order']['account-number'] = 'OTHER'
+    else:
+        body['data']['order']['legs'][0]['symbol'] = '/OTHER'
+    rcpt = receipt(wire, pin.account, 'tastytrade.dry_run', json.dumps(body).encode())
+    with pytest.raises(ValueError):
+        parse_tastytrade_preflight(rcpt, preflight=preflight_request(wire, pin))

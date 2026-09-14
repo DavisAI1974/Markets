@@ -66,7 +66,7 @@ Body keys: `order-type` `"Limit"`, `time-in-force`, `price` (decimal string),
 quantity}`, `external-identifier` (= intent id), `automated-source` (pinned
 bool), `source` (pinned). Dry-run â€” POST `/accounts/{account-number}/orders/dry-run`
 (`.../postAccountsAccountNumberOrdersDryRun/`) takes the identical body; it is
-produced as a distinct `PreflightRequest` type so it cannot be passed to
+produced as a distinct `PreflightRequest` type that also binds the account/environment, so it cannot be passed to
 `ExecutionLedger.dispatch_once`, and `parse_tastytrade_preflight` refuses any
 error or warning. Per the official guide
 (`https://developer.tastytrade.com/docs/guides/idempotency-and-retries/`)
@@ -97,8 +97,9 @@ Sources and shapes read:
 | `tastytrade.get_order` | 200 | `data` order object (`.../getAccountsAccountNumberOrdersId/`) | `Received`/`Routed`/`Live`/`Cancel Requested` -> ACKNOWLEDGED/PARTIAL by enumerated fills; `Filled` -> FILLED; `Cancelled` -> CANCELED; `Rejected` -> REJECTED; `Expired` refused (gap 1); anything else refused |
 
 tastytrade filled quantity is the sum of the single leg's enumerated `fills[]`
-`quantity` values deduplicated by `fill-id`; it must reconcile with `size` minus
-`remaining-quantity` for nonterminal statuses. Acknowledgement size is never
+`quantity` values deduplicated by `fill-id`; it must reconcile with `size` minus the single leg's
+`remaining-quantity` for nonterminal statuses. The documented field is on the
+leg, not the order. If an extra order-level copy is present, it must agree. Acknowledgement size is never
 counted as a fill. `remaining_quantity` in the fact and observation means quantity
 still working: it is the provider's remaining count while nonterminal and 0 once
 terminal (a canceled remainder is not working).
@@ -167,3 +168,34 @@ absence; the adapter offers no "not found" fact at all.
 PYTHONPATH = repository root, `research/kalshi/frankie_boss`, its `tests` dir
 (`;` separator on Windows). `python -m pytest research/kalshi/frankie_boss/tests/
 test_execution_policy.py test_execution_ledger.py test_execution_adapters.py -q`.
+
+
+## Codex integration review — 2026-09-14
+
+Imported Claude commit `5e09b38c24722b96ec98f146f902d1feac19448b` onto the
+current BOSS integration history, without reapplying the Granite contract.
+The original 146 policy/ledger/adapter tests passed before changes. Sixteen
+new regression cases first failed against that import; all 162 now pass.
+
+Review corrections:
+
+- Read tastytrade remaining quantity from its single leg as documented by the
+  [Get Order schema](https://developer.tastytrade.com/reference/orders/getAccountsAccountNumberOrdersId/).
+  Compare decimal prices by exact rational value, accepting equivalent trailing
+  zeros while preserving the original response bytes.
+- Reject duplicate JSON keys and nonfinite JSON constants, including nested
+  unknown fields, rather than silently choosing one interpretation.
+- Reject a Kalshi page after a terminal cursor and repeated request cursors.
+- Restrict account identifiers interpolated into URL paths to a single safe
+  segment. JSON-only identifiers retain their separate rules.
+- Bind dry-run requests and receipts to an exact account/environment. Require a
+  returned order with matching account, client id, price, TIF and single-leg
+  economics; empty warnings/errors alone do not validate an unrelated order.
+- Recheck receipt account and fact venue when creating an Observation.
+- Reject impossible Kalshi canceled quantities and tastytrade Filled responses
+  that still report working quantity before converting terminal working size to 0.
+
+No existing policy, ledger, or contract acceptance rule changed. All tests use
+synthetic responses and fake transports; authenticated account/position snapshots,
+real provider calls, Expired ledger vocabulary and operational controller wiring
+remain outside this slice. This is software integration, not trading readiness.
