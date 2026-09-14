@@ -1,4 +1,4 @@
-"""Deterministic replay-only execution composition; no network or account truth.
+"""Deterministic execution composition; no network client or account truth.
 
 Expected hashes and issuer/convention identities are independently caller-trusted.
 Retained witnesses establish byte identity, not authenticated provider semantics.
@@ -13,7 +13,7 @@ from .c15_journal import pack, unpack
 from .execution_contracts import (Contract, AccountKey, AccountSnapshot, Intent,
     Policy, Registry, SourceReference, Valuation, MarketSnapshot)
 from .execution_adapters import (KalshiPin, TastytradePin, TransportReceipt,
-    translate, parse_order_response, preflight_request, parse_tastytrade_preflight)
+    translate, parse_order_response, preflight_request, parse_tastytrade_preflight, observation)
 from .execution_ledger import WireRequest
 from .forecast_contract import sha256_digest
 
@@ -104,12 +104,6 @@ class ExecutionAuthority(Contract):
     account_convention_hash: str
     transport_hash: str
 
-    def __post_init__(self):
-        super().__post_init__()
-        if self.account.environment != 'replay':
-            raise ValueError('this synthetic controller accepts replay accounts only')
-
-
 @dataclass(frozen=True)
 class ExecutionInputs(Contract):
     intent: Intent
@@ -137,6 +131,31 @@ class DispatchResult(Contract):
     receipt_locator: str
     fact_hash: str
     # This receipt is transport evidence only: ledger remains SENT_UNKNOWN.
+
+
+@dataclass(frozen=True)
+class ReflectionEvidence(Contract):
+    fact_hash: str
+    account_evidence_hash: str
+    issuer_hash: str
+    convention_hash: str
+    positions_match: bool
+    witnesses: tuple[bytes, ...]
+
+    def __post_init__(self):
+        super().__post_init__()
+        if not self.witnesses or any(not item for item in self.witnesses):
+            raise ValueError('independent reflection witness bytes required')
+
+
+@dataclass(frozen=True)
+class ReconciliationResult(Contract):
+    observation_hash: str
+    evidence_locator: str
+    accepted: bool
+    status: str
+    checkpoint_count: int
+    checkpoint_head_hash: str
 
 
 class ExecutionController:
@@ -194,7 +213,7 @@ class ExecutionController:
                       preflight_receipt=None, expected_preflight_hash=None):
         self._prepared(prepared, expected_prepared_hash)
         if transport_hash != self.authority.transport_hash or not callable(transport) or not callable(now):
-            raise ValueError('explicit pinned fake transport and clock required')
+            raise ValueError('explicit pinned transport capability and clock required')
         if type(self.pin) is TastytradePin:
             if type(preflight_receipt) is not TransportReceipt:
                 raise ValueError('exact successful tastytrade preflight required')
@@ -215,6 +234,8 @@ class ExecutionController:
             market=inputs.market, account=prepared.account_evidence.snapshot, reservations=(),
             now=clock, loss_day=inputs.loss_day, kill_switch=False)
         self.ledger.create(inputs.intent)
+        if self.ledger.state(inputs.intent.intent_id)['wire'] is not None:
+            raise ValueError('submission outcome exists; reconcile, never resend')
         retained = []
 
         def sender(wire):
@@ -238,9 +259,71 @@ class ExecutionController:
             result = DispatchResult(prepared.digest, response.digest, locator, fact.digest)
             self.store.put(dict(kind='dispatch_result', value=asdict(result), checkpoint=self.ledger.checkpoint()))
             return result
-        except BaseException:
+        except BaseException as original:
             # Only an attempted send makes this an exposure uncertainty. Policy
             # refusal before SENT_UNKNOWN does not turn into provider rejection.
-            if self.ledger.state(inputs.intent.intent_id)['wire'] is not None:
-                self.ledger.latch_kill('controller dispatch unresolved')
+            try:
+                uncertain = self.ledger.state(inputs.intent.intent_id)['wire'] is not None
+            except BaseException:
+                uncertain = True  # A poisoned journal cannot certify no transmission.
+            if uncertain:
+                self._stop('controller dispatch unresolved', original)
             raise
+
+    def _stop(self, reason, original):
+        try:
+            self.ledger.latch_kill(reason)
+        except BaseException as latch_error:
+            # Preserve process-control exceptions and surface durability failure.
+            raise original from latch_error
+
+    def ingest_order_observation(self, prepared, *, expected_prepared_hash, receipt,
+            expected_receipt_hash, expected_source, account_evidence,
+            expected_account_evidence_hash, reflection, expected_reflection_hash):
+        self._prepared(prepared, expected_prepared_hash)
+        intent, wire = prepared.inputs.intent, prepared.wire
+        state = self.ledger.state(intent.intent_id)
+        if state['intent'] != asdict(intent) or state['wire'] != asdict(wire):
+            raise ValueError('observation requires the exact durably attempted intent and wire')
+        try:
+            if type(receipt) is not TransportReceipt or type(reflection) is not ReflectionEvidence:
+                raise ValueError('typed transport and independent reflection evidence required')
+            # Retain the full rejected envelope, too; never reduce it to a bool.
+            locator = self.store.put(dict(kind='reconciliation', receipt=asdict(receipt),
+                account=asdict(account_evidence), reflection=asdict(reflection)))
+            _pin(receipt, expected_receipt_hash)
+            self._account(account_evidence, expected_account_evidence_hash)
+            _pin(reflection, expected_reflection_hash)
+            fact = parse_order_response(receipt, intent=intent, wire=wire,
+                pin=self.pin, expected_source=expected_source)
+            snapshot = account_evidence.snapshot
+            if (reflection.fact_hash != fact.digest or reflection.account_evidence_hash != account_evidence.digest
+                    or reflection.issuer_hash != self.authority.account_issuer_hash
+                    or reflection.convention_hash != self.authority.account_convention_hash
+                    or not reflection.positions_match):
+                raise ValueError('independent reflection evidence does not match fact and account')
+            if (snapshot.units != prepared.inputs.policy.units
+                    or {e.scope for e in snapshot.exposures} != {s.scope for s in prepared.inputs.policy.scope_limits}
+                    or snapshot.observed_ns < snapshot.pnl_observed_ns
+                    or snapshot.pnl_observed_ns < fact.received_ns):
+                raise ValueError('reflected account coverage or causal clock differs')
+            obs = observation(fact, intent=intent, wire=wire, receipt=receipt,
+                observation_id=reflection.digest, account_snapshot_hash=snapshot.digest,
+                positions_match=reflection.positions_match)
+            accepted = self.ledger.reconcile(obs, account_snapshot=snapshot, expected_account_hash=snapshot.digest)
+            checkpoint = self.ledger.checkpoint()
+            result = ReconciliationResult(obs.digest, locator, accepted, self.ledger.state(intent.intent_id)['status'],
+                checkpoint['count'], checkpoint['head_hash'])
+            self.store.put(dict(kind='reconciliation_result', value=asdict(result)))
+            return result
+        except BaseException as original:
+            self._stop('controller reconciliation unresolved', original)
+            raise
+
+    def admit_account_successor(self, account_evidence, *, expected_account_evidence_hash):
+        _pin(self.authority, self.expected_authority_hash)
+        self._account(account_evidence, expected_account_evidence_hash)
+        self.store.put(dict(kind='account_successor', value=asdict(account_evidence)))
+        # The independent envelope pin above binds this exact snapshot digest.
+        self.ledger.reflect_account(account_evidence.snapshot, expected_hash=account_evidence.snapshot.digest)
+        return self.ledger.checkpoint()
