@@ -155,7 +155,8 @@ def test_staging_rejects_corrupt_existing_object_without_overwrite(tmp_path):
 
 
 @pytest.mark.parametrize('missing',[False,True])
-def test_bucket_creation_is_only_exact_scoped_name_and_absent_only(missing):
+def test_bucket_creation_is_only_exact_scoped_name_and_absent_only(missing,monkeypatch):
+    monkeypatch.setattr(m,'APPROVED_ACCOUNT_SHA256',hashlib.sha256(b'123456789012').hexdigest())
     calls=[]
     class Absent(Exception): response={'Error':{'Code':'404'}}
     class Client:
@@ -168,7 +169,8 @@ def test_bucket_creation_is_only_exact_scoped_name_and_absent_only(missing):
     assert calls==[('head',bucket)]+([('create',bucket),('head',bucket)] if missing else [])
 
 
-def test_bucket_access_denial_does_not_attempt_create():
+def test_bucket_access_denial_does_not_attempt_create(monkeypatch):
+    monkeypatch.setattr(m,'APPROVED_ACCOUNT_SHA256',hashlib.sha256(b'123456789012').hexdigest())
     class Denied(Exception): response={'Error':{'Code':'403'}}
     class Client:
         def head_bucket(self,**kw): raise Denied()
@@ -178,3 +180,11 @@ def test_bucket_access_denial_does_not_attempt_create():
 
 def test_bucket_rejects_invalid_account():
     with pytest.raises(ValueError):m.ensure_scoped_bucket(object(),'../other')
+
+
+def test_wrong_well_formed_account_cannot_touch_s3():
+    class Client:
+        def head_bucket(self,**kw):pytest.fail('wrong account must not touch S3')
+        def create_bucket(self,**kw):pytest.fail('wrong account must not touch S3')
+    with pytest.raises(ValueError,match='approved account'):
+        m.ensure_scoped_bucket(Client(),'000000000000')

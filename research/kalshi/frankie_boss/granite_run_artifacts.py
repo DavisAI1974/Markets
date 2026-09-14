@@ -19,6 +19,9 @@ FILES = SHARDS | {'config.json', 'generation_config.json', 'model.safetensors.in
                  'tokenizer.json', 'tokenizer_config.json', 'chat_template.jinja',
                  'special_tokens_map.json', 'vocab.json', 'merges.txt'}
 BLOCK = 4 * 1024 * 1024
+# Commitment to the account in the owner's private DROP_IN_CODEX.md. The raw
+# private identifier remains outside Git; rotated credentials cannot change scope.
+APPROVED_ACCOUNT_SHA256 = '3c7ffc6cc2835350849373c23a8e513bc07771ca2eceba2d683af17c5cb3fe26'
 
 
 def canonical(value):
@@ -267,6 +270,8 @@ def stage(client, bucket, manifest, directory, receipt_path, *, fetch=download_f
 def ensure_scoped_bucket(client, account):
     if type(account) is not str or not re.fullmatch('[0-9]{12}', account):
         raise ValueError('valid caller account required')
+    if hashlib.sha256(account.encode('ascii')).hexdigest() != APPROVED_ACCOUNT_SHA256:
+        raise ValueError('caller must match the approved account')
     bucket = f'frankie-granite42-{account}-us-east-1'
     try:
         client.head_bucket(Bucket=bucket)

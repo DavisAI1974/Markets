@@ -33,8 +33,9 @@ claimed. Failed staging retains earlier completed objects and receipt for restar
 
 The staging workflow is triggered only by a reviewed change to its own workflow
 file on the integration branch. It runs tests before exposing AWS credentials to
-one staging step, uses the caller account only to derive the approved bucket
-name, and creates that bucket only after a true absent result. Other access errors
+one staging step, compares the caller account to the private account's reviewed
+SHA256 commitment before deriving the exact approved bucket name, and creates
+that bucket only after a true absent result. Other access errors
 stop. The job is bounded to 180 minutes and creates no chargeable GPU resources.
 Staged S3 model objects are retained intentionally for deployment; they incur
 storage costs. Verification receipts are retained as CI artifacts for 30 days.
