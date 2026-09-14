@@ -90,8 +90,8 @@ def test_schema_and_parser_consume_the_contract_objects():
     assert schema.EVIDENCE_VERDICTS is contract.EVIDENCE_VERDICTS
     assert granite_parser.REQUIRED_KEYS is contract.REQUIRED_KEYS
     assert granite_context.REQUIRED_KEYS is contract.REQUIRED_KEYS
-    assert contract.CONTRACT.validate(valid_output(snapshot())) is True
-    assert contract.CONTRACT.validate({}) is False
+    assert schema.validate_schema(valid_output(snapshot())) is True
+    assert schema.validate_schema({}) is False
 
 
 REF = {'row': 0, 'field': 'mid'}
@@ -261,7 +261,7 @@ def test_every_pinned_service_rejects_a_contract_change_before_transport(tmp_pat
     with pytest.raises(ValueError, match='identity does not match native prompt/schema/parser'):
         asyncio.run(serve_native_shadow(native_state, native_pin, request_id='x', timeout_seconds=1,
                                         transport=transport))
-    with pytest.raises(ValueError, match='critic does not pin native-context prompt/parser/schema'):
+    with pytest.raises(ValueError, match='critic does not pin selected context prompt/parser/schema'):
         asyncio.run(controller.refresh(**request))
 
 
@@ -286,4 +286,37 @@ def test_standalone_and_package_imports_share_one_contract():
         assert standalone.system_prompt_hash(variant) == FROZEN_SHA256[variant]
     assert standalone_schema.LIMITS is standalone.LIMITS
     assert standalone_schema.validate_schema(valid_output(snapshot())) is True
-    assert standalone.CONTRACT.validate(valid_output(snapshot())) is True
+    assert standalone_schema.validate_schema(valid_output(snapshot())) is True
+
+
+def test_alternate_render_contract_cannot_claim_per_instance_validation():
+    wider = replace(contract.CONTRACT, limits=replace(contract.LIMITS, max_hypotheses=6))
+    assert '1..6' in wider.render_system_text('native_v1')
+    assert schema.validate_schema(at('hypotheses', 6)) is False
+    assert not hasattr(wider, 'validate')
+
+
+def test_compact_services_and_controller_reject_changed_contract_before_work(tmp_path, mutated_contract_source):
+    from test_granite_compact_service import compact_case, bedrock_config, sagemaker_config
+    from test_frankie_compact_controller import build_compact
+    from research.kalshi.frankie_boss.granite_bedrock import build_bedrock_service
+    from research.kalshi.frankie_boss.granite_sagemaker import build_sagemaker_service
+    CONTRACT_FILE.write_bytes(mutated_contract_source)
+    (tmp_path / 'state').mkdir()
+    (tmp_path / 'controller').mkdir()
+    state, pin, _ = compact_case(tmp_path / 'state')
+    controller, bridge, critic, request = build_compact(tmp_path / 'controller')
+    calls = []
+    factory = lambda config: calls.append(config)
+    services = (
+        build_bedrock_service(enabled=True, config=bedrock_config(), identity=pin, client_factory=factory),
+        build_sagemaker_service(enabled=True, config=sagemaker_config(), identity=pin, client_factory=factory),
+    )
+    CONTRACT_FILE.write_bytes(mutated_contract_source + b'\n# compact route dependency probe\n')
+    for service in services:
+        with pytest.raises(ValueError, match='selected context prompt/parser/schema'):
+            asyncio.run(service.critique_compact(state, request_id='contract-probe'))
+    with pytest.raises(ValueError, match='selected context prompt/parser/schema'):
+        asyncio.run(controller.refresh(**request))
+    assert calls == [] and critic.calls == 0
+    assert bridge.book.checkpoint()['count'] == 0

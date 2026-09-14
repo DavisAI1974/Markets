@@ -35,7 +35,14 @@ section 2a) named. The ruling predates the compact codec; this spec includes it.
 - `render_system_text(variant)` for `PROMPT_VARIANTS = ('serialized_v2', 'native_v1',
   'compact_native_v1')`
 - `system_prompt_hash(variant)` = SHA-256 of the rendered text
-- `CONTRACT.validate(output)` delegating to `granite_output_schema.validate_schema`
+
+Validation stays at the existing `granite_output_schema.validate_schema` entry
+point, which enforces the frozen production contract. Alternate contract instances
+are rendering probes only. The returned slice's unused instance `validate` method
+was removed during integration because it ignored its instance and validated
+against the global production limits; retaining it would falsely imply that a
+custom rendered contract controls output acceptance. No dynamic validation policy
+or change in accepted production output was introduced.
 
 Consumers:
 
@@ -100,11 +107,12 @@ Consequences, proven by tests that append an inert comment to `granite_contract.
 on disk and restore it:
 
 - all three parser hashes move while all three prompt hashes stay frozen;
-- `serve_shadow`, `serve_native_shadow` and `FrankieForecastController.refresh`
-  each raise before invoking transport when the local contract differs from the
-  pinned identity (the controller compares `identity.parser_code_hash` to
-  `native_parser_code_hash()` in `_configuration`, so it inherits the binding
-  without any controller change).
+- `serve_shadow`, `serve_native_shadow`, both AWS services' `critique_compact`,
+  and native/compact `FrankieForecastController.refresh` each raise before
+  invoking transport when the local contract differs from the
+  pinned identity (the controller route compares `identity.parser_code_hash` to
+  the selected native or compact parser hash in `_configuration`, so both routes
+  inherit the dependency binding).
 
 ### Migration
 
@@ -133,7 +141,9 @@ scorers' job (de27bb26); unknown variant and inconsistent V2 caps rejected; a li
 change moves the prompt hash visibly; render fails closed on an unrenderable value;
 invalid limits rejected; contract mutation moves every parser identity; every
 pinned service rejects a contract change before transport; compact identity is
-transitive; standalone and package imports share one contract.
+transitive; standalone and package imports share one contract; compact AWS services
+and controller reject stale contract pins before SDK construction, critic calls or
+native publication; alternate render contracts expose no misleading validator API.
 
 `tests/test_legacy_output_shape_conformance.py`: the BLD-1 output-shape finding
 (see below).

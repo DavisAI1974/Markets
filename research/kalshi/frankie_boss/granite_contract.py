@@ -110,13 +110,6 @@ class GraniteCritiqueContract:
     def system_prompt_hash(self, variant: str) -> str:
         return hashlib.sha256(self.render_system_text(variant).encode('utf-8')).hexdigest()
 
-    def validate(self, output: object) -> bool:
-        """Shape validation, delegated to the validator that consumes these limits."""
-        try:
-            from .granite_output_schema import validate_schema
-        except ImportError:
-            from granite_output_schema import validate_schema
-        return validate_schema(output)
 
 
 # ---------------------------------------------------------------------------
