@@ -119,12 +119,22 @@ class NativeForecastArtifact(HashedContract):
     gap_observed: bool
     points: tuple[ForecastPoint, ...]
     net_usd: float
+    context_receipt: bytes | None = None
 
     def __post_init__(self):
         if not isinstance(self.session, ForecastSession) or not isinstance(self.snapshot, DecoderSnapshot):
             raise ValueError('typed session and decoder snapshot required')
         for name in ('native_model_hash', 'input_hash', 'arm_hash'):
             sha256_digest(getattr(self, name), name)
+        if self.context_receipt is not None:
+            if type(self.context_receipt) is not bytes:
+                raise ValueError('immutable context receipt required')
+            binding = unpack(json.loads(self.context_receipt))
+            if (binding['context']['input_hash'] != self.input_hash
+                    or binding['context']['model_hash'] != self.native_model_hash
+                    or binding['context']['source_prefix_hash'] != self.session.source_hash
+                    or binding['context']['as_of'] != self.session.receive_cutoff_ns):
+                raise ValueError('context receipt differs from forecast source/model')
         if type(self.representation) is not tuple or len(self.representation) != self.snapshot.d_model:
             raise ValueError('immutable native representation required')
         for value in self.representation:
@@ -206,7 +216,7 @@ class NativeForecastArtifact(HashedContract):
         return artifact
 
 
-def freeze_forecast(decoder, representation, session, *, native_model_hash, input_hash, arm_hash):
+def freeze_forecast(decoder, representation, session, *, native_model_hash, input_hash, arm_hash, context_receipt=None):
     decoder._state(representation)
     snapshot = DecoderSnapshot.capture(decoder)
     # Generate using the same frozen weights used by subsequent audit queries.
@@ -226,4 +236,4 @@ def freeze_forecast(decoder, representation, session, *, native_model_hash, inpu
             values = tuple(frozen.path(z, offset/session.duration_ns, anchor=anchor, anchor_usd=amount).tolist())
             points.append(ForecastPoint(session.open_ns+offset, values, False))
     return NativeForecastArtifact(session, snapshot, tuple(native.tolist()), native_model_hash, input_hash,
-                                  arm_hash, gap, observed, tuple(points), gap[1]+points[-1].p50)
+                                  arm_hash, gap, observed, tuple(points), gap[1]+points[-1].p50, context_receipt)
