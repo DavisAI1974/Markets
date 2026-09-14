@@ -108,12 +108,15 @@ class ContextOutput:
 
 
 class ContextSessionRunner:
-    def __init__(self,model,builder,*,entity,t_ctx=T_CTX,teacher=None):
+    def __init__(self,model,builder,*,entity,t_ctx=T_CTX,teacher=None,qsv=None,expected_qsv_hash=None):
         if type(t_ctx) is not int or t_ctx<1:
             raise ValueError('positive declared context length required')
         if type(entity) is not tuple or len(entity)!=2 or any(type(x) is not int for x in entity):
             raise ValueError('entity must be exact (publisher_id,instrument_id)')
         self.model,self.builder,self.entity,self.t_ctx,self.teacher=model,builder,entity,t_ctx,teacher
+        self.qsv,self.expected_qsv_hash=qsv,expected_qsv_hash
+        if (qsv is None) != (expected_qsv_hash is None) or (qsv is not None and qsv.digest != expected_qsv_hash):
+            raise ValueError('QSV requires its trusted artifact identity')
         self._retry=None; self._last=None
         self._check_model()
 
@@ -131,6 +134,8 @@ class ContextSessionRunner:
         trunk=self._check_model()
         names=('trunk.py','b1_reasoner.py','native_mbo_encoder.py','context_session.py',
                'c15_journal.py','causal_packet.py')
+        if self.qsv is not None:
+            names=(*names,'context_qsv.py')
         code={n:Path(__file__).with_name(n).read_bytes() for n in names}
         return evidence_hash(dict(schema=SCHEMA,trunk_schema=TRUNK_SCHEMA,
             weights=tensor_identity(self.model.state_dict()),config=asdict(trunk.cfg),
@@ -184,7 +189,12 @@ class ContextSessionRunner:
                 source_manifest_hash=self.builder.scope.scope_id)
             info['teacher_hash']=teacher['attachment_hash']
             info['teacher_binding']=self.teacher.binding
-        input_hash=evidence_hash(dict(info=info,entity=self.entity,tensors=tensor_identity(tokens)))
+        binding={}
+        if self.qsv is not None:
+            tokens['qsv'],tokens['qsv_mask'],qsv_binding=self.qsv.attach(
+                context,expected_hash=self.expected_qsv_hash,device=device)
+            binding['qsv_binding']=qsv_binding
+        input_hash=evidence_hash(dict(info=info,entity=self.entity,tensors=tensor_identity(tokens),**binding))
         return tokens,info,input_hash,teacher,context
 
     def run(self,*,as_of,through_cursor=None):
@@ -199,12 +209,15 @@ class ContextSessionRunner:
         self._retry=identity+(input_hash,model_hash)
         kwargs=dict(tokens={k:v.detach().clone() for k,v in tokens.items()})
         kwargs['numeric']=kwargs['tokens']['numeric']
-        # Native event-only candidate has no invented book/QSV projection. QSV
-        # can be explicitly ablated; an enabled unablated branch requires a
-        # separately governed mapping, and cannot be silently zero-filled.
+        for name in ('qsv','qsv_mask'):
+            if name in kwargs['tokens']:
+                kwargs[name]=kwargs['tokens'].pop(name)
+        # QSV comes only from a separately governed, causal artifact. The
+        # event-only candidate still fails if unablated QSV is required but absent.
         with torch.no_grad():
             if isinstance(self.model,B1Reasoner):
-                heads=self.model.forward_decision(**kwargs,packet_hash=evidence_hash(info))
+                packet_identity=info if self.qsv is None else dict(context=info,input_hash=input_hash)
+                heads=self.model.forward_decision(**kwargs,packet_hash=evidence_hash(packet_identity))
             else:
                 heads=self.model(**kwargs)
         if heads['evidence_scores'].shape!=(1,len(context)) or any(not torch.isfinite(v).all() for v in heads.values()):
@@ -224,10 +237,11 @@ class ContextSessionRunner:
             receipt=asdict(last['receipt']),tokens={k:v.detach().clone() for k,v in last['tokens'].items()})
 
     @classmethod
-    def restore(cls,model,builder,state,*,expected_input_hash,expected_model_hash,teacher=None):
+    def restore(cls,model,builder,state,*,expected_input_hash,expected_model_hash,teacher=None,qsv=None,expected_qsv_hash=None):
         if set(state)!={'schema','entity','t_ctx','through_cursor','receipt','tokens'} or state['schema']!=SCHEMA:
             raise ValueError('invalid native session checkpoint')
-        result=cls(model,builder,entity=tuple(state['entity']),t_ctx=state['t_ctx'],teacher=teacher)
+        result=cls(model,builder,entity=tuple(state['entity']),t_ctx=state['t_ctx'],teacher=teacher,
+                   qsv=qsv,expected_qsv_hash=expected_qsv_hash)
         receipt=state['receipt']
         if result._model_hash()!=expected_model_hash or receipt['model_hash']!=expected_model_hash:
             raise ValueError('model differs from trusted checkpoint identity')
