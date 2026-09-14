@@ -157,3 +157,12 @@ def test_runtime_endpoint_replica_drift_is_rejected(tmp_path):
     p=plan();client=Client();path=tmp_path/'ledger.json';d.create_resources(client,p,path,now=lambda:1001)
     client.endpoints[p['endpoint']['EndpointName']]['ProductionVariants']=[{'VariantName':'AllTraffic','CurrentInstanceCount':2,'DesiredInstanceCount':2}]
     with pytest.raises(ValueError):d.inspect_resources(client,p)
+
+
+def test_plan_matches_installed_aws_sdk_request_shapes():
+    import botocore.session
+    from botocore.validate import validate_parameters
+    service=botocore.session.get_session().get_service_model('sagemaker')
+    p=plan()
+    for key,operation in [('model','CreateModel'),('endpoint_config','CreateEndpointConfig'),('endpoint','CreateEndpoint')]:
+        validate_parameters(p[key],service.operation_model(operation).input_shape)
