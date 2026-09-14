@@ -26,31 +26,51 @@ class PreparedFrankieForecast:
         return json.loads(self.payload_json)
 
 
-def route_frankie_forecast(*, legacy, load_native, enabled=False):
+def route_frankie_forecast(*, legacy, load_native, enabled=False,
+                          expected_digest=None, publication_hash=None, metadata=None):
+    """Enabled roots and metadata must come independently from the verified caller.
+
+    The loader supplies only a proposal. This function cannot authenticate a ledger
+    or a metadata origin; consume_forecast supplies the verified publication root.
+    Caller metadata remains explicitly unverified in the returned transport stamp.
+    """
     if type(enabled) is not bool:
         raise ValueError('explicit boolean enable flag required')
     if not enabled:
         return legacy()
+    try:
+        from .forecast_contract import sha256_digest
+        from .frankie_contract import BLD1_FIELDS, BLD1_FIELD_NAMES
+    except ImportError:
+        from forecast_contract import sha256_digest
+        from frankie_contract import BLD1_FIELDS, BLD1_FIELD_NAMES
+    sha256_digest(expected_digest, 'trusted native artifact')
+    sha256_digest(publication_hash, 'trusted publication')
+    forecast_fields = {'guessed_net_usd', 'overnight_gap_usd', 'path_p50_curve', 'confidence'}
+    if type(metadata) is not dict or set(metadata) != set(BLD1_FIELD_NAMES)-forecast_fields:
+        raise ValueError('complete independent caller metadata required')
+    metadata = json.loads(json.dumps(metadata, allow_nan=False))
+    for spec in BLD1_FIELDS:
+        if spec.name in metadata:
+            spec.validate(metadata[spec.name])
     draft = load_native()
     if not isinstance(draft, PreparedFrankieForecast):
         raise ValueError('typed category-free draft required')
     try:
         from .frankie_category_free import CategoryFreeRecord, CONTRACT_ID
         from .forecast_artifact import NativeForecastArtifact
-        from .frankie_contract import BLD1_FIELD_NAMES
     except ImportError:
         from frankie_category_free import CategoryFreeRecord, CONTRACT_ID
         from forecast_artifact import NativeForecastArtifact
-        from frankie_contract import BLD1_FIELD_NAMES
     if draft.contract_id != CONTRACT_ID:
         raise LegacyConfidenceCompatibilityError(draft)
-    checked = CategoryFreeRecord(draft.payload_json, draft.artifact_digest)
-    artifact = NativeForecastArtifact.from_payload(draft.artifact_payload, expected_digest=draft.artifact_digest)
-    forecast_fields = {'guessed_net_usd', 'overnight_gap_usd', 'path_p50_curve', 'confidence'}
-    metadata = {k: checked.payload[k] for k in BLD1_FIELD_NAMES if k not in forecast_fields}
-    expected = prepare_frankie_forecast(artifact, expected_digest=draft.artifact_digest, metadata=metadata)
+    if draft.artifact_digest != expected_digest:
+        raise ValueError('proposal differs from trusted native artifact')
+    checked = CategoryFreeRecord(draft.payload_json, expected_digest, publication_hash)
+    artifact = NativeForecastArtifact.from_payload(draft.artifact_payload, expected_digest=expected_digest)
+    expected = prepare_frankie_forecast(artifact, expected_digest=expected_digest, metadata=metadata)
     if expected.payload != checked.payload:
-        raise ValueError('projection differs from verified native artifact')
+        raise ValueError('projection differs from trusted native artifact or caller metadata')
     return checked
 
 

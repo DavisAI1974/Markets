@@ -43,11 +43,13 @@ def test_category_free_draft_retains_valid_abstain_forecast_and_stays_outside_bl
     assert payload['path_p50_curve'][0][1] == 0
     assert payload['path_p50_curve'][-1][1] == f.points[-1].p50
     with pytest.raises(ContractError, match='low'): validate_bld1(payload)
-    record = route_frankie_forecast(enabled=True, legacy=lambda: None, load_native=lambda: draft)
+    record = route_frankie_forecast(enabled=True, legacy=lambda: None, load_native=lambda: draft,
+        expected_digest=f.digest, publication_hash=H, metadata=metadata())
     assert record.payload == payload
     stale = replace(draft, contract_id='BOSS_FRANKIE_CATEGORY_FREE_DRAFT_V1')
     with pytest.raises(LegacyConfidenceCompatibilityError):
-        route_frankie_forecast(enabled=True, legacy=lambda: None, load_native=lambda: stale)
+        route_frankie_forecast(enabled=True, legacy=lambda: None, load_native=lambda: stale,
+            expected_digest=f.digest, publication_hash=H, metadata=metadata())
 
 
 def test_s121_clock_wrap_fractional_times_and_true_close_sentinel():

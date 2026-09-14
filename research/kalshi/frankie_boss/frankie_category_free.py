@@ -2,7 +2,6 @@
 from dataclasses import dataclass, field
 import hashlib
 import json
-import math
 
 try:
     from .frankie_contract import BLD1_FIELDS, BLD1_FIELD_NAMES, ContractError, _curve_positions, _mechanically_linear
@@ -29,8 +28,7 @@ def validate_category_free(payload):
         raise ValueError('reasoning must be nonempty')
     if abs(points[0][1]) > 1e-9:
         raise ValueError('first cumulative value must be zero')
-    endpoint = checked['guessed_net_usd']-checked['overnight_gap_usd']
-    if not math.isclose(points[-1][1], endpoint, rel_tol=0., abs_tol=1.):
+    if checked['guessed_net_usd'] != checked['overnight_gap_usd'] + points[-1][1]:
         raise ValueError('terminal must equal net minus gap')
     if abs(points[-1][1]) > 1e-9 and _mechanically_linear(points):
         raise ValueError('decorative endpoint interpolation rejected')
@@ -68,9 +66,14 @@ class CategoryFreeRecord:
         return json.loads(self.payload_json)
 
     def to_json(self):
+        forecast_fields = {'guessed_net_usd', 'overnight_gap_usd', 'path_p50_curve', 'confidence'}
+        metadata = {k: v for k, v in self.payload.items() if k not in forecast_fields}
+        metadata_hash = hashlib.sha256(json.dumps(metadata, sort_keys=True,
+            separators=(',', ':'), allow_nan=False).encode()).hexdigest()
         return json.dumps(dict(payload=self.payload, stamp=dict(contract_id=self.contract_id,
             adapter_id=self.adapter_id, artifact_digest=self.artifact_digest,
-            publication_hash=self.publication_hash)), sort_keys=True, separators=(',', ':'), allow_nan=False)
+            publication_hash=self.publication_hash, metadata_hash=metadata_hash,
+            metadata_verification='caller_supplied_unverified')), sort_keys=True, separators=(',', ':'), allow_nan=False)
 
     @property
     def digest(self):

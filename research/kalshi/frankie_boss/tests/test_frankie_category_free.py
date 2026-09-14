@@ -15,7 +15,8 @@ def payload():
 
 def test_approved_route_returns_distinct_versioned_record_and_preserves_forecast():
     f = artifact(); prepared = prepare_frankie_forecast(f, expected_digest=f.digest, metadata=metadata())
-    record = route_frankie_forecast(enabled=True, legacy=lambda: pytest.fail('legacy invoked'), load_native=lambda: prepared)
+    record = route_frankie_forecast(enabled=True, legacy=lambda: pytest.fail('legacy invoked'), load_native=lambda: prepared,
+        expected_digest=f.digest, publication_hash='a'*64, metadata=metadata())
     assert isinstance(record, CategoryFreeRecord)
     assert record.payload == prepared.payload and record.artifact_digest == f.digest
     envelope = json.loads(record.to_json())
@@ -57,7 +58,9 @@ def test_safety_abstain_is_complete_and_category_free():
 def test_forged_preparation_is_revalidated_at_enabled_boundary():
     f = artifact(); prepared = prepare_frankie_forecast(f, expected_digest=f.digest, metadata=metadata())
     forged = replace(prepared, payload_json=json.dumps({**prepared.payload, 'confidence': 'high'}))
-    with pytest.raises(ValueError): route_frankie_forecast(enabled=True, legacy=None, load_native=lambda: forged)
+    with pytest.raises(ValueError):
+        route_frankie_forecast(enabled=True, legacy=None, load_native=lambda: forged,
+            expected_digest=f.digest, publication_hash='a'*64, metadata=metadata())
 
 
 def test_accounting_valid_forgery_cannot_reuse_native_artifact_identity():
@@ -66,4 +69,5 @@ def test_accounting_valid_forgery_cannot_reuse_native_artifact_identity():
     altered['guessed_net_usd'] += 100; altered['overnight_gap_usd'] += 100
     forged = replace(prepared, payload_json=json.dumps(altered))
     with pytest.raises(ValueError, match='native artifact'):
-        route_frankie_forecast(enabled=True, legacy=None, load_native=lambda: forged)
+        route_frankie_forecast(enabled=True, legacy=None, load_native=lambda: forged,
+            expected_digest=f.digest, publication_hash='a'*64, metadata=metadata())

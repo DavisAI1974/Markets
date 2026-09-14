@@ -49,7 +49,6 @@ def consume_forecast(*, legacy, enabled=False, book=None, publication_hash=None,
         raise ValueError('explicit boolean enable flag required')
     if not enabled:
         return legacy()
-    from dataclasses import replace
     import sqlite3
     import struct
     try:
@@ -96,7 +95,8 @@ def consume_forecast(*, legacy, enabled=False, book=None, publication_hash=None,
         if candidate.model_hash != expected_model:
             raise ValueError('publication model differs from native artifact')
         prepared = prepare_frankie_forecast(artifact, expected_digest=candidate.candidate_id, metadata=metadata)
-        record = route_frankie_forecast(enabled=True, legacy=None, load_native=lambda: prepared)
-        return replace(record, publication_hash=publication.receipt_hash)
+        return route_frankie_forecast(enabled=True, legacy=None, load_native=lambda: prepared,
+            expected_digest=candidate.candidate_id, publication_hash=publication.receipt_hash,
+            metadata=metadata)
     except (ValueError, TypeError, KeyError, ContractError, RuntimeError, OSError, sqlite3.Error) as exc:
         return category_free_abstain(metadata, (f'native_forecast_unavailable: {type(exc).__name__}: {exc}',))
