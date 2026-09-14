@@ -42,4 +42,3 @@ separate from this connectivity test. Preserve that attribution in the actual
 emitted prompt and evidence receipts.
 
 Verification before the first hosted attempt: 106 combined coordinator/live-helper/lifecycle/startup/artifact checks passed locally. Independent reviewer reran all 28 coordinator checks and approved the bounded workflow. These are software checks; actual hosted acceptance is recorded separately.
-
