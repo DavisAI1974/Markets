@@ -1,5 +1,9 @@
 # BOSS next-chat handoff — 2026-09-14
 
+Latest owner direction: the next chat owns Claude's consumer addendum. Read
+ADDENDUM_WORK_TRANSFER_20260914.md first for the preserved, uncommitted work and
+its limited verification. The transfer chat has stopped implementation.
+
 Current successor: [CLAUDE_REVIEW_FIXES_HANDOFF_20260914.md](CLAUDE_REVIEW_FIXES_HANDOFF_20260914.md).
 Read it first for the owner-authorized required and optional Claude review fixes,
 their verification checkpoint and the next unfinished work. The prior continuation
