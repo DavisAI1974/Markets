@@ -208,24 +208,27 @@ def test_signature_excludes_query_and_verifies_exact_protocol():
 
 
 @pytest.mark.parametrize('environment', ['live', 'sandbox'])
-def test_kalshi_prepares_signature_and_key_before_dispatch(environment):
+def test_kalshi_loads_key_before_dispatch_and_signs_current_send_clock(environment):
     pin, wire, cap = fixture('kalshi', environment)
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     pem = key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
         serialization.NoEncryption())
     http = FakeHTTP([(201, b'order')])
+    clock = [10*SECOND]
     resolutions = []
     def resolve(ref):
         resolutions.append(ref)
         return KalshiSecrets('synthetic-key-id', pem)
     transport = prepare_transport(wire=wire, pin=pin, capability=cap, expected_capability_hash=cap.digest,
-        resolve_secret=resolve, http=http, expected_http_hash=H, now=lambda: 10*SECOND)
+        resolve_secret=resolve, http=http, expected_http_hash=H, now=lambda: clock[0])
     assert len(resolutions) == 1 and not http.calls
+    clock[0] = 39*SECOND  # delay after preparation must not reuse a stale signature
     assert transport(wire).source == 'kalshi.create_order'
     headers = http.calls[0]['headers']
     key.public_key().verify(base64.b64decode(headers['KALSHI-ACCESS-SIGNATURE']),
-        ('10000POST'+wire.path).encode(), padding.PSS(mgf=padding.MGF1(hashes.SHA256()),
+        ('39000POST'+wire.path).encode(), padding.PSS(mgf=padding.MGF1(hashes.SHA256()),
         salt_length=padding.PSS.DIGEST_LENGTH), hashes.SHA256())
+    assert headers['KALSHI-ACCESS-TIMESTAMP'] == '39000'
 
 
 @pytest.mark.parametrize('expired', [False, True])
@@ -278,3 +281,27 @@ def test_cancellation_messages_are_redacted_and_not_converted_to_retry():
     with pytest.raises(KeyboardInterrupt) as err:
         ready(http)
     assert str(err.value) == '' and err.value.__suppress_context__
+
+
+@pytest.mark.parametrize('after_sign', [9*SECOND, 40*SECOND])
+def test_kalshi_rechecks_lease_after_signing_before_http(monkeypatch, after_sign):
+    import research.kalshi.frankie_boss.execution_transport as module
+    pin, wire, cap = fixture('kalshi')
+    key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    pem = key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption())
+    clock = [10*SECOND]
+    http = FakeHTTP([])
+    def delayed_signature(*args):
+        result = kalshi_signature(*args)
+        clock[0] = after_sign
+        return result
+    transport = prepare_transport(wire=wire, pin=pin, capability=cap, expected_capability_hash=cap.digest,
+        resolve_secret=lambda _: KalshiSecrets('synthetic-key-id', pem),
+        http=http, expected_http_hash=H, now=lambda: clock[0])
+    monkeypatch.setattr(module, 'kalshi_signature', delayed_signature)
+    with pytest.raises(TransportError):
+        transport(wire)
+    assert not http.calls
+    with pytest.raises(TransportError):
+        transport(wire)

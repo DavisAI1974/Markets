@@ -12,13 +12,15 @@ store, no provider request was made and no account permission or live execution 
    identity, User-Agent, timeout, short ready lifetime and expiry margin.
 2. Prepare the controller's immutable wire, then call `prepare_transport` with the
    independently expected capability and HTTP identity, explicit secret provider and clock.
-   This resolves secrets and loads/signs a Kalshi key or completes one tastytrade refresh.
+   This resolves secrets and loads a Kalshi key or completes one tastytrade refresh.
 3. For tastytrade call the lease's `preflight()` once, retain and independently pin its
    returned `TransportReceipt`, then pass it into the existing controller. Preflight
    interpretation and retained failure evidence remain the controller's responsibility.
 4. Call `controller.dispatch_once(..., transport=ready, transport_hash=ready.digest, now=...)`.
-   Its final policy clock occurs after all secret resolution, signing, OAuth and dry-run
-   work. The sender checks the ready lease clock without performing another auth operation.
+   Its final policy clock occurs after all secret resolution, key loading, OAuth and dry-run
+   work. For Kalshi, the sender signs the current request timestamp with the already loaded
+   key immediately before HTTP, then rechecks the lease/clock after local signing. It never
+   re-resolves credentials or refreshes OAuth inside submission.
    Every order response, including 401/429/5xx/3xx, is returned as raw typed evidence.
    No response causes automatic refresh or resubmission.
 

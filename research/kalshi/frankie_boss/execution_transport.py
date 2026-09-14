@@ -11,6 +11,7 @@ import re
 import threading
 from typing import Protocol
 from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 from .execution_auth import CredentialReference, KalshiSecrets, TastytradeSecrets, kalshi_signature
 from .execution_contracts import AccountKey, Contract
 from .execution_ledger import WireRequest
@@ -142,12 +143,13 @@ Call only through ExecutionController/ExecutionLedger for orders. Local reuse
 protection supplements the durable ledger; it does not replace it on restart.
 """
     __slots__ = ('_wire', '_pin', '_cap', '_http', '_now', '_headers', '_sensitive',
-                 '_start', '_until', '_lock', '_sent', '_preflight_sent')
+                 '_start', '_until', '_lock', '_sent', '_preflight_sent', '_key')
 
-    def __init__(self, wire, pin, cap, http, now, headers, sensitive, start, until):
+    def __init__(self, wire, pin, cap, http, now, headers, sensitive, start, until, key):
         self._wire, self._pin, self._cap, self._http, self._now = wire, pin, cap, http, now
         self._headers, self._sensitive = dict(headers), tuple(sensitive)
         self._start, self._until = start, until
+        self._key = key
         self._lock, self._sent, self._preflight_sent = threading.Lock(), False, False
 
     @property
@@ -163,12 +165,26 @@ protection supplements the durable ledger; it does not replace it on restart.
             if not self._start <= started < self._until:
                 raise TransportError('ready transport expired or clock moved backwards')
             path = preflight_request(self._wire, self._pin).path if preflight else self._wire.path
-            response = _exchange(self._http, self._cap, path, self._headers, self._wire.body)
+            headers = dict(self._headers)
+            sensitive = self._sensitive
+            if self._key is not None:
+                # Key resolution/loading is already complete. Sign the actual request
+                # clock now; a prepared signature would become stale while awaiting policy.
+                timestamp = started//1_000_000
+                signature = kalshi_signature(self._key, timestamp, self._wire.method, path)
+                headers.update({'KALSHI-ACCESS-TIMESTAMP': str(timestamp),
+                    'KALSHI-ACCESS-SIGNATURE': signature})
+                sensitive += (signature.encode(),)
+                signed = _clock(self._now)
+                if not started <= signed < self._until:
+                    raise TransportError('ready lease expired during signing or clock moved backwards')
+                started = signed
+            response = _exchange(self._http, self._cap, path, headers, self._wire.body)
             received = _clock(self._now)
             if received < started:
                 raise TransportError('HTTP receive clock moved backwards')
             # Known credential echoes cannot enter durable generic receipts.
-            if any(secret and secret in response.body for secret in self._sensitive):
+            if any(secret and secret in response.body for secret in sensitive):
                 raise TransportError('HTTP response contains authentication material')
             source = ('tastytrade.dry_run' if preflight else
                       'kalshi.create_order' if type(self._pin) is KalshiPin else 'tastytrade.submit_order')
@@ -195,7 +211,7 @@ protection supplements the durable ledger; it does not replace it on restart.
 def prepare_transport(*, wire: WireRequest, pin, capability: TransportCapability,
                       expected_capability_hash: str, resolve_secret: SecretProvider,
                       http: HTTPExchange, expected_http_hash: str, now) -> ReadyTransport:
-    """Resolve/load/sign/refresh before the controller takes its final clock.
+    """Resolve/load/refresh before the controller takes its final clock.
 
 No OAuth cache or in-sender refresh exists. Prepare a new lease for a new intent;
 the ledger still forbids resending any previously attempted wire after restart.
@@ -208,14 +224,15 @@ the ledger still forbids resending any previously attempted wire after restart.
         secrets = resolve_secret(capability.credential)
         headers = {'User-Agent': capability.user_agent, 'Content-Type': 'application/json', 'Accept': 'application/json'}
         until = start + capability.ready_lifetime_ns
+        key = None
         if type(pin) is KalshiPin:
             if type(secrets) is not KalshiSecrets:
                 raise TransportError('Kalshi credentials required')
             key = serialization.load_pem_private_key(secrets.private_key_pem, password=None)
-            signature = kalshi_signature(key, start//1_000_000, wire.method, wire.path)
-            headers.update({'KALSHI-ACCESS-KEY': secrets.key_id, 'KALSHI-ACCESS-TIMESTAMP': str(start//1_000_000),
-                'KALSHI-ACCESS-SIGNATURE': signature})
-            sensitive = (secrets.private_key_pem, secrets.key_id.encode(), signature.encode())
+            if not isinstance(key, rsa.RSAPrivateKey) or key.key_size < 2048:
+                raise TransportError('RSA private key of at least 2048 bits required')
+            headers['KALSHI-ACCESS-KEY'] = secrets.key_id
+            sensitive = (secrets.private_key_pem, secrets.key_id.encode())
         else:
             if type(secrets) is not TastytradeSecrets:
                 raise TransportError('tastytrade credentials required')
@@ -239,6 +256,6 @@ the ledger still forbids resending any previously attempted wire after restart.
         finished = _clock(now)
         if not start <= finished < until:
             raise TransportError('authentication preparation expired')
-        return ReadyTransport(wire, pin, capability, http, now, headers, sensitive, start, until)
+        return ReadyTransport(wire, pin, capability, http, now, headers, sensitive, start, until, key)
     except BaseException as error:
         _failure('authentication preparation failed', error)
