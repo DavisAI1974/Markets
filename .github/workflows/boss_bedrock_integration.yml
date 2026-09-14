@@ -1,0 +1,50 @@
+name: BOSS Bedrock integration inventory
+
+on:
+  push:
+    branches: [codex/boss-full-evidence-20260907]
+    paths:
+      - .github/workflows/boss_bedrock_integration.yml
+      - research/kalshi/frankie_boss/bedrock_inventory.py
+      - research/kalshi/frankie_boss/tests/test_bedrock_inventory.py
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boss-bedrock-inventory
+  cancel-in-progress: false
+
+jobs:
+  read-only-inventory:
+    if: github.ref == 'refs/heads/codex/boss-full-evidence-20260907'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact reviewed commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install inventory SDK and test dependencies
+        run: python -m pip install boto3==1.42.23 pytest==8.3.5
+      - name: Verify inventory contract without credentials
+        run: python -m pytest research/kalshi/frankie_boss/tests/test_bedrock_inventory.py -q
+      - name: Inventory model and endpoint metadata only
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: python -m research.kalshi.frankie_boss.bedrock_inventory --regions us-east-2 us-east-1 --output work/bedrock-inventory.json
+      - name: Preserve inventory and permission failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: boss-bedrock-inventory-${{ github.run_id }}
+          path: work/bedrock-inventory.json
+          if-no-files-found: warn
+          retention-days: 14
