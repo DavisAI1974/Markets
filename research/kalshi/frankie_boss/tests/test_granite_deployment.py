@@ -47,7 +47,7 @@ class Client:
         return self.endpoints[EndpointName]
     def create_model(self,**args):self.models[args['ModelName']]=deepcopy(args);return {'ModelArn':'synthetic'}
     def create_endpoint_config(self,**args):self.configs[args['EndpointConfigName']]=deepcopy(args);return {'EndpointConfigArn':'synthetic'}
-    def create_endpoint(self,**args):self.endpoints[args['EndpointName']]={**args,'EndpointStatus':'InService'};return {'EndpointArn':'synthetic'}
+    def create_endpoint(self,**args):self.endpoints[args['EndpointName']]={**args,'EndpointStatus':'InService','ProductionVariants':[{'VariantName':'AllTraffic','CurrentInstanceCount':1,'DesiredInstanceCount':1}]};return {'EndpointArn':'synthetic'}
     def delete_endpoint(self,EndpointName):self.deleted.append('endpoint');self.endpoints.pop(EndpointName,None)
     def delete_endpoint_config(self,EndpointConfigName):self.deleted.append('config');self.configs.pop(EndpointConfigName,None)
     def delete_model(self,ModelName):self.deleted.append('model');self.models.pop(ModelName,None)
@@ -151,3 +151,9 @@ def test_startup_receipt_rejects_two_different_reports():
         def get_log_events(self,**kw):
             return {'events':[{'message':'GRANITE_STARTUP_RECEIPT '+json.dumps({'schema':'GRANITE_STARTUP_RUNTIME_V1','attempt':i})} for i in (1,2)],'nextForwardToken':kw.get('nextToken','end')}
     with pytest.raises(ValueError):d.startup_receipt(Logs(),plan())
+
+
+def test_runtime_endpoint_replica_drift_is_rejected(tmp_path):
+    p=plan();client=Client();path=tmp_path/'ledger.json';d.create_resources(client,p,path,now=lambda:1001)
+    client.endpoints[p['endpoint']['EndpointName']]['ProductionVariants']=[{'VariantName':'AllTraffic','CurrentInstanceCount':2,'DesiredInstanceCount':2}]
+    with pytest.raises(ValueError):d.inspect_resources(client,p)

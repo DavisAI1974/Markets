@@ -136,6 +136,12 @@ def inspect_resources(client, plan):
             raise ValueError('missing deployment resource: ' + kind)
         check_description(kind, observed, plan)
         results[kind] = observed
+    endpoint = results['endpoint']
+    if endpoint.get('EndpointStatus') == 'InService':
+        variants = endpoint.get('ProductionVariants', [])
+        if (len(variants) != 1 or variants[0].get('VariantName') != 'AllTraffic' or
+                variants[0].get('CurrentInstanceCount') != 1 or variants[0].get('DesiredInstanceCount') != 1):
+            raise ValueError('runtime endpoint replica count drift')
     return results
 
 
