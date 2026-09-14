@@ -217,9 +217,9 @@ class ExecutionController:
         if type(self.pin) is TastytradePin:
             if type(preflight_receipt) is not TransportReceipt:
                 raise ValueError('exact successful tastytrade preflight required')
+            self.store.put(dict(kind='preflight', value=asdict(preflight_receipt)))
             _pin(preflight_receipt, expected_preflight_hash)
             parse_tastytrade_preflight(preflight_receipt, preflight=preflight_request(prepared.wire, self.pin))
-            self.store.put(dict(kind='preflight', value=asdict(preflight_receipt)))
         elif preflight_receipt is not None or expected_preflight_hash is not None:
             raise ValueError('unexpected preflight for this adapter')
         clock = now()
@@ -282,15 +282,16 @@ class ExecutionController:
             expected_account_evidence_hash, reflection, expected_reflection_hash):
         self._prepared(prepared, expected_prepared_hash)
         intent, wire = prepared.inputs.intent, prepared.wire
-        state = self.ledger.state(intent.intent_id)
-        if state['intent'] != asdict(intent) or state['wire'] != asdict(wire):
-            raise ValueError('observation requires the exact durably attempted intent and wire')
         try:
-            if type(receipt) is not TransportReceipt or type(reflection) is not ReflectionEvidence:
+            if (type(receipt) is not TransportReceipt or type(reflection) is not ReflectionEvidence
+                    or type(account_evidence) is not AccountEvidence):
                 raise ValueError('typed transport and independent reflection evidence required')
             # Retain the full rejected envelope, too; never reduce it to a bool.
             locator = self.store.put(dict(kind='reconciliation', receipt=asdict(receipt),
                 account=asdict(account_evidence), reflection=asdict(reflection)))
+            state = self.ledger.state(intent.intent_id)
+            if state['intent'] != asdict(intent) or state['wire'] != asdict(wire):
+                raise ValueError('observation requires the exact durably attempted intent and wire')
             _pin(receipt, expected_receipt_hash)
             self._account(account_evidence, expected_account_evidence_hash)
             _pin(reflection, expected_reflection_hash)

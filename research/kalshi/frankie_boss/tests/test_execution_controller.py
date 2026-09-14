@@ -385,3 +385,42 @@ def test_changed_dispatch_binding_never_calls_sender(tmp_path, mode):
         assert ledger.checkpoint()['count'] == 0
     finally:
         ledger.close()
+
+
+@pytest.mark.parametrize('body_kind', ['warning', 'error', 'malformed'])
+def test_refused_typed_preflight_retains_full_failure_bytes(tmp_path, body_kind):
+    c, ledger, inputs, account, pin = setup_controller(tmp_path, 'tastytrade')
+    try:
+        prepared = prepared_for(c, inputs, account)
+        body = (b'<html>provider fault</html>' if body_kind=='malformed' else
+            json.dumps(dict(data=dict(order=tasty_order(prepared.wire),
+                warnings=['provider warning'] if body_kind=='warning' else [],
+                errors=['provider error'] if body_kind=='error' else []))).encode())
+        preflight = receipt(prepared.wire, inputs.intent.account, 'tastytrade.dry_run', body, received_ns=9)
+        with pytest.raises(ValueError):
+            c.dispatch_once(prepared, expected_prepared_hash=prepared.digest,
+                transport=lambda _: pytest.fail('refused dry-run must not submit'), transport_hash=H,
+                now=lambda: 10, preflight_receipt=preflight, expected_preflight_hash=preflight.digest)
+        envelopes = [c.store.get(p.name) for p in c.store.path.iterdir()]
+        assert any(e.get('kind')=='preflight' and e['value']['body']==body for e in envelopes)
+        assert ledger.checkpoint()['count'] == 0
+    finally:
+        ledger.close()
+
+
+def test_unavailable_reconciliation_state_retains_evidence_and_independent_kill(tmp_path, monkeypatch):
+    c, ledger, inputs, account, pin = setup_controller(tmp_path)
+    try:
+        prepared = prepared_for(c, inputs, account)
+        send_kalshi(c, prepared)
+        response, reflected, proof = terminal_evidence(c, prepared, account)
+        def unavailable(_):
+            raise OSError('synthetic unavailable state')
+        monkeypatch.setattr(ledger, 'state', unavailable)
+        with pytest.raises(OSError, match='unavailable state'):
+            ingest(c, prepared, response, reflected, proof)
+        assert ledger.killed and (tmp_path/'orders.sqlite.kill').is_file()
+        envelopes = [c.store.get(p.name) for p in c.store.path.iterdir()]
+        assert any(e.get('kind')=='reconciliation' and e['receipt']['body']==response.body for e in envelopes)
+    finally:
+        ledger.close()

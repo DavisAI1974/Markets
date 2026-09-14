@@ -56,7 +56,9 @@ KalshiPin/TastytradePin and match authority/account.
 2. `dispatch_once(prepared, *, expected_prepared_hash, transport, transport_hash,
    now, preflight_receipt=None, expected_preflight_hash=None)` re-admits exact
    prepared identity and bytes. Tastytrade requires a separately pinned successful
-   existing dry-run receipt for the same wire/account; Kalshi refuses extra
+   existing dry-run receipt for the same wire/account; typed preflight envelopes
+   are retained before pin/schema/warning/error interpretation, including failures.
+   Kalshi refuses extra
    preflight inputs. Sample `now()` **after** preflight validation/retention and
    check that preflight receipt falls inside intent creation/send clocks.
    Create the intent idempotently, then delegate approval/send to the existing
@@ -72,7 +74,7 @@ KalshiPin/TastytradePin and match authority/account.
 4. `ingest_order_observation(prepared, *, expected_prepared_hash, receipt,
    expected_receipt_hash, expected_source, account_evidence,
    expected_account_evidence_hash, reflection, expected_reflection_hash)` requires
-   the exact durably attempted ledger intent/wire, retains full reconciliation
+   the exact durably attempted ledger intent/wire, retains full typed reconciliation
    evidence, reuses the existing parser/observation builder, verifies reflection
    pins and account scope/unit/causal-clock coverage, then calls ledger.reconcile.
    Terminal release uses the typed account snapshot whose digest is bound by the
@@ -80,6 +82,8 @@ KalshiPin/TastytradePin and match authority/account.
    complete reflection digest. The result reports current status and trusted
    checkpoint, separately from the reconcile boolean. A repeated older observation
    may no longer validate against current state; it is not a new historical claim.
+   Evidence retention precedes the ledger state read; unavailable/poisoned state
+   is inside the independent kill-on-failure boundary.
 5. `admit_account_successor(account_evidence, *, expected_account_evidence_hash)`
    retains and validates evidence, then delegates to ledger.reflect_account;
    existing causal frontier and reflected-intent preservation stay authoritative.
@@ -131,11 +135,16 @@ disk failures before/after send, poisoned RETURN journal writes, process-control
 exceptions and independent kill while transport remains in flight. Every transport
 is synthetic. Actual provider behavior/authentication remains unproved.
 
-Combined execution verification: **211 passed in 25.86 seconds** (39 new
+Initial combined execution verification: **211 passed in 25.86 seconds** (39 new
 controller cases plus the existing 172 policy/ledger/adapter cases), no failures
 or skips. The first account/dispatch and reflection test batches failed against
 the absent interfaces before implementation; separate red/green regressions
 covered supported environments and the poisoned-journal error/kill path.
+
+Independent review identified preflight failure retention and unavailable
+reconciliation-state retention/kill gaps. Four new regression cases failed before
+correction; corrected combined verification: **215 passed in 26.20 seconds**
+(43 controller + 172 existing execution cases), no failures or skips.
 
 The next operational increments must bind an actual approved transport and source
 of complete account/position/P&L/valuation/reflection evidence, secrets/signing and
