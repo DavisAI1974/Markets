@@ -45,6 +45,7 @@ class CategoryFreeRecord:
     payload_json: str
     artifact_digest: str | None
     publication_hash: str | None = None
+    reproduction_status: str = 'unknown'
     contract_id: str = field(default=CONTRACT_ID, init=False)
     adapter_id: str = field(default=ADAPTER_ID, init=False)
 
@@ -59,6 +60,8 @@ class CategoryFreeRecord:
             sha256_digest(self.artifact_digest, 'artifact')
         if self.publication_hash is not None:
             sha256_digest(self.publication_hash, 'publication')
+        if self.reproduction_status not in ('unknown', 'publisher_verified'):
+            raise ValueError('unknown publisher reproduction status')
         object.__setattr__(self, 'payload_json', json.dumps(payload, sort_keys=True, separators=(',', ':'), allow_nan=False))
 
     @property
@@ -72,7 +75,8 @@ class CategoryFreeRecord:
             separators=(',', ':'), allow_nan=False).encode()).hexdigest()
         return json.dumps(dict(payload=self.payload, stamp=dict(contract_id=self.contract_id,
             adapter_id=self.adapter_id, artifact_digest=self.artifact_digest,
-            publication_hash=self.publication_hash, metadata_hash=metadata_hash,
+            publication_hash=self.publication_hash, reproduction_status=self.reproduction_status,
+            metadata_hash=metadata_hash,
             metadata_verification='caller_supplied_unverified')), sort_keys=True, separators=(',', ':'), allow_nan=False)
 
     @property

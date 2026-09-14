@@ -130,6 +130,7 @@ def test_inconsistent_computation_receipt_returns_safe_record(tmp_path, mutation
     artifact = NativeForecastArtifact.from_payload(original.selected.forecast_artifact,
         expected_digest=original.selected.candidate_id)
     binding = unpack(json.loads(artifact.context_receipt))
+    binding.pop('publication_validation', None)  # Exercise legacy, unattested receipt validation.
     if mutation == 'packet': binding['recurrence']['packet_hash'] = 'b'*64
     elif mutation == 'missing_recurrence': del binding['recurrence']
     elif mutation == 'missing_context_field': del binding['context']['packet_hashes']

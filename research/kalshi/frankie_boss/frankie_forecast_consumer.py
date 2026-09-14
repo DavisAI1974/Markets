@@ -20,7 +20,8 @@ def _computation_binding(artifact):
         from c15_journal import evidence_hash, unpack, pack, canonical_bytes
         from forecast_contract import sha256_digest
     binding = unpack(json.loads(artifact.context_receipt))
-    if type(binding) is not dict or set(binding) != {'context', 'recurrence', 'native_execution_hash'}:
+    required = {'context', 'recurrence', 'native_execution_hash'}
+    if type(binding) is not dict or set(binding) not in (required, required | {'publication_validation'}):
         raise ValueError('complete native computation binding required')
     context = asdict(ContextReceipt(**binding['context']))
     recurrence = asdict(RecurrenceReceipt(**binding['recurrence']))

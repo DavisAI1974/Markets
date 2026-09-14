@@ -87,7 +87,10 @@ def test_verified_roundtrip_and_tampered_point_rejection():
     with pytest.raises(ValueError, match='trusted'):
         NativeForecastArtifact.from_payload(f.payload, expected_digest='b'*64)
     point = replace(f.points[-1], quantiles=(0., 0., 0.))
-    with pytest.raises(ValueError): replace(f, points=(f.points[0], point), net_usd=f.gap_quantiles[1])
+    changed = replace(f, points=(f.points[0], point), net_usd=f.gap_quantiles[1])
+    with pytest.raises(ValueError): changed.verify_reproduction()
+    with pytest.raises(ValueError):
+        NativeForecastArtifact.from_payload(changed.payload, expected_digest=f.digest)
 
 
 def test_distinct_session_horizons_condition_native_values():

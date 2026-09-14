@@ -3,10 +3,12 @@
 Snapshots contain exact decoder tensors and native state, never future labels.
 The runtime/code lock must still match when an artifact is queried later.
 """
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 import sys
 import json
+import math
+import struct
 import torch
 
 try:
@@ -48,6 +50,28 @@ class DecoderSnapshot(HashedContract):
                 or type(self.weights) is not bytes or not self.weights):
             raise ValueError('immutable decoder weights and positive dimensions required')
         sha256_digest(self.runtime, 'runtime')
+        # Structural validation must not instantiate today's decoder: archived
+        # four-coordinate snapshots remain readable after model/runtime changes.
+        weights = unpack(json.loads(self.weights))
+        shapes = {}
+        for name, width, output in (('gap_median', self.d_model, 1),
+                ('gap_tails', self.d_model, 2), ('path_median', self.d_model+2, 1),
+                ('path_tails', self.d_model+2, 2), ('time_decoder', self.d_model+2, 2)):
+            shapes.update({name+'.0.weight': (self.hidden, width), name+'.0.bias': (self.hidden,),
+                           name+'.2.weight': (output, self.hidden), name+'.2.bias': (output,)})
+        if type(weights) is not dict or set(weights) != set(shapes) | {'session_projection.weight'}:
+            raise ValueError('frozen decoder state keys differ')
+        for name, value in weights.items():
+            if type(value) is not dict or set(value) != {'dtype', 'shape', 'bytes'}:
+                raise ValueError('malformed frozen tensor')
+            shape = value['shape']
+            valid_shape = (shape in ((self.d_model, 4), (self.d_model, 5))
+                           if name == 'session_projection.weight' else shape == shapes[name])
+            if (type(shape) is not tuple or any(type(n) is not int or n < 1 for n in shape)
+                    or not valid_shape or value['dtype'] != 'torch.float64'
+                    or type(value['bytes']) is not bytes or len(value['bytes']) != math.prod(shape)*8
+                    or any(not math.isfinite(v) for (v,) in struct.iter_unpack('=d', value['bytes']))):
+                raise ValueError('frozen decoder tensor contract differs')
 
     @classmethod
     def capture(cls, decoder):
@@ -135,6 +159,15 @@ class NativeForecastArtifact(HashedContract):
                     or binding['context']['source_prefix_hash'] != self.session.source_hash
                     or binding['context']['as_of'] != self.session.receive_cutoff_ns):
                 raise ValueError('context receipt differs from forecast source/model')
+            if 'publication_validation' in binding:
+                marker = binding.pop('publication_validation')
+                fields = asdict(self)
+                fields['context_receipt'] = canonical_bytes(pack(binding))
+                reproduced_hash = evidence_hash(dict(schema='BOSS_FORECAST_CONTRACT_V1',
+                    kind='NativeForecastArtifact', fields=fields))
+                if marker != dict(schema='BOSS_NATIVE_PUBLICATION_VALIDATION_V1',
+                        runtime=self.snapshot.runtime, reproduced_artifact_hash=reproduced_hash):
+                    raise ValueError('publisher reproduction attestation differs from artifact')
         if type(self.representation) is not tuple or len(self.representation) != self.snapshot.d_model:
             raise ValueError('immutable native representation required')
         for value in self.representation:
@@ -142,13 +175,30 @@ class NativeForecastArtifact(HashedContract):
         if (type(self.points) is not tuple or len(self.points) < 2
                 or any(not isinstance(p, ForecastPoint) for p in self.points)):
             raise ValueError('complete immutable path required')
-        if (self.points[0].time_ns != self.session.open_ns or self.points[0].p50 != 0
+        if (self.points[0].time_ns != self.session.open_ns or self.points[0].quantiles != (0., 0., 0.)
                 or self.points[-1].time_ns != self.session.close_ns
                 or any(a.time_ns >= b.time_ns for a, b in zip(self.points, self.points[1:]))):
             raise ValueError('path must cover the session in strict time order from zero')
+        ForecastPoint(self.session.open_ns, self.gap_quantiles, self.gap_observed)
         finite_number(self.net_usd, 'net')
         if self.net_usd != self.gap_quantiles[1] + self.points[-1].p50:
             raise ValueError('net must equal gap plus terminal, without a separate median claim')
+        observed = self.session.event_cutoff_ns >= self.session.open_ns
+        if self.gap_observed != observed or (observed and self.gap_quantiles != (self.session.observed_gap,)*3):
+            raise ValueError('gap differs from causal observed status/value')
+        expected = [(self.session.open_ns, (0., 0., 0.), observed)]
+        expected.extend((m.event_ns, (self.session.movement(m),)*3, True) for m in self.session.known_marks)
+        if [(p.time_ns, p.quantiles, p.observed) for p in self.points[:len(expected)]] != expected:
+            raise ValueError('path differs from certified observed prefix')
+        future = self.points[len(expected):]
+        if (not future or len(future)-1 > self.session.knot_policy.max_interior
+                or any(p.observed or p.time_ns <= max(self.session.open_ns, self.session.event_cutoff_ns)
+                       or (p.time_ns-self.session.open_ns) % self.session.knot_policy.quantum_ns for p in future)):
+            raise ValueError('forecast points must follow the cutoff on the declared quantum and budget')
+
+    @torch.no_grad()
+    def verify_reproduction(self):
+        """Explicit current-runtime reproduction; historical reads do not call this."""
         decoder = self.snapshot.restore()
         z = decoder.condition(torch.tensor(self.representation, dtype=torch.float64), self.session.features)
         s = self.session
@@ -166,6 +216,7 @@ class NativeForecastArtifact(HashedContract):
             if (type(point.observed) is not bool or point.observed != (observed and point.time_ns <= self.session.anchor_ns)
                     or point.quantiles != self._query(point.time_ns, decoder, z)):
                 raise ValueError('point differs from frozen native query or observation')
+        return self
 
     def _query(self, time_ns, decoder, z):
         s = self.session
@@ -190,14 +241,22 @@ class NativeForecastArtifact(HashedContract):
             return self._query(time_ns, decoder, z)
 
     @property
+    def publisher_reproduction_status(self):
+        """Ledger-trusted producer claim, never a current-runtime verification."""
+        binding = {} if self.context_receipt is None else unpack(json.loads(self.context_receipt))
+        return 'publisher_verified' if 'publication_validation' in binding else 'unknown'
+
+    @property
     def payload(self):
         return canonical_bytes(pack(dict(schema='BOSS_NATIVE_FORECAST_V1', **asdict(self))))
 
     @classmethod
-    def from_payload(cls, payload, *, expected_digest):
+    def from_payload(cls, payload, *, expected_digest, verify_reproduction=False):
         sha256_digest(expected_digest, 'trusted forecast digest')
         if type(payload) is not bytes:
             raise ValueError('immutable forecast bytes required')
+        if type(verify_reproduction) is not bool:
+            raise ValueError('explicit reproduction verification flag required')
         fields = unpack(json.loads(payload))
         if fields.pop('schema') != 'BOSS_NATIVE_FORECAST_V1':
             raise ValueError('unsupported native forecast schema')
@@ -213,6 +272,8 @@ class NativeForecastArtifact(HashedContract):
         artifact = cls(**fields)
         if artifact.digest != expected_digest or artifact.payload != payload:
             raise ValueError('forecast differs from trusted artifact identity')
+        if verify_reproduction:
+            artifact.verify_reproduction()
         return artifact
 
 
@@ -235,5 +296,14 @@ def freeze_forecast(decoder, representation, session, *, native_model_hash, inpu
         for offset in times[1:]:
             values = tuple(frozen.path(z, offset/session.duration_ns, anchor=anchor, anchor_usd=amount).tolist())
             points.append(ForecastPoint(session.open_ns+offset, values, False))
-    return NativeForecastArtifact(session, snapshot, tuple(native.tolist()), native_model_hash, input_hash,
-                                  arm_hash, gap, observed, tuple(points), gap[1]+points[-1].p50, context_receipt)
+    artifact = NativeForecastArtifact(session, snapshot, tuple(native.tolist()), native_model_hash, input_hash,
+                                     arm_hash, gap, observed, tuple(points), gap[1]+points[-1].p50, context_receipt)
+    artifact.verify_reproduction()
+    if context_receipt is not None:
+        binding = unpack(json.loads(context_receipt))
+        if 'publication_validation' in binding:
+            raise ValueError('publication attestation must be made after reproduction')
+        binding['publication_validation'] = dict(schema='BOSS_NATIVE_PUBLICATION_VALIDATION_V1',
+            runtime=snapshot.runtime, reproduced_artifact_hash=artifact.digest)
+        artifact = replace(artifact, context_receipt=canonical_bytes(pack(binding)))
+    return artifact

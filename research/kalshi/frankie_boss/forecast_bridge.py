@@ -3,7 +3,7 @@
 This module has no model imports at load time. The default route calls the exact
 legacy callback. The enabled result has its own explicit contract identity.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
 
 
@@ -71,7 +71,7 @@ def route_frankie_forecast(*, legacy, load_native, enabled=False,
     expected = prepare_frankie_forecast(artifact, expected_digest=expected_digest, metadata=metadata)
     if expected.payload != checked.payload:
         raise ValueError('projection differs from trusted native artifact or caller metadata')
-    return checked
+    return replace(checked, reproduction_status=artifact.publisher_reproduction_status)
 
 
 def prepare_frankie_forecast(artifact, *, expected_digest, metadata):
