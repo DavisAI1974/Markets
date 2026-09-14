@@ -1,6 +1,6 @@
 """Inventory contract tests, entirely offline."""
 from botocore.exceptions import ClientError
-from research.kalshi.frankie_boss.bedrock_inventory import collect_operation
+from bedrock_inventory import collect_operation
 
 
 def test_complete_pagination_retains_metadata():
@@ -35,3 +35,29 @@ def test_nonpaginated_no_invalid_arguments():
         assert kwargs == {}
         return {'items': []}
     assert collect_operation(operation, 'items', paginated=False)['status'] == 'complete'
+
+
+def test_installed_sdk_shapes_match_every_inventory_operation():
+    import boto3
+    from bedrock_inventory import OPERATIONS
+    client = boto3.client('bedrock', region_name='us-east-2',
+                          aws_access_key_id='offline', aws_secret_access_key='offline')
+    for name, result_key, paginated in OPERATIONS:
+        model = client.meta.service_model.operation_model(client.meta.method_to_api_mapping[name])
+        assert result_key in model.output_shape.members
+        if paginated:
+            bounds = model.input_shape.members['maxResults'].metadata
+            assert bounds['min'] <= 100 <= bounds['max']
+            assert 'nextToken' in model.input_shape.members
+            assert 'nextToken' in model.output_shape.members
+
+
+def test_inventory_import_does_not_require_torch_or_package_initialization():
+    import pathlib
+    import subprocess
+    import sys
+    directory = pathlib.Path(__file__).resolve().parents[1]
+    code = ("import sys; sys.path.insert(0, sys.argv[1]); sys.modules['torch'] = None; "
+            "import bedrock_inventory; "
+            "assert 'research.kalshi.frankie_boss' not in sys.modules")
+    subprocess.run([sys.executable, '-I', '-c', code, str(directory)], check=True)
