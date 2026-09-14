@@ -9,6 +9,23 @@ not permission to launch its listed experiments.
 
 ## Ordered slices
 
+Current forecast increment (owner clarified best-candidate selection and revisions
+at every horizon; no categorical publication threshold):
+
+1. Internal confidence diagnostics and joint-error evaluation. Missing labels remain
+   explicit; no low/med/high output. Test policy identity and boundary failures.
+2. Comparable candidate selection plus durable rolling revisions, consuming frozen
+   forecast artifacts. Test sole/maximum/tie selection, all horizons, immutable targets,
+   idempotency, restart, source/arm isolation and retained alternatives.
+3. Native decoder and protected integration remain subsequent work; no synthetic
+   artifact is presented as a trained forecast. Reuse the existing C15 exact journal
+   primitive in a separate forecast ledger, never write forecast rows into C15 input.
+
+Verification: focused pytest files test_forecast_confidence.py and
+test_rolling_forecast.py, then existing seam/B1/context suites in an LF checkout.
+Each slice changes at most three implementation/test files and receives review.
+The task index stays in boss-production-todo.md to preserve unrelated tasks/plan.md.
+
 1. Governed QSV attachment: exact registered names, per-coordinate masks, causal
    source/cursor binding, real native model consumption and trusted retry/restore.
    Verify focused context tests with enabled, absent and ablated QSV; mutations and

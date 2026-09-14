@@ -4,6 +4,8 @@
 - [ ] QSV producer-side production wiring and throughput validation
 - [x] Forecast-head and confidence-label proposed design documented (SPEC-native-forecast-confidence.md)
 - [ ] Forecast design reviewed; heads/bridge implemented and empirical calibration bindings completed
+- [x] Internal confidence diagnostics without categorical publication labels (39 synthetic tests; G15 empirical acceptance remains open)
+- [ ] Best comparable candidate selection and durable revisions at every horizon
 - [ ] Protected Frankie integration and disabled identity proof
 - [ ] Production source conformance/wiring software
 - [ ] Six B2/C1 teacher columns with preserved C15R2 control

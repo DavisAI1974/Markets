@@ -1,10 +1,36 @@
 # SPEC: Native BOSS forecast and confidence contract
 
-Status: PROPOSED DESIGN; not implemented, fitted, calibrated, or production-approved.
+Status: implementation in progress; not fitted, calibrated, or production-approved.
 Date: 2026-09-14. Capability id: `native-forecast-confidence`.
 Code baseline: `25db5c8b6c5e9da2872f1870c77fca82dee1731f`.
 Authority: the owner's request to design the missing forecast and confidence.
 The prior build workbook and historical handoffs are reference material, not permission to run experiments.
+
+## Owner revision: rolling best-supported forecasts (2026-09-14)
+
+The owner's subsequent instructions supersede the categorical confidence policy
+below: do not use low/med/high categories or an absolute confidence cutoff to
+decide publication. Publish the sole valid candidate, or the highest-ranked of
+multiple comparable candidates, with scores retained internally. An unavailable
+calibrated probability is not a reason to withhold a valid ranked forecast.
+Raw scores from unrelated scorers are not comparable: alternatives use one frozen
+ranking policy/scorer for the same target, as-of source state and experiment arm.
+Deterministic ties use candidate id order. No selection across blinded experiment arms.
+
+Every registered horizon is revisable, including all intermediate horizons.
+Targets are stable absolute times; remaining horizon decreases with each new as-of.
+New forecasts append revisions and never replace earlier predictions or move the
+target. A revision records source, model, ranking-policy and predecessor identities.
+Ordinary new-data revisions are distinct from separately versioned model changes.
+Near-term targets can update more often under a declared cadence policy; there is
+no hardcoded two-horizon special case and no invented live schedule in this build.
+
+The rolling lifecycle accepts immutable, already-validated native forecast artifact
+bytes. It does not manufacture forecasts or extend single-session BLD-1 to multi-day
+semantics. The existing protected projector remains untouched; any required legacy
+confidence-field compatibility is separate from ranking and must not label every
+winner 'high'. Empirical calibration must evaluate the selected-forecast pipeline,
+including candidate count/generation/ranking policy, not only individual candidates.
 
 ## 1. Objective and assumptions
 
