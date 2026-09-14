@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from pathlib import Path
 from typing import Any, Iterator, Mapping
 
@@ -64,7 +65,7 @@ class RowSink:
         # extra pass over a member ledger measured at 9.2 GB, bought for nothing. The bytes
         # written, the bytes hashed and the bytes counted are now one encoding rather than
         # two that have to agree.
-        self._handle = self.path.open("wb")
+        self._handle = self.path.open("xb")
         self._digest = hashlib.sha256()
         self._rows = 0
         self._bytes = 0
@@ -130,6 +131,7 @@ class RowSink:
     def close(self) -> dict[str, Any]:
         if not self._closed:
             self._handle.flush()
+            os.fsync(self._handle.fileno())
             self._handle.close()
             self._closed = True
         return self.receipt()
@@ -172,12 +174,21 @@ class RowSink:
         exactly what a silently failed write leaves intact.
         """
         receipt = self.close()
-        on_disk = sum(1 for _ in self.path.open("r", encoding="utf-8"))
+        on_disk = 0
+        disk_bytes = 0
+        disk_digest = hashlib.sha256()
+        with self.path.open("rb") as handle:
+            for line in handle:
+                on_disk += 1
+                disk_bytes += len(line)
+                disk_digest.update(line)
         if on_disk != self._rows or on_disk != expected_rows:
             raise RowSinkError(
                 f"{self.ledger} retention mismatch: {expected_rows} counted, "
                 f"{self._rows} offered, {on_disk} on disk at {self.path}"
             )
+        if disk_bytes != self._bytes or disk_digest.hexdigest() != receipt['sha256']:
+            raise RowSinkError(f"{self.ledger} retained bytes differ from emitted evidence at {self.path}")
         receipt["reconciled_against_counter"] = expected_rows
         receipt["rows_read_back_from_disk"] = on_disk
         return receipt
@@ -204,6 +215,9 @@ class LedgerSinks:
 
     def __init__(self, out_dir: Path | str) -> None:
         out_dir = Path(out_dir)
+        for name in ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl', 'legacy_observable_rows.jsonl'):
+            if (out_dir / name).exists():
+                raise RowSinkError(f"existing evidence at {out_dir / name}; use a new run directory")
         self.member = RowSink(out_dir / "exact_member_rows.jsonl", ledger=self.MEMBER)
         self.lifecycle = RowSink(out_dir / "exact_lifecycle_rows.jsonl", ledger=self.LIFECYCLE)
         self.legacy = RowSink(out_dir / "legacy_observable_rows.jsonl", ledger=self.LEGACY)

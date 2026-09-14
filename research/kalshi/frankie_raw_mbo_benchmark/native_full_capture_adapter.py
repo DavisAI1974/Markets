@@ -92,9 +92,11 @@ Step-1 value copied.
 from __future__ import annotations
 
 from collections import Counter
+from copy import deepcopy
 from dataclasses import asdict
 from datetime import timedelta
-from typing import Any
+import math
+from typing import Any, Mapping
 
 from research.kalshi.frankie_raw_mbo_benchmark import native_session
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import (
@@ -104,6 +106,47 @@ from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import (
     V4MboAdapter,
     _ratio,
 )
+
+NATIVE_MBO_FIELDS = (
+    'instrument_id', 'publisher_id', 'channel_id', 'order_id', 'action', 'side',
+    'price', 'size', 'flags', 'sequence', 'ts_event', 'ts_recv', 'ts_in_delta', 'rtype',
+)
+
+
+def source_record(record: Any) -> dict[str, Any]:
+    """Keep original presence, values and extensions beside normalized book inputs."""
+    if isinstance(record, Mapping):
+        raw = deepcopy(dict(record))
+    # Native SDK records expose their complete wire bytes; do not infer that a
+    # fixed attribute projection accounts for every original field.
+    elif hasattr(record, '__bytes__'):
+        raw = {field: deepcopy(getattr(record, field)) for field in NATIVE_MBO_FIELDS
+               if hasattr(record, field)}
+        raw['wire_bytes_hex'] = bytes(record).hex()
+    elif hasattr(record, '__dict__'):
+        raw = deepcopy(vars(record))
+    else:
+        raise TypeError('full capture requires a complete mapping or a wire-serializable native record')
+    _validate_source_value(raw)
+    return raw
+
+
+def _validate_source_value(value: Any) -> None:
+    """Refuse values JSONL would silently coerce, before applying the event."""
+    kind = type(value)
+    if kind is dict:
+        if any(type(key) is not str for key in value):
+            raise TypeError('source-record JSONL requires string field names; original input refused')
+        for item in value.values():
+            _validate_source_value(item)
+    elif kind is list:
+        for item in value:
+            _validate_source_value(item)
+    elif kind is float:
+        if not math.isfinite(value):
+            raise ValueError('source-record JSONL cannot preserve nonfinite values; original input refused')
+    elif value is not None and kind not in (str, bool, int):
+        raise TypeError(f'source-record JSONL cannot preserve {kind.__name__}; original input refused')
 
 __all__ = [
     "ACTIVITY_ANCHORS",
@@ -353,6 +396,7 @@ class FullCaptureAdapter(V4MboAdapter):
     def __init__(self) -> None:
         super().__init__()
         self._effects: dict[int, list[dict[str, Any]]] = {}
+        self._source_records: dict[int, list[dict[str, Any]]] = {}
         self._integrity_open: dict[int, dict[str, int]] = {}
         self._last_sequence: dict[int, int] = {}
         self._since: dict[int, _ActivitySince] = {}
@@ -396,12 +440,15 @@ class FullCaptureAdapter(V4MboAdapter):
         source_dbn_object: str | None = None,
         source_dbn_sha256: str | None = None,
     ) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+        original = source_record(record)
         msg = self.normalize(record, raw_symbol, source_dbn_object, source_dbn_sha256)
         book = self.books.setdefault(msg.instrument_id, InstrumentBook(msg.instrument_id))
         iid = msg.instrument_id
         if not book.event_group:
             self._effects[iid] = []
+            self._source_records[iid] = []
             self._integrity_open[iid] = dict(book.integrity)
+        self._source_records[iid].append(original)
 
         observed = self._observe_before(book, msg, iid)
         since = self._since.get(iid)
@@ -563,6 +610,16 @@ class FullCaptureAdapter(V4MboAdapter):
         now_ns = int(msg.ts_recv_ns)
         effects = self._effects.get(iid, [])
         actions = frame.get("raw_actions", [])
+        originals = self._source_records.get(iid, [])
+        if len(originals) != len(actions):
+            raise RuntimeError('source-record coverage differs from closed event group')
+        actions = [
+            {**action, 'source_record': raw,
+             'source_missing_fields': [field for field in NATIVE_MBO_FIELDS if field not in raw],
+             'source_null_fields': [field for field in NATIVE_MBO_FIELDS if field in raw and raw[field] is None]}
+            for action, raw in zip(actions, originals)
+        ]
+        frame['raw_actions'] = actions
         # Parallel by construction - one effect appended per record, both reset together at
         # group open - so the zip is defensive, and a length mismatch is worth seeing.
         if len(effects) == len(actions):
@@ -590,6 +647,7 @@ class FullCaptureAdapter(V4MboAdapter):
         }
         frame["capture_observations"] = dict(self.capture)
         self._effects[iid] = []
+        self._source_records[iid] = []
         return frame
 
     @staticmethod

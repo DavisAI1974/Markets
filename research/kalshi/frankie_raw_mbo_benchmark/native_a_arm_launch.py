@@ -68,6 +68,9 @@ from research.kalshi.frankie_raw_mbo_benchmark.native_replay_driver import (
     NativeReplayDriver,
 )
 from research.kalshi.frankie_raw_mbo_benchmark.native_row_sink import LedgerSinks
+from research.kalshi.frankie_raw_mbo_benchmark.native_full_capture_adapter import (
+    NATIVE_MBO_FIELDS, source_record,
+)
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import F_LAST
 from research.kalshi.frankie_raw_mbo_benchmark.native_staging import SpawnStager
 from research.kalshi.frankie_raw_mbo_benchmark.periodic_checkpointer import PeriodicCheckpointer
@@ -291,10 +294,7 @@ def run_pre_traversal_gates(
 # --------------------------------------------------------------------------------------
 # The record source
 # --------------------------------------------------------------------------------------
-NATIVE_RECORD_FIELDS = (
-    "instrument_id", "publisher_id", "channel_id", "order_id", "action", "side",
-    "price", "size", "flags", "sequence", "ts_event", "ts_recv", "ts_in_delta",
-)
+NATIVE_RECORD_FIELDS = NATIVE_MBO_FIELDS
 
 
 def native_records(
@@ -324,7 +324,7 @@ def native_records(
         for record in store:
             if type(record).__name__ not in {"MboMsg", "MBOMsg"}:
                 continue
-            row = {field: getattr(record, field, None) for field in NATIVE_RECORD_FIELDS}
+            row = source_record(record)
             row["source_dbn_object"] = str(path)
             row["source_dbn_sha256"] = digest
             row["raw_symbol"] = _symbol(symbols, row["instrument_id"], row["ts_recv"])
