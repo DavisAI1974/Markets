@@ -1,0 +1,46 @@
+{
+ "batch": 1,
+ "conditions": [],
+ "no_condition": [
+  {
+   "play_id": "direction.flow_nowcast",
+   "why": "REAL BAR, UNSERVED QUANTITY. The play states a genuine numeric bar - |dip_imb_level| >= 0.15 - but dip_imb_level is a Lee-Ready signed aggressor imbalance computed over a ~300s window around a leg's trigger push, and it lives in the fingerprint / MBP corpus, not in decision_state. It resolves zero times in grp18-grp23_state.json, which the S112 audit verified independently. The served tape aggregates (tape_conditions.session_signed_flow, session_b_share, big_print_b_share) are whole-session, day-grain quantities on a different event window and a different denominator; the audit already ran them as a DECLARED PROXY and refused to score the play on them. No state_path is picked: attaching a leg-grain bar to a day-grain field is exactly the wrong-but-well-formed input that reads as evaluated and silently never fires."
+  },
+  {
+   "play_id": "direction.book_contrarian",
+   "why": "NO NUMERIC BAR AND THE QUANTITY IS UNSERVED. The read is imb_R, resting-book imbalance measured AT LEG ENTRY off MBP-10 depth; the call is 'fade the heavy resting side', a qualitative heavy/light descriptor with no threshold anywhere in the record. imb_R resolves in zero committed states - the depth corpus is on S3, not in decision_state. tape_conditions.l1_book.quote_bid_share is the nearest-looking served field and is deliberately NOT used: it is a whole-session L1 quote-time share, not depth-at-entry, and the play's own S112 instance ran it as an explicitly declared proxy (48 percent at day grain, 43 percent inside the play's flat-flow scope) while stating 'that is a different instrument and I will not score the play on it'."
+  },
+  {
+   "play_id": "ride.magnitude_staircase",
+   "why": "REAL BARS, UNSERVED QUANTITY. The rungs ($50 / $150 / $250 / $350 / $500 of peak_usd) are genuine numeric thresholds, but peak_usd is a leg's realized-so-far favourable excursion inside a live 1800s window; it exists in renders/ng_refine_s95/fingerprints.json and in no decision_state. No served path carries a running intra-leg excursion. vol_regime.n0_prev_range is the nearest-looking numeric and measures a PRIOR SESSION's whole-day range - a different quantity at a different grain - so it is not used. Compounding this: the S112 audit found the staircase is substantially time-to-peak wearing a dollar bar, and time_to_peak_s is unserved as well, so neither the stated conditioning variable nor the true one can be written."
+  },
+  {
+   "play_id": "exit.recruitment_reversal",
+   "why": "NO NUMERIC BAR AND THE QUANTITIES ARE UNSERVED. The demoted arm (turn_far_thinning) and the surviving arm (old-swing continuation-collapse + negative turn_exhaustion + peaked_fast fade) are all per-leg fingerprint fields; none resolves in any committed state. The surviving arm is stated qualitatively as well - 'old-direction legs stop continuing' names no rate and no threshold. The 20251008 0-of-15 is an INSTANCE, not a bar, and the play's own falsifier records that the base rate which would turn it into one has never been computed."
+  },
+  {
+   "play_id": "shape.grind_vs_spike",
+   "why": "REAL BAR, UNSERVED QUANTITY. peaked_fast is defined as time-to-peak <= 60s, a genuine numeric threshold that splits 1,246 of 6,358 legs in the fingerprint store. But time_to_peak_s, peaked_fast and retention are per-leg fields in fingerprints.json; decision_state carries no time-to-peak at any grain, so the bar cannot be evaluated at the moment the forecast is made. This is the play's own caveat ('usable once the first ~60s-2h of build is seen - NOT at the open') restated as a data fact, and it is why every modern appearance of the play is a needs_intraday_reveal stand-down."
+  },
+  {
+   "play_id": "daytype.surprise_magnitude",
+   "why": "THE QUANTITY IS SERVED BUT THE PLAY STATES NO BAR. stor_surprise resolves in the modern states, but the call - 'big |surprise| -> bigger-leg day; near-consensus -> range/chop' - is qualitative, and the 10 Bcf split that appears in the falsifier is the S112 auditor's own construction for a refutation test (r = 0.087, big-surprise median BELOW small-surprise median), not the play's threshold. Two further reasons not to manufacture one. (a) PROSE-VS-SERVED DISAGREEMENT: the read says '|stor_surprise| (Bcf vs SEASONAL)' while the mechanism it describes requires a surprise vs CONSENSUS; the state serves both, and storage_consensus.last_print.surprise_vs_consensus_bcf is the quantity the market actually prices. (b) DEGENERATE WITHIN THE WEEK: verified directly on grp20-grp23_state.json, stor_surprise is carried unchanged across ~5 consecutive sessions and on the print Thursday itself is still the PREVIOUS week's value (g22 serves -5.0 on 0625 and only becomes -1.4 on 0626), so any bar written on it has zero within-week variance and is stale on the one day the play most wants to size."
+  },
+  {
+   "play_id": "daytype.weekday_archetype",
+   "why": "DAY-OF-WEEK IS A CATEGORICAL DESCRIPTOR, NOT A BAR. The read is literally 'day of week'; the state serves it as the STRING field `dow` ('Mon'..'Fri'), which is not a numeric quantity and is therefore not in the served vocabulary. No arm - Wed up-lean, Thu catalyst, Fri range, Tue continuation, Mon gap - states a threshold on any quantity. The S112 health note records the degenerate shape with the sign reversed: the play emits a call on all five weekdays, so it fires 10-of-10 days in every block and never declines. That is a property of the arms, not of a bar, and no condition can express it."
+  },
+  {
+   "play_id": "timing.subsecond_reversal_exhaustion",
+   "why": "NO TRIGGER BAR AND THE QUANTITY IS UNSERVED AT ANY RESOLUTION. The read is sub-second dipole EXHAUSTION (the imbalance collapsing toward 0.5) stacked with fine-resolution price-reversal timing; decision_state carries nothing sub-daily on the flow side, so no specialist could evaluate it even on a day that called for it. The numbers the play does carry - entry ~5-6 bps off the turn, the 4 bps maker floor, the 22 bps taker floor - are EXECUTION-QUALITY outcomes to be measured, not thresholds on a state quantity; they belong to the OPEN_ITEMS A-6 success criterion, not to conditions[]."
+  },
+  {
+   "play_id": "daytype.monday_weekend_gap",
+   "why": "THREE ARMS, NONE WRITABLE. (a) Monday-ness is the string field `dow`, not a numeric quantity. (b) The 'material gap' bar (|gap| >= ~350 'as the specialists apply it' - the tilde is the auditor's, the play states no number) reads the Sunday-reopen-to-Monday-open PRICE gap, and no gap field resolves anywhere in the committed states: it is price-curve content, which is the blind's one declared mask. (c) The arm SELECTOR - mature swing / fresh cum-extreme / no-material-gap - has no served numeric definition at all, which the S112 health note names as the reason the three arms partition every Monday by construction and no Monday can fall outside the play. Attaching a bar to any served field here would put a threshold on a quantity the play does not read."
+  },
+  {
+   "play_id": "daytype.storage_thursday_magnitude",
+   "why": "A DAY-CLASS DESCRIPTOR PLUS A SIZE PRIOR, WITH NO BAR ON EITHER ARM. The read is 'day of week = Thursday storage-print day'; the SIZE call is 'up-size the magnitude prior' with no threshold, and its only measured form is 'beats its OWN block's non-print median' - a within-block relative comparison the {state_path, comparator, threshold} form cannot express (measured 8 of 14 print Thursdays across g17-g23, and 0 of 2 in g22). The SIDE arm reads 'the running chain', which the S112 health note records as having no served numeric bar anywhere in the state and therefore 'not checkable at all'. RECORDED BUT DELIBERATELY NOT WRITTEN AS A CONDITION: the day-class gate alone is exactly encodable as flow_calendar.days_to_next_eia_release == 0, verified to select 2 of 10 days in each of g20-g23 and to agree exactly with flow_calendar.is_eia_print_day. That is calendar membership of the trigger, not the play's bar, and marking the play 'parsed' on it would put a green tick on a play whose two substantive arms carry no bar at all."
+  }
+ ]
+}

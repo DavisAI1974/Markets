@@ -1,0 +1,66 @@
+{
+ "days": [
+  {
+   "date": "20260601",
+   "dow": "Mon",
+   "owner": "B",
+   "guessed_net_usd": 350,
+   "overnight_gap_usd": 300,
+   "path_distribution": [
+    {
+     "et_hr": 20,
+     "p50": 0
+    },
+    {
+     "et_hr": 22,
+     "p50": 180
+    },
+    {
+     "et_hr": 0,
+     "p50": 290
+    },
+    {
+     "et_hr": 2,
+     "p50": 300
+    },
+    {
+     "et_hr": 4,
+     "p50": 280
+    },
+    {
+     "et_hr": 6,
+     "p50": 300
+    },
+    {
+     "et_hr": 8,
+     "p50": 400
+    },
+    {
+     "et_hr": 10,
+     "p50": 460
+    },
+    {
+     "et_hr": 12,
+     "p50": 440
+    },
+    {
+     "et_hr": 14,
+     "p50": 380
+    },
+    {
+     "et_hr": 16,
+     "p50": 350
+    }
+   ],
+   "handoff_out": {
+    "note": "Not required at round 1 for a Monday (the coordinator's Friday sign-off guard covers weekend-feeding days only), emitted anyway because C owns 20260602 next and the chain state must travel.",
+    "exit_type": "seam_gap_realized_then_absorbed - the counter-move is spent in the gap and the catch-up window; the afternoon is the mature chain reasserting.",
+    "chain_polarity_and_age_to_inherit": "DOWN, age 5 by my close - the block chain is NOT flipped. My UP is a seam counter-move inside a live down chain, and structure.chain_polarity_flip is explicitly NOT fired (C1 unmet, C3 forbids front-running). Whoever takes 06-02 must not read my up day as a polarity change.",
+    "cum_from_anchor_to_inherit": "-830 inherited + 350 = -480 USD from the 3.034 anchor at my close, on the forecast-constructed channel. NO DAY MAY RESTART AT CUM 0. Note the cum is now OFF its running minimum for the first time since 0525 but has NOT reclaimed the -100 level, let alone the +180 crest - the leg is intact.",
+    "close_location": "DERIVED FROM MY OWN P50 PATH, NOT OBSERVED, and labelled as such the way E labelled its own. Close +350 against a path high of +460 (10:00) and a path low of 0 (20:00 reopen) = 0.76 of range from the low, i.e. upper quartile but off the high.",
+    "what_06_02_should_watch": "Whether the covering residual has anything left. The seam prior fires AT seams; it does not carry into a Tuesday session on its own. If the 06-01 gap was fully realized and the afternoon gave back, the Tuesday reverts to the standing bearish backdrop (inject phase, vs_5yr +95, empty weather) unless the tape turned buy-side - and the discriminator is 06-01's own session_b_share and phase table, which C will have as its D-1 and I did not.",
+    "what_the_refine_must_fill_first": "The 05-29 last-hour SIGNED FLOW (the covering-vs-squaring discriminator E asked for and still nobody has); the realized cum_from_anchor, which replaces my forecast-constructed chain; and the 06-01 reopen print itself, which is the single cleanest test of both A's consumption rule and my complex-net size arm."
+   }
+  }
+ ]
+}

@@ -1,0 +1,153 @@
+{
+  "specialist": "E",
+  "lens": "Friday / expiry / roll / weekend-positioning; turn-exhaustion gate; covering-self-limiting",
+  "group": "g18",
+  "brain_version": "s102.8",
+  "round": 1,
+  "days_owned": ["20260501", "20260508"],
+  "doctrine_note": "OLD BLIND stays CORE; MBO is a POSTERIOR UPDATE. Direction stays with delivered flow-conviction per phase (sign(signed_flow)*sign(price_change)) + absorption. Book layer STANDS DOWN both days (no book_trustworthy verdict in evidence) - trade-flow + absorption only. Magnitudes DERIVED from the phase table, honest under-100. Both days are weekend-feeding Fridays -> handoff_out emitted on both (coordinator Friday sign-off).",
+  "cross_cutting_mbo_finding": "Both owned Fridays carry near-identical heavy SELL signed-flow (0501 -3358, 0508 -3214) yet deliver OPPOSITE signs. The discriminator is ABSORPTION / phase conviction, not the raw imbalance: 0501 absorb_session=true and the decisive final phase prints sell flow -1728 AGAINST a rising +200 (negative conviction under rising = crowded-short COVERING lift) -> price delivered UP (+280). 0508 absorb_session=false and the decisive final phase prints sell flow -2692 ALIGNED with -710 (positive conviction, genuine delivery), turn_down confirmed 09:15 -> price delivered DOWN (-370). Covering-absorbed => UP; aligned-delivered => DOWN. The blind read both as down-chain Fridays off the raw SELL tilt; MBO absorption flips 0501 and confirms 0508.",
+  "days": [
+    {
+      "date": "20260501",
+      "dow": "Fri",
+      "day_class": "friday_weekend_positioning",
+      "blind_direction": "down",
+      "blind_net_usd": -480,
+      "posterior_direction_by_horizon": {
+        "overnight": "up",
+        "morning": "down",
+        "afternoon": "up",
+        "close": "up"
+      },
+      "expected_magnitude_usd": 250,
+      "expected_magnitude_band_usd": [120, 300],
+      "onset_time_et": "2026-04-30 23:47 (up onset, overnight)",
+      "turn_time_et": "none (no clean turn; morning dip absorbed, ph2 covering lift)",
+      "trend_vs_chop": "chop_with_covering_recovery",
+      "continuation_vs_reversal": "reversal_vs_blind (blind called down; covering absorbed the sell and delivered up)",
+      "path_p50_curve": [
+        [18, 0],
+        [20, 40],
+        [22, 120],
+        [0.5, 250],
+        [3, 400],
+        [6, 540],
+        [8, 600],
+        [9.5, 100],
+        [11, -80],
+        [13, 130],
+        [14.5, 200],
+        [16, 240],
+        [17, 250]
+      ],
+      "confidence": "medium",
+      "weight_assigned": {"blind": 0.30, "causal_mbo": 0.70},
+      "evidence_used": [
+        "total_sflow -3358 (SELL) but absorb_session=true",
+        "phase table: ph0 +462/+500 (overnight buy onset), ph1 -2092/-400 (aligned sell dip to low -140 @10:13), ph2 -1728/+200 with ph_absorb=true (sell flow ABSORBED, price rises = covering lift)",
+        "high_exc +610 @08:12, low_exc -140 @10:13, close net +290 (day_move +280) = round-trip that RECOVERED into the close",
+        "covering-into-weekend signature (0327 class): sustained sell absorbed by the book, price holds up"
+      ],
+      "evidence_rejected": [
+        "raw book div/imb read (book layer stood down - no trustworthy verdict)",
+        "blind's down-lean off the raw SELL tilt (refuted by ph2 absorption)"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer: no execution_authority / conviction-floor / book_complete verdict in g18 evidence -> book read stands down; trade-flow + phase absorption only"
+      ],
+      "selection_reason": "Friday weekend-positioning day owned by E; covering-vs-delivered-sell is exactly the E turn/exhaustion-gate lens.",
+      "mbo_verdict": "COVERING lift. Crowded short (SELL flow all session) was ABSORBED - ph2 negative-conviction-under-rising is the tell. Direction FLIPS to UP vs blind. Magnitude derived from the ph2 covering recovery (+200) plus residual overnight carry, honest ~+250 vs actual +280 (err -30). Covering give-back is self-limiting (one-shot) - do NOT extrapolate a standing weekly up bias.",
+      "handoff_out": {
+        "close_level": 2.789,
+        "cum_from_anchor_usd": 1000,
+        "last_hour_dir": "up",
+        "last_hour_flow": "SELL_absorbed",
+        "close_off_low_usd": 430,
+        "close_off_high_usd": -320,
+        "late_extreme_flag": "none (low was mid-morning 10:13; close well off both extremes, upper-middle)",
+        "chain_polarity": "up_chain_but_fragile (covering-driven, SELL flow persists underneath)",
+        "chain_age": "up-leg day 2 (0430 turn_up +1230 -> 0501 covering +290)",
+        "exit_type": "covering_hold (NOT crest-trim; sell absorbed, covering lift into the close)",
+        "monday_bias": "up_fade_to_flat_with_squeeze_TAIL. The covering lift is SELF-LIMITING (one-shot) so the p50 reverts toward chain/state default, NOT a re-fire of covering-up. BUT the crowded short did not clear (SELL flow -3358 persists and the block's short stack has been REBUILDING) -> fat UPPER tail / squeeze risk on Monday. A informs, B owns the number: p50 modest, tail up.",
+        "read": "Weekend inherits a covering-hold close at 2.789 (+1000 from anchor). The sell was absorbed, not delivered - shorts covered into the weekend. Sunday reopen is continuation-biased UP but self-limiting; the standing risk is an upper-tail squeeze because the crowded short is still on. Do not size the Monday p50 as a fresh covering rally - that fuel is one-shot spent unless a new one-sided run rebuilds it."
+      }
+    },
+    {
+      "date": "20260508",
+      "dow": "Fri",
+      "day_class": "friday_weekend_positioning",
+      "blind_direction": "down",
+      "blind_net_usd": -420,
+      "posterior_direction_by_horizon": {
+        "overnight": "down",
+        "morning": "up",
+        "afternoon": "down",
+        "close": "down"
+      },
+      "expected_magnitude_usd": -350,
+      "expected_magnitude_band_usd": [-250, -510],
+      "onset_time_et": "2026-05-08 04:10 (up onset, overnight/early pop)",
+      "turn_time_et": "2026-05-08 09:15 (turn_down confirmed, high +590)",
+      "trend_vs_chop": "morning_pop_then_trend_down",
+      "continuation_vs_reversal": "continuation (down chain resumes via delivered sell; blind direction confirmed)",
+      "path_p50_curve": [
+        [18, 0],
+        [20, -30],
+        [22, -60],
+        [0.5, -80],
+        [3, -60],
+        [6, 100],
+        [8, 400],
+        [9.5, 560],
+        [11, 100],
+        [13, -250],
+        [14.5, -450],
+        [16, -370],
+        [17, -350]
+      ],
+      "confidence": "high",
+      "weight_assigned": {"blind": 0.65, "causal_mbo": 0.35},
+      "evidence_used": [
+        "total_sflow -3214 (SELL) AND absorb_session=false",
+        "phase table: ph0 -27/-110, ph1 -495/+480 (mild-sell morning pop to high +590), ph2 -2692/-710 with ph_absorb=false (heavy ALIGNED sell delivery)",
+        "turn_kind turn_down @09:15 (turn_mag 950), high_exc +590 @09:15, low_exc -510 @14:12, close net -360 (day_move -370)",
+        "aligned final-phase conviction (sell + price both negative) = genuine delivery, NOT absorbed"
+      ],
+      "evidence_rejected": [
+        "raw book div/imb read (book layer stood down - no trustworthy verdict)",
+        "reading the ph1 morning pop as a covering hold (it was a mild-sell pop that FAILED and turned down; ph2 is aligned delivery, not absorption)"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer: no execution_authority / conviction-floor / book_complete verdict in g18 evidence -> book read stands down; trade-flow + phase absorption only"
+      ],
+      "selection_reason": "Friday weekend-positioning day owned by E; the turn-down / delivered-sell read is E's turn/exhaustion-gate lens; contrast partner to 0501.",
+      "mbo_verdict": "DELIVERED SELL. absorb_session=false, ph2 sell -2692 aligned with -710 = genuine turn-down delivery (confirmed 09:15) after a failed morning pop. Direction STAYS DOWN, confirming blind. Magnitude tightened to -350 (blind -420 slightly oversized) vs actual -370 (err +20). This is chain/state-default DOWN resuming - NOT a covering setup, no squeeze fuel built here.",
+      "handoff_out": {
+        "close_level": 2.750,
+        "cum_from_anchor_usd": 610,
+        "last_hour_dir": "down",
+        "last_hour_flow": "SELL_delivered_aligned",
+        "close_off_low_usd": 150,
+        "close_off_high_usd": -950,
+        "late_extreme_flag": "late_low (low -510 @14:12, into the final hour; close -360 off the low but firmly in the lower band)",
+        "chain_polarity": "down_chain_resumed (turn_down delivered)",
+        "chain_age": "down-leg day 1 (fresh turn after 0507 up +720; the failed pop then aligned delivery)",
+        "exit_type": "delivered_sell_continuation (NOT covering, NOT fadeable crest-trim; aligned turn-down delivery)",
+        "monday_bias": "down_continuation. Sell was DELIVERED not absorbed -> chain/state default DOWN carries into the reopen. NO covering to fade and NO fresh crowding stack built on the sell side that would flip a squeeze - so unlike 0501 there is no upper-tail squeeze flag. A/B inherit a clean down-biased seam.",
+        "read": "Weekend inherits a delivered-sell close at 2.750 (+610 from anchor, but a fresh down-turn). The morning pop failed and the afternoon walked price down on aligned sell flow with no absorption. Sunday reopen is continuation-biased DOWN; this is a genuine turn, not a covering hold - do not fade it up. Contrast to 0501: same raw SELL tilt, but 0501 was absorbed (covered up) and 0508 was delivered (walked down) - the absorption verdict is the sign."
+      }
+    }
+  ],
+  "summary": {
+    "days_scored": 2,
+    "flip_from_blind": ["20260501 (down -> up, covering absorbed)"],
+    "confirm_blind": ["20260508 (down confirmed, sell delivered)"],
+    "derived_vs_actual": {
+      "20260501": {"posterior_usd": 250, "actual_day_move_usd": 280, "err_usd": -30, "blind_err_usd": -760},
+      "20260508": {"posterior_usd": -350, "actual_day_move_usd": -370, "err_usd": 20, "blind_err_usd": -50}
+    },
+    "book_layer": "stood down both days (no trustworthy verdict); trade-flow + phase absorption only",
+    "handoff_out_emitted": ["20260501", "20260508"]
+  }
+}

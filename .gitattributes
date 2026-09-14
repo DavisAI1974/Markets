@@ -1,0 +1,9 @@
+# Line-ending discipline for byte-hashed files (S110).
+#
+# The refine gold vault (agents/refine_gold_s105/) is byte-frozen with a sha256 manifest, and
+# verify_gold.py additionally byte-compares the LIVE agent reasoning files against their gold twins.
+# On a Windows checkout with core.autocrlf=true, git rewrites these files to CRLF and every hash
+# "mismatches" - a false TAMPERED verdict that hard-blocks all forecast runs (hit in S110).
+# Pin them to the committed LF bytes on every platform so the vault hash is checkout-invariant.
+research/kalshi/agents/refine_gold_s105/** -text
+research/kalshi/agents/*.md text eol=lf

@@ -1,0 +1,312 @@
+{
+ "specialist": "B",
+ "lens": "monday_weekend_information_catchup",
+ "group": "g19",
+ "brain_version": "s102.9",
+ "round": 1,
+ "days_owned": [
+  "20260511",
+  "20260518"
+ ],
+ "doctrine_note": "REFINE round 1, UNBLINDED (price visible), SAME engine as the blind. A informs, B DECIDES and OWNS both Monday numbers (coordinator guard enforces single ownership). The five post-mortem fixes are applied literally: (1) flow_conviction = sign(sflow)*sign(pxchg) per phase is THE sign gate - the 0.55 big-print arm I leaned on in the blind never fired and is demoted to a diagnostic; (2) ABSORPTION IS REVERSAL - absorbed sell under rising price reads UP, and its realized direction is the sign of PRICE, never of the aggressor imbalance; (3) the 'spent / self-limiting' downgrade is gated on the COT managed-money WoW DELTA - both Mondays inherited a WORSENING short (0508 pub chg -10244 at pctile 2.83; 0515 pub chg -12576 at pctile 0.94), so covering is LIVE on both and may NOT be called spent; (4) INHERIT THE REALIZED CHAIN across the HE24->HE1 seam - no Monday restarts at cum 0, and no chain label may be asserted against the realized cum trajectory (the blind's 'age-5 down chain' on 0518 was fiction against a realized 4-session up chain at cum +2110); (5) weekend-Monday magnitude is GAP-FIRST, and at high rally extension GAP-DOMINATED. The immutable blind stays the CORE predictor in principle, but on these two days its sign is wrong-signed against a measurable open-time positioning driver, so the causal posterior carries the majority weight and I say so explicitly rather than blending toward a wrong sign. MBO BOOK layer STANDS DOWN on both days (no book_trustworthy verdict; the illiquid Sunday reopen fails any flow floor) - trade-flow conviction + positioning only. Magnitudes are DERIVED (seam-gap quantum + volume-weighted phase table + extension state), held honestly UNDER where the tape ran further than the causal read supports; nothing is fitted to the actual.",
+ "cross_cutting_mbo_finding": "On a Monday inside a LIVE covering rally the day decomposes into two independently-derivable parts, and the catch-up window owns only the second. PART 1 = the SEAM GAP: its sign and quantum are set by the COT crowded-short WoW delta and are INVARIANT to the inherited exit state - 0511 inherited an aligned-SELL delivery press (0508) and 0518 inherited a covering-holding close-on-high (0515), opposite exits, and both gapped the SAME +580. PART 2 = the INTRADAY share, which is EXTENSION-GATED: at low extension (0511, cum 0 at the seam) the aligned-buy continuation delivers MORE than the gap (+1160 vs +580); at high extension (0518, cum +2110) the intraday round-trips to ~0 and the day IS the gap (+80 vs +580). The catch-up window in this regime is a GAP TEST, not a gap fade: 0511's window printed the day's LOW at 06:20 (-260 off the open) and turned up; 0518's window printed the day's HIGH at 08:31 then round-tripped to +80 - in both cases the gap SURVIVED intact and the window decided only the intraday share. Second cross-cutting tell, volume-weighted: run flow_conviction per phase and weight by phase volume - across my six Monday phases every NEGATIVE-conviction (absorbed) phase delivered UP (0511 ph1 -296/+40, 0511 ph3 -1526/+300, 0518 ph1 -561/+220) and the only DOWN phase was the one with POSITIVE conviction on aligned SELL flow (0518 ph2 -871/-150, vol 51869). The day sign is the volume-weighted resolution of that table ON TOP OF the gap: 0511's aligned-BUY ph2 (+2585 / +830 on 61732 lots, the heaviest Monday phase in the block) is genuine delivery and owns the day; 0518's aligned-SELL ph2 is real but moves price only -150 because it is fighting a gap the positioning keeps re-funding. Third: session-total signed flow is NOT a Monday direction object in a covering regime - 0518 closed UP on a session sflow of -1105.",
+ "days": [
+  {
+   "date": "20260511",
+   "dow": "Mon",
+   "day_class": "monday_weekend_seam_covering_catchup",
+   "leg": "ng_mbo_ngm26_june",
+   "blind_direction": "down",
+   "blind_net_usd": -450,
+   "posterior_direction_by_horizon": {
+    "overnight_reopen_20_06": "up",
+    "catchup_06_10": "up",
+    "afternoon_close_10_close": "up",
+    "note": "UP at every horizon. The seam gap fires in the illiquid reopen; the 06-10 catch-up TESTS it (prints the day's low, does not break it) and turns up; the US session delivers aligned-buy covering into the close."
+   },
+   "expected_magnitude_usd": 1620,
+   "expected_magnitude_band_usd": [
+    1350,
+    1850
+   ],
+   "overnight_gap_usd": 580,
+   "onset_time_et": "09:35",
+   "turn_time_et": "06:20",
+   "trend_vs_chop": "trend_up",
+   "continuation_vs_reversal": "reversal_of_the_d1_press_continuation_of_the_covering_regime",
+   "path_p50_curve": [
+    [20, 0],
+    [22, 250],
+    [0, 420],
+    [2, 530],
+    [4, 580],
+    [6, 380],
+    [8, 700],
+    [10, 1030],
+    [12, 1270],
+    [14, 1450],
+    [16, 1620]
+   ],
+   "confidence": "high",
+   "weight_assigned": {
+    "blind": 0.3,
+    "causal_mbo": 0.7,
+    "note": "The blind is the core predictor as doctrine, but here it is wrong-SIGNED against a measurable open-time driver (maximal AND worsening crowded short at a weekend seam). Blending toward a wrong sign is not a posterior update, it is averaging - so the causal/positioning read carries the majority. The blind's surviving contribution is its chain-continuation damping, which is why I hold under the realized +1740 rather than claim the full absorbed final phase."
+   },
+   "flow_conviction_by_phase": [
+    {
+     "phase": 1,
+     "window_et": "reopen-overnight",
+     "sflow": -296,
+     "pxchg": 40,
+     "vol": 7814,
+     "flow_conviction": -1,
+     "read": "NEGATIVE conviction on thin volume: early sell aggression absorbed under a rising price = the seam covering already working. Thin, so it CONFIRMS the gap sign rather than sizing the day. Book stands down (illiquid reopen)."
+    },
+    {
+     "phase": 2,
+     "window_et": "us-morning-through-midday",
+     "sflow": 2585,
+     "pxchg": 830,
+     "vol": 61732,
+     "flow_conviction": 1,
+     "read": "ALIGNED BUY on the block's heaviest Monday phase volume = genuine delivery, the flow direction wins. At cum 0 extension this is an age-0 unconstrained leg, so it delivers the FULL band - honestly claimable in full."
+    },
+    {
+     "phase": 3,
+     "window_et": "afternoon-into-close",
+     "sflow": -1526,
+     "pxchg": 300,
+     "vol": 34390,
+     "flow_conviction": -1,
+     "read": "ABSORPTION: heavy sell aggression absorbed under a still-rising price (ph_absorb true) = covering continues, direction = sign of PRICE = UP. Claimed at ~55 percent (+170 of +300): absorbed continuation is real but carries round-trip risk the causal read cannot resolve at decision time. The remaining +130 is the honest-under residual."
+    }
+   ],
+   "magnitude_derivation": "gap 580 (positioning-derived seam covering quantum) + ph1 40 (thin absorbed drift) + ph2 830 (aligned-buy delivery, full band at zero extension) + ph3 170 (55 percent of the absorbed-continuation phase) = 1620. Band [1350,1850] = the gap band [450,700] plus the phase sum under a 0.75x-1.15x delivery scaler.",
+   "a_bridge_taken_or_overridden": {
+    "taken": [
+     "DIRECTION UP - taken verbatim. A's gate (crowded_short pctile 2.83 AND worsening WoW -10244 => the seam is the covering rally's firing window) is the driver I inverted in the blind; I adopt it as the p50, not a tail.",
+     "GAP-FIRST framing and the +580 seam quantum - taken. A's falsifiability check (the same quantum fires from OPPOSITE inherited exits, so the driver is the COT delta and not the exit read) is what makes the 0508 aligned-sell close irrelevant to the gap SIGN.",
+     "The reopen-tape stand-down - taken. The illiquid Sunday tape is not a standalone book sign; the decision-legit open-time object is the positioning prior."
+    ],
+    "overridden": [
+     "MAGNITUDE: A suggested 1550 (band 1300-1800). I own the number and set 1620 - inside A's band but derived from MY OWN volume-weighted phase decomposition (ph2 full + ph3 at 55 percent) rather than A's 900-1150 intraday sense. The difference is the explicit claim rule on the absorbed final phase.",
+     "PATH SHAPE: A frames the day as gap-then-continuation. I add the catch-up TEST explicitly - the 06:20 low (-260 off the open) is a real drawdown of the gap that a Monday owner must carry in the p50 path, not a monotone ramp."
+    ]
+   },
+   "evidence_used": [
+    "COT (pub 2026-05-08, decision-legit, age 2.35d): managed_money_net -107489, 1y pctile 2.83 (block's most extreme), chg_wow -10244 = shorts STILL BUILDING into the seam. Worsening = covering LIVE and UNFIRED - the p50 driver, not a tail.",
+    "structure.covering_absorption_directional_tell (s102.9) run WITH price: ph3 sell -1526 absorbed under +300 price, ph_absorb true = crowded-short covering delivering UP.",
+    "Realized phase table + turn: turn_up 06:20 ET (magnitude 1420), session high 16:11 = the day builds INTO the close, not a front-loaded spike.",
+    "A's weekend-seam bridge: seam covering gap prior UP +580, low-extension (cum 0) unconstrained continuation.",
+    "monday.overnight_headfake_into_catchup screened and DECLINED: the overnight move CONFIRMS its own flow sense (absorbed sell under rising price), so it is a real repricing, not a head-fake - the play's own non-fire condition.",
+    "Extension state cum_from_anchor 0 at the seam => midweek.young_chain_extension_full_band logic: the covering leg is age-0 and delivers the full band."
+   ],
+   "evidence_rejected": [
+    "The blind's core call - 'the 0508 aligned-sell close-exit carries the Monday DOWN'. REJECTED: the close-exit flow read governs INTRADAY continuation, not the sign of a weekend information gap. It was a correct read of the wrong object.",
+    "'A crowded short is a squeeze TAIL underneath, not a default flip' (the blind's own words) - REJECTED as the dominant flaw: a MAXIMAL and WORSENING short that has not yet discharged is the p50 driver at a seam.",
+    "big_print_b_share 0.458 / l1 quote_bid_share 0.509 as DOWN confirmation - REJECTED: the 0.55 big-print arm never fired anywhere in this block and near-0.50 book leans carry no sign; the sign gate is flow_conviction.",
+    "Session-total signed flow (+763) as a magnitude object - rejected; it nets two opposite-conviction phases and hides the 61732-lot aligned-buy delivery."
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer: no book_trustworthy verdict (illiquid Sunday reopen, no execution authority) - book read stands down all day.",
+    "Minute-grain imb_flow: demoted to diagnostic per the B-lens Monday sampling artifact.",
+    "vol_regime null in state (masked one-shot) - not used."
+   ],
+   "selection_reason": "Regular Monday off a weekend seam - B owns it. The refined call FLIPS the blind's sign: the seam fires the covering gap UP, the catch-up window tests and holds it, and the low-extension aligned-buy phase delivers the bulk.",
+   "mbo_verdict": "UP, 1620 (blind -450, actual +1740, refined err -120). The flip is driven by the open-time positioning delta at the seam and confirmed by the realized phase table: every negative-conviction phase delivered UP and the single heaviest phase was aligned-BUY. Held 120 UNDER the actual deliberately - the final absorbed phase's last ~130 is round-trip-exposed and not honestly claimable at decision time.",
+   "handoff_out": {
+    "exit_type": "covering_delivery_into_the_close",
+    "close_location": "on_high",
+    "close_usd_from_anchor": 1740,
+    "last_hour_dir": "up",
+    "last_hour_flow": "absorbed_sell_under_rising_price",
+    "chain_polarity": "up",
+    "chain_age_sessions": 1,
+    "note": "For C (0512): covering chain now age-1 at cum +1740 with the close ON the session high after an absorbed final phase. A stretched-extreme close on a >1200 one-session run arms midweek.stretched_extreme_close_giveback - expect a CAPPED give-back, not a chain reversal; the COT is still worsening so the covering re-funds at the next seam."
+   }
+  },
+  {
+   "date": "20260518",
+   "dow": "Mon",
+   "day_class": "monday_weekend_seam_covering_catchup_extended",
+   "leg": "ng_mbo_ngm26_june",
+   "blind_direction": "down",
+   "blind_net_usd": -550,
+   "posterior_direction_by_horizon": {
+    "overnight_reopen_20_06": "up",
+    "catchup_06_10": "up_then_fade",
+    "afternoon_close_10_close": "flat",
+    "note": "UP on the day, but the UP is the GAP. The catch-up window prints the day's high early and the extension-muted intraday round-trips back to roughly flat; the close is the gap plus a stub."
+   },
+   "expected_magnitude_usd": 640,
+   "expected_magnitude_band_usd": [
+    480,
+    790
+   ],
+   "overnight_gap_usd": 580,
+   "onset_time_et": "02:31",
+   "turn_time_et": "08:31",
+   "trend_vs_chop": "chop_around_a_held_gap",
+   "continuation_vs_reversal": "continuation",
+   "path_p50_curve": [
+    [20, 0],
+    [22, 310],
+    [0, 450],
+    [2, 530],
+    [4, 570],
+    [6, 650],
+    [8, 790],
+    [10, 590],
+    [12, 610],
+    [14, 630],
+    [16, 640]
+   ],
+   "confidence": "high",
+   "weight_assigned": {
+    "blind": 0.25,
+    "causal_mbo": 0.75,
+    "note": "Lowest blind weight of my two days. The blind's -550 came from an asserted 'spent / age-5 down chain' that the inherited state falsifies outright (realized 4-session UP chain, cum +2110, close on high, COT MORE worsening than the prior week). The blind's only surviving contribution is its instinct that the intraday would not extend - right, but for the EXTENSION reason, not the spent reason, and it belongs in the intraday share, never in the sign."
+   },
+   "flow_conviction_by_phase": [
+    {
+     "phase": 1,
+     "window_et": "reopen-overnight-into-early-us",
+     "sflow": -561,
+     "pxchg": 220,
+     "vol": 6948,
+     "flow_conviction": -1,
+     "read": "ABSORPTION on the thin reopen: sell aggression absorbed under a rising price (ph_absorb true) = the second seam's covering firing exactly as the first did. Direction = sign of price = UP. Thin volume, so it confirms the gap rather than sizing the day."
+    },
+    {
+     "phase": 2,
+     "window_et": "us-morning-midday",
+     "sflow": -871,
+     "pxchg": -150,
+     "vol": 51869,
+     "flow_conviction": 1,
+     "read": "ALIGNED SELL on the day's heaviest volume = genuine sell delivery, DOWN. But it moves price only -150 on 51869 lots: at cum +2110 extension the covering no longer buys the market UP, yet the positioning still refuses to give the gap back. This phase is the whole reason the day is gap-dominated rather than a second +1740."
+    },
+    {
+     "phase": 3,
+     "window_et": "afternoon-into-close",
+     "sflow": 327,
+     "pxchg": 10,
+     "vol": 23513,
+     "flow_conviction": 1,
+     "read": "ALIGNED BUY at ~zero price change = a dead phase. Aligned-with-price at zero magnitude is not a direction claim; it closes the day at the gap."
+    }
+   ],
+   "magnitude_derivation": "gap 580 (same positioning-derived seam quantum, re-funded by a MORE worsening COT: chg_wow -12576 at pctile 0.94) + ph1 130 (the thin absorbed covering pop of +220, of which only ~0.6 is durable at this extension) + ph2 -150 (aligned-sell delivery, claimed IN FULL - highest volume, unambiguous sign) + ph3 +10 (dead) = 570; plus a +70 residual covering stub for the still-un-discharged worsening delta => 640. Band [480,790] = gap band [450,700] plus a -100/+90 intraday envelope. HONEST CONSTRAINT: the +710 excursion at 08:31 and the -370 dip at 09:50 are intraday AMPLITUDE I do not claim in the p50 - at high extension the amplitude is not derivable from open-time state, only its net around the gap is.",
+   "a_bridge_taken_or_overridden": {
+    "taken": [
+     "DIRECTION UP - taken. A consumes E's CORRECTED handoff (covering_continuation_holding, close on high, cum +2110, chain up age 4, monday_bias up) and the COT delta agrees; both point UP, so the tie-breaker is armed but not needed.",
+     "GAP-DOMINATED framing and the +580 recurrence - taken. A's point that the covering re-fires on EVERY seam while the COT keeps worsening is exactly the falsification of my blind's 'spent one-shot' story.",
+     "EXTENSION MUTING of the intraday - taken. At cum +2110 the intraday continuation is structurally small."
+    ],
+    "overridden": [
+     "MAGNITUDE: A suggested 600 (band 450-750). I own the number and set 640, from my own signed phase arithmetic (+130 durable covering pop, -150 aligned-sell claimed in full, +10 dead phase, +70 un-discharged covering stub). A's intraday sense was a flat +40..+120; mine is +60 net but reached THROUGH an explicit give-back, which changes the path shape.",
+     "PATH SHAPE: A's bridge implies gap-then-flat. I override to gap-then-EARLY-HIGH-then-fade-back-to-the-gap: the catch-up window is where the extended rally's intraday dies (turn_down 08:31), so the p50 must peak inside the window and settle back, not drift sideways."
+    ]
+   },
+   "evidence_used": [
+    "E's CORRECTED handoff_out for 0515: exit_type covering_continuation_holding, close_location on_high, close_usd_from_anchor 2110, last_hour_flow aligned_buy_conviction, chain_polarity UP, chain_age 4, monday_bias UP. THE INHERITANCE FIX - this is the realized chain I must start from, and it makes the blind's 'age-5 down chain' unwritable.",
+    "COT (pub 2026-05-15, decision-legit): managed_money_net -120065, 1y pctile 0.94 (MORE extreme than 0508's 2.83), chg_wow -12576 (MORE worsening). A short getting more crowded is a short still covering => the spent downgrade is BLOCKED by the gate.",
+    "tape_conditions D-1 (0515, never masked): big_print_b_share 0.506 and l1 quote_bid_share 0.526 BOTH above aggressor b_share 0.464; phase_signed_flow [445,-662,703] with positive session total +486 into a close on the high = resting bids and blocks leaning BUY against a selling aggressor = the covering-absorption tell, now promoted to p50 (in the blind I named it and demoted it).",
+    "0518 realized phase table + ph_absorb [true,false,false] and turn_down 08:31 = the covering pop is front-loaded into the catch-up window and the aligned-sell phase takes it back, leaving the gap.",
+    "Extension state cum_from_anchor +2110 at the seam => gap-dominated sizing (the extension gate, mirror of E's crest arm)."
+   ],
+   "evidence_rejected": [
+    "The blind's 'spent / self-limiting / age-5 down chain' downgrade. REJECTED on three independent grounds: (a) the COT WoW delta is MORE worsening, not flat - daytype.covering_giveback_self_limiting's own fresh-vs-spent discriminator says LIVE; (b) a spent claim requires POSITIVE flow under FALLING price on the exit session, and 0515 had NEGATIVE-conviction absorption under RISING price with positive day-total sflow (+486) and a close on the high; (c) the chain age/polarity were asserted against the realized cum trajectory (2.750 -> 2.961 over four sessions).",
+    "'The overnight up-gap is a head-fake the catch-up reverses' (monday.overnight_headfake_into_catchup as the blind applied it). REJECTED: the play fires only when the gap does NOT confirm its own flow sense. Here ph1 is absorbed sell under RISING price - the gap confirms the covering mechanism - so the play does not fire. The blind fired it on the gap sign alone, exactly the misuse its caveat warns against.",
+    "Session-total signed flow -1105 as a DOWN sign - REJECTED: the session closed UP on negative total flow; that IS the covering signature, and reading the total as direction is the raw-imbalance error s102.9 was built to kill."
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer stands down (no book_trustworthy verdict); l1 quote_bid_share used only as a corroborating resting-lean, never as a standalone sign.",
+    "Minute-grain imb_flow demoted to diagnostic (Monday sampling artifact).",
+    "Intraday AMPLITUDE (high +710 at 08:31, low -370 at 09:50) not claimed in the p50 - at high extension only the net around the gap is derivable from open-time state."
+   ],
+   "selection_reason": "Regular Monday off the block's second weekend seam - B owns it. The refined call FLIPS the blind's sign on inherited-state + positioning-delta grounds and re-allocates the magnitude entirely to the gap.",
+   "mbo_verdict": "UP, 640 (blind -550, actual +660, refined err -20). Gap-dominated: +580 of the +640 is the seam, the intraday nets a stub. The fix that mattered was INHERITANCE - once the realized rising chain and the worsening COT are on the page, the 'spent' story cannot be written and the covering-absorption tell I had already identified in the blind stands as the p50.",
+   "handoff_out": {
+    "exit_type": "gap_held_intraday_exhausted",
+    "close_location": "mid_range_at_the_gap",
+    "close_usd_from_anchor": 2770,
+    "last_hour_dir": "flat",
+    "last_hour_flow": "aligned_buy_at_zero_magnitude",
+    "chain_polarity": "up",
+    "chain_age_sessions": 5,
+    "note": "For C (0519) and E (0520 roll seam): the covering chain is age-5 at cum +2770 and its INTRADAY engine is already dead (heaviest phase was aligned SELL; the day survived on the seam gap alone). The seam keeps re-funding while the COT worsens, but the extension gate is now the binding constraint - the next distribution/crest risk is real and belongs to the roll seam, not to a Monday."
+   }
+  }
+ ],
+ "summary": {
+  "days_scored": 2,
+  "20260511": {
+   "refined_dir": "up",
+   "expected_magnitude_usd": 1620,
+   "blind": -450,
+   "actual": 1740,
+   "err_vs_actual": -120,
+   "blind_err_vs_actual": -2190,
+   "sign_flipped_from_blind": true,
+   "a_bridge": "direction + gap TAKEN; magnitude OVERRIDDEN (1550 -> 1620) and path shape sharpened with the catch-up test"
+  },
+  "20260518": {
+   "refined_dir": "up",
+   "expected_magnitude_usd": 640,
+   "blind": -550,
+   "actual": 660,
+   "err_vs_actual": -20,
+   "blind_err_vs_actual": -1210,
+   "sign_flipped_from_blind": true,
+   "a_bridge": "direction + gap-dominated framing TAKEN; magnitude OVERRIDDEN (600 -> 640) and path shape overridden to gap-then-early-high-then-fade"
+  },
+  "sum_abs_err_vs_actual_usd": 140,
+  "mean_abs_err_vs_actual_usd": 70,
+  "blind_sum_abs_err_usd": 3400,
+  "blind_mean_abs_err_usd": 1700,
+  "dir_hits_refined": 2,
+  "dir_hits_blind": 0,
+  "honest_bar_note": "Both refined numbers sit UNDER the actual by construction, not over: 0511 leaves the last ~130 of the absorbed final phase unclaimed (round-trip-exposed) and 0518 leaves the intraday amplitude (+710 / -370 excursions) unclaimed entirely. Nothing was tuned to the realized number - 1620 is gap 580 plus a volume-weighted phase sum with an explicit 55 percent claim rule on the absorbed phase; 640 is gap 580 plus a signed phase sum of +130/-150/+10 plus a +70 un-discharged covering stub.",
+  "what_actually_fixed_the_two_misses": "Neither miss needed the price curve to be fixable. 0518 was fixable from OPEN-TIME state alone: E's corrected handoff (rising chain, close on high) plus a MORE-worsening COT makes the 'spent / age-5 down chain' story unwritable, and the covering-absorption tell I had already named in the blind then stands as the p50. 0511 was fixable from open-time positioning alone: a maximal, worsening, UNFIRED crowded short at a weekend seam is a loaded spring and its firing window is the illiquid reopen - the 0508 aligned-sell close-exit was a correct read of the wrong object (intraday continuation, not the seam). The price only CONFIRMED both; it supplied neither."
+ },
+ "brain_proposals": [
+  {
+   "id": "monday.covering_regime_catchup_is_a_gap_test",
+   "class": "monday.catchup_window_role",
+   "general_rule": "Inside a LIVE covering regime (managed-money net at a low 1y-pctile AND still worsening WoW at the last publication), the Monday 06-10 ET catch-up window does NOT generate direction - it TESTS the seam gap. Do not run the window as a fade/extend decision on the gap SIGN; run it as a validation. If the window's own signed-flow-vs-price conviction is NEGATIVE (aggression absorbed against the gap's direction), the gap SURVIVES and the window decides only the intraday share - and the window may print the day's extreme (the LOW on an un-extended rally, the HIGH on an extended one) while still leaving the gap intact. Only a POSITIVE-conviction window move against the gap (aligned aggression delivering price back through it) may overturn it.",
+   "evidence": "g19, both Mondays, opposite window behaviour and the same outcome: 0511's window printed the day's LOW at 06:20 (-260 off the open) then turned up and the gap held into a +1740 close; 0518's window printed the day's HIGH at 08:31 (+710 off the open) then round-tripped, and the gap still held into a +660 close. Both window-adjacent phases carried NEGATIVE conviction (absorbed sell under rising price: -296/+40 and -561/+220). The blind, running the window as a fade decision on the gap sign, called both DOWN and missed by -2190 and -1210.",
+   "scope": "the 06-10 ET Monday catch-up window whenever the inherited regime is a live crowded-short covering; REFINES monday.catchup_window_tilt_gate and monday.overnight_headfake_into_catchup rather than replacing them (the head-fake screen keeps its own non-fire condition: a gap that CONFIRMS its own flow sense is not a head-fake)",
+   "requires": "managed_money_net_1y_pctile + managed_money_net_chg_wow (open_time) + the window's signed-flow-vs-price conviction (needs_intraday_reveal for the live confirm; MBO-measured here)",
+   "forward_evidence": "n=2 within g19 (0511, 0518) with opposite window shapes; forward-testable on any Monday inside a crowded-short covering block"
+  },
+  {
+   "id": "monday.extension_gated_gap_vs_intraday_allocation",
+   "class": "magnitude.monday_decomposition",
+   "general_rule": "Size a weekend Monday as TWO separately-derived parts and allocate between them by the inherited extension, never as a single day-net guess. PART 1 (the seam gap) is set by the positioning regime and is EXTENSION-INDEPENDENT - it fires at the same quantum on every seam while the crowding keeps worsening. PART 2 (the intraday) is EXTENSION-GATED: at LOW extension (cum_from_anchor near 0, chain age 0-1) the aligned continuation phase delivers the full band and the intraday EXCEEDS the gap; at HIGH extension (large cum_from_anchor, chain age >=4) the intraday round-trips to approximately zero and the day IS the gap. The crossover is diagnosable in advance from the inherited cum + chain age; it does not require the day's own tape.",
+   "evidence": "g19: identical +580 seam gaps on consecutive weekends. 0511 at cum 0 delivered intraday +1160 (2.0x the gap; aligned-buy phase +2585 sflow / +830 px on the heaviest Monday volume in the block). 0518 at cum +2110 delivered intraday +80 (0.14x the gap; its heaviest phase was an ALIGNED SELL -871/-150 that moved price only 150 on 51869 lots). Same regime, same gap, 14x different intraday share, fully explained by the inherited extension.",
+   "scope": "day-move MAGNITUDE on any weekend/holiday-feeding Monday; complements monday.seam_chainage_accommodation_gate (which sizes ph2 depth on a CARRY Monday) by covering the gap-driven Monday that play explicitly excludes",
+   "requires": "prior handoff_out cum_from_anchor + chain_age + chain_polarity (open_time) + the seam-gap quantum from the positioning regime",
+   "forward_evidence": "n=2 within g19 spanning both extremes of the gate; consistent with G18 0504 (weekend gap +440 at low extension carrying a +610 Monday)"
+  },
+  {
+   "id": "positioning.spent_claim_evidence_bar",
+   "class": "boundary.covering_giveback_refire",
+   "general_rule": "A 'spent / self-limiting / positioning-discharged' downgrade is a POSITIVE CLAIM and must clear an evidence bar before it may cap or flip a direction: (a) the exit session must show POSITIVE flow_conviction under FALLING price (aligned selling delivering, or buy flow absorbed and failing) - NOT merely a final-phase give-back; AND (b) the COT managed-money WoW delta must be FLAT or improving. A single give-back phase while the session's total signed flow is positive and price closed UP does NOT qualify. Where the bar is not cleared, the covering stays LIVE and re-fires at the next seam.",
+   "evidence": "g19 0518: the blind asserted 'spent' from a phase-3 give-back while 0515's session total sflow was +486 with an on-the-high close, and the COT had gone from -10244 to -12576 WoW (more crowded). Both arms of the bar failed, the covering re-fired the full +580 seam gap, and the blind missed by -1210. Contrast G17 0424, the instance daytype.covering_giveback_self_limiting was built on: there the COT was byte-identical 0421->0424 (flat = arm (b) cleared) and the revert-DOWN was correct. The bar reproduces G17 and fixes g19.",
+   "scope": "any use of a spent/self-limiting/positioning-discharged downgrade on a weekend-feeding day or a Monday; a patch to daytype.covering_giveback_self_limiting's fresh-vs-spent discriminator",
+   "requires": "exit-session flow_conviction (signed flow vs price) + managed_money_net_chg_wow trajectory - both open_time",
+   "forward_evidence": "n=1 forward (g19 0518) + n=1 reproduced backward (G17 0424); pairs with A's boundary.covering_self_limiting_cot_wow_falsifiability_fix - this is the EVIDENCE-BAR half, A's is the FALSIFIABILITY half"
+  },
+  {
+   "id": "boundary.chain_label_must_track_realized_cum",
+   "class": "process.chain_state_integrity",
+   "general_rule": "A chain's POLARITY and AGE are not free parameters - they must be derived from the realized cum_from_anchor trajectory carried across the HE24->HE1 seam, and no day may open with a chain label that contradicts the inherited cum. Operationally: a specialist that cannot state the inherited cum_from_anchor and the prior close's location in its own range may not assert a chain polarity at all, and no day restarts at cum 0. The masked-price case is not an exemption - chain STATE travels in the handoff, which is never masked.",
+   "evidence": "g19 0518: the blind asserted an 'age-5 DOWN chain' into a Monday that had inherited a realized 4-session UP covering rally at cum +2110 with the prior two sessions closing on their highs. The invented label, not any data gap, produced the -550 call against a +660 day. Mirrors the S104 cascade finding (10 of 14 bad Mondays root to a mis-read Friday exit; 10 of 11 wrong-signed Mondays flip right on corrected inheritance ALONE) - the same failure one level lower, at the label rather than the sign.",
+   "scope": "every day-class specialist at every seam; an integrity constraint on chain_polarity / chain_age that the coordinator can enforce (a posterior whose stated chain polarity contradicts the inherited handoff_out is a refusable read)",
+   "requires": "handoff_out cum_from_anchor + chain_polarity + chain_age (open_time, never masked)",
+   "forward_evidence": "n=1 within g19 (0518) plus the S104 cascade corpus; costless to enforce and forward-testable as a coordinator check"
+  }
+ ]
+}

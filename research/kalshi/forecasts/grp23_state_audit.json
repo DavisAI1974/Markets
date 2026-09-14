@@ -1,0 +1,233 @@
+{
+ "group": "g23",
+ "phase": "audit",
+ "auditor_note": "Audit run S110, price-free, committed state + committed code only (data/ empty this session; no S3). state_health g23: PASS, 2 soft (L1 absent on both Monday reopens, declared). Every finding below passes every existing guard.",
+ "findings": [
+  {
+   "id": "f1",
+   "severity": "severe",
+   "field": "tape_conditions.{session_signed_flow, phase_signed_flow, phase_n_trades, phase_volume_lots, phase_b_share(+_two_sided), session_b_share(+_two_sided), big_print_b_share(+_two_sided), unsided_volume_frac}",
+   "days": [
+    "20260717"
+   ],
+   "claim": "The entire flow/b-share family served on the block's FINAL day (describing session 20260716, the second EIA print session) is computed on a different, ~44%-sized tape than the session-count fields sitting next to it in the same block, silently and with full confidence flags.",
+   "evidence": "Phase sums vs session totals, exact: sum(phase_n_trades)=19,722 vs n_trades=39,965 (49.3%); sum(phase_volume_lots)=43,910 vs volume_lots=100,272 (43.8%). Every other scope in g22+g23 sums EXACTLY - 23 of 24 scopes including both Sunday stubs and both prior_full_session limbs; this is the sole failure. The served session-level b-family is the TRUNCATED set's: from the phase table, b2=0.5312/u=0.1997/b=0.4251 vs served 0.531/0.199/0.425 - triple-exact at 3dp. Flow implied by the served family on the full sided volume = 100,272*(1-0.199)*(2*0.531-1) = +4,980 vs served session_signed_flow +2,167 (which equals the phase sum exactly); on all 8 other leg days this identity closes within b2's 3dp rounding. unsided_volume_frac 0.199 is 3-4x out of family vs every other full session in the block (0.045-0.074) and matches the degraded/deferred cont-store signature (Sunday stubs 0.189-0.219; g22 pre-roll month-2 era 0.131-0.163). big_print gap (two_sided minus original) = 0.143 vs 0.000-0.048 on every other day, and the pair 0.431 vs 0.574 straddles the 0.50 balance bar - the two served big-print series disagree about which side was the majority on the served tape. Meanwhile n_trades, volume_lots, trades_per_min (27.8 = full ~24h span), big_prints_n (173, in family with the other EIA Thursday's 303), leg_count_150 (30) and l1_book.quote_updates (272,582, in family 229-330k) all describe the FULL session. firehose_present.mbo_flow=True and never_masked=true assert confidence; no note declares any of it.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "medium",
+   "mechanism_note": "Mechanism (see f2): flow_read always reads the cont stores via a max-trade-count selector; in this era the n0 store is degraded (~20-26% of the front tape, measured in f3) while n1 carried the full scored-contract tape, so the selector landed on the correct tape on every other day by volume ranking and lost it on 20260716 (n1 file absent or partial at stage-pull time - stage_group._dl silently ignores cont-store misses - leaving the ~49% store as the max). Which store/file it actually consumed is uncheckable without the data plane.",
+   "plays_affected": [
+    "direction.flow_conviction_sign_gate",
+    "flow.big_print_bshare_thin_tape_guard",
+    "flow.price_free_absorption_proxy",
+    "flow.passive_ladder_displacement",
+    "daytype.friday_exit_close_location_over_flow_shape",
+    "daytype.eia_preprint_overextension_gate",
+    "direction.giveback_exhaustion_boundary",
+    "structure.covering_absorption_directional_tell",
+    "boundary.prior_close_flow_direction_disagreement",
+    "structure.accumulation_arm_turn",
+    "selector.divergence_resolution",
+    "midweek.giveback_exhaustion_reversal_recognition",
+    "monday.catchup_window_tilt_gate"
+   ],
+   "impact": "20260717 is the final decision day and the one reading the print-reaction tape of the second storage Thursday; tape_conditions is the blind's PRIMARY channel under the data doctrine. direction.flow_conviction_sign_gate computes its per-phase sign products from a phase table that describes a different tape. flow.big_print_bshare_thin_tape_guard is structurally DEFEATED: it requires big_prints_n to be 'the SAMPLE SIZE behind the ratio', but n=173 was counted on the full leg tape while the 0.431 ratio was computed on the ~44% tape - the guard sees a big sample and passes a ratio it does not back. flow.passive_ladder_displacement's mandatory limb (b) reads final-phase volume vs session max from an off-tape phase_volume_lots. daytype.friday_exit_close_location_over_flow_shape consumes a (volume, net) pair whose two members come from different tapes. daytype.eia_preprint_overextension_gate limb (b) tests session_b vs big_print coherence on fields that are incoherent by provenance, not by market behavior.",
+   "guard_proposed": "Within-block reconciliation, free, both fields already served: assert sum(phase_n_trades)==n_trades AND sum(phase_volume_lots)==volume_lots (exact) on every tape_conditions scope including prior_full_session. Negative-tested on committed states: fires on exactly 1 of 24 scopes across g22+g23 (g23 20260717) and nowhere else. Add to state_health next to the S109 b-share identity. Note the existing identity guards CANNOT see this: b=b2*(1-u) passes (the family is self-consistent on the wrong tape) and flow==sum(phase flows) passes (same wrong tape).",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": true
+  },
+  {
+   "id": "f2",
+   "severity": "high",
+   "field": "flow_read._ACTIVE_LEGS (dead code) + tape_reconcile.reconcile (guards the wrong reader's field)",
+   "days": [
+    "20260706",
+    "20260707",
+    "20260708",
+    "20260709",
+    "20260710",
+    "20260713",
+    "20260714",
+    "20260715",
+    "20260716",
+    "20260717"
+   ],
+   "claim": "The S108 hole-#8 fix never actually reached the flow channel: nothing anywhere sets flow_read._ACTIVE_LEGS, so flow_read ALWAYS reads the cont stores via the max-trade-count selector on every day of every staged group; and the stage-time reconcile gate compares a reader-A field (n_trades, leg-sourced since S108) against the leg - the leg against itself - so it can never again detect a flow-side off-instrument read.",
+   "evidence": "Exhaustive grep: flow_read._ACTIVE_LEGS is assigned exactly once, its own '= None' initializer (flow_read.py:23, comment claims 'set by the harness'); forecast_harness.py:863 sets only its OWN module global. flow_read._load_trades takes the leg path only 'if _ACTIVE_LEGS:' - never true - and its fallback is wrapped 'except Exception: pass', silent. _tape_enrich then overwrites the harness's b-fields with flow_read's cont-sourced values (the S107/S108/S109 copy-through list). tape_reconcile.reconcile compares tc['n_trades'] to leg_trade_count() - but n_trades comes from _tape_day_stats which reads the leg directly when a group is supplied, so ratio==1.00 by construction; it passed g23 at stage time while f1 sat in the state. Corroboration that the channel ran on cont luck, not the leg: on every non-stub day of g22+g23 except 20260716 the flow-side phase sums equal the leg count TO THE EXACT TRADE (the Q26-holding cont store was complete and won the max), and in G21 the same selector served 18-60% wrong-instrument tapes (tape_reconcile docstring, measured n0 6,262 / n1 5,554 vs leg 34,221).",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "high",
+   "plays_affected": [
+    "direction.flow_conviction_sign_gate",
+    "flow.big_print_bshare_thin_tape_guard",
+    "flow.price_free_absorption_proxy",
+    "flow.passive_ladder_displacement",
+    "daytype.eia_preprint_overextension_gate",
+    "daytype.friday_exit_close_location_over_flow_shape",
+    "structure.covering_absorption_directional_tell",
+    "boundary.prior_close_flow_direction_disagreement",
+    "direction.giveback_exhaustion_boundary",
+    "structure.accumulation_arm_turn"
+   ],
+   "impact": "Every play that reads signed flow, phases, b-shares or unsided fraction is exposed on any day where the cont ranking shifts (rolls, partial pulls, data-year tails, Sunday folds) - exactly the day classes the walk cares most about. The channel's correctness this era rested on an ACCIDENT of volume ranking: n0 degraded lost the max to a complete Q26-carrying n1. The moment the ranking flips (f1's day; all four bad G21 days) the primary channel silently goes off-tape while both existing gates pass.",
+   "guard_proposed": "Fix at source: set flow_read._ACTIVE_LEGS = group inside decision_state alongside the harness's own (or pass the leg explicitly into flow_read.session_flow). Then repoint the reconcile gate at the flow-side numbers: reconcile sum(tc['phase_n_trades']) (flow-read provenance) against leg_trade_count, tolerance 0.95-1.05, in addition to n_trades. Negative test on committed states: flow-side ratio 0.49 on g23 20260717 (fires), 0.98-1.00 on all 23 other scopes (passes). Also make stage_group._dl log cont-store misses - today a missing cont file is silently ignored (LEG misses are logged, cont misses are not).",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": true
+  },
+  {
+   "id": "f3",
+   "severity": "medium",
+   "field": "vol_regime.n0_prev_trades / n0_prev_net / n0_prev_range (and by extension the n0_* rolling windows and n0_activity_trend)",
+   "days": [
+    "20260706",
+    "20260707",
+    "20260708",
+    "20260709",
+    "20260710",
+    "20260713",
+    "20260714",
+    "20260715",
+    "20260716",
+    "20260717"
+   ],
+   "claim": "The frozen vol/range conditioner's n0 'prior session' fields describe a store carrying roughly a fifth to a quarter of the scored contract's tape in this era, while the same state serves the true count for the same session two blocks away.",
+   "evidence": "vol_regime (vintage 20260703) serves n0_prev_date=2026-07-03, n0_prev_trades=2,594. tape_conditions.prior_full_session on day 20260706 - the SAME session 20260703, leg-reconciled, source leg:ng_mbo_ngq26 - serves n_trades=11,501. Ratio 22.6%. Cross-block reference grp22: n0_prev_trades=1,835 for session 20260619 vs its own PFS leg count 6,935 (26.5%). The G21-era measurement in tape_reconcile's header shows the same store at 18.3% of the leg. Three independent windows, one consistent picture: the nymex_cont_n0 store is degraded/deferred through this whole era, and vol_regime's n0 basis reads it. n0_activity_trend swings 0.202 (g22) to 1.855 (g23) - a store-instability signature, not a market-activity one. The rolling fields (n0_net_sigma_5/10/20 583-665, n0_range_5/10/20_mean 987-1014 vs n0_prev_range 510, n0_range_pctile 13.3) are built over windows that necessarily mix healthy-era and degraded-era files; extent uncheckable without the store.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "medium",
+   "mechanism_note": "Candidates: the n0 (OI-continuous) symbology rolled to the deferred contract at the OI crossover (contract_structure in this same state shows OI front NGU26 226,324 > NGQ26 218,960 as of session 2026-07-01), and/or the store files are partial pulls in the never-fully-repaired July window. Both make the served numbers off the scored tape; distinguishing them needs the data plane.",
+   "plays_affected": [
+    "level.giveback_origin_shelf",
+    "direction.absorption_is_reversal",
+    "daytype.thin_session_range_invariance",
+    "boundary.chain_staleness_gate"
+   ],
+   "impact": "vol_regime is the magnitude band scaler ('conditions magnitude expectations; never calls direction'). Bands and thin-session conditioning read n0_prev_trades/range and the sigma windows off a tape fraction: participation reads (thin_session_range_invariance) see one-quarter of the real participation, and staleness/shelf gates read prev-session activity that is not the scored contract's. The block's note declares the n0-vs-v0 BASIS distinction but nowhere says the n0 basis is off the scored instrument or degraded in this window - it is presented as 'the G11+ walk basis'.",
+   "guard_proposed": "Stage-time reconciliation where the sessions coincide: when vol_regime.n0_prev_date equals the anchor session, assert n0_prev_trades within 0.9-1.1 of the leg-sourced tape_conditions count for that session; below it, stamp a served n0_basis_degraded flag (declare, do not silently drop). Negative test: fires on g22 (0.265) and g23 (0.226) - both genuinely degraded-era - and would pass on pre-June groups staged when the cont store was whole; that split should be verified on one healthy group before adoption.",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": true
+  },
+  {
+   "id": "f4",
+   "severity": "medium",
+   "field": "storage_consensus.last_print.* (20260717) and storage_consensus.next_print (20260710..20260717)",
+   "days": [
+    "20260710",
+    "20260713",
+    "20260714",
+    "20260715",
+    "20260716",
+    "20260717"
+   ],
+   "claim": "The survey-consensus feed died after capturing the 20260709 print: the 20260716 print's consensus is never served on any day (next_print=None from 0710), and on 20260717 last_print still claims the 0709 print as the latest while the same day's storage block already carries the 0716 print - a same-day cross-block contradiction.",
+   "evidence": "grp22 (cross-block reference) shows the feed's healthy shape: last_print updates NEXT-DAY after both of its prints (days_since_print=1 on 20260626 and 20260703) and next_print is populated on every day. grp23 matches that shape through the 0709 print (day 0710: last=0709, since=1), then: next_print=None on 0710-0717 (the 0716 print approach has no consensus_chg, no days_to_print, no house_disagreement on any serving day), and day 0717 serves last_print.print_date=2026-07-09, days_since_print=8, surprise_vs_consensus=+12 - while storage/storage_regional on the SAME day key serve as_of=2026-07-16 with the new weekly_chg (+41) and the day-level stor_surprise updates to the new print's seasonal surprise (5.4). The two surprise channels disagree about which print they describe on 0717. Partially declared: the block note names a forward hole for the SURVEY store ('None outside... Mar-Jul 2026'), which covers the next_print Nones; but the last_print limb (tradingeconomics) had been updating next-day in-block, and its death after 0709 is declared nowhere - 'last_print' on 0717 is an affirmative misstatement.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "medium",
+   "mechanism_note": "Consistent with the consensus store's capture ending at/near the 0709-0710 snapshot (the staged data year ends ~07-20); whether a 0716 pre-print snapshot ever existed is uncheckable without the store.",
+   "plays_affected": [
+    "daytype.eia_preprint_overextension_gate",
+    "daytype.storage_thursday_magnitude",
+    "magnitude.positioning_saturation_turn",
+    "magnitude.shoulder_counter_print_damping",
+    "selector.divergence_resolution",
+    "structure.post_parabolic_bleed"
+   ],
+   "impact": "daytype.eia_preprint_overextension_gate limb (c) ('surprise already priced >= 1 week') evaluates the WRONG print on 0717: it reads the 0709 surprise at age 8 as the latest when a new print landed the prior session - the limb fires as satisfied on stale identity, on the exact day-class (post-print) it exists for. Plays sizing the second print Thursday (storage_thursday_magnitude on 0716) have no consensus channel for that print at all - a coverage hole a specialist should treat as 'unknown', but only the note's store-span aside says so. daytype.surprise_magnitude is INSULATED (reads the seasonal stor_surprise, which updated correctly).",
+   "guard_proposed": "Same-day cross-block freshness reconciliation: if storage.as_of (a print date) > storage_consensus.last_print.print_date on any served day, the consensus feed missed a cycle - flag hard at stage time. Negative test: fires only on g23 20260717 across g22+g23; passes all 19 other days. A presence check cannot see this (every field is populated and internally consistent).",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": true
+  },
+  {
+   "id": "f5",
+   "severity": "low",
+   "field": "options_surface.months[*].{top5_oi_strikes[*].strike, oi_weighted_strike}",
+   "days": [
+    "20260706",
+    "20260707",
+    "20260708",
+    "20260709",
+    "20260710",
+    "20260713",
+    "20260714",
+    "20260715",
+    "20260716",
+    "20260717"
+   ],
+   "claim": "Option strikes are served in units exactly 10x below the $/MMBtu convention every other price-denominated field in the state uses, undeclared - and the block's own note instructs the reader to compute distance-from-settle against contract_structure's calendar-front settle, which is served in $/MMBtu.",
+   "evidence": "Served strikes 0.275/0.3/0.325/0.35/0.375/0.4 map exactly onto the NG $/MMBtu strike grid divided by 10 (the 0.325 strike is the near-the-money one against the frozen $/MMBtu settle served in contract_structure; put OI stacked at 0.275-0.3 below, call OI at 0.35-0.4 above - the normal collar shape). Same scale in grp22 (0.35, 0.325) - a standing feed convention, not new in g23. No units field, and no note declares the scale; the note says 'distance-from-settle is the agent's read against contract_structure's calendar-front settle', i.e., it directs a cross-unit subtraction that is nonsense unless the reader silently infers the 10x. oi_weighted_strike 0.5284 is internally consistent with far-out-of-the-money call OI drag on the same /10 scale.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "medium",
+   "plays_affected": [
+    "structure.squeeze_unwind",
+    "magnitude.shoulder_counter_print_damping",
+    "monday.seam_chainage_accommodation_gate",
+    "midweek.young_chain_extension_full_band",
+    "tape.squeeze_ignition_flush_conjunction",
+    "selector.divergence_resolution"
+   ],
+   "impact": "Any wall-distance or pin-proximity read that follows the block's own instruction gets a 10x-wrong distance (walls appear absurdly far below every $/MMBtu quantity, including the blind's own price frame). Ratio/structure reads (put_call_oi_ratio, share_of_month_oi, days_to_opex - all verified internally consistent) are unaffected, which is why this ranks low; the G19 lesson (the conviction gate fed the wrong series under the same name) says do not rely on the specialist noticing.",
+   "guard_proposed": "Schema fix + declaration: serve strike_units explicitly (or rescale to $/MMBtu at the feed), and add a stage-time unit reconciliation - nearest served strike must lie within 0.5x-2x of contract_structure.calendar_front_settle after declared scaling. Negative test: fires on g22 and g23 as served today (both /10, undeclared), passes once units are declared/rescaled.",
+   "guard_kind": "schema",
+   "stake_a_run_on_it": true
+  }
+ ],
+ "clean": [
+  "storage / storage_regional / storage_vintage information clock and levels: the print lands at the NEXT day's open, never the print day's (0709 and 0716 both verified); level chains exact (2922+61=2983, 2983+41=3024); vs_5yr evolution consistent with the weekly change vs the 5yr-average change; regional-to-national sums within EIA's 1-Bcf rounding on all three served vintages; day-level stor_surprise = l48.chg_vs_5yr_chg (seasonal basis) and UPDATES correctly for both prints including on 20260717; stor_surprise_sign consistent with sign on all days; storage_vintage is a frozen historical revision exemplar, fully declared via as_of/age_days (123->134 counting correctly), matching the known Mountain-reclass event",
+  "cot: the July-4-delayed publication is modeled exactly (0630-report published Mon 2026-07-06 15:30, first served at the 0707 open, publication_delayed=True declared on the affected days); week-over-week chains exact on all books (-82,722+17,914=-64,808; -64,808+4,513=-60,295; ICE ld1 chains likewise); combined-minus-futures equals the served options_implied fields exactly; percentiles sit on the midrank (r-0.5)/n grid for n_obs 53/157; age_days consistent with a same-clock open",
+  "flow_calendar: business-day arithmetic verified against the real calendar (futures expiry 2026-07-29 = 3 business days before Aug 1; options expiry 2026-07-28 = 1 bd prior; days_to_opex/expiry count down 16->7 and 17->8 correctly); is_eia_print_day true exactly on 0709/0716; eia_storage_release_datetime_et is this-calendar-week semantics, consistent with next_eia_release fields; GSCI roll window lands on business days 5-9 and BCOM on 6-10 with business_day_of_month agreeing; no expiry or opex day inside the block, correctly",
+  "squeeze_watch vs flow_calendar (the S109 f1 class): days_to_calendar_front_expiry_live equals flow_calendar.days_to_futures_expiry on all 10 days; symbols agree; the frozen dte is declared frozen; calendar_dte_limb_satisfied_live=False is CORRECT on every day (live dte bottoms at 8 against a <=7 bar); the spread limb honestly serves None with an 'UNKNOWN, not false' note",
+  "contract_structure (frozen, declared): settle/spread/curve fields internally consistent (front-next settle difference equals the served spread; backwardation label consistent with the sign of slope_1; day-level curve_regime matches); OI-vs-volume divergence between OI-front and volume-front is explicitly declared (oi_volume_divergence=True with both symbols served); the 'date'=anchor+1 convention is consistent across g22/g23; expiry dates from definitions match the calendar block",
+  "steo_vintage: jun26->jul26 vintage flip lands on 20260708 with knowable_from=2026-07-08 (release 0707), age_days=1 at the flip; values move only at the flip; month_cur/prev/next consistent",
+  "ngwu_balance: issue clock 0702/0709/0716 with knowable_from the following day; the S&P section death is fully declared (era=2, sd_live=False, latest_sd_levels frozen at 2025-09-25 with age_days 285-296 counting correctly); sparse wow fields are declared Nones, never zeros",
+  "nuclear_outages: chg_1d chains exactly into the next day's level on every step; fleet capacity constant; July outage levels and pct_of_fleet plausible for the season; age_days=1 live daily",
+  "grid_stack: fuel shares recompute exactly from mwh/total_gen; age_days=2 declared EIA-930 lag; levels plausible per BA; demand vs day-ahead forecast tracks",
+  "solar: deterministic astronomy verified (post-solstice day-length decline accelerating, ET-vs-local offsets correct per metro)",
+  "weather family: weather_forecast asof D-1 23:59 on every day; D0 forecast tracks the realized-proxy within noise on all 10 days; the realized-as-proxy look-ahead is DECLARED by its note name (realized_as_proxy_for_forecastable_regime) with the true decision-time read served alongside; weather_forecast_cycle availability rules correct (12Z usable at the Sunday reopen, 06Z at the weekday open) and present exactly on the two seam Mondays; no provisional_tail flag and no tail cliff on the final days; freeze_risk live (basin tmins vary daily) with correct July zeros; model_disagreement live and varying under the same blind wall",
+  "tape_conditions on the NINE other days: phase sums equal session totals exactly; the b=b2*(1-u) identity closes on all 24 scopes (the S109 guard is active and working); session flow equals sided-volume*(2*b2-1) within 3dp rounding on all 8 other leg days; signed-flow signs consistent with the two-sided share side on every scope; l1 quote_updates/n_trades ratios in one family (5.1-8.6) with no clean separation; the Sunday stubs are fully declared (prior_session_is_reopen_stub, note_stub, prior_full_session carried, CME trade-date convention)",
+  "anchor artifact g23_anchor.json: chain-verified against the prior group's last day (status MATCH); the holiday half-session is declared with a thinness caveat; session_activity matches the state's prior_full_session limb field-for-field; the last-hour direction is explicitly downgraded to a resolution-floor signal; downsampled-provenance nulls (trade_count/signed_flow) declared rather than fabricated",
+  "state_health run on g23: PASS with 2 declared softs (L1 absent for the two Sunday stubs); verified it currently guards EMPTY blocks, mask-envelopes with nothing frozen, tape required sub-reads, the weather provisional tail, the b-share identity, and the squeeze_watch frozen-vs-live calendar - and that NONE of those guards can see findings f1-f5 (all fields present, typed, in range, internally consistent)",
+  "_information_clock: static doctrine block, times consistent with the served feeds (print Thu 10:30 ET, COT Fri 15:30 ET, settle window named)"
+ ],
+ "uncheckable": [
+  "Which cont store/file flow_read consumed on 20260716 (settles f1's sub-mechanism: n1 absent vs n1 partial vs n0 deferred-contract): requires data/nymex_cont_n0|n1/NG_20260716.jsonl.gz or the S3 object listing - data/ is empty this session and keys do not survive",
+  "The TRUE full-session flow/b-family for session 20260716 (what should have been served on 20260717): requires the leg file data/ng_mbo_g17/ng_mbo_ngq26_20260716.dbn.zst",
+  "Whether the Sunday reopen stubs (sessions 20260705/20260712, nymex_cont_n0, 149/256 trades) are complete Sunday-evening tapes of the scored contract or degraded/deferred files: no leg-store Sunday files exist to reconcile against, and the reconcile gate skips Sundays by design",
+  "The contamination extent of vol_regime's n0 rolling windows (net_sigma_5/10/20, range means, range_pctile over <=60 sessions) across the degraded era - the prev-session fields are proven off-tape (f3) but the window mix needs data/vol_regime/ plus the cont tapes",
+  "The instrument identity of the ng_l1 book feed (quote_updates ratios are in-family, suggesting the front, but no independent reconciliation exists in the committed state)",
+  "Exactness of the weather realized values on the final two days against a margin re-fetch (the hole-#7 class): the provisional_tail flag is absent and there is no tail cliff, but that is absence of evidence, not a re-fetch verification",
+  "Whether a pre-print consensus snapshot for the 20260716 print ever existed anywhere (would settle f4's mechanism - capture failure vs true survey absence): the consensus store is not present this session",
+  "Anything requiring the walled refine-side artifacts (g23_actual, g23_exit_states, g23_mbo_evidence) - by design of this audit"
+ ],
+ "adjudication": {
+  "session": "S110",
+  "authority": "session (SOP STEP 2 - data plumbing only)",
+  "verdicts": {
+   "f1": {
+    "go": true,
+    "fix": "state_repair_s110.py R1 (recover from leg-built evidence + null unrecoverables, flow_family_basis)",
+    "guard": "state_health phase-sum reconciliation, HARD",
+    "negative_test": "fires on exactly 2/48 scopes across 17 committed group states (the two defective sums), 0 after repair"
+   },
+   "f2": {
+    "go": true,
+    "fix": "at source, same commit: forecast_harness sets flow_read._ACTIVE_LEGS; flow_read fallback loud; tape_reconcile flow-side leg check",
+    "note": "live execution verification rides the next data-plane staging"
+   },
+   "f3": {
+    "go": true,
+    "fix": "n0_era_basis declared g22+g23 (values not rebuildable cold)",
+    "guard": "state_health n0-era reconciliation, HARD when undeclared",
+    "negative_test": "pre-June g21 reconciles 0.978 (passes); g22 0.265 / g23 0.226 fire until declared; 0 after"
+   },
+   "f4": {
+    "go": true,
+    "fix": "state_repair_s110.py R2 (last_print null + basis)",
+    "guard": "state_health storage-vs-consensus freshness, HARD",
+    "negative_test": "fires on exactly 1/99 day-blocks (g23 20260717), 0 after repair"
+   },
+   "f5": {
+    "go": true,
+    "fix": "state_repair_s110.py R3 (x10 + strike_units on the two live states); feed-source fix queued (data plane)",
+    "guard": "state_health strike-scale vs calendar_front_settle, HARD when units undeclared",
+    "negative_test": "10x present in all 10 groups carrying options (true positives on legacy records, left as records); live states pass after rescale"
+   }
+  }
+ }
+}

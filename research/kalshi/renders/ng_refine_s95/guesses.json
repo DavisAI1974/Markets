@@ -1,0 +1,105 @@
+{
+ "note": "per-day dominant-move scorecard (ACTUAL vs GUESS $), from brain evidence. Full guess curves were lost; these scalars + sign are the surviving guess reference. PER-EVENT, no averages.",
+ "days": {
+  "20250908": {
+   "group": 3,
+   "actual_usd": 1260,
+   "guess_usd": -450
+  },
+  "20250910": {
+   "group": 3,
+   "actual_usd": -950,
+   "guess_usd": 370
+  },
+  "20250911": {
+   "group": 3,
+   "actual_usd": -1180,
+   "guess_usd": -540
+  },
+  "20250915": {
+   "group": 3,
+   "actual_usd": -1150,
+   "guess_usd": 450
+  },
+  "20250916": {
+   "group": 3,
+   "actual_usd": 1330,
+   "guess_usd": -140
+  },
+  "20250918": {
+   "group": 3,
+   "actual_usd": -1560,
+   "guess_usd": -650
+  },
+  "20250922": {
+   "group": 3,
+   "actual_usd": -1410,
+   "guess_usd": -500
+  },
+  "20250923": {
+   "group": 3,
+   "actual_usd": 690,
+   "guess_usd": -300
+  },
+  "20250925": {
+   "group": 4,
+   "actual_usd": 1160,
+   "guess_usd": -330
+  },
+  "20250929": {
+   "group": 4,
+   "actual_usd": 1240,
+   "guess_usd": -640
+  },
+  "20251001": {
+   "group": 4,
+   "actual_usd": 1590,
+   "guess_usd": 360
+  },
+  "20251002": {
+   "group": 4,
+   "actual_usd": 1360,
+   "guess_usd": 760
+  },
+  "20251006": {
+   "group": 4,
+   "actual_usd": 1150,
+   "guess_usd": 600
+  },
+  "20251007": {
+   "group": 4,
+   "actual_usd": 1620,
+   "guess_usd": 460
+  },
+  "20251008": {
+   "group": 5,
+   "actual_usd": -1980,
+   "guess_usd": 320
+  },
+  "20251010": {
+   "group": 5,
+   "actual_usd": -1490,
+   "guess_usd": 150
+  },
+  "20251014": {
+   "group": 5,
+   "actual_usd": -910,
+   "guess_usd": 360
+  },
+  "20251016": {
+   "group": 5,
+   "actual_usd": -1190,
+   "guess_usd": -300
+  },
+  "20251020": {
+   "group": 5,
+   "actual_usd": 2770,
+   "guess_usd": 580
+  },
+  "20251021": {
+   "group": 5,
+   "actual_usd": 1100,
+   "guess_usd": 440
+  }
+ }
+}

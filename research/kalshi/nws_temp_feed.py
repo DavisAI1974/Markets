@@ -41,7 +41,8 @@ import os
 import sys
 import time
 from collections import defaultdict
-from datetime import datetime, timezone
+import csv
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import requests
@@ -361,6 +362,25 @@ def realized_index(start: str, end: str, use_cache: bool = True, verbose: bool =
         per_station[st] = daily_from_obs(rows)
         time.sleep(0.5)                 # politeness to IEM
     gw = gas_weighted(per_station)
+    # S108 THE PARTIAL-TAIL DEFECT. The LAST day of any fetched range is computed on incomplete hours
+    # and is WRONG - while still reporting coverage 1.0 and n_stations 16, so nothing downstream can
+    # tell. Measured twice on this store:
+    #   2026-07-13 was the tail of an earlier pull at gw_cdd 8.034 / regime mod_cool. Fetching
+    #     2026-07-14..18 recomputed it to 13.548 / hard_cool - its neighbours are 14.2 and 15.5, so the
+    #     8.034 was an anomalous dip and the correction is the real value.
+    #   2026-07-17 was the tail of that pull at gw_cdd 15.42 / precip 0.2029. Fetching 2026-07-18..20
+    #     recomputed it to 15.14 / precip 0.0002.
+    #   2026-07-16, which had a successor day INSIDE its own pull, was byte-identical across both.
+    # So a day is trustworthy only once a LATER day has been fetched. Flag the tail rather than dropping
+    # it: a silently missing day is the failure mode this project keeps hitting, and a declared one lets
+    # state_health refuse the group. cache.update() overwrites, so a later pull CLEARS the flag by
+    # itself - the store self-heals as it extends.
+    if gw:
+        tail = max(gw)
+        gw[tail] = {**gw[tail], "provisional_tail": True,
+                    "provisional_note": ("LAST DAY OF A FETCH RANGE - computed on incomplete hours and "
+                                         "NOT decision-legit. coverage/n_stations do NOT detect this. "
+                                         "Re-fetch with at least one day of margin past it to settle it.")}
     if use_cache:
         cache.update(gw)
         _save_cache(cache)
@@ -443,6 +463,427 @@ def forecast_index_today(verbose: bool = True) -> dict:
 
 
 # ------------------------------------------------------------------------------------------------------
+# (C) HISTORICAL decision-time FORECAST via IEM MOS archive  (S97 JOB 2.2, Greg S96)
+#
+# WHY: the gas market reprices on what the FORECAST SAID and especially on the RUN-TO-RUN CHANGE in the
+# forecast - not on the temperature that actually turned out. Every weather-conditioned brain rule is
+# currently tested against realized temps used as a market-knowledge proxy (see _weather_asof /
+# "realized_as_proxy_for_forecastable_regime"). That is backwards. This block reconstructs, for each target
+# trading day D, what the NWS MOS point forecasts SAID as of the EVENING OF D-1.
+#
+# SOURCE (verified live, S97): IEM archives NWS MOS point forecasts back to ~2000 at
+#   GET https://mesonet.agron.iastate.edu/cgi-bin/request/mos.py
+#       ?station=K<4char>&model=<GFS|NAM|MEX|NBS|LAV>&sts=<ISO Z>&ets=<ISO Z>&format=csv
+# CSV columns: runtime,ftime,model,n_x,tmp,dpt,cld,wdr,wsp,...,station
+#   runtime = model INITIALIZATION time (UTC)  <- the blind-wall key
+#   ftime   = valid/forecast time (UTC)
+#   tmp     = forecast temperature (F)
+# Model codes actually served (probed): GFS = GFS-MOS "MAV" short range (3-hourly, out to ~+72h),
+#   NAM = NAM-MOS "MET" (3-hourly, out to ~+84h), MEX = GFS extended MOS (12-hourly, out to ~+192h).
+# All 16 gas-demand metros return data for every one of the three models (probed 2026-01-20).
+#
+# MODEL PREFERENCE (per Greg's directive, extended only where the directive's models cannot reach):
+#   GFS (MAV) preferred -> NAM (MET) fallback -> MEX only for horizons MAV/MET physically cannot cover
+#   (beyond ~+72/84h, i.e. roughly D+3..D+7). The model actually used is RECORDED PER METRO PER TARGET DAY
+#   in `source_by_metro`; nothing is silently substituted.
+#
+# NORMALS: forecast_vs_normal uses the NWS climatological normals that IEM serves alongside the daily ASOS
+# summaries (climo_high_f / climo_low_f from /cgi-bin/request/daily.py). These are published NWS climate
+# normals for the station+calendar-day - REAL data, not a synthesized or back-fit baseline.
+#
+# THE THREE OUTPUTS (all additive, all per-day, never pooled):
+#   forecast_gw_hdd / forecast_gw_cdd  - gas-weighted, for target D and each horizon out to D+7
+#   forecast_vs_normal                 - the forecast's departure from NWS climatological normal
+#   forecast_run_delta                 - THE REPRICING DRIVER: today's run-set (as-of D-1 evening) MINUS
+#                                        yesterday's run-set (as-of D-2 evening) for THE SAME TARGET DAYS
+#
+# THE BLIND WALL (the single most important correctness property here): a target day D may only ever see
+# model runs whose `runtime` is <= MOS_CUTOFF(D) = D-1 T23:59Z. In the reference gas-day tz
+# (America/Chicago) that instant is 17:59 CT on D-1 - unambiguously the evening of D-1, and it admits the
+# 18Z D-1 cycle while EXCLUDING the 00Z-of-D cycle. Enforced by _mos_cutoff_utc + a hard assert in
+# _runset_asof, and re-checked in --selftest.
+#
+# MISSING IS EXPLICIT, NEVER ZERO (non-negotiable): a metro/day/run with no usable MOS coverage yields
+# None - never a defaulted 0. A silently-zeroed HDD in January reads to the forecast agent as "no heating
+# demand", which is a catastrophic false signal. Weights are renormalized over the metros actually present,
+# `coverage` reports the weight fraction retained, and any day below full coverage is flagged
+# partial=True with the missing metros NAMED in `metros_missing`.
+# ------------------------------------------------------------------------------------------------------
+MOS_URL = "https://mesonet.agron.iastate.edu/cgi-bin/request/mos.py"
+IEM_DAILY_URL = "https://mesonet.agron.iastate.edu/cgi-bin/request/daily.py"
+MOS_DIR = "weather/mos_asof"
+MOS_RAW_DIR = os.path.join(MOS_DIR, "raw")
+MOS_INDEX = os.path.join(MOS_DIR, "mos_asof_index.json")
+MOS_NORMALS = os.path.join(MOS_DIR, "climo_normals.json")
+MOS_HORIZONS = 8                      # target D+0 .. D+7
+MOS_MODEL_ORDER = ["GFS", "NAM", "MEX"]      # MAV preferred, MET fallback, MEX only where MAV/MET cannot reach
+MOS_MIN_OBS = {"GFS": 5, "NAM": 5, "MEX": 2}  # min forecast temps inside the target gas-day to trust it
+# IEM daily.py needs the state ASOS network for the climo normals.
+STATION_NETWORK = {
+    "NYC": "NY_ASOS", "BOS": "MA_ASOS", "PHL": "PA_ASOS", "DCA": "VA_ASOS",
+    "ORD": "IL_ASOS", "DTW": "MI_ASOS", "MSP": "MN_ASOS", "STL": "MO_ASOS",
+    "IAH": "TX_ASOS", "DFW": "TX_ASOS", "ATL": "GA_ASOS", "DEN": "CO_ASOS",
+    "PHX": "AZ_ASOS", "LAX": "CA_ASOS", "SFO": "CA_ASOS", "SEA": "WA_ASOS",
+}
+
+
+def _d(iso: str) -> datetime:
+    return datetime.strptime(iso, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+
+
+def _shift(iso: str, days: int) -> str:
+    return (_d(iso) + timedelta(days=days)).strftime("%Y-%m-%d")
+
+
+def _mos_cutoff_utc(target_day: str) -> datetime:
+    """THE BLIND WALL. Latest model INITIALIZATION time a forecast for `target_day` may see: D-1 T23:59Z
+    (= 17:59 CT on D-1, the evening of D-1 in the gas-day reference tz). Admits the 18Z D-1 cycle,
+    excludes the 00Z cycle of D itself."""
+    return _d(target_day) - timedelta(minutes=1)
+
+
+# ---------------- raw MOS fetch (cached to disk; one request per station+model over the whole window) ----
+def fetch_mos(station4: str, model: str, sts: str, ets: str, retries: int = 4) -> list[dict]:
+    """Raw MOS rows for one station+model over [sts, ets] (YYYY-MM-DD, interpreted UTC). Returns
+    [{runtime, ftime, tmp}] with values kept verbatim (empty string = missing, never coerced to 0)."""
+    params = {"station": station4, "model": model, "format": "csv",
+              "sts": f"{sts}T00:00Z", "ets": f"{ets}T23:59Z"}
+    last = None
+    for i in range(retries):
+        try:
+            r = requests.get(MOS_URL, params=params, timeout=120)
+            if r.status_code == 200 and r.text.strip():
+                break
+            last = f"status {r.status_code}"
+        except requests.RequestException as e:
+            last = str(e)
+        time.sleep(2 ** i)
+    else:
+        raise RuntimeError(f"[mos] {station4} {model} {sts}..{ets} failed: {last}")
+    rd = list(csv.DictReader(io.StringIO(r.text)))
+    out = []
+    for row in rd:
+        rt, ft, tmp = row.get("runtime", ""), row.get("ftime", ""), (row.get("tmp") or "").strip()
+        if not rt or not ft or tmp in ("", "M"):
+            continue                                        # missing stays missing; NOT zero
+        try:
+            out.append({"runtime": rt, "ftime": ft, "tmp": float(tmp)})
+        except ValueError:
+            continue
+    return out
+
+
+def load_mos_cached(station: str, model: str, sts: str, ets: str, refresh: bool = False) -> list[dict]:
+    os.makedirs(MOS_RAW_DIR, exist_ok=True)
+    path = os.path.join(MOS_RAW_DIR, f"{station}_{model}_{sts}_{ets}.json")
+    if os.path.exists(path) and not refresh:
+        with open(path) as f:
+            return json.load(f)
+    rows = fetch_mos("K" + station, model, sts, ets)
+    with open(path, "w") as f:
+        json.dump(rows, f)
+    time.sleep(0.4)                                          # politeness to IEM
+    return rows
+
+
+def _index_runs(rows: list[dict]) -> dict[str, dict[str, float]]:
+    """[{runtime, ftime, tmp}] -> {runtime_iso: {ftime_iso: tmp}}."""
+    runs: dict[str, dict[str, float]] = defaultdict(dict)
+    for r in rows:
+        runs[r["runtime"]][r["ftime"]] = r["tmp"]
+    return dict(runs)
+
+
+def _parse_ts(s: str) -> datetime:
+    return datetime.strptime(s, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+
+
+def _runset_asof(runs: dict[str, dict[str, float]], cutoff: datetime) -> dict[str, dict[str, float]]:
+    """The model cycles a forecaster could have seen in the 24h ENDING at `cutoff` - i.e. the current
+    evening's batch. Hard-asserts the blind wall: nothing initialized after `cutoff` may pass."""
+    lo = cutoff - timedelta(hours=24)
+    sel = {rt: fc for rt, fc in runs.items() if lo < _parse_ts(rt) <= cutoff}
+    assert all(_parse_ts(rt) <= cutoff for rt in sel), "BLIND WALL VIOLATION: run initialized after cutoff"
+    return sel
+
+
+def _day_temp_from_run(fcst: dict[str, float], target_day: str, min_obs: int) -> tuple[float, float] | None:
+    """(tmax, tmin) the run forecasts for `target_day` in REF_TZ (the gas day) - same max/min convention as
+    daily_from_obs, so forecast and realized numbers are directly comparable. None if under-covered."""
+    temps = [t for ft, t in fcst.items()
+             if _parse_ts(ft).astimezone(REF_TZ).strftime("%Y-%m-%d") == target_day]
+    if len(temps) < min_obs:
+        return None
+    return max(temps), min(temps)
+
+
+def _station_forecast(runs_by_model: dict[str, dict], target_day: str, cutoff: datetime) -> dict | None:
+    """One metro's decision-time forecast for one target day: walk MOS_MODEL_ORDER, take the LATEST
+    eligible cycle of the first model that actually covers the day. Records which model won."""
+    for model in MOS_MODEL_ORDER:
+        runs = runs_by_model.get(model)
+        if not runs:
+            continue
+        sel = _runset_asof(runs, cutoff)
+        for rt in sorted(sel, key=_parse_ts, reverse=True):     # latest eligible cycle first
+            mm = _day_temp_from_run(sel[rt], target_day, MOS_MIN_OBS[model])
+            if mm is None:
+                continue
+            tmax, tmin = mm
+            tmean = (tmax + tmin) / 2.0
+            hdd, cdd = degree_days(tmean)
+            return {"model": model, "runtime": rt, "tmax": round(tmax, 1), "tmin": round(tmin, 1),
+                    "tmean": round(tmean, 2), "hdd": round(hdd, 2), "cdd": round(cdd, 2)}
+    return None                                                 # explicit miss - NEVER a zero
+
+
+def _gas_weight_forecast(per_station: dict[str, dict | None]) -> dict:
+    """Gas-weight the per-metro forecast. Renormalizes over metros PRESENT; names the missing ones; flags
+    partial. Returns nulls (not zeros) when nothing is available."""
+    w = station_weights()
+    present = {s: v for s, v in per_station.items() if v is not None}
+    missing = sorted(s for s in STATION_WEIGHTS_RAW if s not in present)
+    wsum = sum(w[s] for s in present)
+    if wsum <= 0:
+        return {"gw_hdd": None, "gw_cdd": None, "coverage": 0.0, "n_metros": 0,
+                "metros_missing": missing, "partial": True,
+                "coverage_note": "NO MOS coverage for any metro - value is null, NOT zero"}
+    gw_hdd = sum(w[s] * present[s]["hdd"] for s in present) / wsum
+    gw_cdd = sum(w[s] * present[s]["cdd"] for s in present) / wsum
+    partial = len(missing) > 0
+    return {
+        "gw_hdd": round(gw_hdd, 3), "gw_cdd": round(gw_cdd, 3),
+        "coverage": round(wsum, 4), "n_metros": len(present),
+        "metros_missing": missing, "partial": partial,
+        "regime": regime_bucket(gw_hdd, gw_cdd),
+        "source_by_metro": {s: f"{present[s]['model']}@{present[s]['runtime']}" for s in sorted(present)},
+        "coverage_note": (f"PARTIAL: {len(missing)}/{len(STATION_WEIGHTS_RAW)} metros missing "
+                          f"({','.join(missing)}); weights renormalized over the {len(present)} present"
+                          if partial else "complete: all 16 gas-demand metros present"),
+    }
+
+
+# ---------------- NWS climatological normals (real, from IEM daily.py climo_high_f/climo_low_f) ----------
+def fetch_normals(station: str, sts: str, ets: str, retries: int = 4) -> dict[str, float]:
+    """{MM-DD: climo_tmean_F} from the NWS normals IEM serves with the daily ASOS summary."""
+    params = {"network": STATION_NETWORK[station], "stations": station, "sts": sts, "ets": ets,
+              "format": "comma", "vars": "max_temp_f,min_temp_f"}
+    last = None
+    for i in range(retries):
+        try:
+            r = requests.get(IEM_DAILY_URL, params=params, timeout=180)
+            if r.status_code == 200 and r.text.strip() and not r.text.startswith("ERROR"):
+                break
+            last = f"status {r.status_code} {r.text[:60]}"
+        except requests.RequestException as e:
+            last = str(e)
+        time.sleep(2 ** i)
+    else:
+        raise RuntimeError(f"[mos] normals {station} failed: {last}")
+    out: dict[str, float] = {}
+    for row in csv.DictReader(io.StringIO(r.text)):
+        hi, lo, day = (row.get("climo_high_f") or "").strip(), (row.get("climo_low_f") or "").strip(), row.get("day", "")
+        if not day or hi in ("", "M", "None") or lo in ("", "M", "None"):
+            continue                                        # missing normal stays missing
+        try:
+            out[day[5:]] = (float(hi) + float(lo)) / 2.0     # key MM-DD
+        except ValueError:
+            continue
+    return out
+
+
+def load_normals(sts: str, ets: str, refresh: bool = False) -> dict[str, dict[str, float]]:
+    os.makedirs(MOS_DIR, exist_ok=True)
+    if os.path.exists(MOS_NORMALS) and not refresh:
+        with open(MOS_NORMALS) as f:
+            return json.load(f)
+    out = {}
+    for st in STATION_WEIGHTS_RAW:
+        try:
+            out[st] = fetch_normals(st, sts, ets)
+            print(f"[mos] normals {st}: {len(out[st])} calendar days", flush=True)
+        except Exception as e:
+            print(f"[mos] normals {st} MISSING: {e}", flush=True)   # explicit; not filled with zeros
+        time.sleep(0.4)
+    with open(MOS_NORMALS, "w") as f:
+        json.dump(out, f, sort_keys=True)
+    return out
+
+
+def _gw_normal(target_day: str, normals: dict[str, dict[str, float]]) -> dict:
+    """Gas-weighted NWS-normal HDD/CDD for the calendar day. Nulls, never zeros, where normals are absent."""
+    w = station_weights()
+    mmdd = target_day[5:]
+    present = {s: normals[s][mmdd] for s in STATION_WEIGHTS_RAW
+               if s in normals and mmdd in normals.get(s, {})}
+    missing = sorted(s for s in STATION_WEIGHTS_RAW if s not in present)
+    wsum = sum(w[s] for s in present)
+    if wsum <= 0:
+        return {"gw_hdd": None, "gw_cdd": None, "coverage": 0.0, "metros_missing": missing,
+                "coverage_note": "NO NWS normals available - null, NOT zero"}
+    hdd = sum(w[s] * degree_days(present[s])[0] for s in present) / wsum
+    cdd = sum(w[s] * degree_days(present[s])[1] for s in present) / wsum
+    return {"gw_hdd": round(hdd, 3), "gw_cdd": round(cdd, 3), "coverage": round(wsum, 4),
+            "metros_missing": missing,
+            "coverage_note": ("complete" if not missing else
+                              f"PARTIAL normals: missing {','.join(missing)}")}
+
+
+# ---------------- the assembled as-of state ------------------------------------------------------------
+def mos_asof_day(target_day: str, mos: dict[str, dict[str, dict]], normals: dict) -> dict:
+    """Everything a forecaster knew about temperature on the EVENING OF D-1, for target day D.
+
+    horizons[h] describes target day D+h as seen by the D-1-evening run batch.
+    run_delta[h]  = that same target day D+h, D-1-evening batch MINUS D-2-evening batch (the repricing
+                    driver). Computed only over metros present in BOTH batches, with its own coverage.
+    """
+    cutoff_today = _mos_cutoff_utc(target_day)                  # D-1 T23:59Z
+    cutoff_yday = cutoff_today - timedelta(days=1)              # D-2 T23:59Z
+    horizons, run_delta = [], []
+    for h in range(MOS_HORIZONS):
+        tgt = _shift(target_day, h)
+        cur = {s: _station_forecast(mos.get(s, {}), tgt, cutoff_today) for s in STATION_WEIGHTS_RAW}
+        prv = {s: _station_forecast(mos.get(s, {}), tgt, cutoff_yday) for s in STATION_WEIGHTS_RAW}
+        gw_cur = _gas_weight_forecast(cur)
+        nrm = _gw_normal(tgt, normals)
+        vs_norm = (None if gw_cur["gw_hdd"] is None or nrm["gw_hdd"] is None
+                   else round(gw_cur["gw_hdd"] - nrm["gw_hdd"], 3))
+        horizons.append({
+            "horizon": h, "target_date": tgt,
+            "forecast_gw_hdd": gw_cur["gw_hdd"], "forecast_gw_cdd": gw_cur["gw_cdd"],
+            "regime": gw_cur.get("regime"),
+            "normal_gw_hdd": nrm["gw_hdd"], "normal_gw_cdd": nrm["gw_cdd"],
+            "forecast_vs_normal": vs_norm,
+            "coverage": gw_cur["coverage"], "n_metros": gw_cur["n_metros"],
+            "partial": gw_cur["partial"], "metros_missing": gw_cur["metros_missing"],
+            "coverage_note": gw_cur["coverage_note"],
+            "source_by_metro": gw_cur.get("source_by_metro", {}),
+        })
+        # run delta on the COMMON metro set only (so a coverage change cannot masquerade as a forecast change)
+        both = [s for s in STATION_WEIGHTS_RAW if cur.get(s) and prv.get(s)]
+        w = station_weights(); wsum = sum(w[s] for s in both)
+        if wsum <= 0:
+            run_delta.append({"horizon": h, "target_date": tgt, "d_gw_hdd": None, "d_gw_cdd": None,
+                              "coverage": 0.0, "n_metros": 0, "partial": True,
+                              "metros_missing": sorted(set(STATION_WEIGHTS_RAW) - set(both)),
+                              "coverage_note": "no metro has BOTH a D-1-evening and a D-2-evening run - "
+                                               "delta is null, NOT zero"})
+        else:
+            d_hdd = sum(w[s] * (cur[s]["hdd"] - prv[s]["hdd"]) for s in both) / wsum
+            d_cdd = sum(w[s] * (cur[s]["cdd"] - prv[s]["cdd"]) for s in both) / wsum
+            miss = sorted(set(STATION_WEIGHTS_RAW) - set(both))
+            run_delta.append({"horizon": h, "target_date": tgt,
+                              "d_gw_hdd": round(d_hdd, 3), "d_gw_cdd": round(d_cdd, 3),
+                              "coverage": round(wsum, 4), "n_metros": len(both),
+                              "partial": bool(miss), "metros_missing": miss,
+                              "coverage_note": ("complete: all 16 metros in both batches" if not miss else
+                                                f"PARTIAL delta: {len(miss)} metros lack one batch "
+                                                f"({','.join(miss)}); common-set weights renormalized")})
+    d0, r0 = horizons[0], run_delta[0]
+    # the 1..7 day forward block-average is a SHAPE descriptor for the agent, never a final answer (Greg's
+    # no-pooling rule): the per-horizon values above are canonical and always carried.
+    fwd = [x["forecast_gw_hdd"] for x in horizons[1:] if x["forecast_gw_hdd"] is not None]
+    return {
+        "date": target_day,
+        "asof_utc": cutoff_today.strftime("%Y-%m-%dT%H:%MZ"),
+        "asof_note": ("all model runs strictly initialized at or before D-1 T23:59Z (= 17:59 CT on D-1, "
+                      "the evening of D-1); the 00Z cycle of D itself is EXCLUDED"),
+        "forecast_gw_hdd": d0["forecast_gw_hdd"], "forecast_gw_cdd": d0["forecast_gw_cdd"],
+        "forecast_regime": d0["regime"],
+        "forecast_vs_normal": d0["forecast_vs_normal"],
+        "forecast_run_delta": r0["d_gw_hdd"],
+        "forecast_run_delta_cdd": r0["d_gw_cdd"],
+        "fwd7_gw_hdd_span": ([min(fwd), max(fwd)] if fwd else None),
+        "complete": (not d0["partial"]) and (not r0["partial"]) and d0["forecast_gw_hdd"] is not None,
+        "coverage_note": f"D+0 forecast: {d0['coverage_note']} | D+0 run-delta: {r0['coverage_note']}",
+        "horizons": horizons,
+        "run_delta": run_delta,
+    }
+
+
+def build_mos_asof(start: str, end: str, refresh: bool = False, verbose: bool = True) -> dict:
+    """Back-fill the as-of-D-1-evening MOS forecast state for every target day in [start, end).
+    Fetches the raw MOS window once per (metro, model), then assembles per-day. Writes MOS_INDEX."""
+    fetch_sts = _shift(start, -3)                    # need the D-2 batch for the run delta
+    fetch_ets = _shift(end, MOS_HORIZONS + 1)        # need runs valid out to D+7
+    mos: dict[str, dict[str, dict]] = {}
+    for st in STATION_WEIGHTS_RAW:
+        mos[st] = {}
+        for model in MOS_MODEL_ORDER:
+            try:
+                rows = load_mos_cached(st, model, fetch_sts, fetch_ets, refresh=refresh)
+                mos[st][model] = _index_runs(rows)
+                if verbose:
+                    print(f"[mos] {st} {model}: {len(rows)} rows / {len(mos[st][model])} runs", flush=True)
+            except Exception as e:
+                print(f"[mos] {st} {model} MISSING: {e}", flush=True)     # explicit; no substitution
+    normals = load_normals(_shift(start, -1), end, refresh=refresh)
+    out = {}
+    day = start
+    while day < end:
+        out[day] = mos_asof_day(day, mos, normals)
+        if verbose:
+            v = out[day]
+            print(f"[mos] {day}  fHDD {v['forecast_gw_hdd']}  vsNorm {v['forecast_vs_normal']}  "
+                  f"runDelta {v['forecast_run_delta']}  complete={v['complete']}", flush=True)
+        day = _shift(day, 1)
+    os.makedirs(MOS_DIR, exist_ok=True)
+    with open(MOS_INDEX, "w") as f:
+        json.dump(out, f, sort_keys=True, indent=1)
+    return out
+
+
+def mos_selftest() -> bool:
+    """Blind wall + missing-is-never-zero + weighting, on synthetic STRUCTURE only (no synthetic market or
+    weather values are ever persisted; these are unit fixtures for the join logic)."""
+    ok = True
+
+    def check(name, cond):
+        nonlocal ok
+        print(f"  [{'PASS' if cond else 'FAIL'}] {name}")
+        ok = ok and cond
+
+    cut = _mos_cutoff_utc("2026-01-20")
+    check("cutoff is D-1 T23:59Z", cut == datetime(2026, 1, 19, 23, 59, tzinfo=timezone.utc))
+    check("cutoff is the evening of D-1 in the gas-day tz (17:59 CT)",
+          cut.astimezone(REF_TZ).strftime("%Y-%m-%d %H:%M") == "2026-01-19 17:59")
+
+    runs = {"2026-01-19 18:00:00": {"2026-01-20 12:00:00": 20.0},   # eligible (D-1 18Z)
+            "2026-01-20 00:00:00": {"2026-01-20 12:00:00": 99.0},   # LEAK: 00Z of D itself
+            "2026-01-18 12:00:00": {"2026-01-20 12:00:00": 10.0}}   # too old for this batch
+    sel = _runset_asof(runs, cut)
+    check("blind wall drops the 00Z-of-D run", "2026-01-20 00:00:00" not in sel)
+    check("blind wall keeps the 18Z D-1 run", "2026-01-19 18:00:00" in sel)
+    check("24h batch window drops the D-3 run", "2026-01-18 12:00:00" not in sel)
+
+    # missing is null, never zero
+    empty = _gas_weight_forecast({s: None for s in STATION_WEIGHTS_RAW})
+    check("no coverage -> gw_hdd is None (NOT 0.0)", empty["gw_hdd"] is None and empty["partial"])
+    check("no coverage names every missing metro", len(empty["metros_missing"]) == len(STATION_WEIGHTS_RAW))
+
+    # partial coverage renormalizes and is flagged with named metros
+    one = {s: None for s in STATION_WEIGHTS_RAW}
+    one["ORD"] = {"model": "GFS", "runtime": "r", "tmax": 20.0, "tmin": 0.0, "tmean": 10.0,
+                  "hdd": 55.0, "cdd": 0.0}
+    p = _gas_weight_forecast(one)
+    check("single-metro partial renormalizes to that metro's value", abs(p["gw_hdd"] - 55.0) < 1e-9)
+    check("partial flagged with 15 named missing metros", p["partial"] and len(p["metros_missing"]) == 15)
+    check("partial coverage < 1.0", p["coverage"] < 1.0)
+
+    # full coverage
+    full = {s: {"model": "GFS", "runtime": "r", "tmax": 40.0, "tmin": 20.0, "tmean": 30.0,
+                "hdd": 35.0, "cdd": 0.0} for s in STATION_WEIGHTS_RAW}
+    f = _gas_weight_forecast(full)
+    check("full coverage -> coverage 1.0, not partial",
+          abs(f["coverage"] - 1.0) < 1e-9 and not f["partial"] and abs(f["gw_hdd"] - 35.0) < 1e-9)
+
+    # under-covered target day is a miss, not a fabricated value
+    check("under-covered day -> None",
+          _day_temp_from_run({"2026-01-20 12:00:00": 30.0}, "2026-01-20", 5) is None)
+    return ok
+
+
+# ------------------------------------------------------------------------------------------------------
 # selftest: degree-day math + weight normalization + parse + LEAKAGE invariance
 # ------------------------------------------------------------------------------------------------------
 def selftest() -> int:
@@ -483,6 +924,10 @@ def selftest() -> int:
     withf = daily_from_obs(rows_with_future).get(day1)
     check("day-1 index invariant under appended FUTURE obs (leakage gate)", only == withf and only is not None)
 
+    # (C) MOS as-of forecast feed: blind wall + missing-is-never-zero
+    print("  -- mos-asof --")
+    ok = mos_selftest() and ok
+
     print("SELFTEST:", "PASS" if ok else "FAIL")
     return 0 if ok else 1
 
@@ -494,6 +939,12 @@ def main() -> int:
     ap.add_argument("--no-cache", action="store_true", help="do not read/write the local cache")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--forecast", action="store_true", help="live/forward decision-time forecast demo (B)")
+    ap.add_argument("--mos-asof", action="store_true",
+                    help="(C) back-fill the HISTORICAL decision-time MOS forecast state (as of the EVENING "
+                         "OF D-1) for [--start, --end): gas-weighted forecast HDD/CDD out to D+7, departure "
+                         "from NWS normal, and the run-to-run delta vs the prior evening's batch. Writes "
+                         "weather/mos_asof/.")
+    ap.add_argument("--refresh", action="store_true", help="mos-asof: re-fetch instead of using the disk cache")
     ap.add_argument("--ingest-hourly", action="store_true",
                     help="RAW hourly ingestion: pull every quantitative ASOS field per (station,month) and "
                          "store gzipped jsonl (zero reduction) to --dest, resumable. Aggregate on the trade "
@@ -512,6 +963,18 @@ def main() -> int:
         return selftest()
     if args.forecast:
         print(json.dumps(forecast_index_today(), indent=2))
+        return 0
+    if args.mos_asof:
+        if not (args.start and args.end):
+            ap.error("--mos-asof needs --start and --end (YYYY-MM-DD)")
+        idx = build_mos_asof(args.start, args.end, refresh=args.refresh)
+        comp = [d for d in sorted(idx) if idx[d]["complete"]]
+        part = [d for d in sorted(idx) if not idx[d]["complete"] and idx[d]["forecast_gw_hdd"] is not None]
+        miss = [d for d in sorted(idx) if idx[d]["forecast_gw_hdd"] is None]
+        print(f"[mos] DONE {args.start}..{args.end} -> {MOS_INDEX}")
+        print(f"[mos] complete={len(comp)} partial={len(part)} missing={len(miss)}")
+        if part: print("[mos] PARTIAL days: " + ",".join(part))
+        if miss: print("[mos] MISSING days: " + ",".join(miss))
         return 0
     if args.ingest_hourly:
         if not (args.start and args.end):

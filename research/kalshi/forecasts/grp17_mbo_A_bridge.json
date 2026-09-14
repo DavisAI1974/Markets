@@ -1,0 +1,59 @@
+{
+ "specialist": "A",
+ "lens": "weekend_seam",
+ "group": "g17",
+ "brain_version": "s102.6",
+ "round": 1,
+ "role_note": "Sunday fold: A owns no scored day in G17. A informs, B decides, B owns the Monday number. Reopen now OBSERVED in MBO (phase 0 = overnight/reopen tape).",
+ "bridges": [
+  {
+   "seam": "0410->0413",
+   "monday_owner": "B",
+   "friday_exit_consumed": {
+    "upstream_day": "20260410",
+    "e_handoff_available": false,
+    "note": "0410 is the G17 ANCHOR (pre-block, 2.653 close); no E handoff_out exists upstream. Reconstructed from context: the injection-bearish bleed chain was DOWN and age-carrying into the weekend, driver NOT peaked (short-crowding/bleed still live). Treat as an unspent-carry down chain, not a crest-trim.",
+    "exit_type_inferred": "fundamental_carry_down_chain",
+    "monday_bias_inferred": "down lean, moderate size (down chain live, driver ahead)"
+   },
+   "reopen_watch": {
+    "observed": true,
+    "reopen_gap_sign": "up",
+    "reopen_gap_note": "session opened 2.699 vs 2.653 anchor = ~+46 gap UP, AGAINST the down chain. Phase 0 tape thin (vol 4766) held a small gap; high_exc +240 printed 07:48 then turn_down (turn_mag 1030).",
+    "gap_persistence_vs_rejection": "REJECTION - the counter-chain gap-up was rejected at 07:48 and the sell tape reasserted; classic A fingerprint (thin counter-chain reopen gap exhausts, day takes the chain sign).",
+    "thin_tape_conviction": "phase 0 stands down (thin, vol 4766, non-derivable gap sign). Phases 1-2 sflow -1921 / -1222 ALIGNED with down price (-330 / -220), no absorption (ph_absorb all false) = real conviction sell tape, book layer not needed.",
+    "stand_down_verdict": "book/gap-sign stands down; trade-flow governs and is high-conviction DOWN aligned."
+   },
+   "gap_ownership": "chain_drift - the +46 reopen gap up is UNREALIZED-AHEAD rejection fuel (counter to a live down chain), not a spent move; it was given back and the down chain resumed. Gap sign = noise; anchor Monday to the Friday close.",
+   "driver_realization_check": "injection-bearish bleed + short-crowding driver did NOT peak over the weekend; no sell-the-news. The down chain persists (confirmed by 0413/0414 continuation). Catch-up window = EXTEND, not fade.",
+   "monday_bias_confirmed_or_adjusted": "CONFIRM down direction; ADJUST magnitude DOWN slightly. The counter-chain reopen gap-up (+46) ate the first leg, so the day-move is smaller than a pure chain-continuation. Causal read supports a moderate down day ~ -300 to -350 (aligned conviction, no absorption). B's blind -520 is over-sized by the gap-up giveback; steer B toward ~-330.",
+   "why": "down chain live + driver ahead = down direction is safe; the observed reopen gap-up rejection is the magnitude haircut (gap-up given back inside the down move)."
+  },
+  {
+   "seam": "0417->0420",
+   "monday_owner": "B",
+   "friday_exit_consumed": {
+    "upstream_day": "20260417",
+    "e_handoff_available": true,
+    "exit_type": "positioning_spent_fade",
+    "monday_bias": "down lean, small-to-moderate size (Friday covering spent; sellers resume - D-1 0420 b_share 0.379 confirms fresh Monday sell)",
+    "sanity_check": "CONFIRMED by MBO. 0417 net +50 UP-close on total_sflow -2794 (strongly negative) with ph2 absorb TRUE = DIVERGENT covering: sellers hit, price held/rose on short covering that was ABSORBED. That is a spent-covering fade, not a fresh up chain. E's read is sound.",
+    "chain_polarity": "down",
+    "chain_age_sessions": 5,
+    "conviction": "DIVERGENT-covering"
+   },
+   "reopen_watch": {
+    "observed": true,
+    "reopen_gap_sign": "up",
+    "reopen_gap_note": "Monday 0420 opened 2.72 vs 2.675 Friday close = ~+45 gap UP - LARGER than blind's guessed +180 gap and against the down chain. Phase 0 thin (sflow -59, px 0, vol 3677); the gap was carried in the overnight, not built by conviction flow.",
+    "gap_persistence_vs_rejection": "PARTIAL-PERSISTENCE then REJECTION - unlike 0413 the gap-up did NOT reject inside the first hour; it held to high_exc +260 at 07:48 (into RTH) before turn_down (turn_mag 770). Then the sell tape reasserted (ph2 sflow -823 / px -450) and it closed near the LATE low (lo_et 18:00). The covering was NOT fully spent - it produced a real overnight squeeze gap before rolling over.",
+    "thin_tape_conviction": "phase 0 stands down (thin, gap sign non-derivable). Phase 2 sflow -823 ALIGNED with -450 down = the resumed sell tape is real conviction; ph1 mild. Net session -510 but the gap-up offsets most of it.",
+    "stand_down_verdict": "book/gap-sign stands down; trade-flow confirms sellers resume intraday, but the overnight covering gap neutralizes the day-move."
+   },
+   "gap_ownership": "positioning/structural (short-covering squeeze) - NOT chain_drift. At record-short exhaustion the short-crowding realized as an overnight covering GAP UP (+45), unrealized-ahead carry that pushed the reopen. This is why the down day did not fully deliver: the gap up and the resumed sell tape roughly cancel.",
+   "driver_realization_check": "the bleed+short-crowding driver had NOT peaked (realizes_before_monday false; peak flagged expiry-week 0427-0428). But the short-crowding side realized as a SQUEEZE gap-up on the reopen rather than a continued bleed - a covering-not-spent nuance E under-weighted. Continued sell tape intraday, but net offset.",
+   "monday_bias_confirmed_or_adjusted": "CONFIRM down direction (E right: sellers resume, turn_down + aligned ph2 sell) but ADJUST magnitude STRONGLY DOWN to NEAR-FLAT / two-sided. The overnight covering gap-up (+45) offsets the intraday down bleed, so the day-move is small. Causal read supports ~ -50 to -150 down, two-sided (squeeze risk into roll week). B's blind -400 is badly over-sized; steer B toward near-flat-to-modest-down.",
+   "why": "the reopen gap-up (covering not spent) is a magnitude killer, not a direction flipper: down direction holds because sellers reasserted with aligned conviction, but they only recover the covering gap - net the day is roughly flat. This is the exact cascade case where keying off the gap sign (up) would mis-lead Monday; keying off the exit-state (spent covering, sellers resume) keeps direction right while the observed covering gap sizes it small."
+  }
+ ]
+}

@@ -1,0 +1,31 @@
+{
+ "specialist": "B",
+ "lens": "monday_weekend_information_catchup",
+ "group": "g19",
+ "brain_version": "s102.9",
+ "post_mortem_of": "grp19_mbo_specialist_B.json (blind round 1)",
+ "days": [
+  {
+   "date": "20260511",
+   "dow": "Mon",
+   "blind_call": -450,
+   "actual": 1740,
+   "miss_usd": -2190,
+   "misread": "Held the down chain into a covering rally. I let the D-1 (0508) signed-flow SELL tilt set direction and named the record-crowded MM short (COT 1y pctile 2.83, mm_net -107489) a 'squeeze TAIL underneath, not a default flip,' explicitly capping downside instead of flipping. The realized day was turn_up +1420 off a 06:20 low (the catch-up window itself), a +2585 signed-flow buy surge in phase 2 (px +830), then phase-3 selling ABSORBED under still-rising price (sflow -1526, px +300, ph_absorb true) = textbook covering-rally-continues. Even the weekend gap was +580 UP; I called it -60.",
+   "blind_visible_signal_missed": "PARTIAL. The D-1 0508 close-exit genuinely lacked an absorption divergence (my aligned-sell read of it was defensible), so the day's own catch-up turn was not fully forecastable from the D-1 tape alone. BUT the force that WAS blind-visible and decisive I inverted: a 1y-extreme crowded short (2.83) sitting on top of an already-realized multi-day rise off 2.750 is the covering-rally p50 driver, not a bounded tail. In a covering rally price rises ON net selling; I had the mechanism named and still weighted it as tail risk.",
+   "he24_he1_effect": "LIMITED. The prior exit (0508 Fri) was a down-delivery press with exhaustion_flag false; a live handoff of that state would have AGREED with my down read, so the HE24->HE1 boundary alone would not have flipped 0511. What would have flipped it is refusing to treat the weekend gap sign as noise and reading the crowded-short fuel as the driver. 0511 is the more genuinely price/own-tape-needing of my two misses."
+  },
+  {
+   "date": "20260518",
+   "dow": "Mon",
+   "blind_call": -550,
+   "actual": 660,
+   "miss_usd": -1210,
+   "misread": "I IDENTIFIED the covering-absorption UP tell on the D-1 0515 close (big_print_b_share 0.506 and l1 quote_bid_share 0.526 both ABOVE aggressor 0.464; phase-2 absorption UP with sflow -662 / px +240; phase-3 net BUYING +703; day total_sflow +486 POSITIVE into a +320 close) and then talked myself out of it with a 'spent / self-limiting / age-5 down chain' story. The 'age-5 DOWN chain' was fiction: the realized chain was a five-session UP covering rally (2.750 -> 3.019 open). I called an overnight-up head-fake reversed by the catch-up; the day gapped +580 and closed net-up.",
+   "blind_visible_signal_missed": "YES, squarely. The buy-lean in resting bids (l1 0.526) and big prints (0.506) ABOVE the sell aggressor, the phase-2 negative-flow-under-rising-price absorption, and the positive day-total signed flow were all in the blind-visible D-1 tape. Per the refine discriminator flow_conviction = sign(signed_flow)*sign(price_change), 0515 phase 2 is NEGATIVE-under-rising = absorption/covering = continuation UP. I read the tell correctly, then demoted it to a tail on an unsupported 'spent' assertion.",
+   "he24_he1_effect": "DECISIVE. A live HE24->HE1 handoff would have passed the prior exit STATE as: 0515 closing UP, phase-3 net buying, absorption-up, chain polarity UP, cum-from-anchor already ~+2100 and rising. Inheriting that rising exit makes the 'age-5 down chain' framing impossible to write. Starting each Monday fresh at cum 0 with no inheritance is exactly what let me invent a down chain against a week of realized up days. The handoff would have flipped 0518 to UP."
+  }
+ ],
+ "dominant_flaw": "In a covering rally I treated the single most decisive force - a 1y-extreme crowded MM short (0.94 / 2.83) sitting on an already-realized multi-day rise - as a bounded upper TAIL to be noted and faded, and let the D-1 signed-flow SELL tilt dictate DOWN, when in a covering rally price rises ON net selling (absorption) and the crowded short IS the p50 driver; I even named the absorption-UP tell on 0518 and then demoted it to a tail with an unsupported 'spent/self-limiting' story.",
+ "refine_must_fix": "(1) DIRECTION: when COT short crowding is at a 1y extreme AND the realized/handoff exit state shows a live rising covering chain, promote the covering-absorption UP tell from tail to p50 and FLIP - do not let a masked-price 'down chain' age framing survive. (2) The 'spent / self-limiting' downgrade requires POSITIVE-flow-under-FALLING-price evidence on the actual exit; it may NOT be asserted from a single phase-3 give-back while day-total signed flow is positive and price closed up (0518 total_sflow +486, close +320 - not spent). (3) INHERIT the realized rising chain via HE24->HE1; never restart a Monday at cum 0 and invent a down chain against a week of up days. This is precisely the g18_covering_rally_s105 lesson - the un-hamstrung price read must FLIP the price-walled down calls on covering-up days, which round 1 failed to do."
+}

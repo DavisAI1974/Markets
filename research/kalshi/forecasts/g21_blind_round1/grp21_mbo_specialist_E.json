@@ -1,0 +1,236 @@
+{
+  "specialist": "E",
+  "lens": "Friday / expiry / futures-and-index roll / weekend positioning",
+  "group": "g21",
+  "brain_version": "s103.4",
+  "round": 1,
+  "run_mode": "BLIND (price curve masked; identical committed rule files as the refine)",
+  "days_owned": ["20260612"],
+  "doctrine_note": "Blind round-1 posterior. Inputs were the brain (s103.4, 66 plays) + renders/ng_refine_s95/grp21_state.json ONLY. No forecasts/grp21.json, no g21_mbo_evidence.json, no g21_actual.json, no exit-state or handoff file, no raw tape. The OLD BLIND stays the core predictor; the never-masked MBO trade-flow read (session/phase signed flow, big prints, L1) is a posterior update on direction confidence and path, never a replacement. The MBO BOOK layer STANDS DOWN in full - a blind state carries no book_trustworthy verdict and L1 quote_bid_share 0.507 with an IQR of 0.30-0.714 is a coin flip. Magnitude is derived from a generator-loss argument and a level target, with vol_regime used only as a sanity band (it is masked at the 0605 vintage, is known to run low, and its staleness concentrates 1.71x on exactly my day-class). The PRIOR-OVER-STATE turn/exhaustion gate was run BEFORE any sign was emitted, per daytype.friday_turn_exhaustion_gate; its full worksheet is in the day object.",
+
+  "cross_cutting_mbo_finding": {
+    "headline": "Both of my merged G20 contributions are un-runnable in the blind for one missing field, and it is a one-line fix.",
+    "finding_1_phase_volume_is_not_served": {
+      "statement": "flow.passive_ladder_displacement was merged with a MANDATORY second limb - 'final-phase volume AT OR ABOVE the session maximum' - and daytype.friday_exit_close_location_over_flow_shape was merged with a (VOLUME, NET) PAIR condition. tape_conditions serves phase_signed_flow and phase_b_share and does NOT serve phase_volume. So on the blind's served state only limb (a) of each is computable.",
+      "why_this_matters": "Both limbs are NON-PRICE and therefore blind-legitimate in principle. On G20 I had the phase volumes (ph1 4,715 / ph2 51,424 / ph3 60,930) only because they came from the MBO evidence file, which the blind does not get. The mandatory limb - the one B forced in precisely because without it the play is a false-positive machine - is the limb the blind cannot see. As served, a play merged as blind-available is refine-only.",
+      "consequence_on_0612": "On the 0611 exit I can evaluate limb (a) (ph3 |net| 378 / ph2 2,654 = 14.2%, FAILS the ~5% bar, so the play correctly does not fire) but I could not have confirmed a fire if limb (a) had passed. The play did not fire here, so nothing was lost on this day - but the next time limb (a) passes in a blind, the specialist has to either assert the play on half its evidence or stand it down, and both are wrong answers.",
+      "fix": "Add phase_volume (a 3-element list alongside phase_signed_flow / phase_b_share) to tape_conditions. It is non-price, it is already computed upstream to produce the b_shares, and it makes two merged plays blind-available as written. NOT proposing a brain edit - this is a state-builder field, and I have edited nothing.",
+      "self_scoring": "This is a finding against my own play, not for it."
+    },
+    "finding_2_week2_measurement_basis_is_discontinuous": {
+      "statement": "The never-masked tape shows a hard break at the 0614/0615 boundary that is NOT a market event. Week-1 prior sessions (0608-0611) run 38,434-47,040 trades / 88,893-110,168 lots at a 1.0-tick median spread. Week-2 prior sessions (0615-0618) run 6,262-22,490 trades / 12,041-46,452 lots at a 2.0-tick median spread. Monday 0615 is 6.6x thinner than Monday 0608.",
+      "why_it_is_not_the_market": "flow_calendar carries front_symbol_calendar = NGN26 and futures_expiry_date = 2026-06-26 on EVERY day of the block, so on the calendar-front basis the leg never changes. But NGN26 at dte 8-5 is in the two weeks BEFORE expiry, normally the MOST liquid stretch of its life, not a 6.6x collapse. The store is source_store 'nymex_cont_n0'; a continuous n0 series rolling to a thinner deferred leg reproduces exactly this signature, and it is the NG.v.0/NG.n.0 basis whipsaw the brain already records from the G11 expiry week.",
+      "consequence_for_A_B_C_D": "Any flow MAGNITUDE compared across the 0614/0615 boundary is comparing two different instruments. Week-2 net-flow and volume readings must NOT be scaled against week-1 references, and the week-2 big-print samples (n = 0, 6, 2, 16, 19) fall straight into the thin-tape guard's q1: 0616's 0.841 on 6 prints and 0619's 0.303 on 19 prints are dispersion, not signal, and flow.big_print_bshare_thin_tape_guard stands them down at the ~0.60 bar.",
+      "scope_of_my_own_exposure": "NONE on my day. 0612 reads prior session 0611, which is week-1 internal and on the same basis as 0608-0610. My comparisons are all inside the clean segment. I am flagging this for the owners of 0615-0619, not excusing my own number."
+    },
+    "finding_3_the_config_roll_claim_is_wrong_and_flow_calendar_wins": {
+      "checked_as_directed": "The spawn flagged an NGN26 -> NGQ26 roll at the 06-19/06-22 boundary and instructed me to verify against flow_calendar, which is never masked and wins over any config claim.",
+      "verdict": "flow_calendar shows front_symbol_calendar = NGN26 on all ten block days including 20260619, with futures_expiry_date 2026-06-26 throughout. contract_structure (0605 vintage) agrees: calendar_front_symbol NGN26, front_is_calendar_front true. There is NO calendar-front roll inside this block. The config claim is REFUTED on the basis that matters for scoring.",
+      "but": "See finding_2 - the config was probably describing the CONTINUOUS-STORE roll, which the tape says happened at 0614/0615, five sessions EARLIER than the config states and on a different basis than the calendar front. Two different objects with one name. A seam in the measurement basis is not a seam in the contract, and only the second one voids an overnight gap."
+    },
+    "finding_4_the_cot_clock_inside_this_block": {
+      "statement": "The 0612 15:30 ET COT publication is the ONLY positioning update inside the entire second week of this block, and it lands INSIDE my session.",
+      "measured": "At the 0612 open the live vintage is the 06-02 report (published 06-05): MM net -114,854, WoW +19,572 IMPROVING, 1y pctile 4.72. At 15:30 ET on 0612 the 06-09 report publishes: MM net -122,617, WoW -7,763 WORSENING, 1y pctile 2.83 - a NEW 1-year extreme. That same 06-09 vintage is still the live one on 0619 at age_days 6.35.",
+      "two_consequences": [
+        "SEQUENCING: my session runs 19 of its 21 hours on a positioning read that says the covering fuel is SPENT, and its last 90 minutes and its entire weekend handoff on a read that says the shorts are RE-LOADING to a new 1y low. The day-move and the handoff are conditioned by different vintages. This is not a subtlety to smooth over - it is why my day is DOWN and my monday_bias is UP without contradiction.",
+        "NON-REPEATABILITY: per daytype.covering_giveback_self_limiting, the same worsening reading may not arm a second seam. There is NO new COT between 0615 and 0619, so whoever owns the 0618/0619 weekend-feeding day cannot re-fire this worsening as fresh fuel - by then it is six days old and already consumed by the 0614 seam."
+      ]
+    },
+    "finding_5_the_ice_hh_books_led_the_nymex_book_by_one_report": {
+      "measured": "On the SAME 06-02 report where NYMEX MM improved +19,572, the ICE HH books WORSENED: hh_index MM net -38,639 WoW -6,874 at 1y pctile 4.72, hh_basis -6,546 WoW -7,140 at 8.49. ICE LD1 improved (+22,295) but sits at pctile 10.38. One report later the NYMEX book worsened -7,763 to a 2.83 pctile.",
+      "read": "The ICE HH complex was re-shorting while the NYMEX headline was covering. Taking the NYMEX +19,572 at face value at the open would have licensed a clean 'fuel spent' claim; the ICE HH channel contradicted it at the same publication timestamp and was right one report early.",
+      "honesty": "n=1. I am NOT proposing this as a play and I did not use it to set my sign. I used it for exactly one thing: to refuse to harden 'positioning fuel is spent' into a standing block-level assumption at the open. Recorded so it can be counted on G22+ rather than re-derived."
+    }
+  },
+
+  "days": [
+    {
+      "date": "20260612",
+      "dow": "Fri",
+      "day_class": "friday_terminal_index_roll_weekend_feeding",
+      "day_class_detail": "Business day 10. BCOM NG roll day 5 of 5 = the LAST tranche (0615 in_bcom_roll FALSE). GSCI window already closed at day 5 on 0611. NOT an EIA print day (last print 0611 10:30, next 0618, days_to_next_eia_release 6). NOT expiry (dte 9), NOT opex (days_to_opex 8), no bidweek, no holiday, no early close. squeeze_watch active FALSE. The block's FIRST weekend-feeding session.",
+
+      "turn_exhaustion_gate": {
+        "protocol": "daytype.friday_turn_exhaustion_gate, run in full BEFORE any sign was emitted. The prior-over-state default is forbidden as the direction source.",
+        "arm_chain_age_ge_4": "NOT EVALUABLE. Round-1 blind, no handoff, and boundary.chain_label_must_track_realized_cum forbids asserting a chain polarity or age without a stated inherited cum_from_anchor. I do not have one and I do not assert one.",
+        "arm_cum_at_extreme": "NOT EVALUABLE, and STOOD DOWN by schedule. Anchor 20260605, so 0612 is k=5. boundary.chain_staleness_gate permits a cum-keyed RUNG only at k<=3; at k>=4 it widens to the full band or stands down. Recorded below as B's forward-test datapoint.",
+        "arm_positioning_at_extreme": "FIRES, but with a sign that cuts against a turn. COT 1y pctile 4.72 (3y 9.24) = maximally crowded short. BUT the live-at-open WoW is +19,572 IMPROVING. positioning.covering_self_limiting_cot_wow_gate limb (b) is satisfied for a 'spent' downgrade and boundary.seam_gap_up_prior_on_worsening_cot explicitly gives NO up prior on a non-worsening WoW. So the positioning extreme does NOT generate an intraday covering-UP for this session.",
+        "arm_d1_giveback_or_opposing_flow_tilt": "CLEAN, and ALIGNED with continuation-DOWN. 0611 session signed flow -3,772 on the week's maximum volume (110,168 lots) and maximum trade count (47,040), with ALL THREE phases negative (-740 / -2,654 / -378) and session two-sided b_share 0.481. There is no D-1 give-back and no opposing tilt.",
+        "arm_based_vs_stretched": "NOT ASSERTABLE at k=5. Per daytype.friday_crest_trim_discriminator, crest-trim fires ONLY on a demonstrably STRETCHED chain; unable to demonstrate it, I route OUT to this gate and positioning_spent_fade exactly as the discriminator prescribes.",
+        "arm_crest_realization_window": "The week's scheduled driver has ALREADY REALIZED - the EIA print landed Thursday 0611 10:30 at +108 vs a +101 consensus and +33 vs the 5-yr change. Nothing crosses the weekend unrealized on the storage channel, so weekend.carry_realization_flip's FUNDAMENTAL_CARRY branch does not apply and this is not a carry Friday.",
+        "verdict": "NO TURN. The gate's own release condition - 'a continuation sign is emitted ONLY when the turn check is clean' - is met on the one arm that is evaluable (D-1 flow aligned), and the two arms that would flip me are either unevaluable by schedule (cum/chain) or affirmatively point away from a turn (positioning improving at the open). Sign taken from the DIRECT D-1 flow distribution plus the calendar, not from a chain extrapolation and not from a day-class default. This is the same route that worked on the G18 blind."
+      },
+
+      "posterior_direction_by_horizon": {
+        "overnight_2000_0600": "down, small - carries the 0611 sell tilt with no generator of its own; ph1 is ~4% of session volume and D's measured G20 negative says the handoff does not size the overnight",
+        "morning_0600_1200": "down, drift - NO scheduled binary, so D's proposed 06:00-10:30 pre-print leg is declined (see evidence_rejected)",
+        "settle_1200_1430": "down - the BCOM terminal tranche concentrates into the 14:00-14:30 settle window; this is the day's LOW",
+        "close_1430_1700": "UP relief - the index seller finishes and is gone for the rest of the block; plus mild weekend short-squaring after the 15:30 COT prints a new 1y extreme",
+        "day_net": "DOWN"
+      },
+
+      "expected_magnitude_usd": -340,
+      "expected_magnitude_band_usd": [-900, 300],
+
+      "magnitude_derivation": {
+        "principle": "Derived from generator loss against a level target, NOT fitted and NOT scaled off vol_regime. On G20 I re-earned a Friday magnitude with no vol_regime term at all, off a level; vol_regime here is masked at the 0605 vintage, is documented ~53% low on net sigma and ~46% low on mean range, and its staleness concentrates 1.71x on CATALYST/SEAM days - my class. That route is taken again by choice, not by necessity.",
+        "step_1_count_the_generators": "0611 carried THREE down-generators simultaneously: the GSCI terminal tranche (roll day 5), the BCOM tranche (roll day 4), and a bearish realized EIA print. It produced -3,772 of net sell on the week's maximum volume. On 0612, TWO of the three are gone: GSCI's window closed at the 0611 close, and the print is behind with the next one 6 days out. What remains is BCOM's fifth and final tranche.",
+        "step_2_isolate_the_roll_only_baseline": "0609 and 0610 are roll-window sessions with NO print: -1,704 and -1,813, mean -1,759. That is the two-index mechanical baseline. 0611's -3,772 is therefore ~-2,013 of print-day excess over it. 0608 (+3,261) is the week's only positive session and is excluded as the post-weekend outlier.",
+        "step_3_size_the_0612_residual": "With GSCI out entirely and BCOM on its last of five tranches, the residual mechanical sell is a small fraction of the -1,759 two-index baseline - on the order of -400 lots of net, not thousands. 0612 should be the QUIETEST directional session of the week on the front leg.",
+        "step_4_the_roll_was_already_partly_pre_priced": "contract_structure at the 0605 vintage - BEFORE the roll window opened on bd 6 - already shows the front cheapening against the next: calendar_front_next_spread -0.041 with chg_1d -0.007, chg_3d -0.015, chg_5d -0.013. The market pre-positioned for this roll. An already-priced mechanical flow delivers less on its terminal day, which caps the number rather than extending it.",
+        "step_5_two_independent_derivations": {
+          "flow_proportional": "Expected 0612 net flow ~-400 against 0611's -3,772 is ~11%. Applied naively to a 0611 move at roughly sigma_5 scale that gives ~-130. REJECTED AS THE ANSWER because it assumes an impact linearity I cannot calibrate without price and because it ignores a session's non-mechanical variance floor. Kept as the LOWER bound of the derivation.",
+          "day_class_floor": "A no-catalyst summer Friday in a regime with n0_net_sigma_20 = 862 and a RISING activity trend (1.448) does not sit at -130. The quiet-directional-Friday class lands at ~0.35-0.50 sigma_20, i.e. -300 to -430. Kept as the UPPER bound."
+        },
+        "step_6_the_number": "-340. Midpoint of the two derivations, weighted toward the day-class floor because the flow-proportional route rests on an uncalibratable coefficient. -340 = 0.39x n0_net_sigma_20 (862) and 0.30x n0_net_sigma_5 (1,117). It is deliberately UNDER what a straight extension of the week's accelerating sell (-1,704 -> -1,813 -> -3,772) would suggest, because two of the three drivers of that acceleration expire at the 0611 close.",
+        "band_asymmetry": "[-900, +300]. Down-shoulder wider because every named generator present points down and none of the up-channels is armed intraday. Upper shoulder kept genuinely positive - not token - for three reasons: the roll seller finishing can be front-run within the session; the ICE HH books were already re-shorting on the live vintage (finding_5); and dte 9 leaves a thin squeeze tail. Per my lens an expiry two weeks out is TAIL risk, never a p50 covering trigger, so it sits in the band and not in the number.",
+        "range_vs_net_note": "Per daytype.thin_session_range_invariance (A, G20): a low-NET day does not imply a low RANGE. I expect a realized range near regime-normal (n0_range_20_mean 1,266, range_5_mean 1,612) despite a -340 net. That governs the PATH, not the day-move, and my p50 curve carries a real -520 excursion against a -340 close for exactly that reason."
+      },
+
+      "onset_time_et": "12:00",
+      "turn_time_et": "14:30",
+      "trend_vs_chop": "grind_then_turn",
+      "continuation_vs_reversal": "continuation",
+      "continuation_vs_reversal_detail": "The DAY-MOVE continues the 0611 sell direction. The last 2.5 hours reverse. Both statements are load-bearing: the first sets the number, the second sets the handoff, and conflating them is how a Friday cascades.",
+
+      "path_p50_curve": [
+        [20, 0],
+        [22, -50],
+        [0, -100],
+        [2, -130],
+        [4, -150],
+        [6, -180],
+        [8, -240],
+        [10, -300],
+        [12, -390],
+        [14, -500],
+        [16, -370]
+      ],
+      "path_note": "2-hourly from the 20:00 reopen, cum USD from the prior close. The 14:00 point is the approach into the settle window; the true p50 low is ~-520 near 14:30 as BCOM's terminal tranche clears, which the 2-hourly grid does not resolve. The 16:00 -370 is already inside the relief leg and runs to the -340 close. The day therefore closes roughly 35% off its own low.",
+
+      "confidence": 0.58,
+      "confidence_reasoning": "Sign carries three concordant non-price sources (the D-1 flow tilt, a realized-bearish print, a residual mechanical roll sell) with no intraday up-generator armed on the live-at-open COT vintage - that part I hold firmly. Magnitude rests on a generator-loss argument I cannot calibrate blind, which is where the 0.58 rather than 0.7 comes from. The path shape (low into the settle, relief into the close) is the most mechanically determined part of this day and I hold it more confidently than the number.",
+
+      "weight_assigned": {
+        "blind": 0.55,
+        "causal_mbo": 0.45,
+        "note": "In a blind run 'causal_mbo' means the NEVER-MASKED flow channel only - session/phase signed flow, big-print size-weighted share, L1 - with no realized price and therefore no flow_conviction. It gets 0.45 because the D-1 flow tilt IS my direction source. The blind core keeps 0.55 because the calendar structure (terminal roll tranche, realized print, dte/opex distance) and the positioning clock carry the magnitude and the entire handoff."
+      },
+
+      "evidence_used": [
+        "flow_calendar 0612: business_day_of_month 10, in_bcom_roll TRUE at bcom_roll_day_n 5 (the terminal tranche), in_gsci_roll FALSE (GSCI closed at its day 5 on 0611), and 0615 in_bcom_roll FALSE - the index-roll window CLOSES with my session. daytype.friday_exit_decomposition names 'index-roll LAST day' directly under POSITIONING_SPENT_FADE, and its sub-rule ('an index roll whose WINDOW is still open Monday is positioning-CARRY, not spent') resolves cleanly to SPENT here.",
+        "tape_conditions 0611 (never_masked): session_signed_flow -3,772 on 110,168 lots / 47,040 trades / 32.7 trades-per-min - all three the week's maximum; phase_signed_flow [-740, -2654, -378] all negative; session_b_share_two_sided 0.481; phase_b_share_two_sided [0.44, 0.48, 0.494]; leg_count_150 = 42.",
+        "The roll-window flow sequence on the front leg: 0609 -1,704, 0610 -1,813, 0611 -3,772 - monotone and accelerating; 0608 +3,261 the single positive session, excluded as the post-weekend outlier. This is the mechanical footprint the 0612 residual is derived from.",
+        "storage / stor_surprise: EIA printed +108 against a +101 consensus (a 7 Bcf bearish miss) and chg_vs_5yr_chg +33 (stor_surprise 33.0, sign 'above'); level 2,686, vs_5yr +119, phase 'inject'. curve_regime contango with curve_slope_1 +0.041. The realized catalyst is bearish and the curve carries no scarcity.",
+        "cot LIVE AT THE OPEN (06-02 report, published 06-05 15:30, age 6.35d): MM net -114,854, 1y pctile 4.72, 3y 9.24, WoW +19,572 IMPROVING. Read per positioning.covering_self_limiting_cot_wow_gate limb (b) and boundary.seam_gap_up_prior_on_worsening_cot: a non-worsening WoW arms NO covering-UP prior, so the crowded short generates nothing intraday.",
+        "cot PUBLISHING INSIDE MY SESSION (06-09 report, 0612 15:30 ET): MM net -122,617, WoW -7,763 WORSENING, 1y pctile 2.83 - a new 1-year extreme. Decision-legit for my last 90 minutes and for the entire weekend handoff. This ARMS boundary.seam_gap_up_prior_on_worsening_cot at the 0614 seam and is the reason monday_bias is UP while the day is DOWN.",
+        "contract_structure (0605 vintage): calendar_front_next_spread -0.041 with chg_1d -0.007 / chg_3d -0.015 / chg_5d -0.013 - the front was ALREADY cheapening against the next before the roll window opened on bd 6. The roll was partly pre-priced, which damps the terminal-day residual.",
+        "vol_regime (0605 vintage, SANITY BAND ONLY, no magnitude term taken from it): n0_net_sigma_20 862, sigma_10 1,058, sigma_5 1,117, range_20_mean 1,266, range_5_mean 1,612, range_pctile 86.7, activity_trend 1.448, n0_prev (0605) net -1,350 / range 1,570.",
+        "l1_book 0611: quote_bid_share 0.507 with p25-p75 [0.30, 0.714], spread_ticks_med 1.0, 393,006 quote updates. Used ONLY as a health check - the book is deep, tight and balanced, which supports 'no liquidity event' and nothing more.",
+        "squeeze_watch: active FALSE; days_to_calendar_front_expiry 14 at vintage / 9 at 0612; last_prompt_symbol NGM26 expired 2026-05-27 with sessions_since_prompt_expiry 7 (internally coherent for a 0605 vintage); unwind_watch FALSE. Verified as a genuine, healthy inactive - NOT the G20-class frozen-expired-front false positive.",
+        "grid_stack 0610 + nuclear_outages 0611: US48 demand 13,839,432 MWh against a day-ahead forecast of 13,425,034 (+3.1% over forecast), gas_share 0.3864, gas_chg_7d +646,022 MWh (+13.9% WoW), est_gas_burn_bcfd 40.4; PJM +5.9% over forecast, CISO +12.6%; nuclear 3.537 GW out with chg_7d +641 MW. A real bullish burn undercurrent - used as a DOWN-SIDE DAMPER on the magnitude, never as a sign flip, because the 0611 print nevertheless came in loose against both consensus and the 5-yr despite it.",
+        "steo_vintage jun26 (released 06-09, knowable 06-10): power_burn revised +0.393 to 39.2 Bcfd cur / 48.6 next, but dry_production ALSO revised UP +0.566 to 111.0. Supply revised up by more than demand - net neutral-to-slightly-bearish, consistent with the loose print."
+      ],
+
+      "evidence_rejected": [
+        {
+          "item": "big_print_b_share 0.572 size-weighted on 160 big prints (two-sided 0.581) - big money on the BID while the count tape sold -3,772",
+          "nominal_effect": "160 prints puts this in the thickest quartile, so flow.big_print_bshare_thin_tape_guard does NOT apply and the reading clears both the 0.55 bar and q4's 0.547 equal-rate bar. Taken at face value it fires a BUY.",
+          "rejected_on_two_independent_grounds": [
+            "(a) SCOPE. flow.price_free_absorption_proxy is explicitly HALF-ONLY: its precondition is aggregate session signed flow POSITIVE. 0611 is -3,772. The mirror arm is REFUTED in the brain with four measured G20 counterexamples (0527 .529 -> +2,100; 0528 .522 -> -160; 0604 .533 -> -1,340; 0603 .476 -> +1,130 - two up, two down, and the one sell reading preceded the second-biggest up day). Under a negative count tape this channel carries no next-session information. This is precisely the recorded negative that exists to stop me re-deriving it, and it stopped me.",
+            "(b) MECHANICAL CONTAMINATION, independent of (a). 0611 sits INSIDE the index-roll window on the FRONT leg. A commodity index roll sells the front and buys the deferred, and its counterparty takes the other side of the calendar spread by BUYING the front in blocks. big_prints_n jumped 108 -> 160 (+48%) on the terminal GSCI day - the block-print footprint of a roll tranche, not a positioning tell. The EIA print day also inflates volume, so both explanations are present at once; I state the conjunction rather than pick the one I like."
+          ],
+          "general_form_offered": "During an index-roll window, the size-weighted big-print channel on the FRONT leg is contaminated by the roll's spread counterparty and is not a positioning tell. Offered as an observation with a mechanism, NOT proposed as a play - n=1 and I have not measured it across roll windows."
+        },
+        {
+          "item": "weather - the first group where this block is populated",
+          "verdict": "TESTED ON ITS OWN NUMBERS, NULL. I did not inherit G20's verdict.",
+          "measured": "forecast_gw_cdd 13.924 with forecast_run_delta_cdd +0.478 - a +3.4% warm add. forecast_gw_hdd 0.02 with an fwd7 span of [0.118, 0.803]. weekday_open cycle deltas run warmer (d_gw_hdd -0.02 / -0.118 / +0.084 / -0.649 / -0.166 / -0.292 / +0.02). model_disagreement abs_spread_gw_hdd 0.073 at H0 and 0.048 at H1, coverage 1.0 on all 16 metros. freeze_risk: zero days below 20F at all four basins across all eight horizons, basin tmins 58-78F.",
+          "why_null": "The brain's material weather calls are scaled in 10-20 gw units (the shoulder monotone runs -10.4gw and -16.3gw). Sub-1-unit deltas on a 13.9 CDD base carry no authority in any incumbent play. This is a REAL ABSENCE measured on a fully populated, complete-coverage block - not an empty block, and not the G20 inheritance."
+        },
+        {
+          "item": "options_surface pin / strike content",
+          "verdict": "UNUSABLE - known defect, not a market read.",
+          "measured": "NGN26 top5 OI strikes at 0.35 / 0.30 / 0.275 / 0.325 / 0.40 and oi_weighted_strike 0.5187, against a market near 3.2. That is the documented LNE strike x10 scale trap - the combined pin view merges mismatched ladders (S100.1, unfixed).",
+          "what_survives": "Only the scale-free put/call OI ratio: NGN26 0.72 and NGQ26 0.565, i.e. call-heavy in both months, consistent with upside hedging in a crowded-short regime. Too weak to carry a sign and given no weight."
+        },
+        {
+          "item": "daytype.weekend_crest_friday (crest-trim)",
+          "verdict": "TRIGGER NOT MET on both limbs - the same discipline that resolved the G15 0327 false positive.",
+          "limb_a": "Requires a chain STRETCHED near its extreme. Not assertable at k=5 per boundary.chain_staleness_gate, and boundary.chain_label_must_track_realized_cum forbids asserting a polarity without a stated inherited cum. I state neither.",
+          "limb_b": "Requires the chain-side driver PRICED with its realization window crossing the weekend closure. The week's driver (the EIA print) REALIZED Thursday 0611 10:30 and the next is 6 days out. Nothing crosses the weekend unrealized.",
+          "routed": "OUT to daytype.friday_turn_exhaustion_gate and POSITIONING_SPENT_FADE, exactly as daytype.friday_crest_trim_discriminator prescribes for a chain that cannot be shown stretched."
+        },
+        {
+          "item": "structure.covering_extension_distribution_flip, and the rung-2 cum-keyed intraday arm of boundary.seam_gap_up_prior_on_worsening_cot",
+          "verdict": "STOOD DOWN BY SCHEDULE at k=5 per boundary.chain_staleness_gate (rungs permitted only at k<=3).",
+          "forward_test_datapoint_for_B": "B's proposed deterministic form asks each day to record whether a cum-keyed play fired and at what k, predicting that blind |err| on k>=4 days WITH a cum-keyed fire exceeds |err| on k>=4 days WITHOUT one. RECORD FOR 20260612: k=5, cum-keyed plays fired = NONE. This day belongs in the control arm.",
+          "note": "I also flag that the flip's age arm must read REGIME AGE FROM REALIZED CUM (my own G20 retirement of the label-reading assumption). In a round-1 blind with no handoff I have neither the label nor the cum, so the arm is unavailable rather than merely stood down - a stronger statement, and the honest one."
+        },
+        {
+          "item": "structure.covering_absorption_directional_tell's proposed 06:00-10:30 scope extension (D, G20)",
+          "verdict": "DECLINED on 0612 - both preconditions fail.",
+          "reasoning": "The mechanism as D stated it is 'a crowded short that is still ADDING must de-risk before a scheduled binary, and that de-risk dates to the session's first liquid window.' On 0612 there is NO scheduled binary (days_to_next_eia_release 6, days_to_futures_expiry 9, days_to_opex 8), and on the LIVE-AT-OPEN COT vintage the short is NOT still adding (WoW +19,572 improving). I did not import the large morning leg. Recorded as a clean falsifiability check on a proposed extension rather than as a silent omission - a correct decline should leave a trace."
+        },
+        {
+          "item": "flow.passive_ladder_displacement (my own merged play)",
+          "verdict": "DOES NOT FIRE on the 0611 exit.",
+          "limb_a": "FAILS. ph3 |net| 378 against ph2's 2,654 = 14.2%, well above the ~5% bar.",
+          "limb_b": "NOT EVALUABLE - tape_conditions serves no phase_volume. See cross_cutting_mbo_finding_1.",
+          "note": "Recorded as a non-fire of my own play. The falsifier stated at merge time is 'a final phase meeting both conditions whose price travel is subsequently NOT recovered at the next seam' - not exercised here, because the conditions were not met."
+        },
+        {
+          "item": "The MBO BOOK layer in full",
+          "verdict": "STANDS DOWN, per the shared directive's book gate.",
+          "reasoning": "A blind state carries no book_trustworthy verdict (no execution_authority, no conviction floor, no book_complete). All I have is L1: quote_bid_share 0.507 with an IQR of [0.30, 0.714] is a coin flip with enormous dispersion. Trade-flow only, and labelled as such. I did not let any raw book lean touch the sign."
+        }
+      ],
+
+      "stand_down_reasons": [
+        "MBO book layer: no book_trustworthy verdict available in a blind state; L1 quote_bid_share 0.507 with IQR [0.30, 0.714] carries no lean. Trade-flow only.",
+        "big_print_b_share 0.572: stood down on scope (price_free_absorption_proxy is POSITIVE-flow only; the mirror arm is refuted) AND on mechanical contamination (index-roll spread counterparty buys the front leg in blocks).",
+        "All cum-keyed and chain-age-keyed plays: k=5 exceeds the chain_staleness_gate's k<=3 rung permission, and a round-1 blind has no inherited cum to satisfy chain_label_must_track_realized_cum.",
+        "Limb (b) of my own flow.passive_ladder_displacement: phase_volume is not served in tape_conditions.",
+        "options_surface pin levels: known LNE x10 scale defect.",
+        "Weather as a directional term: measured sub-1-gw deltas against a 10-20 gw authority scale - a real null, not an absent block."
+      ],
+
+      "selection_reason": "20260612 is a Friday and the terminal day of the BCOM NG index roll - the roll-seam and weekend-positioning day-class, both squarely E. It is also the block's FIRST weekend-feeding session, so the coordinator's Friday sign-off applies and the exit read seeds A's weekend bridge and B's 20260615 Monday.",
+
+      "mbo_verdict": "A quiet, mechanically-determined down Friday whose last two hours turn - and whose handoff points the opposite way to its day-move, for a reason that is dated rather than contradictory. The never-masked flow record is unambiguous through the week: from 0609 the front leg sold monotonically and with acceleration (-1,704, -1,813, -3,772), peaking on 0611 when three down-generators stacked - GSCI's terminal roll tranche, BCOM's fourth, and a bearish realized EIA print (+108 vs +101, +33 vs the 5-yr). Two of those three expire at the 0611 close. What is left on 0612 is BCOM's fifth and final tranche against a spread that had already begun cheapening the front before the window even opened. So the direction carries but the size collapses: -340, roughly a third of a 20-session sigma, and deliberately under a straight extension of the week. The path is the most determined part of the day - drift through a morning with no scheduled binary, the mechanical low into the 14:00-14:30 settle as the last tranche clears, then relief into the close because the seller is finished and does not come back for the remainder of the block. That gives a close roughly a third off the low, which per daytype.friday_exit_close_location_over_flow_shape is the field the weekend actually consumes. Then the sequencing: for 19 of my 21 hours the live positioning read says the covering fuel is SPENT (WoW +19,572, pctile 4.72), and at 15:30 ET the new COT prints -7,763 WORSENING to a 2.83 1y pctile - a new one-year extreme. The shorts re-loaded. The ICE HH books had already said so one report earlier. So the day is DOWN on a mechanical seller and the seam is UP on a loaded spring, and the two do not fight because they are answers to different questions asked at different times. What I refuse to do is hand B a gap number: the up prior arms on the WORSENING print, but the +580 quantum from G19 is explicitly block-specific and only the SIGN rule generalises, so B gets a sign and a mechanism, not a magnitude to anchor on.",
+
+      "handoff_out": {
+        "exit_type": "POSITIONING_SPENT_FADE",
+        "exit_type_reasoning": "daytype.friday_exit_decomposition type (2), taken on its CALENDAR limb: 'index-roll LAST day' is named directly in the trigger, and the play's own sub-rule discriminator resolves it - an index roll whose window is still open Monday is positioning-CARRY, but 0615 carries in_bcom_roll FALSE, so this window is CLOSED before Monday and the verdict is SPENT. IMPORTANT LIMITATION, stated so the refine can overturn it cleanly: the play's PRICE-based tell for this type ('price moves AGAINST last-hour flow') is NOT verifiable in a blind. My exit_type rests entirely on the calendar limb. If the refine finds the 0612 close moved WITH its last-hour flow, downgrade this to MOMENTUM_CARRY and the monday_bias below loses its mechanical half - but NOT its positioning half, which is independent. The positioning half is the load-bearing one.",
+        "monday_bias": "UP, moderate - and NOT a gap number",
+        "monday_bias_reasoning": "TWO INDEPENDENT generators, both open-time. (1) MECHANICAL: the index seller that drove 0609-0612 is finished and is gone for the whole rest of the block; Monday fades the positioning half, which is precisely what POSITIONING_SPENT_FADE prescribes. (2) POSITIONING: the COT publishing at 0612 15:30 ET shows MM net -122,617, WoW -7,763 WORSENING, 1y pctile 2.83 - a NEW one-year extreme. boundary.seam_gap_up_prior_on_worsening_cot: worsening WoW makes the seam the covering rally's firing window and an unfired maximal crowded short at a seam is BASE-CASE UP, a loaded spring. FALSIFIABILITY, stated explicitly because this play demands it: these two point the same way from DIFFERENT mechanisms, not from opposite inherited positioning states, so this is not the non-falsifiable trap. The COT WoW delta is the declared tie-breaker and it says UP. Had the 15:30 print come in FLAT or improving, the mechanical half alone would leave only a weak up-lean and the gap sign would revert to NOISE - that is the condition under which I am wrong.",
+        "close_location_in_range": "OFF THE LOW - derived, ~35% up off the session low, in the upper part of the lower half. NOT a close-on-low. The mechanism is the roll's terminal tranche clearing into the 14:00-14:30 settle (the day's low) followed by 2.5 hours with the mechanical seller removed. Per daytype.friday_exit_close_location_over_flow_shape this location - not the final-phase flow shape - is what Monday should consume, and it reads CONTINUATION-OF-THE-TURN, not continuation-of-the-down. NOTE the merged (VOLUME, NET) PAIR condition on that play could not be applied here because phase_volume is not served in the blind state (see cross_cutting_mbo_finding_1); this location read therefore rests on the roll mechanics, not on a measured close-phase volume.",
+        "final_phase_conviction": "NOT COMPUTABLE IN A BLIND - flow_conviction requires realized price and is refine-only by the brain's own text. I do not assert one and I do not substitute a proxy. What I can hand forward instead: the last observable phase structure is 0611's ph3 at -378 against ph2's -2,654, i.e. sell pressure ABATING into the close, with two-sided phase b_share RISING through the session (0.44 -> 0.48 -> 0.494) toward balance. That is a decaying seller, consistent with but not proof of the 0612 exhaustion read. It does NOT meet limb (a) of positioning.covering_self_limiting_cot_wow_gate, which states that a single final-phase give-back does not qualify as evidence of a spent condition - and I am not using it as such.",
+        "cot_residual_state": "WORSENING AND FRESHLY EXTREME - the most important field in this handoff. At my open the live vintage said IMPROVING (+19,572, pctile 4.72). At 15:30 ET inside my session the 06-09 report published: MM net -122,617, WoW -7,763, 1y pctile 2.83, 3y unavailable at that vintage. The shorts ADDED into a new one-year low. Corroborating open-time channel: the ICE HH books were ALREADY worsening on the prior report (hh_index -6,874 WoW at pctile 4.72; hh_basis -7,140 at 8.49) while NYMEX headline improved - they led by one report. CONSUMPTION WINDOW for the residual test (my corrected instrument, accepted by A): all sessions from publication_ts 2026-06-12T15:30-04:00 to the candidate 0614 seam - which is 90 minutes of Friday and nothing else. That window is too short to cross to cumulative net-positive signed flow, so the residual is UNCONSUMED at the seam. An unconsumed worsening short at a seam is the loaded-spring case. CRITICAL NON-REPEATABILITY WARNING for whoever owns 0618/0619: this same 06-09 report is STILL the live vintage on 0619 at age 6.35 days. There is NO new COT anywhere in week 2. Per daytype.covering_giveback_self_limiting, once this worsening arms the 0614 seam it is SPENT FUEL, not new fuel, and it may NOT arm a second seam. A still-extreme-but-not-freshly-worsening COT at the 0618/0619 boundary reverts to the chain/state default.",
+        "chain_state": "NOT ASSERTED - and that refusal is deliberate. boundary.chain_label_must_track_realized_cum: a specialist who cannot state the inherited cum_from_anchor and the prior close's range-location may not assert a chain polarity at all, and the masked-price case is explicitly NOT an exemption. This is a round-1 blind with no handoff file, so I have neither. I hand forward the two things I CAN state: (i) the block anchor is 3.220 on 20260605 with last-hour dir +1, off a session that was itself -1,350 with a 1,570 range (vol_regime n0_prev) - an anchor set by a down day that bounced into its close; (ii) 0612 is k=5 from that anchor, which puts every cum-keyed play beyond boundary.chain_staleness_gate's k<=3 rung permission. A and B must take the cum from the realized handoff chain, NOT from any label I could have invented. Inventing one is exactly what produced the G19 fictional age-5 down chain against a realized four-session rally.",
+        "seam_gap_prior": "SIGN: UP, armed. MAGNITUDE: NOT SUPPLIED, deliberately. boundary.seam_gap_up_prior_on_worsening_cot arms on the worsening WoW, but its own caveat is explicit that the G19 +580 quantum is BLOCK-SPECIFIC and only the SIGN rule is the general claim - n=2 seams in one block. G21's covering-seam quantum has not been established and I will not manufacture one, because a fabricated gap number is the single easiest way for my Friday to cascade into B's Monday. TERMINATION CLAUSE checked and NOT triggered: A's retirement of the rung-2 magnitude clause says the ladder does not apply when structure.covering_extension_distribution_flip fires - that flip cannot fire here, because its extension arm requires a realized cum I do not have and its age arm must read regime age from realized cum, not from a label. So the gap arm stands and the intraday rung does not. Additionally, per the same play, the Monday 06:00-10:30 catch-up window TESTS the gap rather than generating direction: a negative-conviction window leaves the gap intact and may print the day's extreme; only positive-conviction aggression back through the gap overturns it.",
+        "what_monday_inherits": "A close off the low, a market with its mechanical seller permanently gone for the remainder of the block, and a crowded short that RE-LOADED to a new one-year extreme in the final 90 minutes before the weekend. The bearish fundamentals are intact and unpriced-out - injection season loose (+108 print, +33 vs 5-yr, vs_5yr surplus +119, contango with slope_1 +0.041) - so this is NOT a fundamental turn and Monday is not the start of an up-chain. It is a positioning seam: the flow that was pressing the front leg down for four sessions was mechanical, it is finished, and the people who sold into it are maximally short into a weekend. Monday should open with an UP lean whose magnitude comes from the seam channel and not from me, and A should size the Sunday reopen from the removed-seller condition rather than from the Friday day-move (per the shared directive, Sunday inherits the Friday CLOSE and chain state, never the Friday day-net). One structural caution B needs: the tape_conditions basis is DISCONTINUOUS across the 0614/0615 boundary - week-2 sessions run 6.6x thinner at double the spread - so B must NOT compare Monday's flow magnitudes against my week-1 numbers. See cross_cutting_mbo_finding_2. Two calendar items for downstream owners: 0619 carries cme_holiday TRUE (Juneteenth), is_cme_business_day FALSE, cme_session_class 'partial_session', which makes 0618 the last FULL session before a long weekend and makes BOTH 0618 and 0619 weekend-feeding for sign-off purposes; and the next EIA print is 0618 10:30 with a 75 Bcf consensus against a 7 Bcf house disagreement.",
+        "invalidation": [
+          "If the refine finds the 0612 close moved WITH its last-hour flow rather than against it, POSITIONING_SPENT_FADE downgrades to MOMENTUM_CARRY and the mechanical half of monday_bias falls away. The positioning half (worsening COT to a 2.83 pctile) survives independently and still carries an UP seam sign.",
+          "If the 0612 close is ON its low rather than a third off it, my roll-completion relief leg did not happen; the whole late-session turn is void and Monday inherits a continuation-down, not a fade. This is the single most checkable claim I am making and the one I most want scored.",
+          "If the realized 0612 day-move exceeds roughly -900 (my band floor), the terminal BCOM tranche was materially larger than the two-index baseline implies, and my generator-loss derivation is wrong on its central assumption - that the last of five tranches is a small fraction of the window's per-session mechanical flow.",
+          "If the realized 0612 day-move is POSITIVE beyond about +300, the market front-ran the roll completion within the session rather than at its close, and the correct read is that roll-completion relief arrives on the terminal day rather than after it. That would be a genuine new mechanism and should be recorded as one, not absorbed as noise.",
+          "If the 0614 seam gaps DOWN, boundary.seam_gap_up_prior_on_worsening_cot's core sign claim takes a direct hit on its first out-of-block test - it would be the first worsening-WoW seam to gap against the prior, and the play should be marked accordingly rather than explained away."
+        ]
+      }
+    }
+  ],
+
+  "summary": {
+    "days_emitted": 1,
+    "day_move_usd": {"20260612": -340},
+    "direction": {"20260612": "DOWN"},
+    "friday_sign_off": "SATISFIED - handoff_out emitted in full (9 fields: exit_type, monday_bias, close_location_in_range, final_phase_conviction, cot_residual_state, chain_state, seam_gap_prior, what_monday_inherits, invalidation). 20260612 is the block's first weekend-feeding session and feeds B's 20260615 Monday via A's bridge.",
+    "turn_exhaustion_gate_result": "RUN BEFORE THE SIGN, per daytype.friday_turn_exhaustion_gate. NO TURN. The only evaluable arm (D-1 flow tilt) is aligned with continuation-DOWN; the positioning arm is extreme but IMPROVING at the open and therefore arms no covering-UP; the cum/chain arms are unevaluable by schedule at k=5 and were not substituted with a guess.",
+    "headline": "A terminal-index-roll Friday: the sign continues but the size collapses, because two of the three generators behind the week's accelerating sell expire at the prior close. -340 against a 20-session sigma of 862. The day and its handoff point opposite ways, and that is a dating artefact rather than a contradiction - the COT vintage flips from improving to worsening at 15:30 ET, inside my own session.",
+    "what_i_stood_down_and_why_it_matters": "The single most tempting reading on the board was big_print_b_share 0.572 on 160 prints - thick tape, clears every bar, and it says BUY. I stood it down on two independent grounds and neither was a hunch: the brain's own recorded half-scope on flow.price_free_absorption_proxy (four measured counterexamples under a negative count tape) and the mechanical fact that an index-roll counterparty buys the front leg in blocks. That recorded negative did exactly the job it was merged to do.",
+    "self_critical_note": "My two G20 contributions - flow.passive_ladder_displacement and the (volume, net) pair on friday_exit_close_location_over_flow_shape - both turn out to be un-runnable as written in a blind, because tape_conditions serves no phase_volume. That is a finding against my own work and it is the most useful thing in this file. The fix is one field.",
+    "no_files_modified": "No agent file, coordinator, brain, or harness code was read for editing or edited. The brain was read only as context. The only file written is this posterior.",
+    "inputs_confirmed": "knowledge/ng_brain.json (s103.4, 66 plays), knowledge/refinement_architecture_doctrine.md, agents/mbo_refine_shared.md, agents/mbo_specialist_E.md, renders/ng_refine_s95/grp21_state.json. Schema convention (path grid, 9-field handoff) confirmed against my own committed G20 output, which contains no G21 content. No G21 price-bearing file was opened."
+  }
+}

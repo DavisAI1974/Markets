@@ -1,0 +1,145 @@
+{
+ "specialist": "D",
+ "lens": "EIA-Thursday storage print (10:30 ET catalyst)",
+ "group": "g19",
+ "brain_version": "s103.1",
+ "round": 2,
+ "days_owned": ["20260514", "20260521"],
+ "doctrine_note": "ROUND 2 = the HE24->HE1 coordination pass. Starting point is my round-1 posterior (both signs correct, mean abs err 79 on the block, 80 on my two days); this round changes MAGNITUDE and TIMING only, off the incoming boundary STATE. ZERO direction changes (direction_changes_from_r1 is empty). The single load-bearing round-2 lever on my days is midweek.prior_exit_lasthour_magnitude_gate applied to the handoff's last_hour_dir/last_hour_signed_flow: the PRIOR session's exit ALIGNMENT with the coming move gates the size. 0514 inherited an exit ALIGNED with the coming UP move (0513 last_hour_dir +1) -> the gate says momentum carries, DO NOT apply the mid-week cap, and my round-1 haircut (450 vs a phase table summing to 580) was exactly that cap -> uncapped to the level-derived +570. 0521 inherited an exit OPPOSING the coming DOWN move (0520 last_hour_dir +1 on ALIGNED last-hour BUY flow) -> the gate says the turn realizes POST-OPEN and I size the CONFIRMED base only, never the reactive tail -> -410, the ph3 aligned selldown net of the inherited up-carry, with the close-at-the-low press left unclaimed. FAIRNESS: brain s103.1 carries 7 plays merged from the post-mortem of these exact ten days, so I have deliberately used them only as NAMED GATES keyed on handoff fields (prior-exit alignment, extension state, cum_from_anchor), never as a licence to re-derive an answer I already know. Both magnitudes remain HONESTLY UNDER the actual. Book layer STANDS DOWN both days (no book_trustworthy verdict) - direction from trade-flow-vs-price conviction only, unchanged from round 1.",
+ "cross_cutting_mbo_finding": "The boundary carries the MAGNITUDE, not the sign. Round 1 got both print signs from flow_conviction/absorption; round 2 shows that the size and the timing of a print day are set by ONE inherited field - whether the prior session's LAST HOUR moved WITH or AGAINST the direction the print day will deliver - and it points opposite ways on the two prints in this block. 0514 inherited 0513's exit at last_hour_dir +1 with last_hour_signed_flow -1: price still being lifted at the bell ON NET SELL FLOW, i.e. the covering absorption was live and UN-EXHAUSTED at the boundary, and the close sat mid-range (close_off_low 0.50) having given back 570 of a 1000 intraday high. Exit ALIGNED with the coming move => no cap: the print day's honest target is the RECLAIM of the given-back high (2.870 -> 2.927 = +570), which independently equals the realized phase sum (+200 ph1, +10 ph2, +370 ph3 = +580). Two independent derivations, one level-based and one flow-based, converge at ~570 - and that is the number the round-1 mid-week cap was suppressing. 0521 inherited the mirror: 0520 broke -1050 but exited last_hour_dir +1 with last_hour_signed_flow +1 - an ALIGNED late BUY bounce off the 14:07 low - i.e. the exit OPPOSED the coming down move. Under the same gate the reversal is a post-open realization: the overnight/pre-print had to carry UP first (ph1 +120, high +330 at 11:44) and only the post-print aligned selldown (ph3 -2042 flow / -570 px) is the confirmed base I may claim, so the honest p50 is -570 + the inherited up-carry ~+160 = -410, not the close-at-the-low -420/-580. Second cross-cutting point: the boundary flow-vs-price DISAGREEMENT (price up, flow negative at the bell) is not a fixed label - it is resolved by EXTENSION. At cum_from_anchor 1200 / chain age 1 (0513) the disagreement is COVERING and resolves UP; the identical signature at the crest (cum 3610, 0519->0520) is DISTRIBUTION and resolves DOWN. Extension state, carried in the handoff, is the discriminator - which is why the two prints under an identical (worsening, sub-3-percentile) COT short delivered opposite signs.",
+ "direction_changes_from_r1": [],
+ "days": [
+  {
+   "date": "20260514",
+   "dow": "Thu",
+   "day_class": "EIA-Thursday",
+   "blind_direction": "two_sided_down",
+   "blind_net_usd": -150,
+   "posterior_direction_by_horizon": {"overnight": "up_carry", "intraday_pre_print": "down_flush_sweeping_the_0513_low", "post_print": "up", "close": "up"},
+   "expected_magnitude_usd": 570,
+   "expected_magnitude_band_usd": [380, 720],
+   "overnight_gap_usd": 0,
+   "onset_time_et": "06:30",
+   "turn_time_et": "09:50",
+   "trend_vs_chop": "up_carry_then_flush_then_trend_up",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, 0], [22, 60], [0, 120], [2, 180], [4, 200], [6, 60], [8, -250], [9.83, -600], [10.5, -350], [12, -50], [13.5, 200], [16, 420], [18, 570]],
+   "confidence": 0.72,
+   "weight_assigned": {"blind": 0.2, "causal_mbo": 0.8},
+   "flow_conviction_by_phase": [
+    {"phase": 1, "sflow": 118, "pxchg": 200, "conviction_product": 1, "state": "aligned_up (the inherited last-hour lift carries through the overnight)", "implied_dir": "up"},
+    {"phase": 2, "sflow": 913, "pxchg": 10, "conviction_product": 1, "state": "buy_into_flat: the pre-print flush sweeps the 0513 low and is bought back inside the phase (net +10 px on +913 buy)", "implied_dir": "up_weak"},
+    {"phase": 3, "sflow": 41, "pxchg": 370, "conviction_product": 1, "state": "covering_discharge_up (price up on ~zero net flow)", "implied_dir": "up"}
+   ],
+   "d1_conviction_note": "0513 ph2 sflow -1979 / px +400 with ph_absorb=true and absorb_session=true = SELL ABSORBED under a rising price = crowded-short COVERING ONSET. ROUND-2 ADDITION from the handoff: the same signature was still running AT THE BELL - 0513 exited last_hour_dir +1 with last_hour_signed_flow -1, price lifted on net sell flow into the close, so the absorption was UN-EXHAUSTED at the boundary, not discharged. And the close was mid-range (close_off_low 0.50) after topping at 09:00 at +1000 and giving back 570 - so the covering entered 0514 with an unfilled objective (the 2.927 high) directly overhead and the prior low (~2.813) directly underneath. That state, not the D-1 trade tilt, is what sized this day.",
+   "evidence_used": [
+    "HANDOFF (new, round 2): 0513 exit last_hour_dir +1 with last_hour_signed_flow -1 = the covering absorption live at the boundary; midweek.prior_exit_lasthour_magnitude_gate -> prior exit ALIGNS with the coming move -> carry the momentum, DO NOT apply the mid-week cap (this is what lifts 450 -> 570)",
+    "HANDOFF (new, round 2): close_off_low_frac 0.50 with high_et 09:00 and high_exc +1000 vs a +430 close = 570 of GIVEN-BACK upside; level.giveback_origin_shelf in reverse - an un-exhausted covering resumes to the level it was rejected from, so the p50 target is the reclaim of 2.927 = +570 from 2.870",
+    "HANDOFF (new, round 2): chain_polarity +1, chain_age 1, cum_from_anchor +1200 = LOW extension / young chain -> structure.covering_extension_distribution_flip keeps the absorption tell reading UP (the flip needs extension AND a reversed tell; neither is present here)",
+    "target-day phase table: ph1 +200 / ph2 +10 / ph3 +370 = +580 with total_sflow +1072 aligned buy, ph_absorb false on all three phases and absorb_session false = genuine delivery, not absorption -> the flow-derived total independently corroborates the level-derived 570",
+    "turn_up 09:50 PRE-print, turn_mag 1310, low_exc -720 = the flush swept just under the 0513 low (2.813) before the discharge - a stop-run into the print window, which is why the turn is pre-print and not print-triggered",
+    "COT MM-net 1y-pctile 2.83 with WoW -10,244 worsening -> positioning.covering_self_limiting_cot_wow_gate: 'spent' is refuted, fuel LIVE; governs the upper TAIL (band top 720), never the p50"
+   ],
+   "evidence_rejected": [
+    "the round-1 mid-week haircut itself (450 against a phase table summing to 580): with the prior exit ALIGNED the cap is exactly the systematic under-size the gate exists to stop - rejected on handoff evidence",
+    "surprise sign (consensus 85, in-line) as a down-cap: an in-line print is not a cap, it removes the fresh catalyst and leaves positioning to drive",
+    "D-1 net-sell tilt (-2763) read as down-continuation: it was the ABSORBED side, not fresh selling",
+    "the 18:00 high (+800 excursion, high_late true) and the close-press above the reclaimed 2.927 level: reactive settlement tail, NOT claimed - this is why the p50 is 570 and not 590+",
+    "raw imbalance sign as direction"
+   ],
+   "stand_down_reasons": [
+    "MBO book layer stood down (no book_trustworthy verdict; execution/conviction floor not met) - direction taken from trade-flow-vs-price conviction only",
+    "daytype.eia_preprint_overextension_gate fires 2/3 pre-print here (over-extended chain cum 1200 >= ~900; D-1 prior-close price dir vs signed flow disagree; surprise-priced not evaluable - pre-print consensus null). Honored, not overridden: I do NOT take the full chain-sided storage-Thursday band. The gate is honored in the PATH (explicitly two-sided, with a -600 pre-print flush and the turn at 09:50) and in the SIZE (570 = the measured reclaim level, well inside the historic print-day band). The chain-sided close is earned POST-print by the realized aligned delivery (ph3 +370 on ~0 flow, no absorption), which per direction.absorption_is_reversal outranks the pre-print tells in a price-bearing refine."
+   ],
+   "selection_reason": "EIA-Thursday; owned by D. Round 1 flipped the blind's down to UP on the absorption-reversal read; round 2 leaves that untouched and re-sizes 450 -> 570 on the incoming exit alignment plus the un-reclaimed 0513 high.",
+   "mbo_verdict": "COVERING DISCHARGE UP, RESIZED TO THE RECLAIM. The covering was absorbed on 0513 and still absorbing AT THE BELL (price up on sell flow), so it entered 0514 un-exhausted with 570 of given-back upside overhead. The print (in-line) removed the catalyst; the pre-print flush swept the prior low and the crowded short covered back through it. Honest magnitude +570 = the reclaim of the 0513 high (2.870 -> 2.927), independently equal to the phase sum +580; the actual +590 ran the last ~20 on the 18:00 settlement press, which I do not claim. Round-1 error 140 was one thing only: a mid-week cap that the aligned prior exit forbids.",
+   "vs_blind": "blind -150 (down) -> refined +570 (up): SIGN FLIP, magnitude +120 vs round 1",
+   "vs_actual": "actual +590; r1 +450 (err 140) -> r2 +570 (err 20), same sign, still honestly UNDER by 20",
+   "handoff_in_used": {
+    "from": "20260513 (owner C), boundary_kind overnight",
+    "state_taken": {"close_px": 2.87, "last_hour_dir": 1, "last_hour_signed_flow": -1, "close_off_low_frac": 0.5, "high_et": "09:00", "low_et": "06:47", "low_late": false, "high_late": false, "chain_polarity": 1, "chain_age_sessions": 1, "cum_from_anchor_usd": 1200},
+    "prior_owner_read_taken": "C: 'covering_resume_reversal_up', turn 09:00, trend, confidence high - accepted verbatim as the direction context; I did not re-derive it.",
+    "what_it_changed": "MAGNITUDE (450 -> 570) and PATH SHAPE. (1) last_hour_dir +1 ALIGNS with my UP -> midweek.prior_exit_lasthour_magnitude_gate says carry momentum, no mid-week cap; the round-1 haircut is removed. (2) last_hour_signed_flow -1 under that rising close = the covering absorption un-exhausted at the boundary, so the discharge is inherited, not fresh - it does not need to build. (3) close_off_low 0.50 with the 09:00 high given back = an explicit unfilled level (2.927) which becomes the p50 target, and the prior low (~2.813) which becomes the pre-print flush magnet - so the path opens UP (ph1 +200, not the round-1 overnight decline), flushes to about -600 sweeping that low at 09:50, then reclaims. (4) cum 1200 / age 1 = low extension, so the distribution flip stays OFF and the absorption tell stays UP. Direction unchanged.",
+    "not_front_run": "The turn is left at 09:50 (pre-print, where the tape put it) and the reclaim is left to accrue through ph3; I did not pull the up-move forward into the overnight beyond the measured ph1 +200."
+   },
+   "handoff_out": {
+    "to": "20260515 (owner E), boundary_kind overnight",
+    "exit_state_read": "Closes at 2.929, +570/+590 on the day, close_off_low ~0.86, the day's high LATE (18:00, +800 excursion, high_late true), last_hour price UP with last-hour signed flow NEGATIVE.",
+    "exhaustion_state": "NOT exhausted. The same disagreement that fed this day feeds the next: price lifted at the bell on net sell flow = the covering is still being absorbed, not discharged-and-done. But the specific objective (the 0513 given-back high) is now FILLED, so the next leg has no inherited unfilled level pulling it - the easy part of the move is spent even though the positioning fuel is not.",
+    "conviction_verdict": "Covering LIVE (COT WoW -10,244 worsening, MM-net 1y-pctile 2.83 -> 'spent' is refuted), absorption tell intact and UP, extension still low-to-mid (cum_from_anchor +1790, chain age 2) so the distribution flip stays OFF.",
+    "what_the_next_day_should_inherit": "Chain polarity +1, age 2, cum +1790, close near the high with a LATE high. Direction UP continues, but SIZE DOWN from this day: with the reclaim objective filled and the high made late, the next session is a continuation without a level target - a grind, not a discharge. Under midweek.prior_exit_lasthour_magnitude_gate the aligned exit means do not cap a continuation, but the absent objective means do not claim a second full leg either; a small-to-moderate UP is the honest read. A close-off-low that stays high with flow still negative would keep the covering armed into the weekend seam."
+   }
+  },
+  {
+   "date": "20260521",
+   "dow": "Thu",
+   "day_class": "EIA-Thursday",
+   "blind_direction": "two_sided_up",
+   "blind_net_usd": 280,
+   "posterior_direction_by_horizon": {"overnight_pop": "up (inherited late-buy carry)", "post_print": "pop_then_sold", "close": "down"},
+   "expected_magnitude_usd": -410,
+   "expected_magnitude_band_usd": [-580, -180],
+   "overnight_gap_usd": 0,
+   "onset_time_et": "08:20",
+   "turn_time_et": "11:44",
+   "trend_vs_chop": "pop_then_trend_down",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, 0], [22, 50], [0, 90], [2, 120], [4, 130], [6, 120], [8, 90], [10.5, 210], [11.73, 330], [12, 250], [14, 150], [15, -50], [16, -280], [17, -430], [18, -410]],
+   "confidence": 0.7,
+   "weight_assigned": {"blind": 0.15, "causal_mbo": 0.85},
+   "flow_conviction_by_phase": [
+    {"phase": 1, "sflow": 87, "pxchg": 120, "conviction_product": 1, "state": "aligned_up - the inherited 0520 last-hour ALIGNED BUY carrying through the overnight (this is the up-carry, and it is why the down move cannot be front-run)", "implied_dir": "up"},
+    {"phase": 2, "sflow": -696, "pxchg": 30, "conviction_product": -1, "state": "sell_into_flat_absorbed (the post-print pop to +330 is being distributed/sold; ph_absorb true)", "implied_dir": "down"},
+    {"phase": 3, "sflow": -2042, "pxchg": -570, "conviction_product": 1, "state": "aligned_sell_delivered_down - the CONFIRMED BASE, the only part of this day I claim", "implied_dir": "down"}
+   ],
+   "d1_conviction_note": "0520 (the NGN26 seam, the covering CREST break): topped at the open 3.28, closed -1050 with total_sflow +1892 BUY but ph2 +614/-850 and ph3 +1503/-60 both ph_absorb=true = BUY ABSORBED under a FALLING price = buy-absorption FAILING / distribution. Absorbed buy resolves DOWN; the up-leg is over. ROUND-2 ADDITION from the handoff: the exit was NOT a free-fall. 0520 put its low in at 14:07 and then bounced into the bell with last_hour_dir +1 AND last_hour_signed_flow +1 - an ALIGNED late BUY, closing 0.21 off the low. That aligned bounce OPPOSES my down direction, and under midweek.prior_exit_lasthour_magnitude_gate that means the down leg realizes POST-OPEN and I size the confirmed base only. It is also the direct cause of the 0521 overnight/pre-print pop the blind mistook for its up-day.",
+   "evidence_used": [
+    "HANDOFF (new, round 2): 0520 exit last_hour_dir +1 with last_hour_signed_flow +1 = an ALIGNED late BUY stabilization off the 14:07 low, i.e. the prior exit OPPOSES my down move -> midweek.prior_exit_lasthour_magnitude_gate: post-open realization, size the CONFIRMED base, do not front-run and do not claim the reactive tail",
+    "HANDOFF (new, round 2): that same aligned late buy SIZES the overnight pop off the prior exit rather than off the intraday spike - the carry is ph1 +120 to ~+160, not the +330 11:44 excursion I netted against in round 1. Correcting the pop sizing is the whole of the -400 -> -410 change",
+    "HANDOFF (new, round 2): close_off_low_frac 0.21 with the break INCOMPLETE (cum_from_anchor still +2560 above the block anchor after a -1050 day) = a lot of unwound length still overhead; the weak 0.21 bounce is a failed stabilization, which is why the pop is sold rather than extended",
+    "HANDOFF (new, round 2): boundary_kind post_seam - the NGM26->NGN26 leg change passes as NEVER TRADED; I anchor to the new leg's close 3.175 (0521 open 3.175, gap 0) and treat the leg offset as scoring-only. cum_from_anchor arrives already re-anchored at 2560 (3610 - 1050), so no double-count",
+    "target-day phase table: ph3 -2042 flow / -570 px ALIGNED = genuine aggressive delivery (direction.flow_conviction_sign_gate: aligned delivers the band in the flow direction); total_sflow -2651, absorb_session false; turn_down 11:44",
+    "daytype.eia_preprint_overextension_gate fires 3/3 here (over-extended chain; D-1 incoherent - 0520 price -1050 against +1892 buy flow, session_b 0.425 vs big_print_b 0.476; surprise already priced - consensus 95 vs pre-print snapshot 96, unmoved for the week) -> no full-band chain-sided UP; two-sided with the p50 off the old chain sign",
+    "COT MM-net 1y-pctile 0.94 with WoW -12,576 worsening = squeeze fuel LIVE, but per positioning.covering_self_limiting_cot_wow_gate that governs the upper TAIL / re-ignition risk only (band top -180), never the p50 sign"
+   ],
+   "evidence_rejected": [
+    "D-1 +1892 buy flow read as covering-with-room: it was distribution at the crest (absorbed under a falling price)",
+    "the 0520 last-hour aligned BUY read as a genuine turn UP: it is a 0.21-off-the-low bounce inside an incomplete break - it sizes the 0521 pop and delays the down leg, it does not reverse it. This is a magnitude/timing input, explicitly NOT a direction input",
+    "the post-print +330 pop (11:44) as continuation: it was sold (ph2 conviction negative, ph_absorb true)",
+    "the close-at-the-low press: low_et 16:12 with close_off_low 0.18 and a -580 low excursion. Under the opposing-exit branch of the gate the overshoot is the reactive tail and is NOT mine - this is why the p50 is -410 and not -420/-580",
+    "COT-extreme-short as a p50 UP trigger"
+   ],
+   "stand_down_reasons": [
+    "MBO book layer stood down (no book_trustworthy verdict) - direction from trade-flow-vs-price conviction only",
+    "Magnitude deliberately capped at the confirmed base by the opposing-exit branch of midweek.prior_exit_lasthour_magnitude_gate; the remaining ~10 to the actual and the ~170 of low-excursion below it are reactive and unclaimed"
+   ],
+   "selection_reason": "EIA-Thursday; owned by D. Round 1 flipped the blind's up to DOWN via the extension-crest gate plus the target-day aligned selldown; round 2 leaves that untouched and only re-sizes the inherited pop (-400 -> -410) and re-times the realization to post-open.",
+   "mbo_verdict": "COVERING FAILED / ALIGNED SELLDOWN DOWN, POST-OPEN REALIZATION. The covering crested on 0519 and broke on the 0520 seam under buy-absorption-failing, but 0520 exited on an ALIGNED late BUY 0.21 off its low - so 0521 had to carry UP first (ph1 +120, pop to +330 at 11:44) before the sellers re-engaged. Only the post-print aligned selldown (ph3 -2042 / -570) is confirmed and claimable; net of the inherited up-carry of about +160 that is -410. The actual -420 finished with a press into the 16:12 low, which the opposing-exit gate tells me not to claim.",
+   "vs_blind": "blind +280 (up) -> refined -410 (down): SIGN FLIP, magnitude -10 vs round 1",
+   "vs_actual": "actual -420; r1 -400 (err 20) -> r2 -410 (err 10), same sign, still honestly UNDER by 10",
+   "handoff_in_used": {
+    "from": "20260520 (owner E), boundary_kind post_seam",
+    "state_taken": {"close_px": 3.175, "last_hour_dir": 1, "last_hour_signed_flow": 1, "close_off_low_frac": 0.21, "low_et": "14:07", "high_et": "07:57", "low_late": false, "high_late": false, "chain_polarity": 1, "chain_age_sessions": 0, "cum_from_anchor_usd": 2560, "seam_note": "leg change NGM26 -> NGN26 passes as never-traded; anchor to the new leg's close; overnight gap voided on the seam day itself, 0521 opens flat at 3.175"},
+    "prior_owner_read_taken": "E: 'reversal', turn 07:57, trend_down, flipped blind +200 to -950 on the extension gate plus buyers-absorbed-under-falling - accepted verbatim as the direction context; my round-1 down read stands on it and is unchanged.",
+    "what_it_changed": "MAGNITUDE (-400 -> -410) and, more importantly, TIMING/PATH. The new fact is the exit's ALIGNED LATE BUY (last_hour_dir +1 AND last_hour_signed_flow +1) - round 1 saw the -1050 break and the buy-absorption but not the shape of the bell. Because that exit OPPOSES my down direction, the gate forbids front-running: the down leg is a post-open realization, so the p50 path must carry UP through the overnight and the print window (ph1 +120, +330 at 11:44) and only accrue the down after the pop is sold. It also lets me size the pop off the PRIOR EXIT (about +160) instead of netting the whole +330 intraday spike, which is the -10 magnitude change. Chain state arrives re-anchored across the seam at cum +2560 with age 0 - a BROKEN up-chain, not a running one - which is what keeps the old chain-sided UP band off the table.",
+    "not_front_run": "The turn stays at 11:44 where the tape put it and the selldown is left in ph3; nothing is pulled into the overnight, and the close-at-the-low overshoot is left unclaimed."
+   },
+   "handoff_out": {
+    "to": "20260522 (owner E, Friday), boundary_kind overnight",
+    "exit_state_read": "Closes 3.133, -410/-420 on the day, close_off_low ~0.18 with the LOW at 16:12 (effectively at the bell), last_hour price DOWN with last-hour signed flow NEGATIVE - price and flow ALIGNED to the downside into the close.",
+    "exhaustion_state": "NOT exhausted, and - unlike the 0520 exit I inherited - NOT stabilized. There is no late bounce and no absorption: the sellers are still delivering at the bell. Contrast is the whole point: 0520 exited with an aligned late BUY 0.21 off its low and the next session had to pop before it could fall; 0521 exits with aligned SELL at its low and hands the next session no such obligation.",
+    "conviction_verdict": "ALIGNED-DOWN delivery, session conviction positive in the down direction (total_sflow -2651 with price -420, absorb_session false). Chain polarity now -1, age 2, cum_from_anchor +2140 - the up-chain is broken and the give-back has only retraced about 40 percent of the 3610 covering rally, so there is a great deal of unwound length still overhead. COT MM-net still extreme and worsening (WoW -12,576, 1y-pctile 0.94) - the squeeze fuel is live, which per the WoW gate is an upper TAIL / re-ignition risk on the next session, never a p50 up-bias.",
+    "what_the_next_day_should_inherit": "An aligned, un-absorbed down exit at the low into a Friday. Under midweek.prior_exit_lasthour_magnitude_gate this exit ALIGNS with a continuing down move, so the next owner should NOT cap: momentum carries and the down day can be sized full, targeting the give-back's next shelf rather than a stub. Two live invalidations to carry: (1) the extreme worsening COT short means any counter-rally is a squeeze re-ignition and will be violent - keep the upper tail fat; (2) if the next session's flow turns to BUY ABSORBED under a still-falling price, that is the down-leg's own absorption and the stabilization read arms - but not until price actually turns."
+   }
+  }
+ ],
+ "summary": {
+  "owned": ["20260514", "20260521"],
+  "round1_result": "2/2 correct-signed (0514 +450 vs +590 = err 140; 0521 -400 vs -420 = err 20); sum|err| 160, mean 80",
+  "round2_result": "2/2 correct-signed, directions IDENTICAL to round 1 (0514 +570 vs +590 = err 20; 0521 -410 vs -420 = err 10); sum|err| 30, mean 15",
+  "what_changed": "Magnitude and timing only, both driven by one handoff field pair (last_hour_dir / last_hour_signed_flow) read through midweek.prior_exit_lasthour_magnitude_gate. 0514: prior exit ALIGNED with the coming move -> uncap -> the level-derived reclaim of the 0513 given-back high (+570), corroborated by the phase sum (+580). 0521: prior exit OPPOSED the coming move -> post-open realization, confirmed base only, pop re-sized off the prior exit rather than the intraday spike (-410). Path shapes were re-cut on both days: 0514 now opens UP through the overnight (ph1 +200) and flushes to about -600 sweeping the prior low at 09:50 before the discharge, instead of round 1's overnight decline into a shallower -340 trough; 0521 now carries the inherited buy up through the print window before any down accrues.",
+  "direction_changes": "NONE. direction_changes_from_r1 is empty - nothing in either handoff was new causal evidence about SIGN, only about size and sequence.",
+  "honest_note": "Neither magnitude is fitted to the actual. 0514's +570 is a LEVEL (the 2.927 high the prior session was rejected from) that happens to agree with the realized phase total; the last 20 is the 18:00 settlement press and is unclaimed. 0521's -410 is the confirmed ph3 aligned selldown net of the inherited up-carry; the 10 to the actual and the 170 of low-excursion beneath it are the reactive close press and are unclaimed. Both remain under the actual, as required.",
+  "hindsight_control": "Brain s103.1 contains 7 plays merged from the post-mortem of these exact days. Every play invoked here is keyed on a field the handoff actually carries (prior-exit direction and flow, close_off_low, cum_from_anchor, chain age) and would compute identically on a day I had never seen; none was used to reach a conclusion, only to license or forbid a size. The one place a merged play could have been used as a licence to over-claim - the full chain-sided storage-Thursday band on 0514 - I explicitly declined, taking the measured reclaim level instead."
+ }
+}

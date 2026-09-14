@@ -40,10 +40,14 @@ def _cache_path(root: str) -> str:
 # ------------------------------------------------------------------------------------------------------
 # Curve metrics (pure, testable)
 # ------------------------------------------------------------------------------------------------------
-def curve_features(closes: dict[int, float]) -> dict | None:
+def curve_features(closes: dict[int, float], symbols: dict[int, str] | None = None) -> dict | None:
     """
     closes: {rank: settle} for one date (rank 0 = nearest expiry). Returns the conditioning features, or
     None if the front two ranks are missing. All spreads in $ (never bps); shape sign is the read.
+
+    symbols: optional {rank: raw_symbol} (e.g. {0: "NGG26", 1: "NGH26"}). When supplied, the
+    MONTH-SPECIFIC spreads are added — notably `mar_apr_spread` (NGH - NGJ), the most-watched
+    structural spread in NG (the end of withdrawal season). Missing is None, never 0.0.
     """
     if 0 not in closes or 1 not in closes:
         return None
@@ -67,7 +71,26 @@ def curve_features(closes: dict[int, float]) -> dict | None:
         regime = "contango"
     else:
         regime = "flat"
+    # MONTH-SPECIFIC structural spreads. NG month codes: F=Jan G=Feb H=Mar J=Apr K=May ... Z=Dec.
+    # mar_apr (H-J) straddles the end of the withdrawal season and is NG's most-watched spread.
+    # A month pair that is not on the curve stays None - NEVER 0.0 (0.0 reads as "at parity").
+    month_spreads: dict[str, float | None] = {"mar_apr_spread": None, "mar_apr_pair": None}
+    if symbols:
+        by_sym = {}
+        for rk, sym in symbols.items():
+            if rk in closes and sym:
+                by_sym[str(sym).upper()] = closes[rk]
+        # take the FRONT-MOST H/J pair of the same delivery year present on the curve
+        for yr in sorted({s[3:] for s in by_sym if len(s) >= 5 and s.startswith("NG")}):
+            h, j = f"NGH{yr}", f"NGJ{yr}"
+            if h in by_sym and j in by_sym:
+                month_spreads["mar_apr_spread"] = round(by_sym[h] - by_sym[j], 4)
+                month_spreads["mar_apr_pair"] = f"{h}-{j}"
+                break
+
     return {
+        **month_spreads,
+        "symbols": {str(k): v for k, v in (symbols or {}).items()} or None,
         "front": round(front, 4), "c1": round(c1, 4), "back_rank": ranks[-1], "back": round(back, 4),
         "slope_1": round(slope_1, 4), "slope_back": round(slope_back, 4),
         "slope_1_pct": round(slope_1_pct, 6), "slope_back_pct": round(slope_back_pct, 6),
@@ -109,9 +132,12 @@ def pull(root: str, start: str, end: str, n_ranks: int = N_RANKS) -> dict[str, d
                                        schema="ohlcv-1d", start=start, end=end)
     # rank per raw symbol; map each record's instrument back to its continuous rank via the symbol
     closes_by_date: dict[str, dict[int, float]] = {}
-    inst_rank = {}
+    syms_by_date: dict[str, dict[int, str]] = {}
     df = data.to_df()
-    # to_df carries a 'symbol' column with the continuous alias (e.g. 'CL.c.3')
+    # to_df carries a 'symbol' column with the continuous alias (e.g. 'CL.c.3'). Resolve each rank's
+    # ACTUAL delivery contract (e.g. 'NGH26') via the per-day instrument map so month-specific
+    # structural spreads (mar_apr) can be taken. Unresolvable -> the rank simply carries no symbol.
+    instmap = _instrument_map(root)
     for _, row in df.iterrows():
         sym = str(row.get("symbol", ""))
         if ".c." not in sym:
@@ -119,9 +145,13 @@ def pull(root: str, start: str, end: str, n_ranks: int = N_RANKS) -> dict[str, d
         rank = int(sym.rsplit(".", 1)[1])
         date = row.name.strftime("%Y-%m-%d") if hasattr(row.name, "strftime") else str(row.name)[:10]
         closes_by_date.setdefault(date, {})[rank] = float(row["close"])
+        iid = row.get("instrument_id")
+        raw = instmap.get(date.replace("-", ""), {}).get(str(int(iid))) if iid is not None else None
+        if raw:
+            syms_by_date.setdefault(date, {})[rank] = raw
     features = {}
     for date, closes in sorted(closes_by_date.items()):
-        f = curve_features(closes)
+        f = curve_features(closes, syms_by_date.get(date))
         if f:
             features[date] = f
     os.makedirs(CACHE_DIR, exist_ok=True)
@@ -129,6 +159,20 @@ def pull(root: str, start: str, end: str, n_ranks: int = N_RANKS) -> dict[str, d
         json.dump(features, fh, sort_keys=True, indent=0)
     print(f"[curve] {root}: {len(features)} dated curves -> {_cache_path(root)}")
     return features
+
+
+def _instrument_map(root: str) -> dict:
+    """{'YYYYMMDD': {instrument_id_str: raw_symbol}} from the contract_structure definitions cache.
+    Absent cache -> {} (ranks then carry no symbol; month spreads stay None, never 0)."""
+    p = os.path.join("data/contract_structure", f"{root}_instrument_map.json.gz")
+    if not os.path.exists(p):
+        return {}
+    try:
+        import gzip
+        with gzip.open(p, "rt") as f:
+            return json.load(f).get("per_day", {})
+    except Exception:
+        return {}
 
 
 def load(root: str) -> dict[str, dict]:

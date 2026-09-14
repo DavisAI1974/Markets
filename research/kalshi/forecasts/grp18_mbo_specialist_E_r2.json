@@ -1,0 +1,175 @@
+{
+  "specialist": "E",
+  "lens": "Friday / expiry / roll / weekend-positioning; turn-exhaustion gate; covering-self-limiting",
+  "group": "g18",
+  "brain_version": "s102.8",
+  "round": 2,
+  "days_owned": ["20260501", "20260508"],
+  "doctrine_note": "ROUND 2 HE24->HE1 coordination pass. Start from round-1 posterior; TIGHTEN off the incoming handoff STATE (not day-net). OLD BLIND stays CORE; MBO is a POSTERIOR UPDATE. No direction change from round 1 (both directions held; the handoff only sharpens magnitude/timing/confidence and gives the intraday shape a causal owner). Book layer STANDS DOWN both days (no book_trustworthy verdict in g18 evidence) - trade-flow + phase absorption only. Both days are weekend-feeding Fridays -> handoff_out emitted on both (coordinator Friday sign-off, enforced).",
+  "cross_cutting_mbo_finding": "The HE24->HE1 handoff resolves what round 1 read from the day-tape alone: BOTH owned Fridays open onto a strong prior UP-close (0430 off_low 0.84 turn_up +1230 into 0501; 0507 off_low 0.81 print +720 into 0508) yet the CHAIN STATE behind those closes is opposite, and THAT is what the day delivers. Into 0501 the inherited state is a LIVE up-chain (pol+1, age1) - so 0501's covering-up is chain-supported (up-leg day 2), the morning +610 is inherited up-momentum, and the day holds up (+270). Into 0508 the inherited state is a FRESH DOWN turn (pol-1, age0) sitting under a SPENT one-shot up-print - so 0508's morning +590 pop is the exhausting print-carry residual, it tops @09:15, and the fresh down-chain delivers aligned sell down (-360). Same strong-up prior close; opposite chain polarity underneath -> opposite day. The handoff's chain_polarity/age is the discriminator the day-tape absorption verdict independently confirms (0501 absorb=true covering-up; 0508 absorb=false delivered-down).",
+  "days": [
+    {
+      "date": "20260501",
+      "dow": "Fri",
+      "day_class": "friday_weekend_positioning",
+      "blind_direction": "down",
+      "blind_net_usd": -480,
+      "posterior_direction_by_horizon": {
+        "overnight": "up",
+        "morning": "up",
+        "afternoon": "up",
+        "close": "up"
+      },
+      "expected_magnitude_usd": 270,
+      "expected_magnitude_band_usd": [180, 320],
+      "onset_time_et": "2026-04-30 23:47 (up onset, overnight - the inherited 0430 strong-close up-momentum carrying)",
+      "turn_time_et": "none (no clean turn; morning dip @10:13 absorbed, ph2 covering lift holds the up-chain)",
+      "trend_vs_chop": "up_chain_continuation_with_absorbed_midmorning_dip",
+      "continuation_vs_reversal": "continuation_of_inherited_up_chain (reversal only vs the BLIND's down-lean; vs the true incoming state this is up-leg day 2 continuing)",
+      "path_p50_curve": [
+        [18, 0],
+        [20, 60],
+        [22, 150],
+        [0.5, 280],
+        [3, 430],
+        [6, 560],
+        [8, 600],
+        [9.5, 120],
+        [11, -60],
+        [13, 150],
+        [14.5, 220],
+        [16, 260],
+        [17, 270]
+      ],
+      "confidence": "medium_high",
+      "weight_assigned": {"blind": 0.25, "causal_mbo": 0.75},
+      "evidence_used": [
+        "HANDOFF: incoming pol+1, age1, cum+720, close_off_low_frac 0.84, last_hour_dir +1 -> a LIVE up-chain (0430 fresh turn_up +1230) carrying strong up-momentum into the overnight seam; 0501 is up-leg DAY 2, not a lone reversal",
+        "day-tape confirm: total_sflow -3358 (SELL) but absorb_session=true; ph2 -1728/+200 with ph_absorb=true (sell ABSORBED under rising = covering, negative-conviction-under-rising tell)",
+        "phase table: ph0 +462/+500 (overnight up onset = the inherited momentum), ph1 -2092/-400 (aligned sell dip to low -140 @10:13), ph2 -1728/+200 covering lift",
+        "high_exc +610 @08:12 = the inherited up-chain momentum peaking early; low -140 @10:13 absorbed; close net +290 (day_move +280) = up-leg maturing not turning"
+      ],
+      "evidence_rejected": [
+        "raw book div/imb read (book layer stood down - no trustworthy verdict)",
+        "blind's down-lean off the raw SELL tilt (refuted by ph2 absorption AND by the inherited up-chain state)",
+        "reading 0501 as a standalone lone covering reversal (round-1 framing) - the handoff shows it is chain-supported up-leg day 2, which is why the up held"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer: no execution_authority / conviction-floor / book_complete verdict in g18 evidence -> book read stands down; trade-flow + phase absorption only"
+      ],
+      "selection_reason": "Friday weekend-positioning day owned by E; covering-into-weekend on a live inherited up-chain is exactly E's turn/exhaustion lens; contrast partner to 0508.",
+      "mbo_verdict": "COVERING lift ON A LIVE UP-CHAIN. Round 1 read this as a lone covering reversal (+250); the handoff tightens it to up-leg DAY 2 - the inherited 0430 strong-close (off_low 0.84) up-momentum drove the +610 morning high, then the crowded-short SELL was absorbed (ph2 negative-conviction-under-rising) and covering held the close up. Direction UP, now doubly confirmed (inherited chain + absorption). Magnitude nudged +250 -> +270 for the inherited overnight carry, honest vs actual +280 (err -10). Confidence medium -> medium_high (state resolves the round-1 ambiguity). Covering give-back is SELF-LIMITING (one-shot) - do NOT extrapolate a standing weekly up bias; but the crowded short is still on (upper-tail squeeze risk into Monday).",
+      "handoff_in_used": {
+        "from_date": "20260430",
+        "from_owner": "D",
+        "took": "pol+1 age1 cum+720 close_off_low_frac 0.84 last_hour_dir +1 = a LIVE up-chain from a fresh 0430 turn_up +1230 closing strong near its high. D's read: 'Print delivered UP ... the cascade root - the corrected UP close' (conf 0.8).",
+        "tightened": "Direction UNCHANGED (up). The state upgrades my 0501 from a lone covering reversal to up-leg DAY 2 of an inherited live up-chain: (1) the morning +610 high gets a causal owner (inherited 0430 up-momentum carrying through the flat overnight seam, open 2.76 vs prior close 2.761), no gap front-run; (2) magnitude +250 -> +270 (the off_low 0.84 strong prior close adds real overnight carry); (3) confidence medium -> medium_high (chain-supported, not a standalone flip). The absorbed sell is now read as a MATURING up-leg's defensive flow, not the whole story.",
+        "not_front_run": "The overnight up carry is sized by the PRIOR-day (0430) exhaustion/strong-close state, not projected as a fresh 0501 rally; the day-move stays modest (+270) because the up-leg is age 2 and maturing."
+      },
+      "handoff_out": {
+        "close_level": 2.789,
+        "cum_from_anchor_usd": 1000,
+        "last_hour_dir": "up",
+        "last_hour_flow": "SELL_absorbed",
+        "close_off_low_usd": 430,
+        "close_off_high_usd": -320,
+        "late_extreme_flag": "none (low was mid-morning 10:13, high 08:12; close upper-middle, off both extremes)",
+        "chain_polarity": "up_chain_maturing_but_fragile (covering-driven; SELL flow -3358 persists underneath)",
+        "chain_age": "up-leg day 2 (0430 turn_up +1230 [age1] -> 0501 covering hold +290 [age2])",
+        "exit_type": "covering_hold (NOT crest-trim; sell absorbed, covering lift into the close - continuation-biased, do NOT fade down)",
+        "monday_bias": "up_fade_to_flat_with_LIVE_UPPER_TAIL. The covering lift is SELF-LIMITING (one-shot) so the p50 reverts toward chain/state default and does NOT re-fire a fresh covering rally. BUT the crowded short did NOT clear (SELL flow -3358 persists, short stack still on into a maturing age-2 up-leg) -> fat UPPER tail / squeeze risk stays live on Monday. A informs the seam, B owns the number: p50 modest-up, tail up.",
+        "read": "Weekend inherits a covering-hold close at 2.789 (+1000 from anchor), up-leg day 2 of a live chain. The sell was ABSORBED not delivered - shorts covered into the weekend on top of a still-live up-chain. Sunday reopen is continuation-biased UP but self-limiting; the standing risk is an upper-tail SQUEEZE because the crowded short is still on. Do not size the Monday p50 as a fresh covering rally - that specific fuel is one-shot spent unless a new one-sided run rebuilds it - but keep the upper tail wide. [Note for the walk: B's 0504 did flip up +170 and the chain ran on to 2.85 - the squeeze had further to run, exactly this tail.]"
+      }
+    },
+    {
+      "date": "20260508",
+      "dow": "Fri",
+      "day_class": "friday_weekend_positioning",
+      "blind_direction": "down",
+      "blind_net_usd": -420,
+      "posterior_direction_by_horizon": {
+        "overnight": "up",
+        "morning": "up",
+        "afternoon": "down",
+        "close": "down"
+      },
+      "expected_magnitude_usd": -360,
+      "expected_magnitude_band_usd": [-260, -520],
+      "onset_time_et": "2026-05-08 04:10 (up onset, overnight/early pop = the inherited 0507 print-carry residual, NOT a fresh covering setup)",
+      "turn_time_et": "2026-05-08 09:15 (turn_down confirmed, high +590 - the print-carry exhausts and the inherited FRESH down-chain takes over)",
+      "trend_vs_chop": "inherited_print_pop_exhausts_then_fresh_down_chain_delivers",
+      "continuation_vs_reversal": "continuation_of_inherited_fresh_down_turn (blind direction confirmed; the morning pop is spent print-carry, not a reversal)",
+      "path_p50_curve": [
+        [18, 0],
+        [20, -30],
+        [22, -60],
+        [0.5, -80],
+        [3, -40],
+        [6, 150],
+        [8, 430],
+        [9.5, 560],
+        [11, 90],
+        [13, -260],
+        [14.5, -450],
+        [16, -380],
+        [17, -360]
+      ],
+      "confidence": "high",
+      "weight_assigned": {"blind": 0.60, "causal_mbo": 0.40},
+      "evidence_used": [
+        "HANDOFF: incoming pol-1, age0, cum+980, close_off_low_frac 0.81, last_hour_dir +1 = a FRESH DOWN turn sitting under a SPENT one-shot up-print (0507 +720). D's read: 'Print delivered UP ... post-print re-anchor ... Not the covering' (conf 0.75). The chain STATE is pol-1 age0 despite the high close - the up was a one-shot print, the base chain has turned down.",
+        "day-tape confirm: total_sflow -3214 (SELL) AND absorb_session=false; ph2 -2692/-710 with ph_absorb=false (heavy ALIGNED sell delivery, positive conviction = genuine down)",
+        "phase table: ph0 -27/-110, ph1 -495/+480 (the inherited print-carry pop to high +590 @09:15 - mild sell, no fresh buying), ph2 -2692/-710 aligned delivery",
+        "turn_kind turn_down @09:15 (turn_mag 950) precisely where the print-carry exhausts; high_exc +590 @09:15, low_exc -510 @14:12, close net -360 (day_move -370)"
+      ],
+      "evidence_rejected": [
+        "raw book div/imb read (book layer stood down - no trustworthy verdict)",
+        "reading the morning +590 pop as a covering hold / fresh up-chain (it is the INHERITED 0507 print-carry residual exhausting; ph1 flow is mild-SELL -495, no fresh buy demand; ph2 is aligned delivery, not absorption)",
+        "the blind's two-sided-down open framing (direction right, but it did not see the morning print-carry pop that had to exhaust first)"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer: no execution_authority / conviction-floor / book_complete verdict in g18 evidence -> book read stands down; trade-flow + phase absorption only"
+      ],
+      "selection_reason": "Friday weekend-positioning day owned by E; the print-carry-exhaustion-then-turn-down read is E's turn/exhaustion lens; contrast partner to 0501.",
+      "mbo_verdict": "DELIVERED SELL after inherited print-carry exhausts. Round 1 read the morning pop as a 'mild-sell pop that failed'; the handoff gives it a causal owner - it is the SPENT 0507 up-print (+720, off_low 0.81) carrying into the overnight seam and topping @09:15, exactly when the inherited FRESH down-chain (pol-1 age0) takes over. absorb_session=false, ph2 -2692 aligned with -710 = genuine turn-down delivery. Direction STAYS DOWN, confirming blind. Magnitude tightened -350 -> -360 (the inherited high-close print carry lifts the morning higher, giving the fresh down-turn slightly more room to fall) vs actual -370 (err +10). Chain/state-default DOWN resuming - NO covering fuel, NO squeeze stack built here.",
+      "handoff_in_used": {
+        "from_date": "20260507",
+        "from_owner": "D",
+        "took": "pol-1 age0 cum+980 close_off_low_frac 0.81 last_hour_dir +1 = a FRESH DOWN turn (age0) sitting under a SPENT one-shot up-print (0507 +720). D's read: 'Print delivered UP ... Not the covering' (conf 0.75).",
+        "tightened": "Direction UNCHANGED (down). The state is the key: 0507 closed HIGH (off_low 0.81) but the chain flipped to pol-1 age0 - a fresh down turn beneath the print. This upgrades my 0508: (1) the morning +590 pop gets a causal owner - it is the inherited 0507 print-carry residual exhausting through the flat overnight seam (open 2.786 vs prior close 2.787), NOT a fresh covering setup, so I do not misread it up; (2) turn_down @09:15 is sized by the PRIOR-day (0507) print-exhaustion state, not front-run - the pop must spend before the fresh down-chain delivers; (3) magnitude -350 -> -360 (the inherited high close means the pop peaks higher -> more room to fall on the aligned ph2 delivery).",
+        "not_front_run": "The overnight/morning up pop is the inherited print carry and is sized by the prior 0507 exhaustion, not projected forward as a fresh up leg; the day resolves DOWN only after that carry tops @09:15."
+      },
+      "handoff_out": {
+        "close_level": 2.750,
+        "cum_from_anchor_usd": 620,
+        "last_hour_dir": "down",
+        "last_hour_flow": "SELL_delivered_aligned",
+        "close_off_low_usd": 150,
+        "close_off_high_usd": -950,
+        "late_extreme_flag": "late_low (low -510 @14:12 into the final hours; close -360 off the low but firmly in the lower band)",
+        "chain_polarity": "down_chain_confirmed (fresh 0507 pol-1 age0 -> 0508 delivers, now age1)",
+        "chain_age": "down-leg day 1/age1 (inherited fresh down turn [age0] delivered on 0508; the inherited 0507 up-print pop exhausted @09:15)",
+        "exit_type": "delivered_sell_continuation (NOT covering, NOT fadeable crest-trim; aligned turn-down delivery after the inherited print-carry pop spent)",
+        "monday_bias": "down_continuation. Sell was DELIVERED not absorbed -> chain/state default DOWN carries into the reopen. NO covering to fade and NO fresh crowding stack built on the sell side that would flip a squeeze -> unlike 0501 there is NO upper-tail flag. The inherited 0507 up-print is fully spent (topped @09:15, gone). A/B inherit a clean down-biased seam.",
+        "read": "Block-close Friday sign-off. Weekend inherits a delivered-sell close at 2.750 (+620 from anchor, but a confirmed fresh down-turn now age1). The morning +590 pop was the inherited 0507 print-carry exhausting @09:15; the afternoon walked price down on aligned sell flow with no absorption. Sunday reopen is continuation-biased DOWN; this is a genuine turn, not a covering hold - do not fade it up. Contrast to 0501: same strong-up prior close, but 0501 inherited a LIVE up-chain (pol+1) and covered up, while 0508 inherited a FRESH DOWN turn (pol-1) under a spent print and delivered down - the incoming chain polarity was the sign, and the day-tape absorption verdict (0501 true, 0508 false) confirmed it."
+      }
+    }
+  ],
+  "summary": {
+    "days_scored": 2,
+    "round": 2,
+    "flip_from_blind": ["20260501 (down -> up; covering absorbed on a live inherited up-chain)"],
+    "confirm_blind": ["20260508 (down confirmed; inherited print-carry exhausts, fresh down-chain delivers)"],
+    "r1_to_r2_change": {
+      "20260501": {"r1_usd": 250, "r2_usd": 270, "direction": "up (unchanged)", "what_the_handoff_tightened": "pol+1 age1 off_low 0.84 upgraded the day from a lone covering reversal to up-leg day 2 on a live inherited up-chain; +20 for inherited overnight carry; confidence medium -> medium_high; morning +610 high given a causal owner (inherited 0430 momentum)."},
+      "20260508": {"r1_usd": -350, "r2_usd": -360, "direction": "down (unchanged)", "what_the_handoff_tightened": "pol-1 age0 under a spent 0507 up-print gave the morning +590 pop a causal owner (inherited print-carry exhausting @09:15, not a covering setup); -10 for the higher inherited close giving more room to fall; turn_down @09:15 sized by prior-day print exhaustion, not front-run."}
+    },
+    "derived_vs_actual": {
+      "20260501": {"posterior_usd": 270, "actual_day_move_usd": 280, "err_usd": -10, "blind_err_usd": -760},
+      "20260508": {"posterior_usd": -360, "actual_day_move_usd": -370, "err_usd": 10, "blind_err_usd": -50}
+    },
+    "book_layer": "stood down both days (no trustworthy verdict); trade-flow + phase absorption only",
+    "handoff_out_emitted": ["20260501", "20260508"],
+    "friday_sign_off": "both owned days carry handoff_out (coordinator Friday sign-off satisfied)"
+  }
+}

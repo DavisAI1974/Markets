@@ -41,5 +41,49 @@ if [ ! -d realbins ] || [ -z "$(ls -A realbins 2>/dev/null)" ]; then
   echo "[session_start] realbins: $(ls realbins 2>/dev/null | wc -l) files"
 fi
 
+# ---------------------------------------------------------------------------
+# Kalshi NG forecaster substrate (S108). data/ is gitignored and DIES WITH THE
+# CONTAINER, while the committed state/forecast artifacts survive. Restoring it
+# was a manual rediscovery at the top of S107 and again at the top of S108, so
+# it happens here instead.
+#
+# TWO RULES, both learned the hard way:
+#   1. ALWAYS run boto3 under `env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY`.
+#      The container injects PLACEHOLDER creds into the environment that override
+#      ~/.aws/credentials, so an un-stripped call authenticates as nobody.
+#   2. NO-OP LOUDLY when the keys are absent. A half-restored plane is exactly the
+#      silently-empty-input failure this project keeps getting bitten by - six in
+#      one session - and it reads downstream like a deliberate price mask. Say
+#      plainly that nothing was restored; never leave a partial plane looking whole.
+# Keys live ONLY in ~/.aws/credentials and scratchpad/*.env (chmod 600). This hook
+# never prints, copies or commits them.
+# ---------------------------------------------------------------------------
+if [ -f research/kalshi/restore_substrate.py ]; then
+  pip install --quiet numpy pandas matplotlib boto3 databento >/dev/null 2>&1 \
+    || echo "[session_start] kalshi dep install had issues (continuing)"
+
+  if [ -f "$HOME/.aws/credentials" ] && ! grep -qi placeholder "$HOME/.aws/credentials" 2>/dev/null; then
+    echo "[session_start] AWS creds present - restoring the NG data plane (S3 + vol_regime rebuild)..."
+    env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \
+      python3 research/kalshi/restore_substrate.py 2>&1 | tail -5 \
+      || echo "[session_start] restore_substrate had issues - VERIFY BEFORE STAGING"
+    # The completeness gate is the whole point: it refuses to stage a group with an
+    # empty block, so surface its verdict at session start rather than mid-run.
+    python3 research/kalshi/state_health.py 2>&1 | grep -E "PASS|HARD|REFUS" | head -12 \
+      || echo "[session_start] state_health did not run"
+  else
+    echo "[session_start] ================================================================"
+    echo "[session_start] NG DATA PLANE NOT RESTORED - no AWS credentials found."
+    echo "[session_start]   data/ is EMPTY or STALE. Staging a group, re-staging, and the"
+    echo "[session_start]   round-2 handoff on any group staged before S108 will FAIL or,"
+    echo "[session_start]   worse, read as an empty block. Committed artifacts are fine:"
+    echo "[session_start]   a group staged at S108 or later runs BOTH rounds without data/."
+    echo "[session_start]   To restore:  write ~/.aws/credentials (chmod 600), then"
+    echo "[session_start]   env -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY \\"
+    echo "[session_start]     python3 research/kalshi/restore_substrate.py"
+    echo "[session_start] ================================================================"
+  fi
+fi
+
 echo "[session_start] done."
 exit 0

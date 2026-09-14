@@ -1,0 +1,102 @@
+{
+  "specialist": "E",
+  "lens": "FRIDAY / EXPIRY / ROLL / WEEKEND POSITIONING",
+  "group": 15,
+  "tag": "g15",
+  "brain_version_base": "s102.1 (immutable blind = forecasts/grp15.json)",
+  "doctrine": "POSTERIOR UPDATE of the immutable blind (refinement_architecture_doctrine.md). The blind stays the core predictor; I adjust ONLY on MATERIAL causal evidence. MBO book-reconstruction layer is LOW-CONVICTION on both my days (no execution_authority anywhere, div_conviction <= ~0.15, imb_level whipsaws) -> per doctrine #8 I DISABLE book-based turn calls and fall back to TRADE-FLOW + absorption (signed flow, phase pxchg, absorb_session, consumed_side), which is trustworthy. Execution = SHADOW.",
+  "days": [
+    {
+      "date": "20260320",
+      "dow": "Fri",
+      "instrument": "NGK26",
+      "role": "ROLL SEAM day (NGJ26 April -> NGK26 May; Kalshi underlying rolled 5bd before the Mar 27 LTD)",
+      "blind_direction": "down",
+      "blind_net_usd": -250,
+      "seam_note": "The 0319->0320 basis change is a CONTRACT SWAP, not a traded move: NGJ26 0319 close 3.115 -> NGK26 0320 open 3.078, offset ~-0.037 (~-370 in scoring units). MARKED NEVER TRADED; overnight_gap forecast = 0; the seam offset is measured only at scoring. The MBO ph1 overnight move (sflow +155, pxchg +320) is a REAL NGK26 intraday move and is NOT the seam - do not read it as weekend repricing.",
+      "posterior_direction_by_horizon": {
+        "overnight_20_06": "up (mild probe; ph1 pxchg +320, high +580 at 06:04)",
+        "morning_06_10": "down (sell-off to the -660 low at 09:26; ph2 pxchg -780)",
+        "afternoon_10_close": "recover, net small down (ph3 pxchg +370 on positive flow; close -80)",
+        "net_day": "down-SHALLOW (near flat)"
+      },
+      "expected_magnitude_usd": -120,
+      "onset_time_et": "06:04 (turn_down after an overnight up probe)",
+      "turn_time_et": "09:26 (the -660 low; afternoon recovers off it)",
+      "trend_vs_chop": "CHOP (whipsaw: up probe -> sell-off -> recovery; no sustained trend)",
+      "continuation_vs_reversal": "intraday reversal-within-day absorbed; net a shallow down continuation of the stretched chain",
+      "path_p50_curve": [[20,0],[22,50],[0,150],[2,250],[4,400],[6,550],[8,-200],[10,-600],[12,-350],[14,-200],[16,-100],[18,-110],[20,-120]],
+      "confidence": "LOW-MODERATE (quiet settle-digestion Friday; low materiality; the seam dominates and is never-traded)",
+      "weight_assigned": {"blind": 0.7, "mbo_trade_flow": 0.3, "mbo_book_layer": 0.0},
+      "evidence_used": [
+        "MBO trade-flow: total_sflow +3519 POSITIVE on a down-price day = buyers ABSORBING the down drift -> down-conviction is WEAK -> shallow the blind's -250 toward flat",
+        "ph2 ph_absorb=true (the -780 down leg was absorbed on +1484 buy flow) - the down attempt has no follow-through",
+        "Friday flow-calendar: no GSCI/BCOM roll live, no early close - the ONLY roll mechanic is the Kalshi-underlying seam itself (already handled never-traded); nothing else mechanical",
+        "blind's own read: 0319 active sell print-day but NO live building catalyst to ride into the weekend -> Friday squaring caps extension"
+      ],
+      "evidence_rejected": [
+        "MBO book-layer (div_expect flips continue/reversal/weakening/flip_risk across the session; div_conviction ~0.0-0.31; imb_level whipsaws +/-; execution_authority=false ALL session) - NOISE, not used for direction or turns",
+        "the 15:04 'flip_risk' book flag - would falsely signal a late reversal that did not durably occur; ignored",
+        "the ph1 overnight +320 up move as bullish - it is on the NGK26 leg and is NOT the seam; not read as repricing"
+      ],
+      "stand_down_reasons": [
+        "seam marked never-traded: overnight_gap forecast = 0 (real overnight forecast ~0 at the contract swap)",
+        "MBO book reconstruction low-conviction all session (no execution_authority) -> book-based conclusions DISABLED per doctrine #8; trade-flow + L1 only, limitation labeled",
+        "low-materiality quiet Friday -> small posterior adjustment only"
+      ],
+      "mbo_verdict": "HELP (mild). HOW: the positive session signed-flow (+3519) + ph2 absorption confirm the down-drift is being absorbed, supporting a SHALLOW near-flat outcome and refining the blind's -250 toward -120 (actual raw -80). WHY only mild: quiet day, seam dominates, and the MBO BOOK layer is pure noise here (would have whipsawed me). Net: the MBO TRADE-FLOW layer helps a little; the MBO BOOK layer works AGAINST me and is stood down.",
+      "selection_reason": "Friday/roll specialist: flow-calendar read first (empty but for the seam), seam marked never-traded, trade-flow absorption -> shallow-down posterior. Matches the refined_view benchmark (-150). Blind residual to actual -170; posterior residual ~-40."
+    },
+    {
+      "date": "20260327",
+      "dow": "Fri",
+      "instrument": "NGK26",
+      "role": "APRIL FUTURES EXPIRY day (NGJ26 expires 14:30 ET, the prompt leg; my walk instrument May is once-removed, G12 handoff-note form)",
+      "blind_direction": "down",
+      "blind_net_usd": -350,
+      "posterior_direction_by_horizon": {
+        "overnight_20_03": "up (ph1 pxchg +440 on +421 buy flow; onset up 03:43)",
+        "morning_03_10": "up STRONG (covering; morning high +1410 at 08:22; ph2 pxchg +430 AGAINST -1013 sell flow = absorption)",
+        "afternoon_10_close": "HOLD UP (ph3 pxchg +280 against -1878 sell flow; slight trim off the +1410 high; close +1160, low_exc only -60)",
+        "net_day": "UP STRONG"
+      },
+      "expected_magnitude_usd": 1050,
+      "onset_time_et": "03:43 (up onset; strength builds into the 08:22 morning high)",
+      "turn_time_et": null,
+      "trend_vs_chop": "TREND UP, steady (turn_kind=none; a single mild consolidation off the 08:22 high, no reversal)",
+      "continuation_vs_reversal": "CONTINUATION of the covering bid (short-covering into settle), NOT a reversal - the down-chain had already turned up (0325 bounce + 0326 hold)",
+      "path_p50_curve": [[20,0],[22,150],[0,350],[2,450],[4,650],[6,1000],[8,1400],[10,1150],[12,1050],[14,1100],[16,1120],[18,1150],[20,1120]],
+      "confidence": "HIGH on direction (absorption signature is decisive), MODERATE-HIGH on magnitude (~+900..+1200 band)",
+      "weight_assigned": {"blind": 0.2, "mbo_trade_flow": 0.7, "mbo_book_layer": 0.0},
+      "expiry_covering_vs_crest_trim_diagnosis": "EXPIRY COVERING, not crest-trim. (1) TAPE FINGERPRINT (decisive): total_sflow -2470 (aggressive net SELLING) yet price rose ALL THREE phases (+440/+430/+280) with absorb_session=TRUE and BID-consumed+weakening across the session (22:05, 03:05, 09:05) - aggressive sellers hit bids that are ABSORBED/replenished as shorts cover, so price grinds UP against the flow. A crest-trim would show price FALLING WITH aligned sell flow; here price rises AGAINST it = covering. (2) STRUCTURE: the weekend_crest_friday TRIGGER is NOT met - the chain is a DOWN-chain that already TURNED UP (0325 counter-bounce + 0326 hold = 2 basing/counter closes, chain-state-is-tape-state demotes it), so there is no stretched up-chain to trim. (3) DRIVER TIMING: the 0328 cold peak (D+1 ~13.5-17.7 gw) is AHEAD and crosses the weekend UNREALIZED = a risk-HOLDING/covering bid (shorts cover ahead of weekend cold), the OPPOSITE of a crest-trim where the driver is SPENT. (4) EXPIRY MECHANIC: April futures expiry, days_to_expiry 0, NO stranded premium on the walk leg -> the 0225 covering-into-settle form governs the prompt; May receives it damped (once-removed).",
+      "evidence_used": [
+        "MBO trade-flow DECISIVE: total_sflow -2470 sell + price +1160 UP + absorb_session=TRUE = ABSORPTION -> short covering into settle",
+        "phase price all three UP (+440/+430/+280); ph2 and ph3 both ph_absorb=true against heavy negative flow (-1013, -1878) = covering grind, no seller follow-through",
+        "consumed_side=BID with div_expect=weakening/exhausting at 22:05 / 03:05 / 09:05 = sellers depleting bids that keep replenishing as shorts lift = the covering paradox",
+        "onset up 03:43, morning high +1410 at 08:22, low_exc only -60 (no meaningful downside), close 3.035 near the high = all-day steady bid, no afternoon flip",
+        "expiry mechanic: April expiry, no stranded premium -> 0225 covering-into-settle form (now n=2 with 0225)",
+        "chain-state-is-tape-state: 0325 bounce + 0326 hold = down-chain demoted to basing/turning-up, so crest-trim precondition is absent",
+        "0328 cold AHEAD/unrealized across the weekend = holding/covering bid (blind knew the driver crosses the closure)"
+      ],
+      "evidence_rejected": [
+        "blind's weekend_crest_friday crest-trim (-350): TRIGGER not met (no stretched up-chain at extreme; driver ahead not spent) -> the blind MIS-FIRED the form, it did not merely mis-size",
+        "MBO book-layer div_transition flags: the 12:05 'reversal, exh True, consumed ASK, conv 0.154' briefly signals a top - but the session did NOT reverse (close +1160). Acting on this noisy book flag would have chopped me out of the covering rally. Book layer stood down.",
+        "imb_level series (whipsaws -0.31..+0.62 with no persistence) - not used for direction"
+      ],
+      "stand_down_reasons": [
+        "MBO book reconstruction low-conviction all day (execution_authority=false everywhere; div_conviction <= ~0.15) -> DISABLE book-based turn/reversal calls per doctrine #8; use trade-flow + absorption + L1 only, limitation labeled",
+        "May is once-removed from the expiring April prompt -> the covering bid is received DAMPED (band held to ~+1050, honest-under vs the +1160 actual, not stretched to match)"
+      ],
+      "mbo_verdict": "HELP DECISIVELY. HOW: the absorb_session=TRUE + negative-signed-flow-with-price-UP + BID-consumed-weakening fingerprint is the short-covering-into-settle diagnosis that FLIPS the blind's -350 crest-trim to a ~+1050 expiry-covering rally (actual +1160). WHY the blind missed: it applied crest-trim FORM to a down-chain that had turned up with an UNREALIZED-AHEAD driver - both crest-trim preconditions (stretched-extreme chain + spent driver) were absent; the MBO tape made that unmistakable in real time (up onset 03:43, absorption by mid-morning). CAVEAT: the MBO BOOK layer worked AGAINST me (its 12:05 reversal flag would have faded the rally); only the MBO TRADE-FLOW layer is load-bearing here.",
+      "selection_reason": "Friday/expiry specialist: flow-calendar first identifies April expiry -> expiry-day form split (no stranded premium -> covering-into-settle, not short-the-expiry). The MBO tape confirms covering over crest-trim decisively. Matches the refined_view benchmark (+1060). Blind residual to actual +1510 (wrong sign); posterior residual ~-110 (band-position, honest-under)."
+    }
+  ],
+  "specialist_summary": {
+    "headline": "0320 = mild shallow-down refine (seam never-traded, trade-flow absorption); 0327 = a DECISIVE sign flip from the blind's -350 crest-trim to a ~+1050 expiry-covering rally.",
+    "0320": "Blind down -250 -> posterior down-SHALLOW -120. Seam (NGJ26->NGK26 -0.037) marked never-traded. Positive session signed flow (+3519) absorbs the down drift = shallow. Low weight, low materiality. MBO helps mildly (trade-flow), book layer is noise.",
+    "0327": "Blind down -350 (crest-trim) -> posterior UP +1050 (expiry covering). The tape is unambiguous: net SELLING (-2470) absorbed while price grinds UP all day (absorb_session=True, BID-consumed weakening). Distinguished from crest-trim by: no stretched up-chain (down-chain turned up 0325/0326), driver 0328 cold AHEAD/unrealized (holding bid, not spent), April expiry no-stranded-premium 0225 covering form.",
+    "mbo_helped_or_hurt": "The MBO TRADE-FLOW layer HELPED on both days and was DECISIVE on 0327 (the covering diagnosis). The MBO BOOK-RECONSTRUCTION layer HURT on both days: no execution_authority anywhere, div_conviction <= ~0.15, div_transition/imb_level whipsaw - its 0327 12:05 'reversal' flag and 0320 15:04 'flip_risk' flag would both have produced false turn calls against the true path. Per doctrine #8 the book layer is stood down; trade-flow + absorption + L1 carry the refine. Recommendation for G16/G17: gate book-derived div/imb features behind an execution_authority / conviction floor before letting them touch direction.",
+    "execution": "SHADOW",
+    "no_averaging": "Each day treated per-event; no pooling. 0320 and 0327 share only the Friday class - their posteriors are independent (one near-flat chop, one large covering trend)."
+  }
+}

@@ -1,0 +1,482 @@
+{
+ "20260622": {
+  "date": "20260622",
+  "dow": "Mon",
+  "contract": "NGQ26",
+  "instrument": null,
+  "owner": "B",
+  "open": 3.319,
+  "close": 3.263,
+  "net_usd": -560,
+  "n_trades": 30371,
+  "session_min": 1439.5,
+  "high_exc": 580,
+  "low_exc": -660,
+  "hi_et": "2026-06-22 04:07:57.852512598-04:00",
+  "lo_et": "2026-06-22 18:02:16.326995850-04:00",
+  "turn_kind": "turn_down",
+  "turn_mag": 1140,
+  "turn_et": "2026-06-22 04:07:57.852512598-04:00",
+  "onset_et": "2026-06-22 02:55:32.528894424-04:00",
+  "onset_dir": "up",
+  "total_sflow": -3717,
+  "sflow_sign": -1,
+  "absorb_session": false,
+  "phases": [
+   {
+    "sflow": 622,
+    "pxchg": 430,
+    "vol": 7345
+   },
+   {
+    "sflow": -3942,
+    "pxchg": -560,
+    "vol": 42164
+   },
+   {
+    "sflow": -397,
+    "pxchg": -440,
+    "vol": 22219
+   }
+  ],
+  "ph_absorb": [
+   false,
+   false,
+   false
+  ],
+  "seam": false,
+  "dst": null
+ },
+ "20260623": {
+  "date": "20260623",
+  "dow": "Tue",
+  "contract": "NGQ26",
+  "instrument": null,
+  "owner": "C",
+  "open": 3.263,
+  "close": 3.19,
+  "net_usd": -730,
+  "n_trades": 39019,
+  "session_min": 1437.4,
+  "high_exc": 470,
+  "low_exc": -910,
+  "hi_et": "2026-06-23 01:02:09.931334734-04:00",
+  "lo_et": "2026-06-23 12:42:52.239594221-04:00",
+  "turn_kind": "turn_down",
+  "turn_mag": 1200,
+  "turn_et": "2026-06-23 01:02:09.931334734-04:00",
+  "onset_et": "2026-06-23 01:00:49.066492318-04:00",
+  "onset_dir": "up",
+  "total_sflow": -1990,
+  "sflow_sign": -1,
+  "absorb_session": false,
+  "phases": [
+   {
+    "sflow": -116,
+    "pxchg": 160,
+    "vol": 5194
+   },
+   {
+    "sflow": -1281,
+    "pxchg": -430,
+    "vol": 45867
+   },
+   {
+    "sflow": -593,
+    "pxchg": -460,
+    "vol": 31456
+   }
+  ],
+  "ph_absorb": [
+   false,
+   false,
+   false
+  ],
+  "seam": false,
+  "dst": null
+ },
+ "20260624": {
+  "date": "20260624",
+  "dow": "Wed",
+  "contract": "NGQ26",
+  "instrument": null,
+  "owner": "C",
+  "open": 3.191,
+  "close": 3.27,
+  "net_usd": 790,
+  "n_trades": 30921,
+  "session_min": 1439.1,
+  "high_exc": 820,
+  "low_exc": -140,
+  "hi_et": "2026-06-24 19:17:38.130675793-04:00",
+  "lo_et": "2026-06-23 23:30:40.819475412-04:00",
+  "turn_kind": "none",
+  "turn_mag": 930,
+  "turn_et": null,
+  "onset_et": "2026-06-24 06:56:40.587149620-04:00",
+  "onset_dir": "up",
+  "total_sflow": 311,
+  "sflow_sign": 1,
+  "absorb_session": false,
+  "phases": [
+   {
+    "sflow": 296,
+    "pxchg": 110,
+    "vol": 4352
+   },
+   {
+    "sflow": 84,
+    "pxchg": 270,
+    "vol": 43061
+   },
+   {
+    "sflow": -69,
+    "pxchg": 410,
+    "vol": 22551
+   }
+  ],
+  "ph_absorb": [
+   false,
+   false,
+   false
+  ],
+  "seam": false,
+  "dst": null
+ },
+ "20260625": {
+  "date": "20260625",
+  "dow": "Thu",
+  "contract": "NGQ26",
+  "instrument": null,
+  "owner": "D",
+  "open": 3.268,
+  "close": 3.264,
+  "net_usd": -40,
+  "n_trades": 51708,
+  "session_min": 1439.0,
+  "high_exc": 850,
+  "low_exc": -500,
+  "hi_et": "2026-06-25 09:01:38.581424236-04:00",
+  "lo_et": "2026-06-25 10:48:21.331629992-04:00",
+  "turn_kind": "turn_down",
+  "turn_mag": 890,
+  "turn_et": "2026-06-25 09:01:38.581424236-04:00",
+  "onset_et": "2026-06-25 03:14:37.734678984-04:00",
+  "onset_dir": "up",
+  "total_sflow": 1956,
+  "sflow_sign": 1,
+  "absorb_session": false,
+  "phases": [
+   {
+    "sflow": 766,
+    "pxchg": 620,
+    "vol": 7419
+   },
+   {
+    "sflow": -12,
+    "pxchg": -380,
+    "vol": 70526
+   },
+   {
+    "sflow": 1202,
+    "pxchg": -290,
+    "vol": 41429
+   }
+  ],
+  "ph_absorb": [
+   false,
+   false,
+   true
+  ],
+  "seam": false,
+  "dst": null
+ },
+ "20260626": {
+  "date": "20260626",
+  "dow": "Fri",
+  "contract": "NGQ26",
+  "instrument": null,
+  "owner": "E",
+  "open": 3.264,
+  "close": 3.287,
+  "net_usd": 230,
+  "n_trades": 48072,
+  "session_min": 1259.8,
+  "high_exc": 1110,
+  "low_exc": -30,
+  "hi_et": "2026-06-26 08:40:16.670172215-04:00",
+  "lo_et": "2026-06-25 20:01:28.222321033-04:00",
+  "turn_kind": "turn_down",
+  "turn_mag": 880,
+  "turn_et": "2026-06-26 08:40:16.670172215-04:00",
+  "onset_et": "2026-06-26 01:43:09.616236687-04:00",
+  "onset_dir": "up",
+  "total_sflow": 871,
+  "sflow_sign": 1,
+  "absorb_session": false,
+  "phases": [
+   {
+    "sflow": 688,
+    "pxchg": 710,
+    "vol": 5653
+   },
+   {
+    "sflow": -2554,
+    "pxchg": -80,
+    "vol": 37883
+   },
+   {
+    "sflow": 2737,
+    "pxchg": -410,
+    "vol": 77951
+   }
+  ],
+  "ph_absorb": [
+   false,
+   false,
+   true
+  ],
+  "seam": false,
+  "dst": null
+ },
+ "20260629": {
+  "date": "20260629",
+  "dow": "Mon",
+  "contract": "NGQ26",
+  "instrument": null,
+  "owner": "B",
+  "open": 3.292,
+  "close": 3.176,
+  "net_usd": -1160,
+  "n_trades": 44490,
+  "session_min": 1439.3,
+  "high_exc": 210,
+  "low_exc": -1290,
+  "hi_et": "2026-06-28 23:32:54.078859091-04:00",
+  "lo_et": "2026-06-29 14:52:33.825459957-04:00",
+  "turn_kind": "turn_down",
+  "turn_mag": 1370,
+  "turn_et": "2026-06-28 23:32:54.078859091-04:00",
+  "onset_et": "2026-06-29 05:16:01.028311729-04:00",
+  "onset_dir": "down",
+  "total_sflow": -4547,
+  "sflow_sign": -1,
+  "absorb_session": false,
+  "phases": [
+   {
+    "sflow": 53,
+    "pxchg": -440,
+    "vol": 6986
+   },
+   {
+    "sflow": -3770,
+    "pxchg": -650,
+    "vol": 77343
+   },
+   {
+    "sflow": -830,
+    "pxchg": -70,
+    "vol": 31289
+   }
+  ],
+  "ph_absorb": [
+   false,
+   false,
+   false
+  ],
+  "seam": false,
+  "dst": null
+ },
+ "20260630": {
+  "date": "20260630",
+  "dow": "Tue",
+  "contract": "NGQ26",
+  "instrument": null,
+  "owner": "C",
+  "open": 3.175,
+  "close": 3.254,
+  "net_usd": 790,
+  "n_trades": 49078,
+  "session_min": 1434.6,
+  "high_exc": 1530,
+  "low_exc": -160,
+  "hi_et": "2026-06-30 12:48:41.171269178-04:00",
+  "lo_et": "2026-06-29 23:54:20.043335915-04:00",
+  "turn_kind": "none",
+  "turn_mag": 950,
+  "turn_et": null,
+  "onset_et": "2026-06-30 06:28:52.381664038-04:00",
+  "onset_dir": "up",
+  "total_sflow": -5573,
+  "sflow_sign": -1,
+  "absorb_session": true,
+  "phases": [
+   {
+    "sflow": 600,
+    "pxchg": 330,
+    "vol": 6126
+   },
+   {
+    "sflow": -4266,
+    "pxchg": 880,
+    "vol": 83255
+   },
+   {
+    "sflow": -1907,
+    "pxchg": -430,
+    "vol": 40672
+   }
+  ],
+  "ph_absorb": [
+   false,
+   true,
+   false
+  ],
+  "seam": false,
+  "dst": null
+ },
+ "20260701": {
+  "date": "20260701",
+  "dow": "Wed",
+  "contract": "NGQ26",
+  "instrument": null,
+  "owner": "C",
+  "open": 3.254,
+  "close": 3.204,
+  "net_usd": -500,
+  "n_trades": 35517,
+  "session_min": 1439.3,
+  "high_exc": 170,
+  "low_exc": -590,
+  "hi_et": "2026-07-01 09:02:05.662069798-04:00",
+  "lo_et": "2026-07-01 08:40:50.983571291-04:00",
+  "turn_kind": "none",
+  "turn_mag": 670,
+  "turn_et": null,
+  "onset_et": "2026-07-01 01:52:46.078094244-04:00",
+  "onset_dir": "down",
+  "total_sflow": -73,
+  "sflow_sign": -1,
+  "absorb_session": false,
+  "phases": [
+   {
+    "sflow": -300,
+    "pxchg": -170,
+    "vol": 7819
+   },
+   {
+    "sflow": 11,
+    "pxchg": -160,
+    "vol": 53861
+   },
+   {
+    "sflow": 216,
+    "pxchg": -180,
+    "vol": 22031
+   }
+  ],
+  "ph_absorb": [
+   false,
+   false,
+   false
+  ],
+  "seam": false,
+  "dst": null
+ },
+ "20260702": {
+  "date": "20260702",
+  "dow": "Thu",
+  "contract": "NGQ26",
+  "instrument": null,
+  "owner": "D",
+  "open": 3.204,
+  "close": 3.204,
+  "net_usd": 0,
+  "n_trades": 34889,
+  "session_min": 1439.9,
+  "high_exc": 160,
+  "low_exc": -530,
+  "hi_et": "2026-07-02 15:53:36.965513706-04:00",
+  "lo_et": "2026-07-02 10:30:08.787272453-04:00",
+  "turn_kind": "turn_up",
+  "turn_mag": 530,
+  "turn_et": "2026-07-02 10:30:08.787272453-04:00",
+  "onset_et": "2026-07-02 03:03:48.112767696-04:00",
+  "onset_dir": "down",
+  "total_sflow": -2861,
+  "sflow_sign": -1,
+  "absorb_session": false,
+  "phases": [
+   {
+    "sflow": -126,
+    "pxchg": -280,
+    "vol": 5650
+   },
+   {
+    "sflow": -1612,
+    "pxchg": 20,
+    "vol": 56411
+   },
+   {
+    "sflow": -1123,
+    "pxchg": 250,
+    "vol": 22726
+   }
+  ],
+  "ph_absorb": [
+   false,
+   true,
+   true
+  ],
+  "seam": false,
+  "dst": null
+ },
+ "20260703": {
+  "date": "20260703",
+  "dow": "Fri",
+  "contract": "NGQ26",
+  "instrument": null,
+  "owner": "A",
+  "open": 3.204,
+  "close": 3.245,
+  "net_usd": 410,
+  "n_trades": 11501,
+  "session_min": 1020.0,
+  "high_exc": 690,
+  "low_exc": 0,
+  "hi_et": "2026-07-03 10:07:06.936462641-04:00",
+  "lo_et": "2026-07-02 20:00:00.045264721-04:00",
+  "turn_kind": "none",
+  "turn_mag": 410,
+  "turn_et": null,
+  "onset_et": "2026-07-03 00:03:34.012036562-04:00",
+  "onset_dir": "up",
+  "total_sflow": -1005,
+  "sflow_sign": -1,
+  "absorb_session": true,
+  "phases": [
+   {
+    "sflow": -29,
+    "pxchg": 310,
+    "vol": 1663
+   },
+   {
+    "sflow": -487,
+    "pxchg": 90,
+    "vol": 8085
+   },
+   {
+    "sflow": -489,
+    "pxchg": 20,
+    "vol": 12997
+   }
+  ],
+  "ph_absorb": [
+   false,
+   false,
+   false
+  ],
+  "seam": false,
+  "dst": null
+ }
+}

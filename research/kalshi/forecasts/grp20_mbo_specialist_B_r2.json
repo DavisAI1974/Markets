@@ -1,0 +1,347 @@
+{
+ "specialist": "B",
+ "lens": "Monday weekend-information repricing; the 06-10 ET catch-up window is where Monday decides. Post-Sunday-fold (S104.1) my day starts at the Sunday 18:00 ET reopen: Monday = Friday close -> Monday close, the reopen hours are my overnight phase.",
+ "group": "g20",
+ "brain_version": "s103.2",
+ "round": 2,
+ "days_owned": [
+  "20260601"
+ ],
+ "doctrine_note": "Round 2 is a coordination pass, not a second forecast. The incoming handoff confirmed my round-1 extension rather than changing it, so the number HOLDS at -900 and I say so plainly - a confirmation is not an improvement and manufacturing 90 dollars of movement toward a visible actual would be fitting, not refinement. The immutable blind stays the CORE predictor and the weight split is unchanged. Magnitude is DERIVED from a measured extension and a cross-block mechanism fraction. No brain edits; proposals only. Per-event, never pooled - the four-block correlations in the cross-cutting finding are reported WITH their per-event tables and are used to falsify claims, never as a pooled conclusion standing alone. NG is not WTI.",
+ "direction_changes_from_r1": [],
+ "cross_cutting_mbo_finding": {
+  "headline": "ROUND 2 REBUILDS THIS FINDING AND RETRACTS THREE OF ITS FOUR ROUND-1 CLAIMS. The surviving mechanism is narrower, measured on four blocks, and falsifiable: THE BLIND RUNS A REAL MEAN-REVERSION RULE ON A FICTITIOUS STATE VARIABLE. The market mean-reverts against its REALIZED cum-from-anchor in every block measured (corr -0.36 / -0.58 / -0.63 / -0.50 for G17/G18/G19/G20). The blind mean-reverts against its CONSTRUCTED cum (corr of its own day-guess against its own running chain: -0.65 / -0.18 / -0.71 / -0.52). The rule is right; the input is a forecast integral, not a market state. Separately and NOT the same thing, the blind carries a persistent DOWN BIAS (mean per-day error -206 USD over 40 days, its constructed chain negative on 36 of 40 days) - and that bias, not the chain-staleness, is what produces the block lean.",
+  "what_I_retract_from_round_1_and_why": [
+   {
+    "claim": "'a continuous chain integrates the blind's own directional error WITHOUT BOUND'",
+    "verdict": "RETRACTED - falsified by my own data.",
+    "measurement": "mean |divergence| by session index k across G17-G20: k=1 768, k=2 590, k=3 1022, k=4 2182, k=5 2408, k=6 2645, k=7 2730, k=8 2388, k=9 2612, k=10 2058. A pure random walk on the measured per-day error sd (811) would grow as 811*sqrt(k): 811, 1147, 1405, 1622, 1813, 1986, 2146, 2294, 2433, 2565. The observed divergence tracks the envelope to k=4 and then SATURATES near 2,400-2,700 while the envelope keeps rising, and at k=10 it is BELOW it. The divergence is bounded and sub-diffusive, not unbounded. The word 'unbounded' was rhetoric and it is wrong."
+   },
+   {
+    "claim": "'one integrator, opposite signs, ALLOCATED BY DAY-CLASS - 4,050 too low on eight mid-week days, 1,490 too high on the two Monday-class days'",
+    "verdict": "RETRACTED - it is a G20-only artifact and G19 inverts it.",
+    "measurement": "G19 signed error by class: Monday-class -3,400 (n=2, blind TOO LOW), non-Monday +1,030 (n=8). G20: Monday-class +1,490 (TOO HIGH), non-Monday -4,050. Exactly opposite allocations on consecutive blocks. The coordinator's independent G17-G20 day-class means (Mon -465, Tue +24, Wed -60, Thu -692, Fri +165) agree with G19 and against my G20 reading: across four blocks the blind's Monday bias is NEGATIVE, and its largest day-class bias is THURSDAY (-692, the EIA print), which my story does not address at all. A mechanism that predicted a stable sign allocation and delivered opposite signs on consecutive blocks is refuted on its own prediction."
+   },
+   {
+    "claim": "'polarity INVERTED at my seam' as the causal driver of the miss",
+    "verdict": "RETRACTED AS A MECHANISM, KEPT AS A DESCRIPTION OF ONE DAY.",
+    "measurement": "Direct test over all 40 block-days: days where sign(constructed cum) != sign(realized cum) have mean |err| 660 (n=27); days where the signs AGREE have mean |err| 677 (n=9). No difference. Polarity inversion does not predict a larger error. It was true on 0601 and it explains nothing general."
+   },
+   {
+    "claim": "'the measurement' - the divergence table offered as evidence",
+    "verdict": "RETRACTED AS EVIDENCE. It is an IDENTITY.",
+    "measurement": "divergence_t = realized_cum_t - constructed_cum_t = -(sum of the blind's errors through t), verified exactly on all four blocks (residual 0 on 40/40 days). The divergence IS the running integral of the errors it was offered to explain. Quoting 'mean |divergence| = 2,310 = 2.1x n0_range_20_mean' as a finding restates 'the blind's errors accumulated'. It is a useful bookkeeping object and it is not evidence for any causal claim. I should have caught this in round 1."
+   }
+  ],
+  "what_survives_and_the_measurement_that_earns_it": {
+   "premise_1_the_market_side": "The market mean-reverts against realized cum-from-anchor. corr(actual day-move_t, realized cum_{t-1}) = -0.361 (G17), -0.578 (G18), -0.631 (G19), -0.500 (G20); pooled -0.324 over 40 days. NEGATIVE IN ALL FOUR BLOCKS. Note it is a LEVEL effect, not a momentum effect: the lag-1 autocorrelation of the actual day-move is -0.045, i.e. nothing. Days do not alternate; days revert against the accumulated level.",
+   "premise_2_the_blind_side": "The blind applies that same reversion, to its own chain. corr(blind day-guess_t, constructed cum_{t-1}) = -0.653 (G17), -0.177 (G18), -0.705 (G19), -0.520 (G20). NEGATIVE IN ALL FOUR BLOCKS.",
+   "the_consequence_which_is_what_round_1_saw": "corr(blind error_t, divergence_{t-1}) = +0.503 / +0.397 / +0.659 / +0.465, positive in all four blocks. Under an independent-error null this correlation is ZERO (the divergence is the running negative sum of past errors, which is uncorrelated with the next error), so it is not an artifact of the identity above - it is the joint footprint of premises 1 and 2. Note its SIGN is the opposite of what my round-1 story predicted: I claimed a chain running low would drag the next guess LOW (negative feedback into the error); the measurement says a chain running low is followed by guesses that are TOO HIGH. That is the reversion rule firing on the wrong variable, not a runaway integrator.",
+   "how_much_the_missing_variable_is_worth": "Leave-one-block-out benchmark of a ONE-VARIABLE rule that uses NOTHING but the realized cum: day-move_hat = -beta * realized_cum_{t-1}, beta fitted on the other three blocks and scored on the held-out block. Held-out G17: mean|err| 353 vs the blind's 451. G18: 563 vs 521 (the one loss). G19: 779 vs 939. G20: 713 vs 788. Direction hits 4/5/4/6 against the blind's 5/5/4/6. One number the blind is masked from, with no weather, no storage, no positioning, no flow and no calendar, matches or beats the entire blind stack on day-level error in three blocks of four.",
+   "the_part_this_does_NOT_explain_stated_because_round_1_overclaimed_it": "It does NOT explain the block lean. The same one-variable rule's forward-curve drift on the held-out blocks is +1,135 / -1,077 / -3,842 / -3,345 against the blind's -970 / -2,330 / -2,370 / -2,560: on G19 and G20 the cum-reversion rule leans DOWN HARDER than the blind does. Cum-blindness is a DISPERSION problem, not a DRIFT problem. The drift is a separate defect - a flat down bias in the blind's day-guesses (mean -206/day; constructed block cum negative in all four blocks at -2,040 / -1,720 / -1,220 / -700 while the actual block cum ran -1,070 / +610 / +1,150 / +1,860). Round 1 claimed one mechanism produced both. Two mechanisms produce them, and fixing the one I named would make the drift worse."
+  },
+  "the_falsifier_what_would_kill_this": {
+   "F1_kills_the_market_premise": "A block with corr(actual day-move_t, realized cum_{t-1}) >= 0. Four for four negative so far; one non-negative block is a serious hit, two kills the premise and with it the whole mechanism, because if the market does not revert against cum there is nothing for a wrong cum to get wrong.",
+   "F2_kills_the_blind_premise": "A block with corr(blind day-guess_t, constructed cum_{t-1}) >= 0. That would mean the blind is not running a cum-reversion rule at all, and the mechanism has no blind-side half.",
+   "F3_kills_the_worth_claim": "The leave-one-block-out one-variable benchmark ceasing to match or beat the blind's mean|err| on new blocks. It is already 3 of 4, not 4 of 4 - G18 is a recorded loss and I am not hiding it.",
+   "F4_the_guard_against_the_A_trap": "The G19 post-mortem killed covering-self-limiting because it was non-falsifiable toward DOWN - unfired implied down AND spent implied down. This finding is exposed to the same disease because it can narrate an error of either sign. The guard is that it is now stated as TWO SIGNED CORRELATIONS with a predicted sign each (F1 negative, F2 negative) and a predicted sign for their product (F3, err vs divergence POSITIVE), and every one of those three can come out the other way on the next block. Concretely: if G21's blind runs error and divergence with a NEGATIVE correlation, my round-1 runaway-integrator story would be the live hypothesis and this round-2 one would be dead. I could not say that in round 1, and that is the difference between the two versions.",
+   "F5_what_would_have_killed_it_in_round_1_and_did": "The day-class allocation and the unbounded-growth claims both made predictions, both were checkable against G19, and both failed. I ran the checks and they are recorded above rather than quietly dropped."
+  },
+  "does_it_survive_on_G19": {
+   "answer": "The mechanism survives on G19 and is STRONGEST there. The round-1 STORY does not survive on G19 and is retracted.",
+   "survives": "G19 has the largest market-side reversion (-0.631), the largest blind-side reversion (-0.705) and the largest error-vs-divergence coupling (+0.659) of the four blocks. G19 is the cleanest instance of the mechanism, not a counterexample to it.",
+   "does_not_survive": "The day-class allocation inverts (G19 Monday-class -3,400 too LOW vs G20 +1,490 too HIGH). The unbounded-integration claim is contradicted by G19's own divergence path, which peaks at 5,120 on k=7 and then FALLS to 2,370 by k=10 - the market came back to the chain rather than the chain running away.",
+   "the_shared_fingerprint_that_is_real": "In both blocks the blind's constructed chain was NEGATIVE across essentially the whole block (9/10 days in G19, 7/10 in G20) while the realized chain was POSITIVE across essentially the whole block. Both blinds spent the block believing the market was below its anchor while it was above. That is the same fingerprint - but it is a BIAS fingerprint, not a staleness fingerprint, and it points at the down bias in premise-free day-guesses rather than at chain continuity."
+  },
+  "the_blind_side_observable_the_crux": {
+   "the_question": "The blind cannot compute the divergence - it has no realized cum. So chain_staleness_gate is useless unless there is an OPEN-TIME, NEVER-MASKED proxy for the extension state. I tested every candidate in the never-masked set. Each was tested against realized cum-from-anchor on G18/G19/G20 (G17 has no committed state file).",
+   "candidates_tested_and_rejected_per_event": [
+    {
+     "candidate": "cumulative tape_conditions.session_signed_flow since the anchor",
+     "measurement": "corr with realized cum_{t-1}: +0.614 (G18), -0.815 (G19), -0.591 (G20)",
+     "verdict": "REJECTED. The sign FLIPS between a normal block and a covering block, and it flips toward NEGATIVE exactly in the covering regimes where an extension gate matters most. In G20 the tape ran four consecutive net-sell sessions (cum -9,198) under a +2,710 price rally. A flow integral is not a price integral; in a covering rally it is its mirror image."
+    },
+    {
+     "candidate": "cot.managed_money_net (never masked, publishes weekly)",
+     "measurement": "corr with realized cum_{t-1}: +0.694 (G18), -0.784 (G19), -0.656 (G20)",
+     "verdict": "REJECTED twice over. Sign-unstable, and it takes only TWO distinct values inside a ten-session block (report dates 05-19 and 05-26 in G20), so the correlation is a two-point comparison dressed as a statistic. It is also structurally late: G20's 05-26 report covers the week BEFORE the 05-27/05-28 rally, so at the 0601 seam it reported the short getting MORE crowded (WoW -38,123) while the price had already run +2,710."
+    },
+    {
+     "candidate": "cumulative tape_conditions.volume_lots since the anchor",
+     "measurement": "corr with |realized cum_{t-1}|: +0.556 / +0.799 / +0.832 - which looks promising until it is compared to the session counter alone: corr(k, |realized cum|) = +0.562 / +0.785 / +0.811. Identical. And volume IN EXCESS of the block's own opening run-rate correlates -0.332 / -0.644 / +0.832 - sign-unstable.",
+     "verdict": "REJECTED. Cumulative volume is a CLOCK in disguise; it carries no information about extension beyond 'more sessions have happened'."
+    },
+    {
+     "candidate": "the session counter k itself",
+     "measurement": "corr(k, |realized cum|) = +0.562 / +0.785 / +0.811",
+     "verdict": "AVAILABLE, FREE, AND THE ONLY SURVIVOR - but it gives only the MAGNITUDE envelope of the extension, never its SIGN. It cannot tell an extension-gated play which side to fade."
+    }
+   ],
+   "the_plain_answer": "NO BLIND-SIDE OBSERVABLE OF THE SIGN OR LEVEL OF REALIZED CUM EXISTS IN THE CURRENT NEVER-MASKED SET. I name that rather than manufacture a proxy. The consequence is that chain_staleness_gate CANNOT be divergence-triggered on the blind side, and my round-1 threshold ('stand down when the staleness term exceeds ~1x n0_range_20_mean') is not runnable by the blind as written. It is a refine-only gate in that form, which makes it useless where the problem is.",
+   "what_IS_runnable_the_honest_reduction": {
+    "name": "chain_staleness_gate, DETERMINISTIC form (proposal only, no brain edit in this run)",
+    "rule": "The blind's constructed chain has a MEASURED dispersion around the realized chain that depends only on k, the session index from the block anchor - and k is known in advance for a one-shot block blind, so this is not a runtime signal, it is a schedule. Measured mean |divergence|: k<=3 gives 768 / 590 / 1,022 (all below one n0_range_20_mean, ~1,094); k>=4 gives 2,182 / 2,408 / 2,645 / 2,730 / 2,388 / 2,612 / 2,058 (all roughly 2x it). So: a play keyed on cum_from_anchor or chain extension may assert a RUNG for k<=3; from k>=4 it must widen to the full band or stand down and hand the decision to a channel with no cum content.",
+    "what_it_would_have_done_on_0601": "0601 is k=6. The blind's day sign came from boundary.seam_gap_up_prior_on_worsening_cot's RUNG-2 intraday arm, which is cum-keyed ('at high extension it round-trips to ~0 and the day IS the gap'). Under the gate that arm stands down and the day routes to the non-cum-keyed gates - monday.catchup_window_tilt_gate (D-1 trade tilt) and daytype.monday_weekend_gap R3. The GAP arm of the seam play is not cum-keyed and survives, which is correct: the gap was right at +690.",
+    "the_honest_cost": "This gate makes the blind SILENT on extension for two thirds of every block. That is an unwelcome answer and I am not going to dress it up. The measured alternative is worse: on the seven k>=4 days per block the constructed chain is on average 2,400 USD away from the realized one, which is 2.2x n0_range_20_mean, and asserting a rung off it is asserting a rung off noise.",
+    "forward_test": "On G21+, record for each day whether any cum-keyed play fired and at what k. The prediction is that the blind's |err| on k>=4 days where a cum-keyed play fired exceeds its |err| on k>=4 days where none did. If that difference is zero or negative the gate is worthless and should be dropped."
+   }
+  },
+  "the_finding_I_did_not_have_in_round_1_and_it_is_the_bigger_one": {
+   "headline": "ON 0601 THE BLIND WAS NOT SERVED THE FRIDAY'S FLOW AT ALL. My round-1 selection_reason said the blind 'owed the day' to monday.catchup_window_tilt_gate and had the D-1 tilt 'in hand'. THAT IS WRONG AND I RETRACT IT. The Friday 05-29 session is served NOWHERE in G20's decision state.",
+   "the_audit": "tape_conditions.session by day across G20: 0525<-0524, 0526<-0525, 0527<-0526, 0528<-0527, 0529<-0528, 0601<-20260531, 0602<-0601, 0603<-0602, 0604<-0603, 0605<-0604. Session 20260529 appears in NO day's tape_conditions. On the Monday the blind was served the SUNDAY REOPEN STUB: 2,620 lots, 1,224 trades, session_signed_flow +278. The dropped Friday session was ~117,069 lots with total_sflow -2,126. The blind's single strongest non-price directional channel, on the highest-stakes day of the week, was replaced by a sample 2.2% of its size whose sign was OPPOSITE (+278 vs -2,126). The blind called +350.",
+   "it_is_systemic_not_a_one_day_accident": "Same audit across every staged group: G21 0615 served a 123-lot stub in place of 0612; G22 0629 served a 375-lot stub in place of 0626; G23 0706 served a 251-lot stub and 0713 a 534-lot stub. Every Monday from G20 forward. G17/G18/G19 are clean (their Sunday reopens did not register as separate sessions), which is why this never showed up before and why it looks like a regression rather than an old bug.",
+   "why_state_health_could_not_catch_it": "This is S107's seventh silent hole and it is a NEW CLASS. The other six were EMPTY blocks. This block is fully populated - every field present, plausible values, never_masked TRUE - it is simply the WRONG SESSION. A completeness assertion cannot see it. The detector for this class is a CONSISTENCY assertion: the session tape_conditions serves must be the prior TRADING session in the block, and if it is not, both must be carried.",
+   "attribution_kept_straight_as_the_directive_demands": "The harness fix already landed THIS SESSION (commit 2a36fa2, 'Fix the Monday stub: the blind now carries the Friday too'; forecast_harness._tape_conditions_block now sets prior_session_is_reopen_stub and attaches prior_full_session). I verified it is present in the restaged G21 and G22 states (G21 0615 carries prior_full_session 20260612 at 74,362 lots; G22 0629 carries 20260626 at 121,487) and ABSENT from G23's two Mondays, which have not been restaged. So this is not my discovery of an open defect - it is my measurement of WHAT THE DEFECT COST on the day I own, plus one open item: G23 still needs a restage before it can be run.",
+   "what_it_changes_for_the_merge": "It changes the verdict on my own day and it partly vindicates A, whom I overrode in round 1. I ruled the blind's miss 'a failure to consult two incumbent gates'. It was not. monday.catchup_window_tilt_gate requires the D-1 trade tilt; the tilt the blind was served was +278 UP, and consulting the gate on the served state would have produced the SAME +350 it printed. The blind could not have run that gate correctly from the state it was given. A's position that the brain lacked something is closer to right than mine was - though A located the lack in a missing RUNG and it was actually a missing INPUT. My round-1 magnitude, direction and derivation are unaffected (they were never sourced from the blind's served state), but the ATTRIBUTION is: this day was lost to a data defect first and a reasoning gap second, and a merge must not bank the correction as forward evidence for any play."
+  }
+ },
+ "days": [
+  {
+   "date": "20260601",
+   "dow": "Mon",
+   "day_class": "regular Monday, weekend seam, business_day_of_month 1; post-covering-squeeze DISTRIBUTION DAY 1 at maximal extension. No mechanical flow term: is_expiry_day FALSE, is_opex_day FALSE, in_gsci_roll FALSE, in_bcom_roll FALSE, in_bidweek FALSE, days_to_futures_expiry 18, days_to_next_eia_release 3. (flow_calendar's gsci_ng_roll_this_month and bcom_ng_roll_this_month are MONTH flags with roll_day_n null and the in_*_roll windows FALSE - not a roll term on business day 1.)",
+   "blind_direction": "up",
+   "blind_net_usd": 350,
+   "posterior_direction_by_horizon": {
+    "overnight_20_04_et": "up (the seam gap holds and extends modestly on non-confirming flow - a head-fake, not the day)",
+    "eu_04_08_et": "down (first liquidity restoration; the overnight extension bleeds off but the gap itself survives)",
+    "us_am_08_12_et": "down, and this is the whole day (second and decisive liquidity restoration; the gap is repaid and the extension unwind begins in the same phase)",
+    "us_pm_12_17_et": "down, decelerating; low early-afternoon, close pinned NEAR the low on a mature chain (no accommodation bounce)",
+    "day_net": "down"
+   },
+   "expected_magnitude_usd": -900,
+   "expected_magnitude_band_usd": [
+    -1400,
+    -600
+   ],
+   "onset_time_et": "08:15",
+   "turn_time_et": "03:40",
+   "trend_vs_chop": "trend - a single monotone unwind with no counter-phase. A residual that has already discharged has no second wave, and a distribution has no reason to pause on day 1.",
+   "continuation_vs_reversal": "reversal of the PRICE chain (the up chain flips) and simultaneously CONTINUATION of the FLOW tilt (consecutive net-sell sessions into the seam). Tagged reversal, because the play that fires is structure.covering_extension_distribution_flip.",
+   "path_p50_curve": [
+    [
+     20,
+     690
+    ],
+    [
+     22,
+     780
+    ],
+    [
+     0,
+     830
+    ],
+    [
+     2,
+     870
+    ],
+    [
+     4,
+     820
+    ],
+    [
+     6,
+     640
+    ],
+    [
+     8,
+     420
+    ],
+    [
+     10,
+     -550
+    ],
+    [
+     12,
+     -780
+    ],
+    [
+     14,
+     -880
+    ],
+    [
+     16,
+     -900
+    ]
+   ],
+   "confidence": 0.76,
+   "weight_assigned": {
+    "blind": 0.35,
+    "causal_mbo": 0.65,
+    "justification": "Unchanged from round 1 in the split, changed in the JUSTIFICATION. Round 1 justified the low blind weight as a doctrine RESTORATION - the blind had the D-1 tilt and failed to apply it. The round-2 audit shows the blind was never served the Friday's flow (session 20260529 appears in no day's tape_conditions in G20; the Monday got a 2,620-lot Sunday stub with the OPPOSITE sign). So the 0.65 to causal_mbo is not the causal layer correcting a rule the blind ignored; it is the causal layer supplying an INPUT the blind was not given. Same number, honest reason."
+   },
+   "magnitude_derivation": {
+    "round_2_status": "HELD AT -900. No term re-derived, no parameter added, no direction change. The handoff confirmed the standing extension of +3,080 rather than revising it, and a confirmation is not an improvement.",
+    "step_0_direction": "The reversed-absorption tell plus the extension state. Round 2 adds one CONFIRMING observation from the handoff that I did not state in round 1: the Friday exit carries last_hour_dir -1 with last_hour_signed_flow +1, i.e. buy flow absorbed under a falling price in the final hour - the same signature I forecast for my own ph2/ph3, present one session earlier. It removes an inference step from the pre-arming; it does not change the sign, which was already down.",
+    "step_1_the_gap": "+690 realized at the 20:00 reopen (refine-observed). 1.04x n0_net_sigma_20 (661), 63% of n0_range_20_mean (1,094), on 1,224 trades / 2,620 lots.",
+    "step_2_ownership": "Per-lot: the whole Friday-close-to-US-morning up displacement of +1,080 (gap +690 plus ph1 +390) was made on 11,161 lots and +352 net lots = 0.0968 USD/lot against 0528 ph2's +2,020 on 88,726 lots = 0.0228 USD/lot, a 4.2x ratio. A's per-trade basis gives 24.6x. Both say the displacement was made without participation and is repayable at the first restoration of real liquidity.",
+    "step_3_the_ruler_PRIMARY_unchanged": "structure.covering_extension_distribution_flip's day-1 delivery fraction of the STANDING EXTENSION, measured on its only prior instance in a DIFFERENT, already-scored block: G19 20260520, actual -1,050 against a standing extension of +3,610 = 29.1%. Applied to this day's own measured standing extension of +3,080 (realized cum +2,390 plus the observed +690 gap): 0.291 x 3,080 = -896 -> -900.",
+    "step_4_the_new_objection_round_2_raised_against_its_own_ruler": "The handoff's chain_age_sessions field forced me to check the play's age arm under the brain's own definition (sessions since the turn). My day is age 3; the exemplar G19 0520 is age 5. Play 56 asks for >= 5, so ONE ARM OF MY OWN GATE FAILS. See chain_age_definition_collision in handoff_in_used. The extension arm and the discriminator both hold. The direction of the resulting bias is toward a DEEPER number, not a shallower one - G20 built +2,710 of extension in two sessions (1,027/session) against G19's +2,830 over five (722/session), and a more concentrated cohort at a worse basis distributes faster. I DECLINE to apply a concentration adjustment. It would move -900 toward the -990 I can see, on a parameter validated at n=1, which is fitting. The residual is honest-under and its SIGN is consistent with the concentration argument - that is the correct place for that observation, not in the number.",
+    "step_5_cross_checks_unchanged": "A's two-leg route -850; the daytype.monday_weekend_gap.s102_1 watch-rule centre -800 (with its stalled-WoW condition NOT literally met - WoW -38,123 worsening - and the >=1-sigma seam discharge substituted and flagged); monday.seam_chainage_accommodation_gate confirming the DEEP class and the near-low pin (realized close_off_low_frac 0.06, ph2 +1,892/-2,030 absorb TRUE, ph3 +1,830/-40 absorb TRUE). Three routes, 96 dollars of spread, primary taken.",
+    "step_6_the_band_unchanged": "Shallow rail 20% x 3,080 = -616 -> -600. Deep rail 45% x 3,080 = -1,386 -> -1,400, which is also exactly the two-term construction (-690 gap at 100% repayment because it is thin-tape price-finding rather than inventory transfer, plus -696 = 29.1% of the owned +2,390). The two-term route is DECLINED as a point estimate for the same reason as in round 1: it adds a free parameter G19 cannot validate, because G19 0520 had no unowned seam component to separate.",
+    "step_7_the_sigma_check_unchanged": "-900 on a +690 gap implies a session net of -1,590 = 2.41 sigma on the 661 ruler. The ruler is STOOD DOWN, not merely flagged: vol_regime is frozen at the 20260522 pre-ramp vintage with n0_activity_trend already 1.619 at the freeze, and this block's own 0528 printed +2,090 = 3.16 sigma against it while 0605 printed -2.04. Trimming toward a pre-ramp sigma is the arithmetic trap."
+   },
+   "evidence_used": [
+    "forecasts/g20_he24_he1_handoffs.json 20260601: cum_from_anchor_usd +2390, chain_polarity +1, close 3.273, close_off_low_frac 0.01, low_et 16:59 low_late TRUE, last_hour_dir -1 with last_hour_signed_flow +1 - CONFIRMS the round-1 extension and adds the Friday final-hour absorption pair",
+    "g20_mbo_evidence 0529 phase table: ph1 -494/+110/4,715; ph2 -1,573/+530/51,424 (ph_absorb TRUE); ph3 -59/-810/60,930 - ph3 IS the session's largest phase, which is the checkable fact E must adjudicate against FLOWLESS_BID_WITHDRAWAL",
+    "g20_mbo_evidence 0527/0528 session conviction: +620 on sflow -4,910 and +2,090 on sflow -1,966 - two consecutive negative-conviction rally days, covering_extension_distribution_flip's own PRE-WARNING kill-clause",
+    "g20_mbo_evidence 0601 phases: ph1 +74/+390/8,541 (non-confirming overnight); ph2 +1,892/-2,030/74,938 ph_absorb TRUE; ph3 +1,830/-40/34,745 ph_absorb TRUE; session total_sflow +3,796 on net -1,680",
+    "tape_conditions 0601 (never_masked, session 20260531): 1,224 trades, 2,620 lots, session_signed_flow +278, phase_b_share [0.485, 0.489, 0.669] - a back-loaded chase in the final ~40 minutes, which names the cohort that gets distributed to; AND, per the round-2 audit, the ONLY flow the blind was served for this day",
+    "AUDIT of tape_conditions.session across all ten G20 days - session 20260529 is served on no day; the Friday's -2,126 total_sflow on ~117,069 lots never reached the blind (refine-side finding, and the reason the round-1 attribution is retracted)",
+    "AUDIT across grp21/grp22/grp23 states - the same Monday stub substitution on 0615 (123 lots), 0629 (375 lots), 0706 (251 lots), 0713 (534 lots); G21/G22 carry the S108 prior_full_session fix, G23 does not",
+    "g20_actual realized legs (refine-only, the designated mask lift): 0529 cum_from_anchor +2,390; 0601 open 3.342 = +690 gap on the 3.273 close; realized day-move -990",
+    "g20_exit_states 0601: close 3.174, close_off_low_frac 0.06, low_et 13:50, high_et 03:40, last_hour_dir -1 / last_hour_signed_flow -1",
+    "G19 committed block (cross-block, already scored): 20260520 day-move -1,050 against a standing extension of +3,610, chain age 5 sessions since the 0512 turn - the only prior instance of covering_extension_distribution_flip and the only honest ruler for its day-1 delivery fraction",
+    "G17-G20 blind vs actual day-moves and cum series (forecasts/grp17..20.json + renders/ng_refine_s95/g17..20_actual.json) - the four-block measurements behind the rebuilt cross-cutting finding",
+    "flow_calendar 0601: business_day_of_month 1, days_to_futures_expiry 18, days_to_next_eia_release 3, no expiry/opex/roll/bidweek",
+    "cot 0601: report 05-26, publication 2026-05-29T15:30, MM net -134,426, WoW -38,123 worsening, 1y pctile 0.94 - used ONLY to establish a residual EXISTED, then read as SPENT into the observed gap",
+    "storage 0601: stor_surprise -3.2, level 2,483, vs_5yr +95, phase inject - the bullish surprise is the 05-28 print, three sessions back"
+   ],
+   "evidence_rejected": [
+    "MY OWN ROUND-1 ATTRIBUTION that the blind 'had the D-1 tilt in hand and failed to consult it' - RETRACTED on the audit above. The tilt the blind was served was the +278 Sunday stub, sign UP. Consulting monday.catchup_window_tilt_gate on the served state reproduces the blind's +350.",
+    "THE SEAM GAP SIGN AS A DAY SIGN - still rejected as a READ (daytype.monday_weekend_gap R3 fades a Sunday gap that jumped WITH a mature swing to a fresh cum-extreme), but no longer characterised as a failure the blind could have avoided unaided.",
+    "boundary.seam_gap_up_prior_on_worsening_cot's RUNG-2 intraday arm ('at high extension it round-trips to ~0 and the day IS the gap') - falsified here at the top of its own range. The gap arm survives and was right at +690; the intraday arm is cum-keyed and is what the proposed staleness gate stands down.",
+    "the handoff's chain_age_sessions = 0 - NOT adopted. It is a third definition of the field (consecutive same-signed day-moves), not evidence about my day. Equally, E's 5 is not adopted. Under the brain's own definition the number is 3, and I record that it fails play 56's age arm rather than quietly using the value that suits me.",
+    "E's FLOWLESS_BID_WITHDRAWAL classification of 0529 ph3 - rejected on this instance; 60,930 lots is the session's largest phase and is not 'traded by nobody'. The TYPE survives with a LOW-VOLUME condition added.",
+    "big_print_b_share 1.0 on big_prints_n 1 - flow.big_print_bshare_thin_tape_guard stands it down; the field is the SIZE-weighted series so pre-S107 count-series intuition does not apply either.",
+    "restored weather / weather_forecast / weather_forecast_cycle / freeze_risk - tested independently on my own day and earning nothing; model_disagreement abs_spread_gw_hdd 1.025 at H0 EXCEEDS mav_gw_hdd 0.997, so the channel cannot corroborate anything on 0601 in either direction.",
+    "vol_regime as a magnitude cap - stood down (20260522 pre-ramp vintage; the block's own 0528 ran 3.16 sigma against it). Retained only as a same-window scale reference for the gap.",
+    "squeeze_watch / contract_structure / options_surface / cash_basis - frozen_structure_stale PRESENT with the frozen calendar front NGM26 expired 2026-05-27 against a live NGN26; reading delivery mechanics off a dead front is a false positive.",
+    "monday.window_deep_book_shakeout - my own lens's 06:00 L1-10 tie-breaker CANNOT RUN (firehose_present.l1_book FALSE on 0601, no book_trustworthy verdict in G20). Named as unavailable rather than silently omitted.",
+    "the minute-grain imb_flow series - demoted to diagnostic per my lens file.",
+    "cumulative signed flow, cot managed_money_net and cumulative volume as blind-side proxies for realized cum - each tested per event across G18/G19/G20 and each rejected; see the_blind_side_observable_the_crux."
+   ],
+   "stand_down_reasons": [
+    "MBO book layer: no book_trustworthy verdict in G20 AND firehose_present.l1_book FALSE on 0601 - trade-flow only",
+    "big_print_b_share: 1.0 on n=1, thin-tape guard; size-weighted basis",
+    "contract_structure / squeeze_watch / options_surface / cash_basis: masked_one_shot at the 20260522 vintage with the calendar front already expired",
+    "weather channel in full: model_disagreement abs_spread_gw_hdd 1.025 exceeds mav_gw_hdd 0.997",
+    "vol_regime as a magnitude cap or sigma ceiling: stale pre-ramp vintage, block already printed 3.16 sigma against it",
+    "daytype.monday_weekend_gap.s102_1's literal second condition (stalled covering WoW): NOT met (WoW -38,123 worsening). Substituted with the observed >=1-sigma seam discharge on stub liquidity, flagged, not banked",
+    "structure.covering_extension_distribution_flip's AGE arm (>= 5): NOT met under the brain's own definition (age 3). The extension arm and the discriminator are met; the age failure is recorded and the number is NOT adjusted for it in either direction"
+   ],
+   "restored_input_attribution": {
+    "mandatory_statement": "On 20260601 NEITHER restored input earned any improvement. Round 2 adds a third negative: the incoming HANDOFF earned no improvement either - it confirmed the extension I already used. The correction remains ~95% reasoning and ~5% the refine's designated price mask-lift, and the round-2 audit reallocates part of the 'reasoning' credit away from the brain and onto a DATA DEFECT: the blind's Friday flow was never served.",
+    "handoff_contribution": "ONE non-zero item, and it is confirmatory not corrective: the Friday's last_hour_dir -1 with last_hour_signed_flow +1 puts the reversed-absorption tell one session earlier than I credited in round 1. It shortens the inference chain; it does not move the number.",
+    "what_the_refine_actually_bought": "The observed +690 reopen print and the realized cum_from_anchor +2,390 - both PRICE, the refine's one designated mask lift - plus, in round 2, the MBO evidence for session 20260529 which the blind was structurally not served at all. That last one is a DATA GAP on the blind side, not a refine privilege, and it must be recorded as such.",
+    "what_reasoning_bought": "The direction (extension state plus the reversed-absorption tell); the pre-arming (the flip play's PRE-WARNING kill-clause, satisfied on 0527 and 0528); the magnitude ruler (the day-1 extension fraction from G19 0520); the ownership measure (per-lot displacement, 4.2x); the shape (mature-chain deep pin); the 0529 hinge adjudication; and in round 2 the self-falsification of three of my own round-1 claims."
+   },
+   "selection_reason": "HOLD -900, direction unchanged, ATTRIBUTION REVISED. The magnitude is unchanged because its input is unchanged: structure.covering_extension_distribution_flip's day-1 delivery fraction (29.1%, measured cross-block on G19 0520 in a different already-scored block) applied to this day's own measured standing extension of +3,080 (realized cum +2,390 plus the observed +690 gap) = -896 -> -900, honest-under by 90 against the realized -990. The handoff CONFIRMED that +2,390 rather than revising it, and E's round-2 exit read was not on disk at run time, so no revision to the extension was available. What round 2 changes is the ATTRIBUTION, and the merge depends on getting it right: round 1 said the blind 'failed to consult' monday.catchup_window_tilt_gate; the audit shows session 20260529 is served in no day's tape_conditions in G20 and the Monday was handed a 2,620-lot Sunday stub with signed flow +278 in place of the Friday's -2,126 on ~117,069 lots, so consulting that gate on the served state reproduces the blind's +350. This day was lost to a data defect first and a reasoning gap second. Restored weather contributed nothing and could not have (its own model_disagreement exceeds its level); restored vol_regime contributed nothing and would have dragged me shallow. No brain edit is proposed off this day - only the gate and the definition fix, both stated as proposals.",
+   "mbo_verdict": "HOLD THE NUMBER, CORRECT THE STORY. -900 stands: direction down, gap kept at the observed +690, size from the extension fraction, path head-fake / bleed / cliff with the high at 03:40 and the entire day delivered from 08:15 in the US catch-up window. Two things are new. (1) The chain_age field carries three incompatible definitions across the handoff builder, E's read and the brain's doctrine, and under the brain's own definition my day fails play 56's age arm - recorded, not papered over, and not used to move the number in the direction of the actual. (2) The blind never received the Friday's flow on this day, which retracts my round-1 verdict that the miss was a failure to consult.",
+   "handoff_in_used": {
+    "source": "forecasts/g20_he24_he1_handoffs.json days.20260601 (prior 20260529, owner E, boundary weekend_reopen)",
+    "verdict_required_by_the_directive": "CONFIRMED MY INPUT - IT DID NOT CHANGE IT. Stated plainly because a confirmation is not an improvement and must not be banked as one.",
+    "field_by_field": [
+     {
+      "field": "cum_from_anchor_usd +2390",
+      "status": "CONFIRMS",
+      "why": "This is the REALIZED cum I already used in round 1. My r1 standing extension was +2,390 (realized) + 690 (observed reopen gap) = +3,080, sourced from renders/ng_refine_s95/g20_actual.json, which is the same realized leg series the handoff builder integrates. The handoff hands me the identical number by a second route. Zero change to the input of my magnitude ruler."
+     },
+     {
+      "field": "chain_polarity +1",
+      "status": "CONFIRMS",
+      "why": "r1 read the inherited chain as UP and maximally extended, and derived a polarity FLIP on my day. Unchanged."
+     },
+     {
+      "field": "close_px 3.273 / open 3.289 / day_move -160",
+      "status": "CONFIRMS",
+      "why": "Already in evidence and in g20_exit_states; my +690 gap is measured off this 3.273 close."
+     },
+     {
+      "field": "close_off_low_frac 0.01, low_et 16:59, low_late TRUE, last_hour_dir -1, last_hour_signed_flow +1",
+      "status": "CONFIRMS, and sharpens one thing",
+      "why": "r1 already used the 0.01 close-off-low and the late low. The pair I did NOT explicitly state in r1 is last_hour_dir -1 WITH last_hour_signed_flow +1: price falling into the close while the last hour's net aggression was BUY. That is a NEGATIVE last-hour flow_conviction on the Friday exit - buy flow absorbed under a falling price - which is the SAME signature I forecast for my own ph2/ph3 and it is present one session earlier than I credited. It does not move my number; it removes one step of inference from the pre-arming, because the reversed-absorption tell that structure.covering_extension_distribution_flip wants is already visible in the Friday's final hour, not only in my own session."
+     },
+     {
+      "field": "chain_age_sessions 0",
+      "status": "CONTRADICTS BOTH E AND MY r1 - and it is a DEFINITION COLLISION, not new evidence",
+      "why": "See chain_age_definition_collision below. I do not adopt 0, I do not retain 5, and I do not change my number on it."
+     },
+     {
+      "field": "prior_owner_read (E, verbatim)",
+      "status": "UNCHANGED FROM r1",
+      "why": "The handoff carries E's ROUND-1 verdict text. No forecasts/grp20_mbo_specialist_E_r2.json existed at the time of this run (checked: no grp20 *_r2.json on disk), so E's round-2 exit read - specifically any revision of the 0529 ph3 classification - was NOT available to me and cannot have moved my extension. My adjudication of the hinge-vs-withdrawal question therefore stands on the phase-table numbers I can verify directly, which E can check: 0529 phases are ph1 4,715 / ph2 51,424 / ph3 60,930 lots. ph3 IS the session's largest phase by volume. E's FLOWLESS_BID_WITHDRAWAL conflates net flow (-59) with participation (60,930)."
+     }
+    ],
+    "what_would_have_changed_my_number": "Only a revision to the standing extension. Two things could have supplied one: (a) E revising the 0529 exit such that the chain's terminal cum is not +2,390 - impossible, it is a realized price fact, not an interpretation; or (b) E reclassifying 0529 ph3 from a hinge to a delivery already in progress, which would make my Monday day-2 of a distribution rather than day-1 and would argue for a SMALLER number. Neither happened. The extension I apply the fraction to is unchanged at +3,080.",
+    "chain_age_definition_collision": {
+     "the_three_numbers": "The handoff builder emits chain_age_sessions = 0 for the 0601 boundary. E's handoff_out says age 5. My round 1 used 5, taken from E. The brain's own doctrine (doctrine_tier3.friday_monday_cascade_s104.midweek_exit_read_protocol.fields.chain_polarity_and_age) defines it as 'sessions since the turn', which on this block is 3 (turn at the 0526 close at cum -160, the block minimum; then 0527, 0528, 0529).",
+     "why_the_builder_says_0": "he24_he1_handoff.chain_state() counts backwards while sign(day_move) equals the polarity. 0529's day-move was -160 against a polarity of +1, so the counter breaks immediately and returns 0. That is 'consecutive same-signed day-moves', which is a DIFFERENT quantity from 'sessions since the turn'. It is not a bug in the arithmetic; it is an unnamed second definition sharing one field name.",
+     "why_E_says_5": "5 is the count of sessions from the BLOCK ANCHOR (0525..0529), a third definition. E's own parenthetical lists only three days (0527 +610, 0528 +2100, 0529 -160) while asserting 5 - the text does not match its own number.",
+     "why_this_is_load_bearing_and_not_pedantry": "structure.covering_extension_distribution_flip (play 56) gates on 'cum high ~>+2000 vs block anchor AND age >= 5'. Under the brain's own definition my day's age is 3, so ONE ARM OF THE GATE I RAN IN ROUND 1 FAILS. I check the exemplar under the same definition: G19 0520's up-chain turned at the 0512 close (cum +780, the block minimum), giving 0513/0514/0515/0518/0519 = age 5 with cum +3,610. The exemplar passes; my day does not.",
+     "what_I_do_about_it_and_why_I_do_NOT_move_the_number": "The extension arm (+2,390 realized, +3,080 with the gap, against a >+2,000 bar) is MET, and the play's discriminator (reversed absorption tell: big BUY absorbed under a falling price) is met on my day twice over (ph2 +1,892 on -2,030, ph3 +1,830 on -40, both ph_absorb TRUE) and, per the handoff, already in the Friday's final hour. What fails is the age COUNT. The honest reading is that age is a proxy for how long the cohort accumulated, and the quantity the play actually needs is how much extension exists and at what basis it was acquired. On that reading my day is not weaker than the exemplar, it is more CONCENTRATED: G20 built +2,710 of the extension in TWO sessions (0527 +610, 0528 +2,100) where G19 built +2,830 over five, i.e. 1,027 USD of extension per session against 722. A more concentrated cohort at a worse average basis distributes FASTER, which argues the day-1 delivery fraction should be ABOVE 29.1%, not below - and 29.1% x 3,080 = -896 against a realized -990 is exactly consistent with that. I decline to apply the adjustment. Moving from -900 toward -1,000 would close 90 dollars of a 990-dollar number by adding a concentration parameter validated on n=1, in the direction of an actual I can see. That is fitting. I keep -900, I record the concentration argument as the reason my honest-under residual is signed the way it is, and I propose the definition fix rather than a magnitude change."
+    }
+   },
+   "handoff_out": {
+    "note": "Unchanged in substance from round 1 - the day realized as read, and nothing in the incoming handoff revises my exit. Re-emitted so C (0602) consumes one current object, with the chain_age field now stated under an EXPLICIT definition because the field is ambiguous (see chain_age_definition_collision).",
+    "exit_type": "DISTRIBUTION_DELIVERY_DAY_1 - net BUY aggression (+3,796) absorbed under a falling price (-1,680) across BOTH main phases (ph2 +1,892/-2,030 absorb TRUE, ph3 +1,830/-40 absorb TRUE), closing pinned near the low (close_off_low_frac 0.06). structure.covering_extension_distribution_flip's DOWN state fully realized, not a give-back.",
+    "chain_state_to_inherit": "POLARITY FLIPPED. The up chain topped at cum +3,080 at my open and closed at +1,400. New polarity DOWN. AGE STATED THREE WAYS so the next owner cannot inherit the wrong one: sessions-since-the-turn = 1; consecutive-same-signed-day-moves (the handoff builder's definition) = 1; sessions-from-block-anchor = 6. The one the plays want is sessions-since-the-turn = 1. The down chain is YOUNG.",
+    "cum_from_anchor_to_inherit": "+1,400 REALIZED against the 3.034 anchor - still positive, so the extension being unwound is far from exhausted. No day may restart at cum 0, and no day may inherit a CONSTRUCTED cum where a realized one exists.",
+    "close_location": "OBSERVED: close 3.174, close_off_low_frac 0.06, low_et 13:50, high_et 03:40, last_hour_dir -1, last_hour_signed_flow -1. The low was NOT late; the day finished by early afternoon and the last three hours were flat. A mature-chain deep pin with no late impulse. NOTE the last-hour pair: dir -1 with flow -1 is ALIGNED, i.e. positive last-hour conviction - the opposite of the Friday I inherited (dir -1, flow +1). My exit is momentum-carried, not absorption-carried.",
+    "final_phase_conviction": "ph3 sflow +1,830 with pxchg -40 on 34,745 lots, ph_absorb TRUE. flow_conviction NEGATIVE at the phase grain: buy flow still absorbed, but the price effect collapsed from -2,030 (ph2) to -40 (ph3) on half the volume. The distribution is STILL RUNNING and has stopped being PRODUCTIVE.",
+    "what_06_02_should_expect": "SELF-LIMITING. Expect a second day of net BUY aggression absorbed (it printed +3,524) delivering almost NO price. Size 0602 SMALL; do not extrapolate my -990. The crowded-short residual is SPENT for every later seam in this block - it discharged into the 0601 reopen gap and consumption latches - so the 05-26 COT publication must NOT re-arm the 06-05 seam.",
+    "invalidation_for_the_next_owner": "If 0602's main phase shows SELL flow absorbed under a RISING price, the distribution is finished and the covering bid has returned - revert to the pre-flip regime, do not carry my down polarity. If it shows large ALIGNED DOWN net flow on heavy volume, that is a fresh impulse seller rather than distribution of the covering cohort: still down, different mechanism, does not stop at the extension give-back, widen the band downward rather than centre it."
+   }
+  }
+ ],
+ "a_bridge_record_r2": {
+  "note": "A's round-2 posterior was not on disk at run time (no forecasts/grp20_mbo_specialist_A_r2.json), so A's adjudication of my three objections could not be consumed. My round-1 positions stand, with ONE self-correction that goes A's way.",
+  "self_correction_in_A_favour": "I overrode A's verdict that 'your miss was the rung, not the arithmetic' on the ground that the brain already held two incumbent gates the blind simply failed to consult. The round-2 audit shows the blind was not served the input those gates require. A was closer to right than I was: something WAS missing. A located it in a missing rung of boundary.seam_gap_up_prior_on_worsening_cot; it was actually a missing INPUT (the Friday session's flow). My rejection of the RUNG placement stands - the mechanism is structure.covering_extension_distribution_flip, already in the brain at 0.84 with a cross-block exemplar, and adding a rung would split its forward evidence - but my characterisation of the blind's miss as a failure to consult is withdrawn.",
+  "unchanged": "Rung-3 rejected as a placement (mechanism accepted, belongs under covering_extension_distribution_flip as discriminator notes: displacement efficiency far above 1, and no forward driver into the session). The 0529 ph3 hinge reading stands - it is the AGGRESSION HANDOVER, so my Monday is distribution DAY 1 and the deepest of the sequence (0601 net -1,680 vs 0602 -70 on a nearly identical buy aggression), which is what says size the Monday full and warn C that it self-limits. A's -850 remains a good bracket from above; the sigma ruler stays stood down, not trimmed toward."
+ },
+ "e_adjudication_r2": {
+  "status": "E's round-2 posterior was not on disk at run time; the hinge-vs-withdrawal question is unresolved from my side and I restate the checkable fact for E.",
+  "the_checkable_fact": "0529 phase volumes are ph1 4,715 / ph2 51,424 / ph3 60,930 lots. ph3 is the session's LARGEST phase. FLOWLESS_BID_WITHDRAWAL reads -59 as 'nobody sold this low'; -59 is a NET, and 60,930 lots changed hands to produce it. The TYPE is real and survives with a LOW-VOLUME condition attached; this instance is not it.",
+  "what_I_would_ask_E_to_carry": "E's proposed condition on daytype.friday_exit_close_location_over_flow_shape should be restated on the (volume, net) PAIR rather than on net flow alone. A flowless close on 4,000 lots is an unpriced print that reverts; a flowless close on 60,000 lots is a handover that continues. The 3.273 close was WEAK BUT REAL, and my +690 gap is measured off it.",
+  "one_thing_E_should_know_from_my_audit": "The Friday 20260529 session's tape_conditions is served on NO day in G20. E's own exit read is therefore the ONLY channel by which any of the Friday's flow reaches the Monday on the blind side - which raises the cost of a mis-specified Friday exit_type well above what the cascade doctrine already assumed."
+ },
+ "proposals_no_brain_edit_this_run": [
+  {
+   "name": "chain_staleness_gate (DETERMINISTIC form)",
+   "statement": "A play keyed on cum_from_anchor or chain extension may assert a RUNG only for k <= 3 sessions from the block anchor; from k >= 4 it widens to the full band or stands down and hands the decision to a channel with no cum content. Calibrated on measured mean |constructed - realized| by k across G17-G20 (768/590/1,022 for k<=3; 2,182-2,730 for k>=4) against n0_range_20_mean ~1,094.",
+   "why_deterministic": "The blind cannot compute the divergence and no never-masked proxy for realized cum survived testing (signed-flow integral sign-flips +0.614/-0.815/-0.591; COT sign-flips and has two values per block; cumulative volume is the session counter in disguise). k is known in advance for a one-shot block blind, so this is a schedule, not a runtime signal.",
+   "forward_test": "On G21+, record per day whether a cum-keyed play fired and at what k. Prediction: the blind's |err| on k>=4 days where a cum-keyed play fired exceeds its |err| on k>=4 days where none did. Zero or negative difference kills it."
+  },
+  {
+   "name": "chain_age single definition",
+   "statement": "Define chain_age ONCE as 'sessions since the turn' (the brain's existing doctrine wording) and make he24_he1_handoff.chain_state() emit that quantity, or rename what it currently emits (consecutive same-signed day-moves) to a distinct field. Three incompatible values for one field name on one boundary (0 builder / 3 doctrine / 5 E) decide play 56's age gate.",
+   "cost_of_not_fixing": "On 0601 the three definitions give PASS, FAIL and PASS on the same play, on the same day, from the same data."
+  },
+  {
+   "name": "tape_conditions session-consistency assertion",
+   "statement": "state_health should assert that tape_conditions.session equals the prior TRADING session of the block, and that where it does not (the Sunday reopen stub) prior_full_session is present and non-null. This is a CONSISTENCY assertion, a different class from the completeness assertions state_health currently makes - the block was fully populated and plausible on every G20 Monday and was simply the wrong session.",
+   "status": "The harness half is ALREADY FIXED this session (commit 2a36fa2); G21 and G22 are restaged and carry prior_full_session; G23's two Mondays (0706, 0713) are NOT and still serve 251-lot and 534-lot stubs. The assertion is what stops it recurring."
+  }
+ ],
+ "summary": {
+  "days_owned": 1,
+  "round": 2,
+  "posterior": {
+   "20260601": -900
+  },
+  "round_1_posterior": {
+   "20260601": -900
+  },
+  "change_from_r1": {
+   "20260601": 0
+  },
+  "blind": {
+   "20260601": 350
+  },
+  "realized": {
+   "20260601": -990
+  },
+  "err_vs_realized": {
+   "20260601": 90
+  },
+  "blind_err": {
+   "20260601": 1340
+  },
+  "improvement_usd": 1250,
+  "honest_under_100": true,
+  "direction_changes_from_r1": 0,
+  "one_line": "HOLD -900. The handoff confirmed the +2,390 realized extension I already used rather than revising it, E's round-2 exit read was not available, and no new causal evidence bears on direction, magnitude or timing - so the honest move is no move.",
+  "the_one_thing_the_merge_should_take": "Two things, and they must not be merged into one. (1) The blind runs a REAL mean-reversion rule on a FICTITIOUS state variable: the market reverts against realized cum in all four measured blocks (-0.36/-0.58/-0.63/-0.50) and the blind reverts against its own constructed cum (-0.65/-0.18/-0.71/-0.52); a leave-one-block-out rule using ONLY realized cum matches or beats the blind's mean|err| on three blocks of four. But no never-masked proxy for realized cum exists, so the only runnable gate is deterministic in k. (2) The block LEAN is a different defect - a flat down bias (mean -206/day, constructed block cum negative in all four blocks) - and the cum-reversion fix makes the drift WORSE on G19 and G20, so it must not be banked as the lean's cure. My round-1 claim that one mechanism produced both is RETRACTED, along with the day-class allocation (G19 inverts it) and the unbounded-growth claim (the divergence saturates below a random-walk envelope).",
+  "disagreement_recorded": "A: rung placement still rejected (the mechanism is covering_extension_distribution_flip, already at 0.84 with a cross-block exemplar), but my round-1 verdict that the blind's miss was 'a failure to consult' is WITHDRAWN in A's favour - the blind was not served the input the gate needs. E: the 0529 ph3 hinge reading stands on the checkable phase volumes (ph3 = 60,930 lots, the session's largest); FLOWLESS_BID_WITHDRAWAL survives as a type only with a LOW-VOLUME condition."
+ }
+}

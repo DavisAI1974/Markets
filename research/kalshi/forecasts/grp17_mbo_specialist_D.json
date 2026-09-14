@@ -1,0 +1,92 @@
+{
+ "specialist": "D",
+ "lens": "Thursday EIA storage print - pre-print over-extension gate + post-print delivery-vs-absorption re-anchor",
+ "group": "g17",
+ "brain_version": "s102.6",
+ "round": 1,
+ "days_owned": ["20260416", "20260423"],
+ "doctrine_note": "Blind stays CORE; MBO is a POSTERIOR update. The EIA print's direction is set by delivery-vs-absorption in the post-print phases (flow_conviction = sign(signed_flow)*sign(price_change) per phase), NOT the surprise sign and NOT the pre-print chain. Book layer stood down both days (no book_trustworthy verdict in evidence) - trade-flow only. Magnitudes derived from the phase table; the reactive extreme is not claimed.",
+ "cross_cutting_mbo_finding": "The two G17 EIA prints are the clean two-sided test of the eia_preprint_overextension_gate + post-print re-anchor. 0416: all three phases are aligned buy-flow-with-rising-price (conviction +/+/+, absorb_session FALSE, close AT the +810 session high) = a coherent DELIVERY UP - the exact rally the blind rode DOWN via chain-through-the-print. The pre-print gate FIRED on 0416 (incoherent D-1 flow + over-extended down chain -> two-sided, not full-band chain-down), and the post-print counter-delivery on non-absorbing buy flow FLIPS the block lean UP (not just re-size). 0423: absorb_session TRUE, ph2 +841 flow / -1180 px and ph3 +4517 flow / -60 px = massive BUY ABSORPTION FAILING (negative conviction under falling price) - the print delivered DOWN despite a +5373 buy total. The gate correctly SPARED 0423 (coherent D-1 sell -> stayed DOWN, full band). So the same discriminator explains both prints causally: aligned = deliver, absorbed = fail. The raw signed-flow SIGN is a trap on 0423 (+5373 buy reads bullish; it is absorption).",
+ "days": [
+  {
+   "date": "20260416",
+   "dow": "Thu",
+   "day_class": "eia_thursday",
+   "contract": "NGK26",
+   "blind_direction": "down",
+   "blind_net_usd": -400,
+   "posterior_direction_by_horizon": {
+    "pre_print": "two_sided (gate fired: incoherent D-1 + over-extended down chain)",
+    "post_print": "up (counter-delivery on aligned buy flow)",
+    "close": "up"
+   },
+   "expected_magnitude_usd": 700,
+   "expected_magnitude_band_usd": [560, 760],
+   "onset_time_et": "03:55",
+   "turn_time_et": "none (no reversal; monotone aligned build, close at 16:59 high)",
+   "trend_vs_chop": "trend_up",
+   "continuation_vs_reversal": "reversal_of_the_blind_chain (delivery UP counter to the priced-in down chain)",
+   "path_p50_curve": [[18.0, 0], [22.0, 60], [2.0, 150], [6.0, 280], [8.0, 360], [9.5, 440], [10.5, 540], [11.0, 600], [12.0, 640], [14.25, 680], [17.0, 700]],
+   "confidence": "high",
+   "weight_assigned": {"blind": 0.20, "causal_mbo": 0.80},
+   "evidence_used": [
+    "phases all aligned buy-flow-with-rising-price: ph1 sflow +355 / px +310, ph2 +242 / +150, ph3 +687 / +270 -> flow_conviction +/+/+ (DELIVERY, not absorption)",
+    "absorb_session FALSE, ph_absorb [F,F,F] - no absorption anywhere",
+    "close AT the session high (high_exc +810 @16:59; low_exc only -100) -> the +720 is held, not a reactive spike",
+    "total_sflow +1284 (net buy), onset_dir up @03:55 - the up build precedes the print",
+    "pre-print over-extension gate FIRED (incoherent D-1 flow 0.472/0.522 + over-extended down chain) -> blind should have been two-sided, not full-band down",
+    "post-print re-anchor (selector.midblock_right_the_ship): counter-delivery on non-absorbing flow FLIPS the block lean UP"
+   ],
+   "evidence_rejected": [
+    "blind chain-through-the-print DOWN sign (-400) - the dominant D flaw; refuted by aligned delivery",
+    "MBO book layer - stood down (no book_trustworthy verdict); trade-flow delivery is the driver"
+   ],
+   "stand_down_reasons": ["book layer stood down: no execution_authority / book_complete verdict in evidence -> trade-flow-only read"],
+   "selection_reason": "D owns EIA-Thursday; 0416 is the canonical chain-through-the-print flip - the gate + post-print re-anchor are exactly D's lens.",
+   "mbo_verdict": "FLIP UP. Delivery: three aligned buy-flow phases, no absorption, close at high. Magnitude +700 derived from gap(-10) + phase px-sum(+730), all conviction-positive with no reactive tail to discount. Blind -400 refuted."
+  },
+  {
+   "date": "20260423",
+   "dow": "Thu",
+   "day_class": "eia_thursday",
+   "contract": "NGM26",
+   "blind_direction": "down",
+   "blind_net_usd": -420,
+   "posterior_direction_by_horizon": {
+    "pre_print": "down (gate SPARED: coherent D-1 sell 0.415/0.40 -> full-band down earned)",
+    "post_print": "down (buy absorption FAILING under falling price)",
+    "close": "down"
+   },
+   "expected_magnitude_usd": -1180,
+   "expected_magnitude_band_usd": [-1300, -980],
+   "onset_time_et": "09:10",
+   "turn_time_et": "22:16 prior-evening turn_down (high_exc +270 @20:16 then roll over); print-window impulse 10:30-13:00",
+   "trend_vs_chop": "trend_down (single dominant absorption-failure impulse)",
+   "continuation_vs_reversal": "continuation (coherent down chain; print CONFIRMS via absorption)",
+   "path_p50_curve": [[18.0, 0], [22.0, 10], [2.0, -50], [6.0, -90], [8.0, -120], [9.5, -180], [10.5, -500], [11.0, -750], [12.0, -1100], [14.25, -1200], [17.0, -1180]],
+   "confidence": "high",
+   "weight_assigned": {"blind": 0.35, "causal_mbo": 0.65},
+   "evidence_used": [
+    "absorb_session TRUE, ph_absorb [F,T,T]",
+    "ph2 sflow +841 / px -1180 -> flow_conviction NEGATIVE (buy flow, price collapses) = the absorption-failure impulse (the causal core of the day)",
+    "ph3 sflow +4517 / px -60 -> a buy FLOOD that only arrests the bleed, cannot reverse it -> conviction negative, near the low",
+    "turn_down (turn_mag 1510 @22:16), onset_dir down @09:10, low_exc -1420 @12:57 - a sustained down delivery",
+    "pre-print gate SPARED 0423: D-1 flow coherent with the down chain (0.415/0.40) -> the full band is EARNED here (contrast 0416)"
+   ],
+   "evidence_rejected": [
+    "the raw +5373 buy total_sflow read as bullish accumulation - it is ABSORPTION (price fell -1250 against it); the signed-flow SIGN does not sort direction on an absorbing print",
+    "the reactive extreme: low_exc -1420 and the full -1250 close tail - NOT claimed. The causal read supports the dominant ph2 absorption impulse (~-1180); the extra ~70 of reactive extension is not mine to claim"
+   ],
+   "stand_down_reasons": ["book layer stood down: no book_trustworthy verdict -> trade-flow / absorption read only"],
+   "selection_reason": "D owns EIA-Thursday; 0423 is the absorption-confirms-down print - the surprise-sign-blind, delivery-vs-absorption read is D's lens.",
+   "mbo_verdict": "STAY DOWN. Absorption: a +5373 buy total could not hold price (ph2 +841/-1180, ph3 +4517/-60) = buy absorption failing. Direction certain; magnitude -1180 derived from the dominant ph2 absorption impulse + gap/ph1, deliberately NOT the reactive -1420 low / -1250 tail. Blind direction right, magnitude (-420) too small - MBO upgrades it."
+  }
+ ],
+ "summary": {
+  "headline": "Both G17 EIA prints explained causally by the same discriminator: flow_conviction (sign(flow)*sign(px)) per post-print phase. 0416 aligned across all three phases = DELIVERY UP -> flip the blind's chain-down to +700. 0423 negative conviction under a +5373 buy flood = ABSORPTION FAILING -> confirm DOWN, upgrade to -1180.",
+  "gate_worked": "The pre-print over-extension gate DISCRIMINATED: FIRED on 0416 (incoherent D-1 + over-extended down chain -> two-sided, opening the door to the up delivery) and SPARED 0423 (coherent D-1 sell -> full-band down earned). No over-fire.",
+  "post_print_re_anchor": "0416 counter-delivery on non-absorbing buy flow FLIPS the block lean UP (not just re-size); 0423 absorption CONFIRMS the down lean. This is the cascade-root fix - the wrong post-print close does not anchor the next weeks.",
+  "honesty": "0416 +700 = gap + aligned phase-sum, no tail to discount. 0423 -1180 = dominant absorption impulse only; the reactive -1420 low / -1250 close tail is NOT claimed (honest under-100 without fitting the extreme).",
+  "expected_err_vs_actual": {"20260416": "actual +720 -> err ~+20", "20260423": "actual -1250 -> err ~+70 (under-claimed by design)"}
+ }
+}

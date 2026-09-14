@@ -1,0 +1,126 @@
+{
+  "specialist": "D",
+  "lens": "thursday_eia_storage_print_catalyst",
+  "group": 15,
+  "brain_version": "s102.4",
+  "round": 2,
+  "days_owned": ["20260319", "20260326"],
+  "role": "ROUND-2 HE24->HE1 coordination pass. Starts from the round-1 posterior (grp15_mbo_specialist_D.json), not from scratch. The immutable blind (grp15.json) stays the CORE predictor; MBO is a POSTERIOR UPDATE. Execution = SHADOW (execution_authority False all session both days). Round-1 scored refined 12/12 dir, block mean abs err 72; my two days were 0319 err +30 and 0326 err +10. Round 2 uses the incoming HE24->HE1 boundary STATE to TIGHTEN timing/shape and to test magnitude; direction changes would require NEW causal evidence (none present). Both magnitudes HOLD - the handoff supplies the causal WHY for the round-1 numbers rather than moving them.",
+  "doctrine_note": "The handoff carries STATE (prior realized exit), never a day-net. I read my open relative to the prior exit condition and size the seam turn by the PRIOR day exhaustion state, never front-run. On BOTH my days the incoming state is a give-back-exhaustion UP bounce that is already mature/fading at the prior close - which is exactly why my Thursday print-day up-carries fade and the print resolves the way it does. This is the coordination pass confirming, not re-deriving, the round-1 reads.",
+  "days": [
+    {
+      "date": "20260319",
+      "dow": "Thu",
+      "instrument": "NGJ26",
+      "day_class": "tue_thu_core + EIA storage print overlay (10:30 ET, consensus +31 Bcf INJECTION, ~+59 loose vs 5yr = S3 bearish trajectory)",
+      "blind_direction": "down",
+      "blind_net_usd": -800,
+      "round1_expected_magnitude_usd": -1050,
+      "posterior_direction_by_horizon": {
+        "overnight_20_06": "down (onset down 00:50 ET, thr 500; phase1 sflow +34 but pxchg -370). The 0318 strong up-close did NOT carry as an overnight HOLD - the tape dipped first",
+        "preprint_06_1030": "UP counter-probe to the session high +470 at 09:31 ET, then turn_down 09:31 (BEFORE the print). ROUND 2 RE-READ: this morning probe is the INHERITED up-momentum from 0318's give-back-exhaustion bounce exhausting - not a random counter-probe. Sub-conviction (imbL ~0), pre-print, legit",
+        "postprint_1030_close": "DOWN, chain-sided - the +31 injection (loose vs 5yr, bearish) reasserts the down move over the exhausted up-carry; delivery back-loaded, phase3 sflow -1438 / px -880, session low -1250 at 18:33 ET"
+      },
+      "expected_magnitude_usd": -1050,
+      "expected_magnitude_band_usd": [-1250, -850],
+      "onset_time_et": "00:50 (down, overnight)",
+      "turn_time_et": "09:31 (turn_down at the +470 morning high - the inherited up-carry exhausts and the chain reasserts into the print)",
+      "trend_vs_chop": "trend down with one pre-print counter-probe up (the inherited carry); net directional",
+      "continuation_vs_reversal": "continuation (down move reasserts; the chain-SIDED bearish injection print delivers its band, deeper than the blind sized)",
+      "path_p50_curve": [[20, 0], [22, -120], [0, -210], [2, -320], [4, -360], [6, -180], [8, 350], [10, 120], [12, -430], [14, -720], [16, -980], [18, -1200], [20, -1050]],
+      "mfe_usd": 470,
+      "mae_usd": -1250,
+      "confidence": 0.75,
+      "weight_assigned": {"blind": 0.55, "causal_mbo": 0.45},
+      "evidence_used": [
+        "HANDOFF: 0318 exit state - close 3.223 near its HIGH (close_off_low 0.97), high_late true, last_hour_dir +1 / last_hour_signed_flow +1 = buy momentum into the overnight seam. But 0318 was a 1-session-old give-back-exhaustion REVERSAL (chain_age 1, cum +910) = a MATURE bounce, not a fresh up-trend. This sizes the 0319 up-carry as a FADE, not a continuation",
+        "onset_dir down 00:50 ET (overnight, thr 500) - pre-print, corroborates the blind down chain",
+        "pre-print morning probe UP to +470 (high_exc, 09:31 ET) then turn_down 09:31 - now causally the inherited up-carry exhausting BEFORE the print (legit pre-10:30 evidence)",
+        "total_sflow -4861 (sell), sflow_sign -1 - net selling all session",
+        "post-print phase3: sflow -1438, pxchg -880, absorb False -> chain-sided down delivery, low -1250 at 18:33 ET (LATE)",
+        "print context: +31 injection ~+59 loose vs 5yr = bearish; print AGREES with chain"
+      ],
+      "evidence_rejected": [
+        "the 0318 strong up-close (last_hour buy flow, high_late) as a reason to LIFT the 0319 open call - REJECTED: doctrine says size the seam by the prior EXHAUSTION state, and 0318 was a mature give-back bounce, so the carry fades rather than extends",
+        "phase2 absorption (sflow -3457 but pxchg +170, absorb True) NOT read as bullish reversal - a mid-session absorption bounce that RESOLVED DOWN under chain + bearish print",
+        "raw onset counter-probe +470 not treated as a day-direction flip - pre-print squaring, sub-conviction (imbL near 0)"
+      ],
+      "stand_down_reasons": [
+        "execution_authority False all session (SHADOW / evidence-grade only)",
+        "print-cutoff discipline: only pre-10:30-ET evidence used to characterize pre-print positioning"
+      ],
+      "handoff_in_used": "From 0318 (owner C, REVERSAL up, the turn the blind missed): close 3.223, close_off_low 0.97, high_late true, last_hour_dir/flow both +1, chain_polarity +1 age 1, cum +910. TAKEN: the buy momentum into the seam explains the 0319 pre-print +470 morning probe - it is the RESIDUAL of 0318's up-move, not a new signal. But because 0318 was a 1-session-old give-back-exhaustion bounce (mature, cum already +910), the carry is a FADE setup; the +470 probe fails at 09:31 and the bearish +31 injection reasserts the down move. This TIGHTENS the shape (the morning up-hump is now explained, not anomalous) and CONFIRMS the round-1 magnitude; it does not move the day-net anchor (measured from the 3.223 close).",
+      "handoff_out": {
+        "receiving_owner": "E (0320 Fri)",
+        "prior_exit_state": {"close_px": 3.115, "day_move_usd": -1080, "last_hour_dir": 1, "last_hour_signed_flow": 1, "low_et": "18:33", "high_et": "09:31", "close_off_low_frac": 0.1, "low_late": true, "high_late": false},
+        "chain_polarity": 1, "chain_age_sessions": 0, "cum_from_anchor_usd": -170,
+        "exhaustion_state": "The chain-sided bearish injection delivered its band into the LATE 18:33 low (-1250). Closed near the low (close_off_low 0.10) BUT the final hour turned UP (dir +1) with buy flow (+1) = a marginal late-buy absorption starting to lift off the low. Read: the down delivery is SPENT (band paid out, closed weak but bouncing); the up-chain reference is stale (age 0). 0320 should inherit a shallow near-flat digestion, not a fresh down-leg - the delivery already happened.",
+        "conviction_verdict": "post-print down-leg had ALIGNED flow (phase3 sflow -1438 under px -880) = real delivery, not absorption; the late lift is a small covering bounce, not a reversal. Next day sized shallow off the exhausted state."
+      },
+      "mbo_verdict": "HELP (unchanged from round 1). Confirms DIRECTION (down) and the chain-SIDED print delivery, and the ROUND-2 handoff adds the causal WHY for the shape: the pre-print +470 probe is the inherited 0318 up-carry exhausting, sized as a fade by the prior day's mature-bounce exhaustion state. Magnitude HOLDS at -1050 (round-1 err +30, actual -1080) - the handoff supplies no new magnitude evidence and the day-net anchor is unchanged. Confidence nudged 0.72 -> 0.75 because the morning hump is now explained rather than a loose end.",
+      "selection_reason": "Thursday EIA storage-print catalyst governs (the print, not the Thursday, owns the day). Chain-sided print (loose injection agrees with the running down-chain) -> the with-print leg delivers its full band; specialist D confirms and deepens, and the handoff explains the inherited morning up-carry."
+    },
+    {
+      "date": "20260326",
+      "dow": "Thu",
+      "instrument": "NGK26",
+      "day_class": "tue_thu_core + EIA storage print overlay (10:30 ET, consensus -44 DRAW, ~-43 tight vs 5yr = backdrop-inversion) + April OPEX",
+      "blind_direction": "up",
+      "blind_net_usd": 900,
+      "round1_expected_magnitude_usd": -50,
+      "posterior_direction_by_horizon": {
+        "overnight_20_06": "mild up (onset UP 04:34 ET, thr 250; phase1 sflow -12, px +110) - a thin overnight up-bias continuing the 0325 bounce, but sub-conviction",
+        "preprint_06_1030": "SELL-COIL into the print - imbalance turns negative 09:05-10:05 (imbL -0.32 -> -0.40, cons=BID = sellers hitting bids); a divergence vs the blind's clean bullish up-print expectation (legit pre-10:30 evidence)",
+        "postprint_1030_1300": "UP leg DELIVERS to the session high +600 at 13:04 ET - leg direction matches the blind BUT it rides on ABSORPTION (phase2 sflow -3175 NEGATIVE while px +390 up) = short-covering into supply, NO buy-flow conviction",
+        "postprint_1300_close": "REVERSAL - turn_down 13:04, give-back to the low -480 at 16:12 ET (phase3 sflow -409, px -550), close FLAT -60"
+      },
+      "expected_magnitude_usd": -50,
+      "expected_magnitude_band_usd": [-250, 200],
+      "onset_time_et": "04:34 (up, overnight) - sub-conviction; the material pre-print read is the 09:05-10:05 sell-coil",
+      "turn_time_et": "13:04 (turn_down at the +600 high - the up-leg exhausts and round-trips)",
+      "trend_vs_chop": "round-trip / mean-revert: up-leg then full give-back to flat (chop-around-flat on the day net, clean up-then-down arc intraday)",
+      "continuation_vs_reversal": "REVERSAL - the counter-print up-leg delivers intraday then round-trips; NO continuation to the close",
+      "path_p50_curve": [[20, 0], [22, 40], [0, 90], [2, 150], [4, 190], [6, 150], [8, 130], [10, 110], [12, 500], [14, 320], [16, -450], [18, -150], [20, -60]],
+      "mfe_usd": 600,
+      "mae_usd": -480,
+      "confidence": 0.72,
+      "weight_assigned": {"blind": 0.4, "causal_mbo": 0.6},
+      "evidence_used": [
+        "HANDOFF: 0325 exit state - up basing-bounce (+650) closed near its HIGH (close_off_low 0.83, high_late true) BUT with a last-hour FADE (last_hour_dir -1, last_hour_signed_flow -1), and the dominant chain STILL DOWN (chain_polarity -1, age 0, cum -1690). The bounce is ALREADY exhausting at the prior close, inside a down chain - the exact counter-print round-trip setup",
+        "pre-print sell-coil 09:05-10:05 ET: imbL -0.317 -> -0.397, cons=BID (sellers hitting bids into the print) - a divergence the blind's clean bullish-print read lacked",
+        "post-print up-leg to +600 (high_exc, 13:04 ET) delivered DESPITE phase2 sflow -3175 negative (absorb True) - the CAUSAL tell: absorption/short-covering, not buy-flow, so it cannot hold",
+        "turn_down 13:04 (turn_mag 660) + phase3 give-back sflow -409, px -550 to low -480 (16:12 ET)",
+        "close net -60 (flat) - the round-trip completes",
+        "total_sflow -3596 (net SELL on the day) - the tape sold the whole session even as price rallied midday"
+      ],
+      "evidence_rejected": [
+        "raw onset_dir UP (04:34) as a confirmer of the blind's +900 - REJECTED: the same onset=up appears on 0319 (resolved down). The discriminator is signed-flow-vs-price (absorption), not onset direction",
+        "the +600 MFE as evidence the up-leg 'held' - REJECTED: an up-leg on persistent negative flow inside a down chain is a round-trip setup",
+        "the 0325 close-near-high (close_off_low 0.83) as a reason to EXTEND the bounce into 0326 - REJECTED: the 0325 LAST-HOUR fade (dir/flow both -1) shows the bounce already exhausting; do not front-run a continuation the exit state contradicts"
+      ],
+      "stand_down_reasons": [
+        "execution_authority False all session (SHADOW / evidence-grade only)",
+        "print-cutoff discipline: the +600 high (13:04) and the round-trip are POST-print - used only for the post-print horizon, never to backfill a pre-print read",
+        "the reversal call is live-detectable only at/after the 13:04 turn (the absorption signature emerges during the phase2 up-leg); the posterior does not claim to know the round-trip at the open"
+      ],
+      "handoff_in_used": "From 0325 (owner C, REVERSAL up week-2 give-back-exhaustion bounce off the cum-low): close 2.926, close_off_low 0.83, high_late true, last_hour_dir -1 / last_hour_signed_flow -1, chain_polarity -1 age 0, cum -1690. TAKEN: the bounce closed near its high BUT the final hour FADED (dir and flow both -1) and the dominant chain is still DOWN - so the up-bounce is ALREADY showing exhaustion at the prior close. Entering the counter-print (-44 bullish draw vs a down chain), the 0326 up-leg to +600 is the TERMINAL push of an exhausting bounce, running on absorption, and round-trips to flat. This CONFIRMS the round-1 reversal call and the ~13:00 turn, and TIGHTENS confidence - the exit-state fade is an independent early tell that agrees with the phase2 absorption signature. Magnitude HOLDS at -50 (round-1 err +10).",
+      "handoff_out": {
+        "receiving_owner": "E (0327 Fri, NGJ26 EXPIRY / LTD)",
+        "prior_exit_state": {"close_px": 2.92, "day_move_usd": -60, "last_hour_dir": -1, "last_hour_signed_flow": 1, "low_et": "16:12", "high_et": "13:04", "close_off_low_frac": 0.39, "low_late": false, "high_late": false},
+        "chain_polarity": 1, "chain_age_sessions": 0, "cum_from_anchor_usd": -1750,
+        "exhaustion_state": "The counter-print up-leg (+600, 13:04) round-tripped to flat; closed mid-range (close_off_low 0.39). KEY TELL for the next day: the final hour has last_hour_dir -1 but last_hour_signed_flow +1 = BUY flow being absorbed UNDER a falling price = accumulation/coiling into the close, not a down continuation. Combined with 0327 being NGJ26 EXPIRY/LTD, this is a covering-rally COIL, not a fresh down-leg.",
+        "conviction_verdict": "the up-leg was pure absorption (no buy conviction) and round-tripped - so DO NOT carry a directional up bias. But the late positive-flow-under-falling-price is a bullish coil; 0327 (expiry) has real covering-rally risk. Owner E should inherit a flat/coiled state with expiry-covering UP as the live scenario, NOT a continuation of the give-back down."
+      },
+      "mbo_verdict": "HELP (strong - the block's over-size correction, unchanged from round 1). The blind called +900 UP to the close; MBO shows the up-leg DID deliver intraday (peak +600 at 13:04) but ROUND-TRIPPED to flat (close -60), because the entire up-leg ran on ABSORPTION (phase2 sflow -3175 under px +390) = short-covering with no buy conviction. ROUND 2 adds an INDEPENDENT confirmer from the handoff: the 0325 exit already showed the bounce fading (last-hour dir/flow both -1) inside a down chain, so the counter-print up-leg was the terminal push of an exhausting move - the exit state and the phase2 absorption agree. Magnitude HOLDS at -50 (round-1 err +10, actual -60). HONEST HURT NOTE persists: raw onset_dir=UP and absorb=True are identical on 0319/0326 yet resolve oppositely - only signed-flow-vs-price disambiguates.",
+      "selection_reason": "Thursday EIA storage-print catalyst governs, and this is the COUNTER-print case (bullish -44 draw against the running down-chain in deep S1-void). Counter-print + no seasonal amplifier + a prior-close bounce already fading -> the up-leg delivers then round-trips; specialist D's flow-conviction read (absorption), now doubly-confirmed by the handoff exit-state fade, is the decisive discriminator vs the blind's chain-sided-print assumption."
+    }
+  ],
+  "cross_cutting_mbo_finding": "The HE24->HE1 handoff pass did not move either of my magnitudes (both round-1 numbers were already honest: 0319 -1050 vs actual -1080, 0326 -50 vs actual -60) - it supplied the CAUSAL WHY that round 1 asserted from within-day flow alone. The general mechanism it exposes (+n): on a Thursday PRINT day, the incoming exit state DISAMBIGUATES the pre-print up-carry that both my days share. BOTH 0319 and 0326 open off a give-back-exhaustion UP bounce, and BOTH produce a pre-print/early up-hump (+470 on 0319, the bounce-continuation on 0326). The handoff tells me WHICH way each resolves without waiting for the print: when the prior bounce is MATURE and closed strong-but-into-a-bearish-print (0319, close_off_low 0.97 but chain-sided injection ahead) the up-carry is a fade and the chain-sided print delivers its band DOWN; when the prior bounce already FADED in its last hour inside a still-down chain (0325 -> 0326, last_hour dir/flow both -1, chain_polarity -1) the counter-print up-leg is a terminal push that round-trips. In BOTH cases the rule is the same and it is the doctrine rule: size the seam up-carry by the PRIOR day's EXHAUSTION state, never by the raw close-near-high or the raw onset_dir=up (which are identical on both days and non-discriminating). The prior-close last-hour flow-vs-direction is the leading tell - it fired the 0325->0326 round-trip a full session before the phase2 absorption confirmed it, and (as my 0326 handoff_out flags) the SAME last_hour_signed_flow-vs-direction lens turns positive-under-falling into the 0327 expiry covering-coil. Recommend forward-testing 'prior-close last_hour_signed_flow vs last_hour_dir as an overnight-seam exhaustion/coil tell' on G16/G17.",
+  "summary": {
+    "round1_to_round2": "Both owned days HELD their round-1 magnitudes; the handoff pass changed reasoning/confidence, not numbers. 0319: -1050 -> -1050 (the handoff explains the pre-print +470 as the inherited 0318 up-carry exhausting; confidence 0.72 -> 0.75). 0326: -50 -> -50 (the 0325 last-hour fade inside a down chain independently confirms the counter-print round-trip; confidence 0.68 -> 0.72). No direction changes (no new causal evidence warranted one).",
+    "eia_lens_finding": "The Thursday-print split (pre-print positioning vs post-print reaction) is decided by signed-flow-vs-price CONVICTION on the post-print leg, and round 2 shows the INCOMING exit state gives an early, independent read on the pre-print up-carry that both print days share. Chain-sided print with a maturing carry (0319) delivers its band; counter-print with an already-fading carry (0326) round-trips. Neither resolution is readable from the print SIGN, the close-near-high, or the raw onset_dir - only from exhaustion state + flow-conviction.",
+    "handoff_value": "STATE not day-net was respected throughout: I interpreted the prior exit condition, was not handed a number. The handoff's marginal value on my days was CONFIRMATION + confidence (both round-1 reads were already accurate), plus a genuinely NEW forward-testable tell (prior-close last_hour flow-vs-direction as a seam exhaustion/coil signal) surfaced in the 0326 handoff_out toward the 0327 expiry day.",
+    "per_event_no_averaging": "The two days are characterized individually and resolve oppositely (chain-sided delivery vs counter-print round-trip); no pooled 'Thursday' number is asserted.",
+    "cutoff_compliance": "No post-10:30-ET evidence used to characterize pre-print positioning on either day; the +600 high (0326, 13:04) and both evening lows are post-print and used only for the post-print horizon."
+  }
+}

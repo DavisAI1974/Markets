@@ -1,0 +1,242 @@
+{
+  "specialist": "B",
+  "lens": "Monday weekend-information repricing (agents/mbo_specialist_B.md); Monday = Friday close -> Monday close, the Sunday 18:00 reopen hours are the overnight phase",
+  "group": "g23",
+  "brain_version": "s104.0",
+  "round": 1,
+  "mode": "REFINE",
+  "days_owned": ["20260706"],
+  "note_on_ownership": "This assignment covers 20260706 only. 20260713 is my other g23 Monday and is a separate assignment; nothing here forecasts it.",
+
+  "doctrine_note": "The immutable blind (forecasts/grp23.json) is untouched and remains the core predictor. This is a POSTERIOR UPDATE. Direction stays with the D-1 trade tilt the blind consumed (it was right). What the causal layer changes is MAGNITUDE (bounded by a pre-cutoff impact coefficient the blind never consulted), the GAP SIGN, and the PATH. Magnitudes below are DERIVED from the phase tables, the k3 impact coefficient, and the rally-quality give-back rung - never fitted to the realized number; where the actual went further than the derivation supports I say so and do not claim the excess. No brain edit is made; general mechanisms are filed under proposal_contribution as text only.",
+
+  "declared_defective_inputs": [
+    "renders/ng_refine_s95/g23_mbo_feature_states.jsonl DOES NOT EXIST for g23. Verified absent by directory listing.",
+    "renders/ng_refine_s95/g23_mbo_l1_manifest.json DOES NOT EXIST for g23. Verified absent by directory listing.",
+    "CONSEQUENCE: no book_trustworthy verdict can be formed (no execution_authority, no conviction floor, no book_complete). Per the shared directive the MBO BOOK LAYER STANDS DOWN GROUP-WIDE. Everything below is TRADE-FLOW ONLY, off g23_mbo_evidence.json phase tables plus the realized continuous curve. No queue, depletion, replenishment, far-side-recruitment or L1 spread conclusion is drawn anywhere in this file.",
+    "grp23_state.json 20260706 firehose_present = {mbo_flow: true, l1_book: FALSE} - the state itself independently confirms no book layer on this day.",
+    "NO A-BRIDGE FOR MY DAY. My lens requires consuming A's weekend bridge read before finalizing a Monday. forecasts/g23_perday/ contains grp23_Abridge_20260713.json only; there is no A bridge for the 0703->0706 seam in either the blind or the refine set. The Monday-A pairing Greg specified (S104.1, 'start the week correct') did not run on the harder of the two seams - the 3-night holiday one. Declared as a process gap, not worked around silently.",
+    "k3_prev for my day is measured on |ph3 flow| = 489 lots, marginally BELOW the >=500-lot floor C's numb-class rule states. My instance is a boundary instance by 2 percent and I count it as such, not as a clean one.",
+    "Blind-side defects carried forward unchanged (they were correctly declared in the blind and none is repaired here): the seam LEVEL difference was not computable (0702-evening CDD vintage absent), vol_regime sigma is era-degraded (~0.226 of the scored leg's tape), grid_stack has no wind_chg_7d, COT was 9.4 days stale across the long weekend, storage_consensus next_print carries the post-print capture stamp."
+  ],
+
+  "attribution_fence": "The S110 ladder graft changed the CDD horizon/run-delta inputs underneath this block (weather_forecast.ladder_graft_basis declares it). I therefore bank NEITHER credit NOR blame on the ladder's seam-sign output. My gap-sign finding below is argued from the 0703 phase table, the give-back rung and the storage balance - three inputs the graft did not touch - and I state explicitly that the ladder arm is unscoreable in g23.",
+
+  "days": [
+    {
+      "date": "20260706",
+      "dow": "Mon",
+      "day_class": "block-open Monday after a 3-night Independence Day seam (Fri 0703 13:00 ET early close -> Sun 0705 18:00 ET reopen, ~53 hours closed). D-1 = the 0703 holiday HALF session, 11,501 trades / 1,020 minutes against a ~37,000-trade full-session median. No EIA (0709 = D+3), no opex/expiry, GSCI roll window opens 0708. Pre-void: the 0709 liquidity void is three sessions ahead.",
+
+      "blind_direction": "up",
+      "blind_net_usd": 500,
+      "blind_gap_usd": 400,
+      "blind_session_usd": 100,
+
+      "posterior_direction_by_horizon": {
+        "seam_2000_et": "down",
+        "overnight_2000_to_0600": "down then turn up; the seam overshoot completes in the first hours of the reopen and reverses",
+        "catchup_window_0600_1000": "flat / mildly negative - NOT the ratification leg (see cross_cutting_mbo_finding)",
+        "us_session_1000_to_close": "up",
+        "day_close_to_close": "up"
+      },
+
+      "expected_magnitude_usd": 100,
+      "expected_magnitude_band_usd": [0, 200],
+      "expected_magnitude_derivation": "STEP 1 - the ceiling. k3_prev = |0703 ph3 price change| / |0703 ph3 signed flow| = |+20| / |-489| = 0.041 (signed -0.041). This is the tape's marginal price impact per unit of aggressor imbalance at the prior session's terminal phase, and it is entirely pre-cutoff. 0.041 <= 0.05 puts the seam in the NUMB class, whose stated consequence is |day move| <= ~200 USD. STEP 2 - the central estimate, computed WITH MY OWN DAY HELD OUT so the number is not fitted: the other numb instances available to me are g23 0713->0714 (+200), 0714->0715 (-60), 0715->0716 (-20), plus the two g20 instances C reports (-160, -70). Held-out median |move| = 70, mean 102. STEP 3 - the sign. The D-1 tilt: 0703 was absorb_session TRUE, closing +410 on -1,005 net aggressor SELL with all three phases net-sell; absorbed sell = pressure against the absorbed side = UP. That is the blind's own direction instrument and I keep it. STEP 4 - combine: up, magnitude at the held-out class central tendency => +100. The realized +100 is a coincidence of the derivation landing on the class median, not a fit; the derivation as written would have produced +100 without ever reading the actual.",
+
+      "gap_vs_session_split": {
+        "actual_gap_usd": -580,
+        "actual_session_usd": 680,
+        "actual_day_move_usd": 100,
+        "blind_gap_usd": 400,
+        "blind_session_usd": 100,
+        "blind_day_move_usd": 500,
+        "blind_gap_err_usd": 980,
+        "blind_session_err_usd": -580,
+        "blind_day_err_usd": 400,
+        "posterior_gap_usd": -290,
+        "posterior_gap_band_usd": [-150, -600],
+        "posterior_session_usd": 390,
+        "posterior_day_usd": 100,
+
+        "THE_HEADLINE": "The day-level score of 'direction right, magnitude 5x' is an artifact of two larger errors cancelling. The blind was wrong on BOTH components and in OPPOSITE directions: gap +400 vs actual -580 (error 980, SIGN WRONG), session +100 vs actual +680 (error 580, sign right but 6.8x under). |component errors| = 1,560 against a day-level error of 400 - the day-level number conceals 74 percent of what the blind actually got wrong. Scoring this Monday only at the day level would have recorded a near-miss on what was in fact a double failure.",
+
+        "did_the_wide_band_emission_behave_as_designed": "PARTLY, and the part that failed is a design flaw, not an execution error. The play boundary.weekend_gap_wide_band_emission is designed to emit SIGN plus a WIDE BAND rather than a point, and it did exactly that: band +150..+700 from 0.5-1.0x an era-degraded sigma ~600, token point +400, explicitly refusing a point claim. Score it in two pieces. MAGNITUDE: the band was RIGHT. |actual gap| = 580 sits inside |150..700|; the sigma scaling and the mid-book (NYMEX MM 29.25 pctile, WoW +2,187 improving) choice of the 0.5-1.0x rung rather than the 1.5-2.5x extreme rung both held. SIGN: the band was WRONG, and because the band is emitted one-sided the correct magnitude read was destroyed by the sign error - the actual landed 730 USD outside the near edge of a band that had no way to contain it. THE FLAW: the play fuses a sign claim to a magnitude band, but the two come from independent measurements (sign from the stability ladder; magnitude from sigma x book state). A 'wide band' that cannot straddle zero is not a wide band, it is a fuzzy point. Filed as proposal 2.",
+
+        "why_the_gap_went_down_the_derivation": "Three pre-cutoff inputs, none of them the ladder (see attribution_fence), all pointing the same way. (a) RALLY QUALITY AT THE SEAM. 0703's +410 was a conviction-negative pop: rising price on -1,005 net sell, absorb_session TRUE, zero aligned up phases, on 11,501 trades. My blind fired magnitude.rally_quality_giveback_rung correctly and then applied it to the SESSION component only, netting the seam to small-up on the ladder's 'new driver'. The rung should have been applied to the SEAM. A holiday half-session's move is made by the participants who were there; the seam is the moment everyone who was absent prices it. The rung's 50-70 percent give-back on +410 gives -205..-287. (b) THE BALANCE. stor_surprise +39.2 above, storage +151 vs 5yr and loosening further through the block (+151 -> +156 -> +162). (c) BURN AS A NUMERATOR. My day's est_gas_burn 42.9 Bcf/d is the LOWEST reading in the entire block, and I used it as an up-confirm (see burn_conversion_gate_adjudication). WHAT I DO NOT CLAIM: the rung supports -205..-287. The actual was -580, i.e. 141 percent of the whole 0703 gain. I own the -290 edge of the rung and explicitly decline the other -290. The honest bar says emit what the read supports; the read supports a give-back, not an overshoot to 141 percent.",
+
+        "structural_finding_gap_is_a_weekend_only_object": "Measured across all 20 staged sessions in g22+g23: the sixteen weekday seams carry |gap| <= 20 USD (values 0, 10, -20, 0, -10, 0, 0, 0, 0, 10, 0, 0, 0, 0, -10, -10) - one tick of noise, because this is a ~23-hour continuously traded tape and the weekday 'open' is the prior close. The four weekend / block-open seams carry |gap| of 1,210 (0622), 50 (0629), 580 (0706), 360 (0713). 100 percent of the block's gap risk is concentrated on Mondays. The gap-vs-session split is therefore a MONDAY-ONLY object, and the entire error budget of that split is mine to own."
+      },
+
+      "k3_measurement_answering_target_1": {
+        "definition": "k3 = ph3 price change / ph3 signed flow on the served phase table - the tape's marginal price impact per unit of aggressor imbalance at a session's terminal phase. Same definition C used, recomputed independently here from g22/g23 mbo_evidence.",
+        "k3_on_my_D_minus_1_0703": -0.041,
+        "k3_on_my_D_minus_1_inputs": "ph3 pxchg +20 USD on ph3 signed flow -489 lots across 12,997 lots of ph3 volume (a 1,020-minute half session)",
+        "k3_on_my_own_day_0706": -0.116,
+        "k3_on_my_own_day_inputs": "ph3 pxchg +140 USD on ph3 signed flow -1,207 lots across 25,981 lots",
+        "block_k3_series_recomputed": {"20260706": -0.116, "20260707": -0.066, "20260708": 0.557, "20260709": -0.115, "20260710": 0.302, "20260713": 0.026, "20260714": 0.018, "20260715": -0.036, "20260716": 0.116, "20260717": 0.112},
+
+        "THE_DIRECTIVE_PREMISE_IS_WRONG_FOR_MY_DAY": "The directive states 'YOUR DAY IS PRE-VOID (the high-impact regime)'. The block is pre-void, but my day's INCOMING coefficient is not high-impact - it is 0.041, which is NUMB, lower than any post-void reading except 0714's 0.018. The 0703 half session's terminal phase was already numb. THE CAUSE IS DIFFERENT, WHICH IS THE POINT: 0713+ is numb because a liquidity void removed the book (0709: 98,400 lots produced -1,860 on -11 net flow); 0703 is numb because a holiday half-session had almost nobody in it (12,997 ph3 lots, 11,501 trades all day). Two independent roads into the same coefficient. The coefficient does not know which road it came in on - and for the purpose it is put to (bounding tomorrow's net) it appears not to need to.",
+
+        "DOES_THE_COEFFICIENT_EXPLAIN_MY_MAGNITUDE_MISS": "YES for the day net, NO for the day's internals, and the distinction is the useful part. FOR THE NET: the numb ceiling says |day move| <= ~200. Actual +100. My blind's +500 was 2.5x outside a ceiling that was fully computable from the prior session's phase table before the reopen. That is the whole magnitude miss, explained by a pre-cutoff instrument I did not consult - I reached for weather bands and sigma scalers when the tape had already published its own exchange rate between flow and price. FOR THE INTERNALS: the coefficient explains nothing. Inside that +100 net the day ran a -580 gap, a low 840 USD below the anchor at 21:33 Sunday, a +960 turn, a realized range of 970 and a close at 0.99 of range. A numb coefficient is a NET suppressor, not a volatility suppressor. Quantified on g22+g23: numb-next days have median |day move| 80 against a non-numb median of 520 (a 6.5x compression), but median range 875 against 1,350 (only 1.5x). Ratio range/|net| runs 3.9 to 72.5 on numb days against 1.2 to 5.0 on non-numb. Mechanism: when aggressor flow cannot move the level, price round-trips instead of trending.",
+
+        "out_of_sample_corroboration_of_the_numb_rule": "C's numb-class proposal was built on g20 plus g23 week-2, and does NOT include my seam. Mine is an independent instance in a different day-class (a 3-night holiday seam Monday rather than a mid-week weekday) and it lands in class: k3_prev 0.041, realized day move +100 <= 200. All four numb seams measurable in g22+g23 land in class: 0703->0706 (+100), 0713->0714 (+200), 0714->0715 (-60), 0715->0716 (-20). Recorded as corroboration with its caveat: my |ph3 flow| is 489 against C's stated >=500 floor, so I am a boundary instance."
+      },
+
+      "burn_conversion_gate_adjudication_answering_target_3": {
+        "what_my_blind_did": "Fired weather.burn_conversion_gate as an UP-CONFIRM: est_gas_burn 42.9 Bcf/d on the Sat 0704 row, gas_chg_7d +1,110,514 MWh (Sat-over-Sat, the weekday-normalized form), and licensed the up-lean at the lower-middle of the 'burn-confirmed' +400..+800 class.",
+        "verdict": "REFUTED ON MY DAY TOO. I make it five specialists.",
+        "evidence_1_magnitude": "The gate licensed a +400..+800 day. Actual +100 - a 4-8x over-size, and it is exactly the magnitude error the numb coefficient would have prevented. The gate and the coefficient gave opposite instructions on the same day and the coefficient was right.",
+        "evidence_2_the_confirming_limb_cannot_discriminate": "Recomputed on my own group: forecast_run_delta_cdd (the CDD-add limb) is POSITIVE on 9 of 10 g23 days (0706 +0.963, 0707 +0.362, 0708 +0.570, 0709 +0.278, 0710 +0.020, 0713 +0.435, 0714 +0.390, 0715 +0.534, 0716 +0.135; only 0717 negative at -0.183). A limb that is on nearly every day of a summer block is not a gate - it is a constant. Independently reproduces the '20/20' finding on g23's own numbers.",
+        "evidence_3_burn_rose_while_price_collapsed": "US48 est_gas_burn across the block: 42.9, 42.3, 44.9, 45.3, 45.4, 43.5, 43.3, 47.2, 48.8, 51.0 Bcf/d - up 19 percent from my day to 0717. Price over the same span: 3.245 -> 2.916, down 329 ticks / -3,290 USD. My day carries the block's LOWEST burn reading and one of only four positive day-moves; 0717 carries the HIGHEST burn reading and a +180. Burn level and price direction are not related in this block in either the level or the change.",
+        "evidence_4_E_mechanism_corroborated_at_my_seam": "E's reading - burn is a numerator with no balance-clearing denominator, so at the demand peak with a loosening balance, burn confirmation is BEARISH - is corroborated on my day at the one place the market moved decisively in a single direction. My denominator was loosening on every served field (stor_surprise +39.2 above; storage +151 vs 5yr, widening to +156 then +162 through the block). The seam then gapped -580. My blind read the numerator as an up-confirm and the seam went the other way.",
+        "what_I_will_not_claim": "That burn is a bearish indicator. One block in which burn rose 19 percent while price fell 10 percent is a demonstration that the gate as written carries no directional information; it is not a demonstration of the opposite sign. The correct disposition is WITHDRAW the amplitude/confirmation limb, not invert it."
+      },
+
+      "bearing_on_the_0709_print_target_2": {
+        "scope": "0709 is D's day. I comment only on what my own day measurably handed forward, and I claim nothing about the print itself.",
+        "what_0706_handed_forward": "My session ENDED on a strong absorption: ph3 signed flow -1,207 lots against a price change of +140 USD, close at 0.99 of the day's range, last_hour_dir +1. A resting bid was soaking heavy aggressor selling and still lifting the level. Three sessions later that same structural slot was empty: 0709 ph2 put 98,400 lots through and moved -1,860 on -11 net flow.",
+        "the_caution_this_supports": "Absorption is a statement about the bid that is there NOW. It carries no information about whether that bid survives a seam or three sessions. Two instances in my own evidence make the point in opposite directions: 0703 absorbed sell and closed +410, and the very next seam erased it with -580; 0706 absorbed sell and the bid held into 0707 (+160). Scored across g22+g23, absorb_session TRUE -> next-day sign goes 2 of 3 (0630 wrong, 0703 right, 0709 right). My blind's direction call came off this instrument and was right - but a 2-of-3 instrument being right on my day is not the instrument being validated, and I record it that way."
+      },
+
+      "onset_time_et": "20:00 (the Sunday reopen itself is the onset; the seam repricing arrives with the first prints, not later)",
+      "turn_time_et": "22:00 Sun (derived: the seam sell exhausts within the first hours of a thin reopen because the 0703 resting bid is still there beneath it; the give-back rung sizes the overshoot, the absorption structure says it does not persist. Realized turn was 21:33 - the derivation is one 2-hourly bucket late, and I am not adjusting it to match)",
+      "trend_vs_chop": "trend - one-directional grind from the overnight low to the close once the seam completes (realized close_off_low_frac 0.99 confirms; no material second leg down after the turn)",
+      "continuation_vs_reversal": "REVERSAL at the seam (the seam reverses the 0703 half-session rally), then a single continuation leg for the remaining 21 hours. Day-net is a marginal continuation of the 0703 up-side, which is why the close-to-close number is small and positive while both intraday components are large.",
+
+      "path_p50_curve": [
+        [20, -290],
+        [22, -400],
+        [0, -350],
+        [2, -260],
+        [4, -220],
+        [6, -150],
+        [8, -160],
+        [10, -170],
+        [12, -60],
+        [14, -30],
+        [16, 70],
+        [17, 100]
+      ],
+      "path_note": "2-hourly clock from the 20:00 ET Sunday reopen through the 17:00 Monday close, cum USD from the 3.245 anchor. Shape is derived: seam give-back at the reopen, overshoot completing in the first overnight hours, turn, then a monotone recovery with the 06-10 catch-up window flat-to-negative (see cross_cutting finding) and the close near the high. Amplitude is honestly UNDER the realized path - realized was 20:00 -580, 22:00 -800 (low -840 at 21:33), 00:00 -650, 02:00 -390, 04:00 -360, 06:00 -190, 08:00 -160, 10:00 -240, 12:00 -40, 14:00 -120, 16:00 +50, close +100. I am not claiming the extra ~300 of seam overshoot that the give-back rung does not support.",
+      "blind_path_scored": "The immutable blind's curve ran +400 to +580 for the entire 21 hours and never went negative. The realized curve was negative at 11 of the 12 grid points. The blind's SHAPE was qualitatively right in its second half (rise into the US session, peak mid-afternoon, close near the high) but the level was offset by roughly +600 to +1,000 throughout, and the blind's own intraday swing was +170 peak-to-trough against a realized +1,000 from the overnight low to the close. The blind over-read the LEVEL by a full seam gap and under-read the SWING by about 6x.",
+
+      "confidence": 0.62,
+      "confidence_basis": "Split by component, because they are not equally supported. DAY MOVE (+100): HIGH - the numb ceiling is a measured, pre-cutoff, 4-of-4 instrument in g22+g23 and the direction instrument is the blind's own and was right. GAP SIGN (down): LOW - the mechanism I use (apply the rally-quality give-back rung at the SEAM rather than the session, on a thin-session move) is n=1 in this data. I flip the sign because the causal evidence is unambiguous on this day, and I refuse to dress an n=1 mechanism as a rule. GAP MAGNITUDE (-290): MEDIUM - derived from the rung's own 50-70 percent band, and deliberately short of the realized -580. PATH SHAPE: MEDIUM-HIGH. CATCH-UP WINDOW INERTNESS: MEDIUM-HIGH (4 of 4 Mondays across two groups, but both groups sit in one downtrend - see the falsifier).",
+
+      "weight_assigned": {
+        "blind": 0.40,
+        "causal_mbo": 0.60,
+        "rationale": "Doctrine keeps DIRECTION with the D-1 trade tilt the blind consumed, and that tilt was right - the blind earns its 0.40 there and nowhere else. The causal layer earns 0.60 for the three things it changed: the magnitude ceiling (from a pre-cutoff impact coefficient), the gap sign, and the path level. Note that the single most valuable causal input on this day - k3_prev - is computed entirely from the prior session's phase table and is therefore blind-available. This posterior is not mostly a reaction to the price curve; it is mostly a correction for an instrument the blind could have used and did not."
+      },
+
+      "evidence_used": [
+        "g22_mbo_evidence.json 20260703 phase table (ph1 -29/+310/1663, ph2 -487/+90/8085, ph3 -489/+20/12997; total_sflow -1,005; absorb_session TRUE) - the D-1 tilt and the k3_prev computation",
+        "g23_mbo_evidence.json 20260706 phase table (ph1 +664/+250/11508, ph2 -89/+290/58075, ph3 -1,207/+140/25981; total_sflow -632; turn_up 960 at 21:32 Sun) - the realized causal structure",
+        "g23_actual.json day 20260706 (open 3.187, close 3.255, gap_usd -580, net_usd +680, day_move_usd +100) and the continuous curve resampled to the 2-hourly clock",
+        "g23_exit_states.json 20260706 (close_off_low_frac 0.99, last_hour_dir +1, last_hour_signed_flow +1, low 21:32, high 14:37)",
+        "g23_anchor.json (anchor 3.245 chain-verified vs g22; direction_caveat = last-hour net is 1 tick at the resolution floor; holiday_caveat = 11,501 trades vs a ~37,000 median)",
+        "grp23_state.json 20260706: grid_stack US48 (est_gas_burn 42.9, gas_chg_7d +1,110,514 MWh, gas_share 0.416), storage (level 2,922, vs_5yr +151), stor_surprise +39.2 above, weather_forecast run-delta ladder, flow_calendar (no EIA/opex/expiry, GSCI opens 0708), tape_conditions.prior_full_session",
+        "grp23_state.json all ten days: forecast_run_delta_cdd and grid_stack est_gas_burn series - the burn-gate adjudication",
+        "g22 + g23 mbo_evidence and actual files, all 20 sessions - the gap-is-weekend-only structural measurement, the k3 series, the numb-class tally, the absorption forward record, the four-Monday catch-up-window measurement"
+      ],
+
+      "evidence_rejected": [
+        "THE ENTIRE MBO BOOK LAYER - g23_mbo_feature_states.jsonl and g23_mbo_l1_manifest.json do not exist; no book_trustworthy verdict is formable; stood down group-wide. No queue/depletion/replenishment/recruitment/spread conclusion appears anywhere above.",
+        "weather.burn_conversion_gate as an up-confirm - refuted on four independent measurements on my own day and group (see the adjudication block). The blind's +400..+800 sizing off it is discarded.",
+        "The stability-ladder seam sign - NOT rejected on merit but declared UNSCOREABLE in g23 per the attribution fence: the S110 graft changed these inputs underneath the block, so neither its correctness nor its failure can be banked here. My gap-sign flip is argued from three graft-independent inputs instead.",
+        "The Sunday reopen stub (149 trades, sflow -12, 0 big prints) as a tilt object - degenerate; used only as the gap-forming session, consistent with the blind.",
+        "anchor_lasthr_dir (-1) - the anchor file declares it at the price-resolution floor (1 tick, 11 percent of a 90 USD last-hour range) AND holiday-thin. Not leaned on in either direction. Note it happened to point down, which is the way the seam went, and I decline the credit: a 1-tick signal that is right once is noise that was right once.",
+        "minute-grain imb_flow - my lens file flags it as a known Monday trap (flips faster than its own autocorrelation). Phase table used as the primary object throughout; no minute-grain read appears above.",
+        "Any claim about 0709's print mechanism beyond what my own day's exit structure supports - that is D's day."
+      ],
+
+      "stand_down_reasons": [
+        "MBO book layer: artifacts absent for g23 (feature_states.jsonl, l1_manifest.json). Group-wide stand-down. Trade-flow only.",
+        "L1 layer: firehose_present.l1_book = false on the served state for this day - independently confirms the stand-down.",
+        "A-bridge consumption: no A weekend bridge exists for the 0703->0706 seam. My lens requires it and it was not available. Declared as an unmet precondition, not silently skipped.",
+        "Seam LEVEL difference (weekend.seam_delta_requires_level_difference): still not computable in refine - the 0702-evening CDD vintage remains absent. The 3-night accumulation is still structurally under-read; the refine does not repair the blind's input gap, it only stops depending on it.",
+        "Numb-class point estimate (flow x k3_prev): NOT used as the forecast. The session signed flow it needs is a within-day quantity and not pre-cutoff. Only the CLASS CEILING, which is pre-cutoff, is used."
+      ],
+
+      "selection_reason": "Regular Monday, block-open, weekend-seam day-class - specialist B by definition, and the day is doubly mine because the entire block's gap risk is a Monday object (measured: weekday |gap| <= 20 across 16 seams).",
+
+      "mbo_verdict": "TRADE-FLOW ONLY (book stood down). The flow read on this day is clean and it says one thing: an absorbed-sell structure that survived. Phase 1 was the only ALIGNED phase (+664 flow on +250 price - genuine buying lifting a thin overnight book after the seam overshoot). Phases 2 and 3 both ran flow NEGATIVE under a RISING price (-89 on +290, then -1,207 on +140) - the classic absorption signature, and ph_absorb flags the third. Under the working discriminator that is NEGATIVE-under-rising and would normally read as covering / round-trip risk. It did not round-trip: the close came at 0.99 of range. The reason it did not is the level - the whole session was climbing back out of a seam hole, so the 'rising price' being sold into was a recovery toward the prior close, not an extension away from it. That is the scoping this discriminator needs and did not have: NEGATIVE-under-rising means round-trip risk when the rise is an EXTENSION beyond the anchor, and means a bid defending a level when the rise is a RECOVERY toward it. On 0706 the price only crossed the anchor at 15:00 and closed 100 above it - almost the entire absorbed-sell phase happened below the prior close.",
+
+      "handoff_out": {
+        "note": "Emitted although 0706 is not a weekend-feeding day - 0707 (C) inherits directly from me and the chain should carry state rather than a number.",
+        "exit_close": 3.255,
+        "exit_cum_from_anchor_usd": 100,
+        "exhaustion_state": "NOT exhausted on price - closed at 0.99 of range, one tick off the session high, after a 960 USD one-directional recovery. But exhausted on FLOW: ph3 delivered -1,207 lots of aggressor selling for only +140 of price, and the day's total flow was NEGATIVE (-632) against a +680 session. The level was carried by a resting bid, not by buying pressure. That is a rally standing on one leg.",
+        "conviction_verdict": "NEGATIVE-under-rising in both of the last two phases. Aligned conviction existed only in the overnight phase. The close is high-quality by price and low-quality by flow.",
+        "impact_coefficient_handed_forward": "k3 for 0706 = +140 / -1,207 = -0.116. NOT numb (|0.116| > 0.05), so 0707 does not inherit a numb ceiling - the tape could still move on flow going into 0707. What 0707 inherits is a mid-range coefficient with an absorbing sign.",
+        "what_0707_should_inherit": "A market that has just closed a 53-hour seam round trip and finished 100 above where it started the week, on selling that a bid kept eating. The bid is the whole thesis. Two things would invalidate it fast: the bid stepping away (aggressor selling starting to MOVE price, i.e. k3 turning positive-aligned and rising), or a fresh cum-extreme. Do not inherit 'up momentum' from this close - inherit 'a defended level with negative flow underneath it'. The forward record of that structure in this block is not encouraging: the same absorbed-sell-into-a-defended-level signature appears on 0703 (erased by the very next seam) and on 0709 (where the bid was simply gone).",
+        "chain_polarity_and_age": "Up-side, age 1 from the block anchor, young. Nothing mature to fade."
+      }
+    }
+  ],
+
+  "cross_cutting_mbo_finding": "MY OWN LENS'S CORE PREMISE IS REFUTED ON THIS EVIDENCE. The lens file states: 'The 06-10 ET catch-up window is where Monday decides; the overnight session is drift that the US morning either ratifies or reverses.' I measured the 06:00-10:00 ET window's contribution on every Monday available across two staged groups, off the realized continuous curves. It is NEGATIVE ON ALL FOUR: g22 0622 -710, g22 0629 -510, g23 0706 -50, g23 0713 -360 (median -435). The two adjacent sub-periods each split 2-2 (pre-06: +500 / -490 / +390 / -100; 10-close: -350 / -160 / +340 / +200). The window is the ONLY sub-period of a Monday that is unanimous in sign, and it is unanimous in the sell direction - including on the two Mondays that closed UP on the day (0622 +650, 0706 +100), where the window traded against the day's own direction. On my day specifically the window contributed -50 of a +880 realized advance: the advance happened before it (overnight and early morning, +390 from the open to 06:00) and after it (+340 from 10:00 to the close). The window did not decide the day and it did not ratify anything. TWO CONSEQUENCES. (1) The lens's RATIFICATION arm is 0 for 2 and should be retired: on this evidence the US morning does not ratify a positive overnight, it sells into it. (2) The lens's real object is the SEAM, not the window - 100 percent of the block's gap risk sits on Mondays (weekday |gap| <= 20 across 16 seams; weekend |gap| 1,210 / 50 / 580 / 360), and on my day the gap error alone (980) was 2.45x the day-level error the blind was scored on. A Monday specialist whose attention is on 06-10 is watching the quietest four hours of his own day. THE CAVEAT THAT KEEPS THIS HONEST: g22 and g23 sit inside a single downtrend (3.319 -> 2.916), so a unanimous sell window may be a regime sample rather than a structure. The falsifier is explicit and cheap: an up-trending fortnight in which the Monday 06-10 window is positive on 2 or more Mondays.",
+
+  "proposal_contribution": {
+    "preamble": "TEXT ONLY. No brain edit is made or implied. Each item states its n, whether it spans groups, its scope, and its falsifier. Items with n=1 are labelled as hypotheses and are NOT offered as rules.",
+
+    "proposal_1": {
+      "id": "boundary.gap_is_a_weekend_only_object",
+      "claim": "In this continuously-traded tape the overnight gap is structurally zero on weekdays and material only across weekend / block-open seams. Emit a gap-vs-session split ONLY on Mondays and block-opens; on every other day the split is arithmetic theatre and the day-move IS the session.",
+      "evidence": "All 20 staged sessions across g22 and g23, per-event. Sixteen weekday seams: |gap| values 0, 10, 20, 0, 10, 0, 0, 0, 0, 10, 0, 0, 0, 0, 10, 10 - maximum 20 USD, i.e. two ticks, which is the render's own resolution. Four weekend / block-open seams: 1,210 (g22 0622), 50 (g22 0629), 580 (g23 0706), 360 (g23 0713).",
+      "n": "20 sessions, 2 groups, spans groups. Structural rather than statistical - it follows from the ~23-hour session.",
+      "scope": "NG continuous front-month on the staged MBO legs. Would need re-checking on any tape with a different session calendar.",
+      "why_it_matters": "It relocates the whole gap error budget onto four days in twenty and tells the coordinator which days need a split scored separately at all.",
+      "falsifier": "A weekday seam with |gap| >= 100 USD absent a session-calendar change."
+    },
+
+    "proposal_2": {
+      "id": "boundary.weekend_gap_wide_band_emission - SPLIT THE SIGN FROM THE BAND",
+      "claim": "The play currently fuses a sign claim to a magnitude band and emits a one-sided band. Split it: emit the gap MAGNITUDE as a signless band from the sigma x book-state rung, and emit the gap SIGN as a separate, separately-scored instrument. Score the two independently.",
+      "evidence": "My day is the clean demonstration. The magnitude arm was RIGHT (|actual gap| 580 sits inside the |150..700| band the play derived from a 0.5-1.0x era-degraded sigma, and the mid-book rung was correctly preferred to the 1.5-2.5x extreme rung). The sign arm was WRONG. Because the band is one-sided, a correct magnitude read scored as a 730 USD miss outside the near edge. Across the four weekend seams in g22+g23, the |150..700| band would contain |gap| on 2 of 4 (580, 360) and miss 2 (1,210, 50) - so the band's width is mediocre on its own and its usable content is being destroyed by a sign error it does not need to carry.",
+      "n": "4 weekend seams, 2 groups, spans groups.",
+      "scope": "Weekend/block-open seams only (see proposal 1).",
+      "falsifier": "A group in which the fused emission scores better than the split emission on gap error - i.e. where the sign and magnitude arms are genuinely correlated."
+    },
+
+    "proposal_3": {
+      "id": "flow.numb_impact_coefficient_bounds_the_net_not_the_range",
+      "claim": "SCOPE REFINEMENT to C's numb-class rule (which I corroborate out-of-sample), not a competing rule. A numb prior-session terminal coefficient bounds the next day's NET and says nothing useful about its RANGE. It is a net-suppressor, not a volatility-suppressor. A desk sizing a quiet day off it will be right about the close and badly wrong about the path.",
+      "evidence": "Numb seams in g22+g23 (|k3_prev| <= 0.05), per instance: 0703->0706 net +100 on a range of 970 (ratio 9.7) with a 960 USD turn and a low 840 below the anchor; 0713->0714 net +200 range 780 (3.9); 0714->0715 net -60 range 760 (12.7); 0715->0716 net -20 range 1,450 (72.5). Against the non-numb days in the same two groups: median |net| 520 and median range 1,350, ratios 1.2 to 5.0. The numb class compresses the NET by 6.5x (median |net| 80 vs 520) but the RANGE by only 1.5x (875 vs 1,350). CORROBORATION of C's underlying rule: my seam is an independent instance in a day-class C did not sample (a 3-night holiday seam Monday) and it lands in class at +100 <= 200; all four numb seams in g22+g23 land in class.",
+      "n": "4 numb instances measured here spanning g22-g23, against a 15-session non-numb comparison in the same two groups. C reports further instances in g20, so the underlying rule spans three groups.",
+      "declared_weakness": "My own instance measures k3_prev on 489 lots against C's stated >=500-lot floor. It is a boundary instance by 2 percent and should be counted as such.",
+      "scope": "Next-day NET only. Explicitly silent on sign (C's own refusal, which I keep) and now explicitly silent on range.",
+      "falsifier": "A numb seam (|k3_prev| <= 0.05, |ph3 flow| >= 500) whose next session both nets >= 700 USD and does so without an exogenous catalyst - which would break the net claim; or a run of numb seams whose ranges compress as hard as their nets, which would break this refinement."
+    },
+
+    "proposal_4": {
+      "id": "monday.catchup_window_is_a_sell_window_not_a_ratification_window - RETIRE the ratification arm of the B lens",
+      "claim": "The 06:00-10:00 ET Monday window does not ratify or reverse the overnight according to the overnight's sign. On the available evidence it contributes negatively regardless of the day's direction, and it is not where Monday's magnitude is decided. Retire the ratification arm; keep the window as a small, one-sided drag term; move the lens's attention to the seam.",
+      "evidence": "Four Mondays, both staged groups, measured off the realized continuous curves: 0622 -710, 0629 -510, 0706 -50, 0713 -360. Negative 4 of 4, median -435. The two adjacent sub-periods each split 2-2 (pre-06 +500/-490/+390/-100; 10-close -350/-160/+340/+200), so the window is the only unanimous sub-period of a Monday. It is negative on both Mondays that closed UP on the day, i.e. it trades against the day's own direction. On 0706 it contributed -50 of a +880 advance, all of which arrived outside the window.",
+      "n": "4 Mondays, 2 groups, spans groups.",
+      "scope": "Regular and block-open Mondays on the staged NG legs.",
+      "declared_confound": "g22 and g23 sit inside one continuous downtrend (3.319 -> 2.916). A unanimous sell window across two groups of one regime may be a regime sample, not a structure. This is the reason the proposal is worded as 'retire the ratification arm' (which is 0 for 2 and cannot be rescued by regime) rather than 'the window sells' (which can).",
+      "falsifier": "An up-trending fortnight in which the Monday 06-10 window is positive on 2 or more Mondays."
+    },
+
+    "proposal_5": {
+      "id": "weather.burn_conversion_gate - CONCUR WITH WITHDRAWAL of the confirmation limb",
+      "claim": "Adding my day's adjudication to the four already filed. The gate's CDD-add limb is positive on 9 of 10 g23 days and so cannot gate anything in a summer block; the burn limb rose 19 percent across g23 (42.9 -> 51.0 Bcf/d) while price fell 10 percent (-3,290 USD); and my day - the block's LOWEST burn reading, used as an up-confirm licensing a +400..+800 day - delivered +100 with its one decisive directional move (the -580 seam) going against the gate. Withdraw the confirmation/amplitude limb. Do NOT invert it: one block showing the gate carries no directional information is not a demonstration that burn is bearish.",
+      "n": "10 days in g23 measured here; five specialists concurring across the group.",
+      "scope": "Summer/CDD-regime blocks. The winter/HDD form is untested here and should not be retired by this evidence.",
+      "falsifier": "A block in which the burn limb fires on fewer than half the days AND the up-fires deliver at their licensed magnitude class."
+    },
+
+    "hypothesis_not_a_proposal": {
+      "id": "seam.thin_session_move_is_repriced_at_the_seam (n=1 - HYPOTHESIS ONLY)",
+      "statement": "A price move made inside a holiday half-session or otherwise thin session is made by the participants who were present; the seam is when the absent majority prices it. The rally-quality give-back rung should therefore be applied to the SEAM, not to the following session.",
+      "the_single_instance": "0703 closed +410 on -1,005 net aggressor sell across all three phases, absorb_session TRUE, on 11,501 trades against a ~37,000 full-session median. The next seam gapped -580 - 141 percent of the entire 0703 gain, and more than the 50-70 percent rung would support (-205..-287).",
+      "why_it_is_filed_as_a_hypothesis": "n=1. The only other half-sessions in g22+g23 are the Fridays 0710 and 0717, which carry full trade counts (47,552 and 26,930) and so are not the same object. I flip my own gap sign on this reading because the causal evidence on my day is unambiguous, and I refuse to promote it to a rule on one instance. It needs a second holiday or genuinely thin session feeding a seam before it is worth anyone's forward test.",
+      "falsifier": "A thin session (trade count <= 40 percent of the full-session median) whose move is EXTENDED rather than given back at the next seam."
+    }
+  },
+
+  "summary": "One day owned: 20260706, a block-open Monday after a 3-night holiday seam. HEADLINE: the blind's scored result (+500 vs +100, 'direction right, magnitude 5x') is a cancellation artifact. The gap was +400 forecast against -580 actual - wrong sign, 980 error - and the session was +100 forecast against +680 actual - right sign, 580 error. Component error 1,560 against a day-level score of 400; the day-level number hid 74 percent of the failure. POSTERIOR: day-move +100 (direction unchanged from the blind, magnitude re-derived), split gap -290 / session +390, path re-levelled and honestly under-amplitude. THE INSTRUMENT: k3_prev, the prior session's terminal-phase impact coefficient, computed from 0703's phase table as |+20|/|-489| = 0.041 - NUMB, ceiling |day move| <= 200. My blind's +500 was 2.5x outside a bound that was fully computable before the reopen. The directive's premise that my day is 'pre-void, high impact' is wrong: 0703's terminal phase was already numb, from holiday thinness rather than from a liquidity void - two roads into the same coefficient. The coefficient explains the whole magnitude miss on the NET and none of the internals: a 970 range, a 960 turn and a -840 low sat inside a +100 day, because a numb coefficient suppresses the net 6.5x and the range only 1.5x. BURN GATE: refuted on my day too, four independent ways - the CDD limb is positive 9/10 days in g23, burn rose 19 percent across the block while price fell 10 percent, my day carries the block's LOWEST burn reading and got used as an up-confirm, and the one decisive move went against it. WIDE-BAND EMISSION: magnitude arm right (|580| inside |150..700|), sign arm wrong, and because the band is one-sided the correct magnitude read scored as a 730 miss - split the sign from the band. MY OWN LENS: refuted. The 06-10 catch-up window is negative on 4 of 4 Mondays across both staged groups, including both Mondays that closed up; on my day it contributed -50 of an +880 advance. The ratification arm is 0 for 2 and should be retired, with the downtrend confound declared. DEFECTIVE INPUTS: g23_mbo_feature_states.jsonl and g23_mbo_l1_manifest.json do not exist - the book layer stands down group-wide and nothing above depends on it; and there was no A weekend-bridge read for the 0703->0706 seam, which is a process gap on the harder of the group's two seams."
+}

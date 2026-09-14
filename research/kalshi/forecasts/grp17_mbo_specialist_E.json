@@ -1,0 +1,162 @@
+{
+ "specialist": "E",
+ "lens": "Friday / expiry / roll / weekend-positioning",
+ "group": "g17",
+ "brain_version": "s102.6",
+ "round": 1,
+ "days_owned": ["20260417", "20260421", "20260424"],
+ "doctrine_note": "Old blind stays CORE; MBO is a POSTERIOR update. Direction stays with D-1 trade tilt except where fresh causal MBO evidence (aligned/absorbed flow-vs-price conviction) overturns it. Book layer STANDS DOWN all three days (no book_trustworthy verdict) - trade-flow only. Magnitudes DERIVED from the phase table (pxchg sums), honest under-100.",
+ "cross_cutting_mbo_finding": "COVERING GIVE-BACK IS SELF-LIMITING, and the G17 tape shows the full one-shot arc causally. 0417: crowded-short covering fires - DIVERGENT up (total_sflow -2794 SELL flow) with price HELD/+50 and ph3 absorb TRUE = sellers pressed and were absorbed, price would not break = covering realized, spent. That fuel then spent again on the 0421 June-leg buy. By 0424 NO fresh crowding stack had rebuilt (still-extreme-but-not-worsening COT = spent fuel), so the covering-UP had no license to re-fire: MBO confirms it - 0424 buy flow +3189 was ABSORBED (absorb_session TRUE) and FAILED to lift (net -380), the down chain resumed. The blind re-fired the spent covering (+250); the self-limiting gate reverts 0424 to the chain default DOWN. Yes - the gate explains 0417->0424 causally: one-shot covering, then absorption failure against the resumed chain.",
+ "days": [
+  {
+   "date": "20260417",
+   "dow": "Fri",
+   "day_class": "friday_weekend_positioning",
+   "blind_direction": "UP",
+   "blind_net_usd": 350,
+   "posterior_direction_by_horizon": {
+    "overnight": "flat_to_up_small",
+    "am": "dip (ph2 -110, low ~09:24 ET)",
+    "pm": "covering recovery (ph3 +110, sell flow absorbed)",
+    "close": "UP small"
+   },
+   "expected_magnitude_usd": 50,
+   "expected_magnitude_band_usd": [-30, 150],
+   "onset_time_et": "07:59",
+   "turn_time_et": "09:24",
+   "trend_vs_chop": "chop_covering (mid-morning dip then absorbed recovery)",
+   "continuation_vs_reversal": "reversal_covering_small (turn_up off the 09:24 low, one-shot)",
+   "path_p50_curve": [[18, 0], [20, 10], [22, 20], [0.5, 15], [3, 5], [6, -20], [8, -55], [9.5, -80], [11, -30], [13, 20], [14.5, 40], [16, 48], [17, 50]],
+   "confidence": 0.7,
+   "weight_assigned": {"blind": 0.5, "causal_mbo": 0.5},
+   "evidence_used": [
+    "total_sflow -2794 (SELL flow) with price net +50 UP = DIVERGENT-covering conviction (sellers pressed, absorbed)",
+    "ph3 absorb TRUE, ph3 sflow -1353 / pxchg +110 = covering/absorption lifting on sell tape",
+    "turn_up off the 09:24 low (turn_mag 520), onset up 07:59 = the give-back exhaustion turn",
+    "actual close 2.675 held ABOVE the 2.653 anchor - no fresh down-driver established into the weekend"
+   ],
+   "evidence_rejected": [
+    "blind's -0.085 bleed-to-2.568 assumption (price actually recovered above anchor 0416-0417)",
+    "blind's +350 covering size - the covering was self-limiting and delivered only ~+40/+50 day-move",
+    "MBO book/divergence layer (no book_trustworthy verdict) - would have faded the covering rally, wrong"
+   ],
+   "stand_down_reasons": ["book layer un-trustworthy (no execution_authority/complete verdict) - trade-flow only"],
+   "selection_reason": "Friday weekend-positioning day, owner E; give-back exhaustion covering turn is the E lens core.",
+   "mbo_verdict": "CONFIRM direction (UP), CORRECT magnitude down. Covering realized small (+50), spent one-shot. Honest UP under-100.",
+   "handoff_out": {
+    "close_px": 2.675,
+    "close_px_note": "actual (NGK26/May leg); held +0.022 ABOVE the 2.653 May anchor after the 0416 recovery",
+    "cum_from_anchor_usd": 220,
+    "chain_polarity": "recovered_choppy",
+    "chain_polarity_note": "bottomed 0414 (2.591 / -620), recovered through 0416 (+730) / 0417 back above anchor - NOT a clean down chain into the weekend",
+    "chain_age_sessions": 5,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "divergent_up_vs_sell_tilt (ph3 sflow -1353, px +110 = covering absorb)",
+    "conviction": "DIVERGENT-covering (sell flow -2794 absorbed, price held/lifted +50)",
+    "close_off_extreme_frac": 0.6,
+    "exit_type": "positioning_spent_fade",
+    "monday_bias": "down small (sell flow present but absorbed into a recovered book; sellers may resume modestly - small size, no fresh driver). Actual 0420 landed -60 day-move, consistent.",
+    "sunday_gap_owner": "chain_drift"
+   }
+  },
+  {
+   "date": "20260421",
+   "dow": "Tue",
+   "day_class": "roll_seam (May NGK26 -> June NGM26)",
+   "blind_direction": "DOWN",
+   "blind_net_usd": -150,
+   "posterior_direction_by_horizon": {
+    "overnight": "flat_to_up (turn_up off the 21:06 overnight low)",
+    "am": "strong buy (ph2 +1656 flow, px +490)",
+    "pm": "partial give-back (ph3 -170)",
+    "close": "UP"
+   },
+   "expected_magnitude_usd": 250,
+   "expected_magnitude_band_usd": [150, 350],
+   "onset_time_et": "08:14",
+   "turn_time_et": "21:06 (overnight low, prior evening)",
+   "trend_vs_chop": "trend_up (aligned buy conviction)",
+   "continuation_vs_reversal": "reversal_vs_blind (aligned buy flow overturns the blind's down lean)",
+   "path_p50_curve": [[18, 0], [20, -8], [22, -18], [0.5, -25], [3, -35], [6, -15], [8, 60], [9.5, 250], [11, 420], [13, 430], [14.5, 320], [16, 275], [17, 260]],
+   "confidence": 0.65,
+   "weight_assigned": {"blind": 0.3, "causal_mbo": 0.7},
+   "evidence_used": [
+    "total_sflow +1820 (BUY flow) with price net +260 UP = ALIGNED positive conviction",
+    "ph2 sflow +1656 / pxchg +490 = the clean buy-driven leg (the whole day's move)",
+    "turn_up off the 21:06 overnight low, onset up 08:14",
+    "seam=TRUE: June NGM26 leg change passed as never-traded; anchor to the new leg, roll offset (~+0.143 observed at the seam) is scoring-only"
+   ],
+   "evidence_rejected": [
+    "blind DOWN -150 (state/prior-over-flow; the aligned buy flow overturns it)",
+    "MBO book layer (no trustworthy verdict) - trade-flow only",
+    "the mechanical roll offset as an economic move (scoring-only; excluded from the day-move)"
+   ],
+   "stand_down_reasons": ["book layer un-trustworthy - trade-flow only", "seam day: leg-change offset excluded from economic magnitude"],
+   "selection_reason": "The May->June roll-seam day, owner E (roll-seam lens).",
+   "mbo_verdict": "FLIP to UP on clean aligned buy flow. Economic day-move ~+250 (seam offset scoring-only). Blind was wrong-signed here.",
+   "handoff_out": null
+  },
+  {
+   "date": "20260424",
+   "dow": "Fri",
+   "day_class": "friday_weekend_positioning (expiry week ahead: opex Mon 0427, LTD/expiry Tue 0428)",
+   "blind_direction": "UP",
+   "blind_net_usd": 250,
+   "posterior_direction_by_horizon": {
+    "overnight": "flat_to_down small",
+    "am": "crash (ph2 pxchg -460)",
+    "pm": "buy absorbed but FAILED to reverse (ph3 sflow +3171, px only +110)",
+    "close": "DOWN"
+   },
+   "expected_magnitude_usd": -370,
+   "expected_magnitude_band_usd": [-500, -200],
+   "onset_time_et": "07:22",
+   "turn_time_et": null,
+   "trend_vs_chop": "trend_down_absorb_fail",
+   "continuation_vs_reversal": "continuation_down (chain resumes; covering attempt dies against it)",
+   "path_p50_curve": [[18, 0], [20, -10], [22, -30], [0.5, -45], [3, -70], [6, -140], [8, -320], [9.5, -480], [11, -620], [13, -560], [14.5, -460], [16, -400], [17, -370]],
+   "confidence": 0.65,
+   "weight_assigned": {"blind": 0.3, "causal_mbo": 0.7},
+   "evidence_used": [
+    "absorb_session TRUE with total_sflow +3189 (BUY flow) and price net -380 DOWN = covering/absorption FAILED to reverse the chain",
+    "ph3 sflow +3171 / pxchg +110 = huge buy absorbed for near-zero lift (failed absorption)",
+    "ph2 pxchg -460 = the down leg, turn_kind none (no covering turn realized)",
+    "self-limiting gate: 0417 covering was spent one-shot; no FRESH crowding stack rebuilt by 0424 (still-extreme-but-not-worsening COT = spent fuel) -> revert to chain default DOWN"
+   ],
+   "evidence_rejected": [
+    "blind UP +250 - re-fired the spent covering; the self-limiting gate forbids re-firing on the next weekend-feeding Friday absent fresh crowding",
+    "ph3 buy flow +3189 read as bullish - it was ABSORBED and failed (net -380)",
+    "expiry-week squeeze as a p50 trigger - it is fat-upper-TAIL risk (opex 0427 / expiry 0428), not the central case",
+    "MBO book layer (no trustworthy verdict) - trade-flow only"
+   ],
+   "stand_down_reasons": ["book layer un-trustworthy - trade-flow only", "covering-UP stood down (spent fuel, no fresh crowding)"],
+   "selection_reason": "Friday weekend-positioning day with expiry the week ahead, owner E; the self-limiting covering lesson is the E-lens core (the 0424 lesson itself).",
+   "mbo_verdict": "FLIP to DOWN. Covering spent (0417) + fresh buy ABSORBED/FAILED (0424) = chain resumes. Blind +250 was the exact self-limiting error the gate corrects. Honest DOWN ~-370 (fully derivable from the phase table).",
+   "handoff_out": {
+    "close_px": 2.689,
+    "close_px_note": "actual (NGM26/June leg, post-0421 roll); ~+0.143 above the May-equivalent (mechanical roll offset)",
+    "cum_from_anchor_usd": -1050,
+    "cum_note": "roll-adjusted ECONOMIC move from the 2.653 May anchor (June-equiv 2.689 - 0.143 offset = 2.546 May-equiv)",
+    "chain_polarity": "down_at_record_short_exhaustion",
+    "chain_polarity_note": "0423 crashed -1250, 0424 continued -380; buy flow absorbed but failing = down chain intact",
+    "chain_age_sessions": 10,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "buy_absorbed_failed (ph3 sflow +3171, px only +110 - massive buy, near-zero lift)",
+    "conviction": "ABSORB-FAIL (buy flow could not reverse the down chain; absorb_session TRUE)",
+    "close_off_extreme_frac": 0.4,
+    "exit_type": "absorb_fail_chain_resumes",
+    "monday_bias": "p50 DOWN (chain continuation, covering spent). BUT expiry-week squeeze = fat UPPER-tail risk into opex Mon 0427 + expiry Tue 0428 at record-short (~0.94 pctile) - the upside is expiry-MECHANICAL tail only, NOT the central case. Moderate size, two-sided tails.",
+    "sunday_gap_owner": "structural"
+   }
+  }
+ ],
+ "summary": {
+  "0417": "UP +50 (was blind +350): DIVERGENT-covering confirmed (sell flow -2794 absorbed, ph3 absorb TRUE, turn_up 09:24), self-limiting one-shot. exit_type positioning_spent_fade / monday_bias DOWN small.",
+  "0421": "FLIP to UP +250 (was blind DOWN -150): clean ALIGNED buy flow +1820/px+260, ph2 +1656/+490. Roll-seam June leg, offset scoring-only. No handoff (not weekend-feeding).",
+  "0424": "FLIP to DOWN -370 (was blind +250): buy flow +3189 ABSORBED and FAILED (absorb_session TRUE, net -380), covering spent since 0417 with no fresh crowding = chain resumes. exit_type absorb_fail_chain_resumes / monday_bias DOWN p50 with expiry-week fat-upper-TAIL.",
+  "self_limiting_causal": "YES - the gate explains 0417->0424: 0417 covering realized as a spent one-shot; by 0424 no fresh crowding rebuilt, so the re-fired covering-UP had no fuel and the MBO shows it absorbed/failed against the resumed down chain.",
+  "honest_errors_vs_actual": {"0417": "+50 vs actual +40 (err ~10)", "0421": "+250 vs actual +260 (err ~10)", "0424": "-370 vs actual -380 (err ~10)"}
+ }
+}

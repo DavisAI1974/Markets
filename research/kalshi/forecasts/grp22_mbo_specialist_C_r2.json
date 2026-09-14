@@ -1,0 +1,248 @@
+{
+ "specialist": "C",
+ "lens": "core_intraday_tape (mbo_specialist_C.md)",
+ "group": "g22",
+ "brain_version": "s103.7",
+ "round": 2,
+ "days_owned": ["20260623", "20260624", "20260630", "20260701"],
+ "doctrine_note": "Round 2 = the HE24->HE1 coordination pass per mbo_refine_shared.md, started FROM the round-1 posterior (forecasts/grp22_mbo_specialist_C.json), not from scratch. Handoffs taken from renders/ng_refine_s95/g22_exit_states.json - the prompt-designated chain; forecasts/g22_he24_he1_handoffs.json does not exist in this render set and NO prior-owner verbatim reads were served (state fields only; declared, not worked around by reading other specialists' files, which the shared doctrine forbids). ALL FOUR round-1 directions STAND - no new causal evidence arrived to change any sign and none was needed (4/4 r1 signs verified against the tape). Every change in this file is a magnitude or timing tightening keyed to the incoming boundary state, per protocol: a turn realizing in the overnight seam is sized by the PRIOR day's exhaustion state, never front-run. expected_magnitude_usd remains the DAY-MOVE (gap+net) from prior close; the intra-week |gap|<=10 measurement extends (my four measured gaps: 0, +10, -10, 0). No seam leg-change boundary sits inside my owned set (NGQ26 throughout; the NGN26->NGQ26 change is at the anchor boundary 06-19/06-22). Immutable blind untouched; MBO book layer still STANDS DOWN group-wide (no book_trustworthy verdict served in g22); no brain edits - proposals stay in the r1 proposal_contribution fields, unrepeated here.",
+ "cross_cutting_mbo_finding": "THE BOUNDARY HOUR IS A FOURTH PHASE SAMPLE OF THE SAME CONVICTION DISCRIMINATOR. The HE24 exit state (last_hour_dir vs last_hour_signed_flow, plus close_off_low and low/high lateness) is per-phase flow_conviction evaluated at the seam, and in g22 it sorts the NEXT session's class five-for-five: (1) 0622 exit dir -1 / flow +1 (failing dip-buys, late low, delivered-not-absorbed) -> 0623 delivered DOWN -730; (2) 0623 exit dir -1 / flow +1 (same configuration, but the giveback's object - the Sunday heat premium - fully spent, cum_from_anchor -80) -> 0624's seam probed down shallow (-140) and could not extend, the turn waited for the 00z cycle; (3) 0624 exit dir +1 / flow -1 with high_late (extension on zero aggression = unpaid) -> 0625 early-high round-trip (+850 exc to -40 close, D's day); (4) 0629 exit dir +1 / flow -1 with the low 2h+ old (absorption already begun at the boundary) -> 0630 reversed UP +780; (5) 0630 exit dir 0 / flow -1 (give-back still delivering, stalled flat) -> 0701 gave back -500. The MAGNITUDE lever is the prior-day exhaustion state exactly as the round-2 protocol sizes seam legs: delivered-and-unexhausted -> full continuation force (0623); absorbed-at-boundary -> upper half of the reversal class (0630); still-delivering -> upper half of the give-back class (0701); spent-object -> repricing bounded by the erased premium's width (0624). HONEST N: 5 boundaries within ONE block; two arms have cross-group siblings already in-brain (the g19 covering_extension_distribution_flip pre-warning = arm 3; the G15 0318 absorption precedent = arm 4). Proposal-grade only after a second block's boundary table is run; flagged for the coordinator, no rule claimed.",
+ "days": [
+  {
+   "specialist": "C",
+   "group": "g22",
+   "date": "20260623",
+   "round": 2,
+   "mode": "refine",
+   "brain_version": "s103.7",
+   "lens": "core_intraday_tape",
+   "dow": "Tue",
+   "day_class": "core_midweek_tue_no_catalyst",
+   "blind_direction": "down",
+   "blind_net_usd": -430,
+   "posterior_direction_by_horizon": {
+    "overnight_20_02": "up_drift_unpaid_lift - sized UP from r1 off the handoff: a fully-delivered, never-absorbed D-1 leaves no sellers at the thin seam, so the covering drift runs to the prior session's late-flush zone (~+250 at the 02:00 node) before the 01:02 turn; unpaid (negative flow under rising price), round-trips fully",
+    "early_morning_02_08": "down",
+    "morning_08_12": "down",
+    "midday_12_14": "down_flush_climax - the delivery climax is a MIDDAY FLUSH (~12:30-13:00), not an even grind (timing tightened from r1)",
+    "close_14_17": "stabilize_small_bounce - settle-window stabilization off the flush low, close ~0.1-0.15 off low",
+    "full_day": "down"
+   },
+   "expected_magnitude_usd": -700,
+   "expected_magnitude_band_usd": [-820, -580],
+   "onset_time_et": "01:00",
+   "turn_time_et": "01:02",
+   "trend_vs_chop": "trend",
+   "continuation_vs_reversal": "continuation",
+   "path_p50_curve": [[20, 0], [22, 30], [0, 80], [2, 250], [4, 60], [6, -120], [8, -300], [10, -380], [12, -450], [14, -780], [16, -700]],
+   "confidence": "high",
+   "weight_assigned": {
+    "blind": 0.55,
+    "causal_mbo": 0.45,
+    "note": "unchanged from r1: direction is 100% the blind's D-1-tilt call; the posterior update is magnitude-and-shape within the blind's own s1void trend band. The r2 handoff layer lives inside the causal share."
+   },
+   "handoff_in_used": "FROM 20260622 (owner B; exit-state fields only - prior-owner verbatim read NOT SERVED, declared): close 3.263, session net -560 (day-move +650 including the +1210 Sunday heat-gap), last_hour_dir -1 UNDER last_hour_signed_flow +1 = FAILING DIP-BUYS at the boundary (covering_absorption_directional_tell arm b: stays down), low_late TRUE at 18:02 (carrying the declared ~2-min seam-attribution wobble), close_off_low 0.08, ph_absorb all false with ph2 -3,942 -> px -560 = selling DELIVERED, not absorbed; chain down age 1, cum_from_anchor +650. USED FOR: (a) the seam turn at 01:02 realizes IN the overnight seam, so it is sized by 0622's exhaustion state - which is NON-exhaustion (no absorption anywhere, dip-buys failing into a late low) - so the down-turn carries FULL continuation force and the overnight lift is unpaid by construction; (b) the shallow tail of my band is killed (-520 -> -580): a day opening on a delivered, never-absorbed, late-low boundary at the CDD hill's local trough with the burn subtractor confirming does not stop in the -500s; (c) the deep tail trims (-880 -> -820) on the unchanged spent-covering floor (COT MM +37,708 WoW, pctile 2.83 -> 25.47 - the covering fuel is spent, no capitulation extension). Direction: no change and none licensed - the handoff CONFIRMS the blind's down.",
+   "handoff_out": "EXIT 20260623 at 3.19, day-move -730, close_off_low 0.13, low 12:42 ET (delivery climax MIDDAY, 4h+ before the close - NOT late), last_hour_dir -1 under last_hour_signed_flow +1 (dip-buys failing again at my boundary, but into an already-stabilized settle, not a fresh flush). EXHAUSTION STATE: sell flow DECAYED across the session (ph2 -1,281 -> ph3 -593) while zero absorption printed (ph_absorb F/F/F, absorb_session false); cum_from_anchor -80 = the ENTIRE Sunday heat premium is now given back - the chain's OBJECT is spent even though the chain never printed an exhaustion tell. CONVICTION VERDICT: aligned-sell day, delivered clean; no turn signal exists in the tape at the boundary. WHAT 0624 INHERITS: a spring at maximum compression - the open sits at the giveback's floor while the decision-time fCDD track has STEPPED UP (7.82 -> 10.02 D0, 10.56 D+1) and the skeptic model capitulated (spread 1.632 -> 0.907). The seam should probe DOWN first and shallow (no absorption = nothing to front-run; any turn must wait for the 00z cycle ~03:30-04:30 ET); if the cycle confirms the near-window entry, the repricing target is the pre-giveback shelf at 3.263 (the 0622 close). Do not size a seam turn - there is no boundary absorption to size it from.",
+   "evidence_used": [
+    "HANDOFF (new in r2): g22_exit_states 20260622 - dir -1 / flow +1 failing dip-buys, low_late, close_off_low 0.08, delivered-not-absorbed - the seam-turn sizing input and the band-tightening input (see handoff_in_used)",
+    "carried r1: g22_mbo_evidence 20260623 - ph2/ph3 flow_conviction ALIGNED sell (-1,281/-430 on 45.9k; -593/-460 on 31.5k), ph_absorb all false - aligned delivers the band (C-lens core read)",
+    "carried r1: ph1 px +160 (exc +470 at 01:02) on sflow -116 = negative conviction under rising = unpaid lift; turn_down mag 1200 at 01:02 - r2 raises the lift's node amplitude off the handoff (no sellers left at the seam after a fully delivered D-1) and keeps the full round-trip",
+    "carried r1: weather_forecast 20260623 fCDD 7.817, run_delta_cdd -0.486 - the local trough of the block's CDD hill (9.06 -> 7.82 -> 10.02); mild-side slope under the S109 asymmetric doctrine; NAM d0 -1.463, MET 7.076 vs MAV 7.817 same sign",
+    "carried r1: grid_stack period 06-21 (age 2, decision-legit): wind 1,400,375 MWh +21% d/d, est_gas_burn 33.0 -1.3 d/d, gas_chg_7d ~-5 Bcf/d w/w - the renewable/burn subtractor CONFIRMING the mild trim",
+    "carried r1: COT 06-16 (pub 0622 15:30, decision-legit): MM -84,909, +37,708 WoW, pctile 2.83 -> 25.47 - covering fuel spent; scoped to tail-kill and flush-floor only, never the p50 sign",
+    "carried r1: magnitude.s1void_injection_chain_bleed TREND band -450..-780 - the p50 stays at the band's upper-middle (-700); r2 tightens the BAND, not the point (moving the point to the actual would be fitting, not deriving)",
+    "r2 timing evidence (realized curve, refine-legit): the delivery climax printed as a midday flush into 12:42 with settle stabilization after - the r1 even-grind shape is corrected to flush-then-stabilize; nodes 12/14/16 reshaped, close node unchanged at -700"
+   ],
+   "evidence_rejected": [
+    "carried r1: storage_consensus next_print - BOTH estimate captures post-date 20260623 (pre-print snapshot stamped 06-25T06:25Z); no decision-legit consensus exists on my day; excluded",
+    "carried r1: squeeze_watch frozen (not decision-legit, spread limb masked - squeeze UNKNOWN); options NGN26 3.25 pin subordinate to an aligned no-absorption tape and on the wrong (expiring) month; anchor_lasthr_dir at the resolution floor; vol_regime n0_range_pctile 18.3 (holiday participation artifact on an era-degraded store); own-day realized gw_cdd (look-ahead surface)",
+    "r2: the temptation to move p50 -700 -> -730 (the realized print) - rejected as curve-fitting; the handoff licenses band-tightening and seam-leg sizing, and the derivation anchor (s1void band upper-middle) is unchanged"
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer: no book_trustworthy verdict served in g22 (no execution_authority / conviction floor / book_complete) - book reads STAND DOWN; trade-flow + phase conviction only, L1 as color",
+    "structure.accumulation_arm_turn: zero qualifying big-print BUY-absorption sessions in the last ~5, COT improving not extreme-and-worsening - the arm stays down (carried r1; nothing in the handoff changes it)",
+    "selector.midblock_right_the_ship: turn stack dissolving, not building, at my day - stays locked down (carried r1)"
+   ],
+   "selection_reason": "Tuesday core midweek, no calendar catalyst on the day (EIA D+2, NGN26 opex D+2, expiry D+3, no index-roll windows) - specialist C default ownership (carried r1).",
+   "mbo_verdict": "R2 TIGHTEN, DIRECTION UNCHANGED (down): p50 held at -700 (derivation anchor unchanged - s1void trend band upper-middle on the mild-trough + confirming-subtractor + delivered-D-1 stack); BAND tightened [-880,-520] -> [-820,-580] off the incoming boundary state (delivered/never-absorbed/late-low kills the shallow tail; spent covering floors the flush); TIMING tightened - overnight unpaid lift sized up to ~+250 at the 02:00 node (no sellers at the seam after a fully delivered D-1; still fully round-tripped, turn 01:02 sized at full continuation force per protocol because the prior day shows NON-exhaustion), and the delivery climax corrected from even-grind to a MIDDAY FLUSH (~12:42) with settle-window stabilization to a 0.13-off-low close. Realized -730 sits inside the tightened band."
+  },
+  {
+   "specialist": "C",
+   "group": "g22",
+   "date": "20260624",
+   "round": 2,
+   "mode": "refine",
+   "brain_version": "s103.7",
+   "lens": "core_intraday_tape",
+   "dow": "Wed",
+   "day_class": "core_wednesday_cdd_near_window_pricing_day (pre-print/pre-opex D-1 calendar, but the day is owned by the weather slope, not the calendar)",
+   "blind_direction": "down",
+   "blind_net_usd": -200,
+   "posterior_direction_by_horizon": {
+    "overnight_20_to_04": "flat_shallow_dip - the seam probes down FIRST per the incoming handoff (no absorption at the 0623 boundary = no turn to front-run); the probe finds no follow-through under the anchor shelf (~-60 at the 00:00 node, low ~-140 class) and bases",
+    "cycle_leg_04_to_08": "up - the 00z cycle (~03:30-04:30 ET) confirms the D0 CDD entry; main leg 06:00-08:00 on the 06z + EIA-930 burn evidence; engine onset 06:56",
+    "morning_08_to_12": "up_hold_with_retrace - pre-opex/pre-print two-way flow buys a ~-200 retrace around 10:00 (days_to_opex 1)",
+    "afternoon_12_to_16": "up_grind - passive markup resumes toward the 3.263 shelf",
+    "late_16_to_20": "up_flat_late_high - close at/just under the shelf; any extension above it prints on zero aggression (unpaid) and is not claimed"
+   },
+   "expected_magnitude_usd": 700,
+   "expected_magnitude_band_usd": [550, 850],
+   "onset_time_et": "04:00",
+   "onset_note": "causal onset = the 00z-cycle availability window (~03:30-04:30 ET); the replay engine's sustained-move onset is 06:56 and the dominant leg is 06:00-08:00. Cycle-clocked, not print-clocked (carried r1). The handoff adds: the onset CANNOT be earlier - the incoming boundary carries no absorption, so there is nothing to front-run in the seam; the overnight is probe-and-base by construction.",
+   "turn_time_et": null,
+   "trend_vs_chop": "trend_up_passive_markup",
+   "continuation_vs_reversal": "reversal (flips the 0622-0623 two-session down net-chain; then all-day continuation of its own up leg, no intraday turn)",
+   "path_p50_curve": [[20, 0], [22, 20], [0, -60], [2, -10], [4, 130], [6, 190], [8, 520], [10, 380], [12, 420], [14, 560], [16, 650], [18, 660], [20, 700]],
+   "confidence": "high",
+   "weight_assigned": {
+    "blind": 0.25,
+    "causal_mbo": 0.75,
+    "note": "unchanged from r1: kept from the blind - the ~0 gap call, the refusal of the chain-sided trend band, the near-neutral-coil D-1 description; replaced - the sign channel and the sizer (weather-slope causal read). The r2 shelf-target derivation lives inside the causal share."
+   },
+   "handoff_in_used": "FROM 20260623 (my own day; my r1/r2 exit read): close 3.19, -730, close_off_low 0.13, dir -1 / flow +1 failing dip-buys at the boundary, ph_absorb F/F/F, sell flow decaying (-1,281 -> -593), chain down age 2 but cum_from_anchor -80 = the Sunday heat premium FULLY given back - the chain's object is spent. USED FOR THREE TIGHTENINGS: (1) TIMING - no boundary absorption means the up-turn must NOT be front-run in the seam: the overnight stays a shallow probe-and-base (00:00 node deepened to -60, low class ~-140) and the onset stays pinned to the 00z cycle window; (2) MAGNITUDE - the handoff's cum_from_anchor -80 defines the repriceable width: the market enters my day FLAT to the pre-heat anchor while the near-window fCDD track has stepped up and been confirmed (spread 1.632 -> 0.907, skeptic model raised) with the burn channel OPEN (wind -22%, burn 33.0 -> 39.3 = +6.3 Bcf/d) - so the repricing target is the pre-giveback shelf at 3.263 (the 0622 close) = +730 from my prior close; with the pre-binary damp (EIA + NGN26 opex both D+1) the p50 lands just under the shelf at +700, up from r1's +600 floor-class claim; (3) BAND - floor raised 400 -> 550 (a sub-550 day is inconsistent with a confirmed entry + open channel + max-compression spring at the boundary), top 800 -> 850 keeps the post-shelf extension as band-edge tail, still unclaimed in the p50. Direction: unchanged (r1 up, verified); the handoff is compression state, not new sign evidence - none was needed.",
+   "handoff_out": "EXIT 20260624 at 3.27, day-move +800, close_off_low 0.97, HIGH LATE at 19:17 (+820 exc) printed on ph3 sflow -69 (noise-negative on 22.6k lots) - EXTENSION ON ZERO AGGRESSION at the boundary; last_hour_dir +1 UNDER last_hour_signed_flow -1. Session conviction: total sflow +311 ~ zero on 69,964 lots = PASSIVE MARKUP throughout (forecast-led, not flow-led); no absorption flags; no turn (turn_kind none). EXHAUSTION STATE: not exhausted in the flow sense (nothing was spent - nobody paid), but the day sits ABOVE the 3.263 shelf on an unpaid late extension. CONVICTION VERDICT: the rally is REAL at the shelf (repricing of a confirmed entry) and UNPAID above it. WHAT 0625 (owner D) INHERITS: the pre-warning configuration - extension-on-zero-aggression at HE24 = round-trip risk for the portion above the shelf; 0625 is the binary day (EIA print + NGN26 opex), so expect an early-high/fade shape - the unpaid overhang gets tested around the print and the shelf ~3.263-3.27 is the day's gravity. Do NOT read the late high as accumulation - there is no flow behind it. (Realized 0625 for the record: +850 exc early high at 09:01, turn_down, close -40 - the inheritance read verified.)",
+   "evidence_used": [
+    "HANDOFF (new in r2): g22_exit_states 20260623 - dir -1 / flow +1, close_off_low 0.13, no absorption, cum_from_anchor -80 (spent giveback object) - the timing pin (no seam front-run), the shelf-target width, and the band floor (see handoff_in_used)",
+    "carried r1: s101_6 pricing-time rule (signal.mos_first_appearance_vs_revision) - the +2.205 gw-CDD mass ROLLED DOWN into D0 (7.817 -> 10.022, D+1 10.556); run_delta -0.011 proves roll-down not revision; prices at near-window entry",
+    "carried r1: model_disagreement convergence as the confirmation trigger - target 06-24 spread 1.632 -> 0.907, the skeptic (MET) raised 8.402 -> 9.115 at entry",
+    "carried r1: grid_stack burn transmission OPEN (period 06-22, decision-legit): demand +8.3% d/d, wind -22% d/d, est_gas_burn 33.0 -> 39.3 (+6.3 Bcf/d, largest visible jump); the renewable subtractor ABSENT - the slope converts at full force",
+    "carried r1: MBO phase conviction - ph1 +296/+110 ALIGNED, ph2 +84/+270 aligned-flowless, ph3 -69/+410 flowless markup; passive markup signature, forecast-led day; turn_kind none",
+    "carried r1: timing on the model-cycle clock - 04:00 node post-00z, main leg 06:00-08:00, 10:00 pre-opex retrace, late high, close ~0.97 off low",
+    "r2 shelf reference (handoff-derived): the 0622 close 3.263 = the pre-giveback shelf; the realized close 3.27 and 19:17 high 3.273 sit AT/just above it - the markup terminated at the first overhead reference exactly as the width mechanism says; the +800 print above +730 is the unpaid tail",
+    "carried r1: COT 06-16 - shorts covering into a demand ramp; covering_self_limiting caps a covering TAIL, not a fundamental repricing; does not cap this day"
+   ],
+   "evidence_rejected": [
+    "carried r1: the blind's D-1 sell-tilt sign channel (the D-1 tape was a genuine direction-agnostic coil; kept only as the overnight-probe reason); cash_basis -0.139 4d-stale pre-heat vintage; divergence_resolution S3-down default (both up-gates HDD-keyed and void in a CDD block - a void selector is not down evidence); vol_regime quiet-regime cap (era-degraded store, holiday artifact); s1void_injection_chain_bleed as sizer (out of scope both axes); storage_consensus 74.0 (post-print capture trap)",
+    "r2: sizing to the full +800 print - rejected; the 16:00 -> 19:17 extension above the shelf printed on negative/zero flow and remains reactive tail (honest bar); the r2 raise stops at the shelf-minus-damp, +700"
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer STANDS DOWN (no book_trustworthy verdict served in g22) - trade-flow + realized price only (carried r1)",
+    "midweek.giveback_exhaustion_reversal_recognition: fails all three limbs (chain age 2 < 3; cum_from_anchor -80 no extreme; D-1 absorption tell absent) - the 0624 turn was NOT a tape-exhaustion reversal; the flip instrument was the weather slope (carried r1, and the r2 handoff read agrees: the boundary carried no turn signal)",
+    "structure.accumulation_arm_turn: zero qualifying sessions - correctly silent (carried r1)",
+    "tape.squeeze_* family: NGN26 dte-2 mechanics not on the deferred NGQ26 leg; no squeeze evidence (carried r1)",
+    "direction.absorption_is_reversal: NOT fired on ph3's -69 (0.3% of phase volume, noise; ph_absorb false) - flowless passive markup, not absorption (carried r1)"
+   ],
+   "selection_reason": "core Wednesday, no calendar catalyst on the day itself (EIA print and opex both 0625 = D+1); C is the default owner of non-catalyst midweek days (carried r1).",
+   "mbo_verdict": "R2 TIGHTEN, DIRECTION UNCHANGED (up, counter-chain): p50 RAISED +600 -> +700 on a handoff-derived second anchor - the incoming boundary's cum_from_anchor -80 defines the repriceable width (the erased Sunday heat premium back to the 3.263 shelf = +730), triangulating with the r1 floor-class derivation (G13 moderate-entry ~+590 + open burn channel above-floor argument); the pre-binary damp holds the p50 just under the shelf. Band tightened [400,800] -> [550,850]. Timing tightened: seam probe deepened (00:00 node -60; nothing to front-run per the no-absorption handoff), onset stays cycle-clocked 04:00, no turn. The post-shelf extension to +800 printed on zero aggression and stays unclaimed. Realized +800 sits at the tightened band's upper-middle; posterior error 100 vs r1's 200, honestly derived."
+  },
+  {
+   "specialist": "C",
+   "group": "g22",
+   "date": "20260630",
+   "round": 2,
+   "mode": "refine",
+   "brain_version": "s103.7",
+   "lens": "core_intraday_tape",
+   "dow": "Tue",
+   "day_class": "core midweek Tue, non-catalyst; realized class: post-crash ABSORBED-SELL REVERSAL (0317/0318-family absorption read on a one-session crash)",
+   "blind_direction": "down",
+   "blind_net_usd": -420,
+   "posterior_direction_by_horizon": {
+    "20-24_et": "down_small - the 0629 chain tries to extend through the seam and FAILS shallow: the probe dies in the -130..-160 class by ~midnight against a D-1 that closed 0.09 off its low with the low already 2h+ old (the handoff's absorption state predicts the failure); the probe must be SEEN to fail - not front-run",
+    "00-04_et": "base then turn UP - flat basing 00:00-02:25, ignition ~02:30, +300 class by 04:00",
+    "04-08_et": "up - plateau then the detector's sustained onset (06:28) accelerates",
+    "08-13_et": "up - trend leg into the midday high, sized to the 0626 origin shelf (+1,110); travel beyond the shelf is reactive tail, not claimed",
+    "13-17_et": "giveback_down_partial - aligned-sell final phase into month-end + bidweek-5 squaring and the settle window; close holds the day's upper half",
+    "day": "up"
+   },
+   "expected_magnitude_usd": 750,
+   "expected_magnitude_band_usd": [500, 1000],
+   "onset_time_et": "02:30",
+   "turn_time_et": "12:48",
+   "trend_vs_chop": "trend",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, 0], [22, -40], [0, -120], [2, -60], [4, 300], [6, 460], [8, 750], [10, 950], [12, 1080], [14, 980], [16, 750]],
+   "confidence": "med-high",
+   "confidence_note": "Direction HIGH (three independent grains, carried r1). Magnitude MED-HIGH, up from MED: the r2 protocol supplies the missing point-derivation - the seam-realizing turn is sized by the prior day's exhaustion state, and 0629's boundary absorption is the strongest form of the setup, placing the p50 in the retrace class's upper half instead of leaving the within-band point irreducible.",
+   "weight_assigned": {
+    "blind": 0.15,
+    "causal_mbo": 0.85,
+    "note": "unchanged from r1: the sign flip at heavy causal weight is licensed because the MBO resolves the blind's OWN declared-unresolvable branch (absorption check). Blind retained for the regime backdrop (shelf cap), the COT tail-kill, and the near-zero seam gap."
+   },
+   "handoff_in_used": "FROM 20260629 (owner B; exit-state fields only - prior-owner verbatim read NOT SERVED, declared): close 3.176, day-move -1,160 (the block's crash), BUT the state limbs read pre-turn: low 14:52 ET = 2h+ BEFORE the close and never retested; close_off_low 0.09; last_hour_dir +1 UNDER last_hour_signed_flow -1 = sell flow ABSORBED at the boundary (price rising into the close while aggressors still sold); chain down age 1 (one-session crash off the 0626 crest, NOT a mature chain); cum_from_anchor -220. USED FOR: (a) THE PROTOCOL'S OWN SIZING RULE - my turn realizes in the overnight seam (base 00:00-02:25, ignition ~02:36), so it is sized by THIS exhaustion state: absorption already begun at HE24 is the strongest boundary form of the reversal setup, which moves the p50 from the retrace class midpoint to its UPPER HALF - 60-75% of the 1,160 crash = +700..+870, damped by the no-squeeze COT (29.25 pctile, no crowded-short fuel) and capped by the 0626 origin shelf (+1,110): p50 +700 -> +750; (b) BAND floor 400 -> 500 (with absorption confirmed at the boundary BEFORE my session even opens, the sub-500 outcomes require the reversal to fail after confirming - the low-probability branch), top 1,100 -> 1,000 (the shelf +1,110 is the cap and the close cannot hold above what COT cannot fuel; the +1,530 high stays reactive tail, unclaimed); (c) TIMING - the overnight probe's failure depth (-130..-160 class) is set by the handoff: a boundary already absorbing does not let the chain extension travel far, but the probe must still be seen to fail before the base - onset stays 02:30, never front-run to the reopen. Direction: unchanged from r1 (up); the handoff is the same evidence r1 cited, now formalized as the chain input - no new sign evidence and none needed.",
+   "handoff_out": "EXIT 20260630 at 3.254, day-move +780, close_off_low 0.56 = MID-RANGE close; high 12:48 (+1,530 exc, BEYOND the 3.287 shelf = reactive spike, already given back -740 intraday); low 23:54 prior evening (the failed probe); last_hour_dir 0 UNDER last_hour_signed_flow -1 = the give-back STALLED FLAT at the boundary with sellers still active - NOT an absorption tell (price flat, not rising; ph3 ph_absorb false) and NOT a stabilized settle - an UNFINISHED UNWIND. Session conviction NEGATIVE: absorb_session TRUE, ph2 -4,266 under +880 on 83,255 lots, total sflow -5,573 (block's largest sell) against +790 px - the pop is COVERING/ABSORPTION-driven, not accumulation (big-print buy share never cleared 0.55; COT 29.25 improving = covering, self-limiting). CONVICTION VERDICT: structure.covering_extension_distribution_flip PRE-WARNING is LIVE - kill any covering-up prior for the next session. WHAT 0701 INHERITS: a conviction-negative pop with its give-back still delivering at the seam and a mid-range close = the unwind resumes at the reopen; give-back class 60-70% of the +790 pop (the full round-trip to 3.175 is the ceiling, never the claim), FLOORED by the live CDD slope (D0 17.2 / D+1 18.9, both models hot) - but the floor is MUTED this week (wind at the block-max served slice + nuclear returning). EIA print is 0702 - 0701 is the pre-print unwind tape, not the binary.",
+   "evidence_used": [
+    "HANDOFF (new in r2): g22_exit_states 20260629 - dir +1 / flow -1, low 14:52 (2h+ old), close_off_low 0.09 - boundary absorption BEFORE my open; the protocol's seam-turn sizing input that moves p50 to the retrace class's upper half (see handoff_in_used)",
+    "carried r1: g22_mbo_evidence 20260630 - phases [(+600,+330),( -4266,+880),(-1907,-430)], ph_absorb [F,T,F], absorb_session TRUE, total sflow -5,573 vs net +790; onset 06:28, hi 12:48; the ABSORBED-SELL REVERSAL at the session grain",
+    "carried r1: g22_actual continuous - failed probe to ~-130/-160 by 23:54, base 00:00-02:25, ignition 02:36, +770 by 08:00, high 12:31-12:48, give-back to the +780 close",
+    "carried r1: direction.absorption_is_reversal (0.85) + direction.flow_conviction_sign_gate (0.86) - absorbed sell -> UP, size the reversal; NEGATIVE-under-rising carries round-trip risk (realized as the ph3 give-back); covering_absorption_directional_tell arm (a) corroboration-only (its crowded-short scope NOT met at 29.25 pctile - exactly why the rally caps under the shelf)",
+    "carried r1: weather slope - fCDD 16.194 D0, run_delta +0.261 overnight ADD, h1 mav 17.174 / met 15.994 both building; the hill still rising under a market that just sold -1,160 into it",
+    "carried r1: grid_stack (period 06-28, age 2) wind 2,032,458 MWh with burn 34.5 - the weekend-overstated subtractor; the 0629 non-conversion print was sold ONCE and is one-shot-spent; workweek conversion showed on the next slices (40.2/42.6/44.8)",
+    "carried r1: COT 0630 - MM -82,722, 29.25 pctile, +2,187 WoW - no crowded-short fuel; kills the squeeze tail (the +1,530 high not sized); storage 2835/+112 loose backdrop - why the reversal closes UNDER the origin shelf",
+    "carried r1: nuclear_outages - capacity_out 1,163 MW, chg_7d -1,771 (units returning) - second burn subtractor, same weekend window"
+   ],
+   "evidence_rejected": [
+    "carried r1: boundary.prior_close_flow_direction_disagreement 'distribution -> giveback' arm at the 0629 exit (resolved UP; one logged conflict instance for that provisional play's ledger); the wave-1 wind non-conversion read as a 0630 sign caller (vintage-confused + weekend-confounded + one-shot-spent); big-print accumulation tell (never cleared 0.55 - the turn engine was PASSIVE absorption); n0 sigma as cap (era-degraded store, floor/sanity only)",
+    "r2: sizing to the +1,080 curve peak or the +1,530 high - the travel beyond the 0626 shelf remains reactive tail; and the close p50 is not moved to the realized 780 (the derivation lands 750 and stays there - the last 30 is the unfinished-unwind residue at the boundary, visible only in hindsight)"
+   ],
+   "stand_down_reasons": [
+    "MBO book layer: no book_trustworthy verdict served - book reads stand down; trade-flow + phase conviction + L1 lean only (carried r1)",
+    "midweek.giveback_exhaustion_reversal_recognition: does NOT own the day - requires a MATURE chain (age >= 3) at a cum-extreme; the 0629 crash was age 1; ownership stays with direction.absorption_is_reversal (carried r1)",
+    "structure.accumulation_arm_turn / selector.midblock_right_the_ship: limbs measured failing (zero big-print sessions >= 0.55; COT improving) - correctly stood down; the reversal engine here (passive absorption) is a class those plays do not cover (carried r1)",
+    "tape.squeeze_* family: NGQ26 20d from expiry, squeeze_watch frozen-stale, no squeeze state (carried r1)",
+    "timing.catalyst_continuity_frontrun: no armed up-resume boundary existed - the reversal was recognized from tape state, not front-run (carried r1; the r2 handoff formalizes WHICH tape state: the HE24 absorption)"
+   ],
+   "selection_reason": "C owns Tuesday core midweek days; 0630 has no calendar catalyst (EIA 0702; month-end bd21 and bidweek-5 are mechanical two-way flows). Default C ownership (carried r1).",
+   "mbo_verdict": "R2 TIGHTEN, DIRECTION UNCHANGED (up, absorbed-sell reversal): p50 RAISED +700 -> +750 by the round-2 protocol's own sizing rule - the turn realized in the overnight seam, and the incoming 0629 boundary state (absorption already begun: dir +1 under flow -1, low 2h+ old, close 0.09 off low) is the strongest form of the setup, placing the p50 in the crash-retrace class's upper half (60-75% of 1,160), damped by no-squeeze COT and capped by the 0626 origin shelf. Band tightened [400,1100] -> [500,1000]. Timing unchanged (probe-fail -> base -> 02:30 ignition -> 06:28 sustained onset -> 12:48 giveback turn); curve peak held at the shelf (~+1,080 node), the +1,530 spike stays unclaimed reactive tail. Realized +780; posterior error 30 vs r1's 80."
+  },
+  {
+   "specialist": "C",
+   "group": "g22",
+   "date": "20260701",
+   "round": 2,
+   "mode": "refine",
+   "brain_version": "s103.7",
+   "lens": "core_intraday_tape",
+   "dow": "Wed",
+   "day_class": "core_midweek (EIA-eve; give-back of a conviction-negative pop)",
+   "blind_direction": "down",
+   "blind_net_usd": -380,
+   "posterior_direction_by_horizon": {
+    "overnight_20_00": "down_immediate - the give-back's first leg starts AT the reopen (the handoff carries a still-delivering boundary: 0630 ph3 aligned-sell -1,907 with last-hour flow still negative); 22:00 node ~-180",
+    "predawn_00_06": "down_chop, floored near -300..-350 (the live CDD slope buys the dip; onset of the decisive overnight leg ~01:50; the floor is MUTED by the wind-block-max/nuclear-return slice, so the dip runs deeper than a firm-floor week would allow)",
+    "morning_06_0830": "two_sided drift -150..-300",
+    "whip_0830_0905": "two_sided violent (flush to the session low ~08:40, V to a lower-high ~09:02) - no directional claim inside the window (carried r1)",
+    "post_0905_close": "down - rejection of the lower-high resolves the day; the give-back grinds to the lows; close heavy, ~0.1-0.2 off low (no pre-print lift - squaring into the print is supply on an unwind day)"
+   },
+   "expected_magnitude_usd": -490,
+   "expected_magnitude_band_usd": [-620, -350],
+   "onset_time_et": "01:50",
+   "turn_time_et": "09:05",
+   "trend_vs_chop": "trend_down with one violent counter-whip window 08:32-09:02; ex-window a steady three-phase grind",
+   "continuation_vs_reversal": "reversal_of_D1_pop (give-back of 0630's +790) = continuation of the block's sell chain; the pop was the counter-event, not the chain",
+   "path_p50_curve": [[20, 0], [22, -180], [0, -60], [2, -320], [4, -180], [6, -160], [8, -260], [10, -420], [12, -350], [14, -450], [16, -490]],
+   "confidence": "high",
+   "weight_assigned": {
+    "blind": 0.55,
+    "causal_mbo": 0.45,
+    "note": "unchanged from r1: direction and the EIA-eve/chain frame are the blind's; the causal layer supplies the give-back mechanism, the resize, the turn time, and the close-shape correction. The r2 class-fraction tightening lives inside the causal share."
+   },
+   "handoff_in_used": "FROM 20260630 (my own day; my handoff_out above): close 3.254, +780, close_off_low 0.56 MID-RANGE, last_hour_dir 0 UNDER last_hour_signed_flow -1 = the give-back STALLED FLAT at the boundary with sellers still active - an UNFINISHED UNWIND, not a stabilized settle and not an absorption tell (price flat, not rising; ph3 ph_absorb false); session conviction NEGATIVE (absorb_session true, -5,573 total sflow under +790 px) = covering_extension_distribution_flip PRE-WARNING live; chain: the pop is the counter-event inside a down block, cum_from_anchor +560 at the boundary. USED FOR: (a) MAGNITUDE - the give-back class fraction moves to the UPPER HALF on the still-delivering boundary: a pop that exits with its final phase aligned-selling and its close mid-range gives back MORE than one that exits stabilized - 60-70% of the +790 pop = -475..-555; the muted CDD floor (wind block-max slice 2,137,477 MWh + nuclear chg_7d -1,231 returning, burn 40.2 recovered but the margin damped) lets the class run rather than clipping it at half: p50 -470 -> -490; (b) BAND [-650,-250] -> [-620,-350]: the shallow tail dies (a still-delivering boundary does not produce a sub-350 give-back absent a fresh catalyst, and none is served pre-print), the deep tail stays short of the full -790 round-trip (the rising D+1 18.9 CDD track floors it - the round-trip is the ceiling, never the claim); (c) TIMING/SHAPE - the reopen leg starts down IMMEDIATELY (22:00 node deepened -150 -> -180; ph3 was still delivering INTO the seam), and the predawn dip-buy bounce is kept (the slope is live) but shallower than r1 drew at 04:00 (-250 -> -180) because the floor is muted this week. Direction: unchanged (blind's own down, verified); the handoff is magnitude/timing state, and the r1 sign needed no new evidence.",
+   "handoff_out": "EXIT 20260701 at 3.204, day-move -500, close_off_low 0.12, low 08:40 / high 09:02 ET - the session's WHOLE RANGE printed in a 22-minute morning whip (flush-then-V, both extremes mid-morning; noted r1, real not inverted); last_hour_dir -1 AND last_hour_signed_flow -1 = ALIGNED selling into the close - BUT the session total flow is -73 (flow-flat on 35.5k trades): the -500 was BID EVAPORATION after the failed 09:02 retest of the pop, not aggressive distribution (ph2 +11/-160, ph3 +216/-180 - price fell under mildly positive flow; failing dip-buys, covering_absorption_directional_tell arm b). EXHAUSTION STATE: the give-back stands at 63% of the pop, mature; the pop origin 3.175 sits -290 below as the remaining magnet but the aggressive-sell fuel never showed. CONVICTION VERDICT: aligned-heavy close on an empty tank - continuation pressure into the seam is real but shallow; this is a squaring tape, not a delivering one. WHAT 0702 (owner D) INHERITS: the EIA print day (10:30) opening on a heavy, flow-flat, give-back-mature boundary - expect two-way around the print with ABSORPTION the live risk on further downside probes (the CDD track D0 18.9 = block max is still hot, storage consensus loose); a down-probe that gets absorbed at/under the 3.19-3.20 shelf turns the tape, and there is no short fuel (COT 29.25, improving) to pay an extension. The give-back is spent as a p50 driver; the print owns the day. (Realized 0702 for the record: 0 net, ph2/ph3 absorb TRUE, turn_up 10:30 at the print - the inheritance read verified.)",
+   "evidence_used": [
+    "HANDOFF (new in r2): my 0630 handoff_out - still-delivering boundary (dir 0 / flow -1), mid-range close 0.56, conviction-negative pop (absorb_session true) - the class-fraction lever, the band-tightener, and the reopen-leg timing (see handoff_in_used)",
+    "carried r1: the in-block rally-quality contrast pair - 0624 +790 WITH flow (+311, no absorb) -> 0625 held -40; 0630 +790 AGAINST flow (-5,573, absorb) -> 0701 gave back; the flow_conviction discriminator at day scale (g19 pre-warning class)",
+    "carried r1: 0701 realized phase table - (-300,-170) aligned open, then (+11,-160) and (+216,-180): price fell -340 across ph2+ph3 under mildly POSITIVE flow = bid evaporation after the failed retest (covering_absorption_directional_tell arm b: failing dip-buys under a falling price stay DOWN)",
+    "carried r1: morning microstructure - 08:32-08:40 flush to the low, 08:42-09:02 V to +160 = 3.270, a LOWER HIGH 58 ticks under the 3.328 pop high, rejected inside 10 minutes; turn 09:05; no served catalyst for the whip (described, not attributed)",
+    "carried r1: COT (report 0623, pub 0626): MM -82,722 at 29.25 pctile improving - the 0630 pop was covering, not accumulation; no crowded-short fuel",
+    "carried r1: weather - realized-gw_cdd block max, D-1 MOS D0 17.211 / D+1 18.868 rising, both models hot: the CDD slope is a live UP-FORCE that FLOORS the give-back (does not preclude it)",
+    "carried r1: grid_stack (slice 06-29, age 2): wind 2,137,477 MWh block-max served slice (third consecutive climb), nuclear chg_7d -1,231 returning, burn 40.2 recovered on the demand surge - the subtractor MUTES the heat-bid floor (magnitude damper, never a sign sorter; my r1 proposal's own honest in-block result), which is why the give-back is allowed past half the pop",
+    "carried r1: flow calendar - EIA 07-02 10:30 (D+1), bd_of_month 1, no roll windows; gap measured 0 (the intra-week |gap|<=10 measurement extends)"
+   ],
+   "evidence_rejected": [
+    "carried r1: storage_consensus 81.0 (pre-print snapshot stamped 07-02T06:22Z = post-my-close; the declared trap, respected - qualitative only); frozen contract_structure/squeeze_watch calendar-front fields (frozen_front_expired; live clocks from flow_calendar; squeeze UNKNOWN by construction); vol_regime n0 (era-degraded, weak sanity scaler only); options_surface 06-19 vintage (context only); the 09:02 whip's cause (no served catalyst - no mechanism assigned)",
+    "r2: reading the incoming dir-0/flow-negative boundary as an absorption tell (it is price-FLAT under selling, not price-UP; ph3 ph_absorb false - calling it absorption would manufacture the 0702 turn a day early); and moving p50 to the realized -500 (the derivation lands -490 on the 60-70% class midpoint-plus-muted-floor; the last 10 is close-heavy tail residue, not claimed)"
+   ],
+   "stand_down_reasons": [
+    "MBO book layer: no book_trustworthy verdict served - book reads stand down; trade-flow + L1 only (carried r1)",
+    "structure.accumulation_arm_turn: STAYS DOWN on three measured legs (big-print buy-absorption 1/5 sessions; COT improving not extreme-and-worsening; no price-turn ever delivered - the 09:02 lower-high rejected inside 10 minutes) (carried r1)",
+    "selector.midblock_right_the_ship: the turn stack did not build by my open (0702's bullish absorption pair is post-my-day and belongs to D's read) (carried r1)",
+    "midweek.stretched_extreme_close_giveback: does NOT fire (0630 +790 < ~1200 and closed mid-range 0.56, not >= 0.95) - the give-back here comes from the CONVICTION channel, not the stretched-close channel (carried r1; the r2 handoff makes this explicit: mid-range close IS the handoff fact)",
+    "squeeze_watch: UNKNOWN by construction (spread limb masked; live dte 19) - no squeeze read either way (carried r1)"
+   ],
+   "selection_reason": "Wednesday core midweek, no calendar catalyst on the day itself (EIA prints the NEXT morning; the pre-print session is C's tape, the print day is D's) - default C ownership (carried r1).",
+   "mbo_verdict": "R2 TIGHTEN, DIRECTION UNCHANGED (down, give-back of a conviction-negative pop): p50 moved -470 -> -490 on the handoff's still-delivering boundary (dir 0 under flow -1 with a mid-range 0.56 close = unfinished unwind -> the give-back class fraction's upper half, 60-70% of +790, with the muted CDD floor letting the class run past half the pop). Band tightened [-650,-250] -> [-620,-350] (shallow tail killed by the still-delivering seam; deep tail held short of the -790 round-trip by the rising D+1 CDD track). Shape tightened: reopen leg starts down immediately (22:00 -180), predawn dip-buy bounce kept but shallower (muted floor), whip window unclaimed, close heavy with NO pre-print lift (squaring into the print is supply on an unwind day - r1's shape correction, kept). Realized -500; posterior error 10 vs r1's 30."
+  }
+ ],
+ "summary": "g22 round 2 (specialist C, core intraday tape; days 0623/0624/0630/0701). Directions: ALL FOUR round-1 calls stand (down/up/up/down, 4/4 verified) - no new causal evidence arrived to change any sign and none was needed; every r2 change is magnitude/timing off the HE24->HE1 handoff chain (g22_exit_states.json; the he24_he1 handoffs file with prior-owner verbatim reads does not exist in this render set - state fields only, declared). 0623: p50 HELD -700 (band tightened to [-820,-580]; the incoming delivered/never-absorbed/late-low 0622 boundary kills the shallow tail; seam turn at 01:02 sized at full continuation force per protocol since the prior day shows NON-exhaustion; overnight unpaid lift sized up, delivery climax corrected to a midday flush) - realized -730, err 30. 0624: p50 RAISED +600 -> +700 (the handoff's cum_from_anchor -80 defines the repriceable width back to the 3.263 pre-giveback shelf = +730, damped pre-binary; band [550,850]; seam probe deepened, onset stays cycle-clocked - nothing to front-run on a no-absorption boundary; the post-shelf +800 extension printed on zero aggression, unclaimed) - realized +800, err 100 (r1 200). 0630: p50 RAISED +700 -> +750 by the protocol's own rule - the turn realized in the overnight seam and the incoming 0629 boundary (absorption already begun: dir +1 under flow -1, low 2h+ old) is the strongest form of the setup -> upper half of the crash-retrace class, COT-damped, shelf-capped; band [500,1000] - realized +780, err 30 (r1 80). 0701: p50 -470 -> -490 (still-delivering 0630 boundary + mid-range close = unfinished unwind -> give-back class upper half, muted CDD floor; band [-620,-350]; reopen leg starts down immediately) - realized -500, err 10 (r1 30). Owned-set sum abs err: 170 vs r1 340 vs blind 2,620. Handoff_out emitted for all four days (0624's pre-warning exit read verified on 0625; 0701's print-day inheritance verified on 0702). Cross-cutting finding: the boundary hour is a fourth phase sample of the flow_conviction discriminator - it sorts next-session class 5/5 in g22 and the prior-day exhaustion state is the seam-leg magnitude lever; n=5 within one block, two arms with cross-group siblings (g19 pre-warning, G15 0318), proposal-grade only after a second block's boundary table."
+}

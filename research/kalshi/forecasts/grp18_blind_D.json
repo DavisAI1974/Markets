@@ -1,0 +1,855 @@
+{
+ "specialist": "D",
+ "lens": "Thursday EIA",
+ "group": "g18",
+ "brain_version": "s102.8",
+ "forecast_schema_version": "ng.v2",
+ "days_owned": [
+  "20260430",
+  "20260507"
+ ],
+ "days": [
+  {
+   "date": "20260430",
+   "dow": "Thu",
+   "archetype": "eia_storage_thursday_coherent_buy_chain_sided_up",
+   "reasoning": "S3 shoulder injection print Thursday (June/NGM26 basis clean; anchor 2.689, last-hour DOWN). Decision-legit pre-print consensus for the 04-24 report is +80 Bcf (TE final is a post-print frozen capture; the 04-29 pre-print snapshot carried no value - so 80 is used as trajectory, not a hard legit point). Prior print (0423, report 04-17): actual +103 vs consensus 94/96 = +9 loose (bearish surplus confirmed, PUBLIC a week). Building-surplus backdrop (L48 +103/wk, vs_5yr +111.8). PRE-PRINT OVER-EXTENSION GATE (daytype.eia_preprint_overextension_gate): (a) OVER-EXTENSION - the pre-print chain is NOT a same-side multi-day run: 0427 -3950 sell, 0428 +342 flat, 0429 +7783 buy = a fresh single-session buy after chop, not a stacked run -> does NOT fire. (b) COHERENCE - D-1 (0429) is a strong COHERENT BUY: session_signed_flow +7783, session_b 0.52 AND big_print_b 0.621 BOTH buy, phase_flow [53,3644,4086] accelerating buy, phase_b rising [0.484,0.512,0.543]; session and big-print AGREE -> does NOT fire. (c) surprise priced marginal (bearish surplus public but no fresh 1-week specific surprise). < 2 fire -> gate does NOT trigger; the full-band chain-sided call is EARNED because D-1 flow is COHERENT (the 0423-analog case). Chain-sided direction = the D-1 buy side = UP. This is genuine demand / short-covering into the print (qbid 0.462 = offers stacked, aggressor lifting them). Magnitude S1-void-DAMPED (deep shoulder, near-window ~8.6 gw-HDD mod_heat, weather band grants no size) but storage-Thursday up-sizes the print magnitude. Post-print delivery is unseeable blind -> scenarios: coherent buy deliver-and-carry = damped-band UP; a big bearish build could fade the pop. Held a real counter/fade tail but the coherent buy owns the sign UP.",
+   "regime": {
+    "day_class": "eia_thursday_print",
+    "seasonal_state": "S3_shoulder_injection_S1void",
+    "demand_regime": "shoulder_low_hdd",
+    "curve_regime": "contango",
+    "storage_phase": "injection_building_surplus",
+    "vol_regime": "masked_null",
+    "dominant_driver": "coherent_preprint_buy_chain_sided_up_in_s1void_shoulder",
+    "selector_mode": "coherent_buy_chain_sided"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "daytype.eia_preprint_overextension_gate",
+     "inputs": {
+      "over_extension_multiday_run": "none (0427 -3950 / 0428 +342 / 0429 +7783 = fresh single buy)",
+      "d1_session_b": 0.52,
+      "d1_big_print_b": 0.621,
+      "d1_coherence": "coherent_buy (session + big-print agree)",
+      "surprise_priced": "marginal"
+     },
+     "thresholds": ">=2 of {over-ext>=~$900 same-side run, incoherent D-1, surprise priced>=1wk} -> two-sided; else full band ONLY if D-1 flow coherent",
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "up",
+     "magnitude_band_usd": [
+      200,
+      900
+     ],
+     "note": "0/1 tells fire; D-1 flow COHERENT buy -> chain-sided UP earned (the 0423-analog spare, but UP-signed here because the coherent side is BUY)"
+    },
+    {
+     "rule_id": "daytype.storage_thursday_magnitude",
+     "inputs": {
+      "dow": "Thu",
+      "eia_print_et": "10:30",
+      "consensus_bcf": 80,
+      "chain": "coherent_buy"
+     },
+     "thresholds": "print-Thursday magnitude up-size; R2 leg sides with running swing (buy); day net owned by chain state",
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "up",
+     "magnitude_band_usd": [
+      300,
+      780
+     ],
+     "note": "chain-sided buy leg; the running swing into the print is buy (0429 +7783)"
+    },
+    {
+     "rule_id": "magnitude.s1void_injection_chain_bleed",
+     "inputs": {
+      "phase": "injection_building_surplus",
+      "near_window_hdd_gw": "~8.6",
+      "d1_session_b": 0.52
+     },
+     "thresholds": "the play scopes a chain-sided DOWN session with sub-0.50 sell tape; here D-1 b>0.50 (BUY tape) -> the down-chain-bleed read does NOT apply",
+     "scope_pass": false,
+     "ownership_rank": 3,
+     "direction_effect": "none",
+     "magnitude_band_usd": null,
+     "note": "scope fails: session_b 0.52 is a BUY tape, not the sub-0.50 sell tape this down-bleed sizer requires; the chain is not a down-bleed here"
+    },
+    {
+     "rule_id": "selector.divergence_resolution",
+     "inputs": {
+      "near_window_max_hdd_gw": "~10 (<16.4)",
+      "d1_session_b": 0.52,
+      "regime": "S1void_injection"
+     },
+     "thresholds": "cold-add UP wins only if HDD>=16.4 AND b>=0.50; else S3-bearish DOWN default",
+     "scope_pass": true,
+     "ownership_rank": 4,
+     "direction_effect": "up_from_flow_not_weather",
+     "magnitude_band_usd": null,
+     "note": "no cold-add (HDD<16.4) so weather grants no UP lean; but the UP sign here comes from the COHERENT BUY tape via the over-extension gate, not from a cold-add - the S3-bearish DOWN default is overridden by the live coherent buy"
+    },
+    {
+     "rule_id": "daytype.surprise_magnitude",
+     "inputs": {
+      "decision_legit_consensus": "80 (soft, final-frozen)",
+      "prior_surprise_bcf": "+9 loose (0423)"
+     },
+     "thresholds": "big |surprise| -> bigger leg; near-consensus -> chop; SIGN does not sort side",
+     "scope_pass": true,
+     "ownership_rank": 5,
+     "direction_effect": "none_side",
+     "magnitude_band_usd": [
+      200,
+      700
+     ],
+     "note": "80 headline build; a big loose print is the fade risk to the coherent-buy UP call (held as tail)"
+    },
+    {
+     "rule_id": "boundary.prior_close_flow_direction_disagreement",
+     "inputs": {
+      "d1_session_b": 0.52,
+      "d1_big_print_b": 0.621,
+      "d1_price_dir": "masked"
+     },
+     "thresholds": "price-vs-flow last-hour disagreement arms a seam reversal",
+     "scope_pass": false,
+     "ownership_rank": 6,
+     "direction_effect": "none",
+     "magnitude_band_usd": null,
+     "note": "flow uniformly BUY; price masked but presumed buy-side aligned = no disagreement flag; the coherent buy is a clean carry, not a seam reversal"
+    },
+    {
+     "rule_id": "magnitude.shoulder_weather_band_void",
+     "inputs": {
+      "near_window_max_hdd_gw": "~8.6 mod_heat"
+     },
+     "thresholds": "near-window max <=13.5 gw -> weather band VOID",
+     "scope_pass": true,
+     "ownership_rank": 7,
+     "direction_effect": "none",
+     "magnitude_band_usd": null,
+     "note": "deep S1-void; weather grants no size, day owned by the coherent-flow/storage co-conditions -> magnitude damped"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.45,
+     "flat": 0.33,
+     "down": 0.22
+    },
+    "us_open": {
+     "up": 0.47,
+     "flat": 0.28,
+     "down": 0.25
+    },
+    "settle": {
+     "up": 0.5,
+     "flat": 0.22,
+     "down": 0.28
+    },
+    "close": {
+     "up": 0.5,
+     "flat": 0.22,
+     "down": 0.28
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": 330,
+    "stdev": 500,
+    "p10": -650,
+    "p25": -150,
+    "p50": 400,
+    "p75": 750,
+    "p90": 1150,
+    "bins": [
+     {
+      "label": "<-400",
+      "probability": 0.1
+     },
+     {
+      "label": "-400..-100",
+      "probability": 0.14
+     },
+     {
+      "label": "-100..+150",
+      "probability": 0.16
+     },
+     {
+      "label": "+150..+450",
+      "probability": 0.24
+     },
+     {
+      "label": "+450..+900",
+      "probability": 0.24
+     },
+     {
+      "label": ">+900",
+      "probability": 0.12
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "18:00",
+     "end_et": "08:00",
+     "probability": 0.55,
+     "expected_direction": "up_flat",
+     "catalyst": "overnight_coherent_buy_carry"
+    },
+    {
+     "start_et": "08:00",
+     "end_et": "10:30",
+     "probability": 0.5,
+     "expected_direction": "up_flat",
+     "catalyst": "pre_print_buy_positioning"
+    },
+    {
+     "start_et": "10:30",
+     "end_et": "11:00",
+     "probability": 0.65,
+     "expected_direction": "two_sided_impulse",
+     "catalyst": "eia_storage_print_80bcf_consensus"
+    },
+    {
+     "start_et": "11:00",
+     "end_et": "14:00",
+     "probability": 0.55,
+     "expected_direction": "up",
+     "catalyst": "post_print_delivery_vs_absorption"
+    },
+    {
+     "start_et": "14:00",
+     "end_et": "17:00",
+     "probability": 0.52,
+     "expected_direction": "up",
+     "catalyst": "settle_close_carry"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.53,
+    "chop": 0.47
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.52,
+    "reversal": 0.28,
+    "hold": 0.2
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18.0,
+     "p10": 0,
+     "p50": 0,
+     "p90": 0
+    },
+    {
+     "et_hr": 22.0,
+     "p10": -30,
+     "p50": 15,
+     "p90": 60
+    },
+    {
+     "et_hr": 2.0,
+     "p10": -55,
+     "p50": 30,
+     "p90": 110
+    },
+    {
+     "et_hr": 6.0,
+     "p10": -80,
+     "p50": 55,
+     "p90": 150
+    },
+    {
+     "et_hr": 8.0,
+     "p10": -110,
+     "p50": 85,
+     "p90": 210
+    },
+    {
+     "et_hr": 9.5,
+     "p10": -150,
+     "p50": 120,
+     "p90": 270
+    },
+    {
+     "et_hr": 10.5,
+     "p10": -260,
+     "p50": 240,
+     "p90": 620
+    },
+    {
+     "et_hr": 11.0,
+     "p10": -200,
+     "p50": 320,
+     "p90": 720
+    },
+    {
+     "et_hr": 12.0,
+     "p10": -160,
+     "p50": 370,
+     "p90": 770
+    },
+    {
+     "et_hr": 14.25,
+     "p10": -140,
+     "p50": 390,
+     "p90": 800
+    },
+    {
+     "et_hr": 17.0,
+     "p10": -180,
+     "p50": 400,
+     "p90": 900
+    }
+   ],
+   "guess_curve": [
+    {
+     "et_hr": 18.0,
+     "p50": 0
+    },
+    {
+     "et_hr": 22.0,
+     "p50": 15
+    },
+    {
+     "et_hr": 2.0,
+     "p50": 30
+    },
+    {
+     "et_hr": 6.0,
+     "p50": 55
+    },
+    {
+     "et_hr": 8.0,
+     "p50": 85
+    },
+    {
+     "et_hr": 9.5,
+     "p50": 120
+    },
+    {
+     "et_hr": 10.5,
+     "p50": 240
+    },
+    {
+     "et_hr": 11.0,
+     "p50": 320
+    },
+    {
+     "et_hr": 12.0,
+     "p50": 370
+    },
+    {
+     "et_hr": 14.25,
+     "p50": 390
+    },
+    {
+     "et_hr": 17.0,
+     "p50": 400
+    }
+   ],
+   "overnight_gap_usd": 15,
+   "guessed_net_usd": 400,
+   "fwd_curve_lean": "up_coherent_buy_over_injection_backdrop",
+   "confidence": {
+    "overall": 0.5,
+    "direction": 0.55,
+    "magnitude": 0.45,
+    "timing": 0.55
+   },
+   "scenario_components": [
+    {
+     "name": "coherent_buy_deliver_and_carry",
+     "probability": 0.55,
+     "direction": "up",
+     "distribution": {
+      "p10": 100,
+      "p50": 550,
+      "p90": 1150
+     },
+     "governing_driver": "eia_preprint_overextension_gate spared + coherent D-1 buy (0.52/0.621) carries through the print",
+     "invalidation_conditions": "a big loose build (>>80) that overwhelms the buy, or a genuine sell-tape at the open (session_b<0.50)"
+    },
+    {
+     "name": "bearish_build_fade",
+     "probability": 0.3,
+     "direction": "down_after_pop",
+     "distribution": {
+      "p10": -650,
+      "p50": -280,
+      "p90": 120
+     },
+     "governing_driver": "a large loose injection print delivers bearish and fades the pre-print buy (the coherent-buy = exhausted short-cover risk)",
+     "invalidation_conditions": "print at/below 80 with the buy held past settle"
+    },
+    {
+     "name": "near_consensus_chop",
+     "probability": 0.15,
+     "direction": "flat",
+     "distribution": {
+      "p10": -200,
+      "p50": 80,
+      "p90": 350
+     },
+     "governing_driver": "surprise_magnitude near-80 -> range/chop, buy bias intact but small",
+     "invalidation_conditions": "a large |surprise| vs 80"
+    }
+   ],
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp18_state_s95render_masked",
+    "missing_inputs": [
+     "vol_regime (masked_one_shot null)",
+     "stor_surprise (null, store hole Mar-Jul)",
+     "pre_print_storage_consensus point (04-29 pre-print snapshot carried no value; 80 is final-frozen trajectory)"
+    ],
+    "stale_inputs": [
+     "storage_regional as_of 2026-04-23 (period 2026-04-17)",
+     "steo apr26 age 23d",
+     "options_surface vintage 2026-04-24 (frozen at anchor)"
+    ],
+    "partial_inputs": [
+     "storage_consensus (80 final-frozen, not a legit pre-print point estimate)"
+    ],
+    "prohibited_inputs_removed": [
+     "dip_imb_level of the target day",
+     "target-day price curve",
+     "post-print actual"
+    ],
+    "flags": [
+     "gate_not_fired_coherent_buy",
+     "chain_sided_UP_earned",
+     "s1void_down_bleed_scope_fails_buy_tape",
+     "two_sided_print_scenarios",
+     "june_basis_clean"
+    ]
+   }
+  },
+  {
+   "date": "20260507",
+   "dow": "Thu",
+   "archetype": "eia_storage_thursday_gate_fired_two_sided_counter_tilt",
+   "reasoning": "S3 shoulder injection print Thursday (June/NGM26 basis clean). Building-surplus backdrop intact. PRE-PRINT OVER-EXTENSION GATE (daytype.eia_preprint_overextension_gate): (a) OVER-EXTENSION FIRES - the immediate pre-print chain is a stacked same-side BUY run: 0505 +3258 buy, 0506 +2066 buy = a 2-day buy run (cum +5324) reversing the prior 2-day sell (0501 -3358, 0504 -3110); a multi-day same-side run into the print. (b) INCOHERENT D-1 FIRES (the decisive tell) - D-1 (0506) net session_signed_flow is +2066 (BUY) BUT big_print_b_share is 0.427 (SELL) and session_b 0.48 (sell-lean): the BIG PRINTS ARE SELLING INTO a net-buy tape = distribution; the net flow and the big-print side DISAGREE. (c) surplus priced marginal. >= 2 tells fire (a + b) -> GATE FIRES: do NOT emit the full-band chain-sided (which would be UP continuing the 2-day buy run); go TWO-SIDED / COUNTER-TILT - raise the counter-delivery weight, widen toward the turn, p50 moves OFF the buy-chain sign toward flat/counter. This is exactly the chain-through-the-print trap the gate guards: a naive net-flow read sees +2066 buy and rides UP; the DIRECT big-print side read (0.427 SELL) reveals distribution and flips the call to a fade. p50 mild DOWN/flat. Injection backdrop + big-print distribution favors the bearish counter-delivery; but genuinely bimodal (the small-flow buy could still carry). S1-void damps magnitude either way (deep shoulder). No fresh legit pre-print point consensus captured -> trajectory prior only; surprise SIGN does not sort the side.",
+   "regime": {
+    "day_class": "eia_thursday_print",
+    "seasonal_state": "S3_shoulder_injection_S1void",
+    "demand_regime": "shoulder_low_hdd",
+    "curve_regime": "contango",
+    "storage_phase": "injection_building_surplus",
+    "vol_regime": "masked_null",
+    "dominant_driver": "gate_fired_bigprint_distribution_two_sided_counter_tilt",
+    "selector_mode": "two_sided_counter_tilt"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "daytype.eia_preprint_overextension_gate",
+     "inputs": {
+      "over_extension_multiday_run": "2-day buy run 0505 +3258 / 0506 +2066 = cum +5324 (fires)",
+      "d1_session_b": 0.48,
+      "d1_big_print_b": 0.427,
+      "d1_net_signed_flow": 2066,
+      "d1_coherence": "INCOHERENT (net-flow buy vs big-print SELL 0.427 = distribution)",
+      "surprise_priced": "marginal"
+     },
+     "thresholds": ">=2 of {over-ext same-side run, incoherent D-1, surprise priced} -> two-sided/counter-tilt, p50 off the chain sign",
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "counter_tilt_down_flat",
+     "magnitude_band_usd": [
+      -500,
+      300
+     ],
+     "note": "(a) over-ext + (b) incoherent D-1 BOTH fire -> gate triggers; chain sign (up) is NOT emitted; p50 tilts counter/flat toward the turn"
+    },
+    {
+     "rule_id": "boundary.prior_close_flow_direction_disagreement",
+     "inputs": {
+      "d1_session_b": 0.48,
+      "d1_big_print_b": 0.427,
+      "d1_net_signed_flow": 2066,
+      "d1_price_dir": "masked"
+     },
+     "thresholds": "price/flow (or net-flow vs big-print) last-hour disagreement arms a seam reversal",
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "reversal_risk_down",
+     "magnitude_band_usd": null,
+     "note": "net signed-flow BUY but big prints SELL (0.427) = distribution building = the reversal/fade tell into the print; arms the counter-tilt, does not own it alone"
+    },
+    {
+     "rule_id": "daytype.storage_thursday_magnitude",
+     "inputs": {
+      "dow": "Thu",
+      "eia_print_et": "10:30",
+      "chain": "over_extended_buy_run"
+     },
+     "thresholds": "print-Thursday magnitude up-size; R2 leg = running swing; but a print after a violent same-side extension is an alternation GIVE-BACK day whose with-swing leg ROUND-TRIPS",
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "giveback_round_trip",
+     "magnitude_band_usd": [
+      200,
+      650
+     ],
+     "note": "the 2-day buy extension into the print = the give-back/alternation class; the with-buy pop is the leg that round-trips (1002/1120 analog)"
+    },
+    {
+     "rule_id": "magnitude.shoulder_counter_print_damping",
+     "inputs": {
+      "s1_state": "void",
+      "print_vs_chain": "counter_to_buy_run"
+     },
+     "thresholds": "a COUNTER print (bearish build vs the buy run) in S1-void damps day-net toward flat (~0..counter small)",
+     "scope_pass": true,
+     "ownership_rank": 4,
+     "direction_effect": "down_damped",
+     "magnitude_band_usd": [
+      -300,
+      100
+     ],
+     "note": "S1-void removes the amplifier; the counter-delivering (bearish build) print round-trips the buy toward a small counter net, not a full winter counter band"
+    },
+    {
+     "rule_id": "magnitude.s1void_injection_chain_bleed",
+     "inputs": {
+      "phase": "injection_building_surplus",
+      "d1_session_b": 0.48,
+      "d1_big_print_b": 0.427
+     },
+     "thresholds": "chain-sided DOWN session with sub-0.50 sell tape delivers full band; here the RUNNING chain is a BUY run (net-flow buy) though the big-prints sell",
+     "scope_pass": false,
+     "ownership_rank": 5,
+     "direction_effect": "none",
+     "magnitude_band_usd": null,
+     "note": "scope ambiguous: session_b 0.48 borderline sell but net-flow is buy and the multi-day chain is a buy run - not a clean down-bleed; held out, the gate owns the call"
+    },
+    {
+     "rule_id": "daytype.surprise_magnitude",
+     "inputs": {
+      "decision_legit_consensus": null,
+      "prior_surprise_bcf": "+9 loose (0423 trajectory)"
+     },
+     "thresholds": "big |surprise| -> bigger leg; near-consensus -> chop; SIGN does not sort side",
+     "scope_pass": true,
+     "ownership_rank": 6,
+     "direction_effect": "none_side",
+     "magnitude_band_usd": [
+      150,
+      600
+     ],
+     "note": "no fresh legit pre-print point; a large loose build would confirm the counter (down) fade, a tight draw the buy continuation - two-sided"
+    },
+    {
+     "rule_id": "magnitude.shoulder_weather_band_void",
+     "inputs": {
+      "near_window_max_hdd_gw": "shoulder low"
+     },
+     "thresholds": "near-window max <=13.5 gw -> weather band VOID",
+     "scope_pass": true,
+     "ownership_rank": 7,
+     "direction_effect": "none",
+     "magnitude_band_usd": null,
+     "note": "deep S1-void; weather grants no size; the day is owned by the gate + tape distribution read"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.36,
+     "flat": 0.34,
+     "down": 0.3
+    },
+    "us_open": {
+     "up": 0.33,
+     "flat": 0.3,
+     "down": 0.37
+    },
+    "settle": {
+     "up": 0.32,
+     "flat": 0.25,
+     "down": 0.43
+    },
+    "close": {
+     "up": 0.34,
+     "flat": 0.24,
+     "down": 0.42
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 160,
+    "mean": -80,
+    "stdev": 520,
+    "p10": -850,
+    "p25": -420,
+    "p50": -120,
+    "p75": 300,
+    "p90": 720,
+    "bins": [
+     {
+      "label": "<-500",
+      "probability": 0.16
+     },
+     {
+      "label": "-500..-200",
+      "probability": 0.2
+     },
+     {
+      "label": "-200..0",
+      "probability": 0.18
+     },
+     {
+      "label": "0..+200",
+      "probability": 0.16
+     },
+     {
+      "label": "+200..+500",
+      "probability": 0.18
+     },
+     {
+      "label": ">+500",
+      "probability": 0.12
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "18:00",
+     "end_et": "08:00",
+     "probability": 0.5,
+     "expected_direction": "two_sided",
+     "catalyst": "overnight_carry_of_a_distributed_buy_run"
+    },
+    {
+     "start_et": "08:00",
+     "end_et": "10:30",
+     "probability": 0.48,
+     "expected_direction": "two_sided",
+     "catalyst": "pre_print_positioning_distribution"
+    },
+    {
+     "start_et": "10:30",
+     "end_et": "11:00",
+     "probability": 0.66,
+     "expected_direction": "two_sided_impulse",
+     "catalyst": "eia_storage_print"
+    },
+    {
+     "start_et": "11:00",
+     "end_et": "14:00",
+     "probability": 0.55,
+     "expected_direction": "down_fade",
+     "catalyst": "post_print_delivery_vs_absorption_giveback"
+    },
+    {
+     "start_et": "14:00",
+     "end_et": "17:00",
+     "probability": 0.5,
+     "expected_direction": "down_flat",
+     "catalyst": "settle_close_round_trip"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.42,
+    "chop": 0.58
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.34,
+    "reversal": 0.4,
+    "hold": 0.26
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18.0,
+     "p10": 0,
+     "p50": 0,
+     "p90": 0
+    },
+    {
+     "et_hr": 22.0,
+     "p10": -55,
+     "p50": -5,
+     "p90": 45
+    },
+    {
+     "et_hr": 2.0,
+     "p10": -100,
+     "p50": -12,
+     "p90": 70
+    },
+    {
+     "et_hr": 6.0,
+     "p10": -140,
+     "p50": -20,
+     "p90": 95
+    },
+    {
+     "et_hr": 8.0,
+     "p10": -190,
+     "p50": -30,
+     "p90": 130
+    },
+    {
+     "et_hr": 9.5,
+     "p10": -240,
+     "p50": -45,
+     "p90": 170
+    },
+    {
+     "et_hr": 10.5,
+     "p10": -620,
+     "p50": -120,
+     "p90": 470
+    },
+    {
+     "et_hr": 11.0,
+     "p10": -700,
+     "p50": -140,
+     "p90": 420
+    },
+    {
+     "et_hr": 12.0,
+     "p10": -760,
+     "p50": -135,
+     "p90": 400
+    },
+    {
+     "et_hr": 14.25,
+     "p10": -800,
+     "p50": -125,
+     "p90": 360
+    },
+    {
+     "et_hr": 17.0,
+     "p10": -850,
+     "p50": -120,
+     "p90": 720
+    }
+   ],
+   "guess_curve": [
+    {
+     "et_hr": 18.0,
+     "p50": 0
+    },
+    {
+     "et_hr": 22.0,
+     "p50": -5
+    },
+    {
+     "et_hr": 2.0,
+     "p50": -12
+    },
+    {
+     "et_hr": 6.0,
+     "p50": -20
+    },
+    {
+     "et_hr": 8.0,
+     "p50": -30
+    },
+    {
+     "et_hr": 9.5,
+     "p50": -45
+    },
+    {
+     "et_hr": 10.5,
+     "p50": -120
+    },
+    {
+     "et_hr": 11.0,
+     "p50": -140
+    },
+    {
+     "et_hr": 12.0,
+     "p50": -135
+    },
+    {
+     "et_hr": 14.25,
+     "p50": -125
+    },
+    {
+     "et_hr": 17.0,
+     "p50": -120
+    }
+   ],
+   "overnight_gap_usd": -5,
+   "fwd_curve_lean": "two_sided_counter_tilt_bigprint_distribution",
+   "guessed_net_usd": -120,
+   "confidence": {
+    "overall": 0.44,
+    "direction": 0.4,
+    "magnitude": 0.42,
+    "timing": 0.55
+   },
+   "scenario_components": [
+    {
+     "name": "counter_delivery_fade_the_buy",
+     "probability": 0.42,
+     "direction": "down",
+     "distribution": {
+      "p10": -850,
+      "p50": -420,
+      "p90": -60
+     },
+     "governing_driver": "big-print distribution (0.427 SELL into buy tape) + a bearish build print fades the over-extended 2-day buy run (give-back/alternation)",
+     "invalidation_conditions": "a tight draw-relative print with the buy re-accelerating (session_b>0.52) past settle"
+    },
+    {
+     "name": "buy_run_continuation",
+     "probability": 0.33,
+     "direction": "up",
+     "distribution": {
+      "p10": -100,
+      "p50": 320,
+      "p90": 720
+     },
+     "governing_driver": "the small-flow net buy (+2066) still carries; the big-print sell was hedging not distribution",
+     "invalidation_conditions": "the print delivers a loose build and the buy fails to hold the open"
+    },
+    {
+     "name": "round_trip_chop",
+     "probability": 0.25,
+     "direction": "flat",
+     "distribution": {
+      "p10": -300,
+      "p50": -40,
+      "p90": 220
+     },
+     "governing_driver": "shoulder_counter_print_damping + S1-void: the print pops and round-trips to a small net",
+     "invalidation_conditions": "a large |surprise| that trends the day one-way"
+    }
+   ],
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp18_state_s95render_masked",
+    "missing_inputs": [
+     "vol_regime (masked_one_shot null)",
+     "stor_surprise (null, store hole Mar-Jul)",
+     "pre_print_storage_consensus point (no legit pre-print point captured)"
+    ],
+    "stale_inputs": [
+     "storage_regional as_of 2026-04-23",
+     "steo apr26 age 30d",
+     "options_surface vintage 2026-04-24 (frozen at anchor, 13d stale)"
+    ],
+    "partial_inputs": [
+     "storage_consensus (trajectory only for the 05-01 report)"
+    ],
+    "prohibited_inputs_removed": [
+     "dip_imb_level of the target day",
+     "target-day price curve",
+     "post-print actual"
+    ],
+    "flags": [
+     "gate_FIRED_two_sided",
+     "bigprint_distribution_into_buy_tape",
+     "over_extended_2day_buy_run",
+     "counter_tilt_p50_off_chain_sign",
+     "genuinely_bimodal",
+     "june_basis_clean"
+    ]
+   }
+  }
+ ]
+}

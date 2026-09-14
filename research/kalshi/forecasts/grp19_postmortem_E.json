@@ -1,0 +1,60 @@
+{
+ "specialist": "E",
+ "lens": "friday_expiry_roll_weekend_positioning",
+ "group": "g19",
+ "brain_version": "s102.9",
+ "mode": "POST_MORTEM_SELF_EVAL",
+ "days_owned": ["20260515", "20260520", "20260522"],
+ "scoreboard": {
+  "0515": {"blind": 90, "actual": 320, "miss_usd": 230, "dir": "OK_undersized"},
+  "0520": {"blind": 200, "actual": -1050, "miss_usd": 1250, "dir": "WRONG_SIGN"},
+  "0522": {"blind": -190, "actual": -990, "miss_usd": 800, "dir": "OK_undersized"},
+  "total_abs_miss_usd": 2280
+ },
+ "days": [
+  {
+   "date": "20260515",
+   "dow": "Fri",
+   "blind_call": 90,
+   "actual": 320,
+   "miss_usd": 230,
+   "dir_verdict": "OK sign (UP), undersized ~3.5x",
+   "misread": "Read 0514 D-1 final-phase signed-flow collapse (913->41) as covering EXHAUSTING and forecast 0515 as a small last-gasp fade into the bell. Wrong: 0514 printed its HIGH at 18:00 (closed ON its high, +590) and 0515's own tape was a clean turn_up (07:56) with a STRONG final phase (sflow +703, px +130) and high at 12:49 held into a firm close (+320). The covering was ACCELERATING, not exhausting; I mistook a strong-close continuation for a spent one-shot.",
+   "blind_visible_signal_missed": "0514 closed on its session high (hi_et 18:00 = the bell) and 0515's ph3 signed_flow was strongly POSITIVE (+703) with price rising - a buy-conviction close, not a fade. Both blind-visible. My 'final-phase +41 collapse' read cherry-picked D-1's phase count and ignored that D-1 closed at its high.",
+   "he24_he1_effect": "A LIVE prior-day handoff would have HELPED. Inheriting 0514's actual exit state (closed on session high, late-high flag, covering accelerating) directly contradicts 'exhausting'. It would have (a) upsized 0515 toward +300 and (b) prevented the positioning_spent_fade / Monday-DOWN exit that mis-seeded the panel. This is exactly the Friday-exit-cascade the doctrine warns of."
+  },
+  {
+   "date": "20260520",
+   "dow": "Wed",
+   "leg": "ng_mbo_ngn26_july",
+   "blind_call": 200,
+   "actual": -1050,
+   "miss_usd": 1250,
+   "dir_verdict": "WRONG SIGN - the block's biggest miss",
+   "misread": "I read the D-1 (0519) book polarity - big_print_b_share 0.537 + l1 quote_bid_share 0.53 resting ABOVE a sell-aggressor b_share 0.393 - as 'sell absorbed -> crowded-short covering -> UP' and fired the roll-seam as a covering PULSE day (+200). I inverted the absorption. What actually happened on the July leg: price crested at the 07:57 reopen high (+270) and collapsed to -1050; turn_down at 07:57, low at 14:07. The realized flow was POSITIVE all day (session sflow +1892; ph2 +614 / px -850; ph3 +1503 / px -60) yet price FELL - i.e. NEGATIVE flow_conviction: BUYERS being absorbed by sellers at a maximally-extended top = DISTRIBUTION, not covering. Same book shape I keyed on, opposite sign, because I never conditioned it on rally extension or on the sign of flow-vs-price.",
+   "inverted_tell": "The covering_absorption_directional_tell is NOT unconditional. Resting-bid-over-sell-aggressor near a fresh low = shorts covered UP; the identical polarity near a +2110-from-anchor, 5-6 session-old crest = longs/late-chasers absorbed = DISTRIBUTION DOWN. I applied the low-context sign to a high-context crest. I also ignored that 0519's OWN session flow_conviction was already negative (session sflow -2374 SELL while price rose +830) = the rally was running purely on borrowed short-covering fuel with real flow selling underneath = a terminal-squeeze signature, blind-visible.",
+   "blind_visible_vs_price_dependent": "SPLIT, honest. The EXACT intraday crest-and-collapse off the 3.28 open (turn 07:57) is PRICE-DEPENDENT - blind could not see the top without the curve, and a close-state handoff from 0519 (which closed near its high, rally intact) would NOT cleanly flip the sign to -1050. BUT my +200 UP CONVICTION was blind-REFUTABLE: (1) cum_from_anchor +2110 = maximally extended one-shot covering (covering_giveback_self_limiting - the exact gate I wrote and correctly applied to 0522 but VIOLATED here); (2) 0519 session sflow -2374 negative-conviction. Those two blind-visible facts should have moved the p50 to flat / small-DOWN with a fat lower tail, not +200 UP. So: sign is partly price-dependent, but the confident UP was a self-inflicted doctrine violation.",
+   "he24_he1_effect": "PARTIAL help. A live 0519 handoff carries close-state (near high, +830, rally intact) = looks like bullish continuation, so it would NOT have flipped me clean to -1050. What it WOULD have carried is 0519's negative session flow_conviction (sflow -2374 while price +830) and the +2110 extension - inherited as 'rally on spent short-covering fuel, real flow selling' - which would have killed the +200 conviction and at least neutralized to flat. The clean sign flip required the price (the intraday crest), which only the refine sees."
+  },
+  {
+   "date": "20260522",
+   "dow": "Fri",
+   "leg": "ng_mbo_ngn26_july",
+   "blind_call": -190,
+   "actual": -990,
+   "miss_usd": 800,
+   "dir_verdict": "OK sign (DOWN), massively undersized ~5x",
+   "misread": "Direction reasoning was correct (aligned-sell delivery + spent covering -> chain default DOWN, did NOT re-fire covering-UP - the S105 lesson applied right). But I capped magnitude at -190 by over-weighting a 'post-big-down-day exhaustion + late weekend-cover trim' and treating the down move as mostly discharged. Actual -990: ph2 sflow -1208 / px -690 was decisive delivery, and the late ph3 buy flow (+1436) was ABSORBED (px -350) - the weekend-cover 'trim' I banked on never lifted price, it got sold. I under-sized the one directional call I had right.",
+   "blind_visible_signal_missed": "0521 (D-1) closed ON its session low (lo_et 16:12 = the bell) with an ACCELERATING sell final phase (ph3 sflow -2042). Closed-on-low + accelerating sell into a 3-day-weekend seam = down momentum intact and strong, which supports -700+ sizing, not -190. My late-weekend-cover-trim assumption fought a blind-visible closed-on-low.",
+   "he24_he1_effect": "Would have HELPED magnitude substantially. A live handoff from 0521 (closed on session low, ph3 -2042 accelerating) inherited into 0522 justifies a much larger down day (-700 to -900) instead of -190. Direction was already right; the handoff fixes the ~5x under-sizing directly."
+  }
+ ],
+ "handoff_out_error": {
+  "day": "20260515",
+  "error": "My 0515 handoff_out set exit_type=positioning_spent_fade and monday_bias=DOWN ('0514 covering pulse spent and 0515 exhausted it; down chain reasserts Monday'). Reality: 0518 was +660 UP (gap +580 + net +80), 0519 +840 UP - the covering rally ACCELERATED for two more sessions into the 0520 crest. The exit read was flat wrong: 0515 closed strong (+320, high held into close) and 0514 closed on its high; nothing was 'spent'.",
+  "root_cause": "I diagnosed exhaustion from a D-1 phase-flow decay pattern (913->41) while ignoring that both 0514 and 0515 CLOSED ON/NEAR their highs. I read exhaustion off flow-shape and missed the price-location tell (close-on-high) - the very thing a Friday exit read exists to capture.",
+  "mis_seed_effect": "Yes - mis-seeded the panel. A/B size the Sunday/Monday reopen from the Friday handoff; I handed them monday_bias DOWN into a +660 UP Monday. This is the canonical mis-read-Friday-exit cascade (brain: friday_sign_off, 10/14 bad Mondays root to it)."
+ },
+ "dominant_flaw": "I treated 'covering absorption' (resting-bid/big-print over sell-aggressor) as an unconditional UP tell keyed to book polarity, and read exhaustion off flow-shape decay - both without conditioning on rally EXTENSION or on the sign of flow-vs-price (flow_conviction), so at the block's maximally-extended crest I called the SAME signature UP (distribution top) that I should have called DOWN, and called a close-on-high continuation 'spent'.",
+ "refine_must_fix": "With price, the refine must gate the covering_absorption_directional_tell on two things the blind can only infer: (1) RALLY EXTENSION - resting-bid absorption near a fresh low = covering UP, but the identical polarity on a maximally-extended, multi-session covering rally (cum_from_anchor high, chain age >=5) = DISTRIBUTION -> DOWN; the tell FLIPS with extension. (2) REALIZED flow_conviction = sign(signed_flow)*sign(price_change): on 0520 ph2 +614/-850 and ph3 +1503/-60 = NEGATIVE conviction (buyers absorbed, price down) reads the DOWN directly off the tape. Book polarity is never a standalone sign; it is gated by extension + realized flow_conviction. Also enforce close-on-high/low as the Friday exit tell over phase-flow decay (0514/0515 closed on highs = NOT spent), and hold the covering_giveback_self_limiting gate on EVERY weekend-feeding/roll day (applied to 0522, violated on 0520)."
+}

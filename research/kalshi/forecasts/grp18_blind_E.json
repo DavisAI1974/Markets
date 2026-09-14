@@ -1,0 +1,840 @@
+{
+ "specialist": "E",
+ "lens": "Friday/expiry/roll",
+ "group": "g18",
+ "brain_version": "s102.8",
+ "forecast_schema_version": "ng.v2",
+ "days_owned": [
+  "20260501",
+  "20260508"
+ ],
+ "days": [
+  {
+   "date": "20260501",
+   "dow": "Fri",
+   "archetype": "friday_weekend_feeding_covering_pop_giveback",
+   "reasoning": "GATE FIRES DOWN. A crowded-short (MM net -100,574, 8.49 1y pctile) S3 injection block with a warm shoulder (HDD ~9-10, no freeze risk) and contango carry = a bearish structural bleed. The mid-week 0429 buy surge (+7783) is a counter-trend COVERING pop, not fresh fundamental demand; it exhausted on Thu 0430 (post-EIA midday buy +1964 then last-hour SELL -2822, b_share 0.433). The turn/exhaustion gate reads that exit-state: stretched pop + D-1 last-hour sell opposing it + crowded-short covering self-limiting -> the Friday sign is the TURN (give-back DOWN), never a pop continuation. Crest-trim discriminator confirms genuine same-side sell flow (not a covering-close), so it fades DOWN. s1void confirms the sub-0.50 D-1 sell-tape delivers a real down band (not a stub). Dead-sponsor unwind 3 sessions after NGK26 LTD adds a mild down lean. p50 -480, held at the low end of the band because crowded-short caps hard downside; a weekend covering squeeze is the up-tail, not the p50.",
+   "regime": {
+    "day_class": "friday_weekend_feeding",
+    "seasonal_state": "S3_shoulder_injection",
+    "demand_regime": "low_shoulder_warm",
+    "curve_regime": "contango",
+    "storage_phase": "injection_build",
+    "vol_regime": "unknown_masked",
+    "dominant_driver": "covering_pop_exhaustion_giveback_into_bearish_bleed",
+    "selector_mode": "turn_gate_override_of_pop"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "daytype.friday_turn_exhaustion_gate",
+     "inputs": {
+      "up_leg_age_sessions": 2,
+      "cot_mm_net_pctile_1y": 8.49,
+      "cot_mm_net_chg_wow": 13521,
+      "d1_session_b_share": 0.46,
+      "d1_last_hour_phase_flow": -2822,
+      "d1_last_hour_b_share": 0.433,
+      "chain_state": "stretched_covering_pop"
+     },
+     "thresholds": {
+      "pctile_extreme<=": 15,
+      "d1_last_hour_flow_opposes_pop": true,
+      "stretched": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "turn_down_giveback",
+     "magnitude_band_usd": [
+      -780,
+      -150
+     ],
+     "note": "gate fires: 0429 +7783 covering pop exhausted by 0430 last-hour SELL -2822 (b 0.433). Friday sign = the TURN (down give-back), NOT pop continuation up. Prior-over-state default forbidden."
+    },
+    {
+     "rule_id": "daytype.friday_crest_trim_discriminator",
+     "inputs": {
+      "chain_state": "stretched",
+      "d1_last_hour_price_vs_flow": "sell_flow_aligned_not_covering_close"
+     },
+     "thresholds": {
+      "stretched_plus_squaring": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "crest_trim_fadeable_down",
+     "magnitude_band_usd": [
+      -700,
+      -200
+     ],
+     "note": "0430 last hour is genuine same-side SELL flow (not price-up-vs-sell), so route to crest_trim/positioning-spent, not covering-UP. Stretched + squaring -> trim the pop DOWN."
+    },
+    {
+     "rule_id": "magnitude.s1void_injection_chain_bleed",
+     "inputs": {
+      "near_window_hdd_gw": 9.4,
+      "storage_phase": "injection",
+      "d1_session_b_share": 0.46,
+      "chain_side": "down"
+     },
+     "thresholds": {
+      "normals_base<=20": true,
+      "session_b<0.50": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "down_full_band_not_stub",
+     "magnitude_band_usd": [
+      -780,
+      -450
+     ],
+     "note": "D-1 0430 b_share 0.46 sub-0.50 live sell-tape confirms the chain-sided down; do NOT damp to a stub. Crowded-short caps hard downside -> place p50 at the low end of the band."
+    },
+    {
+     "rule_id": "structure.friday_exhausted_extreme_giveback",
+     "inputs": {
+      "post_expiry_dead_sponsor": "NGK26_LTD_0428_3sessions_back",
+      "business_day_of_month": 1
+     },
+     "thresholds": {
+      "prompt_expiry_within_~3_sessions": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 4,
+     "direction_effect": "down_unwind_lean",
+     "magnitude_band_usd": [
+      -400,
+      -100
+     ],
+     "note": "3 sessions after NGK26 expiry; residual dead-sponsor premium unwind adds a mild down lean on bd1 May."
+    },
+    {
+     "rule_id": "selector.divergence_resolution",
+     "inputs": {
+      "near_window_max_hdd_gw": 10.3,
+      "d1_session_b_share": 0.46
+     },
+     "thresholds": {
+      "hdd>=16.4": false,
+      "session_b>=0.50": false
+     },
+     "scope_pass": true,
+     "ownership_rank": 5,
+     "direction_effect": "default_S3_bearish_down",
+     "magnitude_band_usd": [
+      -780,
+      -200
+     ],
+     "note": "neither cold-add gate holds (HDD 10.3<16.4; b 0.46<0.50) -> default to the S3-bearish DOWN angle. Warm shoulder, no freeze risk, no cold catalyst."
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.28,
+     "flat": 0.4,
+     "down": 0.32
+    },
+    "us_open": {
+     "up": 0.26,
+     "flat": 0.3,
+     "down": 0.44
+    },
+    "settle": {
+     "up": 0.27,
+     "flat": 0.26,
+     "down": 0.47
+    },
+    "close": {
+     "up": 0.28,
+     "flat": 0.24,
+     "down": 0.48
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": -430,
+    "stdev": 470,
+    "p10": -960,
+    "p25": -650,
+    "p50": -480,
+    "p75": -150,
+    "p90": 350,
+    "bins": [
+     {
+      "bucket_usd": "<= -800",
+      "probability": 0.16
+     },
+     {
+      "bucket_usd": "-800..-400",
+      "probability": 0.34
+     },
+     {
+      "bucket_usd": "-400..-100",
+      "probability": 0.22
+     },
+     {
+      "bucket_usd": "-100..+200",
+      "probability": 0.14
+     },
+     {
+      "bucket_usd": "+200..+700",
+      "probability": 0.1
+     },
+     {
+      "bucket_usd": ">= +700",
+      "probability": 0.04
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "09:30",
+     "end_et": "11:00",
+     "probability": 0.48,
+     "expected_direction": "down",
+     "catalyst": "US-open give-back of the spent covering pop; sell-tape resumes"
+    },
+    {
+     "start_et": "13:30",
+     "end_et": "15:00",
+     "probability": 0.4,
+     "expected_direction": "down",
+     "catalyst": "settle-window bleed into the weekend"
+    },
+    {
+     "start_et": "15:00",
+     "end_et": "17:00",
+     "probability": 0.3,
+     "expected_direction": "up",
+     "catalyst": "crowded-short weekend-risk covering bounce (up-tail, not p50)"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.52,
+    "chop": 0.48
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.3,
+    "reversal": 0.52,
+    "hold": 0.18
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18.0,
+     "p10": -0.0,
+     "p50": -0.0,
+     "p90": 0.0
+    },
+    {
+     "et_hr": 20.0,
+     "p10": -38.4,
+     "p50": -19.2,
+     "p90": 14.0
+    },
+    {
+     "et_hr": 22.0,
+     "p10": -86.4,
+     "p50": -43.2,
+     "p90": 31.5
+    },
+    {
+     "et_hr": 0.5,
+     "p10": -124.8,
+     "p50": -62.4,
+     "p90": 45.5
+    },
+    {
+     "et_hr": 3.0,
+     "p10": -163.2,
+     "p50": -81.6,
+     "p90": 59.5
+    },
+    {
+     "et_hr": 6.0,
+     "p10": -211.2,
+     "p50": -105.6,
+     "p90": 77.0
+    },
+    {
+     "et_hr": 8.0,
+     "p10": -288.0,
+     "p50": -144.0,
+     "p90": 105.0
+    },
+    {
+     "et_hr": 9.5,
+     "p10": -460.8,
+     "p50": -230.4,
+     "p90": 168.0
+    },
+    {
+     "et_hr": 11.0,
+     "p10": -595.2,
+     "p50": -297.6,
+     "p90": 217.0
+    },
+    {
+     "et_hr": 13.0,
+     "p10": -710.4,
+     "p50": -355.2,
+     "p90": 259.0
+    },
+    {
+     "et_hr": 14.5,
+     "p10": -825.6,
+     "p50": -412.8,
+     "p90": 301.0
+    },
+    {
+     "et_hr": 16.0,
+     "p10": -921.6,
+     "p50": -460.8,
+     "p90": 336.0
+    },
+    {
+     "et_hr": 17.0,
+     "p10": -960.0,
+     "p50": -480.0,
+     "p90": 350.0
+    }
+   ],
+   "overnight_gap_usd": -30,
+   "guess_curve": [
+    -0.0,
+    -19.2,
+    -43.2,
+    -62.4,
+    -81.6,
+    -105.6,
+    -144.0,
+    -230.4,
+    -297.6,
+    -355.2,
+    -412.8,
+    -460.8,
+    -480.0
+   ],
+   "guessed_net_usd": -480,
+   "fwd_curve_lean": "contango_next_higher_by_0.30",
+   "confidence": {
+    "overall": 0.52,
+    "direction": 0.58,
+    "magnitude": 0.44,
+    "timing": 0.46
+   },
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp18_state_masked_one_shot",
+    "missing_inputs": [
+     "vol_regime",
+     "target_day_price_state(masked)"
+    ],
+    "stale_inputs": [
+     "cot(6.4d)",
+     "cash_basis(weekly)"
+    ],
+    "partial_inputs": [
+     "intra_block_price_path(unknown,inferred_from_tape_tilt)"
+    ],
+    "prohibited_inputs_removed": [
+     "target_day_tape",
+     "next_day_realized_flow"
+    ],
+    "flags": [
+     "weekend_gap_uncertainty",
+     "masked_price_state",
+     "crowded_short_up_tail"
+    ]
+   },
+   "scenario_components": [
+    {
+     "name": "covering_pop_giveback_plus_injection_bleed",
+     "probability": 0.6,
+     "direction": "down",
+     "distribution": {
+      "p50": -500,
+      "p10": -960,
+      "p90": -80
+     },
+     "governing_driver": "0429 covering pop exhausted (0430 last-hr sell) + S3 injection bearish bleed + dead-sponsor unwind",
+     "invalidation_conditions": [
+      "fresh bullish storage/weather shock",
+      "intraday b_share climbs >0.52"
+     ]
+    },
+    {
+     "name": "weekend_short_covering_squeeze",
+     "probability": 0.3,
+     "direction": "up",
+     "distribution": {
+      "p50": 250,
+      "p10": -100,
+      "p90": 800
+     },
+     "governing_driver": "MM net at 8.49 pctile (crowded short) squares ahead of weekend headline risk",
+     "invalidation_conditions": [
+      "last-hour b_share stays <0.45",
+      "no bullish weekend catalyst"
+     ]
+    },
+    {
+     "name": "flat_chop",
+     "probability": 0.1,
+     "direction": "flat",
+     "distribution": {
+      "p50": 0,
+      "p10": -200,
+      "p90": 200
+     },
+     "governing_driver": "low-vol shoulder two-sided chop",
+     "invalidation_conditions": [
+      "a directional catalyst appears"
+     ]
+    }
+   ],
+   "handoff_out": {
+    "close_px": 2.629,
+    "close_px_note": "GUESSED (price state masked); ~-0.06 net from 2.689 anchor via tape-tilt chain 0427 sell/0429 pop/0430 fade + Friday give-back -0.048",
+    "cum_from_anchor_usd": -600,
+    "chain_polarity": "down",
+    "chain_age_sessions": 2,
+    "exhaustion_flag": true,
+    "last_hour_dir": "down",
+    "last_hour_signed_flow": "sell_tilt_aligned_fading",
+    "conviction": "ALIGNED",
+    "close_off_extreme_frac": 0.18,
+    "positioning_calendar": {
+     "expiry": false,
+     "opex": false,
+     "index_roll_window_open_monday": false,
+     "note": "no opex/expiry this week (NGM26 opex 0526); GSCI/BCOM roll opens ~0507, so Monday 0504 is PRE-roll; NGK26 LTD 0428 = dead-sponsor unwind 3 sessions back"
+    },
+    "driver_realization": {
+     "driver": "counter_trend_covering_pop_exhaustion_into_S3_injection_bleed",
+     "peak_day_et": "2026-04-29",
+     "realizes_before_monday": true
+    },
+    "exit_type": "positioning_spent_fade",
+    "monday_bias": "down lean, small-to-moderate (covering pop spent Fri; bearish bleed resumes into 0504; crowded-short at 8.49 pctile caps hard downside, watch a Monday covering bounce as the counter-risk)",
+    "sunday_gap_owner": "chain_drift"
+   }
+  },
+  {
+   "date": "20260508",
+   "dow": "Fri",
+   "archetype": "friday_weekend_feeding_fresh_pop_giveback_index_roll",
+   "reasoning": "GATE FIRES DOWN (fresh cycle, not a re-fire). A second fresh covering pop (0505 +3258 / 0506 +2066) inside the still-crowded-short (MM net -97,245, 10.38 1y pctile) S3 injection block exhausted on Thu 0507 (post-EIA midday firm +554 then last-hour SELL -1105, b 0.445). The turn gate reads that exit-state -> give-back DOWN. Covering-self-limiting check: my prior weekend-feeding exit (0501) was positioning_spent_fade DOWN, NOT a covering-UP, so the 0417->0424 re-fire trap does not apply here at all; and COT is not worsening (chg_wow +3329, shorts trimming), so 0508 reverts to the chain/state DEFAULT, which is bearish DOWN anyway. Reinforced specifically on 0508 by the GSCI (day 2) + BCOM (day 1) index roll: long-only rolls forward in contango, selling the NGM26 front = mechanical DOWN pressure. Crest smaller than 0501 so p50 slightly shallower (-420); roll firms the downside and trims the up-tail. Weekend covering squeeze remains the up-tail.",
+   "regime": {
+    "day_class": "friday_weekend_feeding",
+    "seasonal_state": "S3_shoulder_injection",
+    "demand_regime": "low_shoulder_warm",
+    "curve_regime": "contango",
+    "storage_phase": "injection_build",
+    "vol_regime": "unknown_masked",
+    "dominant_driver": "covering_pop_exhaustion_giveback_into_bearish_bleed",
+    "selector_mode": "turn_gate_override_of_pop"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "daytype.friday_turn_exhaustion_gate",
+     "inputs": {
+      "up_leg_age_sessions": 2,
+      "cot_mm_net_pctile_1y": 10.38,
+      "cot_mm_net_chg_wow": 3329,
+      "d1_session_b_share": 0.459,
+      "d1_last_hour_phase_flow": -1105,
+      "d1_last_hour_b_share": 0.445,
+      "chain_state": "stretched_covering_pop"
+     },
+     "thresholds": {
+      "pctile_extreme<=": 15,
+      "d1_last_hour_flow_opposes_pop": true,
+      "stretched": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "turn_down_giveback",
+     "magnitude_band_usd": [
+      -700,
+      -150
+     ],
+     "note": "FRESH crest: 0505 +3258 / 0506 +2066 buy run exhausted by 0507 last-hour SELL -1105 (b 0.445). Sign = turn DOWN. Distinct fresh pop, not a re-fire of 0501's spent covering."
+    },
+    {
+     "rule_id": "daytype.covering_giveback_self_limiting",
+     "inputs": {
+      "prior_weekend_feeding_exit": "positioning_spent_fade(0501)",
+      "cot_worsening": false,
+      "cot_chg_wow": 3329,
+      "fresh_one_sided_run": "0505_0506_buy",
+      "chain_state_default": "S3_bearish_down"
+     },
+     "thresholds": {
+      "re_fire_covering_UP": false
+     },
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "revert_to_chain_default_down",
+     "magnitude_band_usd": [
+      -700,
+      -150
+     ],
+     "note": "0501 exit was positioning_spent_fade DOWN (never a covering-UP), so the 0417->0424 re-fire trap does not apply. COT is NOT worsening (chg_wow +3329, shorts trimming) -> the pop is spent fuel; 0508 reverts to the chain/state DEFAULT, which is bearish DOWN. No covering-UP is being re-fired."
+    },
+    {
+     "rule_id": "magnitude.weekend_chain_drift_day_move",
+     "inputs": {
+      "in_gsci_roll": true,
+      "gsci_roll_day_n": 2,
+      "in_bcom_roll": true,
+      "bcom_roll_day_n": 1,
+      "front_symbol_calendar": "NGM26",
+      "curve_regime": "contango"
+     },
+     "thresholds": {
+      "index_roll_active": true,
+      "long_only_rolls_forward_in_contango": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "mechanical_sell_pressure_down",
+     "magnitude_band_usd": [
+      -400,
+      -100
+     ],
+     "note": "0508 inside GSCI (day 2) + BCOM (day 1) roll -> long-only index sells the front NGM26 = mechanical DOWN support; reinforces the give-back and trims the up-tail vs 0501."
+    },
+    {
+     "rule_id": "magnitude.s1void_injection_chain_bleed",
+     "inputs": {
+      "near_window_hdd_gw": 9.4,
+      "storage_phase": "injection",
+      "d1_session_b_share": 0.459,
+      "chain_side": "down"
+     },
+     "thresholds": {
+      "normals_base<=20": true,
+      "session_b<0.50": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 4,
+     "direction_effect": "down_full_band_not_stub",
+     "magnitude_band_usd": [
+      -700,
+      -350
+     ],
+     "note": "D-1 0507 b_share 0.459 sub-0.50 sell-tape confirms chain-sided down; crest smaller than 0501 (0507 -1105 vs 0430 -2822) so p50 slightly shallower, but roll pressure firms downside."
+    },
+    {
+     "rule_id": "selector.divergence_resolution",
+     "inputs": {
+      "near_window_max_hdd_gw": 10.0,
+      "d1_session_b_share": 0.459
+     },
+     "thresholds": {
+      "hdd>=16.4": false,
+      "session_b>=0.50": false
+     },
+     "scope_pass": true,
+     "ownership_rank": 5,
+     "direction_effect": "default_S3_bearish_down",
+     "magnitude_band_usd": [
+      -700,
+      -150
+     ],
+     "note": "neither cold-add gate holds -> default S3-bearish DOWN. Warm shoulder, no cold catalyst."
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.28,
+     "flat": 0.4,
+     "down": 0.32
+    },
+    "us_open": {
+     "up": 0.25,
+     "flat": 0.31,
+     "down": 0.44
+    },
+    "settle": {
+     "up": 0.25,
+     "flat": 0.27,
+     "down": 0.48
+    },
+    "close": {
+     "up": 0.26,
+     "flat": 0.25,
+     "down": 0.49
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": -400,
+    "stdev": 440,
+    "p10": -900,
+    "p25": -620,
+    "p50": -420,
+    "p75": -140,
+    "p90": 250,
+    "bins": [
+     {
+      "bucket_usd": "<= -800",
+      "probability": 0.14
+     },
+     {
+      "bucket_usd": "-800..-400",
+      "probability": 0.34
+     },
+     {
+      "bucket_usd": "-400..-100",
+      "probability": 0.24
+     },
+     {
+      "bucket_usd": "-100..+200",
+      "probability": 0.15
+     },
+     {
+      "bucket_usd": "+200..+700",
+      "probability": 0.09
+     },
+     {
+      "bucket_usd": ">= +700",
+      "probability": 0.04
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "09:30",
+     "end_et": "11:30",
+     "probability": 0.46,
+     "expected_direction": "down",
+     "catalyst": "US-open give-back + index-roll sell of NGM26 front"
+    },
+    {
+     "start_et": "13:00",
+     "end_et": "14:30",
+     "probability": 0.42,
+     "expected_direction": "down",
+     "catalyst": "roll/settle sell into the weekend"
+    },
+    {
+     "start_et": "15:00",
+     "end_et": "17:00",
+     "probability": 0.28,
+     "expected_direction": "up",
+     "catalyst": "crowded-short weekend covering bounce (up-tail)"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.54,
+    "chop": 0.46
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.33,
+    "reversal": 0.49,
+    "hold": 0.18
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18.0,
+     "p10": -0.0,
+     "p50": -0.0,
+     "p90": 0.0
+    },
+    {
+     "et_hr": 20.0,
+     "p10": -45.0,
+     "p50": -21.0,
+     "p90": 12.5
+    },
+    {
+     "et_hr": 22.0,
+     "p10": -90.0,
+     "p50": -42.0,
+     "p90": 25.0
+    },
+    {
+     "et_hr": 0.5,
+     "p10": -135.0,
+     "p50": -63.0,
+     "p90": 37.5
+    },
+    {
+     "et_hr": 3.0,
+     "p10": -180.0,
+     "p50": -84.0,
+     "p90": 50.0
+    },
+    {
+     "et_hr": 6.0,
+     "p10": -234.0,
+     "p50": -109.2,
+     "p90": 65.0
+    },
+    {
+     "et_hr": 8.0,
+     "p10": -306.0,
+     "p50": -142.8,
+     "p90": 85.0
+    },
+    {
+     "et_hr": 9.5,
+     "p10": -414.0,
+     "p50": -193.2,
+     "p90": 115.0
+    },
+    {
+     "et_hr": 11.0,
+     "p10": -540.0,
+     "p50": -252.0,
+     "p90": 150.0
+    },
+    {
+     "et_hr": 13.0,
+     "p10": -657.0,
+     "p50": -306.6,
+     "p90": 182.5
+    },
+    {
+     "et_hr": 14.5,
+     "p10": -765.0,
+     "p50": -357.0,
+     "p90": 212.5
+    },
+    {
+     "et_hr": 16.0,
+     "p10": -855.0,
+     "p50": -399.0,
+     "p90": 237.5
+    },
+    {
+     "et_hr": 17.0,
+     "p10": -900.0,
+     "p50": -420.0,
+     "p90": 250.0
+    }
+   ],
+   "overnight_gap_usd": -25,
+   "guess_curve": [
+    -0.0,
+    -21.0,
+    -42.0,
+    -63.0,
+    -84.0,
+    -109.2,
+    -142.8,
+    -193.2,
+    -252.0,
+    -306.6,
+    -357.0,
+    -399.0,
+    -420.0
+   ],
+   "guessed_net_usd": -420,
+   "fwd_curve_lean": "contango_next_higher_by_0.30",
+   "confidence": {
+    "overall": 0.53,
+    "direction": 0.6,
+    "magnitude": 0.45,
+    "timing": 0.47
+   },
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp18_state_masked_one_shot",
+    "missing_inputs": [
+     "vol_regime",
+     "target_day_price_state(masked)"
+    ],
+    "stale_inputs": [
+     "cot(6.4d)",
+     "cash_basis(weekly)"
+    ],
+    "partial_inputs": [
+     "intra_block_price_path(unknown,inferred_from_tape_tilt)"
+    ],
+    "prohibited_inputs_removed": [
+     "target_day_tape",
+     "next_day_realized_flow"
+    ],
+    "flags": [
+     "weekend_gap_uncertainty",
+     "masked_price_state",
+     "crowded_short_up_tail",
+     "index_roll_active"
+    ]
+   },
+   "scenario_components": [
+    {
+     "name": "fresh_pop_giveback_plus_index_roll_bleed",
+     "probability": 0.62,
+     "direction": "down",
+     "distribution": {
+      "p50": -450,
+      "p10": -900,
+      "p90": -60
+     },
+     "governing_driver": "0505-0506 fresh covering pop exhausted (0507 last-hr sell) + GSCI/BCOM roll selling + S3 bearish default",
+     "invalidation_conditions": [
+      "fresh bullish storage/weather shock",
+      "intraday b_share climbs >0.52"
+     ]
+    },
+    {
+     "name": "weekend_short_covering_squeeze",
+     "probability": 0.28,
+     "direction": "up",
+     "distribution": {
+      "p50": 200,
+      "p10": -120,
+      "p90": 700
+     },
+     "governing_driver": "MM net 10.38 pctile still crowded short squares ahead of weekend",
+     "invalidation_conditions": [
+      "last-hour b_share stays <0.45",
+      "roll selling dominates the tape"
+     ]
+    },
+    {
+     "name": "flat_chop",
+     "probability": 0.1,
+     "direction": "flat",
+     "distribution": {
+      "p50": 0,
+      "p10": -200,
+      "p90": 200
+     },
+     "governing_driver": "low-vol shoulder chop, roll and covering offset",
+     "invalidation_conditions": [
+      "a directional catalyst appears"
+     ]
+    }
+   ],
+   "handoff_out": {
+    "close_px": 2.584,
+    "close_px_note": "GUESSED (price state masked); ~-0.105 from 2.689 anchor via chain (0504 sell/0505-06 pop/0507 fade) + Friday give-back+roll -0.045",
+    "cum_from_anchor_usd": -1050,
+    "chain_polarity": "down",
+    "chain_age_sessions": 2,
+    "exhaustion_flag": true,
+    "last_hour_dir": "down",
+    "last_hour_signed_flow": "sell_tilt_aligned_plus_index_roll",
+    "conviction": "ALIGNED",
+    "close_off_extreme_frac": 0.15,
+    "positioning_calendar": {
+     "expiry": false,
+     "opex": false,
+     "index_roll_window_open_monday": true,
+     "note": "0508 inside GSCI(day2)+BCOM(day1) roll; roll typically winds down ~bd9 (~0512), so by Monday 0511 mechanical sell pressure is fading and the crowded-short up-tail grows; NGM26 opex 0526 still 11 sessions out"
+    },
+    "driver_realization": {
+     "driver": "fresh_covering_pop_exhaustion_plus_index_roll_selling_into_S3_bleed",
+     "peak_day_et": "2026-05-06",
+     "realizes_before_monday": true
+    },
+    "exit_type": "positioning_spent_fade",
+    "monday_bias": "down lean easing to small (fresh pop spent + roll selling largely done by 0511; bearish default persists but crowded-short 10.38 pctile covering bounce is a rising counter-risk into Monday)",
+    "sunday_gap_owner": "chain_drift"
+   }
+  }
+ ]
+}

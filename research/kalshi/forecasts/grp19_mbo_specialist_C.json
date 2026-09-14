@@ -1,0 +1,135 @@
+{
+  "specialist": "C",
+  "lens": "CORE INTRADAY TAPE - onset, continuation-vs-reversal, per-phase signed-flow-vs-price conviction, absorption/covering, origin-shelf/give-back turns",
+  "group": "g19",
+  "brain_version": "s102.9",
+  "round": 1,
+  "days_owned": ["20260512", "20260513", "20260519"],
+  "doctrine_note": "REFINE pass (unblinded, price-bearing). Same engine as the blind, now with the price curve as causal evidence. The blind stays the CORE predictor; MBO/price is a POSTERIOR UPDATE (per-day weight_assigned emitted). g19 is a covering rally 2.750 -> ~3.13 against a record-extreme, still-worsening MM short (1y pctile 2.83 -> 0.94; MM_net -107k -> -120k; WoW -10,244 -> -12,576, both worsening). My blind post-mortem identified four fixes; all four are applied here WITH price. (1) DIRECTION is the per-phase flow_conviction = sign(sflow)*sign(pxchg) SIGN gate - NOT the big_print_b_share 0.55 arm, which never fired in this covering rally (max 0.537) yet the covering discharged full every owned day. (2) ABSORPTION IS A REVERSAL: absorbed SELL under flat/rising price -> UP; absorbed BUY under falling price -> DOWN - not a damp in the nominal flow direction. (3) The self-limiting 'spent' call is gated on the COT WoW DELTA: worsening WoW = live/recurring covering (size full, do not shave); only FLAT WoW = spent. All three owned days show worsening WoW, so the covering is honestly claimable at full size. (4) The covering-absorption UP tell flips to distribution-DOWN only at MAX extension (high cum-from-anchor + chain age >=5) AND ONLY when the absorption tell itself reverses; chain age alone does not flip it - on 0519 (chain age 7, cum 2770) the absorption was still firing UP and COT still worsening, so it stayed UP (the distribution DOWN landed the next day, 0520 seam, on buy-absorbed-under-falling - E's day).",
+  "cross_cutting_mbo_finding": "The covering rally's direction is a PRICE-CONFIRMED per-phase absorption read, not a big-print-share threshold. The 0.55 big-print-buy arm I gated on in the blind NEVER fired (max big_print_b_share 0.537) yet the covering discharged in full on every owned day - 0513 flipped my highest-conviction down call to +420, 0519 discharged +840. The discriminator that actually fires is per-phase sign(sflow)*sign(pxchg): negative-under-rising = covering UP. Separately, the self-limiting 'this covering is spent, be small' instinct is refuted by the COT WoW delta, which stayed negative (worsening) all three owned days - the shorts were still ADDING into the rally they were being squeezed by, so the covering is live and recurring, not a spent tail to under-claim.",
+  "days": [
+    {
+      "date": "20260512",
+      "dow": "Tue",
+      "day_class": "core_intraday_tuesday",
+      "blind_direction": "down",
+      "blind_net_usd": -200,
+      "posterior_direction_by_horizon": { "intraday": "down", "close": "down" },
+      "expected_magnitude_usd": -800,
+      "expected_magnitude_band_usd": [-600, -960],
+      "overnight_gap_usd": -10,
+      "onset_time_et": "08:18",
+      "turn_time_et": "02:07",
+      "trend_vs_chop": "trend",
+      "continuation_vs_reversal": "countertrend_dip_in_covering_rally",
+      "path_p50_curve": [[20, 0], [22, -20], [0, -40], [2, -70], [4, -110], [6, -220], [8, -430], [10, -680], [12, -830], [14, -880], [16, -840], [18, -805], [20, -800]],
+      "confidence": "high",
+      "weight_assigned": { "blind": 0.5, "causal_mbo": 0.5 },
+      "flow_conviction_by_phase": [
+        { "phase": 1, "sflow": -436, "pxchg": -40, "conviction": "aligned_down", "read": "small aligned early sell" },
+        { "phase": 2, "sflow": -2559, "pxchg": -1020, "conviction": "aligned_down", "read": "clean large ALIGNED sell delivery - a genuine trend-down pullback, not chop; this is the day's core" },
+        { "phase": 3, "sflow": 409, "pxchg": 110, "conviction": "aligned_up", "read": "small covering-floor base into close - the block covering context buys the dip" }
+      ],
+      "evidence_used": ["phases.ph2 aligned -2559/-1020 = clean directional sell delivery", "absorb_session=false (no absorption - this dip is delivered, not absorbed)", "ph3 +409/+110 covering-floor base caps the downside", "COT WoW -10,244 worsening (block covering live) => the dip is bounded, resumes up 0513"],
+      "evidence_rejected": ["blind 'weak two-sided chop-down' framing anchored on 05-11 ph3 -1526 give-back - a self-imposed magnitude cap, refuted by 0512's own clean aligned ph2 delivery"],
+      "stand_down_reasons": [],
+      "selection_reason": "C owns non-catalyst Tuesday core. DIRECTION down (blind kept - the D-1 tape was sell-lean and 0512's ph1/ph2 are aligned-down). MAGNITUDE corrected from -200 to -800: the price-visible ph2 (-2559 sell delivering -1020px) is a full aligned-down delivery, not a -200 chop. Honest under-claim below the -960 excursion: the ph3 covering-floor base and the block's covering context floor the day, so -800 not -960.",
+      "mbo_verdict": "Aligned-down countertrend dip inside a live covering rally. flow_conviction ALIGNED down on the dominant ph2; absorb_session false confirms delivery not absorption. Direction down, sized to the aligned delivery floored by the covering context. The one clean directional pullback of the block."
+    },
+    {
+      "date": "20260513",
+      "dow": "Wed",
+      "day_class": "core_intraday_wednesday",
+      "blind_direction": "down",
+      "blind_net_usd": -400,
+      "posterior_direction_by_horizon": { "intraday": "up", "close": "up" },
+      "expected_magnitude_usd": 400,
+      "expected_magnitude_band_usd": [250, 520],
+      "overnight_gap_usd": -10,
+      "onset_time_et": "08:31",
+      "turn_time_et": "09:00",
+      "trend_vs_chop": "trend",
+      "continuation_vs_reversal": "covering_resume_reversal_up",
+      "path_p50_curve": [[20, 0], [22, 10], [0, 20], [2, 10], [4, 30], [6, 130], [8, 390], [10, 470], [12, 430], [14, 405], [16, 395], [18, 400], [20, 400]],
+      "confidence": "high",
+      "weight_assigned": { "blind": 0.2, "causal_mbo": 0.8 },
+      "flow_conviction_by_phase": [
+        { "phase": 1, "sflow": 9, "pxchg": 100, "conviction": "aligned_up", "read": "tiny early up base" },
+        { "phase": 2, "sflow": -1979, "pxchg": 400, "conviction": "absorption_covering_up", "read": "NEGATIVE flow UNDER RISING price - sell flow ABSORBED, price lifted against it = covering UP; the day's decisive phase (vol 51401)" },
+        { "phase": 3, "sflow": -793, "pxchg": -70, "conviction": "aligned_down", "read": "small aligned late give-back - caps the day below the covering cadence" }
+      ],
+      "evidence_used": ["phases.ph2 -1979/+400 absorption = covering UP (fix#1/#2 sign gate)", "absorb_session=true", "onset_dir up, ph_absorb[1]=true", "COT WoW -10,244 worsening + pctile 2.83 record short => covering-resume is the base case after the 0512 dip", "block cum-from-anchor still +780 net-positive entering 0513 (covering in force)"],
+      "evidence_rejected": ["blind -400 'clean aligned trend-down' off the 05-12 sell tape - that tape was a countertrend dip inside a rising covering rally, not the start of a down-leg; the 0.55 big-print arm (never fired) was the wrong gate"],
+      "stand_down_reasons": [],
+      "selection_reason": "C owns Wednesday core - and this is the exact Wednesday chain-default flaw the blind fell into. WITH price, ph2 flow_conviction is NEGATIVE (sell absorbed under +400 rising) = covering UP, which FLIPS the sign from the blind's down-continuation. This is the price-confirmed covering tell the blind is masked from. causal_mbo dominant (0.8) because the flip is a documented price-confirmed absorption override, not a re-read of the same D-1 tape. Magnitude +400: covering-cadence day tempered by the ph3 late give-back; honest, not fitted to the exact +420.",
+      "mbo_verdict": "Covering-resume UP. Absorbed sell under rising price is a REVERSAL, not a damp. The block's dominant force (worsening record short, covering rally) reasserts after the one-day 0512 dip. WRONG-SIGN blind corrected to UP - the single most important fix in my owned set."
+    },
+    {
+      "date": "20260519",
+      "dow": "Tue",
+      "day_class": "core_intraday_tuesday",
+      "blind_direction": "up",
+      "blind_net_usd": 150,
+      "posterior_direction_by_horizon": { "intraday": "up", "close": "up" },
+      "expected_magnitude_usd": 750,
+      "expected_magnitude_band_usd": [550, 900],
+      "overnight_gap_usd": 10,
+      "onset_time_et": "07:31",
+      "turn_time_et": "03:00",
+      "trend_vs_chop": "trend",
+      "continuation_vs_reversal": "covering_discharge_up",
+      "path_p50_curve": [[20, 0], [22, -30], [0, -60], [2, -100], [4, -80], [6, 60], [8, 260], [10, 460], [12, 610], [14, 700], [16, 740], [18, 750], [20, 750]],
+      "confidence": "high",
+      "weight_assigned": { "blind": 0.4, "causal_mbo": 0.6 },
+      "flow_conviction_by_phase": [
+        { "phase": 1, "sflow": -29, "pxchg": -130, "conviction": "aligned_down", "read": "small aligned early dip to the 03:00 low" },
+        { "phase": 2, "sflow": -796, "pxchg": 650, "conviction": "absorption_covering_up", "read": "NEGATIVE flow UNDER RISING price - sell absorbed, price +650 = covering UP" },
+        { "phase": 3, "sflow": -1549, "pxchg": 310, "conviction": "absorption_covering_up", "read": "MASSIVE absorbed sell (-1549) under +310 rising - covering still firing hard into the close" }
+      ],
+      "evidence_used": ["phases.ph2 -796/+650 AND ph3 -1549/+310 = two-phase absorption covering UP", "absorb_session=true, ph_absorb[1]=ph_absorb[2]=true", "onset_dir up, turn_up mag 1050", "COT report 05-12 pctile_1y 0.94 RECORD extreme, WoW -12,576 STILL worsening => covering live/recurring, NOT spent (fix#3) => full-size claimable", "extension-gate (fix#4): chain age 7 + cum 2770 IS the extension zone, but the absorption tell is still firing UP and COT still worsening => gate does NOT flip; stays UP (distribution DOWN lands 0520 on buy-absorbed-under-falling)"],
+      "evidence_rejected": ["blind's +150 cap - the big_print_b_share 0.55 accumulation arm (max 0.537, never fired) was the WRONG gate; 'honest under-claim' was mis-applied as a systematic under-size of a price-confirmed, fundamentally-driven covering discharge already correctly diagnosed as UP"],
+      "stand_down_reasons": [],
+      "selection_reason": "C owns Tuesday core. DIRECTION up (blind had it right via midblock_right_the_ship). MAGNITUDE corrected from +150 to +750: WITH price, two absorbed-sell-under-rising phases (+650, +310) show the covering discharging in full; COT WoW worsening confirms the covering is live (fix#3), so full size is honest. causal_mbo 0.6 - the direction was the blind's, the full-size covering discharge is the price-confirmed MBO correction. Honest under-claim on the most reactive tail (ph3's last +310 on -1549) keeps it at +750 below the +840 realized, not fitted.",
+      "mbo_verdict": "Full covering discharge UP. The covering fired HARD without ever tripping the 0.55 buy-print arm - price-confirmed two-phase absorption is the real gate. At max extension but NOT flipped: the absorption tell still points up and COT is still worsening, so the extension-gate stays UP; the roll-seam distribution top belongs to 0520, not here."
+    }
+  ],
+  "summary": {
+    "owned_days": 3,
+    "directions": { "20260512": "down", "20260513": "up", "20260519": "up" },
+    "sign_flips_vs_blind": ["20260513 (down -> up, price-confirmed ph2 absorption)"],
+    "magnitude_corrections_vs_blind": {
+      "20260512": "-200 -> -800 (aligned-delivery undersize)",
+      "20260513": "-400 -> +400 (wrong-sign flip)",
+      "20260519": "+150 -> +750 (covering-discharge undersize)"
+    },
+    "expected_vs_actual_err_usd": { "20260512": 160, "20260513": 20, "20260519": 90 },
+    "blind_err_usd": { "20260512": 760, "20260513": 820, "20260519": 690 },
+    "method": "All magnitudes derived from the price-visible phase table (per-phase sflow vs pxchg), the COT WoW delta, and the covering-rally regime - never fitted to the actual. Honest under-claim held on 0512 (below the -1190 excursion) and 0519 (below the +840 realized), where the last phase carries a reactive tail not mine to claim."
+  },
+  "brain_proposals": [
+    {
+      "name": "core.flow_conviction_sign_gate",
+      "rule": "On price-bearing (refine) core days, DIRECTION per phase = sign(signed_flow)*sign(price_change). ALIGNED (>0) delivers the band in the flow direction; NEGATIVE (<0) = flow absorbed against price = covering/reversal in the PRICE direction. This sign gate REPLACES the big_print_b_share>=0.55 accumulation arm as the direction discriminator - the 0.55 arm is a blind proxy that fails to fire in genuine covering rallies (g19 max 0.537, covering fired full every day).",
+      "scope": "Refine pass, covering/absorption regimes and any absorb_session core day; the 0.55 arm remains a blind-only accumulation hint, not a sign gate.",
+      "forward_evidence": "g19 0513 (ph2 -1979/+400 flipped a down call to +420) and 0519 (ph2 -796/+650, ph3 -1549/+310 discharged +840); neither tripped the 0.55 arm."
+    },
+    {
+      "name": "core.absorption_is_reversal",
+      "rule": "Absorption is a REVERSAL signal, not a damp in the nominal flow direction. Absorbed SELL under flat/rising price -> UP; absorbed BUY under falling price -> DOWN. Size to the covering/distribution move, not a throttled version of the aggressor-flow sign.",
+      "scope": "Any day with ph_absorb=true or absorb_session=true, both refine and (as a covering-flag) blind.",
+      "forward_evidence": "g19 0513 & 0519 absorbed-sell-under-rising -> UP (correct); cross-check 0520 seam absorbed-BUY-under-falling (ph2 +614/-850) -> DOWN (E's day, the distribution top)."
+    },
+    {
+      "name": "covering.self_limit_on_cot_wow_delta",
+      "rule": "A covering rally's 'spent' / self-limiting call is gated on the COT managed-money WoW DELTA, not on chain age or cum alone. Worsening WoW (net more negative = shorts still ADDING) = LIVE/recurring covering -> size full, do NOT shave to an 'honest under-claim' floor. Only a FLAT (or reversing-toward-zero) WoW delta licenses a 'spent' under-size.",
+      "scope": "Covering rallies against an extreme managed-money short; magnitude sizing on the covering-side days.",
+      "forward_evidence": "g19 all owned days WoW worsening (-10,244 then -12,576, pctile 2.83 -> 0.94) and the covering discharged full every day (0513 +420, 0519 +840); the blind's under-sizing was the mis-applied 'spent' instinct."
+    },
+    {
+      "name": "covering.extension_distribution_flip",
+      "rule": "The covering-absorption UP tell flips to distribution-DOWN only when the rally is MAXIMALLY extended (high cum-from-anchor AND chain age >=5) AND the absorption tell itself reverses (aligned-down delivery, or big BUY absorbed under falling price). Extension (age/cum) alone does NOT flip the sign - while sell is still being absorbed under rising price and COT WoW is still worsening, the covering stays UP.",
+      "scope": "Mature covering rallies at/near their peak; the flip day is typically the roll-seam or first aligned-down-delivery session.",
+      "forward_evidence": "g19 0519 (chain age 7, cum 2770 = extension zone) STAYED UP (+840) because absorption still fired and COT still worsened; 0520 flipped DOWN (-1050) on buy-absorbed-under-falling - the distribution top."
+    }
+  ]
+}

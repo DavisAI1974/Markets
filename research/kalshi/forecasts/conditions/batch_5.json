@@ -1,0 +1,60 @@
+{
+ "batch": 5,
+ "conditions": [
+  {
+   "play_id": "daytype.eia_preprint_overextension_gate",
+   "conditions": [
+    {
+     "quantity": "d1_session_b_share_side",
+     "state_path": "tape_conditions.session_b_share",
+     "reference": "absolute",
+     "comparator": ">=",
+     "threshold": 0.5,
+     "units": "share"
+    },
+    {
+     "quantity": "d1_big_print_b_share_side",
+     "state_path": "tape_conditions.big_print_b_share",
+     "reference": "absolute",
+     "comparator": ">=",
+     "threshold": 0.5,
+     "units": "share"
+    }
+   ]
+  }
+ ],
+ "no_condition": [
+  {
+   "play_id": "midweek.prior_exit_lasthour_magnitude_gate",
+   "why": "No bar, and no served quantity. What the gate actually tests is whether the PRIOR session's last_hour_dir (sign of the final-2h cum change) AGREES with the coming turn direction - a sign-agreement test between two derived signs, which carries no threshold on either. And neither operand is served: no last_hour_* field exists anywhere in the vocabulary; last_hour_dir/last_hour_signed_flow live only in the refine-only g*_exit_states.json, which is why the play's own instances record it standing down 5 of 5 in the blind. The only numbers it carries (+1200..+1600) are the OUTPUT magnitude band it emits, not a trigger bar - and the play's own instances refute that band on every modern day."
+  },
+  {
+   "play_id": "midweek.giveback_exhaustion_reversal_recognition",
+   "why": "The two bar-bearing limbs are on unserved price content and the served-adjacent limb has no bar. chain_polarity DOWN with chain_age>=3, and cum_from_anchor at/near the block extreme OR >=~75% retrace to the origin shelf, are both price-derived; the play's own health note calls them 'PRICE content and frozen in the blind', and no chain-age or cum-from-anchor quantity is served. The third limb - D-1 absorption (large sell flow with price holding) or an extreme sell-climax - is a SHAPE read: the brain's own checked_and_clear_bshare_basis entry states its big_print_b_share reference is 'a SHAPE read, not an absolute 0.50 bar. Nothing to re-point.' Writing a 0.50 bar here would manufacture the very semantic that note says is absent."
+  },
+  {
+   "play_id": "midweek.young_chain_extension_full_band",
+   "why": "All three limbs are unserved. 'chain age 0-1' looks like a bar but chain age is a narrative label carried in the per-block handoff files, not a state quantity; 'chain-sided vs counter' is a classification, not a number; 'D-1 flow alignment' is a sign comparison of flow against the masked price. The play's health note is explicit - 'None of the three limbs is a served quantity' - and the corpus records eleven stand-downs, every one for unevaluable limbs. Any condition here would name a field the state does not carry."
+  },
+  {
+   "play_id": "monday.seam_chainage_accommodation_gate",
+   "why": "The bar is well-formed (inherited seam chain age <=2 young -> accommodated/shallow, >=3 mature -> absorbed/deep) but the quantity is not served. There is NO chain-age field in any grp*_state.json; chain_age_sessions exists only in the per-boundary forecasts/g*_he24_he1_handoffs.json, so the gate keys on a specialist-constructed label rather than a measurement - which is how it came to fire on the fictional 'age 5' at 0518 against a realized five-session UP rally. A condition pointing at any served path would be naming a different quantity than the one the gate reads."
+  },
+  {
+   "play_id": "monday.catchup_window_tilt_gate",
+   "why": "The play states no numeric bar at all: it CARRIES A SIGN - the inherited D-1 tilt read off E.monday_bias / C.conviction_verdict - which are AGENT OUTPUTS produced later in the same run, not served fields, so no state file can evaluate or contradict them. Its own falsifier proposes a served restatement (sign of prior_full_session.session_signed_flow, or the two-sided b_share vs 0.50), but that is a PROPOSED REPLACEMENT rule, not this play's stated bar, and both named paths are served only in g21-g23 (3 of 6 modern blocks) so neither is in the legal vocabulary. Substituting the nearest served field would also measure the wrong session: on Mondays tape_conditions serves the Sunday reopen stub, not the Friday the play reads - the documented 0601 defect."
+  },
+  {
+   "play_id": "boundary.prior_close_flow_direction_disagreement",
+   "why": "The trigger is a DISAGREEMENT between two signs - last-hour price direction versus last-hour signed flow - so there is no threshold on any quantity, only a comparison of polarities. And neither operand is served: the state carries phase-thirds and session aggregates but no last-hour object for an in-block session, which is the reason recorded verbatim for six blind stand-downs across G20-G23 (and for the anchor day, last_hour.signed_flow is null BY DESIGN off the downsampled series). The 5-of-13 measurement in the audit was run on the refine-only exit states, not on anything the condition could read."
+  },
+  {
+   "play_id": "daytype.friday_turn_exhaustion_gate",
+   "why": "A procedural rule - run the turn/exhaustion check before emitting a Friday sign, and never take the sign from a day-class default - whose limbs split into unserved and unbarred. The one limb carrying a real number, chain_age>=4, is on an unserved quantity, as is 'cum-from-anchor at a session/block extreme'. The one limb that names a SERVED quantity - positioning percentile at an extreme (cot.managed_money_net_pctile_3y / cot.managed_money_net_options_implied_pctile_3y) - states no threshold: 'at an extreme' is a descriptor, and the incumbent <=5-pctile bar belongs to two other plays that write that number down. The remaining limbs (D-1 give-back or opposing flow tilt, based-vs-stretched, the crest-realization window) are qualitative. Recording a bar here would require inventing the number the play declines to state."
+  },
+  {
+   "play_id": "daytype.friday_crest_trim_discriminator",
+   "why": "Two discriminators, neither carrying a bar. Based-vs-stretched: the play's own health note says it 'has NO numeric bar on any served quantity', and 0710 shows two readers classing the same day either way ('BASED / CHOPPY' on a day entering at the running block cum extreme). Covering-vs-squaring: a sign comparison - price UP into settle AGAINST sell flow - on last-hour direction and last-hour flow, neither of which is served; the play itself scopes the tell as 'MBO-measured for G15; inferred otherwise'. The play's own falsifier concedes the stretched arm 'needs a bar first'."
+  }
+ ]
+}

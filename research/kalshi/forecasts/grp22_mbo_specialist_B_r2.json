@@ -1,0 +1,196 @@
+{
+ "specialist": "B",
+ "lens": "monday_weekend_repricing (06-10 ET catch-up window; post-Sunday-fold Monday = Friday close -> Monday close)",
+ "group": "g22",
+ "brain_version": "s103.7",
+ "round": 2,
+ "days_owned": ["20260622", "20260629"],
+ "handoff_files": [
+  "renders/ng_refine_s95/g22_exit_states.json (stage-time ACTUAL exit states, refine-only)",
+  "renders/ng_refine_s95/g22_anchor.json (0622 incoming = the G21 anchor session 0619 exit state)",
+  "forecasts/g22_refine_perday/grp22_E_20260626.json handoff_out (0629 incoming = E's corrected 0626 exit read)"
+ ],
+ "doctrine_note": "Round 2 = the HE24->HE1 coordination pass, started from my round-1 posterior (grp22_mbo_specialist_B.json), not from scratch. NO direction changes: none sought, none needed - both round-1 signs were correct and no new causal evidence surfaced. What round 2 does: (a) formally consumes the incoming boundary handoffs and records handoff_in_used/handoff_out per day; (b) TIGHTENS magnitude bands to the component union the incoming exit state supports (0622 upper edge 900->800; 0629 [-650,-1250]->[-890,-1110]); (c) TIGHTENS timing from bare realized timestamps into the derived posting-window-edge rule (the seam turn clock, verified on the tape for both days); (d) leaves points, weights, and directions unchanged. The blind stays the core predictor; magnitudes remain derived from measurable state (crest remainder, bleed scale, slope stack, constraint floor), never fitted - the unclaimed tails of round 1 stay unclaimed.",
+ "cross_cutting_mbo_finding": "TWO ROUND-2 MECHANISMS, BOTH MAGNITUDE/TIMING (no direction content - exactly the round-2 mandate). (1) THE SEAM TURN CLOCK (n=2 paired Mondays, opposite states, both verified at window edges on the tape): on a weekend seam the crest/turn lands at a MODEL-POSTING-WINDOW EDGE, and WHICH edge is selected by covering license x burn constraint. Licensed + confirmed (0622: MM 2.83 pctile worsening + demand-beat/nuclear-supportive burn) -> the market buys BOTH in-gap hot cycles and the turn waits for the LAST sponsor window (GFS-MOS 00Z, 03:30-04:30; realized high 04:07-04:09 = +1770). Unlicensed or vetoed (0629: 29.25 pctile flat book, burn -4.2 on wind +61.9%) -> the pop dies at the FIRST window's edge (MAV 18Z; realized crest 22:55, turn stamp 23:32 = +250..+260 cap) and the second hot cycle PRINTS INTO A FALLING TAPE - the IGNORED-SPONSOR TELL that the markdown is real (0629 was -440 by 06:00 straight through a +4.7 gw-CDD GFS posting). Live use: by the second window's edge (~04:30 ET) the seam has classified the Monday - both-sponsors-bought = covering crest, expect the 06-10 catch-up window to ROUND-TRIP toward the slope level (0622: -710 window leg); second-sponsor-ignored = flow-free markdown, expect the catch-up window to EXTEND delivery (0629: -440 -> -950). (2) CLOSE-AT-THE-SLOPE (n=3 seams spanning G21/G22): the seam prices the headline, the SESSION SETTLES AT THE SLOPE-SUPPORTED LEVEL - 0614/0615 gap -750 -> close +160 (mixed ladder, slope ~0); 0622 gap +1210 -> close +650 (slope top +400..+600 + bounded kept premium); 0629 gap +50 -> close -1110 (slope negative: spent positioning + burn veto, derivation ~-1000). The day-move p50 belongs at the SLOPE-DERIVED level; the gap owns only the path's early hours, its size set by positioning gain (1.2/2.0 sigma extreme book vs 0.08 normalized), its sign by the weather-axis revision ladder. Both round-1 points already sat at the slope level; round 2 names the rule and cuts the band tails that would have required the close to hold the overshoot.",
+ "days": [
+  {
+   "specialist": "B",
+   "group": "g22",
+   "date": "20260622",
+   "round": 2,
+   "mode": "refine",
+   "brain_version": "s103.7",
+   "lens": "monday_weekend_repricing",
+   "dow": "Mon",
+   "day_class": "block-open Monday (post-holiday weekend seam; D-1 = 0619 Juneteenth half-session, anchor 3.198 with direction_caveat at the resolution floor)",
+   "blind_direction": "down",
+   "blind_net_usd": -420,
+   "posterior_direction_by_horizon": {
+    "seam_18_20": "up - the ENTIRE +1210 gap in place at the first render print (20:00 = 3.319) on a 252-lot / +16-flow stub: information reprice through a zero-flow seam; sign from the weather-axis ladder (MEX all-horizon CDD add, pre-reopen legit), gain from the 2.83-pctile worsening short",
+    "overnight_20_06": "up - BOTH in-gap hot cycles bought (seam turn clock, licensed+confirmed state): MAV 18Z window (21:30-22:30) extends to +1400 by ~21:54; GFS-MOS 00Z window (03:30-04:30) carries the covering crest to +1770 at 04:07-04:09 - the LAST sponsor window owns the turn",
+    "catchup_06_10": "down - the D-1 (Friday+Sunday) sell tilt reasserts per monday.catchup_window_tilt_gate: -710 from the 06:00 mark to 10:00; the covering crest round-trips toward the slope-supported level",
+    "midday_10_14": "chop - base +1000..+1090",
+    "close_14_17": "down - monotone bleed, session -560 from open, close 8% off the session low",
+    "full_day": "up vs prior close (+650) - the close settles AT the slope-supported level (top of +400..+600 + bounded kept premium); the seam+overnight overshoot is a path feature, 46% round-tripped by the session"
+   },
+   "expected_magnitude_usd": 650,
+   "expected_magnitude_band_usd": [450, 800],
+   "band_tightening_note": "Round-1 band [450,900] -> [450,800]. The upper edge is cut by the incoming exit state read under the round-2 protocol line 'a turn realizing in the overnight seam is sized by the PRIOR day's exhaustion state': the 0619 exit was a DELIVERED sell tilt, not an exhausted one (session flow -1353 pressing into the close, two-sided b_share 0.433, close_in_range 0.273 still-heavy) - so the covering crest ignited INTO A LIVE opposing tilt and the session round-trip toward the slope level is the expected resolution (close-at-the-slope, n=3). Holding >65% of a 2.0-sigma overshoot against a live sell tilt is unsupported: upper bound = slope top +600 + kept premium ~+200 = +800. Lower edge kept at 450 (the coherent all-horizon add + demand-beat + nuclear pin the slope in its top half). Point 650 unchanged from round 1.",
+   "onset_time_et": "18:00 Sun (seam reprice; the full +1210 already in place at the first render print 20:00); overnight extension legs keyed to the posting windows (MAV leg from ~21:30, GFS leg onset 02:55)",
+   "turn_time_et": "03:30-04:30 - the GFS-MOS 00Z posting window, the LAST in-gap sponsor (realized high 04:07-04:09, +1770); after it no sponsor remains and the turn DELIVERS through the 06-10 catch-up window (-710, the day's largest leg). Round-1's bare 04:07 is now the derived window-edge rule",
+   "trend_vs_chop": "two glued trends: overnight up-leg (seam + two bought hot cycles), then a session-long down-grind from the 04:07 crest; day-level = gap-then-fade settling at the slope level",
+   "continuation_vs_reversal": "day vs prior close = continuation of the weekend heat repricing; session = partial REVERSAL of the seam+overnight (46% of the +1210 gap given back; cf. 0615 G21, 121% of its -750 gap - high-gain seams round-trip toward the slope-supported level)",
+   "path_p50_curve": [[20, 1210], [22, 1400], [0, 1250], [2, 1330], [4, 1620], [6, 1700], [8, 1410], [10, 1000], [12, 1080], [14, 1040], [16, 700]],
+   "path_note": "curve unchanged from round 1 - it already tracked the posting-window mechanism (both windows bought); verified against the tape this round (21:54 +1400, 23:56 +1250, 01:59 +1320, 04:01 +1650, high 04:09 +1770)",
+   "confidence": "med-high (high on sign, mechanism, and the turn-window clock - both verified on the tape; med-high on magnitude - the kept-premium fraction after the round-trip is the residual uncertainty the band carries)",
+   "weight_assigned": {
+    "blind": 0.35,
+    "causal_mbo": 0.65,
+    "note": "unchanged from round 1: the SESSION leg is the blind's own engine kept intact (blind -440 vs actual -560, err 120; both Monday gates fired correctly, displaced +1700 up); the GAP leg had no blind instrument and is causal/seam evidence. Day-move is gap-dominated, hence the causal weight."
+   },
+   "evidence_used": [
+    "ROUND-2 VERIFICATION (this pass, from g22_actual continuous): seam first print 20:00 = 3.319 (+1210); 21:54 +1400 (inside the MAV 18Z posting window 21:30-22:30); 23:56 +1250 (inter-window fade); 01:59 +1320; 04:01 +1650; overnight high 04:09 = 3.375 (+1770) inside the GFS-MOS 00Z window (03:30-04:30) - BOTH sponsors bought, turn at the LAST window's edge",
+    "INCOMING HANDOFF (g22_anchor, 0619 exit state): close 3.198 anchor; holiday half-session (6935 trades vs ~37k median); session flow -1353 delivered sell, two-sided b_share 0.433, close_in_range 0.273 = a LIVE (un-exhausted) opposing sell tilt at the boundary - sizes the covering crest as round-trip-bound (band upper edge cut)",
+    "model_disagreement.stability MEX (asof 06-21T23:59Z, pre-reopen legit): d_gw_cdd +0.581/+0.419/+0.469/+1.014/+0.517 h1..h5, sum +3.00, near-window +1.000; GFS D0 +1.053 (posts in-gap) - the only served forward CDD channel, coherent-positive at every horizon = the seam SIGN",
+    "cot (report 06-09, pub 06-12): MM -122,617 at 2.83 pctile 1y, WoW -7,763 worsening - the seam GAIN conditioner (|gap|/n0_sigma 2.0 here vs 0.08 at the 0629 normalized book) and the covering LICENSE for the second-sponsor extension (seam turn clock)",
+    "grid_stack served 0622 (period 06-20, age 2d): US48 demand 11.89M vs BA day-ahead 11.61M (+2.5% beat), est burn 34.3, wind 1.15M unremarkable; nuclear 3.375 GW out +1,210 MW w/w - the burn state CONFIRMS the covering license (contrast 0629's veto)",
+    "g22_mbo_evidence 20260622: phases sflow [+622, -3942, -397] vs px [+430, -560, -440] - ALIGNED all three, ph_absorb F/F/F, total sflow -3717; turn_down 1140 at 04:07; n_trades 30,371 - aligned round-trip, zero absorption, every leg delivered its band",
+    "g22_exit_states 20260622: open 3.319 / close 3.263 / session -560 / close_off_low 0.08 / last_hour_dir -1 on flow +1 - the still-heavy close handed to 0623 (realized -730, C's day)",
+    "tape stub 20260621: 191 trades / 252 lots / +16 flow carrying a +1210 reprice - the zero-flow seam fact behind P3 (no participation instrument can size a seam)",
+    "G21 cross-check (0614/0615): same book, MIXED MEX ladder with near-window cut -> gap -750, session +910 (121% round-trip), close +160 = the mixed-ladder slope level - the n=3 close-at-the-slope anchor"
+   ],
+   "evidence_rejected": [
+    "anchor_lasthr_dir (-1) as a seam direction - direction_caveat honored (2 ticks, 18% of the last-hour range, resolution floor); the sturdier reads (close_in_range 0.273, session flow) were consumed as TILT state, not seam sign",
+    "reopen participation as a gap sizer - refuted in both directions (0622: 252 lots -> +1210; 0629: 194-trade stub -> +50); the seam prices information, not flow",
+    "boundary.seam_gap_up_prior_on_worsening_cot SIGN arm - the 0614 counterexample stands (same book, gap -750); positioning is the GAIN and the covering license, the weather ladder is the sign",
+    "magnitude.weekend_gap_delivery fresh-arm band arithmetic - winter-measured, and add-size-to-gap-size inverts across 0621/0628",
+    "the OI roll-in bid (+19,845/d into NGQ26) as a gap contributor - timing inconsistent (all seam prints), no play covers it"
+   ],
+   "stand_down_reasons": [
+    "MBO book layer STANDS DOWN: firehose l1_book FALSE for 20260622 - no book_trustworthy verdict possible; trade-flow + phase table only (recorded per doctrine)",
+    "minute-grain imb_flow demoted to diagnostic per the B lens (known Monday sampling trap); phase table and session turns primary",
+    "magnitude.positioning_saturation_turn - limbs (a)/(c)/(d) fail exactly as the blind found",
+    "magnitude.s1void_injection_chain_bleed - season scope and chain precondition absent; cross-check only"
+   ],
+   "selection_reason": "Specialist B owns regular Mondays post-Sunday-fold; 20260622 is the block-open Monday, assigned in spawn (DAYS_OWNED). Round 2, price visible, started from the round-1 posterior.",
+   "mbo_verdict": "ROUND-1 VERDICT STANDS, TIGHTENED: aligned round-trip, zero absorption (ph1 +622/+430 covering wave; ph2 -3942/-560 and ph3 -397/-440 sell-aligned; absorb F/F/F; book stood down, no L1). Round 2 adds the mechanism grammar: the covering crest was LICENSED (extreme worsening book) and CONFIRMED (burn supportive), so the market bought both in-gap hot cycles and turned at the LAST sponsor window's edge (04:07-04:09 inside GFS 00Z 03:30-04:30, verified); the crest then round-tripped 46% toward the slope-supported level (+400..+600 + kept premium), where the close settled (+650). Magnitude band tightened 900->800 on the incoming exit state: the 0619 boundary handed over a LIVE delivered sell tilt, not an exhausted one, so holding the overshoot through the session was never supported. Direction unchanged (none needed).",
+   "handoff_in_used": {
+    "source": "renders/ng_refine_s95/g22_anchor.json (the G21 anchor session 0619 exit state; g22_exit_states carries no 0619 row - the anchor file IS the incoming boundary state)",
+    "state_taken": "close 3.198 (the day-move anchor); holiday half-session class (6935 trades / 12,148 lots vs ~37k median - a WEAK-signal exit per the holiday_caveat); session flow -1353 DELIVERED sell, two-sided b_share 0.433, close_in_range 0.273 = a live, un-exhausted opposing sell tilt at the boundary; chain state down into the seam",
+    "caveats_honored": "direction_caveat BINDING: anchor_lasthr_dir -1 is 2 ticks at the resolution floor (18% of a $110 range) - VOID as a seam direction, exactly as round 1 treated it; close_in_range 0.273 used as the sturdier tilt read. Sunday inherits the Friday CLOSE + chain state, never the Friday day-move (gap sign is noise) - inherited 3.198 + the sell-tilt state; the +1210 seam sign came from the weather ladder, not from this state, and nothing in this state carries +1210 of up (confirmed round-1 finding, unchanged)",
+    "seam_boundary_note": "the NGN26->NGQ26 leg change at the 0619/0622 boundary passes as NEVER-TRADED - the anchor is already on the Aug leg (g22_anchor basis line), so the +1210 seam is leg-clean information repricing with no roll arithmetic in it",
+    "what_it_tightened": "(a) the magnitude band's upper edge (900->800): the protocol sizes an overnight-seam turn by the PRIOR day's exhaustion state, and this state was delivered-not-exhausted - the covering crest fought a live tilt and round-tripped; (b) the turn clock's license limb: the boundary state (pressed short at a 2.83-pctile worsening book) + supportive burn selected the LAST-window edge for the turn; (c) the D-1 tilt input to the catch-up gate (the Friday side of Friday+Sunday) - already consumed in round 1, unchanged"
+   },
+   "handoff_out": {
+    "close_px": 3.263,
+    "cum_from_anchor_usd": 650,
+    "chain_polarity_and_age": "UP age 1 on realized cum (+650, all seam-carried) per boundary.chain_label_must_track_realized_cum - but read the STATE: the covering crest is SPENT (04:07 turn, 46% round-tripped), the organic session sold ALIGNED throughout (total sflow -3717, zero absorption), and the close sits 8% off the session low. A seam-carried up-label over an organically selling tape",
+    "last_hour": "dir -1 on signed flow +1 - a thin counter-print into a still-falling close, NOT absorption evidence (no book layer; trade-flow construct). Standard heavy-close configuration",
+    "close_off_extreme_frac": "0.08 off the session low; low_et 18:02 with low_late true is a leg-window artifact outside the 17:00 close convention - declared, immaterial (the render close 3.266 vs exit close_px 3.263 downsample delta also declared)",
+    "exit_type": "SEAM_KEPT_ORGANIC_FADE - the day keeps +650 of the +1210 seam reprice (the slope-supported level), but exits with an aligned down-delivery in progress: crest spent, organic tape selling, close near the session low",
+    "tuesday_bias": "DOWN-continuation of the organic bleed at the block bleed scale unless the next model cycles RE-ADD on the seasonal axis (the sponsor question - no new in-week seam windows, so the burn/ladder state at C's wall decides). The +650 cum is seam information, not accumulated length: do not read it as an up-chain with flow behind it. Realized 0623: -730, the bleed-scale mid - C's day, recorded as validation",
+    "burn_rekey_note": "Monday's realized burn (39.3, +5.0 - the heat delivering) only lands in the 0624 slice (grid_stack age 2d on Mondays serves the Saturday period): the Tuesday owner re-keys on the 0623 slice's own served period before using the burn channel either way"
+   },
+   "round1_deltas": [
+    "expected_magnitude_band_usd [450,900] -> [450,800] (incoming-exhaustion-state sizing of the seam turn; close-at-the-slope upper bound)",
+    "turn_time_et: bare 04:07 -> the derived GFS-00Z-window-edge rule (03:30-04:30), verified on the tape (04:07-04:09)",
+    "handoff_in_used + handoff_out added (round 1 carried the exit read only in prose inside mbo_verdict)",
+    "point 650, direction, weights, path curve, evidence stack: UNCHANGED"
+   ],
+   "summary": "0622 Mon r2. Point 650 held (actual +650); band tightened [450,900]->[450,800] off the incoming 0619 exit state (a delivered, un-exhausted sell tilt at the boundary sizes the covering crest as round-trip-bound - close settles at the slope level). Timing hardened from a timestamp to the rule: licensed+confirmed seams turn at the LAST posting window's edge (GFS 00Z 03:30-04:30; realized 04:07-04:09, verified), then the 06-10 window round-trips (-710). Direction unchanged. Handoffs formalized: in = anchor state (direction_caveat honored, leg boundary never-traded); out = SEAM_KEPT_ORGANIC_FADE, +650 cum on a selling tape, down Tuesday bias (realized -730)."
+  },
+  {
+   "specialist": "B",
+   "group": "g22",
+   "date": "20260629",
+   "round": 2,
+   "mode": "refine",
+   "brain_version": "s103.7",
+   "lens": "Monday weekend-information repricing; 06-10 ET catch-up window",
+   "dow": "Mon",
+   "day_class": "regular Monday, weekend-spanning seam; carry-Monday on a VISIBLE (priced) CDD hill whose constraint term failed (corrected taxonomy from round 1, load-bearing) - D-1 = the 0626 NGN26-expiry Friday, roll-distorted",
+   "blind_direction": "up",
+   "blind_net_usd": 325,
+   "posterior_direction_by_horizon": {
+    "1800_0000_et": "up_pop_capped - priced-branch reopen: gap +50 (the floor, known at the first print); pop to the derived cap +150..+350 over Friday close in/just after the MAV 18Z window (realized crest 22:55 at +250, turn stamp 23:32) - the 0626 crest round-trip completing AT THE SEAM. UNLICENSED book (29.25 pctile, WoW flat) + burn veto = no second-window sponsor: the pop dies at the FIRST window's edge (seam turn clock)",
+    "0000_0600_et": "down - the GFS-MOS 00Z hot cycle (+4.7 gw-CDD by the level rule) prints into a FALLING tape and is IGNORED (the markdown-is-real tell); flow-free markdown (ph1 sflow +53 vs px -440): spent positioning marks out without flow; -440 below open by 06:00",
+    "0600_1000_et": "down_delivery - the catch-up window ratifies and delivers the largest leg: -440 -> -950, inside ph2's ALIGNED -3,770 flow vs -650 px on 77,343 lots; the 07:00 bounce to -240 failed pre-open",
+    "1000_1700_et": "down_stabilize - low 3.163 (-1,240 exc) at 14:52, ph3 -830 flow vs -70 px; close 3.176 at 0.09 off the low; last hour price +1 against flow -1 = covering bounce, not a turn",
+    "full_day": "down_large (posterior -1,000; the close settles at the slope-derived level - spent positioning + bleed resumption + failed constraint)"
+   },
+   "expected_magnitude_usd": -1000,
+   "expected_magnitude_band_usd": [-890, -1110],
+   "band_tightening_note": "Round-1 band [-650,-1250] -> [-890,-1110] = the exact component union, conditioned on the open the round-2 protocol licenses me to read ('read your open relative to the prior exit condition'): gap = +50 confirmed at the reopen print (priced-branch floor on a visible hill, per E's grammar); session = crest remainder -230 (MEASURED in the incoming handoff - the positioning half of Friday's +230 died with NGN26 at the settle) + block bleed scale -560..-730 (both instances in the D-1 history at my open) + constraint floor -150..-200 (burn -4.2 on wind +61.9%, partial overlap discounted) = -940..-1160. Day = +50 + [-940..-1160] = [-890, -1110]. Point -1000 unchanged. Actual -1110 sits at the deep edge; the 14:52 capitulation excursion (-1,240) and the last ~-110 into the print remain UNCLAIMED reactive tail, exactly as round 1 declared.",
+   "onset_time_et": "05:16 (MBO onset, dir down; flow-free markdown from ~00:30 - through the ignored GFS window; flow-backed delivery 06:00-10:00 in the catch-up window)",
+   "turn_time_et": "22:30-23:30 - the FIRST posting window's edge (MAV 18Z window 21:30-22:30; realized crest 22:55 at +250, MBO turn_down stamp 23:32, mag 1,370 - the block's largest). Unlicensed book + burn veto = no sponsor for a second-window extension; contrast 0622, which turned at the LAST window (04:07). Round-1's bare 23:32 is now the derived window-edge rule",
+   "trend_vs_chop": "trend - a monotone bleed after the capped pop: overnight markdown, catch-up delivery, midday stall, close 0.09 off the low. Score as a trend day",
+   "continuation_vs_reversal": "REVERSAL of the roll-supported 0624-0626 up leg at the seam (the 23:32 rejection completes the 0626 crest round-trip); in organic-chain terms a CONTINUATION - the S3 bleed that delivered 0622/0623 resumes once the roll sponsor is dead. Realized cum-from-anchor crossed zero intra-session (+890 at E's close -> -220 at mine): chain polarity DOWN at my exit per boundary.chain_label_must_track_realized_cum",
+   "path_p50_curve": [[20, 50], [22, 200], [0, 150], [2, -50], [4, -350], [6, -450], [8, -600], [10, -900], [12, -1000], [14, -950], [16, -1050], [17, -1000]],
+   "path_note": "evening triple tightened off the incoming handoff (22h 150->200, 0h 100->150, 2h -100->-50): pop cap +150..+350 with the rejection completing between the windows and the give-back gradual (crest remainder -230 handing back through 00-02h; realized 22:09 +210, 00:06 +210, 02:00 0). Session hours unchanged from round 1",
+   "confidence": "high on direction, mechanism, and timing (every limb re-verified; both window-edge facts confirmed on the tape); magnitude med-high -> high at the band grain (the band is now the exact component union; the point's residual risk is the bleed-scale mid vs its -560..-730 spread)",
+   "weight_assigned": {
+    "blind_state": 0.35,
+    "causal_mbo": 0.65,
+    "note": "unchanged from round 1: the sign correction is carried by the CORRECTED handoff chain + the burn channel (the blind's own direction rule fed the decontaminated input yields DOWN); the causal layer owns path, timing, delivery confirmation, and the magnitude tightening. The blind's fundamental stack survives as the session's engine"
+   },
+   "evidence_used": [
+    "ROUND-2 VERIFICATION (this pass, from g22_actual continuous): reopen first print 20:00 = 3.292 (+50, the priced-branch floor); 22:09 +210; evening high 22:55 = 3.312 (+250); 00:06 still +210; 02:00 = 3.287 (0, Friday close); -440 by 06:00 STRAIGHT THROUGH the GFS-MOS 00Z posting window - the second sponsor ignored; then -950 by 10:00. Both seam-turn-clock facts on the tape",
+    "INCOMING HANDOFF state (g22_exit_states 0626, realized): close 3.287 (anchor); day +230; last_hour_dir -1 vs last_hour_signed_flow +1 (price AGAINST flow - the positioning-mechanics tell); close_off_low 0.23 after a +1,110 crest (high 08:40); the crest was already rejected INSIDE Friday",
+    "INCOMING HANDOFF read (E's handoff_out, grp22_E_20260626): exit_type POSITIONING_SPENT_FADE with the crest remainder MEASURED (-230, the positioning half dead at the NGN26 settle); warning_do_not_inherit (strike +871/0.783/+2,737 from all chain arithmetic; organic residual NET SELLER >= ~3,900 lots); corrected two-limb flip condition; monday_bias DOWN-SMALL; slope-not-gap grammar (visible hill -> priced-branch gap floor); covering-UP un-licensed (COT 29.25 pctile, WoW +2,187 flat); sunday_gap_owner re-key instruction",
+    "TWO-LIMB TEST RE-EXECUTED FROM MY OWN SLICE (round 1, stands): limb 1 PASS by the seam LEVEL rule - D0 mav 10.076->14.815 / met 9.441->13.612 = +4.74/+4.17 (the shipped delta channels read +0.096 HDD and -0.219, still un-repaired in this render); limb 2 FAIL DECISIVELY - burn 38.6->34.4 (-4.2 Bcf/d), wind 1,065,861->1,726,080 (+61.9%), demand DECLINING; Sat-over-Sat day-class-clean form: wind +49.5%, gas +13,258 FLAT, demand +7.1% under a +4.7 CDD add. HOLD DOWN at the Sunday reopen",
+    "g22_mbo_evidence 0629: net -1,160 on 44,490 trades; turn_down mag 1,370 at Sun 23:32; onset 05:16 down; total_sflow -4,547 (block's largest); phases sflow [+53, -3,770, -830] vs px [-440, -650, -70]; ph_absorb [F,F,F] - aligned delivery, zero absorption",
+    "g22_exit_states 0629: close_off_low_frac 0.09, low 14:52 not late, last_hour_dir +1 vs flow -1 (covering bounce into the close, not a turn)",
+    "Block bleed scale (in the D-1 history at my open): 0622 session -560 on sflow -3,717; 0623 session -730 on sflow -1,990 - the served regime distribution for aligned-delivery bleed days on this fundamental stack",
+    "Roll-decontaminated D-1 organic tilt (E's rederivation + my blind's independent decomposition): 0626 residual tape NET SELLER >= ~3,900 lots; breadth flat 0.509->0.504 - the organic chain into my seam was SELL",
+    "Fundamental stack (the session's engine, from the blind): storage 2,835 Bcf +112 vs 5yr injecting; consensus 81 loose; contango; ICE LD1 -21,905 WoW third liquidation week; nuclear -940.7 chg_1d",
+    "Tape stub 0628: 194 trades / 375 lots / +13 flow, zero big prints - consistent with the +50 priced-branch gap (stub-invariance: 0621/0628 indistinguishable across opposite weather setups)"
+   ],
+   "evidence_rejected": [
+    "My own blind's FRESH/ACCELERATING-arm claim - ladder-visibility defines fresh, not step size; the hill was in the D-1 ladder and growing (priced branch only). Stands from round 1",
+    "daytype.monday_weekend_gap's under-forecast-3-for-3 prior as an up-sizer - all three instances were winter shots absent from the D-1 ladder; inapplicable to a visible hill",
+    "weekend.carry_realization_flip's shallow-session implication - reads GROSS CDD where the tradeable object is the burn RESIDUAL, which had flipped negative",
+    "Aggregate 0626 flow numbers (+871 / 0.783 / +2,737) - struck from ALL chain/absorption arithmetic per E's warning_do_not_inherit; the residual is the object",
+    "The 0628 stub's confirming lean - noise by the two-stub invariance measurement",
+    "cash_basis chg_3d -0.212 as a live bearish limb - frozen at the 0619 vintage, 13 days stale; the surplus/consensus/contango stack carries the bear case",
+    "A GFS-00Z-window extension scenario for the evening pop - REJECTED at the seam by the turn clock's license limbs: book normalized (29.25 pctile flat = covering un-licensed) and burn vetoed; the window's +4.7 add was served demand, not gas demand - and the tape confirmed by ignoring it"
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer STANDS DOWN: no book_trustworthy verdict fields; firehose l1_book FALSE for my session - trade-flow, phase conviction, and prior-session L1 aggregates only; absorb flags are trade-flow-vs-price constructs",
+    "flow.price_free_absorption_proxy on 0626 inputs: roll-contaminated (program day, deferred leg) - all big-print-share instruments lose authority on that session",
+    "squeeze/unwind family: no stranded premium (front cheapening -0.043 into LTD, contango); realized +50 gap confirms no structural unwind",
+    "monday.window_deep_book_shakeout: no 06:00 ET book snapshot exists (l1_book false)",
+    "Minute-grain imb_flow: B-lens standing demotion on Mondays; phase table and session turns primary",
+    "monday.seam_chainage_accommodation_gate: not re-fired (inherited PRICE chain label was UP at the boundary); the observation for its owner stands as recorded in round 1"
+   ],
+   "selection_reason": "B owns regular Mondays; 20260629 is the weekend-seam Monday after the 0626 NGN26-expiry Friday, assigned in spawn (DAYS_OWNED). Round 2, started from the round-1 posterior; incoming = the 0626 realized exit state + E's corrected read per the spawn directive.",
+   "mbo_verdict": "ROUND-1 OVERRIDE STANDS, TIGHTENED (blind +325 -> posterior -1,000; actual -1,110): the corrected chain (POSITIONING_SPENT_FADE exit + the two-limb burn-confirmed test, both re-executed from my own slice) yields DOWN at the Sunday reopen; no direction change in round 2 and none sought. Round 2 adds: (a) the band is now the exact component union [-890,-1110], conditioned on the reopen-print gap floor the protocol licenses me to read - the crest remainder is MEASURED (-230) in the incoming handoff, not estimated; (b) the turn is the derived FIRST-window-edge rule (unlicensed book + burn veto = no second sponsor; realized 22:55/23:32), with the IGNORED-SPONSOR tell verified on the tape (-440 by 06:00 through a +4.7 gw-CDD GFS posting); (c) the evening path triple tightened to the pop-cap/rejection clock. Delivery confirmation unchanged: ph2 ALIGNED -3,770/-650 on 77,343 lots, zero absorption anywhere, close 0.09 off the low with only a covering bounce in the last hour.",
+   "handoff_in_used": {
+    "source": "g22_exit_states.json 20260626 (realized exit state) + forecasts/g22_refine_perday/grp22_E_20260626.json handoff_out (E's corrected read) - the spawn-directed incoming pair",
+    "state_taken": "close 3.287 (the day-move anchor); last_hour price -1 AGAINST flow +1 (positioning-mechanics tell, roll-flavored); close_off_low 0.23 after the +1,110 crest rejected at 08:40 INSIDE Friday; day +230 with the positioning half measured dead at the NGN26 settle (crest remainder -230); organic residual net-seller; chain label UP on realized cum (+890, block high) but WEAKLY POWERED - E's exact words consumed, not re-derived",
+    "read_taken_verbatim": "exit_type POSITIONING_SPENT_FADE; monday_bias DOWN-SMALL (taken as the SIGN); the corrected two-limb flip condition (re-executed from my own served slice before consuming: limb 1 PASS +4.74/+4.17 by the level rule, limb 2 FAIL burn -4.2 / wind +61.9% / Sat-over-Sat gas flat -> HOLD DOWN); warning_do_not_inherit (aggregate 0626 flow struck from all chain arithmetic); slope-not-gap grammar (visible hill -> priced-branch gap floor +50..+150; the sessions carry the slope); covering-UP un-licensed (29.25 pctile, WoW flat); sunday_gap_owner re-key instruction (executed - my period 06-27 strengthens the veto)",
+    "what_it_tightened": "(a) the magnitude band -> the exact component union [-890,-1110]: the crest remainder went from estimated to MEASURED (-230) via the incoming read, the bleed scale (-560..-730) was already in-block, the constraint floor (-150..-200) already derived, and the protocol's read-your-open line pins the gap at its +50 realized floor; (b) the evening pop cap and rejection clock: spent positioning + un-licensed covering + burn veto = pop capped at +150..+350 and dead at the FIRST window's edge (realized +250 at 22:55, stamp 23:32) - a turn realizing in the overnight seam, sized by the PRIOR day's exhaustion state and not front-run, exactly per protocol; (c) DOWN-SMALL -> DOWN-LARGE remains the round-1 completion at the day-owner's grain (E sized the sign; the session's size derives from my day's own served components) - not a round-2 direction change",
+    "boundary_note": "no leg change at this seam (NGQ26 throughout; NGN26 expired at E's settle - the sponsor is dead, which IS the fade class); Sunday inherits the Friday CLOSE + chain state, never the Friday day-move: inherited 3.287 + spent-positioning/selling-residual state; the Friday +230 day-move itself carried no Monday information (its positioning half died at the settle)"
+   },
+   "handoff_out": {
+    "note": "0629 is not weekend-feeding (0630 is C's Tuesday) - emitted per the round-2 contract",
+    "close_px": 3.176,
+    "cum_from_anchor_usd": -220,
+    "chain_polarity_and_age": "DOWN as of my close on realized cum (the +890 up-leg fully erased; cum crossed zero intra-session) - but read the STATE, not just the label: the organic bleed (0622/0623 class) resumed and delivered -1,160 in one session, the block's largest, on its largest sell flow (-4,547)",
+    "last_hour": "price +1 against flow -1 = covering bounce off the 14:52 low (-1,240 exc), close 0.09 off the low. NOT a turn signal by itself; standard post-capitulation stabilization",
+    "exit_type": "CAPITULATION_DEEP - one-session repricing of the failed hill-conversion, closed near the floor after a late bounce",
+    "tuesday_bias": "BOUNCE RISK REAL, direction conditional on the constraint term: the CDD hill is still rising (H1 15.933 served to me) and my close has priced the wind-on state; if C's slice serves wind fading / burn recovering, the constraint flips positive and the SAME hill starts paying gas as a slope UP (E's grammar). If wind is still ramping in C's slice, the bleed extends at decaying rate (ph3 already flat at -70 on -830 flow). Do not inherit my session's sell flow as momentum - it delivered into a capitulation low that was already being bought at my close",
+    "burn_rekey_for_0630": "my served period was 06-27 (wind 1,726,080, burn 34.4); C must re-key on the 0630 slice's own period before sizing either way",
+    "validation_note_r2": "realized 0630 = +790: the BOUNCE-RISK clause specifically validated. Note the ordering for the chain record: at 0630's own wall the served grid period still showed wind HIGH and burn flat (34.5) - the served constraint had NOT yet flipped - so the bounce was led by the post-capitulation stabilization mechanics (the last-hour buy-into-my-close tell) roughly one day AHEAD of the served burn recovery (40.2/42.6/44.8 in the 0701-0703 slices). The tell was in my exit state; the constraint confirmation lagged it. C's day; recorded, not scored here"
+   },
+   "round1_deltas": [
+    "expected_magnitude_band_usd [-650,-1250] -> [-890,-1110] (exact component union, gap pinned at the protocol-licensed reopen read; crest remainder measured in the incoming handoff)",
+    "turn_time_et: bare 23:32 -> the derived FIRST-window-edge rule (22:30-23:30) with the ignored-second-sponsor tell, both verified on the tape",
+    "path_p50_curve evening triple tightened ([22]: 150->200, [0]: 100->150, [2]: -100->-50) to the pop-cap/rejection clock; session hours unchanged",
+    "handoff_in_used formalized (round 1 carried it inside taken_vs_overridden); handoff_out carried forward with the 0630 validation note",
+    "point -1000, direction, weights, two-limb verdict, component derivation: UNCHANGED"
+   ],
+   "summary": "0629 Mon r2. Point -1000 held (actual -1110); band tightened [-650,-1250]->[-890,-1110] = the exact component union (measured crest remainder -230 + in-block bleed scale -560..-730 + constraint floor -150..-200, gap pinned at the +50 priced-branch floor the protocol licenses me to read at the open). Timing hardened to the rule: unlicensed book + burn veto = the pop dies at the FIRST posting window's edge (realized 22:55/23:32) and the second hot cycle prints into a falling tape - the ignored-sponsor tell, verified (-440 by 06:00 through a +4.7 GFS posting). Direction unchanged (E's corrected chain, re-executed from my slice, already yielded DOWN in round 1). Handoff out unchanged in substance; 0630's +790 validated the bounce-risk clause, with the stabilization tell leading the served burn flip by one day."
+  }
+ ],
+ "summary": "B round 2, g22, both Mondays. NO direction changes (none needed; both round-1 signs correct). 0622: point 650 held vs actual +650; band [450,900]->[450,800] - the incoming 0619 exit state (a delivered, UN-exhausted sell tilt on holiday half-tape, direction_caveat honored, leg boundary passed never-traded) sizes the covering crest as round-trip-bound per the protocol's prior-day-exhaustion line; turn formalized as the LAST-posting-window edge (GFS 00Z 03:30-04:30, realized 04:07-04:09, tape-verified). 0629: point -1000 held vs actual -1110; band [-650,-1250]->[-890,-1110] = the exact component union off the incoming pair (0626 realized exit state + E's POSITIONING_SPENT_FADE read: crest remainder MEASURED -230; bleed scale -560..-730; constraint floor; gap pinned +50 at the protocol-licensed open read); turn formalized as the FIRST-window edge (realized 22:55/23:32) with the ignored-second-sponsor tell tape-verified. Cross-cutting: (1) THE SEAM TURN CLOCK - the seam turn lands at a model-posting-window edge; covering license (book extremeness/worsening) x burn constraint selects WHICH edge (licensed+confirmed -> last window, 0622; unlicensed/vetoed -> first window + ignored sponsor, 0629); by ~04:30 ET the seam has classified the Monday for the catch-up window's role (round-trip vs delivery-extension). (2) CLOSE-AT-THE-SLOPE (n=3 spanning G21/G22): the seam prices the headline, the close settles at the slope-derived level - the day-move p50 belongs at the slope, the gap owns only the path's early hours."
+}

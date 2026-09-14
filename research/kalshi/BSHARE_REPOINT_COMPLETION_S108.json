@@ -1,0 +1,74 @@
+{
+ "meta": {
+  "title": "Completing the b_share re-point: two SIGN plays carry the semantic in prose, not in a numeric bar",
+  "brain_base": "s103.4 (66 plays)",
+  "proposes": "s103.5",
+  "found_by": "C, during the G21 blind, against the session lead's own s103.4 fix",
+  "merge_rule": "STRICTLY ADDITIVE. Two plays gain an amendment key, one gains a checked-and-clear record. No existing key rewritten.",
+  "effective_from": "G22. Greg S108: G21 runs WHOLE on s103.4, blind and refine, so the two differ only by the price curve; changing the brain mid-group would make the refine-vs-blind delta un-attributable."
+ },
+
+ "the_method_failure": {
+  "what_i_did_in_s103.4": "Classified plays by regexing NUMERIC bars near `b_share`. Found 0.50 on two plays, re-pointed those.",
+  "why_it_was_wrong": "A play can carry BOTH an empirically-fitted numeric bar AND a separate theoretical 0.50 semantic expressed in PROSE. structure.accumulation_arm_turn reads 'big_print_b_share >= 0.55 on >= 2 of the last ~5 sessions ... UNDER A SUB-0.50 SELL TAPE'. The 0.55 is fitted and correctly stays on the original series; the sub-0.50 SESSION tape is a balance claim and belongs on the two-sided series. I saw the 0.55 and filed the play as fitted.",
+  "the_general_lesson": "A semantic can live in prose as well as in a bar, and a regex over bars will miss it. The reproducible sweep is on phrases (`sub-0.50`, `sell tape`, `above/below 0.50`) as well as numbers.",
+  "recorded_because": "This is the second time in one session a classification-by-pattern missed a case that a specialist then found by reading. It should not be re-learned a third time."
+ },
+
+ "amendments_to_incumbents": [
+  {
+   "play_id": "structure.accumulation_arm_turn",
+   "add_field": "assumption_retired_bshare_basis",
+   "value": {
+    "assumed": "That the 'sub-0.50 sell tape' condition means the crowd is net selling.",
+    "measured": "session_b_share as served is biased LOW by unsided volume (13.49% of volume across 223 sessions) and clears 0.50 on only 5 of 223 sessions. Across G21 the sub-0.50 semantic FLIPS between bases on 5 of 10 days. On the served series G21 is an unbroken sell tape 10/10; on the two-sided series it is genuinely two-sided.",
+    "now_licensed": "The sub-0.50 SESSION-tape condition reads `session_b_share_two_sided`. The `big_print_b_share >= 0.55` arm and the thin-tape quartile bars (0.524/0.550/0.553) STAY on the original series - they are fitted there.",
+    "why_it_matters_more_than_the_s103.4_pair": "This is a SIGN play. The two plays re-pointed in s103.4 were a selector and a magnitude play. An unrepointed sign play is strictly worse.",
+    "it_already_changed_a_forecast": "G21 0618. D used exactly two sessions for the >=2-of-~5 window: 06-11 (bp 0.572; session 0.445 served / 0.481 two-sided - sub-0.50 on BOTH) and 06-12 (bp 0.597; session 0.479 served / 0.52 two-sided - FAILS). On the corrected basis one of two qualifies, the >=2 bar is not met, and the arm DOES NOT FIRE. D reported 0618 as having a second independent channel agreeing; on the corrected series it rested on ONE - the pre-print generator. The number may still be right; the confidence basis was not.",
+    "forward_evidence_NOT_to_bank": "C on G21 0616 found the arm holds at 0.406 served and FAILS at 0.520 two-sided, kept its sign, and credited flow.price_free_absorption_proxy explicitly NOT this arm. B did the same on 0615 one day earlier in the chain, unprompted. Neither day is forward evidence for this play.",
+    "proposed_by": "C (G21 blind), verified by the session lead"
+   }
+  },
+  {
+   "play_id": "selector.midblock_right_the_ship",
+   "add_field": "assumption_retired_bshare_basis",
+   "value": {
+    "assumed": "Same semantic, inherited by reference: 'recurring buy-absorption (>=2 of ~5, non-consecutive) UNDER A SELL TAPE'.",
+    "measured": "Same measurement. This play does not carry its own numeric bar; it restates accumulation_arm_turn's condition.",
+    "now_licensed": "Defers to structure.accumulation_arm_turn's definition, which now reads session_b_share_two_sided. Stated as a deferral rather than duplicated so there is ONE definition, not two that can drift.",
+    "proposed_by": "C (G21 blind)"
+   }
+  },
+  {
+   "play_id": "midweek.giveback_exhaustion_reversal_recognition",
+   "add_field": "checked_and_clear_bshare_basis",
+   "value": {
+    "claim_raised": "C named this as a third play carrying the same unrepointed absolute-0.50 semantic.",
+    "verdict": "NOT UPHELD. Its only b_share reference is 'an extreme sell-climax big_print_b_share at the low' - a SHAPE read, not an absolute 0.50 bar. Nothing to re-point.",
+    "why_recorded": "So the claim is not re-raised next group. C was right on two of three; recording the third as checked-and-clear is what stops a correct-but-partial finding from being re-litigated."
+   }
+  }
+ ],
+
+ "harness_changes_landing_with_this": [
+  {
+   "change": "phase_volume_lots / phase_n_trades served in tape_conditions",
+   "why": "E filed this against its OWN play. flow.passive_ladder_displacement was merged with a MANDATORY limb (b) - final-phase volume at or above the session maximum - the limb B forced in because without it the play is a false-positive machine. daytype.friday_exit_close_location_over_flow_shape was merged with a (volume, net) PAIR. But tape_conditions served phase_signed_flow and phase_b_share and NO phase volume, so both plays, merged as blind-available, were refine-only AS SERVED.",
+   "verified": "phase_volume_lots sums exactly to volume_lots (74,362 on 20260612)."
+  },
+  {
+   "change": "squeeze_watch derives its CALENDAR limb live from flow_calendar",
+   "why": "active is derived from contract_structure, which is price-derived and FROZEN at the anchor vintage, so the whole block reported dte=14 / active=false while the live calendar said 7 on 0616, 6 on 0617, 5 on 0618/0619 - the block sat INSIDE the play's own <=7 window and the flag denied it on four days. But only the SPREAD limb is genuinely price-derived; days_to_calendar_front_expiry is deterministic calendar and needs no mask. C and A found this independently and both used the live calendar instead.",
+   "additive": "active keeps its name, type and value. Added: days_to_calendar_front_expiry_live, calendar_front_symbol_live, calendar_limb_satisfied_live, calendar_limb_basis, and an explicit active_false_negative message when the frozen and live limbs disagree.",
+   "verified": "Live dte reproduces what C and A read from flow_calendar independently: 7 on 0616, 5 on 0619, 12 on 0609. False-negative flag fires on the frozen-false/live-true case."
+  }
+ ],
+
+ "adjudication_checklist": [
+  "3 amendments, all ADD a new key. Verify all pre-existing keys on all 66 incumbents byte-identical.",
+  "0 new plays.",
+  "One amendment is a NEGATIVE record (checked_and_clear) so a partially-correct claim is not re-raised.",
+  "Neither G21 0616 nor 0615 may be banked as forward evidence for accumulation_arm_turn - both specialists declined to credit it themselves.",
+  "Effective G22. G21 is scored end-to-end on s103.4."
+ ]
+}

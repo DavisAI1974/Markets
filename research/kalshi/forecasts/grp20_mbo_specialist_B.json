@@ -1,0 +1,257 @@
+{
+ "specialist": "B",
+ "lens": "Monday weekend-information repricing; the 06-10 ET catch-up window is where Monday decides. Post-Sunday-fold (S104.1) my day starts at the Sunday 18:00 ET reopen: Monday = Friday close -> Monday close, the reopen hours are my overnight phase.",
+ "group": "g20",
+ "brain_version": "s103.2",
+ "round": 1,
+ "days_owned": [
+  "20260601"
+ ],
+ "doctrine_note": "The immutable blind stays the CORE predictor and I emit a weight split. On this one day the blind's DAY SIGN is overturned - but not by replacing the blind with an order-flow model. It is overturned by restoring a doctrine clause the blind itself failed to apply: 'DIRECTION stays with the D-1 trade tilt.' The blind took its day sign from the SEAM GAP prior instead, which two incumbent Monday plays (monday.catchup_window_tilt_gate, monday.overnight_headfake_into_catchup) forbid on their face. So the MBO layer here is doing what the doctrine says it should - confirming turn and absorption and sizing off measurable state - while the direction correction is a doctrine restoration, not a new predictor. Magnitude is DERIVED from a measured extension and a cross-block mechanism fraction, never fitted to the actual; I emit -900 against a realized -990 and I do not reach for the last 90. MBO book layer stands down block-wide (no book_trustworthy verdict; firehose_present.l1_book FALSE on 0601) - trade-flow only. Per-event, never pooled. NG is not WTI.",
+ "cross_cutting_mbo_finding": {
+  "headline": "The G19 cum-0 fix worked, and that is exactly why the block leaned. The fix made the blind's chain CONTINUOUS; it cannot make it TRACK REALITY, because the blind is masked from price. A continuous chain built from the blind's own forecast day-moves INTEGRATES the blind's own directional error without bound - and every extension-gated play then reads extension off the wrong side of it. One mechanism produces both halves of G20's error, including the sign inversion on my day.",
+  "the_measurement": {
+   "definition": "constructed_cum = running sum of the blind's own guess_day_move_usd (what exit_state_blind() hands the next day). realized_cum = cum_from_anchor_usd from the realized legs (refine-only). divergence = realized - constructed.",
+   "table_date_blindday_constructedcum_actualday_realizedcum_divergence": [
+    ["20260525", 180, 180, 30, 30, -150],
+    ["20260526", -280, -100, -190, -160, -60],
+    ["20260527", -500, -600, 610, 450, 1050],
+    ["20260528", 150, -450, 2100, 2550, 3000],
+    ["20260529", -380, -830, -160, 2390, 3220],
+    ["20260601", 350, -480, -990, 1400, 1880],
+    ["20260602", 250, -230, -80, 1320, 1550],
+    ["20260603", 480, 250, 750, 2070, 1820],
+    ["20260604", -450, -200, 1130, 3200, 3400],
+    ["20260605", -500, -700, -1340, 1860, 2560]
+   ],
+   "what_it_shows": "The divergence opens on 0527-0528 (the covering ramp, +1,050 then +3,000) and NEVER recovers; mean |divergence| over days 3-10 is 2,310 = 2.1 x n0_range_20_mean (1,094). By 0529 the blind's constructed chain read cum -830 - a running MINIMUM, polarity DOWN - while the realized chain stood at +2,390, a running MAXIMUM, polarity UP. The constructed chain was 3,220 wrong in level and INVERTED in polarity at the exact seam where extension mattered most."
+  },
+  "why_this_is_the_block_lean_and_not_a_down_lean": "The blind did not hold a uniform bearish view. Every extension-gated play in the brain reads extension off cum: structure.covering_extension_distribution_flip, structure.friday_exhausted_extreme_giveback, midweek.stretched_extreme_close_giveback, midweek.young_chain_extension_full_band, and the INTRADAY arm of boundary.seam_gap_up_prior_on_worsening_cot. A chain running progressively BELOW reality presents every mid-week day as low-extension with room to fall -> the 4,050 the blind was too LOW across the eight mid-week days. The SAME error presents the one maximally-extended day as un-extended -> the extension-gated FADE never armed, the seam gap prior ran unopposed, and the blind leaned UP by 1,490 across the two Monday-class days. Same cause, opposite signs, allocated by whether the day was extension-gated.",
+  "my_day_is_the_proof_not_the_exception": "0601 is the ONLY day in the block where the blind's error moved the constructed chain TOWARD reality (divergence 3,220 -> 1,880, a 1,340 narrowing that is exactly my err). Everywhere else the blind's error widened the divergence. An error that widens the gap on eight days and closes it on the two Monday-class days is not two errors; it is one integrator running with a sign that depends on whether the play consulted cum.",
+  "why_the_fix_made_it_worse_not_better": "Pre-fix, restarting at cum 0 each day accidentally re-anchored the chain near neutral every session - the error was intermittent and self-clearing. boundary.chain_label_must_track_realized_cum removed the reset and made the chain continuous, which is correct in a world with realized price and WRONG in a world without one: continuity converts an intermittent bug into a coherent, unbounded drift. This is why the framing's observation holds - the structural fix demonstrably worked and the calls still failed. The fix is not the problem; the fix's PRECONDITION (a chain anchored to something real) was never supplied on the blind side.",
+  "the_proposal_general_no_brain_edit_this_run": {
+   "name": "chain_staleness_gate (proposed; PROPOSAL only, no brain edit in this run)",
+   "rule": "Any play keyed on cum_from_anchor or chain extension must first read a STALENESS term. On the refine side that is |realized_cum - constructed_cum| directly. On the blind side, where realized_cum is masked, the only honest substitute is a bound: the constructed chain is trustworthy for at most k sessions after the last day whose realized move is known, and beyond that every extension-gated play must widen its band or stand down rather than assert a rung.",
+   "threshold_candidate": "stand the extension gate down when the staleness term exceeds ~1 x n0_range_20_mean (1,094 here). On 0601 the divergence was 3,220 = 2.9x - three times the stand-down threshold, and the play the blind most needed was the one it was least entitled to run.",
+   "forward_test": "compute the divergence table on every future block; the claim is that the blind's per-day |err| correlates with the divergence and that its SIGN flips on extension-gated days. G20 gives 10 points; G21+ is the test.",
+   "why_this_is_not_a_data_fix_banked_as_evidence": "It is not evidence for any play. It is a GATE on the plays that already exist, and it makes an explicit prediction about the blind's error structure that can falsify it."
+  }
+ },
+ "days": [
+  {
+   "date": "20260601",
+   "dow": "Mon",
+   "day_class": "regular Monday, weekend seam, business_day_of_month 1; post-covering-squeeze DISTRIBUTION DAY 1 at maximal extension. No mechanical flow term: is_expiry_day FALSE, is_opex_day FALSE, in_gsci_roll FALSE, in_bcom_roll FALSE, in_bidweek FALSE, days_to_futures_expiry 18, days_to_next_eia_release 3. (flow_calendar carries gsci_ng_roll_this_month TRUE and bcom_ng_roll_this_month TRUE - MONTH flags, with roll_day_n null and the in_*_roll windows FALSE. Do not read the month flags as a roll term on business day 1.)",
+   "blind_direction": "up",
+   "blind_net_usd": 350,
+   "posterior_direction_by_horizon": {
+    "overnight_20_04_et": "up (the seam gap holds and extends modestly on non-confirming flow - a head-fake, not the day)",
+    "eu_04_08_et": "down (first liquidity restoration; the overnight extension bleeds off but the gap itself survives - EU depth is not enough to repay it)",
+    "us_am_08_12_et": "down, and this is the whole day (second and decisive liquidity restoration; the gap is repaid and the extension unwind begins in the same phase)",
+    "us_pm_12_17_et": "down, decelerating; low late-morning-to-early-afternoon, close pinned NEAR the low on a mature chain (no accommodation bounce)",
+    "day_net": "down"
+   },
+   "expected_magnitude_usd": -900,
+   "expected_magnitude_band_usd": [
+    -1400,
+    -600
+   ],
+   "onset_time_et": "08:15",
+   "turn_time_et": "03:40",
+   "trend_vs_chop": "trend - a single monotone unwind with no counter-phase. A residual that has already discharged has no second wave, and a distribution has no reason to pause on day 1.",
+   "continuation_vs_reversal": "reversal of the PRICE chain (the 5-session up chain flips) and simultaneously CONTINUATION of the FLOW tilt (four consecutive net-sell sessions into the seam). Tagged reversal, because the play that fires is structure.covering_extension_distribution_flip.",
+   "path_p50_curve": [
+    [20, 690],
+    [22, 780],
+    [0, 830],
+    [2, 870],
+    [4, 820],
+    [6, 640],
+    [8, 420],
+    [10, -550],
+    [12, -780],
+    [14, -880],
+    [16, -900]
+   ],
+   "confidence": 0.74,
+   "weight_assigned": {
+    "blind": 0.35,
+    "causal_mbo": 0.65,
+    "justification": "The lowest blind weight I would assign anywhere in this block, and it needs the justification. What SURVIVES from the blind is the GAP: sign correct, size +300 against +690 realized, and the two-part gap-first structure. What does NOT survive is the blind's DAY sign - and the reason it does not survive is that the blind departed from the doctrine's own direction rule (direction stays with the D-1 trade tilt) in favour of the seam gap sign. Overturning that is a doctrine RESTORATION, so the 0.65 to causal_mbo is not the order-flow model replacing the blind; it is the causal layer supplying the D-1 tilt measurement and the extension state that the direction rule needs as inputs."
+   },
+   "magnitude_derivation": {
+    "step_0_direction_before_any_number": "D-1 (Friday + Sunday) trade tilt = 0529 total_sflow -2,126 plus the 0531 reopen stub session_signed_flow +278 = -1,848 NET SELL. monday.catchup_window_tilt_gate: 'direction = the inherited D-1 trade tilt, NOT the gap sign or the Friday day-net.' DOWN. Corroborated independently on cumulative signed flow: 0526 -1,290, 0527 -4,910, 0528 -1,966, 0529 -2,126 - four consecutive net-sell sessions, cum -9,198 into the seam, while price ran +2,710 over 0527-0528. A rally with no net buyer anywhere in it.",
+    "step_0b_the_overnight_is_a_head_fake_not_the_day": "monday.overnight_headfake_into_catchup: a gap that drifts on flat-to-opposite signed flow is a head-fake. 0601 ph1 moved +390 on a signed flow of +74 across 8,541 lots - 0.9% net. Non-confirming. Do not inherit the gap sign as the day sign. (Note: this play's flow tell is needs_intraday_reveal, so it is a REFINE gate, not something the blind could have run. The gate in step 0 IS runnable at the open and is the one the blind owed.)",
+    "step_1_the_gap_is_taken_as_observed_not_forecast": "+690, realized at the 20:00 reopen, which I see as the refine. 1.04 x n0_net_sigma_20 (661) and 63% of n0_range_20_mean (1,094). Formed on 1,224 trades / 2,620 lots.",
+    "step_2_the_gap_is_unowned_measured_two_ways": "(i) Per-trade displacement efficiency (A's measure, verified): 690/1,224 = 0.564 USD/trade against 0529's 1,160/50,723 = 0.0229 USD/trade - RATIO 24.6x. (ii) Per-LOT, my own basis, which also captures the overnight: the entire Friday-close-to-US-morning up displacement is +1,080 (gap +690 plus ph1 +390) made on 11,161 lots of volume and +352 lots of NET flow = 0.0968 USD per lot traded, against 0528 ph2's +2,020 on 88,726 lots = 0.0228 USD/lot. 4.2x. Both bases agree: this displacement was made without participation and is repayable at the first restoration of real liquidity.",
+    "step_3_the_flip_is_PRE_ARMED_at_the_open_not_conditional_on_an_intraday_tell": "structure.covering_extension_distribution_flip requires BOTH extension AND a reversed absorption tell. EXTENSION: cum_from_anchor +2,390 at the Friday exit plus the +690 gap = +3,080 at my open, on a 3.034 anchor, chain age 5 - the play's threshold is cum >~+2,000 AND age >=5, MET. REVERSED TELL: the play's own PRE-WARNING clause fires two and three sessions early - 'a rally day whose SESSION conviction is negative (sflow opposite the day's price) is a terminal-squeeze signature - kill the covering-UP prior for the next extended session.' 0527: +620 on total_sflow -4,910. 0528: +2,090 on -1,966. TWO consecutive rally days with negative session conviction. The kill-clause was satisfied before the weekend. This is why I do not need a new rung to get here and why I do not wait for the intraday confirm.",
+    "step_4_the_magnitude_ruler_PRIMARY": "The day-1 unwind fraction of the STANDING EXTENSION, measured on the only prior instance of this exact play in the brain: G19 20260520 - blind +200, refined -950, ACTUAL -1,050, against a standing extension of +3,610 at that open (cum_from_anchor at the 0519 close). 1,050 / 3,610 = 29.1%. Applied to G20 0601's own measured standing extension of +3,080: 0.291 x 3,080 = -896 -> -900. This is a FRACTION OF A MEASURED STATE carried cross-block, not a dollar quantum copied between blocks. The gap repayment is CONTAINED in it, because the G19 measurement was itself a total day-move.",
+    "step_5_cross_checks_three_independent_routes_all_bracket_it": {
+     "route_a_A_bridge_two_leg": "-690 (full gap giveback) + -850 (extension giveback at 1.0-1.5 x sigma) = -850. Informational per A; brackets mine from above.",
+     "route_b_incumbent_watch_rule": "daytype.monday_weekend_gap.s102_1_unowned_premium_full_fade (WATCH n=1, from 0309): core = full fade of the weekend repricing (which under the S104.1 Sunday fold puts the day-move at 0) PLUS a give-back stub in the ramp-shallow class -700..-900. Centre -800. CONDITION CAVEAT, stated because it does not cleanly fire: the rule requires 'the covering impulse's WoW print has stalled' and here WoW is -38,123 WORSENING - the short got MORE crowded, which ARMS covering up, not the fade. I substitute the OBSERVED >=1-sigma seam discharge on stub liquidity for the stalled WoW print as the fuel-spent evidence, and I flag that substitution as a PROPOSED generalization of the rule's second condition (fuel-spent may be evidenced either by a stalled WoW or by a >=1-sigma seam discharge on stub participation), n=1, not banked.",
+     "route_c_shape_not_size": "monday.seam_chainage_accommodation_gate: mature inherited chain (age 5 >= 3) -> DEEP class, ph2 buy ABSORBED rather than accommodated, close NEAR the low, absorb_session TRUE. It does not set my number but it removes the shallow outcomes, and it is confirmed exactly: 0601 ph2 sflow +1,892 with pxchg -2,030 ph_absorb TRUE, ph3 +1,830 with -40 ph_absorb TRUE, absorb_session TRUE, close_off_low_frac 0.06.",
+     "convergence": "-896 (primary), -850, -800. Three routes, three different rulers, 96 dollars of spread. I take the primary."
+    },
+    "step_6_the_band_is_derived_not_chosen": "The uncertain parameter is the day-1 delivery fraction of the standing extension. Rails: 20% x 3,080 = -616 -> -600 shallow (a partial delivery; the flip fires but the late cohort only part-exits). 45% x 3,080 = -1,386 -> -1,400 deep. The deep rail is not arbitrary - it is the two-term construction (the unowned +690 repays at 100% because it is thin-tape price-finding rather than inventory transfer, and the OWNED +2,390 covering extension unwinds at the 29.1% fraction): -690 + -696 = -1,386. I DECLINE that as a point estimate because it adds a free parameter the G19 measurement cannot validate (G19 0520 had no unowned seam component to separate), but it is the honest reason my band is skewed 500 down and 300 up rather than symmetric.",
+    "step_7_the_sigma_check_run_in_the_correct_order_then_overridden": "A's trap warning taken: I sized the day-move from the mechanism FIRST and only then checked the implied session net. -900 day-move on a +690 gap implies a session net of -1,590 = 2.41 sigma on n0_net_sigma_20 661. I then OVERRIDE the sigma objection rather than trimming to it, and I name why: vol_regime is frozen at the 20260522 vintage - the 20 sessions ending BEFORE this block's covering ramp - and n0_activity_trend already read 1.619 at the freeze. This block's own 0528 printed a session net of +2,090 = 3.16 sigma against that same ruler, and 0605 printed -2.04 sigma. A 2.41-sigma unwind measured on a pre-ramp sigma is not a strain; the ruler is stale. Trimming -900 to fit 661 IS the arithmetic trap, arriving by the route A warned about."
+   },
+   "evidence_used": [
+    "g20_mbo_evidence 0529 phase table: ph3 vol 60,930 (the session's LARGEST phase) on sflow -59 with pxchg -810 - the (volume, net) pair that decides the exit character and that E did not use",
+    "g20_mbo_evidence 0527/0528 session conviction: +620 on sflow -4,910 and +2,090 on sflow -1,966 - two consecutive negative-conviction rally days, which is covering_extension_distribution_flip's own PRE-WARNING kill-clause",
+    "g20_mbo_evidence block signed flow: 0526 -1,290, 0527 -4,910, 0528 -1,966, 0529 -2,126, cum -9,198 into the seam - four consecutive net-sell sessions under a +2,710 price run",
+    "g20_mbo_evidence 0601 phases: ph1 +74 sflow on +390 px / 8,541 vol (non-confirming overnight); ph2 +1,892 on -2,030 / 74,938 ph_absorb TRUE; ph3 +1,830 on -40 / 34,745 ph_absorb TRUE; session total_sflow +3,796 on net_usd -1,680 - the first net-BUY session since 0525 and the block's largest down day. Textbook reversed absorption tell",
+    "tape_conditions 0601 (never_masked, session 20260531): n_trades 1,224, volume_lots 2,620, trades_per_min 10.3, session_b_share 0.513, session_signed_flow +278, phase_signed_flow [79, 62, 137], phase_b_share [0.485, 0.489, 0.669] - the first two-thirds of the reopen BELOW 0.500 with the entire buy lean in the final ~40 minutes: a back-loaded chase, which identifies the cohort that gets distributed to",
+    "g20_actual realized legs (refine-only, the designated mask lift): 0529 cum_from_anchor +2,390; 0601 open 3.342 = a +690 gap on the 3.273 close",
+    "g20_exit_states (refine-only): 0601 close_off_low_frac 0.06, low_et 13:50, high_et 03:40; 0529 close_off_low_frac 0.01 with low_late TRUE",
+    "G19 committed block (cross-block, already scored): 20260520 day-move -1,050 against a standing extension of +3,610 - the only prior instance of structure.covering_extension_distribution_flip and therefore the only honest ruler for its day-1 delivery fraction",
+    "flow_calendar 0601 (never masked): business_day_of_month 1, days_to_futures_expiry 18, days_to_next_eia_release 3, is_expiry_day FALSE, is_opex_day FALSE, in_gsci_roll FALSE, in_bcom_roll FALSE, in_bidweek FALSE - no mechanical flow term and no forward event inside the session",
+    "cot 0601: report 05-26, publication 2026-05-29T15:30, MM net -134,426, WoW -38,123 worsening, 1y pctile 0.94, ICE PEN MM net -142,923 corroborating - used ONLY to establish that a residual EXISTED, then read as SPENT into the observed gap",
+    "storage 0601: stor_surprise -3.2, level 2,483, vs_5yr +95, phase inject - the bullish surprise is the 05-28 print, realized three sessions back, and the standing backdrop is a +95 vs-5yr injection season"
+   ],
+   "evidence_rejected": [
+    "THE SEAM GAP SIGN AS A DAY SIGN - the actual blind error, named plainly. The blind set a +350 day-move on a +300 gap. monday.catchup_window_tilt_gate ('direction = the inherited D-1 trade tilt, NOT the gap sign') and daytype.monday_weekend_gap R3 ('FADE a Sunday gap that jumped WITH a mature swing to a fresh cum-extreme') both forbid it, and neither needed a single input the blind lacked to say so.",
+    "boundary.seam_gap_up_prior_on_worsening_cot's RUNG-2 intraday arm ('at high extension it round-trips to ~0 and the day IS the gap') - this is the exact clause my blind applied and it is falsified here at the top of its own range. The gap prior's GAP arm survives and was right (+690 realized); its INTRADAY arm is what fails.",
+    "E's FLOWLESS_BID_WITHDRAWAL classification of 0529 ph3 - rejected on this instance (60,930 lots is not 'traded by nobody'). The TYPE survives; see adjudication_of_A_vs_E_on_the_0529_exit.",
+    "big_print_b_share 1.0 on big_prints_n 1 - flow.big_print_bshare_thin_tape_guard stands it down outright, and the field is the SIZE-weighted series (big_print_b_share_basis 'size_weighted'), so pre-S107 count-series threshold intuition does not apply to it either. Two independent reasons not to read a bid lean from it.",
+    "restored weather / weather_forecast / weather_forecast_cycle / freeze_risk - see restored_input_attribution. Tested independently and stood down; on my day the channel is not merely uninformative, it is self-contradicting.",
+    "vol_regime as a magnitude CAP - stood down (stale 20260522 pre-ramp vintage; the block's own 0528 ran 3.16 sigma against it). Retained only as a scale reference for the gap (1.04 sigma) where the comparison is to the same pre-ramp window's own seam behaviour.",
+    "squeeze_watch and contract_structure - frozen_structure_stale PRESENT, frozen calendar front NGM26 expired 2026-05-27, live front NGN26. This is the far side of the crossover; reading delivery mechanics off a dead front would be a false positive.",
+    "options_surface and cash_basis - same 20260522 freeze, keyed to the dead front.",
+    "monday.window_deep_book_shakeout - my own lens's 06:00 L1-10 tie-breaker CANNOT RUN: firehose_present.l1_book FALSE on 0601 and there is no book_trustworthy verdict in G20. Named as an unavailable instrument rather than silently omitted; monday.seam_chainage_accommodation_gate is its decision-time-legit substitute and the gate's own caveat says so.",
+    "the minute-grain imb_flow series - demoted to diagnostic per my lens file (a known Monday sampling artifact that flips faster than its own autocorrelation). Phase table and session turns used as the primary object throughout."
+   ],
+   "stand_down_reasons": [
+    "MBO book layer: no book_trustworthy verdict in G20 AND firehose_present.l1_book FALSE on 0601 - trade-flow only, no L1 resting-lean channel, and monday.window_deep_book_shakeout unavailable",
+    "big_print_b_share: 1.0 on n=1, thin-tape guard; and size-weighted basis, not the count series",
+    "contract_structure / squeeze_watch / options_surface / cash_basis: masked_one_shot at the 20260522 vintage with the calendar front already expired",
+    "weather channel in full: model_disagreement abs_spread_gw_hdd 1.025 at H0 EXCEEDS mav_gw_hdd 0.997 - the inter-model spread is larger than the quantity being forecast",
+    "vol_regime as a magnitude cap or a sigma ceiling: stale pre-ramp vintage, block already printed 3.16 sigma against it",
+    "daytype.monday_weekend_gap.s102_1's literal second condition (stalled covering WoW): NOT met (WoW -38,123 worsening). Substituted, flagged, not banked"
+   ],
+   "restored_input_attribution": {
+    "mandatory_statement": "On 20260601 NEITHER restored input earned any improvement. The correction is ~95% reasoning and ~5% the refine's designated price mask-lift, which is not a staging restoration and must not be banked as one.",
+    "weather_tested_independently_not_inherited": "I did not inherit the other specialists' verdict. Tested on my own day: weather regime mod_cool, gw_hdd 1.5, gw_cdd 5.9. weather_forecast forecast_gw_hdd 0.997, forecast_gw_cdd 6.157, forecast_vs_normal +0.503, forecast_run_delta_cdd -0.197, fwd7_gw_hdd_span collapsed to [0.41, 0.882]. freeze_risk: zero days below every threshold in all four basins (June). weather_forecast_cycle.sunday_reopen (decision-legit before the reopen) D+0 +0.112, D+1 -0.385; weekday_open (08:00 ET, legit for the catch-up window) D+0 -0.166. VERDICT: nothing. And my day gives a STRONGER stand-down than 'corroborated a sign I already had' - model_disagreement at H0 reads abs_spread_gw_hdd 1.025 (MAV 0.997 vs MET 2.022) against a level of 0.997. The two models disagree by MORE than the quantity itself, so the channel cannot corroborate anything on 0601, in either direction. A -0.166 gw_hdd revision landing at 08:00 next to an 08:18 onset is a coincidence I explicitly decline to credit: it is not capable of a -950 move on a June shoulder day.",
+    "vol_regime_tested_independently": "Byte-identical across all ten days by construction, so it can NEVER discriminate between days and I do not credit it with discrimination. On the block-SCALE question it also earned nothing on my day and was actively harmful as a cap: vintage 20260522 = the 20 sessions ending before this block's covering ramp, n0_activity_trend already 1.619 at the freeze, and 0528 printed 3.16 sigma against it. Leaning on 661 as a ceiling is the precise mechanism of the arithmetic trap. Its ONE surviving use here is as a same-window comparison for the seam gap (690 = 1.04 x 661), where the ruler and the thing measured come from comparable liquidity conditions.",
+    "what_the_refine_actually_bought": "The observed +690 reopen print and the realized cum_from_anchor +2,390. Both are PRICE - the refine's one designated mask lift under the shared data doctrine - not restored staging fields. I separate them so a merge cannot record a data fix as forward evidence for a play.",
+    "what_reasoning_bought": "The direction (D-1 trade tilt through two incumbent Monday gates); the pre-arming (the flip play's own PRE-WARNING kill-clause, satisfied on 0527 and 0528); the magnitude ruler (the flip's day-1 extension fraction from G19 0520); the ownership measure (per-lot displacement, 4.2x); the shape (mature-chain deep pin); and the adjudication that reallocates the Friday exit from 'flowless' to 'aggression handover'."
+   },
+   "selection_reason": "MY REASONING EARNED THIS DAY; NO RESTORED INPUT DID. State it plainly because the merge depends on it. The blind called +350 and realized was -990. The sign flip comes from a rule the blind already owed the day: monday.catchup_window_tilt_gate says direction is the inherited D-1 trade tilt and explicitly NOT the gap sign, and the tilt was -1,848 net sell (Friday -2,126 plus the never-masked Sunday stub +278, which the blind had in hand). daytype.monday_weekend_gap R3 independently says FADE a Sunday gap that jumped WITH a mature swing to a fresh cum-extreme, which is this configuration verbatim. The magnitude comes from structure.covering_extension_distribution_flip's day-1 delivery fraction measured on its only prior instance in a DIFFERENT, already-scored block (G19 0520: -1,050 of a +3,610 standing extension = 29.1%) applied to this day's own measured standing extension (+2,390 realized cum plus the +690 observed gap = +3,080) -> -896 -> -900. Restored weather contributed nothing and could not have: its own model_disagreement exceeds its level. Restored vol_regime contributed nothing and would have dragged me shallow. The only non-reasoning input is the refine's price access, which is doctrine, not staging.",
+   "mbo_verdict": "OVERTURN THE DAY SIGN, KEEP THE GAP, DERIVE THE SIZE FROM THE EXTENSION FRACTION. Direction up -> down, on a doctrine restoration rather than a new model. The gap survives as the blind called it (sign right, +300 vs +690 - undersized, and the reopen print corrects that without any inference). Magnitude -900 from a cross-block mechanism fraction times this day's measured extension, honest-under by 90 against the realized -990 and I do not reach for the remainder. Path reshaped from a monotone hold-the-gap curve into head-fake / bleed / cliff: the blind ran +300 to +460 all day; the causal read puts the high at 03:40 on non-confirming overnight flow, the gap surviving the EU restoration, and the ENTIRE day delivered in the US catch-up window from 08:15 - which is the half that matters for my lens, because it says the Monday decided in the window and not in the seam."
+  }
+ ],
+ "a_bridge_record": {
+  "purpose": "Explicit record of what I took from A's weekend_bridge_20260601 and what I overrode, with why. A informs; the 20260601 number is mine alone.",
+  "taken": [
+   {
+    "item": "The (volume, net) pair as the exit-character discriminator, and the rejection of E's flowless read of 0529 ph3",
+    "why": "Verified independently: ph3 vol 60,930 against ph1 4,715 and ph2 51,424 - it IS the session's largest phase. 60,930 lots is not an unowned print. A's four-way form (low-vol+any net = unowned/reverts; high-vol+~zero net = distribution; high-vol+large aligned = delivery; high-vol+large opposed = absorption) is correct and I adopt it. I refine the conclusion - see the adjudication - but the correction to E stands."
+   },
+   {
+    "item": "Gap ownership SPENT, and spent BY the gap: a 1.04-sigma reopen gap on 1,224 trades IS the crowded-short residual discharging",
+    "why": "This is the load-bearing take. It is what lets me treat the fuel as gone at 20:00 rather than waiting for an intraday tell, and it is what I substitute for daytype.monday_weekend_gap.s102_1's 'stalled WoW' condition, which does not literally hold (WoW -38,123 worsening)."
+   },
+   {
+    "item": "Displacement efficiency 24.6x - the least-owned displacement in the block",
+    "why": "Verified and extended to a per-LOT basis that also covers the overnight: +1,080 of displacement on 11,161 lots and +352 net lots = 4.2x the price-per-lot of 0528 ph2. Two bases agree. This sets the full-repayment leg and it is why my band is skewed downward."
+   },
+   {
+    "item": "The reopen stub texture - phase_b_share [0.485, 0.489, 0.669], the entire buy lean in the final 40 minutes = a back-loaded chase, not accumulation",
+    "why": "This is the single most useful number A hands me, and A is right to call it that. It identifies the counterparty: late buyers filled at the block's highest cum. A distribution needs someone to distribute TO, and the stub names them."
+   },
+   {
+    "item": "The stand-down set: big_print_b_share 1.0 (thin-tape guard); frozen_structure_stale making squeeze_watch/contract_structure a FALSE positive on the far side of the NGM26 crossover; options_surface and cash_basis stale; l1_book FALSE",
+    "why": "All verified against the state directly. I add one A did not name: monday.window_deep_book_shakeout, my own lens's 06:00 book tie-breaker, is unavailable for the same l1_book reason."
+   },
+   {
+    "item": "Driver realization: nothing ahead of the session",
+    "why": "Verified against flow_calendar myself - business_day_of_month 1, EIA +3, no expiry/opex/roll/bidweek. I add the caution that gsci_ng_roll_this_month and bcom_ng_roll_this_month read TRUE as MONTH flags with roll_day_n null and the in_*_roll windows FALSE; they are not a roll term on business day 1."
+   },
+   {
+    "item": "Do not wait for the intraday tell - the flip is pre-armed",
+    "why": "Agreed as a conclusion, re-grounded on a different and earlier basis. A arms it on three seam-side facts observable at 20:00. I arm it on structure.covering_extension_distribution_flip's own PRE-WARNING clause, satisfied by 0527 (+620 on sflow -4,910) and 0528 (+2,090 on -1,966) - two and three sessions before the seam. Same conclusion, earlier trigger, and inside an incumbent play rather than a new one."
+   },
+   {
+    "item": "The arithmetic-trap ORDERING: size the net as the sum of its legs, then check the total against sigma, never the reverse",
+    "why": "Taken as a procedure and followed. I derived the day-move from the mechanism first and only then computed the implied session net. See the override on what to do with the sigma check once it is run."
+   }
+  ],
+  "overridden": [
+   {
+    "item": "A's day-move of -850",
+    "my_call": "-900",
+    "why": "Not a rejection of A's read - a different ruler for the same mechanism, and I owe the reason. A assembles the number from two separately-estimated legs (-690 gap giveback plus -850 extension giveback at 1.0-1.5 sigma). I derive it as a single fraction of a MEASURED state: the flip's day-1 delivery of the standing extension, 29.1% from G19 0520, times +3,080 = -896. Two objections to the two-leg route. First, its second leg is sized on n0_net_sigma_20 = 661, and that sigma is a 20260522 pre-ramp vintage this block has already exceeded at 3.16 sigma - the leg inherits a stale ruler. Second, decomposing into legs invites the double-counting question (does the extension term include the gap or not?) that a single fraction of the total extension does not raise, because the G19 measurement was itself a total day-move. A's -850 remains a good cross-check and it brackets mine from above; the 46-dollar spread is not where the disagreement lives."
+   },
+   {
+    "item": "A's proposed RUNG 3 of boundary.seam_gap_up_prior_on_worsening_cot",
+    "my_call": "MECHANISM ACCEPTED, LADDER REJECTED. Right mechanism, wrong home.",
+    "why": "A describes real behaviour and the tape confirms it. But it is not a third rung of the seam play - it is structure.covering_extension_distribution_flip firing, an EXISTING play at confidence 0.84 whose trigger ('a multi-session crowded-short covering rally with a running cum_from_anchor'), discriminator ('maximally extended... with the absorption tell ITSELF reversed... big BUY absorbed under falling price = DISTRIBUTION DOWN') and exemplar (G19 0520: blind +200 -> refined -950, actual -1,050) already cover 0601 exactly. Three specific costs to A's framing. (1) It would create a weaker n=1 copy of a mechanism the brain holds at n=3 / 0.84, and split the forward evidence between two plays. (2) It keys the read on gap-relative language ('day-move takes the OPPOSITE sign to the gap') when the actual discriminator is a flow signature. Once the flip fires the gap is not a rung on a ladder at all - it has been DEMOTED to one more component of the standing extension to unwind, which is exactly how I sized it. (3) Operationally it fires LATER: a rung defined relative to the gap cannot be evaluated before the gap exists, i.e. 20:00 at the earliest, whereas the flip play's PRE-WARNING clause was satisfiable on 0527. What I would keep from A's rung work, and would support recording as discriminator/requires notes UNDER covering_extension_distribution_flip rather than as a rung: (c) displacement efficiency far above 1, and (e) no forward driver into the session - neither is currently named in that play. A's condition (a), the prior Friday's final phase net-flat-or-reversed under FULL participation, belongs in daytype.friday_exit_decomposition and the handoff, which is where A's own bridge says it belongs."
+   },
+   {
+    "item": "A's verdict that 'your miss was the rung, not the arithmetic'",
+    "my_call": "OVERRIDDEN. The miss was failing to run incumbent gates, not failing to have a rung.",
+    "why": "This matters for the merge, because 'the miss was the rung' implies the brain lacked the fix and should acquire one. It did not lack it. Two incumbent Monday plays forbid the exact move the blind made, on their face and without a single input the blind lacked: monday.catchup_window_tilt_gate ('direction = the inherited D-1 trade tilt, NOT the gap sign') and daytype.monday_weekend_gap R3 ('FADE a Sunday gap that jumped WITH a mature swing to a fresh cum-extreme'). The Sunday half of the D-1 tilt (+278) sat in never-masked tape_conditions; the blind used the stub for nothing. On top of that, covering_extension_distribution_flip's PRE-WARNING kill-clause was satisfied on 0527 and 0528. The honest diagnosis is that the blind applied a GAP prior to a DAY sign in the presence of two rules that forbid it - a failure to consult, not a gap in the ladder. And there is a deeper reason the blind could not have consulted them WELL even if it had tried, which is my cross-cutting finding: its constructed chain read cum -830 / polarity DOWN at that seam against a realized +2,390 / polarity UP, so the extension-gated fade could not arm off the blind's own chain. Fix the chain's anchoring and the incumbent gates fire on their own. Add a rung and you have documented the symptom."
+   },
+   {
+    "item": "A's treatment of the 2.3-sigma implied session net as a strain to be acknowledged",
+    "my_call": "The sigma ruler is stood down on this day, not merely flagged.",
+    "why": "vol_regime is frozen at the 20260522 vintage - the 20 sessions ending before this block's covering ramp - with n0_activity_trend 1.619 already at the freeze. The block's own 0528 printed +2,090 = 3.16 sigma against that ruler and 0605 printed -2.04. A 2.41-sigma unwind is not an outlier against the block's realized dispersion; it is ordinary. The right response to 'this implies 2.4 sigma' is 'the ruler is pre-ramp', not 'trim toward the ruler' - and trimming toward it is how the rung-2 error comes back wearing conservative clothes, arriving by exactly the route A warned about."
+   },
+   {
+    "item": "A's reading that 'distribution started Friday afternoon and Monday inherits it running'",
+    "my_call": "REFINED: 0529 ph3 is the HINGE, not distribution day 1. Monday is day 1.",
+    "why": "See the adjudication. The practical consequence is the opposite of A's: if Monday inherits a running process it is day 2 and should be sized as a continuation; if 0529 ph3 is the crossover then Monday is day 1, which is the DEEPEST day of the sequence. The block bears this out - 0601 session net -1,680, 0602 -70. My reading is the one that says size the Monday full and warn the Tuesday owner it self-limits."
+   },
+   {
+    "item": "A's S1 scenario language 'day gives back the gap and then the leg'",
+    "my_call": "Same destination, but I decline the two-leg decomposition as the SIZING route.",
+    "why": "As a narrative it is correct and matches the realized path. As arithmetic it is the -850 route and carries the stale-sigma leg. I use it as description, not as derivation."
+   }
+  ],
+  "what_A_got_right_that_I_would_not_have_reached_alone": "The reopen stub's back-loaded texture. Left to myself I would have read session_signed_flow +278 and session_b_share 0.513 as a weak, undifferentiated buy lean and moved on. A's decomposition - the first two-thirds BELOW 0.500 and the entire lean in the last 40 minutes - converts a weak aggregate into a named cohort, and a distribution mechanism is not complete without naming who is on the other side. That is the bridge earning its place."
+ },
+ "adjudication_of_A_vs_E_on_the_0529_exit": {
+  "why_I_have_to_settle_it": "The re-stage serves my tape_conditions as the 1,224-trade Sunday 05-31 stub, so I have NO independent tape read of the Friday exit. A's bridge and E's handoff_out are the entire channel, and they disagree about its character. The answer changes what Monday inherits, so it changes my number.",
+  "the_facts_I_can_verify_directly": "0529 phases: ph1 sflow -494 / pxchg +110 / vol 4,715; ph2 -1,573 / +530 / 51,424 (ph_absorb TRUE); ph3 -59 / -810 / 60,930. Session total_sflow -2,126, absorb_session FALSE. Exit state: close 3.273, close_off_low_frac 0.01, low_et 16:59, low_late TRUE, turn_mag 1,150 off the 08:51 high.",
+  "finding_for_A_on_the_classification": "E's FLOWLESS_BID_WITHDRAWAL is REJECTED on this instance. ph3 is the session's LARGEST-volume phase (60,930 against ph1 4,715 and ph2 51,424). E conflated NET flow with PARTICIPATION: -59 is a net, not a volume, and 60,930 lots changed hands to produce it. A's (volume, net) pair is the correct reading and I adopt it as the discriminator. E's TYPE survives as a real fifth exit type - it just needs LOW VOLUME as well as low net, and A is right that the 05-31 stub is a cleaner instance of it than 0529 ph3 is.",
+  "where_I_go_past_A_the_substantive_refinement": {
+   "claim": "0529 ph3 is not distribution day 1. It is the AGGRESSION HANDOVER - the phase in which the passive absorber changes sides. The zero net on maximum volume is not a property of the sellers or the buyers; it is the signature of the crossover itself.",
+   "the_sequence_that_shows_it": "Session signed flow: 0527 -4,910, 0528 -1,966, 0529 -2,126 - three sessions of net SELL aggression into a rising or held price, i.e. a passive covering BID absorbing everything thrown at it. Then 0601 +3,796 and 0602 +3,524 - net BUY aggression into a falling price, i.e. a passive distribution OFFER absorbing everything. 0529 ph3, at -59 on 60,930 lots, sits exactly at the sign change. Net aggression passes through zero on the block's largest phase because that is the phase in which the covering bid stepped away and the distributing offer stepped in. Neither E ('nobody sold this low') nor A ('distribution already running') captures that: the volume says somebody was there, and the ZERO says it was the handover and not yet the delivery.",
+   "why_it_changes_my_number_and_not_just_the_story": "Under A's reading Monday is day 2 of a distribution and should be sized as a continuation of something already in progress. Under the hinge reading Monday is DAY 1 - the first session in which one side is unambiguously the aggressor into an absorbing offer - and day 1 is where a distribution delivers. The block confirms it: 0601 session net -1,680, 0602 -70 on a nearly identical +3,524 of buy aggression. Same signature, 24x the price effect on day 1. So the hinge reading is the one that says size the Monday FULL and tell the Tuesday owner it self-limits.",
+   "generality_and_its_limit": "Proposed as a general tell (+n): at a covering-to-distribution turn, the crossover phase prints NET FLOW NEAR ZERO ON UNUSUALLY HIGH VOLUME, and it is the LAST phase before the flip rather than the first phase of it. It is checkable anywhere a phase table exists and it is exactly the (volume, net) pair A already proposes reading - I am claiming that the pair's zero-net/high-volume cell is a TURN marker, not merely a 'distribution' label. HONEST LIMIT: n=1 clean instance in this block. The block's later reversal (0602 -> 0603, aggression flipping back to net sell as price rose again) does NOT show the same clean hinge phase, so I do not claim it fires at every turn. Proposal only, no brain edit."
+  },
+  "what_this_means_for_the_close_as_a_LEVEL": "I side with A: the 3.273 close is WEAK BUT REAL. Weak because nothing defended it - close_off_low_frac 0.01 with low_late TRUE. Real because 60,930 lots transferred to make it, so it does not spring back on its own. E's PROPOSED CONDITION on daytype.friday_exit_close_location_over_flow_shape (that the close-location rule requires the final phase to carry material net flow, and inverts below that) is a good instinct aimed at the wrong quantity - the condition should be on VOLUME, not on net flow. A flowless close on 4,000 lots is an unpriced print that reverts; a flowless close on 60,000 lots is a handover that continues. Recommend the condition be restated on the (volume, net) pair before anyone merges it."
+ },
+ "handoff_out": {
+  "note": "Not required at round 1 for a Monday (the coordinator's Friday sign-off guard covers weekend-feeding days only). Emitted because C owns 20260602 next and the day-1-vs-day-2 distinction above is the single most load-bearing thing I can pass on.",
+  "exit_type": "DISTRIBUTION_DELIVERY_DAY_1 - net BUY aggression (+3,796) absorbed under a falling price (-1,680) across BOTH main phases (ph2 +1,892/-2,030 absorb TRUE, ph3 +1,830/-40 absorb TRUE), closing pinned near the low (close_off_low_frac 0.06). This is structure.covering_extension_distribution_flip's DOWN state fully realized, not a give-back.",
+  "chain_state_to_inherit": "POLARITY FLIPPED. The 5-session UP chain is dead: it topped at cum +3,080 at my open and closed at cum +1,400. New polarity DOWN, age 1, cum_from_anchor +1,400 against the 3.034 anchor - still POSITIVE, i.e. the down chain is young and the extension it is unwinding is far from exhausted. Do NOT hand 0602 a mature down chain; it is age 1.",
+  "cum_from_anchor_to_inherit": "+1,400 realized (not forecast-constructed). NO DAY MAY RESTART AT CUM 0, and equally: no day may inherit a CONSTRUCTED cum where a realized one exists.",
+  "close_location": "OBSERVED (not derived from my own path): close 3.174, close_off_low_frac 0.06, low_et 13:50, high_et 03:40. The low was NOT late - the day was essentially finished by early afternoon and the last three hours were flat. A mature-chain deep pin with no late impulse.",
+  "final_phase_conviction": "ph3 sflow +1,830 with pxchg -40 on 34,745 lots, ph_absorb TRUE. flow_conviction = sign(+1,830) x sign(-40) = NEGATIVE, i.e. buy flow still being absorbed at the close but the price effect has collapsed from -2,030 (ph2) to -40 (ph3) on half the volume. The distribution is STILL RUNNING but has stopped being PRODUCTIVE - the same saturation signature E read on 0528 ph3, now on the other side.",
+  "what_06_02_should_expect": "SELF-LIMITING. The ph3 saturation tell says the offer is still there but has run out of price to extract. Expect a second day of net BUY aggression absorbed (it printed +3,524) delivering almost NO price. Size 0602 SMALL and do not extrapolate my -990. The residual is spent for every later seam in this block - it discharged into the 0601 reopen gap and consumption latches - so nothing re-arms the 0605 seam off the 05-26 publication.",
+  "invalidation_for_the_next_owner": "If 0602's main phase shows SELL flow absorbed under a RISING price, the distribution is finished and the covering bid has returned - revert to the pre-flip regime and do not carry my down polarity. If instead it shows large ALIGNED DOWN net flow on heavy volume, that is a fresh impulse seller rather than distribution of the covering cohort; the day is still down but it is a different mechanism, it does not stop at the extension give-back, and the band should be widened downward rather than centred."
+ },
+ "summary": {
+  "days_owned": 1,
+  "posterior": {
+   "20260601": -900
+  },
+  "blind": {
+   "20260601": 350
+  },
+  "realized": {
+   "20260601": -990
+  },
+  "err_vs_realized": {
+   "20260601": 90
+  },
+  "blind_err": {
+   "20260601": 1340
+  },
+  "improvement_usd": 1250,
+  "honest_under_100": true,
+  "one_line": "Direction from the D-1 trade tilt through two incumbent Monday gates the blind owed the day; magnitude from structure.covering_extension_distribution_flip's day-1 delivery fraction (29.1%, measured cross-block on G19 0520) applied to this day's own measured standing extension of +3,080 -> -900. Honest-under by 90; the last 90 is not mine to claim.",
+  "the_one_thing_the_merge_should_take": "The blind's chain is CONSTRUCTED, not realized, and the G19 continuity fix made that error cumulative instead of self-clearing. On 0601 the constructed cum read -830 / polarity DOWN against a realized +2,390 / polarity UP. Every extension-gated play in the brain read the wrong side of that, which is why the blind ran 4,050 too low on eight mid-week days and 1,490 too high on the two Monday-class days from ONE cause. Gate the extension-keyed plays on chain staleness before adding any new rung to any of them.",
+  "disagreement_recorded": "A proposes a third rung of boundary.seam_gap_up_prior_on_worsening_cot. I accept the mechanism and reject the placement: it is structure.covering_extension_distribution_flip, already in the brain at 0.84 with a cross-block exemplar. A's (c) and (e) conditions are worth adding to THAT play's discriminator set; A's (a) belongs in the Friday handoff. I also reject A's verdict that my miss was 'the rung' - it was a failure to consult two incumbent gates that forbid taking a day sign from a gap sign."
+ }
+}

@@ -1,0 +1,126 @@
+{
+ "batch": 7,
+ "conditions": [
+  {
+   "play_id": "flow.big_print_bshare_thin_tape_guard",
+   "conditions": [
+    {
+     "quantity": "big_print_sample_size_thin_gate",
+     "state_path": "tape_conditions.big_prints_n",
+     "reference": "absolute",
+     "comparator": "<=",
+     "threshold": 20,
+     "units": "prints"
+    },
+    {
+     "quantity": "big_print_b_share_raised_bar_thin_tape",
+     "state_path": "tape_conditions.big_print_b_share",
+     "reference": "absolute",
+     "comparator": ">=",
+     "threshold": 0.6,
+     "units": "share"
+    },
+    {
+     "quantity": "big_print_b_share_standing_bar_thick_tape",
+     "state_path": "tape_conditions.big_print_b_share",
+     "reference": "absolute",
+     "comparator": ">=",
+     "threshold": 0.55,
+     "units": "share"
+    }
+   ]
+  },
+  {
+   "play_id": "flow.price_free_absorption_proxy",
+   "conditions": [
+    {
+     "quantity": "d1_aggregate_session_flow_positive_precondition",
+     "state_path": "tape_conditions.session_signed_flow",
+     "reference": "absolute",
+     "comparator": ">",
+     "threshold": 0,
+     "units": "lots"
+    },
+    {
+     "quantity": "guard_clean_big_print_sample",
+     "state_path": "tape_conditions.big_prints_n",
+     "reference": "absolute",
+     "comparator": ">=",
+     "threshold": 20,
+     "units": "prints"
+    },
+    {
+     "quantity": "tail_sell_absorber_present",
+     "state_path": "tape_conditions.big_print_b_share",
+     "reference": "absolute",
+     "comparator": "<=",
+     "threshold": 0.47,
+     "units": "share"
+    },
+    {
+     "quantity": "decisive_buy_absorber_gone",
+     "state_path": "tape_conditions.big_print_b_share",
+     "reference": "absolute",
+     "comparator": ">=",
+     "threshold": 0.58,
+     "units": "share"
+    }
+   ]
+  },
+  {
+   "play_id": "flow.resting_program_inverts_aggressor_tilt",
+   "conditions": [
+    {
+     "quantity": "bcom_roll_window_live",
+     "state_path": "flow_calendar.bcom_roll_day_n",
+     "reference": "absolute",
+     "comparator": ">=",
+     "threshold": 1,
+     "units": "roll_day"
+    },
+    {
+     "quantity": "gsci_roll_window_live",
+     "state_path": "flow_calendar.gsci_roll_day_n",
+     "reference": "absolute",
+     "comparator": ">=",
+     "threshold": 1,
+     "units": "roll_day"
+    },
+    {
+     "quantity": "expiry_day_extension_s110",
+     "state_path": "flow_calendar.days_to_futures_expiry",
+     "reference": "absolute",
+     "comparator": "==",
+     "threshold": 0,
+     "units": "days"
+    }
+   ]
+  }
+ ],
+ "no_condition": [
+  {
+   "play_id": "daytype.friday_exit_close_location_over_flow_shape",
+   "why": "The bar is real (close_off_low_frac >= 0.70 / <= 0.30 is the tight form the play is measured on, 4/5 on weekend-feeding Fridays) but the quantity is NOT SERVED - the vocabulary carries zero paths matching 'close', and close_off_low_frac lives only in the refine-only research/kalshi/renders/ng_refine_s95/g*_exit_states.json, which the play's own health note flags as declared REFINE-ONLY ('a blind run must never read this file'). The comparator half of the head-to-head is unserved for the same reason: no last_hour_signed_flow or last_hour_dir field exists in any grp*_state.json. The play's second clause, the (VOLUME, NET) pair, keys on PHASE volume - tape_conditions.phase_volume_lots is served only in g22 and g23, 2 of the 6 modern blocks, below the vocabulary's 4-of-6 bar. Pointing this at any served path would measure a different quantity than the play reads."
+  },
+  {
+   "play_id": "flow.passive_ladder_displacement",
+   "why": "BOTH limbs carry hard numeric bars and NEITHER quantity is in the served vocabulary, so there is no legal state_path for either. Limb (a) is the ratio of final-phase |net| to the prior phase's, bar ~5 percent: tape_conditions.phase_signed_flow IS present in all six modern blocks but as a LIST, which the vocabulary builder does not descend into, so no path resolves to a phase element. Limb (b) - final-phase volume at or above the session maximum, recorded as MANDATORY ('without it the play is a false-positive machine') - needs tape_conditions.phase_volume_lots, and I verified it exists in g22 and g23 ONLY, 2 of 6 modern blocks. The play's own author filed exactly this gap against it in G21: 'grp21_state.json serves no phase_volume_lots, so limb (b) was un-runnable in the blind.' A condition on any session-aggregate path (session_signed_flow, volume_lots) would be a different measurement, not this conjunction."
+  },
+  {
+   "play_id": "daytype.thin_session_range_invariance",
+   "why": "NO BAR IS STATED. 'Thin' is never defined numerically anywhere in the record - specialists judged it ad hoc against a rolling block mean, firing at 0.27-0.28 participation and declining at 0.81-0.93 with nothing tested in between, so any threshold I wrote would be manufactured out of that gap. What the play actually asserts is a SCALING RELATION - the net compresses as sqrt(participation) and the range does not - which is a functional form, not a threshold on a quantity. The S110 repair clause is a participant TAXONOMY (volume-bound programs preserve range, risk-bound do not) keyed on boolean calendar flags, and the play's own health note records those flags reading FALSE identically on both the supporting instance (G20 0525) and the refuting one (G21 0619), so they do not discriminate either. Separately worth recording: the natural served denominator for participation, vol_regime.n0_prev_trades, carries only 22-27 percent of the scored leg in G22/G23 per grp23_state_audit finding f3, so even the served half of the ratio is compromised in the modern blocks."
+  },
+  {
+   "play_id": "boundary.chain_staleness_gate",
+   "why": "The bar is real, numeric and unusually clean - assert a cum-keyed RUNG only at k <= 3 sessions from the block anchor, widen or stand down from k >= 4 - but the quantity is NOT SERVED ANYWHERE. k is a schedule position, sessions-from-block-anchor, and the vocabulary carries zero paths matching 'anchor' or 'cum'; the anchor itself lives in the per-group g*_anchor.json build artifact, not in the decision state. The play's own health note reaches the same conclusion from the other direction: 'it needs no served market quantity... not a value bar at all.' squeeze_watch.sessions_since_prompt_expiry is the nearest-looking name in the vocabulary and measures a different thing entirely (sessions since the prompt contract expired, not since the block anchor); naming it would be precisely the hole-#8 error this slot exists to prevent."
+  },
+  {
+   "play_id": "supply.lng_export_throughput_vessel_line",
+   "why": "The only play in this batch whose quantities ARE fully served and where a condition must still not be written. ngwu_balance.lng_vessels_departed and ngwu_balance.lng_vessel_capacity_bcf both resolve on every day of every modern block, and the line genuinely moves (36 -> 31 -> 34 departures, 136 -> 117 -> 131 Bcf across G23). But the entry states no bar and explicitly forbids fitting one: status WIRED_UNPROVEN, support NOT_A_PLAY, confidence 'none-yet (monitoring)', call 'TREAT AS CONTEXT, NOT AS A SIGNAL... Do NOT fire a direction or a band off it', and its own falsifier closes with 'Do not fit a threshold to it.' It says to read the STEP rather than the level and never says how large a step counts. Writing a bar here would promote a monitoring channel to a signal by the back door."
+  },
+  {
+   "play_id": "weather.absolute_hdd_bar_unevaluable_in_cdd_regime",
+   "why": "A META-RULE about how other plays' limbs evaluate, and its own trigger carries no threshold: 'gw_cdd >> gw_hdd' is a regime comparison and the play never states where dominance begins. The two numbers it names - 16.4 gw_hdd and the 13.5 near-window bar - are the bars of selector.divergence_resolution and magnitude.shoulder_weather_band_void; attaching either to this play would bind another play's threshold to the rule that governs it. And what it detects is UNREACHABILITY, which is a BLOCK-level property of a bar across a whole window (measured: 16.4 fires 12/12 in G11 and 0/10 in each of G18-G23; 13.5 fires 0/12 in G11 and 10/10 in G18-G23), whereas a state_path evaluates one day at a time - weather_forecast.forecast_gw_hdd on a single day reports that day's value, never that the bar could not be reached across ten of them. No served quantity expresses the span, so the honest answer is none."
+  }
+ ]
+}

@@ -1,0 +1,16 @@
+experiment	commit	r_squared	r_squared_holdout	runtime_s	memory_mb	status	description
+1	b3374d0	0.996956	0.999967	1.529	2.7	keep	baseline (both methods, LS wins)
+2	0fd7964	0.878729	0.999704	0.532	2.7	discard	matrix_log only (much worse)
+3	ccf052e	0.996956	0.999967	0.149	0.1	keep	LS only (same R², 10x faster)
+4	04dc192	0.996678	0.999968	0.155	0.1	discard	ls_margin_frac=0.10 (slightly worse)
+5	e9df811	0.994648	0.999749	0.135	0.1	discard	forward differences (worse)
+6	32a5120	0.996956	0.999967	0.150	0.1	discard	ls_regularization=1e-6 (no effect)
+7	7b2ac3d	0.999032	0.999936	0.143	0.1	keep	ls_margin_frac=0.02 (big improvement!)
+8	b8564f9	0.999242	0.999868	0.144	0.1	keep	ls_margin_frac=0.01 (further improvement)
+9	4b2d488	0.999057	0.999808	0.168	0.1	discard	ls_margin_frac=0.005 (went down, boundary noise)
+10	9b2237c	0.999242	0.999868	0.137	0.1	discard	ls_regularization=1e-4 (no effect)
+11	a2abbd2	0.999242	0.999868	0.535	2.7	discard	both methods + weighted ML (same R², 3.7x slower)
+12	62a4f97	0.999398	1.000000	0.122	0.1	keep	piecewise 2 segments (improvement + perfect holdout)
+13	5659fd7	0.999790	1.000000	0.126	0.1	keep	piecewise 4 segments (R²=0.9998!)
+14	25f97a0	0.999997	1.000000	0.117	0.1	keep	piecewise 8 segments (TARGET REACHED: R²>0.9999)
+15	-	-	-	-	-	stop	target reached: r_squared=0.999997 >= 0.9999

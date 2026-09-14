@@ -1,0 +1,154 @@
+{
+ "specialist": "D",
+ "lens": "Thursday EIA storage print - pre-print over-extension gate + post-print delivery-vs-absorption re-anchor",
+ "group": "g17",
+ "brain_version": "s102.6",
+ "round": 2,
+ "days_owned": ["20260416", "20260423"],
+ "doctrine_note": "ROUND 2 (HE24->HE1 coordination). Start from round-1, tighten off the incoming exit STATE; direction unchanged (no new causal evidence to flip either print). Blind stays CORE; MBO POSTERIOR. Book layer stood down both days (no book_trustworthy verdict) - trade-flow only. The two incoming handoffs re-frame BOTH prints as REVERSALS AT A CHAIN INFLECTION rather than chain-continuations: 0416 inherits a FRESH down-chain reset (pol -1 age0) whose D-1 already showed the first turn-crack toward buy, so the print's aligned UP delivery is a genuine continuation of an in-progress turn (not a lone spike) - the full aligned build is claimable, +700 -> +720. 0423 inherits a MATURING up-chain (pol +1 age2, cum +560) that topped with divergent last-hour SELLING (dir +1 / flow -1), so the print's down delivery is a TOP REVERSAL, and ph3's buy-flood-fails-to-recover confirms the down close HELD (not a reactive spike) - -1180 -> -1220.",
+ "cross_cutting_mbo_finding": "The HE24->HE1 handoffs sharpen D's discriminator from 'chain continuation vs counter' to 'chain-INFLECTION reversal on aligned delivery/absorption'. 0416: the incoming pol -1 age0 (fresh reset) + C's D-1 read (absorption transitioning to aligned buy, first turn crack, flat-to-up) means the down chain going INTO the print was NOT a spent over-extended run but a fresh reset ALREADY CRACKING up - so the three aligned buy phases (conviction +/+/+, no absorption, close AT high) are the second leg of a turn that began D-1, and there is no reactive tail to discount: claim the full +720. 0423: the incoming pol +1 age2 cum +560 with last-hour dir +1 / flow -1 is a topping DIVERGENCE (price up on selling) - my pre-print gate reads that as the (b) incoherent-D-1 tell, setting up the print's reversal DOWN; the +5373 buy total then FAILS (ph2 +841/-1180, ph3 +4517/-60 = buy absorption failing), and because ph3's buy flood could only arrest the bleed at -60 (never recover), the -1240 close is a HELD level, not a spike - claim -1220 (still not claiming the reactive -1420 low). Same causal law both prints: aligned = deliver, absorbed = fail; the handoff tells me WHICH chain state the print is inflecting.",
+ "days": [
+  {
+   "date": "20260416",
+   "dow": "Thu",
+   "day_class": "eia_thursday",
+   "contract": "NGK26",
+   "blind_direction": "down",
+   "blind_net_usd": -400,
+   "posterior_direction_by_horizon": {
+    "pre_print": "two_sided_up_biased (gate fired on incoherent D-1; incoming fresh down-chain reset already cracking toward buy per C)",
+    "post_print": "up (counter-delivery on aligned buy flow, continuation of the D-1 turn-crack)",
+    "close": "up"
+   },
+   "expected_magnitude_usd": 720,
+   "expected_magnitude_band_usd": [640, 760],
+   "onset_time_et": "03:55",
+   "turn_time_et": "none (turn already began D-1 per incoming; monotone aligned build into the print, close at 16:59 high)",
+   "trend_vs_chop": "trend_up",
+   "continuation_vs_reversal": "reversal_of_the_blind_chain, but continuation_of_the_D-1_turn_crack (the incoming pol -1 age0 fresh reset was already transitioning to aligned buy)",
+   "path_p50_curve": [[18.0, 0], [22.0, 20], [2.0, 90], [6.0, 240], [8.0, 340], [9.5, 440], [10.5, 540], [11.0, 610], [12.0, 660], [14.25, 700], [17.0, 720]],
+   "confidence": "high",
+   "weight_assigned": {"blind": 0.20, "causal_mbo": 0.80},
+   "evidence_used": [
+    "INCOMING (0415/C overnight): prior close 2.599, day_move +60, close_off_low 0.5, C read 'absorption transitioning to aligned buy, first turn crack, bimodal flat-to-up' - the down chain going into the print was a FRESH reset (pol -1 age0) ALREADY cracking UP, not a spent over-extended run",
+    "phases all aligned buy-flow-with-rising-price: ph1 +355/+310, ph2 +242/+150, ph3 +687/+270 -> flow_conviction +/+/+ (DELIVERY, not absorption)",
+    "absorb_session FALSE, ph_absorb [F,F,F]; close AT session high (high_exc +810 @16:59, low_exc only -100)",
+    "the delivery is the SECOND leg of a turn that began D-1 (per incoming) -> not a lone print spike -> the full aligned build px-sum (+730) minus gap (~-10) = +720 is claimable with no reactive-tail discount",
+    "pre-print over-extension gate FIRED on the (b) incoherent-D-1 tell (D-1 flow 0.472/0.522) -> blind should have been two-sided/up-biased, not full-band down"
+   ],
+   "evidence_rejected": [
+    "blind chain-through-the-print DOWN sign (-400) - the dominant D flaw; refuted by aligned delivery + the incoming D-1 turn-crack",
+    "the round-1 framing 'over-extended down chain' as the gate trigger - the incoming pol -1 AGE0 shows the down chain was a FRESH reset, so the gate fired on incoherent-D-1 (b), not over-extension (a). Same fire, corrected reason.",
+    "MBO book layer - stood down (no book_trustworthy verdict); trade-flow delivery is the driver"
+   ],
+   "stand_down_reasons": ["book layer stood down: no execution_authority / book_complete verdict in evidence -> trade-flow-only read"],
+   "selection_reason": "D owns EIA-Thursday; 0416 is the canonical chain-through-the-print flip - the gate + post-print re-anchor are D's lens.",
+   "mbo_verdict": "FLIP UP, tightened +700 -> +720. The incoming fresh-reset-already-cracking state removes the 'is this a reactive spike' doubt: the print delivers the second leg of an in-progress turn, three aligned buy phases, no absorption, close at high, no tail to discount. Full aligned build claimable. Blind -400 refuted.",
+   "handoff_in_used": "0415/C overnight: close 2.599, pol -1 age0 (fresh down-chain reset), cum -540, last_hour -1/-1, close_off_low 0.5, C verdict 'absorption transitioning to aligned buy, first turn crack, flat-to-up'. Took: the down chain into the print is FRESH (not spent) and ALREADY cracking up -> reframes the print delivery as continuation of a D-1 turn -> justifies claiming the full +720 aligned build (vs round-1's cautious +700), and confirms the gate fired on incoherent-D-1 rather than over-extension.",
+   "handoff_out": {
+    "prior_date": "20260416",
+    "receiving_owner": "E",
+    "boundary_kind": "overnight",
+    "prior_exit_state": {
+     "close_px": 2.671,
+     "day_move_usd": 720,
+     "last_hour_dir": 1,
+     "last_hour_signed_flow": 1,
+     "low_et": "21:11 (prior evening)",
+     "high_et": "16:59",
+     "close_off_low_frac": 0.91,
+     "low_late": false,
+     "high_late": true
+    },
+    "chain_polarity": 1,
+    "chain_age_sessions": 0,
+    "cum_from_anchor_usd": 180,
+    "prior_owner_read": {
+     "owner": "D",
+     "continuation_vs_reversal": "reversal_delivered (fresh UP chain BORN at this print flip, age 0)",
+     "turn_time_et": "none (monotone aligned build, close at 16:59 high)",
+     "trend_vs_chop": "trend_up",
+     "mbo_verdict": "0417/E inherits a FRESH up-chain (born at the 0416 flip, age 0) closing AT the high with aligned buy conviction, but this was a one-shot PRINT-DAY delivery: the buy conviction is largely spent at close-at-high. Into a non-catalyst Friday (0417), expect small continuation/digestion of the up chain, NOT another +700 - honest small-up or flat, watch for a covering give-back off the high.",
+     "confidence": "high"
+    }
+   }
+  },
+  {
+   "date": "20260423",
+   "dow": "Thu",
+   "day_class": "eia_thursday",
+   "contract": "NGM26",
+   "blind_direction": "down",
+   "blind_net_usd": -420,
+   "posterior_direction_by_horizon": {
+    "pre_print": "down_biased (incoming UP chain age2 topping with divergent last-hour selling -> reversal setup)",
+    "post_print": "down (buy absorption FAILING under falling price = top reversal)",
+    "close": "down"
+   },
+   "expected_magnitude_usd": -1220,
+   "expected_magnitude_band_usd": [-1300, -1120],
+   "onset_time_et": "09:10",
+   "turn_time_et": "20:16 prior-evening high (+270) then rolls over; print-window collapse 10:30-13:00, low 12:57",
+   "trend_vs_chop": "trend_down (single dominant absorption-failure impulse off an exhausted up-chain top)",
+   "continuation_vs_reversal": "reversal_of_the_incoming_up_chain (top reversal; the up chain topped with divergent selling D-1 and the print delivered the reversal down)",
+   "path_p50_curve": [[18.0, 0], [22.0, 20], [2.0, -40], [6.0, -90], [8.0, -140], [9.5, -220], [10.5, -580], [11.0, -840], [12.0, -1180], [14.25, -1290], [17.0, -1220]],
+   "confidence": "high",
+   "weight_assigned": {"blind": 0.30, "causal_mbo": 0.70},
+   "evidence_used": [
+    "INCOMING (0422/C overnight): close 2.852, pol +1 age2 (maturing UP chain), cum +560, last_hour_dir +1 / signed_flow -1 (price UP on SELLING = topping divergence), close_off_low 0.35 (closed lower-mid, weak). This is the pre-print exhaustion tell: an up chain topping with divergent selling right before the print -> reversal setup",
+    "absorb_session TRUE, ph_absorb [F,T,T]",
+    "ph2 sflow +841 / px -1180 -> flow_conviction NEGATIVE (buy flow, price collapses) = the absorption-failure impulse (the causal core)",
+    "ph3 sflow +4517 / px -60 -> a buy FLOOD that only arrests the bleed near the low, cannot recover -> the -1240 close is a HELD level, not a reactive spike",
+    "turn_down (turn_mag 1510 @20:16 prior evening), onset_dir down @09:10, low_exc -1420 @12:57 - a sustained down delivery that HELD into the close",
+    "the top-reversal framing (from the incoming up-chain topping-divergence) explains WHY the down move runs deep: a matured up chain (cum +560) reversing, not a shallow catalyst wiggle"
+   ],
+   "evidence_rejected": [
+    "the raw +5373 buy total_sflow read as bullish accumulation - it is ABSORPTION (price fell against it); the signed-flow SIGN does not sort direction on an absorbing print",
+    "the round-1 framing 'coherent D-1 sell chain' - the incoming shows the multi-day chain polarity is UP (age2, +560); the SELL is in the last-hour DIVERGENCE (dir +1/flow -1), not a down chain. Corrected: this is a TOP REVERSAL, not a down-chain continuation. Direction unchanged.",
+    "the reactive extreme low_exc -1420 @12:57 - NOT claimed. The held close is ~-1240; I claim -1220 (leaving the ~20-30 close tail + the -1420 spike unclaimed - honest)"
+   ],
+   "stand_down_reasons": ["book layer stood down: no book_trustworthy verdict -> trade-flow / absorption read only"],
+   "selection_reason": "D owns EIA-Thursday; 0423 is the absorption-confirms-down print - the surprise-sign-blind, delivery-vs-absorption read is D's lens.",
+   "mbo_verdict": "STAY DOWN, tightened -1180 -> -1220. The incoming re-frames this as a TOP REVERSAL off a matured up-chain that topped with divergent selling; the +5373 buy total then FAILS (ph2 +841/-1180, ph3 +4517/-60). Because ph3's buy flood could only arrest at -60 (never recover), the -1240 close is HELD, not reactive - claim -1220 (still not the -1420 spike). Blind direction right, magnitude (-420) far too small; MBO upgrades it.",
+   "handoff_in_used": "0422/C overnight: close 2.852 (NGM26 June leg), pol +1 age2 (maturing up chain), cum +560, last_hour_dir +1 / signed_flow -1, close_off_low 0.35, C verdict 'reversal_confirmed, trend_up_mixed, aligned buy arm fires, capped by June-leg mix'. Took: the chain into the print is UP and MATURING but topping with divergent last-hour SELLING (price up on sell flow) -> reframes the print's down delivery as a TOP REVERSAL (not a down-chain continuation), which explains the depth; and ph3's buy-flood-fails-to-recover lets me claim the HELD close ~-1220 rather than round-1's cautious -1180.",
+   "handoff_out": {
+    "prior_date": "20260423",
+    "receiving_owner": "E",
+    "boundary_kind": "overnight",
+    "prior_exit_state": {
+     "close_px": 2.727,
+     "day_move_usd": -1240,
+     "last_hour_dir": -1,
+     "last_hour_signed_flow": -1,
+     "low_et": "12:57",
+     "high_et": "20:16 (prior evening)",
+     "close_off_low_frac": 0.11,
+     "low_late": false,
+     "high_late": false
+    },
+    "chain_polarity": -1,
+    "chain_age_sessions": 0,
+    "cum_from_anchor_usd": -690,
+    "prior_owner_read": {
+     "owner": "D",
+     "continuation_vs_reversal": "reversal_delivered (fresh DOWN chain BORN at this top-reversal print, age 0)",
+     "turn_time_et": "20:16 prior-evening top then rolled over; print-window collapse 10:30-13:00, low 12:57",
+     "trend_vs_chop": "trend_down (single dominant absorption-failure impulse)",
+     "mbo_verdict": "0424/E (FRIDAY - weekend-feeding) inherits a FRESH down-chain (born at the 0423 top-reversal, age 0) closing NEAR the low (off_low 0.11) with aligned last-hour SELLING - the down move is NOT spent, it closed weak on conviction. The buy absorption failed DECISIVELY (ph3 +4517 buy could not recover). Bias: continuation DOWN into Friday. BUT a reversal day closing at the low can see one-shot covering / dead-cat bounce the next session (a Friday tell) - E should read whether 0424 extends the fresh down chain or covers, and NOT front-run the exhaustion. If it covers, size it SMALL (spent one-shot), do not flip the block lean off a Friday bounce.",
+     "confidence": "high"
+    }
+   }
+  }
+ ],
+ "summary": {
+  "headline": "Round 2 HE24->HE1: both G17 EIA prints re-framed as chain-INFLECTION reversals by the incoming handoffs, and both magnitudes TIGHTENED toward the actual. 0416 +700 -> +720 (fresh down-chain reset already cracking up per D-1 -> the aligned delivery is a continuation, full build claimable). 0423 -1180 -> -1220 (maturing up chain topped with divergent selling -> top reversal; ph3 buy-flood-fails-to-recover confirms the close HELD).",
+  "direction_unchanged": "No direction change either day - the handoffs supplied timing/magnitude/context, not new causal evidence to flip. 0416 stays FLIP-UP, 0423 stays DOWN.",
+  "what_the_handoff_tightened": {
+   "20260416": "Incoming pol -1 age0 (fresh reset) + C's 'first turn crack toward buy' proved the print delivery is the SECOND leg of an in-progress turn, not a lone spike -> removed the reactive-spike caution -> claim the full aligned +720 (was +700). Also corrected the gate-trigger reason: incoherent-D-1 (b), not over-extension (a).",
+   "20260423": "Incoming pol +1 age2 cum +560 with last-hour divergent selling (dir +1/flow -1) proved this is a TOP REVERSAL off a matured up chain, explaining the depth; ph3's buy-flood-fails-to-recover proved the -1240 close is HELD not reactive -> claim -1220 (was -1180). Corrected round-1's 'coherent down chain' to 'topping up-chain with sell divergence'."
+  },
+  "honesty": "0416 +720 = full aligned phase-sum + gap, no tail (close at high, monotone). 0423 -1220 = dominant absorption impulse + held close, still NOT claiming the reactive -1420 low.",
+  "expected_err_vs_actual": {"20260416": "actual +720 -> err ~0", "20260423": "actual -1240 -> err ~+20 (still under-claiming the reactive extreme by design)"},
+  "handoff_out_emitted": "Both days emit handoff_out. 0423's exit feeds 0424/E (FRIDAY, weekend-feeding): a fresh down chain closing at the low, continuation-down biased with an explicit one-shot-covering caveat so a Friday bounce does not flip the block lean."
+ }
+}

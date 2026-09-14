@@ -3,6 +3,18 @@
 A tracked-in-repo memory for the team. Anything here should land before Tier 1
 launch (closed friends-group signal feed) unless explicitly marked as "later."
 
+## Security (Greg, added S100 2026-07-20)
+
+- **Make the GitHub repo PRIVATE** (`DavisAI1974/Markets` is the codebase for a live
+  trading program) — and when flipping it, make sure Claude's access survives: the
+  Claude GitHub App / Claude Code integration must be granted access to the private
+  repo (repo settings > integrations, or the Claude GitHub settings page) so sessions
+  can still fetch and push. Verify with a session-start fetch after the flip.
+- **AWS key rotation deferred to GO-LIVE** (Greg's call, S100): the S99 photo-exposed
+  key stays in service during the build phase; rotation + deactivation of old keys
+  becomes a GO-LIVE checklist item alongside vigilance on all keys. Keys stay only in
+  gitignored `scratchpad/aws.env`, never in chat text, never committed.
+
 ## ⚠️ Must revert before Tier 1 launch
 
 ### `DEMO_MODE_EMIT_EQUILIBRIUM_EXTREMES` in `backend/api_server.py`

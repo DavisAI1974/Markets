@@ -1,0 +1,42 @@
+{
+ "proposal": "S114_MAGNITUDE_CEILING",
+ "session": "S114",
+ "adjudication": {
+  "adjudicated_by": "Greg, S114: 'Did we do the biggest winners AND the biggest forecast errors builds?' then 'Can we quickly clear off the biggest winners section?'",
+  "note": "The winners build was owed and had been skipped. Built S114 on the committed census; the first framing (EIA print-day under-sizing) was TESTED AND DROPPED - capture degrades with MOVE SIZE, not with print status (non-print big movers 0512 20%, 0522 19%, 0616 18% sit with the print days, while small print days capture 16-17% like small non-print days). What survived is mechanical and larger. D37: the story was wrong, the measurement stands.",
+  "evidence_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv (captured_usd column)"
+ },
+ "new_plays_proposed": [
+  {
+   "id": "magnitude.emission_ceiling_check",
+   "target": "magnitude",
+   "trigger": "before emitting guess_day_move_usd / expected_magnitude_usd on ANY day - deterministic, every specialist, every run",
+   "read": "your own derived magnitude, against the day's plausible range from its drivers and the block's realized day-move distribution",
+   "call": "MEASURED ON THE MODERN WALK: the emitted magnitude has a CEILING AT ROUGHLY $550 AND THE MARKET DOES NOT. Across 60 scored days (g18-g23) the largest |guess| ever emitted is 950 (20260618, the single over-call, on a +520 day); the SECOND largest is 550. So 59 of 60 days emitted <= $550. Meanwhile 30 of 60 days - EXACTLY HALF - delivered |actual| > 550, ranging to 2100. The output distribution is truncated at about a quarter of the input distribution's range. CONSEQUENCE, per event: capture degrades monotonically with move size - |act| under 300 captures 36-100% (0626 91, 0717 100, 0714 60, 0526 52), 500-900 captures 17-76%, 900-1400 captures 18-37% (0605 37, 0430 32, 0512 20, 0522 19, 0616 18), and above 1400 captures 7-12% (0528 7%, 0709 12%). THE REPAIR IS NOT 'GUESS BIGGER' - that would break 'magnitudes DERIVED, never fitted'. The repair is that the DERIVATION IS STOPPING SHORT: when a day carries several independent drivers, SUM them rather than emitting the dominant one, and when your derived number sits near 550 while the day's drivers support more, SAY SO EXPLICITLY in the reasoning rather than silently emitting the cap. A magnitude you cannot derive is a NO CALL candidate (A-2), not a capped number.",
+   "mechanism": "A truncated output distribution against a fat-tailed input distribution loses to a zero-change forecast on exactly the tail days, by construction - which is the mechanical explanation for the S111 benchmark result (blind MAE 1.13x the mean absolute actual move, losing to zero-change in six of seven blocks). It also explains the winners/losers asymmetry measured in the same census: best capture +500 (20260605), worst capture -550 (20260713, 20260518). BOTH tails are bounded by the same ceiling - when the capped number has the right sign you can win at most ~550, when it has the wrong sign you lose ~550. ROOT CAUSE NOT ESTABLISHED and deliberately not asserted (D37): candidates are the honest-bar doctrine being read as a cap, 'magnitudes DERIVED never fitted' biting harder in the blind where derivation has less to work with, output-contract band anchoring, and specialists anchoring on a typical day-move rather than the day's own drivers. Registry A-40 carries the root-cause work.",
+   "requires": [
+    "the specialist's own derived magnitude (self-check, no new data)",
+    "block day-move context where available"
+   ],
+   "scope": "every lane, every day, blind and refine alike - it is a self-check on emission, not a directional signal. Blind-legal by construction: it reads nothing but the specialist's own output.",
+   "confidence": 0.75,
+   "status": "PROVISIONAL",
+   "support": "MECHANISM_VERIFIED",
+   "falsifier": "If forward runs emit magnitudes above 550 on days whose drivers support it AND capture on |actual|>900 days does not improve above the measured 18-37% band, the ceiling was not the binding constraint and this play is wrong. Equally refuted if raising emissions degrades sum|err| - i.e. if the cap was doing useful work - which would mean the honest bar is correctly calibrated and the loss is elsewhere.",
+   "conditions": [
+    {"quantity": "emitted_magnitude_near_ceiling", "state_path": "self.guess_day_move_usd", "reference": "absolute", "comparator": ">=", "threshold": 450, "units": "usd"}
+   ],
+   "instances": [
+    {"date": "20260528", "group": "g20", "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv", "what_the_state_said": "Direction RIGHT and captured 7.1%: actual +2100, emitted +150. The largest move of the modern walk, called correctly, and 93% of it left on the table."},
+    {"date": "20260709", "group": "g23", "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv", "what_the_state_said": "Direction RIGHT and captured 12.2%: actual -2050, emitted -250."},
+    {"date": "20260605", "group": "g20", "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv", "what_the_state_said": "THE BEST DAY OF THE MODERN WALK: actual -1340, emitted -500, captured +500 = 37%. The best result the desk has produced is a 37% capture, and it sits at the ceiling."},
+    {"date": "20260618", "group": "g21", "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv", "what_the_state_said": "THE ONE EXCEPTION, named so it is not forgotten: the only emission above 550 in 60 days (+950) and it OVER-called a +520 day. So the single time the ceiling was broken, it was broken wrongly - which is why the repair must be derivation, not permission to inflate."},
+    {"date": "20260713", "group": "g23", "source_file": "research/kalshi/data_records/walk_census_g18_g23_S114.csv", "what_the_state_said": "The loss side of the same ceiling: emitted +550 into a -620 day, captured -550. Best win +500, worst loss -550 - both the ceiling."}
+   ],
+   "corpus": {"d24_state": "found", "searched_on": "S114", "searched_scope": "all 60 modern scored days g18-g23, |guess| and |actual| distributions listed individually, capture ratio computed per event", "n_found": 60},
+   "forward": [{"tag": "forward_evidence", "text": "NONE. Registered against g24. The g22 mechanics rehearsal is its first live observation: does a specialist under SOP v1.9 emit above 550 when the day warrants?"}],
+   "health": {"degenerate_block_share": null, "can_change_state": "Fires on any day whose derived magnitude reaches 450+; measured 8 of 60 days would trip it, so it discriminates rather than firing always or never."},
+   "provenance": {"merged_session": "S114", "brain_version": "s105.3", "from_proposal": "forecasts/S114_MAGNITUDE_CEILING_PROPOSAL.json", "proposed_by": "S114 winners census"}
+  }
+ ]
+}

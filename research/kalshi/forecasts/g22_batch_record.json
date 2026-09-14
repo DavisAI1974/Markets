@@ -1,0 +1,102 @@
+{
+ "group": "g22",
+ "created": "2026-08-02T01:38:15Z",
+ "entries": [
+  {
+   "ts": "2026-08-02T01:38:15Z",
+   "session": "S108",
+   "station": "staged",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "staged S108 machinery: state + anchor + evidence + exit_states committed; b_share hole #9 repaired via identity (S109)"
+  },
+  {
+   "ts": "2026-08-02T01:38:15Z",
+   "session": "S109",
+   "station": "audited",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "pre-blind audit of staged state found holes #9 (b_share encoding) + #10 (squeeze_watch frozen-but-live); both fixed pre-blind"
+  },
+  {
+   "ts": "2026-08-02T01:38:15Z",
+   "session": "S109",
+   "station": "blind-r1",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "wave-1 VOID (hole #11 causal leak, all three specialists declared); re-run clean on per-day causal slices, 10 runs C/D/E->A->B"
+  },
+  {
+   "ts": "2026-08-02T01:38:15Z",
+   "session": "S109",
+   "station": "scored",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "4/10 dir, sum|err| 5965, drift -1815, survives 30% - drift = the missed CDD hill exactly"
+  },
+  {
+   "ts": "2026-08-02T01:38:15Z",
+   "session": "S110",
+   "station": "archived",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "blind archived by MOVE to g22_blind_round1/ (SOP STEP 4); canonical names cleared"
+  },
+  {
+   "ts": "2026-08-02T01:38:15Z",
+   "session": "S110",
+   "station": "note",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "S110 state repairs applied post-audit-of-G23: options strikes x10 + strike_units declared; vol_regime n0_era_basis declared (audit f3/f5 family)"
+  },
+  {
+   "ts": "2026-08-02T01:38:15Z",
+   "session": "S110",
+   "station": "refine-r1",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "IN FLIGHT: 10 per-day runs under RUN_SOP RFN-1 (first standardized use), two named targets (missed hill; 0629 slope-treated-as-spike); wave 1 (C x4, D x2, E x1) spawned"
+  },
+  {
+   "ts": "2026-08-02T01:40:53Z",
+   "session": "S110",
+   "station": "inspected",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "inspection manifest written (10-guard roster, PASS 0 hard)"
+  },
+  {
+   "ts": "2026-08-02T02:23:13Z",
+   "session": "S110",
+   "station": "refine-r1",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "r1 COMPLETE under RFN-1 (first standardized use): 10/10 dir, sum|err| 500, drift -80 (blind 4/10, 5965, -1815). Convergent proposals: burn-conversion gate both polarities (E/A/B/C), seam sign-from-stability-deltas n=3 (B-0622), expiry-day program extension n=2 (E), EIA window doctrine n=4 (D), read-at-the-wrong-level audit class (E/B/A co-signed)."
+  },
+  {
+   "ts": "2026-08-02T02:23:13Z",
+   "session": "S110",
+   "station": "nonconformance",
+   "sop": "v1.2",
+   "brain": "s103.7",
+   "summary": "S109 P4 claimed CDD ladder + seam_delta_warning SERVED; committed g22/g23 states carry NEITHER (harness code landed, artifacts never rebuilt - no data plane at S109 close). D11 fix-verification class, third instance this session. Repair disposition to Greg with the r1 report."
+  },
+  {
+   "ts": "2026-08-02T02:39:02Z",
+   "session": "S110",
+   "station": "refine-r2",
+   "sop": "v1.2",
+   "brain": "s104.0",
+   "summary": "r2 COMPLETE: 10/10, sum|err| 330, drift +50 (r1 500/-80; blind 5965/-1815). HE24->HE1 pass earned -170; 3 exact zeros; D named+fixed its own r1 timing slack."
+  },
+  {
+   "ts": "2026-08-02T02:39:02Z",
+   "session": "S110",
+   "station": "merged",
+   "sop": "v1.2",
+   "brain": "s104.0",
+   "summary": "brain s103.7 -> s104.0 via S110_MERGE_PROPOSAL.json (adjudicator: strictly additive, 64/68 byte-identical, 4 incumbents +dated keys, 8 new plays PROPOSED -> 76). Backup ng_brain_s103.7_backup.json. Greg go: run-with-your-plan."
+  }
+ ]
+}

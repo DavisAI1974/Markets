@@ -1,0 +1,161 @@
+{
+ "specialist": "E",
+ "group": "g22",
+ "days": [
+  {
+   "specialist": "E",
+   "group": "g22",
+   "date": "20260626",
+   "dow": "Fri",
+   "day_class": "Friday / futures-expiry (NGN26 LTD) / weekend-feeding / bidweek day 3",
+   "scored_leg": "ng_mbo_ngq26",
+   "guessed_net_usd": 250,
+   "overnight_gap_usd": 0,
+   "path_p50_curve": [
+    [
+     8,
+     -40
+    ],
+    [
+     10,
+     60
+    ],
+    [
+     12,
+     190
+    ],
+    [
+     14,
+     310
+    ],
+    [
+     15,
+     290
+    ],
+    [
+     16,
+     250
+    ]
+   ],
+   "expected_magnitude_band_usd": [
+    -50,
+    600
+   ],
+   "confidence": "low",
+   "turn_exhaustion_gate": {
+    "play": "daytype.friday_turn_exhaustion_gate",
+    "run_order": "RUN FIRST, BEFORE any direction sign was formed. The prior-over-state Friday default (range / roll-pressure DOWN) was never consulted as a direction source.",
+    "verdict": "CLEAN - no turn/exhaustion limb fires. Gate therefore PERMITS a continuation sign on the young up leg.",
+    "limbs": {
+     "chain_age_ge_4": {
+      "result": "NO",
+      "value": "flow-chain age 2 sessions (turn on 0624)",
+      "basis": "session_signed_flow across the slice: 0619 -1353, 0622 -3717, 0623 -1990, 0624 +311, 0625 +1956; session_b_share_two_sided 0.433 / 0.469 / 0.486 / 0.503 / 0.509 - monotone across four sessions. The down leg terminated 0624; the up leg is age 2 = YOUNG.",
+      "declared_limitation": "boundary.chain_label_must_track_realized_cum requires REALIZED cum, which is price-masked. This age is derived from the AGGRESSOR-FLOW chain, an explicitly weaker substitute. Declared, not asserted as equivalent."
+     },
+     "cum_from_anchor_at_extreme": {
+      "result": "UNEVALUATED - not clean, not fired",
+      "reason": "cum-from-anchor is price-derived and masked in blind mode. I refuse to manufacture a value. The gate's continuation branch requires 'cum not extreme'; I treat that limb as UNKNOWN and take the confidence penalty rather than assume it."
+     },
+     "positioning_at_extreme": {
+      "result": "NO - and the direction of travel is the load-bearing part",
+      "value": "COT MM net -84,909, 1y pctile 25.47, 3y 23.25, WoW +37,708",
+      "basis": "The crowded-short extreme that existed at block open is GONE. On 0622 the served COT was -122,617 at the 2.83rd pctile and WORSENING (-7,763 WoW). The report published 06-22 moved it to -84,909 at the 25.47th pctile, +37,708 covered - a 22.6-percentile-point discharge in one report. Under positioning.covering_self_limiting_cot_wow_gate limb (b), an IMPROVING WoW is SPENT fuel: covering is not live and not recurring."
+     },
+     "d1_flow_opposes_chain": {
+      "result": "NO - D-1 flow is ALIGNED with the current (up) leg",
+      "value": "0625 session_signed_flow +1956, session_b_share_two_sided 0.509 (first reading of the block above the 0.50 absolute bar), ph1 two-sided 0.555, ph3 net +1202 on 41,429 lots"
+     },
+     "based_vs_stretched": {
+      "result": "BASED / TURNING, not stretched",
+      "consequence": "daytype.friday_crest_trim_discriminator routes crest-trim OUT. daytype.weekend_crest_friday's trigger is NOT met. This is the 0327 false-positive class the discriminator exists to prevent - and 0327 was also an expiry Friday."
+     },
+     "crest_realization_window": {
+      "result": "NO",
+      "basis": "No priced driver realizes or expires by this close. The live driver is weekend cooling demand, which is UNRESOLVED across the seam (model_disagreement H1 spread_gw_cdd 1.916: MAV 10.548 vs MET 8.632)."
+     }
+    },
+    "what_the_gate_changed": "Nothing about the sign was inherited. Had the gate fired I would have emitted the TURN direction; it did not, so the sign comes from the aligned D-1 tape on a young leg. Separately, daytype.covering_giveback_self_limiting was checked as the E-lens requires and it BLOCKED a covering-UP prior - so the up sign here is a young-leg continuation, NOT a re-fired covering squeeze."
+   },
+   "reasoning": "SIGN. The turn/exhaustion gate ran first and returned CLEAN on every evaluable limb (chain age 2, D-1 flow aligned, chain based-not-stretched, no crest window, positioning not extreme), with cum-from-anchor declared UNEVALUATED because it is price-masked. Under the gate's own text a continuation sign is licensed only on a clean check, and it is clean, so the sign follows the state: the aggressor tape turned over four sessions in one direction with no reversal (session_signed_flow -3717 -> -1990 -> +311 -> +1956; session_b_share_two_sided 0.469 -> 0.486 -> 0.503 -> 0.509). D-1 (0625) is the block's largest tape by a wide margin (51,708 trades / 119,374 lots vs a 70-82k block norm) and its FINAL phase is the strongest buy of the block, +1202 on 41,429 lots. Under daytype.friday_exit_close_location_over_flow_shape's (volume, net) pair that is a HANDOVER THAT CONTINUES, not a flowless unpriced print. UP. EXPIRY FORM. 0626 is NGN26 last trade day. structure.mature_swing_alternation.s101_6_expiry_day_form splits on stranded premium: with it, unwind; without it, alternation plus short-covering into the settle governs and you NEVER short an expiry session on the sponsor-expires argument. Stranded premium is ABSENT - calendar_front_next_spread is -0.043 (July BELOW August) with chg_3d -0.021, i.e. the expiring front is CHEAPENING against the next, the exact inverse of a squeeze; unwind_watch false. So the covering-into-settle branch governs, base band +300..+700 (n=2: 0225 +420, 0327 +1160). CRITICAL HAIRCUT: both precedents had the walked leg AS the expiring contract. Mine does not - the scored leg is NGQ26 and the expiry mechanics live in NGN26. NGQ26 receives spillover only (residual roll bid, and it inherits the prompt role at the settle), so I take roughly 0.4 of the band, ~+200, and say so rather than banking a precedent that does not structurally apply. MAGNITUDE CEILING. flow.price_free_absorption_proxy fires on its stated precondition (session signed flow POSITIVE at +1956; big-print sample 122, guard-clean well above the 20-print floor of flow.big_print_bshare_thin_tape_guard, so the bar stands unraised). Its reading is the constraint: big_print_b_share (size-weighted) is 0.499 and does NOT clear the measured 0.547 flip bar, so the absorber has NOT left - buy-absorption-failing risk is live and the play's instruction is TAKE THE TURN SMALL. This is the only price-free instrument in the slot flow_conviction cannot fill blind, and it caps me. COMPONENTS, all derived: expiry covering-into-settle on the deferred leg +200; young-leg aligned-flow continuation at ~0.2x n0_net_sigma_5 (589) in a quiet regime (n0_range_pctile 18.3) +120; against it, weekend and holiday-truncated-week squaring plus contango carry plus a bearish physical stack -70. Net +250, about 0.4 sigma. GAP. 0625->0626 is an INTRA-WEEK boundary; 24 of 24 intra-week boundaries measured across G19+G20+G21 carry |gap| <= 10, so the overnight is structurally zero and I emit 0. SHAPE. Early softness (weekend squaring, weak cash, the -0.5 CDD run cut), firm through the middle on the residual roll and expiry bid, then flat-to-lower into the close as the weekend bag is set - the 0225 form (morning trough, covering leg, close off the high), damped for the deferred leg. TIMING CAVEAT: the phase table is session-relative and carries no clock boundaries, so this shape is a derived expectation, NOT a phase-to-clock mapping. WHAT I AM TRADING AGAINST, honestly: the fundamental stack is bearish and I am up against it. Surplus vs 5yr 112 in injection phase; the 06-25 print was 76 Bcf against a strictly-pre-print consensus of 67, a +9 Bcf BEARISH miss at decision time (the served +2.0 uses the post-print-frozen 74 and must be discounted per the auditor); the next consensus is 81, a bigger build still; curve in contango; cash basis -0.139 with chg_3d -0.212, i.e. physical July collapsing against futures in the middle of bidweek; and forecast_run_delta_cdd is -0.5, today's model run CUTTING cooling demand. That stack is why the number is +250 and not +500, and why confidence is low rather than medium. The sign still follows the state because my own self-analysis found that emitting a Friday sign from the day-class default rather than the state owned 72% of my misses, and the bearish stack here is a PRIOR, while the aligned D-1 handover tape and the clean gate are STATE.",
+   "plays_fired": [
+    "daytype.friday_turn_exhaustion_gate - ran FIRST, returned CLEAN; licensed a continuation sign instead of a day-class default",
+    "structure.mature_swing_alternation.s101_6_expiry_day_form - no stranded premium (calendar_front_next_spread -0.043, chg_3d -0.021, unwind_watch false) -> covering-into-settle branch, base band +300..+700, HAIRCUT to ~0.4 because the expiry is in NGN26 and the scored leg is NGQ26",
+    "flow.price_free_absorption_proxy - precondition met (sflow +1956 positive, 122 big prints); big_print_b_share 0.499 fails the 0.547 flip bar -> absorber still present -> TAKE THE TURN SMALL. This set the magnitude ceiling",
+    "flow.big_print_bshare_thin_tape_guard - 122 prints >= 20, so the bar stands unraised at 0.547/0.55; no thin-tape adjustment applied",
+    "daytype.friday_exit_close_location_over_flow_shape - the (volume, net) pair on 0625 ph3 (+1202 on 41,429 lots) reads HANDOVER-CONTINUES, which is the D-1 continuation licence; and my own forecast mid-range close is what I hand forward, not a flow-decay story",
+    "positioning.covering_self_limiting_cot_wow_gate - limb (b): COT WoW +37,708 IMPROVING = SPENT, not worsening; governs SIZE not sign per its own scope clause, and it is why no squeeze band is applied",
+    "daytype.covering_giveback_self_limiting - E-lens mandatory check: no FRESH crowding stack (pctile 25.47 and improving), so covering-UP is NOT re-fired; the expiry is squeeze TAIL risk, never a p50 trigger",
+    "daytype.friday_crest_trim_discriminator - evaluated and routed crest-trim OUT (chain BASED, not stretched)",
+    "daytype.friday_exit_decomposition - the construction of handoff_out",
+    "magnitude.weekend_gap_delivery - NOT applied to my own day-net; handed to A and B as the weekend arbiter (fresh shot vs already-priced), which is where the weekend information will land"
+   ],
+   "plays_stood_down": [
+    "daytype.weekend_crest_friday - TRIGGER NOT MET. Requires a STRETCHED same-side chain near its extreme AND a priced driver realizing/expiring by the close. The flow chain is BASED/TURNING (three sell sessions then two buy) and no driver realizes today. Firing it here would reproduce the 0327 false positive verbatim, on another expiry Friday",
+    "structure.friday_exhausted_extreme_giveback - requires extreme cum-from-anchor OR chain age >= 4. Flow-chain age is 2; the cum limb is PRICE-MASKED and is declared UNEVALUATED, not clean",
+    "structure.squeeze_unwind - no stranded premium. The expiring front trades BELOW the next (-0.043) and is cheapening (chg_3d -0.021): the inverse of a squeeze. unwind_watch false. Descriptor grade in any case",
+    "flow.resting_program_inverts_aggressor_tilt - trigger is in_bcom_roll / in_gsci_roll, both FALSE on 0625 and 0626 (only bcom_ng_roll_this_month / gsci_ng_roll_this_month are true, with roll_day_n null). Stood down as a play. The analogous mechanic IS recorded as a caution below, because 0625 was OPEX day, but I do not dress a caution up as a play fire",
+    "selector.divergence_resolution - OUT OF SCOPE and UNEVALUABLE. There is no weather cold-add in a July CDD market, and its gate (a) HDD >= 16.4 is structurally unreachable in this block (auditor-declared artifact). I did NOT read its stated DOWN default as a live bearish vote off an unfireable rule",
+    "daytype.eia_preprint_overextension_gate - not my day-class; the print was 0625 (D's day). Consulted only for the consensus look-ahead",
+    "structure.chain_polarity_flip - its CONFIRM conditions C1 (band-break) and C2 (old-side continuation-collapse in the actual tape) are PRICE-derived and masked. I do not claim a confirmed polarity flip; the four-session flow turn is a declared weaker substitute",
+    "direction.flow_conviction_sign_gate - REFINE-ONLY, requires realized price. Cannot be computed blind, per its own caveat",
+    "direction.absorption_is_reversal - requires phase flow-vs-price. Stood down; price_free_absorption_proxy is the blind-side substitute and it is the one I used",
+    "structure.covering_extension_distribution_flip - requires cum_from_anchor and phase absorption; both masked",
+    "magnitude.crash_regime_bands / structure.post_parabolic_bleed - no parabola or crash regime present",
+    "monday.* family - not my day-class"
+   ],
+   "handoff_out": {
+    "exit_type": "MOMENTUM_CARRY - weak, with an explicitly fadeable expiry/weekend-squaring half. Direction and flow are aligned at the close (young up leg, D-1 handover tape carried), so this is momentum carry, NOT crest-trim (chain is based, not stretched) and NOT positioning_spent_fade (the positioning discharge already happened in the week to 06-16 and is visible in COT, not in this session). The qualifier matters: a slice of the up close is residual expiry/roll mechanics in a contract that no longer exists after today, and that slice does not carry.",
+    "monday_bias": "DOWN-SMALL. Not a number - a state read. The up leg is young but weakly powered (absorber still present, big_print_b_share 0.499 below the 0.547 flip bar), the covering tank is SPENT (COT 25.47 pctile, WoW +37,708 improving), and the fundamental stack into 0629 is bearish on every channel I can see: surplus 112 in injection phase, next consensus 81 Bcf (a bigger build than the 76 just printed), contango, cash basis -0.139 with chg_3d -0.212, and a model run CUTTING cooling demand (-0.5 CDD). The single thing that flips this is a weekend heat ADD; the current model trend is the opposite. B owns the number - interpret this state, do not arithmetic it.",
+    "exit_shape": "Forecast (blind - I have no realized close): a mid-to-upper-range close, NOT a close on the high. Early softness, firm middle on the residual roll/expiry bid, flat-to-lower final hour as the weekend and holiday-week bag is set. This is deliberately NOT a close-on-high continuation signal - per daytype.friday_exit_close_location_over_flow_shape the continuation verdict comes from close LOCATION, and a mid-range close is a weak carry, which is exactly why monday_bias is down-small rather than up.",
+    "last_hour_dir": "FORECAST -1 (mild). Weekend squaring into a holiday-truncated week (0703 Independence Day observed) plus negative carry. LOW confidence - this is a forecast, not a measurement; the blind has no last-hour price channel. Do NOT lean on it the way the anchor's own last-hour direction was correctly de-weighted (2 ticks, resolution floor).",
+    "last_hour_signed_flow_sign": "FORECAST -1 (mild sell). If the realized pairing turns out to be price-UP against sell flow, that is COVERING and the exit re-reads as positioning_spent_fade with a stronger down bias into Monday. If it is price-DOWN with sell flow, that is aligned delivery and confirms this read. A is asked to re-key on the realized pairing when it becomes visible.",
+    "close_off_low": "FORECAST ~0.55 of the session range. Explicitly a forecast. Note the measured negative result on record: close_off_low does NOT size the overnight leg (refuted on D's own pair, 0527 at 0.59 ran -170 while 0603 at 0.82 ran only -70). Use it as an exhaustion/continuation read only, never as an overnight sizer.",
+    "chain_polarity_and_age": {
+     "polarity": "UP (turned 0624), derived from the AGGRESSOR-FLOW chain, not from realized cum",
+     "age_sessions_at_my_close": 3,
+     "basis": "session_signed_flow -3717 (0622), -1990 (0623), +311 (0624), +1956 (0625), forecast + (0626); session_b_share_two_sided 0.469 / 0.486 / 0.503 / 0.509 - monotone, no reversal",
+     "warning_to_A_and_B": "This label is FLOW-derived. boundary.chain_label_must_track_realized_cum requires REALIZED cum, and structure.covering_extension_distribution_flip's retired-assumption note records that a chain-age LABEL cost 1,350 on G20 0605 when cum ran without ever turning. The moment either of you can see realized cum, RE-DERIVE the age from it and overrule this label. Do not inherit it as measured."
+    },
+    "cum_from_anchor_state": "UNKNOWABLE IN BLIND MODE - price-masked, and I refuse to manufacture it. Anchor is 3.198 on 0619 (chain-verified against g21's realized last-day close). SUBSTITUTE handed forward: cumulative session signed flow from the anchor = -1353 (0619) + 16 (0621 stub) -3717 -1990 +311 +1956 = -4,777 lots net SELL across the block to my open, i.e. the aggressor tape is still net-sold-from-anchor even after the four-session turn. That is a real constraint on how extended the up leg can be, and it is the honest form of the extremity limb I could not evaluate.",
+    "confirm_refute": {
+     "confirms_this_exit_read_monday_down_small": [
+      "The Sunday weekend model cycle CUTS gw_cdd further at D+1..D+3, extending today's forecast_run_delta_cdd of -0.5",
+      "0626 as served to B (its prior_full_session) shows session_b_share_two_sided back BELOW 0.50 and/or a negative final-phase net - i.e. my forecast up-close was not actually bought at the close",
+      "0626's big_print_b_share stays below ~0.547 on a guard-clean (>=20) sample - the absorber is still present and the turn stays small",
+      "The Sunday reopen stub prints net sell"
+     ],
+     "refutes_it_flip_monday_up": [
+      "The weekend cycle ADDS gw_cdd at D+1..D+3 - a FRESH shot. Then magnitude.weekend_gap_delivery's fresh branch governs (+1500..+2500) and THE GAP, not the Monday session, carries the repricing. This is the single highest-leverage weekend variable and I cannot see it",
+      "0626's big_print_b_share CLEARS ~0.547 on a guard-clean sample together with a positive final phase on the session's largest phase volume - absorber gone, accumulation confirmed, the young leg is properly powered",
+      "A NEW COT extreme with WORSENING WoW (shorts re-adding). This is currently ABSENT (+37,708 improving) and B must NOT assume it. Only a genuinely rebuilt crowding stack re-licenses a covering-UP; daytype.covering_giveback_self_limiting forbids it otherwise"
+     ]
+    },
+    "structural_notes_for_A_and_B": [
+     "TO A (weekend seam): this seam runs off a NORMAL full Friday, not a holiday half-session - the g22_anchor holiday_caveat applies to 0619 only and does NOT apply here. Size the reopen normally.",
+     "TO A: the seam's decisive variable is the CDD model cycle, and the block serves NO forward CDD ladder (HDD-only, auditor-declared). model_disagreement H1 spread_gw_cdd is 1.916 (MAV 10.548 vs MET 8.632) - Saturday's heat is genuinely contested. Weight the Sunday reopen read accordingly and treat any single-model weekend CDD as low information.",
+     "TO B (0629): NGN26 expired at my settle. On your day the last prompt expiry is ONE session back, so magnitude.block_gap_ownership evaluates ANCHOR_STRUCTURAL first and the dead-sponsor arm is live BY CALENDAR. But the stranded-premium PRECONDITION IS ABSENT - I measured calendar_front_next_spread -0.043 with chg_3d -0.021, the expiring front cheapening against the next, the inverse of a squeeze. There is nothing to unwind. Do not expect a structural unwind gap.",
+     "TO B: NGQ26 becomes the PROMPT contract over this weekend. Expect a step change in the scored leg's own tape scale (volume, OI, big-print count) that is a ROLE change, not a conviction change. Do not read a bigger tape as a bigger signal.",
+     "TO B: your 0629 tape_conditions is the Sunday REOPEN STUB and your prior_full_session is MY 0626. Read direction off 0626; do not tilt off the stub (thin-sample degeneracy, flow.big_print_bshare_thin_tape_guard).",
+     "TO B: the week you open is holiday-truncated (0703 Independence Day observed), which is part of why my Friday close carries a squaring component that does not carry forward."
+    ]
+   },
+   "state_defects_and_contradictions_found": [
+    "STORAGE CONSENSUS - the auditor's declared look-ahead is worse than a discount: the served final consensus is 74 against a strictly-pre-print snapshot of 67 (house_disagreement_bcf 7.0). The decision-time surprise on the 06-25 print is +9 Bcf BEARISH, not the served +2.0. The 7 Bcf drift also means the true 10:30 expectation is uncertain across 67-74, so the honest surprise is a RANGE of +2 to +9 bearish - every point of which is more bearish than the served value.",
+    "DIRECT CONTRADICTION BETWEEN TWO STORAGE CHANNELS ON THE SAME PRINT: stor_surprise reads -1.4 'below' (seasonal proxy = mildly BULLISH) while the survey channel reads +9 build miss (BEARISH). vs_5yr went 114 -> 112, so the surplus narrowed 2 Bcf. I weight the SURVEY channel for the market reaction and the proxy channel for the trend, and I flag that the block serves both without adjudicating them.",
+    "FORWARD WEATHER IS HDD-ONLY IN A JULY CDD MARKET (auditor-declared, and it bites hardest on MY day). The only forward CDD numbers anywhere in my slice are forecast_run_delta_cdd (-0.5, D+0 ONLY) and model_disagreement[].spread_gw_cdd. There is no CDD ladder, no fwd7 CDD span, no CDD run_delta beyond D+0. On a summer WEEKEND SEAM this is the single most consequential missing input, because magnitude.weekend_gap_delivery's fresh-vs-priced branch - the thing that decides Monday - is a forward-cooling-demand question and I am handing A and B a weekend read without the ladder to answer it. Reported as a DEFECT, not worked around.",
+    "VOL_REGIME IS SIZED OFF THE WRONG INSTRUMENT. Its v0 basis is entirely null, so every band comes from n0 alone, and n0 is a materially thinner series than my scored leg (n0_prev_trades 1,835 on 06-19 against the leg's 6,935 on the same date). My magnitude band is therefore derived from a proxy series, not from ng_mbo_ngq26. Frozen at the 0619 vintage on top of that. Declared.",
+    "CONTRACT_STRUCTURE SERVES TWO DIFFERENT 'FRONT' PAIRS AND THEY DISAGREE. front_symbol is NGU26 (the OI front) with front_next_spread -0.04 = a Sep/Aug pair, while volume_front_symbol is NGN26 and front_is_calendar_front is FALSE. The expiring pair is only visible in calendar_front_next_spread (-0.043, NGN26/NGQ26), which is what I used for the stranded-premium test. This is exactly the S97 lesson - the OI-continuous front HIDES the squeeze - and on an expiry day reading the wrong pair would have answered the stranded-premium question off two contracts neither of which expires today.",
+    "SQUEEZE_WATCH IS CORRECTLY UNKNOWN ON MY DAY (live calendar dte 0 on NGN26, spread limb genuinely masked). I did not read its absence as a negative, per the auditor's instruction; I answered the stranded-premium question from contract_structure's calendar-front pair instead and declared that this uses the 0619-frozen vintage.",
+    "0625 WAS BOTH THE EIA PRINT DAY AND JULY OPEX (is_opex_day true, options_expiry_date 2026-06-25) - which is why its tape is 51,708 trades / 119,374 lots against a 70-82k block norm. CAUTION, NOT A PLAY FIRE: an options-expiry pin rests liquidity and is filled by the crowd, so some of the +1956 aggressor buy is mechanical delta-hedging rather than conviction, by the same physics as flow.resting_program_inverts_aggressor_tilt. That play's stated trigger (in_bcom_roll / in_gsci_roll) is FALSE, so I did not fire it - I recorded the caution and it is part of why confidence is low and the number is small.",
+    "POSITIVE CHECK - S109 hole #9 is sound in my slice: session_b_share == session_b_share_two_sided * (1 - unsided_volume_frac) reproduces the served value to 3 dp on all six readings (0619 prior_full, 0621 stub, 0622, 0623, 0624, 0625). Zero breaches."
+   ],
+   "weight_assigned": {
+    "blind_state": 1.0,
+    "causal_mbo": 0.0,
+    "note": "blind run - no realized price channel available"
+   },
+   "brain_version": "s103.6"
+  }
+ ]
+}
