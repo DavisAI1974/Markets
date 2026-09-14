@@ -133,3 +133,36 @@ separate normalizer test file and collected no tests; the corrected run includes
 the normalization tests housed in test_c15_teacher_r3.py. No prior workbook or source
 module was changed. The external arXiv paper is not independently reviewed here;
 all discussion of it is attributed to the supplied byte-distillation memo.
+
+## Supplemental 18files.zip evidence, received later on September 14
+
+The user supplied `C:/Users/A/Downloads/18files.zip`, SHA256
+`b5752a537fb629315931116dddebf696ce0c01a954797c7d22051adfd50dd82b`.
+This adds the previously absent per_term/upstream/tstat CSVs and corresponding
+scripts, plus operator_runs.xlsx and RESEARCH_STATUS_20260914.md. The earlier
+absence statement describes the earlier archive only. This supplemental archive
+does not contain term_scale.py or separation_test.py, imported by the scripts.
+No supplied script was executed and full reproduction remains unavailable.
+
+Independent CSV/statistics checks found 600 per-term rows across 60 trials, zero
+support reentries, and 595 active terms. Maximum absolute residual for persistence
+versus `1-entry_index/n_lam` was 5.551115123125783e-17. This is a property of these
+synthetic runs, not a universal teacher identity.
+
+The 800 upstream rows have 400 rows per rho. Spearman correlations of xy versus
+entry were 0.814698384464153 (rho=0) and 0.282359679239234 (rho=0.5); OLS versus
+entry were 0.969547038882819 and 0.942917116271163. OLS versus maximum absolute
+coefficient were 0.999963812256973 and 0.999895889198983, close rank agreement
+rather than exact numerical equivalence.
+
+The 120 t-statistic rows have 60 rows per rho, with 42/45 positives. The negative
+maximum minus positive minimum overlaps were 1.28937521696734/2.80163001441482 for
+weak coefficient/sigma and 1.35230543892393/1.37335171728531 for weak t. These data
+do not establish a separating threshold. The script comment describes the weakest
+planted term by true coefficient, while its code selects minimum absolute fitted
+OLS coefficient among planted terms; retain that interpretation caveat.
+
+All supplemental results are synthetic. They supply diagnostic evidence only;
+they do not establish real OD/Frankie performance or change C15 targets, masks,
+training permissions or production calibration. Original workbook bytes remain
+untouched, and no combined workbook was generated.
