@@ -47,7 +47,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_EC2_METADATA_DISABLED: 'true'
-        run: python research/kalshi/frankie_boss/sagemaker_inventory.py --regions us-east-1 us-east-2 --output work/sagemaker-inventory.json
+        run: python research/kalshi/frankie_boss/sagemaker_inventory.py --regions us-east-1 --output work/sagemaker-inventory.json
       - name: Inventory model and endpoint metadata only
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

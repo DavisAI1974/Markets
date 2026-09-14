@@ -1,15 +1,22 @@
 """Read-only prerequisites for exact Granite deployment; no resource creation."""
 import json
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 IMAGE_TAG = '0.20.2-gpu-py312-cu130-ubuntu22.04-sagemaker'
+ENDPOINT_QUOTA = 'L-F8D7F460'
+ENDPOINT_QUOTA_NAME = 'ml.g6e.2xlarge for endpoint usage'
 
 
-def pages(operation, key, *, args=None, token_key='NextToken', max_pages=20):
+def pages(operation, key, *, args=None, token_key='NextToken', max_pages=20, stop_when=None):
+    if type(max_pages) is not int or max_pages <= 0:
+        raise ValueError('positive bounded page count required')
     request, items, seen = dict(args or {}), [], set()
     for _ in range(max_pages):
         response = operation(**request)
         items.extend(response[key])
+        if stop_when is not None and stop_when(items):
+            return {'status': 'complete', 'items': items}
         token = response.get(token_key)
         if not token:
             return {'status': 'complete', 'items': items}
@@ -38,18 +45,51 @@ def roles(client):
     return result
 
 
-def quotas(client):
-    result = pages(client.list_service_quotas, 'Quotas', args={'ServiceCode': 'sagemaker', 'MaxResults': 100})
+def quotas(client, *, max_pages=20):
+    def matches(item):
+        return item.get('QuotaCode') == ENDPOINT_QUOTA and item.get('QuotaName') == ENDPOINT_QUOTA_NAME
+    result = pages(client.list_service_quotas, 'Quotas', args={'ServiceCode': 'sagemaker', 'MaxResults': 100},
+                   max_pages=max_pages, stop_when=lambda items: any(matches(item) for item in items))
     result['items'] = [{key: item.get(key) for key in ('QuotaName', 'QuotaCode', 'Value', 'Adjustable')}
-                       for item in result['items'] if 'g6e.2xlarge' in item.get('QuotaName', '')]
+                       for item in result['items'] if matches(item)]
+    result['scope'] = 'selected_endpoint_quota_only'
+    result['quota_code'] = ENDPOINT_QUOTA
+    if result['status'] == 'complete' and len(result['items']) != 1:
+        result['status'] = 'unresolved'
     return result
 
 
 def prices(client, region):
+    # AWS-maintained hosting lookup uses component + instanceName, not instanceType:
+    # https://awslabs.github.io/llmeter/reference/callbacks/cost/providers/sagemaker/
     result = pages(client.get_products, 'PriceList', args={'ServiceCode': 'AmazonSageMaker', 'MaxResults': 100,
-                   'Filters': [{'Type': 'TERM_MATCH', 'Field': 'instanceType', 'Value': 'ml.g6e.2xlarge'},
+                   'Filters': [{'Type': 'TERM_MATCH', 'Field': 'instanceName', 'Value': 'ml.g6e.2xlarge'},
+                               {'Type': 'TERM_MATCH', 'Field': 'component', 'Value': 'Hosting'},
                                {'Type': 'TERM_MATCH', 'Field': 'regionCode', 'Value': region}]})
     result['items'] = [json.loads(item) for item in result['items']]
+    rates = []
+    for item in result['items']:
+        product = item.get('product', {})
+        attributes = product.get('attributes', {})
+        if any(attributes.get(k) != v for k, v in {'component': 'Hosting', 'instanceName': 'ml.g6e.2xlarge', 'regionCode': region}.items()):
+            continue
+        for term in item.get('terms', {}).get('OnDemand', {}).values():
+            for key, dimension in term.get('priceDimensions', {}).items():
+                value = dimension.get('pricePerUnit', {}).get('USD')
+                if dimension.get('unit') != 'Hrs' or type(value) is not str:
+                    continue
+                try:
+                    amount = Decimal(value)
+                    if not amount.is_finite() or amount < 0:
+                        continue
+                except InvalidOperation:
+                    continue
+                rates.append({'sku': product.get('sku'), 'dimension': key, 'usd_per_instance_hour': value})
+    result['scope'] = 'on_demand_hosting_compute_only'
+    result['endpoint_rates'] = rates
+    if result['status'] == 'complete' and len(rates) != 1:
+        result['status'] = 'unresolved'
+    result['endpoint_rate_status'] = 'resolved' if result['status'] == 'complete' else 'unresolved'
     return result
 
 
