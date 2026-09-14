@@ -40,6 +40,22 @@ def update(bridge, sessions):
                          as_of=first.receive_cutoff_ns, source_as_of=first.event_cutoff_ns, source_hash=first.source_hash)
 
 
+def test_second_handle_source_change_during_forward_never_publishes(tmp_path, monkeypatch):
+    from c15_journal import EvidenceJournal
+    bridge,sessions=build_refresh(tmp_path)
+    original=bridge.context.model.forward_decision
+    def changed(**kwargs):
+        result=original(**kwargs)
+        other=EvidenceJournal(bridge.context.builder.journal.path)
+        try: other.append('foreign-audit',{})
+        finally: other.close()
+        return result
+    monkeypatch.setattr(bridge.context.model,'forward_decision',changed)
+    with pytest.raises(ValueError): update(bridge,sessions)
+    assert all(bridge.book.latest(t,arm_hash=H) is None for t,_ in sessions)
+    with pytest.raises(ValueError): update(bridge,sessions)
+
+
 def test_each_target_uses_same_forward_state_and_preserves_native_receipt(tmp_path, monkeypatch):
     bridge, sessions = build_refresh(tmp_path)
     original = bridge.context.model.forward_decision; states = []

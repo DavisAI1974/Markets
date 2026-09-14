@@ -99,6 +99,8 @@ class NativeForecastRefresh:
         if any(p.device.type != 'cpu' for p in self.context.model.parameters()):
             raise ValueError('native forecast candidate currently requires CPU arithmetic')
         cursor = self.context.builder.chain.next_cursor-1 if through_cursor is None else through_cursor
+        journal = self.context.builder.journal
+        journal_state = (journal.count, journal.head_hash)
         tokens, info, input_hash, teacher, context = self.context._prepare(as_of, cursor)
         if info['source_prefix_hash'] != source_hash:
             raise ValueError('session source differs from the native journal prefix')
@@ -109,13 +111,12 @@ class NativeForecastRefresh:
         execution_hash = native_execution_hash(self.context.model)
         snapshot = DecoderSnapshot.capture(self.decoder)
         model_hash = evidence_hash(dict(native=native_hash, execution=execution_hash, decoder=snapshot.digest))
-        journal = self.context.builder.journal
-        journal_state = (journal.count, journal.head_hash)
         generation_hash = evidence_hash(dict(model=model_hash, sessions=expected_sessions_hash,
             input_hash=input_hash, journal_state=journal_state, code=Path(__file__).read_bytes()))
         by_target = dict(sessions)
 
         def unchanged():
+            journal.verify(count=journal_state[0],head_hash=journal_state[1])
             if (self.context._model_hash() != native_hash or DecoderSnapshot.capture(self.decoder) != snapshot
                     or native_execution_hash(self.context.model) != execution_hash
                     or (journal.count, journal.head_hash) != journal_state):

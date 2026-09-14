@@ -224,6 +224,9 @@ class ContextSessionRunner:
             raise ValueError('model did not produce finite evidence scores for every context row')
         if self._model_hash()!=model_hash:
             raise ValueError('model changed during forward; retry requires original model')
+        # A second journal handle does not update this handle's cached head.
+        # Freeze the source for the whole attempt before accepting its output.
+        self.builder.journal.verify(count=identity[2],head_hash=identity[3])
         receipt=ContextReceipt(**info,input_hash=input_hash,model_hash=model_hash)
         self._last=dict(tokens=tokens,receipt=receipt,through_cursor=cursor)
         self._retry=None
@@ -233,6 +236,10 @@ class ContextSessionRunner:
         if self._retry is not None or self._last is None:
             raise ValueError('complete the pending cutoff before checkpoint export')
         last=self._last
+        # A valid later suffix is allowed; an unprocessed or altered physical
+        # journal is not. The exported input still names the completed cutoff.
+        for _ in journal_prefix(self.builder,last['through_cursor']):
+            pass
         return dict(schema=SCHEMA,entity=self.entity,t_ctx=self.t_ctx,through_cursor=last['through_cursor'],
             receipt=asdict(last['receipt']),tokens={k:v.detach().clone() for k,v in last['tokens'].items()})
 

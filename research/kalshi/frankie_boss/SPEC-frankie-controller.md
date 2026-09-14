@@ -86,6 +86,9 @@ leader-election claim. Its explicit async `refresh` request carries:
 Preflight deep-copy/validate metadata and all pins before native work. Freeze the
 canonical request bytes, policy/target registry, controller code, context-mapper
 code, native-context prompt/parser identities, and both model configurations.
+The controller configuration also binds the shared `granite_shadow.py` runtime,
+so changing transport waiting, request construction or response validation cannot
+silently reuse a completed request under unchanged service-module bytes.
 Changes to these inputs require a new declared model/configuration generation;
 ordinary source-prefix updates retain unchanged model identities. Never resolve a
 human model label to whatever endpoint happens to be available.

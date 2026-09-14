@@ -215,3 +215,22 @@ def test_earlier_delivered_prefix_unchanged_by_suffix(tmp_path):
         driver.complete()
     finally:
         driver.close()
+def test_receive_regression_completes_and_restores_without_reordering(tmp_path):
+    from test_c15_full_evidence import row
+    from test_causal_prefix_records import scope,member,SHA_A
+    from causal_prefix import ScopeKind
+    from c15_journal import pack
+    declared=scope(kind=ScopeKind.PROBE_ONLY,members=(member(0,SHA_A,2),))
+    driver=SourceConformanceDriver(declared,tmp_path/'regression.sqlite',expected_scope_hash=declared.genesis_hash())
+    rows=[]
+    for cursor,recv in enumerate((20,10)):
+        raw=row(cursor,oid=cursor+1);raw['ts_recv']=recv;rows.append(raw)
+        driver.append(raw,cursor=cursor,source_member_index=0,source_sha256=SHA_A,session_id='synthetic')
+    completion=driver.complete();state=driver.checkpoint();driver.close()
+    restored=SourceConformanceDriver.restore(declared,tmp_path/'regression.sqlite',state,
+        expected_scope_hash=declared.genesis_hash(),expected_state_hash=state['state_hash'])
+    evidence=list(restored.evidence_stream())
+    assert pack([e['raw_record'] for e in evidence])==pack(rows)
+    assert evidence[-1]['integrity']['receive_time_regression']==1
+    assert restored.complete()==completion
+    restored.close()

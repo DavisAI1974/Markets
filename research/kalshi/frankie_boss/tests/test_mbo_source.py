@@ -198,3 +198,18 @@ def test_physically_present_undefined_ts_out_is_preserved(tmp_path):
         assert raw['dbn_wire_bytes'] == physical
     finally:
         driver.close()
+
+
+def test_actual_sdk_receive_regression_retains_wire_and_completes_restore(tmp_path):
+    records=[record(1,ts_recv=201),record(2,ts_recv=101)]
+    result,scope=ingest(tmp_path,dbn_bytes(records),2)
+    driver=SourceConformanceDriver.restore(scope,tmp_path/'journal.sqlite',result.checkpoint,
+        expected_scope_hash=scope.genesis_hash(),expected_state_hash=result.completion.builder_state_hash)
+    try:
+        evidence=list(driver.evidence_stream())
+        assert [e['raw_record']['dbn_wire_bytes'] for e in evidence]==[bytes(r) for r in records]
+        assert [e['raw_record']['ts_recv'] for e in evidence]==[201,101]
+        assert evidence[-1]['integrity']['receive_time_regression']==1
+        assert driver.complete()==result.completion
+    finally:
+        driver.close()

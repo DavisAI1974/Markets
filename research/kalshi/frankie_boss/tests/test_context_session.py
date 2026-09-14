@@ -12,6 +12,39 @@ def model():
     return NativeTrunk(NativeRegistry(), d_model=16, n_heads=2, n_layers=1).double().eval()
 
 
+def test_second_handle_source_change_during_forward_cannot_return_or_export(tmp_path, monkeypatch):
+    from c15_journal import EvidenceJournal
+    builder=build(tmp_path); submit(builder,row(0)); m=model()
+    session=ContextSessionRunner(m,builder,entity=(1,1))
+    original=m.forward
+    def changed(**kwargs):
+        result=original(**kwargs)
+        other=EvidenceJournal(builder.journal.path)
+        try: other.append('foreign-audit',{})
+        finally: other.close()
+        return result
+    monkeypatch.setattr(m,'forward',changed)
+    with pytest.raises(ValueError): session.run(as_of=2)
+    with pytest.raises(ValueError): session.export()
+
+
+def test_export_checks_physical_source_but_preserves_valid_later_prefix(tmp_path):
+    from c15_journal import EvidenceJournal
+    builder=build(tmp_path); submit(builder,row(0)); m=model()
+    session=ContextSessionRunner(m,builder,entity=(1,1))
+    output=session.run(as_of=2)
+    session.append(row(1),source_member_index=0,session_id='s')
+    state=session.export()
+    assert state['receipt']['input_hash']==output.receipt.input_hash
+    restored=ContextSessionRunner.restore(m,builder,state,
+        expected_input_hash=output.receipt.input_hash,expected_model_hash=output.receipt.model_hash)
+    assert restored.run(as_of=2,through_cursor=0).receipt==output.receipt
+    other=EvidenceJournal(builder.journal.path)
+    try: other.append('foreign-audit',{})
+    finally: other.close()
+    with pytest.raises(ValueError): session.export()
+
+
 def test_context_receipt_accounts_for_every_prefix_row_and_resume(tmp_path):
     builder = build(tmp_path)
     m = model()

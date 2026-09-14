@@ -130,6 +130,29 @@ class MboResumeStateTests(unittest.TestCase):
         self.assertEqual(continuous_emitted, restored_emitted)
         self.assertEqual(export_adapter_state(continuous), export_adapter_state(restored))
 
+    def test_receive_regression_preserves_order_defect_and_exact_continuation(self):
+        adapter=V4MboAdapter()
+        records=self.prefix()[:3]
+        records[1]['ts_recv']=500_000_000
+        records[1]['ts_event']=499_999_990
+        apply_rows(adapter,records)
+        state=export_adapter_state(adapter)
+        self.assertEqual([a['ts_recv_ns'] for a in state['books'][0]['activity']],
+                         [1_000_000_000,500_000_000,3_000_000_000])
+        self.assertEqual(state['books'][0]['integrity']['receive_time_regression'],1)
+        restored=restore_adapter_state(state)
+        self.assertEqual(export_adapter_state(restored),state)
+        self.assertEqual(apply_rows(adapter,self.suffix()),apply_rows(restored,self.suffix()))
+        self.assertEqual(export_adapter_state(adapter),export_adapter_state(restored))
+
+    def test_unsorted_activity_still_checks_every_row_against_receive_watermark(self):
+        adapter=V4MboAdapter();apply_rows(adapter,self.prefix()[:3])
+        state=export_adapter_state(adapter)
+        state['books'][0]['activity'][0]['ts_recv_ns']=4_000_000_000
+        state['state_hash']=adapter_state_hash(state)
+        with self.assertRaisesRegex(ResumeStateError,'watermark'):
+            restore_adapter_state(state)
+
     def test_checkpoint_refuses_open_event_group(self):
         p = PRICE_SCALE
         adapter = V4MboAdapter()

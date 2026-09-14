@@ -78,7 +78,7 @@ class FrankieForecastController:
             targets=tuple(asdict(t) for t in self.bridge.targets),policy=asdict(self.bridge.policy),
             entity=self.bridge.context.entity,
             code={name:Path(__file__).with_name(name).read_bytes() for name in
-                  ('frankie_controller.py','controller_journal.py','granite_context.py')},
+                  ('frankie_controller.py','controller_journal.py','granite_context.py','granite_shadow.py')},
             transport_code=Path(source).read_bytes())
 
     def _snapshot(self, publications, *, as_of, source_as_of, source_hash, through_cursor):

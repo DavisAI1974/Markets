@@ -32,6 +32,20 @@ def test_disabled_calls_legacy_without_dependencies():
     assert asyncio.run(controller.refresh()) is sentinel
 
 
+def test_shared_critic_runtime_change_invalidates_completed_request(tmp_path, monkeypatch):
+    from pathlib import Path
+    controller, _, critic, request = build_controller(tmp_path)
+    assert asyncio.run(controller.refresh(**request))['status'] == 'complete'
+    original = Path.read_bytes
+    def changed(path):
+        content = original(path)
+        return content + b'\n# changed shared runtime\n' if path.name == 'granite_shadow.py' else content
+    monkeypatch.setattr(Path, 'read_bytes', changed)
+    with pytest.raises(ValueError, match='changed'):
+        asyncio.run(controller.refresh(**request))
+    assert critic.calls == 1
+
+
 def test_enabled_requires_pinned_critic_before_native_work(tmp_path):
     bridge, _ = build_refresh(tmp_path)
     with pytest.raises(ValueError, match='critic'):

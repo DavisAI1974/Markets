@@ -260,9 +260,14 @@ def _validate_state(state: Mapping[str, Any]) -> None:
         if not isinstance(book["activity"], list):
             raise ResumeStateError("activity must be a list")
         activity = [_validate_activity(row) for row in book["activity"]]
-        if any(activity[i]["ts_recv_ns"] > activity[i + 1]["ts_recv_ns"] for i in range(len(activity) - 1)):
-            raise ResumeStateError("activity rows are not in causal receive order")
-        if activity and book["last_recv_ns"] is not None and activity[-1]["ts_recv_ns"] > book["last_recv_ns"]:
+        # Source order is authoritative even when receive timestamps regress.
+        # The unchanged adapter accepts and diagnoses these rows; preserve their
+        # exact order and let its existing rolling-cache reconstruction handle
+        # unsorted timestamps. Check every row against the maximum seen receive
+        # time instead of assuming the final activity row is the latest one.
+        if activity and book["last_recv_ns"] is not None and any(
+            row["ts_recv_ns"] > book["last_recv_ns"] for row in activity
+        ):
             raise ResumeStateError("activity exceeds book receive watermark")
 
 
