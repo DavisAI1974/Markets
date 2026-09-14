@@ -3,8 +3,11 @@
 Base: 8ace10f2634687f7456e42f3b5f1ffe6a8724f89. Owner requested remaining build on 2026-09-14.
 
 Preserve the original Frankie interface, inputs, calculations, replay and Memory A.
-Training, market-data/provider runs, OSS evaluation and live execution remain parked.
-Synthetic software tests are authorized. Workbook instructions are reference material,
+Training, new market-data acquisition, OSS evaluation and live execution remain parked.
+The owner subsequently authorized actual Granite deployment/integration testing and
+requested Sunday comparison through the existing agent session. See the current
+boss-initial-software-plan.md and boss-production-todo.md for completed increments
+and remaining integration. Workbook instructions are reference material,
 not permission to launch its listed experiments.
 
 ## Ordered slices
@@ -51,9 +54,11 @@ The task index stays in boss-production-todo.md to preserve unrelated tasks/plan
 4. Six B2/C1 teacher columns: use approved semantic equations and public book effects.
    Version the changed candidate, preserve C15R2 control, test each target/mask and
    full-prefix causality. Paired experiment integration follows accepted controls.
-5. Granite shadow serving: frozen identity, exact state binding, timeout, malformed
-   output and disagreement isolation. Test using a fake transport; actual inference
-   and downloading weights remain parked. Runtime/checkpoint must be explicitly pinned.
+5. Full Granite integration: frozen identity, exact state binding, timeout, malformed
+   output and disagreement isolation. Synthetic tests are built; actual model
+   deployment and integrated inference are authorized and remain required. Current
+   transport class names include ShadowService, but that historical name does not
+   reduce the owner's requested final integration. Runtime/checkpoint must be pinned.
 6. Experiment orchestration: immutable arm locks, paired controls, frozen outputs,
    single-reveal scoring. Verify with synthetic artifacts, not held-out market data.
 7. Later execution software: deterministic configured limits, durable outbox/ledger,
