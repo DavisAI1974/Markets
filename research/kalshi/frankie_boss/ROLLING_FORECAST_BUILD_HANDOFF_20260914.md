@@ -89,7 +89,9 @@ does not independently enforce membership in a matching refresh intent.
 
 Training, provider/market-data runs, held-out/OSS evaluation and live execution
 remain parked. No workbook production gate is promoted by this increment. The
-earlier workbook copy has not been updated for this software slice.
+earlier workbook copy was unchanged at implementation checkpoint ccc7159d. The
+subsequent closeout workbook now records this software slice while retaining open
+production gates. See NEXT_CHAT_HANDOFF_20260914.md and CLOSEOUT_VERIFICATION_20260914.md.
 
 ## Review and rollback
 

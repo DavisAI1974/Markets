@@ -2,7 +2,7 @@
 
 - [x] Governed QSV artifact-to-native/B1 attachment and retry/restore tests (11 new focused checks)
 - [ ] QSV producer-side production wiring and throughput validation
-- [x] Forecast-head and confidence-label proposed design documented (SPEC-native-forecast-confidence.md)
+- [x] Native forecast and category-free confidence/selection design documented (SPEC-native-forecast-confidence.md)
 - [ ] Forecast design reviewed; heads/bridge implemented and empirical calibration bindings completed
 - [x] Internal confidence diagnostics without categorical publication labels (39 synthetic tests; G15 empirical acceptance remains open)
 - [x] Best comparable candidate selection and durable revisions at every horizon (synthetic software only)
@@ -13,7 +13,7 @@
 - [ ] Granite frozen serving and shadow policy
 - [ ] Paired experiment orchestration and single reveal
 - [ ] Deterministic execution controls, ledger/reconciliation and venue adapters
-- [ ] Focused review and final build/workbook handoff
+- [x] Rolling increment reviewed; workbook and next-chat handoff completed (remaining production build still open)
 
 Parked: training, market-data/provider runs, OSS evaluation, live execution.
 Unmeasured: production throughput and provisional context-length acceptance.
