@@ -16,6 +16,7 @@ except ImportError:
     from forecast_contract import HashedContract, finite_number, sha256_digest, unique_names
 
 SCHEMA = 'BOSS_ROLLING_FORECAST_V1'
+REFRESH_SCHEMA = 'BOSS_FORECAST_REFRESH_INTENT_V1'
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +30,31 @@ class ForecastTarget(HashedContract):
         unique_names((self.target_id,), 'target_id')
         if type(self.target_ns) is not int:
             raise ValueError('target_ns must be integer nanoseconds')
+
+
+@dataclass(frozen=True, slots=True)
+class RefreshIntent(HashedContract):
+    as_of: int
+    source_as_of: int
+    source_hash: str
+    arm_hash: str
+    generation_hash: str
+    refresh_policy_hash: str
+    material: bool
+    targets: tuple[ForecastTarget, ...]
+
+    def __post_init__(self):
+        if (type(self.as_of) is not int or type(self.source_as_of) is not int or
+                self.source_as_of > self.as_of or type(self.material) is not bool):
+            raise ValueError('causal integer cutoffs and boolean material flag required')
+        for name in ('source_hash', 'arm_hash', 'generation_hash', 'refresh_policy_hash'):
+            sha256_digest(getattr(self, name), name)
+        if (type(self.targets) is not tuple or not self.targets or
+                any(not isinstance(t, ForecastTarget) for t in self.targets)):
+            raise ValueError('immutable full refresh target registry required')
+        keys = tuple((t.instrument, t.target_id) for t in self.targets)
+        if len(set(keys)) != len(keys) or keys != tuple(sorted(keys)):
+            raise ValueError('refresh target registry must be unique and canonical')
 
 
 @dataclass(frozen=True, slots=True)
@@ -91,6 +117,8 @@ class PublishedForecast:
     previous_hash: str | None
     receipt_hash: str
     request_hash: str
+    refresh_policy_hash: str | None
+    generation_hash: str | None
 
     @property
     def remaining_ns(self):
@@ -113,6 +141,7 @@ self-consistent database. External delivery/acknowledgement is a separate layer.
         self._latest = {}
         self._requests = {}
         self._targets = {}
+        self._refresh_locks = {}
         self._failed = False
         try:
             if checkpoint is not None:
@@ -134,18 +163,24 @@ self-consistent database. External delivery/acknowledgement is a separate layer.
         return candidate.arm_hash, candidate.target.digest
 
     @staticmethod
-    def _request(candidates):
+    def _request(candidates, refresh_policy_hash, generation_hash):
         return dict(schema=SCHEMA,
+                    refresh_policy_hash=refresh_policy_hash,
+                    generation_hash=generation_hash,
                     candidates=tuple(asdict(c) for c in sorted(candidates, key=lambda c: c.candidate_id)))
 
-    def _prepare(self, candidates):
+    def _prepare(self, candidates, refresh_policy_hash=None, generation_hash=None):
+        if refresh_policy_hash is not None:
+            sha256_digest(refresh_policy_hash, 'refresh_policy_hash')
+        if generation_hash is not None:
+            sha256_digest(generation_hash, 'generation_hash')
         selected = select_candidate(candidates)
         target_key = (selected.arm_hash, selected.target.instrument, selected.target.target_id)
         if target_key in self._targets and self._targets[target_key] != selected.target:
             raise ValueError('an existing target identity cannot move to a different time')
         stream = self._stream(selected)
         intent = stream + (selected.as_of,)
-        request = self._request(candidates)
+        request = self._request(candidates, refresh_policy_hash, generation_hash)
         request_hash = evidence_hash(request)
         if intent in self._requests:
             old = self._requests[intent]
@@ -165,7 +200,8 @@ self-consistent database. External delivery/acknowledgement is a separate layer.
 
     def _remember(self, selected, payload, receipt_hash):
         result = PublishedForecast(selected, payload['revision'], payload['previous_hash'],
-                                   receipt_hash, payload['request_hash'])
+                                   receipt_hash, payload['request_hash'], payload['refresh_policy_hash'],
+                                   payload['generation_hash'])
         stream = self._stream(selected)
         self._latest[stream] = result
         self._requests[stream + (selected.as_of,)] = result
@@ -174,22 +210,50 @@ self-consistent database. External delivery/acknowledgement is a separate layer.
 
     def _replay(self, entry):
         payload = entry['payload']
+        if entry['kind'] == REFRESH_SCHEMA:
+            try:
+                intent = RefreshIntent(**dict(payload, targets=tuple(
+                    ForecastTarget(**t) for t in payload['targets'])))
+            except (TypeError, KeyError) as exc:
+                raise ValueError('malformed refresh intent') from exc
+            key = (intent.arm_hash, intent.as_of)
+            if key in self._refresh_locks or evidence_hash(asdict(intent)) != evidence_hash(payload):
+                raise ValueError('refresh intent replay mismatch')
+            self._refresh_locks[key] = intent
+            return
         if entry['kind'] != SCHEMA or type(payload) is not dict:
             raise ValueError('unexpected forecast ledger entry')
         try:
             candidates = tuple(ForecastCandidate(**dict(c, target=ForecastTarget(**c['target'])))
                                for c in payload['candidates'])
-            selected, expected = self._prepare(candidates)
+            selected, expected = self._prepare(candidates, payload['refresh_policy_hash'], payload['generation_hash'])
         except (TypeError, KeyError) as exc:
             raise ValueError('malformed forecast ledger entry') from exc
         if expected is None or evidence_hash(expected) != evidence_hash(payload):
             raise ValueError('forecast ledger selection or revision mismatch')
         self._remember(selected, payload, evidence_hash(entry))
 
-    def publish(self, candidates):
+    def bind_refresh(self, intent):
+        """Durably freeze the whole refresh request before any generation starts."""
         if self._failed:
             raise ValueError('publication state uncertain; restart from verified checkpoint')
-        selected, payload = self._prepare(candidates)
+        if not isinstance(intent, RefreshIntent):
+            raise ValueError('typed refresh intent required')
+        key = (intent.arm_hash, intent.as_of)
+        previous = self._refresh_locks.get(key)
+        if previous is not None:
+            if previous.digest != intent.digest:
+                raise ValueError('refresh intent changed after initial attempt')
+            return
+        self._failed = True
+        self.journal.append(REFRESH_SCHEMA, asdict(intent))
+        self._refresh_locks[key] = intent
+        self._failed = False
+
+    def publish(self, candidates, *, refresh_policy_hash=None, generation_hash=None):
+        if self._failed:
+            raise ValueError('publication state uncertain; restart from verified checkpoint')
+        selected, payload = self._prepare(candidates, refresh_policy_hash, generation_hash)
         if payload is None:
             return selected
         # If storage commits then throws, do not expose or retry an uncertain write.
