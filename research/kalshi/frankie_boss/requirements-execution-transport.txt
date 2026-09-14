@@ -1,0 +1,2 @@
+# Optional authentication slice; does not modify training/deployment environments.
+cryptography==46.0.3
