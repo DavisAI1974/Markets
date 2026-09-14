@@ -1,5 +1,9 @@
 # Continue Frankie after combined-build documentation closeout
 
+Later implementation status: read SESSION_CLOSEOUT_20260914.md first. It records
+implemented compact routing/attachments/contract, verified staging, final receiver
+regression and the pending actual hosted test. Historical status below is preserved.
+
 Run using-agent-skills first. Repository: DavisAI1974/Markets.
 
 The owner wants the full final Frankie build completed, including actual Granite

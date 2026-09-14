@@ -1,5 +1,9 @@
 # Historical workbook reconciliation — 2026-09-14
 
+Later implementation status is recorded in SESSION_CLOSEOUT_20260914.md. This
+historical row audit is preserved; its then-pending compact route, attachment
+software, contract and staging have advanced as documented in that closeout.
+
 Read-only reconciliation. No workbook, repository source, model, provider, or test run changed. Spreadsheet skill applied; bundled Python ZIP/XML extraction used to inspect exact worksheet cells. This file is a build inventory, not new authorization for training, acquisition, held-out reveal, or orders.
 
 ## Evidence and precedence
