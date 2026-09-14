@@ -2,7 +2,9 @@
 
 ## Status
 
-Proposed, 2026-09-14. Design only; not implementation or production approval.
+Revised by owner, 2026-09-14. Native decoder design remains proposed. Internal
+diagnostics and rolling selection are implemented with synthetic tests; no
+empirical or production approval is implied.
 
 ## Context
 
@@ -22,10 +24,19 @@ that their preopen sum is a marginal median net. Fit timing before path values;
 use native-generated times and independent audit queries to avoid future-extremum
 label leakage and easy-knot-only evaluation.
 
-Define confidence as the calibrated probability of a joint, explicitly bounded
-gap/net/path-error event. Proposed public bands are 0.60/0.80; unknown calibration
-has an explicit low/null sentinel. Bind the policy, model and calibration artifacts
-to the exact forward/retry identity.
+Measure reliability internally as the calibrated probability of a joint, explicitly
+bounded gap/net/path-error event when calibration is supported. The owner rejected
+categorical bands and absolute publication thresholds: publish the sole valid
+candidate, or the highest-ranked among comparable alternatives. Unknown calibration
+means an absent internal probability, not a low label or a withheld forecast.
+Bind policy, model and calibration artifacts to the exact forward/retry identity.
+
+All registered horizons receive append-only revisions at stable absolute targets.
+Explicit cadence can increase update frequency as targets approach; material data
+can refresh all active targets. Freeze the whole refresh intent before generation,
+including full registry and generation hashes, so partial retries cannot change scope.
+Legacy BLD-1 confidence compatibility remains unresolved and the protected projector
+is unchanged. Do not silently label every selected forecast high.
 
 The owner's research notes add mandatory timestamp-resolvability evidence before
 timing labels, internal ordered quantiles with per-horizon coverage curves,

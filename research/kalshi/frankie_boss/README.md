@@ -36,8 +36,14 @@ The trunk contains one shared `TemporalGraphBranch`. There are not three graph m
 The proposed native forecast and confidence design is in
 [SPEC-native-forecast-confidence.md](SPEC-native-forecast-confidence.md).
 It specifies the missing native decoders and a separately governed confidence
-policy; it is not an implemented or calibrated forecast checkpoint. The existing
-projector remains unchanged, and the proposed numeric bands live outside it.
+policy; it is not a trained or calibrated native forecast checkpoint. The owner
+replaced categorical bands with best-comparable-candidate selection. The existing
+projector remains unchanged; its legacy confidence compatibility is still pending.
+
+The additive rolling layer now retains every target's revisions and alternatives,
+supports explicit all-horizon refresh cadence, and freezes retry intent before
+generation. See [the rolling build handoff](ROLLING_FORECAST_BUILD_HANDOFF_20260914.md)
+for implemented scope, synthetic verification and remaining integration work.
 
 Only these learned quantities have deliberately specified public semantics:
 

@@ -17,12 +17,16 @@ at every horizon; no categorical publication threshold):
 2. Comparable candidate selection plus durable rolling revisions, consuming frozen
    forecast artifacts. Test sole/maximum/tie selection, all horizons, immutable targets,
    idempotency, restart, source/arm isolation and retained alternatives.
-3. Native decoder and protected integration remain subsequent work; no synthetic
+3. Explicit cadence at every horizon, with durable whole-request intent binding
+   before generation. Test partial/material retries and failure before first output.
+4. Native decoder and protected integration remain subsequent work; no synthetic
    artifact is presented as a trained forecast. Reuse the existing C15 exact journal
    primitive in a separate forecast ledger, never write forecast rows into C15 input.
 
 Verification: focused pytest files test_forecast_confidence.py and
-test_rolling_forecast.py, then existing seam/B1/context suites in an LF checkout.
+test_rolling_forecast.py and test_forecast_refresh.py, then existing seam/B1/context
+suites in an LF checkout. Completed broad synthetic verification: 871 passed,
+1 CUDA-only skip (checkpoint dependency-isolation tests in a separate process).
 Each slice changes at most three implementation/test files and receives review.
 The task index stays in boss-production-todo.md to preserve unrelated tasks/plan.md.
 

@@ -8,8 +8,8 @@ The prior build workbook and historical handoffs are reference material, not per
 
 ## Owner revision: rolling best-supported forecasts (2026-09-14)
 
-The owner's subsequent instructions supersede the categorical confidence policy
-below: do not use low/med/high categories or an absolute confidence cutoff to
+The owner's subsequent instructions replace the earlier categorical policy:
+do not use low/med/high categories or an absolute confidence cutoff to
 decide publication. Publish the sole valid candidate, or the highest-ranked of
 multiple comparable candidates, with scores retained internally. An unavailable
 calibrated probability is not a reason to withhold a valid ranked forecast.
@@ -47,10 +47,10 @@ Assumptions proposed for review:
 - Forecast heads are an additive, opt-in candidate. Granite never supplies or replaces them.
 - An approved instrument/session/label manifest supplies units, calendar and anchor
   conventions. We do not guess a futures multiplier, exchange close or price source.
-- Numerical confidence bands below are proposed policy, not measured performance.
+- No categorical confidence bands or absolute publication floor are used.
   Training, market-data runs, held-out scoring and execution remain parked.
 
-Forecast generation and its reliability label form one consumer-facing capability;
+Forecast generation and best-candidate selection form one consumer-facing capability;
 calibration has a one-way dependency on a frozen forecast, never the reverse.
 
 ## 2. Public semantics and accounting
@@ -75,7 +75,7 @@ label; it is not repaired by shifting or rescaling the path.
 | `overnight_gap_usd` | same | Conditional P50 gap before open; certified observed gap once causally available |
 | `session_path_p50_curve` | `path_p50_curve` | Native, endogenous-time conditional P50 cumulative-from-open values |
 | `session_net_usd` | `guessed_net_usd` | Gap output plus native path terminal, calculated once |
-| `confidence_label` | `confidence` | Governed `low/med/high` forecast-reliability label |
+| Internal ranking score and optional calibrated probability | Legacy `confidence` compatibility unresolved | Ranking chooses among comparable candidates; no categorical field is added to the new API |
 
 **Median limitation:** before the open, the sum of marginal medians need not be the
 median of the sum. Therefore the public net is a coherent central full-day forecast,
@@ -236,7 +236,7 @@ For each frozen prediction, the binary success event is:
 
 Queries include all emitted future knots, the terminal and the independent
 outcome-independent audit set. Thus omitting a difficult output knot cannot alone
-improve the confidence label. This event covers those declared queries, not every
+improve the reliability score. This event covers those declared queries, not every
 instant between them. No tolerance is inferred from the projector's $1 accounting
 tolerance, from a desired success rate, or from future session volatility.
 
@@ -251,17 +251,12 @@ forecast outputs, horizon/session phase and causal quality masks, targeting `E`
 with binary log loss. It cannot alter forecasts, knot selection or B1 halting.
 Pass its scalar logit through a separately fitted sigmoid calibrator [2].
 
-Proposed policy `forecast-confidence-v1`:
-
-| Eligible calibrated probability p(E) | Public label |
-|---|---|
-| `p < 0.60` | `low` |
-| `0.60 <= p < 0.80` | `med` |
-| `p >= 0.80` | `high` |
-
-These are proposed reporting bands, not trading thresholds or empirical claims.
-The calibrated probability stays internal; the projector receives only the resolved
-enum and remains unchanged.
+Publication uses the sole valid candidate or the greatest comparable ranking score.
+There is no absolute score floor. Calibrated probability, when supported, remains
+an internal measurement. Highest-ranked does not imply high absolute reliability.
+The existing projector's required enum is a legacy compatibility issue, not a
+reason to reintroduce categories or label every selected candidate high. Enabled
+Frankie wiring remains pending an explicit compatible boundary decision.
 
 ### Eligibility and failure states
 
@@ -270,7 +265,7 @@ hashes match, the calibration artifact has passed its independent acceptance rep
 and the current instrument, phase, horizon and input-quality state fall within its
 declared support. Merely having a file or a finite sigmoid output is insufficient.
 
-The acceptance lock must specify minimum distinct-session support per reported band,
+The acceptance lock must specify minimum distinct-session support per reported bin,
 maximum reliability deviation, confidence-interval procedure accounting for
 within-session and serial dependence, missing-label limits and expiry/drift criteria.
 Inspect reliability diagrams plus log loss/Brier scores; those scores alone do not
@@ -283,9 +278,9 @@ Implement validation rejecting an incomplete production policy; do not fabricate
 numbers to turn this design into a passed production gate. Synthetic tests may
 supply explicitly synthetic tolerances and acceptance artifacts.
 
-- Missing, expired, mismatched or unsupported calibration: public `low`, internal
-  `probability=null`, explicit reason such as `UNCALIBRATED` or `OUT_OF_SUPPORT`.
-  This sentinel does not assert that a measured probability is below 0.60.
+- Missing, expired, mismatched or unsupported calibration: internal
+  `probability=null` and an explicit diagnostic reason. This is neither a zero
+  probability nor a categorical label and does not suppress a valid forecast.
 - Invalid/missing forecast, source mismatch or timeout: existing complete zero
   safety ABSTAIN, with defects. Never synthesize a forecast from Granite.
 - Valid forecast plus ordinary trading ABSTAIN: preserve net/gap/path and the
@@ -309,7 +304,7 @@ predeclared components/query coordinates, not whichever summary looks persuasive
 Report the complete matrix as well as instrument/phase/horizon strata.
 
 Use average ranks for ties. Report pairwise valid row counts, missing counts,
-constant-input flags and dependence-aware uncertainty. A constant low fallback
+constant-input flags and dependence-aware uncertainty. A constant scorer
 has undefined correlation, not evidence of independence [3]. Correlation near
 either +1 or -1 is a redundancy warning, not a proof that confidence has no useful
 information; low correlation alone is not proof of added value either.
@@ -440,26 +435,21 @@ Proposed internal objects are immutable, validated and schema-versioned:
   error policy, preregistered comparison/grid/seed manifest, support/acceptance
   report, validity interval and provenance.
 
-Illustrative boundary usage, not code implemented by this spec:
-
-```python
-heads = InternalBLD1Heads(
-    session_net_usd=gap_usd + path_points[-1][1],
-    overnight_gap_usd=gap_usd,
-    session_path_p50_curve=tuple(path_points),
-    confidence_label=confidence.label,
-    internal_only={
-        "forecast_probability": confidence.probability,
-        "confidence_status": confidence.status,
-        "forecast_artifact_hash": artifact_hash,
-    },
-)
-```
-
 Keep existing `FrankieProjector.project_internal` validation. Other BLD fields
 retain their protected population path; no invented reasoning or play activations.
-All twelve fields must still be present. Operational diagnostics must also appear
-through the existing defects channel without introducing a thirteenth public field.
+All twelve fields must still be present. The earlier categorical projection example
+is withdrawn. Do not route informational calibration diagnostics through a fatal
+packet-defect path that would erase a valid forecast. Enabled compatibility and
+diagnostic transport require separate integration tests; no thirteenth field is added.
+
+Implemented rolling-layer contracts are `ForecastTarget`, `ForecastCandidate`,
+`RollingForecastBook`, `RefreshIntent`, `RefreshPolicy` and `ForecastRefreshLoop`.
+Each refresh durably binds its complete target registry, source cutoffs/hash, arm,
+generation identity, cadence hash and material-update flag before generation.
+Partial retries preserve committed revisions and finish the remaining due targets.
+Even a failure before the first candidate binds the request across verified restart.
+The producer must derive generation identity from actual weights/scorer/settings;
+this generic layer validates hashes, not the producer's content-hashing implementation.
 
 Extend enabled retry identity to include decoder weights, inference/runtime settings,
 session/anchor convention, knot policy, error policy, scorer/calibrator and trusted
@@ -509,7 +499,9 @@ Byte-pinned fixtures require an LF checkout. On Windows, verify with
 A CRLF conversion changes the audited byte hash; do not change the expected hash
 to make that checkout pass. Use a separate LF checkout for these checks.
 
-No build command, training run or new runtime test is claimed by this design-only change.
+Implemented software verification is recorded in ROLLING_FORECAST_BUILD_HANDOFF_20260914.md.
+Native-head and bridge acceptance cases below remain pending unless that handoff
+explicitly records them. No training, data run or empirical calibration is claimed.
 
 Required implementation acceptance cases:
 
@@ -523,8 +515,10 @@ Required implementation acceptance cases:
    Later arrival/revision never changes an already bound earlier forecast.
 5. Future-label perturbations cannot change inputs, model forecasts or teacher
    attachment. Train/calibrate/validation session/horizon overlap is rejected.
-6. Boundary labels at 0.60 and 0.80 are exact; malformed policies reject; absent,
-   stale, mismatched and unsupported calibration gives low/null plus a reason.
+6. Malformed policies reject; absent, stale, mismatched and unsupported calibration
+   gives an internal null probability plus a reason, never a categorical label.
+   The sole candidate is selected without a score floor; multiple candidates use
+   the maximum comparable score with deterministic ties and retained alternatives.
 7. Joint-event tests catch gap-only, net-only and path-only failure, missing labels,
    and sparse-output attempts to evade independent audit queries.
 8. Valid ABSTAIN preserves forecasts; invalid forecast uses the complete established
