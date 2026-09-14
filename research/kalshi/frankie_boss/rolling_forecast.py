@@ -274,5 +274,16 @@ self-consistent database. External delivery/acknowledgement is a separate layer.
             raise ValueError('publication state uncertain; restart before checkpointing')
         return dict(schema=SCHEMA, count=self.journal.count, head_hash=self.journal.head_hash)
 
+    def publication(self, receipt_hash):
+        """Read a specific retained revision from the verified single-writer book."""
+        sha256_digest(receipt_hash, 'publication receipt')
+        if self._failed:
+            raise ValueError('publication state uncertain; restart from verified checkpoint')
+        self.journal.verify(count=self.journal.count, head_hash=self.journal.head_hash)
+        for published in self._requests.values():
+            if published.receipt_hash == receipt_hash:
+                return published
+        raise ValueError('unknown publication receipt')
+
     def close(self):
         self.journal.close()
