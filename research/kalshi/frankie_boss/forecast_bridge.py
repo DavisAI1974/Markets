@@ -1,7 +1,7 @@
-"""Reviewable category-free Frankie draft; protected BLD-1 activation is blocked.
+"""Owner-approved category-free Frankie path, separate from protected BLD-1.
 
 This module has no model imports at load time. The default route calls the exact
-legacy callback. A category-free draft is never mislabeled as a valid BLD-1 record.
+legacy callback. The enabled result has its own explicit contract identity.
 """
 from dataclasses import dataclass
 import json
@@ -18,7 +18,8 @@ class LegacyConfidenceCompatibilityError(ValueError):
 class PreparedFrankieForecast:
     artifact_digest: str
     payload_json: str
-    contract_id: str = 'BOSS_FRANKIE_CATEGORY_FREE_DRAFT_V1'
+    artifact_payload: bytes
+    contract_id: str = 'BOSS_FRANKIE_CATEGORY_FREE_V1'
 
     @property
     def payload(self):
@@ -33,11 +34,28 @@ def route_frankie_forecast(*, legacy, load_native, enabled=False):
     draft = load_native()
     if not isinstance(draft, PreparedFrankieForecast):
         raise ValueError('typed category-free draft required')
-    raise LegacyConfidenceCompatibilityError(draft)
+    try:
+        from .frankie_category_free import CategoryFreeRecord, CONTRACT_ID
+        from .forecast_artifact import NativeForecastArtifact
+        from .frankie_contract import BLD1_FIELD_NAMES
+    except ImportError:
+        from frankie_category_free import CategoryFreeRecord, CONTRACT_ID
+        from forecast_artifact import NativeForecastArtifact
+        from frankie_contract import BLD1_FIELD_NAMES
+    if draft.contract_id != CONTRACT_ID:
+        raise LegacyConfidenceCompatibilityError(draft)
+    checked = CategoryFreeRecord(draft.payload_json, draft.artifact_digest)
+    artifact = NativeForecastArtifact.from_payload(draft.artifact_payload, expected_digest=draft.artifact_digest)
+    forecast_fields = {'guessed_net_usd', 'overnight_gap_usd', 'path_p50_curve', 'confidence'}
+    metadata = {k: checked.payload[k] for k in BLD1_FIELD_NAMES if k not in forecast_fields}
+    expected = prepare_frankie_forecast(artifact, expected_digest=draft.artifact_digest, metadata=metadata)
+    if expected.payload != checked.payload:
+        raise ValueError('projection differs from verified native artifact')
+    return checked
 
 
 def prepare_frankie_forecast(artifact, *, expected_digest, metadata):
-    """Prepare all twelve proposed fields for review, with an explicit null enum.
+    """Prepare all twelve approved fields with explicit null confidence.
 
     No calibration diagnostic enters the fatal defect list. Metadata comes from
     the existing Frankie population path; this function does not invent plays,
@@ -91,4 +109,5 @@ def prepare_frankie_forecast(artifact, *, expected_digest, metadata):
         raise ValueError('Frankie date must match the declared session close in ET')
     if not payload['reasoning'].strip():
         raise ValueError('existing Frankie reasoning must be nonempty')
-    return PreparedFrankieForecast(artifact.digest, json.dumps(payload, sort_keys=True, separators=(',', ':'), allow_nan=False))
+    return PreparedFrankieForecast(artifact.digest,
+        json.dumps(payload, sort_keys=True, separators=(',', ':'), allow_nan=False), artifact.payload)
