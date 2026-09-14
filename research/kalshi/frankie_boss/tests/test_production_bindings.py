@@ -31,9 +31,9 @@ def saved(tmp_path, name, value):
     return dict(path=name, sha256=hashlib.sha256(payload).hexdigest(), bytes=len(payload))
 
 
-def configuration(tmp_path, *, b1=True, qsv=False):
+def configuration(tmp_path, *, b1=True, qsv=False, records=1):
     from mbo_source import ingest_sources
-    path, scope = source(tmp_path, dbn_bytes([record()]), 1)
+    path, scope = source(tmp_path, dbn_bytes([record(i+1) for i in range(records)]), records)
     extraction = pin()
     result = ingest_sources(scope, (path,), tmp_path/'source.sqlite', extraction,
         expected_scope_hash=scope.genesis_hash(), session_ids=('SYN',))
@@ -203,4 +203,45 @@ def test_configured_session_and_qsv_coverage_reach_existing_guards(tmp_path):
         context=bundle.context(driver._builder,expected_builder_state_hash=ingestion.completion.builder_state_hash)
         with pytest.raises(ValueError,match='QSV lacks'):
             context.run(as_of=101)
+    finally: driver.close()
+
+
+def test_complete_source_required_but_causal_prefix_remains_available(tmp_path):
+    from mbo_source import extract_mbo
+    config, driver, ingestion = configuration(tmp_path, records=2)
+    partial = SourceConformanceDriver(driver.scope, tmp_path/'partial.sqlite',
+        expected_scope_hash=driver.scope.genesis_hash())
+    try:
+        partial.append(extract_mbo(record(), pin()), cursor=0, source_member_index=0,
+            source_sha256=driver.scope.members[0].sha256, session_id='SYN')
+        bundle = load(tmp_path,config)
+        with pytest.raises(ValueError,match='incomplete'):
+            bundle.context(partial._builder,
+                expected_builder_state_hash=partial._builder.export_state()['state_hash'])
+        context = bundle.context(driver._builder,
+            expected_builder_state_hash=ingestion.completion.builder_state_hash)
+        assert context.run(as_of=101,through_cursor=0).receipt.consumed_rows == 1
+    finally:
+        partial.close()
+        driver.close()
+
+
+def test_existing_builder_must_match_configured_raw_symbol(tmp_path):
+    config, driver, ingestion = configuration(tmp_path)
+    try:
+        config['source']['raw_symbol']='DIFFERENT-FROM-JOURNAL'
+        with pytest.raises(ValueError,match='raw symbol'):
+            load(tmp_path,config).context(driver._builder,
+                expected_builder_state_hash=ingestion.completion.builder_state_hash)
+    finally: driver.close()
+
+
+def test_qsv_cannot_be_bound_to_model_without_qsv_path(tmp_path):
+    config, driver, _ = configuration(tmp_path,qsv=True)
+    try:
+        model=B1Reasoner(NativeTrunk(NativeRegistry(SOURCE_EXTRA_FIELDS),d_model=16,
+            n_heads=2,n_layers=1,use_qsv=False),B1Config(k_max=1,k_fixed=1)).double().eval()
+        config['native']=saved(tmp_path,'native.json',asdict(NativeModelSnapshot.capture(model)))
+        with pytest.raises(ValueError,match='QSV'):
+            load(tmp_path,config)
     finally: driver.close()

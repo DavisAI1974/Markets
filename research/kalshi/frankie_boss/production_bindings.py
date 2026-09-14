@@ -117,12 +117,21 @@ class ProductionBindings:
         state = builder.export_state()
         if state['state_hash'] != expected_builder_state_hash:
             raise ValueError('builder checkpoint differs')
+        expected_counts = tuple(member.mbo_records for member in self.source.scope.members)
+        if builder.chain.next_cursor != sum(expected_counts):
+            raise ValueError('configured source record count is incomplete')
         builder.journal.verify(count=state['journal_count'], head_hash=state['journal_hash'])
+        counts = [0] * len(expected_counts)
         for entry in journal_prefix(builder, builder.chain.next_cursor-1):
             if entry['raw_record'].get('dbn_extraction_hash') != self.source.pin.digest:
                 raise ValueError('builder extraction pin differs')
             if entry['session_id'] != self.source.session_ids[entry['source_member_index']]:
                 raise ValueError('builder source session differs')
+            if entry['normalized']['raw_symbol'] != self.source.raw_symbol:
+                raise ValueError('builder raw symbol differs from configured mapping')
+            counts[entry['source_member_index']] += 1
+        if tuple(counts) != expected_counts:
+            raise ValueError('configured source member counts do not reconcile')
         return ContextSessionRunner(self.native.restore(), builder, entity=self.entity,
             t_ctx=self.t_ctx, teacher=teacher, qsv=self.qsv,
             expected_qsv_hash=self.qsv.digest if self.qsv is not None else None)
@@ -219,6 +228,8 @@ def load_bindings(path, *, expected_sha256):
             raise ValueError('all sessions must share one causal source state')
     qsv = qsv_evidence = None
     if config['qsv'] is not None:
+        if not trunk.cfg.use_qsv:
+            raise ValueError('QSV artifact requires a model with a QSV path')
         value = _keys(config['qsv'], ('artifact', 'producer', 'expected_artifact_hash', 'mapping_evidence'))
         producer = _typed(ProducerConfig, value['producer'])
         qsv_value = dict(_keys(artifact(value['artifact']), ('producer_id', 'names', 'rows')))

@@ -112,7 +112,10 @@ bridge = bundle.assemble(builder, caller_owned_forecast_book,
 
 Callers own journals/books, trusted checkpoints, lifecycle/cleanup and execution
 authorization. Assembly verifies the builder's scope, checkpoint, full journal,
-per-member sessions and extraction pins. Forecast sessions must bind the assembled
+complete declared per-member counts, sessions, raw-symbol mapping and extraction
+pins. Completeness of ingestion does not restrict earlier causal run cutoffs.
+An attached QSV artifact requires the restored model's QSV input path.
+Forecast sessions must bind the assembled
 checkpoint's source prefix. No constructor writes output, runs a forward or fetches
 anything. Artifacts and evidence bytes stay available in the returned bundle;
 configuration bytes retain all supplied provenance and file identities.
@@ -124,3 +127,7 @@ use, corrupted source/QSV evidence is refused, and loading performs no ingestion
 forward. They do not establish fitted performance, raw-source equivalence, empirical
 calibration, provider capacity, rights, or live trading readiness. Protected prompts,
 agent-lineage evidence, Memory A, workbook and Sunday artifacts are unchanged.
+
+After independent review, three regression cases cover incomplete ingestion,
+raw-symbol mismatch and an incompatible QSV model. All 131 selected production,
+native-artifact, source, native-refresh, QSV-producer and confidence checks passed.
