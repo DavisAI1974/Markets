@@ -1,5 +1,22 @@
 # Evidence audit and build continuation, 2026-09-14
 
+## Later closeout supersedes the pending-state notes below
+
+Read CONTINUATION_HANDOFF_20260914.md first. The agent branch advanced to
+996d121c with the owner's explicit earlier-roster policy change and Windows
+fixture repairs; its committed verification is 2,082 passed, no failures/errors/
+skips. October 1 remains missing, and the refreshed carry is distinct from the
+frozen Sunday prior. Earlier baseline failures in this report are historical.
+
+BOSS de27bb26 also fixes negative reference indices in both native and compact
+Granite scorers: 83 focused context tests pass, no prompt text changed. A returned
+Claude architecture ruling and teacher material have now been received and
+reconciled; the earlier statement that no ruling was received is superseded.
+Compact service/controller routing is specified but unimplemented. Claude's
+contract assignment is prepared for manual use; the automatic read-only Claude
+Code call failed expired OAuth and produced no model output or edits. No new
+Granite call, replay, training, or derivative workbook occurred in this closeout.
+
 The audit repairs below are separate from completing the final Frankie build.
 Neither an actual Granite inference nor the Sunday comparison has run here.
 The owner wants fixes closed first, then a new task to finish the full build.

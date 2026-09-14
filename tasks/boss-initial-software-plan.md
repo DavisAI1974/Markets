@@ -94,9 +94,20 @@ historical-read API behavior while that decision is pending.
 
 ## Architecture review request and agent execution
 
-`CLAUDE_ARCH_REVIEW_NOOA_CONTEXT_RETRIEVAL_20260914.md` at 3cfbf5c4 is a request for
-review, not a returned approval or direction to replace architecture. Reconcile any
-returned answer explicitly. The separate Claude addendum above remains deferred.
+`CLAUDE_ARCH_REVIEW_NOOA_CONTEXT_RETRIEVAL_20260914.md` at 3cfbf5c4 is the older
+request. The returned ruling and Slice 1 stop handoff have now been received.
+See CONTINUATION_HANDOFF_20260914.md, BUILD_MAP_RECONCILIATION_20260914.md and
+CLAUDE_CODE_CONTRACT_ASSIGNMENT_20260914.md under frankie_boss. The separate
+forecast addendum above remains deferred. The 11-field protected legacy prompt
+and 12-field additive BOSS adapter require a caller trace and corrected contract
+proof; no frozen prompt was changed to force the proposed equality assertion.
+
+The manual Claude assignment owns narrow byte-preserving contract packaging for
+all three current Granite prompt variants. No implementation has returned; the
+automatic local read-only Claude attempt failed expired OAuth with no edits.
+Codex's compact service/controller route is SPEC-granite-compact-service.md only.
+The agent-file exporter/receiver is AGENT_FILE_INTEGRATION_PLAN_20260914.md only.
+The original workbook remains unchanged; no derivative workbook was generated.
 
 The owner clarified that Frankie runs as an agent session over committed files.
 Use the existing fetch/emit/spawn/read-back path from the raw-MBO benchmark lineage;

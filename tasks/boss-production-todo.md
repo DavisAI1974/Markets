@@ -26,6 +26,11 @@
 - [x] Lossless compact-context codec and explicit expansion admission bounds
 - [ ] Compact-context integration through actual Granite service and controller
 - [ ] Integrate BOSS outputs with existing committed-file agent fetch/emit/spawn path
+- [ ] Coordinate Claude's narrow Granite contract packaging; manual assignment prepared, result not received
+- [ ] Resolve NOOA legacy 11-field versus additive BOSS 12-field conformance finding without changing protected prompts
+- [ ] Add static authority map after the contract finding is resolved; no runtime arbitration
+- [x] Reconcile historical workbook rows and new teacher/Claude material in separate reports (original workbook unchanged)
+- [ ] Create the combined derivative workbook from the reconciled row map
 - [x] Rolling increment reviewed; workbook and next-chat handoff completed (remaining production build still open)
 
 Owner-authorized: actual Granite model deployment and integration testing. AWS
@@ -39,3 +44,11 @@ is not required. No existing control is removed by this hosting clarification.
 Still parked: training, market-data acquisition, held-out/OSS evaluation and live
 order submission. Do not reinterpret model-inference authorization as those actions.
 Unmeasured: production throughput and provisional context-length acceptance.
+
+Current closeout: research/kalshi/frankie_boss/CONTINUATION_HANDOFF_20260914.md.
+Agent branch 996d121c records 2,082 passing tests and preserves distinct current
+carry versus frozen Sunday prior. BOSS de27bb26's negative-reference repair has
+83 focused passing tests. These are separate lineages, not a fully integrated
+Frankie result. C32/D6/D7 distillation rows are conditional proposals, not newly
+accepted production components. Earlier Claude C3/C4 work remains deferred until
+the initial-sheet work is complete.
