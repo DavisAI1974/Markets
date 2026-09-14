@@ -103,6 +103,11 @@ def prepare_frankie_forecast(artifact, *, expected_digest, metadata):
     if (opening.utcoffset() != closing.utcoffset()
             or artifact.session.duration_ns > 24*3600*10**9):
         raise ValueError('session cannot use the S121 clock across an offset change or multiple days')
+    boundary = opening.replace(hour=20, minute=0, second=0, microsecond=0)
+    if opening >= boundary:
+        boundary += timedelta(days=1)
+    if closing > boundary:
+        raise ValueError('session crosses the S121 20:00 boundary; an approved session split or clock is required')
     curve = []
     for index, point in enumerate(artifact.points):
         micros, remainder = divmod(point.time_ns, 1000)

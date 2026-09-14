@@ -15,6 +15,7 @@ ADAPTER_ID = 'BOSS_FRANKIE_CATEGORY_FREE_ADAPTER_V1'
 
 
 def validate_category_free(payload):
+    """The defects list is fatal-only; report non-fatal gaps in reasoning."""
     if not isinstance(payload, dict) or set(payload) != set(BLD1_FIELD_NAMES):
         raise ValueError('exactly the twelve Frankie fields are required')
     if payload['confidence'] is not None:
@@ -91,6 +92,9 @@ def category_free_abstain(metadata, reasons):
     expected = set(BLD1_FIELD_NAMES)-{'guessed_net_usd', 'overnight_gap_usd', 'path_p50_curve', 'confidence'}
     if not isinstance(metadata, dict) or set(metadata) != expected:
         raise ValueError('complete existing Frankie metadata required')
+    for f in BLD1_FIELDS:
+        if f.name in metadata:
+            f.validate(metadata[f.name])
     payload = dict(metadata)
     for f in BLD1_FIELDS:
         if f.name not in ('specialist', 'group', 'date', 'reasoning'):
@@ -98,4 +102,27 @@ def category_free_abstain(metadata, reasons):
             payload[f.name] = value
     payload.update(disposition='ABSTAIN', state_defects_and_gaps_reported=list(reasons),
                    reasoning=metadata['reasoning'].strip() or '; '.join(reasons))
+    if metadata['plays_fired'] or metadata['plays_stood_down']:
+        history = {k: metadata[k] for k in ('plays_fired', 'plays_stood_down')}
+        payload['reasoning'] += '\nPre-abstention play metadata: ' + json.dumps(history, sort_keys=True)
     return CategoryFreeRecord(json.dumps(payload), None)
+
+
+def report_nonfatal_gaps(metadata, gaps):
+    """Preserve twelve fields: non-fatal missingness is visible in reasoning.
+
+    This helper does not decide severity. Callers must not downgrade causal or
+    integrity failures; those remain in state_defects_and_gaps_reported.
+    """
+    if (not isinstance(gaps, (list, tuple)) or not gaps
+            or any(type(g) is not str or not g.strip() for g in gaps)):
+        raise ValueError('explicit nonempty non-fatal gap descriptions required')
+    expected = set(BLD1_FIELD_NAMES)-{'guessed_net_usd', 'overnight_gap_usd', 'path_p50_curve', 'confidence'}
+    if type(metadata) is not dict or set(metadata) != expected:
+        raise ValueError('complete existing Frankie metadata required')
+    result = json.loads(json.dumps(metadata, allow_nan=False))
+    for f in BLD1_FIELDS:
+        if f.name in result:
+            f.validate(result[f.name])
+    result['reasoning'] = result['reasoning'].rstrip() + '\nNon-fatal gaps: ' + json.dumps(list(gaps))
+    return result
