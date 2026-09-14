@@ -4,6 +4,39 @@ Branch: `codex/frankie-agent-evidence-fixes-20260914`, based on 9006b633.
 This is the existing committed-file agent path. The BOSS build remains on
 `codex/boss-full-evidence-20260907`; the trees are not yet integrated.
 
+## Fix follow-up, 2026-09-14
+
+The owner explicitly removed the requirement to run/promote every earlier roster
+day before admitting later findings. October 1 remains MISSING; no run or evidence
+was invented. Attribution, source-day validation, content identity and veto checks
+remain. The current seed retains all 44 previous VERIFIED findings exactly and
+adds 18 Sunday findings as NEW. All historical file-seed entries are unchanged.
+
+Current seed: 244,923 bytes, SHA-256
+`b814bb58f03d506f1643a162ff0ca1e94e17a7f8e90d533d844e86b1995b4f07`.
+Mission and knowledge-manifest pins were regenerated. The frozen prior used by
+Sunday run 33746436209 remains 166,700 bytes, SHA-256
+`4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a`.
+Archived principal-run files were not changed. The refreshed carry is not the
+frozen prior for a historical Sunday comparison.
+
+Windows fixes use Git Bash and stdin for workflow tests, explicit native Python
+for the fake AWS command, and LF fixture bytes. Workflow bodies and production
+rescue behavior are unchanged. Seed writing now preserves the hashed LF bytes;
+checking compares actual bytes and rejects text-equivalent CRLF drift.
+
+Final verification: **2,082 passed, zero failures/errors/skips**, across two
+disjoint batches covering the complete legacy-agent test directory: 53 Windows
+workflow/knowledge/helper tests (236.44 seconds) and all other 2,029 tests
+(135.95 seconds). The seed/findings 36-test and delivery 29-test focused runs
+overlap these totals and are not added. All four seed/knowledge regeneration
+checks, Python compilation and Git whitespace checks passed. This verifies the
+Windows host; it is not a separate Linux CI or BOSS integration result.
+
+This follow-up is fixes only. No replay, Granite run, integration build or build-doc
+organization was performed. The earlier baseline failures below are historical;
+the owner's explicit policy change supersedes their chronology instruction.
+
 ## Reviewed fixes
 
 - d9e7f809 preserves original source fields, rtype, missing/null distinctions and
