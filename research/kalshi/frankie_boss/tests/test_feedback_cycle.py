@@ -65,6 +65,21 @@ def test_complete_replay_never_constructs_old_controller_or_learner(tmp_path, mo
     store.close(); checkpoint.close()
 
 
+def test_verified_incomplete_controller_reaches_principal_without_retry(tmp_path, monkeypatch):
+    store, checkpoint, args, calls = fixture(tmp_path, monkeypatch)
+    incomplete = dict(request_id='sun', request_hash='e'*64, status='incomplete', records=())
+    class Controller:
+        async def refresh(self, **kwargs):
+            calls['controller'] += 1
+            return incomplete
+    args['controller_factory'] = Controller
+    monkeypatch.setattr(cycle, '_export_verified', lambda *args, **kwargs: dict(
+        request_hash='e'*64, status='incomplete', source=dict(prefix_hash='c'*64, through_cursor=2)))
+    result = asyncio.run(store.run(**args))
+    assert result['feedback_hash'] and calls['controller'] == calls['principal'] == calls['learner'] == 1
+    store.close(); checkpoint.close()
+
+
 def test_training_commit_without_cycle_receipt_recovers_without_forward(tmp_path, monkeypatch):
     store, checkpoint, args, calls = fixture(tmp_path, monkeypatch)
     original = store._save

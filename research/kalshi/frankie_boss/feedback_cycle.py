@@ -100,12 +100,14 @@ def _export_verified(directory, export_args, result, learning):
     for name in ('request_id', 'boss_commit', 'agent_commit', 'controller_checkpoint', 'native_checkpoint'):
         if manifest[name] != export_args[name]:
             raise ValueError('retained export differs from independently supplied pins')
-    if (manifest['request_id'] != result['request_id'] or manifest['status'] != 'complete'
+    if (manifest['request_id'] != result['request_id']
+            or result.get('status') not in ('complete', 'incomplete')
+            or manifest['status'] != result['status']
             or manifest['request_hash'] != result['request_hash']
             or manifest['source']['prefix_hash'] != learning['source_hash']
             or manifest['source']['through_cursor'] != learning['through_cursor']
             or manifest['source']['as_of'] != learning['as_of']):
-        raise ValueError('export does not bind completed cycle source/request')
+        raise ValueError('export does not bind verified cycle source/request')
     for item in manifest['files']:
         if Path(item['path']).name != item['path']:
             raise ValueError('invalid export member path')
@@ -249,8 +251,9 @@ class CycleCoordinator:
                     self._observe('boss_reasoning', request_id)
                     controller = controller_factory()
                     result = await controller.refresh(request_id=request_id, **controller_kwargs)
-                    if result.get('request_id') != request_id or result.get('status') != 'complete':
-                        raise ValueError('cycle requires actual completed integrated controller result')
+                    if (result.get('request_id') != request_id
+                            or result.get('status') not in ('complete', 'incomplete')):
+                        raise ValueError('cycle requires actual verified integrated controller result')
                     self._save(request_id, 'controller', result)
                 result_hash = evidence_hash(result)
                 directory = self.path.parent/('handoff-'+hashlib.sha256(request_id.encode()).hexdigest())
