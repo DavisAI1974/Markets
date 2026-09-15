@@ -2,7 +2,10 @@
 import hashlib
 import importlib.metadata
 from pathlib import Path
-from . import granite_run_artifacts as artifacts
+try:
+    from . import granite_run_artifacts as artifacts
+except ImportError:
+    import granite_run_artifacts as artifacts
 # Same image pins as granite_live_controller.measure_fixture; avoid its model imports.
 TOKENIZER_FILES={'config.json','generation_config.json','tokenizer.json','tokenizer_config.json',
                  'chat_template.jinja','special_tokens_map.json','vocab.json','merges.txt'}

@@ -1,9 +1,28 @@
 """Synthetic tokenizer admission; no model, downloads or network."""
 import hashlib
 import json
+from pathlib import Path
+import subprocess
+import sys
 from copy import deepcopy
 import pytest
 from research.kalshi.frankie_boss import granite_runpod_admission as m
+
+
+def test_standalone_import_needs_no_pytorch():
+    code = '''import builtins, sys
+sys.path.insert(0, sys.argv[1])
+original = builtins.__import__
+def guarded(name, *args, **kwargs):
+    if name == 'torch' or name.startswith('torch.'):
+        raise AssertionError('token admission must not import PyTorch')
+    return original(name, *args, **kwargs)
+builtins.__import__ = guarded
+import granite_runpod_admission
+assert granite_runpod_admission.CONTEXT == 4096
+'''
+    subprocess.run([sys.executable, '-c', code, str(Path(m.__file__).parent)],
+                   check=True, capture_output=True, timeout=10)
 
 
 def tokenizer_fixture(tmp_path, ids=None):
