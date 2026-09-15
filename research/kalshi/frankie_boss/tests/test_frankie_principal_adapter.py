@@ -1,7 +1,7 @@
 """Focused new session boundary tests; no principal or model calls."""
 import json
 import pytest
-from frankie_principal_adapter import (FrankiePrincipalAdapter, PrincipalPending, SECTIONS,
+from frankie_principal_adapter import (FrankiePrincipalAdapter, PrincipalPending, PrincipalNotDispatched, SECTIONS,
     canonical, digest, file_witness, rebind_delivery_receipt)
 
 
@@ -13,7 +13,9 @@ def case(tmp_path, executor=None):
     prompt.write_text('verified attributed inputs')
     adapter = FrankiePrincipalAdapter(receiver_root=tmp_path / 'receiver', receiver_commit='a'*40,
         python='python', directory=tmp_path / 'session', preparation={},
-        render={'knowledge-receipt': str(evidence)}, protected_files={'A': witness},
+        render={'knowledge-receipt': str(evidence), 'knowledge-receipt-sha256': 'a'*64,
+            'knowledge-bundle-sha256': 'b'*64, 'retained-prompt':str(prompt),
+            'retained-prompt-sha256':file_witness(prompt)['sha256']}, protected_files={'A': witness},
         section_evidence={section: witness for section in SECTIONS}, feedback_contract={},
         session_executor=executor)
     # These tests isolate the session boundary; production prepare runs frozen receiver.
@@ -33,13 +35,23 @@ def response(request):
         'lessons': []}
 
 
+
+def attestation(adapter, request, response):
+    body = {'schema':'FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1','mechanism':'AGENT_SESSION',
+        'request_sha256':digest(request),'response_sha256':digest(response),
+        'session_id':response['session_id'],
+        'model_identity_as_reported_by_session':response['model_identity_as_reported_by_session']}
+    path = adapter.directory/'host-record.json'
+    path.write_bytes(canonical(dict(body,host_authority='test host dispatch')))
+    return dict(body,host_record=dict(path=str(path),**file_witness(path)))
+
 def finish(adapter, attachment):
     with pytest.raises(PrincipalPending):
         adapter.execute('request', attachment)
     request = json.loads((adapter.directory / 'session-request.json').read_bytes())
     result = response(request)
     result['sections'] = {k:v['sha256'] for k,v in adapter.section_evidence.items()}
-    adapter.record_session_response(result)
+    adapter.record_session_response(result, host_attestation=attestation(adapter, request, result))
     return adapter.recover('request', attachment)
 
 
@@ -54,7 +66,8 @@ def test_interrupted_session_never_resubmits(tmp_path):
     with pytest.raises(PrincipalPending):
         adapter.execute('request', attachment)
     assert len(calls) == 1
-    assert adapter.recover('request', attachment) is None
+    with pytest.raises(PrincipalPending):
+        adapter.recover('request', attachment)
 
 
 def test_completed_session_recovers_typed_feedback_without_second_call(tmp_path):
@@ -85,7 +98,8 @@ def test_missing_section_or_self_minted_receipt_refuses(tmp_path):
     with pytest.raises(PrincipalPending):
         adapter.execute('request', attachment)
     request = json.loads((adapter.directory / 'session-request.json').read_bytes())
-    adapter.record_session_response(response(request))
+    result = response(request)
+    adapter.record_session_response(result, host_attestation=attestation(adapter, request, result))
     with pytest.raises(ValueError, match='18 preserved'):
         adapter.recover('request', attachment)
 
@@ -173,3 +187,65 @@ def test_retained_prompt_rejects_post_sunday_memory_even_with_valid_self_hash(tm
     receipt.write_bytes(canonical(body))
     with pytest.raises(ValueError, match='pre-Sunday Memory'):
         module.retained_knowledge(receipt, file_witness(receipt)['sha256'], bundle, file_witness(bundle)['sha256'])
+
+
+def test_recovery_distinguishes_undispatched_from_pending(tmp_path):
+    adapter, attachment = case(tmp_path)
+    with pytest.raises(PrincipalNotDispatched):
+        adapter.recover('request', attachment)
+    with pytest.raises(PrincipalPending):
+        adapter.execute('request', attachment)
+    with pytest.raises(PrincipalPending):
+        adapter.recover('request', attachment)
+
+
+def test_response_requires_host_witness_and_detects_changed_host_record(tmp_path):
+    adapter, attachment = case(tmp_path)
+    with pytest.raises(PrincipalPending):
+        adapter.execute('request', attachment)
+    request=json.loads((adapter.directory/'session-request.json').read_bytes())
+    result=response(request)
+    result['sections']={k:v['sha256'] for k,v in adapter.section_evidence.items()}
+    host=attestation(adapter,request,result)
+    with pytest.raises(TypeError):
+        adapter.record_session_response(result)
+    host['response_sha256']='0'*64
+    with pytest.raises(ValueError,match='host attestation'):
+        adapter.record_session_response(result,host_attestation=host)
+    host=attestation(adapter,request,result)
+    adapter.record_session_response(result,host_attestation=host)
+    Path = __import__('pathlib').Path
+    Path(host['host_record']['path']).write_text('changed')
+    with pytest.raises(ValueError,match='host session record bytes'):
+        adapter.recover('request',attachment)
+
+
+def test_partial_receiver_output_is_retained_before_new_preparation(tmp_path):
+    adapter,attachment=case(tmp_path)
+    partial=adapter.directory/'receiver'
+    partial.mkdir()
+    (partial/'source-binding.json').write_text('partial bytes')
+    def stop_after_recovery(module,args):
+        assert not partial.exists()
+        assert len(list(adapter.directory.glob('receiver.partial-*')))==1
+        raise RuntimeError('preparation not executed in this seam check')
+    adapter._run=stop_after_recovery
+    with pytest.raises(RuntimeError,match='preparation not executed'):
+        adapter.prepare(tmp_path/'handoff')
+    assert next(adapter.directory.glob('receiver.partial-*')).joinpath('source-binding.json').read_text()=='partial bytes'
+
+
+def test_constructor_enforces_pinned_memory_and_emitter_path_identity(tmp_path):
+    adapter,_=case(tmp_path)
+    args=dict(receiver_root=adapter.receiver_root,receiver_commit=adapter.receiver_commit,
+        python=adapter.python,directory=tmp_path/'other',preparation={'result_path':str(tmp_path/'result.json'),
+            'delivery_receipt':str(tmp_path/'delivery.json')},protected_files=adapter.protected_files,
+        section_evidence=adapter.section_evidence,feedback_contract={})
+    render={'knowledge-receipt':str(tmp_path/'knowledge.json'),'knowledge-receipt-sha256':'a'*64,
+        'knowledge-bundle-sha256':'b'*64}
+    created=FrankiePrincipalAdapter(**args,render=render)
+    assert created.render['result']==str((tmp_path/'result.json').resolve())
+    with pytest.raises(ValueError,match='pinned pre-Sunday'):
+        FrankiePrincipalAdapter(**args,render={'knowledge-receipt':'unpinned'})
+    with pytest.raises(ValueError,match='emitter paths differ'):
+        FrankiePrincipalAdapter(**args,render=dict(render,result='wrong.json'))

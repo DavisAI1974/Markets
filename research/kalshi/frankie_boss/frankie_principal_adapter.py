@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import uuid
 
 try:
     from .native_forecast_learning import FrankieFeedback, SessionFeedback, TimingLabel, ValueLabel
@@ -20,6 +21,10 @@ except ImportError:
 FROZEN_MEMORY_SHA256 = '4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a'
 
 SECTIONS = ('4.0', '4.0b') + tuple(f'4.{i}' for i in range(1, 17))
+
+
+class PrincipalNotDispatched(RuntimeError):
+    """No adapter request exists: the host provably has not dispatched a session."""
 
 
 class PrincipalPending(RuntimeError):
@@ -145,13 +150,31 @@ class FrankiePrincipalAdapter:
         if self.directory.is_relative_to(self.receiver_root):
             raise ValueError('principal evidence must be outside frozen receiver checkout')
         self.preparation, self.render = dict(preparation), dict(render)
-        if not self.render.get('knowledge-receipt'):
-            raise ValueError('explicit pre-Sunday knowledge receipt required')
+        for key in ('knowledge-receipt', 'knowledge-receipt-sha256', 'knowledge-bundle-sha256'):
+            if not self.render.get(key):
+                raise ValueError('explicit pinned pre-Sunday knowledge receipt and bundle required')
+        common_render = {'knowledge-receipt', 'knowledge-receipt-sha256', 'knowledge-bundle-sha256'}
+        if self.render.get('retained-prompt'):
+            if set(self.render) - common_render - {'retained-prompt', 'retained-prompt-sha256'}:
+                raise ValueError('unexpected retained-prompt configuration')
+            if not self.render.get('retained-prompt-sha256'):
+                raise ValueError('retained prompt independent hash required')
+        else:
+            if set(self.render) - common_render - {'result', 'delivery-receipt', 'stream-receipt',
+                    'outputs-receipt', 'sealed-proof', 'ledger-dir', 'evidence-uri'}:
+                raise ValueError('unexpected emitter configuration')
+            for render_key, preparation_key in (('result', 'result_path'), ('delivery-receipt', 'delivery_receipt')):
+                if preparation_key not in self.preparation:
+                    raise ValueError('preparation result and delivery paths required')
+                supplied = self.render.get(render_key, self.preparation[preparation_key])
+                if Path(supplied).resolve() != Path(self.preparation[preparation_key]).resolve():
+                    raise ValueError('emitter paths differ from receiver preparation')
+                self.render[render_key] = str(Path(supplied).resolve())
         if set(section_evidence) != set(SECTIONS) or not protected_files:
             raise ValueError('all 18 preserved sections and frozen memory witnesses required')
         self.protected_files = protected_files
         self.section_evidence = section_evidence
-        self.feedback_contract = feedback_contract
+        self.feedback_contract = json.loads(canonical(feedback_contract))
         self.session_executor = session_executor
 
     def _config_hash(self):
@@ -196,6 +219,11 @@ class FrankiePrincipalAdapter:
         handoff_directory = str(Path(handoff_directory).resolve())
         prepared = self.directory / 'receiver'
         receipt_file = prepared / 'preparation-receipt.json'
+        if prepared.exists() and not receipt_file.exists():
+            if prepared.is_symlink() or prepared.resolve().parent != self.directory:
+                raise ValueError('unsafe partial receiver directory')
+            retained = self.directory / ('receiver.partial-' + uuid.uuid4().hex)
+            prepared.rename(retained)  # preserve incomplete evidence; never overwrite/delete
         if not receipt_file.exists():
             self._run('prepare_boss_attachment', dict(self.preparation,
                 directory=handoff_directory, output_directory=prepared))
@@ -203,12 +231,15 @@ class FrankiePrincipalAdapter:
         if receipt['input_paths']['directory'] != handoff_directory:
             raise ValueError('retained receiver receipt belongs to another handoff')
         self._check_preparation(receipt)
+        bundle = Path(self.render['knowledge-receipt']).parent / 'KNOWLEDGE_BUNDLE.md'
+        retained_knowledge(self.render['knowledge-receipt'], self.render['knowledge-receipt-sha256'],
+                           bundle, self.render['knowledge-bundle-sha256'])
         prompt = self.directory / 'prompt.md'
         if not prompt.exists():
             if self.render.get('retained-prompt'):
                 self._render_retained(prompt, prepared)
             else:
-                self._run('emit_frankie_spawn', dict(self.render, output=prompt,
+                self._run('emit_frankie_spawn', dict({k:v for k,v in self.render.items() if k not in ('knowledge-receipt-sha256', 'knowledge-bundle-sha256')}, output=prompt,
                     **{'boss-attachment-request': prepared / 'attachment-request.json'}))
         knowledge_bundle = Path(self.render['knowledge-receipt']).parent / 'KNOWLEDGE_BUNDLE.md'
         attachment = {'config_hash': self._config_hash(), 'preparation_receipt': receipt, 'prompt': str(prompt),
@@ -327,25 +358,53 @@ class FrankiePrincipalAdapter:
         _write(path, request)  # durable intent before the session tool/remote call
         if self.session_executor is None:
             raise PrincipalPending(f'authorized host session must consume {path}')
-        response = self.session_executor(request)
-        self.record_session_response(response)
+        dispatched = self.session_executor(request)
+        self.record_session_response(dispatched['response'], host_attestation=dispatched['host_attestation'])
         return self.recover(request_id, attachment)
 
-    def record_session_response(self, response):
-        """Host-only: record actual session-tool response, never runner-generated labels."""
-        if not (self.directory / 'session-request.json').exists():
-            raise ValueError('response cannot precede durable principal intent')
+    def _attest_host(self, response, host_attestation, request):
+        if (not isinstance(response, dict) or not isinstance(host_attestation, dict) or
+                any(not isinstance(response.get(k),str) or not response[k].strip()
+                    for k in ('session_id','model_identity_as_reported_by_session'))):
+            raise ValueError('actual session identity and host attestation are required')
+        expected = {'schema': 'FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', 'mechanism': 'AGENT_SESSION',
+            'request_sha256': digest(request), 'response_sha256': digest(response),
+            'session_id': response['session_id'],
+            'model_identity_as_reported_by_session': response['model_identity_as_reported_by_session']}
+        if any(host_attestation.get(k) != v for k,v in expected.items()):
+            raise ValueError('host attestation does not bind the actual request/response/session')
+        record = host_attestation.get('host_record')
+        if not isinstance(record, dict) or set(record) != {'path', 'bytes', 'sha256'}:
+            raise ValueError('independent host session record witness required')
+        if file_witness(record['path']) != {k:record[k] for k in ('bytes', 'sha256')}:
+            raise ValueError('host session record bytes changed')
+        host_record = json.loads(Path(record['path']).read_bytes())
+        if any(host_record.get(k) != v for k,v in expected.items()) or not host_record.get('host_authority'):
+            raise ValueError('host record does not attest this session response')
+        return host_attestation
+
+    def record_session_response(self, response, *, host_attestation):
+        """Host-only: require its own retained dispatch/output witness, not model claims."""
+        request_path = self.directory / 'session-request.json'
+        if not request_path.exists():
+            raise PrincipalNotDispatched('response cannot precede durable principal intent')
         self._files()
-        _write(self.directory / 'session-response.json', response)
+        request = json.loads(request_path.read_bytes())
+        self._attest_host(response, host_attestation, request)
+        _write(self.directory / 'session-response.json', {'response':response, 'host_attestation':host_attestation})
 
     def recover(self, request_id, attachment):
         request_path, response_path = (self.directory / name for name in ('session-request.json', 'session-response.json'))
+        if not request_path.exists():
+            raise PrincipalNotDispatched('no adapter request exists; no session was dispatched')
         if not response_path.exists():
-            return None
+            raise PrincipalPending('durable request exists without a response; wait for that session')
         request = self._request(request_id, attachment)
         if json.loads(request_path.read_bytes()) != request:
             raise ValueError('retained principal intent differs')
-        response = json.loads(response_path.read_bytes())
+        retained = json.loads(response_path.read_bytes())
+        response = retained['response']
+        host_attestation = self._attest_host(response, retained['host_attestation'], request)
         for name in ('session_id', 'model_identity_as_reported_by_session'):
             if not isinstance(response.get(name), str) or not response[name].strip():
                 raise ValueError('actual agent session identity is required')
@@ -357,7 +416,7 @@ class FrankiePrincipalAdapter:
             'session_id': response['session_id'],
             'model_identity_as_reported_by_session': response['model_identity_as_reported_by_session'],
             'request_sha256': digest(request), 'response_sha256': digest(response),
-            'attachment_hash': attachment['attachment_hash']}
+            'attachment_hash': attachment['attachment_hash'], 'host_attestation_hash': digest(host_attestation)}
         receipt['receipt_sha256'] = digest(receipt)
         feedback = dict(response['feedback'])
         if 'principal_receipt_hash' in feedback:

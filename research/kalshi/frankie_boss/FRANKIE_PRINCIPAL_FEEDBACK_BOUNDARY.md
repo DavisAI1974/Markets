@@ -26,11 +26,13 @@ are pinned across recovery.
 3. If `session_executor(request)` is supplied, it must be the authorized host's
    actual agent-session bridge. With no callback, `PrincipalPending` exposes a
    durable outbox for the host's real agent tools. Read the outbox, invoke Frankie
-   with its exact files, then call `record_session_response(response)` with the
-   actual session output and observed session identity. Do not synthesize labels
+   with its exact files, then call `record_session_response(response, host_attestation=...)` with the
+   actual session output and the host's independent saved dispatch/output witness. Do not synthesize labels
    in the runner or use a historical session ID as proof of this new call.
-4. `recover(request_id, attachment)` never calls a session. An intent without a
-   complete response stays pending. A saved response yields the same envelope.
+4. `recover(request_id, attachment)` never calls a session. No saved adapter request
+   raises `PrincipalNotDispatched` (safe for the coordinator to execute). An existing
+   request without a complete response raises `PrincipalPending` and must not be
+   redispatched. A saved response yields the same envelope.
 5. `verify(envelope, request_id, input_hash, source_hash, learning_cutoff_ns)` checks
    against the retained session response and returns typed `FrankieFeedback`.
    The learner performs its existing full session/causality/label checks before
@@ -122,3 +124,39 @@ session only after receiving the actual BOSS attributed inputs. The request
 preserves all 19 historical invocation cutoffs, requires own-source certified
 anchors and outcome-independent timing/query conventions, and prevents training
 on end-of-day outcomes before replaying earlier same-day requests.
+
+
+## Review repairs and runtime conversion
+
+`record_session_response` now requires `host_attestation`. Its schema is
+`FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1`, with `mechanism=AGENT_SESSION`,
+`request_sha256`, `response_sha256`, `session_id`,
+`model_identity_as_reported_by_session`, and
+`host_record={path,bytes,sha256}`. The host record itself must contain the same
+binding fields plus a nonempty `host_authority`. It represents the host's actual
+session dispatch/output observation, not a model's self-attestation. The host
+must retain the record for recovery. A callback returns
+`{response: ..., host_attestation: ...}`. No provider-signature claim is made.
+
+Both renderer paths now require pinned, verified pre-Sunday memory before prompt
+construction. The emitter's result/delivery paths must equal receiver preparation
+paths; adapter-only hash flags are removed from its CLI arguments. An incomplete
+receiver directory is preserved under a unique `receiver.partial-*` name before
+new preparation, rather than deleted or left permanently wedged.
+
+`source_contract_runtime.bind_cycle(contract_path, expected_contract_sha256,
+cycle_index, prefix)` validates the entire authored 19-cycle contract and binds
+only the runtime source hash to the exact authored cursor and clocks. It returns
+the typed target/session roster, registry hash, learning cutoff and authored
+policy/split hashes. It does no forward pass and computes no market labels.
+`metadata_for_binding(binding, state_defects_and_gaps_reported=...)` creates exact
+BLD metadata with explicit development units and ABSTAIN disposition; the host
+must supply known defects explicitly.
+
+`make_principal_adapter(...)` constructs per-cycle receiver pins only after a
+verified controller export exists. It calls the real full-source `bind_prefix`,
+uses the new physically verified local redelivery receipt, and selects pristine
+historical prompt/memory/section witnesses. Required expected manifest, mapping,
+source-journal checkpoint, retained-witness and delivery-file hashes come from
+trusted host receipts. The coordinator must still lazily return completed cycles
+before reconstructing old runtime identities.
