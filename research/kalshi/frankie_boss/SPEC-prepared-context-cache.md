@@ -2,7 +2,7 @@
 
 Date: 2026-09-15. Claude slice on `codex/full-frankie-boss-connection-20260915` @ e9d1945b.
 Module: `research/kalshi/frankie_boss/prepared_context_cache.py`. Tests: `tests/test_prepared_context_cache.py`.
-Not wired into any module. Codex owns host integration.
+Host integration is in the current task's `work/run_actual_sunday.py`; it primes before readiness and restores the original preparation method before learning or a cycle change.
 
 ## Problem
 
@@ -61,7 +61,7 @@ evidence hash under `bindings_hash`.
 
 `prepare(as_of, through_cursor)` refuses a different cutoff, then re-runs every check above, then returns
 `own()` copies. Source change detection uses the STORED tail (one `SELECT ... ORDER BY ordinal DESC LIMIT 1`
-on the builder's connection) plus the handle's cached tail; no decoded journal scan and no `entries()` call.
+through a fresh read-only SQLite connection opened from `journal.path` and closed immediately) plus the handle's cached tail; no decoded journal scan and no `entries()` call. This supports VerifiedJournalReader without exposing its private connection.
 A second handle appending to the same file is detected even though the builder handle's cached `count` does
 not move. Nothing is ever recomputed: a changed identity is a `ValueError`, and the caller must build a new
 cache after re-establishing the identities it wants.
@@ -113,11 +113,13 @@ nothing and a later creation prepares again; use after close refused, close idem
   small export, not a scan.
 - Stored-tail detection cannot see a writer that rewrote earlier rows in place while keeping the tail; the
   downstream `journal.verify` in the consumer paths remains the full-integrity check (requirement 6).
-- The cache does not observe device moves of the model; a moved model changes nothing in the state-dict hash
-  but the cached tokens keep their original device. Consumers already `.to(device)` inside `_prepare`; a host
-  that moves the model after preparation must rebuild the cache.
+- Parameter and buffer device identities are pinned. Moving the model after preparation is rejected before reading weights or returning cached tensors; rebuild the cache for a new device.
 
-## Blob hashes (git, LF)
+## Original Claude slice blob hashes (before integration repairs)
 
 - prepared_context_cache.py db9e78b32f8863d8d5df1fca69eb40ccef981dc9
 - tests/test_prepared_context_cache.py d8aa65c368eddbffb2f863575b606e8e396c5490
+
+## Integration repair validation
+
+Three new targeted tests use a real VerifiedJournalReader, reject CPU-to-meta model movement before model hashing, and distinguish signed zero and NaN payload bits through raw contiguous uint8 tensor bytes. The original eight tests were not repeated. A separate new host seam proves the original `_prepare` is restored before learning and accepts a later cutoff after the checkpoint changes. Cache close also runs on cycle release, source-view change, and host exit.

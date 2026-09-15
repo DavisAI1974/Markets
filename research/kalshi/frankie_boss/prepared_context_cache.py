@@ -16,6 +16,7 @@ integration.
 import copy
 from pathlib import Path
 import threading
+import sqlite3
 
 import torch
 
@@ -51,7 +52,11 @@ def _sha256(value, name):
 
 def _stored_tail(journal):
     """The stored tail, not the handle's cached attributes: a second handle's append is visible."""
-    row = journal.connection.execute('SELECT ordinal, digest FROM entries ORDER BY ordinal DESC LIMIT 1').fetchone()
+    connection = sqlite3.connect(Path(journal.path).resolve().as_uri() + '?mode=ro', uri=True)
+    try:
+        row = connection.execute('SELECT ordinal, digest FROM entries ORDER BY ordinal DESC LIMIT 1').fetchone()
+    finally:
+        connection.close()
     return (row[0] + 1, row[1]) if row else (0, evidence_hash(dict(schema=JOURNAL_SCHEMA)))
 
 
@@ -116,6 +121,8 @@ class PreparedContextCache:
             scope_id=builder.scope.scope_id, next_cursor=builder.chain.next_cursor,
             entity=tuple(context.entity), t_ctx=context.t_ctx,
             model_hash=self._model_hash, teacher_binding=self._teacher_binding,
+            model_devices=tuple(('parameter:'+name, str(value.device)) for name,value in context.model.named_parameters())
+                + tuple(('buffer:'+name, str(value.device)) for name,value in context.model.named_buffers()),
             teacher_class=None if teacher is None else type(teacher).__module__ + '.' + type(teacher).__qualname__,
             qsv_hash=context.expected_qsv_hash, checkpoint_hash=self._checkpoint_hash)
 
@@ -192,7 +199,9 @@ def same_preparation(left, right):
     """Exact structural equality of two prepared tuples (tensors by dtype, shape and bits)."""
     if isinstance(left, torch.Tensor) or isinstance(right, torch.Tensor):
         return (isinstance(left, torch.Tensor) and isinstance(right, torch.Tensor)
-                and left.dtype == right.dtype and left.shape == right.shape and torch.equal(left.cpu(), right.cpu()))
+                and left.dtype == right.dtype and left.shape == right.shape
+                and left.detach().cpu().contiguous().reshape(-1).view(torch.uint8).numpy().tobytes()
+                    == right.detach().cpu().contiguous().reshape(-1).view(torch.uint8).numpy().tobytes())
     if type(left) is not type(right):
         return False
     if type(left) is dict:
