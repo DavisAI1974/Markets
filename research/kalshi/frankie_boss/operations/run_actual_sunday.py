@@ -305,10 +305,8 @@ class ActualHost:
         actual_schedule=verified(self.host['schedule'])
         if actual_schedule.resolve()!=(schedule/'schedule.json').resolve() or sha(actual_schedule)!=outer['schedule_file_sha256']:
             raise ValueError('full schedule differs from verified execution receipt')
-        body=json.loads(actual_schedule.read_bytes())
-        logical=body.pop('schedule_sha256')
-        if hashlib.sha256(self.api.journal.canonical_bytes(self.api.journal.pack(body))).hexdigest()!=logical or logical!=outer['schedule_sha256']:
-            raise ValueError('logical schedule identity changed')
+        from research.kalshi.frankie_boss.verified_sunday_schedule import verified_schedule
+        verified_schedule(json.loads(actual_schedule.read_bytes()), expected_digest=outer['schedule_sha256'])
         manifest=verified_json(self.config['source_manifest'])
         scope=self.api.source_scope(manifest,expected_manifest_hash=manifest['manifest_hash'])
         if (state['scope_genesis_hash']!=scope.genesis_hash() or completion['scope_hash']!=scope.genesis_hash()):
