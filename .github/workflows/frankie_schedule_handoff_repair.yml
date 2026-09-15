@@ -1,0 +1,24 @@
+name: Verify exact Sunday schedule handoff repair
+on:
+  push:
+    branches: [codex/journal-reduction-stack-20260915]
+    paths:
+      - research/kalshi/frankie_boss/verified_sunday_schedule.py
+      - research/kalshi/frankie_boss/tests/test_schedule_serialization.py
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          sparse-checkout: research/kalshi/frankie_boss
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Verify actual schedule commitment and reject corruption
+        run: python -B research/kalshi/frankie_boss/tests/test_schedule_serialization.py -v
