@@ -1,5 +1,17 @@
 # Active continuation
 
+## Current user override: progress governs run duration
+
+The user explicitly removed fixed startup AND execution runtime budgets. Keep the
+same retained Pod and run going while probes demonstrate meaningful progress.
+Do not stop or restart a progressing run because an elapsed-time budget expires.
+Health responsiveness alone is not proof of work progress. A stall or failure
+requires diagnosis of the retained run, not an automatic start or inference retry.
+Explicit user stop and confirmed fatal-failure handling remain available. A hosting
+observer's platform time limit must preserve resumable run state; it is not a Pod
+runtime deadline. The earlier 30-minute startup/execution lease assumptions below
+are superseded. Lifecycle and host implementation are being updated accordingly.
+
 The accompanying handoff and code-state files preserve the preceding task's exact
 checkpoint. They are historical evidence, not a claim that the unfinished cycle ran.
 
