@@ -345,6 +345,8 @@ def validate_runtime(records, admitted):
 
 def publish_service(journal, pod_id, intent, records):
     """A health-verified launch receipt; no inference request is sent here."""
+    if time.time() >= intent['deadline'] - 150:
+        raise TimeoutError('insufficient time to publish before cleanup')
     ready = {'outcome': 'service_ready', 'pod_id': pod_id,
              'base_url': 'https://' + pod_id + '-8081.proxy.runpod.net/v1',
              'model': 'granite42-smoke', 'ready_at': time.time(),
@@ -352,6 +354,8 @@ def publish_service(journal, pod_id, intent, records):
              'deadline': intent['deadline'], 'runtime': records,
              'inference_sent': False}
     journal.put('service-ready.json', ready, once=True)
+    if time.time() >= intent['deadline'] - 120:
+        raise TimeoutError('cleanup threshold reached during publication')
     save('service-ready.json', ready)
     return ready
 
@@ -422,7 +426,8 @@ def controller(journal, api):
         capture_progress(journal, current, intent, manifest, collector, records)
         if type(pod.get('cost')) not in (int, float) or not 0 < pod['cost'] <= 1.25:
             raise ValueError('actual hourly price outside approved smoke envelope')
-        startup_deadline = intent['deadline'] - 120
+        # Leave one minute for bounded runtime/readiness publication before stop.
+        startup_deadline = intent['deadline'] - 180
         while time.time() < startup_deadline:
             current = api.request('GET', '/v2/pods/' + pod_id)
             if not control.owned_pod(current, intent):

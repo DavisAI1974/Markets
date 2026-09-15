@@ -27,6 +27,20 @@ def test_supervisor_metadata_only_is_removed():
                            'SUPERVISOR_UNAPPROVED_OVERRIDE': 'still rejected by bootstrap'}
 
 
+@pytest.mark.parametrize('during_write', [False, True])
+def test_service_publication_refuses_cleanup_race(monkeypatch, tmp_path, during_write):
+    clock = [2500 if during_write else 2650]
+    monkeypatch.setattr(cloud.time, 'time', lambda: clock[0])
+    monkeypatch.setattr(cloud, 'OUT', tmp_path)
+    class Journal:
+        def put(self, *args, **kwargs):
+            assert during_write
+            clock[0] = 2680
+    with pytest.raises(TimeoutError):
+        cloud.publish_service(Journal(), 'abc123', {'deadline': 2800}, {})
+    assert not (tmp_path/'service-ready.json').exists()
+
+
 @pytest.mark.parametrize('value', [None, 'other'])
 def test_unexpected_supervisor_metadata_refused(value):
     from types import SimpleNamespace

@@ -24,8 +24,8 @@ only missing objects, and compare them to the pinned bundle before issuing GET U
 checks hashes before import and removes URLs from the process environment.
 
 The controller checks real startup model/tokenizer/runtime/disk evidence and an
-authenticated GET /health. It sends no inference POST. Startup can use the full 28
-minutes before cleanup begins. Once ready, save a secret-free service receipt to S3 and the controller
+authenticated GET /health. It sends no inference POST. Startup can use 27 minutes,
+then reserves one minute for publication before cleanup begins. Once ready, save a secret-free service receipt to S3 and the controller
 artifact, then leave the service running until the watchdog's cleanup threshold.
 Failures trigger immediate exact-Pod stop with disk retention. A missing create response is
 reconciled only by the watchdog so discovered identity cannot be lost.
