@@ -1,0 +1,36 @@
+name: Stage pinned retained Granite bootstrap
+
+on:
+  push:
+    branches: [codex/full-frankie-boss-connection-20260915]
+    paths: [.github/frankie-bootstrap-stage-request.json]
+
+permissions:
+  contents: read
+
+jobs:
+  stage:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_EC2_METADATA_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install boto3==1.42.23 botocore==1.42.97 cryptography==46.0.3
+      - run: python research/kalshi/frankie_boss/granite_bootstrap_stage.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: granite-bootstrap-stage-sensitive-${{ github.run_id }}
+          path: work/bootstrap-stage-sensitive/bootstrap-stage.encrypted.json
+          retention-days: 1
+          if-no-files-found: error

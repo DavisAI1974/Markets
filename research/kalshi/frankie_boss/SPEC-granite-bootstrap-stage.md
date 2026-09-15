@@ -1,0 +1,9 @@
+# Pinned bootstrap staging
+
+The retained open-ended runtime uses a separate versioned bootstrap directory. This staging helper exports the exact seven roster files from an explicitly pinned Git commit and packages their committed LF bytes. An independently supplied bundle SHA must match before any upload. A marker change on the integration branch invokes the dedicated workflow; it does not launch or modify a Pod.
+
+The seven files and bundle manifest are stored under a digest-specific private S3 prefix. Every creation is conditional, checksum-bound and encrypted with AES256 at rest. Existing objects are reused only after their full bytes match; collisions are preserved and refused. Local roster/file validation precedes every external write. Each object receives a short-lived GET capability after readback. The capability receipt is encrypted to the local recipient's RSA public key with the existing RSA-OAEP-SHA256/AES-256-GCM envelope. The public GitHub artifact contains only the encrypted envelope. Credentials and plaintext URLs are never printed.
+
+The workflow has no Runpod credential and only reads repository contents. It receives AWS credentials through the existing GitHub secrets. Stage only when the local host is ready for deployment so the 15-minute download capabilities remain valid; an expired capability requires reissuing capabilities, never bypassing hash checks. The workflow's five-minute job bound covers eight small file transfers and does not constrain model startup or the actual run.
+
+Three new synthetic seams passed once: conditional writes plus exact readback and existing reuse; a changed final local roster file refused before any remote operation; and a conflicting existing object preserved and refused. Independent code review found no concrete defect. No cloud staging or Pod action was performed during these checks.
