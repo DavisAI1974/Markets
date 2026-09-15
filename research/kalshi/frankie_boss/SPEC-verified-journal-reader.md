@@ -63,6 +63,15 @@ Compatibility with `EvidenceJournal` read behaviour: `path`, `count`, `head_hash
 6. `sha256(SCHEMA + NUL + body) == digest` over the already-validated bytes.
 7. After the last row: running count equals `count` and last digest equals `head_hash`, else
    `evidence journal changed during iteration` (also covers rows appended after open and a deleted tail).
+8. Fresh tail reread (added 2026-09-15, second slice): once the iterating SELECT has finished and released
+   its read snapshot, the stored tail is queried again with a fresh statement and must still equal
+   `(count, head_hash)`. In WAL mode a row appended by another connection during iteration is invisible to
+   the iterated rows, so step 7 alone would pass; only the stored tail reveals it. Likewise a tail row deleted
+   externally during iteration is still served by the snapshot and is caught only here.
+   `tests/test_verified_reader_concurrent_tail.py` covers both, plus an unchanged WAL journal that must still
+   verify. `EvidenceJournal.entries()` (unchanged, not owned by this slice) has the same WAL gap; the reader
+   does not inherit it. In rollback-journal mode a concurrent writer is blocked by the reader's shared lock
+   instead, so the case cannot arise there.
 
 Steps 3 and 4 together are what make step 6 equivalent to `evidence_hash(envelope)`: the original hashes
 `canonical_bytes(pack(envelope))`, and `pack(envelope) == tree` (step 3) with `canonical_bytes(tree) == body`
@@ -151,5 +160,6 @@ The full Sunday dataset was not reread and no number here describes it.
 
 ## Blob hashes (git, LF)
 
-- verified_journal_reader.py ef9ab457b1bc4714b5bc522233fa5145774b8162
+- verified_journal_reader.py 6e43e6f520797273aed24069aed5035528181071 (fresh tail reread; was ef9ab457b1bc4714b5bc522233fa5145774b8162)
+- tests/test_verified_reader_concurrent_tail.py beba7319dc488bf812f049ce2e121b45f7669630
 - tests/test_verified_journal_reader.py 1a4248a2304ae7168ada9a4308177d18923db7f4

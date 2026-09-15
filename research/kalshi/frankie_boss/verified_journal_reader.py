@@ -117,10 +117,7 @@ class VerifiedJournalReader:
         self._connection = sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True)
         try:
             self._connection.execute("PRAGMA query_only=1")
-            row = self._connection.execute(
-                "SELECT ordinal, digest FROM entries ORDER BY ordinal DESC LIMIT 1").fetchone()
-            stored = (row[0] + 1, row[1]) if row else (0, GENESIS_HASH)
-            if stored != (expected_count, expected_head_hash):
+            if self._stored_tail() != (expected_count, expected_head_hash):
                 raise ValueError("journal differs from checkpoint; existing evidence was retained")
         except BaseException:
             self._connection.close()
@@ -148,8 +145,16 @@ class VerifiedJournalReader:
                 raise ValueError(_MISMATCH)
             previous, count = digest, count + 1
             yield envelope
-        if count != self.count or previous != self.head_hash:
+        # The SELECT above has finished, so its read snapshot is released. Reread the stored
+        # tail with a fresh statement: in WAL mode a concurrent append is invisible to the
+        # iterated rows, and only the stored tail can reveal it.
+        if count != self.count or previous != self.head_hash or self._stored_tail() != (self.count, self.head_hash):
             raise ValueError("evidence journal changed during iteration")
+
+    def _stored_tail(self):
+        row = self._connection.execute(
+            "SELECT ordinal, digest FROM entries ORDER BY ordinal DESC LIMIT 1").fetchone()
+        return (row[0] + 1, row[1]) if row else (0, GENESIS_HASH)
 
     def verify(self, *, count, head_hash):
         for _ in self.entries():
