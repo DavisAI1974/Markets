@@ -131,6 +131,59 @@ def _cohort(start, groups, side):
             _value(sum(min(size, current[oid]) for oid, size in cohort.items())/total))
 
 
+def _history_row(e):
+    """Equation-specific history view; full original evidence is hashed first.
+
+    Both top-three FIFO cohorts retain every member and its complete order
+    fields. Full-depth observations remain in the source journal and are not
+    replaced by this temporary view used only for the defined teacher horizons.
+    """
+    result={key:e[key] for key in ('normalized','effect','order_before','order_after',
+        'rank_before','rank_after','source_member_index','session_id') if key in e}
+    if e['observation'] is not None:
+        observation=e['observation']
+        levels={side:observation['levels'][side][:3] for side in ('A','B')}
+        ids={oid for side in levels.values() for level in side for oid in level['order_ids']}
+        result['observation']=dict(levels=levels,orders=[o for o in observation['orders'] if o['order_id'] in ids],
+            integrity=observation['integrity'])
+    else:
+        result['observation']=None
+    return result
+
+
+class _OneRowInput:
+    """Lockstep source for a raw iterator; never buffers a previous full row."""
+    def __init__(self):
+        self.row=None
+        self.closed=False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.closed:
+            raise StopIteration
+        if self.row is None:
+            raise ValueError('raw teacher requested more than one source row')
+        row,self.row=self.row,None
+        return row
+
+
+def _paired_raw(control_teacher,raw_teacher,evidence,*,as_of,source_manifest_hash):
+    left,right=_OneRowInput(),_OneRowInput()
+    control=control_teacher.iter_raw(left,as_of=as_of)
+    raw=raw_teacher.iter_raw(right,as_of=as_of,source_manifest_hash=source_manifest_hash)
+    for e in evidence:
+        left.row=right.row=e
+        old,six=next(control),next(raw)
+        if left.row is not None or right.row is not None or old[0] is not e or six[0] is not e:
+            raise ValueError('raw teacher streams lost exact source alignment')
+        yield e,old[1],six[1]
+    left.closed=right.closed=True
+    if next(control,None) is not None or next(raw,None) is not None:
+        raise ValueError('raw teacher emitted an extra source row')
+
+
 class RawJournalTeacherR3:
     """Reconstruct all six shares from a caller-verified complete source prefix.
 
@@ -150,13 +203,11 @@ class RawJournalTeacherR3:
             horizons=(64, 1024), top_levels=3, imbalance_epsilon='.05',
             code={name: hashlib.sha256((here/name).read_bytes()).hexdigest() for name in files}))
 
-    def attach(self, evidence, *, context_cursors, as_of, source_manifest_hash,
-               expected_prefix_hash):
-        if (type(as_of) is not int or as_of < 0 or type(context_cursors) is not tuple
-                or not context_cursors or any(type(c) is not int or c < 0 for c in context_cursors)
-                or tuple(sorted(set(context_cursors))) != context_cursors):
-            raise ValueError('declare ordered unique context cursors and nonnegative as_of')
-        for identity in (source_manifest_hash, expected_prefix_hash):
+    def iter_raw(self, evidence, *, as_of, source_manifest_hash):
+        """Stream all six-column rows while retaining only defined group history."""
+        if type(as_of) is not int or as_of < 0:
+            raise ValueError('nonnegative as_of required')
+        for identity in (source_manifest_hash,):
             if (type(identity) is not str or len(identity) != 64
                     or any(c not in '0123456789abcdef' for c in identity)):
                 raise ValueError('declare source and expected prefix hashes')
@@ -164,12 +215,8 @@ class RawJournalTeacherR3:
         history = defaultdict(lambda: deque(maxlen=1025))
         pending = defaultdict(list)
         publishers = {}
-        wanted = set(context_cursors)
-        rows = []
         content = evidence_hash(dict(candidate=candidate, source=source_manifest_hash))
         last_recv = -1
-        last = None
-        count = 0
         for cursor, e in enumerate(evidence):
             if type(e['cursor']) is not int or e['cursor'] != cursor:
                 raise ValueError('complete prefix requires every cursor from zero')
@@ -184,7 +231,7 @@ class RawJournalTeacherR3:
             last_recv = m['ts_recv_ns']
             content = evidence_hash(dict(previous=content, evidence=e))
             key = m['publisher_id'], m['instrument_id']
-            pending[key].append(e)
+            pending[key].append(_history_row(e))
             values = [_missing('NOT_F_LAST') for _ in COLUMNS]
             if e['receipt'] is not None:
                 history[key].append(pending.pop(key))
@@ -204,16 +251,27 @@ class RawJournalTeacherR3:
                         pair = (_cohort(groups[-horizon-1][-1], groups[-horizon:], side)
                             if len(groups) > horizon else (_missing('WINDOW_SHORT'),)*2)
                         values[2+index], values[4+index] = pair
-            if cursor in wanted:
-                rows.append(dict(cursor=cursor, source_prefix_hash=e['terminal_prefix_hash'],
-                    as_of_ts_recv_ns=last_recv, evidence_content_hash=content, columns=values))
-            last = e
-            count += 1
+            yield e,dict(cursor=cursor, source_prefix_hash=e['terminal_prefix_hash'],
+                as_of_ts_recv_ns=last_recv, evidence_content_hash=content, columns=values)
+
+    def attach(self, evidence, *, context_cursors, as_of, source_manifest_hash,
+               expected_prefix_hash):
+        if (type(context_cursors) is not tuple or not context_cursors
+                or any(type(c) is not int or c < 0 for c in context_cursors)
+                or tuple(sorted(set(context_cursors))) != context_cursors):
+            raise ValueError('declare ordered unique context cursors and nonnegative as_of')
+        if (type(expected_prefix_hash) is not str or len(expected_prefix_hash)!=64
+                or any(c not in '0123456789abcdef' for c in expected_prefix_hash)):
+            raise ValueError('declare source and expected prefix hashes')
+        wanted=set(context_cursors);rows=[];last=None;count=0
+        for last,row in self.iter_raw(evidence,as_of=as_of,source_manifest_hash=source_manifest_hash):
+            count+=1
+            if row['cursor'] in wanted: rows.append(row)
         if last is None or last['terminal_prefix_hash'] != expected_prefix_hash:
             raise ValueError('terminal prefix mismatch')
         if len(rows) != len(context_cursors):
             raise ValueError('context cursor absent from prefix')
-        result = dict(candidate=CANDIDATE, candidate_digest=candidate, target_names=COLUMNS,
+        result = dict(candidate=CANDIDATE, candidate_digest=self.candidate_digest, target_names=COLUMNS,
             source_manifest_hash=source_manifest_hash, terminal_prefix_hash=expected_prefix_hash,
             processed_records=count, rows=rows, normalization='RAW_SHARE')
         return dict(result, attachment_hash=evidence_hash(result))
@@ -259,26 +317,18 @@ class JournalTeacherR3:
             from c15_normalizer_r3 import NormalizerR3, IdentityNormalizerR3
             from c15_normalizer import NormalizedValue
             from dipole_target import DipoleTarget, DipoleTargetSpec
-        evidence, context = list(evidence), list(context)
-        if not evidence or not context:
+        context = list(context)
+        if type(as_of) is not int or as_of<0:
+            raise ValueError('nonnegative as_of required')
+        if not context:
             raise ValueError('nonempty complete prefix and context required')
         selected = tuple(e['cursor'] for e in context)
-        if tuple(sorted(set(selected))) != selected:
+        if (any(type(cursor) is not int or cursor<0 for cursor in selected)
+                or tuple(sorted(set(selected))) != selected):
             raise ValueError('ordered unique context cursors required')
         session_fields = {'cursor','raw_record','normalized','source_member_index',
                           'session_id','integrity','terminal_prefix_hash'}
-        for item in context:
-            cursor = item['cursor']
-            if (type(cursor) is not int or not 0 <= cursor < len(evidence)
-                    or set(item) not in (session_fields, set(evidence[cursor]))
-                    or evidence_hash(item) != evidence_hash({k:evidence[cursor][k] for k in item})):
-                raise ValueError('context must match exact verified prefix row')
-        raw = self.raw_teacher.attach(evidence,
-            context_cursors=tuple(range(len(evidence))), as_of=as_of,
-            source_manifest_hash=source_manifest_hash,
-            expected_prefix_hash=evidence[-1]['terminal_prefix_hash'])
-        control = self.control.attach(evidence, evidence, as_of=as_of,
-                                      source_manifest_hash=source_manifest_hash)
+        selected_rows={item['cursor']:item for item in context}
         identity = isinstance(self.normalizer, IdentityNormalizerR3)
         normalizer = (IdentityNormalizerR3(self.normalizer.config.instrument_ids) if identity else
             NormalizerR3.restore(self.normalizer.config, self.normalizer.export(), self.normalizer.state_hash))
@@ -289,7 +339,15 @@ class JournalTeacherR3:
                  'log_ticks','log_groups','log_ticks') if identity else ('z_score',)*19
         wanted = set(selected)
         targets, raw_rows, receipts = [], [], []
-        for e, old, six in zip(evidence, control['raw'], raw['rows']):
+        processed=0
+        for e,old,six in _paired_raw(self.control,self.raw_teacher,evidence,
+                as_of=as_of,source_manifest_hash=source_manifest_hash):
+            processed+=1
+            if e['cursor'] in wanted:
+                item=selected_rows[e['cursor']]
+                if (set(item) not in (session_fields,set(e))
+                        or evidence_hash(item)!=evidence_hash({k:e[k] for k in item})):
+                    raise ValueError('context must match exact verified prefix row')
             combined = [dict(v) for v in old]
             combined[7:13] = [{k: v[k] for k in ('value','state','reason')} for v in six['columns']]
             iid = e['normalized']['instrument_id']
@@ -312,6 +370,8 @@ class JournalTeacherR3:
             targets.append(target)
             raw_rows.append(combined)
             receipts.append(receipt)
-        return dict(targets=tuple(targets),raw=raw_rows,processed_records=len(evidence),
+        if not processed or len(targets)!=len(context):
+            raise ValueError('context cursor absent from complete prefix')
+        return dict(targets=tuple(targets),raw=raw_rows,processed_records=processed,
             context_cursors=selected,step_receipts=tuple(receipts),
             attachment_hash=evidence_hash(receipts),candidate_digest=self.candidate_digest)

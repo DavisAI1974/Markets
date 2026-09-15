@@ -65,21 +65,19 @@ class JournalTeacher:
             return IdentityNormalizer(self.normalizer.config.instrument_ids)
         return Normalizer.restore(self.normalizer.config,self.normalizer.export(),self.normalizer.state_hash)
 
-    def attach(self,evidence,context,*,as_of,source_manifest_hash):
-        """Reconstruct causal teacher state from all prefix rows, then align context.
+    def iter_raw(self,evidence,*,as_of):
+        """Yield one raw row per complete-prefix input without constructing targets.
 
-        The supplied normalizer is an immutable initial phase checkpoint. Every
-        attachment starts from it; retries cannot double-fit observations.
-        Only UPDATING consumes new target statistics. Frozen phases stay frozen.
+        Equations and group history are unchanged. Consumers must exhaust this
+        iterator; selection happens only after every chronological observation.
         """
-        normalizer=self._normalizer_copy()
         groups=defaultdict(lambda:deque(maxlen=K_LONG))
         pending=defaultdict(list); machines={}; origins={}; ordinal=defaultdict(int)
-        wanted={e['cursor'] for e in context}; selected={}; processed=0; last=None; last_recv=-1
+        processed=0; last_recv=-1
         for e in evidence:
             if e['cursor']!=processed:
                 raise ValueError('teacher prefix must account for every source cursor from zero')
-            processed+=1; last=e
+            processed+=1
             m=e['normalized']; iid=m['instrument_id']; key=(m['publisher_id'],iid)
             if iid not in self.ticks:
                 raise ValueError('teacher encountered instrument outside declared universe')
@@ -104,9 +102,17 @@ class JournalTeacher:
                 groups[key].append(group)
                 raw=self._columns(e,groups[key],origins,key,machines,ordinal[key])
                 ordinal[key]+=1
-                normalized=[normalizer.observe(iid,c,r['value'],State(r['state'])) for c,r in zip(COLUMNS,raw)]
-            else:
-                normalized=[NormalizedValue(r['value'],State(r['state'])) for r in raw]
+            yield e,raw
+
+    def attach(self,evidence,context,*,as_of,source_manifest_hash):
+        """Consume every raw row and normalize before selecting requested targets."""
+        normalizer=self._normalizer_copy()
+        wanted={e['cursor'] for e in context}; selected={}; processed=0; last=None
+        for e,raw in self.iter_raw(evidence,as_of=as_of):
+            processed+=1; last=e
+            iid=e['normalized']['instrument_id']
+            normalized=([normalizer.observe(iid,c,r['value'],State(r['state'])) for c,r in zip(COLUMNS,raw)]
+                if e['receipt'] is not None else [NormalizedValue(r['value'],State(r['state'])) for r in raw])
             if e['cursor'] in wanted:
                 selected[e['cursor']]=(raw,self._target(e,normalized,normalizer,source_manifest_hash),
                     normalizer.receipt() if isinstance(normalizer,Normalizer) else dict(normalizer_id=normalizer.normalizer_id))
