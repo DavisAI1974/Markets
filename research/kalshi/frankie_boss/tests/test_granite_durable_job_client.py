@@ -304,3 +304,29 @@ def test_all_local_setup_failures_are_proven_unsent(phase,monkeypatch):
     with pytest.raises(jobs.RequestNotDispatched) as caught:
         jobs.https_exchange_jobs('test123','POST',None if phase=='path' else '/v1/jobs/'+'a'*64,b'{}',KEY,80)
     assert caught.value.local_validation is True and calls==[]
+
+
+@pytest.mark.parametrize('result_kind', ['length', 'failed', 'stop'])
+def test_untyped_cleanup_io_error_never_masks_persisted_model_outcome(tmp_path,result_kind):
+    from research.kalshi.frankie_boss.granite_shadow import IncompleteModelOutput
+    remote=Remote();remote.state='failed' if result_kind=='failed' else 'completed'
+    raw=service._json(dict(object='chat.completion',model='granite42-smoke',choices=[
+        dict(index=0,finish_reason=result_kind,message=dict(role='assistant',content='partial'))])).encode()
+    def exchange(*args):
+        status,body=remote(*args)
+        if result_kind=='length':
+            if args[2].endswith('/result'):return status,raw
+            if status!=404:
+                value=json.loads(body);value.update(result_bytes=len(raw),result_sha256=hashlib.sha256(raw).hexdigest())
+                body=service._json(value).encode()
+        return status,body
+    client,request=configured(tmp_path,exchange)
+    def unavailable_directory(value):raise OSError('cleanup directory unavailable')
+    client._outcome_ready=unavailable_directory
+    expected=IncompleteModelOutput if result_kind=='length' else jobs.JobAttention
+    with pytest.raises(expected) as caught:asyncio.run(client._durable_transport(request,{}))
+    if result_kind=='failed':assert caught.value.code=='REMOTE_JOB_TERMINAL_FAILURE'
+    elif result_kind=='stop':assert caught.value.code=='RETAINED_COMPLETION_PUBLICATION_PENDING'
+    if result_kind!='stop':assert caught.value.details['cleanup_pending']['code']=='RETAINED_COMPLETION_PUBLICATION_PENDING'
+    assert list(tmp_path.glob('*/outcome.json'))
+    if result_kind=='length':assert list(tmp_path.glob('*/output-incomplete.json'))

@@ -578,9 +578,10 @@ class ActualHost:
 
     def publish_completion(self,cycle_directory,startup,outcome):
         """Publish only persisted model outcome pins through the separate workflow."""
-        directory=cycle_directory/'completion-publication';directory.mkdir(exist_ok=True)
+        directory=cycle_directory/'completion-publication'
         marker=directory/'intent.c15.json';result_path=directory/'dispatch-accepted.c15.json'
         try:
+            directory.mkdir(exist_ok=True)
             if outcome['protocol']!='jobs_v1' or outcome['request_sha256']!=startup['request_sha256']:
                 raise ValueError('completion differs from exact admitted startup request')
             path=Path(outcome['outcome_path']).resolve()

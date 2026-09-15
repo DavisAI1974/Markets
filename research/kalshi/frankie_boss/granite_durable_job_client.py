@@ -96,6 +96,18 @@ class DurableJobRunpodService(OpenEndedRunpodService):
         return hashlib.sha256((_json(dict(protocol='jobs_v1',directory=str(self.directory)))+
             hashlib.sha256(Path(__file__).read_bytes()).hexdigest()).encode()).hexdigest()
 
+    async def _publish_saved_outcome(self,value):
+        if self._outcome_ready is None:return
+        try:
+            await asyncio.to_thread(self._outcome_ready,value)
+        except JobAttention:
+            raise
+        except Exception as error:
+            # Cleanup failure cannot replace a persisted terminal model outcome.
+            # Preserve a safe pointer even when its own directory cannot be made.
+            raise JobAttention('RETAINED_COMPLETION_PUBLICATION_PENDING',value['job_id'],
+                value['outcome_path'],details=dict(error_type=type(error).__name__)) from None
+
     async def _durable_transport(self,request,evidence):
         if request.identity!=self.identity or request.timeout_seconds is not None or self._config.transport_protocol!='jobs_v1':
             raise ValueError('foreign durable job request')
@@ -246,7 +258,7 @@ class DurableJobRunpodService(OpenEndedRunpodService):
             details={}
             if self._outcome_ready is not None:
                 try:
-                    await asyncio.to_thread(self._outcome_ready,dict(protocol='jobs_v1',outcome_kind='terminal_control',
+                    await self._publish_saved_outcome(dict(protocol='jobs_v1',outcome_kind='terminal_control',
                         job_id=job_id,request_sha256=body_hash,outcome_sha256=digest,http_status=None,
                         outcome_path=str(outcome_path.resolve())))
                 except JobAttention as cleanup:
@@ -259,7 +271,7 @@ class DurableJobRunpodService(OpenEndedRunpodService):
             body_base64=outcome['body_base64'],admission=admitted,job_id=job_id))
         async def publish_outcome():
             if self._outcome_ready is not None:
-                await asyncio.to_thread(self._outcome_ready,dict(protocol='jobs_v1',outcome_kind='model_response',job_id=job_id,
+                await self._publish_saved_outcome(dict(protocol='jobs_v1',outcome_kind='model_response',job_id=job_id,
                     request_sha256=body_hash,outcome_sha256=outcome['body_sha256'],http_status=outcome['http_status'],
                     outcome_path=str(outcome_path.resolve())))
         if outcome['http_status']!=200:
