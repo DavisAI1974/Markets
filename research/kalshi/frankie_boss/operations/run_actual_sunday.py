@@ -43,6 +43,13 @@ class HostProbe:
 
     def advance(self,phase,**values):return self.call('advance',phase,**values)
 
+    def data(self,value):
+        allowed = {'phase','entries','total','percent','records_per_second','worker_cpus',
+                   'worker_cpu_seconds','queued_blocks','oldest_queue_age_seconds'}
+        safe = {key: value[key] for key in allowed if key in value}
+        try: print('FRANKIE_DATA_PROGRESS '+json.dumps(safe,sort_keys=True),flush=True)
+        except OSError: pass
+
     def controller(self,value):
         # Never forward arbitrary service fields, prompt text or exception text.
         allowed={'source_validation','native_reasoning','native_complete','critic_request',
@@ -156,6 +163,7 @@ def imports(repo):
     from research.kalshi.frankie_boss import granite_run_artifacts as artifacts
     from research.kalshi.frankie_boss.online_source_prefix import OnlinePrefix,PrefixCursor
     from research.kalshi.frankie_boss.verified_journal_reader import VerifiedJournalReader
+    from research.kalshi.frankie_boss.frankie_journal_reader import FrankieCompactReader
     from research.kalshi.frankie_boss.prepared_context_cache import prepare_context_cache
     from research.kalshi.frankie_boss.selected_source_scope import source_scope
     from research.kalshi.frankie_boss.feedback_cycle import CycleCoordinator,_exclusive
@@ -373,7 +381,7 @@ class ActualHost:
             witness_sha256=sha(witness_path),files=value))
         snapshot=verified(value['snapshot']);receipt=verified_json(value['receipt'])
         origin=Path(receipt['original_journal']).resolve()
-        if receipt.get('schema')=='C15_JOURNAL_PREFIX_SNAPSHOT_V1':
+        if receipt.get('schema') in ('C15_JOURNAL_PREFIX_SNAPSHOT_V1','C15_COMPACT_JOURNAL_PREFIX_SNAPSHOT_V1'):
             if (receipt['snapshot_sha256']!=value['snapshot']['sha256'] or
                 receipt['through_cursor']!=binding['through_cursor']):
                 raise ValueError('new snapshot bytes/cursor differ from actual witness')
@@ -402,8 +410,14 @@ class ActualHost:
         finally:connection.close()
         if receipt['journal_count']!=2*receipt['records_in_prefix']:
             raise ValueError('prefix record denominator differs')
-        journal=self.api.VerifiedJournalReader(snapshot,expected_count=receipt['journal_count'],
-            expected_head_hash=receipt['journal_head_hash'])
+        reader = self.api.VerifiedJournalReader
+        reader_options = {}
+        if receipt.get('schema') == 'C15_COMPACT_JOURNAL_PREFIX_SNAPSHOT_V1':
+            reader = self.api.FrankieCompactReader
+            reader_options = dict(workers=self.host.get('data_workers', 1),
+                emit=None if self.probe is None else self.probe.data)
+        journal=reader(snapshot,expected_count=receipt['journal_count'],
+            expected_head_hash=receipt['journal_head_hash'],**reader_options)
         old=self.builder
         self.builder=self.api.OnlinePrefix(self.scope,journal,self.api.PrefixCursor(receipt['records_in_prefix'],receipt['source_prefix_hash']))
         self.source_checkpoint=dict(count=receipt['journal_count'],head_hash=receipt['journal_head_hash'])

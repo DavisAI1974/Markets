@@ -5,6 +5,7 @@ with the fully pinned actual-host configuration; safe reruns reuse published
 witnesses and recover receipt-before-witness publication, never overwrite files.
 """
 import argparse
+from functools import partial
 from contextlib import contextmanager
 import hashlib
 import heapq
@@ -17,6 +18,7 @@ import time
 REPO = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(REPO))
 from research.kalshi.frankie_boss import journal_prefix_snapshot as snapshot
+from research.kalshi.frankie_boss import compact_journal_snapshot as compact_snapshot
 from research.kalshi.frankie_boss.c15_journal import unpack, pack, canonical_bytes, evidence_hash
 from research.kalshi.frankie_boss.feedback_cycle import _exclusive
 from research.kalshi.frankie_boss import context_session, sunday_native_runtime
@@ -77,7 +79,8 @@ def snapshot_progress(directory, cycle_index, through_cursor, seed_collector=Non
     def emit(phase, completed):
         try:
             progress(directory, phase, cycle_index=cycle_index,
-                     completed_records=completed, total_records=total)
+                     completed_records=completed, total_records=total,
+                     percent=round(100*completed/total,4))
         except OSError as error:
             try:
                 print(json.dumps(dict(phase='prefix_progress_write_failed', cycle_index=cycle_index,
@@ -291,7 +294,7 @@ def materialize(source, output, steps, *, parent_count, parent_head_hash, bindin
                     batch_binding_sha256=binding_sha256,selection_code_sha256=sha(context_session.__file__),
                     runtime_code_sha256=sha(sunday_native_runtime.__file__)))
         matches_step(receipt, step)
-        if (receipt['schema'] != snapshot.SCHEMA or Path(receipt['original_journal']).resolve() != source.resolve()
+        if (receipt['schema'] not in (snapshot.SCHEMA, compact_snapshot.SCHEMA) or Path(receipt['original_journal']).resolve() != source.resolve()
                 or Path(receipt['snapshot_journal']).resolve() != path.resolve()
                 or receipt['parent'] != dict(count=parent_count, head_hash=parent_head_hash, sha256=None)):
             raise ValueError('prefix provenance differs from completed source')
@@ -349,6 +352,13 @@ def main(configuration_path):
                 or first_receipt['journal_count'] > origins[str(Path(first_receipt['original_journal']).resolve())]):
             raise ValueError('retained prefix00 has no verified closed ancestry')
         host = configuration['host_runtime']
+        compact_witness = host.get('compact_journal')
+        copier = snapshot.snapshot_journal_prefix
+        if compact_witness is not None:
+            compact_path = pinned(compact_witness)
+            copier = partial(compact_snapshot.snapshot_compact_prefix,
+                compact_path=compact_path, compact_sha256=compact_witness['sha256'],
+                workers=host.get('data_workers', 1))
         binding = dict(schema='FRANKIE_REMAINING_SUNDAY_PREFIXES_V1',
                        ingestion_receipt=host['ingestion_receipt'], schedule_receipt=host['schedule_receipt'],
                        schedule=host['schedule'], source_lineage=host['source_lineage'],
@@ -358,6 +368,11 @@ def main(configuration_path):
                        copier_sha256=sha(snapshot.__file__), model_calls=0, source_replays=0)
         binding.update(context_selection=dict(entity=list(entity),t_ctx=t_ctx,
             runtime_code_sha256=sha(sunday_native_runtime.__file__),selection_code_sha256=sha(context_session.__file__)))
+        if compact_witness is not None:
+            binding.update(compact_journal=compact_witness,
+                compact_copier_sha256=sha(compact_snapshot.__file__),
+                full_reader_sha256=sha(Path(compact_snapshot.__file__).with_name('frankie_journal_reader.py')),
+                data_workers=host.get('data_workers', 1))
         binding_path = output / 'remaining-prefix-binding.json'
         if binding_path.exists():
             if json.loads(binding_path.read_bytes()) != binding:
@@ -365,7 +380,7 @@ def main(configuration_path):
         else: save_new(binding_path, binding)
         results = materialize(journal, output, schedule['steps'], parent_count=completion['journal_count'],
                               parent_head_hash=completion['journal_hash'], binding_sha256=sha(binding_path),
-                              scope=scope,entity=entity,t_ctx=t_ctx)
+                              scope=scope,entity=entity,t_ctx=t_ctx,copier=copier)
         progress(output, 'verifying_final_source_physical_pin')
         if sha(journal) != ingestion['journal_sha256']:
             raise ValueError('source physical bytes changed during prefix batch')
