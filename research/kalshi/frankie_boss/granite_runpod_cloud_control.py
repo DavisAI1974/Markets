@@ -120,9 +120,11 @@ class Runpod:
 
 
 def validate_intent(intent):
+    nonce = intent.get('nonce', '') if type(intent) is dict else ''
+    accepted_names = {'granite-smoke-' + nonce, 'granite-smoke-' + nonce + '-migration'}
     if (type(intent) is not dict or intent.get('schema') != 'GRANITE_CLOUD_INTENT_V1'
-            or not re.fullmatch(r'[0-9a-f]{32}', intent.get('nonce', ''))
-            or intent.get('name') != 'granite-smoke-' + intent['nonce']
+            or not re.fullmatch(r'[0-9a-f]{32}', nonce)
+            or intent.get('name') not in accepted_names
             or intent.get('image') != granite_runpod.IMAGE
             or type(intent.get('start')) not in (int, float)
             or type(intent.get('deadline')) not in (int, float)

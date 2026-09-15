@@ -28,8 +28,10 @@ from .granite_active_run import ActiveRunStore, completion_cleanup
 from .granite_startup_pins import persist_configuration
 
 OUT = Path('work/retained-granite')
-INFO_SHA256 = 'c6c151ddc5ad252a04c34a533e8bc4d9f46c24778372c9bb84f34e748832020a'
+INFO_SHA256 = '0e059d18cbfaef80e5171dbfefc0b91d5d66376cd9ec8a19b639c135b81f751c'
 PRIOR_RUN = '34928264918'
+JOURNAL_GENERATION = 'migration-ycf4v6lmave6xw'
+MIGRATION_RECEIPT = Path(__file__).with_name('granite_retained_migration_receipt.json')
 REQUEST_BUCKET = 'bento-568968024170-us-east-2-an'
 REQUEST_PREFIX = 'nymex/ng_mbo_5y_v0/frankie/boss_requests/'
 
@@ -44,9 +46,25 @@ def info_from_journal(journal):
     prior.client, prior.bucket = journal.client, journal.bucket
     prior.prefix = 'runpod-smoke/'+PRIOR_RUN+'/'
     raw = prior.get_bytes('pod-info.json')
-    if raw is None or hashlib.sha256(raw).hexdigest() != INFO_SHA256:
+    if raw is None or hashlib.sha256(raw).hexdigest() != 'c6c151ddc5ad252a04c34a533e8bc4d9f46c24778372c9bb84f34e748832020a':
         raise ValueError('accepted retained Pod receipt differs')
-    return artifacts.strict_json(raw)
+    info = artifacts.strict_json(raw)
+    migration = artifacts.strict_json(MIGRATION_RECEIPT.read_bytes())
+    if (set(migration) != {'schema', 'source_info_sha256', 'source_pod_id', 'pod'}
+            or migration['schema'] != 'GRANITE_POD_MIGRATION_V1'
+            or migration['source_info_sha256'] != hashlib.sha256(raw).hexdigest()
+            or migration['source_pod_id'] != info['pod_id']):
+        raise ValueError('retained Pod migration receipt differs')
+    pod = migration['pod']
+    if set(pod) != {'id', 'name', 'image', 'status', 'dataCenterId', 'gpu', 'disk', 'mounts', 'cost'}:
+        raise ValueError('retained Pod migration facts differ')
+    info['intent']['name'] = pod['name']
+    info['pod_id'] = pod['id']
+    info['pod'] = pod
+    info['base_url'] = 'https://' + pod['id'] + '-8081.proxy.runpod.net/v1'
+    if hashlib.sha256(artifacts.canonical(info)).hexdigest() != INFO_SHA256:
+        raise ValueError('migrated retained Pod receipt differs')
+    return info
 
 
 def request_digest():
@@ -430,7 +448,7 @@ def cleanup(api):
     startup = artifacts.strict_json((OUT/'startup-intent.json').read_bytes())
     digest = lifecycle.check_startup(startup, info)
     journal = cloud.Journal()
-    journal.prefix = 'retained-granite/'+startup['request_sha256']+'/'
+    journal.prefix = 'retained-granite/'+startup['request_sha256']+'/'+JOURNAL_GENERATION+'/'
     journal.put('retained-confirmed-fatal.json', {'startup_sha256': digest})
     result = completion_cleanup(api, journal,
         ActiveRunStore(journal.client, journal.bucket, lifecycle.POD_ID), info, digest,
@@ -450,7 +468,7 @@ def main():
     info = info_from_journal(journal)
     # Request-specific journal survives observer job replacement. A prior start
     # intent always selects observation; it can never submit a second start.
-    journal.prefix = 'retained-granite/'+request_digest()+'/'
+    journal.prefix = 'retained-granite/'+request_digest()+'/'+JOURNAL_GENERATION+'/'
     manifest = artifacts.strict_json(artifacts.DEFAULT_MANIFEST.read_bytes())
     try:
         if role == 'prepare':

@@ -242,3 +242,18 @@ def validate_resume(info, pod, manifest):
     if any(actual[key] != info['pod'][key] for key in stable):
         _refuse()
     return copy.deepcopy(info)
+
+
+def validate_running_migration(info, pod, manifest):
+    """Validate the provider-started replacement created by automatic migration."""
+    if (type(info) is not dict or not info.get('intent', {}).get('name', '').endswith('-migration')
+            or pod.get('status') != 'RUNNING'):
+        _refuse()
+    recorded_status = info['pod']['status']
+    try:
+        info['pod']['status'] = 'EXITED'
+        checked = validate_resume(info, dict(pod, status='EXITED'), manifest)
+    finally:
+        info['pod']['status'] = recorded_status
+    checked['pod']['status'] = recorded_status
+    return checked

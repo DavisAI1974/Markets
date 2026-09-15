@@ -25,7 +25,7 @@ def publish_completion(journal, fields):
         raise ValueError('exact completion hashes required')
     startup = journal.get('retained-startup.json')
     if (type(startup) is not dict or startup.get('request_sha256') != fields['request_sha256']
-            or startup.get('pod_id') != 'jvs75m56w8f73q'
+            or startup.get('pod_id') != 'ycf4v6lmave6xw'
             or hashlib.sha256(canonical(startup)).hexdigest() != fields['startup_sha256']):
         raise ValueError('completion differs from retained startup')
     for name, value in (
@@ -61,7 +61,7 @@ class CompletionJournal:
             connect_timeout=5, read_timeout=10,
             retries={'total_max_attempts': 2, 'mode': 'standard'}))
         self.bucket = 'frankie-granite42-568968024170-us-east-1'
-        self.prefix = 'retained-granite/' + request_sha256 + '/'
+        self.prefix = 'retained-granite/' + request_sha256 + '/migration-ycf4v6lmave6xw/'
 
     def get(self, name):
         try:
