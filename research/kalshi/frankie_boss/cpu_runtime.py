@@ -40,6 +40,10 @@ def configure_cpu_runtime(policy=None):
     policy = CpuRuntimePolicy() if policy is None else policy
     if not isinstance(policy, CpuRuntimePolicy):
         raise ValueError("CpuRuntimePolicy required")
+    available = os.cpu_count()
+    required = max(policy.workers, policy.torch_intraop_threads)
+    if available is None or available < required:
+        raise RuntimeError(f"host exposes {available!r} logical CPUs; policy requires at least {required}")
     os.environ["FRANKIE_CPU_WORKERS"] = str(policy.workers)
     import torch
     torch.set_num_threads(policy.torch_intraop_threads)
@@ -52,5 +56,6 @@ def configure_cpu_runtime(policy=None):
     if torch.get_num_interop_threads() != policy.torch_interop_threads:
         raise RuntimeError("PyTorch inter-op thread policy was not applied")
     return dict(schema="FRANKIE_CPU_RUNTIME_POLICY_V1", **asdict(policy),
+                host_logical_cpus=available,
                 torch_num_threads=torch.get_num_threads(),
                 torch_num_interop_threads=torch.get_num_interop_threads())
