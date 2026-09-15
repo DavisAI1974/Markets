@@ -26,7 +26,7 @@ def test_bad_model_or_expired_stage_never_accepts(tmp_path,damage):
 
 
 def test_bundle_rejects_tamper_and_unsafe_roster(tmp_path):
-    names=['granite_runpod.py','granite_runpod_proxy.py','granite_startup.py',
+    names=['granite_runpod.py','granite_runpod_proxy.py','granite_runpod_jobs.py','granite_startup.py',
            'granite_run_artifacts.py','granite_artifacts_manifest.json','granite_image_identity.json',
            'granite_runpod_progress.py']
     rows=[]

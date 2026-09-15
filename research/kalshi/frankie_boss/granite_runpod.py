@@ -74,7 +74,7 @@ def verify_bundle(directory, expected_digest):
     if hashlib.sha256(raw).hexdigest()!=expected_digest:
         raise ValueError('bootstrap bundle identity differs')
     bundle=artifacts.strict_json(raw)
-    expected={'granite_runpod.py','granite_runpod_proxy.py','granite_startup.py',
+    expected={'granite_runpod.py','granite_runpod_proxy.py','granite_runpod_jobs.py','granite_startup.py',
               'granite_run_artifacts.py','granite_artifacts_manifest.json','granite_image_identity.json',
               'granite_runpod_progress.py'}
     rows=bundle.get('files',[])
@@ -146,7 +146,8 @@ def prepare_process(directory, manifest, environment, *, deadline, clock=time.mo
             if (receipt.get('schema')!='GRANITE_STARTUP_RUNTIME_V1'
                     or receipt.get('image_digest')!=startup.IMAGE_DIGEST
                     or receipt.get('environment')!={k:environment[k] for k in startup.launch_environment(
-                        max_model_len=int(environment['GRANITE_MAX_MODEL_LEN']),served_model=environment['GRANITE_SERVED_MODEL'])}
+                        max_model_len=int(environment['GRANITE_MAX_MODEL_LEN']),served_model=environment['GRANITE_SERVED_MODEL'],
+                        transport_protocol=environment.get('GRANITE_TRANSPORT_PROTOCOL', 'direct_v1'))}
                     or receipt.get('mount',{}).get('manifest_sha256')!=artifacts.manifest_digest(manifest)):
                 raise ValueError('child startup receipt binding mismatch')
             expected_argv=['python3','-m','vllm.entrypoints.openai.api_server','--host','0.0.0.0','--port','8080',
@@ -224,7 +225,8 @@ def boot(environment, *, directory='/opt/ml/model', bundle_directory=None,
         raise ValueError('Runpod supervisor command differs')
     restored['SUPERVISOR_PROGRAM__APP_COMMAND']=startup.COMMAND
     expected=startup.launch_environment(max_model_len=int(restored.get('GRANITE_MAX_MODEL_LEN','0')),
-                                       served_model=restored.get('GRANITE_SERVED_MODEL'))
+                                       served_model=restored.get('GRANITE_SERVED_MODEL'),
+                                       transport_protocol=restored.get('GRANITE_TRANSPORT_PROTOCOL', 'direct_v1'))
     if any(restored.get(key)!=value for key,value in expected.items()):
         raise ValueError('startup configuration differs before staging')
     controlled=('SUPERVISOR_','SM_VLLM_','GRANITE_','STANDARD_','HF_MODEL_ID')
@@ -241,6 +243,8 @@ def boot(environment, *, directory='/opt/ml/model', bundle_directory=None,
     if deadline is None:
         evidence.update(bootstrap_bundle_sha256=environment.get('RUNPOD_BUNDLE_SHA256'),
                         supervisor_command_sha256=environment['RUNPOD_SUPERVISOR_COMMAND_SHA256'])
+    if environment.get('GRANITE_TRANSPORT_PROTOCOL') == 'jobs_v1':
+        evidence['durable_job_protocol'] = 'jobs_v1'
     print('GRANITE_RUNPOD_STARTUP '+artifacts.canonical(evidence).decode(),flush=True)
     remaining(deadline,clock)
     kwargs={'progress':progress} if progress is not None else {}

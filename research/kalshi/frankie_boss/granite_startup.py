@@ -28,12 +28,14 @@ def digest_file(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def launch_environment(*, max_model_len, served_model):
+def launch_environment(*, max_model_len, served_model, transport_protocol='direct_v1'):
     if type(max_model_len) is not int or max_model_len not in (4096, 131072):
         raise ValueError('explicit supported 4096 or 131072 runtime context required')
     if type(served_model) is not str or not re.fullmatch('[A-Za-z0-9_.-]{1,100}', served_model):
         raise ValueError('explicit served model name required')
-    return {
+    if transport_protocol not in ('direct_v1', 'jobs_v1'):
+        raise ValueError('supported transport protocol required')
+    environment = {
         'SUPERVISOR_PROGRAM__APP_COMMAND': COMMAND,
         'SUPERVISOR_PROGRAM__APP_AUTORESTART': 'false',
         'SUPERVISOR_PROGRAM__APP_STARTRETRIES': '0',
@@ -53,6 +55,9 @@ def launch_environment(*, max_model_len, served_model):
         'GRANITE_VERIFIER_SHA256': digest_file(artifacts.__file__),
         'GRANITE_MANIFEST_SHA256': artifacts.manifest_digest(artifacts.strict_json(artifacts.DEFAULT_MANIFEST.read_bytes())),
     }
+    if transport_protocol == 'jobs_v1':
+        environment['GRANITE_TRANSPORT_PROTOCOL'] = transport_protocol
+    return environment
 
 
 def runtime_facts():
@@ -82,7 +87,8 @@ def prepare_startup(directory, manifest, environment, *, runtime_facts=runtime_f
         length = int(environment['GRANITE_MAX_MODEL_LEN'])
     except (ValueError, KeyError, TypeError) as exc:
         raise ValueError('explicit runtime context required') from exc
-    expected = launch_environment(max_model_len=length, served_model=environment.get('GRANITE_SERVED_MODEL'))
+    expected = launch_environment(max_model_len=length, served_model=environment.get('GRANITE_SERVED_MODEL'),
+                                  transport_protocol=environment.get('GRANITE_TRANSPORT_PROTOCOL', 'direct_v1'))
     expected['GRANITE_MANIFEST_SHA256'] = artifacts.manifest_digest(manifest)
     if any(environment.get(key) != value for key, value in expected.items()):
         raise ValueError('startup identity/configuration mismatch')

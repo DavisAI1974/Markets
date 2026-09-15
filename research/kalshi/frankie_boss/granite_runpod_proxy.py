@@ -1,7 +1,7 @@
 """Bounded text-only Granite proxy. Publish only port8081 through Runpod HTTPS."""
 import hmac
 import http.client
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
 import os
@@ -9,6 +9,10 @@ import re
 import socket
 import threading
 import time
+try:
+    from .granite_runpod_jobs import JobStore, JobConflict, SPOOL
+except ImportError:
+    from granite_runpod_jobs import JobStore, JobConflict, SPOOL
 
 BACKEND_PORT = 8080
 MAX_REQUEST = 1024 * 1024
@@ -171,6 +175,8 @@ class _Handler(BaseHTTPRequestHandler):
         if not hmac.compare_digest(supplied, self.server.authorization):
             return self._reply(401, b'{"error":"unauthorized"}')
         health = self.command == 'GET' and self.path == '/health'
+        if self.server.jobs is not None and not health:
+            return self._job_request()
         if not health and (self.command != 'POST' or self.path != '/v1/chat/completions'):
             return self._reply(404, b'{"error":"request refused"}')
         try:
@@ -204,15 +210,62 @@ class _Handler(BaseHTTPRequestHandler):
             return self._reply(503 if health else 502, b'{"error":"upstream unavailable"}')
         self._reply(200, result)
 
+    def _job_request(self):
+        match = re.fullmatch(r'/v1/jobs/([0-9a-f]{64})(/result)?', self.path)
+        if (match is None or self.command not in ('POST', 'GET')
+                or (self.command == 'POST' and match[2])):
+            return self._reply(404, b'{"error":"request refused"}')
+        job_id, result_path = match.groups()
+        try:
+            size = _length(self.headers, MAX_REQUEST, optional=self.command == 'GET')
+            if self.headers.get_all('Expect') or (self.command == 'GET' and size):
+                raise ValueError('job request framing')
+            if self.command == 'POST':
+                if self.headers.get_all('Content-Type') != ['application/json']:
+                    raise ValueError('job content type')
+                hashes = self.headers.get_all('X-Granite-Request-SHA256', [])
+                if len(hashes) != 1 or not re.fullmatch('[0-9a-f]{64}', hashes[0]):
+                    raise ValueError('job request hash required')
+                body = self.rfile.read(size)
+                if len(body) != size:
+                    raise ValueError('short job request')
+                _chat(body, self.server.model)
+                # Never persist the credential even if accidentally included in
+                # JSON escapes. Auth itself stays outside the durable model body.
+                if self.server.secret.decode('ascii') in json.dumps(_json(body), ensure_ascii=False):
+                    raise ValueError('credential body refused')
+                control = self.server.jobs.submit(job_id, hashes[0], body)
+                return self._reply(202, json.dumps(control, separators=(',', ':')).encode())
+            control = self.server.jobs.status(job_id)
+            if control is None:
+                return self._reply(404, b'{"error":"unknown job"}')
+            if result_path and control['state'] == 'completed':
+                return self._reply(200, self.server.jobs.result(job_id))
+            self._reply(202 if result_path else 200, json.dumps(control, separators=(',', ':')).encode())
+        except JobConflict:
+            self._reply(409, b'{"error":"job identity conflict"}')
+        except OverflowError:
+            self._reply(413, b'{"error":"request refused"}')
+        except (ValueError, OSError, RecursionError):
+            self._reply(400, b'{"error":"request refused"}')
+        except Exception:
+            self._reply(503, b'{"error":"job storage unavailable"}')
 
-class _Server(HTTPServer):
+
+class _Server(ThreadingHTTPServer):
     request_queue_size = 5
 
     def handle_error(self, request, client_address):
         pass  # Never emit request or exception data to stderr.
 
+    def server_close(self):
+        super().server_close()
+        if getattr(self, 'jobs', None) is not None:
+            self.jobs.close()
 
-def make_server(secret, address=('0.0.0.0', 8081), *, model, open_ended=False):
+
+def make_server(secret, address=('0.0.0.0', 8081), *, model, open_ended=False,
+                transport_protocol='direct_v1', spool=SPOOL):
     """Address is a local-test seam; main fixes deployment port and host."""
     if type(secret) is not str or not re.fullmatch(r'[A-Za-z0-9_-]{32,256}', secret):
         raise ValueError('required proxy secret invalid')
@@ -220,17 +273,27 @@ def make_server(secret, address=('0.0.0.0', 8081), *, model, open_ended=False):
         raise ValueError('required served model invalid')
     if type(open_ended) is not bool:
         raise ValueError('explicit proxy runtime mode required')
+    if transport_protocol not in ('direct_v1', 'jobs_v1'):
+        raise ValueError('explicit proxy transport protocol required')
     server = _Server(address, _Handler)
     server.secret = secret.encode('ascii')
     server.authorization = b'Bearer ' + server.secret
     server.model = model
     server.open_ended = open_ended
+    server.jobs = None
+    try:
+        if transport_protocol == 'jobs_v1':
+            server.jobs = JobStore(spool, secret=server.secret)
+    except BaseException:
+        server.server_close()
+        raise
     return server
 
 
 def main():
     with make_server(os.environ.get('RUNPOD_GRANITE_API_KEY'),
                      model=os.environ.get('GRANITE_SERVED_MODEL'),
+                     transport_protocol=os.environ.get('GRANITE_TRANSPORT_PROTOCOL', 'direct_v1'),
                      open_ended=os.environ.get('RUNPOD_GRANITE_LIFETIME_SECONDS') == 'none') as server:
         server.serve_forever()
 

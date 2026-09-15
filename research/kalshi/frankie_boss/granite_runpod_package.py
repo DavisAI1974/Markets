@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import shlex
 
-FILES=('granite_runpod.py','granite_runpod_proxy.py','granite_startup.py',
+FILES=('granite_runpod.py','granite_runpod_proxy.py','granite_runpod_jobs.py','granite_startup.py',
        'granite_run_artifacts.py','granite_artifacts_manifest.json','granite_image_identity.json',
        'granite_runpod_progress.py')
 ROOT='/opt/ml/additional-model-data-sources/bootstrap'
