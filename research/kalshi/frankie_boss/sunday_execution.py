@@ -142,6 +142,7 @@ class SundayRuntime:
     source_journal_path: str
     source_journal_checkpoint: dict
     context_encoding: str = 'compact_v1'
+    context_encoding_options: dict | None = None
     controller_event: Callable | None = None
     release: Callable | None = None
 
@@ -249,6 +250,7 @@ class SundayExecution:
                             expected_critic_config_hash=runtime.expected_critic_config_hash,
                             expected_critic_identity_hash=runtime.expected_critic_identity_hash,
                             context_encoding=runtime.context_encoding,input_hash=runtime.input_hash,
+                            **({'context_encoding_options':_plain(runtime.context_encoding_options)} if runtime.context_encoding_options is not None else {}),
                             source_journal_checkpoint=runtime.source_journal_checkpoint,
                             source_journal_path=str(Path(runtime.source_journal_path).resolve()))
                         _save(plan_path,plan)  # exact full plan and independent pins BEFORE refresh/call
@@ -257,7 +259,8 @@ class SundayExecution:
                             raise ValueError('retained request plan identity differs')
                         if (plan['source_journal_checkpoint']!=runtime.source_journal_checkpoint or
                                 plan['source_journal_path']!=str(Path(runtime.source_journal_path).resolve()) or
-                                plan['input_hash']!=runtime.input_hash or plan['context_encoding']!=runtime.context_encoding):
+                                plan['input_hash']!=runtime.input_hash or plan['context_encoding']!=runtime.context_encoding or
+                                plan.get('context_encoding_options')!=_plain(runtime.context_encoding_options)):
                             raise ValueError('retained source/admission identity differs')
                         if plan['controller_kwargs']['sessions']!=_plain(binding['sessions']):
                             raise ValueError('retained request plan has different authored sessions')
@@ -278,7 +281,7 @@ class SundayExecution:
                             critic=critic,expected_native_hash=plan['expected_native_hash'],
                             expected_critic_config_hash=plan['expected_critic_config_hash'],
                             expected_critic_identity_hash=plan['expected_critic_identity_hash'],
-                            context_encoding=plan['context_encoding'],event=runtime.controller_event)
+                            context_encoding=plan['context_encoding'],context_encoding_options=plan.get('context_encoding_options'),event=runtime.controller_event)
                     def export_kwargs(result):
                         controller_pin=controller_journal.checkpoint();native_pin=book.checkpoint()
                         # Observe actual durable checkpoints independently of result fields.

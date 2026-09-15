@@ -22,9 +22,11 @@ def _critic_context(state, intent):
         raise ValueError('critic encoding differs from controller configuration')
     snapshot = route.parse(intent['snapshot_text'], expected_hash=intent['snapshot_hash'])
     native = route.native(snapshot)
-    if (('native_snapshot_hash' in intent or route.encoding == 'compact_v1')
+    if (('native_snapshot_hash' in intent or route.encoding in ('compact_v1', 'stacked_v1'))
             and intent.get('native_snapshot_hash') != native.hash):
         raise ValueError('critic encoding differs from exact native snapshot')
+    if route.encoding == 'stacked_v1' and route.encode(native, **(config.get('context_encoding_options') or {})).text != snapshot.text:
+        raise ValueError('critic encoding differs from configured exact derivation options')
     prompt = route.build_prompt(snapshot)
     if intent['prompt_text'] != prompt.text:
         raise ValueError('critic prompt differs from selected encoding')

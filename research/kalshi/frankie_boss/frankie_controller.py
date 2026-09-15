@@ -27,7 +27,7 @@ def native_model_pin(bridge):
 class FrankieForecastController:
     def __init__(self, *, enabled=False, legacy=None, bridge=None, journal=None,
                  critic=None, expected_native_hash=None, expected_critic_config_hash=None,
-                 expected_critic_identity_hash=None, context_encoding='native_v1', event=None):
+                 expected_critic_identity_hash=None, context_encoding='native_v1', context_encoding_options=None, event=None):
         if type(enabled) is not bool:
             raise ValueError('explicit boolean enable flag required')
         self.enabled, self.legacy = enabled, legacy
@@ -38,6 +38,10 @@ class FrankieForecastController:
         self.event = event
         from research.kalshi.frankie_boss.granite_context_route import context_route
         self.context_encoding = context_route(context_encoding).encoding
+        if context_encoding_options is not None and (self.context_encoding != 'stacked_v1' or
+                type(context_encoding_options) is not dict or set(context_encoding_options)-{'scope_public','prefix_seed'}):
+            raise ValueError('explicit stacked derivation options required')
+        self.context_encoding_options = unpack(pack(context_encoding_options))
         if (critic is None or getattr(critic, 'enabled', False) is not True
                 or not callable(getattr(critic, context_route(self.context_encoding).method, None))):
             raise ValueError('enabled critic for selected context encoding required')
@@ -82,6 +86,7 @@ class FrankieForecastController:
         if source is None:
             raise ValueError('critic implementation source identity required')
         return dict(context_encoding=self.context_encoding,
+            **({'context_encoding_options':self.context_encoding_options} if self.context_encoding_options is not None else {}),
             native_hash=self.expected_native_hash,critic_config_hash=self.expected_critic_config_hash,
             critic_identity_hash=self.expected_critic_identity_hash,
             critic_timeout=self.critic.request_timeout,
@@ -131,7 +136,7 @@ class FrankieForecastController:
             expected_packet_hash=packet,source_as_of=source_as_of,expected_qsv_binding=qsv_binding)
         from research.kalshi.frankie_boss.granite_context_route import context_route
         route = context_route(self.context_encoding)
-        encoded = route.encode(snapshot)
+        encoded = route.encode(snapshot, **(self.context_encoding_options or {}))
         return encoded,route.build_prompt(encoded),asdict(receipt),packet,snapshot.hash
 
     def _critic_result(self, receipt, *, snapshot, prompt, attempt_id):

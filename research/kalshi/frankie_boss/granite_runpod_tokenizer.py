@@ -65,6 +65,10 @@ class LocalTokenizerAdmission:
         self._lock = threading.Lock()
 
     @property
+    def context(self):
+        return self._context
+
+    @property
     def tokenizer_sha256(self):
         return self._tokenizer_sha256
 

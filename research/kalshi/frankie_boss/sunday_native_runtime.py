@@ -137,7 +137,8 @@ def current_training_identity(context, decoder, optimizer, checkpoint, *, expect
 
 
 def prepare_critic_request(context, *, as_of, through_cursor, source_as_of,
-                           served_model_name='granite42-smoke', output_tokens=1200):
+                           served_model_name='granite42-smoke', output_tokens=1200,
+                           context_encoding='compact_v1', context_encoding_options=None):
     """No forward, remote call or publication. Preserve every prepared context row.
 
     Return exact compact service bytes for LocalTokenizerAdmission; capacity
@@ -159,8 +160,8 @@ def prepare_critic_request(context, *, as_of, through_cursor, source_as_of,
         registry=context.model.trunk.registry, expected_input_hash=input_hash,
         expected_packet_hash=evidence_hash(packet), source_as_of=source_as_of,
         expected_qsv_binding=qsv_binding)
-    route = context_route('compact_v1')
-    snapshot = route.encode(mapped)
+    route = context_route(context_encoding)
+    snapshot = route.encode(mapped, **(context_encoding_options or {}))
     prompt = route.build_prompt(snapshot)
     body = canonical(dict(model=served_model_name, messages=[dict(role='user', content=prompt.text)],
         temperature=0, max_tokens=output_tokens, stream=False,
@@ -168,6 +169,9 @@ def prepare_critic_request(context, *, as_of, through_cursor, source_as_of,
     return body, dict(schema='BOSS_ACTUAL_CRITIC_INPUT_V1', context=asdict(receipt),
         request_sha256=hashlib.sha256(body).hexdigest(), request_bytes=len(body),
         prompt_sha256=hashlib.sha256(prompt.text.encode()).hexdigest(),
-        native_snapshot_hash=mapped.hash, compact_snapshot_hash=snapshot.hash,
+        native_snapshot_hash=mapped.hash,
+        **({'compact_snapshot_hash':snapshot.hash} if context_encoding=='compact_v1' else
+           {'encoded_snapshot_hash':snapshot.hash,'context_encoding':context_encoding,
+            'context_encoding_options':context_encoding_options}),
         teacher_binding=context.teacher.binding if context.teacher is not None else None,
         model_forward_performed=False, inference_performed=False)
