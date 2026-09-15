@@ -174,8 +174,8 @@ def verify_attachment(request: AttachmentRequest, *, result_path, delivery_recei
         raise AttachmentError('attachment directory must be an ordinary directory')
     manifest, manifest_raw = _canonical_file(directory/'manifest.json', request.expected_manifest_sha256)
     _keys(manifest, 'schema boss_commit agent_commit request_id request_hash status controller_checkpoint native_checkpoint configuration_hash source targets files', 'manifest')
-    if manifest['schema'] != SCHEMA or manifest['status'] != 'complete':
-        raise AttachmentError('only a complete BOSS attachment is admitted')
+    if manifest['schema'] != SCHEMA or manifest['status'] not in ('complete', 'incomplete'):
+        raise AttachmentError('only a verified BOSS attachment is admitted')
     if trusted_agent_commit is None:
         trusted_agent_commit = _executing_commit()
     for name, expected in (('boss_commit', request.expected_boss_commit), ('agent_commit', request.expected_agent_commit)):

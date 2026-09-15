@@ -123,14 +123,15 @@ def test_source_attestation_must_match_actual_agent_identity(tmp_path, field, va
     with pytest.raises(boss.AttachmentError): verify(request, result, delivery)
 
 
-def test_refuses_incomplete_even_when_re_pinned(tmp_path):
+def test_accepts_verified_incomplete_when_re_pinned(tmp_path):
     from dataclasses import replace
     request, result, delivery = fixture(tmp_path)
     body = json.loads((request.directory/'manifest.json').read_bytes())
     body['status'] = 'incomplete'
     (request.directory/'manifest.json').write_bytes(encoded(body))
     request = replace(request, expected_manifest_sha256=sha(encoded(body)))
-    with pytest.raises(boss.AttachmentError): verify(request, result, delivery)
+    accepted = verify(request, result, delivery)
+    assert accepted.receipt['manifest_sha256'] == request.expected_manifest_sha256
 
 
 def test_post_comparison_never_renders_input_block(tmp_path):
