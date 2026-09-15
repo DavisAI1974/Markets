@@ -11,3 +11,6 @@ research/kalshi/agents/*.md text eol=lf
 # Granite prompt fixtures are byte-frozen (sha256 asserted by tests/test_granite_contract.py);
 # the same autocrlf rewrite would break them on a Windows checkout.
 research/kalshi/frankie_boss/tests/fixtures/granite_prompts/** -text
+
+# Exact official cancellation schema reference is checked at runtime.
+research/kalshi/frankie_boss/provenance/kalshi-cancel-order-v2-20260915.md -text

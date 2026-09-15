@@ -11,6 +11,7 @@ from typing import get_args, get_origin
 from .c15_journal import EvidenceJournal, evidence_hash, pack, unpack
 from .execution_contracts import (Contract, AccountKey, Intent, Policy, Registry,
     SourceReference, Valuation, MarketSnapshot, AccountSnapshot, Reservation, Exposure)
+from .execution_cancel_contracts import CancelIntent, CancelAuthorization, CancelWire
 from .execution_policy import evaluate
 from .forecast_contract import sha256_digest
 
@@ -109,7 +110,7 @@ class ExecutionLedger:
             self._lease.close()
             raise ValueError('execution writer lease unavailable') from exc
         self._lock=threading.Lock();self._failed=False;self._closed=False
-        self._states={};self._observations={};self._killed=False;self._frontiers={}
+        self._states={};self._observations={};self._killed=False;self._frontiers={};self._cancellations={}
         self._kill_path=Path(str(path)+'.kill')
         self._kill_event=threading.Event();self._kill_io_lock=threading.Lock()
         if self._kill_path.exists():self._kill_event.set()
@@ -194,6 +195,29 @@ class ExecutionLedger:
         if step=='KILL':
             if type(p) is not str or not p.strip():raise ValueError('kill reason required')
             self._killed=True;return
+        if step=='CANCEL_ATTEMPT':
+            if type(p) is not dict or set(p)!={'control','authorization','wire','sent_ns','target_received_ns'}:
+                raise ValueError('exact cancellation attempt fields required')
+            control=_restore(CancelIntent,p['control']);authorization=_restore(CancelAuthorization,p['authorization'])
+            wire=_restore(CancelWire,p['wire'])
+            self._validate_cancel(control,authorization,wire,p['sent_ns'],p['target_received_ns'])
+            if control.control_id in self._cancellations or any(
+                v['control']['original_intent_id']==control.original_intent_id or
+                (v['control']['account']==asdict(control.account) and v['control']['provider_order_id']==control.provider_order_id)
+                for v in self._cancellations.values()):
+                raise ValueError('cancellation already attempted for this order; never resend')
+            self._cancellations[control.control_id]=dict(p,returned=False,error_type=None)
+            return
+        if step in ('CANCEL_RETURN','CANCEL_ERROR'):
+            key='body' if step=='CANCEL_RETURN' else 'error_type'
+            if type(p) is not dict or set(p)!={'control_id',key}:
+                raise ValueError('exact cancellation outcome fields required')
+            prior=self._cancellations[p['control_id']]
+            if prior['returned'] or prior['error_type'] is not None or type(p[key]) is not (bytes if key=='body' else str):
+                raise ValueError('invalid or duplicate cancellation outcome')
+            if key=='body':prior['returned']=True
+            else:prior['error_type']=p[key]
+            return
         if step=='CREATED':
             intent=_restore(Intent,p)
             if intent.intent_id in self._states: raise ValueError('duplicate execution intent')
@@ -286,12 +310,12 @@ class ExecutionLedger:
 
     def _append(self,step,payload):
         self._active();event=_copy(dict(step=step,payload=payload))
-        old=(_copy(self._states),_copy(self._observations),self._killed,_copy(self._frontiers))
+        old=(_copy(self._states),_copy(self._observations),self._killed,_copy(self._frontiers),_copy(self._cancellations))
         try:
             self._transition(event)
         except BaseException:
-            self._states,self._observations,self._killed,self._frontiers=old;raise
-        self._states,self._observations,self._killed,self._frontiers=old
+            self._states,self._observations,self._killed,self._frontiers,self._cancellations=old;raise
+        self._states,self._observations,self._killed,self._frontiers,self._cancellations=old
         self._failed=True
         self.journal.append(SCHEMA,event)
         self._transition(event);self._failed=False
@@ -341,6 +365,51 @@ class ExecutionLedger:
                 raise
             self._append('RETURN',dict(intent_id=intent.intent_id,body=result))
             return result
+
+    def _validate_cancel(self,control,authorization,wire,clock,target_received_ns):
+        if type(clock) is not int or type(target_received_ns) is not int or target_received_ns < 0:
+            raise ValueError('explicit cancellation and target clocks required')
+        if (not authorization.created_ns <= control.created_ns <= clock < control.expires_ns <= authorization.expires_ns
+                or not target_received_ns <= control.created_ns
+                or clock-target_received_ns > authorization.max_target_age_ns):
+            raise ValueError('cancellation authorization/intent/target freshness failed')
+        state=self._states[control.original_intent_id]
+        original=_restore(Intent,state['intent'])
+        if state['wire'] is None or state['released']:
+            raise ValueError('cancellation requires an unresolved submitted order')
+        submitted=_restore(WireRequest,state['wire'])
+        if (control.original_intent_hash!=original.digest or control.submitted_wire_hash!=submitted.digest
+                or control.account!=original.account or authorization.account!=original.account
+                or control.client_id!=submitted.client_id or control.authorization_hash!=authorization.digest
+                or wire.control_hash!=control.digest or wire.adapter_hash!=authorization.adapter_hash
+                or wire.adapter_hash!=submitted.adapter_hash or wire.account!=control.account
+                or wire.provider_order_id!=control.provider_order_id or wire.client_id!=control.client_id
+                or wire.expires_ns!=min(control.expires_ns,target_received_ns+authorization.max_target_age_ns+1)
+                or (state['provider_id'] is not None and state['provider_id']!=control.provider_order_id)):
+            raise ValueError('cancellation differs from submitted order or independent authority')
+
+    def cancel_once(self,*,control,authorization,wire,target_received_ns,now,sender):
+        """Journal a distinct control attempt under the same writer lease, even killed.
+
+        Controller authenticates target receipt/authority; this ledger checks the
+        actual submitted wire and never changes original status or reservations.
+        """
+        with self._operation():
+            if type(control) is not CancelIntent or type(authorization) is not CancelAuthorization or type(wire) is not CancelWire or not callable(sender):
+                raise ValueError('typed cancellation contracts and callback required')
+            self._append('CANCEL_ATTEMPT',dict(control=asdict(control),authorization=asdict(authorization),
+                wire=asdict(wire),sent_ns=now,target_received_ns=target_received_ns))
+            try:
+                result=sender(wire)
+                if type(result) is not bytes:raise ValueError('raw cancellation return bytes required')
+            except BaseException as exc:
+                self._append('CANCEL_ERROR',dict(control_id=control.control_id,error_type=type(exc).__name__))
+                raise
+            self._append('CANCEL_RETURN',dict(control_id=control.control_id,body=result))
+            return result
+
+    def cancellation(self,control_id):
+        self._active();return _copy(self._cancellations.get(control_id))
 
     def reconcile(self,observation,*,account_snapshot=None,expected_account_hash=None):
         with self._operation():
