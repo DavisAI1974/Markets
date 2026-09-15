@@ -22,7 +22,6 @@ concurrency:
 
 jobs:
   cycle0:
-    # GitHub's documented larger-runner label for a 16-core Ubuntu runner.
     runs-on:
       labels: ubuntu-24.04-16core
     timeout-minutes: 355
@@ -34,10 +33,10 @@ jobs:
       NUMEXPR_NUM_THREADS: '1'
       PYTHONUNBUFFERED: '1'
     steps:
-      - name: Checkout exact review branch
+      - name: Checkout exact dual-compute branch
         uses: actions/checkout@v4
         with:
-          ref: chatgpt/frankie-32cpu-lossless-20260915
+          ref: chatgpt/frankie-dual-compute-20260915
           fetch-depth: 1
 
       - name: Set up Python
