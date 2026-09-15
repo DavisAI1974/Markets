@@ -41,7 +41,9 @@ class Journal:
         account = boto3.client('sts', region_name='us-east-1', config=config).get_caller_identity()['Account']
         self.client = boto3.client('s3', region_name='us-east-1', config=config)
         self.bucket = artifacts.ensure_scoped_bucket(self.client, account)
-        self.client.close()  # No connected HTTP pool is inherited by isolated calls.
+        self.client.close()
+        # Forked bounded calls inherit a fresh client with no established HTTP pool.
+        self.client = boto3.client('s3', region_name='us-east-1', config=config)
         run_id = os.environ['GITHUB_RUN_ID']
         if not run_id.isascii() or not run_id.isdecimal():
             raise ValueError('GitHub run identity required')
