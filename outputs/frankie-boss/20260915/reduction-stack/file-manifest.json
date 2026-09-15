@@ -1,0 +1,68 @@
+[
+  {
+    "sha256": "ac0ee8713f6bcb3e28a4c52065d9b3ecab1e61e0c747e8196cd46c41e1335140",
+    "path": "research/kalshi/frankie_boss/compact_conformance_reader.py",
+    "bytes": 4546,
+    "git_blob": "8fdfbcba168cd361d55d215c22655f0d6bfa69d9"
+  },
+  {
+    "sha256": "2daa8aca07ea1ed750ce106eaba0e515ee9faf111bf6c43b2d67ea42e3609f11",
+    "path": "research/kalshi/frankie_boss/compact_journal.py",
+    "bytes": 10219,
+    "git_blob": "c47961f9f78354f47604d02123035211e0e52a18"
+  },
+  {
+    "sha256": "7820b2960e4de0b4762a847721a386a202c7c5fd34b72a2c3cf3be04956941d4",
+    "path": "research/kalshi/frankie_boss/journal_stack_execution.py",
+    "bytes": 7153,
+    "git_blob": "cfe7e63d90d11ee0944596acc8feafc4ac38ab98"
+  },
+  {
+    "sha256": "e97533496838ebd097f0b37325c8fd478700eb0c2b6148d4a9b1526cef529214",
+    "path": "research/kalshi/frankie_boss/operations/benchmark_reduction_stack.py",
+    "bytes": 7607,
+    "git_blob": "3565a4b779dfaa149965f8b9b2195cb73d97c051"
+  },
+  {
+    "sha256": "6196d2d76aba35c031b1e142d8c77b9809fa77b07cc64509fb07f57cf93e9334",
+    "path": "research/kalshi/frankie_boss/single_pass_finalization.py",
+    "bytes": 5158,
+    "git_blob": "41cc5b5527950479e256a8e134de11f56c756c2a"
+  },
+  {
+    "sha256": "a5c06100044a0245ebbef7717555e86e07205d97a03228e54ec5aaa3d4d83531",
+    "path": "research/kalshi/frankie_boss/tests/test_combined_stack.py",
+    "bytes": 2202,
+    "git_blob": "2126a83b8d2cfc96a60c744ec11fec3ef8d37fd8"
+  },
+  {
+    "sha256": "32d8811ff40e6ac47a80787184bb25dbe845692ccfce9b602aa2bc8d646ed487",
+    "path": "research/kalshi/frankie_boss/tests/test_compact_journal.py",
+    "bytes": 2083,
+    "git_blob": "1f830f502070838e29a53251a8618e7561e05442"
+  },
+  {
+    "sha256": "5d380d6056b4c26b7760a62265998800bd94b889f0842056f79c53d1c45d249d",
+    "path": "research/kalshi/frankie_boss/tests/test_single_pass_finalization.py",
+    "bytes": 2972,
+    "git_blob": "a5773d159a16ad07b66b7e59c67793b524657afe"
+  },
+  {
+    "sha256": "6b159bbf065cd243d1f702be3653a8f5f6be9ceddc3b387dcf4202d28d3c5f57",
+    "path": "outputs/frankie-boss/20260915/reduction-stack/benchmark-01/result.json",
+    "bytes": 3344,
+    "git_blob": "5810e2c3ab0e6771aa4f88519cb2b58d80473efb"
+  },
+  {
+    "sha256": "f94cb5886fe43e9a18d12e2f405175319289d378ee7822648952cdbcdd72468a",
+    "path": "outputs/frankie-boss/20260915/reduction-stack/benchmark-01/synthetic-compact.sqlite",
+    "bytes": 122880,
+    "git_blob": "c1067e095ba55336dcb35d385a5fabd30e4e3878"
+  },
+  {
+    "sha256": "87901982b9e59cb8e79d87635ca227ead52cbe88c475a2a65fc8d319011ec419",
+    "path": "outputs/frankie-boss/20260915/reduction-stack/benchmark-01/synthetic/source.sqlite",
+    "bytes": 3698688,
+    "git_blob": "3eea6e15128ac61075a88c48f1eb135bf6a69882"
+  }
+]

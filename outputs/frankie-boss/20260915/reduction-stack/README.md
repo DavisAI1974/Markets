@@ -1,0 +1,15 @@
+# Journal reduction stack: implementation and retained evidence
+
+This commit preserves all newly created source, tests, benchmark results, and both exact synthetic database fixtures in Git. No new local files were created for publication. Raw credentials and signed capabilities are not publication inputs.
+
+The implementation adds a one-pass finalizer that runs the unchanged SourceConformanceDriver semantic predicates, exact canonical decoding, bounded order-sharing/gzip storage, compact verification with explicit CPU worker budgets, and a one-pass conversion/conformance execution adapter with CPU affinity. The conversion adapter is newly written and still requires its focused integration verification and actual journal launch. This is an implementation checkpoint, not a claim of production rollout or completed Sunday execution.
+
+Seven focused checks passed during implementation: three finalizer boundaries, three codec boundaries, and one combined two-worker conformance/partition-corruption test. Later CPU accounting/projection and migration wiring changes have not been separately executed yet. No old passing test suite or smoke inference was rerun. The already-started benchmark finished; the owner then directed no further benchmark rounds.
+
+The identical retained 128-row sample measured 20.9489x compressed-block storage reduction with the implemented codec. The earlier 21.48x prototype covered three observations; these are distinct sample scopes. Median reader wall times were legacy 3.6113s, faster reader 0.6717s, and compressed-plus-faster-reader 1.1261s. A 128-record synthetic full-conformance fixture measured 2.5353s for legacy two passes, 0.3868s for the faster single pass, and 1.7492s for compressed single-pass verification with two workers including process startup. Complete exact timings and identities are in benchmark-01/result.json. These are not whole-Sunday or sustained real-time claims, and unlike ratios are not multiplied.
+
+The separate model-input reduction remains configured in the frozen Sunday host: 929730 to 92427 input tokens. The CPU/storage modules in this commit do not alter the frozen paid application or running GitHub verification 34958705448. Original source completed and published its ingestion receipt; the existing schedule worker is advancing. No remote first-finisher substitution is needed for source completion.
+
+The owner's training-resource screenshot refers to https://huggingface.co/blog/grpo-with-trl-ifstruct : a small LFM2.5-350M TRL/GRPO recipe sized for a free-tier 16GB Colab/Kaggle GPU. It does not establish an allocated CPU/GPU resource for Frankie. Dedicated data CPU allocation remains an explicit operational requirement.
+
+Remaining: verify and launch the actual combined journal path with dedicated workers, preserve exact physical/logical identities, finish existing nineteen-prefix processing and final data audit, then perform the authorized nineteen-cycle Sunday session with probes and Frankie's printed analysis. No actual journal migration or inference is claimed by this commit.

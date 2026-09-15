@@ -1,0 +1,106 @@
+{
+  "dedicated_workers": 2,
+  "limitations": [
+    "Fixed sample storage/decoder results are not a full-journal claim.",
+    "Synthetic full-conformance timings are not Sunday or sustained real-time acceptance.",
+    "Worker CPU excludes process startup; parent CPU is reported separately.",
+    "Concurrent original schedule and GitHub work preserved; no affinity claim.",
+    "Free Colab/Kaggle GPU tutorial does not establish a provisioned Frankie resource."
+  ],
+  "max_inflight_blocks": 4,
+  "sample": {
+    "canonical_bytes": 10748676,
+    "compact_bytes": 513090,
+    "compact_ratio": 20.94890954803251,
+    "encode": {
+      "parent_cpu_seconds": 0.84375,
+      "wall_seconds": 0.9332490999950096
+    },
+    "gzip6_bytes": 929197,
+    "input_sha256": "a206a8593088766a0a54ba066a66425eac900a3d184352e0e2e95dbdc02059bb",
+    "rows": 128,
+    "timings": {
+      "compact_fast": [
+        {
+          "parent_cpu_seconds": 1.0625,
+          "wall_seconds": 1.1132723999908194
+        },
+        {
+          "parent_cpu_seconds": 1.0625,
+          "wall_seconds": 1.1398905999958515
+        },
+        {
+          "parent_cpu_seconds": 1.078125,
+          "wall_seconds": 1.1261018000077456
+        }
+      ],
+      "fast": [
+        {
+          "parent_cpu_seconds": 0.625,
+          "wall_seconds": 0.6690769999986514
+        },
+        {
+          "parent_cpu_seconds": 0.671875,
+          "wall_seconds": 0.6960509999771602
+        },
+        {
+          "parent_cpu_seconds": 0.65625,
+          "wall_seconds": 0.6716963999788277
+        }
+      ],
+      "legacy": [
+        {
+          "parent_cpu_seconds": 3.484375,
+          "wall_seconds": 3.5876342999981716
+        },
+        {
+          "parent_cpu_seconds": 3.421875,
+          "wall_seconds": 3.6113193000201136
+        },
+        {
+          "parent_cpu_seconds": 3.46875,
+          "wall_seconds": 3.618552499974612
+        }
+      ]
+    }
+  },
+  "schema": "FRANKIE_REDUCTION_STACK_BENCHMARK_V1",
+  "synthetic": {
+    "compact_bytes": 122880,
+    "completion": {
+      "builder_state_hash": "af1e5450d443c32ac3f7b5ff8658afaa329b26ce170c94c0155d9e664f12856b",
+      "group_count": 128,
+      "journal_count": 256,
+      "journal_hash": "8ab1a0939fd12f97fbd6314e288da195a0df559ffbe875d8ef3c1b822e25d8cf",
+      "member_counts": [
+        128
+      ],
+      "record_count": 128,
+      "schema": "BOSS_SOURCE_CONFORMANCE_V1",
+      "scope_hash": "76b532dff924660e4750eb79fa0d3d8db7861b22c252e69bb4dff7a64e0eaf34",
+      "scope_kind": "PROBE_ONLY",
+      "source_prefix_hash": "b7992712b3b7efa6de2412f04949b17cf645144f71ef6eafc9d13c63eb759e87"
+    },
+    "entries": 256,
+    "flush_seconds": 0.3613595999777317,
+    "records": 128,
+    "source_bytes": 3698688,
+    "timings": {
+      "compact_single_pass_two_workers": {
+        "parent_cpu_seconds": 0.125,
+        "wall_seconds": 1.7491954000433907,
+        "worker_cpu_seconds": 0.34375
+      },
+      "fast_single_pass": {
+        "parent_cpu_seconds": 0.390625,
+        "wall_seconds": 0.3867633000481874,
+        "worker_cpu_seconds": 0.0
+      },
+      "legacy_two_pass": {
+        "parent_cpu_seconds": 2.421875,
+        "wall_seconds": 2.5353341000154614
+      }
+    },
+    "write_seconds": 0.6290107000386342
+  }
+}
