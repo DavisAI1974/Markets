@@ -39,11 +39,12 @@ class Journal:
         config = Config(connect_timeout=5, read_timeout=10,
                         retries={'total_max_attempts': 1, 'mode': 'standard'})
         account = boto3.client('sts', region_name='us-east-1', config=config).get_caller_identity()['Account']
-        self.client = boto3.client('s3', region_name='us-east-1', config=config)
-        self.bucket = artifacts.ensure_scoped_bucket(self.client, account)
-        self.client.close()
-        # Forked bounded calls inherit a fresh client with no established HTTP pool.
-        self.client = boto3.client('s3', region_name='us-east-1', config=config)
+        client = boto3.client('s3', region_name='us-east-1', config=config)
+        try:
+            self.bucket = artifacts.ensure_scoped_bucket(client, account)
+        finally:
+            client.close()
+        self.config = config
         run_id = os.environ['GITHUB_RUN_ID']
         if not run_id.isascii() or not run_id.isdecimal():
             raise ValueError('GitHub run identity required')
@@ -53,11 +54,16 @@ class Journal:
         return control.bounded_call(lambda: self._put_bytes(name, data, once=once))
 
     def _put_bytes(self, name, data, *, once=False):
+        import boto3
         if not name or '..' in name or name.startswith('/') or len(data) > 1048576:
             raise ValueError('journal bounds')
         kwargs = {'IfNoneMatch': '*'} if once else {}
-        self.client.put_object(Bucket=self.bucket, Key=self.prefix + name,
-                               Body=data, ServerSideEncryption='AES256', **kwargs)
+        client = boto3.client('s3', region_name='us-east-1', config=self.config)
+        try:
+            client.put_object(Bucket=self.bucket, Key=self.prefix + name,
+                              Body=data, ServerSideEncryption='AES256', **kwargs)
+        finally:
+            client.close()
         if self.get_bytes(name) != data:
             raise ValueError('journal readback mismatch')
 
@@ -65,20 +71,27 @@ class Journal:
         return control.bounded_call(lambda: self._get_bytes(name))
 
     def _get_bytes(self, name):
+        import boto3
+        client = boto3.client('s3', region_name='us-east-1', config=self.config)
         try:
-            result = self.client.get_object(Bucket=self.bucket, Key=self.prefix + name)
+            result = client.get_object(Bucket=self.bucket, Key=self.prefix + name)
         except Exception as error:
             response = getattr(error, 'response', None)
             if isinstance(response, dict) and response.get('Error', {}).get('Code') == 'NoSuchKey':
+                client.close()
                 return None
+            client.close()
             raise
-        with result['Body'] as body:
-            if result['ContentLength'] > 1048576:
-                raise ValueError('oversized journal object')
-            data = body.read(1048577)
-            if len(data) != result['ContentLength']:
-                raise ValueError('incomplete journal object')
-            return data
+        try:
+            with result['Body'] as body:
+                if result['ContentLength'] > 1048576:
+                    raise ValueError('oversized journal object')
+                data = body.read(1048577)
+                if len(data) != result['ContentLength']:
+                    raise ValueError('incomplete journal object')
+                return data
+        finally:
+            client.close()
 
     def put(self, name, value, *, once=False):
         self.put_bytes(name, canonical(value), once=once)
