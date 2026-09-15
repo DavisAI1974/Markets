@@ -33,9 +33,9 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          expected = dict(operation='map_preserved_sunday_wire_bytes', run_id='33746436209',
-              source_day='20211003', recompute_market_calculations=False,
-              model_inference=False, upload_raw_data=False)
+          expected = dict(operation='prepare_full_source_connection', run_id='33746436209',
+              recompute_frankie_calculations=False, boss_source_ingestion=True,
+              model_inference=False, preserve_full_delivery=True)
           if json.loads(Path('.github/frankie-ledger-mapping-request.json').read_bytes()) != expected:
               raise SystemExit('mapping request differs from fixed authorized operation')
           PY
@@ -51,6 +51,7 @@ jobs:
             aws s3 cp "$prefix/ledgers/$name.jsonl.gz" "$RUNNER_TEMP/frankie-mapping-input/$name.jsonl.gz" --only-show-errors
           done
           aws s3 cp "$prefix/calculation_result.json" "$RUNNER_TEMP/frankie-mapping-input/calculation_result.json" --only-show-errors
+          aws s3 cp "$prefix/small_artifacts.tar.gz" "$RUNNER_TEMP/frankie-mapping-input/small_artifacts.tar.gz" --only-show-errors
       - name: Retain compressed full delivery for the actual local Frankie receiver
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
