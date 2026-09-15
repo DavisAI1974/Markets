@@ -2,13 +2,13 @@
 
 Separate implementation identity from c15_journal.EvidenceJournal. This module never
 writes, never trusts the database tail, and opens the file read-only. Expensive per-row
-JSON/decode/canonical-hash validation is performed by an explicit bounded worker pool;
+JSON/decode/canonical-hash validation can be performed by an explicit bounded worker pool;
 ordered continuity and the final trusted checkpoint remain verified by the parent process.
 
-The worker count is explicit and defaults to 32 (the retained Frankie/Granite CPU budget).
-Set FRANKIE_CPU_WORKERS or pass workers= for a different declared host. Rows are consumed
-in bounded batches and yielded in original ordinal order; no row is dropped, reordered,
-averaged, normalized, or accepted without the same structural/hash checks.
+Standalone use is deliberately single-worker. Production launchers set
+FRANKIE_CPU_WORKERS=32 explicitly. Rows are consumed in bounded batches and yielded in
+original ordinal order; no row is dropped, reordered, averaged, normalized, or accepted
+without the same structural/hash checks.
 """
 from concurrent.futures import ProcessPoolExecutor
 import hashlib
@@ -28,7 +28,7 @@ DIGEST_PREFIX = SCHEMA.encode() + b"\0"
 _HEX = frozenset("0123456789abcdef")
 _MALFORMED = "malformed evidence value tag"
 _MISMATCH = "evidence journal continuity or hash mismatch"
-DEFAULT_WORKERS = 32
+DEFAULT_WORKERS = 1
 
 
 def canonical_tagged_bytes(tree):
@@ -130,7 +130,7 @@ class VerifiedJournalReader:
     """Stream an existing evidence journal against an independently supplied checkpoint.
 
     count and head_hash are the supplied expectations, verified against the stored tail
-    at open and again after every complete iteration. Validation work is parallel but
+    at open and again after every complete iteration. Validation work may be parallel but
     output order and hash-chain continuity remain serial and exact. Memory is bounded to
     at most workers*4 source rows plus executor overhead.
     """
