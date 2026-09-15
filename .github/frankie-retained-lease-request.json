@@ -1,1 +1,60 @@
-{"request_sha256":"ec1bd4c34cd27a654b05e2811f892f4d2fe1aa44e6b5dc919cd972709cea92e2","local_ready":{"request_sha256":"ec1bd4c34cd27a654b05e2811f892f4d2fe1aa44e6b5dc919cd972709cea92e2","host_instance_id":"4ab1d69ce40f4dd5b1792467954cc524","admitted_at":1789481076.2855203},"runtime_configuration":{"bootstrap_directory":"/opt/ml/additional-model-data-sources/bootstrap-jobs-v1","bundle_sha256":"67affdb2de76a3cb36f17d326b223b148c0c363794f727421bd38a5470afea39","context_encoding":"stacked_v1","files":[{"path":"granite_runpod.py","sha256":"684893ce7089e784dcf0c0dd5329cef3cc486df4fb99646458d678615c45bf5a","size":14397},{"path":"granite_runpod_proxy.py","sha256":"2bb4b331a3a5b01c01b8bc964dc5da0b753a4e94d7dc8f463663671eb680deac","size":13596},{"path":"granite_runpod_jobs.py","sha256":"7c1e5ae64310b53e7735b0cdd43504759236c39b90ebd2ea1e48e0579875582d","size":10132},{"path":"granite_startup.py","sha256":"bb92602455c66ad4a44aefbe2d3794a75b3cb5e983408df74303ae3cf9bbfc2b","size":9533},{"path":"granite_run_artifacts.py","sha256":"8a1e07529fd4b88456e689cfc0525ebe0f07b3d4552ce74ae0c6c22e4f701b0e","size":15983},{"path":"granite_artifacts_manifest.json","sha256":"adf5304a845900b4395c2593c5d270ae727867cc9a164132510acb95d5a3091a","size":1864},{"path":"granite_image_identity.json","sha256":"f0f619cb1ed40cbd797631ad60a3c77033d9659066ab9dee729a4a7e3e413b5e","size":1285},{"path":"granite_runpod_progress.py","sha256":"baf8213087b6880189aec0afcc4a04dc69a8655c964cded90d8bfdafb7659864","size":10233}],"schema":"GRANITE_RETAINED_RUNTIME_CONFIGURATION_V1","service_context":131072,"source_commit":"9a8f3f46abaa3d840b07b685010108e0c551b174","supervisor_command_sha256":"391963397aed83cba895b0bc2e996b4d73d81887bfc93197f2e674256c12dbfd","transport_protocol":"jobs_v1"}}
+{
+  "request_sha256": "ec1bd4c34cd27a654b05e2811f892f4d2fe1aa44e6b5dc919cd972709cea92e2",
+  "local_ready": {
+    "request_sha256": "ec1bd4c34cd27a654b05e2811f892f4d2fe1aa44e6b5dc919cd972709cea92e2",
+    "host_instance_id": "4ab1d69ce40f4dd5b1792467954cc524",
+    "admitted_at": 1789481076.2855203
+  },
+  "runtime_configuration": {
+    "bootstrap_directory": "/opt/ml/additional-model-data-sources/bootstrap-jobs-v1",
+    "bundle_sha256": "67affdb2de76a3cb36f17d326b223b148c0c363794f727421bd38a5470afea39",
+    "context_encoding": "stacked_v1",
+    "files": [
+      {
+        "path": "granite_runpod.py",
+        "sha256": "684893ce7089e784dcf0c0dd5329cef3cc486df4fb99646458d678615c45bf5a",
+        "size": 14397
+      },
+      {
+        "path": "granite_runpod_proxy.py",
+        "sha256": "2bb4b331a3a5b01c01b8bc964dc5da0b753a4e94d7dc8f463663671eb680deac",
+        "size": 13596
+      },
+      {
+        "path": "granite_runpod_jobs.py",
+        "sha256": "7c1e5ae64310b53e7735b0cdd43504759236c39b90ebd2ea1e48e0579875582d",
+        "size": 10132
+      },
+      {
+        "path": "granite_startup.py",
+        "sha256": "bb92602455c66ad4a44aefbe2d3794a75b3cb5e983408df74303ae3cf9bbfc2b",
+        "size": 9533
+      },
+      {
+        "path": "granite_run_artifacts.py",
+        "sha256": "8a1e07529fd4b88456e689cfc0525ebe0f07b3d4552ce74ae0c6c22e4f701b0e",
+        "size": 15983
+      },
+      {
+        "path": "granite_artifacts_manifest.json",
+        "sha256": "adf5304a845900b4395c2593c5d270ae727867cc9a164132510acb95d5a3091a",
+        "size": 1864
+      },
+      {
+        "path": "granite_image_identity.json",
+        "sha256": "f0f619cb1ed40cbd797631ad60a3c77033d9659066ab9dee729a4a7e3e413b5e",
+        "size": 1285
+      },
+      {
+        "path": "granite_runpod_progress.py",
+        "sha256": "baf8213087b6880189aec0afcc4a04dc69a8655c964cded90d8bfdafb7659864",
+        "size": 10233
+      }
+    ],
+    "schema": "GRANITE_RETAINED_RUNTIME_CONFIGURATION_V1",
+    "service_context": 131072,
+    "source_commit": "9a8f3f46abaa3d840b07b685010108e0c551b174",
+    "supervisor_command_sha256": "391963397aed83cba895b0bc2e996b4d73d81887bfc93197f2e674256c12dbfd",
+    "transport_protocol": "jobs_v1"
+  }
+}
