@@ -84,6 +84,22 @@ def test_preserves_every_byte_and_separate_source_identities(tmp_path):
     assert 'BOSS/Granite producer evidence' in accepted.input_block()
 
 
+def test_pinned_legacy_sunday_result_keeps_hash_mismatch_visible(tmp_path):
+    from dataclasses import replace
+    request, result_path, _ = fixture(tmp_path)
+    result = json.loads(result_path.read_bytes())
+    result['layers']['identity_receipt']['code_commit'] = boss.LEGACY_SUNDAY_RESULT_COMMIT
+    result['runner_result_hash'] = 'a' * 64
+    result['result_hash'] = 'b' * 64
+    raw = encoded(result)
+    request = replace(request, expected_result_sha256=sha(raw))
+    integrity = boss._result_integrity(request, result, raw)
+    assert integrity['status'] == 'PINNED_LEGACY_DECLARED_HASH_MISMATCH'
+    assert integrity['declared_result_hash'] != integrity['recomputed_result_hash']
+    with pytest.raises(boss.AttachmentError):
+        boss._result_integrity(replace(request, expected_result_sha256='c' * 64), result, raw)
+
+
 @pytest.mark.parametrize('kind', ['manifest_pin', 'boss_commit', 'agent_commit', 'checkpoint', 'extra', 'changed', 'missing', 'directory', 'crosswalk', 'mapping'])
 def test_rejects_changed_pins_or_physical_evidence(tmp_path, kind):
     request, result, delivery = fixture(tmp_path)

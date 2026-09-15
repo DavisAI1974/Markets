@@ -27,6 +27,7 @@ BASE_FILES = {'state.c15.json': 'controller_state', 'controller.c15.jsonl': 'con
               'critic-prompt.txt': 'critic_prompt'}
 CHECKPOINT_SCHEMAS = {'controller_checkpoint': 'BOSS_FRANKIE_CONTROLLER_JOURNAL_V1',
                       'native_checkpoint': 'BOSS_ROLLING_FORECAST_V1'}
+LEGACY_SUNDAY_RESULT_COMMIT = '7d0068d8ae720772415bf84c8c0689e84408d642'
 
 
 class AttachmentError(ValueError):
@@ -113,6 +114,7 @@ class AttachmentRequest:
     expected_crosswalk_sha256: str
     mapping_artifact: Path
     mode: str
+    expected_result_sha256: str | None = None
 
 
 def load_request(path: Path | str | None) -> AttachmentRequest | None:
@@ -122,7 +124,7 @@ def load_request(path: Path | str | None) -> AttachmentRequest | None:
     path = Path(path)
     try:
         body = json.loads(_plain_file(path))
-        _keys(body, 'directory expected_manifest_sha256 expected_boss_commit expected_agent_commit controller_checkpoint native_checkpoint crosswalk_path expected_crosswalk_sha256 mapping_artifact mode', 'attachment request')
+        _keys(body, 'directory expected_manifest_sha256 expected_boss_commit expected_agent_commit controller_checkpoint native_checkpoint crosswalk_path expected_crosswalk_sha256 mapping_artifact mode expected_result_sha256', 'attachment request')
         for name in ('directory', 'crosswalk_path', 'mapping_artifact'):
             if not isinstance(body[name], str) or not body[name]:
                 raise AttachmentError(f'{name}: explicit path required')
@@ -130,6 +132,35 @@ def load_request(path: Path | str | None) -> AttachmentRequest | None:
         return AttachmentRequest(**body)
     except (ValueError, TypeError) as exc:
         raise AttachmentError(f'attachment request refused: {exc}') from exc
+
+
+def _result_integrity(request: AttachmentRequest, result: Mapping[str, Any], raw: bytes) -> Mapping[str, Any]:
+    """Authenticate a canonical result, or the one retained Sunday legacy artifact.
+
+    The Sunday file is preserved byte-for-byte from verified delivery.  Its declared
+    result hash does not cover its final bytes, so the discrepancy remains explicit;
+    the independently supplied whole-file SHA becomes its attachment identity.
+    """
+    declared = result.get('result_hash')
+    _digest(declared, 'agent result hash')
+    recomputed = canonical_hash(result, omit='result_hash')
+    if declared == recomputed:
+        return {'status': 'CANONICAL_RESULT_HASH_VERIFIED', 'declared_result_hash': declared,
+                'recomputed_result_hash': recomputed, 'file_sha256': _sha(raw)}
+    expected = request.expected_result_sha256
+    _digest(expected, 'independent result file pin')
+    identity = result.get('layers', {}).get('identity_receipt', {})
+    runner_hash = result.get('runner_result_hash')
+    _digest(runner_hash, 'legacy runner result hash')
+    if (_sha(raw) != expected
+            or identity.get('code_commit') != LEGACY_SUNDAY_RESULT_COMMIT
+            or result.get('completion_status') != 'EVIDENCE_ONLY'
+            or result.get('verdict') != 'ACCEPTED'):
+        raise AttachmentError('agent result declared hash mismatch is not the pinned Sunday legacy artifact')
+    return {'status': 'PINNED_LEGACY_DECLARED_HASH_MISMATCH',
+            'declared_result_hash': declared, 'recomputed_result_hash': recomputed,
+            'runner_result_hash': runner_hash, 'file_sha256': expected,
+            'code_commit': LEGACY_SUNDAY_RESULT_COMMIT}
 
 
 @dataclass(frozen=True)
@@ -255,8 +286,9 @@ def verify_attachment(request: AttachmentRequest, *, result_path, delivery_recei
         _verify_result_bytes(result_raw, delivery)
         identity = result['layers']['identity_receipt']
         days = {str(cut['source_day']) for cut in result['traversal']['invocation_cutoffs']}
-        if len(days) != 1 or result['result_hash'] != canonical_hash(result, omit='result_hash'):
-            raise AttachmentError('agent result must bind exactly one actual source day and valid result hash')
+        if len(days) != 1:
+            raise AttachmentError('agent result must bind exactly one actual source day')
+        result_integrity = _result_integrity(request, result, result_raw)
         actual = {'run_id': identity['run_id'], 'arm': identity['arm'], 'source_day': days.pop(),
                   'source_manifest_hash': identity['source_manifest_hash'],
                   'delivery_manifest_sha256': delivery['manifest_sha256'],
@@ -271,6 +303,7 @@ def verify_attachment(request: AttachmentRequest, *, result_path, delivery_recei
                'manifest_sha256': request.expected_manifest_sha256, 'boss_commit': manifest['boss_commit'],
                'agent_commit': manifest['agent_commit'], 'controller_checkpoint': manifest['controller_checkpoint'],
                'native_checkpoint': manifest['native_checkpoint'], 'boss_source': source, 'agent': actual,
+               'agent_result_integrity': result_integrity,
                'source_binding_sha256': request.expected_crosswalk_sha256,
                'mapping_status': 'CALLER_ATTESTED_WITH_BYTE_WITNESS', 'mapping_provenance': provenance}
     receipt['receipt_sha256'] = canonical_hash(receipt, omit='receipt_sha256')

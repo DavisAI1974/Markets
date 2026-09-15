@@ -68,7 +68,8 @@ def prepare(*, pins_path, expected_pins_sha256, directory, result_path,
         expected_boss_commit=pins['expected_boss_commit'], expected_agent_commit=pins['expected_agent_commit'],
         controller_checkpoint=pins['controller_checkpoint'], native_checkpoint=pins['native_checkpoint'],
         crosswalk_path=output / 'source-binding.json', expected_crosswalk_sha256=receiver._sha(binding_raw),
-        mapping_artifact=mapping_artifact, mode=pins['mode'])
+        mapping_artifact=mapping_artifact, mode=pins['mode'],
+        expected_result_sha256=pins['result_file_sha256'])
     # The unchanged receiver remains authoritative. Stage only our new crosswalk;
     # no output directory or completion receipt exists until verification passes.
     with tempfile.TemporaryDirectory(prefix='frankie-prepare-', dir=output.parent) as temporary:
