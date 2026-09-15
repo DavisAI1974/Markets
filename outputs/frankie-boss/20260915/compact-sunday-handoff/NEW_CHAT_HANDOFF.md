@@ -1,4 +1,32 @@
-# Current launch status — 2026-09-15 14:06 UTC
+# Current launch status — 2026-09-15 17:24 UTC
+
+## Latest live continuation — read this first
+
+The original admitted request and all nineteen verified prefixes remain preserved. The runtime checkout is still pinned to `9a8f3f46abaa3d840b07b685010108e0c551b174`; do not pull, reset, or normalize its files. The publication branch advances separately.
+
+The migrated retained Pod is `ycf4v6lmave6xw`, name `granite-smoke-4e2ecee03d7b2bb77da16180aba4f98d-migration`, one L40S/32 vCPU, and is currently `RUNNING`. It is ready at context `131072`, lifetime `none`, transport `jobs_v1`, with `PROCESS_AUTO_RECOVERY=true`. The old Pod `jvs75m56w8f73q` remains retained and exited. Do not start another Pod or change accounts/resets.
+
+The fresh readiness artifact is `E:/Codex/Frankie-BOSS-20260915/retained-ready-34987737686`, from workflow run `34987737686`. Its original `service-pins.json` SHA is `be3fa9e9777032ac6918396698d28d597f6dd243af8150d081cfacd31a1cd4eb`. The original witness is preserved unchanged.
+
+The Linux readiness identity did not match the pinned Windows runtime's raw parser-source identity. Every other readiness check passed, including request/admission, tokenizer, model manifest, service runtime, Pod/config hash, context, and transport. Before any dispatch, a separate aligned witness was created at `E:/Codex/Frankie-BOSS-20260915/retained-ready-34987737686-runtime-aligned`. Its locally recomputed identity is `a07526f9befa695c386a180596c79cac539f44a67e571588438000043e76d5c4`; aligned `service-pins.json` SHA is `5edbc7aeae8f4b9a36de9474aec1937774d43d3bf4727a85d7ab78df75564f11`. Read its `alignment-receipt.json`. The prior cycle service record is preserved as `actual-feedback-run/execution/cycle-00/host-service.pre-runtime-alignment.c15.json`; the active `host-service.c15.json` points to the aligned witness.
+
+The aligned host resume used unified exec session `43958`, launcher PID `57456`, actual Python PID `61816`, stdout `E:/Codex/Frankie-BOSS-20260915/sunday-launch-20260915/actual-host-resume07.stdout.log`, and adjacent stderr. It successfully rebuilt all `3262/3262` retained preparation records, accepted the exact `FRANKIE_ACTUAL_RESUME_JOB_V1` trigger in memory, passed the earlier identity failure, created `controller-witnesses/`, `native-witnesses/`, `controller.sqlite`, `native.sqlite`, and `request-plan.c15.json`, then stopped with a safe `RuntimeError` followed by `ValueError` during local `boss_reasoning` at cursor `3261`. Those PIDs/session have exited.
+
+**No durable model dispatch is recorded.** `execution/cycle-00/critic-spool/` contains no `dispatch.json`, request, submit-intent, acceptance, observation, or outcome file. In `granite_durable_job_client.py`, `dispatch.json` is durably saved before the first GET/POST, so the absent file is evidence that this attempt did not reach durable transport. Do not claim Frankie inference started, and do not submit anything until the local failure is diagnosed.
+
+Immediate continuation:
+
+1. Preserve every current file. Inspect `controller.sqlite`, `native.sqlite`, `request-plan.c15.json`, and the final progress records to isolate the local RuntimeError/ValueError. The public host deliberately suppresses exception text, so use a safe local diagnostic wrapper around the failing local controller stage; never print credentials, prompts, or raw market data.
+2. Do not restart the host blindly. A restart currently rebuilds the 3,262-record in-memory cache. The future recovery item is recorded at `E:/Codex/Frankie-BOSS-20260915/runtime-recovery-backlog.md`, SHA `2140cc5dbbbf93c5ca9243aaa73ade188dd0189a89bdfac8401ba5e7f1232138`.
+3. After fixing only the proven local issue, resume the same cycle/request and aligned service witness. Supply the service key only through bounded stdin. Confirm `FRANKIE_JOB_PROGRESS job_not_found_same_id_create`, `job_accepted`, or `job_running` plus a retained `critic-spool/*/dispatch.json` before saying Frankie started.
+4. Keep the Pod and GitHub observer running while meaningful progress or investigation continues. No elapsed cutoff, smoke inference, ambiguous retry, extra source day, repeated passing suite, account/reset action, or rebuild of completed components.
+5. Operational recovery fixes are committed on `codex/full-frankie-boss-connection-20260915` at `45a9dfb1080971328e20987c17b63d48e3c05674`. That commit preserves original supervisor identity during the recovery wrapper and fixes completion checkout/pinning. It is separate from the frozen BOSS runtime checkout.
+
+The earlier 14:06 UTC block and historical material below remain provenance. Their old PID, stopped-Pod, URL-expiry, and "waiting after admission" statements are superseded by this section.
+
+---
+
+# Previous launch status — 2026-09-15 14:06 UTC
 
 **Read [LIVE_LAUNCH_HANDOFF.md](LIVE_LAUNCH_HANDOFF.md) first.** All19 prefixes are complete. Actual host PID63112 / unified exec session48894 is alive and waiting after first request admission. The retained Pod environment has lifetime `none`, context131072 and final-v4/jobs_v1 applied; Pod still stopped. Exact actual-request staging run34979334781 succeeded and its encrypted receipt is on E. Actual inference has not started. Continue the existing host; do not restart it. Bootstrap URL expiry14:12:12 UTC requires attention before paid start.
 
