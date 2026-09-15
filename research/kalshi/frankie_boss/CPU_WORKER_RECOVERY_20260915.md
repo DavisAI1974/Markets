@@ -1,50 +1,41 @@
-# Frankie/BOSS 32-vCPU CPU-worker recovery — 2026-09-15
+# Frankie/BOSS CPU-worker recovery — dual-compute target, 2026-09-15
 
-Branch: `chatgpt/frankie-32cpu-lossless-20260915`
-Base: `9a38157b696f1d92bf88b7cf112280695b44e136`
+Branch history began as `chatgpt/frankie-32cpu-lossless-20260915`, but Greg corrected the target during the session. The authoritative design is now **GitHub 16 CPU for native Frankie/BOSS + retained RunPod 32 vCPU/L40S for Granite/service-side work**.
 
-## Owner direction
+## Native Frankie/BOSS
 
-Use the retained 32-vCPU capacity efficiently for Frankie/BOSS as well as Granite. Preserve every market record, field, causal cutoff, FIFO/full-book/dipole input, Memory A, calculation, plane and existing cycle-00 evidence. No silent dropping, truncation, averaging, smoothing or normalization is authorized by this performance work.
+- Run native orchestration/training from GitHub Actions on the 16-core runner.
+- Use up to 16 bounded verified-journal workers where safe and lossless.
+- Use 16 PyTorch intra-op threads, one inter-op thread.
+- Keep one causally ordered optimizer/checkpoint writer.
+- Preserve inputs, calculations, planes, Memory A, evidence, cutoffs and learning order.
 
-## What changed
+## Granite / RunPod
 
-1. `verified_journal_reader.py`
-   - keeps the existing read-only/checkpoint-bound verified reader contract;
-   - adds bounded ordered `ProcessPoolExecutor` validation;
-   - production worker count is selected explicitly by `FRANKIE_CPU_WORKERS`;
-   - row-local JSON/decode/canonical/hash work may run in parallel;
-   - previous-hash continuity, ordinal order, final count and trusted head hash remain checked by the parent process;
-   - batches are bounded to `workers * 4` rows;
-   - worker processes force OMP/MKL/OpenBLAS/NumExpr thread counts to 1, preventing nested oversubscription;
-   - standalone default remains one worker so unrelated tooling/tests do not silently spawn 32 processes.
+- Keep the retained L40S Pod and its included 32 vCPUs.
+- Use those 32 vCPUs for Granite/service-owned work and, after review, Granite-specific preprocessing/tokenization/validation that can be moved without crossing native Frankie authority.
+- Do not create a larger Pod merely for CPU.
 
-2. `cpu_runtime.py`
-   - declares the production policy: 32 verification workers, 32 PyTorch intra-op CPU threads, one PyTorch inter-op thread, one internal thread per verification worker;
-   - configures the policy before model/checkpoint construction;
-   - does not alter model inputs, calculations, planes, evidence, loss or optimizer order.
+## Lossless reader change
 
-3. `operations/run_actual_sunday_32cpu.py`
-   - production entry point applying the 32-vCPU policy before importing/running the actual Sunday host.
+`verified_journal_reader.py` now supports explicit bounded parallel row-local validation through `ProcessPoolExecutor`. The parent process still verifies ordinal order, previous-hash continuity, final count/head and immutable source tail. Standalone default remains one worker; production launchers select the worker count explicitly.
 
-4. `tests/test_cpu_worker_policy.py`
-   - verifies the declared 32/32/1/1 policy;
-   - verifies exact ordered parity between single-worker and parallel verified reads;
-   - verifies environment-selected worker count.
+Worker processes force OMP/MKL/OpenBLAS/NumExpr internal thread counts to one to avoid nested oversubscription.
 
-## Existing optimizations retained
+## Existing Codex optimizations preserved
 
-The actual host already integrates `VerifiedJournalReader`, `PreparedContextCache`, and retained-preparation recovery. Do not rebuild or bypass them. The cache performs one exact preparation under bound identities and reuses independent copies while source/model/teacher/checkpoint identities remain unchanged.
+The actual host already integrates `VerifiedJournalReader`, `PreparedContextCache`, and retained-preparation recovery. Do not rebuild or bypass them.
 
-## Critical cycle-00 boundary
+## Cycle-00 owner direction
 
-The current Sunday cycle-00 evidence and principal/Granite outputs remain authoritative and must not be recreated. The retained `BossTrainingCheckpoint` records `torch.get_num_threads()` inside its runtime binding. Therefore:
+Preserve the original failed cycle-00 run and all original evidence unchanged. After Claude reviews/accepts the dual-compute migration and the lawful Sunday package is available in GitHub, run cycle 0 again from the beginning under a **new run identity**. This is not an in-place retry and must not reuse or overwrite the failed cycle-00 checkpoint.
 
-- do **not** launch `run_actual_sunday_32cpu.py` against the retained cycle-00 checkpoint until its recorded thread count is read;
-- if the retained checkpoint already records 32 PyTorch threads, the new policy matches it;
-- if it records another value, migrate explicitly from the last lawful checkpoint after preserving its exact hash/state. Never silently mutate the old checkpoint identity;
-- no Granite retry or Frankie principal replay is authorized merely to adopt this CPU policy.
+## Important checkpoint identity rule
 
-## Next operational step
+`BossTrainingCheckpoint` records `torch.get_num_threads()` in its runtime binding. Therefore a new GitHub16 run must create its checkpoint under the 16-thread policy from the beginning. Do not silently adopt an old checkpoint created under a different thread count.
 
-Read the retained cycle-00 `BossTrainingCheckpoint` runtime binding from the E: recovery state and record its `binding.runtime.threads` value. Then choose either identity-preserving resume (if 32) or explicit checkpoint migration (if different) before continuing cycle 00 training. All subsequent new-day runs should start through the explicit 32-vCPU launcher from checkpoint creation onward.
+See also:
+- `DUAL_COMPUTE_TARGET_20260915.md`
+- `GITHUB16_EXECUTION_TARGET_20260915.md`
+- `operations/run_actual_sunday_github16.py`
+- `.github/workflows/frankie_sunday_cycle0_github16.yml`
