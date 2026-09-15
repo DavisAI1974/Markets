@@ -1,3 +1,38 @@
+# Latest owner direction and recovery state — 2026-09-15 21:28 UTC
+
+## Read this section first
+
+The actual Sunday run reached cycle 00. Granite inference completed, Frankie's actual response and analysis were validated and durably recorded, and the response produced 29 strictly future timing confirmations. The native forecast was `ABSTAIN` and fired no plays. Granite's empty analytical payload was retained honestly as an incomplete/L2-rejected critic result; it must not be retried ambiguously or described as confirmation.
+
+The local host then entered `boss_training`. Python PID `62976` consumed CPU throughout the calculation but exited with the final progress record `operation_failed`, `error_type=RuntimeError`, at `phase_elapsed_seconds=761.0998131000088`. Cycle 00 has no recorded completion, and cycle 01 has not started. Preserve the cycle-00 request, critic output, principal response, immutable `session-response.json`, receipt, analysis, databases, checkpoints, and progress logs before recovery. Diagnose the exact training failure from the preserved state and resume from the latest lawful save point; do not rerun Granite or recreate the completed principal response.
+
+Relevant current runtime paths:
+
+- run: `E:/Codex/Frankie-BOSS-20260915/actual-feedback-run`
+- runtime checkout: `E:/Codex/Frankie-BOSS-20260915/sunday-launch-20260915/Markets`
+- configuration: `E:/Codex/Frankie-BOSS-20260915/sunday-launch-20260915/actual-host-final-configuration.json`
+- cycle-00 Frankie analysis: `actual-feedback-run/execution/cycle-00/principal/actual-frankie-analysis.md`
+- cycle-00 request SHA: `ec1bd4c34cd27a654b05e2811f892f4d2fe1aa44e6b5dc919cd972709cea92e2`
+- cycle-00 principal receipt SHA: `6387d9b6b77368d6e1fb36ac0af8e0cafa348c40adbddaceb19084bed256d3f7`
+
+Do not pull or reset the live runtime checkout. The publication checkout and branch advance separately. Keep the retained Pod and all original evidence. Continue without an elapsed cutoff while a recovery or calculation probe shows meaningful progress.
+
+## Four-day sequence and later historical-data attachment
+
+The owner confirmed that the additional **1,900+ data points are not wired into Frankie/BOSS yet**. Do not imply that cycle 00 or the current Sunday run used them.
+
+Execution order:
+
+1. Recover and complete this Sunday run with the already admitted data contract and all nineteen cycles.
+2. Reuse the same pipeline for the remaining three historical days. Change day-specific configuration, inputs, cutoffs, receipts, and run state; do not rebuild unchanged reducers, CPU controls, checkpoints, probes, transport, or publishing.
+3. After the four-day historical sequence is complete, run more recent historical days with the 1,900+ additional data points attached to Frankie as historical context.
+
+The 1,900+ attachment is a future functionality/configuration step, not part of the active Sunday recovery. Before using it, bind the exact point catalog, provenance, observation/availability timestamps, missingness, and per-day cutoff so later-known values cannot leak into an earlier decision. Preserve unavailable values as unavailable. Record the resulting interface and evidence in Git, then reuse that attachment path for the more recent historical days.
+
+This ordering is owner direction. Preserve it in subsequent handoffs and completion reports.
+
+---
+
 # Current launch status — 2026-09-15 17:24 UTC
 
 ## Latest live continuation — read this first
