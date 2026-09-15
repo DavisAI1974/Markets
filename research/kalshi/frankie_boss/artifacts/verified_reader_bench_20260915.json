@@ -1,0 +1,44 @@
+{
+ "host_cpus": 4,
+ "results": [
+  {
+   "label": "prefix-00 (raw, cycle 0)",
+   "bytes": 463036416,
+   "rows": 6524,
+   "schema": [
+    "CREATE TABLE entries (ordinal INTEGER PRIMARY KEY, kind TEXT NOT NULL, body BLOB NOT NULL, digest TEXT NOT NULL)"
+   ],
+   "runs": [
+    {
+     "workers": 1,
+     "seconds": 28.74,
+     "rows_read": 6524,
+     "error": null
+    },
+    {
+     "workers": 2,
+     "seconds": 24.48,
+     "rows_read": 6524,
+     "error": null
+    },
+    {
+     "workers": 4,
+     "seconds": 16.42,
+     "rows_read": 6524,
+     "error": null
+    }
+   ],
+   "sha_after_equals_pin": true
+  },
+  {
+   "label": "prefix-01 (compact, cycle 1)",
+   "bytes": 50348032,
+   "tables": [
+    "blocks",
+    "seal"
+   ],
+   "verified_journal_reader": "REFUSES: no such table: entries",
+   "sha_after_equals_pin": true
+  }
+ ]
+}

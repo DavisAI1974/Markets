@@ -58,5 +58,39 @@ def test_environment_selects_only_journal_worker_count(tmp_path, monkeypatch):
                                    expected_head_hash=journal.head_hash)
     try:
         assert reader.workers == 3
+        assert reader._executor is None  # a tail-only open spawns nothing
     finally:
         reader.close(); journal.close()
+
+
+def test_parallel_reader_rejects_at_the_same_row_as_single_worker(tmp_path):
+    """Corrupt one row deep inside a batch: both paths must raise the same error at the same ordinal.
+
+    A 5-row journal cannot catch this (chunksize degenerates to 1); 64 rows with 4 workers
+    puts ordinal 37 inside a multi-row chunk, which is where the chunked map failed early.
+    """
+    import sqlite3
+    journal = EvidenceJournal(tmp_path / "journal.sqlite", create=True)
+    for index in range(64):
+        journal.append("ROW", {"index": index})
+    count, head = journal.count, journal.head_hash
+    journal.close()
+    raw = sqlite3.connect(tmp_path / "journal.sqlite")
+    for operation in ("update", "delete"):
+        raw.execute("DROP TRIGGER forbid_" + operation)
+    raw.execute("UPDATE entries SET body = X'7b7d' WHERE ordinal = 37")  # '{}' : valid JSON, invalid envelope
+    raw.commit(); raw.close()
+    seen = {}
+    for workers in (1, 4):
+        reader = VerifiedJournalReader(tmp_path / "journal.sqlite", expected_count=count, expected_head_hash=head, workers=workers)
+        consumed, error = 0, None
+        try:
+            for _ in reader.entries():
+                consumed += 1
+        except Exception as exc:
+            error = (type(exc).__name__, str(exc))
+        finally:
+            reader.close()
+        seen[workers] = (consumed, error)
+    assert seen[1] == seen[4]
+    assert seen[1][0] == 37 and seen[1][1] is not None

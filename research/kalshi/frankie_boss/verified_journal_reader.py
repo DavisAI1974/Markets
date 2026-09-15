@@ -9,7 +9,17 @@ Standalone use is deliberately single-worker. Production chooses journal verific
 parallelism independently through FRANKIE_JOURNAL_VERIFY_WORKERS. Rows are yielded in
 original ordinal order; no row is dropped, reordered, averaged, normalized, or accepted
 without the same structural/hash checks. On Linux the worker pool uses forkserver so it
-does not fork an already-initialized PyTorch/OpenMP parent.
+does not fork an already-initialized PyTorch/OpenMP parent. The pool is created lazily on
+the first entries() call, so a tail-only open (journal_prefix_snapshot, source_recovery)
+never spawns processes.
+
+Per row the reader performs one JSON parse, one validating decode (unpack with structural
+checks guaranteeing pack(decoded) == tagged tree exactly), one canonical serialization of
+the tagged tree, and one SHA-256 over the validated bytes under the existing SCHEMA + NUL
+prefix. EvidenceJournal.entries() performs parse, unpack, pack, serialize, pack and
+serialize again per row; this reader accepts and rejects the same rows, with or without
+workers: every row-local exception is re-raised in the parent at that row's ordinal
+position, after every valid row before it has been yielded.
 """
 from concurrent.futures import ProcessPoolExecutor
 import hashlib
@@ -35,12 +45,24 @@ WORKER_ENV = "FRANKIE_JOURNAL_VERIFY_WORKERS"
 
 
 def canonical_tagged_bytes(tree):
-    """canonical_bytes() specialised to pack() output."""
+    """canonical_bytes() specialised to pack() output.
+
+    pack() emits only lists, str, bool and int nodes. causal_packet._canon is the identity
+    on every one of those (bool before int, str and int unchanged, lists rebuilt in order)
+    and sort_keys has nothing to sort, so this is byte-identical to canonical_bytes(tree).
+    tests/test_verified_journal_reader.py demonstrates the equivalence differentially.
+    """
     return json.dumps(tree, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
 
 
 def decode_tagged(node):
-    """unpack() with structural validation such that pack(decode_tagged(node)) == node."""
+    """unpack() with structural validation such that pack(decode_tagged(node)) == node.
+
+    Every shape pack() cannot produce is rejected: wrong tag arity, a bool under "int",
+    a float or bool under "int", non-lowercase or odd-length hex, a float64 whose bits do
+    not round-trip, non-string or duplicate mapping keys, and unknown tags. The original
+    reader rejects the same rows through repack inequality or an unpack exception.
+    """
     if type(node) is not list or not node:
         raise ValueError(_MALFORMED)
     tag = node[0]
@@ -158,9 +180,6 @@ class VerifiedJournalReader:
             self._connection.execute("PRAGMA query_only=1")
             if self._stored_tail() != (expected_count, expected_head_hash):
                 raise ValueError("journal differs from checkpoint; existing evidence was retained")
-            if self.workers > 1:
-                self._executor = ProcessPoolExecutor(max_workers=self.workers,
-                    mp_context=_worker_context(), initializer=_worker_init)
         except BaseException:
             self._connection.close()
             raise
@@ -172,12 +191,18 @@ class VerifiedJournalReader:
     def _validated(self, rows):
         if self._executor is None:
             return map(_validate_row, rows)
-        return self._executor.map(_validate_row, rows,
-            chunksize=max(1, len(rows)//self.workers))
+        # chunksize must stay 1: a larger chunk fails as a unit, so the parent would raise
+        # BEFORE yielding the valid rows that precede the bad one inside that chunk, and the
+        # consumer would see a different consumed count than the single-worker reader.
+        # Measured: chunksize=len(rows)//workers reported 36 rows where one worker reports 37.
+        return self._executor.map(_validate_row, rows, chunksize=1)
 
     def entries(self):
         """Verify/yield history in order with one bounded validation batch prefetched."""
         previous, count = GENESIS_HASH, 0
+        if self.workers > 1 and self._executor is None:
+            self._executor = ProcessPoolExecutor(max_workers=self.workers,
+                mp_context=_worker_context(), initializer=_worker_init)
         cursor = self._connection.execute(
             "SELECT ordinal, kind, body, digest FROM entries ORDER BY ordinal")
         rows = cursor.fetchmany(self.batch_rows)
