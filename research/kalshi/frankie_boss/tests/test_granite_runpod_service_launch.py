@@ -6,12 +6,12 @@ from research.kalshi.frankie_boss import granite_runpod_cloud as cloud
 from research.kalshi.frankie_boss.tests.test_granite_runpod_cloud_control import intent
 
 
-def test_twenty_minute_limit_and_no_larger_window():
+def test_thirty_minute_limit_and_no_larger_window():
     item = intent()
     item['deadline'] = item['start'] + cloud.TOTAL_SECONDS
-    assert cloud.TOTAL_SECONDS == 1200
+    assert cloud.TOTAL_SECONDS == 1800
     cloud.control.validate_intent(item)
-    for duration in (1201, 1800, 3600):
+    for duration in (1201, 1801, 3600):
         item['deadline'] = item['start'] + duration
         with pytest.raises(ValueError):
             cloud.control.validate_intent(item)
@@ -42,6 +42,7 @@ def test_service_launch_keeps_ready_pod_and_cleans_failure(monkeypatch, tmp_path
     monkeypatch.setattr(cloud.secrets, 'token_hex', lambda _: 'a' * 32)
     monkeypatch.setattr(cloud, 'stage_bootstrap', lambda journal: ({'files': []}, {}))
     monkeypatch.setattr(cloud, 'bootstrap_command', lambda *args: 'python3 bootstrap.py')
+    monkeypatch.setattr(cloud, 'capture_progress', lambda *args: None)
     records = {'startup': {}, 'disk': {}}
     monkeypatch.setattr(cloud, 'startup_logs', lambda *args: records)
     checked = []
@@ -73,7 +74,7 @@ def test_service_launch_keeps_ready_pod_and_cleans_failure(monkeypatch, tmp_path
         def request(self, method, path, body=None):
             if method == 'POST':
                 assert self.created is None
-                assert body['env']['RUNPOD_GRANITE_LIFETIME_SECONDS'] == '1080'
+                assert body['env']['RUNPOD_GRANITE_LIFETIME_SECONDS'] == '1680'
                 self.created = dict(body, id='abc123', cost=1.09)
             else:
                 assert (method, path) == ('GET', '/v2/pods/abc123')
@@ -86,7 +87,7 @@ def test_service_launch_keeps_ready_pod_and_cleans_failure(monkeypatch, tmp_path
     else:
         result = cloud.controller(journal, API())
         assert result['outcome'] == 'service_ready'
-        assert result['cleanup_starts_at'] == 2080 and result['deadline'] == 2200
+        assert result['cleanup_starts_at'] == 2680 and result['deadline'] == 2800
         assert result['inference_sent'] is False
         assert 'api_key' not in json.dumps(result)
         assert cleanup == []

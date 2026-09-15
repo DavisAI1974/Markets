@@ -16,11 +16,13 @@ from . import granite_runpod_package as package
 from . import granite_runpod_probe as probe
 from . import granite_run_artifacts as artifacts
 from . import granite_runpod_cloud_control as control
+from . import granite_cloud_diagnostics as telemetry
+from . import granite_cloud_resume as resume
 
-BASE = '8aba96aa46ee95b410496f9e3154fb2d96395f56'
-BUNDLE_SHA = '32312f5334efa8f002df30482fd1823d9b2b49ae0484f9ccf2798de37378b24c'
+BASE = 'b1d4eba5d945e6ef717737a0f08bedec0a982e89'
+BUNDLE_SHA = 'df88dabe6975c7fedc52dd1264273aea8cb4e2da2c0e02a7518fff1402a1e9e5'
 ADMISSION_SHA = '3af163e3732cc0fc586164a4f5981870dfdbadb0616393d64506fe5557b5ef7c'
-TOTAL_SECONDS = 1200
+TOTAL_SECONDS = 1800
 PRIOR_STAGING_RUN = '34924522636'
 ROOT = Path(__file__).parent
 OUT = Path('work/cloud-receipts')
@@ -126,6 +128,13 @@ def expired(*args): raise TimeoutError('bootstrap download deadline')
 signal.signal(signal.SIGALRM,expired)
 signal.alarm(60)
 for row in rows:
+ target=p/row['path']
+ if target.is_symlink(): raise SystemExit('bootstrap symlink refused')
+ if target.exists():
+  if not target.is_file() or target.stat().st_size>65536: raise SystemExit('bootstrap file refused')
+  existing=target.read_bytes()
+  if hashlib.sha256(existing).hexdigest()!=row['sha256']: raise SystemExit('existing bootstrap byte mismatch')
+  continue
  u=urllib.parse.urlsplit(urls[row['path']])
  if u.scheme!='https' or u.hostname not in ({(bucket + '.s3.amazonaws.com')!r},{(bucket + '.s3.us-east-1.amazonaws.com')!r}) or u.port not in (None,443) or u.username or u.fragment: raise SystemExit('bootstrap origin refused')
  c=http.client.HTTPSConnection(u.hostname,timeout=10)
@@ -159,16 +168,34 @@ def stage_bootstrap(journal):
     urls = {}
     prior = object.__new__(Journal)
     prior.client, prior.bucket = journal.client, journal.bucket
-    prior.prefix = 'runpod-smoke/' + PRIOR_STAGING_RUN + '/'
+    prior.prefix = 'granite-bootstrap/' + BUNDLE_SHA + '/'
+    reused = []
+    uploaded = []
     for name in (*package.FILES, 'runpod_bundle.json'):
         key = 'bootstrap/' + name
-        if prior.get_bytes(key) != (destination / name).read_bytes():
+        data = (destination / name).read_bytes()
+        existing = prior.get_bytes(key)
+        if existing is None:
+            prior.put_bytes(key, data, once=True)
+            uploaded.append(name)
+        elif existing != data:
             raise ValueError('previously staged bootstrap changed')
+        else:
+            reused.append(name)
         urls[name] = journal.client.generate_presigned_url('get_object',
-            Params={'Bucket': journal.bucket, 'Key': prior.prefix + key}, ExpiresIn=1200)
+            Params={'Bucket': journal.bucket, 'Key': prior.prefix + key}, ExpiresIn=TOTAL_SECONDS)
     save('staging.json', {'bundle_sha256': BUNDLE_SHA, 'files': receipt['files'],
-                          'readback_verified': True, 'reused_from_run': PRIOR_STAGING_RUN})
+                          'readback_verified': True, 'reused_files': reused, 'uploaded_files': uploaded})
     return receipt, urls
+
+
+def cleanup_operation(intent):
+    return resume.stop_owned_once if intent.get('cleanup_mode') == 'stop_retain' else control.cleanup_once
+
+
+def cleanup_confirmed(result, intent):
+    expected = 'confirmed_stopped' if intent.get('cleanup_mode') == 'stop_retain' else 'confirmed_absent'
+    return result.get('status') == expected
 
 
 def watchdog(journal, api):
@@ -203,7 +230,7 @@ def watchdog(journal, api):
                 pass  # Once armed, S3 loss must not prevent independent termination.
         if finished or time.time() >= intent['deadline'] - 120:
             try:
-                result = control.cleanup_once(api, intent, pod_id, remember)
+                result = cleanup_operation(intent)(api, intent, pod_id, remember)
                 if result.get('pod_id'):
                     pod_id = result['pod_id']
                 save('watchdog-cleanup.json', result)
@@ -211,7 +238,7 @@ def watchdog(journal, api):
                     journal.put('watchdog-cleanup.json', result)
                 except Exception:
                     pass
-                if result['status'] == 'confirmed_absent':
+                if cleanup_confirmed(result, intent):
                     # Before the creation window closes, a delayed create can still arrive.
                     if finished and finished.get('creation_closed') is True:
                         return result
@@ -221,7 +248,7 @@ def watchdog(journal, api):
                 result = {'status': 'unresolved', 'error_type': type(error).__name__}
                 save('watchdog-cleanup.json', result)
         time.sleep(5)
-    if result.get('status') != 'confirmed_absent':
+    if not cleanup_confirmed(result, intent):
         raise RuntimeError('independent cleanup unresolved')
     return result
 
@@ -237,7 +264,7 @@ def finish(journal, api, intent, creation_closed, pod_id):
         save('controller-cleanup.json', result)
         return result
     try:
-        result = control.cleanup_once(api, intent, pod_id)
+        result = cleanup_operation(intent)(api, intent, pod_id)
         save('controller-cleanup.json', result)
         try:
             journal.put('controller-cleanup.json', result)
@@ -256,7 +283,7 @@ def startup_logs(api, pod_id):
 
 def _startup_logs(api, pod_id):
     connection = http.client.HTTPSConnection('api.runpod.io', timeout=4)
-    records = {}
+    records = {'telemetry': []}
     deadline = time.monotonic() + 8
     try:
         connection.request('GET', '/v2/pods/' + pod_id + '/logs?source=container&tail=500',
@@ -266,6 +293,8 @@ def _startup_logs(api, pod_id):
             return records
         total = 0
         while time.monotonic() < deadline and total < 1048576:
+            if connection.sock is not None:
+                connection.sock.settimeout(max(.05, min(1, deadline-time.monotonic())))
             raw = response.readline(65537)
             if not raw or len(raw) > 65536:
                 break
@@ -274,16 +303,30 @@ def _startup_logs(api, pod_id):
                 continue
             value = json.loads(raw[5:])
             line = value.get('line', '')
+            if type(line) is not str:
+                continue
+            if line.startswith(('GRANITE_PROGRESS ', 'GRANITE_DIAGNOSTIC ')):
+                if len(line.encode()) <= 8192:
+                    records['telemetry'].append(line)
+                    records['telemetry'] = records['telemetry'][-128:]
             for prefix, key in [('GRANITE_RUNPOD_STARTUP ', 'startup'), ('GRANITE_DISK ', 'disk')]:
                 if line.startswith(prefix):
                     records[key] = artifacts.strict_json(line[len(prefix):].encode())
-            if set(records) == {'startup', 'disk'}:
-                break
     except (TimeoutError, OSError):
         pass
     finally:
         connection.close()
     return records
+
+
+def capture_progress(journal, pod, intent, manifest, collector, records):
+    snapshot = collector.export()
+    info = resume.capture_pod_info(pod, intent, manifest, snapshot,
+                                   records if 'startup' in records else None)
+    save('diagnostics.json', snapshot)
+    save('pod-info.json', info)
+    journal.put('pod-info.json', info)
+    return info
 
 
 def validate_runtime(records, admitted):
@@ -334,7 +377,7 @@ def controller(journal, api):
     started = int(time.time())
     intent = {'schema': 'GRANITE_CLOUD_INTENT_V1', 'nonce': nonce,
               'name': 'granite-smoke-' + nonce, 'image': control.granite_runpod.IMAGE,
-              'start': started, 'deadline': started + TOTAL_SECONDS}
+              'start': started, 'deadline': started + TOTAL_SECONDS, 'cleanup_mode': 'stop_retain'}
     journal.put('intent.json', intent, once=True)
     save('intent.json', intent)
     for _ in range(12):
@@ -362,6 +405,10 @@ def controller(journal, api):
     creation_closed = False
     pod_id = None
     outcome = {'outcome': 'incomplete'}
+    manifest = artifacts.strict_json(artifacts.DEFAULT_MANIFEST.read_bytes())
+    collector = telemetry.Collector(nonce, manifest)
+    records = {}
+    current = None
     try:
         control.assert_creation_window(intent, journal.get('armed.json'), time.time())
         pod = api.request('POST', '/v2/pods', body)
@@ -369,22 +416,29 @@ def controller(journal, api):
         if not control.owned_pod(pod, intent):
             raise ValueError('created Pod identity differs')
         pod_id = pod['id']
+        current = pod
         save('pod.json', {'id': pod_id, 'name': pod['name'], 'cost': pod.get('cost')})
         journal.put('pod.json', {'id': pod_id}, once=True)
+        capture_progress(journal, current, intent, manifest, collector, records)
         if type(pod.get('cost')) not in (int, float) or not 0 < pod['cost'] <= 1.25:
             raise ValueError('actual hourly price outside approved smoke envelope')
-        records = {}
-        startup_deadline = min(intent['start'] + 900, intent['deadline'] - 120)
+        startup_deadline = intent['deadline'] - 120
         while time.time() < startup_deadline:
             current = api.request('GET', '/v2/pods/' + pod_id)
             if not control.owned_pod(current, intent):
                 raise ValueError('Pod identity changed')
             try:
-                records.update(startup_logs(api, pod_id))
+                incoming = startup_logs(api, pod_id)
+                for line in incoming.pop('telemetry', []):
+                    summary = collector.ingest(line)
+                    if summary:
+                        print(summary, flush=True)
+                records.update(incoming)
             except TimeoutError:
                 save('startup-log-read.json', {'status': 'read_timeout', 'at': time.time()})
             save('startup-progress.json', {'at': time.time(), 'records': records})
-            if set(records) == {'startup', 'disk'}:
+            capture_progress(journal, current, intent, manifest, collector, records)
+            if {'startup', 'disk'} <= set(records):
                 validate_runtime(records, admitted)
                 try:
                     status, data = probe.https_exchange(pod_id, 'GET', '/health', b'', api_key, 5)
@@ -403,6 +457,12 @@ def controller(journal, api):
     finally:
         if outcome.get('outcome') != 'service_ready':
             finish(journal, api, intent, creation_closed, pod_id)
+        if current is not None:
+            try:
+                current = api.request('GET', '/v2/pods/' + pod_id)
+                capture_progress(journal, current, intent, manifest, collector, records)
+            except Exception as error:
+                save('capture-failure.json', {'error_type': type(error).__name__})
     return outcome
 
 

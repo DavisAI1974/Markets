@@ -3,7 +3,8 @@ name: Launch Granite service
 on:
   push:
     branches: [codex/granite-runpod-launch-20260915]
-    paths: [.github/workflows/granite_runpod_cloud_smoke.yml]
+    paths: [.github/granite-launch-request.json]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,7 +18,7 @@ jobs:
     name: cloud-${{ matrix.mode }}
     if: github.repository == 'DavisAI1974/Markets'
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -37,9 +38,9 @@ jobs:
           python -m pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
           python -m pip install numpy==2.4.3 boto3==1.42.23 pytest==8.3.5
       # Reuse the 70 passing Linux checks from run 34924522636.
-      # The continuation changes are checked locally before this explicit push.
+      # The continuation changes are checked locally before explicit dispatch.
       - name: Run bounded smoke role
-        timeout-minutes: 26
+        timeout-minutes: 36
         env:
           MODE: ${{ matrix.mode }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
