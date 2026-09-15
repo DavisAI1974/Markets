@@ -35,6 +35,9 @@ def bounded_call(operation, seconds=12):
             result = ('provider', error.status)
         except ValueError as error:
             result = ('value', str(error))
+        except AttributeError as error:
+            # Attribute names are safe diagnostic metadata; never serialize the object or arguments.
+            result = ('attribute', getattr(error, 'name', None))
         except BaseException as error:
             result = ('error', type(error).__name__)
         try:
@@ -65,6 +68,8 @@ def bounded_call(operation, seconds=12):
             raise ProviderError(result)
         if kind == 'value':
             raise ValueError(result)
+        if kind == 'attribute':
+            raise RuntimeError('isolated operation failed: AttributeError:' + str(result))
         if kind != 'ok':
             raise RuntimeError('isolated operation failed: ' + result)
         return result
