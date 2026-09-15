@@ -1,23 +1,21 @@
-"""Focused tests for explicit CPU policy and ordered parallel journal verification.
+"""Focused tests for explicit native CPU policy and ordered parallel journal verification.
 
 No market data, model inference, cloud access, or result-bearing run is performed.
 """
-import os
-
 from c15_journal import EvidenceJournal
 from cpu_runtime import CpuRuntimePolicy
 from verified_journal_reader import VerifiedJournalReader
 
 
-def test_policy_defaults_to_declared_32_cpu_budget():
+def test_policy_defaults_to_declared_github_16_cpu_budget():
     policy = CpuRuntimePolicy()
-    assert policy.workers == 32
-    assert policy.torch_intraop_threads == 32
+    assert policy.workers == 16
+    assert policy.torch_intraop_threads == 16
     assert policy.torch_interop_threads == 1
     assert policy.worker_internal_threads == 1
 
 
-def test_parallel_reader_matches_single_worker_exactly(tmp_path, monkeypatch):
+def test_parallel_reader_matches_single_worker_exactly(tmp_path):
     journal = EvidenceJournal(tmp_path / "journal.sqlite", create=True)
     for index in range(257):
         journal.append("ROW", {"index": index, "payload": bytes([index % 256]) * (1 + index % 17)})
