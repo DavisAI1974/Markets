@@ -129,6 +129,11 @@ class NativeForecastHeads(nn.Module):
             raw = times[-1] + delay * (duration_ns - times[-1])
             next_ns = round(raw / policy.quantum_ns) * policy.quantum_ns
             if not times[-1] < next_ns < duration_ns:
+                # Once the locked grid has no remaining interior coordinate,
+                # session close is the only representable future timestamp.
+                next_grid = (times[-1] // policy.quantum_ns + 1) * policy.quantum_ns
+                if next_grid >= duration_ns:
+                    return (*times, duration_ns)
                 raise ValueError('duplicate or unrepresentable endogenous timestamp')
             previous_delay = (next_ns - times[-1]) / duration_ns
             times.append(next_ns)

@@ -83,6 +83,13 @@ def test_invalid_or_unrepresentable_time_is_rejected_without_repair(delay):
                 start_ns=0, policy=KnotPolicy(10, 3))
 
 
+def test_grid_exhaustion_terminates_at_true_close():
+    m = decoder(); z = torch.ones(4, dtype=torch.float64)
+    scripted(m, [(.5, -1)])
+    assert m.knots(z, duration_ns=1000, start_ns=990,
+                   policy=KnotPolicy(10, 3)) == (990, 1000)
+
+
 def test_budget_exhaustion_is_not_silent_truncation():
     m = decoder(); scripted(m, [(.2, -1), (.2, -1)])
     with pytest.raises(ValueError, match='budget'):
