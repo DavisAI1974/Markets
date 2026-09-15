@@ -19,7 +19,7 @@ jobs:
         run: |
           echo 'FRANKIE_MAPPING_PHASE runtime_install'
           python -m pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
-          python -m pip install databento-dbn==0.62.0 zstandard==0.25.0
+          python -m pip install numpy==2.4.3 databento-dbn==0.62.0 zstandard==0.25.0
       - name: Fetch the fixed preserved raw source and compressed member ledger
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
