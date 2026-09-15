@@ -1,0 +1,11 @@
+# Explicit Granite long-context candidate
+
+The development candidate selects context131072 with open-ended request transport. RunpodConfig rejects arbitrary lengths and refuses finite transport for this candidate. Existing finite4096 config serialization and hash remain unchanged. The verified startup only accepts4096 or131072; the latter appends exactly --enable-chunked-prefill --max-num-batched-tokens2048. Parent startup verification requires identical arguments. Opaque VLLM environment overrides are rejected alongside other controlled overrides.
+
+The pinned vLLM0.20.2 documentation describes chunked prefill as splitting one request's prefill into scheduled chunks under max_num_batched_tokens. This remains one model request with its evolving model/KV state, not independent prompts or lossy input pieces. The documentation gives2048 as a smaller scheduling budget and warns that disabling chunked prefill while the budget is below model length can fail startup. [Official v0.20.2 optimization documentation](https://docs.vllm.ai/en/v0.20.2/configuration/optimization/#chunked-prefill).
+
+The candidate retains bfloat16, one sequence, one GPU, gpu-memory-utilization0.9, and the verified model/runtime identities. No quantization, hidden context extension, or memory-utilization increase is introduced. Root's retained L40S memory estimate leaves3,831,331,160bytes after estimated131072-token KV and mounted model bytes within90%VRAM; this is an estimate, not runtime fit evidence. Actual startup remains required before a capacity claim.
+
+Five new synthetic checks passed once after implementation: explicit long candidate/legacy hash, three unsupported lengths, and child/parent exact prefill arguments including tamper and environment rejection. No old passing tests, source journal reads, model inference, or cloud calls were made.
+
+LocalTokenizerAdmission now accepts only explicit4096/131072 and compares both model positional capacity and full input+output token count against the selected context. The default and tokenizer identity bytes remain unchanged. A sixth new stub-tokenizer seam accepts exactly129872input+1200outputtokens at131072, rejects one token over, and confirms no truncation; no actual baseline re-tokenization occurred.

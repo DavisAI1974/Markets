@@ -154,6 +154,8 @@ def prepare_process(directory, manifest, environment, *, deadline, clock=time.mo
                 '--dtype','bfloat16','--tensor-parallel-size','1','--pipeline-parallel-size','1',
                 '--data-parallel-size','1','--max-num-seqs','1','--max-model-len',environment['GRANITE_MAX_MODEL_LEN'],
                 '--gpu-memory-utilization','0.9','--generation-config','vllm']
+            if environment['GRANITE_MAX_MODEL_LEN']=='131072':
+                expected_argv += ['--enable-chunked-prefill','--max-num-batched-tokens','2048']
             if receipt.get('argv')!=expected_argv:
                 raise ValueError('child executable/arguments differ from pinned startup')
             return receipt

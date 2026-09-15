@@ -26,9 +26,10 @@ class LocalTokenizerAdmission:
                  loader=None, version_reader=None, manifest=None):
         if (type(served_model_name) is not str
                 or not re.fullmatch('[A-Za-z0-9_.-]{1,100}', served_model_name)
-                or type(context) is not int or context != CONTEXT):
-            raise ValueError('explicit served model and 4096 context required')
+                or type(context) is not int or context not in (CONTEXT, 131072)):
+            raise ValueError('explicit served model and supported 4096 or 131072 context required')
         self._model = served_model_name
+        self._context = context
         self.evidence_class = ('SYNTHETIC_TOKENIZER' if any(
             value is not None for value in (loader, version_reader, manifest)) else 'LOCAL_TOKENIZER_ADMISSION')
         version_reader = version_reader or importlib.metadata.version
@@ -47,8 +48,8 @@ class LocalTokenizerAdmission:
             artifacts.verify_file(directory / row['path'], row)
         config = artifacts.strict_json((directory / 'config.json').read_bytes())
         limit = config.get('max_position_embeddings') if type(config) is dict else None
-        if type(limit) is not int or limit < CONTEXT:
-            raise ValueError('model positional limit must admit 4096 context')
+        if type(limit) is not int or limit < context:
+            raise ValueError('model positional limit must admit selected context')
         # Match the established production identity, not the frozen smoke receipt.
         self._manifest_bytes = artifacts.canonical(dict(schema='GRANITE_TOKENIZER_MANIFEST_V1',
             files=rows, versions=versions, invocation=dict(message_roles=['user'], **invocation())))
@@ -98,7 +99,7 @@ class LocalTokenizerAdmission:
         except Exception:
             raise ValueError('local complete chat tokenization failed') from None
         if (type(ids) is not list or not ids or any(type(token) is not int or token < 0 for token in ids)
-                or len(ids) + request['max_tokens'] > CONTEXT):
+                or len(ids) + request['max_tokens'] > self._context):
             raise ValueError('complete input and output exceed admitted context or token IDs are invalid')
         return dict(request_sha256=hashlib.sha256(body).hexdigest(), input_tokens=len(ids),
-            output_tokens=request['max_tokens'], context=CONTEXT, tokenizer_sha256=self.tokenizer_sha256)
+            output_tokens=request['max_tokens'], context=self._context, tokenizer_sha256=self.tokenizer_sha256)

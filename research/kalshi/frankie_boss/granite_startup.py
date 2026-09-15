@@ -29,8 +29,8 @@ def digest_file(path):
 
 
 def launch_environment(*, max_model_len, served_model):
-    if type(max_model_len) is not int or max_model_len <= 0:
-        raise ValueError('explicit positive runtime context required')
+    if type(max_model_len) is not int or max_model_len not in (4096, 131072):
+        raise ValueError('explicit supported 4096 or 131072 runtime context required')
     if type(served_model) is not str or not re.fullmatch('[A-Za-z0-9_.-]{1,100}', served_model):
         raise ValueError('explicit served model name required')
     return {
@@ -86,7 +86,7 @@ def prepare_startup(directory, manifest, environment, *, runtime_facts=runtime_f
     expected['GRANITE_MANIFEST_SHA256'] = artifacts.manifest_digest(manifest)
     if any(environment.get(key) != value for key, value in expected.items()):
         raise ValueError('startup identity/configuration mismatch')
-    controlled = ('SUPERVISOR_', 'SM_VLLM_', 'GRANITE_', 'STANDARD_', 'HF_MODEL_ID')
+    controlled = ('SUPERVISOR_', 'SM_VLLM_', 'VLLM_', 'GRANITE_', 'STANDARD_', 'HF_MODEL_ID')
     if any(key.startswith(controlled) and key not in expected for key in environment):
         raise ValueError('unapproved startup override')
     mount = artifacts.verify_directory(directory, manifest, progress=progress)
@@ -104,6 +104,8 @@ def prepare_startup(directory, manifest, environment, *, runtime_facts=runtime_f
             '--dtype', 'bfloat16', '--tensor-parallel-size', '1', '--pipeline-parallel-size', '1',
             '--data-parallel-size', '1', '--max-num-seqs', '1', '--max-model-len', str(length),
             '--gpu-memory-utilization', '0.9', '--generation-config', 'vllm']
+    if length == 131072:
+        argv += ['--enable-chunked-prefill', '--max-num-batched-tokens', '2048']
     return {'schema': 'GRANITE_STARTUP_RUNTIME_V1', 'mount': mount, 'runtime': facts,
             'image_digest': IMAGE_DIGEST, 'bootstrap_sha256': digest_file(__file__),
             'argv': argv, 'environment': expected,
