@@ -82,12 +82,19 @@ def service(monkeypatch):
     ('/v1/chat/completions', KEY, b'{"stream":true}', 400),
     ('/v1/chat/completions', KEY, b'{"messages":[{"content":[{"image_url":"https://invalid"}]}]}', 400),
     ('/v1/chat/completions', KEY, b'{"model":"a","model":"b"}', 400),
-    ('/v1/chat/completions', KEY, b'x' * (1024 * 1024 + 1), 413),
-], ids=['missing-auth', 'wrong-auth', 'metrics', 'query', 'stream', 'media', 'duplicate-json', 'oversize'])
+], ids=['missing-auth', 'wrong-auth', 'metrics', 'query', 'stream', 'media', 'duplicate-json'])
 def test_refused_without_backend(service, path, auth, body, status):
     request, calls, _, _ = service
     assert request(path, auth=auth, body=body)[0] == status
     assert calls == []
+
+
+def test_oversized_declared_body_refused_before_body_send(service):
+    request, calls, _, _ = service
+    # Sending an entire rejected body races the server's close and can yield a
+    # platform-specific TCP reset. Admission is decided from headers alone.
+    assert request(body=None, headers={'Content-Length': str(proxy.MAX_REQUEST + 1)})[0] == 413
+    assert not calls
 
 
 def test_forward_only_body_and_minimal_health(service):
