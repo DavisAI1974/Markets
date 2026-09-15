@@ -1,0 +1,21 @@
+{
+  "schema": "FRANKIE_COMPACT_INGESTION_TARGETED_TESTS_V1",
+  "code_commit": "dc956260273747462f55817da684b27c32c8ceaf",
+  "passed": 5,
+  "failed": 0,
+  "seconds": 6.399,
+  "tests": [
+    "full_envelopes_and_progress",
+    "cutoff_exact_bytes_and_block_reuse",
+    "broken_worker_seam_rejected",
+    "physical_pin_mismatch_rejected",
+    "cpu_allocation_and_consumer_reserve"
+  ],
+  "scope": "New implementation boundaries only; fabricated fixtures; no inference or source replay",
+  "temporary_files": "E staging",
+  "actual_journal_restore": {
+    "archive_sha256": "d3a994c915008317f91e36ea4b36de5719e1ff1ce1a18a9ee425cc389dfbee23",
+    "journal_sha256": "19603159548b1e443a3565f8c999543981c43c23c80fd511c11e760f633b260f",
+    "files_verified": 17
+  }
+}
