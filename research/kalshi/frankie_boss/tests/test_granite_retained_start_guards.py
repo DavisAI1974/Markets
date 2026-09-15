@@ -71,3 +71,29 @@ def test_runtime_verifier_uses_explicit_long_context_pin():
     cloud.validate_runtime(records, dict(model_manifest_sha256='a'*64, context=131072))
     with pytest.raises(ValueError):
         cloud.validate_runtime(records, dict(model_manifest_sha256='a'*64))
+
+
+def test_watchdog_reconciles_acknowledged_stop_before_any_unrelated_exited_read(monkeypatch, tmp_path):
+    info = dict(pod_id=life.POD_ID, intent={})
+    startup = life.make_startup(info, start=1000., request_sha256='a'*64,
+        local_ready=dict(request_sha256='a'*64, host_instance_id='local-ready-instance', admitted_at=999.))
+    journal = Journal()
+    journal.client, journal.bucket = None, 'bucket'
+    journal.rows.update({'retained-startup.json': startup,
+        'retained-confirmed-fatal.json': {'startup_sha256': life.check_startup(startup, info)}})
+    monkeypatch.setattr(host, 'OUT', tmp_path)
+    clock = [1001.]
+    monkeypatch.setattr(host.time, 'time', lambda: clock[0])
+    monkeypatch.setattr(host.time, 'sleep', lambda seconds: clock.__setitem__(0, clock[0]+seconds))
+    monkeypatch.setattr(host, 'watchdog_identity', lambda: dict(run_id='1', job_id='2', job_deadline=2000.))
+    monkeypatch.setattr(host, 'ActiveRunStore', lambda *args: None)
+    calls = []
+    def cleanup(*args, **kwargs):
+        calls.append(kwargs)
+        return {'status': 'stop_pending' if len(calls) == 1 else 'confirmed_stopped'}
+    monkeypatch.setattr(host, 'completion_cleanup', cleanup)
+    class Api:
+        def request(self, *args):
+            raise AssertionError('cleanup ownership protocol must own readback')
+    host.watchdog(journal, Api(), info)
+    assert calls == [dict(acknowledged_stop=True), dict(acknowledged_stop=True)]

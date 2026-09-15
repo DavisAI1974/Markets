@@ -1,0 +1,56 @@
+name: Publish retained Granite completion
+
+on:
+  push:
+    branches: [codex/full-frankie-boss-connection-20260915]
+    paths: [.github/workflows/frankie_retained_completion.yml]
+  workflow_dispatch:
+    inputs:
+      request_sha256:
+        required: true
+        type: string
+      startup_sha256:
+        required: true
+        type: string
+      outcome_sha256:
+        required: true
+        type: string
+      job_id:
+        required: true
+        type: string
+      code_commit:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: retained-completion-${{ inputs.request_sha256 }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'DavisAI1974/Markets' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_EC2_METADATA_DISABLED: 'true'
+      AWS_DEFAULT_REGION: us-east-1
+      REQUEST_SHA256: ${{ inputs.request_sha256 }}
+      STARTUP_SHA256: ${{ inputs.startup_sha256 }}
+      OUTCOME_SHA256: ${{ inputs.outcome_sha256 }}
+      JOB_ID: ${{ inputs.job_id }}
+      CODE_COMMIT: ${{ inputs.code_commit }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install boto3==1.42.23
+      - name: Publish exact completed outcome to independent observer
+        run: python research/kalshi/frankie_boss/granite_retained_completion.py

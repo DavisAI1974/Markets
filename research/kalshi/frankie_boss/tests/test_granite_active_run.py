@@ -168,3 +168,30 @@ def test_stop_helper_persists_ack_before_readback(monkeypatch):
             return {}
     resume.stop_owned_once(API(), {}, 'pod', on_ack=lambda: events.append('durable_ack'))
     assert events == ['GET', 'GET', 'POST', 'durable_ack', 'GET']
+
+
+def test_ack_write_transient_or_lost_readback_recovers_without_second_stop():
+    for persisted in (False, True):
+        store = ActiveRunStore(S3(), 'bucket', 'pod')
+        store.claim('a'*64)
+        class FlakyJournal(Journal):
+            attempts = 0
+            def put(self, name, value, **kwargs):
+                if name == 'retained-stop-acknowledged.json':
+                    self.attempts += 1
+                    if self.attempts == 1:
+                        if persisted:
+                            super().put(name, value, **kwargs)
+                        raise OSError('transient acknowledgement write/readback')
+                return super().put(name, value, **kwargs)
+        journal = FlakyJournal()
+        calls = []
+        def stop(api, intent, pod_id, on_ack):
+            calls.append('stop')
+            on_ack()
+            return dict(status='confirmed_stopped', pod_id=pod_id, data_retained=True)
+        result = completion_cleanup(None, journal, store, {'intent': {}}, 'a'*64,
+                                    stop, acknowledged_stop=True)
+        assert result['status'] == 'confirmed_stopped'
+        assert calls == ['stop']
+        assert store.read()[0]['phase'] == 'closed'

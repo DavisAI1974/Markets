@@ -345,13 +345,19 @@ def watchdog(journal, api, info):
                 save('startup-intent.json', startup)
                 journal.put('retained-observer.json', dict(startup_sha256=digest,
                     at=time.time(), watchdog_identity=identity))
-                if journal.get('retained-finished.json') == {'startup_sha256': digest}:
+                finished = journal.get('retained-finished.json') == {'startup_sha256': digest}
+                fatal = journal.get('retained-confirmed-fatal.json') == {'startup_sha256': digest}
+                if finished or fatal:
                     result = completion_cleanup(api, journal,
                         ActiveRunStore(journal.client, journal.bucket, lifecycle.POD_ID),
                         info, digest, retained.stop_owned_once, acknowledged_stop=True)
                     save('completion-cleanup.json', result)
                     if result['status'] in ('confirmed_stopped', 'not_active_run'):
                         return
+                    # Keep reconciling this stop; an unrelated EXITED sample
+                    # must not bypass the acknowledgement/memo/release protocol.
+                    time.sleep(10)
+                    continue
                 ready = journal.get('service-ready.json')
                 ready_hash = hashlib.sha256(artifacts.canonical(ready)).hexdigest() if ready else None
                 new_ready = ready_hash is not None and ready_hash != last_ready_hash
@@ -408,6 +414,7 @@ def cleanup(api):
     digest = lifecycle.check_startup(startup, info)
     journal = cloud.Journal()
     journal.prefix = 'retained-granite/'+startup['request_sha256']+'/'
+    journal.put('retained-confirmed-fatal.json', {'startup_sha256': digest})
     result = completion_cleanup(api, journal,
         ActiveRunStore(journal.client, journal.bucket, lifecycle.POD_ID), info, digest,
         retained.stop_owned_once, acknowledged_stop=True)

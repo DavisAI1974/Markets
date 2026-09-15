@@ -111,7 +111,22 @@ def completion_cleanup(api, journal, active_runs, info, digest, stop, *, acknowl
             return dict(status='cleanup_pending', pod_id=active_runs.pod_id, startup_sha256=digest)
         return dict(status='not_active_run', pod_id=active_runs.pod_id, startup_sha256=digest)
     def acknowledge():
-        journal.put('retained-stop-acknowledged.json', dict(startup_sha256=digest,
-            pod_id=active_runs.pod_id, status='stop_acknowledged'), once=True)
+        name = 'retained-stop-acknowledged.json'
+        receipt = dict(startup_sha256=digest, pod_id=active_runs.pod_id,
+                       status='stop_acknowledged')
+        # Retry only the durable acknowledgement, never the provider action.
+        # A lost write readback may already have persisted the exact receipt.
+        for attempt in range(2):
+            try:
+                prior_ack = journal.get(name)
+                if prior_ack is not None:
+                    if prior_ack != receipt:
+                        raise ValueError('stop acknowledgement identity differs')
+                    return
+                journal.put(name, receipt, once=True)
+                return
+            except Exception:
+                if attempt:
+                    raise
     options = {'on_ack': acknowledge} if acknowledged_stop else {}
     return finish(stop(api, info['intent'], active_runs.pod_id, **options))
