@@ -12,12 +12,13 @@ from urllib.parse import parse_qs, urlsplit
 
 try:
     from . import granite_runpod_package as package
-    from .granite_request_stage import BUCKET, canonical, encrypt_receipt
+    from .granite_request_stage import canonical, encrypt_receipt
 except ImportError:
     import granite_runpod_package as package
-    from granite_request_stage import BUCKET, canonical, encrypt_receipt
+    from granite_request_stage import canonical, encrypt_receipt
 
-PREFIX = 'nymex/ng_mbo_5y_v0/frankie/bootstrap/'
+BUCKET = 'frankie-granite42-568968024170-us-east-1'
+PREFIX = 'granite-bootstrap-open-run/'
 DIRECTORY = '/opt/ml/additional-model-data-sources/bootstrap-open-run-v1'
 EXPIRY = 900
 
@@ -70,7 +71,7 @@ def stage_bundle(client, directory, expected_sha256, *, now=time.time):
         url = client.generate_presigned_url('get_object', Params={'Bucket': BUCKET, 'Key': key},
             ExpiresIn=EXPIRY, HttpMethod='GET')
         parsed = urlsplit(url)
-        if (parsed.scheme != 'https' or parsed.hostname != BUCKET+'.s3.us-east-2.amazonaws.com'
+        if (parsed.scheme != 'https' or parsed.hostname not in (BUCKET+'.s3.us-east-1.amazonaws.com', BUCKET+'.s3.amazonaws.com')
                 or parsed.path != '/'+key or parse_qs(parsed.query).get('X-Amz-Expires') != [str(EXPIRY)]):
             raise ValueError('unexpected bootstrap download capability')
         urls[name] = url
@@ -99,7 +100,7 @@ def main():
             receipt = package.package(source, packed, runtime_directory=DIRECTORY)
             if receipt['bundle_sha256'] != marker['bundle_sha256']:
                 raise ValueError('committed package differs from independently supplied digest')
-            client = boto3.client('s3', region_name='us-east-2', config=Config(signature_version='s3v4',
+            client = boto3.client('s3', region_name='us-east-1', config=Config(signature_version='s3v4',
                 s3={'addressing_style': 'virtual'}, connect_timeout=5, read_timeout=10,
                 retries={'total_max_attempts': 1, 'mode': 'standard'}))
             result = stage_bundle(client, packed, marker['bundle_sha256'])

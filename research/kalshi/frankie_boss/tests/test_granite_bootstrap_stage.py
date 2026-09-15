@@ -24,7 +24,7 @@ class Client:
         self.objects[kwargs['Key']] = kwargs['Body']; self.puts.append(kwargs)
     def generate_presigned_url(self, operation, *, Params, ExpiresIn, HttpMethod):
         assert operation == 'get_object' and HttpMethod == 'GET'
-        return 'https://'+Params['Bucket']+'.s3.us-east-2.amazonaws.com/'+Params['Key']+'?X-Amz-Expires='+str(ExpiresIn)
+        return 'https://'+Params['Bucket']+'.s3.us-east-1.amazonaws.com/'+Params['Key']+'?X-Amz-Expires='+str(ExpiresIn)
 
 
 def bundle(tmp_path):
@@ -59,3 +59,21 @@ def test_existing_digest_object_collision_is_preserved_and_refused(tmp_path):
     client.objects[key] = b'collision'
     with pytest.raises(ValueError, match='stored bootstrap differs'): stage.stage_bundle(client, tmp_path, digest)
     assert client.objects[key] == b'collision' and not client.puts
+
+
+def test_download_origins_match_retained_cloud_bootstrap_verifier(tmp_path):
+    import ast
+    import shlex
+    from research.kalshi.frankie_boss import granite_runpod_cloud as cloud
+    digest = bundle(tmp_path)
+    result = stage.stage_bundle(Client(), tmp_path, digest)
+    command = cloud.bootstrap_command(result['files'], digest, stage.BUCKET,
+        directory=stage.DIRECTORY, open_ended=True)
+    wrapper = ast.parse(shlex.split(command)[2])
+    hex_source = wrapper.body[0].value.args[0].func.value.args[0].value
+    source = bytes.fromhex(hex_source).decode()
+    origin_guard = next(line for line in source.splitlines() if 'bootstrap origin refused' in line)
+    for url in result['urls'].values():
+        host = stage.urlsplit(url).hostname
+        assert repr(host) in origin_guard
+    assert stage.BUCKET == 'frankie-granite42-568968024170-us-east-1'
