@@ -1,0 +1,13 @@
+# Retained source diagnostic interruption and explicit continuation
+
+The 2026-09-15 source recovery committed 26,000 INPUT/APPLIED pairs before RunProbe detected a failed heartbeat. The original inner exception was discarded; Windows latest-file replacement sharing denial is a plausible cause, not an established historical fact. No model forward or principal call occurred.
+
+RunProbe now treats only Windows sharing/lock errors 5/32/33 during replacement of the advisory progress.json as nonfatal after the primary progress.jsonl event was fsynced. A safe warning is itself fsynced. All other storage failures remain fatal, and background errors preserve exception chaining and a safe diagnostic-failure.json with type/errno/winerror/phase. No private exception message is placed in diagnostics.
+
+Explicit source recovery keeps the failed parent byte-pinned and read-only. VerifiedJournalReader performs one complete canonical and cryptographic verification pass. Each generated envelope is serialized once and compared directly to retained canonical body bytes from a separate read-only cursor; final parent bytes and head are checked. This removes the prior inventory verification pass and expected-envelope recanonicalization. It does not skip adapter transitions or pretend a missing mutable-state checkpoint exists. Original entries are SQLite-backed up without rewriting; only missing/new records can append. New receipt fields bind helper and reader code SHA256.
+
+The operational continuation saves full immutable builder states at each 1,000-record threshold's first closed group, before reporting that progress. A healthy exception path attempts a final checkpoint and records why unavailable when a group remains open. Each state has independently persisted bytes/state/journal/prefix witnesses. A future recovery can therefore restore the last complete trusted state rather than reconstructing all earlier transitions.
+
+New tests only: two diagnostic persistence seams passed; one single-verification-pass closed-tail continuation seam passed. Existing passing source and diagnostics suites were not rerun. The failed source database, failure receipt and exited schedule attempt remain preserved.
+
+A same-machine isolated Windows CreateFileW reproduction held the advisory destination open with FILE_SHARE_READ|FILE_SHARE_WRITE but without FILE_SHARE_DELETE. os.replace raised PermissionError errno13/winerror5, and both original destination and new source bytes remained intact. Error5 is therefore included only at advisory snapshot replacement, following durable append-only persistence; it is not assumed to prove historical sharing.

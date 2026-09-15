@@ -48,6 +48,7 @@ class RunProbe:
         self._lock, self._stop = threading.RLock(), threading.Event()
         self._thread = None
         self._heartbeat_error = None
+        self._heartbeat_exception = None
         self._started = self._phase_at = self._advance_at = self._sample_at = self.clock()
         self._warned_at, self._stalled = None, False
         self._state = dict(phase='data_delivery', owner='transport', completed=0,
@@ -83,7 +84,19 @@ class RunProbe:
             stream.write(data)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, self.directory/'progress.json')
+        try:
+            os.replace(temporary, self.directory/'progress.json')
+        except OSError as error:
+            # The append-only event above is already fsynced. A Windows reader
+            # can deny replacement of the advisory latest snapshot temporarily.
+            if getattr(error, 'winerror', None) not in (5, 32, 33):
+                raise
+            warning = dict(value, kind='warning', code='latest_snapshot_unavailable',
+                           diagnostic_error=self._safe_error(error, 'latest_snapshot'))
+            with (self.directory/'progress.jsonl').open('ab') as stream:
+                stream.write(canonical(warning)+b'\n')
+                stream.flush()
+                os.fsync(stream.fileno())
         self._previous_count, self._sample_at = state['completed'], now
         line = 'FRANKIE_PROGRESS '+data.decode()
         if self.emit is print:
@@ -140,13 +153,26 @@ class RunProbe:
         while not self._stop.wait(self.interval):
             try:
                 self.sample()
-            except Exception:
-                self._heartbeat_error = True
+            except Exception as error:
+                self._heartbeat_exception = error
+                self._heartbeat_error = self._safe_error(error, 'heartbeat')
+                try:
+                    with (self.directory/'diagnostic-failure.json').open('wb') as stream:
+                        stream.write(canonical(dict(run_id=self.run_id, error=self._heartbeat_error)))
+                        stream.flush()
+                        os.fsync(stream.fileno())
+                except OSError:
+                    pass  # The retained exception still reaches the owner.
                 self._stop.set()
+
+    @staticmethod
+    def _safe_error(error, phase):
+        return dict(error_type=type(error).__name__, errno=getattr(error, 'errno', None),
+                    winerror=getattr(error, 'winerror', None), phase=phase)
 
     def check_health(self):
         if self._heartbeat_error:
-            raise RuntimeError('run diagnostic persistence failed')
+            raise RuntimeError('run diagnostic persistence failed') from self._heartbeat_exception
 
     def controller_event(self, value):
         """Observe controller boundaries; durable journals still decide reuse."""

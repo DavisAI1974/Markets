@@ -11,6 +11,7 @@ import sqlite3
 
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import V4MboAdapter
 from .c15_builder import C15Builder
+from .verified_journal_reader import VerifiedJournalReader
 from .causal_prefix_records import RecordPrefixChain
 from .c15_registry import implementation_identity
 from .c15_journal import EvidenceJournal, SCHEMA, evidence_hash, canonical_bytes, pack
@@ -25,16 +26,31 @@ class _ReplayJournal:
     def __init__(self, parent, destination):
         self.parent, self.destination = parent, destination
         self.iterator = iter(parent.entries())
+        self.raw_connection = sqlite3.connect(parent.path.resolve().as_uri()+'?mode=ro', uri=True)
+        self.raw_iterator = iter(self.raw_connection.execute('SELECT body,digest FROM entries ORDER BY ordinal'))
+        self.pending = None
         self.count = 0
         self.head_hash = evidence_hash(dict(schema=SCHEMA))
 
+    def peek_input(self):
+        if self.pending is not None:
+            raise ValueError('unconsumed pending replay envelope')
+        self.pending = next(self.iterator)
+        if self.pending['kind'] != 'INPUT':
+            raise ValueError('FAILED or nonalternating original evidence requires explicit separate reconciliation')
+        return self.pending['payload']
+
     def append(self, kind, payload):
         if self.count < self.parent.count:
-            expected = next(self.iterator)
+            expected = self.pending if self.pending is not None else next(self.iterator)
+            self.pending = None
+            body, digest = next(self.raw_iterator)
             generated = dict(schema=SCHEMA,ordinal=self.count,previous_hash=self.head_hash,kind=kind,payload=payload)
-            if canonical_bytes(pack(generated)) != canonical_bytes(pack(expected)):
+            if canonical_bytes(pack(generated)) != body:
                 raise ValueError('rehydrated adapter output differs from retained exact envelope')
-            self.head_hash = evidence_hash(expected)
+            if expected['kind'] != kind:
+                raise ValueError('FAILED or nonalternating original evidence')
+            self.head_hash = digest
             self.count += 1
             return self.head_hash
         # Only the missing APPLIED of an already retained pending INPUT may be
@@ -60,21 +76,18 @@ def rehydrate_source(scope, parent_path, destination_path, *, expected_parent, e
         raise ValueError('recovery must preserve original parent journal')
     if file_sha256(parent_path)!=expected_parent['sha256']:
         raise ValueError('original parent physical bytes changed')
-    parent=EvidenceJournal(parent_path)
+    parent=VerifiedJournalReader(parent_path,expected_count=expected_parent['count'],expected_head_hash=expected_parent['head_hash'])
     destination=None
+    replay=None
     try:
         if (parent.count,parent.head_hash)!=(expected_parent['count'],expected_parent['head_hash']):
             raise ValueError('original parent journal checkpoint changed')
-        inputs=[]
-        for entry in parent.entries():
-            expected_kind='INPUT' if entry['ordinal']%2==0 else 'APPLIED'
-            if entry['kind']!=expected_kind:
-                raise ValueError('FAILED or nonalternating original evidence requires explicit separate reconciliation')
-            if entry['kind']=='INPUT': inputs.append(entry['payload'])
         with destination_path.open('xb'): pass
         connection=sqlite3.connect(destination_path)
         try:
-            parent.connection.backup(connection)
+            backup_source=sqlite3.connect(parent_path.resolve().as_uri()+'?mode=ro',uri=True)
+            try: backup_source.backup(connection)
+            finally: backup_source.close()
             if connection.execute('PRAGMA journal_mode=WAL').fetchone()[0]!='wal':
                 raise ValueError('WAL recovery journal unavailable')
             connection.execute('PRAGMA synchronous=FULL')
@@ -90,7 +103,8 @@ def rehydrate_source(scope, parent_path, destination_path, *, expected_parent, e
         replay=_ReplayJournal(parent,destination)
         builder.journal=replay
         total=(parent.count+1)//2
-        for submitted in inputs:
+        for _ in range(total):
+            submitted=replay.peek_input()
             if submitted['cursor']!=builder.chain.next_cursor or submitted['scope_genesis_hash']!=scope.genesis_hash():
                 raise ValueError('original input source scope or cursor differs')
             builder.apply(submitted['record'],source_member_index=submitted['source_member_index'],
@@ -104,15 +118,20 @@ def rehydrate_source(scope, parent_path, destination_path, *, expected_parent, e
             raise ValueError('unconsumed parent evidence')
         if file_sha256(parent_path)!=expected_parent['sha256']:
             raise ValueError('parent changed during explicit recovery')
+        replay.raw_connection.close()
         builder.journal=destination
         receipt=dict(schema='C15_EXPLICIT_SOURCE_RECOVERY_V1',parent_path=str(parent_path),parent=dict(expected_parent),
             recovered_path=str(destination_path),existing_entries_rewritten=0,
             replayed_complete_records=parent.count//2,pending_input_completed=parent.count%2,
             next_cursor=builder.chain.next_cursor,journal_count=destination.count,journal_hash=destination.head_hash,
-            recovery_method='EXACT_ENVELOPE_VERIFIED_IN_MEMORY_REHYDRATION',journal_mode='wal',synchronous='FULL')
+            recovery_method='EXACT_ENVELOPE_VERIFIED_IN_MEMORY_REHYDRATION',journal_mode='wal',synchronous='FULL',
+            verification_reader='VerifiedJournalReader',parent_verification_passes=1,
+            recovery_code_sha256=file_sha256(Path(__file__)),
+            reader_code_sha256=file_sha256(Path(__file__).with_name('verified_journal_reader.py')))
         return builder,receipt
     except BaseException:
         if destination is not None: destination.close()
         raise
     finally:
+        if replay is not None: replay.raw_connection.close()
         parent.close()
