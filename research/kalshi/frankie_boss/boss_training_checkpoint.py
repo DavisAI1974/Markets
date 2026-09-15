@@ -125,7 +125,7 @@ class BossTrainingCheckpoint:
                 or not isinstance(optimizer, torch.optim.Optimizer)):
             raise ValueError('caller-owned native, decoder, optional teacher and optimizer required')
         self.models, self.optimizer = dict(models), optimizer
-        self.identities = dict(identities)
+        self._identities = dict(identities)  # detached from the caller's mutable mapping
         self._binding = self._layout()
         self._lock, self._failed = threading.Lock(), False
         path = Path(path)
@@ -155,7 +155,7 @@ class BossTrainingCheckpoint:
                         or state['request_id'] != request_id or type(state['training_cursor']) is not int
                         or sequence != (0 if last is None else last['sequence']+1)
                         or state['previous_hash'] != previous
-                        or state['identities'] != self.identities or encode_state(state['binding']) != encode_state(self._binding)
+                        or state['identities'] != self._identities or encode_state(state['binding']) != encode_state(self._binding)
                         or (last is not None and state['training_cursor'] <= last['training_cursor'])):
                     raise ValueError('training checkpoint identity or chain differs')
                 if sequence == 0:
@@ -207,7 +207,7 @@ class BossTrainingCheckpoint:
                 code=_sha(Path(__file__).read_bytes())))
 
     def _envelope(self, sequence, request_id, result_hash, cursor, previous, update_result=None):
-        return dict(schema=SCHEMA, identities=self.identities, binding=self._binding, sequence=sequence,
+        return dict(schema=SCHEMA, identities=dict(self._identities), binding=self._binding, sequence=sequence,
             request_id=request_id, controller_result_hash=result_hash, training_cursor=cursor, previous_hash=previous,
             models={role: dict(weights=model.state_dict(),
                 modes={name: module.training for name, module in model.named_modules()},
@@ -257,6 +257,12 @@ class BossTrainingCheckpoint:
         digest = _sha(raw)
         self.db.execute('INSERT INTO checkpoints VALUES (?,?,?,?)', (state['sequence'], state['request_id'], raw, digest))
         return self._receipt(state, digest)
+
+    @property
+    def identities(self):
+        """Admitted identities as a fresh plain dict: callers cannot mutate the admitted mapping,
+        and the exact-type (dict) serialization/binding paths keep working unchanged."""
+        return dict(self._identities)
 
     @property
     def checkpoint_hash(self):

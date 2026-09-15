@@ -24,6 +24,32 @@ class AmbiguousPrincipalCall(RuntimeError):
     """An existing principal intent has no recoverable verified output."""
 
 
+def _not_dispatched_signals():
+    """Adapter-owned recovery contract, resolved lazily so this module never redefines it.
+
+    PrincipalNotDispatched (adapter) means no durable session request exists, so the
+    coordinator's saved intent never reached the principal and dispatch is safe.
+    PrincipalPending means a durable request exists without a response and must
+    propagate untouched. Until the adapter exports PrincipalNotDispatched, nothing is
+    caught and an intent without output remains ambiguous, exactly as before.
+    """
+    from . import frankie_principal_adapter as adapter
+    signal = getattr(adapter, 'PrincipalNotDispatched', None)
+    return (signal,) if isinstance(signal, type) and issubclass(signal, BaseException) else ()
+
+
+def _requested_session_ids(sessions):
+    """Session IDs of the requested (name, session) roster, in order; shape is explicit."""
+    if type(sessions) not in (list, tuple):
+        raise ValueError('explicit requested session roster required')
+    ids = []
+    for pair in sessions:
+        if type(pair) not in (list, tuple) or len(pair) != 2 or not hasattr(pair[1], 'session_id'):
+            raise ValueError('requested sessions must be (name, session) pairs')
+        ids.append(pair[1].session_id)
+    return tuple(ids)
+
+
 def file_hash(path):
     with Path(path).open('rb') as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
@@ -232,6 +258,8 @@ class CycleCoordinator:
                 if envelope is None:
                     self._observe('causal_handoff', request_id)
                     export_args = export_kwargs(result) if callable(export_kwargs) else dict(export_kwargs)
+                    if export_args.get('request_id', request_id) != request_id:
+                        raise ValueError('export request identity differs from cycle request')
                     export_args = dict(export_args, request_id=request_id)
                     manifest = _export_verified(directory, export_args, result, learning_kwargs)
                     self._save(request_id, 'export', manifest)
@@ -242,7 +270,13 @@ class CycleCoordinator:
                     intent = self._load(request_id, 'principal_intent')
                     self._observe('frankie_calculations', request_id)
                     if intent is not None:
-                        envelope = await asyncio.to_thread(principal.recover, request_id, attachment)
+                        # Saved intent precedes the adapter's durable request. Only the adapter's
+                        # explicit PrincipalNotDispatched proves nothing was sent; PrincipalPending
+                        # and every other failure propagate, and a missing result stays ambiguous.
+                        try:
+                            envelope = await asyncio.to_thread(principal.recover, request_id, attachment)
+                        except _not_dispatched_signals():
+                            envelope = await asyncio.to_thread(principal.execute, request_id, attachment)
                         if envelope is None:
                             raise AmbiguousPrincipalCall('principal completion unknown; retained output or explicit reconciliation required')
                     else:
@@ -260,6 +294,11 @@ class CycleCoordinator:
                         or feedback.source_hash != learning_kwargs['source_hash']
                         or not learning_kwargs['as_of'] <= feedback.available_ns <= learning_kwargs['learning_cutoff_ns']):
                     raise ValueError('principal feedback causal binding differs')
+                # Roster check precedes both the saved feedback and the training update so a
+                # rejected envelope never enters apply_completed and never poisons the checkpoint.
+                if (type(feedback.sessions) is not tuple or tuple(s.session_id for s in feedback.sessions)
+                        != _requested_session_ids(learning_kwargs['sessions'])):
+                    raise ValueError('principal feedback session roster differs from requested sessions in order')
                 self._save(request_id, 'feedback', dict(feedback=asdict(feedback), feedback_hash=feedback.digest,
                     envelope_hash=evidence_hash(envelope)))
                 self._memory_unchanged()
