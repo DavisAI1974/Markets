@@ -7,6 +7,23 @@ Implementation status: the current Sunday entry point still contains Sunday-spec
 
 Date: 2026-09-15. Read live logs before relying on this snapshot.
 
+## Required Git documents for this handoff
+
+Repository: **DavisAI1974/Markets**  
+Branch: **codex/journal-reduction-stack-20260915**  
+Handoff name: **NEW_CHAT_HANDOFF.md**  
+Handoff directory: **outputs/frankie-boss/20260915/compact-sunday-handoff/**
+
+Read these updated files in that directory:
+1. NEW_CHAT_HANDOFF.md — complete operational ownership and exact pins.
+2. SUNDAY_LAUNCH_CONTINUATION.md — remaining actual-run steps.
+3. PARALLEL_SOURCE_AUDIT.md — completed source/journal evidence and authority.
+4. JOURNAL_OPTIMIZATION_REVIEW.md — compatible reductions, evidence and boundaries.
+5. REALTIME_PERFORMANCE_REQUIREMENTS.md — reusable performance requirements and pending acceptance.
+6. FINAL_PRELAUNCH_GATE_READINESS.md — completed prerequisites and exact remaining gate.
+
+Also read updated **research/kalshi/frankie_boss/operations/COMPACT_SUNDAY_INGESTION.md** on the publication branch. These are the current Git versions; original E documents remain historical evidence. Do not pull publication changes into the live runtime checkout.
+
 ## Owner intent and boundaries
 Run using-agent-skills first. Finish the actual nineteen-cycle Sunday Frankie/BOSS run with all compatible reductions, dedicated CPU ingestion, save points, percentage probes, and Frankie's printed analysis. No smoke inference, repeated passing suites, ambiguous inference retries, extra source day, account/reset actions, or elapsed cutoff while meaningful progress continues.
 Preserve original frozen checkout, evidence, retained Pod and all live work. Old launch heartbeat remains paused; do not resume it or introduce competing launch ownership.
