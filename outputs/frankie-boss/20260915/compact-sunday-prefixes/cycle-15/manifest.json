@@ -1,0 +1,17 @@
+{
+  "schema": "FRANKIE_ENCRYPTED_PREFIX_ARCHIVE_V1",
+  "cycle_index": 15,
+  "base_archive_commit": "fb2e988c9c55b84db497047a173e4db990f6d709",
+  "base_sha256": "19603159548b1e443a3565f8c999543981c43c23c80fd511c11e760f633b260f",
+  "target_sha256": "59a3800980caf0d93a5758a8b7a8ec5e74c033aaff3f5f33bbf4883868290ee3",
+  "target_bytes": 469356544,
+  "ciphertext_sha256": "f9a26952a3ded6bf9a41049808b3f3f1b6593e64e9e2f7ac4e9c9a599211bb61",
+  "ciphertext_bytes": 115423,
+  "nonce_base64": "nDHdyOyvrcA9E0kb",
+  "aad": "FRANKIE_PREFIX_ARCHIVE_V1:15",
+  "encrypted_key_base64": "bD5pZL3a68Qhn22aKniIEdnn87rFJ19oZyKpIFdYWKLE/isjVi15eo7hQHAzDyaNWzhE4GxF9DXVLlyla1KKHvg+C9zcHWtqAz8RRWe3ij/c0sDmSjttgQrRkfv3jAaTxq/+imtydpt1d6AsBfI/akfc5JJZdoh/9mOBdMFa09p1X3aVgRy7ofIraxqlVYukasMyKYoi4WoTYW78Mz6pf05R6ECOlCz8/5OY7eJR3h0AwNeG+kOaIQWdX4mGR3v5GzknEHJjxVZxjoC++MpjSSsv2G+dwYhM10xfVqmqGQ5rJ4xbIL3q5BzZCAyejb4OVBc1NaXdFspbLjMpbmLo9CspGXoyn37c7YVIilSsiG71IjJ0pWI+g5teC6H54qB7KTPRa8IADlp0OKIVWkls5SKGrwhPQkjAJwV+h/M8fllz+EWg/trLyh09knzFff3ZFVhN7TUrYqr230Hq6RqprgaetC3cti95u+9La8pUD5PVeinmPzhBLDNVHGhNinGi",
+  "recipient_public_key_sha256": "b437c74b14c4b79183ba12cec80d8f21b05c890d0fd71a73238a8f9afb4bd1a5",
+  "encryption": "AES-256-GCM",
+  "key_wrapping": "RSA-OAEP-SHA256",
+  "exact_reconstruction_verified": true
+}
