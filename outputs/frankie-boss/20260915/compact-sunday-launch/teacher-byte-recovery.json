@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "before_sha256": "fd7307559b76d91cc4bcc3702ebc7a1e74d6eba131f8b39a9e66458a2c9c4839",
+      "name": "c15_teacher.py",
+      "normalized_source_unchanged": true,
+      "restored_sha256": "40742bbdd0cf60c36aadf40cec3e81a22ed6c356f760279e77ce01b53a824f89"
+    },
+    {
+      "before_sha256": "b2f3ece1307a0e88e09ae974343cab758a0b9f39a5315dc6a617c8aa5d63bdb1",
+      "name": "c15_teacher_r3.py",
+      "normalized_source_unchanged": true,
+      "restored_sha256": "55b9487c47181ec2ac6de6f5ccb8012397a8bd906abc37158db2bc1d9a9e90e9"
+    }
+  ],
+  "model_calls": 0,
+  "preserved_pre_inference_attempt": "E:\\Codex\\Frankie-BOSS-20260915\\actual-feedback-run-pre-inference-byte-mismatch",
+  "schema": "FRANKIE_TEACHER_RAW_BYTE_RECOVERY_V1"
+}

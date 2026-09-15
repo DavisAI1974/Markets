@@ -1,0 +1,11 @@
+{
+  "configuration": "E:\\Codex\\Frankie-BOSS-20260915\\sunday-launch-20260915\\actual-host-final-configuration.json",
+  "other_pod_environment_preserved": true,
+  "pid": 63112,
+  "pod_id": "jvs75m56w8f73q",
+  "pod_lifetime_seconds": "none",
+  "pod_status": "EXITED",
+  "runtime_commit": "9a8f3f46abaa3d840b07b685010108e0c551b174",
+  "status": "actual_host_retained_preparation_recovery",
+  "unified_exec_session": 48894
+}
