@@ -43,7 +43,9 @@ def _json(raw):
                       parse_constant=lambda _: (_ for _ in ()).throw(ValueError('nonfinite')))
 
 
-def _chat(raw, model):
+def _chat(raw, model, *, service_context=4096):
+    if type(service_context) is not int or service_context not in (4096, 131072):
+        raise ValueError('explicit supported service context required')
     data = _json(raw)
     allowed = {'model', 'messages', 'max_tokens', 'temperature', 'top_p', 'seed',
                'stream', 'chat_template_kwargs'}
@@ -56,7 +58,7 @@ def _chat(raw, model):
             or template['enable_thinking'] is not False):
         raise ValueError('thinking must be disabled')
     n = data.get('max_tokens')
-    if type(n) is not int or not 1 <= n <= 1200:
+    if type(n) is not int or not 1 <= n <= (service_context if service_context == 131072 else 1200):
         raise ValueError('token bound')
     if type(data.get('temperature')) not in (int, float) or data['temperature'] != 0:
         raise ValueError('deterministic temperature required')
@@ -191,7 +193,7 @@ class _Handler(BaseHTTPRequestHandler):
             if len(body) != size:
                 raise ValueError('short request')
             if not health:
-                _chat(body, self.server.model)
+                _chat(body, self.server.model, service_context=self.server.service_context)
                 if self.server.open_ended:
                     # Only an authenticated, fully received and validated body
                     # selects open decode. Header/body ingress remains bounded.
@@ -229,7 +231,7 @@ class _Handler(BaseHTTPRequestHandler):
                 body = self.rfile.read(size)
                 if len(body) != size:
                     raise ValueError('short job request')
-                _chat(body, self.server.model)
+                _chat(body, self.server.model, service_context=self.server.service_context)
                 # Never persist the credential even if accidentally included in
                 # JSON escapes. Auth itself stays outside the durable model body.
                 if self.server.secret.decode('ascii') in json.dumps(_json(body), ensure_ascii=False):
@@ -265,7 +267,7 @@ class _Server(ThreadingHTTPServer):
 
 
 def make_server(secret, address=('0.0.0.0', 8081), *, model, open_ended=False,
-                transport_protocol='direct_v1', spool=SPOOL):
+                transport_protocol='direct_v1', spool=SPOOL, service_context=4096):
     """Address is a local-test seam; main fixes deployment port and host."""
     if type(secret) is not str or not re.fullmatch(r'[A-Za-z0-9_-]{32,256}', secret):
         raise ValueError('required proxy secret invalid')
@@ -275,10 +277,13 @@ def make_server(secret, address=('0.0.0.0', 8081), *, model, open_ended=False,
         raise ValueError('explicit proxy runtime mode required')
     if transport_protocol not in ('direct_v1', 'jobs_v1'):
         raise ValueError('explicit proxy transport protocol required')
+    if type(service_context) is not int or service_context not in (4096, 131072):
+        raise ValueError('explicit supported service context required')
     server = _Server(address, _Handler)
     server.secret = secret.encode('ascii')
     server.authorization = b'Bearer ' + server.secret
     server.model = model
+    server.service_context = service_context
     server.open_ended = open_ended
     server.jobs = None
     try:
@@ -294,6 +299,7 @@ def main():
     with make_server(os.environ.get('RUNPOD_GRANITE_API_KEY'),
                      model=os.environ.get('GRANITE_SERVED_MODEL'),
                      transport_protocol=os.environ.get('GRANITE_TRANSPORT_PROTOCOL', 'direct_v1'),
+                     service_context=int(os.environ.get('GRANITE_MAX_MODEL_LEN', '4096')),
                      open_ended=os.environ.get('RUNPOD_GRANITE_LIFETIME_SECONDS') == 'none') as server:
         server.serve_forever()
 

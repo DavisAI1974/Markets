@@ -15,7 +15,7 @@ from .granite_context_route import serve_context
 from .granite_runpod_admission import TOKENIZER_VERSIONS
 from .granite_runpod_probe import _remaining, _shutdown
 from .granite_sagemaker import SageMakerReceipt, _final_text, _hash, _json
-from .granite_shadow import GraniteIdentity, ShadowResponse
+from .granite_shadow import GraniteIdentity, ShadowResponse, IncompleteModelOutput
 
 MAX_REQUEST = 1024 * 1024
 MAX_RESPONSE = 4 * 1024 * 1024
@@ -29,8 +29,11 @@ class RunpodConfig:
     request_timeout: float | None
     runtime_sha256: str
     context: int = 4096
+    transport_protocol: str = 'direct_v1'
 
     def __post_init__(self):
+        if self.transport_protocol not in ('direct_v1', 'jobs_v1') or (self.transport_protocol=='jobs_v1' and self.request_timeout is not None):
+            raise ValueError('explicit jobs_v1 requires open-ended inference mode')
         if type(self.pod_id) is not str or not re.fullmatch('[a-z0-9]{1,64}', self.pod_id):
             raise ValueError('explicit DNS-compatible approved Pod ID required')
         if type(self.served_model_name) is not str or not re.fullmatch('[A-Za-z0-9_.-]{1,100}', self.served_model_name):
@@ -38,15 +41,20 @@ class RunpodConfig:
         if self.request_timeout is not None and (type(self.request_timeout) not in (int, float)
                 or not math.isfinite(self.request_timeout) or not 0 < self.request_timeout <= 80):
             raise ValueError('request timeout must be positive and at most 80 seconds')
-        if type(self.context) is not int or self.context != 4096:
-            raise ValueError('verified 4096 context required')
+        if type(self.context) is not int or self.context not in (4096, 131072):
+            raise ValueError('explicit supported 4096 or 131072 context required')
+        if self.context == 131072 and self.request_timeout is not None:
+            raise ValueError('long-context candidate requires open-ended transport')
         if type(self.runtime_sha256) is not str or not re.fullmatch('[0-9a-f]{64}', self.runtime_sha256):
             raise ValueError('independently trusted runtime receipt hash required')
 
     @property
     def config_hash(self):
         schema = 'GRANITE_RUNPOD_SERVICE_V1' if self.request_timeout is not None else 'GRANITE_RUNPOD_OPEN_ENDED_V1'
-        return _hash(dict(schema=schema, **asdict(self),
+        fields=asdict(self)
+        if self.transport_protocol=='direct_v1':fields.pop('transport_protocol')
+        else:schema='GRANITE_RUNPOD_DURABLE_JOBS_V1'
+        return _hash(dict(schema=schema, **fields,
             prompt_mode='exact_user_text', enable_thinking=False, stream=False,
             max_request_bytes=MAX_REQUEST, max_response_bytes=MAX_RESPONSE, total_max_attempts=1))
 
@@ -105,6 +113,7 @@ def _runtime(config, identity, receipt):
                 or startup['schema'] != 'GRANITE_STARTUP_RUNTIME_V1'
                 or startup['environment']['GRANITE_MAX_MODEL_LEN'] != str(config.context)
                 or startup['environment']['GRANITE_SERVED_MODEL'] != config.served_model_name
+                or (config.transport_protocol=='jobs_v1' and startup['environment'].get('GRANITE_TRANSPORT_PROTOCOL')!='jobs_v1')
                 or startup['mount']['manifest_sha256'] != identity.base_checkpoint_sha
                 or identity.runtime_versions != _json(startup)
                 or any(startup['runtime']['packages'].get(k) != v for k, v in TOKENIZER_VERSIONS.items())):
@@ -126,6 +135,8 @@ def _admission(value, body, config, identity):
 
 
 def _error_type(error):
+    if isinstance(error, IncompleteModelOutput):
+        return 'IncompleteModelOutput'
     for cls in (TimeoutError, ConnectionError, OSError, ValueError, RuntimeError):
         if isinstance(error, cls):
             return cls.__name__
@@ -155,7 +166,7 @@ class RunpodShadowService:
             config.__post_init__()
             identity.__post_init__()
             if (identity.thinking or identity.quantization != 'none' or identity.weights_sha is not None
-                    or identity.max_tokens > 1200):
+                    or identity.max_tokens > (config.context if config.context == 131072 else 1200)):
                 raise ValueError('identity differs from pinned proxy/runtime capabilities')
             if not (getattr(self,'_recovery_only',False) and api_key is None) and (type(api_key) is not str or not re.fullmatch('[A-Za-z0-9_-]{32,256}', api_key)):
                 raise ValueError('private proxy credential required')
@@ -188,6 +199,9 @@ class RunpodShadowService:
 
     async def critique_compact(self, snapshot, *, request_id, max_prompt_bytes=None):
         return await self._critique(snapshot, request_id, 'compact_v1', max_prompt_bytes)
+
+    async def critique_stacked(self, snapshot, *, request_id, max_prompt_bytes=None):
+        return await self._critique(snapshot, request_id, 'stacked_v1', max_prompt_bytes)
 
     async def _critique(self, snapshot, request_id, encoding, max_prompt_bytes):
         if not self.enabled:
@@ -258,7 +272,7 @@ class RunpodShadowService:
                     event('request_failed', admitted,
                           status if type(status) is int and 100 <= status <= 599 else None,
                           evidence['error_type'])
-                    error = RuntimeError('Runpod critic request failed')
+                    error = exc if isinstance(exc, IncompleteModelOutput) else RuntimeError('Runpod critic request failed')
                 finally:
                     self._busy.release()
                     try:
@@ -291,7 +305,13 @@ class RunpodShadowService:
 
 
 def build_runpod_service(*, enabled=False, config=None, identity=None, api_key=None,
-                         runtime_receipt=None, admit_request=None, exchange=None, event=None, spool_directory=None, recovery_only=False):
+                         runtime_receipt=None, admit_request=None, exchange=None, event=None, spool_directory=None, recovery_only=False,
+                         outcome_ready=None):
+    if enabled and type(config) is RunpodConfig and config.transport_protocol=='jobs_v1':
+        from .granite_durable_job_client import DurableJobRunpodService, https_exchange_jobs
+        return DurableJobRunpodService(enabled,config,identity,api_key,runtime_receipt,admit_request,
+            exchange or https_exchange_jobs,event,spool_directory=spool_directory,recovery_only=recovery_only,outcome_ready=outcome_ready)
+    if outcome_ready is not None:raise ValueError('outcome publication callback requires durable jobs transport')
     if enabled and type(config) is RunpodConfig and config.request_timeout is None:
         from .granite_open_ended_service import OpenEndedRunpodService, https_exchange_open_ended
         return OpenEndedRunpodService(enabled,config,identity,api_key,runtime_receipt,admit_request,

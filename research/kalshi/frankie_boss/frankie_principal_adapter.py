@@ -359,7 +359,15 @@ class FrankiePrincipalAdapter:
         if self.session_executor is None:
             raise PrincipalPending(f'authorized host session must consume {path}')
         dispatched = self.session_executor(request)
-        self.record_session_response(dispatched['response'], host_attestation=dispatched['host_attestation'])
+        response_path = self.directory / 'session-response.json'
+        if response_path.exists():
+            # A host waiter may receive the response through the separately
+            # locked, validating recorder. Never overwrite that immutable record.
+            if json.loads(response_path.read_bytes()) != dispatched:
+                raise ValueError('recorded principal response differs from host return')
+            self._attest_host(dispatched['response'], dispatched['host_attestation'], request)
+        else:
+            self.record_session_response(dispatched['response'], host_attestation=dispatched['host_attestation'])
         return self.recover(request_id, attachment)
 
     def _attest_host(self, response, host_attestation, request):

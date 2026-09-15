@@ -109,6 +109,14 @@ class PendingTransport(RuntimeError):
     """Dispatched work has no recoverable outcome yet; do not record a verdict."""
 
 
+class IncompleteModelOutput(ValueError):
+    """Capacity exhausted before EOS; preserve evidence and halt this cycle."""
+    def __init__(self, details=None, artifact_path=None):
+        super().__init__('INCOMPLETE RESPONSE — context capacity exhausted')
+        self.details = dict(details or {})
+        self.artifact_path = artifact_path
+
+
 def _discard(task: asyncio.Task) -> None:
     """Retrieve late exceptions without allowing late output to become accepted."""
     if not task.cancelled():
@@ -178,7 +186,7 @@ async def _serve_request(request, snapshot, transport, scorer):
             return ShadowReceipt(request, 'timeout')
         try:
             response = task.result()
-        except PendingTransport:
+        except (PendingTransport, IncompleteModelOutput):
             raise
         except asyncio.CancelledError:
             return ShadowReceipt(request, 'transport_error')

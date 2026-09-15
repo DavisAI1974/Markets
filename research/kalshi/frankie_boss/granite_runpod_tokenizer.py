@@ -77,6 +77,19 @@ class LocalTokenizerAdmission:
         return artifacts.strict_json(self._manifest_bytes)
 
     def __call__(self, body):
+        return self._measure(body)[1]
+
+    def with_remaining_output(self, body):
+        """Select all remaining context for output with one full prompt measurement.
+
+        Changes only max_tokens; callers must persist the returned exact body and
+        admission together. EOS may stop generation before this physical limit.
+        """
+        if self._context != 131072:
+            raise ValueError('remaining output requires the explicit long context')
+        return self._measure(body, remaining_output=True)
+
+    def _measure(self, body, *, remaining_output=False):
         if type(body) is not bytes or not body or len(body) > MAX_REQUEST_BYTES:
             raise ValueError('bounded canonical request bytes required')
         try:
@@ -87,7 +100,8 @@ class LocalTokenizerAdmission:
             if (request['model'] != self._model
                     or type(request['temperature']) not in (int, float) or request['temperature'] != 0
                     or request['stream'] is not False
-                    or type(request['max_tokens']) is not int or not 1 <= request['max_tokens'] <= 1200
+                    or type(request['max_tokens']) is not int
+                    or not 1 <= request['max_tokens'] <= (self._context if self._context == 131072 else 1200)
                     or type(request['chat_template_kwargs']) is not dict
                     or set(request['chat_template_kwargs']) != {'enable_thinking'}
                     or request['chat_template_kwargs']['enable_thinking'] is not False
@@ -102,8 +116,12 @@ class LocalTokenizerAdmission:
                 ids = self._tokenizer.apply_chat_template(messages, **invocation())
         except Exception:
             raise ValueError('local complete chat tokenization failed') from None
-        if (type(ids) is not list or not ids or any(type(token) is not int or token < 0 for token in ids)
-                or len(ids) + request['max_tokens'] > self._context):
+        if type(ids) is not list or not ids or any(type(token) is not int or token < 0 for token in ids):
             raise ValueError('complete input and output exceed admitted context or token IDs are invalid')
-        return dict(request_sha256=hashlib.sha256(body).hexdigest(), input_tokens=len(ids),
+        if remaining_output:
+            request['max_tokens'] = self._context - len(ids)
+            body = artifacts.canonical(request)
+        if request['max_tokens'] < 1 or len(ids) + request['max_tokens'] > self._context:
+            raise ValueError('complete input and output exceed admitted context or token IDs are invalid')
+        return body, dict(request_sha256=hashlib.sha256(body).hexdigest(), input_tokens=len(ids),
             output_tokens=request['max_tokens'], context=self._context, tokenizer_sha256=self.tokenizer_sha256)

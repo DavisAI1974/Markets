@@ -49,3 +49,18 @@ def test_standalone_writer_validates_code_before_dependencies_or_cloud():
     assert result.returncode != 0
     assert 'checkout differs from actual host code' in result.stderr
     assert 'ModuleNotFoundError' not in result.stderr
+
+
+def test_standalone_writer_uses_checked_out_code_not_later_marker_commit():
+    head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+    env = dict(os.environ, **{key.upper(): 'a'*64 for key in
+        ('request_sha256', 'startup_sha256', 'outcome_sha256', 'job_id')},
+        CODE_COMMIT=head, GITHUB_SHA='c'*40)
+    script = Path(__file__).parents[1]/'granite_retained_completion.py'
+    # No site-packages are available: reach boto3 import only after code passes,
+    # without creating a client or touching any remote service.
+    result = subprocess.run([sys.executable, '-I', '-S', str(script)],
+                            env=env, capture_output=True, text=True)
+    assert result.returncode != 0
+    assert 'checkout differs' not in result.stderr
+    assert "No module named 'boto3'" in result.stderr

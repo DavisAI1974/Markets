@@ -14,6 +14,9 @@ completion workflow has its own concurrency group so it cannot wait behind the
 long-running observer it is notifying. A code-only push registers the workflow
 with its cloud job skipped; publication requires the actual host's later
 explicit dispatch. Workflow registration must be verified before launch.
+The publisher checks out that exact reviewed commit, independently of later
+operational marker commits on the dispatch branch. The local worktree's code
+commit and host binding stay fixed while those remote markers advance.
 
 Stop acknowledgement persistence retries the journal operation once, accepting
 an identical record if a previous write succeeded but its readback failed.

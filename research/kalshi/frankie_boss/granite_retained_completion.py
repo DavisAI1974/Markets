@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import re
+import subprocess
 
 
 def canonical(value):
@@ -41,7 +42,8 @@ def publish_completion(journal, fields):
 
 def main():
     fields = {key: os.environ[key.upper()] for key in FIELDS}
-    if fields['code_commit'] != os.environ['GITHUB_SHA']:
+    checked_out = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+    if fields['code_commit'] != checked_out:
         raise ValueError('completion workflow checkout differs from actual host code')
     # Validate before placing user-supplied bytes in a journal path.
     if not re.fullmatch('[0-9a-f]{64}', fields['request_sha256']):

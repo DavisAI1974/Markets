@@ -11,7 +11,7 @@ import math
 import re
 import threading
 
-from .granite_shadow import (GraniteIdentity, ShadowReceipt, ShadowResponse,
+from .granite_shadow import (GraniteIdentity, ShadowReceipt, ShadowResponse, IncompleteModelOutput,
                              serve_shadow, serve_native_shadow)
 
 
@@ -90,6 +90,12 @@ def _final_text(body, model):
             or len(raw['choices']) != 1):
         raise ValueError('unsupported or foreign chat completion')
     choice = raw['choices'][0]
+    if (type(choice) is dict and type(choice.get('index')) is int
+            and choice['index'] == 0 and choice.get('finish_reason') == 'length'):
+        usage = raw.get('usage')
+        counts = {name: usage[name] for name in ('prompt_tokens', 'completion_tokens', 'total_tokens')
+            if type(usage) is dict and type(usage.get(name)) is int and usage[name] >= 0}
+        raise IncompleteModelOutput(dict(finish_reason='length', usage_counts=counts))
     if (type(choice) is not dict or type(choice.get('index')) is not int
             or choice['index'] != 0 or choice.get('finish_reason') != 'stop'):
         raise ValueError('incomplete or ambiguous chat completion')
