@@ -136,4 +136,3 @@ def test_validly_hashed_journal_still_requires_mapped_source_bytes_and_identity(
             boss_journal_path=tmp_path/'changed.sqlite', journal_checkpoint=checkpoint,
             boss_source=source, output_path=tmp_path/'bad-binding.json')
     assert not (tmp_path/'bad-binding.json').exists()
-
