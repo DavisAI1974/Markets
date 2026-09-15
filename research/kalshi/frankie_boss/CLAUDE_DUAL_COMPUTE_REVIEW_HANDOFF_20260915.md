@@ -3,9 +3,8 @@
 Date: 2026-09-15
 Owner: Greg Davis
 Repository: `DavisAI1974/Markets`
-Review branch: `chatgpt/frankie-32cpu-lossless-20260915`
-Current tip when this handoff was written: `34490fcf40a1119704bea10a3e1d0dca99c6e035`
-Base: `9a38157b696f1d92bf88b7cf112280695b44e136`
+Review branch: `chatgpt/frankie-dual-compute-20260915`
+Source lineage: branched from `chatgpt/frankie-32cpu-lossless-20260915`, which began at operational base `9a38157b696f1d92bf88b7cf112280695b44e136`.
 
 ## Run this first
 
@@ -18,7 +17,7 @@ This is a **dual-compute** design, not an either/or choice:
 - **GitHub 16 CPUs**: native Frankie/BOSS orchestration, causal training, checkpoints and cycle state.
 - **Retained RunPod 32 vCPUs + L40S**: Granite inference and Granite/service-owned CPU work.
 
-The two machines may work concurrently on different owned phases. Do not split one native optimizer step across both hosts and do not create concurrent writers to the same Frankie checkpoint/model state.
+The two machines may work concurrently on different owned phases. Their aggregate available CPU capacity is 48 logical CPUs across two hosts, but they are not one shared 48-thread native training process. Do not split one native optimizer step across both hosts and do not create concurrent writers to the same Frankie checkpoint/model state.
 
 After review/acceptance, Greg wants **cycle 0 run again from the beginning under a NEW run identity**. Preserve the original failed cycle-00 run, checkpoint, Granite result, Frankie principal result, logs, receipts and evidence unchanged. The new cycle-00 run must use the same lawful source/scientific configuration with only the corrected execution infrastructure.
 
@@ -55,18 +54,20 @@ It applies the 16/16/1/1 native policy before importing/running the actual Sunda
 
 Added `.github/workflows/frankie_sunday_cycle0_github16.yml`.
 
-It targets a 16-core Ubuntu larger runner, checks `os.cpu_count() >= 16`, sets bounded thread env vars, installs CPU PyTorch, and runs only the focused CPU/reader checks. The result-bearing launch is intentionally gated because the old Sunday configuration contains local `E:/...` paths and the failed local checkpoint. Do not enable the final launch until the exact lawful source/configuration package is restored for GitHub under its existing hashes/receipts and a NEW run identity.
+It targets the 16-core GitHub runner, checks `os.cpu_count() >= 16`, sets bounded thread env vars, installs CPU PyTorch, and runs only the focused CPU/reader checks. The result-bearing launch is intentionally gated because the old Sunday configuration contains local `E:/...` paths and the failed local checkpoint. Do not enable the final launch until the exact lawful source/configuration package is restored for GitHub under its existing hashes/receipts and a NEW run identity.
 
 ### Dual-compute authority record
 
 Added `research/kalshi/frankie_boss/DUAL_COMPUTE_TARGET_20260915.md`.
 
-RunPod remains Granite's host. Its 32 vCPUs can own Granite/service CPU work and potentially Granite-specific preprocessing/tokenization/validation, provided that moving those tasks does not cross the native Frankie authority boundary. If journal-derived data is moved to the Pod, preserve the exact lossless format, verified-reader semantics, causal cutoffs and receipts.
+RunPod remains Granite's host. Its included 32 vCPUs should be used for Granite/service-owned CPU work in parallel with GitHub's native Frankie work. The Pod already owns Granite model serving, request transport and service runtime. A further optimization is possible: move Granite-specific context/request preprocessing, tokenizer admission, validation and other CPU-heavy service preparation onto the retained Pod if Claude confirms the authority boundary remains clean.
+
+If journal-derived data is moved to the Pod, preserve the exact lossless format, verified-reader semantics, causal cutoffs and receipts. Do not duplicate native training authority there.
 
 ## What is not done yet
 
 1. **The lawful Sunday source/configuration package is not yet GitHub-restorable.** The active old config references local E: paths. A deterministic GitHub restoration package/manifest is still required before a result-bearing rerun.
-2. **Granite-side 32-vCPU preprocessing has not been moved yet.** The Pod already owns Granite service/model serving. Review whether moving Granite-bound context encoding/tokenizer admission to the Pod is worth doing and whether its trust boundary remains clean.
+2. **Granite-side 32-vCPU preprocessing has not been moved yet.** The Pod already owns Granite service/model serving. Review which additional Granite-specific CPU tasks should move there.
 3. **No result-bearing cycle-0 rerun has been launched.** That is intentional pending your review and the GitHub-restorable lawful package.
 4. **Focused tests were added but were not executed from this ChatGPT connector session.** The GitHub workflow contains those focused test commands; do not report them as passed until an actual runner executes them.
 
@@ -79,9 +80,10 @@ Please answer these before launch:
 3. Is 16 PyTorch intra-op / 1 inter-op the right native policy, or should some CPUs be reserved for orchestration/I/O while training runs?
 4. Should `FRANKIE_CPU_WORKERS` remain the reader env name or be renamed to make native-vs-Granite ownership clearer?
 5. What exact artifacts from the old E: runtime must be packaged into GitHub so the new cycle-0 run uses the identical lawful source/scientific configuration but a fresh checkpoint/run identity?
-6. Which Granite-specific CPU tasks are safe to move onto the retained 32-vCPU Pod without creating a second authority over native evidence or training state?
-7. Does the GitHub larger-runner label used in the workflow match the runner Greg actually has provisioned? If not, correct only the runner selector; do not change the 16-CPU target.
+6. Which Granite-specific CPU tasks should move onto the retained 32-vCPU Pod so those CPUs are used productively without creating a second authority over native evidence or training state?
+7. Does the GitHub larger-runner selector used in the workflow match the runner Greg actually has provisioned? If not, correct only the runner selector; do not change the 16-CPU target.
 8. Do you see any path where the new run could accidentally reuse the failed cycle-00 checkpoint/principal output? If so, block it before launch.
+9. Can GitHub16 native work and RunPod32 Granite/service preparation overlap safely within a cycle to reduce wall time, and where should the synchronization barrier be?
 
 ## Scientific boundaries — do not change
 
@@ -100,7 +102,8 @@ Do not change Frankie inputs, calculations, planes, adapters, replay, Memory A, 
 - existing `prepared_context_cache.py`
 - existing `boss_training_checkpoint.py`
 - existing `granite_runpod_service.py`
+- existing `granite_retained_host.py`
 
 ## Bottom line
 
-The patch is intended to turn the previous mostly single-host/single-process bottleneck into a clean dual-compute system: **GitHub16 for stateful native Frankie, RunPod32+L40S for Granite/service work**, while retaining exact evidence and one native training authority. Review that boundary rigorously before Greg authorizes the new cycle-0 benchmark.
+The patch is intended to turn the previous mostly single-host bottleneck into a clean dual-compute system: **GitHub16 for stateful native Frankie, RunPod32+L40S for Granite/service work**, while retaining exact evidence and one native training authority. The machines should be used concurrently where their ownership boundaries permit it. Review that boundary rigorously before Greg authorizes the new cycle-0 benchmark.
