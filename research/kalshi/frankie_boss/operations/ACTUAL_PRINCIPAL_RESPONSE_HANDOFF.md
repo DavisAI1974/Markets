@@ -15,6 +15,36 @@ Memory A, source day, or missing market label may be invented or recomputed.
 The feedback availability and labels must obey the supplied learning cutoff;
 full delivered end-of-day evidence does not make it available at an earlier cutoff.
 
+## Printed Frankie analysis
+
+Each actual session must print Frankie's own Markdown analysis and retain that
+same text as a separate entry in `lessons`. It must cover how the run has gone
+so far, the new BOSS and its actual attributed output, what the retained
+calculations measured, and what they found. Cite the section hashes and current
+run evidence; distinguish observations from interpretation and name failures,
+missing observations and uncertainty. Do not anticipate later cycle or learning
+outcomes. Historical calculations and frozen Memory A remain preserved.
+
+Root shows this authored analysis in the task output, then includes it in the
+small Markets Git run report with links to its response and receipt identities.
+After all nineteen cycles, the final report also cites actual learning results
+and probe evidence. A pending or incomplete run must be labelled as such.
+
+## Attached run probes
+
+The actual host attaches `RunProbe` under its lifetime lock before execution.
+`host-progress/progress.jsonl` retains phase and counter observations;
+`progress.json` is the latest snapshot. Preparation, controller, principal wait,
+learning and checkpoint boundaries are connected. `FRANKIE_JOB_PROGRESS` stdout
+records allowlisted durable job states and request hashes; the critic spool
+retains the authoritative job observations and outcomes.
+
+A heartbeat or responsive health endpoint proves observation is alive, not that
+decoding advanced. A `possible_stall` warning requires diagnosis against actual
+worker CPU/I/O, startup evidence or job state; it never stops or retries a run.
+`HOST_DIAGNOSTICS_UNAVAILABLE` means telemetry failed after attachment. Preserve
+the operation journals and diagnose it without duplicating an ambiguous call.
+
 ## Required response and attestation
 
 Response JSON carries `request_sha256` (adapter canonical request digest),
@@ -39,7 +69,8 @@ The independent host attestation has:
 ## Recording a reviewed actual response
 
 Use the existing native-runtime Python with the inert helper at
-`work/record_actual_frankie_response.py` in this continuation task. Arguments:
+`research/kalshi/frankie_boss/operations/record_actual_frankie_response.py`
+in the pinned Markets checkout. Arguments:
 `--configuration PATH --configuration-sha256 SHA --cycle-index N`
 `--response PATH --response-sha256 SHA --host-attestation PATH`
 `--host-attestation-sha256 SHA`.

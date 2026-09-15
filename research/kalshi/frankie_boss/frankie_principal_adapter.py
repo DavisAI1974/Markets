@@ -22,6 +22,18 @@ FROZEN_MEMORY_SHA256 = '4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd
 
 SECTIONS = ('4.0', '4.0b') + tuple(f'4.{i}' for i in range(1, 17))
 
+RUN_ANALYSIS_INSTRUCTION = (
+    'Print your own run analysis in the session output and retain the same Markdown text '
+    'as a separate entry in lessons. Cover how this run has gone so far, your assessment '
+    'of the new BOSS and its actual attributed output, what the retained calculations '
+    'measured, and what those calculations found. Cite the relevant section hashes and '
+    'current run evidence. Distinguish observed results from your interpretation; name '
+    'failures, unavailable observations, uncertainties, and useful next lessons. Do not '
+    'claim later cycles or learning steps have completed before their evidence exists. '
+    'Reuse completed calculation evidence without rerunning it. Keep this new analysis '
+    'separate from frozen Memory A and the eighteen historical sections. '
+)
+
 
 class PrincipalNotDispatched(RuntimeError):
     """No adapter request exists: the host provably has not dispatched a session."""
@@ -284,12 +296,13 @@ class FrankiePrincipalAdapter:
         prefix = ("# Current authorized continuation\n"
             "Sunday 2021-10-03 is the sole source and run day. No separate source day or October 1 "
             "prerequisite applies. Reuse completed principal-authored sections with their original "
-            "authorship; author only the new source convention and BOSS feedback. Preserve frozen "
+            "authorship; author the new source convention, BOSS feedback and run analysis. Preserve frozen "
             "pre-Sunday Memory A; store new lessons separately. The original historical prompt follows "
             "unchanged for provenance, followed by the newly verified BOSS attributed input. Its "
             "multi-day sequencing is overridden by this current single-day instruction.\n"
             "Actual local delivery: " + str(self.preparation['delivery_receipt']) + "\n"
             "Feedback contract: " + canonical(self.feedback_contract).decode() + "\n\n"
+            + RUN_ANALYSIS_INSTRUCTION + "\n\n"
             "# Preserved historical principal prompt (exact bytes follow)\n").encode()
         with Path(prompt).open('xb') as handle:
             handle.write(prefix + original + block)
@@ -343,7 +356,8 @@ class FrankiePrincipalAdapter:
                 'feedback and lessons against feedback_contract; use null for unavailable values. '
                 'Cite every retained section hash. Supply feedback without principal_receipt_hash, '
                 'lessons, sections (section ID to retained SHA256), session_id and '
-                'model_identity_as_reported_by_session. The host attests actual session identity.')}
+                'model_identity_as_reported_by_session. The host attests actual session identity. '
+                + RUN_ANALYSIS_INSTRUCTION)}
 
     def execute(self, request_id, attachment):
         request = self._request(request_id, attachment)

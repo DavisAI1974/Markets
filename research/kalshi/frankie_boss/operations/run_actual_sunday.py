@@ -5,6 +5,11 @@ section. The first unfinished cycle prepares full bytes and token admission, the
 waits for one bounded JSON line on stdin containing the actual readiness witness
 and service key. A principal handoff waits for an actual host-attested response
 while retaining the prepared context and a separate process ownership lock.
+
+The host-progress probe answers which phase owns work, whether native preparation
+is advancing, and whether the same durable job or principal response is pending.
+Its possible_stall warnings are advisory observations, never elapsed stop budgets.
+Operation journals remain authoritative if diagnostic persistence fails.
 """
 from __future__ import annotations
 import argparse
@@ -22,6 +27,54 @@ import sys
 import time
 import uuid
 from types import SimpleNamespace
+
+
+class HostProbe:
+    """Advisory telemetry cannot replace an operation's durable outcome."""
+    def __init__(self,probe):self.probe,self.warned=probe,False
+
+    def call(self,method,*args,**kwargs):
+        try:return getattr(self.probe,method)(*args,**kwargs)
+        except Exception:
+            if not self.warned:
+                self.warned=True
+                try:print(json.dumps(dict(status='HOST_DIAGNOSTICS_UNAVAILABLE',operation_journals_authoritative=True)),flush=True)
+                except Exception:pass
+
+    def advance(self,phase,**values):return self.call('advance',phase,**values)
+
+    def controller(self,value):
+        # Never forward arbitrary service fields, prompt text or exception text.
+        allowed={'source_validation','native_reasoning','native_complete','critic_request',
+            'critic_complete','output_persisted','completed_result_reused','request_failed'}
+        if type(value) is not dict or value.get('phase') not in allowed:return
+        safe={'phase':value['phase']}
+        for name in ('through_cursor','count'):
+            if type(value.get(name)) is int and value[name]>=0:safe[name]=value[name]
+        return self.call('controller_event',safe)
+
+    def job(self,value):
+        allowed={'job_not_found_same_id_create','job_accepted','job_running','job_completed',
+            'job_not_dispatched','job_ambiguous','job_failed','job_result_persisted',
+            'job_http_not_dispatched','job_http_outcome_unknown_query_same_id',
+            'remote_job_credential_rejected','local_job_request_refused_not_dispatched',
+            'remote_backend_not_dispatched_requires_attention'}
+        if type(value) is not dict or value.get('phase') not in allowed:return
+        safe=dict(schema='FRANKIE_ACTUAL_JOB_PROGRESS_V1',run_id=self.probe.run_id,phase=value['phase'])
+        for name in ('job_id','request_hash','body_sha256'):
+            if type(value.get(name)) is str and re.fullmatch('[0-9a-f]{64}',value[name]):safe[name]=value[name]
+        try:print('FRANKIE_JOB_PROGRESS '+json.dumps(safe,sort_keys=True),flush=True)
+        except Exception:pass
+        # Job observations do not reset the progress clock or authorize retries.
+        self.call('sample')
+
+    def __enter__(self):
+        self.probe.__enter__()  # Initial attachment must succeed before execution.
+        return self
+
+    def __exit__(self,*args):
+        self.call('__exit__',*args)
+        return False
 
 
 class ReleasableHostLock:
@@ -51,7 +104,7 @@ class ReleasableHostLock:
         if self.context is not None:self.release()
 
 
-def await_recorded_principal(request,directory,host_lock):
+def await_recorded_principal(request,directory,host_lock,probe=None):
     """Observe only; this callback never dispatches or fabricates a session."""
     matches=[]
     for index in range(19):
@@ -59,6 +112,7 @@ def await_recorded_principal(request,directory,host_lock):
         if path.exists() and json.loads(path.read_bytes())==request:matches.append(path)
     if len(matches)!=1:raise ValueError('unique retained principal request required')
     request_path=matches[0];response_path=request_path.with_name('session-response.json')
+    if probe is not None:probe.advance('frankie_calculation',unit='outputs')
     print(json.dumps(dict(status='actual_frankie_session_pending',request_id=request['request_id'],
         request_path=str(request_path),prepared_context_retained=True)),flush=True)
     host_lock.release()
@@ -72,6 +126,7 @@ def await_recorded_principal(request,directory,host_lock):
     result=json.loads(response_path.read_bytes())
     if type(result) is not dict or set(result)!={'response','host_attestation'}:
         raise ValueError('recorded principal response envelope differs')
+    if probe is not None:probe.advance('frankie_calculation',completed=1,total=1,unit='outputs')
     return result
 
 
@@ -113,6 +168,7 @@ def imports(repo):
     from research.kalshi.frankie_boss.retained_preparation_recovery import recover_retained_preparation
     from research.kalshi.frankie_boss.granite_shadow import PendingTransport,IncompleteModelOutput
     from research.kalshi.frankie_boss.frankie_principal_adapter import PrincipalPending
+    from research.kalshi.frankie_boss.full_run_progress import RunProbe
     return SimpleNamespace(**locals())
 
 
@@ -173,7 +229,8 @@ def incomplete_output_alert(error):
 
 
 class ActualHost:
-    def __init__(self,configuration,*,prepare_only=False):
+    def __init__(self,configuration,*,prepare_only=False,probe=None):
+        self.probe=probe
         self.config=configuration;self.host=configuration['host_runtime']
         self.repo=Path(self.host['repository']).resolve()
         self.api=imports(self.repo);self.prepare_only=prepare_only
@@ -192,6 +249,13 @@ class ActualHost:
 
     def save(self,name,value):self.api.driver._save(self.directory/name,value)
     def load(self,name):return self.api.driver._load(self.directory/name)
+
+    def progress(self,phase,**values):
+        if getattr(self,'probe',None) is not None:self.probe.advance(phase,**values)
+
+    def recovery_progress(self,completed,total):
+        self.progress('boss_reasoning',completed=completed,total=total,unit='records')
+        print(json.dumps(dict(status='retained_preparation_recovery',completed=completed,total=total)),flush=True)
 
     def retained_instance_id(self):
         name='host-instance.c15.json'
@@ -400,6 +464,7 @@ class ActualHost:
 
     def prime_cache(self,binding,cycle_directory):
         self.close_cache()
+        self.progress('boss_reasoning',unit='records')
         original=self.context._prepare
         recovery=self.host.get('retained_preparation_recovery') if binding['cycle_index']==0 else None
         if recovery is not None:
@@ -412,7 +477,7 @@ class ActualHost:
                 if (as_of,through_cursor)!=(binding['as_of'],binding['through_cursor']):
                     raise ValueError('retained preparation requested for different cutoff')
                 return self.api.recover_retained_preparation(self.context,witness,as_of=as_of,through_cursor=through_cursor,
-                    progress=lambda completed,total:print(json.dumps(dict(status='retained_preparation_recovery',completed=completed,total=total)),flush=True))
+                    progress=self.recovery_progress)
             self.context._prepare=recover
         try:
             cache=self.api.prepare_context_cache(self.context,as_of=binding['as_of'],through_cursor=binding['through_cursor'],
@@ -424,6 +489,7 @@ class ActualHost:
         except BaseException:cache.close();raise
         self.original_prepare=original;self.cache=cache
         self.context._prepare=cache.prepare
+        self.progress('boss_reasoning',completed=1,total=1,unit='outputs')
 
     def phase(self,phase,**values):
         # Sunday learning uses the prediction's exact as_of/through_cursor/input
@@ -432,6 +498,10 @@ class ActualHost:
         # Release after the update is committed; runtime.release also closes on
         # failure, and prefix() closes before any later-cutoff builder is installed.
         if phase=='checkpoint_readback':self.close_cache()
+        mapping={'boss_reasoning':'boss_reasoning','causal_handoff':'causal_delivery',
+            'frankie_calculations':'frankie_calculation','native_learning':'boss_training',
+            'checkpoint_readback':'readback','saved_completion':'output_persistence'}
+        if phase in mapping:self.progress(mapping[phase],unit='steps')
 
     def encoding_options(self,binding):
         if self.host['context_encoding'] != 'stacked_v1':
@@ -634,6 +704,7 @@ class ActualHost:
             raise self.api.JobAttention('RETAINED_COMPLETION_PUBLICATION_PENDING',outcome['job_id'],str(marker.resolve())) from None
 
     def runtime(self,binding,cycle_directory,retained_plan):
+        self.progress('input_inventory',completed=binding['cycle_index'],total=19,unit='steps')
         self.source()
         self.prefix(binding,cycle_directory)
         if self.context is None:self._training()
@@ -676,6 +747,7 @@ class ActualHost:
             print(json.dumps(dict(status='actual_input_admitted',request_id=request_id,request_sha256=admission['request_sha256'],
                 ready_path=str(ready_path))),flush=True)
             if self.prepare_only:raise PreparationComplete()
+            self.progress('granite_request',unit='requests')
             # This is the only credential entrance. No credential is copied to any
             # config, artifact, exception text, environment, subprocess or log.
             key,trigger=read_trigger('FRANKIE_ACTUAL_EXECUTE_V1',('readiness_directory','service_pins_sha256'))
@@ -722,6 +794,7 @@ class ActualHost:
             exchange=admitted_jobs_exchange(self.api.https_exchange_jobs,prepared['admission']['request_sha256'],
                 not_dispatched=self.api.RequestNotDispatched)
             return self.api.build_runpod_service(enabled=True,api_key=key,exchange=exchange,
+                event=None if self.probe is None else self.probe.job,
                 spool_directory=cycle_directory/'critic-spool',recovery_only=recovering_critic,
                 outcome_ready=lambda outcome:self.publish_completion(cycle_directory,startup,outcome),**service_inputs)
         policy=self.api.RefreshPolicy(tuple(tuple(band) for band in self.host['refresh_policy_bands']))
@@ -731,6 +804,7 @@ class ActualHost:
             expected_native_hash=prepared['native_pin'],expected_critic_config_hash=pins['config_hash'],
             expected_critic_identity_hash=pins['identity_hash'],critic_factory=critic,
             source_journal_path=self.source_journal_path,source_journal_checkpoint=self.source_checkpoint,release=self.close_cache,
+            controller_event=None if self.probe is None else self.probe.controller,
             context_encoding=self.host['context_encoding'],context_encoding_options=self.encoding_options(binding))
 
     async def run(self):
@@ -743,7 +817,7 @@ class ActualHost:
             retained_directory=str(Path(c['retained_witnesses']['path']).parent),expected_retained_witnesses_sha256=c['retained_witnesses']['sha256'],
             delivery_receipt=c['delivery_receipt']['path'],expected_delivery_file_sha256=c['delivery_receipt']['sha256'],
             result_path=c['calculation_result']['path'],
-            session_executor=lambda request:await_recorded_principal(request,self.directory,self.principal_host_lock))
+            session_executor=lambda request:await_recorded_principal(request,self.directory,self.principal_host_lock,self.probe))
         runner=self.api.driver.SundayExecution(directory=self.directory/'execution',run_id=c['run_id'],coordinator=self.coordinator,
             contract_path=c['contract']['path'],expected_contract_sha256=c['contract']['sha256'],
             schedule_path=h['schedule']['path'],expected_schedule_sha256=h['schedule']['sha256'],runtime_factory=self.runtime,
@@ -774,11 +848,14 @@ def main():
         repo=Path(configuration['host_runtime']['repository']);api=imports(repo)
         Path(configuration['run_directory']).mkdir(parents=True,exist_ok=True)
         with api._exclusive(Path(configuration['run_directory'])/'actual-host-session.lock'), \
-                ReleasableHostLock(api._exclusive,Path(configuration['run_directory'])/'actual-host.lock') as host_lock:
-            host=ActualHost(configuration,prepare_only=args.prepare_only)
+                ReleasableHostLock(api._exclusive,Path(configuration['run_directory'])/'actual-host.lock') as host_lock, \
+                HostProbe(api.RunProbe(Path(configuration['run_directory'])/'host-progress',configuration['run_id'],
+                    resume=(Path(configuration['run_directory'])/'host-progress'/'progress.json').exists())) as probe:
+            host=ActualHost(configuration,prepare_only=args.prepare_only,probe=probe)
             host.principal_host_lock=host_lock
             try:
                 result=asyncio.run(host.run())
+                probe.advance('complete',completed=len(result),total=19,unit='steps')
                 print(json.dumps(dict(status='all_nineteen_cycles_complete',cycles=len(result))),flush=True)
                 return 0
             except PreparationComplete:return 0
