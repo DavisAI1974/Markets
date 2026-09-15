@@ -1,7 +1,7 @@
 """Differential and corruption evidence for VerifiedJournalReader against EvidenceJournal.
 
 Every journal here is a fresh temporary file written by the existing writer; no retained
-database is opened. No suite reruns, no model, source, cloud or principal action.
+database is opened. Reader acceptance/rejection tests run in serial and parallel modes.
 """
 import hashlib
 import json
@@ -13,6 +13,8 @@ import pytest
 from c15_journal import EvidenceJournal, SCHEMA, canonical_bytes, evidence_hash, pack
 from verified_journal_reader import (GENESIS_HASH, VerifiedJournalReader, canonical_tagged_bytes,
                                      decode_tagged)
+
+READER_WORKERS = (1, 4)
 
 
 def bits(hex16):
@@ -39,8 +41,9 @@ def build(tmp_path, values=VALUES, name="journal.sqlite"):
     return journal
 
 
-def reader_for(journal):
-    return VerifiedJournalReader(journal.path, expected_count=journal.count, expected_head_hash=journal.head_hash)
+def reader_for(journal, workers):
+    return VerifiedJournalReader(journal.path, expected_count=journal.count,
+                                 expected_head_hash=journal.head_hash, workers=workers)
 
 
 def same(left, right):
@@ -56,9 +59,10 @@ def same(left, right):
     return left == right
 
 
-def test_reader_yields_exactly_the_original_entries_with_exact_types(tmp_path):
+@pytest.mark.parametrize("workers", READER_WORKERS)
+def test_reader_yields_exactly_the_original_entries_with_exact_types(tmp_path, workers):
     journal = build(tmp_path)
-    reader = reader_for(journal)
+    reader = reader_for(journal, workers)
     original, fast = list(journal.entries()), list(reader.entries())
     assert len(original) == len(fast) == len(VALUES) + 1
     assert all(same(a, b) for a, b in zip(original, fast))
@@ -85,38 +89,42 @@ def test_specialised_serializer_is_byte_identical_to_canonical_bytes(tmp_path):
     journal.close()
 
 
-def test_expected_count_and_head_hash_are_required_and_checked_at_open(tmp_path):
+@pytest.mark.parametrize("workers", READER_WORKERS)
+def test_expected_count_and_head_hash_are_required_and_checked_at_open(tmp_path, workers):
     journal = build(tmp_path)
     path, count, head = journal.path, journal.count, journal.head_hash
     for bad in (dict(expected_count=count - 1, expected_head_hash=head),
                 dict(expected_count=count, expected_head_hash="0" * 64),
                 dict(expected_count=count + 1, expected_head_hash=head)):
         with pytest.raises(ValueError, match="differs from checkpoint"):
-            VerifiedJournalReader(path, **bad)
+            VerifiedJournalReader(path, workers=workers, **bad)
     for bad in (dict(expected_count="3", expected_head_hash=head), dict(expected_count=-1, expected_head_hash=head),
                 dict(expected_count=count, expected_head_hash=head.upper()),
                 dict(expected_count=count, expected_head_hash=head[:-1])):
         with pytest.raises(ValueError, match="independently supplied"):
-            VerifiedJournalReader(path, **bad)
+            VerifiedJournalReader(path, workers=workers, **bad)
     with pytest.raises(TypeError):
         VerifiedJournalReader(path)
     empty = EvidenceJournal(tmp_path / "empty.sqlite", create=True)
     assert empty.head_hash == GENESIS_HASH
-    reader = VerifiedJournalReader(empty.path, expected_count=0, expected_head_hash=GENESIS_HASH)
+    reader = VerifiedJournalReader(empty.path, expected_count=0, expected_head_hash=GENESIS_HASH, workers=workers)
     assert list(reader.entries()) == []
     reader.close()
     with pytest.raises(ValueError, match="differs from checkpoint"):
-        VerifiedJournalReader(empty.path, expected_count=0, expected_head_hash="0" * 64)
+        VerifiedJournalReader(empty.path, expected_count=0, expected_head_hash="0" * 64, workers=workers)
     with pytest.raises(ValueError, match="missing"):
-        VerifiedJournalReader(tmp_path / "absent.sqlite", expected_count=0, expected_head_hash=GENESIS_HASH)
+        VerifiedJournalReader(tmp_path / "absent.sqlite", expected_count=0,
+                              expected_head_hash=GENESIS_HASH, workers=workers)
     empty.close(); journal.close()
 
 
-def test_reader_is_read_only_and_leaves_the_file_untouched(tmp_path):
+@pytest.mark.parametrize("workers", READER_WORKERS)
+def test_reader_is_read_only_and_leaves_the_file_untouched(tmp_path, workers):
     journal = build(tmp_path)
     journal.close()
     before = hashlib.sha256(journal.path.read_bytes()).hexdigest()
-    reader = VerifiedJournalReader(journal.path, expected_count=journal.count, expected_head_hash=journal.head_hash)
+    reader = VerifiedJournalReader(journal.path, expected_count=journal.count,
+                                   expected_head_hash=journal.head_hash, workers=workers)
     with pytest.raises(PermissionError, match="read-only"):
         reader.append("KIND", dict(value=1))
     with pytest.raises(sqlite3_error()):
@@ -133,10 +141,11 @@ def sqlite3_error():
     return sqlite3.OperationalError
 
 
-def test_entries_stream_row_by_row_and_stop_at_the_first_bad_row(tmp_path):
+@pytest.mark.parametrize("workers", READER_WORKERS)
+def test_entries_stream_row_by_row_and_stop_at_the_first_bad_row(tmp_path, workers):
     journal = build(tmp_path, values=[1, 2, 3, 4])
     corrupt(journal, "UPDATE entries SET kind='WRONG' WHERE ordinal=2")
-    reader = reader_for(journal)
+    reader = reader_for(journal, workers)
     stream = reader.entries()
     assert next(stream)["payload"]["value"] == 1
     assert next(stream)["payload"]["value"] == 2
@@ -209,18 +218,20 @@ CORRUPTIONS = {
 }
 
 
+@pytest.mark.parametrize("workers", READER_WORKERS)
 @pytest.mark.parametrize("name", list(CORRUPTIONS))
-def test_every_corruption_rejected_by_both_readers(tmp_path, name):
+def test_every_corruption_rejected_by_both_readers(tmp_path, name, workers):
     journal = build(tmp_path, values=[1, 2, 3])
     count, head = journal.count, journal.head_hash
-    assert tagged(journal, 1)[1][4][1][1][0][1] == ["int", 2]  # payload.value of ordinal 1, the retag anchor
+    assert tagged(journal, 1)[1][4][1][1][0][1] == ["int", 2]
     CORRUPTIONS[name](journal)
     with pytest.raises((ValueError, KeyError, TypeError, IndexError)):
         list(journal.entries())
     try:
-        reader = VerifiedJournalReader(journal.path, expected_count=count, expected_head_hash=head)
+        reader = VerifiedJournalReader(journal.path, expected_count=count,
+                                       expected_head_hash=head, workers=workers)
     except ValueError as refused:
-        assert "differs from checkpoint" in str(refused)  # tail row itself was altered
+        assert "differs from checkpoint" in str(refused)
     else:
         with pytest.raises(ValueError):
             list(reader.entries())
@@ -228,16 +239,17 @@ def test_every_corruption_rejected_by_both_readers(tmp_path, name):
     journal.close()
 
 
-def test_tail_mismatch_after_open_and_incomplete_iteration(tmp_path):
+@pytest.mark.parametrize("workers", READER_WORKERS)
+def test_tail_mismatch_after_open_and_incomplete_iteration(tmp_path, workers):
     journal = build(tmp_path, values=[1, 2, 3])
-    reader = reader_for(journal)
+    reader = reader_for(journal, workers)
     journal.append("LATE", dict(value=4))
     with pytest.raises(ValueError, match="changed during iteration"):
         list(reader.entries())
     with pytest.raises(ValueError, match="changed during iteration"):
         reader.verify(count=reader.count, head_hash=reader.head_hash)
     reader.close()
-    reader = reader_for(journal)
+    reader = reader_for(journal, workers)
     with pytest.raises(ValueError, match="differs from checkpoint"):
         reader.verify(count=reader.count - 1, head_hash=reader.head_hash)
     corrupt(journal, "DELETE FROM entries WHERE ordinal=4")
