@@ -66,23 +66,25 @@ def manifest_digest(manifest):
     return hashlib.sha256(canonical(manifest)).hexdigest()
 
 
-def verify_stream(stream, row):
+def verify_stream(stream, row, *, progress=None):
     digest, size = hashlib.sha256(), 0
+    if progress is not None: progress('file_verify', row, 0)
     while chunk := stream.read(BLOCK):
         size += len(chunk)
         if size > row['size']:
             raise ValueError('artifact exceeds declared bytes: ' + row['path'])
         digest.update(chunk)
+        if progress is not None: progress('file_verify', row, size)
     if size != row['size'] or digest.hexdigest() != row['sha256']:
         raise ValueError('artifact size/hash mismatch: ' + row['path'])
     return dict(row)
 
 
-def verify_file(path, row):
+def verify_file(path, row, *, progress=None):
     if path.is_symlink() or not path.is_file():
         raise ValueError('artifact must be a regular nonsymlink file')
     with path.open('rb') as stream:
-        return verify_stream(stream, row)
+        return verify_stream(stream, row, progress=progress)
 
 
 def verify_index(data, manifest):
@@ -93,12 +95,13 @@ def verify_index(data, manifest):
         raise ValueError('safetensors index shard roster mismatch')
 
 
-def verify_directory(directory, manifest):
+def verify_directory(directory, manifest, *, progress=None):
     digest = manifest_digest(manifest)
     directory = Path(directory)
     if directory.is_symlink() or {p.name for p in directory.iterdir()} != FILES:
         raise ValueError('mounted artifact roster mismatch')
-    files = [verify_file(directory / row['path'], row) for row in manifest['files']]
+    if progress is not None: progress('directory_verify')
+    files = [verify_file(directory / row['path'], row, progress=progress) for row in manifest['files']]
     verify_index((directory / 'model.safetensors.index.json').read_bytes(), manifest)
     return {'schema': 'GRANITE_MOUNT_VERIFICATION_V1', 'manifest_sha256': digest,
             'files': files, 'bytes': sum(row['size'] for row in files),
@@ -162,7 +165,7 @@ def download_url(row):
     return f'https://huggingface.co/{REPOSITORY}/resolve/{REVISION}/{row["path"]}'
 
 
-def download_file(row, directory, *, opener=urllib.request.urlopen):
+def download_file(row, directory, *, opener=urllib.request.urlopen, progress=None):
     """Resume only matching immutable URL + strong ETag; always rehash all bytes."""
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
@@ -173,7 +176,8 @@ def download_file(row, directory, *, opener=urllib.request.urlopen):
     if directory.is_symlink() or any(p.is_symlink() for p in (path, partial, metadata_path)):
         raise ValueError('symlink staging path')
     if path.exists():
-        verify_file(path, row)
+        verify_file(path, row, progress=progress)
+        if progress is not None: progress('file_ready', row, row['size'])
         return path
     offset = partial.stat().st_size if partial.exists() else 0
     expected = {'url': url, 'sha256': row['sha256'], 'size': row['size']}
@@ -185,11 +189,13 @@ def download_file(row, directory, *, opener=urllib.request.urlopen):
         if offset > row['size']:
             raise ValueError('partial file exceeds expected size')
         if offset == row['size']:
-            verify_file(partial, row)
+            verify_file(partial, row, progress=progress)
             partial.rename(path)
             metadata_path.unlink()
+            if progress is not None: progress('file_ready', row, row['size'])
             return path
         headers.update(Range=f'bytes={offset}-', **{'If-Range': metadata['etag']})
+    if progress is not None: progress('download_connect', row, offset)
     with opener(urllib.request.Request(url, headers=headers), timeout=60) as response:
         if offset:
             if (response.status != 206 or response.headers.get('ETag') != metadata['etag'] or
@@ -201,14 +207,17 @@ def download_file(row, directory, *, opener=urllib.request.urlopen):
         metadata_path.write_bytes(canonical({**expected, 'etag': etag}))
         with partial.open('ab' if offset else ('wb' if partial.exists() else 'xb')) as stream:
             size = offset
+            if progress is not None: progress('download', row, size)
             while chunk := response.read(BLOCK):
                 size += len(chunk)
                 if size > row['size']:
                     raise ValueError('download exceeds expected size')
                 stream.write(chunk)
-    verify_file(partial, row)
+                if progress is not None: progress('download', row, size)
+    verify_file(partial, row, progress=progress)
     partial.rename(path)
     metadata_path.unlink()
+    if progress is not None: progress('file_ready', row, row['size'])
     return path
 
 

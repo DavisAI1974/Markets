@@ -1,4 +1,4 @@
-"""Package six committed LF bootstrap files and generate a pre-import verifier.
+"""Package committed LF bootstrap files and generate a pre-import verifier.
 
 Local-only helper. It never transfers files or launches a Pod.
 """
@@ -8,14 +8,15 @@ from pathlib import Path
 import shlex
 
 FILES=('granite_runpod.py','granite_runpod_proxy.py','granite_startup.py',
-       'granite_run_artifacts.py','granite_artifacts_manifest.json','granite_image_identity.json')
+       'granite_run_artifacts.py','granite_artifacts_manifest.json','granite_image_identity.json',
+       'granite_runpod_progress.py')
 ROOT='/opt/ml/additional-model-data-sources/bootstrap'
 
 
 def preexec_code(rows, bundle_sha256, *, directory=ROOT):
     # Embed the exact audited roster rather than trusting executable volume files.
     if len(rows)!=len(FILES) or {r['path'] for r in rows}!=set(FILES):
-        raise ValueError('exact six-file bootstrap roster required')
+        raise ValueError('exact bootstrap roster required')
     return ('import hashlib,os,pathlib,sys\n'
             'p=pathlib.Path('+repr(str(directory))+')\nrows='+repr(rows)+'\n'
             'if p.is_symlink() or hashlib.sha256((p/"runpod_bundle.json").read_bytes()).hexdigest()!='+repr(bundle_sha256)+':\n'

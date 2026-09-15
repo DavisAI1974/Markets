@@ -46,7 +46,7 @@ class TimedResponse:
         return data
 
 
-def stage_model(directory, manifest, *, deadline, opener=None, clock=time.monotonic):
+def stage_model(directory, manifest, *, deadline, opener=None, clock=time.monotonic, progress=None):
     """One download attempt/file; existing verifier owns roster, bytes and resume."""
     artifacts.validate_manifest(manifest)
     if opener is None:
@@ -56,8 +56,8 @@ def stage_model(directory, manifest, *, deadline, opener=None, clock=time.monoto
         return TimedResponse(response,deadline,clock)
     for row in manifest['files']:
         remaining(deadline,clock)
-        artifacts.download_file(row,directory,opener=bounded)
-    receipt=artifacts.verify_directory(directory,manifest)
+        artifacts.download_file(row,directory,opener=bounded,progress=progress)
+    receipt=artifacts.verify_directory(directory,manifest,progress=progress)
     remaining(deadline,clock)
     return receipt
 
@@ -69,7 +69,8 @@ def verify_bundle(directory, expected_digest):
         raise ValueError('bootstrap bundle identity differs')
     bundle=artifacts.strict_json(raw)
     expected={'granite_runpod.py','granite_runpod_proxy.py','granite_startup.py',
-              'granite_run_artifacts.py','granite_artifacts_manifest.json','granite_image_identity.json'}
+              'granite_run_artifacts.py','granite_artifacts_manifest.json','granite_image_identity.json',
+              'granite_runpod_progress.py'}
     rows=bundle.get('files',[])
     if (bundle.get('schema')!='GRANITE_RUNPOD_BUNDLE_V1' or len(rows)!=len(expected)
             or {r.get('path') for r in rows}!=expected
@@ -154,7 +155,7 @@ def prepare_process(directory, manifest, environment, *, deadline, clock=time.mo
 
 
 def supervise(backend_argv, proxy_argv, *, environment, deadline,
-              popen=subprocess.Popen, clock=time.monotonic, sleep=time.sleep):
+              popen=subprocess.Popen, clock=time.monotonic, sleep=time.sleep, progress=None):
     """No autorestart; any process exit or deadline stops both process groups."""
     children=[]
     backend_env=dict(environment)
@@ -164,18 +165,37 @@ def supervise(backend_argv, proxy_argv, *, environment, deadline,
         children.append(popen(backend_argv,env=backend_env,start_new_session=True))
         remaining(deadline,clock)
         children.append(popen(proxy_argv,env=dict(environment),start_new_session=True))
+        last_health=0
+        healthy=False
+        if progress is not None: progress('health_wait')
         while True:
             remaining(deadline,clock)
             if any(child.poll() is not None for child in children):
                 raise RuntimeError('smoke subprocess exited; no restart')
+            if progress is not None and not healthy and clock()-last_health>=5:
+                last_health=clock()
+                healthy=local_health(min(deadline,clock()+1))
+                if healthy: progress('ready')
             sleep(min(.25,remaining(deadline,clock)))
     finally:
         stop_children(children)
 
 
+def local_health(deadline):
+    """Bounded loopback health read for startup telemetry; never inference."""
+    try:
+        try:
+            from .granite_runpod_proxy import _backend
+        except ImportError:
+            from granite_runpod_proxy import _backend
+        return _backend('GET','/health',b'',deadline)==b'{"status":"ok"}'
+    except Exception:
+        return False
+
+
 def boot(environment, *, directory='/opt/ml/model', bundle_directory=None,
          clock=time.monotonic, prepare=prepare_process, stage=stage_process,
-         runner=supervise):
+         runner=supervise, progress=None):
     """Called only inside an explicitly authorized Pod; tests inject all effects."""
     started=clock()
     text=environment.get('RUNPOD_GRANITE_LIFETIME_SECONDS','')
@@ -207,7 +227,9 @@ def boot(environment, *, directory='/opt/ml/model', bundle_directory=None,
               'budget_enforcement':'external Pod teardown required'}
     print('GRANITE_RUNPOD_STARTUP '+artifacts.canonical(evidence).decode(),flush=True)
     remaining(deadline,clock)
-    runner(backend,['python3',PROXY],environment=environment,deadline=deadline,clock=clock)
+    kwargs={'progress':progress} if progress is not None else {}
+    if progress is not None: progress('backend_start')
+    runner(backend,['python3',PROXY],environment=environment,deadline=deadline,clock=clock,**kwargs)
     return evidence
 
 
@@ -218,14 +240,23 @@ def terminate_signal(signum,frame):
 if __name__=='__main__':
     signal.signal(signal.SIGTERM,terminate_signal)
     try:
-        if len(sys.argv)==4 and sys.argv[1]=='stage':
-            stage_model(sys.argv[2],artifacts.strict_json(artifacts.DEFAULT_MANIFEST.read_bytes()),
-                        deadline=time.monotonic()+float(sys.argv[3]))
-        elif len(sys.argv)==4 and sys.argv[1]=='verify':
-            receipt=startup.prepare_startup(sys.argv[2],artifacts.strict_json(artifacts.DEFAULT_MANIFEST.read_bytes()),os.environ)
-            artifacts.save_receipt(sys.argv[3],receipt)
-        elif len(sys.argv)==1:boot(os.environ)
-        else:raise ValueError('unsupported bootstrap invocation')
+        from .granite_runpod_progress import Progress
+    except ImportError:
+        from granite_runpod_progress import Progress
+    manifest=artifacts.strict_json(artifacts.DEFAULT_MANIFEST.read_bytes())
+    mode=sys.argv[1] if len(sys.argv)==4 else 'bootstrap'
+    directory=sys.argv[2] if len(sys.argv)==4 else '/opt/ml/model'
+    progress=Progress(manifest,directory,mode if mode in ('stage','verify') else 'bootstrap',
+                      os.environ.get('RUNPOD_SMOKE_OWNER','local'))
+    try:
+        with progress:
+            if len(sys.argv)==4 and sys.argv[1]=='stage':
+                stage_model(sys.argv[2],manifest,deadline=time.monotonic()+float(sys.argv[3]),progress=progress)
+            elif len(sys.argv)==4 and sys.argv[1]=='verify':
+                receipt=startup.prepare_startup(sys.argv[2],manifest,os.environ,progress=progress)
+                artifacts.save_receipt(sys.argv[3],receipt)
+            elif len(sys.argv)==1:boot(os.environ,progress=progress)
+            else:raise ValueError('unsupported bootstrap invocation')
     except BaseException as error:
         # Never print environment, credentials, backend text or traceback.
         print('GRANITE_RUNPOD_STOP '+type(error).__name__,flush=True)

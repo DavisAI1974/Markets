@@ -76,7 +76,7 @@ def runtime_facts():
                 '/usr/local/bin/sagemaker_entrypoint.sh': digest_file('/usr/local/bin/sagemaker_entrypoint.sh')}}
 
 
-def prepare_startup(directory, manifest, environment, *, runtime_facts=runtime_facts):
+def prepare_startup(directory, manifest, environment, *, runtime_facts=runtime_facts, progress=None):
     directory = Path(directory)
     try:
         length = int(environment['GRANITE_MAX_MODEL_LEN'])
@@ -89,7 +89,8 @@ def prepare_startup(directory, manifest, environment, *, runtime_facts=runtime_f
     controlled = ('SUPERVISOR_', 'SM_VLLM_', 'GRANITE_', 'STANDARD_', 'HF_MODEL_ID')
     if any(key.startswith(controlled) and key not in expected for key in environment):
         raise ValueError('unapproved startup override')
-    mount = artifacts.verify_directory(directory, manifest)
+    mount = artifacts.verify_directory(directory, manifest, progress=progress)
+    if progress is not None: progress('runtime_verify')
     facts = runtime_facts()
     if facts.get('gpu_count') != 1:
         raise ValueError('exactly one GPU required')
