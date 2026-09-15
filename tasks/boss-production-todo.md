@@ -27,10 +27,12 @@
 - [x] Typed Kalshi/tastytrade adapters with documented provider parsing and fake-transport reconciliation (f1fffd23; 172 passes)
 - [x] Operational execution controller with pinned account/reflection evidence and durable receipts (bc18611d; 215 selected execution checks)
 - [x] Scoped auth preparation and single-use transport interface, fresh Kalshi send signatures and tastytrade OAuth preparation (1e6f4c35; 250 selected execution checks)
-- [ ] Concrete HTTP/secret-store clients, authenticated provider/account facts, heartbeat/recovery and cancel/flatten operation
+- [x] Concrete opt-in HTTPS and explicit local secret-file providers with remaining-lease transmission budget (baef3030; 284 selected execution checks, 69 independently rerun)
+- [ ] Authenticated provider/account/valuation/reflection facts, deployed secret/access governance, heartbeat/recovery and cancel/flatten operation
 - [x] Lossless compact-context codec and explicit expansion admission bounds
 - [x] Compact-context service/controller routing software; actual model acceptance tracked separately
 - [x] Committed-file BOSS exporter and separate receiver protocol (receiver 2b4bae18; recorded 2,127 passes)
+- [x] Coordinator attachment preparation on separate receiver lineage (899cbe4a; 23 independently passing synthetic tests, including existing emit/read-back)
 - [ ] Actual source mapping and configured agent operation with attributed BOSS/Granite input
 - [x] Claude Granite contract imported and corrected; original 44df4aa7 retained as provenance
 - [x] Preserve distinct legacy 11-field and additive BOSS 12-field seams with unchanged protected prompts
@@ -40,6 +42,32 @@
 - [x] Rolling increment reviewed; workbook and next-chat handoff completed (remaining production build still open)
 
 ## Current integration status - September 14 continuation
+
+Later continuation software baseline: baef3030, receiver 899cbe4a. Granite
+diagnostics abad0043 retain every startup descriptor and full sanitized SDK
+failure detail; 100 focused tests passed independently. No additional endpoint
+attempt ran and the historical startup cause remains unknown. Concrete execution
+providers baef3030 passed 284 execution tests; root independently reran 69 provider
+and transport tests. Their remaining lease budget prevents a slow connect from
+transmitting after expiry. OS DNS can delay return, and deployed file ACL/secret
+governance remains an operational responsibility.
+
+Receiver preparation 899cbe4a exclusively produces the existing attachment request,
+crosswalk and provenance receipt from independently pinned local evidence. It does
+not invent authentic source mapping or population metadata. A legacy producer of
+the eight field shapes was traced, but no current BOSS request/source/admission
+binding was established; the honest caller-supplied-unverified stamp remains.
+
+Fresh dipole teacher regression: 119 passed, one CUDA-only check skipped. Teacher
+software, masks, six R3 columns and controls are built; production fitted artifacts
+and D0-D5 empirical acceptance remain open. Sunday remains held. Full continuation
+details and exact verification limitations are in
+research/kalshi/frankie_boss/CONTINUATION_BUILD_20260914.md. Receiver final tip
+b4f364f0 includes LF-only cleanup. The initial broad receiver run had 2,140 passes
+and nine Windows checkout byte failures; exact HEAD-byte materialization resolved
+them. Root reran all three affected modules plus preparation: 105 passed.
+
+### Incoming status below (preserved historical detail)
 
 Granite model/bootstrap staging completed successfully (34901570054/34902805329).
 Coordinator software 29f505b2 joins exact tokenizer admission, startup/resource
