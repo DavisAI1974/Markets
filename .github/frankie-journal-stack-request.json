@@ -1,0 +1,11 @@
+{
+  "schema": "FRANKIE_ACTUAL_JOURNAL_STACK_REQUEST_V1",
+  "source_archive_sha256": "cefa75692528b3a66cc89d10993ecbc8e9d420dce924876fc85cfdbfdfa7679f",
+  "records": 57027,
+  "entries": 114054,
+  "worker_policy": "one_affinity_bound_parent_and_remaining_runner_cpus_for_data",
+  "probe": "verified_entries_percent",
+  "original_run_to_preserve": 34958705448,
+  "model_input_encoding": "stacked_v1",
+  "gate_authority": false
+}
