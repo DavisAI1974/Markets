@@ -1,5 +1,23 @@
 # Active continuation
 
+## Latest build state: exact reducers and open-ended runtime
+
+Runtime candidate `96b86abc` removes elapsed startup/run/decode deadlines in explicit open-ended mode and retains durable dispatch/outcome evidence. Process-loss with no retained provider outcome remains ambiguous; it never authorizes a duplicate POST. These changes are committed but have not been deployed to the retained Pod.
+
+Candidate `76f9d179` configures the pinned model's 131,072-token context with 2,048-token chunked prefill, preserving one request and its attention state. Legacy finite 4,096-token behavior retains its prior config hash. The shared service and new context-route integration are still being completed; do not claim the Pod's old 4,096 setting has changed. Retained runtime evidence reports one NVIDIA L40S with 47,665,709,056 bytes of GPU memory. A BF16 KV-cache calculation leaves approximately 3.83 GB after the conservative model-file size and full context cache within the 90% allocation. Actual startup cache capacity remains unverified.
+
+The first exact request measured 929,730 input tokens. Existing Frankie JSON minifiers produced no additional savings because its JSON was already minified. A cumulative offline lossless prototype now measures 91,914 input plus 1,200 output tokens, or 93,114 total. It combines typed columns/deltas, exact wire reconstruction, exact adapter-field derivation, reversible hash encoding, and reconstruction of every per-record packet hash from the complete contiguous normalized source prefix. All 3,262 rows, wire bytes, metadata and packet hashes reconstruct exactly. Production codec/route wiring is in progress. Later windows require a trusted preceding prefix seed and all intervening records; missing inputs require a literal fallback, never guessed hashes. No model comprehension or inference result is claimed by the codec measurements.
+
+Prepared-context cache fixes support the verified reader's private connection, exact tensor bits and device identity. The host restores original preparation before learning and cycle changes. Source ancestry is recorded in a separately pinned closed-lineage sidecar, preserving failed-fork history and historical rehydration boundaries.
+
+The prior source-recovery worker failed after 26,000 completed records when progress persistence failed. Its journal and evidence remain unchanged. The active continuation is now `E:/Codex/Frankie-BOSS-20260915/source-recovery-resume-20260915`, PID 59604 at this checkpoint. It verifies/reconstructs the retained 26,000 records before continuing the full 57,027-record day. Inspect progress before acting; never open its active journal through an independent reader. The one-shot schedule waiter is PID 59792, output `full-causal-schedule-resumed-20260915`; the closed-lineage waiter is PID 59432, output `closed-source-lineage-20260915`. Both await final successful ingestion. PIDs are observational historical identifiers, not authorization to terminate anything.
+
+The separate bootstrap staging workflow exports committed LF bytes, pins the exact eight-file bundle, conditionally uploads and verifies its bytes, and encrypts temporary download capabilities to the local recipient. It never operates a Pod. The local package from `76f9d1797d69e6938c0cc5a53f437b892d59ae1d` has bundle SHA256 `f4f42e28520fd88996d9a608d18926f6d4129a2b6ab72878a5a655351133acb3`; it has not been staged or applied. Repackage if any roster member changes after review.
+
+Remaining before actual execution: complete and pin source/schedule/lineage; integrate the versioned exact codec for every scheduled window; admit the final actual request; finish Claude's independent runtime review; stage and apply the reviewed bootstrap/environment to the same retained stopped Pod; start once and verify actual readiness; execute the real feedback/learning cycles with progress probes. No actual Granite inference, BOSS forward, new principal feedback or training update has occurred.
+
+The older chronological notes below are retained as history; this section supersedes their paths and completion status.
+
 ## Current user override: progress governs run duration
 
 The user explicitly removed fixed startup AND execution runtime budgets. Keep the
