@@ -1,8 +1,11 @@
-"""Explicit CPU execution policy for Frankie/BOSS hosts.
+"""Explicit CPU execution policy for native Frankie/BOSS hosts.
 
 This module changes only execution parallelism. It does not change market inputs,
 feature calculations, model planes, evidence selection, learning objectives, or
 checkpoint contents beyond the already-recorded runtime thread identity.
+
+Native Frankie/BOSS now targets the GitHub 16-core runner. RunPod's separate 32 vCPUs
+belong to Granite/service-side work and are not this module's default.
 
 Call configure_cpu_runtime() before constructing/restoring a BossTrainingCheckpoint.
 A retained checkpoint created under a different PyTorch thread count must be migrated
@@ -11,7 +14,7 @@ explicitly; callers must not silently change it in place.
 from dataclasses import dataclass, asdict
 import os
 
-DEFAULT_CPU_WORKERS = 32
+DEFAULT_CPU_WORKERS = 16
 
 
 @dataclass(frozen=True)
@@ -30,13 +33,7 @@ class CpuRuntimePolicy:
 
 
 def configure_cpu_runtime(policy=None):
-    """Apply the host CPU policy before model/checkpoint construction.
-
-    Journal verification workers read FRANKIE_CPU_WORKERS. The native PyTorch model
-    remains one causally ordered model/optimizer state, using intra-op CPU parallelism
-    rather than unsafe concurrent optimizer writers. This preserves the exact learning
-    order while using the available CPU cores.
-    """
+    """Apply native-host CPU policy before model/checkpoint construction."""
     policy = CpuRuntimePolicy() if policy is None else policy
     if not isinstance(policy, CpuRuntimePolicy):
         raise ValueError("CpuRuntimePolicy required")
