@@ -2,19 +2,25 @@ name: Prepare preserved Frankie source mapping
 
 on:
   workflow_dispatch:
-  push:
-    branches: [codex/full-frankie-boss-connection-20260915]
-    paths: [.github/frankie-ledger-mapping-request.json]
 
 permissions:
   contents: read
 
 jobs:
-  inspect-ledger-format:
+  map-preserved-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
-      - name: Inspect preserved member framing
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Install the recorded extraction runtime
+        run: |
+          echo 'FRANKIE_MAPPING_PHASE runtime_install'
+          python -m pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install databento-dbn==0.62.0 zstandard==0.25.0
+      - name: Fetch the fixed preserved raw source and compressed member ledger
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -24,26 +30,99 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          install -d -m 0700 evidence
-          aws s3api get-object --bucket bento-568968024170-us-east-2-an \
-            --key nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1/ledgers/exact_member_rows.jsonl.gz \
-            --range bytes=0-1048575 member-prefix.gz > /dev/null
-          python3 - <<'PY'
-          import gzip, json
+          python - <<'PY'
+          import json
           from pathlib import Path
-          with gzip.open('member-prefix.gz', 'rb') as stream:
-              first = stream.readline(2*1024*1024)
-          if not first.endswith(b'\n'):
-              raise SystemExit('first member row exceeds inspection bound')
-          row = json.loads(first)
-          Path('evidence/member-row-preview.json').write_text(json.dumps(row, sort_keys=True)+'\n')
-          print(json.dumps(dict(operation='format_inspection_only', row_bytes=len(first),
-              row_keys=sorted(row), full_ledger_verified=False, market_calculations=False)))
+          expected = dict(operation='map_preserved_sunday_wire_bytes', run_id='33746436209',
+              source_day='20211003', recompute_market_calculations=False,
+              model_inference=False, upload_raw_data=False)
+          if json.loads(Path('.github/frankie-ledger-mapping-request.json').read_bytes()) != expected:
+              raise SystemExit('mapping request differs from fixed authorized operation')
           PY
-      - name: Preserve mapping input preview
+          install -d -m 0700 "$RUNNER_TEMP/frankie-mapping-input"
+          echo 'FRANKIE_MAPPING_PHASE source_download'
+          aws s3 cp s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211003.mbo.dbn.zst \
+            "$RUNNER_TEMP/frankie-mapping-input/glbx-mdp3-20211003.mbo.dbn.zst"
+          echo 'FRANKIE_MAPPING_PHASE member_gzip_download'
+          aws s3 cp s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1/ledgers/exact_member_rows.jsonl.gz \
+            "$RUNNER_TEMP/frankie-mapping-input/exact_member_rows.jsonl.gz"
+      - name: Verify all preserved source bytes and stream the full member mapping
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u - <<'PY'
+          import hashlib, importlib.metadata, json, os, threading, time
+          from dataclasses import asdict
+          from pathlib import Path
+          from research.kalshi.frankie_boss import mbo_source, frankie_source_mapping
+          from research.kalshi.frankie_boss.causal_prefix import SourceMember
+          root = Path(os.environ['RUNNER_TEMP'])
+          inputs = root/'frankie-mapping-input'
+          artifacts = root/'frankie-mapping-artifacts'
+          artifacts.mkdir()
+          diagnostic_lock = threading.Lock()
+          def report(value):
+              line = json.dumps(value, sort_keys=True)
+              with diagnostic_lock:
+                  with (artifacts/'progress.jsonl').open('a', encoding='utf-8') as handle:
+                      handle.write(line+'\n')
+                  print('FRANKIE_MAPPING_DIAGNOSTIC '+line, flush=True)
+          report(dict(phase='runtime_identity'))
+          source = inputs/'glbx-mdp3-20211003.mbo.dbn.zst'
+          ledger = inputs/'exact_member_rows.jsonl.gz'
+          if ledger.stat().st_size != 1705613663:
+              raise SystemExit('compressed member size differs from frozen delivery witness')
+          pin = mbo_source.MboSourcePin(3, mbo_source.runtime_hash())
+          runtime = dict(schema='FRANKIE_MAPPING_RUNTIME_BOOTSTRAP_V1', extraction_pin=asdict(pin),
+              trust_origin='measured installed binaries and checked-out extractor; environment bootstrap evidence, not a preexisting independent binary pin',
+              git_commit=os.environ['GITHUB_SHA'], workflow_run_id=os.environ['GITHUB_RUN_ID'],
+              versions={name: importlib.metadata.version(name) for name in ('torch', 'databento-dbn', 'zstandard')},
+              mapping_code_sha256=hashlib.sha256(Path(frankie_source_mapping.__file__).read_bytes()).hexdigest())
+          (artifacts/'runtime-bootstrap.json').write_text(json.dumps(runtime, sort_keys=True)+'\n')
+          member = SourceMember(0, source.name,
+              '4380bd9ba83a5badc4839e12785aa464817b87e3fac11176b951e7b474446d88', 973355, 57027)
+          witness = dict(bytes=10756276521,
+              sha256='f73e95378c04f117863b173bd389675029006fffc309a07992edcc4de4ad5325')
+          latest = dict(phase='mapping_start', plain_bytes=0, records=0, groups=0)
+          start = advanced = time.monotonic()
+          lock, stop = threading.Lock(), threading.Event()
+          def progress(value):
+              global advanced
+              with lock:
+                  latest.update(value)
+                  advanced = time.monotonic()
+          def heartbeat():
+              while not stop.wait(15):
+                  with lock:
+                      status = dict(latest, elapsed_seconds=round(time.monotonic()-start, 1),
+                          seconds_since_progress=round(time.monotonic()-advanced, 1),
+                          possible_stall=time.monotonic()-advanced >= 30)
+                  report(status)
+          worker = threading.Thread(target=heartbeat, daemon=True)
+          worker.start()
+          report(dict(phase='exact_wire_mapping'))
+          try:
+              receipt = frankie_source_mapping.build_mapping(source_path=source, source_member=member,
+                  extraction_pin=pin, member_ledger_path=ledger, member_ledger_witness=witness,
+                  output_directory=artifacts/'mapping', event=progress)
+          except Exception as error:
+              report(dict(phase='failed', error_type=type(error).__name__))
+              raise
+          finally:
+              stop.set()
+              worker.join()
+          report(dict(phase='complete', records=receipt['record_count'],
+              groups=receipt['group_count'], encodings=receipt['encodings'], boss_prefix_bound=False))
+          PY
+      - name: Preserve only the small verified mapping and runtime identity
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: frankie-ledger-format-${{ github.run_id }}
-          path: evidence/
+          name: frankie-sunday-byte-mapping-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/frankie-mapping-artifacts/runtime-bootstrap.json
+            ${{ runner.temp }}/frankie-mapping-artifacts/progress.jsonl
+            ${{ runner.temp }}/frankie-mapping-artifacts/mapping/mapping.json
+            ${{ runner.temp }}/frankie-mapping-artifacts/mapping/index.jsonl
           if-no-files-found: error
           retention-days: 7

@@ -64,6 +64,50 @@ be reused. Filesystem and DNS operations have no hard process-return guarantee.
 
 ## Remaining operational connection
 
+### September 15 continuation checkpoint
+
+Three additional components are implemented, with focused synthetic checks. They
+are not an operational Sunday training loop:
+
+- `frankie_source_mapping.build_mapping` streams the preserved gzip and compares
+  every ordered full DBN wire record, retaining full member-row byte witnesses.
+  `bind_prefix` checks the actual independently pinned BOSS journal and selected
+  closed prefix. The first actual 245-record group matched exactly; the complete
+  57,027-record mapping has not been executed. The mapping workflow is now manual
+  only so publishing this checkpoint cannot start cloud work.
+- `BossTrainingCheckpoint` atomically saves CPU native/decoder/optional teacher,
+  optimizer, Python/NumPy/Torch RNG, cursor and the local update callback's receipt.
+  Replayed completed IDs return saved evidence without another update. An uncertain
+  mutation requires restore. Preserve its trusted hash separately for rollback
+  detection. The initial model pin remains distinct from each trained-state digest.
+- `NativeForecastLearner` applies actual native B1/decoder gradients from separately
+  attested Frankie feedback using complete prepared inputs and exact serving packet
+  identity. Timing learns STOP/presence and median delay; path/gap fitting freezes
+  every timing dependency and trains median value heads. Missing labels stay masked.
+  Explicit settings, principal attestation, query/split authorization and chronological
+  next-request ordering are caller-owned duties. Granite is not trained.
+
+Distinct new evidence: mapping 11 focused tests passed in 4.36s; after its progress
+hook, only three affected cases passed in 3.09s. Training-state persistence passed
+10 focused tests in 5.73s; its later atomic callback-result extension passed one
+new test in 4.97s. Native learning passed nine focused tests in 6.26s. Mapping and
+learner received independent read-only scope reviews; root reviewed persistence.
+These are separate component results, not a full-suite or real Sunday execution.
+
+The durable cycle coordinator does not yet exist. It must compose real controller
+completion, file exporter/receiver, principal-authored feedback, atomic training and
+separate new lessons. It must return a completed cycle before validating an old
+controller pin after training, and recover an already-committed training receipt
+without a second gradient update. Ambiguous principal calls require output recovery,
+not automatic resubmission. Actual stage probes still need those callsites.
+
+The mapping currently requires identical extraction identity on the mapping and BOSS
+hosts, including native binary hashes. The prepared Linux/Python 3.11 runner may
+differ from the future training host. Align the exact runtime, or explicitly review
+a dual independently pinned extraction-identity design retaining full wire equality;
+do not bypass the existing check. Local disk cannot hold the 10.7 GB plaintext
+member ledger; use streaming on an adequately sized host.
+
 Use the existing attributed-input exporter/receiver on their separate code
 lineages. Bind the actual source bytes, causal cursor and population origin before
 claiming authentic combined delivery. Preserve all existing Frankie input layers
