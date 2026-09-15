@@ -1,0 +1,16 @@
+{
+  "schema": "FRANKIE_RETAINED_REQUEST_PREFLIGHT_V1",
+  "observed_at": "2026-09-15T09:08:40.614158+00:00",
+  "request_sha256": "07cc305a5bf7aff15517122624f8337b5f2fc483ff74f74a4c50e3a7365ca770",
+  "request_bytes": 151132,
+  "admission_sha256": "a26b170ce415a68a1474efe11d8c2bf61743051a7eb66d545877c7acbd93aec1",
+  "prior_request_sha256": "b0414444fd8a93e12dd38e019dc2b3a5d3572fe885df7b4369d1d33b0f6b67db",
+  "only_changed_request_field": "max_tokens",
+  "input_tokens_from_retained_admission": 92427,
+  "physical_remaining_output": 38645,
+  "context": 131072,
+  "tokenizer_reexecuted": false,
+  "source_database_reads": 0,
+  "model_calls": 0,
+  "limitation": "Actual host must bind its exact prepared current request and live readiness before dispatch; no model execution or live vLLM token-count proof established."
+}

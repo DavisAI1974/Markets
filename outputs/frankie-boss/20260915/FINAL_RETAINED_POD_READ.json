@@ -1,0 +1,30 @@
+{
+  "id": "jvs75m56w8f73q",
+  "status": "EXITED",
+  "image": "public.ecr.aws/deep-learning-containers/vllm@sha256:18998be4e1276d4eb6e98afe80798aa357c1cc37545150de5c210bc9111beb1d",
+  "gpu": {
+    "count": 1,
+    "id": "NVIDIA L40S",
+    "memory": 125,
+    "vcpuCount": 32
+  },
+  "cost": 1.09,
+  "disk": 100,
+  "ports": [
+    "8081/http"
+  ],
+  "observedAt": "2026-09-15T09:07:58.418Z",
+  "configurationSelectedNotYetApplied": true,
+  "environmentPins": {
+    "GRANITE_MAX_MODEL_LEN": "4096",
+    "GRANITE_MANIFEST_SHA256": "adf5304a845900b4395c2593c5d270ae727867cc9a164132510acb95d5a3091a",
+    "GRANITE_IMAGE_DIGEST": "sha256:18998be4e1276d4eb6e98afe80798aa357c1cc37545150de5c210bc9111beb1d",
+    "RUNPOD_BUNDLE_SHA256": "df88dabe6975c7fedc52dd1264273aea8cb4e2da2c0e02a7518fff1402a1e9e5",
+    "RUNPOD_SUPERVISOR_COMMAND_SHA256": "7fd317a74c578dc9bfb709b813eb6c68df431a973bfb1e133b6fac26883e562a",
+    "PROCESS_AUTO_RECOVERY": "true",
+    "SUPERVISOR_PROGRAM__APP_AUTORESTART": "false",
+    "SUPERVISOR_PROGRAM__APP_STARTRETRIES": "0"
+  },
+  "podMutationsPerformed": 0,
+  "modelCallsPerformed": 0
+}
