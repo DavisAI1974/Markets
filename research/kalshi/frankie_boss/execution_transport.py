@@ -112,10 +112,11 @@ def _object(body):
     return obj
 
 
-def _exchange(http, cap, path, headers, body):
+def _exchange(http, cap, path, headers, body, timeout_ms=None):
     url = cap.origin + path
     response = http(method='POST', url=url, headers=dict(headers), body=body,
-        timeout_ms=cap.timeout_ms, follow_redirects=False, retries=0)
+        timeout_ms=cap.timeout_ms if timeout_ms is None else timeout_ms,
+        follow_redirects=False, retries=0)
     if type(response) is not HTTPResponse or response.url != url:
         raise TransportError('HTTP response origin/path mismatch')
     return response
@@ -179,7 +180,10 @@ protection supplements the durable ledger; it does not replace it on restart.
                 if not started <= signed < self._until:
                     raise TransportError('ready lease expired during signing or clock moved backwards')
                 started = signed
-            response = _exchange(self._http, self._cap, path, headers, self._wire.body)
+            remaining_ms = min(self._cap.timeout_ms, (self._until - started) // 1_000_000)
+            if remaining_ms < 1:
+                raise TransportError('ready lease has no complete millisecond remaining')
+            response = _exchange(self._http, self._cap, path, headers, self._wire.body, remaining_ms)
             received = _clock(self._now)
             if received < started:
                 raise TransportError('HTTP receive clock moved backwards')

@@ -61,8 +61,8 @@ provider transport. This is a route mapping boundary, not a controller replay-on
 The injected HTTP implementation must perform exactly one exchange, verify TLS certificates
 and hostname, enforce the supplied timeout, disable redirects/retries/proxies unless separately
 approved, and not log request headers/body or auth responses. Its digest is a caller's
-independently pinned implementation identity, not proof about a Python callable. There is
-no built-in network client or environment/file secret discovery in this slice. No token cache
+independently pinned implementation identity, not proof about a Python callable. Concrete
+opt-in providers are described below; there is no environment/file secret discovery. No token cache
 or concurrent refresh coordinator is added: each explicit preparation performs one exchange;
 the same prepared lease can then support the dry-run and submission without refreshing.
 
@@ -89,5 +89,59 @@ and HTTP identity refusal before secret resolution; malformed/failed refresh and
 single-use concurrency; raw error receipts, redirect refusal and secret-echo refusal;
 sanitized timeout/cancellation; controller final policy expiry and durable SENT_UNKNOWN/kill
 across reopen with no second send. Existing execution policy/ledger/adapters/controller tests
-must remain green. Concrete TLS client, account discovery and complete account collection
-are explicit next seams and are not claimed complete here.
+must remain green. Account discovery and complete account collection remain next seams.
+
+## Concrete opt-in providers (continuation)
+
+`execution_providers.HTTPSExchange(origin=..., max_response_bytes=...)` implements
+the HTTP callable with Python's standard-library HTTPSConnection. The explicit origin must
+be one of the existing official live/sandbox origins and must match every request exactly.
+Constructing a provider does no I/O. Compose it with `prepare_transport`; retain the
+independently approved implementation hash in the capability. That approval must cover
+provider source, Python/TLS runtime and trust-store configuration, response limit and origin;
+the hash argument by itself does not authenticate a callable or the machine running it.
+
+The client verifies TLS certificates and hostnames using the runtime's default trust store,
+explicitly disables HTTP debug output, uses direct connections (no environment proxy
+discovery), and makes one request on one fresh connection. It does not follow redirects or
+retry any status/exception. Bytes are passed unchanged; non-success statuses are returned
+as raw evidence. Invalid framing/truncation, excessive response size and transport failure
+fail closed through sanitized exceptions. The default body budget is 4 MiB, configurable up
+to 16 MiB; overflow produces uncertainty, never a truncated successful receipt.
+
+The deadline includes local TLS-context preparation and connection establishment. After
+connect, a watchdog shuts down the connected socket when the remaining budget expires,
+including slow response headers/body. The request is refused if connection establishment
+has already exhausted that budget. OS DNS resolution cannot be interrupted by this Python
+socket timeout; it may delay return, but an expired connect cannot subsequently transmit.
+Hard process-return deadlines need an external runtime boundary and existing durable
+SENT_UNKNOWN/reconciliation handling. This is not a certified hard-real-time client.
+
+ReadyTransport now passes the smaller of the capability timeout and whole milliseconds
+remaining on its lease to the HTTP callable. Less than one millisecond remaining refuses
+before HTTP. OAuth preparation retains the original capability timeout. This prevents a
+slow concrete connect from extending an almost-expired ready lease into order transmission.
+
+`FileSecretProvider(reference=..., path=...)` implements the secret callable for one exact
+public CredentialReference and absolute local file path. The private JSON envelope contains
+exactly `credential_hash` (the public reference digest) and `secrets`. Kalshi secrets contain
+exactly `key_id` and `private_key_pem` (PEM text); tastytrade secrets contain exactly
+`refresh_token` and `client_secret`. Duplicate/unknown fields, wrong bindings, non-string
+values, symlinks, non-regular files and files exceeding 64 KiB are refused. There is no
+implicit file discovery, credential provisioning, rotation, or secret-content hashing.
+Known errors are redacted; provider repr omits paths and references.
+
+The operator must provision that file outside Git and apply private ACLs to it and its
+parent directories. This adapter does not enforce Windows ACL policy, encrypt storage,
+prevent privileged process inspection, authenticate rotation history, or claim account
+ownership. The envelope binds declared public identity; file access/placement is trusted
+configuration. A managed vault remains a separate optional deployment choice.
+
+Acceptance uses synthetic file secrets, fake connections and a generated-certificate
+loopback TLS server. It covers refusal before connection, actual byte preservation and
+redirect retention, slow-response interruption, truncated body refusal, exact secret
+binding, and ready-lease connect expiry with zero order transmissions and no reuse.
+No real credentials, venue requests or operational account acceptance occurred.
+
+Implementation sources: [Python HTTPSConnection](https://docs.python.org/3/library/http.client.html)
+and [default TLS context](https://docs.python.org/3/library/ssl.html#ssl.create_default_context).
