@@ -1,0 +1,17 @@
+{
+  "schema": "FRANKIE_RETAINED_POD_ROLLOUT_V1",
+  "pod_id": "jvs75m56w8f73q",
+  "observed_status": "EXITED",
+  "lifetime_seconds": "none",
+  "service_context": 131072,
+  "transport_protocol": "jobs_v1",
+  "bundle_sha256": "67affdb2de76a3cb36f17d326b223b148c0c363794f727421bd38a5470afea39",
+  "supervisor_command_sha256": "391963397aed83cba895b0bc2e996b4d73d81887bfc93197f2e674256c12dbfd",
+  "source_commit": "9a8f3f46abaa3d840b07b685010108e0c551b174",
+  "bootstrap_workflow_run": 34978258747,
+  "bootstrap_marker_commit": "55e88d7dfe841fe81cded101c7311b56a173b5ea",
+  "all_environment_values_verified": true,
+  "rollback_encrypted_sha256": "d2857a4c05a151d3e06b430505ad8d075c257d04a6ad8a1ce9cfd66094599cd9",
+  "pod_start_performed": false,
+  "inference_performed": false
+}
