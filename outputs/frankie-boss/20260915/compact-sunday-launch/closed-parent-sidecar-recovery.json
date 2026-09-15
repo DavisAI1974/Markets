@@ -1,0 +1,20 @@
+{
+  "records": [
+    {
+      "source": "E:\\Codex\\Frankie-BOSS-20260915\\source-recovery-20260915\\source.sqlite-wal",
+      "archived": "E:\\Codex\\Frankie-BOSS-20260915\\sunday-launch-20260915\\closed-parent-sidecars-01\\source.sqlite-wal",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "source": "E:\\Codex\\Frankie-BOSS-20260915\\source-recovery-20260915\\source.sqlite-shm",
+      "archived": "E:\\Codex\\Frankie-BOSS-20260915\\sunday-launch-20260915\\closed-parent-sidecars-01\\source.sqlite-shm",
+      "bytes": 32768,
+      "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb"
+    }
+  ],
+  "database_unchanged": true,
+  "exclusive_handles_verified": true,
+  "database_sha256": "fa1d45ad0242094487e0b35c16f02000a8f7039db9609231075fd088b528307e",
+  "schema": "FRANKIE_CLOSED_PARENT_SIDECAR_RECOVERY_V1"
+}
