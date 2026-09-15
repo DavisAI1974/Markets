@@ -17,6 +17,23 @@ def test_twenty_minute_limit_and_no_larger_window():
             cloud.control.validate_intent(item)
 
 
+def test_supervisor_metadata_only_is_removed():
+    from types import SimpleNamespace
+    environment = {'SUPERVISOR_ENABLED': '1', 'SUPERVISOR_PROCESS_NAME': 'app',
+                   'SUPERVISOR_GROUP_NAME': 'app', 'SUPERVISOR_PROGRAM__APP_COMMAND': 'pinned',
+                   'SUPERVISOR_UNAPPROVED_OVERRIDE': 'still rejected by bootstrap'}
+    exec(cloud.supervisor_metadata_code(), {'os': SimpleNamespace(environ=environment)})
+    assert environment == {'SUPERVISOR_PROGRAM__APP_COMMAND': 'pinned',
+                           'SUPERVISOR_UNAPPROVED_OVERRIDE': 'still rejected by bootstrap'}
+
+
+@pytest.mark.parametrize('value', [None, 'other'])
+def test_unexpected_supervisor_metadata_refused(value):
+    from types import SimpleNamespace
+    with pytest.raises(SystemExit):
+        exec(cloud.supervisor_metadata_code(), {'os': SimpleNamespace(environ={'SUPERVISOR_ENABLED': value})})
+
+
 @pytest.mark.parametrize('publication_fails', [False, True])
 def test_service_launch_keeps_ready_pod_and_cleans_failure(monkeypatch, tmp_path, publication_fails):
     monkeypatch.setenv('GITHUB_RUN_ATTEMPT', '1')

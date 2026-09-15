@@ -88,6 +88,29 @@ def save(name, value):
     (OUT / name).write_bytes(canonical(value))
 
 
+def supervisor_metadata_code():
+    # Supervisor process.py injects these child descriptors, not app overrides.
+    return '''for key,value in {'SUPERVISOR_ENABLED':'1','SUPERVISOR_PROCESS_NAME':'app','SUPERVISOR_GROUP_NAME':'app'}.items():
+ if os.environ.get(key)!=value: raise SystemExit('unexpected supervisor child metadata')
+ os.environ.pop(key)
+'''
+
+
+def recovery_command(rows, bundle_sha, directory=package.ROOT):
+    """Reuse the existing attached bootstrap after a failed pre-model startup."""
+    code = f'''import os,pathlib,shutil,json
+os.environ.pop('RP_BOOTSTRAP_URLS',None)
+p=pathlib.Path({directory!r})
+for parent in (p,*p.parents):
+ if parent.is_symlink(): raise SystemExit('bootstrap symlink refused')
+free=shutil.disk_usage(p).free
+if free<22592970510: raise SystemExit('insufficient model disk')
+print('GRANITE_DISK '+json.dumps({{'free_bytes':free,'required_bytes':22592970510}}),flush=True)
+'''
+    code += supervisor_metadata_code() + package.preexec_code(rows, bundle_sha, directory=directory)
+    return 'python3 -c ' + shlex.quote('exec(bytes.fromhex(' + repr(code.encode().hex()) + ').decode())')
+
+
 def bootstrap_command(rows, bundle_sha, bucket, directory=package.ROOT):
     """Private AWS downloads followed by the unchanged pre-import verifier."""
     roster = rows + [{'path': 'runpod_bundle.json', 'size': None, 'sha256': bundle_sha}]
@@ -118,7 +141,7 @@ free=shutil.disk_usage(p).free
 if free < 17592970510+5000000000: raise SystemExit('insufficient model disk')
 print('GRANITE_DISK '+json.dumps({{'free_bytes':free,'required_bytes':22592970510}}),flush=True)
 '''
-    code = prefix + package.preexec_code(rows, bundle_sha, directory=directory)
+    code = prefix + supervisor_metadata_code() + package.preexec_code(rows, bundle_sha, directory=directory)
     return 'python3 -c ' + shlex.quote('exec(bytes.fromhex(' + repr(code.encode().hex()) + ').decode())')
 
 
