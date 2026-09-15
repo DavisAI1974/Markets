@@ -1,0 +1,84 @@
+name: Frankie Sunday cycle 0 — GitHub 16 CPU
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: New run identity for corrected cycle-0 benchmark
+        required: true
+        type: string
+      configuration_artifact:
+        description: Name of the pre-staged lawful Sunday configuration artifact
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: frankie-sunday-cycle0-${{ inputs.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  cycle0:
+    # GitHub's documented larger-runner label for a 16-core Ubuntu runner.
+    runs-on:
+      labels: ubuntu-24.04-16core
+    timeout-minutes: 355
+    env:
+      FRANKIE_CPU_WORKERS: '16'
+      OMP_NUM_THREADS: '1'
+      MKL_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+      NUMEXPR_NUM_THREADS: '1'
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - name: Checkout exact review branch
+        uses: actions/checkout@v4
+        with:
+          ref: chatgpt/frankie-32cpu-lossless-20260915
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify 16 CPU host before any checkpoint or model construction
+        shell: bash
+        run: |
+          python - <<'PY'
+          import os
+          n = os.cpu_count()
+          print(f'FRANKIE_GITHUB_LOGICAL_CPUS={n}', flush=True)
+          if n is None or n < 16:
+              raise SystemExit('GitHub runner exposes fewer than 16 logical CPUs')
+          PY
+
+      - name: Install project runtime dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install numpy pytest
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
+
+      - name: Focused CPU and lossless-reader checks only
+        shell: bash
+        run: |
+          python -m pytest research/kalshi/frankie_boss/tests/test_cpu_worker_policy.py -q
+          python -m pytest research/kalshi/frankie_boss/tests/test_verified_journal_reader.py -q
+
+      - name: Require externally staged lawful Sunday configuration
+        shell: bash
+        run: |
+          echo 'The result-bearing launch is intentionally gated.'
+          echo 'Before enabling the next step, restore the exact Sunday source/configuration package for the NEW run identity.'
+          echo 'Do not reuse E: paths, the failed cycle-00 checkpoint, or mutate the original run.'
+          exit 78
+
+      # RESULT-BEARING STEP IS DELIBERATELY NOT ENABLED UNTIL THE LAWFUL CONFIGURATION
+      # PACKAGE IS RESTORED IN GITHUB WITH ITS EXISTING hashes/receipts and Claude/Greg
+      # review the migration. The eventual command is:
+      # python -m research.kalshi.frankie_boss.operations.run_actual_sunday_github16 \
+      #   --configuration <github-restored-new-run-config.json>
