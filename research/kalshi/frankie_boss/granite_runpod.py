@@ -1,4 +1,4 @@
-"""Runpod smoke boot: verified public artifacts, bounded local processes, no API client.
+"""Runpod boot: verified artifacts and explicit process runtime mode, no API client.
 
 Executing main is a future paid-Pod operation. Importing and bundle preparation
 are local only. Process exit does not terminate a billable Runpod Pod.
@@ -27,10 +27,16 @@ PROXY = '/opt/ml/additional-model-data-sources/bootstrap/granite_runpod_proxy.py
 
 
 def remaining(deadline, clock=time.monotonic):
+    if deadline is None:
+        return float('inf')
     value=deadline-clock()
     if value <= 0:
         raise TimeoutError('approved process lifetime exhausted')
     return value
+
+
+def process_wait_timeout(deadline, clock):
+    return None if deadline is None else remaining(deadline, clock)
 
 
 class TimedResponse:
@@ -114,9 +120,9 @@ def stage_process(directory, manifest, *, deadline, clock=time.monotonic,
         raise ValueError('packaged model manifest required')
     env=dict(os.environ);env.pop('RUNPOD_GRANITE_API_KEY',None)
     child=popen(['python3',str(Path(__file__)),'stage',str(directory),
-                 str(remaining(deadline,clock))],env=env,start_new_session=True)
+                 'none' if deadline is None else str(remaining(deadline,clock))],env=env,start_new_session=True)
     try:
-        if child.wait(timeout=remaining(deadline,clock))!=0:
+        if child.wait(timeout=process_wait_timeout(deadline,clock))!=0:
             raise RuntimeError('model staging failed; no deployment retry')
         remaining(deadline,clock)
     finally:stop_children([child])
@@ -132,7 +138,7 @@ def prepare_process(directory, manifest, environment, *, deadline, clock=time.mo
         child=popen(['python3',str(Path(__file__)),'verify',str(directory),str(path)],
                     env=env,start_new_session=True)
         try:
-            if child.wait(timeout=remaining(deadline,clock))!=0:
+            if child.wait(timeout=process_wait_timeout(deadline,clock))!=0:
                 raise RuntimeError('startup verification failed')
             remaining(deadline,clock)
             if path.stat().st_size>65536:raise ValueError('oversized startup receipt')
@@ -156,7 +162,7 @@ def prepare_process(directory, manifest, environment, *, deadline, clock=time.mo
 
 def supervise(backend_argv, proxy_argv, *, environment, deadline,
               popen=subprocess.Popen, clock=time.monotonic, sleep=time.sleep, progress=None):
-    """No autorestart; any process exit or deadline stops both process groups."""
+    """No autorestart. Open mode has no elapsed stop; child exit still cleans up."""
     children=[]
     backend_env=dict(environment)
     backend_env.pop('RUNPOD_GRANITE_API_KEY',None)
@@ -174,7 +180,7 @@ def supervise(backend_argv, proxy_argv, *, environment, deadline,
                 raise RuntimeError('smoke subprocess exited; no restart')
             if progress is not None and not healthy and clock()-last_health>=5:
                 last_health=clock()
-                healthy=local_health(min(deadline,clock()+1))
+                healthy=local_health(clock()+1 if deadline is None else min(deadline,clock()+1))
                 if healthy: progress('ready')
             sleep(min(.25,remaining(deadline,clock)))
     finally:
@@ -199,9 +205,13 @@ def boot(environment, *, directory='/opt/ml/model', bundle_directory=None,
     """Called only inside an explicitly authorized Pod; tests inject all effects."""
     started=clock()
     text=environment.get('RUNPOD_GRANITE_LIFETIME_SECONDS','')
-    if not text.isascii() or not text.isdecimal() or int(text)<=0:
-        raise ValueError('explicit positive process lifetime required')
-    deadline=started+int(text)
+    if text == 'none':
+        lifetime_seconds, deadline = None, None
+    else:
+        if not text.isascii() or not text.isdecimal() or int(text)<=0:
+            raise ValueError('explicit positive process lifetime or none required')
+        lifetime_seconds = int(text)
+        deadline=started+lifetime_seconds
     secret=environment.get('RUNPOD_GRANITE_API_KEY','')
     if re.fullmatch(r'[A-Za-z0-9_-]{32,256}',secret) is None:
         raise ValueError('resolved private API key required')
@@ -223,13 +233,18 @@ def boot(environment, *, directory='/opt/ml/model', bundle_directory=None,
     # Keep the reused receipt intact; record the explicit network restriction separately.
     backend=list(receipt['argv']);backend[backend.index('--host')+1]='127.0.0.1'
     evidence={'schema':'GRANITE_RUNPOD_STARTUP_V1','startup':receipt,
-              'backend_argv':backend,'proxy_port':8081,'lifetime_seconds':int(text),
-              'budget_enforcement':'external Pod teardown required'}
+              'backend_argv':backend,'proxy_port':8081,'lifetime_seconds':lifetime_seconds,
+              'budget_enforcement':('explicit completion/stop or fatal child exit; no elapsed cap'
+                                    if deadline is None else 'external Pod teardown required')}
+    if deadline is None:
+        evidence.update(bootstrap_bundle_sha256=environment.get('RUNPOD_BUNDLE_SHA256'),
+                        supervisor_command_sha256=environment['RUNPOD_SUPERVISOR_COMMAND_SHA256'])
     print('GRANITE_RUNPOD_STARTUP '+artifacts.canonical(evidence).decode(),flush=True)
     remaining(deadline,clock)
     kwargs={'progress':progress} if progress is not None else {}
     if progress is not None: progress('backend_start')
-    runner(backend,['python3',PROXY],environment=environment,deadline=deadline,clock=clock,**kwargs)
+    proxy_path = str(Path(bundle_directory or Path(__file__).parent)/'granite_runpod_proxy.py')
+    runner(backend,['python3',proxy_path],environment=environment,deadline=deadline,clock=clock,**kwargs)
     return evidence
 
 
@@ -251,7 +266,8 @@ if __name__=='__main__':
     try:
         with progress:
             if len(sys.argv)==4 and sys.argv[1]=='stage':
-                stage_model(sys.argv[2],manifest,deadline=time.monotonic()+float(sys.argv[3]),progress=progress)
+                stage_deadline = None if sys.argv[3] == 'none' else time.monotonic()+float(sys.argv[3])
+                stage_model(sys.argv[2],manifest,deadline=stage_deadline,progress=progress)
             elif len(sys.argv)==4 and sys.argv[1]=='verify':
                 receipt=startup.prepare_startup(sys.argv[2],manifest,os.environ,progress=progress)
                 artifacts.save_receipt(sys.argv[3],receipt)

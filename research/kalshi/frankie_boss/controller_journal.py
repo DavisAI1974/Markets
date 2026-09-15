@@ -59,7 +59,11 @@ def _critic_links(state, payload):
         if (receipt['config_hash'] != config['critic_config_hash'] or receipt['call_hash'] != call_hash
                 or request.request_id != intent['attempt_id']
                 or request.identity.identity_hash != config['critic_identity_hash']
-                or type(request.timeout_seconds) not in (int,float)
+                or (request.timeout_seconds is None and (config['critic_timeout'] is not None
+                    or type(config.get('durable_storage_identity')) is not str
+                    or len(config['durable_storage_identity']) != 64
+                    or any(c not in '0123456789abcdef' for c in config['durable_storage_identity'])))
+                or (request.timeout_seconds is not None and type(request.timeout_seconds) not in (int,float))
                 or request.timeout_seconds != config['critic_timeout']
                 or request.snapshot_text != snapshot.text or request.snapshot_hash != snapshot.hash
                 or request.prompt_text != prompt.text or intent['prompt_text'] != prompt.text):

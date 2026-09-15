@@ -62,8 +62,11 @@ class FrankieForecastController:
                            ('critic identity',self.expected_critic_identity_hash)):
             sha256_digest(value,name)
         timeout = self.critic.request_timeout
-        if type(timeout) not in (int,float) or not math.isfinite(timeout) or timeout <= 0:
-            raise ValueError('critic timeout must be explicit finite positive number')
+        if timeout is None:
+            if getattr(self.critic,'durable_same_attempt_recovery',False) is not True:
+                raise ValueError('open-ended critic requires durable same-attempt recovery')
+        elif type(timeout) not in (int,float) or not math.isfinite(timeout) or timeout <= 0:
+            raise ValueError('critic timeout must be explicit finite positive number or durable open-ended mode')
         if (self.critic.enabled is not True or
                 self.critic.config_hash != self.expected_critic_config_hash or
                 self.critic.identity.identity_hash != self.expected_critic_identity_hash):
@@ -87,7 +90,9 @@ class FrankieForecastController:
             code={name:Path(__file__).with_name(name).read_bytes() for name in
                   ('frankie_controller.py','controller_journal.py','granite_context.py',
                    'granite_context_compact.py','granite_context_route.py','granite_shadow.py')},
-            transport_code=Path(source).read_bytes())
+            transport_code=Path(source).read_bytes(),
+            **({'durable_storage_identity':self.critic.durable_storage_identity}
+               if getattr(self.critic,'durable_same_attempt_recovery',False) is True else {}))
 
     def _snapshot(self, publications, *, as_of, source_as_of, source_hash, through_cursor):
         from research.kalshi.frankie_boss import granite_context as mapper
@@ -137,7 +142,7 @@ class FrankieForecastController:
                 or request.identity.identity_hash != self.expected_critic_identity_hash
                 or request.request_id != attempt_id or request.snapshot_hash != snapshot.hash
                 or request.snapshot_text != snapshot.text or request.prompt_text != prompt.text
-                or type(request.timeout_seconds) not in (int,float)
+                or (request.timeout_seconds is not None and type(request.timeout_seconds) not in (int,float))
                 or request.timeout_seconds != self.critic.request_timeout):
             raise ValueError('critic receipt differs from exact requested context/configuration')
         expected_call = hashlib.sha256(json.dumps(dict(config_hash=receipt.config_hash,
@@ -263,16 +268,23 @@ class FrankieForecastController:
         unchanged()
         if state['critic_result'] is None:
             previous = state['critic_intent']
-            if previous is not None and recovery_attempt_id is None:
+            same_attempt = previous is not None and getattr(self.critic,'durable_same_attempt_recovery',False) is True
+            if same_attempt and recovery_attempt_id is not None:
+                raise ValueError('durable critic recovery must retain the original attempt')
+            if previous is not None and recovery_attempt_id is None and not same_attempt:
                 raise ValueError('critic completion unknown; explicit recovery attempt required')
-            attempt_id = recovery_attempt_id or evidence_hash(dict(request_id=request_id,request_hash=state['request_hash']))
-            critic_intent = dict(attempt_id=attempt_id,supersedes=previous['attempt_id'] if previous else None,
+            attempt_id = previous['attempt_id'] if same_attempt else (recovery_attempt_id or evidence_hash(dict(request_id=request_id,request_hash=state['request_hash'])))
+            critic_intent = dict(attempt_id=attempt_id,supersedes=(previous['supersedes'] if same_attempt else previous['attempt_id']) if previous else None,
                 context_encoding=self.context_encoding,native_snapshot_hash=native_snapshot_hash,
                 snapshot_hash=snapshot.hash,snapshot_text=snapshot.text,prompt_text=prompt.text,
                 context=context_receipt,packet_hash=packet_hash,config_hash=self.expected_critic_config_hash,
                 identity_hash=self.expected_critic_identity_hash)
             self._observe('critic_request', through_cursor=through_cursor)
-            state = self.journal.record(request_id,'CRITIC_INTENT',critic_intent)
+            if same_attempt:
+                if critic_intent != previous:
+                    raise ValueError('durable recovery context differs from original exact attempt')
+            else:
+                state = self.journal.record(request_id,'CRITIC_INTENT',critic_intent)
             from research.kalshi.frankie_boss.granite_context_route import context_route
             method = getattr(self.critic, context_route(self.context_encoding).method)
             receipt = await method(snapshot,request_id=attempt_id)

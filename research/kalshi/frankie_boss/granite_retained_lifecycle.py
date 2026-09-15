@@ -16,6 +16,72 @@ POD_ID = 'jvs75m56w8f73q'
 SCHEMA = 'GRANITE_RETAINED_LEASE_V1'
 
 
+def make_startup(info, *, start, request_sha256, local_ready):
+    # Reuse exact retained ownership/request validation without attaching a
+    # deadline to startup. Local native input admission authorizes this start.
+    checked = make_lease(info, start=start, duration_seconds=1800, request_sha256=request_sha256)
+    if (type(local_ready) is not dict
+            or set(local_ready) != {'request_sha256', 'host_instance_id', 'admitted_at'}
+            or local_ready['request_sha256'] != request_sha256
+            or type(local_ready['host_instance_id']) is not str
+            or not re.fullmatch('[A-Za-z0-9_-]{16,128}', local_ready['host_instance_id'])
+            or type(local_ready['admitted_at']) not in (int, float)
+            or not math.isfinite(local_ready['admitted_at'])
+            or not 0 < local_ready['admitted_at'] <= start):
+        raise ValueError('actual local input-admitted witness required')
+    return dict(schema='GRANITE_RETAINED_STARTUP_V1', pod_id=POD_ID, start=start,
+        retained_info_sha256=checked['retained_info_sha256'], request_sha256=request_sha256,
+        local_ready=dict(local_ready), startup_deadline=None)
+
+
+def check_startup(startup, info):
+    expected = make_startup(info, start=startup['start'],
+        request_sha256=startup['request_sha256'], local_ready=startup['local_ready'])
+    if canonical(startup) != canonical(expected):
+        raise ValueError('retained startup identity changed')
+    return hashlib.sha256(canonical(startup)).hexdigest()
+
+
+def make_run(info, startup, *, ready_at):
+    digest = check_startup(startup, info)
+    if type(ready_at) not in (int, float) or not math.isfinite(ready_at) or ready_at < startup['start']:
+        raise ValueError('actual readiness time required')
+    return dict(schema='GRANITE_RETAINED_OPEN_RUN_V1', pod_id=POD_ID,
+        start=ready_at, deadline=None, request_sha256=startup['request_sha256'],
+        retained_info_sha256=startup['retained_info_sha256'], startup_intent_sha256=digest)
+
+
+def start_once(api, journal, info, manifest, startup, *, now, request_body,
+               tokenizer_admission, expected_watchdog_identity):
+    digest = check_startup(startup, info)
+    prior = journal.get('retained-start-intent.json')
+    intent = dict(startup_sha256=digest, pod_id=POD_ID)
+    if prior is not None:
+        if prior != intent:
+            raise ValueError('another startup owns this request journal')
+        return dict(status='observe_existing_start', pod_id=POD_ID)
+    if (type(tokenizer_admission) is not LocalTokenizerAdmission
+            or tokenizer_admission.evidence_class != 'LOCAL_TOKENIZER_ADMISSION'
+            or type(request_body) is not bytes
+            or hashlib.sha256(request_body).hexdigest() != startup['request_sha256']):
+        raise ValueError('actual pinned tokenizer and exact request required')
+    admitted = tokenizer_admission(request_body)
+    if (admitted.get('request_sha256') != startup['request_sha256']
+            or admitted.get('context') != 4096
+            or not 0 < admitted['input_tokens'] + admitted['output_tokens'] <= 4096):
+        raise ValueError('full actual request admission required')
+    _watchdog(expected_watchdog_identity, {'deadline': now})
+    arm = journal.get('retained-observer.json')
+    if (type(arm) is not dict or arm.get('startup_sha256') != digest
+            or arm.get('watchdog_identity') != expected_watchdog_identity
+            or not 0 <= now-arm.get('at', 0) <= 20):
+        raise ValueError('fresh independent startup observer required')
+    validate_resume(info, api.request('GET', '/v2/pods/'+POD_ID), manifest)
+    journal.put('retained-start-intent.json', intent, once=True)
+    api.request('POST', '/v2/pods/'+POD_ID+'/action', {'action': 'start'})
+    return dict(status='start_submitted', pod_id=POD_ID, startup_sha256=digest)
+
+
 def make_lease(info, *, start, duration_seconds, request_sha256):
     if (info['pod_id'] != POD_ID or type(start) not in (float, int)
             or not math.isfinite(start) or type(duration_seconds) is not int
@@ -124,7 +190,7 @@ def resume_once(api, journal, info, manifest, lease, *, now, request_body,
 
 def verified_service_inputs(info, manifest, lease, *, runtime_receipt,
                             expected_runtime_sha256, tokenizer_admission,
-                            output_tokens, request_timeout=80):
+                            output_tokens, request_timeout=None, startup_intent=None):
     """Assemble transport only from this lease's complete startup/health receipt.
 
     The independent hosting runner must capture the new bootstrap's accepted
@@ -136,7 +202,20 @@ def verified_service_inputs(info, manifest, lease, *, runtime_receipt,
     from .granite_shadow import GraniteIdentity
     from .granite_contract import SCHEMA_VERSION
     from .granite_run_artifacts import manifest_digest
-    _check(lease, info)
+    open_run = lease.get('schema') == 'GRANITE_RETAINED_OPEN_RUN_V1'
+    if open_run:
+        if startup_intent is None or canonical(lease) != canonical(make_run(info, startup_intent, ready_at=lease['start'])):
+            raise ValueError('exact open run and startup required')
+    else:
+        _check(lease, info)
+    startup_lower_bound = lease['start']
+    if startup_intent is not None:
+        startup_digest = check_startup(startup_intent, info)
+        if (startup_intent['request_sha256'] != lease['request_sha256']
+                or runtime_receipt.get('startup_intent_sha256') != startup_digest
+                or startup_intent['start'] > lease['start']):
+            raise ValueError('execution lease differs from admitted startup')
+        startup_lower_bound = startup_intent['start']
     if (type(tokenizer_admission) is not LocalTokenizerAdmission
             or tokenizer_admission.evidence_class != 'LOCAL_TOKENIZER_ADMISSION'
             or _hash(runtime_receipt) != expected_runtime_sha256):
@@ -150,9 +229,10 @@ def verified_service_inputs(info, manifest, lease, *, runtime_receipt,
             or mount.get('bytes') != sum(row['size'] for row in manifest['files'])
             or type(health) is not dict or health.get('status') != 200
             or health.get('method') != 'GET' or health.get('path') != '/health'
-            or not lease['start'] <= runtime_receipt.get('startup_event_at', 0) <= health.get('observed_at', 0)
+            or not startup_lower_bound <= runtime_receipt.get('startup_event_at', 0) <= health.get('observed_at', 0)
             or not lease['start'] <= health.get('observed_at', 0) <= runtime_receipt.get('ready_at', 0)
-            or not lease['start'] <= runtime_receipt.get('ready_at', 0) < lease['deadline']-120):
+            or not lease['start'] <= runtime_receipt.get('ready_at', 0)
+            or (not open_run and runtime_receipt.get('ready_at', 0) >= lease['deadline']-120)):
         raise ValueError('fresh full model-file verification and authenticated health required')
     route = context_route('compact_v1')
     identity = GraniteIdentity(manifest_digest(manifest), None,

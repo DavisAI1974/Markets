@@ -86,20 +86,23 @@ def _length(headers, limit, *, optional=False):
 
 
 def _backend(method, path, body, client_deadline):
-    deadline = min(time.monotonic() + BACKEND_SECONDS, client_deadline)
-    remaining = deadline - time.monotonic()
+    deadline = None if client_deadline is None else min(time.monotonic() + BACKEND_SECONDS, client_deadline)
+    remaining = 10 if deadline is None else deadline - time.monotonic()
     if remaining <= 0:
         raise TimeoutError()
     connection = http.client.HTTPConnection('127.0.0.1', BACKEND_PORT, timeout=remaining)
     timer = None
     try:
         connection.connect()
-        remaining = deadline - time.monotonic()
-        if remaining <= 0:
-            raise TimeoutError()
-        timer = threading.Timer(remaining, _stop, (connection.sock,))
-        timer.daemon = True
-        timer.start()
+        if deadline is None:
+            connection.sock.settimeout(None)
+        else:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError()
+            timer = threading.Timer(remaining, _stop, (connection.sock,))
+            timer.daemon = True
+            timer.start()
         connection.request(method, path, body, {'Content-Type': 'application/json',
                                                'Content-Length': str(len(body)), 'Connection': 'close'})
         response = connection.getresponse()
@@ -107,7 +110,7 @@ def _backend(method, path, body, client_deadline):
             raise ValueError('upstream status')
         size = _length(response.headers, 1024 if method == 'GET' else MAX_RESPONSE)
         raw = response.read(size)
-        if len(raw) != size or time.monotonic() >= deadline:
+        if len(raw) != size or (deadline is not None and time.monotonic() >= deadline):
             raise ValueError('incomplete upstream')
         if method == 'GET':
             return b'{"status":"ok"}'
@@ -183,6 +186,12 @@ class _Handler(BaseHTTPRequestHandler):
                 raise ValueError('short request')
             if not health:
                 _chat(body, self.server.model)
+                if self.server.open_ended:
+                    # Only an authenticated, fully received and validated body
+                    # selects open decode. Header/body ingress remains bounded.
+                    self._timer.cancel()
+                    self._deadline = None
+                    self.connection.settimeout(None)
         except OverflowError:
             return self._reply(413, b'{"error":"request refused"}')
         except (ValueError, OSError, RecursionError):
@@ -203,22 +212,26 @@ class _Server(HTTPServer):
         pass  # Never emit request or exception data to stderr.
 
 
-def make_server(secret, address=('0.0.0.0', 8081), *, model):
+def make_server(secret, address=('0.0.0.0', 8081), *, model, open_ended=False):
     """Address is a local-test seam; main fixes deployment port and host."""
     if type(secret) is not str or not re.fullmatch(r'[A-Za-z0-9_-]{32,256}', secret):
         raise ValueError('required proxy secret invalid')
     if type(model) is not str or not re.fullmatch(r'[A-Za-z0-9_.-]{1,128}', model):
         raise ValueError('required served model invalid')
+    if type(open_ended) is not bool:
+        raise ValueError('explicit proxy runtime mode required')
     server = _Server(address, _Handler)
     server.secret = secret.encode('ascii')
     server.authorization = b'Bearer ' + server.secret
     server.model = model
+    server.open_ended = open_ended
     return server
 
 
 def main():
     with make_server(os.environ.get('RUNPOD_GRANITE_API_KEY'),
-                     model=os.environ.get('GRANITE_SERVED_MODEL')) as server:
+                     model=os.environ.get('GRANITE_SERVED_MODEL'),
+                     open_ended=os.environ.get('RUNPOD_GRANITE_LIFETIME_SECONDS') == 'none') as server:
         server.serve_forever()
 
 

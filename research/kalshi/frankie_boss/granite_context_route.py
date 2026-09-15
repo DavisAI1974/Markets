@@ -52,7 +52,7 @@ def context_route(encoding='native_v1'):
 async def serve_context(snapshot, identity, *, context_encoding, request_id,
                         timeout_seconds, transport, max_prompt_bytes=None):
     route = context_route(context_encoding)
-    if type(timeout_seconds) not in (int, float) or not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
+    if timeout_seconds is not None and (type(timeout_seconds) not in (int, float) or not math.isfinite(timeout_seconds) or timeout_seconds <= 0):
         raise ValueError('timeout_seconds must be finite and positive')
     if not isinstance(request_id, str) or not request_id.strip():
         raise ValueError('request_id must be explicit')
@@ -60,7 +60,7 @@ async def serve_context(snapshot, identity, *, context_encoding, request_id,
         raise TypeError('identity must be GraniteIdentity')
     route.validate_identity(identity)
     prompt = route.build_prompt(snapshot, max_prompt_bytes=max_prompt_bytes)
-    request = ShadowRequest(request_id, identity, snapshot.text, snapshot.hash, prompt.text, float(timeout_seconds))
+    request = ShadowRequest(request_id, identity, snapshot.text, snapshot.hash, prompt.text, None if timeout_seconds is None else float(timeout_seconds))
     return await _serve_request(request, snapshot, transport, route.score)
 
 

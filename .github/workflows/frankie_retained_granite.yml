@@ -1,10 +1,14 @@
-name: Retained Granite request lease
+name: Retained Granite progress observer
 
 on:
   workflow_dispatch:
     inputs:
       request_sha256:
         description: SHA256 of the exact admitted request stored under the fixed S3 request prefix
+        required: true
+        type: string
+      local_ready_json:
+        description: Exact local input-admitted witness JSON
         required: true
         type: string
   push:
@@ -24,7 +28,7 @@ jobs:
     name: retained-${{ matrix.role }}
     if: github.repository == 'DavisAI1974/Markets'
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix:
@@ -37,6 +41,7 @@ jobs:
       RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
       GH_TOKEN: ${{ github.token }}
       REQUEST_SHA256: ${{ inputs.request_sha256 }}
+      LOCAL_READY_JSON: ${{ inputs.local_ready_json }}
       PYTHONUNBUFFERED: '1'
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -61,10 +66,10 @@ jobs:
           path: work/retained-granite/
           retention-days: 30
           if-no-files-found: error
-      - name: Hold this lease until local stop or deadline
+      - name: Observe until local stop or observer handoff
         if: matrix.role == 'prepare'
         run: python -m research.kalshi.frankie_boss.granite_retained_host hold
-      - name: Stop only the retained owned Pod
+      - name: Clean up only a confirmed fatal runtime or identity failure
         if: always()
         run: python -m research.kalshi.frankie_boss.granite_retained_host cleanup
       - name: Retain role and cleanup evidence

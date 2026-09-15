@@ -1,4 +1,4 @@
-# Sunday native development runtime and retained Granite lease
+# Sunday native development runtime and retained Granite monitoring
 
 This is an explicit development choice, not evidence of previous approval of
 numeric training settings or of a fitted model. The supplied source is its own
@@ -54,29 +54,36 @@ cutoff. The full source still goes through the existing principal handoff.
 
 ## Retained compute
 
-`granite_retained_lifecycle` is restricted to Pod jvs75m56w8f73q. It reuses the
-accepted `validate_resume` and `stop_owned_once` implementation. A new bounded
-lease binds the admitted actual request and retained-info digest. `resume_once`
-requires the real local tokenizer object to measure those exact bytes; a
-caller-created admission dictionary is insufficient. An independent
-runner calls `watchdog_tick` every at most ten seconds; the controller requires
-a matching arm at most twenty seconds old. The arm identifies the actual GitHub
-run/job and a job deadline extending at least thirty seconds beyond the lease.
-Cleanup begins 120 seconds before
-the lease deadline, uses only stop, and continues despite shared-journal errors.
-The caller must keep the independent watchdog running through deadline+30 until
-stopped, save its returned cleanup evidence locally, and report unresolved stop.
+The current user policy has no elapsed startup or runtime stop budget.
+`make_startup` binds the exact admitted request, retained Pod receipt, and actual
+local input-admitted witness. `start_once` records intent before one start;
+a later observer returns `observe_existing_start` and never submits another.
+Startup and run receipts explicitly carry null deadlines. The historical bounded
+lease helpers remain available for prior evidence; the operational host does
+not call them.
 
-`resume_once` records start intent before a single start action. Interruption
-returns `recover_existing_start` on replay; it never silently submits another
-start. No model download, Pod creation/deletion or inference is performed here.
-Reuse the accepted bootstrap and read fresh actual startup facts after resuming;
-the old startup receipt is not evidence of current request capacity/readiness.
-Start/recovery explicitly return `requires_startup_verification`. The
-`verified_service_inputs` guard requires current-lease startup event/ready times,
-all thirteen exact manifest file witnesses and authenticated health evidence.
-Stop after the critic response when principal/CPU learning proceeds elsewhere;
-a later resumed critic gets a fresh bounded lease, never an automatic extension.
+After fresh provider container timestamps, all thirteen model-file witnesses,
+and authenticated health pass, `make_run` creates the open run identity.
+`verified_service_inputs(..., startup_intent=startup, request_timeout=None)`
+binds that identity to the native controller transport. Health responsiveness is
+reported separately from progress. New startup/disk receipts and a newly verified
+service-ready receipt are observable milestones; repeated identical receipts or
+successful health polls are not advancing progress. Absent progress or temporary
+observation failure is an attention state, never an automatic restart or stop.
+
+The independent GitHub observer has the platform's unavoidable six-hour job
+maximum. It writes `observer_handoff_required` before runner exhaustion and
+preserves the Pod and request-specific journal. A replacement observer reads
+that same journal and start intent. This observer horizon is not a model startup
+or runtime deadline. See [GitHub Actions limits](https://docs.github.com/en/actions/reference/limits).
+
+Successful completion remains a stop-retain event: the exact
+`retained-finished.json` marker contains the current `startup_sha256`; the
+observer uses `stop_owned_once` and retains confirmed cleanup. Explicit user
+stop also uses that owned-Pod operation. Verified fatal model/runtime integrity
+failure triggers cached-ownership cleanup independently of S3. Healthy startup,
+long inference, missing progress, or observer exhaustion never triggers cleanup.
+No Pod creation, deletion, model download, or inference occurs in the host driver.
 
 ## Online preparation
 
@@ -99,9 +106,14 @@ The retained config SHA256
 85611f4e34633d4e148e6a5f64bc2d3a23ebbc2b014bc87fbda764eecf261cd9
 declares 131072 maximum positions. The accepted serving configuration and
 current service/tokenizer contract remain 4096, with a 1 MiB request ceiling.
-No actual Sunday full-payload admission result is claimed yet. Increasing a
-service context requires a reviewed explicit contract/configuration change and
-new runtime evidence; it is not a reason to truncate the native context.
+Actual first-cutoff preparation completed using the retained 3262-record prefix,
+without truncation or inference. Its compact request is 1,884,734 bytes and the
+exact accepted tokenizer measures 929,730 input tokens plus 1,200 output tokens:
+930,930 total. Request SHA256:
+`e65c33161a6ff3bfe02fa368dc30d29115dbb56aed8d358a05671891c473536c`.
+It exceeds both the service limits and the model's 131,072-position limit.
+Raising only the service limit cannot admit this complete request. A reviewed
+architecture change is required; the runtime must not silently truncate it.
 
 New retained-lifecycle interruption/admission/deadline tests: four passed.
 Historical passing tests and accepted Granite startup were not rerun.

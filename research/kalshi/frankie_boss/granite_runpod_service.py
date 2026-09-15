@@ -26,7 +26,7 @@ ADMISSION_FIELDS = {'request_sha256', 'input_tokens', 'output_tokens', 'context'
 class RunpodConfig:
     pod_id: str
     served_model_name: str
-    request_timeout: float
+    request_timeout: float | None
     runtime_sha256: str
     context: int = 4096
 
@@ -35,7 +35,7 @@ class RunpodConfig:
             raise ValueError('explicit DNS-compatible approved Pod ID required')
         if type(self.served_model_name) is not str or not re.fullmatch('[A-Za-z0-9_.-]{1,100}', self.served_model_name):
             raise ValueError('explicit served model required')
-        if (type(self.request_timeout) not in (int, float)
+        if self.request_timeout is not None and (type(self.request_timeout) not in (int, float)
                 or not math.isfinite(self.request_timeout) or not 0 < self.request_timeout <= 80):
             raise ValueError('request timeout must be positive and at most 80 seconds')
         if type(self.context) is not int or self.context != 4096:
@@ -45,7 +45,8 @@ class RunpodConfig:
 
     @property
     def config_hash(self):
-        return _hash(dict(schema='GRANITE_RUNPOD_SERVICE_V1', **asdict(self),
+        schema = 'GRANITE_RUNPOD_SERVICE_V1' if self.request_timeout is not None else 'GRANITE_RUNPOD_OPEN_ENDED_V1'
+        return _hash(dict(schema=schema, **asdict(self),
             prompt_mode='exact_user_text', enable_thinking=False, stream=False,
             max_request_bytes=MAX_REQUEST, max_response_bytes=MAX_RESPONSE, total_max_attempts=1))
 
@@ -156,7 +157,7 @@ class RunpodShadowService:
             if (identity.thinking or identity.quantization != 'none' or identity.weights_sha is not None
                     or identity.max_tokens > 1200):
                 raise ValueError('identity differs from pinned proxy/runtime capabilities')
-            if type(api_key) is not str or not re.fullmatch('[A-Za-z0-9_-]{32,256}', api_key):
+            if not (getattr(self,'_recovery_only',False) and api_key is None) and (type(api_key) is not str or not re.fullmatch('[A-Za-z0-9_-]{32,256}', api_key)):
                 raise ValueError('private proxy credential required')
             if not callable(admit_request) or not callable(exchange) or (event is not None and not callable(event)):
                 raise ValueError('per-request admission and transport callbacks required')
@@ -290,6 +291,12 @@ class RunpodShadowService:
 
 
 def build_runpod_service(*, enabled=False, config=None, identity=None, api_key=None,
-                         runtime_receipt=None, admit_request=None, exchange=None, event=None):
+                         runtime_receipt=None, admit_request=None, exchange=None, event=None, spool_directory=None, recovery_only=False):
+    if enabled and type(config) is RunpodConfig and config.request_timeout is None:
+        from .granite_open_ended_service import OpenEndedRunpodService, https_exchange_open_ended
+        return OpenEndedRunpodService(enabled,config,identity,api_key,runtime_receipt,admit_request,
+            exchange or https_exchange_open_ended,event,spool_directory=spool_directory,recovery_only=recovery_only)
+    if spool_directory is not None or recovery_only:
+        raise ValueError('durable spool requires explicit open-ended service mode')
     return RunpodShadowService(enabled, config, identity, api_key, runtime_receipt,
                               admit_request, exchange or https_exchange, event)

@@ -30,6 +30,7 @@ INFO_SHA256 = 'c6c151ddc5ad252a04c34a533e8bc4d9f46c24778372c9bb84f34e748832020a'
 PRIOR_RUN = '34928264918'
 REQUEST_BUCKET = 'bento-568968024170-us-east-2-an'
 REQUEST_PREFIX = 'nymex/ng_mbo_5y_v0/frankie/boss_requests/'
+OPEN_BOOTSTRAP_DIRECTORY = '/opt/ml/additional-model-data-sources/bootstrap-open-run-v1'
 
 
 def save(name, value):
@@ -51,7 +52,7 @@ def request_digest():
     digest = os.environ.get('REQUEST_SHA256', '')
     if not digest:
         value = artifacts.strict_json(Path('.github/frankie-retained-lease-request.json').read_bytes())
-        if set(value) != {'request_sha256'}:
+        if set(value) != {'request_sha256', 'local_ready'}:
             raise ValueError('explicit exact request digest required')
         digest = value['request_sha256']
     if type(digest) is not str or not re.fullmatch('[0-9a-f]{64}', digest):
@@ -98,7 +99,7 @@ def watchdog_identity():
         raise ValueError('actual independent watchdog job is not running')
     job = jobs[0]
     started = datetime.fromisoformat(job['started_at'].replace('Z', '+00:00')).timestamp()
-    return dict(run_id=run_id, job_id=str(job['id']), job_deadline=started+45*60)
+    return dict(run_id=run_id, job_id=str(job['id']), job_deadline=started+360*60)
 
 
 def keep_startup_frame(records, frame, lease):
@@ -112,6 +113,14 @@ def keep_startup_frame(records, frame, lease):
     line = frame.get('line', '')
     if not isinstance(line, str):
         return
+    if line.startswith('GRANITE_PROGRESS '):
+        progress = artifacts.strict_json(line[len('GRANITE_PROGRESS '):].encode())
+        if (progress.get('schema') == 'GRANITE_PROGRESS_V1'
+                and progress.get('correlation_id') == '4e2ecee03d7b2bb77da16180aba4f98d'
+                and progress.get('role') in ('bootstrap', 'stage', 'verify')):
+            fields = ('role', 'phase', 'file_processed_bytes', 'bytes_present', 'verified_file_count')
+            records.setdefault('progress', {})[progress['role']] = {key: progress[key] for key in fields}
+            records['progress_event_at'] = stamp.timestamp()
     for prefix, key in [('GRANITE_RUNPOD_STARTUP ', 'startup'), ('GRANITE_DISK ', 'disk')]:
         if line.startswith(prefix):
             records[key] = artifacts.strict_json(line[len(prefix):].encode())
@@ -146,117 +155,211 @@ def fresh_startup(api, lease):
     return records
 
 
-def prepare(journal, api, info, manifest):
-    if os.environ.get('GITHUB_RUN_ATTEMPT') != '1':
-        raise ValueError('interrupted start requires explicit recovery, not a rerun')
+def request_inputs():
     digest = request_digest()
+    if os.environ.get('LOCAL_READY_JSON'):
+        witness = json.loads(os.environ['LOCAL_READY_JSON'])
+    else:
+        marker = artifacts.strict_json(Path('.github/frankie-retained-lease-request.json').read_bytes())
+        witness = marker['local_ready']
+    return digest, witness
+
+
+def observer_handoff(phase):
+    save('observer-handoff.json', dict(status='observer_handoff_required', phase=phase,
+        pod_id=lifecycle.POD_ID, at=time.time(), pod_stop_requested=False,
+        reason='GitHub hosted observer limit; not a startup or runtime deadline'))
+
+
+def validate_runtime_or_fail(records, manifest):
+    try:
+        cloud.validate_runtime(records, dict(model_manifest_sha256=artifacts.manifest_digest(manifest)))
+        pin = artifacts.strict_json((OUT/'startup-bootstrap-pin.json').read_bytes())
+        actual = records['startup']
+        if (actual.get('lifetime_seconds', 'missing') is not None
+                or actual.get('bootstrap_bundle_sha256') != pin['bundle_sha256']
+                or actual.get('supervisor_command_sha256') != pin['supervisor_command_sha256']):
+            raise ValueError('actual open bootstrap differs from the pinned candidate')
+    except ValueError:
+        save('confirmed-fatal.json', dict(reason='verified_runtime_or_model_integrity_failure'))
+        raise
+
+
+def prepare(journal, api, info, manifest):
+    digest, witness = request_inputs()
     body = read_object(journal, REQUEST_BUCKET, REQUEST_PREFIX+digest+'.json', MAX_REQUEST_BYTES)
     if hashlib.sha256(body).hexdigest() != digest:
         raise ValueError('actual staged request differs from its trusted digest')
     admit = tokenizer(journal, manifest)
-    admission = admit(body)  # Actual full request, before any lease or paid start.
-    lease = lifecycle.make_lease(info, start=time.time(), duration_seconds=1800, request_sha256=digest)
-    journal.put('retained-lease.json', lease, once=True)
+    admission = admit(body)
+    rows = []
+    for name in cloud.package.FILES:
+        raw = (Path(__file__).parent/name).read_bytes()
+        if name.endswith('.py') and b'\r\n' in raw:
+            raise ValueError('committed LF bootstrap source required')
+        rows.append(dict(path=name, size=len(raw), sha256=hashlib.sha256(raw).hexdigest()))
+    bundle_hash = hashlib.sha256(artifacts.canonical(dict(schema='GRANITE_RUNPOD_BUNDLE_V1', files=rows))).hexdigest()
+    pod = retained._owned(api.request('GET', '/v2/pods/'+lifecycle.POD_ID), info['intent'], lifecycle.POD_ID)
+    environment = pod['env']
+    command_hash = hashlib.sha256(environment.get('SUPERVISOR_PROGRAM__APP_COMMAND', '').encode()).hexdigest()
+    expected_command = cloud.bootstrap_command(rows, bundle_hash, journal.bucket,
+        directory=OPEN_BOOTSTRAP_DIRECTORY, open_ended=True)
+    if (environment.get('RUNPOD_GRANITE_LIFETIME_SECONDS') != 'none'
+            or environment.get('RUNPOD_BUNDLE_SHA256') != bundle_hash
+            or environment.get('RUNPOD_SUPERVISOR_COMMAND_SHA256') != command_hash
+            or command_hash != hashlib.sha256(expected_command.encode()).hexdigest()):
+        raise ValueError('retained Pod needs the reviewed open bootstrap rollout before start')
+    save('startup-bootstrap-pin.json', dict(bundle_sha256=bundle_hash,
+                                           supervisor_command_sha256=command_hash))
+    startup = journal.get('retained-startup.json')
+    if startup is None:
+        startup = lifecycle.make_startup(info, start=time.time(), request_sha256=digest, local_ready=witness)
+        journal.put('retained-startup.json', startup, once=True)
+    lifecycle.check_startup(startup, info)
+    if startup['request_sha256'] != digest or startup['local_ready'] != witness:
+        raise ValueError('observer request/local-host admission differs from initial start')
     save('pod-info.json', info)
-    save('lease.json', lease)
-    expected_watchdog = watchdog_identity()
-    for _ in range(12):
-        arm = journal.get('retained-armed.json')
-        if arm and arm.get('watchdog_identity') == expected_watchdog:
+    save('startup-intent.json', startup)
+    identity = watchdog_identity()
+    observer_end = identity['job_deadline']-120
+    while time.time() < observer_end:
+        arm = journal.get('retained-observer.json')
+        if arm and arm.get('watchdog_identity') == identity and 0 <= time.time()-arm.get('at', 0) <= 20:
             break
         time.sleep(3)
     else:
-        raise ValueError('independent watchdog did not arm')
-    started = lifecycle.resume_once(api, journal, info, manifest, lease, now=time.time(),
-        request_body=body, tokenizer_admission=admit, expected_watchdog_identity=expected_watchdog)
-    save('start.json', started)
-    if started['status'] != 'start_submitted':
-        raise ValueError('recover the previous start using its retained evidence')
+        observer_handoff('awaiting_independent_observer')
+        return
+    result = lifecycle.start_once(api, journal, info, manifest, startup, now=time.time(),
+        request_body=body, tokenizer_admission=admit, expected_watchdog_identity=identity)
+    save('start.json', result)
     records = {}
-    while time.time() < lease['deadline']-180:
-        records.update(fresh_startup(api, lease))
-        if {'startup', 'disk'} <= set(records):
-            cloud.validate_runtime(records, dict(model_manifest_sha256=artifacts.manifest_digest(manifest)))
-            pod = retained._owned(api.request('GET', '/v2/pods/'+lifecycle.POD_ID), info['intent'], lifecycle.POD_ID)
-            key = pod['env']['RUNPOD_GRANITE_API_KEY']  # memory only; never written or printed
-            observed = time.time()
-            try:
+    previous_progress = None
+    while time.time() < observer_end:
+        try:
+            records.update(fresh_startup(api, startup))
+            current_progress = records.get('progress')
+            save('startup-progress.json', dict(at=time.time(),
+                milestones=sorted(records), progress_evidence='provider startup/disk milestones and per-role file counters',
+                actual_counters=current_progress,
+                counters_changed=current_progress is not None and current_progress != previous_progress,
+                responsive_health_is_not_progress=True))
+            previous_progress = current_progress
+            if {'startup', 'disk'} <= set(records):
+                validate_runtime_or_fail(records, manifest)
+                pod = retained._owned(api.request('GET', '/v2/pods/'+lifecycle.POD_ID), info['intent'], lifecycle.POD_ID)
+                key = pod['env']['RUNPOD_GRANITE_API_KEY']
+                observed = time.time()
                 status, health = https_exchange(lifecycle.POD_ID, 'GET', '/health', b'', key, 10)
-            except (TimeoutError, OSError):
-                status, health = None, None
-            if status == 200 and health == b'{"status":"ok"}':
-                runtime = dict(outcome='service_ready', pod_id=lifecycle.POD_ID, model='granite42-smoke',
-                    ready_at=time.time(), deadline=lease['deadline'], runtime=records,
-                    startup_event_at=records['startup_event_at'],
-                    startup_event_time_basis='Runpod v2 container SSE event ts',
-                    health=dict(method='GET', path='/health', status=200, observed_at=observed), inference_sent=False)
-                runtime_hash = hashlib.sha256(artifacts.canonical(runtime)).hexdigest()
-                bindings = lifecycle.verified_service_inputs(info, manifest, lease, runtime_receipt=runtime,
-                    expected_runtime_sha256=runtime_hash, tokenizer_admission=admit,
-                    output_tokens=admission['output_tokens'])
-                journal.put('service-ready.json', runtime, once=True)
-                save('service-ready.json', runtime)
-                save('service-pins.json', dict(runtime_sha256=runtime_hash,
-                    config_hash=bindings['config'].config_hash, identity_hash=bindings['identity'].identity_hash,
-                    request_sha256=digest, admission=admission))
-                save('pod-info.json', info)
-                return
+                if status == 200 and health == b'{"status":"ok"}':
+                    run = lifecycle.make_run(info, startup, ready_at=observed)
+                    runtime = dict(outcome='service_ready', pod_id=lifecycle.POD_ID, model='granite42-smoke',
+                        ready_at=time.time(), deadline=None, runtime=records,
+                        startup_event_at=records['startup_event_at'],
+                        startup_event_time_basis='Runpod v2 container SSE event ts',
+                        startup_intent_sha256=lifecycle.check_startup(startup, info),
+                        monitor_identity=identity, health=dict(method='GET', path='/health', status=200, observed_at=observed),
+                        inference_sent=False)
+                    # Re-observing an existing ready run preserves its identity;
+                    # there is no new start, execution budget, or inference.
+                    prior = journal.get('service-ready.json')
+                    prior_run = journal.get('retained-run.json')
+                    if prior is not None:
+                        runtime, run = prior, prior_run
+                    elif prior_run is not None:
+                        run = prior_run
+                    runtime_hash = hashlib.sha256(artifacts.canonical(runtime)).hexdigest()
+                    bindings = lifecycle.verified_service_inputs(info, manifest, run, runtime_receipt=runtime,
+                        expected_runtime_sha256=runtime_hash, tokenizer_admission=admit,
+                        output_tokens=admission['output_tokens'], startup_intent=startup)
+                    if prior is None:
+                        if prior_run is None:
+                            journal.put('retained-run.json', run, once=True)
+                        journal.put('service-ready.json', runtime, once=True)
+                    save('run.json', run)
+                    save('observer.json', journal.get('retained-observer.json'))
+                    save('service-ready.json', runtime)
+                    save('service-pins.json', dict(runtime_sha256=runtime_hash,
+                        config_hash=bindings['config'].config_hash, identity_hash=bindings['identity'].identity_hash,
+                        request_sha256=digest, admission=admission))
+                    return
+        except (TimeoutError, OSError) as error:
+            save('startup-attention.json', dict(at=time.time(), error_type=type(error).__name__,
+                status='observation_unavailable', pod_stop_requested=False))
         time.sleep(5)
-    raise TimeoutError('retained startup did not finish within this bounded lease')
+    observer_handoff('startup_or_readiness')
 
 
 def watchdog(journal, api, info):
-    started = time.time()
-    lease = None
-    while time.time()-started < 600:
-        lease = journal.get('retained-lease.json')
-        if lease:
-            break
-        time.sleep(3)
-    if lease is None:
-        save('watchdog.json', dict(status='no_lease_no_start'))
-        return
-    lifecycle._check(lease, info)
-    save('pod-info.json', info)
-    save('lease.json', lease)
     identity = watchdog_identity()
-    while time.time() <= lease['deadline']+30:
+    startup = None
+    last_ready_hash = None
+    while time.time() < identity['job_deadline']-120:
         try:
-            result = lifecycle.watchdog_tick(api, journal, info, lease, now=time.time(), watchdog_identity=identity)
-            save('watchdog.json', result)
-            if result.get('status') == 'confirmed_stopped':
-                return
-            if journal.get('service-ready.json'):
+            startup = journal.get('retained-startup.json')
+            if startup:
+                digest = lifecycle.check_startup(startup, info)
+                save('pod-info.json', info)
+                save('startup-intent.json', startup)
+                journal.put('retained-observer.json', dict(startup_sha256=digest,
+                    at=time.time(), watchdog_identity=identity))
+                if journal.get('retained-finished.json') == {'startup_sha256': digest}:
+                    result = retained.stop_owned_once(api, info['intent'], lifecycle.POD_ID)
+                    save('completion-cleanup.json', result)
+                    if result['status'] == 'confirmed_stopped':
+                        return
+                ready = journal.get('service-ready.json')
+                ready_hash = hashlib.sha256(artifacts.canonical(ready)).hexdigest() if ready else None
+                new_ready = ready_hash is not None and ready_hash != last_ready_hash
+                last_ready_hash = ready_hash
                 pod = retained._owned(api.request('GET', '/v2/pods/'+lifecycle.POD_ID), info['intent'], lifecycle.POD_ID)
-                if pod['status'] == 'EXITED':
-                    journal.put('retained-finished.json', dict(lease_sha256=lifecycle._check(lease, info)))
+                result = dict(at=time.time(), pod_status=pod['status'],
+                    status='observing', startup_verified=bool(ready),
+                    actual_progress='service_readiness_completed' if new_ready else 'no_new_verified_milestone',
+                    progress_assessment='milestone_advanced' if new_ready else 'progress_unknown_attention_if_persistent',
+                    elapsed_time_stop=False, responsive_health_is_not_progress=True,
+                    watchdog_identity=identity)
+                if ready and pod['status'] != 'EXITED':
+                    try:
+                        health_status, health_body = https_exchange(lifecycle.POD_ID, 'GET', '/health', b'',
+                            pod['env']['RUNPOD_GRANITE_API_KEY'], 10)
+                        result['health_responsive'] = health_status == 200 and health_body == b'{"status":"ok"}'
+                    except (TimeoutError, OSError):
+                        result['health_responsive'] = None
+                if pod['status'] == 'EXITED' and ready:
+                    result['status'] = 'confirmed_stopped'
+                save('watchdog.json', result)
+                if result['status'] == 'confirmed_stopped':
+                    return
         except Exception as error:
-            # Cached lease/ownership survive S3 outages. Deadline ticks stop via
-            # Runpod directly; a failed arm never authorizes a new start.
-            save('watchdog-transient.json', dict(error_type=type(error).__name__, at=time.time()))
+            save('watchdog-attention.json', dict(error_type=type(error).__name__, at=time.time(),
+                status='observation_unavailable', pod_stop_requested=False))
         time.sleep(10)
-    raise TimeoutError('retained stop not confirmed by watchdog deadline')
+    observer_handoff('monitoring')
 
 
 def hold(journal, api, info):
-    lease = journal.get('retained-lease.json')
-    while lease and time.time() < lease['deadline']-120:
-        pod = retained._owned(api.request('GET', '/v2/pods/'+lifecycle.POD_ID), info['intent'], lifecycle.POD_ID)
-        if pod['status'] == 'EXITED':
-            return
+    if not (OUT/'run.json').exists():
+        return  # Startup observer handoff; no automatic stop.
+    identity = watchdog_identity()
+    while time.time() < identity['job_deadline']-120:
+        try:
+            pod = retained._owned(api.request('GET', '/v2/pods/'+lifecycle.POD_ID), info['intent'], lifecycle.POD_ID)
+            if pod['status'] == 'EXITED':
+                return
+        except (TimeoutError, OSError):
+            pass
         time.sleep(10)
+    observer_handoff('ready_run')
 
 
 def cleanup(api):
-    # Each independent job caches these BEFORE it can authorize/start compute.
-    # Cleanup deliberately has no S3 dependency, including client construction.
-    if not (OUT/'lease.json').exists():
+    # Elapsed time, absent progress, and observer exhaustion are NOT stop reasons.
+    if not (OUT/'confirmed-fatal.json').exists():
         return
     info = artifacts.strict_json((OUT/'pod-info.json').read_bytes())
     if hashlib.sha256(artifacts.canonical(info)).hexdigest() != INFO_SHA256:
         raise ValueError('cached retained ownership receipt changed')
-    lease = artifacts.strict_json((OUT/'lease.json').read_bytes())
-    lifecycle._check(lease, info)
     result = retained.stop_owned_once(api, info['intent'], lifecycle.POD_ID)
     save('cleanup.json', result)
     if result['status'] != 'confirmed_stopped':
@@ -271,15 +374,23 @@ def main():
         return
     journal = cloud.Journal()
     info = info_from_journal(journal)
+    # Request-specific journal survives observer job replacement. A prior start
+    # intent always selects observation; it can never submit a second start.
+    journal.prefix = 'retained-granite/'+request_digest()+'/'
     manifest = artifacts.strict_json(artifacts.DEFAULT_MANIFEST.read_bytes())
-    if role == 'prepare':
-        prepare(journal, api, info, manifest)
-    elif role == 'watchdog':
-        watchdog(journal, api, info)
-    elif role == 'hold':
-        hold(journal, api, info)
-    else:
-        raise ValueError('unknown retained host role')
+    try:
+        if role == 'prepare':
+            prepare(journal, api, info, manifest)
+        elif role == 'watchdog':
+            watchdog(journal, api, info)
+        elif role == 'hold':
+            hold(journal, api, info)
+        else:
+            raise ValueError('unknown retained host role')
+    except ValueError:
+        # Only validate_runtime_or_fail marks confirmed fatal model/runtime
+        # evidence. Observer identity/configuration errors preserve the Pod.
+        raise
 
 
 if __name__ == '__main__':

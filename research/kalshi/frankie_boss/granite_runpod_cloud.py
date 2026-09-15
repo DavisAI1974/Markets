@@ -113,8 +113,10 @@ print('GRANITE_DISK '+json.dumps({{'free_bytes':free,'required_bytes':2259297051
     return 'python3 -c ' + shlex.quote('exec(bytes.fromhex(' + repr(code.encode().hex()) + ').decode())')
 
 
-def bootstrap_command(rows, bundle_sha, bucket, directory=package.ROOT):
+def bootstrap_command(rows, bundle_sha, bucket, directory=package.ROOT, *, open_ended=False):
     """Private AWS downloads followed by the unchanged pre-import verifier."""
+    if type(open_ended) is not bool:
+        raise ValueError('explicit bootstrap runtime mode required')
     roster = rows + [{'path': 'runpod_bundle.json', 'size': None, 'sha256': bundle_sha}]
     prefix = f'''import hashlib,http.client,json,os,pathlib,shutil,signal,urllib.parse
 p=pathlib.Path({directory!r})
@@ -126,7 +128,7 @@ rows={roster!r}
 if set(urls)!={{row['path'] for row in rows}}: raise SystemExit('bootstrap URL roster differs')
 def expired(*args): raise TimeoutError('bootstrap download deadline')
 signal.signal(signal.SIGALRM,expired)
-signal.alarm(60)
+signal.alarm({0 if open_ended else 60})
 for row in rows:
  target=p/row['path']
  if target.is_symlink(): raise SystemExit('bootstrap symlink refused')

@@ -83,7 +83,7 @@ class ShadowRequest:
     snapshot_text: str
     snapshot_hash: str
     prompt_text: str
-    timeout_seconds: float
+    timeout_seconds: float | None
 
     @property
     def request_hash(self) -> str:
@@ -103,6 +103,10 @@ class ShadowReceipt:
     status: str
     response: ShadowResponse | None = None
     verdict: str | None = None
+
+
+class PendingTransport(RuntimeError):
+    """Dispatched work has no recoverable outcome yet; do not record a verdict."""
 
 
 def _discard(task: asyncio.Task) -> None:
@@ -174,6 +178,8 @@ async def _serve_request(request, snapshot, transport, scorer):
             return ShadowReceipt(request, 'timeout')
         try:
             response = task.result()
+        except PendingTransport:
+            raise
         except asyncio.CancelledError:
             return ShadowReceipt(request, 'transport_error')
         except Exception:
