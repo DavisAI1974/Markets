@@ -1,4 +1,4 @@
-name: Prepare preserved Frankie source mapping
+name: Prepare full Frankie source mapping and BOSS journal
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ permissions:
 jobs:
   map-preserved-source:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -46,6 +46,19 @@ jobs:
           echo 'FRANKIE_MAPPING_PHASE member_gzip_download'
           aws s3 cp s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1/ledgers/exact_member_rows.jsonl.gz \
             "$RUNNER_TEMP/frankie-mapping-input/exact_member_rows.jsonl.gz"
+          prefix=s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1
+          for name in exact_lifecycle_rows legacy_observable_rows; do
+            aws s3 cp "$prefix/ledgers/$name.jsonl.gz" "$RUNNER_TEMP/frankie-mapping-input/$name.jsonl.gz" --only-show-errors
+          done
+          aws s3 cp "$prefix/calculation_result.json" "$RUNNER_TEMP/frankie-mapping-input/calculation_result.json" --only-show-errors
+      - name: Retain compressed full delivery for the actual local Frankie receiver
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: frankie-full-delivery-${{ github.run_id }}
+          path: ${{ runner.temp }}/frankie-mapping-input/
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
       - name: Verify all preserved source bytes and stream the full member mapping
         shell: bash
         run: |
@@ -125,4 +138,86 @@ jobs:
             ${{ runner.temp }}/frankie-mapping-artifacts/mapping/mapping.json
             ${{ runner.temp }}/frankie-mapping-artifacts/mapping/index.jsonl
           if-no-files-found: error
+          retention-days: 7
+      - name: Build the complete BOSS source journal in the identical extraction runtime
+        timeout-minutes: 20
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u - <<'PY'
+          import hashlib, json, os, shutil, threading, time
+          from dataclasses import asdict
+          from pathlib import Path
+          from research.kalshi.frankie_boss import mbo_source, selected_source_scope
+          from research.kalshi.frankie_boss.c15_journal import canonical_bytes, pack
+          root = Path(os.environ['RUNNER_TEMP'])
+          mapped = root/'frankie-mapping-artifacts'
+          artifacts = root/'boss-source-artifacts'
+          artifacts.mkdir()
+          runtime = json.loads((mapped/'runtime-bootstrap.json').read_bytes())
+          pin = mbo_source.MboSourcePin(**runtime['extraction_pin'])
+          if mbo_source.runtime_hash() != pin.runtime_hash:
+              raise SystemExit('extraction runtime changed since full mapping')
+          manifest = selected_source_scope.source_manifest()
+          scope = selected_source_scope.source_scope(manifest, expected_manifest_hash=manifest['manifest_hash'])
+          source = root/'frankie-mapping-input'/scope.members[0].member_key
+          def save(name, value):
+              (artifacts/name).write_bytes(canonical_bytes(pack(value)))
+          save('source-manifest.c15.json', manifest)
+          save('scope.c15.json', scope.public_dict())
+          save('ingestion-intent.c15.json', dict(schema='BOSS_SOURCE_INGESTION_INTENT_V1',
+              source_manifest_hash=manifest['manifest_hash'], extraction_hash=pin.digest,
+              mapping_sha256=hashlib.sha256((mapped/'mapping/mapping.json').read_bytes()).hexdigest(),
+              runtime_bootstrap_sha256=hashlib.sha256((mapped/'runtime-bootstrap.json').read_bytes()).hexdigest(),
+              git_commit=os.environ['GITHUB_SHA'], workflow_run_id=os.environ['GITHUB_RUN_ID'],
+              free_bytes=shutil.disk_usage(root).free, model_inference=False))
+          lock, stop = threading.Lock(), threading.Event()
+          started = advanced = time.monotonic()
+          latest = dict(phase='ingestion_preparation', records=0, total_records=57027)
+          def report(value):
+              line = json.dumps(value, sort_keys=True)
+              with (artifacts/'progress.jsonl').open('a') as handle:
+                  handle.write(line+'\n')
+              print('BOSS_SOURCE_PROGRESS '+line, flush=True)
+          def progress(value):
+              global advanced
+              with lock:
+                  latest.update(value)
+                  advanced = time.monotonic()
+                  report(latest)
+          def heartbeat():
+              while not stop.wait(15):
+                  with lock:
+                      report(dict(latest, elapsed_seconds=time.monotonic()-started,
+                          seconds_since_progress=time.monotonic()-advanced,
+                          possible_stall=time.monotonic()-advanced >= 60))
+          worker = threading.Thread(target=heartbeat, daemon=True)
+          worker.start()
+          try:
+              result = mbo_source.ingest_sources(scope, (source,), artifacts/'source.sqlite', pin,
+                  expected_scope_hash=scope.genesis_hash(), session_ids=('supplied-source',), event=progress)
+              save('builder-checkpoint.c15.json', result.checkpoint)
+              save('completion.c15.json', asdict(result.completion))
+              receipt = dict(schema='BOSS_FULL_SOURCE_SAVED_V1', extraction_hash=result.extraction_hash,
+                  scope_hash=scope.genesis_hash(), source_manifest_hash=manifest['manifest_hash'],
+                  journal_checkpoint=dict(count=result.completion.journal_count, head_hash=result.completion.journal_hash),
+                  record_count=result.completion.record_count, group_count=result.completion.group_count,
+                  source_prefix_hash=result.completion.source_prefix_hash, principal_execution=False,
+                  model_training=False, mapping_bound=False)
+              (artifacts/'saved-source.json').write_text(json.dumps(receipt, sort_keys=True)+'\n')
+              progress(dict(phase='complete', records=result.completion.record_count, total_records=57027))
+          except BaseException as error:
+              progress(dict(phase='failed', error_type=type(error).__name__))
+              raise
+          finally:
+              stop.set()
+              worker.join()
+          PY
+      - name: Preserve complete source journal and checkpoints including interrupted evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: boss-full-source-journal-${{ github.run_id }}
+          path: ${{ runner.temp }}/boss-source-artifacts/
+          if-no-files-found: warn
           retention-days: 7

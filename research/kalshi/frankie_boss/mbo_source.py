@@ -189,7 +189,7 @@ def _records(stream, pin, ts_out, dbn):
 
 
 def ingest_sources(scope, paths, journal_path, pin, *, expected_scope_hash,
-                   session_ids, raw_symbol=None):
+                   session_ids, raw_symbol=None, event=None):
     """Ingest verified complete local sources and return a restorable C15 result.
 
     This creates a new journal. Errors retain that journal; never truncate or
@@ -209,12 +209,23 @@ def ingest_sources(scope, paths, journal_path, pin, *, expected_scope_hash,
         driver = SourceConformanceDriver(scope, journal_path, expected_scope_hash=expected_scope_hash)
         stack.callback(driver.close)
         cursor = 0
+        total = sum(member.mbo_records for member in scope.members)
+        if event is not None:
+            event(dict(phase='ingestion', records=0, total_records=total))
         for index, (stream, (_, ts_out), session) in enumerate(zip(streams, metadata, session_ids)):
             for raw in _records(stream, pin, ts_out, dbn):
                 driver.append(raw, cursor=cursor, source_member_index=index,
                     source_sha256=scope.members[index].sha256, session_id=session,
                     raw_symbol=raw_symbol, source_dbn_object=str(paths[index]))
                 cursor += 1
+                if event is not None and (cursor % 1000 == 0 or cursor == total):
+                    event(dict(phase='ingestion', records=cursor, total_records=total))
+        if event is not None:
+            event(dict(phase='source_verification', records=cursor, total_records=total))
         completion = driver.complete()
-        return MboIngestion(completion, pin.digest, tuple(raw for raw, _ in metadata),
-                            driver.checkpoint())
+        result = MboIngestion(completion, pin.digest, tuple(raw for raw, _ in metadata),
+                              driver.checkpoint())
+        if event is not None:
+            event(dict(phase='source_saved', records=cursor, total_records=total,
+                journal_hash=completion.journal_hash))
+        return result

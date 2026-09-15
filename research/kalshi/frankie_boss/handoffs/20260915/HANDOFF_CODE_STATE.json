@@ -1,0 +1,101 @@
+{
+  "schema": "FRANKIE_BOSS_HANDOFF_CODE_STATE_V1",
+  "date": "2026-09-15",
+  "status": "saved_for_new_chat_actual_integration_unfinished",
+  "repository": "https://github.com/DavisAI1974/Markets",
+  "branch": "codex/full-frankie-boss-connection-20260915",
+  "commit": "a9e460ce139bbff5153d67cfc408985a9e47e885",
+  "remote_sha_verified": true,
+  "tracked_tree_clean": true,
+  "untracked_scratch": [
+    "work/"
+  ],
+  "scratch_preserved": true,
+  "module_sha256": {
+    "boss_training_checkpoint.py": "76320cf2f5250bfc17cff5ea0f0c3b78d3d28667dca57f6585c3e3d1f032e988",
+    "frankie_source_mapping.py": "f258b411628cd98daf66f2d0a1505bd751ad501cfac0779fee334e8a27546d4e",
+    "native_forecast_learning.py": "a69b5ce892f398798dafabf50c52f853be49055cad60afc600773ceb45770ac9"
+  },
+  "completed_agent_work": true,
+  "pending_background_agent_work": false,
+  "mapping_workflow": "prepared_manual_dispatch_only_not_executed",
+  "full_source_mapping_executed": false,
+  "actual_source_journal_ingested": false,
+  "actual_principal_handoff_completed": false,
+  "saved_cycle_coordinator_implemented": false,
+  "native_learning_callback_implemented": true,
+  "atomic_training_state_implemented": true,
+  "full_sunday_run_started": false,
+  "actual_model_training_started": false,
+  "live_compute_started_this_continuation": false,
+  "retained_pod": {
+    "id": "jvs75m56w8f73q",
+    "last_observed_status": "EXITED",
+    "cleanup_status": "confirmed_stopped",
+    "data_retained": true,
+    "mount": "/opt/ml",
+    "observation_note": "Prior verified operational readback; no new Pod API call during documentation handoff."
+  },
+  "tests": [
+    {
+      "component": "source_mapping",
+      "passed": 11,
+      "seconds": 4.36,
+      "evidence": "agent reported actual focused test command; synthetic fixtures"
+    },
+    {
+      "component": "source_mapping_progress_delta",
+      "passed": 3,
+      "seconds": 3.09,
+      "evidence": "only affected cases rerun after progress hook"
+    },
+    {
+      "component": "training_checkpoint_initial",
+      "passed": 10,
+      "seconds": 5.73,
+      "evidence": "synthetic CPU interrupted/resumed optimizer and exact state tests"
+    },
+    {
+      "component": "training_checkpoint_callback_receipt_delta",
+      "passed": 1,
+      "seconds": 4.97,
+      "evidence": "only new atomic callback-result save/restore/deduplication regression"
+    },
+    {
+      "component": "native_forecast_learning",
+      "passed": 9,
+      "seconds": 6.26,
+      "evidence": "new synthetic actual B1/decoder optimizer, causal/mask/QSV/packet checks"
+    }
+  ],
+  "test_scope_note": "Separate focused component runs, not a cumulative full-suite result or actual Sunday training. Passing historical baselines were not rerun.",
+  "reviews": {
+    "source_mapping": "independent scope review: no blocker for bounded Sunday source",
+    "native_learning": "independent scope review: no concrete defect; external attestation/ordering remain required",
+    "training_checkpoint": "root source review completed; atomic callback-result delta inspected"
+  },
+  "actual_sample": {
+    "records": 245,
+    "bytes_per_record": 56,
+    "all_matched": true,
+    "method": "normalized_fields_reencoded",
+    "full_source_coverage": false
+  },
+  "unresolved": [
+    "actual full source mapping",
+    "cross-host extraction runtime identity",
+    "actual Sunday source journal and selected scope",
+    "verified principal execution and feedback",
+    "durable completed-cycle coordinator and separate lesson persistence",
+    "actual per-stage probe callsites",
+    "full payload admission within verified Granite context",
+    "explicit operational training configuration and new bounded hosted lifecycle"
+  ],
+  "documentation": {
+    "handoff": "FRANKIE_BOSS_NEXT_CHAT_HANDOFF.md",
+    "current_plan": "tasks/plan.md",
+    "current_checklist": "tasks/todo.md",
+    "historical_plan_archive": "tasks/history-before-connection-handoff-20260915",
+    "markdown_updates_completed_after_handoff_and_drop_in": true
+  }
+}

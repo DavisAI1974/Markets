@@ -217,7 +217,8 @@ class SourceScope:
 
     `scope_id` is the caller's declared identity for the scope. For a
     RESULT_BEARING scope it must be the canonical manifest hash from
-    `raw_mbo_source_manifest`. For a PROBE_ONLY scope it is a
+    `raw_mbo_source_manifest` or the explicitly authorized independent source in
+    `selected_source_scope`. For a PROBE_ONLY scope it is a
     SourceScopeReceipt identity that references a pinned member of the
     canonical manifest. This module binds what it is given; it does not
     build manifests.
