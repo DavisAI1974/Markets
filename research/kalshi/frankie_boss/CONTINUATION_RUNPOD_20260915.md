@@ -1,5 +1,42 @@
 # Runpod preparation closeout — 2026-09-15
 
+## Later host-control completion
+
+Tested code `934ef5b7549c3e98c5eef7ae3e733054333d055f` adds a frozen-request tokenizer
+admission helper and a durable one-attempt host probe. **43 focused integrated
+tests passed in 5.71s**, separate from the earlier 640-test baseline below.
+Independent review approved both helpers and the standalone import regression.
+
+The actual saved tokenizer files and pinned versions measured 19 input tokens plus
+16 output allowance: 35 total within context 4096. The receipt SHA256 is
+`3af163e3732cc0fc586164a4f5981870dfdbadb0616393d64506fe5557b5ef7c`. No download or
+model inference occurred. A real-admission/fake-HTTP composition checked independent
+SQLite readback before POST and refusal of a second attempt without further I/O.
+This closes local tokenizer admission, not hosted-runtime equivalence or inference.
+
+The probe uses only an approved Pod's HTTPS proxy, bounds requests/responses, and
+commits a unique per-Pod attempt before inference. It preserves ambiguous outcomes
+and exposes no reset API. The operator must preserve the same journal and enforce
+actual resource identity. DNS/filesystem calls are not a hard process-return bound.
+
+Cleanup discovery: [Runpod PR 330](https://github.com/runpod/runpodctl/pull/330)
+removed stop-after/terminate-after because accepted deadlines were not enforced.
+The restoration PR 331 remained draft on inspection. The public REST v2 schema
+supports explicit termination, but no future scheduling field. An independent
+authorized watchdog and separate volume disposition remain required. No timer
+flag or application lifetime is a verified provider billing cutoff.
+
+After the user toggled the Runpod connection, a fresh runtime again loaded its
+list-Pods tool but failed with the same required-approval/policy-never error. The
+desktop still lacked the tool surface. Full desktop restart is the next activation
+step; resolving task approvals remains separate. No configuration policy changed,
+resource was created or hosted request was sent. Sunday remains held.
+
+The Pod bootstrap package below is unchanged. Host-control evidence is in the
+current task's outputs/runpod-granite-host-controls-20260915 directory.
+
+## Earlier Pod software preparation
+
 The existing SageMaker bootstrap now has a separately reviewed Runpod wrapper and
 authenticated allowlist proxy. The wrapper retains the pinned public image, model
 revision and file hashes, bounds staging and preparation in child processes, and
