@@ -98,6 +98,11 @@ def test_pinned_legacy_sunday_result_keeps_hash_mismatch_visible(tmp_path):
     assert integrity['declared_result_hash'] != integrity['recomputed_result_hash']
     with pytest.raises(boss.AttachmentError):
         boss._result_integrity(replace(request, expected_result_sha256='c' * 64), result, raw)
+    assert boss._delivery_run_binding(
+        'frankie-a-memory-rt-33746436209-1', '33746436209', integrity
+    ) == 'LEGACY_WORKFLOW_RUN_ID_EMBEDDED'
+    with pytest.raises(boss.AttachmentError):
+        boss._delivery_run_binding('other-run', '33746436209', integrity)
 
 
 @pytest.mark.parametrize('kind', ['manifest_pin', 'boss_commit', 'agent_commit', 'checkpoint', 'extra', 'changed', 'missing', 'directory', 'crosswalk', 'mapping'])

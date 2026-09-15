@@ -163,6 +163,17 @@ def _result_integrity(request: AttachmentRequest, result: Mapping[str, Any], raw
             'code_commit': LEGACY_SUNDAY_RESULT_COMMIT}
 
 
+def _delivery_run_binding(result_run_id: Any, delivery_run_id: Any,
+                          integrity: Mapping[str, Any]) -> str:
+    if result_run_id == delivery_run_id:
+        return 'EXACT_RUN_ID'
+    if (integrity.get('status') == 'PINNED_LEGACY_DECLARED_HASH_MISMATCH'
+            and isinstance(delivery_run_id, str) and delivery_run_id
+            and result_run_id == f'frankie-a-memory-rt-{delivery_run_id}-1'):
+        return 'LEGACY_WORKFLOW_RUN_ID_EMBEDDED'
+    raise AttachmentError('delivery run identity differs from calculation run')
+
+
 @dataclass(frozen=True)
 class VerifiedAttachment:
     files: tuple[tuple[str, bytes], ...]
@@ -295,7 +306,8 @@ def verify_attachment(request: AttachmentRequest, *, result_path, delivery_recei
                   'delivery_receipt_sha256': delivery['receipt_sha256'], 'result_hash': result['result_hash']}
         for name in ('source_manifest_hash', 'delivery_manifest_sha256', 'delivery_receipt_sha256', 'result_hash'):
             _digest(actual[name], name)
-        if not actual['run_id'] or actual['run_id'] != delivery['run_id'] or _bytes(binding['agent']) != _bytes(actual):
+        delivery_run_binding = _delivery_run_binding(actual['run_id'], delivery['run_id'], result_integrity)
+        if not actual['run_id'] or _bytes(binding['agent']) != _bytes(actual):
             raise AttachmentError('source-binding attestation differs from actual agent run/day/arm/source/delivery/result')
     except (ValueError, KeyError, TypeError) as exc:
         raise AttachmentError(f'agent evidence binding refused: {exc}') from exc
@@ -304,6 +316,7 @@ def verify_attachment(request: AttachmentRequest, *, result_path, delivery_recei
                'agent_commit': manifest['agent_commit'], 'controller_checkpoint': manifest['controller_checkpoint'],
                'native_checkpoint': manifest['native_checkpoint'], 'boss_source': source, 'agent': actual,
                'agent_result_integrity': result_integrity,
+               'delivery_run_binding': delivery_run_binding,
                'source_binding_sha256': request.expected_crosswalk_sha256,
                'mapping_status': 'CALLER_ATTESTED_WITH_BYTE_WITNESS', 'mapping_provenance': provenance}
     receipt['receipt_sha256'] = canonical_hash(receipt, omit='receipt_sha256')
