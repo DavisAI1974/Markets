@@ -1,0 +1,80 @@
+name: Granite cloud credential preflight
+
+# Credential checks only. No allocation, staging, or model/data access.
+on:
+  push:
+    branches: [codex/granite-runpod-preflight-20260915]
+    paths: [.github/workflows/granite_cloud_preflight.yml]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: granite-cloud-credential-preflight
+  cancel-in-progress: false
+
+jobs:
+  credentials:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Verify AWS authentication without reading stored data
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_MAX_ATTEMPTS: '1'
+          AWS_PAGER: ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$AWS_ACCESS_KEY_ID" || -z "$AWS_SECRET_ACCESS_KEY" ]]; then
+            echo '::error::AWS secret binding is incomplete.'
+            exit 1
+          fi
+          if ! timeout 45s aws sts get-caller-identity --cli-connect-timeout 10 --cli-read-timeout 20 >/dev/null 2>&1; then
+            echo '::error::AWS identity check failed; credential validity or runner connectivity needs attention.'
+            exit 1
+          fi
+          echo 'AWS authentication verified. No S3 objects were accessed.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify Runpod authentication with a read-only request
+        if: always()
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "$RUNPOD_API_KEY" ]]; then
+            echo '::error::Add RUNPOD_API_KEY to repository Actions secrets.'
+            exit 1
+          fi
+          timeout 45s python3 - <<'PY'
+          import http.client, json, os, sys
+          connection = http.client.HTTPSConnection('api.runpod.io', timeout=10)
+          try:
+              connection.request('GET', '/v2/pods', headers={
+                  'Authorization': 'Bearer ' + os.environ['RUNPOD_API_KEY'],
+                  'Accept': 'application/json',
+              })
+              response = connection.getresponse()
+              raw = response.read(65537)
+              if response.status != 200 or len(raw) > 65536:
+                  raise ValueError('read check rejected')
+              if not isinstance(json.loads(raw), (dict, list)):
+                  raise ValueError('unexpected response shape')
+          except Exception:
+              print('::error::Runpod read-only authentication check failed.')
+              sys.exit(1)
+          finally:
+              connection.close()
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('Runpod authenticated read succeeded. Termination permission remains untested.\n')
+          PY
+      - name: State scope
+        if: always()
+        shell: bash
+        run: |
+          echo 'Preflight only: no allocation, staging, inference, historical-data access, or cleanup performed.' >> "$GITHUB_STEP_SUMMARY"
+
