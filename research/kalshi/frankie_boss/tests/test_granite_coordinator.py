@@ -107,3 +107,16 @@ def test_cleanup_failure_is_retained_not_reported_as_success(tmp_path,monkeypatc
     with pytest.raises(TimeoutError):
         c.hosted_sequence(None,None,plan,manifest,tmp_path,lambda _:dict(integration_status='complete'),now=lambda:1001)
     assert a.strict_json((tmp_path/'cleanup-failure.json').read_bytes())['type']=='TimeoutError'
+
+
+def test_log_failure_retained_with_service_details_and_redaction(tmp_path):
+    class Failure(Exception):
+        response={'Error':{'Code':'ResourceNotFoundException','Message':'log group absent'},
+                  'ResponseMetadata':{'RequestId':'log-request'}}
+    class Logs:
+        def describe_log_streams(self,**kwargs):raise Failure('Bearer private-value')
+    with pytest.raises(Failure):c.RecordedLogs(Logs(),tmp_path).describe_log_streams(logGroupName='owned')
+    result=a.strict_json((tmp_path/'logs-00001.json').read_bytes())
+    assert result['failure']['response']['Error']['Message']=='log group absent'
+    assert result['failure']['response']['ResponseMetadata']['RequestId']=='log-request'
+    assert 'private-value' not in str(result)

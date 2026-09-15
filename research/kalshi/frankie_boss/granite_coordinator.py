@@ -63,7 +63,11 @@ def hosted_sequence(client, logs, plan, manifest, directory, invoke, *, now=time
     save(directory/'deployment-plan.json',plan)
     try:
         d.create_resources(client,plan,ledger,now=now)
-        save(directory/'ready-descriptors.json',d.wait_ready(client,plan,now=now,sleep=sleep))
+        poll=[0]
+        def retain_descriptor(event):
+            poll[0]+=1
+            save(directory/'startup-descriptors'/f'{poll[0]:05d}.json',event)
+        save(directory/'ready-descriptors.json',d.wait_ready(client,plan,now=now,sleep=sleep,observe=retain_descriptor))
         receipt=None
         deadline=min(plan['created_at_epoch']+20*60,plan['delete_deadline_epoch']-120)
         while receipt is None and now()<deadline:
@@ -78,18 +82,18 @@ def hosted_sequence(client, logs, plan, manifest, directory, invoke, *, now=time
         if result['integration_status']!='complete':raise ValueError('real controller returned incomplete integration; inspect retained evidence')
         return result
     except BaseException as exc:
-        save(directory/'failure.json',dict(type=type(exc).__name__,message=str(exc),traceback=traceback.format_exc()))
+        save(directory/'failure.json',{**d.failure_evidence(exc),'traceback':d.sanitize_diagnostic(traceback.format_exc())})
         raise
     finally:
         if logs is not None and ledger.exists():
             try:
                 d.startup_receipt(logs,plan)
             except Exception as exc:
-                save(directory/'final-log-error.json',dict(type=type(exc).__name__,message=str(exc)))
+                save(directory/'final-log-error.json',d.failure_evidence(exc))
         try:
             save(directory/'cleanup.json',d.cleanup_resources(client,plan,ledger,now=now,sleep=sleep))
         except BaseException as exc:
-            save(directory/'cleanup-failure.json',dict(type=type(exc).__name__,message=str(exc),traceback=traceback.format_exc()))
+            save(directory/'cleanup-failure.json',{**d.failure_evidence(exc),'traceback':d.sanitize_diagnostic(traceback.format_exc())})
             raise
 
 class RecordedLogs:
@@ -99,9 +103,15 @@ class RecordedLogs:
     def __getattr__(self,name):
         if name not in ('describe_log_streams','get_log_events'):raise AttributeError(name)
         def call(**kwargs):
-            result=getattr(self.client,name)(**kwargs)
             self.counter+=1
-            save(self.directory/f'logs-{self.counter:05d}.json',dict(operation=name,request=kwargs,response=result))
+            event=dict(operation=name,observed_at_epoch=time.time(),request=kwargs)
+            try:
+                result=getattr(self.client,name)(**kwargs)
+            except Exception as exc:
+                save(self.directory/f'logs-{self.counter:05d}.json',
+                     d.sanitize_diagnostic({**event,'failure':d.failure_evidence(exc)}))
+                raise
+            save(self.directory/f'logs-{self.counter:05d}.json',d.sanitize_diagnostic({**event,'response':result}))
             return result
         return call
 
@@ -194,7 +204,7 @@ def run(directory, run_id):
             token_count_matches=result['token_count_matches'],cleanup='confirmed',evidence_class=result['evidence_class']))
         print('Real hosted controller result retained; endpoint cleanup confirmed',flush=True)
     except BaseException as exc:
-        save(directory/'coordinator-failure.json',dict(type=type(exc).__name__,message=str(exc),traceback=traceback.format_exc()))
+        save(directory/'coordinator-failure.json',{**d.failure_evidence(exc),'traceback':d.sanitize_diagnostic(traceback.format_exc())})
         raise
     finally:
         if fixture is not None:fixture.close()
@@ -215,7 +225,7 @@ def cleanup(directory):
     try:
         if d.describe(cloud['sagemaker'],'endpoint',plan) is not None:
             try:d.startup_receipt(logs,plan)
-            except Exception as exc:save(directory/'cleanup-log-error.json',dict(type=type(exc).__name__,message=str(exc)))
+            except Exception as exc:save(directory/'cleanup-log-error.json',d.failure_evidence(exc))
     finally:
         save(directory/'independent-cleanup.json',d.cleanup_resources(cloud['sagemaker'],plan,path))
 

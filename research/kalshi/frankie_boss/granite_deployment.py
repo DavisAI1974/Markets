@@ -10,6 +10,32 @@ from pathlib import Path
 import re
 import time
 
+
+def sanitize_diagnostic(value):
+    """Redact credential fields and common credential syntax without truncation."""
+    sensitive = re.compile(r'authorization|cookie|password|secret|credential|api.?key|signature|(?:^|[_-])(?:access|refresh|session)?[_-]?token$', re.I)
+    if isinstance(value, dict):
+        return {k: '[REDACTED]' if sensitive.search(str(k)) or str(k).lower() in
+                ('accesstoken', 'refreshtoken', 'sessiontoken', 'nexttoken', 'nextforwardtoken', 'nextbackwardtoken')
+                else sanitize_diagnostic(v)
+                for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [sanitize_diagnostic(v) for v in value]
+    if isinstance(value, str):
+        value = re.sub(r'-----BEGIN [^-]*PRIVATE KEY-----.*?-----END [^-]*PRIVATE KEY-----',
+                       '[REDACTED PRIVATE KEY]', value, flags=re.S)
+        value = re.sub(r'(?i)\bBearer\s+[^\s,;]+', 'Bearer [REDACTED]', value)
+        value = re.sub(r'(?i)((?:[\w-]*(?:token|secret|password|credential|signature|api[_-]?key)[\w-]*)[\"\x27]?\s*[:=]\s*)(?:\"[^\"]*\"|\x27[^\x27]*\x27|[^\s&,;]+)',
+                       r'\1[REDACTED]', value)
+        return re.sub(r'\b(?:AKIA|ASIA)[A-Z0-9]{16}\b', '[REDACTED ACCESS KEY]', value)
+    return value
+
+
+def failure_evidence(exc):
+    """Preserve SDK service message/metadata as well as the local exception."""
+    return sanitize_diagnostic({'type': type(exc).__name__, 'message': str(exc),
+                                'response': getattr(exc, 'response', None)})
+
 try:
     from . import granite_run_artifacts as a, granite_startup as startup
 except ImportError:
@@ -145,10 +171,19 @@ def inspect_resources(client, plan):
     return results
 
 
-def wait_ready(client, plan, *, now=time.time, sleep=time.sleep):
+def wait_ready(client, plan, *, now=time.time, sleep=time.sleep, observe=None):
     deadline = min(plan['created_at_epoch'] + 20 * 60, plan['delete_deadline_epoch'])
     while now() < deadline:
-        observed = describe(client, 'endpoint', plan)
+        event = {'operation': 'describe_endpoint', 'observed_at_epoch': now(),
+                 'endpoint_name': plan['endpoint']['EndpointName']}
+        try:
+            observed = describe(client, 'endpoint', plan)
+        except Exception as exc:
+            if observe is not None:
+                observe({**event, 'failure': failure_evidence(exc)})
+            raise
+        if observe is not None:
+            observe(sanitize_diagnostic({**event, 'response': observed}))
         if observed is None:
             raise ValueError('endpoint absent during startup')
         check_description('endpoint', observed, plan)
@@ -191,7 +226,8 @@ def cleanup_resources(client, plan, ledger_path, *, now=time.time, sleep=time.sl
                 except Exception as exc:
                     # Reconcile a lost acknowledgement on the next read. Failures
                     # remain retained and never count as confirmed deletion.
-                    ledger.setdefault('delete_errors', []).append({'kind': kind, 'type': type(exc).__name__,
+                    ledger.setdefault('delete_errors', []).append({'kind': kind, 'observed_at_epoch': now(),
+                        **failure_evidence(exc),
                         'code': getattr(exc, 'response', {}).get('Error', {}).get('Code')})
                     a.save_receipt(path, ledger)
             sleep(5)

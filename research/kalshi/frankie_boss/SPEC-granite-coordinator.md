@@ -63,3 +63,22 @@ CI cleanup confirmed endpoint/configuration/model absence with status deleted.
 The ledger retains 119 transient DeleteEndpoint ValidationExceptions before
 confirmed removal. This is a failed hosted attempt with successful cleanup, not
 model acceptance. Retain/read better provisioning diagnostics before another run.
+
+## Startup diagnostics continuation
+
+Every startup poll now retains a numbered, timestamped endpoint descriptor before
+status/configuration validation, including Creating and Failed states and the
+service FailureReason. Polling errors retain SDK Error and ResponseMetadata.
+Cleanup deletion errors retain full sanitized service messages/request IDs in the
+ledger. CloudWatch page errors are retained individually, including a missing log
+group; successful pages are sanitized copies and runtime admission still consumes
+the original response. Coordinator exception files include sanitized tracebacks.
+Diagnostic redaction covers credential field names, bearer tokens, private keys,
+AWS access-key IDs and common credential assignments. These private diagnostic
+artifacts are not a blanket guarantee that arbitrary provider prose has no private
+data, and should remain in the existing private artifact channel.
+
+No polling interval, startup deadline, budget, creation policy or inference gate
+changes. No new hosted attempt is authorized by this diagnostics change. Existing
+34906771361 artifacts cannot reconstruct discarded periodic descriptors or full
+transient deletion messages; provisioning cause remains unknown.

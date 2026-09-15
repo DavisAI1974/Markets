@@ -166,3 +166,66 @@ def test_plan_matches_installed_aws_sdk_request_shapes():
     p=plan()
     for key,operation in [('model','CreateModel'),('endpoint_config','CreateEndpointConfig'),('endpoint','CreateEndpoint')]:
         validate_parameters(p[key],service.operation_model(operation).input_shape)
+
+def test_wait_ready_retains_each_descriptor_before_terminal_failure(tmp_path):
+    p=plan(); client=Client(); name=p['endpoint']['EndpointName']; tick=[1001]
+    client.endpoints[name]={**p['endpoint'], 'EndpointStatus':'Creating'}
+    observations=[]
+    def sleep(_):
+        tick[0]+=10
+        client.endpoints[name]={'EndpointStatus':'Failed', **p['endpoint'], 'FailureReason':'capacity unavailable'}
+    with pytest.raises(ValueError,match='startup failed'):
+        d.wait_ready(client,p,now=lambda:tick[0],sleep=sleep,observe=observations.append)
+    assert [x['response']['EndpointStatus'] for x in observations]==['Creating','Failed']
+    assert observations[-1]['response']['FailureReason']=='capacity unavailable'
+    assert observations[-1]['observed_at_epoch']==1011
+
+
+def test_sanitized_failure_keeps_full_service_message_and_request_id():
+    class Failure(Exception):
+        response={'Error':{'Code':'ValidationException','Message':'Still creating. token=hidden-value '+('detail '*1000)},
+                  'ResponseMetadata':{'RequestId':'request-123','HTTPStatusCode':400,
+                                      'HTTPHeaders':{'authorization':'Bearer hidden-header'}}}
+    result=d.failure_evidence(Failure('token=hidden-value still creating'))
+    assert result['response']['Error']['Message'].endswith('detail '*1000)
+    assert result['response']['ResponseMetadata']['RequestId']=='request-123'
+    assert 'hidden-value' not in str(result)
+    assert 'hidden-header' not in str(result)
+
+
+def test_timeout_retains_creating_polls_without_extending_deadline():
+    p=plan(); client=Client(); tick=[2180]; observations=[]
+    client.endpoints[p['endpoint']['EndpointName']]={**p['endpoint'],'EndpointStatus':'Creating'}
+    def sleep(seconds):tick[0]+=seconds
+    with pytest.raises(TimeoutError):
+        d.wait_ready(client,p,now=lambda:tick[0],sleep=sleep,observe=observations.append)
+    assert tick[0]==2200
+    assert len(observations)==2
+
+
+def test_cleanup_retains_full_transient_failure_and_still_confirms_absence(tmp_path):
+    p=plan(); client=Client(); ledger=tmp_path/'ledger.json'
+    d.create_resources(client,p,ledger,now=lambda:1001)
+    original=client.delete_endpoint
+    count=[0]
+    class Failure(Exception):
+        response={'Error':{'Code':'ValidationException','Message':'Endpoint is still being created'},
+                  'ResponseMetadata':{'RequestId':'delete-request'}}
+    def delete(**kwargs):
+        count[0]+=1
+        if count[0]==1:raise Failure('still creating')
+        return original(**kwargs)
+    client.delete_endpoint=delete
+    result=d.cleanup_resources(client,p,ledger,now=lambda:1002,sleep=lambda _:None)
+    assert result['status']=='deleted'
+    assert result['delete_errors'][0]['response']['Error']['Message']=='Endpoint is still being created'
+    assert result['delete_errors'][0]['response']['ResponseMetadata']['RequestId']=='delete-request'
+
+
+def test_diagnostic_redaction_preserves_tokenizer_runtime_identity():
+    original={'packages':{'tokenizers':'0.22.2'},'input_tokens':2284,'accessToken':'private'}
+    result=d.sanitize_diagnostic(original)
+    assert result['packages']==original['packages']
+    assert result['input_tokens']==2284
+    assert result['accessToken']=='[REDACTED]'
+    assert original['accessToken']=='private'
