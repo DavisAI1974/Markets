@@ -121,7 +121,7 @@ def validate_intent(intent):
             or intent.get('image') != granite_runpod.IMAGE
             or type(intent.get('start')) not in (int, float)
             or type(intent.get('deadline')) not in (int, float)
-            or intent['deadline'] - intent['start'] != 600):
+            or intent['deadline'] - intent['start'] not in (600, 900, 1200)):
         raise ValueError('invalid immutable launch intent')
     return intent
 

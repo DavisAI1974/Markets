@@ -1,5 +1,4 @@
 """One scoped smoke controller or independent GitHub-runner watchdog."""
-from dataclasses import asdict
 import hashlib
 import http.client
 import json
@@ -21,6 +20,8 @@ from . import granite_runpod_cloud_control as control
 BASE = '8aba96aa46ee95b410496f9e3154fb2d96395f56'
 BUNDLE_SHA = '32312f5334efa8f002df30482fd1823d9b2b49ae0484f9ccf2798de37378b24c'
 ADMISSION_SHA = '3af163e3732cc0fc586164a4f5981870dfdbadb0616393d64506fe5557b5ef7c'
+TOTAL_SECONDS = 1200
+PRIOR_STAGING_RUN = '34924522636'
 ROOT = Path(__file__).parent
 OUT = Path('work/cloud-receipts')
 
@@ -133,12 +134,17 @@ def stage_bootstrap(journal):
     if receipt['bundle_sha256'] != BUNDLE_SHA:
         raise ValueError('reviewed bootstrap changed')
     urls = {}
+    prior = object.__new__(Journal)
+    prior.client, prior.bucket = journal.client, journal.bucket
+    prior.prefix = 'runpod-smoke/' + PRIOR_STAGING_RUN + '/'
     for name in (*package.FILES, 'runpod_bundle.json'):
         key = 'bootstrap/' + name
-        journal.put_bytes(key, (destination / name).read_bytes(), once=True)
+        if prior.get_bytes(key) != (destination / name).read_bytes():
+            raise ValueError('previously staged bootstrap changed')
         urls[name] = journal.client.generate_presigned_url('get_object',
-            Params={'Bucket': journal.bucket, 'Key': journal.prefix + key}, ExpiresIn=900)
-    save('staging.json', {'bundle_sha256': BUNDLE_SHA, 'files': receipt['files'], 'readback_verified': True})
+            Params={'Bucket': journal.bucket, 'Key': prior.prefix + key}, ExpiresIn=1200)
+    save('staging.json', {'bundle_sha256': BUNDLE_SHA, 'files': receipt['files'],
+                          'readback_verified': True, 'reused_from_run': PRIOR_STAGING_RUN})
     return receipt, urls
 
 
@@ -271,6 +277,19 @@ def validate_runtime(records, admitted):
         raise ValueError('hosted runtime differs from admission')
 
 
+def publish_service(journal, pod_id, intent, records):
+    """A health-verified launch receipt; no inference request is sent here."""
+    ready = {'outcome': 'service_ready', 'pod_id': pod_id,
+             'base_url': 'https://' + pod_id + '-8081.proxy.runpod.net/v1',
+             'model': 'granite42-smoke', 'ready_at': time.time(),
+             'cleanup_starts_at': intent['deadline'] - 120,
+             'deadline': intent['deadline'], 'runtime': records,
+             'inference_sent': False}
+    journal.put('service-ready.json', ready, once=True)
+    save('service-ready.json', ready)
+    return ready
+
+
 def controller(journal, api):
     if os.environ['GITHUB_RUN_ATTEMPT'] != '1':
         raise ValueError('controller rerun refused')
@@ -292,7 +311,7 @@ def controller(journal, api):
     started = int(time.time())
     intent = {'schema': 'GRANITE_CLOUD_INTENT_V1', 'nonce': nonce,
               'name': 'granite-smoke-' + nonce, 'image': control.granite_runpod.IMAGE,
-              'start': started, 'deadline': started + 600}
+              'start': started, 'deadline': started + TOTAL_SECONDS}
     journal.put('intent.json', intent, once=True)
     save('intent.json', intent)
     for _ in range(12):
@@ -308,12 +327,13 @@ def controller(journal, api):
     command = bootstrap_command(receipt['files'], BUNDLE_SHA, journal.bucket)
     environment.update({'SUPERVISOR_PROGRAM__APP_COMMAND': command,
         'RUNPOD_SUPERVISOR_COMMAND_SHA256': hashlib.sha256(command.encode()).hexdigest(),
-        'RUNPOD_GRANITE_API_KEY': api_key, 'RUNPOD_GRANITE_LIFETIME_SECONDS': '480',
+        'RUNPOD_GRANITE_API_KEY': api_key,
+        'RUNPOD_GRANITE_LIFETIME_SECONDS': str(TOTAL_SECONDS - 120),
         'RP_BOOTSTRAP_URLS': json.dumps(urls), 'RUNPOD_SMOKE_OWNER': nonce})
     body = {'name': intent['name'], 'image': intent['image'], 'cloud': 'SECURE',
             'gpu': {'id': 'NVIDIA L40S', 'count': 1, 'minCudaVersion': '13.0',
                     'minRamPerGpu': 64, 'minVcpuCountPerGpu': 8},
-            'dataCenterIds': ['US-MO-1', 'US-TX-4', 'US-TX-3'], 'disk': 100,
+            'dataCenterIds': ['US-MO-1', 'US-TX-4'], 'disk': 100,
             'mounts': {'persistent': {'path': '/opt/ml', 'size': 50}},
             'ports': ['8081/http'], 'env': environment, 'startSsh': False, 'startJupyter': False}
     creation_closed = False
@@ -331,11 +351,16 @@ def controller(journal, api):
         if type(pod.get('cost')) not in (int, float) or not 0 < pod['cost'] <= 1.25:
             raise ValueError('actual hourly price outside approved smoke envelope')
         records = {}
-        while time.time() < intent['deadline'] - 210:
+        startup_deadline = min(intent['start'] + 900, intent['deadline'] - 120)
+        while time.time() < startup_deadline:
             current = api.request('GET', '/v2/pods/' + pod_id)
             if not control.owned_pod(current, intent):
                 raise ValueError('Pod identity changed')
-            records.update(startup_logs(api, pod_id))
+            try:
+                records.update(startup_logs(api, pod_id))
+            except TimeoutError:
+                save('startup-log-read.json', {'status': 'read_timeout', 'at': time.time()})
+            save('startup-progress.json', {'at': time.time(), 'records': records})
             if set(records) == {'startup', 'disk'}:
                 validate_runtime(records, admitted)
                 try:
@@ -346,29 +371,16 @@ def controller(journal, api):
                     pass  # Readiness may lag startup verification; inference is not retried.
             time.sleep(5)
         else:
-            raise TimeoutError('startup incomplete in ten-minute window')
-        if time.time() >= intent['deadline'] - 210:
-            raise TimeoutError('insufficient probe and cleanup time')
+            raise TimeoutError('startup incomplete in approved window')
+        if time.time() >= startup_deadline:
+            raise TimeoutError('startup deadline reached')
         save('runtime.json', records)
         journal.put('runtime.json', records)
-        journal_path = (OUT / 'probe.sqlite').resolve()
-        def exchange(pod_id, method, path, body, key, timeout):
-            if method == 'POST':
-                # The existing probe has committed FULL-sync SQLite before this callback.
-                journal.put_bytes('probe.sqlite', journal_path.read_bytes(), once=True)
-                if time.time() >= intent['deadline'] - 180:
-                    raise TimeoutError('inference deadline')
-            return probe.https_exchange(pod_id, method, path, body, key, timeout)
-        result = probe.run_probe(pod_id=pod_id, expected_pod_id=pod_id,
-            admission_receipt=admitted, expected_admission_sha256=ADMISSION_SHA,
-            journal_path=journal_path, api_key=api_key, exchange=exchange)
-        outcome = asdict(result)
-        journal.put_bytes('probe-completed.sqlite', journal_path.read_bytes())
-        journal.put('probe.json', outcome)
-        save('probe.json', outcome)
+        outcome = publish_service(journal, pod_id, intent, records)
     finally:
-        cleanup_result = finish(journal, api, intent, creation_closed, pod_id)
-    return completed_outcome(outcome, cleanup_result)
+        if outcome.get('outcome') != 'service_ready':
+            finish(journal, api, intent, creation_closed, pod_id)
+    return outcome
 
 
 def completed_outcome(outcome, cleanup_result):

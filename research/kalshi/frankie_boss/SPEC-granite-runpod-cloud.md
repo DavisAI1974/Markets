@@ -1,39 +1,43 @@
-# Ten-minute hosted Granite smoke
+# Launch Granite before the Sun run
 
-Scope: one fixed non-market request using the existing admission and probe helpers.
-User-authorized operating budget is $2, with a 600-second total Pod window.
-No market-data access or paper session. No automatic allocation/inference retry.
+The user requested service launch without another standalone smoke. The maximum
+total Pod window is 20 minutes, including shutdown, within the existing $2 cap.
+Start only Granite; the Sun run remains a subsequent user-directed operation.
 
-Use two separate GitHub-hosted runners: controller and watchdog. Both keep a scoped
-S3 journal in the already approved Granite bucket. Before allocation, the watchdog
-must acknowledge the immutable launch intent. It starts cleanup after 480 seconds,
-leaving 120 seconds for provider termination/readback. Controller success/failure
-also triggers immediate cleanup. This survives Pod, controller-process, and Codex
-failure; canceling the entire GitHub workflow or a GitHub outage remains a shared
-failure mode. No hard provider billing guarantee is claimed.
-Each Runpod request, S3 journal operation and startup-log read runs in a killable
-Linux child with a total wall deadline, including DNS and response-body reads.
-After the cleanup threshold the watchdog prioritizes termination over S3 updates.
-Empty inventory after a lost create response remains unresolved; success requires
-an exact recovered Pod ID returning 404. A completed inference with unresolved
-controller cleanup is a failed/incomplete controller result.
+Carry forward run 34924522636: both runners passed 70 focused Linux tests, private
+AWS bootstrap staging/readback passed, and controller/watchdog independently
+verified exact Pod absence. Reuse those tests and the existing staged objects.
+Only changed launch behavior receives targeted tests. The first Pod and attached
+disk were deleted, so a new allocation and possibly cold downloads are necessary.
 
-Stage the unchanged six-file bootstrap plus manifest in private Amazon S3. Verify
-readback before launch. Pass short-lived object-specific download URLs privately,
-verify all bytes before import, and remove URLs from the launched process environment.
-The new download preamble is pinned through the supervisor-command SHA256 binding.
-Use a 100 GB container disk and a 50 GB attached disk mounted at /opt/ml. This is an
-explicit change from a persistent network volume: Pod deletion releases both disks.
-Retain receipts in AWS before destructive cleanup. The model remains pinned to the
-reviewed image, revision, files, tokenizer, request, and 4096 context.
+One create attempt, fresh immutable nonce/intent and journal, and separate hosted
+controller/watchdog runners. The watchdog acknowledges the intent before create.
+It begins termination at 18 minutes, leaving two minutes for exact-ID readback.
+Pod, controller and Codex failure do not disable it; whole-workflow cancellation
+and GitHub outage remain shared failure modes. No hard provider billing cap is
+claimed. Requests, DNS and response-body reads are isolated in killable children.
 
-The watchdog may terminate only a Pod matching the durable random launch nonce,
-exact image and generated name. Reconcile a lost create response using that same
-nonce, never a loose name prefix. Preserve ambiguous outcomes. Refuse repeat workflow
-attempts for the controller. Serialize and persist the probe's committed SQLite
-journal to S3 before inference POST, then preserve the completed receipt/journal.
+Use one secure L40S at no more than $1.25/hour, the reviewed pinned image, model
+revision, tokenizer versions, 4096 context, 100 GB container disk and 50 GB attached
+disk at /opt/ml. Read back the existing seven private S3 objects and compare them
+to the pinned bundle before issuing short-lived GET URLs. The unchanged bootstrap
+checks hashes before import and removes URLs from the process environment.
 
-Acceptance: (1) watchdog arm/readback precedes one create; (2) real runtime and disk
-receipts match local admission before one probe; (3) exact Pod absence is verified.
-Verification includes negative identity/permission/late-creation tests and the real
-hosted run. Local tests alone cannot mark hosted acceptance complete.
+The controller checks real startup model/tokenizer/runtime/disk evidence and an
+authenticated GET /health. It sends no inference POST. Startup has at most 15
+minutes. Once ready, save a secret-free service receipt to S3 and the controller
+artifact, then leave the service running until the watchdog's cleanup threshold.
+Failures trigger immediate exact-Pod cleanup. A missing create response is
+reconciled only by the watchdog so discovered identity cannot be lost.
+
+The endpoint's generated credential stays in the Pod's private environment. A
+later authorized Sun controller can retrieve it using the owned Pod's control
+plane identity; do not publish it in logs or artifacts. Existing token admission
+evidence covers the frozen smoke request only; it does not admit future Sun
+prompts. Health readiness does not establish model-output quality or paper-trading
+readiness. No market data, venue traffic or orders are part of this launch.
+
+Acceptance: verified startup/runtime and authenticated health, with a retained
+service-ready receipt carrying Pod ID, endpoint, model and exact expiry. Cleanup
+remains scheduled independently after the controller exits successfully. Attached
+disks are disposed with the Pod; prior S3 bootstrap and receipts remain retained.
