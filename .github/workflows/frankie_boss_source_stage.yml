@@ -1,0 +1,49 @@
+name: Stage preserved Sunday MBO source
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch the preserved Sunday object
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_DEFAULT_REGION: us-east-2
+          AWS_EC2_METADATA_DISABLED: 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -d -m 0700 staged-source
+          aws s3 cp s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211003.mbo.dbn.zst \
+            staged-source/glbx-mdp3-20211003.mbo.dbn.zst --only-show-errors
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          path = Path('staged-source/glbx-mdp3-20211003.mbo.dbn.zst')
+          payload = path.read_bytes()
+          expected = '4380bd9ba83a5badc4839e12785aa464817b87e3fac11176b951e7b474446d88'
+          if len(payload) != 973355 or hashlib.sha256(payload).hexdigest() != expected:
+              raise SystemExit('Sunday source differs from preserved source roster')
+          receipt = dict(schema='FRANKIE_SUNDAY_SOURCE_COPY_V1', source=path.name,
+              bytes=len(payload), sha256=expected,
+              bucket='bento-568968024170-us-east-2-an',
+              key='nymex/ng_mbo_5y_v0/native/20211001_20211101/'+path.name,
+              operation='copy_only', model_inference=False, market_calculations=False)
+          Path('staged-source/source-copy.json').write_text(json.dumps(receipt, sort_keys=True)+'\n')
+          print(json.dumps(receipt, sort_keys=True))
+          PY
+      - name: Preserve the verified source copy
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: frankie-sunday-source-${{ github.run_id }}
+          path: staged-source/
+          if-no-files-found: error
+          retention-days: 7
