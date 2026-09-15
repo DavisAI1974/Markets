@@ -32,6 +32,28 @@ def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
 
 
+class _FreshS3:
+    """Create the SDK client in the process that performs each operation."""
+    def __init__(self, config):
+        self.config = config
+
+    def __getattr__(self, name):
+        def call(*args, **kwargs):
+            import boto3
+            client = boto3.client('s3', region_name='us-east-1', config=self.config)
+            try:
+                result = getattr(client, name)(*args, **kwargs)
+            except BaseException:
+                client.close()
+                raise
+            if name == 'get_object':
+                result['_frankie_client'] = client
+            else:
+                client.close()
+            return result
+        return call
+
+
 class Journal:
     def __init__(self):
         import boto3
@@ -45,6 +67,7 @@ class Journal:
         finally:
             client.close()
         self.config = config
+        self.client = _FreshS3(config)
         run_id = os.environ['GITHUB_RUN_ID']
         if not run_id.isascii() or not run_id.isdecimal():
             raise ValueError('GitHub run identity required')
@@ -54,16 +77,11 @@ class Journal:
         return control.bounded_call(lambda: self._put_bytes(name, data, once=once))
 
     def _put_bytes(self, name, data, *, once=False):
-        import boto3
         if not name or '..' in name or name.startswith('/') or len(data) > 1048576:
             raise ValueError('journal bounds')
         kwargs = {'IfNoneMatch': '*'} if once else {}
-        client = boto3.client('s3', region_name='us-east-1', config=self.config)
-        try:
-            client.put_object(Bucket=self.bucket, Key=self.prefix + name,
-                              Body=data, ServerSideEncryption='AES256', **kwargs)
-        finally:
-            client.close()
+        self.client.put_object(Bucket=self.bucket, Key=self.prefix + name,
+                               Body=data, ServerSideEncryption='AES256', **kwargs)
         if self.get_bytes(name) != data:
             raise ValueError('journal readback mismatch')
 
@@ -71,16 +89,12 @@ class Journal:
         return control.bounded_call(lambda: self._get_bytes(name))
 
     def _get_bytes(self, name):
-        import boto3
-        client = boto3.client('s3', region_name='us-east-1', config=self.config)
         try:
-            result = client.get_object(Bucket=self.bucket, Key=self.prefix + name)
+            result = self.client.get_object(Bucket=self.bucket, Key=self.prefix + name)
         except Exception as error:
             response = getattr(error, 'response', None)
             if isinstance(response, dict) and response.get('Error', {}).get('Code') == 'NoSuchKey':
-                client.close()
                 return None
-            client.close()
             raise
         try:
             with result['Body'] as body:
@@ -91,7 +105,7 @@ class Journal:
                     raise ValueError('incomplete journal object')
                 return data
         finally:
-            client.close()
+            result.pop('_frankie_client').close()
 
     def put(self, name, value, *, once=False):
         self.put_bytes(name, canonical(value), once=once)
