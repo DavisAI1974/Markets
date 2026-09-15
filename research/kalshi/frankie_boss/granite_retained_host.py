@@ -267,10 +267,27 @@ def prepare(journal, api, info, manifest):
     else:
         observer_handoff('awaiting_independent_observer')
         return
-    result = lifecycle.start_once(api, journal, info, manifest, startup, now=time.time(),
-        request_body=body, tokenizer_admission=admit, expected_watchdog_identity=identity,
-        active_runs=ActiveRunStore(journal.client, journal.bucket, lifecycle.POD_ID),
-        runtime_configuration=configuration)
+    while time.time() < observer_end:
+        try:
+            result = lifecycle.start_once(api, journal, info, manifest, startup, now=time.time(),
+                request_body=body, tokenizer_admission=admit, expected_watchdog_identity=identity,
+                active_runs=ActiveRunStore(journal.client, journal.bucket, lifecycle.POD_ID),
+                runtime_configuration=configuration)
+            break
+        except control.ProviderError as error:
+            if error.status != 400:
+                raise
+            pod = retained._owned(api.request('GET', '/v2/pods/'+lifecycle.POD_ID),
+                info['intent'], lifecycle.POD_ID)
+            if pod['status'] != 'EXITED':
+                result = dict(status='observe_existing_start', pod_id=lifecycle.POD_ID)
+                break
+            save('capacity-wait.json', dict(status='waiting_for_retained_host_capacity',
+                pod_id=lifecycle.POD_ID, observed_at=time.time()))
+            time.sleep(20)
+    else:
+        observer_handoff('retained_host_capacity')
+        return
     save('start.json', result)
     records = {}
     previous_progress = None

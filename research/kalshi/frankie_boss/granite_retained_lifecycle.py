@@ -60,7 +60,21 @@ def start_once(api, journal, info, manifest, startup, *, now, request_body,
     if prior is not None:
         if prior != intent:
             raise ValueError('another startup owns this request journal')
-        return dict(status='observe_existing_start', pod_id=POD_ID)
+        result = journal.get('retained-start-result.json')
+        if result is not None:
+            return dict(status='observe_existing_start', pod_id=POD_ID)
+        failure = journal.get('retained-start-failure.json')
+        expected_failure = dict(startup_sha256=digest, error_type='ProviderError',
+            status='start_outcome_unknown')
+        if failure != expected_failure:
+            return dict(status='observe_existing_start', pod_id=POD_ID)
+        pod = api.request('GET', '/v2/pods/'+POD_ID)
+        if pod['status'] != 'EXITED':
+            return dict(status='observe_existing_start', pod_id=POD_ID)
+        api.request('POST', '/v2/pods/'+POD_ID+'/action', {'action': 'start'})
+        result = dict(status='start_submitted', pod_id=POD_ID, startup_sha256=digest)
+        journal.put('retained-start-result.json', result, once=True)
+        return result
     if (type(tokenizer_admission) is not LocalTokenizerAdmission
             or tokenizer_admission.evidence_class != 'LOCAL_TOKENIZER_ADMISSION'
             or type(request_body) is not bytes
@@ -93,8 +107,13 @@ def start_once(api, journal, info, manifest, startup, *, now, request_body,
     try:
         api.request('POST', '/v2/pods/'+POD_ID+'/action', {'action': 'start'})
     except Exception as error:
-        journal.put('retained-start-failure.json', dict(startup_sha256=digest,
-            error_type=type(error).__name__, status='start_outcome_unknown'), once=True)
+        failure = dict(startup_sha256=digest, error_type=type(error).__name__,
+            status='start_outcome_unknown')
+        prior_failure = journal.get('retained-start-failure.json')
+        if prior_failure is None:
+            journal.put('retained-start-failure.json', failure, once=True)
+        elif prior_failure != failure:
+            raise ValueError('retained start failure identity changed') from error
         raise
     result = dict(status='start_submitted', pod_id=POD_ID, startup_sha256=digest)
     journal.put('retained-start-result.json', result, once=True)
