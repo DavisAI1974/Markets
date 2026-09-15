@@ -5,14 +5,16 @@ writes, never trusts the database tail, and opens the file read-only. Expensive 
 JSON/decode/canonical-hash validation can be performed by an explicit bounded worker pool;
 ordered continuity and the final trusted checkpoint remain verified by the parent process.
 
-Standalone use is deliberately single-worker. Production launchers set
-FRANKIE_CPU_WORKERS=32 explicitly. Rows are consumed in bounded batches and yielded in
+Standalone use is deliberately single-worker. Production chooses journal verification
+parallelism independently through FRANKIE_JOURNAL_VERIFY_WORKERS. Rows are yielded in
 original ordinal order; no row is dropped, reordered, averaged, normalized, or accepted
-without the same structural/hash checks.
+without the same structural/hash checks. On Linux the worker pool uses forkserver so it
+does not fork an already-initialized PyTorch/OpenMP parent.
 """
 from concurrent.futures import ProcessPoolExecutor
 import hashlib
 import json
+import multiprocessing
 import os
 from pathlib import Path
 import sqlite3
@@ -29,6 +31,7 @@ _HEX = frozenset("0123456789abcdef")
 _MALFORMED = "malformed evidence value tag"
 _MISMATCH = "evidence journal continuity or hash mismatch"
 DEFAULT_WORKERS = 1
+WORKER_ENV = "FRANKIE_JOURNAL_VERIFY_WORKERS"
 
 
 def canonical_tagged_bytes(tree):
@@ -89,17 +92,13 @@ def decode_tagged(node):
 
 
 def _worker_init():
-    """Prevent each verification worker from spawning nested math thread pools."""
+    """Cap nested math pools inside verification workers only, never in the trainer."""
     for name in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
         os.environ[name] = "1"
 
 
 def _validate_row(row):
-    """CPU-heavy row validation safe to run in a worker process.
-
-    Previous-hash continuity is intentionally checked by the ordered parent because it
-    depends on the preceding validated row. The worker verifies every row-local invariant.
-    """
+    """CPU-heavy row-local validation safe to run in a worker process."""
     ordinal, kind, body, digest = row
     if type(body) is not bytes:
         raise ValueError(_MISMATCH)
@@ -116,23 +115,30 @@ def _validate_row(row):
 
 def _declared_workers(workers):
     if workers is None:
-        raw = os.environ.get("FRANKIE_CPU_WORKERS", str(DEFAULT_WORKERS))
+        raw = os.environ.get(WORKER_ENV, str(DEFAULT_WORKERS))
         try:
             workers = int(raw)
         except (TypeError, ValueError) as exc:
-            raise ValueError("FRANKIE_CPU_WORKERS must be an integer") from exc
+            raise ValueError(f"{WORKER_ENV} must be an integer") from exc
     if type(workers) is not int or not 1 <= workers <= 256:
         raise ValueError("verified journal worker count must be between 1 and 256")
     return workers
+
+
+def _worker_context():
+    """Avoid forking a multithreaded PyTorch parent; Windows/macOS fall back safely."""
+    methods = multiprocessing.get_all_start_methods()
+    return multiprocessing.get_context("forkserver" if "forkserver" in methods else "spawn")
 
 
 class VerifiedJournalReader:
     """Stream an existing evidence journal against an independently supplied checkpoint.
 
     count and head_hash are the supplied expectations, verified against the stored tail
-    at open and again after every complete iteration. Validation work may be parallel but
-    output order and hash-chain continuity remain serial and exact. Memory is bounded to
-    at most workers*4 source rows plus executor overhead.
+    at open and again after every complete iteration. Validation may be parallel but
+    output order and hash-chain continuity remain serial and exact. At most two bounded
+    source batches (each workers*4 rows) are active so batch N+1 can validate while the
+    caller consumes N without unbounded prefetch.
     """
 
     def __init__(self, path, *, expected_count, expected_head_hash, workers=None):
@@ -153,7 +159,8 @@ class VerifiedJournalReader:
             if self._stored_tail() != (expected_count, expected_head_hash):
                 raise ValueError("journal differs from checkpoint; existing evidence was retained")
             if self.workers > 1:
-                self._executor = ProcessPoolExecutor(max_workers=self.workers, initializer=_worker_init)
+                self._executor = ProcessPoolExecutor(max_workers=self.workers,
+                    mp_context=_worker_context(), initializer=_worker_init)
         except BaseException:
             self._connection.close()
             raise
@@ -162,22 +169,30 @@ class VerifiedJournalReader:
     def append(self, *args, **kwargs):
         raise PermissionError("verified journal reader is read-only; appends belong to EvidenceJournal")
 
+    def _validated(self, rows):
+        if self._executor is None:
+            return map(_validate_row, rows)
+        return self._executor.map(_validate_row, rows,
+            chunksize=max(1, len(rows)//self.workers))
+
     def entries(self):
-        """Verify and yield all history in order, using bounded parallel row validation."""
+        """Verify/yield history in order with one bounded validation batch prefetched."""
         previous, count = GENESIS_HASH, 0
         cursor = self._connection.execute(
             "SELECT ordinal, kind, body, digest FROM entries ORDER BY ordinal")
-        while True:
-            rows = cursor.fetchmany(self.batch_rows)
-            if not rows:
-                break
-            validated = (map(_validate_row, rows) if self._executor is None
-                         else self._executor.map(_validate_row, rows, chunksize=max(1, len(rows)//self.workers)))
+        rows = cursor.fetchmany(self.batch_rows)
+        validated = self._validated(rows) if rows else None
+        while rows:
+            next_rows = cursor.fetchmany(self.batch_rows)
+            # executor.map submits this batch immediately; its results are not observed
+            # until the current ordered batch has been consumed.
+            next_validated = self._validated(next_rows) if next_rows else None
             for ordinal, envelope, digest in validated:
                 if ordinal != count or envelope.get("previous_hash") != previous:
                     raise ValueError(_MISMATCH)
                 previous, count = digest, count + 1
                 yield envelope
+            rows, validated = next_rows, next_validated
         if count != self.count or previous != self.head_hash or self._stored_tail() != (self.count, self.head_hash):
             raise ValueError("evidence journal changed during iteration")
 
