@@ -1,0 +1,155 @@
+{
+  "archive_bytes": 524811155,
+  "archive_sha256": "d3a994c915008317f91e36ea4b36de5719e1ff1ce1a18a9ee425cc389dfbee23",
+  "encrypted_key_base64": "PRv6lfJXb9/soUcQpvNz3V7WaLzbIpqhw2hnmw7W6BdL6KRB6dAU/paVL4kXb/tjAoS4u7j3rY2xWFov6SPwJYJPEJorbJS9qyd0IdN5p7dweYzaPCA7MkU01vYErSqDxXFbxFTUZl/cxSNDkxklN6bdb8GWzDPtNyIjRvHT1a8ygjlYO4ckzV9IRVvNAkaKMRnKnHAywZL0iT8HPX5ak5Uy56W2mmDeDYhCjoDaARVfVKG0C13RWvls5gp8PzYgFdxIp6Jwsx7ziboQNtZbriEmWNGjE/7MxtHbaDxPzapLQJPtnpXihwVk8cmAXZseSWRL1tMRDOD6u5GUJ8UtgxhvJUNkMJoEpNaM1Fcd9NtF465Js9Nhgft4M00xFHwj25HQRLyiUDViEPM2MRaJ5GpBh12wI4A+yxV3JtQyW/e+APvKnBLyRtzH4jpq8o5QsVg5tDpHiLedknC3HpL8wHkCyUqROZJaf8Xv8pKhLp6+cQ3tuAx1S1vldJaCu4si",
+  "encryption": "AES-256-GCM",
+  "files": [
+    {
+      "bytes": 569667584,
+      "path": "journal.compact.sqlite",
+      "sha256": "19603159548b1e443a3565f8c999543981c43c23c80fd511c11e760f633b260f"
+    },
+    {
+      "bytes": 192,
+      "path": "progress.json",
+      "sha256": "84253adf09e635a8ca5b394226cef68919296a151ad0283a19caad75d35e2879"
+    },
+    {
+      "bytes": 32936,
+      "path": "progress.jsonl",
+      "sha256": "b8e9279430e8c8d9d778f21bb9225d549c6593f4f0482cac17bc71e0370fedb2"
+    },
+    {
+      "bytes": 10519,
+      "path": "runtime/research/kalshi/frankie_boss/c15_builder.py",
+      "sha256": "6f1c9050a7e1da226fe1828c4667020d2536e2607971c468df96f615edba66bd"
+    },
+    {
+      "bytes": 6319,
+      "path": "runtime/research/kalshi/frankie_boss/c15_journal.py",
+      "sha256": "898b1671c867b8b10b664dd948cc73890a79fa786b6244dfe5164d6c6503586e"
+    },
+    {
+      "bytes": 1417,
+      "path": "runtime/research/kalshi/frankie_boss/c15_observer.py",
+      "sha256": "223a7841f79b9e530cbe1b96f4c058f9bd23e73016f329ba977e2078a27d7871"
+    },
+    {
+      "bytes": 1063,
+      "path": "runtime/research/kalshi/frankie_boss/c15_registry.py",
+      "sha256": "f32f3c58a3bbdef821420ef189da12e87319db09962b980ce8ef1589eb5c49cb"
+    },
+    {
+      "bytes": 21360,
+      "path": "runtime/research/kalshi/frankie_boss/causal_packet.py",
+      "sha256": "35c1713b043068cee5bbcc6494be3a9faec397598f9437e0161b92e585a8900b"
+    },
+    {
+      "bytes": 32492,
+      "path": "runtime/research/kalshi/frankie_boss/causal_prefix.py",
+      "sha256": "283189f6826936c6db6b515e47b066241224fb6d4ce34983af6a9fc2711e2dd3"
+    },
+    {
+      "bytes": 33334,
+      "path": "runtime/research/kalshi/frankie_boss/causal_prefix_records.py",
+      "sha256": "aacace350fa8d157ea0d6778aaad8c2317072903eea5720a8f1150f03388c094"
+    },
+    {
+      "bytes": 15065,
+      "path": "runtime/research/kalshi/frankie_boss/mbo_resume_state.py",
+      "sha256": "73b34445c92e8aeab1ad9ed1241f080fb4194e68eb15bb5ae51336cc6f0807ca"
+    },
+    {
+      "bytes": 9211,
+      "path": "runtime/research/kalshi/frankie_boss/raw_mbo_source_manifest.py",
+      "sha256": "7abb52c0ef186977988277b72ea9101e4566f0a74ba2e579a1efba0428f8333e"
+    },
+    {
+      "bytes": 1452,
+      "path": "runtime/research/kalshi/frankie_boss/selected_source_scope.py",
+      "sha256": "b71b3873ed02dbd9da15066e7cb79575b63e2e755bf23e5c93ed9f46891fd980"
+    },
+    {
+      "bytes": 7947,
+      "path": "runtime/research/kalshi/frankie_boss/source_conformance.py",
+      "sha256": "0dd7e21b6533f5f8a68722678f147e41d2ebbea766f796b801eeb3daabb66876"
+    },
+    {
+      "bytes": 42349,
+      "path": "runtime/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+      "sha256": "dbf751bfb877cda9df304afc66c7d7fef9460441ccf030e82edd100f445bcd17"
+    },
+    {
+      "bytes": 1394,
+      "path": "verification-receipt.json",
+      "sha256": "0802013e12b1f1df29c928e9fbb24ebdbb13e75b4ea8687fc9807cc08cce67a8"
+    },
+    {
+      "bytes": 405339,
+      "path": "verified-checkpoint.c15.json",
+      "sha256": "750dbb3c63ab672614323dca0dd7f363847ea78aa8a489d0f0b84afe8f00bcf7"
+    }
+  ],
+  "github_run_id": "34962256086",
+  "key_wrapping": "RSA-OAEP-SHA256",
+  "parts": [
+    {
+      "aad": "FRANKIE_JOURNAL_GIT_ARCHIVE_V1:0",
+      "bytes": 67108880,
+      "nonce_base64": "oGJHuZ2MDrmbveFD",
+      "path": "part-00000.aesgcm",
+      "sha256": "71e112c55bbab00067335cc72e1ba439c29a325261f596cdcc011a4e79e36891"
+    },
+    {
+      "aad": "FRANKIE_JOURNAL_GIT_ARCHIVE_V1:1",
+      "bytes": 67108880,
+      "nonce_base64": "Hpdc2VxAYikauWYr",
+      "path": "part-00001.aesgcm",
+      "sha256": "4b27e4c7482ea4ac876f5aeed30a013757c331f33e9c00dc593d90ea21c7eb69"
+    },
+    {
+      "aad": "FRANKIE_JOURNAL_GIT_ARCHIVE_V1:2",
+      "bytes": 67108880,
+      "nonce_base64": "xI8DBRXikJV9Vo3f",
+      "path": "part-00002.aesgcm",
+      "sha256": "931a7fe522dee7ab010252aaf5d19fa41fe2b13e8c59bc04520a4c8a4cac15a6"
+    },
+    {
+      "aad": "FRANKIE_JOURNAL_GIT_ARCHIVE_V1:3",
+      "bytes": 67108880,
+      "nonce_base64": "7Ik1xFmKjwuhyOBV",
+      "path": "part-00003.aesgcm",
+      "sha256": "0b367afa7f84e08af3db9be2acc0bc003c9c1d9c811d13348fc1d8fd15cb4773"
+    },
+    {
+      "aad": "FRANKIE_JOURNAL_GIT_ARCHIVE_V1:4",
+      "bytes": 67108880,
+      "nonce_base64": "Tp3PbMTxp0K7wcw7",
+      "path": "part-00004.aesgcm",
+      "sha256": "b077ddf48e972e6170ae5fba0d7479d01fba96645541bf8bc5c74a5ad7eb22f7"
+    },
+    {
+      "aad": "FRANKIE_JOURNAL_GIT_ARCHIVE_V1:5",
+      "bytes": 67108880,
+      "nonce_base64": "b1RgYUGOn7RTrYky",
+      "path": "part-00005.aesgcm",
+      "sha256": "ddb53cb7653e77ab15ee86f0fc82717da9c31d805152853cc27018f9f961ab45"
+    },
+    {
+      "aad": "FRANKIE_JOURNAL_GIT_ARCHIVE_V1:6",
+      "bytes": 67108880,
+      "nonce_base64": "63NjPlLqB/eQ9emi",
+      "path": "part-00006.aesgcm",
+      "sha256": "9c4967f78c5c460c68d0f468dbc2a9ea996cee8b3e94c62e7e672cc8a5cd8251"
+    },
+    {
+      "aad": "FRANKIE_JOURNAL_GIT_ARCHIVE_V1:7",
+      "bytes": 55049123,
+      "nonce_base64": "IXIQ0guSMAk5PE5w",
+      "path": "part-00007.aesgcm",
+      "sha256": "b8ad812e27f706ec14dba5f9c8bd6922220e37ef633ed1301601c62fdab7f405"
+    }
+  ],
+  "recipient_public_key_sha256": "b437c74b14c4b79183ba12cec80d8f21b05c890d0fd71a73238a8f9afb4bd1a5",
+  "schema": "FRANKIE_JOURNAL_GIT_ARCHIVE_V1"
+}
