@@ -1,6 +1,8 @@
 # Claude review - Frankie/BOSS dual-compute migration (2026-09-15)
 
-Reviewed branch: `chatgpt/frankie-dual-compute-20260915` at `5b0c1b4d`.
+Reviewed branch: `chatgpt/frankie-dual-compute-20260915` at `5b0c1b4d`, then reconciled with the
+seven commits ChatGPT pushed concurrently during the review (`8cef9ca2`..`5ac9bf23`, tip
+`5ac9bf23`); see "Reconciliation" at the end.
 Reviewer: Claude Fable 5.1, working on the E:/Markets checkout with read-only access to the
 E:/Codex/Frankie-BOSS-20260915 runtime. Nothing under E:/Codex or C:/Users/A/Documents/Codex
 was modified; every file read from there was hash-checked against its witness before and after.
@@ -63,7 +65,8 @@ addresses that; more threads make the step faster, not smaller.
 **Q1 - Does the parallel reader preserve exact acceptance/rejection semantics and order?**
 Acceptance: yes. The full existing corruption suite (`test_verified_journal_reader.py`,
 `test_verified_reader_concurrent_tail.py`, `test_journal_prefix_snapshot.py`) passes under
-`FRANKIE_READER_WORKERS` = 1, 2 and 4 (166 tests, all green after the fixes below).
+`FRANKIE_JOURNAL_VERIFY_WORKERS` = 1, 2 and 4 (166 tests green before the rebase, 126 on the
+reconciled tree where ChatGPT's own explicit `workers=` parametrization replaces part of mine).
 Rejection: **no, not as committed.** With `chunksize=len(rows)//workers` a chunk fails as a
 unit, so on a journal corrupted at ordinal 37 the parallel reader raised after yielding 36 rows
 where the single-worker reader yields 37. A valid row vanished from the consumer's view before
@@ -98,10 +101,11 @@ reservation; the parallel raw reader should do the same on the real host. With 1
 processes resident during the step the cost is memory, not CPU; on a 16 GB box that matters,
 on a 64 GB one it does not.
 
-**Q4 - Env var name.** Split. `FRANKIE_READER_WORKERS` is the reader's only channel;
-`FRANKIE_NATIVE_THREADS` records the torch budget; `configure_cpu_runtime` sets both and
-deletes `FRANKIE_CPU_WORKERS`, which nothing reads any more. The tests assert the native value
-does not leak into the reader.
+**Q4 - Env var name.** Split. ChatGPT and I split it independently and its names are the
+ones kept: `FRANKIE_JOURNAL_VERIFY_WORKERS` is the reader's only channel,
+`FRANKIE_TORCH_INTRAOP_THREADS` and `FRANKIE_TORCH_INTEROP_THREADS` are the trainer's, all
+three mandatory with no hidden default (`policy_from_environment`). `FRANKIE_CPU_WORKERS` is
+dead and the tests assert a stale value has no effect.
 
 **Q5 - What must be packaged.** Everything the configuration reads, checked by hash. Built:
 `operations/sunday_restoration_package.py` walks the configuration, follows all 16 top-level
@@ -181,22 +185,37 @@ decision on `torch.use_deterministic_algorithms`, which the checkpoint also bind
 
 ## Changes made on this branch
 
-- `verified_journal_reader.py`: `chunksize=1` (row-exact failure position), lazy pool,
-  forkserver/spawn context, `FRANKIE_READER_WORKERS`, restored the equivalence docstrings the
-  patch had deleted, corrected the stale "production sets 32" docstring.
-- `cpu_runtime.py`: two named budgets, retired `FRANKIE_CPU_WORKERS`, documented the
-  sequential drain-then-step fact and the checkpoint binding.
-- `tests/conftest.py`: reader test modules run under workers 1, 2, 4;
-  `test_cpu_worker_policy.py`: same-row rejection test, no-leak test, lazy-pool assertion.
+- `verified_journal_reader.py`: `chunksize=1` (row-exact failure position), lazy pool
+  creation on first `entries()`, restored the equivalence docstrings the patch had deleted.
+  ChatGPT's concurrent forkserver context, one-batch prefetch and env rename are kept.
+- `cpu_runtime.py`: ChatGPT's version (three explicit budgets, no defaults, CPU-model receipt).
+- `tests/conftest.py`: the two reader-consuming modules that construct readers through the
+  environment run under workers 1, 2, 4; `test_cpu_worker_policy.py`: same-row rejection test
+  (64 rows, corruption at ordinal 37; a 5-row journal cannot catch it), lazy-pool assertion.
 - `.github/workflows/frankie_sunday_cycle0_github16.yml`: PYTHONPATH (the test step failed at
-  collection without it, reproduced), exact torch/numpy/Python pins, new env names. Runner
-  label untouched (finding 2).
+  collection without it, reproduced), exact torch/numpy/Python pins, the three env budgets the
+  launcher now requires. Runner label untouched (finding 2).
 - `operations/sunday_restoration_package.py`, `operations/benchmark_verified_reader.py`,
   `sunday_20260915_package/` (170 files + manifest), `artifacts/verified_reader_bench_20260915.*`.
 
-Tests: 166 passed across the reader, snapshot, recovery and cache modules under three worker
-counts; the two workflow test files pass with the documented PYTHONPATH and fail at collection
-without it, as the workflow was written.
+Tests on the reconciled tree: 126 passed across the policy, reader, concurrent-tail, snapshot,
+cache and recovery modules; the two workflow test files pass with the documented PYTHONPATH
+and fail at collection without it, as the workflow was written.
+
+## Reconciliation with ChatGPT's concurrent commits
+
+While this review ran, ChatGPT pushed `8cef9ca2`..`5ac9bf23` to the same branch, touching the
+same four files. Its reader hardening (forkserver, batch prefetch), its policy split and its
+launcher guards (refuse Windows paths, refuse an existing run directory unless
+`FRANKIE_GITHUB_RECOVERY=1`, write a runtime identity receipt) are all kept; the launcher guard
+closes Q8(a) directly. Two defects survived its pass and are fixed here on top: the chunked
+`executor.map` (its 5-row rejection test cannot see it; the 64-row test does) and the eager
+pool in `__init__`. Its `operations/benchmark_verified_journal.py` and
+`operations/build_sunday_restore_manifest.py` overlap with the two scripts here; the ones
+here hash real witness-pinned snapshots and copy the small files into git, so I recommend
+keeping these and retiring its two, but that is a cleanup for Greg to call, not done here.
+None of its commits touch the three blocking findings: the branch lineage, the runner, and the
+checkpoint toolchain binding are exactly as described above.
 
 ## Recommended path to the cycle-0 rerun
 
