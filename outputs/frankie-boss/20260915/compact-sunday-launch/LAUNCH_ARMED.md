@@ -1,0 +1,11 @@
+# Sunday launch armed
+
+The existing prefix builder and publisher remain running. On 2026-09-15 the owner directed immediate launch after preparation and no repeated test suites. No smoke inference or replacement prefix builder was started.
+
+A single waiting launch process (actual Python PID 63176; unified exec session 28840) is armed in E:/Codex/Frankie-BOSS-20260915/sunday-launch-20260915/Markets. It waits for full19-prefix-witnesses.json AND the existing builder's complete progress event, matches the reported manifest hash and original batch 0d700fc3be75e42b88c579d7158aca44e9acb0f5322a0bee3a481c035facffdf, then writes actual-host-final-configuration.json from the preserved preparation configuration. Only boss_commit alignment to 9a8f3f46abaa3d840b07b685010108e0c551b174 and the completed prefix_manifest pin are changed. It then executes the original committed run_actual_sunday.py WITHOUT --prepare-only. Host source SHA256 is 87f7cc1d7ce31c22aff32d9c908251d4a54d11ef4203dcfdf6379ef76a756fc8.
+
+Final-v4 remains the unchanged prepared package. Context131072, stacked_v1, jobs_v1 and full remaining output remain approved. Console input echo is disabled; service credentials must enter only through the existing in-memory stdin trigger after actual admission and retained readiness. Host stdout/stderr will be in actual-host.stdout.log / actual-host.stderr.log. Waiting process CPU use is negligible. Do not start another host.
+
+At arming, prefixes00..15 were complete,01..15 archived, and16 began. Actual inference has not started. Retained Pod remains stopped with historical environment until the reviewed rollout. Next: observe actual admission, stage exact request/bootstrap, preserve full Pod environment during update, use retained watchdog/start_once, verify readiness, supply existing execution trigger, then complete all19 cycles and print/retain genuine Frankie analysis and learning receipts.
+
+Owner waived extra verification and explicitly requested no repeated tests. No wrapper modification was installed: the earlier suggested pending-prefix launcher was abandoned before files were created. No source/runtime code edits, dependency installs, new Pod, account/reset action, heartbeat resume, or extra source day occurred.
