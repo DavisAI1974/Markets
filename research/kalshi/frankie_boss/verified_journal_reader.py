@@ -88,6 +88,12 @@ def decode_tagged(node):
     raise ValueError("unknown evidence value tag")
 
 
+def _worker_init():
+    """Prevent each verification worker from spawning nested math thread pools."""
+    for name in ("OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS"):
+        os.environ[name] = "1"
+
+
 def _validate_row(row):
     """CPU-heavy row validation safe to run in a worker process.
 
@@ -147,7 +153,7 @@ class VerifiedJournalReader:
             if self._stored_tail() != (expected_count, expected_head_hash):
                 raise ValueError("journal differs from checkpoint; existing evidence was retained")
             if self.workers > 1:
-                self._executor = ProcessPoolExecutor(max_workers=self.workers)
+                self._executor = ProcessPoolExecutor(max_workers=self.workers, initializer=_worker_init)
         except BaseException:
             self._connection.close()
             raise
