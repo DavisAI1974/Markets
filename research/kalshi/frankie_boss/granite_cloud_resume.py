@@ -57,7 +57,7 @@ def _stop_result(pod, pod_id):
     return {'status': 'stop_pending', 'pod_id': pod_id, 'data_retained': False}
 
 
-def stop_owned_once(api, intent, pod_id=None, on_discovered=None):
+def stop_owned_once(api, intent, pod_id=None, on_discovered=None, on_ack=None):
     """One stop action, then exact readback. Absence is never retained success.
 
     The caller retries pending cleanup. A conflicting stop is accepted only when
@@ -83,6 +83,8 @@ def stop_owned_once(api, intent, pod_id=None, on_discovered=None):
     conflict = None
     try:
         api.request('POST', path + '/action', {'action': 'stop'})
+        if on_ack is not None:
+            on_ack()
     except control.ProviderError as error:
         if error.status != 409:
             raise

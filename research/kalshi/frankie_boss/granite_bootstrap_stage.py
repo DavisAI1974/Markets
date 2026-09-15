@@ -19,7 +19,7 @@ except ImportError:
 
 BUCKET = 'frankie-granite42-568968024170-us-east-1'
 PREFIX = 'granite-bootstrap-open-run/'
-DIRECTORY = '/opt/ml/additional-model-data-sources/bootstrap-open-run-v1'
+DIRECTORY = '/opt/ml/additional-model-data-sources/bootstrap-jobs-v1'
 EXPIRY = 900
 
 

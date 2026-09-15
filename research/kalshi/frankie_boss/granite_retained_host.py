@@ -24,13 +24,14 @@ from . import granite_retained_lifecycle as lifecycle
 from .granite_runpod_tokenizer import LocalTokenizerAdmission, MAX_REQUEST_BYTES
 from .granite_runpod_admission import TOKENIZER_FILES
 from .granite_runpod_probe import https_exchange
+from .granite_active_run import ActiveRunStore, completion_cleanup
+from .granite_startup_pins import persist_configuration
 
 OUT = Path('work/retained-granite')
 INFO_SHA256 = 'c6c151ddc5ad252a04c34a533e8bc4d9f46c24778372c9bb84f34e748832020a'
 PRIOR_RUN = '34928264918'
 REQUEST_BUCKET = 'bento-568968024170-us-east-2-an'
 REQUEST_PREFIX = 'nymex/ng_mbo_5y_v0/frankie/boss_requests/'
-OPEN_BOOTSTRAP_DIRECTORY = '/opt/ml/additional-model-data-sources/bootstrap-open-run-v1'
 
 
 def save(name, value):
@@ -52,7 +53,8 @@ def request_digest():
     digest = os.environ.get('REQUEST_SHA256', '')
     if not digest:
         value = artifacts.strict_json(Path('.github/frankie-retained-lease-request.json').read_bytes())
-        if set(value) != {'request_sha256', 'local_ready'}:
+        if set(value) not in ({'request_sha256', 'local_ready'},
+                              {'request_sha256', 'local_ready', 'runtime_configuration'}):
             raise ValueError('explicit exact request digest required')
         digest = value['request_sha256']
     if type(digest) is not str or not re.fullmatch('[0-9a-f]{64}', digest):
@@ -71,7 +73,7 @@ def read_object(journal, bucket, key, maximum):
     return raw
 
 
-def tokenizer(journal, manifest):
+def tokenizer(journal, manifest, *, context=4096):
     directory = Path('work/retained-tokenizer')
     directory.mkdir(parents=True, exist_ok=False)
     for row in manifest['files']:
@@ -80,7 +82,7 @@ def tokenizer(journal, manifest):
                 artifacts.prefix_for(manifest)+row['path'], row['size'])
             (directory/row['path']).write_bytes(raw)
             artifacts.verify_file(directory/row['path'], row)
-    return LocalTokenizerAdmission(directory, served_model_name='granite42-smoke')
+    return LocalTokenizerAdmission(directory, served_model_name='granite42-smoke', context=context)
 
 
 def watchdog_identity():
@@ -103,6 +105,13 @@ def watchdog_identity():
 
 
 def keep_startup_frame(records, frame, lease):
+    try:
+        _keep_startup_frame(records, frame, lease)
+    except (ValueError, TypeError, KeyError, AttributeError, OverflowError):
+        records['malformed_frames'] = records.get('malformed_frames', 0)+1
+
+
+def _keep_startup_frame(records, frame, lease):
     # Runpod v2 OpenAPI defines SSE data {source,line,ts}; validate the
     # provider event timestamp as well as requesting its since-filter.
     if frame.get('source') != 'container' or type(frame.get('ts')) is not str:
@@ -147,7 +156,12 @@ def fresh_startup(api, lease):
                 break
             if not raw.startswith(b'data:'):
                 continue
-            keep_startup_frame(records, json.loads(raw[5:]), lease)
+            try:
+                frame = json.loads(raw[5:])
+            except (ValueError, UnicodeError):
+                records['malformed_frames'] = records.get('malformed_frames', 0)+1
+                continue
+            keep_startup_frame(records, frame, lease)
     except (TimeoutError, OSError):
         pass
     finally:
@@ -165,6 +179,19 @@ def request_inputs():
     return digest, witness
 
 
+def runtime_configuration(journal):
+    supplied = None
+    if os.environ.get('RUNTIME_CONFIGURATION_JSON'):
+        supplied = artifacts.strict_json(os.environ['RUNTIME_CONFIGURATION_JSON'].encode())
+    else:
+        path = Path('.github/frankie-retained-lease-request.json')
+        if path.exists():
+            marker = artifacts.strict_json(path.read_bytes())
+            if marker.get('request_sha256') == request_digest():
+                supplied = marker.get('runtime_configuration')
+    return persist_configuration(journal, supplied)
+
+
 def observer_handoff(phase):
     save('observer-handoff.json', dict(status='observer_handoff_required', phase=phase,
         pod_id=lifecycle.POD_ID, at=time.time(), pod_stop_requested=False,
@@ -173,12 +200,14 @@ def observer_handoff(phase):
 
 def validate_runtime_or_fail(records, manifest):
     try:
-        cloud.validate_runtime(records, dict(model_manifest_sha256=artifacts.manifest_digest(manifest)))
         pin = artifacts.strict_json((OUT/'startup-bootstrap-pin.json').read_bytes())
+        cloud.validate_runtime(records, dict(model_manifest_sha256=artifacts.manifest_digest(manifest),
+                                            context=pin['service_context']))
         actual = records['startup']
         if (actual.get('lifetime_seconds', 'missing') is not None
                 or actual.get('bootstrap_bundle_sha256') != pin['bundle_sha256']
-                or actual.get('supervisor_command_sha256') != pin['supervisor_command_sha256']):
+                or actual.get('supervisor_command_sha256') != pin['supervisor_command_sha256']
+                or (pin['transport_protocol'] == 'jobs_v1' and actual.get('durable_job_protocol') != 'jobs_v1')):
             raise ValueError('actual open bootstrap differs from the pinned candidate')
     except ValueError:
         save('confirmed-fatal.json', dict(reason='verified_runtime_or_model_integrity_failure'))
@@ -187,30 +216,38 @@ def validate_runtime_or_fail(records, manifest):
 
 def prepare(journal, api, info, manifest):
     digest, witness = request_inputs()
+    configuration = runtime_configuration(journal)
     body = read_object(journal, REQUEST_BUCKET, REQUEST_PREFIX+digest+'.json', MAX_REQUEST_BYTES)
     if hashlib.sha256(body).hexdigest() != digest:
         raise ValueError('actual staged request differs from its trusted digest')
-    admit = tokenizer(journal, manifest)
+    admit = tokenizer(journal, manifest, context=configuration['service_context'])
     admission = admit(body)
-    rows = []
-    for name in cloud.package.FILES:
-        raw = (Path(__file__).parent/name).read_bytes()
-        if name.endswith('.py') and b'\r\n' in raw:
-            raise ValueError('committed LF bootstrap source required')
-        rows.append(dict(path=name, size=len(raw), sha256=hashlib.sha256(raw).hexdigest()))
-    bundle_hash = hashlib.sha256(artifacts.canonical(dict(schema='GRANITE_RUNPOD_BUNDLE_V1', files=rows))).hexdigest()
+    rows = configuration['files']
+    bundle_hash = configuration['bundle_sha256']
+    if journal.get('retained-start-intent.json') is None:
+        if {row['path'] for row in rows} != set(cloud.package.FILES):
+            raise ValueError('initial bootstrap roster differs from reviewed source')
+        for row in rows:
+            raw = (Path(__file__).parent/row['path']).read_bytes()
+            if len(raw) != row['size'] or hashlib.sha256(raw).hexdigest() != row['sha256']:
+                raise ValueError('initial bootstrap bytes differ from reviewed source')
     pod = retained._owned(api.request('GET', '/v2/pods/'+lifecycle.POD_ID), info['intent'], lifecycle.POD_ID)
     environment = pod['env']
     command_hash = hashlib.sha256(environment.get('SUPERVISOR_PROGRAM__APP_COMMAND', '').encode()).hexdigest()
-    expected_command = cloud.bootstrap_command(rows, bundle_hash, journal.bucket,
-        directory=OPEN_BOOTSTRAP_DIRECTORY, open_ended=True)
+    # Replacements use original durable pins, not a later checkout's command.
+    if journal.get('retained-start-intent.json') is None:
+        expected_command = cloud.bootstrap_command(rows, bundle_hash, journal.bucket,
+            directory=configuration['bootstrap_directory'], open_ended=True)
+        if hashlib.sha256(expected_command.encode()).hexdigest() != configuration['supervisor_command_sha256']:
+            raise ValueError('initial supervisor command differs from reviewed pin')
     if (environment.get('RUNPOD_GRANITE_LIFETIME_SECONDS') != 'none'
             or environment.get('RUNPOD_BUNDLE_SHA256') != bundle_hash
             or environment.get('RUNPOD_SUPERVISOR_COMMAND_SHA256') != command_hash
-            or command_hash != hashlib.sha256(expected_command.encode()).hexdigest()):
+            or command_hash != configuration['supervisor_command_sha256']
+            or environment.get('GRANITE_MAX_MODEL_LEN') != str(configuration['service_context'])
+            or environment.get('GRANITE_TRANSPORT_PROTOCOL', 'direct_v1') != configuration['transport_protocol']):
         raise ValueError('retained Pod needs the reviewed open bootstrap rollout before start')
-    save('startup-bootstrap-pin.json', dict(bundle_sha256=bundle_hash,
-                                           supervisor_command_sha256=command_hash))
+    save('startup-bootstrap-pin.json', configuration)
     startup = journal.get('retained-startup.json')
     if startup is None:
         startup = lifecycle.make_startup(info, start=time.time(), request_sha256=digest, local_ready=witness)
@@ -231,7 +268,9 @@ def prepare(journal, api, info, manifest):
         observer_handoff('awaiting_independent_observer')
         return
     result = lifecycle.start_once(api, journal, info, manifest, startup, now=time.time(),
-        request_body=body, tokenizer_admission=admit, expected_watchdog_identity=identity)
+        request_body=body, tokenizer_admission=admit, expected_watchdog_identity=identity,
+        active_runs=ActiveRunStore(journal.client, journal.bucket, lifecycle.POD_ID),
+        runtime_configuration=configuration)
     save('start.json', result)
     records = {}
     previous_progress = None
@@ -271,7 +310,10 @@ def prepare(journal, api, info, manifest):
                     runtime_hash = hashlib.sha256(artifacts.canonical(runtime)).hexdigest()
                     bindings = lifecycle.verified_service_inputs(info, manifest, run, runtime_receipt=runtime,
                         expected_runtime_sha256=runtime_hash, tokenizer_admission=admit,
-                        output_tokens=admission['output_tokens'], startup_intent=startup)
+                        output_tokens=admission['output_tokens'], startup_intent=startup,
+                        context_encoding=configuration['context_encoding'],
+                        service_context=configuration['service_context'],
+                        transport_protocol=configuration['transport_protocol'])
                     if prior is None:
                         if prior_run is None:
                             journal.put('retained-run.json', run, once=True)
@@ -304,9 +346,11 @@ def watchdog(journal, api, info):
                 journal.put('retained-observer.json', dict(startup_sha256=digest,
                     at=time.time(), watchdog_identity=identity))
                 if journal.get('retained-finished.json') == {'startup_sha256': digest}:
-                    result = retained.stop_owned_once(api, info['intent'], lifecycle.POD_ID)
+                    result = completion_cleanup(api, journal,
+                        ActiveRunStore(journal.client, journal.bucket, lifecycle.POD_ID),
+                        info, digest, retained.stop_owned_once, acknowledged_stop=True)
                     save('completion-cleanup.json', result)
-                    if result['status'] == 'confirmed_stopped':
+                    if result['status'] in ('confirmed_stopped', 'not_active_run'):
                         return
                 ready = journal.get('service-ready.json')
                 ready_hash = hashlib.sha256(artifacts.canonical(ready)).hexdigest() if ready else None
@@ -360,7 +404,13 @@ def cleanup(api):
     info = artifacts.strict_json((OUT/'pod-info.json').read_bytes())
     if hashlib.sha256(artifacts.canonical(info)).hexdigest() != INFO_SHA256:
         raise ValueError('cached retained ownership receipt changed')
-    result = retained.stop_owned_once(api, info['intent'], lifecycle.POD_ID)
+    startup = artifacts.strict_json((OUT/'startup-intent.json').read_bytes())
+    digest = lifecycle.check_startup(startup, info)
+    journal = cloud.Journal()
+    journal.prefix = 'retained-granite/'+startup['request_sha256']+'/'
+    result = completion_cleanup(api, journal,
+        ActiveRunStore(journal.client, journal.bucket, lifecycle.POD_ID), info, digest,
+        retained.stop_owned_once, acknowledged_stop=True)
     save('cleanup.json', result)
     if result['status'] != 'confirmed_stopped':
         raise RuntimeError('retained cleanup requires follow-up')

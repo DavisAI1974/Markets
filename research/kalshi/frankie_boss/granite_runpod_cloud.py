@@ -332,6 +332,9 @@ def capture_progress(journal, pod, intent, manifest, collector, records):
 
 
 def validate_runtime(records, admitted):
+    context = admitted.get('context', 4096)
+    if type(context) is not int or context not in (4096, 131072):
+        raise ValueError('explicit supported runtime context required')
     startup = records['startup']['startup']
     facts = startup['runtime']
     if (startup['image_digest'] != control.granite_runpod.startup.IMAGE_DIGEST
@@ -339,7 +342,7 @@ def validate_runtime(records, admitted):
             or any(facts['packages'].get(k) != v for k, v in admission.TOKENIZER_VERSIONS.items())
             or facts['gpu_count'] != 1 or 'L40S' not in facts['gpu']
             or facts['gpu_total_memory'] < 45000000000
-            or startup['environment']['GRANITE_MAX_MODEL_LEN'] != '4096'
+            or startup['environment']['GRANITE_MAX_MODEL_LEN'] != str(context)
             or startup['environment']['GRANITE_SERVED_MODEL'] != 'granite42-smoke'
             or records['disk']['free_bytes'] < 22592970510):
         raise ValueError('hosted runtime differs from admission')

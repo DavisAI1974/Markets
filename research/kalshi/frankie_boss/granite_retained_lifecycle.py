@@ -52,7 +52,8 @@ def make_run(info, startup, *, ready_at):
 
 
 def start_once(api, journal, info, manifest, startup, *, now, request_body,
-               tokenizer_admission, expected_watchdog_identity):
+               tokenizer_admission, expected_watchdog_identity, active_runs=None,
+               runtime_configuration=None):
     digest = check_startup(startup, info)
     prior = journal.get('retained-start-intent.json')
     intent = dict(startup_sha256=digest, pod_id=POD_ID)
@@ -65,10 +66,17 @@ def start_once(api, journal, info, manifest, startup, *, now, request_body,
             or type(request_body) is not bytes
             or hashlib.sha256(request_body).hexdigest() != startup['request_sha256']):
         raise ValueError('actual pinned tokenizer and exact request required')
+    from .granite_startup_pins import validate_configuration, validate_url_freshness
+    configuration = validate_configuration(runtime_configuration)
+    context = configuration['service_context']
+    if active_runs is None or active_runs.pod_id != POD_ID:
+        raise ValueError('shared Pod run ownership required before start')
     admitted = tokenizer_admission(request_body)
     if (admitted.get('request_sha256') != startup['request_sha256']
-            or admitted.get('context') != 4096
-            or not 0 < admitted['input_tokens'] + admitted['output_tokens'] <= 4096):
+            or admitted.get('context') != context
+            or type(admitted.get('input_tokens')) is not int or admitted['input_tokens'] <= 0
+            or type(admitted.get('output_tokens')) is not int or admitted['output_tokens'] <= 0
+            or admitted['input_tokens'] + admitted['output_tokens'] > context):
         raise ValueError('full actual request admission required')
     _watchdog(expected_watchdog_identity, {'deadline': now})
     arm = journal.get('retained-observer.json')
@@ -76,10 +84,21 @@ def start_once(api, journal, info, manifest, startup, *, now, request_body,
             or arm.get('watchdog_identity') != expected_watchdog_identity
             or not 0 <= now-arm.get('at', 0) <= 20):
         raise ValueError('fresh independent startup observer required')
-    validate_resume(info, api.request('GET', '/v2/pods/'+POD_ID), manifest)
+    pod = api.request('GET', '/v2/pods/'+POD_ID)
+    validate_resume(info, pod, manifest)
+    expiry = validate_url_freshness(pod['env'], configuration, now=now)
+    journal.put('startup-capability-expiry.json', dict(earliest_expiry=expiry))
+    active_runs.claim(digest)
     journal.put('retained-start-intent.json', intent, once=True)
-    api.request('POST', '/v2/pods/'+POD_ID+'/action', {'action': 'start'})
-    return dict(status='start_submitted', pod_id=POD_ID, startup_sha256=digest)
+    try:
+        api.request('POST', '/v2/pods/'+POD_ID+'/action', {'action': 'start'})
+    except Exception as error:
+        journal.put('retained-start-failure.json', dict(startup_sha256=digest,
+            error_type=type(error).__name__, status='start_outcome_unknown'), once=True)
+        raise
+    result = dict(status='start_submitted', pod_id=POD_ID, startup_sha256=digest)
+    journal.put('retained-start-result.json', result, once=True)
+    return result
 
 
 def make_lease(info, *, start, duration_seconds, request_sha256):
@@ -190,7 +209,9 @@ def resume_once(api, journal, info, manifest, lease, *, now, request_body,
 
 def verified_service_inputs(info, manifest, lease, *, runtime_receipt,
                             expected_runtime_sha256, tokenizer_admission,
-                            output_tokens, request_timeout=None, startup_intent=None):
+                            output_tokens, request_timeout=None, startup_intent=None,
+                            context_encoding='compact_v1', service_context=4096,
+                            transport_protocol='direct_v1'):
     """Assemble transport only from this lease's complete startup/health receipt.
 
     The independent hosting runner must capture the new bootstrap's accepted
@@ -234,12 +255,15 @@ def verified_service_inputs(info, manifest, lease, *, runtime_receipt,
             or not lease['start'] <= runtime_receipt.get('ready_at', 0)
             or (not open_run and runtime_receipt.get('ready_at', 0) >= lease['deadline']-120)):
         raise ValueError('fresh full model-file verification and authenticated health required')
-    route = context_route('compact_v1')
+    route = context_route(context_encoding)
+    if tokenizer_admission.context != service_context:
+        raise ValueError('selected service capacity differs from actual tokenizer admission')
     identity = GraniteIdentity(manifest_digest(manifest), None,
         tokenizer_admission.tokenizer_sha256, 'none', canonical(startup).decode(),
         False, 0, output_tokens, hashlib.sha256(route.system_text.encode()).hexdigest(),
         SCHEMA_VERSION, route.parser_code_hash(), None)
-    config = RunpodConfig(POD_ID, 'granite42-smoke', request_timeout, expected_runtime_sha256)
+    config = RunpodConfig(POD_ID, 'granite42-smoke', request_timeout, expected_runtime_sha256,
+        context=service_context, transport_protocol=transport_protocol)
     _runtime(config, identity, runtime_receipt)
     return dict(config=config, identity=identity, runtime_receipt=runtime_receipt,
                 admit_request=tokenizer_admission)
