@@ -1,0 +1,49 @@
+name: Prepare preserved Frankie source mapping
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/full-frankie-boss-connection-20260915]
+    paths: [.github/frankie-ledger-mapping-request.json]
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-ledger-format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect preserved member framing
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_DEFAULT_REGION: us-east-2
+          AWS_EC2_METADATA_DISABLED: 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -d -m 0700 evidence
+          aws s3api get-object --bucket bento-568968024170-us-east-2-an \
+            --key nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1/ledgers/exact_member_rows.jsonl.gz \
+            --range bytes=0-1048575 member-prefix.gz > /dev/null
+          python3 - <<'PY'
+          import gzip, json
+          from pathlib import Path
+          with gzip.open('member-prefix.gz', 'rb') as stream:
+              first = stream.readline(2*1024*1024)
+          if not first.endswith(b'\n'):
+              raise SystemExit('first member row exceeds inspection bound')
+          row = json.loads(first)
+          Path('evidence/member-row-preview.json').write_text(json.dumps(row, sort_keys=True)+'\n')
+          print(json.dumps(dict(operation='format_inspection_only', row_bytes=len(first),
+              row_keys=sorted(row), full_ledger_verified=False, market_calculations=False)))
+          PY
+      - name: Preserve mapping input preview
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: frankie-ledger-format-${{ github.run_id }}
+          path: evidence/
+          if-no-files-found: error
+          retention-days: 7
