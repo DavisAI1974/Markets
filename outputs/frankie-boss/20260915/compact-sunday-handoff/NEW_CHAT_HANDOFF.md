@@ -1,3 +1,11 @@
+# Current launch status — 2026-09-15 14:06 UTC
+
+**Read [LIVE_LAUNCH_HANDOFF.md](LIVE_LAUNCH_HANDOFF.md) first.** All19 prefixes are complete. Actual host PID63112 / unified exec session48894 is alive and waiting after first request admission. The retained Pod environment has lifetime `none`, context131072 and final-v4/jobs_v1 applied; Pod still stopped. Exact actual-request staging run34979334781 succeeded and its encrypted receipt is on E. Actual inference has not started. Continue the existing host; do not restart it. Bootstrap URL expiry14:12:12 UTC requires attention before paid start.
+
+The earlier snapshot below is retained as history and detailed background; its running-prefix and not-launched-host statements are superseded by the live handoff.
+
+---
+
 # New-chat handoff: compact Frankie Sunday ingestion is running
 
 ## Standing instruction for additional days
