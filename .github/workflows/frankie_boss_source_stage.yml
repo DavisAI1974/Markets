@@ -2,6 +2,11 @@ name: Stage preserved Sunday MBO source
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - codex/full-frankie-boss-connection-20260915
+    paths:
+      - .github/frankie-source-stage-request.json
 
 permissions:
   contents: read
