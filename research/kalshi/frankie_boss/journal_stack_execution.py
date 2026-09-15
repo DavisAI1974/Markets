@@ -120,7 +120,11 @@ class MigratingConformanceReader:
                     if now-last_emit >= 10 or completed == self.count:
                         self.emit(dict(phase='verify_compress_conformance', entries=completed,
                             total=self.count, records=completed//2,
-                            percent=round(100*completed/self.count,4),
+                            logical_entries_verified=completed,
+                            compressed_blocks_completed=(completed+15)//16,
+                            compressed_blocks_total=(self.count+15)//16,
+                            percent=round(100*((completed+15)//16)/((self.count+15)//16),4),
+                            bytes_saved=self.raw_bytes-self.compact_bytes,
                             records_per_second=(completed/2)/(now-started),
                             queued_blocks=len(pending), oldest_queue_age_seconds=now-pending[0][0] if pending else 0,
                             flush_seconds=flush_seconds, worker_cpu_seconds=self.worker_cpu_seconds,
