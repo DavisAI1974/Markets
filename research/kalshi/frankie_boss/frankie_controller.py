@@ -27,12 +27,15 @@ def native_model_pin(bridge):
 class FrankieForecastController:
     def __init__(self, *, enabled=False, legacy=None, bridge=None, journal=None,
                  critic=None, expected_native_hash=None, expected_critic_config_hash=None,
-                 expected_critic_identity_hash=None, context_encoding='native_v1'):
+                 expected_critic_identity_hash=None, context_encoding='native_v1', event=None):
         if type(enabled) is not bool:
             raise ValueError('explicit boolean enable flag required')
         self.enabled, self.legacy = enabled, legacy
         if not enabled:
             return
+        if event is not None and not callable(event):
+            raise ValueError('controller event must be callable')
+        self.event = event
         from research.kalshi.frankie_boss.granite_context_route import context_route
         self.context_encoding = context_route(context_encoding).encoding
         if (critic is None or getattr(critic, 'enabled', False) is not True
@@ -44,6 +47,11 @@ class FrankieForecastController:
         self.expected_critic_identity_hash = expected_critic_identity_hash
         self._busy = threading.Lock()
         self._validate_pins()
+
+    def _observe(self, phase, **values):
+        """Operational phase only; no prompts, market values or credentials."""
+        if self.event is not None:
+            self.event(dict(phase=phase, **values))
 
     def _validate_pins(self):
         try:
@@ -156,10 +164,17 @@ class FrankieForecastController:
         if not self._busy.acquire(blocking=False):
             raise ValueError('controller already has a run in flight')
         try:
+            self._observe('source_validation', through_cursor=through_cursor)
             return await self._refresh(request_id=request_id,sessions=sessions,
                 expected_sessions_hash=expected_sessions_hash,arm_hash=arm_hash,as_of=as_of,
                 source_as_of=source_as_of,source_hash=source_hash,through_cursor=through_cursor,
                 metadata=metadata,material=material,recovery_attempt_id=recovery_attempt_id)
+        except Exception:
+            try:
+                self._observe('request_failed', through_cursor=through_cursor)
+            except Exception:
+                pass  # Preserve the original failure, including diagnostic I/O failure.
+            raise
         finally:
             self._busy.release()
 
@@ -216,6 +231,8 @@ class FrankieForecastController:
             metadata=tuple(owned_metadata))
         state = self.journal.begin(request_id,intent)
         if state['result'] is not None:
+            self._observe('completed_result_reused', through_cursor=through_cursor,
+                          status=state['result']['status'])
             return state['result']
         source = self.bridge.context.builder.journal
         source_state = source.count,source.head_hash
@@ -227,6 +244,7 @@ class FrankieForecastController:
                 raise ValueError('controller source or configuration changed during attempt')
 
         if state['native'] is None:
+            self._observe('native_reasoning', through_cursor=through_cursor)
             publications = self.bridge.update(**native_args)
             unchanged()
             state = self.journal.record(request_id,'NATIVE_COMPLETE',dict(
@@ -234,9 +252,11 @@ class FrankieForecastController:
                     target=asdict(p.selected.target),revision=p.revision) for p in publications),
                 checkpoint=self.bridge.book.checkpoint()))
         publications = tuple(self.bridge.book.publication(p['publication_hash']) for p in state['native']['publications'])
+        self._observe('native_complete', through_cursor=through_cursor, count=len(publications))
         if not publications:
             result = dict(request_id=request_id,request_hash=state['request_hash'],status='idle',records=())
             self.journal.record(request_id,'RESULT',result)
+            self._observe('output_persisted', through_cursor=through_cursor, count=0, status='idle')
             return result
         snapshot,prompt,context_receipt,packet_hash,native_snapshot_hash = self._snapshot(publications,as_of=as_of,
             source_as_of=source_as_of,source_hash=source_hash,through_cursor=through_cursor)
@@ -251,6 +271,7 @@ class FrankieForecastController:
                 snapshot_hash=snapshot.hash,snapshot_text=snapshot.text,prompt_text=prompt.text,
                 context=context_receipt,packet_hash=packet_hash,config_hash=self.expected_critic_config_hash,
                 identity_hash=self.expected_critic_identity_hash)
+            self._observe('critic_request', through_cursor=through_cursor)
             state = self.journal.record(request_id,'CRITIC_INTENT',critic_intent)
             from research.kalshi.frankie_boss.granite_context_route import context_route
             method = getattr(self.critic, context_route(self.context_encoding).method)
@@ -260,6 +281,8 @@ class FrankieForecastController:
             state = self.journal.record(request_id,'CRITIC_RESULT',dict(
                 intent_hash=evidence_hash(critic_intent),receipt=payload))
         critic = state['critic_result']
+        self._observe('critic_complete', through_cursor=through_cursor,
+                      status=critic['receipt']['shadow']['status'])
         metadata_map = dict(owned_metadata)
         records = []
         all_native = True
@@ -276,4 +299,6 @@ class FrankieForecastController:
             records=tuple(records),critic=critic,critic_hash=evidence_hash(critic),
             native_checkpoint=state['native']['checkpoint'])
         self.journal.record(request_id,'RESULT',result)
+        self._observe('output_persisted', through_cursor=through_cursor,
+                      count=len(records), status=result['status'])
         return result
