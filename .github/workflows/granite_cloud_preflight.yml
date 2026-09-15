@@ -72,6 +72,58 @@ jobs:
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
               summary.write('Runpod authenticated read succeeded. Termination permission remains untested.\n')
           PY
+      - name: Check AWS cleanup permissions without provisioning
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_MAX_ATTEMPTS: '1'
+          AWS_PAGER: ''
+        shell: bash
+        run: |
+          timeout 100s python3 - <<'PY'
+          import hashlib, json, os, re, subprocess
+          def aws(*args):
+              result = subprocess.run(['aws', *args, '--output', 'json',
+                  '--cli-connect-timeout', '5', '--cli-read-timeout', '10'],
+                  capture_output=True, text=True, timeout=20)
+              if result.returncode:
+                  codes = re.findall(r'\(([A-Za-z0-9]+)\)', result.stderr)
+                  raise RuntimeError(codes[0] if codes else 'RequestFailed')
+              return json.loads(result.stdout)
+          identity = aws('sts', 'get-caller-identity')
+          account = identity['Account']
+          if hashlib.sha256(account.encode()).hexdigest() != '3c7ffc6cc2835350849373c23a8e513bc07771ca2eceba2d683af17c5cb3fe26':
+              raise SystemExit('Unexpected AWS account; stopped before permission checks.')
+          if not re.fullmatch(r'arn:aws:iam::[0-9]{12}:user/[A-Za-z0-9+=,.@_/-]+', identity['Arn']):
+              raise SystemExit('IAM-user policy simulation is unavailable for this principal type.')
+          name = 'frankie-granite-runpod-smoke-preflight'
+          groups = [
+              (['iam:CreateRole', 'iam:PutRolePolicy', 'iam:PassRole', 'iam:DeleteRole', 'iam:DeleteRolePolicy', 'iam:GetRole'],
+               f'arn:aws:iam::{account}:role/{name}'),
+              (['lambda:CreateFunction', 'lambda:InvokeFunction', 'lambda:DeleteFunction', 'lambda:GetFunctionConfiguration'],
+               f'arn:aws:lambda:us-east-1:{account}:function:{name}'),
+              (['scheduler:CreateSchedule', 'scheduler:GetSchedule', 'scheduler:DeleteSchedule'],
+               f'arn:aws:scheduler:us-east-1:{account}:schedule/default/{name}'),
+              (['s3:PutObject', 's3:GetObject'],
+               f'arn:aws:s3:::frankie-granite42-{account}-us-east-1/runpod-smoke/preflight/receipt.json'),
+          ]
+          report = []
+          try:
+              for actions, resource in groups:
+                  result = aws('iam', 'simulate-principal-policy', '--policy-source-arn', identity['Arn'],
+                      '--action-names', *actions, '--resource-arns', resource)
+                  for row in result['EvaluationResults']:
+                      report.append({'action': row['EvalActionName'], 'decision': row['EvalDecision'],
+                                     'missing_context': row.get('MissingContextValues', [])})
+          except RuntimeError as error:
+              print('AWS_PERMISSION_SIMULATION ' + json.dumps({'status': 'unavailable', 'code': str(error)}))
+              raise SystemExit(1)
+          print('AWS_PERMISSION_SIMULATION ' + json.dumps(report, sort_keys=True))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('Permission simulation completed; this is not live provisioning or cleanup proof.\n')
+          PY
       - name: State scope
         if: always()
         shell: bash
