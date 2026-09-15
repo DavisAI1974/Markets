@@ -128,8 +128,10 @@ def supervisor_metadata_code():
 '''
 
 
-def recovery_command(rows, bundle_sha, directory=package.ROOT):
+def recovery_command(rows, bundle_sha, directory=package.ROOT, *, identity_command=None):
     """Reuse the existing attached bootstrap after a failed pre-model startup."""
+    if identity_command is not None and type(identity_command) is not str:
+        raise ValueError('explicit original supervisor command required')
     code = f'''import os,pathlib,shutil,json
 os.environ.pop('RP_BOOTSTRAP_URLS',None)
 p=pathlib.Path({directory!r})
@@ -139,7 +141,13 @@ free=shutil.disk_usage(p).free
 if free<22592970510: raise SystemExit('insufficient model disk')
 print('GRANITE_DISK '+json.dumps({{'free_bytes':free,'required_bytes':22592970510}}),flush=True)
 '''
-    code += supervisor_metadata_code() + package.preexec_code(rows, bundle_sha, directory=directory)
+    code += supervisor_metadata_code()
+    if identity_command is not None:
+        # The selected vLLM image injects these convenience variables into the
+        # supervisor child. They are not part of the reviewed runtime contract.
+        code += "for key in ('VLLM_ENABLE_CUDA_COMPATIBILITY','VLLM_USAGE_SOURCE'):\n os.environ.pop(key,None)\n"
+        code += "os.environ['SUPERVISOR_PROGRAM__APP_COMMAND']=" + repr(identity_command) + "\n"
+    code += package.preexec_code(rows, bundle_sha, directory=directory)
     return 'python3 -c ' + shlex.quote('exec(bytes.fromhex(' + repr(code.encode().hex()) + ').decode())')
 
 

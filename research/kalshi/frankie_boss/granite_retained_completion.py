@@ -7,7 +7,8 @@ import hashlib
 import json
 import os
 import re
-import subprocess
+
+BOSS_COMMIT = '9a8f3f46abaa3d840b07b685010108e0c551b174'
 
 
 def canonical(value):
@@ -42,9 +43,8 @@ def publish_completion(journal, fields):
 
 def main():
     fields = {key: os.environ[key.upper()] for key in FIELDS}
-    checked_out = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-    if fields['code_commit'] != checked_out:
-        raise ValueError('completion workflow checkout differs from actual host code')
+    if fields['code_commit'] != BOSS_COMMIT:
+        raise ValueError('completion differs from the pinned actual host code')
     # Validate before placing user-supplied bytes in a journal path.
     if not re.fullmatch('[0-9a-f]{64}', fields['request_sha256']):
         raise ValueError('exact request digest required')

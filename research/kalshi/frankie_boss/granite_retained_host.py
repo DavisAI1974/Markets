@@ -252,16 +252,23 @@ def prepare(journal, api, info, manifest):
     pod = retained._owned(api.request('GET', '/v2/pods/'+lifecycle.POD_ID), info['intent'], lifecycle.POD_ID)
     environment = pod['env']
     command_hash = hashlib.sha256(environment.get('SUPERVISOR_PROGRAM__APP_COMMAND', '').encode()).hexdigest()
-    # Replacements use original durable pins, not a later checkout's command.
-    if journal.get('retained-start-intent.json') is None:
-        expected_command = cloud.bootstrap_command(rows, bundle_hash, journal.bucket,
-            directory=configuration['bootstrap_directory'], open_ended=True)
-        if hashlib.sha256(expected_command.encode()).hexdigest() != configuration['supervisor_command_sha256']:
-            raise ValueError('initial supervisor command differs from reviewed pin')
+    # Replacements and exact recovery wrappers use the original durable pins,
+    # not a later checkout's command.
+    expected_command = cloud.bootstrap_command(rows, bundle_hash, journal.bucket,
+        directory=configuration['bootstrap_directory'], open_ended=True)
+    if hashlib.sha256(expected_command.encode()).hexdigest() != configuration['supervisor_command_sha256']:
+        raise ValueError('initial supervisor command differs from reviewed pin')
+    recovery = cloud.recovery_command(rows, bundle_hash,
+        directory=configuration['bootstrap_directory'], identity_command=expected_command)
+    accepted_commands = {configuration['supervisor_command_sha256'],
+                         hashlib.sha256(recovery.encode()).hexdigest()}
+    startup_row = [row for row in rows if row['path'] == 'granite_startup.py']
     if (environment.get('RUNPOD_GRANITE_LIFETIME_SECONDS') != 'none'
             or environment.get('RUNPOD_BUNDLE_SHA256') != bundle_hash
-            or environment.get('RUNPOD_SUPERVISOR_COMMAND_SHA256') != command_hash
-            or command_hash != configuration['supervisor_command_sha256']
+            or environment.get('RUNPOD_SUPERVISOR_COMMAND_SHA256') != configuration['supervisor_command_sha256']
+            or command_hash not in accepted_commands
+            or len(startup_row) != 1
+            or environment.get('GRANITE_BOOTSTRAP_SHA256') != startup_row[0]['sha256']
             or environment.get('GRANITE_MAX_MODEL_LEN') != str(configuration['service_context'])
             or environment.get('GRANITE_TRANSPORT_PROTOCOL', 'direct_v1') != configuration['transport_protocol']):
         raise ValueError('retained Pod needs the reviewed open bootstrap rollout before start')
