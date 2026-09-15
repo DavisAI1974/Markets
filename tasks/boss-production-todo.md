@@ -28,7 +28,10 @@
 - [x] Operational execution controller with pinned account/reflection evidence and durable receipts (bc18611d; 215 selected execution checks)
 - [x] Scoped auth preparation and single-use transport interface, fresh Kalshi send signatures and tastytrade OAuth preparation (1e6f4c35; 250 selected execution checks)
 - [x] Concrete opt-in HTTPS and explicit local secret-file providers with remaining-lease transmission budget (baef3030; 284 selected execution checks, 69 independently rerun)
-- [ ] Authenticated provider/account/valuation/reflection facts, deployed secret/access governance, heartbeat/recovery and cancel/flatten operation
+- [x] Primary Kalshi balance/resting-order cursor collection with authenticated provider seam and retained nonsecret attempts (466e8bc9; fake/local validation)
+- [x] Host-invoked heartbeat and clock-offset supervision through the existing durable execution kill (812b3968)
+- [x] Explicit Kalshi cancel-once controller, durable journal and distinct authenticated DELETE lease with joined restart/expiry tests (9486c6f9, eec82134, 398d1db3)
+- [ ] Authentic positions/fills/history/valuation/reflection facts, deployed secret/access governance, host monitoring cadence, explicit flattening and actual venue/recovery acceptance
 - [x] Lossless compact-context codec and explicit expansion admission bounds
 - [x] Compact-context service/controller routing software; actual model acceptance tracked separately
 - [x] Committed-file BOSS exporter and separate receiver protocol (receiver 2b4bae18; recorded 2,127 passes)
@@ -42,6 +45,15 @@
 - [x] Rolling increment reviewed; workbook and next-chat handoff completed (remaining production build still open)
 
 ## Current integration status - September 14 continuation
+
+Round 2 supersedes the software gaps below: primary observation collection,
+host-invoked supervision and explicit Kalshi cancellation are built and reviewed.
+The read-only Granite recovery workflow ran as 34914225798 on 2bcb9668. It
+confirmed old resource absence and zero owned endpoints but returned incomplete
+evidence: CloudTrail LookupEvents was denied and the expected log group was absent.
+The underlying startup cause and remaining budget are still unknown. No new GPU,
+venue or Sunday attempt ran. Round 2 details and final integrated verification:
+research/kalshi/frankie_boss/CONTINUATION_BUILD_20260915.md.
 
 Later continuation software baseline: baef3030, receiver 899cbe4a. Granite
 diagnostics abad0043 retain every startup descriptor and full sanitized SDK
