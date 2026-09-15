@@ -1,0 +1,61 @@
+{
+  "syntax_checked": [
+    "prepare_snapshot.py",
+    "cloud_transfer.py",
+    "upload_snapshot.py",
+    "verify_snapshot.py"
+  ],
+  "workflow_jobs": [
+    "verify"
+  ],
+  "code_pins": [
+    {
+      "name": "c15_builder.py",
+      "matches_committed_normalized": true
+    },
+    {
+      "name": "c15_observer.py",
+      "matches_committed_normalized": true
+    },
+    {
+      "name": "c15_journal.py",
+      "matches_committed_normalized": true
+    },
+    {
+      "name": "c15_registry.py",
+      "matches_committed_normalized": true
+    },
+    {
+      "name": "causal_prefix.py",
+      "matches_committed_normalized": true
+    },
+    {
+      "name": "causal_prefix_records.py",
+      "matches_committed_normalized": true
+    },
+    {
+      "name": "causal_packet.py",
+      "matches_committed_normalized": true
+    },
+    {
+      "name": "mbo_resume_state.py",
+      "matches_committed_normalized": true
+    },
+    {
+      "name": "source_conformance.py",
+      "matches_committed_normalized": true
+    },
+    {
+      "name": "selected_source_scope.py",
+      "matches_committed_normalized": true
+    },
+    {
+      "name": "raw_mbo_source_manifest.py",
+      "matches_committed_normalized": true
+    },
+    {
+      "name": "ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+      "matches_committed_normalized": true
+    }
+  ]
+}

@@ -1,13 +1,15 @@
 # Journal size and CPU optimization review
 
-Date: 2026-09-15. Review only, applying `performance-optimization/SKILL.md`.
+Date: 2026-09-15. Code review plus one bounded, read-only experiment on a closed independent journal copy, applying `performance-optimization/SKILL.md`.
 Code checkout: `Markets-full-frankie`, frozen launch commit `35982ac7d42b546446038866299c23ca4fc50edc`.
 
 ## Conclusion
 
-There are concrete lossless optimizations. The smallest useful CPU change is to use the already-built faster verified reader for final source conformance, then return completion and checkpoint from one verified immutable state. The live source worker uses the older reader and performs that verification twice. Neither improvement shrinks the current journal. Byte compression can shrink a separate transport/archive copy; a more compact journal storage format would be a separate, larger change.
+Lossless improvements can be stacked. The bounded experiment measured 9.11x to 11.57x compression of a 128-row sample, and exact order sharing plus compression achieved 21.48x on three adjacent completed observations. All sampled observation bytes reconstructed exactly. **24x is not a verified result.** The 21.48x result is a small storage prototype measurement, not whole-journal performance or the current runner's journal format.
 
-The initial review changed no repository code, processes, journal, model, Pod, account, or launch pin, and opened no active database. A subsequently authorized bounded experiment on the closed independent backup is recorded in the addendum below. It changed no production code and did not reread the full journal or rerun tests.
+For CPU work, the existing faster reader can support final source conformance and return completion and checkpoint from one verified immutable state. The original source worker uses the older reader and performs that verification twice. Parallel workers, one conformance pass, compressed transport, and future compact storage address different costs; their combined speedup must be measured rather than obtained by multiplying ratios. The reviewed parallel runner remains unchanged by this exploration.
+
+This work changed no repository code, existing process, journal, model, Pod, account, or launch pin. It created only the isolated experiment script, result and this report. The experiment opened the closed independent backup read-only, sampled 128 rows totaling 10.75 MB, and performed bounded new microbenchmarks. It never opened the active original database, reread the full journal, or reran passing tests. Detailed measurements, identities and limitations appear in the addendum.
 
 ## What is already built
 
@@ -18,7 +20,7 @@ The initial review changed no repository code, processes, journal, model, Pod, a
 | Faster-reader integrations | Present in source_recovery.py, completed_schedule_view.py, retained_preparation_recovery.py, journal_prefix_snapshot.py, and operations/run_actual_sunday.py. Its module header and original specification saying it is not wired anywhere are stale. |
 | Single-pass recovery | Present in source_recovery.py. It verifies the retained parent once and compares generated canonical envelopes to original raw bodies. It does not skip adapter rehydration. |
 | Final source conformance | Still uses the old EvidenceJournal.entries through SourceConformanceDriver._verified_checkpoint. The active resume script calls complete(), then checkpoint(), both calling _verified_checkpoint. |
-| Journal compression / delta storage | Absent from inspected storage writer/reader. Existing body bytes are uncompressed, exactly typed canonical JSON. |
+| Journal compression / delta storage | Absent from the inspected production writer/reader and current runner's journal format. Existing body bytes are uncompressed, exactly typed canonical JSON. An isolated sample order-dictionary prototype and compression measurements are complete; they are not deployed. |
 
 The latest small periodic checkpoint receipt already binds cursor 57,027, journal count 114,054, journal head `d8de0394367b66ea034d2553c3dd45fb7b1ae2b3c92724f8817627118f173500`, and state hash `d46ec93352cfa63fab20e260bb608b0b76e71e5ca10cacd952de6b912bea2d64`. That receipt alone is not the final source conformance result.
 
@@ -29,7 +31,7 @@ The latest small periodic checkpoint receipt already binds cursor 57,027, journa
 3. c15_observer.py:14-25 copies every resting order and every FIFO price-level list at each completed group. These are full snapshots, so unchanged orders recur across nearby groups.
 4. c15_journal.py:47-68 wraps each node with an explicit type tag. Bytes and exact float bits use hex. This preserves distinctions required by the evidence contract, but adds space and many Python objects on decode.
 
-Thus 57,027 updates yield 114,054 stored entries, with substantial repeated structure. The reported 11.7 GB size is consistent with this design. Field-level size shares and achievable compression ratio were not measured; this review does not assign a percentage to snapshots or promise a 10x journal reduction.
+Thus 57,027 updates yield 114,054 stored entries, with substantial repeated structure. The reported 11.7 GB size is consistent with this design. The follow-up sample measured observations at about 91% of sampled body bytes and demonstrated substantial lossless compression. No full-journal field inventory or full-journal codec reduction ratio was measured by this experiment.
 
 ## Ranked actions
 
@@ -51,7 +53,7 @@ This is structurally one scan instead of two for that finalization stage; it is 
 
 ### 3. Compress original bytes for GitHub transport / archival
 
-A separate compressed snapshot can preserve every source byte and be checked against its own compressed hash plus the decompressed physical hash and independently pinned logical checkpoint. This is a practical first size experiment on the independent snapshot already being prepared by the parent, not on the live source DB. Measure actual compressed bytes and compression/decompression time before choosing the format/level.
+A separate compressed snapshot can preserve every source byte and be checked against its own compressed hash plus the decompressed physical hash and independently pinned logical checkpoint. The bounded follow-up measured gzip levels 1 and 6 on a sample of the independent snapshot; details are below. Use the parent's separate whole-archive result for actual transfer size rather than extrapolating the sample.
 
 This does not reduce 57,027 records, change calculations, or reduce JSON traversal CPU after decompression. A compressed upload also does not eliminate the runner's decompressed disk requirement. Streaming compressed verification would require a new transport/container reader, with checks for full consumption, truncation, size and identity; the existing SQLite reader cannot consume a compressed archive directly.
 
@@ -61,7 +63,7 @@ The smallest storage design is independently compressed canonical body blobs or 
 
 Larger possible savings come from exact dictionary sharing, repeated subtrees, and deltas between observations. These must reconstruct every original order snapshot, list/dict ordering, null/absent distinction, float bit pattern, raw field, and receipt before accepting an existing logical identity. Reconstruct from stored exact values/deltas, not by rerunning scientific calculations under potentially different code. Such a format needs corruption, truncation, random-access and exact round-trip evidence before migration. The already-built model-context codec is not a drop-in journal codec.
 
-Expected size savings are plausible because repetition is explicit in the writer, but no ratio or net CPU reduction is established. Compression adds decompression work; reducing disk traffic and reducing Python object traversal are different optimizations.
+The follow-up demonstrates size savings for sampled bytes and a small exact order-sharing prototype. A full-journal format reduction ratio and net CPU reduction remain unestablished. Compression adds decompression work; reducing disk traffic and reducing Python object traversal are different optimizations.
 
 ### 5. Reduce repeated prefix work in a later isolated change
 

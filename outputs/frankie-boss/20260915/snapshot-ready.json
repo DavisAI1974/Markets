@@ -1,0 +1,11 @@
+{
+  "archive": "E:\\Codex\\Frankie-BOSS-20260915\\github-parallel\\source-snapshot.tar.gz",
+  "at": 1789468463.6629205,
+  "bundle_manifest_sha256": "b08a7d968dc33b514cb56ea33ff97ab161e4ce0a4b741b1f19c82b46884fc503",
+  "bytes": 1309639088,
+  "checkpoint_sha256": "750dbb3c63ab672614323dca0dd7f363847ea78aa8a489d0f0b84afe8f00bcf7",
+  "journal_count": 114054,
+  "journal_hash": "d8de0394367b66ea034d2553c3dd45fb7b1ae2b3c92724f8817627118f173500",
+  "schema": "FRANKIE_PARALLEL_SNAPSHOT_READY_V1",
+  "sha256": "cefa75692528b3a66cc89d10993ecbc8e9d420dce924876fc85cfdbfdfa7679f"
+}

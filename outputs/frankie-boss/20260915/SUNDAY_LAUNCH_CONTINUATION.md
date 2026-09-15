@@ -1,5 +1,9 @@
 # Sunday actual run continuation — 2026-09-15
 
+## New-chat and parallel-verification update
+
+Read `E:/Codex/Frankie-BOSS-20260915/github-parallel/NEW_CHAT_HANDOFF.md` first for the latest continuation. The user authorized an independent GitHub CPU verification job, available-CPU use, and stacked lossless journal/CPU optimizations beyond the existing synthetic3.37x result. Its live snapshot/publication/upload/run status files are beside that handoff. Original source/schedule/lineage/gate processes and paid code pin remain preserved. The remote branch will now contain isolated verification workflow/helpers as well as reports; it is no longer solely report-only descendants. Do not pull the frozen paid checkout. Remote verification receipts have `gate_authority=false`; first-finisher adoption requires an explicit reviewed integration, not copying local completion markers. Coordinate the old heartbeat before the new chat becomes execution owner.
+
 ## Current disposition
 
 Actual inference has NOT launched. All 57,027 source records are delivered;
