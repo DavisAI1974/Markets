@@ -29,11 +29,25 @@ def main():
         if m and m.group(1).startswith('AWS_'):
             os.environ[m.group(1)] = m.group(2).strip()
     import boto3
-    s3 = boto3.client('s3', region_name='us-east-2')
-    manifest = json.loads(s3.get_object(Bucket=args.bucket, Key=f'{args.prefix}/UPLOAD_MANIFEST.json')['Body'].read())
-    keys = [f'{args.prefix}/UPLOAD_MANIFEST.json'] + [e['key'] for e in manifest['entries']]
+    from botocore.config import Config
+    # Sign against the bucket's REGIONAL endpoint. A URL signed for the global endpoint gets a 307 to the
+    # regional one, where the signed host no longer matches and S3 answers 403 (measured 2026-09-16).
+    s3 = boto3.client('s3', region_name='us-east-2', endpoint_url='https://s3.us-east-2.amazonaws.com',
+                      config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}))
+    manifest_key = f'{args.prefix}/UPLOAD_MANIFEST.json'
+    manifest_bytes = s3.get_object(Bucket=args.bucket, Key=manifest_key)['Body'].read()
+    manifest = json.loads(manifest_bytes)
+    keys = [manifest_key] + [e['key'] for e in manifest['entries']]
     expires = int(args.hours * 3600)
     urls = {key: s3.generate_presigned_url('get_object', Params={'Bucket': args.bucket, 'Key': key}, ExpiresIn=expires) for key in keys}
+    # Prove one link works unauthenticated, without following redirects, before a host spends time on it.
+    import urllib.request
+    class _NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, *a, **k):
+            return None
+    with urllib.request.build_opener(_NoRedirect).open(urls[manifest_key], timeout=60) as response:
+        if response.status != 200 or response.read() != manifest_bytes:
+            raise SystemExit('presigned manifest link did not return the manifest bytes; not writing the runner')
     payload = json.dumps(dict(schema='FRANKIE_SUNDAY_RESTORE_PRESIGNED_V1', bucket=args.bucket, prefix=args.prefix,
                               expires_seconds=expires, urls=urls), separators=(',', ':'))
     ps1 = (
