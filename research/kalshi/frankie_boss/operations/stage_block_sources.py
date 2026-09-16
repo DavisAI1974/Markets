@@ -45,9 +45,17 @@ def count_records(raw, day):
     ts = frame.index.astype('int64')
     halt = int(dt.datetime(int(day[:4]), int(day[4:6]), int(day[6:]), HALT_UTC_HOUR, tzinfo=dt.timezone.utc).timestamp() * 1e9)
     before = int((ts < halt).sum())
+    flags = frame['flags'].astype(int).values
+    # Seam checks (ingestion review 9.2/9.3): the builder refuses a member transition or a session
+    # change inside an open group, and F_LAST (flag 0x80) closes a group. So the LAST record of every
+    # day file must be F_LAST, and if the halt is a session boundary the last pre-halt record must be too.
+    last_is_f_last = bool(flags[-1] & 0x80)
+    halt_boundary_f_last = bool(flags[before - 1] & 0x80) if 0 < before < len(frame) else None
+    f_last_groups = int((flags & 0x80).astype(bool).sum())
     return dict(mbo_records=int(len(frame)), before_halt=before, after_halt=int(len(frame)) - before,
                 first_ts_recv_ns=int(ts.min()), last_ts_recv_ns=int(ts.max()),
-                instruments=int(frame['instrument_id'].nunique()))
+                instruments=int(frame['instrument_id'].nunique()), f_last_groups=f_last_groups,
+                last_record_f_last=last_is_f_last, halt_boundary_f_last=halt_boundary_f_last)
 
 
 def main():
@@ -86,7 +94,10 @@ def main():
                             mbo_records=counts['mbo_records']))
         sessions.append(dict(member_key=name, day_utc=day, **counts))
         print(json.dumps(dict(member=index, key=target_key, bytes=len(raw), sha256=sha[:16], **counts)), flush=True)
+    seams_clean = all(x['last_record_f_last'] for x in sessions[:-1])
+    halts_clean = all(x['halt_boundary_f_last'] in (True, None) for x in sessions)
     body = dict(schema=SCHEMA, source_kind='NATIVE_DBN_MBO', role='HELD_OUT_BLIND_BLOCK',
+                member_seams_close_groups=seams_clean, halt_boundaries_close_groups=halts_clean,
                 causal_clock='ts_recv_ns', sampled=False, canonical_source_rewritten=False,
                 block=args.block, bucket=args.bucket, prefix=target_prefix, archive_prefix=args.archive,
                 halt_utc_hour=HALT_UTC_HOUR, sources=sources, sessions=sessions,

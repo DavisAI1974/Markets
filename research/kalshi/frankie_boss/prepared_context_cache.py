@@ -52,6 +52,10 @@ def _sha256(value, name):
 
 def _stored_tail(journal):
     """The stored tail, not the handle's cached attributes: a second handle's append is visible."""
+    if hasattr(journal, 'stored_tail'):
+        # A compact prefix (CompactReader / FrankieCompactReader) has no `entries` table; its
+        # stored tail is the seal. Cycle 1 of the Sunday run is the first compact prefix.
+        return journal.stored_tail()
     connection = sqlite3.connect(Path(journal.path).resolve().as_uri() + '?mode=ro', uri=True)
     try:
         row = connection.execute('SELECT ordinal, digest FROM entries ORDER BY ordinal DESC LIMIT 1').fetchone()

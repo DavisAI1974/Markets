@@ -4,9 +4,11 @@
  "bucket": "bento-568968024170-us-east-2-an",
  "canonical_source_rewritten": false,
  "causal_clock": "ts_recv_ns",
+ "halt_boundaries_close_groups": true,
  "halt_utc_hour": 21,
  "ingested": false,
- "manifest_hash": "eb68cb23845a00985cf3e25ad6b23230d7765cb0a8af235b926e67e914ced55c",
+ "manifest_hash": "75c7134df98e83820f5472c828e6c7f07c8b0348e26aabf91726d2683be3b7b0",
+ "member_seams_close_groups": true,
  "model_calls": 0,
  "prefix": "frankie/block_20211004_20211006/sources",
  "prefixes_built": false,
@@ -19,8 +21,11 @@
    "after_halt": 56782,
    "before_halt": 245,
    "day_utc": "20211003",
+   "f_last_groups": 43569,
    "first_ts_recv_ns": 1633277168244072526,
+   "halt_boundary_f_last": true,
    "instruments": 1,
+   "last_record_f_last": true,
    "last_ts_recv_ns": 1633305596372071705,
    "mbo_records": 57027,
    "member_key": "glbx-mdp3-20211003.mbo.dbn.zst"
@@ -29,8 +34,11 @@
    "after_halt": 19182,
    "before_halt": 1975176,
    "day_utc": "20211004",
+   "f_last_groups": 1506255,
    "first_ts_recv_ns": 1633305600000000000,
+   "halt_boundary_f_last": true,
    "instruments": 1,
+   "last_record_f_last": true,
    "last_ts_recv_ns": 1633391999955312214,
    "mbo_records": 1994358,
    "member_key": "glbx-mdp3-20211004.mbo.dbn.zst"
@@ -39,8 +47,11 @@
    "after_halt": 26248,
    "before_halt": 2085682,
    "day_utc": "20211005",
+   "f_last_groups": 1588041,
    "first_ts_recv_ns": 1633392000000000000,
+   "halt_boundary_f_last": true,
    "instruments": 1,
+   "last_record_f_last": true,
    "last_ts_recv_ns": 1633478399954928144,
    "mbo_records": 2111930,
    "member_key": "glbx-mdp3-20211005.mbo.dbn.zst"
@@ -49,8 +60,11 @@
    "after_halt": 29413,
    "before_halt": 2278747,
    "day_utc": "20211006",
+   "f_last_groups": 1716370,
    "first_ts_recv_ns": 1633478400000000000,
+   "halt_boundary_f_last": true,
    "instruments": 1,
+   "last_record_f_last": true,
    "last_ts_recv_ns": 1633564799909162543,
    "mbo_records": 2308160,
    "member_key": "glbx-mdp3-20211006.mbo.dbn.zst"
@@ -87,6 +101,6 @@
    "size_bytes": 39566060
   }
  ],
- "staged_unix": 1789548054,
+ "staged_unix": 1789548979,
  "total_mbo_records": 6471475
 }

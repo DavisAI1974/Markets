@@ -221,6 +221,35 @@ class CompactReader:
     def entries(self):
         yield from verified_rows(self.rows(), self.count, self.head_hash)
 
+    def stored_tail(self):
+        """(count, head) from the seal, O(1); the compact analogue of the raw journal's stored tail."""
+        rows = self.db.execute('SELECT format,count,head FROM seal').fetchall()
+        if len(rows) != 1 or rows[0][0] != FORMAT:
+            raise ValueError('sealed journal identity required')
+        return rows[0][1], rows[0][2]
+
+    def verify(self, *, count, head_hash):
+        """Post-consumption re-pin, the interface context_session.run and the learner step call.
+
+        The raw reader re-drains every row. Here every block blob is re-hashed against the block
+        table, the table is re-checked as one unbroken chain from genesis to the seal, and the seal
+        must equal both the reader's expectation and the caller's. No row is decoded; nothing
+        consumed can change retroactively, and any in-place rewrite of a block or of the table
+        is refused.
+        """
+        table = self.db.execute('SELECT start,count,sha256,previous,head FROM blocks ORDER BY start').fetchall()
+        expected_start, previous = 0, GENESIS_HASH
+        for start, length, digest, before, head in table:
+            if start != expected_start or type(length) is not int or length < 1 or before != previous:
+                raise ValueError('compact block table is not one unbroken chain')
+            blob = self.db.execute('SELECT body FROM blocks WHERE start=?', (start,)).fetchone()
+            if blob is None or hashlib.sha256(blob[0]).hexdigest() != digest:
+                raise ValueError('block identity or continuity differs')
+            expected_start, previous = start + length, head
+        tail = self.stored_tail()
+        if (expected_start, previous) != tail or tail != (self.count, self.head_hash) or tail != (count, head_hash):
+            raise ValueError('journal differs from checkpoint; existing evidence was retained')
+
     def close(self):
         self.db.close()
 
