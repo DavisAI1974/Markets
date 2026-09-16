@@ -85,6 +85,21 @@ sealed set is derived, never typed: 9 sealed layer ids, 4 section-K paths, 10 St
    fill is Greg's ruling; it is not a fix.
 4. The classroom's audit directory and principal artifacts have no entry in `AUTHORITY_MAP.json`.
    Add them with a declared writer before the post-integration audit.
+5. **The BOSS working branch carries stale copies of the two canonical inventories.** The canonical
+   file list is `research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md` (149
+   bullets, sections A-M; the receiver classifies them 63 KEEP / 68 CODE / 5 SEALED / 6 SUPERSEDED /
+   7 OBSOLETE) with `NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md` as the registry's source
+   authority and `KNOWLEDGE_MANIFEST_20260828.json` pinning 76 artifacts by hash. Measured: all 76
+   manifest hashes match on the receiver; 61 of the 63 KEEP files are byte-identical between the
+   receiver checkout and the working branch modulo CRLF; the two that differ are the inventories
+   themselves, and the RECEIVER's are the newer, corrected (D64) versions: the working branch's
+   copies (last touched at `a7dd99e7`) still name "the four live D-finding helpers", keep the
+   "Four live helper-evidence feeds" section, and omit ten file names the receiver's list carries
+   (the role-context profiles, the Step-1 census method and protocols, the chain study contract,
+   the Phase-1 discovery script, the Step-1 census scripts, the Step-1 completion gate). Cycle 0
+   was fed from the receiver's corrected copies (the knowledge receipt's model-visible bundle,
+   248,922 bytes, sha `6f9dbb37…`, is exactly what the session request attached), so the feed was
+   right; the hazard is any future render from the working branch. Not touched here.
 
 Nothing in the ingestion path was found dropped, filtered or rerouted. What the crosswalk
 measures is exactly what the registry declares Frankie must be fed, and for cycle 0 it was.
