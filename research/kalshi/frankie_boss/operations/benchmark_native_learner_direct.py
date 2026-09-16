@@ -4,9 +4,9 @@ This is a disposable benchmark harness for a SCRATCH CLONE of the failed Sunday 
 It deliberately imports the checkout named by --repository so source(), prefix() and
 _training() are the exact host/native implementations bound by that checkout.
 
-The retained clone is read only. A fresh benchmark work directory is created beneath it;
-all host verification files and training.sqlite live there. The clone contributes only its
-saved cycles.sqlite feedback/binding evidence.
+The retained clone is read only. A fresh sibling benchmark work directory is used for all
+host verification files and training.sqlite. The clone contributes only its saved
+cycles.sqlite feedback/binding evidence.
 
 The harness NEVER constructs a critic, calls Granite, invokes the Frankie principal,
 advances CycleCoordinator, applies a completed checkpoint, or touches production state.
@@ -112,7 +112,7 @@ def main():
     parser.add_argument('--cycles-db',default=None,
         help='retained cycles.sqlite; defaults to <clone run_directory>/cycles.sqlite')
     parser.add_argument('--work-directory',default=None,
-        help='fresh benchmark state directory; defaults below the disposable clone')
+        help='fresh benchmark state directory; defaults to a sibling of the retained clone')
     parser.add_argument('--log',required=True)
     parser.add_argument('--sample-seconds',type=float,default=.25)
     args=parser.parse_args()
@@ -131,9 +131,12 @@ def main():
         raise SystemExit('configuration host repository differs from --repository')
 
     work_directory=(Path(args.work_directory).resolve() if args.work_directory else
-                    clone_directory/'benchmark-native-learner-state'/f'threads-{args.threads}')
-    if clone_directory not in work_directory.parents:
-        raise SystemExit('benchmark work directory must remain under the disposable clone')
+                    clone_directory.with_name(clone_directory.name+f'-native-learner-{args.threads}t'))
+    if work_directory==clone_directory or clone_directory in work_directory.parents:
+        raise SystemExit('benchmark work directory must not modify the retained clone tree')
+    work_name=work_directory.name.lower()
+    if 'scratch' not in work_name and 'bench' not in work_name and 'native-learner' not in work_name:
+        raise SystemExit('benchmark work directory must be explicitly disposable')
     if work_directory.exists(): shutil.rmtree(work_directory)
     work_directory.mkdir(parents=True)
 
