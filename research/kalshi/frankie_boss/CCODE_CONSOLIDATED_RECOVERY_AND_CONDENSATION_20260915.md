@@ -234,6 +234,38 @@ conclusions the gate needed:
    needs the mixed-ending working tree (item 1.6 above), not a fresh checkout, to reuse the
    retained feedback.
 
+### 1.7 Operational state, 2026-09-16 (Greg: finish the list short of a run)
+
+- **Byte-exact restore made real.** ChatGPT's `restore_sunday_working_tree_identity.py` refused
+  its own manifests three times when run against the real tree (ordered path comparison,
+  CRLF-hashed blob binding, sparse checkout with 1,149 skip-worktree files). Fixed; real audit
+  161/161, real byte copy git-clean at `050c5056` with all six critical files byte-exact; a
+  long-path guard added after a deep staging path made git call five identical files
+  modified. The six unreproducible files (81,296 bytes) are captured into the package, marked
+  `-text`, verified stored byte-exact by git. Restoration no longer needs the E: drive.
+- **Idle box.** `i-08cee7171c0a76a04` had run idle since September 2 (0.6% CPU, about $184 at
+  list). Stopped on Greg's order; its 300 GB volume kept (about $24 a month). An idle guard
+  (`deploy/aws/idle_instance_guard.py`, six-hourly workflow, `KeepRunning=true` exempt) is
+  PR #10 against the default branch `claude/kalshi-s79-kickoff-ij8t9o`; dry-run verified.
+- **Native host provisioned:** `i-0e90ee6110ef609aa`, r7i.4xlarge (16 vCPU, 126 GB RAM,
+  Xeon 8488C), Windows Server 2022, us-east-2b, profile `Ssm`, 250 GB data volume as `E:`,
+  long paths on, tags `Purpose=frankie-sunday-native-host`, `KeepRunning=false`. Environment
+  installed over SSM and verified: Python 3.13.7 at `C:\Python313` whose `sys.version` string
+  equals the failed run's checkpoint binding character for character, Git 2.47.1 with
+  autocrlf and longpaths, AWS CLI under the instance role. Tools checkout at `C:\tools\Markets`.
+  About $1.80 an hour while running; stop it between steps.
+- **Restore set uploading** to `s3://bento-568968024170-us-east-2-an/frankie/sunday_20260915_restore/`
+  (27 bulk files by mirror path plus six tars: byte-exact working tree, venv, receiver,
+  tokenizer, witnesses, readiness; sha256 manifest last) at about 6 MB/s. On-host restore
+  (`operations/restore_sunday_set_on_host.py`, runner `deploy/aws/frankie_host_restore.ps1`)
+  verifies every hash, extracts byte-exact, lays the 170 in-git package files at their mirror
+  paths, runs the bulk audit and the working-tree audit, writes a receipt.
+- **Benchmark runner ready:** `deploy/aws/frankie_host_benchmark_8_16.ps1` runs the direct
+  learner harness at 8 then 16 threads on scratch clones with fresh checkpoints, removes the
+  header-only sidecar residue between invocations. Nothing result-bearing.
+- **Not done, on purpose:** no cycle-0 run, no Granite, no Pod. The 19-cycle run stays behind
+  Greg's explicit go, and the host carries `KeepRunning=true` only for its duration.
+
 ## Part 2 - token condensation and cycle reuse, grounded in what the repo already has
 
 Greg's instruction was to start from the condenser stacks already in Frankie. They are:
