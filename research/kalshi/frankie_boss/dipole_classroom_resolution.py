@@ -1,7 +1,7 @@
 """Require Frankie to restate corrected understanding for every Dipole correction.
 
 A bare acknowledgement or list of correction IDs is not sufficient evidence that
-Frankie understood Dipole's post-answer correction.  The same-session response
+Frankie understood Dipole's post-answer correction. The same-session response
 must include one nonempty corrected-understanding statement per correction ID.
 """
 from __future__ import annotations
@@ -9,6 +9,22 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from .c15_journal import evidence_hash
+from .dipole_classroom_session import CORRECTION_REQUEST_SCHEMA
+
+
+def bind_resolution_requirement(correction: Mapping[str, Any]) -> dict:
+    """Add the explicit resolution schema to Dipole's same-session correction turn."""
+    if type(correction) is not dict or correction.get("schema")!=CORRECTION_REQUEST_SCHEMA:
+        raise ValueError("Dipole correction request required")
+    body={k:v for k,v in correction.items() if k!="request_sha256"}
+    body["instruction"] += (
+        " Your dipole_acknowledgement must also include correction_resolutions: one ordered object "
+        "{correction_id, corrected_understanding} for every correction_id in post_grade, with your corrected "
+        "understanding stated in your own words. If there are no correction_ids, correction_resolutions must be an "
+        "empty list. A bare ID echo is not sufficient."
+    )
+    body["request_sha256"]=evidence_hash(body)
+    return body
 
 
 def validate_correction_resolutions(raw_ack: Mapping[str, Any], grade: Mapping[str, Any], base_ack: Mapping[str, Any]) -> dict:
