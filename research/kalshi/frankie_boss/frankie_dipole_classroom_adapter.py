@@ -1,0 +1,199 @@
+"""Frankie principal adapter with a mandatory two-turn Dipole classroom.
+
+This subclasses the existing durable principal boundary instead of creating a
+second model path.  The ordinary feedback/lessons envelope is returned unchanged,
+but only after:
+
+1. Dipole's model-visible lesson is attached to the original principal request.
+2. The same Frankie response supplies a complete 19-dimension teach-back.
+3. The audit-only teacher key grades that teach-back locally.
+4. Dipole's correction is durably sent back to the same session.
+5. The same session acknowledges/resolves every correction.
+6. The teacher-complete gate passes and an exact transcript is retained.
+
+The audit-only teacher key is persisted locally and is never placed in the model
+attachment or correction request before Frankie's initial answer.
+"""
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+
+from .dipole_classroom_render import render_transcript
+from .dipole_classroom_session import (
+    CORRECTION_REQUEST_SCHEMA,
+    correction_request,
+    finish,
+    grade_initial_response,
+    model_visible_classroom,
+    validate_correction_response,
+    validate_package,
+)
+from .frankie_principal_adapter import (
+    FrankiePrincipalAdapter,
+    PrincipalPending,
+    canonical,
+    digest,
+    file_witness,
+    _write,
+)
+
+
+class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
+    """Existing principal protocol plus a mandatory same-session classroom."""
+
+    def __init__(self, *args, classroom_package, **kwargs):
+        self.classroom_package = validate_package(classroom_package)
+        super().__init__(*args, **kwargs)
+
+    def _config_hash(self):
+        return digest({
+            "principal_config_hash": super()._config_hash(),
+            "dipole_classroom_binding_hash": self.classroom_package["binding"]["classroom_binding_hash"],
+            "teacher_key_hash": self.classroom_package["teacher_key"]["teacher_key_hash"],
+            "mechanism": "AGENT_SESSION_WITH_DIPOLE_CLASSROOM",
+        })
+
+    def _retain(self, name, body):
+        path = self.directory / name
+        raw = canonical(body)
+        if path.exists():
+            if path.read_bytes() != raw:
+                raise ValueError("retained Dipole classroom artifact changed")
+        else:
+            with path.open("xb") as handle:
+                handle.write(raw);handle.flush();os.fsync(handle.fileno())
+        return path
+
+    def _retain_text(self, name, text):
+        path = self.directory / name
+        raw = text.encode("utf-8")
+        if path.exists():
+            if path.read_bytes() != raw:
+                raise ValueError("retained Dipole classroom transcript changed")
+        else:
+            with path.open("xb") as handle:
+                handle.write(raw);handle.flush();os.fsync(handle.fileno())
+        return path
+
+    def prepare(self, handoff_directory):
+        attachment = super().prepare(handoff_directory)
+        visible = model_visible_classroom(self.classroom_package)
+        attachment = dict(attachment)
+        attachment["dipole_classroom"] = visible
+        attachment["attachment_hash"] = digest({k:v for k,v in attachment.items() if k != "attachment_hash"})
+        # Retain both sides of the disclosure boundary.  Only pre-message/binding
+        # appear in attachment; the key remains local for post-answer grading.
+        self._retain("dipole-classroom-source.json", self.classroom_package["source"])
+        self._retain("dipole-classroom-teacher-key.audit.json", self.classroom_package["teacher_key"])
+        self._retain("dipole-classroom-pre-message.json", self.classroom_package["pre_message"])
+        self._retain("dipole-classroom-model-visible.json", visible)
+        return attachment
+
+    def _request(self, request_id, attachment):
+        request = super()._request(request_id, attachment)
+        visible = attachment.get("dipole_classroom")
+        if visible != model_visible_classroom(self.classroom_package):
+            raise ValueError("principal attachment Dipole classroom differs from model-visible contract")
+        request = dict(request)
+        request["instruction"] += (
+            " Before giving feedback, complete the attached Dipole classroom lesson. Your response must "
+            "include dipole_teachback with schema DIPOLE_CLASSROOM_TEACHBACK_V1. Cover all 19 dimensions "
+            "in governed order. For every dimension provide state_counts for PRESENT/MISSING/INVALID/ABLATED, "
+            "terminal_state, first-to-last PRESENT direction, what happened, why, the market behavior, the "
+            "FIFO/full-book/order link where applicable, evidence, uncertainty, and any specific relationships. "
+            "Set relationship_pairs_considered to 171 after considering the complete pair surface. Distinguish "
+            "observation, interpretation, hypothesis, and anything not yet knowable. Set future_outcome_claimed "
+            "false. The host will then return Dipole's point-by-point grade to this same session; you must resolve "
+            "and acknowledge every correction before this cycle can complete."
+        )
+        request["dipole_classroom_model_visible_hash"] = visible["model_visible_hash"]
+        return request
+
+    def execute(self, request_id, attachment):
+        request = self._request(request_id, attachment)
+        path = self.directory / "session-request.json"
+        if path.exists():
+            if json.loads(path.read_bytes()) != request:
+                raise ValueError("session request identity changed")
+            return self.recover(request_id, attachment)
+        _write(path, request)
+        if self.session_executor is None:
+            raise PrincipalPending(f"authorized host session must consume {path}")
+        dispatched = self.session_executor(request)
+        response_path = self.directory / "session-response.json"
+        if response_path.exists():
+            if json.loads(response_path.read_bytes()) != dispatched:
+                raise ValueError("recorded principal response differs from host return")
+            self._attest_host(dispatched["response"], dispatched["host_attestation"], request)
+        else:
+            self.record_session_response(dispatched["response"], host_attestation=dispatched["host_attestation"])
+        return self._recover_with_classroom(request_id, attachment, dispatch_followup=True)
+
+    def recover(self, request_id, attachment):
+        return self._recover_with_classroom(request_id, attachment, dispatch_followup=False)
+
+    def _record_correction_response(self, correction, dispatched):
+        if type(dispatched) is not dict or set(dispatched) != {"response", "host_attestation"}:
+            raise ValueError("recorded classroom correction response envelope differs")
+        self._attest_host(dispatched["response"], dispatched["host_attestation"], correction)
+        path = self.directory / "classroom-correction-response.json"
+        body = {"response":dispatched["response"], "host_attestation":dispatched["host_attestation"]}
+        if path.exists():
+            if json.loads(path.read_bytes()) != body:
+                raise ValueError("retained classroom correction response changed")
+        else:
+            _write(path, body)
+        return body
+
+    def _recover_with_classroom(self, request_id, attachment, *, dispatch_followup):
+        # Existing principal validation remains authoritative for feedback, frozen
+        # sections, identity and host attestation. It returns the legacy envelope
+        # that the coordinator already understands.
+        envelope = super().recover(request_id, attachment)
+        request = json.loads((self.directory / "session-request.json").read_bytes())
+        retained = json.loads((self.directory / "session-response.json").read_bytes())
+        initial_response = retained["response"]
+        teachback, grade = grade_initial_response(self.classroom_package, initial_response)
+        self._retain("dipole-classroom-teachback.json", teachback)
+        self._retain("dipole-classroom-post-grade.json", grade)
+
+        correction = correction_request(original_request_sha256=digest(request), response=initial_response, grade=grade)
+        correction_path = self.directory / "classroom-correction-request.json"
+        created = False
+        if correction_path.exists():
+            if json.loads(correction_path.read_bytes()) != correction:
+                raise ValueError("retained Dipole classroom correction request changed")
+        else:
+            _write(correction_path, correction);created = True
+
+        response_path = self.directory / "classroom-correction-response.json"
+        if not response_path.exists():
+            if not created or not dispatch_followup or self.session_executor is None:
+                raise PrincipalPending("same Frankie session must consume Dipole classroom correction")
+            dispatched = self.session_executor(correction)
+            self._record_correction_response(correction, dispatched)
+        correction_envelope = json.loads(response_path.read_bytes())
+        self._attest_host(correction_envelope["response"], correction_envelope["host_attestation"], correction)
+        acknowledgement = validate_correction_response(correction=correction,
+            response=correction_envelope["response"], initial_response=initial_response, grade=grade)
+        self._retain("dipole-classroom-acknowledgement.json", acknowledgement)
+        completion = finish(self.classroom_package, teachback=teachback, grade=grade, acknowledgement=acknowledgement)
+        self._retain("dipole-classroom-completion.json", completion)
+        transcript = render_transcript(self.classroom_package["pre_message"], teachback, grade, acknowledgement)
+        transcript_path = self._retain_text("dipole-classroom-transcript.md", transcript)
+        self._retain("dipole-classroom-receipt.json", {
+            "schema":"FRANKIE_DIPOLE_CLASSROOM_RECEIPT_V1",
+            "classroom_binding_hash":self.classroom_package["binding"]["classroom_binding_hash"],
+            "teacher_key_hash":self.classroom_package["teacher_key"]["teacher_key_hash"],
+            "completion_hash":completion["completion_hash"],
+            "transcript":file_witness(transcript_path),
+            "initial_session_id":initial_response["session_id"],
+            "correction_session_id":correction_envelope["response"]["session_id"],
+            "teacher_complete":completion["teacher_complete"],
+        })
+        # Deliberately return the legacy envelope unchanged so the existing cycle
+        # coordinator, feedback verifier, Memory A separation and training contract
+        # remain untouched. Classroom completion is a prerequisite to this return.
+        return envelope
