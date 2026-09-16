@@ -3,7 +3,8 @@
 Preferred restoration is a Windows EC2 host with the original E:/Codex and
 C:/Users/A/Documents/Codex layouts materialized exactly. That keeps nested witness
 bytes and SHA-256 identities unchanged. This builder changes only new-run identity,
-run directory, reviewed BOSS commit, and the explicit numeric runtime policy.
+run directory, reviewed BOSS commit, completion-workflow ref, and the explicit
+numeric runtime policy.
 
 Cycle 0 is intentionally rerun from its lawful source boundary. The failed run's
 retained preparation-recovery witness is removed from the new configuration so
@@ -42,6 +43,7 @@ def main():
     parser.add_argument('--run-id',required=True)
     parser.add_argument('--run-directory',required=True)
     parser.add_argument('--boss-commit',required=True)
+    parser.add_argument('--completion-workflow-ref',required=True)
     parser.add_argument('--python-version',default='3.13.7')
     parser.add_argument('--torch-version',default='2.9.1+cpu')
     parser.add_argument('--numpy-version',default='2.3.5')
@@ -66,6 +68,11 @@ def main():
         raise SystemExit('reviewed 40-hex BOSS commit required')
     if args.boss_commit==LAWFUL_PARENT:
         raise SystemExit('rerun configuration must name the reviewed recovery commit, not the failed commit')
+    if (not re.fullmatch(r'[A-Za-z0-9._/-]{1,200}',args.completion_workflow_ref)
+            or args.completion_workflow_ref.startswith('/') or '..' in args.completion_workflow_ref.split('/')):
+        raise SystemExit('explicit safe completion workflow ref required')
+    if args.completion_workflow_ref=='codex/full-frankie-boss-connection-20260915':
+        raise SystemExit('completion workflow ref cannot point back to the divergent lineage')
     if any(value<1 for value in (args.torch_intraop_threads,args.torch_interop_threads,
                                   args.minimum_logical_cpus,args.minimum_memory_gib)):
         raise SystemExit('positive explicit runtime resources required')
@@ -76,11 +83,12 @@ def main():
         raise SystemExit('fresh run_directory required')
 
     # Preserve every source/evidence path and every existing witness hash. Only
-    # new-run identity/code/runtime policy changes. The old run-specific cycle-0
-    # preparation recovery is deliberately not an input to this fresh benchmark.
+    # new-run identity/code/runtime dispatch policy changes. The old run-specific
+    # cycle-0 preparation recovery is deliberately not an input to this fresh benchmark.
     config['run_id']=args.run_id
     config['run_directory']=str(run_directory)
     config['host_runtime']['boss_commit']=args.boss_commit
+    config['host_runtime']['completion_workflow_ref']=args.completion_workflow_ref
     config['host_runtime'].pop('retained_preparation_recovery',None)
     config['model_calls_performed']=False
     config['training_updates_performed']=False
@@ -95,6 +103,7 @@ def main():
     with out.open('xb') as stream:stream.write(raw)
     print(json.dumps(dict(schema='FRANKIE_EC2_RERUN_CONFIGURATION_BUILT_V1',out=str(out),
         run_id=args.run_id,run_directory=str(run_directory),boss_commit=args.boss_commit,
+        completion_workflow_ref=args.completion_workflow_ref,
         cycle0_preparation_reused=False,configuration_sha256=hashlib.sha256(raw).hexdigest())))
     return 0
 
