@@ -1,0 +1,18 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "FrankieRestoreSetList",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": "arn:aws:s3:::bento-568968024170-us-east-2-an",
+      "Condition": {"StringLike": {"s3:prefix": ["frankie/*"]}}
+    },
+    {
+      "Sid": "FrankieRestoreSetRead",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject"],
+      "Resource": "arn:aws:s3:::bento-568968024170-us-east-2-an/frankie/*"
+    }
+  ]
+}

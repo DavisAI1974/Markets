@@ -40,9 +40,19 @@ def mirror_target(mirror_path):
     return Path(MIRROR_ROOTS[short]) / rest
 
 
+PRESIGNED = {}  # key -> presigned GET url, when the host has no S3 role rights (2026-09-16: the Ssm role has none)
+
+
 def s3_get(bucket, key, destination):
     destination.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run([AWS, 's3', 'cp', f's3://{bucket}/{key}', str(destination), '--only-show-errors'], check=True)
+    url = PRESIGNED.get(key)
+    if url:
+        import urllib.request
+        with urllib.request.urlopen(url, timeout=600) as response, open(destination, 'wb') as out:
+            for chunk in iter(lambda: response.read(1 << 22), b''):
+                out.write(chunk)
+        return
+    subprocess.run([AWS, 's3', 'cp', f's3://{bucket}/{key}', str(destination), '--region', 'us-east-2'], check=True)
 
 
 def main():
@@ -52,7 +62,10 @@ def main():
     parser.add_argument('--tools', required=True, help='checkout of the review branch holding sunday_20260915_package')
     parser.add_argument('--receipt', required=True)
     parser.add_argument('--stage', default='C:/restore-stage')
+    parser.add_argument('--presigned', help='JSON {key: presigned GET url} for hosts whose role cannot read the bucket')
     args = parser.parse_args()
+    if args.presigned:
+        PRESIGNED.update(json.loads(Path(args.presigned).read_bytes())['urls'])
     stage = Path(args.stage); stage.mkdir(parents=True, exist_ok=True)
     started = time.time(); log = []
 
