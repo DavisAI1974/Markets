@@ -132,7 +132,12 @@ def main():
     #    170 files to CRLF and the first host restore refused them (2026-09-16). The blobs are pinned
     #    -text and manifest-exact (tests/test_sunday_package_blobs_match_manifest.py).
     copied = 0
-    for row in restoration['files']:
+    package_rows = list(restoration['files'])
+    for addendum_path in sorted(package.glob('RESTORATION_MANIFEST_ADDENDUM_*.json')):
+        addendum_rows = json.loads(addendum_path.read_bytes())['files']
+        note(addendum=addendum_path.name, files=len(addendum_rows))
+        package_rows += addendum_rows
+    for row in package_rows:
         if not row['in_git']:
             continue
         target = Path(row['original_path'])
@@ -142,7 +147,7 @@ def main():
             raise SystemExit('tools checkout package blob differs from restoration manifest: ' + row['git_path'])
         if not (target.is_file() and sha256_file(target) == row['sha256']):
             target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(raw); copied += 1
-    note(package_small_files=sum(r['in_git'] for r in restoration['files']), copied=copied)
+    note(package_small_files=sum(r['in_git'] for r in package_rows), copied=copied)
 
     # 4. audits: every bulk pin of the restoration manifest, and the byte-exact working tree.
     #    Both modules are stdlib-only; they are loaded by FILE PATH because importing them through the

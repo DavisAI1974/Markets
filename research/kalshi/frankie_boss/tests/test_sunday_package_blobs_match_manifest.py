@@ -18,7 +18,9 @@ MANIFEST = ROOT / 'research/kalshi/frankie_boss/sunday_20260915_package/RESTORAT
 class PackageBlobTests(unittest.TestCase):
     def test_every_in_git_blob_matches_manifest(self):
         rows = [r for r in json.loads(MANIFEST.read_bytes())['files'] if r['in_git']]
-        self.assertGreaterEqual(len(rows), 170)
+        for addendum in sorted(MANIFEST.parent.glob('RESTORATION_MANIFEST_ADDENDUM_*.json')):
+            rows += [r for r in json.loads(addendum.read_bytes())['files'] if r['in_git']]
+        self.assertGreaterEqual(len(rows), 171)
         bad = []
         for row in rows:
             shown = subprocess.run(['git', '-C', str(ROOT), 'show', 'HEAD:' + row['git_path']], capture_output=True)

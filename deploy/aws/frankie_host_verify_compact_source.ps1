@@ -19,9 +19,12 @@ Rename-Item $raw $hidden
 try {
     Write-Output ("RAW_PRESENT_DURING_RUN=" + (Test-Path $raw))
     Push-Location E:\Codex\Frankie-BOSS-20260915\sunday-launch-20260915\Markets
-    & $py $tool --configuration $config --verify-source-only --run-directory $out --tools-root C:\tools\Markets 2>&1 | ForEach-Object { $_.ToString().Substring(0, [Math]::Min(400, $_.ToString().Length)) }
+    # cmd.exe owns the redirection: under $ErrorActionPreference='Stop' PowerShell turns a native command's
+    # first stderr line into a terminating error, which is how two runs lost their tracebacks.
+    & cmd.exe /c "`"$py`" `"$tool`" --configuration `"$config`" --verify-source-only --run-directory `"$out`" --tools-root C:\tools\Markets > E:\bench\compact-verify.log 2>&1"
     $code = $LASTEXITCODE
     Pop-Location
+    Get-Content E:\bench\compact-verify.log -Tail 60 | ForEach-Object { $_.ToString().Substring(0, [Math]::Min(400, $_.ToString().Length)) }
     Write-Output "VERIFY_EXIT=$code"
 } finally {
     Rename-Item $hidden $raw

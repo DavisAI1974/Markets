@@ -1,0 +1,35 @@
+{
+ "schema": "FRANKIE_SUNDAY_RESTORATION_MANIFEST_ADDENDUM_V1",
+ "date": "2026-09-16",
+ "reason": "Referenced-files audit after the third host restore: the second lineage link recovery receipt was read by every host and listed nowhere; the two raw lineage parents are declared absent because the compact-source host verifies their tails from the pinned compact container.",
+ "files": [
+  {
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-recovery-20260915/recovery-receipt.json",
+   "in_git": true,
+   "original_path": "E:\\Codex\\Frankie-BOSS-20260915\\source-recovery-20260915\\recovery-receipt.json",
+   "bytes": 729,
+   "sha256": "df6ad3888ed9b91b1e7e60ec8da1ede39e3657e255c29a88401cb2032aa5f2a6",
+   "reason": "lineage-link-recovery-receipt"
+  }
+ ],
+ "declared_absent": [
+  {
+   "original_path": "E:\\Codex\\Frankie-BOSS-20260915\\source-recovery-20260915\\source.sqlite",
+   "bytes": null,
+   "sha256": "fa1d45ad0242094487e0b35c16f02000a8f7039db9609231075fd088b528307e",
+   "count": 52000,
+   "head_hash": "1dc2d04e15c10ea287f954ed6646381b732d03f81825a106beec9fc5050b04d4",
+   "in_git": false,
+   "reason": "raw lineage parent; lawful host only; compact-source host verifies count/head from the compact container"
+  },
+  {
+   "original_path": "E:\\Codex\\Frankie-BOSS-20260915\\source-execution-20260915\\source.sqlite",
+   "bytes": null,
+   "sha256": "27a5fd321e4735a0cabe75db35ebfecb22f4f94fcc5082551df69825b198cf2c",
+   "count": 7025,
+   "head_hash": "cdd6f73358f6d7beb17e56043b8bfcd2bf226aaa00fde5031e5409f153f46e66",
+   "in_git": false,
+   "reason": "raw lineage parent; lawful host only; compact-source host verifies count/head from the compact container"
+  }
+ ]
+}
