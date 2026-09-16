@@ -164,7 +164,13 @@ def _completion(mode):
     return {'schema':COMPLETION_SCHEMA,'mode':mode,'mastered':True,'acknowledged':True,'teacher_complete':True}
 
 
-def test_final_adapter_keeps_answer_key_material_out_of_the_principal_directory(tmp_path,monkeypatch):
+from research.kalshi.frankie_boss.dipole_classroom_integration import IntegratedDipoleClassroomPrincipalAdapter
+
+
+@pytest.mark.parametrize('adapter_class',[FinalDipoleClassroomPrincipalAdapter,IntegratedDipoleClassroomPrincipalAdapter])
+def test_final_adapter_keeps_answer_key_material_out_of_the_principal_directory(tmp_path,monkeypatch,adapter_class):
+    # The integrated adapter rebinds the final adapter's methods onto the base classroom adapter without the
+    # hardened class in its MRO; the same two-turn flow must hold for it (the reviewer's method-rebinding question).
     history=(_completion('TEACH'),_completion('TEACH'),_completion('GUIDED'),_completion('GUIDED'))
     package=prepare_final_cycle(_teacher(),request_id='run-cycle-00',cycle_index=0,cycle_count=CYCLE_COUNT,
         source_hash=HEX_B,as_of=2_000_000,through_cursor=6,history=history)
@@ -176,7 +182,7 @@ def test_final_adapter_keeps_answer_key_material_out_of_the_principal_directory(
     monkeypatch.setattr(Base,'recover',lambda self,rid,attachment:{'feedback':{},'lessons':[],'principal_receipt':{}})
     monkeypatch.setattr(Base,'_files',lambda self:None)
     monkeypatch.setattr(Base,'_attest_host',lambda self,response,attestation,request:attestation)
-    adapter=object.__new__(FinalDipoleClassroomPrincipalAdapter)
+    adapter=object.__new__(adapter_class)
     adapter.directory=(tmp_path/'cycle-00'/'principal').resolve();adapter.directory.mkdir(parents=True)
     adapter.audit_directory=(tmp_path/'cycle-00'/'classroom-audit').resolve();adapter.audit_directory.mkdir()
     adapter.classroom_package=package
