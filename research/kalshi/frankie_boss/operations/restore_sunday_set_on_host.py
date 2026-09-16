@@ -25,6 +25,7 @@ from pathlib import Path
 
 MIRROR_ROOTS = {'FB': 'E:/Codex/Frankie-BOSS-20260915', 'C_Codex': 'C:/Users/A/Documents/Codex'}
 AWS = r'C:\Program Files\Amazon\AWSCLIV2\aws.exe'
+GIT = r'C:\Program Files\Git\cmd\git.exe'
 
 
 def sha256_file(path):
@@ -117,15 +118,19 @@ def main():
             raise SystemExit(f'{len(bad)} members differ after extraction in {entry["archive"]}: {bad[:3]}')
         note(archive=entry['archive'], members=len(entry['members']), target=str(target_dir), status='restored and verified')
 
-    # 3. the small in-git package files to their mirror paths (byte copies from the tools checkout)
+    # 3. the small in-git package files to their mirror paths. Bytes come from the git OBJECT STORE
+    #    (git show HEAD:path), never the working tree: a checkout with core.autocrlf rewrote 17 of the
+    #    170 files to CRLF and the first host restore refused them (2026-09-16). The blobs are pinned
+    #    -text and manifest-exact (tests/test_sunday_package_blobs_match_manifest.py).
     copied = 0
     for row in restoration['files']:
         if not row['in_git']:
             continue
-        src = tools / row['git_path']; target = Path(row['original_path'])
-        raw = src.read_bytes()
-        if hashlib.sha256(raw).hexdigest() != row['sha256']:
-            raise SystemExit('tools checkout package file differs from restoration manifest: ' + row['git_path'])
+        target = Path(row['original_path'])
+        shown = subprocess.run([GIT, '-C', str(tools), 'show', 'HEAD:' + row['git_path']], capture_output=True)
+        raw = shown.stdout
+        if shown.returncode != 0 or hashlib.sha256(raw).hexdigest() != row['sha256']:
+            raise SystemExit('tools checkout package blob differs from restoration manifest: ' + row['git_path'])
         if not (target.is_file() and sha256_file(target) == row['sha256']):
             target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(raw); copied += 1
     note(package_small_files=sum(r['in_git'] for r in restoration['files']), copied=copied)

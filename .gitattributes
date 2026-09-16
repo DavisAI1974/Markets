@@ -17,3 +17,7 @@ research/kalshi/frankie_boss/provenance/kalshi-cancel-order-v2-20260915.md -text
 
 # Byte-exact Sunday working-tree captures: mixed CRLF/LF bytes that git normalisation would destroy
 research/kalshi/frankie_boss/sunday_20260915_package/FB/sunday-launch-20260915/Markets/** -text
+
+# The whole Sunday package is byte-pinned by RESTORATION_MANIFEST.json (170 in-git files); autocrlf
+# rewrote 17 of them to CRLF on checkout and the on-host restore refused them (2026-09-16).
+research/kalshi/frankie_boss/sunday_20260915_package/** -text

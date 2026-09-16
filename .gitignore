@@ -122,3 +122,6 @@ data/
 # S114: rehearsal artifacts (suffix _b) - regenerable from stage_group --suffix, and per D34
 # data/ is disposable. The REHEARSAL STATE is not a record; the committed g22 state is.
 research/kalshi/renders/ng_refine_s95/*_b.json
+
+# Generated presigned restore runner: bearer links, never committed
+deploy/aws/_frankie_host_restore_presigned.ps1
