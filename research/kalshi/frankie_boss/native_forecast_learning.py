@@ -6,6 +6,7 @@ Granite is not optimized. Durable exactly-once updates/checkpoints belong to the
 coordinator: on failure after mutation, restore its last checkpoint before retry.
 """
 from dataclasses import dataclass, asdict
+import time
 import torch
 from torch.nn import functional as F
 
@@ -108,16 +109,30 @@ class FrankieFeedback(HashedContract):
 
 
 class NativeForecastLearner:
-    def __init__(self, context, decoder, optimizer, config):
+    def __init__(self, context, decoder, optimizer, config, event=None):
         if not isinstance(context.model, B1Reasoner) or not isinstance(config, LearningConfig):
             raise ValueError('native B1 context and explicit learning configuration required')
+        if event is not None and not callable(event):
+            raise ValueError('native learning diagnostic event must be callable')
         self.context, self.decoder, self.optimizer, self.config = context, decoder, optimizer, config
+        self.event = event
         owned = list(context.model.parameters()) + list(decoder.parameters())
         supplied = [p for group in optimizer.param_groups for p in group['params']]
         if len(set(map(id, supplied))) != len(supplied) or set(map(id, supplied)) != set(map(id, owned)):
             raise ValueError('optimizer must own exactly the native B1 and decoder parameters')
         if optimizer_identity(optimizer) != config.optimizer_hash:
             raise ValueError('optimizer configuration differs from its pin')
+
+    def _emit(self, started, request_id, stage, **values):
+        """Best-effort safe telemetry; observer failure cannot alter training."""
+        if self.event is None:
+            return
+        payload = dict(request_id=request_id, stage=stage,
+            elapsed_seconds=max(0.0, time.perf_counter()-started), **values)
+        try:
+            self.event(payload)
+        except Exception:
+            pass
 
     def _validate(self, sessions, feedback, as_of, learning_cutoff_ns):
         if type(learning_cutoff_ns) is not int or learning_cutoff_ns < as_of:
@@ -184,6 +199,7 @@ class NativeForecastLearner:
     def step(self, *, request_id, as_of, through_cursor, source_hash, input_hash,
              sessions, expected_sessions_hash, feedback, expected_feedback_hash, learning_cutoff_ns):
         """One optimizer step. Caller journals intent and persists/reloads all state."""
+        started = time.perf_counter()
         if type(as_of) is not int or type(through_cursor) is not int:
             raise ValueError('integer source cutoff required')
         if type(feedback) is not FrankieFeedback or feedback.digest != expected_feedback_hash:
@@ -197,15 +213,26 @@ class NativeForecastLearner:
             raise ValueError('optimizer configuration changed')
         journal = self.context.builder.journal
         journal_state = (journal.count, journal.head_hash)
-        tokens, info, prepared_hash, teacher, context = self.context._prepare(as_of, through_cursor)
+        self._emit(started, request_id, 'prepare_start')
+        try:
+            tokens, info, prepared_hash, teacher, context = self.context._prepare(as_of, through_cursor)
+        except Exception as error:
+            self._emit(started, request_id, 'step_failed', error_type=type(error).__name__)
+            raise
+        self._emit(started, request_id, 'prepare_complete', context_rows=len(context))
         if prepared_hash != input_hash or info['source_prefix_hash'] != source_hash:
             raise ValueError('training source/input differs from completed forecast')
         for _, session in sessions:
             if session.receive_cutoff_ns != as_of or session.source_hash != source_hash:
                 raise ValueError('session differs from causal source input')
-        for entry in journal_prefix(self.context.builder, through_cursor):
-            if any(entry['normalized']['ts_event_ns'] > s.event_cutoff_ns for _,s in sessions):
-                raise ValueError('training source includes future event time')
+        try:
+            for entry in journal_prefix(self.context.builder, through_cursor):
+                if any(entry['normalized']['ts_event_ns'] > s.event_cutoff_ns for _,s in sessions):
+                    raise ValueError('training source includes future event time')
+        except Exception as error:
+            self._emit(started, request_id, 'step_failed', error_type=type(error).__name__)
+            raise
+        self._emit(started, request_id, 'causal_scan_complete', context_rows=len(context))
         parameters = list(self.context.model.parameters()) + list(self.decoder.parameters())
         before = evidence_hash(dict(native=tensor_identity(self.context.model.state_dict()),
                                     decoder=tensor_identity(self.decoder.state_dict())))
@@ -227,9 +254,11 @@ class NativeForecastLearner:
                 if name in kwargs['tokens']:
                     kwargs[name] = kwargs['tokens'].pop(name)
             packet = info if self.context.qsv is None else dict(context=info, input_hash=input_hash)
+            self._emit(started, request_id, 'forward_start', context_rows=len(context))
             output = self.context.model.forward_decision(**kwargs, packet_hash=evidence_hash(packet))
             if output.representation.shape != (1, len(context), self.decoder.d_model):
                 raise ValueError('training did not consume every declared context record')
+            self._emit(started, request_id, 'forward_complete', context_rows=len(context))
             losses, components, masked = [], [], 0
             for (_,session), labels, (_,weight) in zip(sessions, feedback.sessions, self.config.session_weights):
                 z = self.decoder.condition(output.representation[0,-1], session.features)
@@ -264,18 +293,25 @@ class NativeForecastLearner:
                 if weighted: losses.append(sum(weighted)*weight)
                 components.append(dict(session_id=session.session_id,
                     terms={name:float(value.detach()) for name,value in terms.items()}))
+            self._emit(started, request_id, 'loss_complete', losses=len(losses), masked_labels=masked)
             journal.verify(count=journal_state[0], head_hash=journal_state[1])
             if losses:
                 loss = sum(losses)/sum(weight for _,weight in self.config.session_weights)
                 if not torch.isfinite(loss): raise ValueError('nonfinite native learning loss')
+                self._emit(started, request_id, 'backward_start', losses=len(losses), masked_labels=masked)
                 loss.backward()
+                self._emit(started, request_id, 'backward_complete', losses=len(losses), masked_labels=masked)
                 if any(p.grad is not None and not torch.isfinite(p.grad).all() for p in parameters):
                     raise ValueError('nonfinite native learning gradient')
+                self._emit(started, request_id, 'optimizer_start', losses=len(losses), masked_labels=masked)
                 self.optimizer.step()
+                self._emit(started, request_id, 'optimizer_complete', losses=len(losses), masked_labels=masked)
                 if any(not torch.isfinite(p).all() for p in parameters):
                     raise ValueError('nonfinite updated native parameter; restore prior checkpoint')
             after = evidence_hash(dict(native=tensor_identity(self.context.model.state_dict()),
                                        decoder=tensor_identity(self.decoder.state_dict())))
+            self._emit(started, request_id, 'step_complete', context_rows=len(context),
+                losses=len(losses), masked_labels=masked)
             return dict(schema='BOSS_NATIVE_FORECAST_LEARNING_V1', request_id=request_id,
                 config_hash=self.config.digest, feedback_hash=feedback.digest,
                 input_hash=input_hash, source_hash=source_hash, stage=self.config.stage,
@@ -285,6 +321,9 @@ class NativeForecastLearner:
                 teacher_optimized=False, masked_labels=masked, losses=components,
                 updated=bool(losses), loss=float(loss.detach()) if losses else None,
                 before_hash=before, after_hash=after)
+        except Exception as error:
+            self._emit(started, request_id, 'step_failed', error_type=type(error).__name__)
+            raise
         finally:
             for parameter, flag in zip(parameters, flags):
                 parameter.requires_grad_(flag)
