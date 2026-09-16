@@ -741,6 +741,8 @@ class DeliveryReceiptGateTest(StopRuleTests):
             outputs.RECEIPT_FILENAME, outputs.LEDGERS_DIRNAME,
             outputs.APPEND_ONLY_OUTPUTS_GROUP, outputs.SECTION_LEDGER_PREFIX,
             outputs.RAW_MBO_CLASSIFICATION_LEDGER, outputs.KNOWLEDGE_VERIFICATION_LEDGER,
+            outputs.WHAT_HE_LEARNED_LEDGER, outputs.IN_HIS_OWN_WORDS_LEDGER,
+            "WHAT YOU LEARNED", "YOUR OWN WORDS", "BUILD", "DATA", "SUGGESTION", "two documents",
             "append-only", "hash chain", "no count", "outputs_receipt_sha256",
             "native_principal_outputs validate",
         ):

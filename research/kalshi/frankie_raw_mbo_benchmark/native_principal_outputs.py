@@ -84,6 +84,14 @@ APPEND_ONLY_OUTPUTS_GROUP = "append_only_outputs"
 SECTION_LEDGER_PREFIX = "contract_section_"
 RAW_MBO_CLASSIFICATION_LEDGER = "raw_mbo_classification"
 KNOWLEDGE_VERIFICATION_LEDGER = "knowledge_verification"
+#: Greg, 2026-09-16: "he's supposed to create an analysis doc with his findings, his opinion
+#: about the build, his opinion about the data, any suggestions" and "we want him printing 2
+#: for right now so we can see what he learned along with his words about it". Two ledgers,
+#: both required, both rendered to a document beside his artifact by
+#: `render_frankie_run_documents`: what he learned on this run, and his own words about it.
+WHAT_HE_LEARNED_LEDGER = "what_he_learned"
+IN_HIS_OWN_WORDS_LEDGER = "in_his_own_words"
+RUN_DOCUMENT_LEDGERS = (WHAT_HE_LEARNED_LEDGER, IN_HIS_OWN_WORDS_LEDGER)
 
 #: `### 4.0`, `### 4.0b`, `### 4.16` - the section id is the token after the marks.
 CONTRACT_SECTION_HEADING_RE = re.compile(r"^### (4\.[0-9]+[a-z]?)\b", re.MULTILINE)
@@ -148,7 +156,8 @@ def section_ledger_id(section: str) -> str:
 
 
 def required_ledger_ids(registry: Mapping[str, Any], contract_text: str) -> tuple[str, ...]:
-    """Registry outputs + one per contract section + 9a classification + knowledge verification.
+    """Registry outputs + one per contract section + 9a classification + knowledge verification
+    + the two run documents (what he learned, in his own words).
 
     Derived from the two objects handed in. Nothing here knows how many that is.
     """
@@ -156,6 +165,7 @@ def required_ledger_ids(registry: Mapping[str, Any], contract_text: str) -> tupl
         registry_output_layer_ids(registry)
         + tuple(section_ledger_id(section) for section in contract_section_ids(contract_text))
         + (RAW_MBO_CLASSIFICATION_LEDGER, KNOWLEDGE_VERIFICATION_LEDGER)
+        + RUN_DOCUMENT_LEDGERS
     )
 
 
@@ -1252,6 +1262,83 @@ def _v_knowledge_verification(entries: Sequence[Mapping[str, Any]], ctx: Validat
 
 
 # --------------------------------------------------------------------------------------
+# The two run documents: what he learned, and his own words about it (Greg, 2026-09-16)
+# --------------------------------------------------------------------------------------
+
+#: How a learning stands against the memory he was served: new to it, confirmed on this slice,
+#: revised by it, or refuted by it. Anything but NEW names the served lesson it stands against.
+LEARNING_KINDS = ("NEW", "CONFIRMED", "REVISED", "REFUTED")
+#: The four things his own words must cover: what he found, what he thinks of the build, what
+#: he thinks of the data, and what he suggests. A run whose words skip one is refused - an
+#: analysis with no opinion of the build is the cycle-00 summary Greg rejected.
+OWN_WORDS_TOPICS = ("FINDINGS", "BUILD", "DATA", "SUGGESTION")
+
+
+def _bundle_section_ids(ctx: ValidationContext) -> set[str]:
+    ledgers = ctx.bundle.get("ledgers") if isinstance(ctx.bundle, Mapping) else None
+    if not isinstance(ledgers, Mapping):
+        return set()
+    return {lid[len(SECTION_LEDGER_PREFIX):] for lid in ledgers if lid.startswith(SECTION_LEDGER_PREFIX)}
+
+
+def _v_what_he_learned(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    """One entry per thing learned: a statement, its standing against served memory, the contract
+    sections it came from, and the exact member groups it rests on (or the stated basis when it
+    rests on absence - absence is a result, silence is not)."""
+    sections_in_bundle = _bundle_section_ids(ctx)
+    seen: set[str] = set()
+    for entry in entries:
+        where = f"{WHAT_HE_LEARNED_LEDGER}[{entry['sequence']}]"
+        body, cutoff = entry["body"], entry["cutoff_recv_ns"]
+        learning_id = _text(body, "learning_id", where)
+        if learning_id in seen:
+            _fail(where, f"learning_id {learning_id!r} repeats")
+        seen.add(learning_id)
+        _text(body, "statement", where)
+        kind = _choice(body, "kind", LEARNING_KINDS, where)
+        if kind != "NEW":
+            _text(body, "prior_lesson_id", where)
+        sections = _list(body, "sections", where)
+        for index, section in enumerate(sections):
+            if not isinstance(section, str) or not section.strip():
+                _fail(where, f"`sections[{index}]` must name a contract section")
+            if sections_in_bundle and section not in sections_in_bundle:
+                _fail(where, f"`sections[{index}]` names {section!r}, which is not a section ledger of this bundle")
+        evidence = _mapping(body, "evidence", where)
+        ew = f"{where}.evidence"
+        members = _int_list(evidence, "member_group_indices", ew)
+        if members:
+            evidence_cutoff = _int(evidence, "cutoff_recv_ns", ew)
+            if evidence_cutoff > cutoff:
+                _fail(ew, f"evidence cutoff {evidence_cutoff} is after the entry's cutoff {cutoff}")
+        else:
+            _text(evidence, "basis", ew)
+
+
+def _v_in_his_own_words(entries: Sequence[Mapping[str, Any]], ctx: ValidationContext) -> None:
+    """His words, by topic; every topic covered at least once; `refers_to` names ledgers of this
+    bundle so an opinion points at the evidence it is an opinion about."""
+    ledgers = ctx.bundle.get("ledgers") if isinstance(ctx.bundle, Mapping) else None
+    known = set(ledgers) if isinstance(ledgers, Mapping) else set()
+    covered: set[str] = set()
+    for entry in entries:
+        where = f"{IN_HIS_OWN_WORDS_LEDGER}[{entry['sequence']}]"
+        body = entry["body"]
+        covered.add(_choice(body, "topic", OWN_WORDS_TOPICS, where))
+        _text(body, "statement", where)
+        refers = _list(body, "refers_to", where)
+        for index, ref in enumerate(refers):
+            if not isinstance(ref, str) or not ref.strip():
+                _fail(where, f"`refers_to[{index}]` must name a ledger")
+            if known and ref not in known:
+                _fail(where, f"`refers_to[{index}]` names {ref!r}, which is not a ledger of this bundle")
+    if entries:
+        missing = [topic for topic in OWN_WORDS_TOPICS if topic not in covered]
+        if missing:
+            _fail(IN_HIS_OWN_WORDS_LEDGER, f"his own words never cover {missing}; findings, the build, the data and suggestions are each required (Greg, 2026-09-16)")
+
+
+# --------------------------------------------------------------------------------------
 # Dispatch
 # --------------------------------------------------------------------------------------
 
@@ -1268,6 +1355,8 @@ LEDGER_RULES: dict[str, Any] = {
     RUN_HASHES: _v_run_hashes,
     RAW_MBO_CLASSIFICATION_LEDGER: _v_raw_mbo,
     KNOWLEDGE_VERIFICATION_LEDGER: _v_knowledge_verification,
+    WHAT_HE_LEARNED_LEDGER: _v_what_he_learned,
+    IN_HIS_OWN_WORDS_LEDGER: _v_in_his_own_words,
 }
 
 
@@ -1338,10 +1427,16 @@ MUST_HAVE_ENTRIES = frozenset(
 VALIDATE_FIRST = (KNOWLEDGE_RECEIPTS, PROBABILITY_MOVIE)
 
 
+#: Written by `finalize` after the whole day's tallies exist, like the verification verdicts:
+#: required to carry entries whenever the knowledge receipt is known (staging, finalize), and
+#: allowed empty with a stated reason during the stream phase.
+FINALIZE_LEDGERS = frozenset({KNOWLEDGE_VERIFICATION_LEDGER, *RUN_DOCUMENT_LEDGERS})
+
+
 def _must_have_entries(ledger_id: str, knowledge_receipt_sha256: str | None) -> bool:
     if ledger_id in MUST_HAVE_ENTRIES or ledger_id.startswith(SECTION_LEDGER_PREFIX):
         return True
-    return ledger_id == KNOWLEDGE_VERIFICATION_LEDGER and knowledge_receipt_sha256 is not None
+    return ledger_id in FINALIZE_LEDGERS and knowledge_receipt_sha256 is not None
 
 
 def validate_output_bundle(

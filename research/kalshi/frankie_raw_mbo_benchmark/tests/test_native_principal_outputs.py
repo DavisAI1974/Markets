@@ -71,16 +71,20 @@ class RequiredSetIsDerivedTest(unittest.TestCase):
         self.assertLess(ids.index("4.0"), ids.index("4.0b"))
         self.assertLess(ids.index("4.0b"), ids.index("4.1"))
 
-    def test_required_count_on_todays_files_is_outputs_plus_sections_plus_two(self):
+    def test_required_count_on_todays_files_is_outputs_plus_sections_plus_four(self):
+        """9a classification, knowledge verification, and the two run documents (Greg,
+        2026-09-16: what he learned, and his own words about it)."""
         registry, contract = registry_today(), contract_today()
         required = outputs.required_ledger_ids(registry, contract)
-        expected = len(independent_output_ids(registry)) + len(independent_section_ids(contract)) + 2
+        expected = len(independent_output_ids(registry)) + len(independent_section_ids(contract)) + 4
         self.assertEqual(len(required), expected)
         self.assertEqual(len(set(required)), len(required), "no ledger id repeats")
         for section in independent_section_ids(contract):
             self.assertIn(f"contract_section_{section}", required)
         self.assertIn("raw_mbo_classification", required)
         self.assertIn("knowledge_verification", required)
+        self.assertIn("what_he_learned", required)
+        self.assertIn("in_his_own_words", required)
 
     def test_adding_a_contract_heading_grows_the_set_by_exactly_one(self):
         registry, contract = registry_today(), contract_today()
@@ -1345,8 +1349,99 @@ def complete_bundle(frames: list[dict], *, registry=None, contract_text=None) ->
     for name in ("order_id", "price_raw", "size", "flags", "ts_event_ns", "ts_recv_ns", "book", "book_full", "activity_full", "clocks"):
         raw.append(c2, raw_mbo_body(field_or_group=name))
     bundle.ledger("knowledge_verification").append(c2, verification_body(evidence={"member_group_indices": [1, 2], "cutoff_recv_ns": c2}))
+    bundle.ledger("what_he_learned").append(c2, learned_body(evidence={"member_group_indices": [1, 2], "cutoff_recv_ns": c2}))
+    for topic in outputs.OWN_WORDS_TOPICS:
+        bundle.ledger("in_his_own_words").append(c2, own_words_body(topic=topic))
     hashes.append(c2, {"phase": "END", "state_sha256": sha_of("state-2"), **invariants})
     return bundle
+
+
+
+def learned_body(**overrides) -> dict:
+    body = {
+        "learning_id": "L-2021-10-03-001",
+        "statement": "the touch queue at the bid drained by cancellation before the first trade, on every one of the three closed groups",
+        "kind": "NEW",
+        "sections": ["4.5"],
+        "evidence": {"member_group_indices": [4562, 4563, 4570], "cutoff_recv_ns": C2},
+    }
+    body.update(overrides)
+    return body
+
+
+def own_words_body(**overrides) -> dict:
+    body = {
+        "topic": "FINDINGS",
+        "statement": "what I found on this slice and what I make of it, in my own words",
+        "refers_to": ["contract_section_4.5"],
+    }
+    body.update(overrides)
+    return body
+
+
+class WhatHeLearnedTest(LedgerRuleCase):
+    """Greg, 2026-09-16: 'we want him printing 2 for right now so we can see what he learned'."""
+    LEDGER = "what_he_learned"
+
+    def setUp(self):
+        super().setUp()
+        self.bundle.ledger("contract_section_4.5").append(C2, section_body("4.5"))
+        self.ctx = outputs.ValidationContext(registry=self.registry, bundle=self.bundle.to_dict())
+
+    def test_new_confirmed_revised_and_refuted_pass_with_evidence_or_basis(self):
+        self.check(self.LEDGER, [
+            (C2, learned_body()),
+            (C2, learned_body(learning_id="L-2", kind="CONFIRMED", prior_lesson_id="served-lesson-7")),
+            (C2, learned_body(learning_id="L-3", kind="REFUTED", prior_lesson_id="served-lesson-8", evidence={"member_group_indices": [], "basis": "no member of the lesson's stratum closed; the absence is the learning"})),
+        ])
+
+    def test_a_standing_against_memory_names_the_served_lesson(self):
+        self.refused(self.LEDGER, [(C2, learned_body(kind="REVISED"))], "prior_lesson_id")
+
+    def test_an_unknown_kind_a_repeated_id_and_a_missing_statement_are_refused(self):
+        self.refused(self.LEDGER, [(C2, learned_body(kind="MAYBE"))], "kind")
+        self.refused(self.LEDGER, [(C2, learned_body()), (C2, learned_body())], "repeats")
+        self.refused(self.LEDGER, [(C2, learned_body(statement=""))], "statement")
+
+    def test_evidence_is_exact_member_groups_before_the_cutoff_or_a_stated_basis(self):
+        self.refused(self.LEDGER, [(C2, learned_body(evidence={"member_group_indices": [1], "cutoff_recv_ns": C2 + 1}))], "after the entry")
+        self.refused(self.LEDGER, [(C2, learned_body(evidence={"member_group_indices": []}))], "basis")
+
+    def test_a_section_it_names_must_be_a_section_ledger_of_the_bundle(self):
+        self.refused(self.LEDGER, [(C2, learned_body(sections=["4.99"]))], "not a section ledger")
+
+
+class InHisOwnWordsTest(LedgerRuleCase):
+    """Greg, 2026-09-16: his findings, his opinion of the build, his opinion of the data, his suggestions."""
+    LEDGER = "in_his_own_words"
+
+    def setUp(self):
+        super().setUp()
+        self.bundle.ledger("contract_section_4.5").append(C2, section_body("4.5"))
+        self.ctx = outputs.ValidationContext(registry=self.registry, bundle=self.bundle.to_dict())
+
+    def all_topics(self, **overrides):
+        return [(C2, own_words_body(topic=topic, **overrides)) for topic in outputs.OWN_WORDS_TOPICS]
+
+    def test_all_four_topics_pass(self):
+        self.check(self.LEDGER, self.all_topics())
+
+    def test_words_that_skip_a_topic_are_refused_naming_it(self):
+        rows = [row for row in self.all_topics() if row[1]["topic"] != "BUILD"]
+        self.refused(self.LEDGER, rows, "BUILD")
+
+    def test_an_unknown_topic_an_empty_statement_and_an_unknown_ledger_reference_are_refused(self):
+        self.refused(self.LEDGER, [(C2, own_words_body(topic="MOOD"))], "topic")
+        self.refused(self.LEDGER, self.all_topics(statement=" "), "statement")
+        self.refused(self.LEDGER, self.all_topics(refers_to=["no_such_ledger"]), "not a ledger")
+
+
+class RunDocumentsAreRequiredTest(unittest.TestCase):
+    def test_both_documents_are_must_have_once_the_knowledge_receipt_is_known(self):
+        for lid in outputs.RUN_DOCUMENT_LEDGERS:
+            with self.subTest(ledger=lid):
+                self.assertTrue(outputs._must_have_entries(lid, KNOWLEDGE_RECEIPT))
+                self.assertFalse(outputs._must_have_entries(lid, None), "the stream phase writes them empty with a reason; finalize fills them")
 
 
 class ValidateOutputBundleTest(unittest.TestCase):
@@ -1371,7 +1466,7 @@ class ValidateOutputBundleTest(unittest.TestCase):
     def test_a_complete_bundle_is_accepted_with_an_empty_missing_list_and_todays_full_count(self):
         receipt = self.validate()
         self.assertEqual(receipt["missing_ledger_ids"], [])
-        expected = len(independent_output_ids(self.registry)) + len(independent_section_ids(self.contract)) + 2
+        expected = len(independent_output_ids(self.registry)) + len(independent_section_ids(self.contract)) + 4
         self.assertEqual(len(receipt["required_ledger_ids"]), expected)
         self.assertEqual(set(receipt["ledgers"]), set(receipt["required_ledger_ids"]))
         self.assertEqual(receipt["ledgers"]["output_answer_wall_access_receipts"]["entry_count"], 0)
@@ -1480,7 +1575,7 @@ class EndToEndTest(unittest.TestCase):
             knowledge_receipt_sha256=KNOWLEDGE_RECEIPT, delivery_receipt_sha256=DELIVERY_RECEIPT,
         )
         self.assertEqual(receipt["missing_ledger_ids"], [])
-        self.assertEqual(len(receipt["required_ledger_ids"]), len(independent_output_ids(self.registry)) + len(independent_section_ids(self.contract)) + 2)
+        self.assertEqual(len(receipt["required_ledger_ids"]), len(independent_output_ids(self.registry)) + len(independent_section_ids(self.contract)) + 4)
         self.assertEqual(len(list((self.root / "ledgers").glob("*.json"))), len(receipt["required_ledger_ids"]))
 
     def test_one_entry_mutated_on_disk_refuses_the_reload(self):

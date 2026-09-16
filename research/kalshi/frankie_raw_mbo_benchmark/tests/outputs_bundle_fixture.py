@@ -142,6 +142,9 @@ def build_bundle(
             evidence={"member_group_indices": [1, 2], "cutoff_recv_ns": c2},
         ),
     )
+    bundle.ledger("what_he_learned").append(c2, fx.learned_body(evidence={"member_group_indices": [1, 2], "cutoff_recv_ns": c2}))
+    for topic in outputs.OWN_WORDS_TOPICS:
+        bundle.ledger("in_his_own_words").append(c2, fx.own_words_body(topic=topic))
     hashes.append(c2, {"phase": "END", "state_sha256": fx.sha_of("state-2"), **invariants})
     return bundle
 

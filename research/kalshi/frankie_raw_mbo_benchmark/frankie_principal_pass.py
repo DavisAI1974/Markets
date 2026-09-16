@@ -1183,6 +1183,8 @@ def run_stream(args: argparse.Namespace) -> int:
     L = {lid: bundle.ledger(lid) for lid in bundle.required_ledger_ids}
     bundle.ledger(outputs.ANSWER_WALL_RECEIPTS, empty_reason="no answer wall was accessed; the run holds only the three delivered ledgers and the receipted knowledge")
     bundle.ledger(outputs.KNOWLEDGE_VERIFICATION_LEDGER, empty_reason="verdicts are appended by `finalize` after the whole day's tallies exist; the stream phase states nothing about the lessons")
+    bundle.ledger(outputs.WHAT_HE_LEARNED_LEDGER, empty_reason="what he learned is appended by `finalize` after the whole day's tallies exist; the stream phase states no learning")
+    bundle.ledger(outputs.IN_HIS_OWN_WORDS_LEDGER, empty_reason="his own words are appended by `finalize` after the whole day's tallies exist; the stream phase states no opinion")
 
     stream = CausalGroupStream(ledger_dir / "exact_member_rows.jsonl", ledger_dir / "exact_lifecycle_rows.jsonl",
                                ledger_dir / "legacy_observable_rows.jsonl", run_id=run_id, arm=arm)
@@ -1333,11 +1335,22 @@ def run_stream(args: argparse.Namespace) -> int:
 
 
 def run_finalize(args: argparse.Namespace) -> int:
-    """Append knowledge-verification verdicts at the last cutoff, then re-validate."""
+    """Append the verdicts, what he learned and his own words at the last cutoff, then re-validate.
+
+    `--what-he-learned` and `--in-his-own-words` are the two documents Greg asked for
+    (2026-09-16), hand-written by the principal after the tallies exist, as JSON lists of
+    ledger bodies; `render_frankie_run_documents` prints them as markdown beside his
+    artifact. Both are required: a finalize without them is a run that taught nothing.
+    """
     out_dir = Path(args.out_dir)
     registry = load_registry()
     contract_text = (REPO_ROOT / CONTRACT_PATH).read_text(encoding="utf-8")
     verification = json.loads(Path(args.verification).read_text(encoding="utf-8"))
+    learned = json.loads(Path(args.what_he_learned).read_text(encoding="utf-8"))
+    own_words = json.loads(Path(args.in_his_own_words).read_text(encoding="utf-8"))
+    for name, doc in (("what-he-learned", learned), ("in-his-own-words", own_words)):
+        if not isinstance(doc, list) or not doc or not all(isinstance(row, dict) for row in doc):
+            raise PassError(f"--{name} must be a non-empty JSON list of ledger bodies")
     knowledge = json.loads(Path(args.knowledge_receipt).read_text(encoding="utf-8"))
     delivery = json.loads(Path(args.delivery_receipt).read_text(encoding="utf-8"))
     body = outputs.load_bundle(out_dir)
@@ -1362,10 +1375,21 @@ def run_finalize(args: argparse.Namespace) -> int:
         else:
             entry["evidence"] = {"member_group_indices": v["member_group_indices"], "cutoff_recv_ns": last_cutoff, "computed": v.get("computed")}
         kv.append(last_cutoff, entry)
+    for lid, rows, key in ((outputs.WHAT_HE_LEARNED_LEDGER, learned, "learning_id"), (outputs.IN_HIS_OWN_WORDS_LEDGER, own_words, None)):
+        ledger = bundle.ledger(lid)
+        ledger.empty_reason = None
+        present = {e["body"].get(key) for e in ledger.entries} if key else {json.dumps(e["body"], sort_keys=True) for e in ledger.entries}
+        for row in rows:
+            marker = row.get(key) if key else json.dumps(row, sort_keys=True)
+            if marker in present:
+                continue
+            ledger.append(last_cutoff, row)
     outputs.write_bundle(bundle, out_dir)
     result = outputs.validate_output_bundle_dir(out_dir, registry=registry, contract_text=contract_text,
                                                 knowledge_receipt_sha256=knowledge["receipt_sha256"], delivery_receipt_sha256=delivery["receipt_sha256"])
-    print(json.dumps({"verdicts": len(kv.entries), "outputs_receipt_sha256": result["receipt_sha256"]}, indent=2))
+    print(json.dumps({"verdicts": len(kv.entries), "what_he_learned": len(bundle.ledger(outputs.WHAT_HE_LEARNED_LEDGER).entries),
+                      "in_his_own_words": len(bundle.ledger(outputs.IN_HIS_OWN_WORDS_LEDGER).entries),
+                      "outputs_receipt_sha256": result["receipt_sha256"]}, indent=2))
     return 0
 
 
@@ -1389,6 +1413,8 @@ def main(argv: list[str] | None = None) -> int:
     f.add_argument("--verification", required=True)
     f.add_argument("--knowledge-receipt", required=True)
     f.add_argument("--delivery-receipt", required=True)
+    f.add_argument("--what-he-learned", required=True, help="json list of what_he_learned ledger bodies, written by the principal")
+    f.add_argument("--in-his-own-words", required=True, help="json list of in_his_own_words ledger bodies (FINDINGS, BUILD, DATA, SUGGESTION), written by the principal")
     args = p.parse_args(argv)
     try:
         return run_stream(args) if args.cmd == "stream" else run_finalize(args)
