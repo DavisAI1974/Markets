@@ -1,0 +1,19 @@
+{
+  "schema": "CODEX_FRANKIE_FULL_COMPACT_JOURNAL_AUDIT_V1",
+  "passed": true,
+  "rows": 114054,
+  "inputs": 57027,
+  "applied": 57027,
+  "journal_count": 114054,
+  "journal_head_hash": "d8de0394367b66ea034d2553c3dd45fb7b1ae2b3c92724f8817627118f173500",
+  "physical": {
+    "bytes": 569667584,
+    "sha256": "19603159548b1e443a3565f8c999543981c43c23c80fd511c11e760f633b260f"
+  },
+  "checkpoint_sha256": "750dbb3c63ab672614323dca0dd7f363847ea78aa8a489d0f0b84afe8f00bcf7",
+  "seconds": 671.5555619000224,
+  "sampled": false,
+  "model_calls": 0,
+  "training_updates": 0,
+  "scope": "Full compact journal envelope/hash chain and exact INPUT/APPLIED raw-record pairing; does not prove final launch attachments or model understanding."
+}

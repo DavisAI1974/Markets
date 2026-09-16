@@ -1,0 +1,77 @@
+{
+  "schema": "CODEX_FRANKIE_AUDIT_HANDOFF_PACKET_V1",
+  "verdict": "HOLD",
+  "date": "2026-09-16",
+  "files": [
+    {
+      "file": "AUDIT.md",
+      "bytes": 11822,
+      "sha256": "0663bc8ea38cdb156f41ff36bc406a1fdf3e9a5c3510c43aa16c4d2044916881"
+    },
+    {
+      "file": "CLAUDE_HANDOFF.md",
+      "bytes": 10157,
+      "sha256": "1bb5d2b2215f924559d584d3a44eac5d45cbeb432d5fd09fb07b3fec21d00483"
+    },
+    {
+      "file": "evidence/audit-code-witnesses.json",
+      "bytes": 3038,
+      "sha256": "a1dcf0983fe6b20a927bdd5a6d1f8c1a392921d66be94521dcfe69a25228dd1d"
+    },
+    {
+      "file": "evidence/audit-tests.xml",
+      "bytes": 17126,
+      "sha256": "b715b0d15d8ecef4f88e2fcdbe0aea66c9941b96fb2f150b1659c06c88706fa4"
+    },
+    {
+      "file": "evidence/current-receiver-crosswalk.json",
+      "bytes": 116393,
+      "sha256": "875f93a570ad5154f6171fef0ebea9deb3624f5e808bdfc3c4affe9ea7f28e12"
+    },
+    {
+      "file": "evidence/current-receiver-crosswalk.md",
+      "bytes": 55448,
+      "sha256": "5cbeca94edb808073b214e9867693346840575b66ba2ebcdce3608cd061bf79c"
+    },
+    {
+      "file": "evidence/delivery-ledger-physical-audit.json",
+      "bytes": 1387,
+      "sha256": "950863e3eb8c5274d4c525c8167ae26cc8883076823e895df99edeb2516a41d5"
+    },
+    {
+      "file": "evidence/full-journal-audit.json",
+      "bytes": 751,
+      "sha256": "58cb671e9b5fa41310819d08a20edbc10171a0805d735dd794fb70b6c05067ec"
+    },
+    {
+      "file": "evidence/memory-carry-check.log",
+      "bytes": 873,
+      "sha256": "851e2637fbf7585f10a267ad7312647458b0295d901777dc2e65592351a41cbc"
+    },
+    {
+      "file": "evidence/receiver-tests.xml",
+      "bytes": 50118,
+      "sha256": "a847a9cede84416f868e7f78d416947b54fa6cbea447ad833fb0d2a822beeea0"
+    },
+    {
+      "file": "evidence/recovery-tests.xml",
+      "bytes": 3720,
+      "sha256": "5a0dfd1783b8d9fadd2634c113702437e12e781b687f2e088af874f70e54ce03"
+    },
+    {
+      "file": "evidence/restoration-contract-audit.json",
+      "bytes": 195,
+      "sha256": "9a15992789d6ee5cca76a91c7df84eab1fa046195cb0ff1c927d1ac297482f94"
+    },
+    {
+      "file": "evidence/retained-output-bundle-check.json",
+      "bytes": 7169,
+      "sha256": "75b63eeb2a765cfafbb511d04c6907aba7267eed1c2cff149817d18c129f5c20"
+    },
+    {
+      "file": "full_journal_audit.py",
+      "bytes": 2805,
+      "sha256": "953f2e2648dab7a2dc307dcfae617894bbcf8d6c64b42d23979aeb28e8083d23"
+    }
+  ]
+}

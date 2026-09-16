@@ -1,0 +1,65 @@
+{
+  "audited_branch_sha": "d152dd82a3f8a639f51a8585c0fc65c547270d39",
+  "code_files": [
+    {
+      "path": "research/kalshi/frankie_boss/c15_builder.py",
+      "git_blob": "d2da2a66dfe81bbb96dfc3690de0548c1864a917",
+      "checkout_sha256": "6f1c9050a7e1da226fe1828c4667020d2536e2607971c468df96f615edba66bd"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/c15_journal.py",
+      "git_blob": "a2dd5e9be76c47a9738b28caa5f364ddaf8d4064",
+      "checkout_sha256": "8c6b5f6504e9dfcbd3f1ed871b649c8217e89c2bb81e0ce8294a3a2457d07800"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/compact_journal.py",
+      "git_blob": "a33d65becd17ab99ec06361a448d3aff448aba2e",
+      "checkout_sha256": "ceea70dd224f8ab3b1b8207114ced1ba248d5bcb31ceea4a9d4fe1001f0a81cb"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/frankie_journal_reader.py",
+      "git_blob": "5c623693c94b70fd9b08e30ccebc11fa55537a86",
+      "checkout_sha256": "bfa6e78718df0618ddbb5a76ae8e19c22078ebc87bd00982aaf5426ac3dfdcc7"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/prepared_context_cache.py",
+      "git_blob": "8062f60200305567b1a0ef3394b7b5e58c6a5d22",
+      "checkout_sha256": "706158bcbecf8c8b26060e570da15ba63c26de040c33cf4edf8a6627cad29d96"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/sunday_execution.py",
+      "git_blob": "7a9bb416ebf90da847d53fd88149566611b7546e",
+      "checkout_sha256": "f3f2af9a11de7209f8906308bbd4aeb81a3388d9eab5f0a5b7adc182cd41f614"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/frankie_principal_adapter.py",
+      "git_blob": "bdc8d4b7e3942aecf75779762349c53ca2260eae",
+      "checkout_sha256": "4476f3ea27434dd4e04874a35b657c764ac76dd1e3a0c6b013e6bfa6561f1899"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/source_contract_runtime.py",
+      "git_blob": "bd716327a590ed275b0b87e0df7e4854c0c7ba24",
+      "checkout_sha256": "0eb87c22f2c5336c870e370960b6133a4836212469be33da181eda41fe55ed2e"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/dipole_classroom_integration.py",
+      "git_blob": "5d5261da253a1b192fbeb74cc1e2c67ed141d0b0",
+      "checkout_sha256": "dc7389aa07d9ff4058e6b81f55326f065cf093b7e93cf6cac5f6b814edbe3cca"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/operations/run_actual_sunday.py",
+      "git_blob": "f604d1dc46d3a750845704dc015c48dfcc6db901",
+      "checkout_sha256": "87f7cc1d7ce31c22aff32d9c908251d4a54d11ef4203dcfdf6379ef76a756fc8"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/operations/run_actual_sunday_ec2.py",
+      "git_blob": "2e1f9cbb0650b85aef9ba01ac73d836a274f9586",
+      "checkout_sha256": "7351f439c6b8e51b53651645bfa4a29fc49578a6370562599f4b259f2c7db995"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/operations/run_actual_sunday_compact_source.py",
+      "git_blob": "a3ccfd664afe65ec90b471b8e2e98940c66cb197",
+      "checkout_sha256": "20c134af6d521b9a627ee83abab81172af00d8dfd7821777bea15dbf6957a2fd"
+    }
+  ]
+}

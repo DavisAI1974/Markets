@@ -1,0 +1,4 @@
+PASS  E:\Markets-receiver\research\kalshi\frankie_raw_mbo_benchmark\A_MEMORY_SEED_20260902.json is the generated seed (82 entries, sha256 a1853918a4230341f8fa99bd113a57635615502d8a1102f331b6ff916d41128b); mission pinned
+PASS  E:\Markets-receiver\research\kalshi\agents\frankie_native_raw_mbo_knowledge\KNOWLEDGE_SOURCES_20260828.json is the generated spec (63 KEEP artifacts, 3 own-run artifacts and the seed seed_a_memory_20260902 routed to A_MEMORY)
+PASS  E:\Markets-receiver\research\kalshi\agents\frankie_native_raw_mbo_ingestion_layer_registry_20260828.json is the rebound registry (registry_sha256=239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1)
+PASS  frankie-a-memory-rt-33746436209-1: gate RECEIPT_AND_CHAINS_VERIFIED_FILED_UNDER_PRIOR_REGISTRY_OR_CONTRACT, documents NOT_FILED_RUN_PREDATES_THE_TWO_DOCUMENT_CONTRACT, receipt d8454e8d57d83100
