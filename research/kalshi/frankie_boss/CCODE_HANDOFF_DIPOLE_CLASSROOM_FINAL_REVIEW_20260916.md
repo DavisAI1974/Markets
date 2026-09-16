@@ -11,7 +11,7 @@ ChatGPT hardening commits after that review:
 - `38b90e16149e15fa5462f54b20378c04a9955183` — harden answer-key/correction boundary.
 - `0797d54f3b5729ac89e89f821af32e33d13b6702` — add non-punitive novelty investigation and instance-level evidence review.
 
-The documentation commit containing this handoff is intentionally not part of the code-review range above.
+The documentation commits containing/updating this handoff are intentionally not part of the code-review range above.
 
 ## Greg's governing classroom rule
 
@@ -127,7 +127,7 @@ Please review specifically:
 
 Your earlier review at `f6f3787f` had 42 focused tests green.
 
-ChatGPT could not execute pytest for the two post-review hardening commits in its current environment. The new Python sources were syntax-checked before the GitHub writes, and the GitHub commit/file diff was inspected, but **do not treat the new focused tests as passed until you run them**.
+ChatGPT could not execute pytest for the two post-review hardening commits in its current environment. Draft source text was syntax-checked before the GitHub writes and the GitHub commit/file diffs were inspected, but the exact committed branch was **not** executed here. Do not treat the new focused tests as passed until you run them.
 
 Please run the prior classroom focused suites plus:
 
