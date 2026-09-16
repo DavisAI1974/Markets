@@ -3,7 +3,7 @@
 The lawful host implementation remains untouched. This composition layer only:
 - reuses the already prepared governed teacher attachment from PreparedContextCache;
 - builds and retains the per-cycle Dipole classroom package without rerunning teacher math;
-- feeds the reviewed final classroom adapter explicitly through make_principal_adapter;
+- feeds the reviewed final classroom adapter explicitly through SundayRuntime;
 - attaches the classroom package to the returned SundayRuntime without monkeypatching classes;
 - extends the recorded-session waiter to the mandatory same-session correction turn.
 
@@ -205,6 +205,7 @@ class ClassroomActualHost(base.ActualHost):
                 "Dipole classroom package must exist before Sunday runtime construction"
             )
         runtime.classroom_package = package
+        runtime.principal_adapter_class = self.principal_adapter_class
         return runtime
 
     async def run(self):
@@ -229,7 +230,6 @@ class ClassroomActualHost(base.ActualHost):
             delivery_receipt=c["delivery_receipt"]["path"],
             expected_delivery_file_sha256=c["delivery_receipt"]["sha256"],
             result_path=c["calculation_result"]["path"],
-            adapter_class=self.principal_adapter_class,
             session_executor=lambda request: await_recorded_principal(
                 request, self.directory, self.principal_host_lock, self.probe
             ),
