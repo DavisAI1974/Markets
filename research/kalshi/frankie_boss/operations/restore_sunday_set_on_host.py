@@ -36,6 +36,15 @@ def sha256_file(path):
     return digest.hexdigest()
 
 
+def load_module_by_path(name, path):
+    """Import a stdlib-only module from its file, bypassing the torch-importing package __init__."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(name, str(path))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def mirror_target(mirror_path):
     short, rest = mirror_path.split('/', 1)
     return Path(MIRROR_ROOTS[short]) / rest
@@ -135,10 +144,13 @@ def main():
             target.parent.mkdir(parents=True, exist_ok=True); target.write_bytes(raw); copied += 1
     note(package_small_files=sum(r['in_git'] for r in restoration['files']), copied=copied)
 
-    # 4. audits: every bulk pin of the restoration manifest, and the byte-exact working tree
-    sys.path.insert(0, str(tools))
-    from research.kalshi.frankie_boss.operations import audit_sunday_restoration_manifest as A
-    from research.kalshi.frankie_boss.operations import restore_sunday_working_tree_identity as R
+    # 4. audits: every bulk pin of the restoration manifest, and the byte-exact working tree.
+    #    Both modules are stdlib-only; they are loaded by FILE PATH because importing them through the
+    #    package runs research/kalshi/frankie_boss/__init__.py, which imports torch, which the stock
+    #    host interpreter does not have (the third host restore died there, 2026-09-16).
+    operations = tools / 'research' / 'kalshi' / 'frankie_boss' / 'operations'
+    A = load_module_by_path('audit_sunday_restoration_manifest', operations / 'audit_sunday_restoration_manifest.py')
+    R = load_module_by_path('restore_sunday_working_tree_identity', operations / 'restore_sunday_working_tree_identity.py')
     addendum = json.loads((package / 'BULK_HASH_ADDENDUM_20260915.json').read_bytes())
     audit = A.audit(restoration, addendum, sha256_file(package / 'RESTORATION_MANIFEST.json'))
     if not audit['passed']:
