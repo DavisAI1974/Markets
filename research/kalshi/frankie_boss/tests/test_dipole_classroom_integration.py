@@ -58,18 +58,22 @@ def test_integrated_taper_still_requires_two_mastered_cycles_and_regresses():
     )) == teach
 
 
-def test_classroom_runtime_attaches_package_without_runtime_class_rebinding(monkeypatch):
+def test_classroom_runtime_attaches_package_and_adapter_without_runtime_class_rebinding(monkeypatch):
     host = object.__new__(integrated.ClassroomActualHost)
     package = {"binding": {"request_id": "run-cycle-00"}}
     host.classroom_package = package
     host._load_classroom_package = lambda cycle_directory: package
-    returned = SimpleNamespace(classroom_package=None)
-    runtime_class_before = lawful.ActualHost
+    saved = []
+    host.api = SimpleNamespace(driver=SimpleNamespace(_save=lambda path, body: saved.append((path, body))))
+    returned = SimpleNamespace(classroom_package=None, principal_adapter_class=None)
+    host_class_before = lawful.ActualHost
     monkeypatch.setattr(lawful.ActualHost, "runtime", lambda self, *args: returned)
     result = integrated.ClassroomActualHost.runtime(host, {}, "cycle", None)
     assert result is returned
     assert result.classroom_package is package
-    assert lawful.ActualHost is runtime_class_before
+    assert result.principal_adapter_class is IntegratedDipoleClassroomPrincipalAdapter
+    assert lawful.ActualHost is host_class_before
+    assert saved and saved[-1][1]["qualname"] == "IntegratedDipoleClassroomPrincipalAdapter"
 
 
 def test_classroom_main_has_explicit_host_class_seam_instead_of_global_rebind():
