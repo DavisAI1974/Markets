@@ -55,6 +55,21 @@ def mirror_key(original):
     raise ValueError('path outside the mirror roots: ' + posix)
 
 
+def transfer_config():
+    """Single-threaded multipart transfer, deliberately.
+
+    Reproduced 2026-09-16: with max_concurrency >= 2 on one boto3 client, urllib3 emitted
+    InsecureRequestWarning for the S3 host during multipart part uploads (botocore 1.42.97,
+    urllib3 2.5.0). Same client, same file, same parts at concurrency 1 or use_threads=False:
+    no warning. botocore's URLLib3Session._setup_ssl_cert mutates the shared pool's cert_reqs
+    on every request from every worker thread, and urllib3 flags a connection unverified when
+    its handshake observes the setting mid-mutation. Verification stays on throughout; the
+    race is in the flag. One worker removes the race; every object is sha256-checked anyway.
+    """
+    from boto3.s3.transfer import TransferConfig
+    return TransferConfig(multipart_chunksize=64 * 1024 * 1024, max_concurrency=1)
+
+
 def load_credentials():
     env = {}
     for line in open('scratchpad/aws.env', encoding='utf-8', errors='replace'):
@@ -73,9 +88,8 @@ def main():
     args = parser.parse_args()
     load_credentials()
     import boto3
-    from boto3.s3.transfer import TransferConfig
     s3 = boto3.client('s3', region_name='us-east-2')
-    config = TransferConfig(multipart_chunksize=64 * 1024 * 1024, max_concurrency=4)
+    config = transfer_config()
     log = open(args.log, 'a', encoding='utf-8')
 
     def note(**values):
