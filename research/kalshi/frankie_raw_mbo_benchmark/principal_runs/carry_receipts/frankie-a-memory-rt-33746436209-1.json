@@ -1,0 +1,84 @@
+{
+  "documents": {
+    "files": {},
+    "status": "NOT_FILED_RUN_PREDATES_THE_TWO_DOCUMENT_CONTRACT"
+  },
+  "memory": {
+    "knowledge_manifest": {
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json",
+      "sha256": "cb90d7db6e3e258b71496eb21561a6818ae0536cf5f1e70825a36a65f103f028"
+    },
+    "knowledge_sources": {
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_SOURCES_20260828.json",
+      "sha256": "df0ca040875bb42e22ca830a9fc94d1610edcf953fbd32be4573fac034b08c05"
+    },
+    "mission": {
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md",
+      "sha256": "ff2b8103e2e0f7475db72d9f9b146f7f5196b7841a94af3190537e8016733e85"
+    },
+    "registry": {
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+      "sha256": "239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1"
+    },
+    "seed": {
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json",
+      "sha256": "a1853918a4230341f8fa99bd113a57635615502d8a1102f331b6ff916d41128b"
+    }
+  },
+  "output_bundle_gate": {
+    "current": {
+      "contract_sha256": "822d2cfdf8e78bfde0566f1a67929cc81a02611193167cf94a2171364b897865",
+      "registry_sha256": "239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1"
+    },
+    "filed_against": {
+      "contract_sha256": "822d2cfdf8e78bfde0566f1a67929cc81a02611193167cf94a2171364b897865",
+      "registry_sha256": "239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1"
+    },
+    "ledgers": 30,
+    "outputs_receipt_sha256": "ac42944ad51bd00213b42e7274f17db5c1526c5b8c68fe608b0a2e52ff8d0074",
+    "required_ledger_ids_at_filing": [
+      "output_state_and_state_delta_movie",
+      "output_frankie_reasoning_movie",
+      "output_probability_movie",
+      "output_candidate_discoveries",
+      "output_first_locks_and_no_locks",
+      "output_negative_sparse_inconclusive_ledger",
+      "output_knowledge_retrieval_receipts",
+      "output_provider_invocation_response_receipts",
+      "output_answer_wall_access_receipts",
+      "output_source_state_manifest_code_model_run_hashes",
+      "contract_section_4.0",
+      "contract_section_4.0b",
+      "contract_section_4.1",
+      "contract_section_4.2",
+      "contract_section_4.3",
+      "contract_section_4.4",
+      "contract_section_4.5",
+      "contract_section_4.6",
+      "contract_section_4.7",
+      "contract_section_4.8",
+      "contract_section_4.9",
+      "contract_section_4.10",
+      "contract_section_4.11",
+      "contract_section_4.12",
+      "contract_section_4.13",
+      "contract_section_4.14",
+      "contract_section_4.15",
+      "contract_section_4.16",
+      "raw_mbo_classification",
+      "knowledge_verification"
+    ],
+    "required_set_delta_since_filing": {
+      "added": [
+        "what_he_learned",
+        "in_his_own_words"
+      ],
+      "removed": []
+    },
+    "status": "RECEIPT_AND_CHAINS_VERIFIED_FILED_UNDER_PRIOR_REGISTRY_OR_CONTRACT"
+  },
+  "receipt_sha256": "d8454e8d57d83100534b9d0e4e1d874b9fecad387f019d3a2d1ee5e95ca24908",
+  "run_directory": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/frankie-a-memory-rt-33746436209-1/",
+  "run_id": "frankie-a-memory-rt-33746436209-1",
+  "schema": "FRANKIE_A_MEMORY_CARRY_RECEIPT_V1"
+}
