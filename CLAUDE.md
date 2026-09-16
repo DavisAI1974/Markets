@@ -1,6 +1,23 @@
 # CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-06, Session 114)
 
 
+## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
+
+- **The Granite 4,096-token context is RETIRED. Remove `4096` from ALL Granite-related code**: the `service_context` /
+  `CONTEXT` / `max_model_len` defaults, every `(4096, 131072)` allowlist, the 1,200-output ceiling tied to it, and the
+  retained-lifecycle resume gate. The only Granite context is 131,072 with output = remaining context and the
+  incomplete-output alert (`IncompleteModelOutput`, `output-incomplete.json`). Inventory of the sites to remove is in
+  `research/kalshi/frankie_boss/CLAUDE_RECONCILIATION_20260916.md`.
+- **The native row context `T_CTX = 4096` is a provisional value** (its own comment says so). Greg has retired the
+  4,096-row cycle in prose at least three times; it was never changed in code, so every token projection re-derives it.
+  Do NOT quote projections at 4,096 rows. The replacement row count is Greg's modelling call and is still pending.
+- **Token figures**: the proven packet is 92,427 input tokens at 3,262 rows (stacked_v1), leaving 38,645 output tokens.
+  Shrinking/optimizing the packet is one of the most important jobs. **114,054 is the journal ENTRY count (2 x 57,027
+  records, INPUT + APPLIED), not a token count** -- do not let it surface as "114k tokens".
+- **Native step thread count is a declared numeric identity**: 8, fixed for the whole run, recorded in the numeric policy.
+- Launch is HOLD. No Frankie, Granite, Pod, EC2 or result-bearing action without Greg's explicit go.
+
+
 ## S114 — G24 WALKED BLIND (6/10) AND IT TIES DOING NOTHING, THE RENEWABLES FORCING IS WIRED, AND EVERY REPORTED DEFECT IS CLOSED (read `SESSION_HANDOFF_2026-08-06_S114.md` + `DROP_IN_S115.md`)
 
 **Branch = `claude/kalshi-agents-coordinator-guard-sg0n15`. Brain s105.4 -> s105.9, 90 plays — play

@@ -63,3 +63,37 @@ This work ran in a remote Linux container, not the Windows workstation. No Runpo
 present; AWS credential environment variables are present but were not used; `boto3`, `zstandard` and CPU torch
 were installed for the suites. `.github/workflows/boss_frankie_tests.yml` does not exist on any of the three
 inputs or on this branch. Nothing was started, stopped, dispatched or uploaded.
+
+## Standing rule recorded 2026-09-16 (Greg): remove the Granite 4,096-token context from all Granite code
+
+The 4,096 Granite service context is retired. The only Granite context is 131,072, output budget = remaining context,
+with the incomplete-output alert. Nothing below has been changed yet; this is the inventory for the removal slice.
+
+Non-test code (23 lines, 13 files), all blob-identical to the lawful ancestor `050c5056`:
+
+| file | lines | what |
+|---|---|---|
+| `granite_runpod_admission.py` | 16 | `CONTEXT=4096` |
+| `granite_runpod_service.py` | 31, 44-45, 169 | default context 4096; `(4096, 131072)` allowlist; 1,200 output ceiling when not 131072 |
+| `granite_runpod_tokenizer.py` | 30, 104 | allowlist message; 1,200 ceiling when not 131072 |
+| `granite_runpod_proxy.py` | 46-47, 270, 280, 302 | `_chat` default and allowlist; `main` default; `GRANITE_MAX_MODEL_LEN` fallback '4096' |
+| `granite_runpod_cloud.py` | 335-336 | `admitted.get('context', 4096)` and allowlist |
+| `granite_startup.py` | 32-33 | `max_model_len` allowlist |
+| `granite_startup_pins.py` | 17 | `service_context` allowlist |
+| `granite_retained_host.py` | 94 | `tokenizer(..., context=4096)` default |
+| `granite_retained_lifecycle.py` | 195, 199, 222 | `resume_once` hard-pins context 4096 and input+output <= 4096 (no non-test caller); `verified_service_inputs` defaults `compact_v1` / 4096 |
+| `granite_full_capacity.py` | 30 | `fits_accepted_service = total <= 4096` |
+| `granite_runpod_probe.py` | 42 | `len(body) > 4096` (byte bound, review whether it is a context echo) |
+| `sunday_native_runtime.py` | 142, 148 | `service_context=4096` default and allowlist |
+
+Tests: 16 files under `tests/` reference the Granite 4096 (fixtures, allowlist tests, `GRANITE_MAX_MODEL_LEN: '4096'`).
+Specs: 5 documents state the 4,096 Granite context as current.
+
+The live route already passes 131,072 and `stacked_v1` explicitly from host configuration, so today the 4096 survives as
+defaults, allowlist members and one dead gate; removal makes 131,072 the only admissible value and turns any 4096 into a
+refusal. Separate from this: the native row context `T_CTX = 4096` (encoder, runtime, schedule hash, prefix-builder
+guard) is a modelling parameter whose replacement value Greg has not yet given.
+
+Number provenance settled the same day: the "114k" / "117k" Codex quoted is the journal entry count 114,054
+(2 x 57,027 records, INPUT + APPLIED), which the token review also uses as "the 114k-row drain"; it is not a token figure.
+The token projection at 4,096 rows (~114k-116k) is a coincidence of magnitude and is retired with the row context above.
