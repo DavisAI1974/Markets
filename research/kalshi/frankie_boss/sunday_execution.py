@@ -141,6 +141,7 @@ class SundayRuntime:
     critic_factory: Callable
     source_journal_path: str
     source_journal_checkpoint: dict
+    classroom_package: dict
     context_encoding: str = 'compact_v1'
     context_encoding_options: dict | None = None
     controller_event: Callable | None = None
@@ -163,6 +164,7 @@ class _LazyPrincipal:
                 expected_manifest_sha256=manifest_record['manifest_sha256'],
                 boss_journal_path=self.runtime.source_journal_path,
                 source_journal_checkpoint=self.runtime.source_journal_checkpoint,
+                classroom_package=self.runtime.classroom_package,
                 directory=self.directory/'principal',**self.configuration)
         return self.adapter
 
@@ -220,6 +222,11 @@ class SundayExecution:
                 plan=_load(plan_path) if plan_path.exists() else None
                 runtime=self.runtime_factory(binding,directory,plan)
                 if not isinstance(runtime,SundayRuntime):raise ValueError('explicit SundayRuntime factory result required')
+                if type(runtime.classroom_package) is not dict or runtime.classroom_package.get('binding',{}).get('request_id')!=request_id:
+                    raise ValueError('runtime Dipole classroom must be bound to this exact cycle request')
+                classroom_binding_hash=runtime.classroom_package['binding'].get('classroom_binding_hash')
+                if type(classroom_binding_hash) is not str or len(classroom_binding_hash)!=64:
+                    raise ValueError('runtime Dipole classroom binding hash required')
                 if runtime.checkpoint.checkpoint_hash!=runtime.expected_checkpoint_hash:
                     raise ValueError('runtime training state differs from trusted checkpoint')
                 controller_journal=book=None
@@ -250,19 +257,21 @@ class SundayExecution:
                             expected_native_hash=runtime.expected_native_hash,
                             expected_critic_config_hash=runtime.expected_critic_config_hash,
                             expected_critic_identity_hash=runtime.expected_critic_identity_hash,
+                            classroom_binding_hash=classroom_binding_hash,
                             context_encoding=runtime.context_encoding,input_hash=runtime.input_hash,
                             **({'context_encoding_options':_plain(runtime.context_encoding_options)} if runtime.context_encoding_options is not None else {}),
                             source_journal_checkpoint=runtime.source_journal_checkpoint,
                             source_journal_path=str(Path(runtime.source_journal_path).resolve()))
-                        _save(plan_path,plan)  # exact full plan and independent pins BEFORE refresh/call
+                        _save(plan_path,plan)
                     else:
                         if plan['request_id']!=request_id or plan['contract_sha256']!=self.contract_hash:
                             raise ValueError('retained request plan identity differs')
                         if (plan['source_journal_checkpoint']!=runtime.source_journal_checkpoint or
                                 plan['source_journal_path']!=str(Path(runtime.source_journal_path).resolve()) or
                                 plan['input_hash']!=runtime.input_hash or plan['context_encoding']!=runtime.context_encoding or
-                                plan.get('context_encoding_options')!=_plain(runtime.context_encoding_options)):
-                            raise ValueError('retained source/admission identity differs')
+                                plan.get('context_encoding_options')!=_plain(runtime.context_encoding_options) or
+                                plan.get('classroom_binding_hash')!=classroom_binding_hash):
+                            raise ValueError('retained source/admission/classroom identity differs')
                         if plan['controller_kwargs']['sessions']!=_plain(binding['sessions']):
                             raise ValueError('retained request plan has different authored sessions')
                         controller_kwargs=dict(plan['controller_kwargs'],sessions=binding['sessions'])
@@ -285,7 +294,6 @@ class SundayExecution:
                             context_encoding=plan['context_encoding'],context_encoding_options=plan.get('context_encoding_options'),event=runtime.controller_event)
                     def export_kwargs(result):
                         controller_pin=controller_journal.checkpoint();native_pin=book.checkpoint()
-                        # Observe actual durable checkpoints independently of result fields.
                         _save(directory/'completed-journal-pins.c15.json',dict(controller=controller_pin,
                             native=native_pin,controller_result_hash=evidence_hash(result)))
                         if native_pin!=result['native_checkpoint']:
