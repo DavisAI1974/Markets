@@ -52,7 +52,7 @@ def test_completed_cycle_precedes_contract_binding_and_runtime_factory(tmp_path)
     assert not (tmp_path/'run/cycle-00').exists()
 
 
-def test_full_request_plan_is_saved_before_coordinator_or_critic_call(tmp_path,monkeypatch):
+def _composition_fixture(tmp_path,monkeypatch,*,adapter_class):
     from research.kalshi.frankie_boss import sunday_execution as execution_module
     from research.kalshi.frankie_boss.frankie_principal_adapter import PrincipalPending
     from test_source_contract_runtime import fixture
@@ -77,7 +77,11 @@ def test_full_request_plan_is_saved_before_coordinator_or_critic_call(tmp_path,m
     monkeypatch.setattr(execution_module,'assemble_request',assemble)
     monkeypatch.setattr(execution_module,'native_model_pin',lambda bridge:'e'*64)
     monkeypatch.setattr(execution_module,'learning_config',lambda *args,**kwargs:SimpleNamespace(digest='f'*64))
-    runtime=execution_module.SundayRuntime(context=None,decoder=None,optimizer=None,
+    from research.kalshi.frankie_boss.dipole_classroom import prepare_cycle
+    from test_dipole_classroom_session import _teacher, HEX_B
+    classroom=prepare_cycle(_teacher(),request_id='request-cycle-00',cycle_index=0,cycle_count=19,source_hash=HEX_B,as_of=2_000_000,through_cursor=6)
+    runtime=execution_module.SundayRuntime(context=None,decoder=None,optimizer=None,classroom_package=classroom,
+        principal_adapter_class=adapter_class,
         checkpoint=SimpleNamespace(checkpoint_hash='1'*64),expected_checkpoint_hash='1'*64,
         development_identity={},refresh_policy=None,input_hash='d'*64,expected_native_hash='e'*64,
         expected_critic_config_hash='2'*64,expected_critic_identity_hash='3'*64,
@@ -88,5 +92,71 @@ def test_full_request_plan_is_saved_before_coordinator_or_critic_call(tmp_path,m
         expected_schedule_sha256=digest(steps),runtime_factory=lambda *args:runtime,
         principal_configuration={'receiver_commit':'b'*40},boss_commit='c'*40,agent_commit='b'*40,
         state_defects_and_gaps_reported=[])
+    return execution_module,PrincipalPending,driver,calls
+
+
+def test_full_request_plan_is_saved_before_coordinator_or_critic_call(tmp_path,monkeypatch):
+    from research.kalshi.frankie_boss.dipole_classroom_integration import IntegratedDipoleClassroomPrincipalAdapter
+    execution_module,PrincipalPending,driver,calls=_composition_fixture(
+        tmp_path,monkeypatch,adapter_class=IntegratedDipoleClassroomPrincipalAdapter)
     with pytest.raises(PrincipalPending):asyncio.run(driver.run_cycle(0))
+    plan=execution_module._load(tmp_path/'run/cycle-00/request-plan.c15.json')
+    assert plan['principal_adapter_identity']==(
+        'research.kalshi.frankie_boss.dipole_classroom_integration:'
+        'IntegratedDipoleClassroomPrincipalAdapter')
     assert calls==['coordinator-after-plan']
+
+
+def test_execution_refuses_missing_classroom_adapter_class(tmp_path,monkeypatch):
+    _,_,driver,calls=_composition_fixture(tmp_path,monkeypatch,adapter_class=None)
+    with pytest.raises(ValueError,match='principal adapter class required'):
+        asyncio.run(driver.run_cycle(0))
+    assert calls==[]
+
+
+@pytest.mark.parametrize('adapter_class', [object, str])
+def test_execution_refuses_non_classroom_adapter_before_coordinator(tmp_path,monkeypatch,adapter_class):
+    _,_,driver,calls=_composition_fixture(tmp_path,monkeypatch,adapter_class=adapter_class)
+    with pytest.raises(ValueError,match='classroom principal adapter'):
+        asyncio.run(driver.run_cycle(0))
+    assert calls==[]
+
+
+@pytest.mark.parametrize('tamper', [
+    'package_missing', 'request_id', 'binding_hash', 'adapter_missing',
+    'adapter_module', 'adapter_qualname', 'plan_adapter_missing', 'plan_adapter_changed',
+])
+def test_restart_refuses_changed_classroom_identity_before_coordinator(tmp_path,monkeypatch,tamper):
+    from research.kalshi.frankie_boss.dipole_classroom_integration import IntegratedDipoleClassroomPrincipalAdapter
+    from research.kalshi.frankie_boss.c15_journal import canonical_bytes, pack
+    execution,Pending,driver,calls=_composition_fixture(
+        tmp_path,monkeypatch,adapter_class=IntegratedDipoleClassroomPrincipalAdapter)
+    with pytest.raises(Pending):
+        asyncio.run(driver.run_cycle(0))
+    calls.clear()
+    runtime=driver.runtime_factory(None,None,None)
+    if tamper=='package_missing':
+        runtime.classroom_package=None
+    elif tamper=='request_id':
+        runtime.classroom_package['binding']['request_id']='request-cycle-01'
+    elif tamper=='binding_hash':
+        runtime.classroom_package['binding']['classroom_binding_hash']='9'*64
+    elif tamper=='adapter_missing':
+        runtime.principal_adapter_class=None
+    elif tamper in ('adapter_module','adapter_qualname'):
+        alternate=type('AlternateAdapter',(IntegratedDipoleClassroomPrincipalAdapter,),{})
+        alternate.__module__=IntegratedDipoleClassroomPrincipalAdapter.__module__
+        alternate.__qualname__=IntegratedDipoleClassroomPrincipalAdapter.__qualname__
+        setattr(alternate,'__module__' if tamper=='adapter_module' else '__qualname__','changed')
+        runtime.principal_adapter_class=alternate
+    else:
+        path=tmp_path/'run/cycle-00/request-plan.c15.json'
+        plan=execution._load(path)
+        if tamper=='plan_adapter_missing':
+            del plan['principal_adapter_identity']
+        else:
+            plan['principal_adapter_identity']='changed:Adapter'
+        path.write_bytes(canonical_bytes(pack(plan)))
+    with pytest.raises(ValueError,match='classroom|principal adapter'):
+        asyncio.run(driver.run_cycle(0))
+    assert calls==[]
