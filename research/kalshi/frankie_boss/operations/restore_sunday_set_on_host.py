@@ -111,12 +111,17 @@ def main():
             if sha256_file(tar_path) != entry['sha256']:
                 raise SystemExit('archive hash differs after download: ' + entry['archive'])
         target_dir.mkdir(parents=True, exist_ok=True)
+        pinned = {m['path']: m['sha256'] for m in entry['members']}
         with tarfile.open(tar_path, 'r', format=tarfile.PAX_FORMAT) as tar:
             for member in tar.getmembers():
                 if not member.isfile():
                     continue
                 out = target_dir / member.name
-                if out.is_file() and out.stat().st_size == member.size:
+                # Skip only on a matching HASH. A matching size is not identity: git rewrote .git/index
+                # in place (same size, new bytes) when the host ran `git diff`, and the size-only skip
+                # then failed the member audit instead of re-extracting it (2026-09-16).
+                expected = pinned.get(member.name)
+                if out.is_file() and expected is not None and sha256_file(out) == expected:
                     continue
                 out.parent.mkdir(parents=True, exist_ok=True)
                 with tar.extractfile(member) as src, open(out, 'wb') as dst:
