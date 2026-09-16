@@ -6,7 +6,8 @@ This wrapper preserves the lawful Sunday host and compact-reader lineage. It onl
 - permits later prepare/recovery resume only under the exact stable host identity;
 - enables safe native-step substage/resource diagnostics;
 - uses the existing audited hot-sidecar rule for closed lineage parents so a
-  read-only SQLite open cannot make its own next resume fail.
+  read-only SQLite open cannot make its own next resume fail;
+- routes the principal boundary through the mandatory Dipole classroom wrapper.
 
 It never adopts the failed cycle-00 run directory or training checkpoint.
 """
@@ -71,13 +72,12 @@ def main():
         run_directory.mkdir(parents=True, exist_ok=False)
         _write_new(identity_path, identity)
 
-    # The production host does not know this wrapper-only switch.
     if args.ec2_resume:
         sys.argv = [argument for argument in sys.argv if argument != '--ec2-resume']
 
-    # Import only after the numeric runtime policy is fixed. The production host
-    # still enforces its exact checked-out boss_commit and all existing receipts.
-    from research.kalshi.frankie_boss.operations import run_actual_sunday as actual
+    # Import only after the numeric runtime policy is fixed. The classroom module
+    # wraps, but does not replace, the lawful actual host implementation.
+    from research.kalshi.frankie_boss.operations import run_actual_sunday_classroom as actual
     from research.kalshi.frankie_boss.source_lineage_resume import verify_closed_source_lineage
 
     class EC2ActualHost(actual.ActualHost):
