@@ -15,6 +15,7 @@ import argparse
 import asyncio
 import json
 from pathlib import Path
+import sys
 import time
 
 from research.kalshi.frankie_boss.dipole_classroom_integration import (
@@ -154,7 +155,7 @@ class ClassroomActualHost(base.ActualHost):
 
     def prime_cache(self, binding, cycle_directory):
         super().prime_cache(binding, cycle_directory)
-        _, info, input_hash, teacher, _ = self.cache.prepare(
+        _, _, input_hash, teacher, _ = self.cache.prepare(
             binding["as_of"], binding["through_cursor"]
         )
         if input_hash != self.cache.receipt["input_hash"] or teacher is None:
@@ -195,9 +196,12 @@ class ClassroomActualHost(base.ActualHost):
         self.classroom_package = package
 
     def runtime(self, binding, cycle_directory, retained_plan):
-        retained = self._load_classroom_package(cycle_directory)
-        if retained is not None:
-            self.classroom_package = retained
+        # Never carry a prior cycle's classroom package into this cutoff.
+        self.classroom_package = self._load_classroom_package(cycle_directory)
+        self.api.driver._save(
+            Path(cycle_directory) / "host-dipole-classroom-adapter.c15.json",
+            _adapter_identity(self.principal_adapter_class),
+        )
         runtime = super().runtime(binding, cycle_directory, retained_plan)
         package = self.classroom_package or self._load_classroom_package(cycle_directory)
         if package is None:
@@ -224,7 +228,7 @@ class ClassroomActualHost(base.ActualHost):
             expected_mapping_sha256=c["mapping"]["sha256"],
             receiver_root=c["receiver_root"],
             receiver_commit=c["receiver_commit"],
-            python=__import__("sys").executable,
+            python=sys.executable,
             retained_directory=str(Path(c["retained_witnesses"]["path"]).parent),
             expected_retained_witnesses_sha256=c["retained_witnesses"]["sha256"],
             delivery_receipt=c["delivery_receipt"]["path"],
