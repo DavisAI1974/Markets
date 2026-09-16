@@ -17,36 +17,59 @@ the parallel FrankieCompactReader is the faster drain and the caller may substit
 Identity: FREE. No teacher, normaliser or builder byte changes; the journal bodies are the
 builder's, unchanged.
 """
+from collections import deque
+from concurrent.futures import ProcessPoolExecutor
 import hashlib
-import json
+import multiprocessing
 from pathlib import Path
+import time
 
 try:
     from .c15_builder import C15Builder
-    from .c15_journal import SCHEMA, canonical_bytes, evidence_hash, pack, unpack
+    from .c15_journal import SCHEMA, pack
     from .c15_registry import implementation_identity
     from .causal_prefix_records import RecordPrefixChain
-    from .compact_journal import CompactWriter, FORMAT, decode_block
+    from .compact_journal import CompactWriter, FORMAT, MAX_BYTES, MAX_ROWS, decode_block, encode_block, verified_rows
     from .source_conformance import SourceConformanceDriver
-    from .verified_journal_reader import DIGEST_PREFIX, GENESIS_HASH
+    from .verified_journal_reader import DIGEST_PREFIX, GENESIS_HASH, canonical_tagged_bytes
 except ImportError:   # the tests import the package modules flat, as every module here allows
     from c15_builder import C15Builder
-    from c15_journal import SCHEMA, canonical_bytes, evidence_hash, pack, unpack
+    from c15_journal import SCHEMA, pack
     from c15_registry import implementation_identity
     from causal_prefix_records import RecordPrefixChain
-    from compact_journal import CompactWriter, FORMAT, decode_block
+    from compact_journal import CompactWriter, FORMAT, MAX_BYTES, MAX_ROWS, decode_block, encode_block, verified_rows
     from source_conformance import SourceConformanceDriver
-    from verified_journal_reader import DIGEST_PREFIX, GENESIS_HASH
+    from verified_journal_reader import DIGEST_PREFIX, GENESIS_HASH, canonical_tagged_bytes
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import V4MboAdapter   # as c15_builder and source_recovery import it
 
 
 class CompactBuildJournal:
-    """EvidenceJournal's append contract, persisted through CompactWriter."""
+    """EvidenceJournal's append contract, persisted through the compact codec.
 
-    def __init__(self, path, *, block_bytes=4 * 1024 * 1024):
+    Per row it does what EvidenceJournal.append does, once: pack the envelope to its tagged tree,
+    serialise the tree canonically, hash the bytes. EvidenceJournal serialises through the generic
+    causal_packet canonicaliser twice (body, then evidence_hash re-packs and re-serialises); the
+    codec's canonical_tagged_bytes is byte-identical on pack() output (proven differentially in
+    tests/test_verified_journal_reader.py) and the digest is sha256(DIGEST_PREFIX + body) by
+    definition. Measured on 1,000 real Sunday records: the double generic pass was 96% of 141 ms
+    per record. Blocks are cut by CompactWriter.add's rule (block_bytes, MAX_ROWS), encoded from
+    the trees already in hand, inserted and read back the way the first run's journal stack did.
+    """
+
+    def __init__(self, path, *, block_bytes=4 * 1024 * 1024, workers=0):
+        """workers > 0 encodes blocks (order dedup, gzip) on that many spawned processes while the
+        parent stays on the causal sequence; blocks are inserted in order and read back, as the
+        first run's journal stack did. workers == 0 encodes inline."""
         self.path = Path(path)
         self.writer = CompactWriter(self.path, block_bytes=block_bytes)
+        self.block_bytes = block_bytes
         self.appends = 0
+        self._rows, self._trees, self._pending_bytes, self._pending_previous = [], [], 0, GENESIS_HASH
+        self.workers = int(workers)
+        self._pool = (ProcessPoolExecutor(max_workers=self.workers, mp_context=multiprocessing.get_context('spawn'))
+                      if self.workers > 0 else None)
+        self._inflight = deque()          # (future, start, count, previous, head) in submission order
+        self.worker_cpu_seconds = 0.0
 
     @property
     def count(self):
@@ -61,27 +84,67 @@ class CompactBuildJournal:
         return self.writer.sealed
 
     def append(self, kind, payload):
+        if self.sealed:
+            raise ValueError('container already sealed')
         if type(kind) is not str or not kind:
             raise ValueError('entry kind required')
-        # Byte-for-byte the EvidenceJournal.append envelope, body and digest.
-        envelope = dict(schema=SCHEMA, ordinal=self.count, previous_hash=self.head_hash, kind=kind, payload=payload)
-        body = canonical_bytes(pack(envelope))
-        digest = evidence_hash(envelope)
-        self.writer.add((self.count, kind, body, digest))
+        ordinal, previous = self.count, self.head_hash
+        envelope = dict(schema=SCHEMA, ordinal=ordinal, previous_hash=previous, kind=kind, payload=payload)
+        tree = pack(envelope)
+        body = canonical_tagged_bytes(tree)                                  # == canonical_bytes(tree)
+        digest = hashlib.sha256(DIGEST_PREFIX + body).hexdigest()            # == evidence_hash(envelope)
+        if len(body) > MAX_BYTES // 2:
+            raise ValueError('oversized row')
+        if self._rows and (self._pending_bytes + len(body) > self.block_bytes or len(self._rows) == MAX_ROWS):
+            self.flush()
+        if not self._rows:
+            self._pending_previous = previous
+        self._rows.append((ordinal, kind, body, digest)); self._trees.append(tree); self._pending_bytes += len(body)
+        self.writer.count, self.writer.head_hash = ordinal + 1, digest
         self.appends += 1
         return digest
 
+    def _insert(self, start, count, blob, previous, head):
+        started = time.perf_counter()
+        digest = hashlib.sha256(blob).hexdigest()
+        with self.writer.db:
+            self.writer.db.execute('INSERT INTO blocks VALUES (?,?,?,?,?,?)', (start, count, blob, digest, previous, head))
+        if self.writer.db.execute('SELECT body FROM blocks WHERE start=?', (start,)).fetchone()[0] != blob:
+            raise ValueError('persisted block readback differs')
+        self.writer.flushed_bytes += len(blob)
+        self.writer.flush_seconds += time.perf_counter() - started
+
+    def _collect(self, *, all_of_them):
+        """Insert finished worker blocks in submission order; the queue holds at most 2 x workers."""
+        limit = 0 if all_of_them else 2 * self.workers
+        while self._inflight and (len(self._inflight) > limit or self._inflight[0][0].done()):
+            future, start, count, previous, head = self._inflight.popleft()
+            blob, cpu = future.result()
+            self._insert(start, count, blob, previous, head)
+            self.worker_cpu_seconds += cpu
+
     def flush(self):
-        self.writer.flush()
+        if not self._rows:
+            return
+        start, count, head = self._rows[0][0], len(self._rows), self._rows[-1][3]
+        if self._pool is None:
+            self._insert(start, count, encode_block(self._rows, self._trees), self._pending_previous, head)
+        else:
+            future = self._pool.submit(_encode_rows, self._rows)     # the worker parses the bodies itself
+            self._inflight.append((future, start, count, self._pending_previous, head))
+            self._collect(all_of_them=False)
+        self._rows, self._trees, self._pending_bytes = [], [], 0
 
     def seal(self):
         """Seal at the writer's own tail. The seal states what was written; conformance is a separate claim."""
+        self.flush()
+        self._collect(all_of_them=True)
         self.writer.seal(expected_count=self.count, expected_head_hash=self.head_hash)
 
     def rows(self):
         """Every committed row in order with the block chain re-checked; pending rows are flushed first."""
-        if not self.sealed:
-            self.flush()
+        self.flush()
+        self._collect(all_of_them=True)
         count, previous = 0, GENESIS_HASH
         for start, length, blob, digest, before, head in self.writer.db.execute(
                 'SELECT start,count,body,sha256,previous,head FROM blocks ORDER BY start'):
@@ -96,19 +159,11 @@ class CompactBuildJournal:
             raise ValueError('compact journal changed during iteration')
 
     def entries(self):
-        """Verified envelopes in order, the same acceptance as EvidenceJournal.entries()."""
-        previous, count = GENESIS_HASH, 0
-        for ordinal, kind, body, digest in self.rows():
-            envelope = unpack(json.loads(body))
-            if (body != canonical_bytes(pack(envelope)) or ordinal != count or envelope['ordinal'] != ordinal
-                    or envelope['schema'] != SCHEMA or envelope['kind'] != kind
-                    or envelope['previous_hash'] != previous
-                    or hashlib.sha256(DIGEST_PREFIX + body).hexdigest() != digest):
-                raise ValueError('evidence journal continuity or hash mismatch')
-            previous, count = digest, count + 1
-            yield envelope
-        if (count, previous) != (self.count, self.head_hash):
-            raise ValueError('evidence journal changed during iteration')
+        """Verified envelopes in order through the fast reader's path: one parse, one validating
+        decode, one canonical serialisation, one hash per row (the 3.37x reader of
+        SPEC-verified-journal-reader.md), the same rows accepted and refused as
+        EvidenceJournal.entries(). This is the drain SourceConformanceDriver.complete() runs."""
+        yield from verified_rows(self.rows(), self.count, self.head_hash)
 
     def stored_tail(self):
         rows = self.writer.db.execute('SELECT format,count,head FROM seal').fetchall()
@@ -125,10 +180,22 @@ class CompactBuildJournal:
             raise ValueError('journal differs from checkpoint; existing evidence was retained')
 
     def close(self):
-        self.writer.db.close()
+        try:
+            if self._inflight:
+                self._collect(all_of_them=True)
+        finally:
+            if self._pool is not None:
+                self._pool.shutdown(wait=True)
+            self.writer.db.close()
 
 
-def conformance_driver_with_compact_journal(scope, journal_path, *, expected_scope_hash, block_bytes=4 * 1024 * 1024):
+def _encode_rows(rows):
+    """Worker: encode one block from its rows (bodies are parsed here, off the causal parent)."""
+    started = time.process_time()
+    return encode_block(rows), time.process_time() - started
+
+
+def conformance_driver_with_compact_journal(scope, journal_path, *, expected_scope_hash, block_bytes=4 * 1024 * 1024, workers=0):
     """SourceConformanceDriver whose builder writes the compact container directly.
 
     Same construction as source_recovery.rehydrate_source: the builder's __init__ hard-wires an
@@ -140,7 +207,7 @@ def conformance_driver_with_compact_journal(scope, journal_path, *, expected_sco
     builder.scope, builder.chain = scope, RecordPrefixChain(scope)
     builder.adapter, builder.identity = V4MboAdapter(), implementation_identity()
     builder._sessions, builder._failed = {}, False
-    builder.journal = CompactBuildJournal(journal_path, block_bytes=block_bytes)
+    builder.journal = CompactBuildJournal(journal_path, block_bytes=block_bytes, workers=workers)
     driver = SourceConformanceDriver.__new__(SourceConformanceDriver)
     driver._builder = builder
     driver._stopped = driver._completed = driver._closed = False

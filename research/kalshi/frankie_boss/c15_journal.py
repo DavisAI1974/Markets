@@ -40,23 +40,36 @@ def pack(value):
 
     canonical_bytes remains the hash authority. IEEE-754 bytes avoid its
     numeric quantization, preserving even NaN payload/sign bits.
+
+    Same output as the original recursive form for every accepted value and the
+    same refusal for every other; the branches are ordered by measured frequency
+    (int and str are most nodes of a journal payload) and the mapping walk builds
+    its items in the one pass that checks its keys.
     """
+    kind = type(value)
+    if kind is int:
+        return ["int", value]
+    if kind is str:
+        return ["str", value]
     if value is None:
         return ["null"]
-    if type(value) is bool:
+    if kind is bool:
         return ["bool", value]
-    if type(value) is int:
-        return ["int", value]
-    if type(value) is float:
+    if kind is float:
         return ["float64", struct.pack(">d", value).hex()]
-    if type(value) is str:
-        return ["str", value]
-    if type(value) is bytes:
+    if kind is bytes:
         return ["bytes", value.hex()]
-    if type(value) in (list, tuple, FrozenList):
-        return ["tuple" if type(value) is tuple else "list", [pack(v) for v in value]]
-    if type(value) in (dict, MappingProxyType) and all(type(k) is str for k in value):
-        return ["dict", [[key, pack(val)] for key, val in value.items()]]
+    if kind is list or kind is FrozenList:
+        return ["list", [pack(v) for v in value]]
+    if kind is tuple:
+        return ["tuple", [pack(v) for v in value]]
+    if kind is dict or kind is MappingProxyType:
+        items = []
+        for key, val in value.items():
+            if type(key) is not str:
+                raise ValueError("evidence must use explicit mappings, sequences, bytes and primitive values")
+            items.append([key, pack(val)])
+        return ["dict", items]
     raise ValueError("evidence must use explicit mappings, sequences, bytes and primitive values")
 
 

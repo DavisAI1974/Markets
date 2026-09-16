@@ -68,6 +68,13 @@ def test_session_policies_name_the_trading_day_and_the_member_file():
     assert trading(member, dict(ts_recv=DAY + 21 * HOUR)) == '20211005'      # at the halt: next trading day
     assert trading(member, dict(ts_recv=DAY + 23 * HOUR)) == '20211005'      # the 22:00Z reopen is the next day's evening
     assert per_file(member, dict(ts_recv=DAY + 23 * HOUR)) == '20211004'
+    FRIDAY = DAY + 4 * 24 * HOUR                                             # 2021-10-08 00:00Z
+    assert trading(member, dict(ts_recv=FRIDAY + 20 * HOUR)) == '20211008'  # Friday before the halt
+    assert trading(member, dict(ts_recv=FRIDAY + 22 * HOUR)) == '20211011'  # after Friday's halt: Monday
+    assert trading(member, dict(ts_recv=FRIDAY + 30 * HOUR)) == '20211011'  # Saturday: closed, Monday
+    assert trading(member, dict(ts_recv=FRIDAY + 60 * HOUR)) == '20211011'  # Sunday 12:00Z, pre-open: Monday
+    assert trading(member, dict(ts_recv=FRIDAY + 70 * HOUR)) == '20211011'  # Sunday 22:00Z reopen: Monday
+    assert trading(member, dict(ts_recv=DAY - 2 * HOUR)) == '20211004'      # the block's own Sunday reopen
     assert constant(member, dict(ts_recv=0)) == 'supplied-source'
     with pytest.raises(ValueError):
         tool.session_policy('per_record', halt_utc_hour=21)

@@ -35,12 +35,18 @@ def _orders(tree):
     return _field(_field(_field(tree, 'payload'), 'observation'), 'orders')
 
 
-def encode_block(rows):
+def encode_block(rows, trees=None):
+    """Encode rows (ordinal, kind, body, digest). trees, when given, are the rows' already-parsed
+    tagged trees: a producer that just serialised body from its tree passes them so the codec does
+    not parse 200 KB of JSON a second time (review 2.5); the output bytes are identical either way,
+    and the canonical check still runs on the tree it is given."""
     if not rows or len(rows) > MAX_ROWS or sum(len(row[2]) for row in rows) > MAX_BYTES:
         raise ValueError('block exceeds bounded rows or bytes')
+    if trees is not None and len(trees) != len(rows):
+        raise ValueError('one parsed tree per row required')
     dictionary, lookup, records = [], {}, []
-    for ordinal, kind, body, digest in rows:
-        tree = json.loads(body)
+    for index, (ordinal, kind, body, digest) in enumerate(rows):
+        tree = json.loads(body) if trees is None else trees[index]
         if canonical_tagged_bytes(tree) != body:
             raise ValueError('noncanonical journal body')
         orders, indices = _orders(tree), None
@@ -49,7 +55,11 @@ def encode_block(rows):
                 raise ValueError('invalid order list')
             indices = []
             for order in orders[1]:
-                key = canonical_tagged_bytes(order)
+                # Dedup key: equal trees have equal repr (tagged trees hold only lists, str, int,
+                # bool and None), exactly as they have equal canonical bytes; repr is C-level and
+                # was measured at a third of json.dumps on the real Sunday orders. The dictionary
+                # order and the emitted bytes are unchanged.
+                key = repr(order)
                 if key not in lookup:
                     lookup[key] = len(dictionary)
                     dictionary.append(order)
