@@ -1,0 +1,11 @@
+{
+  "receipt": {
+    "sha256": "20a9058dc693248d57468ecf92d8aeebc8fcd4261da2e31b0c745ae2cb84eae3",
+    "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-execution-20260915\\actual-first-cutoff-capacity\\prefix-receipt.json"
+  },
+  "snapshot": {
+    "sha256": "722512df404c89783e49b577b163c5917764171aa19237e142c52b859f196883",
+    "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-execution-20260915\\actual-first-cutoff-capacity\\prefix.sqlite",
+    "bytes": 463036416
+  }
+}

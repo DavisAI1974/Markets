@@ -1,0 +1,9 @@
+{
+  "schema_version": "BOSS_GRANITE_OUTPUT_SCHEMA_V1",
+  "snapshot_hash": "163d649b2f6071fc6da149f0c99ad8aba97076b23346a648b5721525f5fce95b",
+  "evidence_refs": [],
+  "contradictions": [],
+  "missing_evidence": [],
+  "hypotheses": [],
+  "evidence_verdict": "CONSISTENT"
+}

@@ -1,0 +1,23 @@
+{
+  "schema": "BOSS_ACTUAL_CAPACITY_INTERRUPTION_V1",
+  "pid": 57204,
+  "executable": "C:\\Python313\\python.exe",
+  "script": "E:/Codex/Frankie-BOSS-20260915/source-execution-20260915/prepare_actual_capacity.py",
+  "captured_at": "2026-09-15T06:08:25.5956952Z",
+  "phase": "context_prepare",
+  "last_completed": "initialization.c15.json",
+  "phase_detail": "Existing R3 full-prefix APPLIED materialization; exact inner stage unavailable without instrumentation",
+  "reason": "Parent authorized stop to preserve memory and implement bounded R3 processing",
+  "user_cpu_seconds": 902.8125,
+  "working_set_bytes": 2097524736,
+  "model_forward_performed": false,
+  "inference_performed": false,
+  "publication_performed": false,
+  "source_worker_stopped": false,
+  "preserved": [
+    "prefix.sqlite",
+    "prefix-receipt.json",
+    "initialization.c15.json"
+  ],
+  "status": "confirmed_stopped"
+}

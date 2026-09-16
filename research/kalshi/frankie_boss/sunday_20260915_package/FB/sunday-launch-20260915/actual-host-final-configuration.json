@@ -1,0 +1,108 @@
+{
+  "calculation_result": {
+    "bytes": 29089413,
+    "path": "E:\\Codex\\Frankie-BOSS-20260915\\delivery-plain\\calculation_result.json",
+    "sha256": "91e47d0d1533b6745888bcc17e4231f998ed78dc9735c7e2f0dcab8bd65971a9"
+  },
+  "contract": {
+    "bytes": 2547676,
+    "path": "E:\\Codex\\Frankie-BOSS-20260915\\principal-source-contract\\source-contract.json",
+    "sha256": "359e369cbc43b48ef33280dc64a44200e53d1d3612ed1e10fe26988e7e2baefd"
+  },
+  "delivery_receipt": {
+    "bytes": 4853,
+    "path": "E:\\Codex\\Frankie-BOSS-20260915\\delivery-plain\\local_delivery_receipt.json",
+    "sha256": "db773478c80f28619bdf16abb76ccf6ebedbacc6a65894ba624ed6d82fad0f11"
+  },
+  "host_runtime": {
+    "boss_commit": "050c5056c3657a954d6a3ee17f3a216999930768",
+    "compact_journal": {
+      "bytes": 569667584,
+      "path": "E:\\Codex\\Frankie-BOSS-20260915\\sunday-launch-20260915\\restored-journal\\result\\journal.compact.sqlite",
+      "sha256": "19603159548b1e443a3565f8c999543981c43c23c80fd511c11e760f633b260f"
+    },
+    "completion_workflow_ref": "codex/full-frankie-boss-connection-20260915",
+    "context_encoding": "stacked_v1",
+    "data_workers": 48,
+    "development_limitations": [
+      "One supplied Sunday source; same-source analytical reference and opening anchors are not official exchange prior close or opening.",
+      "Actual NG USD multiplier absent; usd_per_price_unit=1.0 is an explicit development numeraire, not exchange contract P&L.",
+      "Timestamp noise floor unidentified; UTC nanoseconds reflect source representation resolution only.",
+      "Nominal final source tail unobserved; final STOP remains censored without independent closure evidence.",
+      "Development native weights and critic feedback have no calibrated performance claim; no broker execution authority."
+    ],
+    "expected_tokenizer_sha256": "51e3c30923a00f8d17cc0c6126a06d8e4911b5e83232abbed255c2abb49a438a",
+    "ingestion_receipt": {
+      "bytes": 462,
+      "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-recovery-resume-20260915\\ingestion-receipt.json",
+      "sha256": "018c65708d8e32d1ffd6e6e0ee8bfe0e45b88ff2241570fc2866530a9dc5e67a"
+    },
+    "output_budget": "remaining_context",
+    "prefix_manifest": {
+      "bytes": 6945,
+      "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\full19-prefix-witnesses.json",
+      "sha256": "44992e75ab0c821aac87559d4713bc84dd2f72424e2d904ebe81039def1ce416"
+    },
+    "prefixes_directory": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes",
+    "refresh_policy_bands": [
+      [
+        7186681902729,
+        1
+      ]
+    ],
+    "repository": "E:\\Codex\\Frankie-BOSS-20260915\\sunday-launch-20260915\\Markets",
+    "retained_preparation_recovery": {
+      "path": "C:/Users/A/Documents/Codex/2026-09-15/first-run-using-agent-skills-continue/work/retained-recovery/witness.json",
+      "sha256": "6d1370b997209dafc4857f2d02115acc7185e36a2b16dec411d683a6508bd692"
+    },
+    "schedule": {
+      "bytes": 10678,
+      "path": "E:\\Codex\\Frankie-BOSS-20260915\\full-causal-schedule-resumed-20260915\\schedule.json",
+      "sha256": "97da6c589cb64ffb6ff4ba692a1344ad9f16773b10e3ed8783e0ad4bf1f93b2e"
+    },
+    "schedule_receipt": {
+      "bytes": 1528,
+      "path": "E:\\Codex\\Frankie-BOSS-20260915\\full-causal-schedule-resumed-20260915\\receipt.json",
+      "sha256": "c0ffd954da53be9035b75a6aa2f0f527f0c0b93bb8345ac51bdf18365822b4cc"
+    },
+    "service_context": 131072,
+    "source_lineage": {
+      "bytes": 1085,
+      "path": "E:\\Codex\\Frankie-BOSS-20260915\\closed-source-lineage-20260915\\lineage.json",
+      "sha256": "a9c0ef62c737778f85bdafe3afdc1fb536285e6f783c218f1c69a38b7986395f"
+    },
+    "state_defects_and_gaps_reported": [],
+    "tokenizer_directory": "C:/Users/A/Documents/Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer",
+    "transport_protocol": "jobs_v1"
+  },
+  "mapping": {
+    "bytes": 1063,
+    "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-execution-20260915\\mapping\\mapping.json",
+    "sha256": "55cccc238a15b76528d60220e8a236204bf244ef4e33948e9ef6b74a03656e21"
+  },
+  "memory": {
+    "bytes": 166700,
+    "path": "E:\\Codex\\Frankie-BOSS-20260915\\retained-principal\\FROZEN_MEMORY_A_20211003.json",
+    "sha256": "4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a"
+  },
+  "model_calls_performed": false,
+  "receiver_commit": "342f57288d8fbc52a9143c16e7d5dba9d90469cf",
+  "receiver_root": "C:\\Users\\A\\Documents\\Codex\\2026-09-14\\continue-the-frankie-build-in-parallel\\work\\Markets-source",
+  "retained_witnesses": {
+    "bytes": 17810,
+    "path": "E:\\Codex\\Frankie-BOSS-20260915\\retained-principal\\retained-witnesses.json",
+    "sha256": "d4c03cee0524961813daf7f223425236a7edbb03c68468cc42defedec1dc008b"
+  },
+  "run_directory": "E:\\Codex\\Frankie-BOSS-20260915\\actual-feedback-run",
+  "run_id": "frankie-boss-own-source-sunday-20260915",
+  "schedule_directory": "E:\\Codex\\Frankie-BOSS-20260915\\full-causal-schedule-resumed-20260915",
+  "schema": "FRANKIE_BOSS_ACTUAL_HOST_CONFIGURATION_V1",
+  "source_day_required": false,
+  "source_directory": "E:\\Codex\\Frankie-BOSS-20260915\\source-recovery-resume-20260915",
+  "source_manifest": {
+    "bytes": 459,
+    "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-execution-20260915\\manifest.json",
+    "sha256": "616129487e1b9d1f47c6ec7197bdd31e414b3d8db345b39a35b0121fc600ef93"
+  },
+  "training_updates_performed": false
+}

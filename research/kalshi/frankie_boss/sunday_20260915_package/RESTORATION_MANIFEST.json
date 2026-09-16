@@ -1,0 +1,2021 @@
+{
+ "bytes_bulk": 18352046321,
+ "bytes_in_git": 24050835,
+ "configuration": "E:/Codex/Frankie-BOSS-20260915/sunday-launch-20260915/actual-host-final-configuration.json",
+ "configuration_sha256": "a5eef9157130a596da4d5b62e9be2a268f95a561987b59481de4642f33b29f38",
+ "directory_inputs": [
+  {
+   "file_count": 77,
+   "key": "/host_runtime/prefixes_directory",
+   "kind": "dir",
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes",
+   "total_bytes": 5424306494
+  },
+  {
+   "file_count": 1880,
+   "key": "/host_runtime/repository",
+   "kind": "dir",
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\sunday-launch-20260915\\Markets",
+   "total_bytes": 575609430
+  },
+  {
+   "file_count": 8,
+   "key": "/host_runtime/tokenizer_directory",
+   "kind": "dir",
+   "path": "C:/Users/A/Documents/Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer",
+   "total_bytes": 9711121
+  },
+  {
+   "file_count": 2831,
+   "key": "/receiver_root",
+   "kind": "dir",
+   "path": "C:\\Users\\A\\Documents\\Codex\\2026-09-14\\continue-the-frankie-build-in-parallel\\work\\Markets-source",
+   "total_bytes": 183924098
+  },
+  {
+   "file_count": 75,
+   "key": "/run_directory",
+   "kind": "dir",
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-feedback-run",
+   "total_bytes": 173675960
+  },
+  {
+   "file_count": 5,
+   "key": "/schedule_directory",
+   "kind": "dir",
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\full-causal-schedule-resumed-20260915",
+   "total_bytes": 532389
+  },
+  {
+   "file_count": 78,
+   "key": "/source_directory",
+   "kind": "dir",
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-recovery-resume-20260915",
+   "total_bytes": 11736795189
+  }
+ ],
+ "files": [
+  {
+   "bytes": 9013,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/C_Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/chat_template.jinja",
+   "in_git": true,
+   "original_path": "C:/Users/A/Documents/Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/chat_template.jinja",
+   "reason": "directory-input",
+   "sha256": "f0ba43f79b3cabca5e5a7584c77aec92f49feae45cdf7779c87d9fc54cd90258"
+  },
+  {
+   "bytes": 907,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/C_Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/config.json",
+   "in_git": true,
+   "original_path": "C:/Users/A/Documents/Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/config.json",
+   "reason": "directory-input",
+   "sha256": "85611f4e34633d4e148e6a5f64bc2d3a23ebbc2b014bc87fbda764eecf261cd9"
+  },
+  {
+   "bytes": 207,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/C_Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/generation_config.json",
+   "in_git": true,
+   "original_path": "C:/Users/A/Documents/Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/generation_config.json",
+   "reason": "directory-input",
+   "sha256": "1b9baf0a7959d31d7fb58ff6b506c27d09a73d395cadccc7e6dd1d4b7e43fd9d"
+  },
+  {
+   "bytes": 916646,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/C_Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/merges.txt",
+   "in_git": true,
+   "original_path": "C:/Users/A/Documents/Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/merges.txt",
+   "reason": "directory-input",
+   "sha256": "b6fe424e334903f7fb84d3a106d9730455f4744b9fe3c21ee136d97a00e72502"
+  },
+  {
+   "bytes": 563,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/C_Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/special_tokens_map.json",
+   "in_git": true,
+   "original_path": "C:/Users/A/Documents/Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/special_tokens_map.json",
+   "reason": "directory-input",
+   "sha256": "e9435fefd6d838fd9fcbbc44b97a8e3ff322be7f6dfb7e4fd2468586574bb52b"
+  },
+  {
+   "bytes": 7153414,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/C_Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/tokenizer.json",
+   "in_git": true,
+   "original_path": "C:/Users/A/Documents/Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/tokenizer.json",
+   "reason": "directory-input",
+   "sha256": "883975314d58743726347caaf2c32ac89afd5ad57222cffbc4f052f2ab27b2d7"
+  },
+  {
+   "bytes": 17677,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/C_Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/tokenizer_config.json",
+   "in_git": true,
+   "original_path": "C:/Users/A/Documents/Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/tokenizer_config.json",
+   "reason": "directory-input",
+   "sha256": "2007f26df166ed10a2d6fa881c1c8f3cdd151e451469f59b274897f14449835f"
+  },
+  {
+   "bytes": 1612694,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/C_Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/vocab.json",
+   "in_git": true,
+   "original_path": "C:/Users/A/Documents/Codex/2026-09-14/if-you-mean-claude-code-a/work/verified-tokenizer/vocab.json",
+   "reason": "directory-input",
+   "sha256": "a1be0c1e0a89b5bacda6af6f8b63df09668cb8d1f656229ee9123140c9507810"
+  },
+  {
+   "bytes": 1001,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/C_Codex/2026-09-15/first-run-using-agent-skills-continue/work/retained-recovery/witness.json",
+   "in_git": true,
+   "original_path": "C:/Users/A/Documents/Codex/2026-09-15/first-run-using-agent-skills-continue/work/retained-recovery/witness.json",
+   "reason": "pinned",
+   "sha256": "6d1370b997209dafc4857f2d02115acc7185e36a2b16dec411d683a6508bd692"
+  },
+  {
+   "bytes": 1,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/actual-host-session.lock",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/actual-host-session.lock",
+   "reason": "directory-input",
+   "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+  },
+  {
+   "bytes": 1,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/actual-host.lock",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/actual-host.lock",
+   "reason": "directory-input",
+   "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+  },
+  {
+   "bytes": 425984,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/cycles.sqlite",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/cycles.sqlite",
+   "reason": "directory-input",
+   "sha256": "24c114e6b2e2352c1ace5891333deeb2c9e9229da1ea09ec160c48298041357e"
+  },
+  {
+   "bytes": 1,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/cycles.sqlite.lock",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/cycles.sqlite.lock",
+   "reason": "directory-input",
+   "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+  },
+  {
+   "bytes": 151132,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/actual-critic-request.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/actual-critic-request.json",
+   "reason": "directory-input",
+   "sha256": "ec1bd4c34cd27a654b05e2811f892f4d2fe1aa44e6b5dc919cd972709cea92e2"
+  },
+  {
+   "bytes": 480,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/completed-journal-pins.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/completed-journal-pins.c15.json",
+   "reason": "directory-input",
+   "sha256": "df493a73eece66b7fd25d4782eb5e050833e5aca7db517121250d09529840b30"
+  },
+  {
+   "bytes": 805,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/completion-publication/dispatch-accepted.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/completion-publication/dispatch-accepted.c15.json",
+   "reason": "directory-input",
+   "sha256": "5e56370813d62bd89e397a2de6af0d4a14680b9823d87b808d8a9b47da3ed800"
+  },
+  {
+   "bytes": 735,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/completion-publication/intent.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/completion-publication/intent.c15.json",
+   "reason": "directory-input",
+   "sha256": "5aa476ca70c7216ddb2b2c20347b65b7c226ea6c87d1a866e45bc2ea57b9b7ea"
+  },
+  {
+   "bytes": 634,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/controller-witnesses/append-00000000.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/controller-witnesses/append-00000000.c15.json",
+   "reason": "directory-input",
+   "sha256": "e150eeec208a6c2f02b3ca0d95da6f8bf2efc0caddb405ece26ab2f3f2672c73"
+  },
+  {
+   "bytes": 634,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/controller-witnesses/append-00000001.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/controller-witnesses/append-00000001.c15.json",
+   "reason": "directory-input",
+   "sha256": "36bd22947878370d8b31639e737c4fa1048ed23bf1d0236efc6e17439fb1bfb1"
+  },
+  {
+   "bytes": 634,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/controller-witnesses/append-00000002.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/controller-witnesses/append-00000002.c15.json",
+   "reason": "directory-input",
+   "sha256": "dc4d1906d977c8dbfcdd8d6fe74b3e3817072fca5e61e6e95a14bedd27c3fe1f"
+  },
+  {
+   "bytes": 634,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/controller-witnesses/append-00000003.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/controller-witnesses/append-00000003.c15.json",
+   "reason": "directory-input",
+   "sha256": "45385731c1c9233d0c0e91bf2f971ce544072b3a037912e2ca9f2045964d1217"
+  },
+  {
+   "bytes": 634,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/controller-witnesses/append-00000004.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/controller-witnesses/append-00000004.c15.json",
+   "reason": "directory-input",
+   "sha256": "14e0a00544817ae1266335fa736d92fc1fa4194018bee12e2cc01aada530b8db"
+  },
+  {
+   "bytes": 175,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/controller-witnesses/genesis.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/controller-witnesses/genesis.c15.json",
+   "reason": "directory-input",
+   "sha256": "aee829986e81fbca866a3026113addbf0b92513af7460cb0d513f81c56a49d4d"
+  },
+  {
+   "bytes": 1429504,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/controller.sqlite",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/controller.sqlite",
+   "reason": "directory-input",
+   "sha256": "c6b194e060cffacb4a5932ac00b9528c612b3dd619d7f3d89f7eab148745e548"
+  },
+  {
+   "bytes": 801,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/dispatch.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/dispatch.json",
+   "reason": "directory-input",
+   "sha256": "bbc12d34ed378294a95b1d61c8538a41b4712ac162f14b2c8c15e9011589927d"
+  },
+  {
+   "bytes": 588,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/observation-224eb35bdab14767a3a06a72ac05c492.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/observation-224eb35bdab14767a3a06a72ac05c492.json",
+   "reason": "directory-input",
+   "sha256": "566e5e18495197eff92e8592776520c9e906f7bd02f82080b898027af50d3d11"
+  },
+  {
+   "bytes": 579,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/observation-450e0d55fd4847ae83f5c5cef8add94e.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/observation-450e0d55fd4847ae83f5c5cef8add94e.json",
+   "reason": "directory-input",
+   "sha256": "7a2b7439246ae6bd52ab38f020b15c7e642b8c1d162b1a0f10f6dc79b9f695af"
+  },
+  {
+   "bytes": 581,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/observation-a3a77aa24cfd412a90929b892f712788.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/observation-a3a77aa24cfd412a90929b892f712788.json",
+   "reason": "directory-input",
+   "sha256": "62a542b3e52a0aa6d1534061cb3551495662447d1f76668db8acdbc64fe9f7ef"
+  },
+  {
+   "bytes": 596,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/observation-bc07562f41e14026ac0c88fd2f6654ff.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/observation-bc07562f41e14026ac0c88fd2f6654ff.json",
+   "reason": "directory-input",
+   "sha256": "8d6a907e662c0157f4fae1c94b852fcbbd4f73085bc6431da03096fe37fabef0"
+  },
+  {
+   "bytes": 580,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/observation-fb3702af6d544a329a725b7e8d3f6c21.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/observation-fb3702af6d544a329a725b7e8d3f6c21.json",
+   "reason": "directory-input",
+   "sha256": "7b03715029555467c14ea4b5fd9a1c3640ca157cb9ff97592275e41860f8a1e7"
+  },
+  {
+   "bytes": 1861,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/outcome.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/outcome.json",
+   "reason": "directory-input",
+   "sha256": "efeee4ac4b308723a15b61be7fcb3b63d128b7b966af7701be5d36a6ad6f28c5"
+  },
+  {
+   "bytes": 557,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/remote-accepted.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/remote-accepted.json",
+   "reason": "directory-input",
+   "sha256": "487aa148b92f452c4c41125e1464386e624b78b501bc71dbe533d17427a0a943"
+  },
+  {
+   "bytes": 151132,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/request.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/request.json",
+   "reason": "directory-input",
+   "sha256": "ec1bd4c34cd27a654b05e2811f892f4d2fe1aa44e6b5dc919cd972709cea92e2"
+  },
+  {
+   "bytes": 557,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/submit-intent-0e4d55925638415c99342ce8eb1d2ae1.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/submit-intent-0e4d55925638415c99342ce8eb1d2ae1.json",
+   "reason": "directory-input",
+   "sha256": "487aa148b92f452c4c41125e1464386e624b78b501bc71dbe533d17427a0a943"
+  },
+  {
+   "bytes": 1,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/writer.lock",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/critic-spool/5f6d6b901ad0177075e3f4a90bbd9c3dd9b4cd91fb49fe743730a67bbf77b359/writer.lock",
+   "reason": "directory-input",
+   "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+  },
+  {
+   "bytes": 271,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/frankie-critic-output-preserved.txt",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/frankie-critic-output-preserved.txt",
+   "reason": "directory-input",
+   "sha256": "a83f11d4c58ceca66536403a0803cf6e0979a0aa2fd0c79b79761f2b683abded"
+  },
+  {
+   "bytes": 53193,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/host-context-cache.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/host-context-cache.c15.json",
+   "reason": "directory-input",
+   "sha256": "c9d9011b8d573ac3b408568443b284efa9881b65c279476c2b83c5593f9352c3"
+  },
+  {
+   "bytes": 727,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/host-prefix.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/host-prefix.c15.json",
+   "reason": "directory-input",
+   "sha256": "380ebf2547e86d93163eb808e6ebdf0056c28a0d6a3e6671092ecffbb54f26c2"
+  },
+  {
+   "bytes": 289425,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/host-preparation.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/host-preparation.c15.json",
+   "reason": "directory-input",
+   "sha256": "b45c0a80ae527b0cd0066fa0b470c5186863a88d9961714f05ac3bf97bda2b69"
+  },
+  {
+   "bytes": 694,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/host-service.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/host-service.c15.json",
+   "reason": "directory-input",
+   "sha256": "e5623f643e79951a6e7d2e422f8358dc873d7fa5d70e213837b986775404e1b0"
+  },
+  {
+   "bytes": 678,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/host-service.pre-runtime-alignment.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/host-service.pre-runtime-alignment.c15.json",
+   "reason": "directory-input",
+   "sha256": "a16a4f74719291720b6003dc4cf1b879ad636fc08575bb448c1fcd280f00397a"
+  },
+  {
+   "bytes": 611,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/native-witnesses/append-00000000.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/native-witnesses/append-00000000.c15.json",
+   "reason": "directory-input",
+   "sha256": "6094b3703465749cb4f5f6e4727e8d6540736aef2ca263ac54d5aed7a9549a6b"
+  },
+  {
+   "bytes": 604,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/native-witnesses/append-00000001.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/native-witnesses/append-00000001.c15.json",
+   "reason": "directory-input",
+   "sha256": "df76683c361a0e431fa3d2eb88603b7710df9c8d87052fcb140540069152f6ca"
+  },
+  {
+   "bytes": 165,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/native-witnesses/genesis.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/native-witnesses/genesis.c15.json",
+   "reason": "directory-input",
+   "sha256": "b03ed4a1c6fbce97c68fdd458a296bb0ec9888e1c291c9655aefe57149168def"
+  },
+  {
+   "bytes": 12001280,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/native.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "d0555c897a321005ea2915491fbea6ed9c2e5e606dab52f96efa1351db740ea8"
+  },
+  {
+   "bytes": 5309,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/actual-frankie-analysis.md",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/actual-frankie-analysis.md",
+   "reason": "directory-input",
+   "sha256": "2c9388be43751b05909bdf36d4310a2e644ea5f0e8aa38f408a353c54014359f"
+  },
+  {
+   "bytes": 14280,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/actual-frankie-response.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/actual-frankie-response.json",
+   "reason": "directory-input",
+   "sha256": "460f65ea218ea4975c8f2aa009dc00e57ca8a73a5fa4123e9b431155e3526b65"
+  },
+  {
+   "bytes": 658,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/actual-host-attestation.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/actual-host-attestation.json",
+   "reason": "directory-input",
+   "sha256": "2d056aa4c2b44097d7fd3cf243cfd4d58e12ff9ec00a144b0b7cdaa9a3dd8d20"
+  },
+  {
+   "bytes": 1041,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/actual-host-session-record.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/actual-host-session-record.json",
+   "reason": "directory-input",
+   "sha256": "e9f6d65683d5d3cd0b3274209c601a746cca3cae14690b8f3a95bf2f81b0ce59"
+  },
+  {
+   "bytes": 82,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/adapter-config.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/adapter-config.json",
+   "reason": "directory-input",
+   "sha256": "82a753bd0865043086783b58ea392e9201dd176eddca19e7e4160795a3c5b46c"
+  },
+  {
+   "bytes": 1243,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/bound-mapping.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/bound-mapping.json",
+   "reason": "directory-input",
+   "sha256": "f14f019d70409eecf9b2b275bf4c2359ee79f64a7043306fec2fcc88d56ac467"
+  },
+  {
+   "bytes": 158950,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/historical-prompt.md",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/historical-prompt.md",
+   "reason": "directory-input",
+   "sha256": "8ff55bb2a5bb6a0e3549b0260d38b0e9237b26a020ab5d8fad8372e77a6d7705"
+  },
+  {
+   "bytes": 2034,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/preparation-pins.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/preparation-pins.json",
+   "reason": "directory-input",
+   "sha256": "420bc3b8a36bfa13e8482140ed81ce75ca7ab545a1f35790c45f27b488d53217"
+  },
+  {
+   "bytes": 28303442,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/prompt.md",
+   "reason": "directory-bulk",
+   "sha256": "ae6f041bcf7e61696e780866e0ebb08f3785e5d2e64fe35a7f60bdd718a5008d"
+  },
+  {
+   "bytes": 1154,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/receiver/attachment-request.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/receiver/attachment-request.json",
+   "reason": "directory-input",
+   "sha256": "682f7f4d12c618d0fb14208aa746e909b1eb10be69c1730a0e2e08e62450dfdc"
+  },
+  {
+   "bytes": 4888,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/receiver/preparation-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/receiver/preparation-receipt.json",
+   "reason": "directory-input",
+   "sha256": "b45a327f9083536f6f0bc8b97ebec72e3893010b676e8255fc6e48029e7df371"
+  },
+  {
+   "bytes": 1023,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/receiver/source-binding.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/receiver/source-binding.json",
+   "reason": "directory-input",
+   "sha256": "17f43c2a33a5f3a85747792e393e31aef3300418385efe7643780a7da41a9201"
+  },
+  {
+   "bytes": 1154,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/response-check-2ae7898705374279aaa9c8be1d083f5f/receiver/attachment-request.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/response-check-2ae7898705374279aaa9c8be1d083f5f/receiver/attachment-request.json",
+   "reason": "directory-input",
+   "sha256": "682f7f4d12c618d0fb14208aa746e909b1eb10be69c1730a0e2e08e62450dfdc"
+  },
+  {
+   "bytes": 1023,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/response-check-2ae7898705374279aaa9c8be1d083f5f/receiver/source-binding.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/response-check-2ae7898705374279aaa9c8be1d083f5f/receiver/source-binding.json",
+   "reason": "directory-input",
+   "sha256": "17f43c2a33a5f3a85747792e393e31aef3300418385efe7643780a7da41a9201"
+  },
+  {
+   "bytes": 25811,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/response-check-2ae7898705374279aaa9c8be1d083f5f/session-request.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/response-check-2ae7898705374279aaa9c8be1d083f5f/session-request.json",
+   "reason": "directory-input",
+   "sha256": "e5e3d9c069f417bdec26ebed71479744c50e9a1927720d86249754925a8764f7"
+  },
+  {
+   "bytes": 14971,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/response-check-2ae7898705374279aaa9c8be1d083f5f/session-response.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/response-check-2ae7898705374279aaa9c8be1d083f5f/session-response.json",
+   "reason": "directory-input",
+   "sha256": "e83324861f3c3143ac4c86923e939034bd1b2323efbe59ccb7b9ea1d8127c87c"
+  },
+  {
+   "bytes": 25811,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/session-request.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/session-request.json",
+   "reason": "directory-input",
+   "sha256": "e5e3d9c069f417bdec26ebed71479744c50e9a1927720d86249754925a8764f7"
+  },
+  {
+   "bytes": 14971,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/session-response.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal/session-response.json",
+   "reason": "directory-input",
+   "sha256": "e83324861f3c3143ac4c86923e939034bd1b2323efbe59ccb7b9ea1d8127c87c"
+  },
+  {
+   "bytes": 257,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal-export.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/principal-export.c15.json",
+   "reason": "directory-input",
+   "sha256": "e4f7c7d61d4a0f81b8e1a27c0b0bbea8747e8c686f8b81aba03c6bb0d4f59867"
+  },
+  {
+   "bytes": 32846,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/request-plan.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/cycle-00/request-plan.c15.json",
+   "reason": "directory-input",
+   "sha256": "c07213db3466c3da70f8a9684868261be2e22688228c93022f174b6d500f93c8"
+  },
+  {
+   "bytes": 427,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/execution-identity.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/execution-identity.c15.json",
+   "reason": "directory-input",
+   "sha256": "cc23cd38e84c53ea5752cb0a710b789f0816e9343eb7b28e472dbbe769de9f63"
+  },
+  {
+   "bytes": 1,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/execution.lock",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/execution/execution.lock",
+   "reason": "directory-input",
+   "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+  },
+  {
+   "bytes": 1413718,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/controller.c15.jsonl",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/controller.c15.jsonl",
+   "reason": "directory-input",
+   "sha256": "67790a8c5f3d022e06687e5bc62389d4c7d281950a1d3a333876577279209f78"
+  },
+  {
+   "bytes": 148492,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/critic-prompt.txt",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/critic-prompt.txt",
+   "reason": "directory-input",
+   "sha256": "42d45c0e97202649248cc28ea56ac663a719165e981cb30405b74b6651271f8b"
+  },
+  {
+   "bytes": 144407,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/critic-snapshot.txt",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/critic-snapshot.txt",
+   "reason": "directory-input",
+   "sha256": "163d649b2f6071fc6da149f0c99ad8aba97076b23346a648b5721525f5fce95b"
+  },
+  {
+   "bytes": 5987733,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/forecast-000000.bin",
+   "reason": "directory-bulk",
+   "sha256": "25098c6657e4f8004aab819d883f986be73918b3eca6c9240506e1c757e01c50"
+  },
+  {
+   "bytes": 2510,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/manifest.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/manifest.json",
+   "reason": "directory-input",
+   "sha256": "8984954da484022d8e764a2c7fb78c0b3960d2f711552691138ca163eba99eb3"
+  },
+  {
+   "bytes": 11977861,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/native.c15.jsonl",
+   "reason": "directory-bulk",
+   "sha256": "f9b8320300c0fbd2fa5e7ac9fe8f2db3b2a2ce60c7683b295134756e2e17f4a6"
+  },
+  {
+   "bytes": 5236,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/record-000000.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/record-000000.json",
+   "reason": "directory-input",
+   "sha256": "9cb5dad7dfdd4eb3faa025d3aeed8212126d07666064c5e3c5551561203eb198"
+  },
+  {
+   "bytes": 1411721,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/state.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/handoff-55218d51f9a60341c66f228b78aca331510b5128aef7c7716a1b4e5e103f229d/state.c15.json",
+   "reason": "directory-input",
+   "sha256": "a1c55a257b2f9ae65befcc9593746360b68f1497bfbb174fb04d87d7bf4cf336"
+  },
+  {
+   "bytes": 27899,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/host-identity.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/host-identity.c15.json",
+   "reason": "directory-input",
+   "sha256": "4c2df2a006e5cad0d61d1be1f025003a998f57b1408c9c060e53b89cef5c48f3"
+  },
+  {
+   "bytes": 183,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/host-instance.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/host-instance.c15.json",
+   "reason": "directory-input",
+   "sha256": "215186f70186e5f578a4b70e6eb92ae0d7634576808e5ae064cbc2c288d1f0ca"
+  },
+  {
+   "bytes": 440,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/host-progress/progress.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/host-progress/progress.json",
+   "reason": "directory-input",
+   "sha256": "257d674ae7f0c7fe60e4758fa2e787c6bc4bc06f697b14e7aee1c95eeec817d4"
+  },
+  {
+   "bytes": 1848625,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/host-progress/progress.jsonl",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/host-progress/progress.jsonl",
+   "reason": "directory-input",
+   "sha256": "47fc889d45557e3b0d711b48d6620fbbc655dcd5fbf26bc57fb286d8eb66249c"
+  },
+  {
+   "bytes": 7416,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/initialization.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/initialization.c15.json",
+   "reason": "directory-input",
+   "sha256": "2c8060657224cc1a85ad8b1d75d4af8f3d6e423f881f236567c1bbc984e6f459"
+  },
+  {
+   "bytes": 12288,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/lessons.sqlite",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/lessons.sqlite",
+   "reason": "directory-input",
+   "sha256": "74f421be4a3274f1942e4ee689f4e9729ee3ff362fe478092d1bc69a88447965"
+  },
+  {
+   "bytes": 162,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/training-witnesses/state-00000000.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/training-witnesses/state-00000000.c15.json",
+   "reason": "directory-input",
+   "sha256": "15a85ba783f981dd88fa64712783e9eef6a7a986ac2fe941253f12da41aa1e22"
+  },
+  {
+   "bytes": 107556864,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/training.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "696cee058d911dae6733496f91b2a8a83a1cdd89fb3158238ea0287222df5e6e"
+  },
+  {
+   "bytes": 1560,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/verified-source-lineage.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-feedback-run/verified-source-lineage.c15.json",
+   "reason": "directory-input",
+   "sha256": "240960bf0f6c84e1915a9f0fc98ad3f28d2719407a3de509bb3c1700d7b17d59"
+  },
+  {
+   "bytes": 6945,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/full19-prefix-witnesses.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/full19-prefix-witnesses.json",
+   "reason": "pinned",
+   "sha256": "44992e75ab0c821aac87559d4713bc84dd2f72424e2d904ebe81039def1ce416"
+  },
+  {
+   "bytes": 485,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-00-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-00-witness.json",
+   "reason": "directory-input",
+   "sha256": "1ac352dcf9535e9f62286355f0ec80b8b8bf17461414b4aedf80e80526b1cd2b"
+  },
+  {
+   "bytes": 21713,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-01-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-01-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "eeb0868e7cc85ea763b05cbfe23300cff9468f9abf14776b0f88f55a627e4e3a"
+  },
+  {
+   "bytes": 1284,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-01-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-01-receipt.json",
+   "reason": "directory-input",
+   "sha256": "f5486727a3fe45cd1697316e68c9c3b1a08133a0d768c4bd18a9ca9888f7bccc"
+  },
+  {
+   "bytes": 368,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-01-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-01-witness.json",
+   "reason": "directory-input",
+   "sha256": "0680a75523471de965156a5c659a85ba0f56fe95d07ba37167cb2b499f5bcefd"
+  },
+  {
+   "bytes": 50348032,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-01.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "6873366e98438e8122c91f62b2a8c8091115863a20009b1696608b7e1560d416"
+  },
+  {
+   "bytes": 21713,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-02-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-02-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "aad88f0bbcf8138daa89eb8dde0b20967ea4556ea18b9f7e477d184a618ba204"
+  },
+  {
+   "bytes": 1284,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-02-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-02-receipt.json",
+   "reason": "directory-input",
+   "sha256": "8ac1cac9862e9f126083a090bf094b04d7cbf2391adc0f0f7dd4c020901eb72f"
+  },
+  {
+   "bytes": 368,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-02-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-02-witness.json",
+   "reason": "directory-input",
+   "sha256": "89fc343abc9c418097ccb3c8cb550dab5f956ebd84d0233ec68576296acfa107"
+  },
+  {
+   "bytes": 77983744,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-02.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "9bd6db466befa50666f5fd7e5968ff2ee7fc65be3415f1b5c48ea6e8b02932fb"
+  },
+  {
+   "bytes": 24412,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-03-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-03-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "c74a7c2a1ec2495644e43a7dcb9f82dc91d173d10ae218b348f1458d6fb3cbab"
+  },
+  {
+   "bytes": 1287,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-03-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-03-receipt.json",
+   "reason": "directory-input",
+   "sha256": "c348e9bed3d49b5e37bb1b579c15a829a797fae65af438ab2f53f3b87abbda06"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-03-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-03-witness.json",
+   "reason": "directory-input",
+   "sha256": "eea96115cf09934932e793a7ae3d41a9db9cd8c9fe8071d95623595dac804d8c"
+  },
+  {
+   "bytes": 105320448,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-03.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "4ffd73f1747f723ce9ef69aa6b0d602400166b07cd2e349a23952c8ab52aad51"
+  },
+  {
+   "bytes": 25812,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-04-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-04-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "8b9745cf113dc06405781169ba529f709404fdc46fd1b7470742eac467e5b231"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-04-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-04-receipt.json",
+   "reason": "directory-input",
+   "sha256": "9c310e8a3152799ccd3b5c840232daeda128c9b65667c8ac59a45b80c816b96b"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-04-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-04-witness.json",
+   "reason": "directory-input",
+   "sha256": "5fc27d79a4e162f1fae32840d7a5fd09e05a758cc2aee26f6e1738f7f5f043cf"
+  },
+  {
+   "bytes": 133492736,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-04.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "315005a630f1b21e1431693eb5b4def844adc5f74758bfab966d543cb2f4aab0"
+  },
+  {
+   "bytes": 25812,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-05-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-05-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "be3b3d066b7ef3751d1768e77bc4bf3f35c31780afe9e4384d0174b78f5885e6"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-05-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-05-receipt.json",
+   "reason": "directory-input",
+   "sha256": "4e73b498df803df5d452edde117ba5c650896a7aaedc9289838d8bf4c5fdf9a4"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-05-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-05-witness.json",
+   "reason": "directory-input",
+   "sha256": "ed132d308e205e3d5a948c3e5b65964fb751f036f7e36535475843321054772c"
+  },
+  {
+   "bytes": 161759232,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-05.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "429cdeb38f6f72ba8a3f8573285476f2823ed6e9b3d4c794b7a84d770d5765f3"
+  },
+  {
+   "bytes": 25812,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-06-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-06-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "bfd00b6797663044039cc803dcaaaded8cbffa0d3bdafa8860cbc6c26855c627"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-06-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-06-receipt.json",
+   "reason": "directory-input",
+   "sha256": "2f4d52adf248b397874a4e162ff63019863db616152cad69df5592c6fbe2e788"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-06-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-06-witness.json",
+   "reason": "directory-input",
+   "sha256": "134baa62ca399654e8cf5fc25e8fe86a01b35ec36c01326e4e0618db813428b2"
+  },
+  {
+   "bytes": 190640128,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-06.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "ea33996aad26ff9b89e053f42b7acc6402a2a5eea32de5ec00b6d30378996b46"
+  },
+  {
+   "bytes": 25812,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-07-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-07-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "826be1cf33a47cd2ee09cae5dab98755fdb66cbf16cc28dbb0497aad2906bc46"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-07-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-07-receipt.json",
+   "reason": "directory-input",
+   "sha256": "4091e7a0cb633d7f0a95bf6e73f989d86cd19c1d9f402533b39fad75573bf478"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-07-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-07-witness.json",
+   "reason": "directory-input",
+   "sha256": "b0d794ef963e747e583d1b68441a3024fddbae3e91c98b70a9c97d6057f6a306"
+  },
+  {
+   "bytes": 220561408,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-07.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "80507d792a25326a4d38b6fbafb809df90aff7a42449aaf1c980a18ebed1c6b0"
+  },
+  {
+   "bytes": 25812,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-08-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-08-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "b2769c11bb63181aa4cb67f99e794c9269f0a7ea91e6a7933c2c3bd30670cfd3"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-08-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-08-receipt.json",
+   "reason": "directory-input",
+   "sha256": "b0e1ebed8bdd54d637124e327f7c5d120c141b77856e60e4880c7dcef5063c6e"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-08-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-08-witness.json",
+   "reason": "directory-input",
+   "sha256": "b5a8be1d4254881d900044d26d29a15b17ad0097a885fa77de0d28553f83da00"
+  },
+  {
+   "bytes": 250613760,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-08.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "695217ada41e2a01c1758da65a04e1d7cf84931ffdba97205d91dfd834105403"
+  },
+  {
+   "bytes": 25812,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-09-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-09-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "7038e69620bf24e10c9d78ffd2688b5021e89eb228a519655adf3ea5cb51305f"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-09-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-09-receipt.json",
+   "reason": "directory-input",
+   "sha256": "86af31e21d9d74b0e65b2a66e3ae59d7069980dce28d26d95ae21c2a004cbf1a"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-09-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-09-witness.json",
+   "reason": "directory-input",
+   "sha256": "7ded5203fc1f0e0a871b001f6507ea23aad7d60df0d0961e33db90dc4e07d5cb"
+  },
+  {
+   "bytes": 281980928,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-09.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "409cc4dfa04d1bd15cab938ef43eb8143b99210f523e4f5bb3b0d69aa1579816"
+  },
+  {
+   "bytes": 25813,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-10-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-10-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "d712993718eac5c070086dafd2913a5289586ae30d0961454d316591e3e34d07"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-10-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-10-receipt.json",
+   "reason": "directory-input",
+   "sha256": "9150a1bd990765837e642b9a5826aaa512a0523ed9d24c77177fc9bd72976a0a"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-10-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-10-witness.json",
+   "reason": "directory-input",
+   "sha256": "f08b71f208b1e439b94960a68ac5f180ebaac0f33a4e12cdd283d9f97606366a"
+  },
+  {
+   "bytes": 313393152,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-10.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "972705e818e6aec1ee3954a3137278e1fd6d00011dd4c0f97b718a0b169b0e99"
+  },
+  {
+   "bytes": 25813,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-11-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-11-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "9397c58f4922d802815bb4f5a01db74f0560c53e79fbac3536d740b6a24dc71d"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-11-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-11-receipt.json",
+   "reason": "directory-input",
+   "sha256": "b8a86c191755403971253f2427a68decb7be2603fd43cf03e4f2f32325fa7820"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-11-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-11-witness.json",
+   "reason": "directory-input",
+   "sha256": "81031c0cdf78e58aa47827572326c6b075885f4342a933a26da0f70a446a44e8"
+  },
+  {
+   "bytes": 344805376,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-11.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "745dd1658fb7a8aa9d615bcc8e5a52053f6026e21136f95433e2b5ede7b3a496"
+  },
+  {
+   "bytes": 25813,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-12-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-12-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "52d2e05f95862ad33fd59a1ca17f9526787079869b3b042503af89b34b7dfa89"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-12-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-12-receipt.json",
+   "reason": "directory-input",
+   "sha256": "834a804c9b3fe8365f5d775676e619f498d3721e8c61a505a2b0da91b4ac094f"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-12-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-12-witness.json",
+   "reason": "directory-input",
+   "sha256": "628ea13357507a4d2e0912377392fb30a3613beb150380b766113695d08cfbc4"
+  },
+  {
+   "bytes": 376713216,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-12.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "610ff5fa80e2029c33bcf790648cb3627790b20eb3b1250aea39e91e075f1208"
+  },
+  {
+   "bytes": 25813,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-13-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-13-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "becbab78ea8004134010142a4d96a00edcd421843697aa660e5f49d7f6c787c4"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-13-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-13-receipt.json",
+   "reason": "directory-input",
+   "sha256": "815fb5b54d53857f9f7a00b35b70e871f196b314f3d6d2399741c5e4eb692364"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-13-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-13-witness.json",
+   "reason": "directory-input",
+   "sha256": "84426780f1a0e71230e4a3e4b01a17892d2c0474f839eea9a4734cc43f1f80f6"
+  },
+  {
+   "bytes": 407490560,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-13.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "0bc30f674bf3bb0bc1f17a129b0649a38424ed3a18abd472fd24a84932641e9c"
+  },
+  {
+   "bytes": 25813,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-14-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-14-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "ea09087ba7955f9fd8fb4515e8fd6a506dafb282a25a44583e2a0c87a75ff9d1"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-14-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-14-receipt.json",
+   "reason": "directory-input",
+   "sha256": "0e4ccbc6ae5123d0bf2dd55829a34a474f4c60e197d4649bd902a62bfbac6e5f"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-14-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-14-witness.json",
+   "reason": "directory-input",
+   "sha256": "139f828987b8c3e09b3925521cab01741aca37af61e6f14c946de6f0b772b28e"
+  },
+  {
+   "bytes": 438149120,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-14.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "7a94eb52d3c3c43c5a83a654131a2771320c8b529b01c26088fb1340b832a67f"
+  },
+  {
+   "bytes": 25813,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-15-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-15-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "b595a7be4b1c46cd317fe3e4f09b77c342322a61e07e04f632c7b0384914f1eb"
+  },
+  {
+   "bytes": 1289,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-15-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-15-receipt.json",
+   "reason": "directory-input",
+   "sha256": "4cff7e8ddbee040c43fabcc35b75c2a9e27e67c78ca5be4e8bc99e4b7040f838"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-15-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-15-witness.json",
+   "reason": "directory-input",
+   "sha256": "0b93a45b2b08507f79312e3b08069748b123d83de172a030bacb9a8ba9eb8c7c"
+  },
+  {
+   "bytes": 469356544,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-15.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "59a3800980caf0d93a5758a8b7a8ec5e74c033aaff3f5f33bbf4883868290ee3"
+  },
+  {
+   "bytes": 25813,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-16-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-16-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "71e9e147693347ca8053253b76b98619ee6bdb8a1983750838403a100df3dba4"
+  },
+  {
+   "bytes": 1290,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-16-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-16-receipt.json",
+   "reason": "directory-input",
+   "sha256": "4eb3ead6c7809a7201c8d68921af66e897fd42913d034c78a79d8a8b070f16e7"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-16-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-16-witness.json",
+   "reason": "directory-input",
+   "sha256": "a94ab7416aebf6945ca3a9288fb38c49e7303f44572f8e81449f1086743d8b1e"
+  },
+  {
+   "bytes": 500957184,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-16.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "18e89230b605640043587ac521f558e281d94d8733e1a0ca1d1e6611949b0adc"
+  },
+  {
+   "bytes": 25813,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-17-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-17-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "d73d79eafb69ed199cf0e56560e471e4c10d1fb9626bc53ab54d3b0d49371279"
+  },
+  {
+   "bytes": 1290,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-17-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-17-receipt.json",
+   "reason": "directory-input",
+   "sha256": "6c5cedd6f82e736d43232c0a9c5382547d5b5504286d8ec850807b49b0fcee49"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-17-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-17-witness.json",
+   "reason": "directory-input",
+   "sha256": "d1a2fdde4750d853f987a83e9508a7ef766d1b1cf3e738cd40dc4f274ae75567"
+  },
+  {
+   "bytes": 533745664,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-17.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "6a5b84ba29a648116c79a2b483162ae9c1be33bd74e3fdc469fa8654449b8d2d"
+  },
+  {
+   "bytes": 25813,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-18-packet-seed.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-18-packet-seed.json",
+   "reason": "pinned",
+   "sha256": "82be17ae66bf0def8314bad779e2b4121df6cede9b32c8c40b65f8bd987c5e12"
+  },
+  {
+   "bytes": 1290,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-18-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-18-receipt.json",
+   "reason": "directory-input",
+   "sha256": "4e477087509fe9a4362e9b0b4b1f7eb2be0dff64b20733e312d1abc611ca18d0"
+  },
+  {
+   "bytes": 369,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/prefix-18-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-18-witness.json",
+   "reason": "directory-input",
+   "sha256": "1b3c7fd46b683b059811b081289e936682192f45f7bc63f419be0dbf25d65255"
+  },
+  {
+   "bytes": 566403072,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/prefix-18.sqlite",
+   "reason": "directory-bulk",
+   "sha256": "3cf262a8c1ac2c1f1d25fa55bf14754979a9326525b64ae20f741aa72ff7860a"
+  },
+  {
+   "bytes": 2114,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/remaining-prefix-binding.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/remaining-prefix-binding.json",
+   "reason": "pinned",
+   "sha256": "0d700fc3be75e42b88c579d7158aca44e9acb0f5322a0bee3a481c035facffdf"
+  },
+  {
+   "bytes": 97785,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/remaining-prefix-progress.jsonl",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/remaining-prefix-progress.jsonl",
+   "reason": "directory-input",
+   "sha256": "2512ff23fe7e22b63a22bd5a2637c7d995c8c3bb48a1f171a9863cf9a9b80d1c"
+  },
+  {
+   "bytes": 1,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-prefixes/remaining-prefix-writer.lock",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/actual-prefixes/remaining-prefix-writer.lock",
+   "reason": "directory-input",
+   "sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+  },
+  {
+   "bytes": 1085,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/closed-source-lineage-20260915/lineage.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/closed-source-lineage-20260915/lineage.json",
+   "reason": "pinned",
+   "sha256": "a9c0ef62c737778f85bdafe3afdc1fb536285e6f783c218f1c69a38b7986395f"
+  },
+  {
+   "bytes": 85,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/closed-source-lineage-20260915/process.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/closed-source-lineage-20260915/process.json",
+   "reason": "lineage",
+   "sha256": "dbe3bd043300f90c0d41fe386cbfb8f982cbdaf8af0a887ef73537083babd2f9"
+  },
+  {
+   "bytes": 68,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/closed-source-lineage-20260915/progress.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/closed-source-lineage-20260915/progress.json",
+   "reason": "lineage",
+   "sha256": "f57ff3e19fa0a87349932b9c94f3a8c8045487717111b0d6deb5432892cf103d"
+  },
+  {
+   "bytes": 75220,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/closed-source-lineage-20260915/progress.jsonl",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/closed-source-lineage-20260915/progress.jsonl",
+   "reason": "lineage",
+   "sha256": "78ad45517754d9005cdf329496e20f1cea05bb01ab1d8acfbc29562fb025547a"
+  },
+  {
+   "bytes": 581,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/closed-source-lineage-20260915/receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/closed-source-lineage-20260915/receipt.json",
+   "reason": "lineage",
+   "sha256": "7448eb9b206e8685b0bb562ce643e118272e1dffa28bf03c147da46ea24f84f6"
+  },
+  {
+   "bytes": 29089413,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/delivery-plain/calculation_result.json",
+   "reason": "pinned-bulk",
+   "sha256": "91e47d0d1533b6745888bcc17e4231f998ed78dc9735c7e2f0dcab8bd65971a9"
+  },
+  {
+   "bytes": 4853,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/delivery-plain/local_delivery_receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/delivery-plain/local_delivery_receipt.json",
+   "reason": "pinned",
+   "sha256": "db773478c80f28619bdf16abb76ccf6ebedbacc6a65894ba624ed6d82fad0f11"
+  },
+  {
+   "bytes": 86,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/full-causal-schedule-resumed-20260915/process.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/full-causal-schedule-resumed-20260915/process.json",
+   "reason": "directory-input",
+   "sha256": "30fedc0e208af345fb566446ca6204af74e2904823b8f8377b5edecdbe378170"
+  },
+  {
+   "bytes": 96,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/full-causal-schedule-resumed-20260915/progress.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/full-causal-schedule-resumed-20260915/progress.json",
+   "reason": "directory-input",
+   "sha256": "7371e0143af808f010f337e1d6e65a434f45439914fdf0c87b57d8716d218218"
+  },
+  {
+   "bytes": 520001,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/full-causal-schedule-resumed-20260915/progress.jsonl",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/full-causal-schedule-resumed-20260915/progress.jsonl",
+   "reason": "directory-input",
+   "sha256": "a9225350f36430ed1cfb7efa9a0173e0aff3c4043a7e921fae05dca64c40ea1c"
+  },
+  {
+   "bytes": 1528,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/full-causal-schedule-resumed-20260915/receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/full-causal-schedule-resumed-20260915/receipt.json",
+   "reason": "pinned",
+   "sha256": "c0ffd954da53be9035b75a6aa2f0f527f0c0b93bb8345ac51bdf18365822b4cc"
+  },
+  {
+   "bytes": 10678,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/full-causal-schedule-resumed-20260915/schedule.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/full-causal-schedule-resumed-20260915/schedule.json",
+   "reason": "pinned",
+   "sha256": "97da6c589cb64ffb6ff4ba692a1344ad9f16773b10e3ed8783e0ad4bf1f93b2e"
+  },
+  {
+   "bytes": 2547676,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/principal-source-contract/source-contract.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/principal-source-contract/source-contract.json",
+   "reason": "pinned",
+   "sha256": "359e369cbc43b48ef33280dc64a44200e53d1d3612ed1e10fe26988e7e2baefd"
+  },
+  {
+   "bytes": 166700,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/retained-principal/FROZEN_MEMORY_A_20211003.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/retained-principal/FROZEN_MEMORY_A_20211003.json",
+   "reason": "pinned",
+   "sha256": "4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a"
+  },
+  {
+   "bytes": 17810,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/retained-principal/retained-witnesses.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/retained-principal/retained-witnesses.json",
+   "reason": "pinned",
+   "sha256": "d4c03cee0524961813daf7f223425236a7edbb03c68468cc42defedec1dc008b"
+  },
+  {
+   "bytes": 6996,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-execution-20260915/actual-first-cutoff-capacity/initialization.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-execution-20260915/actual-first-cutoff-capacity/initialization.c15.json",
+   "reason": "lineage",
+   "sha256": "78d8df066c35ab48c42daa905588017fc4ec6e3d0d908fc3d9af40b5377e4565"
+  },
+  {
+   "bytes": 917,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-execution-20260915/actual-first-cutoff-capacity/interruption.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-execution-20260915/actual-first-cutoff-capacity/interruption.json",
+   "reason": "lineage",
+   "sha256": "30728c63e2e2140e2773ffb6b59d6dbe27d409ad726644cd80b0ec8ca3d3b306"
+  },
+  {
+   "bytes": 856,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-execution-20260915/actual-first-cutoff-capacity/prefix-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-execution-20260915/actual-first-cutoff-capacity/prefix-receipt.json",
+   "reason": "lineage",
+   "sha256": "20a9058dc693248d57468ecf92d8aeebc8fcd4261da2e31b0c745ae2cb84eae3"
+  },
+  {
+   "bytes": 463036416,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-execution-20260915/actual-first-cutoff-capacity/prefix.sqlite",
+   "reason": "pinned-bulk",
+   "sha256": "722512df404c89783e49b577b163c5917764171aa19237e142c52b859f196883"
+  },
+  {
+   "bytes": 1884734,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-execution-20260915/actual-first-cutoff-streamed-701f360b/actual-request.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-execution-20260915/actual-first-cutoff-streamed-701f360b/actual-request.json",
+   "reason": "pinned",
+   "sha256": "e65c33161a6ff3bfe02fa368dc30d29115dbb56aed8d358a05671891c473536c"
+  },
+  {
+   "bytes": 6996,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-execution-20260915/actual-first-cutoff-streamed-701f360b/initialization.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-execution-20260915/actual-first-cutoff-streamed-701f360b/initialization.c15.json",
+   "reason": "pinned",
+   "sha256": "66f963b9451029fc52c348c84f632c637c980a7324d7d38c85c664338e0a8a3d"
+  },
+  {
+   "bytes": 235331,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-execution-20260915/actual-first-cutoff-streamed-701f360b/prepared.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-execution-20260915/actual-first-cutoff-streamed-701f360b/prepared.json",
+   "reason": "pinned",
+   "sha256": "11b6c380c90b7469b7a6b5ba27e6980bf17505af1373d8d40d05731e00328189"
+  },
+  {
+   "bytes": 459,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-execution-20260915/manifest.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-execution-20260915/manifest.json",
+   "reason": "pinned",
+   "sha256": "616129487e1b9d1f47c6ec7197bdd31e414b3d8db345b39a35b0121fc600ef93"
+  },
+  {
+   "bytes": 1063,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-execution-20260915/mapping/mapping.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-execution-20260915/mapping/mapping.json",
+   "reason": "pinned",
+   "sha256": "55cccc238a15b76528d60220e8a236204bf244ef4e33948e9ef6b74a03656e21"
+  },
+  {
+   "bytes": 405339,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-recovery-resume-20260915/builder-checkpoint.c15.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-recovery-resume-20260915/builder-checkpoint.c15.json",
+   "reason": "directory-input",
+   "sha256": "750dbb3c63ab672614323dca0dd7f363847ea78aa8a489d0f0b84afe8f00bcf7"
+  },
+  {
+   "bytes": 495,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-recovery-resume-20260915/completion.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-recovery-resume-20260915/completion.json",
+   "reason": "directory-input",
+   "sha256": "b804e7a2bd7fa87af51197f641c7a4829506928387fef9f942e7bee02d8d9d5a"
+  },
+  {
+   "bytes": 99,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-recovery-resume-20260915/extraction-pin.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-recovery-resume-20260915/extraction-pin.json",
+   "reason": "directory-input",
+   "sha256": "8dea8bcb18e939abea49f7035bbc3dcb4faaf3cc0199846bae50b9a7c66a2648"
+  },
+  {
+   "bytes": 462,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-recovery-resume-20260915/ingestion-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-recovery-resume-20260915/ingestion-receipt.json",
+   "reason": "pinned",
+   "sha256": "018c65708d8e32d1ffd6e6e0ee8bfe0e45b88ff2241570fc2866530a9dc5e67a"
+  },
+  {
+   "bytes": 276,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-recovery-resume-20260915/parent-witness.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-recovery-resume-20260915/parent-witness.json",
+   "reason": "directory-input",
+   "sha256": "661bd63724a9df350c0772117f5b308c3d73da14d411ff90031b49e0233f5903"
+  },
+  {
+   "bytes": 86,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-recovery-resume-20260915/process.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-recovery-resume-20260915/process.json",
+   "reason": "directory-input",
+   "sha256": "23d0317fc80d1dbeb64ed937704be53fb4a5d6058b9847ccfd26f86f697b15b6"
+  },
+  {
+   "bytes": 994,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-recovery-resume-20260915/recovery-receipt.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-recovery-resume-20260915/recovery-receipt.json",
+   "reason": "directory-input",
+   "sha256": "fc5d27ba8afcdc9c11b11c45a22bb5825031b99a98b51c58a9effb20858947d2"
+  },
+  {
+   "bytes": 490,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-recovery-resume-20260915/scope.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-recovery-resume-20260915/scope.json",
+   "reason": "directory-input",
+   "sha256": "2158f29a6d215ab2832008fd614aad4b4c879789726e7ea7ff61e5f429ff5ba3"
+  },
+  {
+   "bytes": 139,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/source-recovery-resume-20260915/source-prefix-wire-readback.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-recovery-resume-20260915/source-prefix-wire-readback.json",
+   "reason": "directory-input",
+   "sha256": "2a090844d8de2d59ccc9046d94902d1bf809a23d4cdf994ce5c6601e363d2b1e"
+  },
+  {
+   "bytes": 11700711424,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/source-recovery-resume-20260915/source.sqlite",
+   "reason": "directory-bulk",
+   "sha256": null
+  },
+  {
+   "bytes": 5544,
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/sunday-launch-20260915/actual-host-final-configuration.json",
+   "in_git": true,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/sunday-launch-20260915/actual-host-final-configuration.json",
+   "reason": "configuration",
+   "sha256": "a5eef9157130a596da4d5b62e9be2a268f95a561987b59481de4642f33b29f38"
+  },
+  {
+   "bytes": 569667584,
+   "git_path": null,
+   "in_git": false,
+   "original_path": "E:/Codex/Frankie-BOSS-20260915/sunday-launch-20260915/restored-journal/result/journal.compact.sqlite",
+   "reason": "pinned-bulk",
+   "sha256": "19603159548b1e443a3565f8c999543981c43c23c80fd511c11e760f633b260f"
+  }
+ ],
+ "files_bulk": 27,
+ "files_in_git": 170,
+ "lawful_boss_branch": "codex/sunday-runtime-grid-fix-20260915",
+ "lawful_boss_commit": "050c5056c3657a954d6a3ee17f3a216999930768",
+ "mirror_roots": {
+  "C:/Users/A/Documents/Codex": "C_Codex",
+  "E:/Codex/Frankie-BOSS-20260915": "FB"
+ },
+ "pinned_files": [
+  {
+   "bytes": 29089413,
+   "bytes_on_disk": 29089413,
+   "exists": true,
+   "key": "/calculation_result",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\delivery-plain\\calculation_result.json",
+   "sha256": "91e47d0d1533b6745888bcc17e4231f998ed78dc9735c7e2f0dcab8bd65971a9",
+   "sha256_on_disk": "91e47d0d1533b6745888bcc17e4231f998ed78dc9735c7e2f0dcab8bd65971a9"
+  },
+  {
+   "bytes": 2547676,
+   "bytes_on_disk": 2547676,
+   "exists": true,
+   "key": "/contract",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\principal-source-contract\\source-contract.json",
+   "sha256": "359e369cbc43b48ef33280dc64a44200e53d1d3612ed1e10fe26988e7e2baefd",
+   "sha256_on_disk": "359e369cbc43b48ef33280dc64a44200e53d1d3612ed1e10fe26988e7e2baefd"
+  },
+  {
+   "bytes": 4853,
+   "bytes_on_disk": 4853,
+   "exists": true,
+   "key": "/delivery_receipt",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\delivery-plain\\local_delivery_receipt.json",
+   "sha256": "db773478c80f28619bdf16abb76ccf6ebedbacc6a65894ba624ed6d82fad0f11",
+   "sha256_on_disk": "db773478c80f28619bdf16abb76ccf6ebedbacc6a65894ba624ed6d82fad0f11"
+  },
+  {
+   "bytes": 569667584,
+   "bytes_on_disk": 569667584,
+   "exists": true,
+   "key": "/host_runtime/compact_journal",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\sunday-launch-20260915\\restored-journal\\result\\journal.compact.sqlite",
+   "sha256": "19603159548b1e443a3565f8c999543981c43c23c80fd511c11e760f633b260f",
+   "sha256_on_disk": "19603159548b1e443a3565f8c999543981c43c23c80fd511c11e760f633b260f"
+  },
+  {
+   "bytes": 462,
+   "bytes_on_disk": 462,
+   "exists": true,
+   "key": "/host_runtime/ingestion_receipt",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-recovery-resume-20260915\\ingestion-receipt.json",
+   "sha256": "018c65708d8e32d1ffd6e6e0ee8bfe0e45b88ff2241570fc2866530a9dc5e67a",
+   "sha256_on_disk": "018c65708d8e32d1ffd6e6e0ee8bfe0e45b88ff2241570fc2866530a9dc5e67a"
+  },
+  {
+   "bytes": 6945,
+   "bytes_on_disk": 6945,
+   "exists": true,
+   "key": "/host_runtime/prefix_manifest",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\full19-prefix-witnesses.json",
+   "sha256": "44992e75ab0c821aac87559d4713bc84dd2f72424e2d904ebe81039def1ce416",
+   "sha256_on_disk": "44992e75ab0c821aac87559d4713bc84dd2f72424e2d904ebe81039def1ce416"
+  },
+  {
+   "bytes_on_disk": 1001,
+   "exists": true,
+   "key": "/host_runtime/retained_preparation_recovery",
+   "matches_pin": true,
+   "path": "C:/Users/A/Documents/Codex/2026-09-15/first-run-using-agent-skills-continue/work/retained-recovery/witness.json",
+   "sha256": "6d1370b997209dafc4857f2d02115acc7185e36a2b16dec411d683a6508bd692",
+   "sha256_on_disk": "6d1370b997209dafc4857f2d02115acc7185e36a2b16dec411d683a6508bd692"
+  },
+  {
+   "bytes": 10678,
+   "bytes_on_disk": 10678,
+   "exists": true,
+   "key": "/host_runtime/schedule",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\full-causal-schedule-resumed-20260915\\schedule.json",
+   "sha256": "97da6c589cb64ffb6ff4ba692a1344ad9f16773b10e3ed8783e0ad4bf1f93b2e",
+   "sha256_on_disk": "97da6c589cb64ffb6ff4ba692a1344ad9f16773b10e3ed8783e0ad4bf1f93b2e"
+  },
+  {
+   "bytes": 1528,
+   "bytes_on_disk": 1528,
+   "exists": true,
+   "key": "/host_runtime/schedule_receipt",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\full-causal-schedule-resumed-20260915\\receipt.json",
+   "sha256": "c0ffd954da53be9035b75a6aa2f0f527f0c0b93bb8345ac51bdf18365822b4cc",
+   "sha256_on_disk": "c0ffd954da53be9035b75a6aa2f0f527f0c0b93bb8345ac51bdf18365822b4cc"
+  },
+  {
+   "bytes": 1085,
+   "bytes_on_disk": 1085,
+   "exists": true,
+   "key": "/host_runtime/source_lineage",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\closed-source-lineage-20260915\\lineage.json",
+   "sha256": "a9c0ef62c737778f85bdafe3afdc1fb536285e6f783c218f1c69a38b7986395f",
+   "sha256_on_disk": "a9c0ef62c737778f85bdafe3afdc1fb536285e6f783c218f1c69a38b7986395f"
+  },
+  {
+   "bytes": 1063,
+   "bytes_on_disk": 1063,
+   "exists": true,
+   "key": "/mapping",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-execution-20260915\\mapping\\mapping.json",
+   "sha256": "55cccc238a15b76528d60220e8a236204bf244ef4e33948e9ef6b74a03656e21",
+   "sha256_on_disk": "55cccc238a15b76528d60220e8a236204bf244ef4e33948e9ef6b74a03656e21"
+  },
+  {
+   "bytes": 166700,
+   "bytes_on_disk": 166700,
+   "exists": true,
+   "key": "/memory",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\retained-principal\\FROZEN_MEMORY_A_20211003.json",
+   "sha256": "4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a",
+   "sha256_on_disk": "4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a"
+  },
+  {
+   "bytes": 17810,
+   "bytes_on_disk": 17810,
+   "exists": true,
+   "key": "/retained_witnesses",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\retained-principal\\retained-witnesses.json",
+   "sha256": "d4c03cee0524961813daf7f223425236a7edbb03c68468cc42defedec1dc008b",
+   "sha256_on_disk": "d4c03cee0524961813daf7f223425236a7edbb03c68468cc42defedec1dc008b"
+  },
+  {
+   "bytes": 459,
+   "bytes_on_disk": 459,
+   "exists": true,
+   "key": "/source_manifest",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-execution-20260915\\manifest.json",
+   "sha256": "616129487e1b9d1f47c6ec7197bdd31e414b3d8db345b39a35b0121fc600ef93",
+   "sha256_on_disk": "616129487e1b9d1f47c6ec7197bdd31e414b3d8db345b39a35b0121fc600ef93"
+  }
+ ],
+ "run_id": "frankie-boss-own-source-sunday-20260915",
+ "scalars": {
+  "/host_runtime/boss_commit": "050c5056c3657a954d6a3ee17f3a216999930768",
+  "/host_runtime/completion_workflow_ref": "codex/full-frankie-boss-connection-20260915",
+  "/host_runtime/context_encoding": "stacked_v1",
+  "/host_runtime/data_workers": 48,
+  "/host_runtime/development_limitations": [
+   "One supplied Sunday source; same-source analytical reference and opening anchors are not official exchange prior close or opening.",
+   "Actual NG USD multiplier absent; usd_per_price_unit=1.0 is an explicit development numeraire, not exchange contract P&L.",
+   "Timestamp noise floor unidentified; UTC nanoseconds reflect source representation resolution only.",
+   "Nominal final source tail unobserved; final STOP remains censored without independent closure evidence.",
+   "Development native weights and critic feedback have no calibrated performance claim; no broker execution authority."
+  ],
+  "/host_runtime/expected_tokenizer_sha256": "51e3c30923a00f8d17cc0c6126a06d8e4911b5e83232abbed255c2abb49a438a",
+  "/host_runtime/output_budget": "remaining_context",
+  "/host_runtime/refresh_policy_bands": [
+   [
+    7186681902729,
+    1
+   ]
+  ],
+  "/host_runtime/service_context": 131072,
+  "/host_runtime/state_defects_and_gaps_reported": [],
+  "/host_runtime/transport_protocol": "jobs_v1",
+  "/model_calls_performed": false,
+  "/receiver_commit": "342f57288d8fbc52a9143c16e7d5dba9d90469cf",
+  "/run_id": "frankie-boss-own-source-sunday-20260915",
+  "/schema": "FRANKIE_BOSS_ACTUAL_HOST_CONFIGURATION_V1",
+  "/source_day_required": false,
+  "/training_updates_performed": false
+ },
+ "schema": "FRANKIE_SUNDAY_RESTORATION_MANIFEST_V1",
+ "secondary_pins": [
+  {
+   "bytes": 2114,
+   "exists": true,
+   "key": "/binding",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\remaining-prefix-binding.json",
+   "sha256": "0d700fc3be75e42b88c579d7158aca44e9acb0f5322a0bee3a481c035facffdf",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 21713,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/1",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-01-packet-seed.json",
+   "sha256": "eeb0868e7cc85ea763b05cbfe23300cff9468f9abf14776b0f88f55a627e4e3a",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25813,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/10",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-10-packet-seed.json",
+   "sha256": "d712993718eac5c070086dafd2913a5289586ae30d0961454d316591e3e34d07",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25813,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/11",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-11-packet-seed.json",
+   "sha256": "9397c58f4922d802815bb4f5a01db74f0560c53e79fbac3536d740b6a24dc71d",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25813,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/12",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-12-packet-seed.json",
+   "sha256": "52d2e05f95862ad33fd59a1ca17f9526787079869b3b042503af89b34b7dfa89",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25813,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/13",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-13-packet-seed.json",
+   "sha256": "becbab78ea8004134010142a4d96a00edcd421843697aa660e5f49d7f6c787c4",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25813,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/14",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-14-packet-seed.json",
+   "sha256": "ea09087ba7955f9fd8fb4515e8fd6a506dafb282a25a44583e2a0c87a75ff9d1",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25813,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/15",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-15-packet-seed.json",
+   "sha256": "b595a7be4b1c46cd317fe3e4f09b77c342322a61e07e04f632c7b0384914f1eb",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25813,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/16",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-16-packet-seed.json",
+   "sha256": "71e9e147693347ca8053253b76b98619ee6bdb8a1983750838403a100df3dba4",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25813,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/17",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-17-packet-seed.json",
+   "sha256": "d73d79eafb69ed199cf0e56560e471e4c10d1fb9626bc53ab54d3b0d49371279",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25813,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/18",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-18-packet-seed.json",
+   "sha256": "82be17ae66bf0def8314bad779e2b4121df6cede9b32c8c40b65f8bd987c5e12",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 21713,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/2",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-02-packet-seed.json",
+   "sha256": "aad88f0bbcf8138daa89eb8dde0b20967ea4556ea18b9f7e477d184a618ba204",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 24412,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/3",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-03-packet-seed.json",
+   "sha256": "c74a7c2a1ec2495644e43a7dcb9f82dc91d173d10ae218b348f1458d6fb3cbab",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25812,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/4",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-04-packet-seed.json",
+   "sha256": "8b9745cf113dc06405781169ba529f709404fdc46fd1b7470742eac467e5b231",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25812,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/5",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-05-packet-seed.json",
+   "sha256": "be3b3d066b7ef3751d1768e77bc4bf3f35c31780afe9e4384d0174b78f5885e6",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25812,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/6",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-06-packet-seed.json",
+   "sha256": "bfd00b6797663044039cc803dcaaaded8cbffa0d3bdafa8860cbc6c26855c627",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25812,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/7",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-07-packet-seed.json",
+   "sha256": "826be1cf33a47cd2ee09cae5dab98755fdb66cbf16cc28dbb0497aad2906bc46",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25812,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/8",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-08-packet-seed.json",
+   "sha256": "b2769c11bb63181aa4cb67f99e794c9269f0a7ea91e6a7933c2c3bd30670cfd3",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "bytes": 25812,
+   "exists": true,
+   "key": "/prefix_seed_witnesses/9",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\actual-prefixes\\prefix-09-packet-seed.json",
+   "sha256": "7038e69620bf24e10c9d78ffd2688b5021e89eb228a519655adf3ea5cb51305f",
+   "via": "/host_runtime/prefix_manifest"
+  },
+  {
+   "exists": true,
+   "key": "/initialization",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-execution-20260915\\actual-first-cutoff-streamed-701f360b\\initialization.c15.json",
+   "sha256": "66f963b9451029fc52c348c84f632c637c980a7324d7d38c85c664338e0a8a3d",
+   "via": "/host_runtime/retained_preparation_recovery"
+  },
+  {
+   "exists": true,
+   "key": "/prefix",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-execution-20260915\\actual-first-cutoff-capacity\\prefix.sqlite",
+   "sha256": "722512df404c89783e49b577b163c5917764171aa19237e142c52b859f196883",
+   "via": "/host_runtime/retained_preparation_recovery"
+  },
+  {
+   "exists": true,
+   "key": "/prepared",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-execution-20260915\\actual-first-cutoff-streamed-701f360b\\prepared.json",
+   "sha256": "11b6c380c90b7469b7a6b5ba27e6980bf17505af1373d8d40d05731e00328189",
+   "via": "/host_runtime/retained_preparation_recovery"
+  },
+  {
+   "exists": true,
+   "key": "/request",
+   "matches_pin": true,
+   "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-execution-20260915\\actual-first-cutoff-streamed-701f360b\\actual-request.json",
+   "sha256": "e65c33161a6ff3bfe02fa368dc30d29115dbb56aed8d358a05671891c473536c",
+   "via": "/host_runtime/retained_preparation_recovery"
+  }
+ ]
+}
