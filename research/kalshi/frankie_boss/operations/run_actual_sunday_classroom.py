@@ -17,9 +17,9 @@ import json
 from pathlib import Path
 import time
 
-from research.kalshi.frankie_boss.dipole_classroom_final_review import (
-    FinalDipoleClassroomPrincipalAdapter,
-    prepare_final_cycle,
+from research.kalshi.frankie_boss.dipole_classroom_integration import (
+    IntegratedDipoleClassroomPrincipalAdapter,
+    prepare_integrated_cycle,
 )
 from research.kalshi.frankie_boss.dipole_classroom_session import CORRECTION_REQUEST_SCHEMA
 from research.kalshi.frankie_boss.operations import run_actual_sunday as base
@@ -94,7 +94,7 @@ def await_recorded_principal(request, directory, host_lock, probe=None):
 class ClassroomActualHost(base.ActualHost):
     """Actual Sunday host with mandatory, reviewed Dipole classroom composition."""
 
-    principal_adapter_class = FinalDipoleClassroomPrincipalAdapter
+    principal_adapter_class = IntegratedDipoleClassroomPrincipalAdapter
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -164,7 +164,7 @@ class ClassroomActualHost(base.ActualHost):
         index = binding["cycle_index"]
         request_id = f"{self.config['run_id']}-cycle-{index:02d}"
         previous, prior_grade = self._previous_source_and_grade(index)
-        package = prepare_final_cycle(
+        package = prepare_integrated_cycle(
             teacher,
             request_id=request_id,
             cycle_index=index,
