@@ -10,6 +10,7 @@ and `CCODE_RUNTIME_TOKEN_REVIEW_20260916.md` for the measurements everything tod
 | branch | tip | what |
 |---|---|---|
 | `ccode/frankie-lawful-recovery-review-20260915` | `030608e3` | THE working branch: block ingestion path (`0090ee07`), ingestion reduction stack (`848ffe0d`), a reverted CI workflow (`0bb3335d` / `030608e3`) |
+| `ccode/frankie-receiver-feed-20260916` | `2ebb8ce8` | the RECEIVER branch, cut from the frozen receiver `342f5728`: seed carries every own run, own-run artifacts registered, the two required run documents, the BOSS preparation output-bundle gate, `carry_run_into_memory`; worktree `E:\Markets-receiver` (LF checkout, per-worktree autocrlf off) |
 | `ccode/frankie-dipole-classroom-integration-review-20260916` | `61c73a2d` | the classroom integration tip `cf9e2c87` plus ccode's review commit; the branch Codex integrates from |
 | `ccode/frankie-dipole-classroom-review-20260916` | `02306339` | ccode's review of the classroom hardening; ancestor of the above |
 | `chatgpt/frankie-dipole-classroom-integration-20260916` | `cf9e2c87` | ChatGPT's explicit-seam integration, with the Codex handoff |
@@ -52,6 +53,22 @@ integration review branch). `.github/workflows/boss_frankie_tests.yml` exists UN
   model-input reduction `stacked_v1` in the frozen host (929,730 to 92,427 tokens). The 3.37x
   "faster runner" is the single-pass verified reader (`SPEC-verified-journal-reader.md`); the
   ingestion path's completion drain now runs through it, in parallel when workers are given.
+- **Frankie's memory now carries his own Sunday run, and the next run must print two documents**
+  (receiver branch, `2ebb8ce8`, suite 2,189 green). Greg's "do all 3" is built: (1) the seed
+  discovers every committed A_MEMORY run under `principal_runs/` and carries it whole (run
+  33746436209-1: 49 files, its 30 ledgers included; seed v2, 82 entries), and its report,
+  findings and output receipt are registered retrieval artifacts (manifest 79); (2) two required
+  ledgers, `what_he_learned` and `in_his_own_words` (FINDINGS / BUILD / DATA / SUGGESTION, every
+  topic), appended by `finalize`, asked for by the spawn prompt, printed as
+  `FRANKIE_WHAT_HE_LEARNED.md` and `FRANKIE_IN_HIS_OWN_WORDS.md` by `render_frankie_run_documents`;
+  required set 30 -> 32; (3) `prepare_boss_attachment` validates the output bundle the artifact
+  cites and records the verdict, omission must be stated. The automation is
+  `carry_run_into_memory --write --run-id <id>` (gate, documents, seed/register/rebind/refresh
+  written then checked, receipt under `principal_runs/carry_receipts/`); `--check --all`
+  recomputes. The Sunday run is carried with its verdict stated honestly: filed under the prior
+  30-ledger contract, documents not filed. Consequences: the block run must pin receiver
+  `2ebb8ce8` (the Sunday-rerun configuration pins `342f5728`), and the old carry workflow should
+  call the tool; no workflow until Greg says.
 
 ## First business next chat
 
@@ -70,16 +87,28 @@ integration review branch). `.github/workflows/boss_frankie_tests.yml` exists UN
    the pinned set; that is the countable check. Also: the classroom's audit directory and principal
    artifacts have no entry in `AUTHORITY_MAP.json` (15 stores, none classroom); add them with a
    declared writer before the audit or the audit has nothing to check them against.
-2. The on-host DRY `prime_cache` on the retained cycle-1 compact prefix (review §7) is still not
+2. **Hand the receiver branch `ccode/frankie-receiver-feed-20260916` (`2ebb8ce8`) to Codex with
+   the classroom integration.** It is cut from the frozen receiver `342f5728`, four commits, and
+   the next Frankie run needs it: the BOSS Sunday-rerun configuration pins `receiver_commit
+   342f5728`, which has neither the two required run documents nor the output-bundle gate, so a
+   run on it would file 30 ledgers against a 32-ledger contract and be refused at carry. Codex
+   must also (a) give the principal's `finalize` step the two JSON documents
+   (`--what-he-learned`, `--in-his-own-words`) - a finalize without them is refused; (b) call
+   `carry_run_into_memory --write --run-id <id>` after the run commits under `principal_runs/`,
+   instead of the four bare commands in `a_memory_findings_carry_20260903.yml`; (c) pass
+   `--principal-artifact` and `--outputs-dir` to `prepare_boss_attachment` (or state
+   `--without-output-bundle`). The receiver worktree is LF-pinned per worktree; do not set
+   autocrlf in the shared `E:\Markets\.git\config`.
+3. The on-host DRY `prime_cache` on the retained cycle-1 compact prefix (review §7) is still not
    done; start the host, run it, stop the host.
-3. The Sunday both-ways proof (`--sunday --writer both`, session `constant:supplied-source`,
+4. The Sunday both-ways proof (`--sunday --writer both`, session `constant:supplied-source`,
    `--source-object path`); the raw side writes 114,054 fsync'd rows, so run it on C: (NTFS), not E:.
-4. The block ingestion itself, on a Linux host, `--workers` set to the cores minus one, after the
+5. The block ingestion itself, on a Linux host, `--workers` set to the cores minus one, after the
    proof. Then the block schedule and prefixes (the Sunday literals 57027 / 19 / 20211003 become
    manifest fields).
-5. A test for the parallel completion drain (`ingest(..., workers=2)` through
+6. A test for the parallel completion drain (`ingest(..., workers=2)` through
    `FrankieCompactReader`) was declined once today; ask before adding it.
-6. The stalled full-suite process on the workstation (pid 25608, classroom worktree, blocked since
+7. The stalled full-suite process on the workstation (pid 25608, classroom worktree, blocked since
    05:41 after `test_open_run_explicit_completion_still_stops_retained_pod`, no CPU, no children)
    was left alone at Greg's request. The next files in order, `test_granite_retained_lifecycle.py`
    and `test_granite_retained_start_guards.py`, contain wait constructs.
