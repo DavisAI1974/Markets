@@ -76,14 +76,16 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
         boss_journal_path, source_journal_checkpoint, mapping_directory, expected_mapping_sha256,
         receiver_root, receiver_commit, python, directory, retained_directory,
         expected_retained_witnesses_sha256, delivery_receipt, expected_delivery_file_sha256,
-        result_path, classroom_package, session_executor=None):
+        result_path, classroom_package, session_executor=None, adapter_class=None):
     """Build the per-prefix receiver pins plus mandatory Dipole classroom.
 
     Each cycle gets its own directory. All expected hashes/checkpoints are supplied
     by the host's retained trusted receipts; this helper does not mint controller
     completion, mapping equivalence, historical authorship, principal labels, or
     Dipole targets. The classroom package must already be bound to this cutoff by
-    the host from the governed teacher attachment.
+    the host from the governed teacher attachment. The adapter class is an explicit
+    runtime dependency so the final reviewed classroom cannot be swapped by module
+    rebinding between preparation and recovery.
     """
     directory=Path(directory).resolve();directory.mkdir(parents=True,exist_ok=True)
     manifest_path=Path(handoff_directory)/'manifest.json'
@@ -144,7 +146,10 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
         for name,witness in witnesses.items() if '/contract_section_' in name}
     feedback_contract={k:v for k,v in binding.items() if k!='sessions'}
     feedback_contract['sessions']=[{'target':asdict(target),'session':asdict(session)} for target,session in binding['sessions']]
-    return DipoleClassroomPrincipalAdapter(receiver_root=receiver_root,receiver_commit=receiver_commit,python=python,
+    adapter_class = DipoleClassroomPrincipalAdapter if adapter_class is None else adapter_class
+    if type(adapter_class) is not type or not issubclass(adapter_class, DipoleClassroomPrincipalAdapter):
+        raise ValueError('principal adapter class must preserve the mandatory Dipole classroom contract')
+    return adapter_class(receiver_root=receiver_root,receiver_commit=receiver_commit,python=python,
         directory=directory,preparation={'pins_path':str(pins_path),'expected_pins_sha256':digest(pins),
             'result_path':str(Path(result_path).resolve()),'delivery_receipt':str(Path(delivery_receipt).resolve()),
             'mapping_artifact':str(mapping_file)},
