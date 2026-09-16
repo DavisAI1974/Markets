@@ -11,6 +11,11 @@ import re
 import threading
 import time
 
+try:
+    from .runtime_resource_probe import memory_snapshot
+except ImportError:
+    from runtime_resource_probe import memory_snapshot
+
 PHASES = {
     'data_delivery': 'transport', 'input_inventory': 'transport',
     'causal_delivery': 'transport', 'frankie_calculation': 'frankie',
@@ -19,6 +24,11 @@ PHASES = {
     'output_persistence': 'transport', 'readback': 'transport', 'complete': 'coordinator',
 }
 UNITS = {'bytes', 'records', 'groups', 'planes', 'sections', 'requests', 'outputs', 'steps'}
+TRAINING_STAGES = {
+    'prepare_start', 'prepare_complete', 'causal_scan_complete', 'forward_start',
+    'forward_complete', 'loss_complete', 'backward_start', 'backward_complete',
+    'optimizer_start', 'optimizer_complete', 'step_complete', 'step_failed',
+}
 
 
 def canonical(value):
@@ -148,6 +158,41 @@ class RunProbe:
         safe_type = next((name for kind, name in choices if isinstance(error, kind)), 'Exception')
         with self._lock:
             return self._write('error', 'operation_failed', safe_type)
+
+    def training_event(self, value):
+        """Persist safe native-step substage/resource telemetry, never exception text."""
+        if type(value) is not dict or value.get('stage') not in TRAINING_STAGES:
+            raise ValueError('known native training diagnostic stage required')
+        request_id = value.get('request_id')
+        if type(request_id) is not str or not 1 <= len(request_id) <= 256:
+            raise ValueError('bounded training request identity required')
+        elapsed = value.get('elapsed_seconds')
+        if type(elapsed) not in (int, float) or not math.isfinite(elapsed) or elapsed < 0:
+            raise ValueError('finite nonnegative training elapsed time required')
+        safe = dict(schema='FRANKIE_NATIVE_TRAINING_DIAGNOSTIC_V1', run_id=self.run_id,
+            pid=os.getpid(), request_id=request_id, stage=value['stage'], elapsed_seconds=elapsed)
+        for name in ('context_rows', 'losses', 'masked_labels'):
+            item = value.get(name)
+            if item is not None:
+                if type(item) is not int or item < 0:
+                    raise ValueError('nonnegative bounded training diagnostic count required')
+                safe[name] = item
+        error_type = value.get('error_type')
+        if error_type is not None:
+            if type(error_type) is not str or not re.fullmatch(r'[A-Za-z0-9_.]{1,128}', error_type):
+                raise ValueError('safe training error type required')
+            safe['error_type'] = error_type
+        safe.update(memory_snapshot())
+        data = canonical(safe)
+        try:
+            with (self.directory/'native-training.jsonl').open('ab') as stream:
+                stream.write(data+b'\n');stream.flush();os.fsync(stream.fileno())
+            line = 'FRANKIE_TRAINING_PROGRESS '+data.decode()
+            if self.emit is print: print(line, flush=True)
+            else: self.emit(line)
+        except OSError:
+            pass  # Advisory diagnostics can never change training authority or outcome.
+        return safe
 
     def _heartbeat(self):
         while not self._stop.wait(self.interval):
