@@ -4,6 +4,10 @@ Preferred restoration is a Windows EC2 host with the original E:/Codex and
 C:/Users/A/Documents/Codex layouts materialized exactly. That keeps nested witness
 bytes and SHA-256 identities unchanged. This builder changes only new-run identity,
 run directory, reviewed BOSS commit, and the explicit numeric runtime policy.
+
+Cycle 0 is intentionally rerun from its lawful source boundary. The failed run's
+retained preparation-recovery witness is removed from the new configuration so
+cycle-0 context preparation is recomputed rather than adopted from the failed run.
 """
 from __future__ import annotations
 
@@ -72,10 +76,12 @@ def main():
         raise SystemExit('fresh run_directory required')
 
     # Preserve every source/evidence path and every existing witness hash. Only
-    # the new run identity and reviewed code/runtime identity are changed.
+    # new-run identity/code/runtime policy changes. The old run-specific cycle-0
+    # preparation recovery is deliberately not an input to this fresh benchmark.
     config['run_id']=args.run_id
     config['run_directory']=str(run_directory)
     config['host_runtime']['boss_commit']=args.boss_commit
+    config['host_runtime'].pop('retained_preparation_recovery',None)
     config['model_calls_performed']=False
     config['training_updates_performed']=False
     config['native_host_runtime']=dict(schema='FRANKIE_NATIVE_HOST_POLICY_V1',
@@ -89,7 +95,7 @@ def main():
     with out.open('xb') as stream:stream.write(raw)
     print(json.dumps(dict(schema='FRANKIE_EC2_RERUN_CONFIGURATION_BUILT_V1',out=str(out),
         run_id=args.run_id,run_directory=str(run_directory),boss_commit=args.boss_commit,
-        configuration_sha256=hashlib.sha256(raw).hexdigest())))
+        cycle0_preparation_reused=False,configuration_sha256=hashlib.sha256(raw).hexdigest())))
     return 0
 
 
