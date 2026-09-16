@@ -19,7 +19,7 @@ foreach ($threads in @(8, 16)) {
     $cfg | ConvertTo-Json -Depth 20 | Set-Content -Encoding UTF8 $cfgPath
     Write-Output "=== threads=$threads start $(Get-Date -Format s)"
     Push-Location $repo
-    & $py $harness --repository . --configuration $cfgPath --threads $threads --log "E:\bench\direct_${threads}t.jsonl" 2>&1 | Tee-Object -FilePath "E:\bench\direct_${threads}t.stdout" | Select-String -Pattern 'FRANKIE_NATIVE_LEARNER_DIRECT_BENCHMARK_V1|driver_failed|learner_step' | ForEach-Object { $_.Line.Substring(0, [Math]::Min(400, $_.Line.Length)) }
+    & $py $harness --repository . --configuration $cfgPath --threads $threads --log "E:\bench\direct_${threads}t.jsonl" --compact-source-tools C:\tools\Markets 2>&1 | Tee-Object -FilePath "E:\bench\direct_${threads}t.stdout" | Select-String -Pattern 'FRANKIE_NATIVE_LEARNER_DIRECT_BENCHMARK_V1|driver_failed|learner_step' | ForEach-Object { $_.Line.Substring(0, [Math]::Min(400, $_.Line.Length)) }
     $code = $LASTEXITCODE
     Pop-Location
     Write-Output "=== threads=$threads exit=$code end $(Get-Date -Format s)"

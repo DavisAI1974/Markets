@@ -127,6 +127,9 @@ def main():
         help='fresh benchmark state directory; defaults to a sibling of the retained clone')
     parser.add_argument('--log',required=True)
     parser.add_argument('--sample-seconds',type=float,default=.25)
+    parser.add_argument('--compact-source-tools',default=None,
+        help='checkout holding operations/run_actual_sunday_compact_source.py; when given, source() and prefix() '
+             'are answered by the pinned compact journal so the raw journals and lineage parents need not exist')
     args=parser.parse_args()
 
     if args.threads<1 or args.interop_threads<1: raise SystemExit('positive PyTorch thread counts required')
@@ -172,7 +175,16 @@ def main():
         threads=torch.get_num_threads(),interop_threads=torch.get_num_interop_threads(),
         torch=torch.__version__,python=sys.version.split()[0],cpus=os.cpu_count())
 
-    host=actual.ActualHost(bench_configuration); stop=threading.Event()
+    Host=actual.ActualHost
+    if args.compact_source_tools:
+        import importlib.util
+        tools=Path(args.compact_source_tools).resolve()
+        module_path=tools/'research'/'kalshi'/'frankie_boss'/'operations'/'run_actual_sunday_compact_source.py'
+        spec=importlib.util.spec_from_file_location('run_actual_sunday_compact_source',str(module_path))
+        module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+        Host=module.host_class(actual,tools)   # subclass of THIS checkout's ActualHost; learner path untouched
+        log.write('host_class',compact_source_tools=str(tools),host_class=Host.__name__)
+    host=Host(bench_configuration); stop=threading.Event()
     last_learner_event={'value':None};last_completed_substage={'value':None}
     def sampler():
         while not stop.wait(args.sample_seconds): log.write('sample')
