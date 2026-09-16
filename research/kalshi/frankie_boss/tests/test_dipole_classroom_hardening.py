@@ -78,7 +78,7 @@ def test_small_n_pearson_is_suppressed_at_declared_eight_point_floor():
     assert first == {
         "present_overlap": MIN_PEARSON_PRESENT_OVERLAP - 1,
         "pearson": None,
-        "reason": "FEWER_THAN_EIGHT_OVERLAPPING_PRESENT_VALUES",
+        "reason": f"FEWER_THAN_{MIN_PEARSON_PRESENT_OVERLAP}_OVERLAPPING_PRESENT_VALUES",
     }
 
 
@@ -170,7 +170,10 @@ def test_same_session_correction_contains_only_mistakes_not_full_post_grade():
     assert "correlation" not in request["correction_items"][1]
 
 
-def test_hardened_principal_prepare_never_writes_teacher_key_into_principal_dir():
+def test_classroom_prepare_writes_key_and_source_only_to_the_audit_directory():
+    # prepare() is inherited from the base classroom adapter; the key and the source snapshot
+    # (every retained value and state) go to the host-owned audit directory, never the principal one.
     source = inspect.getsource(HardenedDipoleClassroomPrincipalAdapter.prepare)
-    assert "dipole-classroom-teacher-key.audit.json" not in source
-    assert "FrankiePrincipalAdapter.prepare" in source
+    assert '_retain_audit("dipole-classroom-teacher-key.audit.json"' in source
+    assert '_retain_audit("dipole-classroom-source.json"' in source
+    assert '_retain("dipole-classroom-teacher-key' not in source and '_retain("dipole-classroom-source' not in source

@@ -43,61 +43,34 @@ def _same_value(claimed: Any, actual: Any) -> bool:
         return claimed is None
     return claimed is not None and type(claimed) in (int, float) and (not isinstance(claimed, bool)) and math.isfinite(float(claimed)) and math.isclose(float(claimed), float(actual), rel_tol=1e-06, abs_tol=1e-06)
 
-def snapshot_teacher_attachment_for_schedule(teacher: Mapping[str, Any], *, request_id: str, cycle_index: int, curriculum_cycle_count: int, source_hash: str, as_of: int, through_cursor: int) -> dict:
-    """Same lossless snapshot as the classroom core, with the bound owned by the run schedule."""
-    classroom._nonempty(request_id, 'request_id')
-    if type(curriculum_cycle_count) is not int or curriculum_cycle_count <= 0:
-        raise ValueError('positive curriculum cycle count required')
-    if type(cycle_index) is not int or not 0 <= cycle_index < curriculum_cycle_count:
-        raise ValueError('cycle_index must be inside the retained runtime schedule')
-    classroom._hex(source_hash, 'source_hash')
-    if type(as_of) is not int or as_of <= 0 or type(through_cursor) is not int or through_cursor < 0:
-        raise ValueError('positive causal cutoff and nonnegative cursor required')
-    if type(teacher) is not dict:
-        raise ValueError('governed teacher attachment required')
-    required = {'targets', 'raw', 'processed_records', 'context_cursors', 'step_receipts', 'attachment_hash', 'candidate_digest'}
-    if not required.issubset(teacher):
-        raise ValueError('teacher attachment missing governed fields')
-    targets = tuple(teacher['targets'])
-    raw_rows = tuple(teacher['raw'])
-    cursors = tuple(teacher['context_cursors'])
-    receipts = tuple(teacher['step_receipts'])
-    if not targets or not len(targets) == len(raw_rows) == len(cursors) == len(receipts):
-        raise ValueError('teacher target/raw/cursor/receipt cardinality differs')
-    if tuple(sorted(set(cursors))) != cursors or any((type(cursor) is not int or not 0 <= cursor <= through_cursor for cursor in cursors)):
-        raise ValueError('teacher context cursors must be ordered unique members of causal prefix')
-    rows = tuple((classroom._target_row(target, raw, receipt, cursor) for target, raw, receipt, cursor in zip(targets, raw_rows, receipts, cursors)))
-    if any((row['as_of_ts_recv_ns'] > as_of or row['ts_recv_ns'] > as_of for row in rows)):
-        raise ValueError('classroom target exceeds causal cutoff')
-    if any((row['source_manifest_hash'] != rows[0]['source_manifest_hash'] for row in rows)):
-        raise ValueError('teacher targets cross source manifests')
-    body = {'schema': classroom.SOURCE_SCHEMA, 'request_id': request_id, 'cycle_index': cycle_index, 'curriculum_cycle_count': curriculum_cycle_count, 'source_hash': source_hash, 'as_of': as_of, 'through_cursor': through_cursor, 'teacher_attachment_hash': classroom._hex(teacher['attachment_hash'], 'teacher attachment hash'), 'candidate_digest': classroom._hex(teacher['candidate_digest'], 'candidate digest'), 'processed_records': teacher['processed_records'], 'context_cursors': cursors, 'rows': rows, 'coverage_columns': tuple(COLUMNS), 'coverage_count': len(COLUMNS)}
-    body['source_snapshot_hash'] = evidence_hash(body)
-    return body
+def _independent_discovery_eligible(mode: str) -> bool:
+    """TEACH/GUIDED show the evidence, so a mastered cycle there measures comprehension of instruction;
+    only SOCRATIC/VERIFY, where Frankie answers before the key is shown, can measure independent recognition."""
+    return mode in (classroom.ClassroomMode.SOCRATIC.value, classroom.ClassroomMode.VERIFY.value)
 
-def _prior_correction_summary(grade: Mapping[str, Any] | None) -> dict | None:
-    return hardened.prior_correction_summary(grade)
+def _learning_measurement(mode: str) -> str:
+    return 'INDEPENDENT_RECOGNITION_ELIGIBLE' if _independent_discovery_eligible(mode) else 'INSTRUCTIONAL_COMPREHENSION'
 
-def prepare_final_cycle(teacher: Mapping[str, Any], *, request_id: str, cycle_index: int, curriculum_cycle_count: int, source_hash: str, as_of: int, through_cursor: int, previous_snapshot: Mapping[str, Any] | None=None, history: Sequence[Mapping[str, Any]]=(), prior_grade: Mapping[str, Any] | None=None) -> dict:
-    snapshot = snapshot_teacher_attachment_for_schedule(teacher, request_id=request_id, cycle_index=cycle_index, curriculum_cycle_count=curriculum_cycle_count, source_hash=source_hash, as_of=as_of, through_cursor=through_cursor)
+def prepare_final_cycle(teacher: Mapping[str, Any], *, request_id: str, cycle_index: int, cycle_count: int, source_hash: str, as_of: int, through_cursor: int, previous_snapshot: Mapping[str, Any] | None=None, history: Sequence[Mapping[str, Any]]=(), prior_grade: Mapping[str, Any] | None=None) -> dict:
+    """cycle_count is owned by the retained runtime schedule (the host reads its steps); never a classroom constant."""
+    snapshot = classroom.snapshot_teacher_attachment(teacher, request_id=request_id, cycle_index=cycle_index, cycle_count=cycle_count, source_hash=source_hash, as_of=as_of, through_cursor=through_cursor)
     key = hardened._harden_teacher_key_correlations(classroom.build_teacher_key(snapshot, previous_snapshot))
     mode = hardened.select_hardened_mode(history)
-    message = classroom.build_pre_message(key, mode=mode, prior_grade=None)
+    # The core builder emits the prior-correction SUMMARY (never the prior grade) and the Pearson-floor text.
+    message = classroom.build_pre_message(key, mode=mode, prior_grade=prior_grade)
     message = {k: v for k, v in message.items() if k != 'teacher_message_hash'}
-    message['prior_cycle_correction'] = _prior_correction_summary(prior_grade)
     message['direction_definition'] = 'Graded direction means the first PRESENT observation versus the last PRESENT observation in this retained cycle window. Intrawindow rises, falls, reversals, and excursions may still exist even when that endpoint direction is FLAT.'
-    message['relationship_instruction'] = 'Consider all 171 Dipole pairs. Pearson is reported only with at least eight overlapping PRESENT values and nonzero variance. Below that threshold only the overlap count is retained. Pearson is descriptive, not proof of causation or future outcome. Label unsupported developing structures HYPOTHESIS.'
     message['novelty_invitation'] = 'After completing the required Dipole curriculum, report any relationship, structure, mechanism, or hypothesis you believe is new or not explicitly taught. A new idea is not a classroom error merely because Dipole did not teach it. Cite the causal evidence that led you to it and keep future outcomes outside the wall.'
     message['teacher_message_hash'] = evidence_hash(message)
-    binding = {'request_id': request_id, 'cycle_index': cycle_index, 'curriculum_cycle_count': curriculum_cycle_count, 'source_hash': source_hash, 'as_of': as_of, 'through_cursor': through_cursor, 'source_snapshot_hash': snapshot['source_snapshot_hash'], 'teacher_key_hash': key['teacher_key_hash'], 'teacher_message_hash': message['teacher_message_hash'], 'teacher_attachment_hash': snapshot['teacher_attachment_hash'], 'mode': mode, 'coverage_count': len(COLUMNS), 'relationship_pairs_required': classroom.PAIR_COUNT}
+    binding = {'request_id': request_id, 'cycle_index': cycle_index, 'cycle_count': cycle_count, 'source_hash': source_hash, 'as_of': as_of, 'through_cursor': through_cursor, 'source_snapshot_hash': snapshot['source_snapshot_hash'], 'teacher_key_hash': key['teacher_key_hash'], 'teacher_message_hash': message['teacher_message_hash'], 'teacher_attachment_hash': snapshot['teacher_attachment_hash'], 'mode': mode, 'learning_measurement': _learning_measurement(mode), 'independent_discovery_eligible': _independent_discovery_eligible(mode), 'coverage_count': len(COLUMNS), 'relationship_pairs_required': classroom.PAIR_COUNT}
     binding['classroom_binding_hash'] = evidence_hash(binding)
     return {'source': snapshot, 'teacher_key': key, 'pre_message': message, 'binding': binding}
 
 def final_model_visible_classroom(package: Mapping[str, Any]) -> dict:
     package = validate_package(package)
     mode = package['binding']['mode']
-    independent = mode in (classroom.ClassroomMode.SOCRATIC.value, classroom.ClassroomMode.VERIFY.value)
-    value = {'binding': package['binding'], 'pre_message': package['pre_message'], 'audit_key_object_withheld': True, 'independent_discovery_eligible': independent, 'learning_measurement': 'INDEPENDENT_RECOGNITION_ELIGIBLE' if independent else 'INSTRUCTIONAL_COMPREHENSION', 'coverage_invariant': 'ALL_19_DIPOLE_DIMENSIONS_EVERY_CYCLE', 'required_response_ledgers': {'dipole_observation_review': 'EVERY_RETAINED_OBSERVATION_FOR_ALL_19_DIMENSIONS', 'dipole_relationship_scan': classroom.PAIR_COUNT, 'dipole_novel_findings': 'ZERO_OR_MORE_STRUCTURED_CANDIDATES_AFTER_REQUIRED_COVERAGE'}}
+    independent = _independent_discovery_eligible(mode)
+    value = {'binding': package['binding'], 'pre_message': package['pre_message'], 'audit_key_object_withheld': True, 'independent_discovery_eligible': independent, 'learning_measurement': _learning_measurement(mode), 'coverage_invariant': 'ALL_19_DIPOLE_DIMENSIONS_EVERY_CYCLE', 'required_response_ledgers': {'dipole_observation_review': 'EVERY_RETAINED_OBSERVATION_FOR_ALL_19_DIMENSIONS', 'dipole_relationship_scan': classroom.PAIR_COUNT, 'dipole_novel_findings': 'ZERO_OR_MORE_STRUCTURED_CANDIDATES_AFTER_REQUIRED_COVERAGE'}}
     value['model_visible_hash'] = evidence_hash(value)
     return value
 
@@ -226,7 +199,7 @@ def investigate_novel_findings(key: Mapping[str, Any], findings: Sequence[Mappin
             status = 'PARTIALLY_TESTABLE_NOVEL_HYPOTHESIS'
         else:
             status = 'CURRENT_CAUSAL_REFERENCES_MATCH'
-        independent = mode in (classroom.ClassroomMode.SOCRATIC.value, classroom.ClassroomMode.VERIFY.value)
+        independent = _independent_discovery_eligible(mode)
         item = {'schema': NOVELTY_INVESTIGATION_SCHEMA, 'finding_id': finding['finding_id'], 'finding_hash': finding['finding_hash'], 'premise': finding['premise'], 'status': status, 'premise_disposition': 'RETAIN_AS_NOVEL_HYPOTHESIS', 'independent_discovery_eligible': independent, 'teacher_exposure_context': 'INDEPENDENT_DISCOVERY_ATTRIBUTION_ELIGIBLE' if independent else 'INSTRUCTIONAL_PHASE_DISCOVERY_CANDIDATE', 'inspected_evidence': tuple(inspected), 'specific_data_differences': tuple(differences), 'not_yet_testable': tuple(not_testable), 'teacher_response': 'I investigated the causal references you cited. ' + ('The specific differences listed below are places where the data is showing something else. I am not rejecting your whole premise; keep the broader idea as a hypothesis and revise only the contradicted subclaims.' if differences else 'I found no contradiction in the Dipole facts I can test here. That does not prove the broader premise; retain it as a hypothesis and look for reproduction in later causal windows.'), 'scored_for_classroom_mastery': False, 'promotion_rule': 'Do not promote this to Dipole curriculum merely because it appeared once. Track reproduction and later causally available evidence separately.'}
         item['investigation_hash'] = evidence_hash(item)
         investigations.append(item)
@@ -235,19 +208,30 @@ def investigate_novel_findings(key: Mapping[str, Any], findings: Sequence[Mappin
     return body
 
 def apply_relationship_view_crosscheck(grade: Mapping[str, Any], response: Mapping[str, Any]) -> dict:
-    scan = {(item['left'], item['right']): item['direction_relation'] for item in response.get('dipole_relationship_scan', ())}
+    """The exhaustive 171-pair ledger is authoritative. A factual relation stated in the component
+    narrative must agree with it. A narrative HYPOTHESIS is an ADDITIONAL hypothesis only when the
+    ledger also marks a developing_structure for that pair; otherwise it competes with the ledger's
+    factual classification and must be reconciled (Greg: HYPOTHESIS in the narrative and
+    SAME_DIRECTION in the ledger cannot coexist without a correction)."""
+    scan = {(item['left'], item['right']): item for item in response.get('dipole_relationship_scan', ())}
     order = {name: index for index, name in enumerate(COLUMNS)}
     inconsistencies = []
     for component in response.get('dipole_teachback', {}).get('components', ()):
         left = component.get('name')
         for relation in component.get('relationships', ()):
-            if relation.get('relation') == 'HYPOTHESIS':
-                continue
             right = relation.get('with')
             a, b = (left, right) if order[left] < order[right] else (right, left)
-            scan_relation = scan.get((a, b))
-            if scan_relation is not None and scan_relation != relation.get('relation'):
-                inconsistencies.append({'correction_id': f'representation:{a}:{b}', 'left': a, 'right': b, 'component_view': relation.get('relation'), 'exhaustive_scan_view': scan_relation, 'message': "Frankie's two factual records disagree for this pair. Reconcile the records before treating either statement as settled."})
+            ledger = scan.get((a, b))
+            if ledger is None:
+                continue
+            claimed = relation.get('relation')
+            if claimed == 'HYPOTHESIS':
+                if ledger.get('developing_structure') is not None:
+                    continue
+                inconsistencies.append({'correction_id': f'representation:{a}:{b}', 'left': a, 'right': b, 'component_view': 'HYPOTHESIS', 'exhaustive_scan_view': ledger['direction_relation'], 'message': "Frankie's component narrative calls this pair a hypothesis while the exhaustive ledger classifies it factually and records no developing structure. Reconcile this pair: mark the developing structure in the ledger, or state the same classification in both records."})
+                continue
+            if ledger['direction_relation'] != claimed:
+                inconsistencies.append({'correction_id': f'representation:{a}:{b}', 'left': a, 'right': b, 'component_view': claimed, 'exhaustive_scan_view': ledger['direction_relation'], 'message': "Frankie's two factual records disagree for this pair. Reconcile the records before treating either statement as settled."})
     body = {k: v for k, v in grade.items() if k != 'post_grade_hash'}
     existing = tuple(body.get('correction_ids', ()))
     added = tuple((item['correction_id'] for item in inconsistencies))
@@ -390,6 +374,11 @@ def _render_dipole_review(correction: Mapping[str, Any]) -> str:
     if correction['data_review_items']:
         for item in correction['data_review_items']:
             parts += [f"## {item['correction_id']}", '', item['message'], '']
+            # Every field of the item was sent to Frankie; print them so the transcript IS the exchange.
+            for field, value in item.items():
+                if field not in ('correction_id', 'message'):
+                    parts.append(f"- {field}: `{value}`")
+            parts.append('')
     else:
         parts += ['No curriculum factual subclaim required a data-difference review.', '']
     parts += ['## Root-cause grouping', '']
@@ -405,6 +394,8 @@ def _render_dipole_review(correction: Mapping[str, Any]) -> str:
     else:
         for finding in novelty['findings']:
             parts += [f"### {finding['finding_id']}", '', finding['teacher_response'], '', f"Status: `{finding['status']}`", f"Premise disposition: `{finding['premise_disposition']}`", f"Independent-discovery eligible: `{finding['independent_discovery_eligible']}`", '']
+            for inspected in finding['inspected_evidence']:
+                parts.append(f"- inspected `{inspected['scope']}`: `{inspected['status']}`")
             for difference in finding['specific_data_differences']:
                 parts.append(f"- {difference['message']}")
             if finding['not_yet_testable']:
@@ -424,7 +415,8 @@ class FinalDipoleClassroomPrincipalAdapter(hardened.HardenedDipoleClassroomPrinc
         attachment = dict(attachment)
         attachment['dipole_classroom'] = visible
         attachment['attachment_hash'] = digest({k: v for k, v in attachment.items() if k != 'attachment_hash'})
-        self._retain('dipole-classroom-source.json', self.classroom_package['source'])
+        self._retain_audit('dipole-classroom-source.json', self.classroom_package['source'])
+        self._retain_audit('dipole-classroom-teacher-key.audit.json', self.classroom_package['teacher_key'])
         self._retain('dipole-classroom-pre-message.json', self.classroom_package['pre_message'])
         self._retain('dipole-classroom-model-visible.json', visible)
         return attachment
@@ -447,7 +439,7 @@ class FinalDipoleClassroomPrincipalAdapter(hardened.HardenedDipoleClassroomPrinc
         novel_findings = validate_novel_findings(initial_response.get('dipole_novel_findings'), self.classroom_package['pre_message'])
         novelty = investigate_novel_findings(self.classroom_package['teacher_key'], novel_findings, mode=self.classroom_package['binding']['mode'])
         self._retain('dipole-classroom-teachback.json', teachback)
-        self._retain('dipole-classroom-post-grade.json', grade)
+        self._retain_audit('dipole-classroom-post-grade.json', grade)
         self._retain('dipole-classroom-novel-findings.json', novel_findings)
         self._retain('dipole-classroom-novelty-investigation.json', novelty)
         correction = bind_final_resolution_requirement(build_final_correction_request(original_request_sha256=digest(request), response=initial_response, grade=grade, key=self.classroom_package['teacher_key'], teachback=teachback, novelty_investigation=novelty))

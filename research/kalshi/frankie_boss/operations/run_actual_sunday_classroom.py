@@ -27,10 +27,8 @@ def await_recorded_principal(request,directory,host_lock,probe=None):
     if schema==INITIAL_REQUEST_SCHEMA:request_name,response_name,status="session-request.json","session-response.json","actual_frankie_session_pending"
     elif schema==CORRECTION_REQUEST_SCHEMA:request_name,response_name,status="classroom-correction-request.json","classroom-correction-response.json","actual_frankie_classroom_correction_pending"
     else:raise ValueError("known Frankie principal/classroom request schema required")
-    matches=[]
-    for index in range(19):
-        path=Path(directory)/"execution"/f"cycle-{index:02d}"/"principal"/request_name
-        if path.exists() and _load_json(path)==request:matches.append(path)
+    # Search every retained cycle directory; the cycle count belongs to the schedule, not to this loop.
+    matches=[path for path in sorted(Path(directory).glob("execution/cycle-*/principal/"+request_name)) if _load_json(path)==request]
     if len(matches)!=1:raise ValueError("unique retained Frankie classroom request required")
     request_path=matches[0];response_path=request_path.with_name(response_name)
     if probe is not None:probe.advance("frankie_calculation",unit="outputs")
@@ -65,7 +63,8 @@ class ClassroomActualHost(base.ActualHost):
     def _previous_source_and_grade(self,index):
         if index==0:return None,None
         prior=self.directory/"execution"/f"cycle-{index-1:02d}";source=self.api.driver._load(prior/"host-dipole-classroom-source.c15.json")
-        grade_path=prior/"principal"/"dipole-classroom-post-grade.json"
+        # The full post-grade is host-owned audit evidence, retained beside the principal directory.
+        grade_path=prior/"classroom-audit"/"dipole-classroom-post-grade.json"
         if not grade_path.exists():raise ValueError("previous Dipole post-grade required before next cycle")
         return source,_load_json(grade_path)
     def _curriculum_cycle_count(self):
@@ -77,7 +76,7 @@ class ClassroomActualHost(base.ActualHost):
         _,info,input_hash,teacher,_=self.cache.prepare(binding["as_of"],binding["through_cursor"])
         if input_hash!=self.cache.receipt["input_hash"] or teacher is None:raise ValueError("classroom must reuse exact prepared governed teacher attachment")
         index=binding["cycle_index"];request_id=f"{self.config['run_id']}-cycle-{index:02d}";previous,prior_grade=self._previous_source_and_grade(index)
-        package=prepare_final_cycle(teacher,request_id=request_id,cycle_index=index,curriculum_cycle_count=self._curriculum_cycle_count(),source_hash=binding["source_hash"],as_of=binding["as_of"],through_cursor=binding["through_cursor"],previous_snapshot=previous,history=self._history(index),prior_grade=prior_grade)
+        package=prepare_final_cycle(teacher,request_id=request_id,cycle_index=index,cycle_count=self._curriculum_cycle_count(),source_hash=binding["source_hash"],as_of=binding["as_of"],through_cursor=binding["through_cursor"],previous_snapshot=previous,history=self._history(index),prior_grade=prior_grade)
         if tuple(package["source"]["context_cursors"])!=tuple(self.cache.receipt["context_cursors"]):raise ValueError("Dipole classroom rows differ from prepared native context rows")
         paths=self._classroom_paths(cycle_directory)
         for name,key in (("source","source"),("teacher-key","teacher_key"),("pre-message","pre_message"),("binding","binding")):self.api.driver._save(paths[name],package[key])

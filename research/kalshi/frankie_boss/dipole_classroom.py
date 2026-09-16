@@ -42,12 +42,16 @@ TEACHBACK_SCHEMA = "DIPOLE_CLASSROOM_TEACHBACK_V1"
 GRADE_SCHEMA = "DIPOLE_CLASSROOM_POST_GRADE_V1"
 ACK_SCHEMA = "DIPOLE_CLASSROOM_CORRECTION_ACK_V1"
 COMPLETION_SCHEMA = "DIPOLE_CLASSROOM_COMPLETION_V1"
+PRIOR_CORRECTION_SCHEMA = "DIPOLE_CLASSROOM_PRIOR_CORRECTION_SUMMARY_V1"
 
 _HEX = frozenset("0123456789abcdef")
 _STATE_NAMES = tuple(state.name for state in TargetState)
 _DIRECTIONS = ("RISE", "FALL", "FLAT", "INSUFFICIENT")
 _RELATIONS = ("SAME_DIRECTION", "OPPOSITE_DIRECTION", "UNRESOLVED", "HYPOTHESIS")
 PAIR_COUNT = len(COLUMNS) * (len(COLUMNS) - 1) // 2
+# Pearson over fewer overlapping PRESENT points than this is noise; below it only the overlap
+# count is reported. Declared once here; every layer and message text reads this constant.
+MIN_PEARSON_PRESENT_OVERLAP = 8
 
 
 class ClassroomMode(str, Enum):
@@ -179,12 +183,19 @@ def _target_row(target: DipoleTarget, raw_row: Sequence[Mapping[str, Any]], rece
     }
 
 
-def snapshot_teacher_attachment(teacher: Mapping[str, Any], *, request_id: str, cycle_index: int,
+def snapshot_teacher_attachment(teacher: Mapping[str, Any], *, request_id: str, cycle_index: int, cycle_count: int,
                                 source_hash: str, as_of: int, through_cursor: int) -> dict:
-    """Losslessly snapshot every context Dipole target row for this causal cycle."""
+    """Losslessly snapshot every context Dipole target row for this causal cycle.
+
+    cycle_count is the run's curriculum length, owned by the retained runtime schedule (the
+    host derives it from the schedule steps). It is not a classroom constant: the 19 Sunday
+    cycles and the 19 Dipole columns are unrelated numbers.
+    """
     _nonempty(request_id, "request_id")
-    if type(cycle_index) is not int or not 0 <= cycle_index < 19:
-        raise ValueError("cycle_index must be 0..18")
+    if type(cycle_count) is not int or cycle_count <= 0:
+        raise ValueError("positive curriculum cycle count required")
+    if type(cycle_index) is not int or not 0 <= cycle_index < cycle_count:
+        raise ValueError("cycle_index must be inside the retained runtime schedule")
     _hex(source_hash, "source_hash")
     if type(as_of) is not int or as_of <= 0 or type(through_cursor) is not int or through_cursor < 0:
         raise ValueError("positive causal cutoff and nonnegative cursor required")
@@ -206,7 +217,7 @@ def snapshot_teacher_attachment(teacher: Mapping[str, Any], *, request_id: str, 
     if any(row["source_manifest_hash"] != rows[0]["source_manifest_hash"] for row in rows):
         raise ValueError("teacher targets cross source manifests")
     body = {
-        "schema": SOURCE_SCHEMA,"request_id": request_id,"cycle_index": cycle_index,
+        "schema": SOURCE_SCHEMA,"request_id": request_id,"cycle_index": cycle_index,"cycle_count": cycle_count,
         "source_hash": source_hash,"as_of": as_of,"through_cursor": through_cursor,
         "teacher_attachment_hash": _hex(teacher["attachment_hash"], "teacher attachment hash"),
         "candidate_digest": _hex(teacher["candidate_digest"], "candidate digest"),
@@ -259,7 +270,8 @@ def _pearson(left: Sequence[Mapping[str, Any]], right: Sequence[Mapping[str, Any
     pairs = [(a["value"],b["value"]) for a,b in zip(left,right)
         if a["cursor"] == b["cursor"] and a["state"] == b["state"] == TargetState.PRESENT.name]
     n=len(pairs)
-    if n<3:return {"present_overlap":n,"pearson":None,"reason":"FEWER_THAN_THREE_OVERLAPPING_PRESENT_VALUES"}
+    if n<MIN_PEARSON_PRESENT_OVERLAP:
+        return {"present_overlap":n,"pearson":None,"reason":f"FEWER_THAN_{MIN_PEARSON_PRESENT_OVERLAP}_OVERLAPPING_PRESENT_VALUES"}
     xs=[a for a,_ in pairs];ys=[b for _,b in pairs];mx=sum(xs)/n;my=sum(ys)/n
     vx=sum((x-mx)**2 for x in xs);vy=sum((y-my)**2 for y in ys)
     if vx==0 or vy==0:return {"present_overlap":n,"pearson":None,"reason":"ZERO_VARIANCE"}
@@ -356,30 +368,47 @@ def _teacher_component(d: Mapping[str, Any],mode:str)->dict:
     return {**base,"teacher_explanation":"You now lead. Analyze the complete Dipole surface from the causal evidence and account for this component explicitly; I will reveal my factual key only after your answer."}
 
 
+def prior_correction_summary(grade:Mapping[str,Any]|None)->dict|None:
+    """What the next cycle may carry from the previous grade: WHERE Frankie was corrected, never the key.
+
+    The full post-grade holds every actual observation and all 171 actual relations; consecutive
+    context windows overlap, so embedding it would hand the next cycle most of its answers one
+    turn late. Only the correction identifiers, their count and the mastery flag travel.
+    """
+    if grade is None:return None
+    if grade.get("schema")!=GRADE_SCHEMA:raise ValueError("prior correction must be a classroom post-grade")
+    correction_ids=tuple(grade.get("correction_ids",()))
+    if any(type(value) is not str or not value for value in correction_ids):raise ValueError("prior correction ids must be nonempty strings")
+    return {"schema":PRIOR_CORRECTION_SCHEMA,"post_grade_hash":grade.get("post_grade_hash"),"correction_ids":correction_ids,
+        "correction_count":len(correction_ids),"prior_cycle_mastered":grade.get("mastered") is True,
+        "guidance":("These identifiers mark prior-cycle misunderstandings only. Recompute the current causal window "
+            "from its own evidence; no prior actual value, state, direction, pair answer, or exhaustive audit is carried forward.")}
+
+
 def build_pre_message(key:Mapping[str,Any],*,mode:str,prior_grade:Mapping[str,Any]|None=None)->dict:
     if key.get("schema")!=KEY_SCHEMA or key.get("coverage_columns")!=tuple(COLUMNS) or key.get("relationship_pairs_scanned")!=PAIR_COUNT:
         raise ValueError("complete classroom teacher key required")
     if mode not in _MODES:raise ValueError("known classroom mode required")
-    if prior_grade is not None and prior_grade.get("schema")!=GRADE_SCHEMA:raise ValueError("prior correction must be a classroom post-grade")
+    prior_summary=prior_correction_summary(prior_grade)
     components=tuple(_teacher_component(d,mode) for d in key["dimensions"])
     if tuple(x["name"] for x in components)!=tuple(COLUMNS):raise ValueError("pre-message lost Dipole coverage")
     relationship_review=key["relationship_scan"] if mode==ClassroomMode.TEACH.value else None
     body={"schema":MESSAGE_SCHEMA,"request_id":key["request_id"],"cycle_index":key["cycle_index"],"mode":mode,
         "teacher_key_hash":key["teacher_key_hash"],"coverage_columns":tuple(COLUMNS),"coverage_count":len(COLUMNS),
-        "relationship_pairs_required":PAIR_COUNT,"prior_cycle_correction":prior_grade,
+        "relationship_pairs_required":PAIR_COUNT,"prior_cycle_correction":prior_summary,
         "teacher_opening":"Complete Dipole coverage is mandatory. We will account for all 19 components, all PRESENT values, every MISSING/INVALID/ABLATED state and reason, prior-cycle changes, full-book/FIFO/order behavior where justified, and the full intra-Dipole relationship surface. Observation, interpretation, hypothesis, and unknowable future outcome must remain separate.",
         "components":components,"relationship_review":relationship_review,
-        "relationship_instruction":"Consider all 171 Dipole pairs. Pearson is reported only with at least three overlapping PRESENT values and nonzero variance. It is descriptive, not proof of causation or future outcome. Label unsupported developing structures HYPOTHESIS.",
+        "relationship_instruction":f"Consider all {PAIR_COUNT} Dipole pairs. Pearson is reported only with at least {MIN_PEARSON_PRESENT_OVERLAP} overlapping PRESENT values and nonzero variance; below that threshold only the overlap count is retained. It is descriptive, not proof of causation or future outcome. Label unsupported developing structures HYPOTHESIS.",
         "teachback_instruction":"In your own words, cover all 19 dimensions without omission: what happened, what changed or stayed stable, what the states/values mean, why, FIFO/full-book/order behavior where appropriate, every relevant relationship/correlation, what may be a developing structure, and what cannot yet be known.",
         "future_wall":"DO_NOT_CLAIM_OR_USE_ANY_OUTCOME_NOT_CAUSALLY_AVAILABLE_AT_THIS_CUTOFF"}
     body["teacher_message_hash"]=evidence_hash(body);return body
 
 
-def prepare_cycle(teacher:Mapping[str,Any],*,request_id:str,cycle_index:int,source_hash:str,as_of:int,through_cursor:int,
+def prepare_cycle(teacher:Mapping[str,Any],*,request_id:str,cycle_index:int,cycle_count:int,source_hash:str,as_of:int,through_cursor:int,
                   previous_snapshot:Mapping[str,Any]|None=None,history:Sequence[Mapping[str,Any]]=(),prior_grade:Mapping[str,Any]|None=None)->dict:
-    snapshot=snapshot_teacher_attachment(teacher,request_id=request_id,cycle_index=cycle_index,source_hash=source_hash,as_of=as_of,through_cursor=through_cursor)
+    snapshot=snapshot_teacher_attachment(teacher,request_id=request_id,cycle_index=cycle_index,cycle_count=cycle_count,source_hash=source_hash,as_of=as_of,through_cursor=through_cursor)
     key=build_teacher_key(snapshot,previous_snapshot);mode=select_mode(history);message=build_pre_message(key,mode=mode,prior_grade=prior_grade)
-    binding={"request_id":request_id,"cycle_index":cycle_index,"source_hash":source_hash,"as_of":as_of,"through_cursor":through_cursor,
+    binding={"request_id":request_id,"cycle_index":cycle_index,"cycle_count":cycle_count,"source_hash":source_hash,"as_of":as_of,"through_cursor":through_cursor,
         "source_snapshot_hash":snapshot["source_snapshot_hash"],"teacher_key_hash":key["teacher_key_hash"],
         "teacher_message_hash":message["teacher_message_hash"],"teacher_attachment_hash":snapshot["teacher_attachment_hash"],
         "mode":mode,"coverage_count":len(COLUMNS),"relationship_pairs_required":PAIR_COUNT}
@@ -537,7 +566,9 @@ def audit_teacher_complete(*,binding:Mapping[str,Any],key:Mapping[str,Any],pre_m
     if acknowledgement.get("acknowledged") is not True or set(acknowledgement.get("resolved_correction_ids",()))!=set(grade["correction_ids"]):raise ValueError("Dipole corrections were not fully acknowledged")
     if acknowledgement.get("remaining_disagreements"):
         raise ValueError("cycle cannot be teacher-complete with unresolved Dipole disagreement")
-    return {"every_dimension_covered":True,"every_state_value_accounted":True,"prior_cycle_change_reviewed":key["cycle_index"]==0 or True,
+    # prior_cycle_change_reviewed is established by the raise inside the dimension loop above
+    # (every cycle after zero must carry change_from_previous); reaching here means it held.
+    return {"every_dimension_covered":True,"every_state_value_accounted":True,"prior_cycle_change_reviewed":True,
         "relationship_pairs_reviewed":PAIR_COUNT,"frankie_teachback_complete":True,"dipole_correction_complete":True,
         "unresolved_disagreements":0,"teacher_complete":True}
 
@@ -547,5 +578,9 @@ def complete_cycle(*,binding:Mapping[str,Any],key:Mapping[str,Any],pre_message:M
     body={"schema":COMPLETION_SCHEMA,"request_id":binding["request_id"],"cycle_index":binding["cycle_index"],"mode":binding["mode"],
         "classroom_binding_hash":binding["classroom_binding_hash"],"post_grade_hash":grade["post_grade_hash"],"ack_hash":acknowledgement["ack_hash"],
         "mastered":grade["mastered"],"acknowledged":acknowledgement["acknowledged"],"coverage_count":len(COLUMNS),
+        # What a mastered cycle in this mode measures: comprehension of instruction (TEACH/GUIDED)
+        # or independent recognition (SOCRATIC/VERIFY). Carried so the curriculum record never
+        # reads a TEACH pass as a discovery.
+        "learning_measurement":binding.get("learning_measurement"),
         "relationship_pairs_reviewed":PAIR_COUNT,"teacher_complete":audit["teacher_complete"],"audit":audit}
     body["completion_hash"]=evidence_hash(body);return body

@@ -2,9 +2,12 @@
 
 This subclasses the existing durable principal boundary instead of creating a
 second model path. The ordinary feedback/lessons envelope is returned unchanged,
-but only after the complete classroom finishes. The audit-only teacher key is
-persisted locally and never placed in the model attachment before Frankie's first
-answer.
+but only after the complete classroom finishes. Audit-only material (the source
+snapshot with every retained value and state, the teacher key, the full post-grade)
+is persisted in a host-owned audit directory beside the principal directory, never in
+the model-facing principal directory and never in the model attachment. Note the
+limit of that layout: it withholds nothing from a session that can read the whole
+run directory; the guard that matters is the session's filesystem scope.
 """
 from __future__ import annotations
 
@@ -35,9 +38,14 @@ from .frankie_principal_adapter import (
 class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
     """Existing principal protocol plus a mandatory same-session classroom."""
 
-    def __init__(self, *args, classroom_package, **kwargs):
+    def __init__(self, *args, classroom_package, audit_directory=None, **kwargs):
         self.classroom_package = validate_package(classroom_package)
         super().__init__(*args, **kwargs)
+        self.audit_directory = (Path(audit_directory) if audit_directory is not None
+                                else self.directory.parent / "classroom-audit").resolve()
+        if self.audit_directory == self.directory or self.audit_directory.is_relative_to(self.directory):
+            raise ValueError("classroom audit directory must be outside the model-facing principal directory")
+        self.audit_directory.mkdir(parents=True, exist_ok=True)
 
     def _config_hash(self):
         return digest({
@@ -47,8 +55,8 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
             "mechanism": "AGENT_SESSION_WITH_DIPOLE_CLASSROOM",
         })
 
-    def _retain(self, name, body):
-        path = self.directory / name
+    def _retain(self, name, body, *, directory=None):
+        path = (self.directory if directory is None else directory) / name
         raw = canonical(body)
         if path.exists():
             if path.read_bytes() != raw:
@@ -57,6 +65,10 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
             with path.open("xb") as handle:
                 handle.write(raw);handle.flush();os.fsync(handle.fileno())
         return path
+
+    def _retain_audit(self, name, body):
+        """Host-owned audit evidence: retained beside, never inside, the principal directory."""
+        return self._retain(name, body, directory=self.audit_directory)
 
     def _retain_text(self, name, text):
         path = self.directory / name
@@ -75,8 +87,8 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
         attachment = dict(attachment)
         attachment["dipole_classroom"] = visible
         attachment["attachment_hash"] = digest({k:v for k,v in attachment.items() if k != "attachment_hash"})
-        self._retain("dipole-classroom-source.json", self.classroom_package["source"])
-        self._retain("dipole-classroom-teacher-key.audit.json", self.classroom_package["teacher_key"])
+        self._retain_audit("dipole-classroom-source.json", self.classroom_package["source"])
+        self._retain_audit("dipole-classroom-teacher-key.audit.json", self.classroom_package["teacher_key"])
         self._retain("dipole-classroom-pre-message.json", self.classroom_package["pre_message"])
         self._retain("dipole-classroom-model-visible.json", visible)
         return attachment
@@ -151,7 +163,7 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
         initial_response = retained["response"]
         teachback, grade = grade_initial_response(self.classroom_package, initial_response)
         self._retain("dipole-classroom-teachback.json", teachback)
-        self._retain("dipole-classroom-post-grade.json", grade)
+        self._retain_audit("dipole-classroom-post-grade.json", grade)
 
         correction = bind_resolution_requirement(correction_request(
             original_request_sha256=digest(request), response=initial_response, grade=grade))

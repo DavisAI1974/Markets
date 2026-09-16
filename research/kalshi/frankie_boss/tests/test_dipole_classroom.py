@@ -28,6 +28,8 @@ from research.kalshi.frankie_boss.dipole_target import DipoleTarget, DipoleTarge
 HEX_A = "a" * 64
 HEX_B = "b" * 64
 HEX_C = "c" * 64
+# The curriculum length is owned by the run schedule; the host reads it from the schedule steps.
+CYCLE_COUNT = 19
 
 
 def _target(cursor, values, states, *, source_prefix=None):
@@ -84,7 +86,7 @@ def _teacher(*, offset=0.0):
 
 def _prepared(*, cycle_index=0, previous_snapshot=None, history=(), prior_grade=None, offset=0.0):
     return prepare_cycle(_teacher(offset=offset), request_id=f"run-cycle-{cycle_index:02d}", cycle_index=cycle_index,
-        source_hash=HEX_B, as_of=2_000_000 + cycle_index, through_cursor=6,
+        cycle_count=CYCLE_COUNT, source_hash=HEX_B, as_of=2_000_000 + cycle_index, through_cursor=6,
         previous_snapshot=previous_snapshot, history=history, prior_grade=prior_grade)
 
 
@@ -170,11 +172,11 @@ def test_cycle_after_zero_requires_immediate_prior_snapshot_and_reviews_change()
 def test_teacher_cardinality_or_column_loss_fails_closed():
     teacher = _teacher();teacher["raw"] = teacher["raw"][:-1]
     with pytest.raises(ValueError, match="cardinality"):
-        prepare_cycle(teacher, request_id="run-cycle-00", cycle_index=0,
+        prepare_cycle(teacher, request_id="run-cycle-00", cycle_index=0, cycle_count=CYCLE_COUNT,
             source_hash=HEX_B, as_of=2_000_000, through_cursor=6)
     teacher = _teacher();teacher["raw"] = (teacher["raw"][0][:-1],) + teacher["raw"][1:]
     with pytest.raises(ValueError, match="every governed column"):
-        prepare_cycle(teacher, request_id="run-cycle-00", cycle_index=0,
+        prepare_cycle(teacher, request_id="run-cycle-00", cycle_index=0, cycle_count=CYCLE_COUNT,
             source_hash=HEX_B, as_of=2_000_000, through_cursor=6)
 
 

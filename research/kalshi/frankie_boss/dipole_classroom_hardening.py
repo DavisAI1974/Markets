@@ -26,7 +26,6 @@ from .dipole_classroom_session import (
     CORRECTION_REQUEST_SCHEMA,
     finish,
     grade_initial_response,
-    model_visible_classroom,
     validate_correction_response,
 )
 from .frankie_dipole_classroom_adapter import DipoleClassroomPrincipalAdapter
@@ -38,8 +37,10 @@ from .frankie_principal_adapter import (
     _write,
 )
 
-MIN_PEARSON_PRESENT_OVERLAP = 8
-PRIOR_CORRECTION_SCHEMA = "DIPOLE_CLASSROOM_PRIOR_CORRECTION_SUMMARY_V1"
+# Both are declared once in the core module; re-exported here for existing importers.
+MIN_PEARSON_PRESENT_OVERLAP = classroom.MIN_PEARSON_PRESENT_OVERLAP
+PRIOR_CORRECTION_SCHEMA = classroom.PRIOR_CORRECTION_SCHEMA
+prior_correction_summary = classroom.prior_correction_summary
 
 _PREVIOUS_MODE = {
     classroom.ClassroomMode.TEACH.value: classroom.ClassroomMode.TEACH.value,
@@ -78,7 +79,12 @@ def select_hardened_mode(history: Sequence[Mapping[str, Any]]) -> str:
 
 
 def _harden_teacher_key_correlations(key: Mapping[str, Any]) -> dict:
-    """Suppress small-n Pearson values without changing any governed observation."""
+    """Re-apply the declared Pearson floor to a key from any builder; no governed observation changes.
+
+    The core builder already applies MIN_PEARSON_PRESENT_OVERLAP, so on a core-built key this is
+    an identity that re-pins the hash; it exists so a key assembled elsewhere cannot carry a
+    sub-floor coefficient into the classroom.
+    """
     if (
         key.get("schema") != classroom.KEY_SCHEMA
         or key.get("relationship_pairs_scanned") != classroom.PAIR_COUNT
@@ -96,7 +102,7 @@ def _harden_teacher_key_correlations(key: Mapping[str, Any]) -> dict:
             correlation = {
                 "present_overlap": overlap,
                 "pearson": None,
-                "reason": "FEWER_THAN_EIGHT_OVERLAPPING_PRESENT_VALUES",
+                "reason": f"FEWER_THAN_{MIN_PEARSON_PRESENT_OVERLAP}_OVERLAPPING_PRESENT_VALUES",
             }
         item["correlation"] = correlation
         relationships.append(item)
@@ -106,34 +112,12 @@ def _harden_teacher_key_correlations(key: Mapping[str, Any]) -> dict:
     return body
 
 
-def prior_correction_summary(grade: Mapping[str, Any] | None) -> dict | None:
-    """Carry forward where Frankie was corrected, never the prior factual key."""
-    if grade is None:
-        return None
-    if grade.get("schema") != classroom.GRADE_SCHEMA:
-        raise ValueError("prior correction must be a classroom post-grade")
-    correction_ids = tuple(grade.get("correction_ids", ()))
-    if any(type(value) is not str or not value for value in correction_ids):
-        raise ValueError("prior correction ids must be nonempty strings")
-    return {
-        "schema": PRIOR_CORRECTION_SCHEMA,
-        "post_grade_hash": grade.get("post_grade_hash"),
-        "correction_ids": correction_ids,
-        "correction_count": len(correction_ids),
-        "prior_cycle_mastered": grade.get("mastered") is True,
-        "guidance": (
-            "These identifiers mark prior-cycle misunderstandings only. Recompute the "
-            "current causal window from its own evidence; no prior actual value, state, "
-            "direction, pair answer, or exhaustive audit is carried forward."
-        ),
-    }
-
-
 def prepare_hardened_cycle(
     teacher: Mapping[str, Any],
     *,
     request_id: str,
     cycle_index: int,
+    cycle_count: int,
     source_hash: str,
     as_of: int,
     through_cursor: int,
@@ -146,6 +130,7 @@ def prepare_hardened_cycle(
         teacher,
         request_id=request_id,
         cycle_index=cycle_index,
+        cycle_count=cycle_count,
         source_hash=source_hash,
         as_of=as_of,
         through_cursor=through_cursor,
@@ -154,19 +139,12 @@ def prepare_hardened_cycle(
         classroom.build_teacher_key(snapshot, previous_snapshot)
     )
     mode = select_hardened_mode(history)
-    message = classroom.build_pre_message(key, mode=mode, prior_grade=None)
-    message = {k: v for k, v in message.items() if k != "teacher_message_hash"}
-    message["prior_cycle_correction"] = prior_correction_summary(prior_grade)
-    message["relationship_instruction"] = (
-        "Consider all 171 Dipole pairs. Pearson is reported only with at least eight "
-        "overlapping PRESENT values and nonzero variance. Below that threshold only "
-        "the overlap count is retained. Pearson is descriptive, not proof of causation "
-        "or future outcome. Label unsupported developing structures HYPOTHESIS."
-    )
-    message["teacher_message_hash"] = evidence_hash(message)
+    # The core builder now emits the prior-correction SUMMARY and the Pearson-floor text itself.
+    message = classroom.build_pre_message(key, mode=mode, prior_grade=prior_grade)
     binding = {
         "request_id": request_id,
         "cycle_index": cycle_index,
+        "cycle_count": cycle_count,
         "source_hash": source_hash,
         "as_of": as_of,
         "through_cursor": through_cursor,
@@ -388,25 +366,11 @@ def bind_hardened_resolution_requirement(correction: Mapping[str, Any]) -> dict:
 
 
 class HardenedDipoleClassroomPrincipalAdapter(DipoleClassroomPrincipalAdapter):
-    """Existing principal protocol with the answer-key filesystem/prompt leaks removed."""
+    """Existing principal protocol with the answer-key prompt leak removed.
 
-    def prepare(self, handoff_directory):
-        # Deliberately bypass DipoleClassroomPrincipalAdapter.prepare(): that method
-        # retains a duplicate teacher-key audit inside the model-facing principal
-        # directory. The complete key already exists in host-owned cycle evidence.
-        attachment = FrankiePrincipalAdapter.prepare(self, handoff_directory)
-        visible = model_visible_classroom(self.classroom_package)
-        attachment = dict(attachment)
-        attachment["dipole_classroom"] = visible
-        attachment["attachment_hash"] = digest(
-            {k: v for k, v in attachment.items() if k != "attachment_hash"}
-        )
-        self._retain("dipole-classroom-source.json", self.classroom_package["source"])
-        self._retain(
-            "dipole-classroom-pre-message.json", self.classroom_package["pre_message"]
-        )
-        self._retain("dipole-classroom-model-visible.json", visible)
-        return attachment
+    prepare() is inherited: the base classroom adapter retains the source snapshot and the
+    teacher key in the host-owned audit directory, not the principal directory.
+    """
 
     def _recover_with_classroom(
         self, request_id, attachment, *, dispatch_followup
@@ -422,7 +386,7 @@ class HardenedDipoleClassroomPrincipalAdapter(DipoleClassroomPrincipalAdapter):
             self.classroom_package, initial_response
         )
         self._retain("dipole-classroom-teachback.json", teachback)
-        self._retain("dipole-classroom-post-grade.json", grade)
+        self._retain_audit("dipole-classroom-post-grade.json", grade)
 
         correction = bind_hardened_resolution_requirement(
             build_hardened_correction_request(

@@ -81,7 +81,7 @@ def test_full_request_plan_is_saved_before_coordinator_or_critic_call(tmp_path,m
     # bound to this exact request id, so the base composition test binds a real one.
     from research.kalshi.frankie_boss.dipole_classroom import prepare_cycle
     from test_dipole_classroom_session import _teacher, HEX_B
-    classroom=prepare_cycle(_teacher(),request_id='request-cycle-00',cycle_index=0,source_hash=HEX_B,as_of=2_000_000,through_cursor=6)
+    classroom=prepare_cycle(_teacher(),request_id='request-cycle-00',cycle_index=0,cycle_count=19,source_hash=HEX_B,as_of=2_000_000,through_cursor=6)
     runtime=execution_module.SundayRuntime(context=None,decoder=None,optimizer=None,classroom_package=classroom,
         checkpoint=SimpleNamespace(checkpoint_hash='1'*64),expected_checkpoint_hash='1'*64,
         development_identity={},refresh_policy=None,input_hash='d'*64,expected_native_hash='e'*64,

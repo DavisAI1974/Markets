@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Mapping
 
 from .c15_normalizer import COLUMNS
-from .dipole_classroom import ACK_SCHEMA, GRADE_SCHEMA, MESSAGE_SCHEMA, PAIR_COUNT, TEACHBACK_SCHEMA
+from .dipole_classroom import ACK_SCHEMA, GRADE_SCHEMA, MESSAGE_SCHEMA, PAIR_COUNT, PRIOR_CORRECTION_SCHEMA, TEACHBACK_SCHEMA
 
 
 def _line(value):
@@ -22,8 +22,11 @@ def render_pre_message(message: Mapping) -> str:
     parts = [f"# Dipole teacher — cycle {message['cycle_index']:02d}","",f"Mode: **{message['mode']}**","",message["teacher_opening"],""]
     prior=message.get("prior_cycle_correction")
     if prior is not None:
-        parts += ["## Correction carried from the preceding cycle","",prior["teacher_closing"],""]
-        for grade in prior["component_grades"]:parts += [f"- **{grade['name']}** — {grade['explanation']}"]
+        # Only the correction SUMMARY may be carried (identifiers, count, mastery); a full prior
+        # grade here would print the previous answer key into the model-visible record.
+        if prior.get("schema")!=PRIOR_CORRECTION_SCHEMA:raise ValueError("pre-message may carry only a prior-correction summary")
+        parts += ["## Correction carried from the preceding cycle","",prior["guidance"],"",
+            f"Prior-cycle mastery: `{prior['prior_cycle_mastered']}`",f"Prior corrections: `{prior['correction_count']}`"]
         if prior["correction_ids"]:
             parts += ["","Corrections that had to be resolved:"]+[f"- `{item}`" for item in prior["correction_ids"]]
         parts.append("")

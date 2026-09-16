@@ -47,7 +47,7 @@ def _teacher():
 
 
 def _package():
-    return prepare_cycle(_teacher(),request_id='run-cycle-00',cycle_index=0,source_hash=HEX_B,
+    return prepare_cycle(_teacher(),request_id='run-cycle-00',cycle_index=0,cycle_count=19,source_hash=HEX_B,
         as_of=2_000_000,through_cursor=6)
 
 
