@@ -1,0 +1,1 @@
+The temporary staging files under `sunday_20260915_package` are not authoritative. The authoritative package remains at ccode commit `dd37bfa3b300d100f396adf567871419abec06dc` until an exact Git tree graft is completed. Do not use the staging package for restoration or launch.
