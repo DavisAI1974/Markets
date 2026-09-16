@@ -39,3 +39,13 @@ def test_resource_probe_returns_only_nonnegative_scalar_memory_and_host_facts():
                  'system_memory_total_bytes','system_memory_available_bytes'):
         if name in host:
             assert type(host[name]) is int and host[name]>=0
+
+
+def test_memory_snapshot_reports_process_fields_on_this_host():
+    """Windows lost every process field when the pseudo-handle was untyped; both platforms must report RSS."""
+    import os
+    from runtime_resource_probe import memory_snapshot
+    snapshot = memory_snapshot()
+    for name in ('process_rss_bytes', 'process_peak_rss_bytes', 'system_memory_total_bytes'):
+        assert type(snapshot.get(name)) is int and snapshot[name] > 0, (name, snapshot)
+    assert snapshot['process_peak_rss_bytes'] >= snapshot['process_rss_bytes'] or os.name != 'nt'

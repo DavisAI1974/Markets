@@ -1,0 +1,9 @@
+{
+  "addendum_files": 1,
+  "bulk_files": 27,
+  "conflicting_hashes": [],
+  "hash_complete": 27,
+  "missing_hashes": [],
+  "passed": true,
+  "schema": "FRANKIE_SUNDAY_RESTORATION_HASH_AUDIT_V2"
+}

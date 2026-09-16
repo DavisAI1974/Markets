@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "bytes": 11700711424,
+      "closed": true,
+      "mtime_ns": 1789469104000000000,
+      "path": "E:\\Codex\\Frankie-BOSS-20260915\\source-recovery-resume-20260915\\source.sqlite",
+      "sha256": "181467d12a3ea289e67141be2f73e2c5ec068661c5c66c75c51eb30a2787dd6a",
+      "sidecars_absent": true,
+      "verified_full_reads": 2
+    }
+  ],
+  "generated_unix_ns": 1789518917388764600,
+  "generator_pid": 64076,
+  "manifest_configuration_sha256": "a5eef9157130a596da4d5b62e9be2a268f95a561987b59481de4642f33b29f38",
+  "manifest_content_sha256": "c8b2e0f5d4a7ef26844dccd5819f82bd5141c0b05ef1e60c6c6e52e69f25cf41",
+  "schema": "FRANKIE_SUNDAY_BULK_HASH_ADDENDUM_V1"
+}

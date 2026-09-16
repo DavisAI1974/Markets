@@ -48,9 +48,15 @@ def _windows_memory():
                 ('PagefileUsage', ctypes.c_size_t), ('PeakPagefileUsage', ctypes.c_size_t),
                 ('PrivateUsage', ctypes.c_size_t)]
         counters = PROCESS_MEMORY_COUNTERS_EX(); counters.cb = ctypes.sizeof(counters)
-        handle = ctypes.windll.kernel32.GetCurrentProcess()
+        kernel32, psapi = ctypes.windll.kernel32, ctypes.windll.psapi
+        # GetCurrentProcess returns the pseudo-handle (HANDLE)-1. Left untyped, ctypes hands it
+        # back as a 32-bit int and GetProcessMemoryInfo rejects it, so every process field was
+        # silently absent on 64-bit Windows (measured 2026-09-15: only the two system fields came
+        # back). Type the handle and the call.
+        kernel32.GetCurrentProcess.restype = ctypes.c_void_p
+        psapi.GetProcessMemoryInfo.argtypes = [ctypes.c_void_p, ctypes.POINTER(PROCESS_MEMORY_COUNTERS_EX), ctypes.c_ulong]
         process = {}
-        if ctypes.windll.psapi.GetProcessMemoryInfo(handle, ctypes.byref(counters), counters.cb):
+        if psapi.GetProcessMemoryInfo(kernel32.GetCurrentProcess(), ctypes.byref(counters), counters.cb):
             process = dict(process_rss_bytes=int(counters.WorkingSetSize),
                 process_peak_rss_bytes=int(counters.PeakWorkingSetSize),
                 process_private_bytes=int(counters.PrivateUsage))
