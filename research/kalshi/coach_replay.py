@@ -108,8 +108,91 @@ def selftest() -> int:
     return 0
 
 
+# ---------------------------------------------------------------------------------------------------
+# S97 EXTENSION: BLOCK replay of the walked winter groups (G7-G10) off the committed forecast records.
+#
+# Object traded = ONE NG futures contract, DAY SESSION ONLY: enter at the session open, exit at the last
+# 2h grid mark strictly BEFORE the 14:30 ET daily settle (k=SETTLE_EXIT_K ~ 14:00 ET). Side = sign of the
+# playbook's guessed net for that day. A session never spans a contract roll, so the session cell is
+# roll-clean BY CONSTRUCTION. The OVERNIGHT-HOLD cell (prior forecast-day close -> this day's exit) DOES
+# span rolls and weekends; every roll-spanning hold event is VOIDED, named, not netted.
+#
+# FEES, per contract round-trip, both reported, neither hidden:
+#   MAKER  $5.00  = commission + exchange/clearing/NFA only; assumes a RESTING limit fills at the open
+#                   mark and at the exit mark. FILL RISK IS REAL AND UNMODELLED - see the writeup.
+#   TAKER  $25.00 = the same $5.00 plus crossing a 1-tick (0.001 = $10) bid/ask on entry AND exit.
+# ---------------------------------------------------------------------------------------------------
+RENDERS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "renders", "ng_refine_s95")
+FEE_MAKER = 5.0
+FEE_TAKER = 25.0
+SETTLE_EXIT_K = 10          # 2h grid index ~ session_open + 20h ~ 14:00 ET; strictly before the 14:30 settle
+
+
+def _load_block(tag: str, variant: str) -> tuple[dict, dict]:
+    suf = "_refined" if variant == "refined" else ""
+    score = json.load(open(os.path.join(RENDERS, f"{tag}{suf}_score.json")))
+    rt = json.load(open(os.path.join(RENDERS, f"{tag}_rt.json")))          # RT = REAL prices, rolls listed
+    return score, rt
+
+
+def replay_block(tag: str, variant: str = "blind") -> dict:
+    """Per-event net-of-fee replay of one walked block. Returns per-event rows; NO pooled verdict."""
+    score, rt = _load_block(tag, variant)
+    rt_by_date = {d["date"]: d for d in rt["days"]}
+    rt_dates = [d["date"] for d in rt["days"]]
+    roll_dates = {r["date"]: r["offset"] for r in rt.get("rolls", [])}
+
+    events, prev_fc_date = [], None
+    for g in score["days"]:
+        d = g["date"]
+        r = rt_by_date.get(d)
+        if r is None:
+            continue
+        curve = {k: v for k, v in enumerate(x[1] for x in r["curve_2h"])}
+        exit_cum = float(curve.get(SETTLE_EXIT_K, r["net_usd"]))     # settle-excluded exit
+        close_cum = float(r["net_usd"])                              # secondary, touches the settle print
+        side = 0 if not g.get("guess_net_usd") else (1 if g["guess_net_usd"] > 0 else -1)
+
+        # --- overnight-hold cell: does the span from the prior FORECAST day's close cross a roll? ---
+        span_rolls = []
+        if prev_fc_date is not None:
+            i0, i1 = rt_dates.index(prev_fc_date), rt_dates.index(d)
+            span_rolls = [x for x in rt_dates[i0 + 1:i1 + 1] if x in roll_dates]
+        hold_gross = None
+        if prev_fc_date is not None and side != 0:
+            # prior forecast-day close -> this day's settle-excluded exit, through every intervening session
+            i0, i1 = rt_dates.index(prev_fc_date), rt_dates.index(d)
+            bridge = sum(rt_by_date[x]["overnight_gap_usd"] + rt_by_date[x]["net_usd"] for x in rt_dates[i0 + 1:i1])
+            hold_gross = side * (bridge + rt_by_date[d]["overnight_gap_usd"] + exit_cum)
+
+        ev = {
+            "date": d, "dow": g.get("dow"), "archetype": g.get("archetype"),
+            "guess_net_usd": g.get("guess_net_usd"), "actual_net_usd": g.get("actual_net_usd"),
+            "side": {1: "long", -1: "short", 0: "flat"}[side],
+            "exit_cum_usd": exit_cum, "close_cum_usd": close_cum,
+            "session_gross": None if side == 0 else side * exit_cum,
+            "session_gross_at_close": None if side == 0 else side * close_cum,
+            "hold_gross": hold_gross,
+            "roll_void": bool(span_rolls), "span_rolls": span_rolls,
+        }
+        if side != 0:
+            ev["session_maker"] = round(ev["session_gross"] - FEE_MAKER, 1)
+            ev["session_taker"] = round(ev["session_gross"] - FEE_TAKER, 1)
+            ev["dir_ok"] = ev["session_gross"] > 0
+            if hold_gross is not None and not span_rolls:
+                ev["hold_maker"] = round(hold_gross - FEE_MAKER, 1)
+                ev["hold_taker"] = round(hold_gross - FEE_TAKER, 1)
+        events.append(ev)
+        prev_fc_date = d
+    return {"tag": tag, "variant": variant, "brain_version": score.get("brain_version"),
+            "rolls": rt.get("rolls", []), "events": events}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Replay the ng_brain playbook on NG days (canary-side, indicative).")
+    ap.add_argument("--blocks", help="comma-separated block tags, e.g. g7,g8,g9,g10 (S97 block replay)")
+    ap.add_argument("--variant", default="blind", choices=["blind", "refined"])
+    ap.add_argument("--json-out", help="write the per-event rows to this path")
     ap.add_argument("--days", help="comma-separated YYYYMMDD")
     ap.add_argument("--source", default="s3", choices=["s3", "local"])
     ap.add_argument("--brain", default=BRAIN)
@@ -117,6 +200,24 @@ def main() -> int:
     a = ap.parse_args()
     if a.selftest:
         return selftest()
+    if a.blocks:
+        out = []
+        for tag in a.blocks.split(","):
+            b = replay_block(tag, a.variant)
+            out.append(b)
+            print(f"\n=== {tag.upper()} [{a.variant}] brain={b['brain_version']} rolls={b['rolls']} ===")
+            for e in b["events"]:
+                if e["side"] == "flat":
+                    print(f"  {e['date']} {e['dow']:<3} STAND-DOWN (guess flat)  actual_net={e['actual_net_usd']}")
+                    continue
+                hv = "VOID(roll)" if e["roll_void"] else (
+                    f"{e.get('hold_maker'):+.0f}/{e.get('hold_taker'):+.0f}" if e.get("hold_maker") is not None else "n/a")
+                print(f"  {e['date']} {e['dow']:<3} {e['side']:<5} gross{e['session_gross']:+7.0f} "
+                      f"maker{e['session_maker']:+7.0f} taker{e['session_taker']:+7.0f} | hold {hv:<14} "
+                      f"| {str(e['archetype'])[:44]}")
+        if a.json_out:
+            json.dump(out, open(a.json_out, "w"), indent=1)
+        return 0
     if not a.days:
         ap.error("need --days or --selftest")
     brain = json.load(open(a.brain))

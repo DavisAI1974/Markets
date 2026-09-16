@@ -1,0 +1,149 @@
+{
+ "meta": {
+  "proposes": "s104.0",
+  "source_docs": ["S109_MERGE_PROPOSAL_G22.md (P1/P2/P3 play items)", "S110_MERGE_ADDENDUM_G22.md (A1-A9)"],
+  "adjudication_go": "Greg S110: 'run with your plan for proposals and fixes for platform' - recorded in DECISIONS.md D18 family; protocol: additive amendments only, incumbents byte-identical, backup + version bump",
+  "merge_rule": "PROPOSAL + adjudication (D8). Every amendment ADDS a dated key; no pre-existing key is rewritten. Statuses honest (PROPOSED unless spanning-group evidence says PROVISIONAL). Attribution fence: the A11 data repairs changed inputs - no G23 improvement banks as play evidence."
+ },
+ "amendments_to_incumbents": [
+  {
+   "play_id": "magnitude.weekend_gap_delivery",
+   "add_field": "summer_scope_retraction_s110",
+   "value": "S109 P3, adjudicated S110: the FRESH arm (+1500..+2500) is WINTER-measured with no summer instance, and G22 supplies an n=1 summer REFUTATION (0629: driver arrived exactly as forecast - CDD +4.7 realized 14.8 vs forecast 14.815 - and the gap paid +50 against a rescaled +350..+800 call; session -1,160). Scope the fresh arm to winter explicitly. No summer band is proposed - n=1 licenses a scope restriction, not a number. Summer weekend gaps emit via boundary.weekend_gap_wide_band_emission."
+  },
+  {
+   "play_id": "flow.resting_program_inverts_aggressor_tilt",
+   "add_field": "expiry_day_extension_s110",
+   "value": "A4 (E, n=2 spanning): the trigger set gains is_expiry_day on the ROLL-DESTINATION leg - the largest scheduled program in the NG calendar was the play's missing trigger. Instances: G21 0608 (resting/inverted form), G22 0626 (aggressor/saturated form: big prints 0.783 size-weighted on 210 while session_b_share_two_sided sat 0.509->0.504 and the residual tape net-sold). CONSEQUENCE GUARD: on program days big-print instruments (the 0.547 bar, price_free_absorption_proxy, handoff confirm/refute limbs) lose authority - read the RESIDUAL (ex-program) tape. Control: 0625 (opex+EIA, also scheduled-flow) shows none of the fingerprints."
+  },
+  {
+   "play_id": "weekend.carry_realization_flip",
+   "add_field": "scope_split_s110",
+   "value": "A6 (A, n=2 vs n=2): the REALIZING arm's exemplars are winter SHOT-class (unpriced driver lands). A slope-class crest (priced seasonal ramp visible in the ladder) is out of scope - applying the arm there produced the 0703 blind miss and 0629's gap call. Test: is the driver IN the forward ladder at the exit (priced branch) or absent from it (shot branch)? Shot -> arm applies; slope -> hill grammar applies (a hill slopes, it does not gap)."
+  },
+  {
+   "play_id": "daytype.thin_session_range_invariance",
+   "add_field": "participant_taxonomy_s110",
+   "value": "A7 (A; sqrt(participation) survives its second consecutive forward pass - net 410 vs 453 predicted on 0703): the repair clause's 'deadline-bound participant' now carries a taxonomy: VOLUME-BOUND programs (bcom/gsci roll, bidweek, expiry, opex) preserve RANGE (invariance holds); RISK-BOUND participants (holiday-eve weekend squaring/procurement) tilt SIGN without preserving range. A holiday-eve session can carry a risk-bound participant while all volume-bound flags read false."
+  }
+ ],
+ "new_plays_proposed": [
+  {
+   "id": "weather.absolute_hdd_bar_unevaluable_in_cdd_regime",
+   "status": "PROPOSED",
+   "trigger": "any play stating an ABSOLUTE HDD threshold, evaluated in a block whose realized or forecast regime is CDD-dominant (gw_cdd >> gw_hdd)",
+   "read": "an unreachable absolute HDD bar returns UNKNOWN - never a satisfied/refuted boolean. It must not default a selector to a direction (divergence_resolution 16.4 unreachable -> silent bearish default) and must not void a band (shoulder_weather_band_void 13.5 trivially satisfied -> weather band voided every summer day).",
+   "call": "treat the play limb as UNEVALUABLE; fall through to the CDD-side instruments (the ladder + burn gate)",
+   "requires": "the block's realized or forecast CDD/HDD regime (weather_forecast)",
+   "scope": "any play with an absolute HDD bar, in CDD regimes; the mirror (CDD bars in HDD regimes) is expected but unmeasured",
+   "evidence": "S109/G22: four independent HDD-keyed artifacts all degraded bearish-or-void in one CDD block; the blind's four down-calls-that-printed-up contributed -3,840 signed error of a -1,815 drift; B named the mechanism in its 0629 posterior BEFORE scoring",
+   "forward_evidence": "NONE yet - forward test = a winter block where the same bars evaluate normally (the play must be INERT outside CDD regimes)",
+   "falsifier": "a winter block where this play fires (it must not - inertness outside CDD regimes is the claim)",
+   "merged": "S110"
+  },
+  {
+   "id": "weekend.seam_delta_requires_level_difference",
+   "status": "PROPOSED",
+   "trigger": "any weekend or holiday seam (a boundary spanning >= 2 model cycles)",
+   "read": "run-delta channels baseline run-over-run, NOT session-over-session; across a multi-cycle seam the accumulation appears in no single delta and the channel is STRUCTURALLY ~ZERO. Difference the LEVELS (D0 vs the prior session's D0).",
+   "call": "seam weather reads use LEVEL differences only; run deltas are intra-week instruments",
+   "requires": "weather_forecast levels on both sides of the seam",
+   "scope": "all seams; deltas stay valid intra-week",
+   "evidence": "G22 0629: forecast_run_delta_cdd -0.219 and sunday_reopen d +0.096 against a +4.7 LEVEL add; mechanism verified on 0624 (level +2.205, field -0.011); E's 0626 grammar; B-0629 executed the level rule by hand and derived the sign pre-tape",
+   "forward_evidence": "n=2 channels x 2 instances in G22; B r2 adds close-at-the-slope n=3 spanning G21/G22",
+   "falsifier": "an intra-week day where the run delta and the level difference disagree (they should not - the claim is scoped to seams)",
+   "merged": "S110"
+  },
+  {
+   "id": "weekend.seam_sign_from_stability_ladder",
+   "status": "PROPOSED",
+   "trigger": "weekend seam with model_disagreement.stability serving multi-horizon seasonal-axis revision deltas (pre-reopen legit)",
+   "read": "a COHERENT multi-horizon add/cut on the season's demand axis (all reachable horizons revised the same way) owns the seam's SIGN. Positioning does not sign a seam (1/3); it is a sign-agnostic GAIN term: |gap|/sigma ran 1.2-2.0 at a <=5-pctile worsening book vs 0.08 at a normalized book.",
+   "call": "seam sign from the stability ladder's coherent revision; gain from positioning extremeness; NEVER a point gap - see boundary.weekend_gap_wide_band_emission",
+   "requires": "model_disagreement.stability multi-horizon deltas on the seasonal axis; cot pctile + WoW",
+   "scope": "weekend/holiday seams; measured on CDD-axis summer seams G21-G22",
+   "evidence": "3/3 measured seams: 0614 near-window cut -> -750; 0621 coherent add -> +1,210; 0628 largest add -> +50 (sign right, size inverted - see the wide-band play); reopen participation refuted in both directions (252 lots -> +1,210; 194-trade stub -> +50)",
+   "forward_evidence": "n=3 in one session's measurement, spanning G21/G22; forward test G23's two seams",
+   "falsifier": "a coherent multi-horizon add followed by a wrong-signed gap",
+   "caveats": "the channel's own label ('uncertainty conditioner') steered readers away - served-but-MISLABELED; label fix queued (A11.2)",
+   "merged": "S110"
+  },
+  {
+   "id": "boundary.weekend_gap_wide_band_emission",
+   "status": "PROPOSED",
+   "trigger": "any weekend/holiday gap forecast",
+   "read": "the weekend gap is NOT ownable as a POINT from current instruments (confirmed negative, measured twice in opposite directions: 0622 forecast +20 actual +1,210; 0629 forecast +480 actual +50). Add-size does not sort gap-size (inverted across 0621/0628). The SESSION read is a separate, sound instrument (0622 session err 120 while its gap missed by 1,190).",
+   "call": "emit the gap as SIGN (from weekend.seam_sign_from_stability_ladder) + WIDE BAND: ~0.5-1.0x sigma mid-book, 1.5-2.5x sigma at a <=5-pctile worsening extreme; SCORE GAP AND SESSION SEPARATELY; day-move p50 belongs at the slope-derived level (close-at-the-slope, n=3 G21/G22)",
+   "requires": "the stability ladder + cot; vol sigma (note n0 era basis)",
+   "scope": "all weekend/holiday seams until an instrument earns point authority",
+   "evidence": "B-0622 refine (the P3 question answered mechanically); high-gain seams round-trip intraday n=2 (0615 gave back 121%, 0622 46%)",
+   "forward_evidence": "n=2 misses opposite directions + n=3 sign ladder; forward test G23",
+   "falsifier": "a block where a pre-committed POINT gap call lands inside +-300 on both Mondays (would license point emission again)",
+   "merged": "S110"
+  },
+  {
+   "id": "weather.burn_conversion_gate",
+   "status": "PROPOSED",
+   "trigger": "any weather-slope directional lean in a CDD regime (and expected mirror in HDD once measured)",
+   "read": "the slope's TRANSMISSION to gas call runs through the burn residual: gas call = weather load - renewables - absorbable. A CDD add converts only if est_gas_burn_bcfd confirms (flat-to-up) and wind is not ramping against it. WIND IS A DAMPER, NEVER A SORTER (0630 printed up under a rising-wind slice). WEEKDAY-NORMALIZE burn comparisons (Sat/Sun rows collapse mechanically; Sat-over-Sat form survives). grid_stack staleness ~D+2: a Monday reads Saturday - treat as the freshest SAME-DAY-CLASS comparison, never same-day truth.",
+   "call": "burn-confirmed slope lean = full band; wind-on/burn-down = suppress the up-lean toward the constraint floor (-150..-200 class); the gate reads BOTH WAYS (an up-lean must check wind is not contradicting; a down-lean must check burn is not ramping)",
+   "requires": "grid_stack (est_gas_burn_bcfd, wind_mwh, solar_mwh) decision-legit; weather_forecast CDD ladder",
+   "scope": "CDD-regime slope reads; HDD mirror unmeasured; per-BA never pooled as a conclusion (US48 carried as its own row)",
+   "evidence": "BOTH polarities inside G22: 0629 wind +62%/burn -4.2 suppressed a realized +4.8 CDD add (-1,160); 0624 wind -22%/burn +6.3 delivered (+800); 0630 (+780 into 40.2), 0703 (+410 at 44.8 block-max); 0625/0702 confirming mirrors (D). E's two-limb flip test executed both ways (0629 HOLD DOWN vindicated; 0703 PASS UP delivered)",
+   "forward_evidence": "6 in-block instances, 2 polarities, one block - forward test G23 (attribution fence: the ladder repair changed inputs)",
+   "falsifier": "a burn-confirmed CDD add that fails to deliver, or a wind-on day that delivers gross-CDD anyway, in G23+",
+   "merged": "S110"
+  },
+  {
+   "id": "daytype.eia_window_reopen_to_print",
+   "status": "PROPOSED",
+   "trigger": "EIA storage print day",
+   "read": "the pre-print window is REOPEN -> 10:30, not 08:00-10:30 (D's own blind falsifier was drawn too narrow and 'never fired' while the decomposition failed). On gate-fired days the chain's residual delivers OVERNIGHT and the post-print window belongs to the counter side. Catalyst up-size applies to RANGE, not NET, on exhaustion-class prints (0702: 1,380 travel, 0 net).",
+   "call": "window assignment per above; timing claims falsify against reopen->print mass, not a sub-window",
+   "requires": "phase/timing off the tape; the print calendar",
+   "scope": "EIA Thursdays; n=4 spanning G17/G22",
+   "evidence": "0625: 44.4% of variation pre-10:30, high at 09:00; 0702: overnight -480 delivery, print = stop-run into the absorber (-1.4 BELOW consensus flushed to a marginal low then reclaimed); G17 instances per D's lens record",
+   "forward_evidence": "n=4 spanning; G20's decomposition lesson (2,090 credited from day nets, timing refuted 1-of-4) is the cautionary sibling",
+   "falsifier": "a print day whose pre-10:30 share is trivial while the gate fired (would restore the narrow window)",
+   "merged": "S110"
+  },
+  {
+   "id": "magnitude.rally_quality_giveback_rung",
+   "status": "PROPOSED",
+   "trigger": "the session after a D-1 up-leg",
+   "read": "D-1 rally QUALITY sorts next-day magnitude class: an ALIGNED rally (flow with price) -> hold class; a CONVICTION-NEGATIVE pop (rise on net-sell / absorption) -> 50-70% give-back next session. Covering-financed up-legs get full credit to the REVERSAL-RECLAIM and are DENIED post-reclaim extension absent an aligned up phase - resolves the absorption_is_reversal full-size-vs-round-trip tension mechanically.",
+   "call": "size the next session's counter-leg at 50-70% of a conviction-negative pop; cap covering days at the reclaim line",
+   "requires": "phase flow-vs-price conviction on D-1 (flow_read fields)",
+   "scope": "spanning g19 class + G22 (0624->0625 vs 0630->0701; A's r2 used the reclaim-cap on 0703 and the close landed under the line)",
+   "evidence": "0630 pop (+790 on -4,266 absorbed) -> 0701 gave back 63%; 0624 aligned break (+790 on aligned phases) -> 0625 held (-60); D-0702's covering grammar; A-r2's two-sided derivation triangulating +450 vs actual +410",
+   "forward_evidence": "n>=3 instances spanning g19/g22",
+   "falsifier": "a conviction-negative pop followed by a held extension (no give-back) with no new driver",
+   "merged": "S110"
+  },
+  {
+   "id": "handoff.residual_tilt_field",
+   "status": "PROPOSED",
+   "trigger": "any day whose D-1 carried a scheduled program (expiry, bcom/gsci roll, opex)",
+   "read": "the Monday/next-day gate consumes the PROGRAM-DECONTAMINATED D-1 tilt - never the raw aggregate (0629's +871 aggregate hid a net-selling residual once the roll cohort's >=+4,800 was struck).",
+   "call": "carry residual_tilt as an explicit handoff field on program days; the receiving specialist reads it in place of session_signed_flow's sign",
+   "requires": "big-print cohort decomposition of the D-1 tape (flow_read)",
+   "scope": "program days; n=2 (G21 0616, G22 0629)",
+   "evidence": "B-0629: the tilt gate fed +871 gross and weighted the self-derived residual 0.10 - the sign correction in r1 was the blind's own rule fed a decontaminated input",
+   "forward_evidence": "n=2 spanning",
+   "falsifier": "a program day whose residual tilt misleads while the gross aggregate reads true",
+   "merged": "S110"
+  }
+ ],
+ "data_plane_items_NOT_PLAYS": [
+  "A11.1 CDD-ladder artifact repair: DONE for g23 (state_repair_s110b, identity-proven graft); g22 held until refine r2 completes",
+  "A11.2 model_disagreement.stability label fix (served-but-mislabeled): queued with the g22 graft batch + feed source at next data-plane session",
+  "A11.3 session_open_et/close_et on shortened sessions: build at next staging",
+  "A12 brain status-taxonomy migration: PREPARED NOT EXECUTED - mutates incumbent status fields, so it runs as its own explicitly-scoped migration with a printed before/after diff, outside this additive merge",
+  "A10 state_auditor.md gains 'read-at-the-wrong-level' (gross vs residual) + 'served-but-mislabeled' as known kinds: role-file edit, separate commit under change control"
+ ],
+ "refuted_DO_NOT_BANK": [
+  "the 0629 blind mechanism (weekend gap from a slope step) - refuted, carried as the scope retraction on magnitude.weekend_gap_delivery",
+  "reopen-participation-predicts-gap-size - refuted in both directions (0622, 0629)",
+  "wind-as-day-sign-sorter - refuted in-block (0630 up under rising wind); merged only as a DAMPER inside the burn gate"
+ ]
+}

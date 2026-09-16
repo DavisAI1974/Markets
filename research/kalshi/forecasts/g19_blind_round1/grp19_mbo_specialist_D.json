@@ -1,0 +1,97 @@
+{
+  "specialist": "D",
+  "lens": "EIA-Thursday storage print (10:30 ET catalyst; pre-print positioning, delivery, post-delivery digestion)",
+  "group": "g19",
+  "brain_version": "s102.9",
+  "round": 1,
+  "days_owned": ["20260514", "20260521"],
+  "doctrine_note": "BLIND PASS r1, price curve masked; only market-force input is the price-masked decision-state + FULL never-masked tape_conditions flow read. EIA lens on a covering-rally block over a worsening crowded MM short (managed_money_net -107,489, 1y pctile 2.83, chg_wow -10,244 = still adding). Both prints are telegraphed/in-line (05-14 delivers 85 vs 85 consensus = 0 surprise; 05-21 consensus +95 Bcf, larger injection) so surprise SIGN gives no directional fuel - per lens, DELIVERY-vs-ABSORPTION in the first post-print phases sorts direction, not the surprise. Direction is set by the positioning unwind: shorts still pressing into the 05-14 print (coherent sell-lean D-1), covering in force by 05-21 (size-weighted buy flow accelerating). Book layer STANDS DOWN (no book_trustworthy verdict exposed under the one-shot mask; vol_regime value=None, squeeze_watch masked) - trade-flow + L1 resting-lean only. Pre-print over-extension gate (S105) applied per day. Magnitudes derived from shoulder-season low-vol EIA-day distribution + phase flow, honestly small; direction from the crowded-short covering mechanism.",
+  "cross_cutting_mbo_finding": "The g19 EIA-day tape reads the crowded-short unwind directly, and the covering is a SIZE-WEIGHTED flow event invisible to count-based bid share. 05-14 D-1 tape (05-13) is coherent sell-lean - signed_flow -2763, phases [9,-1979,-793] (selling accelerating), session_b 0.444 ~= big_print_b 0.458 (both <0.5, agree) - shorts still pressing into the first print. 05-21 D-1 tape (05-20) FLIPS to accelerating aggressive BUY - signed_flow +1892, phases [-225,+614,+1503] (buy building into the print) - yet count-based session_b stays sell-lean at 0.425 (big_print_b 0.476). That divergence (few large lifters vs many small sellers) is the covering signature: the short-covering shows in size-weighted signed flow while count-share still reads sell. Because both prints are in-line/telegraphed and the recent builds run tighter than the 5yr norm (chg_vs_5yr_chg -19.8), the print delivers no surprise fuel - so the in-line 05-14 caps the short press (absorption, damped down) and the 05-21 covering delivers up, with the larger-injection print + over-extension damping it two-sided. General mechanism: on a crowded-short block, an in-line EIA print sorts by delivery/absorption, and the covering bid is a size-weighted lift the count-based b_share misses (+n).",
+  "days": [
+    {
+      "date": "20260514",
+      "dow": "Thu",
+      "day_class": "EIA-Thursday",
+      "blind_direction": "two_sided_down",
+      "blind_net_usd": -180,
+      "posterior_direction_by_horizon": {
+        "reopen": "flat",
+        "pre_print": "down",
+        "print_1030": "absorption_turn",
+        "midday": "flat",
+        "close": "down"
+      },
+      "expected_magnitude_usd": -150,
+      "expected_magnitude_band_usd": [-350, 120],
+      "overnight_gap_usd": -20,
+      "onset_time_et": "08:00",
+      "turn_time_et": "10:30",
+      "trend_vs_chop": "chop",
+      "continuation_vs_reversal": "reversal",
+      "path_p50_curve": [[20.0, 0], [22.0, -30], [0.0, -70], [2.0, -120], [4.0, -170], [6.0, -230], [8.0, -280], [10.0, -300], [10.5, -255], [12.0, -200], [14.0, -170], [16.0, -150]],
+      "confidence": 0.55,
+      "weight_assigned": {"blind": 0.55, "causal_mbo": 0.45},
+      "evidence_used": [
+        "COT managed_money_net -107,489, 1y pctile 2.83, chg_wow -10,244 (extreme crowded short, worsening) = covering-rally structural context",
+        "D-1 (05-13) tape: signed_flow -2763, phases [9,-1979,-793] selling accelerating, session_b 0.444 ~= big_print_b 0.458 = COHERENT sell-lean into the print",
+        "storage_consensus next_print +85 Bcf for 05-08; realized print delivered 85 = IN-LINE (0 surprise) = no fresh directional fuel",
+        "chg_vs_5yr_chg -19.8 (weekly builds tighter than 5yr norm) + prior print -11 bullish miss (63 vs 74) = shorts offside on a tighter-than-level market",
+        "weather mod_cool, vs_normal +1.552, near-term run_delta -0.239 = mild bullish demand undercut to the down press",
+        "L1 quote_bid_share 0.504 (balanced resting lean) - no resting sell wall to extend the down leg"
+      ],
+      "evidence_rejected": [
+        "storage level L48 2205 vs_5yr +99.6 (bearish backdrop) as a fresh catalyst - it is priced and the print is in-line, not a surprise",
+        "raw phase-2/3 sell flow as a full continuation-down sign - it is the short press that absorbs at the in-line print"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer: no book_trustworthy verdict exposed under the one-shot mask (vol_regime value=None, squeeze_watch masked, no execution_authority/conviction floor) -> book read STANDS DOWN, trade-flow + L1 resting-lean only",
+        "dip_imb_level not surfaced as a decision-legit field this window - not used"
+      ],
+      "selection_reason": "EIA-Thursday print day; the EIA lens owns the 10:30 catalyst and the pre-print/delivery/post-delivery digestion.",
+      "mbo_verdict": "Pre-print sell drift (coherent bearish D-1, low ~-300 into 10:00). Over-extension gate: block is young (first print), D-1 flow COHERENT sell-lean, so a chain-sided down sign is earned - BUT the print delivers IN-LINE (85 vs 85), no surprise fuel, and the crowded short (2.83 pctile) cannot press further. Delivery-vs-absorption: the sell attempt is ABSORBED at the print (buyers hold, covering onset) -> the down leg is damped and round-trips partway. Net small down ~-150, honest for a shoulder-season in-line print. Weight to blind (0.55) because the in-line print gives the causal MBO layer low conviction. This is the transition day - shorts still press but absorption begins the covering the 05-21 tape confirms."
+    },
+    {
+      "date": "20260521",
+      "dow": "Thu",
+      "day_class": "EIA-Thursday",
+      "blind_direction": "two_sided_up",
+      "blind_net_usd": 250,
+      "posterior_direction_by_horizon": {
+        "reopen": "up",
+        "pre_print": "up",
+        "print_1030": "pop_fade",
+        "midday": "up",
+        "close": "up"
+      },
+      "expected_magnitude_usd": 280,
+      "expected_magnitude_band_usd": [80, 520],
+      "overnight_gap_usd": 40,
+      "onset_time_et": "20:00",
+      "turn_time_et": "10:30",
+      "trend_vs_chop": "trend",
+      "continuation_vs_reversal": "continuation",
+      "path_p50_curve": [[20.0, 0], [22.0, 40], [0.0, 90], [2.0, 140], [4.0, 190], [6.0, 240], [8.0, 290], [10.0, 340], [10.5, 380], [12.0, 300], [14.0, 290], [16.0, 280]],
+      "confidence": 0.6,
+      "weight_assigned": {"blind": 0.4, "causal_mbo": 0.6},
+      "evidence_used": [
+        "D-1 (05-20) tape: signed_flow +1892, phases [-225,+614,+1503] = aggressive BUY accelerating into the print (covering in force)",
+        "size-vs-count divergence: session_b 0.425 / big_print_b 0.476 (count sell-lean) against strongly positive size-weighted signed_flow = few large lifters (shorts covering) vs many small sellers = covering signature",
+        "COT crowded short (2.83 pctile) still largely intact = the squeeze has room; post-seam (05-20) fresh leg resumes the covering",
+        "storage_consensus next_print +95 Bcf (larger injection = bearish print) but telegraphed; prior 05-14 print in-line = no momentum for shorts to re-press",
+        "weather shoulder, warming run_delta (d_gw_hdd -0.632/-0.98/-0.924) = bearish demand undercut that DAMPS but does not reverse the positioning-driven covering"
+      ],
+      "evidence_rejected": [
+        "count-based session_b 0.425 as a sell-lean sign - it is dominated by small sellers; the size-weighted signed_flow (+1892, accelerating) is the true aggressor read",
+        "consensus +95 larger injection as a directional down catalyst - it is priced/telegraphed and meets covering demand, not fresh short fuel",
+        "full-band up chain-sided sizing - D-1 flow is incoherent (count vs size disagree) and the covering chain is extended post-seam, so gate caps to two-sided-up damped"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer: no book_trustworthy verdict under the one-shot mask -> book STANDS DOWN, trade-flow + L1 lean only",
+        "over-extension gate (S105) tell fired (incoherent D-1: count b_share vs size-weighted signed_flow disagree; covering chain extended into print) -> two-sided-up / damped, NOT full band"
+      ],
+      "selection_reason": "EIA-Thursday print day, post-seam (05-20) fresh leg; EIA lens owns the 10:30 catalyst and the covering-rally delivery read.",
+      "mbo_verdict": "Covering carries from the 05-20 reopen (accelerating D-1 buy flow, +1892) up through the pre-print into the 10:30 print (peak ~+380). Over-extension gate: D-1 flow is incoherent (count sell-lean vs size buy-lean) and the covering chain is extended, so this is NOT a full-band up - it is two-sided-up, damped. The larger-injection in-line-ish print (95 consensus, bearish backdrop) tests the covering: pop-and-partial-fade at the print, but the intact crowded short and the size-weighted lift resume the bid -> close up ~+280. Direction UP is the positioning covering, not the print surprise (surprise sign gives no directional fuel). Weight to causal MBO (0.6) because the size-weighted flow signature is the driver; magnitude kept honest for shoulder-season low vol with a bearish weather undercut."
+    }
+  ],
+  "summary": "g19 EIA days both fall on telegraphed/in-line prints (05-14 delivers 85=85 = 0 surprise; 05-21 +95 consensus larger injection), so surprise sign gives no directional fuel and delivery-vs-absorption sorts direction. The block is a covering rally over a worsening crowded MM short (2.83 pctile). 05-14 = transition: coherent sell-lean D-1 (shorts pressing) meets an in-line print that absorbs -> damped down, expected -150 (two_sided_down, reversal at the 10:30 print). 05-21 = covering in force: size-weighted buy flow accelerating into the print (signed +1892, count b_share still sell-lean = covering signature) -> up, expected +280 (two_sided_up, continuation, pop-fade at 10:30, damped by over-extension + bearish weather). Book layer stands down throughout (no trustworthy-book verdict under mask); trade-flow + L1 lean only."
+}

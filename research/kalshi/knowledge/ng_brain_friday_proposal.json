@@ -1,0 +1,82 @@
+{
+  "proposal": "Friday / weekend-seam exit-decomposition cleanup",
+  "author": "Specialist E (Friday/expiry/roll/weekend-positioning)",
+  "session": "S104",
+  "base_brain": "s102.4 (knowledge/ng_brain.json)",
+  "status": "PROVISIONAL - proposed plays/amendments only; incumbents NOT edited; forward_evidence NONE (G17+ is the forward test)",
+  "premise": "Greg: 'we missed Monday so bad because we missed Friday so bad.' Across G6-G16, blind Friday DIRECTION is ~50% (worst day-class) and 10 of 14 bad Mondays root to a mis-read Friday exit carried across the seam. The handoff passes a day-NET or the blind's directional LABEL; it must pass the EXIT-STATE decomposition. A Friday close = positioning component + fundamental-carry component, and the two decay on DIFFERENT clocks.",
+  "supporting_doc": "scratchpad/friday_cleanup_summary.md (per-Friday table + Fri->Sun->Mon cascade + handoff protocol)",
+  "do_not_edit": "ng_brain.json and all existing forecast/score files are untouched by this proposal.",
+
+  "proposed_plays": [
+    {
+      "id": "daytype.friday_exit_decomposition",
+      "target": "handoff_direction",
+      "trigger": "any Friday close going into a weekend seam (or the Good-Friday-dark Sunday that replaces it)",
+      "read": "decompose the close into POSITIONING vs FUNDAMENTAL-CARRY from: expiry/opex/index-roll calendar; last-hour price-dir vs last-hour signed-flow (aligned=momentum, divergent=covering/exhaustion); chain age + cum-from-anchor extremity; the driver's realization timing",
+      "call": "emit an EXIT-TYPE, and have the weekend consume the TYPE not the day-net: (1) CREST_TRIM_FADEABLE (stretched same-side chain + priced driver expiring by close) -> Mon continues the give-back; (2) POSITIONING_SPENT_FADE (futures expiry / opex pin / weekend squaring / index-roll LAST day; tell = price moves AGAINST last-hour flow) -> Mon fades the positioning half; (3) FUNDAMENTAL_CARRY_CONTINUE (unrealized weather/storage driver still AHEAD of Monday) -> Mon carries the side; (4) MOMENTUM_CARRY (dir AND flow aligned at the close) -> carry the side. Sub-rule: an index roll whose WINDOW is still open Monday is positioning-CARRY, not spent.",
+      "evidence": "POSITIONING_SPENT: 0327 (April expiry, +1150 covering with price-up-against-sell-flow absorb_session, -> Mon 0330 resumed pre-covering DOWN -650); 0213 (roll's last marked day, undersized -1400). ROLL-CARRY sub-rule: 0206 down (window open) -> 0209 carried down -830. FUNDAMENTAL_CARRY: 1128 (Black-Friday cold arriving +2340 -> Mon 1201 carried +910); 1121 (+910 -> 1124 held +90). MOMENTUM_CARRY missed by the default: 1107/1114 down-momentum -> 1110/1117 carried down. CREST_TRIM: 0410 fired clean -190. n>=2 spanning G8/G9/G12/G13/G15/G16.",
+      "status": "PROVISIONAL",
+      "confidence": 0.5,
+      "requires": "expiry/opex/roll calendar + chain state are open_time_only; the last-hour dir-vs-flow tell requires tape flow (MBO-measured only for G15 so far - see data_gap)",
+      "scope": "the OUTGOING weekend handoff verdict (exit_type + monday_bias); does not re-score the Friday itself",
+      "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
+      "caveats": "The blind's Friday 'range / roll-pressure DOWN' default is the single largest cascade source (1024, 1107, 0227, 0306): it fires a directional LABEL the weekend inherits. This play's structural fix is that Monday inherits the MEASURED exit-state, never the Friday label.",
+      "data_gap": "last-hour signed flow (field #3, the covering/exhaustion tell) is MBO-measured only for G15; for the rest of the record exit-type was inferred from archetype+curve-dir+calendar. Extending the flow measurement to all Friday closes is a DATA build."
+    },
+    {
+      "id": "weekend.carry_realization_flip",
+      "target": "direction",
+      "trigger": "a FUNDAMENTAL-CARRY Friday (unrealized weather/storage driver at the close) going into the weekend, evaluated at the Monday 07-10 ET catch-up window",
+      "read": "the driver's peak-realization day relative to Monday (from the forecast known at Friday close): AHEAD of Monday vs realizing Sat/Sun/Mon",
+      "call": "driver peak still AHEAD -> Monday CARRIES/continues the side. driver peak lands over the weekend (realizes Sat/Sun/Mon) -> Monday = SELL-THE-NEWS REVERSAL (the catch-up window fades the realized driver, it does not extend it). This is the mechanism that explains the worst Monday reversals that followed a CORRECT Friday direction.",
+      "evidence": "REALIZING->reverse (n=2 both spanning groups): 0220 (Friday extension into the cold weekend +600, correct; cold peak realized Sat-Mon -> Sun 0222 carried +1150 -> Mon 0223 REVERSED -1790); 0405 (cold-add realized over the Good-Friday extended weekend +400 -> Mon 0406 -470). AHEAD->carry (contrast): 1128 cold still arriving -> 1201 carried +910; 0111 cold shot Sunday still bleeding -> 0112 extend bounce.",
+      "status": "PROVISIONAL",
+      "confidence": 0.45,
+      "requires": "open_time_only (the forecast peak day is knowable at Friday close and again at the Monday catch-up)",
+      "scope": "Monday direction after a fundamental-carry Friday",
+      "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
+      "caveats": "Distinct from crest-trim: here the Friday DIRECTION was correct and CARRIED into Sunday; the reversal is the DRIVER realizing, not a Friday-close crest. The discriminator is realization TIMING, not chain stretch."
+    },
+    {
+      "id": "structure.friday_exhausted_extreme_giveback",
+      "target": "direction",
+      "trigger": "a Friday closing at an EXTREME cum-from-anchor or on a MATURE chain (age >= 4)",
+      "read": "cum-from-anchor extremity vs block range + chain age at the Friday close",
+      "call": "an extreme/blow-off Friday close is EXHAUSTED, not a continuation: the weekend is give-back-biased and Monday must NOT extend it. Size the weekend from the give-back class, not the ramp class.",
+      "evidence": "n>=3 spanning G9/G10/G12: 0130 blow-off +4990 -> 0201 give-back -7590 (Mon 0202 wrongly EXTENDED +1300, actual -4260); 1212 mature crest rolled over -1190 (Mon 1215 -1570); 0102 over-magnitude down -1250-guess/-700-actual = exhausting -> Mon 0105 mean-reverted up +270.",
+      "status": "PROVISIONAL",
+      "confidence": 0.45,
+      "requires": "open_time_only",
+      "scope": "the weekend + Monday direction/size after an extreme Friday close",
+      "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
+      "caveats": "Overlaps incumbent structure.post_parabolic_bleed and magnitude.crash_regime_bands; this is the FRIDAY-CLOSE-into-weekend instance of the same exhaustion physics, framed for the handoff."
+    }
+  ],
+
+  "proposed_amendments_incumbents_untouched": [
+    {
+      "target_play": "daytype.weekend_crest_friday (id 31)",
+      "amendment": "add a covering-spent vs fundamental-carry SUB-SPLIT the play currently lacks. The play only covers the CREST-TRIM case (stretched same-side chain, driver expiring). A Friday that is NOT a crest can still be POSITIONING-SPENT (expiry/opex covering -> Monday fade) or FUNDAMENTAL-CARRY (driver ahead -> Monday continue). The 0327 note already establishes the trigger-not-met discriminator; this generalizes it into an explicit three-way exit-type classifier (see daytype.friday_exit_decomposition).",
+      "reason": "the incumbent shapes the Friday CLOSE but does not tell the weekend HOW that close decays; the decomposition is the missing handoff verdict."
+    },
+    {
+      "target_play": "daytype.monday_weekend_gap (id 8)",
+      "amendment": "add an EXIT-STATE-INHERITANCE clause: Monday consumes the Friday exit_type + monday_bias (measured last-hour dir/flow, close-off-extreme, positioning-calendar, driver-realization), NOT the Friday day-net or directional label. The 07-10 ET catch-up window reprices driver_realization: a driver that realized over the weekend makes the catch-up a FADE (sell-the-news), not an extend.",
+      "reason": "the current R3 read (fade mature-extreme gap / extend fresh-turn / carry Friday side) is correct but keyed off the GAP; keying it off the Friday EXIT-STATE fixes the cascade cases (0223, 0202, 1201) where the gap sign alone mis-led Monday."
+    },
+    {
+      "target_doctrine": "doctrine_tier3.day_class_toolbags.a_weekend_toolbag",
+      "amendment": "record the handoff_out contract (9 fields: close_px, cum_from_anchor, chain_polarity, chain_age, last_hour_dir, last_hour_signed_flow->conviction, close_off_extreme_frac, positioning_calendar, driver_realization, exit_type, monday_bias, sunday_gap_owner) as the STATE the weekend toolbag consumes. Consistent with the bag's principle that only STATE reads survive the gap - this is the exact state the Friday exit must hand over.",
+      "reason": "the toolbag says only state survives the gap but does not enumerate the Friday-exit state fields; this closes that."
+    }
+  ],
+
+  "unexplained_or_still_missed": {
+    "fresh_shot_sunday_gap_magnitude": "0118 / 0125 / 0201 / 0308 gap SIZE stays irreducible (incumbent weekend_gap_delivery: needs Sat/Sun 00Z/12Z runs, a data build). These proposals address exit-type/direction, not fresh-shot gap size.",
+    "genuinely_not_friday_rooted": "0119 and 0126 Monday reversals are Sunday-fresh-shock-gap cases (catalyst consumed by the gap), correctly out of scope.",
+    "holiday_mondays": "0216 Presidents Day is a different day-class (defer to catch-up/holiday doctrine, 0216->0217).",
+    "partial_magnitude_gaps": "1031->1103, 1222, 0105 - the exit-type rule flags the exhaustion/dead-cat SIGN but does not yet SIZE the Monday bounce depth (band-position gap).",
+    "data_limitation": "the last-hour dir-vs-flow covering/exhaustion tell is proven live only where MBO ran (G15). All other exit-type calls are archetype+curve+calendar inferences pending the flow build."
+  }
+}

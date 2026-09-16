@@ -1,0 +1,366 @@
+{
+ "specialist": "B",
+ "lens": "monday_weekend_information_catchup",
+ "group": "g19",
+ "brain_version": "s103.1",
+ "round": 2,
+ "days_owned": [
+  "20260511",
+  "20260518"
+ ],
+ "doctrine_note": "REFINE ROUND 2 = the HE24->HE1 coordination pass. Starting point is my ROUND-1 posterior (grp19_mbo_specialist_B.json), not a blank page. Round 2 is MAGNITUDE AND TIMING only: zero direction changes, and direction_changes_from_r1 is emitted empty. A INFORMS, B DECIDES, B OWNS both Monday numbers; A's round-2 bridge (grp19_mbo_specialist_A_r2.json) was read in full before either number was committed and the taken/overridden ledger is recorded per day. FAIRNESS DISCLOSURE, mandatory on this block: brain s103.1 carries 7 plays merged from the post-mortem of these exact ten days and several were written from MY OWN round-1 findings, so on my two days hindsight is the live risk, not information scarcity. Two consequences I have applied literally. (1) I refuse any FORWARD-OUTCOME assertion found in an upstream file as evidence: A reports discarding a parenthetical in E's round-1 handoff_out asserting 0518's realized outcome, and I likewise use no such assertion here; A's own hindsight_ledger records realized outcomes as disclosure, and I have used none of them as inputs. (2) Where round 2's new evidence points AGAINST my round-1 number I follow it even though it moves me AWAY from the realized value - 0518 moves 640 -> 560, further under the actual, because the round-1 number reached its accuracy by under-claiming one phase and adding back an unsupported residual stub of nearly the same size, two errors partly cancelling. Round 2 replaces that with one coherent derivation and accepts the larger honest error. On the realized-vs-E conflict I judged the evidence myself rather than taking A's resolution: the realized 0515 exit state in g19_he24_he1_handoffs.json (close_off_low 0.76, high set 12:49, last_hour_dir -1 with last_hour_signed_flow -1, chain_age 3) is reproducible against g19_mbo_evidence.json 20260515 (hi_et 12:49:01, lo_et 07:56:38, close 2.961 with high_exc 530 / low_exc -350 from a 2.929 open giving close_off_low (320+350)/880 = 0.761), so the realized state is arithmetically self-consistent and E's narrative of it is not. I adopt the realized state and, applying the same test to MYSELF, I also correct my own round-1 handoff_out for 0511, which overstated its exit in exactly E's direction (I wrote close_location on_high / last_hour_dir up; the realized state is close_off_low 0.92 with the close ~120 below the 16:11 high and last_hour_dir 0 under last_hour_signed_flow -1). MBO BOOK layer STANDS DOWN on both days (no book_trustworthy verdict at an illiquid Sunday reopen) - trade-flow conviction, phase table and positioning only. Magnitudes stay DERIVED from measurable state; nothing is fitted to the actual and both numbers sit UNDER it.",
+ "cross_cutting_mbo_finding": "ROUND-2 FINDING: the Monday catch-up window is not one object, it is a CLOCK with two separately-gated claims, and round 1 collapsed them. Round 1's cross-cutting decomposition (PART 1 = the positioning-derived seam gap, extension-independent; PART 2 = the extension-gated intraday share) survives round 2 intact and is unchanged. What round 2 adds is that PART 2 itself splits at the window, and each half has its own measurable gate. FIRST HALF - the inherited last-hour press. A's round-2 bridge surfaces that BOTH g19 seams inherited last_hour_dir -1 with last_hour_signed_flow -1 (an unfinished final-hour aligned SELL), so the exit tape is CONSTANT across the pair while the chain state INVERTS (0511: polarity -1, cum 0, covering unfired; 0518: polarity +1, age 3, cum +2110) and the gap fires UP both times. I take A's inference that neither the exit tape nor the chain can therefore be the gap driver. But I do NOT take A's treatment of the inherited press as a session-long intraday suppressor. The press has a HALF-LIFE THAT ENDS AT THE WINDOW TEST, and the window's own extreme is the readout: if the 06-10 ET window prints the day's LOW and the gap survives, the inherited press has completed and failed, and it stops constraining the rest of the day (0511: low 06:20 at -260 off the open, gap intact, turn_up, and the day then ran to a 16:11 high); if the window prints the day's HIGH and price turns down inside it, the press SURVIVED the seam and owns the US session (0518: high 08:31, turn_down 08:31, and ph2 then delivered -871 sflow / -150 px on 51869 lots - the press itself, realized). This is operationally runnable live: watch which extreme the window prints. It also removes a double-count that A's framing invites - once the press is realized as an aligned-sell phase you must not ALSO discount the seam phase for it. SECOND HALF - the afternoon, gated by the MORNING MODEL CYCLE, which is the round-2 timing sharpening and is stronger than A's day-0 reopen delta because it is timed to the phase it governs. weather_forecast_cycle.weekday_open is stamped 08:00 ET, i.e. INSIDE the catch-up window and therefore decision-legit for the afternoon: into 0511 it carried a fresh front-week cold ADD (d_gw_hdd +0.952 for 05-14, +1.101 for 05-15, regime mod_cool vs_normal +2.119), into 0518 it carried nothing near-dated (-0.028 for 05-18, +0.171, +0.025, +0.081; regime hard_cool vs_normal -0.671). That is the discriminator for how much of an ABSORBED phase may be claimed. Absorbed phases are claimed at a discount because they carry round-trip risk; the discount is not a constant. Measured in-block, the survival-to-close of a non-terminal absorbed phase is wildly dispersed - 0518 ph1 0.36, 0513 ph2 0.83, 0520 ph2 1.07, 0519 ph2 1.48, 0515 ph2 1.54 - so the LEVEL is not determinable at n=5 and the uncertainty belongs in the band, not the p50; but the ordering is not random, the one low case is exactly the one with high extension AND a flat forward driver. So: absorbed TERMINAL phase with a live morning cold add -> claim high (0511 ph3 at 0.80); absorbed NON-TERMINAL seam phase at high extension with a flat forward driver -> claim low (0518 ph1 at 0.55). Third, carried unchanged from round 1 and re-confirmed: session-total signed flow is not a Monday direction object in a covering regime (0518 closed UP on a session sflow of -1105), and the sign gate stays flow_conviction per phase, volume-weighted.",
+ "direction_changes_from_r1": [],
+ "days": [
+  {
+   "date": "20260511",
+   "dow": "Mon",
+   "day_class": "monday_weekend_seam_covering_catchup",
+   "leg": "ng_mbo_ngm26_june",
+   "blind_direction": "down",
+   "blind_net_usd": -450,
+   "posterior_direction_by_horizon": {
+    "overnight_reopen_20_06": "up",
+    "catchup_06_10": "up",
+    "afternoon_close_10_close": "up",
+    "note": "UP at every horizon, unchanged from round 1. Round-2 sharpening is inside the last horizon: the afternoon is upgraded from a hedged half-claim to a near-full claim because the 08:00 ET model cycle - which lands INSIDE the catch-up window - re-funds the covering with a fresh front-week cold add, so the absorbed final phase has a driver and is not merely a drift."
+   },
+   "expected_magnitude_usd": 1690,
+   "expected_magnitude_band_usd": [
+    1480,
+    1880
+   ],
+   "overnight_gap_usd": 580,
+   "onset_time_et": "09:35",
+   "turn_time_et": "06:20",
+   "trend_vs_chop": "trend_up",
+   "continuation_vs_reversal": "reversal_of_the_d1_press_continuation_of_the_covering_regime",
+   "path_p50_curve": [
+    [20, 0],
+    [22, 260],
+    [0, 430],
+    [2, 540],
+    [4, 590],
+    [6, 370],
+    [8, 720],
+    [10, 1060],
+    [12, 1300],
+    [14, 1500],
+    [16, 1690]
+   ],
+   "confidence": "high",
+   "weight_assigned": {
+    "blind": 0.3,
+    "causal_mbo": 0.7,
+    "note": "Unchanged from round 1. The blind remains the core predictor as doctrine, but here it is wrong-SIGNED against a measurable open-time driver (maximal AND worsening crowded short at a weekend seam), and blending toward a wrong sign is averaging, not a posterior update. Round 2 does not change the split: the new evidence is a claim-rate gate on one phase, not a re-weighting of the blind."
+   },
+   "flow_conviction_by_phase": [
+    {
+     "phase": 1,
+     "window_et": "reopen-overnight",
+     "sflow": -296,
+     "pxchg": 40,
+     "vol": 7814,
+     "flow_conviction": -1,
+     "read": "NEGATIVE conviction on thin volume (ph_absorb flag itself is FALSE here - this is a conviction read, not a flagged absorption): early sell aggression fails to move price down at the seam = the covering already working. Thin, so it CONFIRMS the gap sign rather than sizing the day. Book stands down (illiquid reopen). Claimed at face, +40, unchanged."
+    },
+    {
+     "phase": 2,
+     "window_et": "us-morning-through-midday",
+     "sflow": 2585,
+     "pxchg": 830,
+     "vol": 61732,
+     "flow_conviction": 1,
+     "read": "ALIGNED BUY on the block's heaviest Monday phase volume = genuine delivery, the flow direction wins. At cum 0 extension this is an age-0 unconstrained leg. ALIGNED phases are claimed IN FULL by rule (flow and price agree, no round-trip ambiguity) - +830, unchanged. This phase also contains the window test: the day's LOW at 06:20 sits at its front, -260 off the open, and the gap is NOT broken."
+    },
+    {
+     "phase": 3,
+     "window_et": "afternoon-into-close",
+     "sflow": -1526,
+     "pxchg": 300,
+     "vol": 34390,
+     "flow_conviction": -1,
+     "read": "ABSORPTION (ph_absorb TRUE): heavy sell aggression absorbed under a still-rising price = covering continues, direction = sign of PRICE = UP. ROUND-2 CHANGE: claim rate raised 0.55 -> 0.80 (+170 -> +240). Two reasons, both new to round 2 and both decision-legit. (a) It is a TERMINAL phase - the round-trip risk that justified the 0.55 discount is the risk of a LATER phase taking it back, and there is no later phase; the only residual is the settle tail, which is what the remaining 0.20 leaves unclaimed. (b) The 08:00 ET model cycle inside the catch-up window carried a fresh front-week cold add (+0.952 for 05-14, +1.101 for 05-15), so the short being absorbed is facing a COLDER forward strip into the settle - a covering rally with a live driver does not fade at the bell. Neither reason is available on 0518, where the same gate reads flat and the claim rate stays low."
+    }
+   ],
+   "magnitude_derivation": "gap 580 (positioning-derived seam covering quantum; UNCHANGED - the first seam of the block has no in-block precedent so the quantum keeps its wide [450,700] honest band) + ph1 40 (thin negative-conviction drift, at face) + ph2 830 (ALIGNED buy, claimed in full by rule, heaviest Monday volume in the block) + ph3 240 (0.80 of +300: terminal absorbed phase with a live morning cold add) = 1690. Round 1 was 1620; the entire +70 delta is the ph3 claim rate moving 0.55 -> 0.80, nothing else moved. Band [1480,1880] tightened from round 1's [1350,1850]: floor = gap floor 450 + 20 + 790 + 195 (ph3 at 0.65), ceiling = gap ceiling 700 + 60 + 870 + 270 (ph3 at 0.90), rounded in. HONEST BAR: 1690 sits 50 UNDER the realized 1740; the last ~50 is the leg into the 16:11 settle print and is not claimable at decision time. I did not touch the gap or either aligned phase to close that distance.",
+   "a_bridge_taken_or_overridden": {
+    "taken": [
+     "DIRECTION UP - taken, unchanged from round 1. A's round-2 bridge is explicitly unchanged on this day (block-open anchor bridge, no in-block prior session exists) and the gate (crowded_short pctile 2.83 AND worsening WoW -10244 => the seam is the covering rally's firing window) still holds.",
+     "GAP-FIRST framing and the +580 seam quantum with band [450,700] - taken. I also take A's round-2 honesty flag that at the FIRST seam the quantum is the weakest decision-legit element (no in-block precedent), which is why I did NOT tighten the gap band on this day even though I tightened the day band.",
+     "The reopen-tape stand-down - taken. The illiquid Sunday tape is not a standalone book sign.",
+     "NEW IN ROUND 2, TAKEN: A's weekend forward-driver check (weather_forecast_cycle.sunday_reopen asof 2026-05-10 17:59 ET, d_gw_hdd +0.531 day-0, +0.553 for 05-14, +1.020 for 05-15). This was NOT in my round-1 evidence_used and it is the single input that changed my number. I verified it directly in grp19_state.json rather than taking it on A's word.",
+     "A's round-2 pair-statement that BOTH seams inherited last_hour_dir -1 / last_hour_signed_flow -1, so the exit tape is constant across the pair - taken as a fact and as the falsifiability argument for the positioning driver."
+    ],
+    "overridden": [
+     "MAGNITUDE: A suggests 1550 (band [1300,1800]), unchanged from its round 1. I own the number and set 1690 - above A's p50 and inside A's ceiling - derived from my own volume-weighted phase decomposition with an explicit claim rule (aligned phases in full, absorbed terminal phase at 0.80 under a live morning driver). A's 1550 rests on an undifferentiated 'intraday ~+900..+1150' sense; mine is +1110 of phase arithmetic on top of the gap.",
+     "A's TREATMENT OF THE INHERITED PRESS: A's round-2 cross-cutting makes the inherited final-hour aligned sell a suppressor of the intraday term generally. I override that for this day. The press here is not a session-long tax - it is a discrete event that COMPLETED AND FAILED at the 06:20 window low, -260 off the open with the gap intact, after which it stops constraining anything. Its whole cost is the drawdown already carried in my p50 path (cum 590 -> 370 at hour 6); charging the afternoon for it as well would double-count. On 0518 the same object behaves oppositely and I let it own the session there - the discriminator is which extreme the window prints, not the mere presence of the press.",
+     "PATH SHAPE: carried over from round 1 and re-asserted. A frames the day as gap-then-continuation; the window TEST is a real drawdown a Monday owner must carry in the p50, not a monotone ramp."
+    ]
+   },
+   "handoff_in_used": {
+    "source": "g19_he24_he1_handoffs.json 20260511 = {note: 'block open - no prior in-block session; anchor to 2.75 down/flat'}",
+    "realized_state_taken": "NONE - there is no in-block prior session at this boundary. Anchor 2.750 (Fri 05-08 close), anchor last-hour dir -1. The only inherited objects are the 0508 aligned-sell exit character and the never-masked prior-session tape_conditions (session_signed_flow -3214, phase [-27,-495,-2692], b_share 0.451, big_print_b_share 0.458, quote_bid_share 0.509).",
+    "what_it_changed_vs_round_1": "The boundary chain itself changed nothing on this day - there is no realized prior-session state to consume. What changed my number came from A's round-2 bridge, not from the handoff file: the pre-reopen weekend model cycle. Recorded honestly as such rather than credited to a handoff that is empty here.",
+    "conflicts_refused": "None found on this day. No upstream file asserts a forward outcome for 0511 that I consumed; the realized 0511 tape below is my own causal evidence as the refine-side owner, not an inherited assertion."
+   },
+   "evidence_used": [
+    "COT (pub 2026-05-08 15:30 ET, pre-reopen, decision-legit, age 2.35d): managed_money_net -107489, 1y pctile 2.83 (block's most extreme), chg_wow -10244 = shorts STILL BUILDING into the seam. Worsening = covering LIVE and UNFIRED - the p50 driver, not a tail.",
+    "NEW IN ROUND 2: weather_forecast_cycle.sunday_reopen asof 2026-05-10 17:59 ET (one minute pre-reopen): d_gw_hdd +0.531 (05-11), +0.553 (05-14), +1.020 (05-15), regime mod_cool vs_normal +1.85. A fresh weekend cold add across the front week - the gap has a forward driver to run on.",
+    "NEW IN ROUND 2 AND THE LOAD-BEARING ONE: weather_forecast_cycle.weekday_open asof 2026-05-11 08:00 ET - INSIDE the catch-up window, therefore decision-legit for the afternoon: d_gw_hdd +0.952 (05-14), +1.101 (05-15), regime mod_cool vs_normal +2.119. This is what upgrades the terminal absorbed phase from a 0.55 hedge to a 0.80 claim.",
+    "structure.covering_absorption_directional_tell (s103.1) run WITH price: ph3 sell -1526 absorbed under +300 price, ph_absorb true = crowded-short covering delivering UP.",
+    "Realized phase table + turn: turn_up 06:20 ET (turn_mag 1420), onset 09:35 up, session high 16:11, high_exc 1280 / low_exc -260, close_off_low 0.92 - the day builds INTO the close, not a front-loaded spike.",
+    "A's weekend-seam bridge (round 2): seam covering gap prior UP +580 band [450,700], low-extension (cum 0) unconstrained continuation, reopen book stand-down.",
+    "monday.overnight_headfake_into_catchup screened and DECLINED again in round 2: the overnight move confirms its own flow sense (sell failing under a rising price), so it is a real repricing, not a head-fake - the play's own non-fire condition.",
+    "Extension state cum_from_anchor 0 at the seam => the covering leg is age-0 and its aligned phase delivers the full band."
+   ],
+   "evidence_rejected": [
+    "The blind's core call - 'the 0508 aligned-sell close-exit carries the Monday DOWN'. REJECTED, unchanged from round 1: the close-exit flow read governs INTRADAY continuation, not the sign of a weekend information gap. A correct read of the wrong object.",
+    "'A crowded short is a squeeze TAIL underneath, not a default flip' (the blind's own words) - REJECTED as the dominant flaw: a MAXIMAL and WORSENING short that has not yet discharged is the p50 driver at a seam.",
+    "big_print_b_share 0.458 / quote_bid_share 0.509 as DOWN confirmation - REJECTED: the 0.55 big-print arm never fired anywhere in this block and near-0.50 book leans carry no sign; the sign gate is flow_conviction.",
+    "Session-total signed flow (+763) as a magnitude object - rejected; it nets two opposite-conviction phases and hides the 61732-lot aligned-buy delivery.",
+    "REJECTED IN ROUND 2: A's session-long application of the inherited last-hour press to this day's intraday term. Rejected on the window-test evidence, see a_bridge_taken_or_overridden.",
+    "REJECTED IN ROUND 2: scaling the seam gap quantum by the COT WoW delta ratio. A -10244 -> -12576 worsening is +23%, which would put the second seam's gap near 713 and outside the honest band, on a relationship that n=1 does not establish as linear. The quantum stays 580 with a band on BOTH days and is not used to close distance to any realized number."
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer: no book_trustworthy verdict (illiquid Sunday reopen, no execution authority, book incomplete) - book read stands down all day; trade-flow + L1 only, LABELED.",
+    "Minute-grain imb_flow: demoted to diagnostic per the B-lens Monday sampling artifact (flips faster than its own autocorrelation).",
+    "vol_regime null in state (masked one-shot) - not used.",
+    "g19_mbo_feature_states.jsonl and g19_mbo_l1_manifest.json do not exist for g19 (generic read-list entries from the g15 era). Worked from g19_mbo_evidence.json exactly as in round 1 - a naming gap, not a degraded input; nothing was substituted or worked around."
+   ],
+   "selection_reason": "Regular Monday off a weekend seam - B owns it. The refined call FLIPS the blind's sign: the seam fires the covering gap UP, the catch-up window tests and holds it, and the low-extension aligned-buy phase plus a driver-funded absorbed close deliver the bulk.",
+   "mbo_verdict": "UP, 1690 (round 1: 1620; blind -450; actual +1740; refined err -50, was -120). Direction unchanged. The whole round-2 delta is one claim rate: the terminal absorbed phase goes 0.55 -> 0.80 because it is terminal (no later phase to take it back) and because the 08:00 ET model cycle inside the catch-up window re-funded the covering with a front-week cold add. Still held 50 UNDER the actual - the settle-print leg is not mine to claim.",
+   "handoff_out": {
+    "exit_type": "covering_delivery_that_STOPPED_CONVERTING_in_the_final_hour",
+    "close_location": "upper_decile_off_low (close_off_low_frac 0.92), session high 16:11, close ~120 USD below it",
+    "close_usd_from_anchor": 1740,
+    "last_hour_dir": "flat",
+    "last_hour_flow": "sell aggression under a FLAT price - negative-to-neutral conviction, absorption no longer converting into price",
+    "chain_polarity": "up",
+    "chain_age_sessions": 1,
+    "self_correction_vs_round_1": "My round-1 handoff_out for this day said close_location 'on_high' and last_hour_dir 'up' with last_hour_flow 'absorbed_sell_under_rising_price'. The realized state in g19_he24_he1_handoffs.json 20260512 does not support that: close_off_low_frac 0.92 with the close ~120 below the 16:11 high, last_hour_dir 0, last_hour_signed_flow -1. That is the SAME overstatement A found in E's 0515 handoff, one seam earlier and in my own file, and I correct it here rather than only pointing at E's. The correction is a downgrade of INTENSITY only; polarity, age and cum are unchanged and the direction of the read is untouched.",
+    "note": "For C (0512): the covering chain is age-1 at cum +1740 after a >1500 one-session run, but the FINAL HOUR is where it stopped converting sell absorption into price - a stall, not a delivery, and not a close on the high. Inherit the stall, not the intensity. A stalled-conversion close at a stretched extreme arms midweek.stretched_extreme_close_giveback: expect a CAPPED give-back rather than a chain reversal, because the COT is still worsening and the covering re-funds at the next seam. The 06:20 low is the level that mattered on the way up and is the first reference on the way back down."
+   }
+  },
+  {
+   "date": "20260518",
+   "dow": "Mon",
+   "day_class": "monday_weekend_seam_covering_catchup_extended",
+   "leg": "ng_mbo_ngm26_june",
+   "blind_direction": "down",
+   "blind_net_usd": -550,
+   "posterior_direction_by_horizon": {
+    "overnight_reopen_20_06": "up",
+    "catchup_06_10": "up_then_fade",
+    "afternoon_close_10_close": "flat",
+    "note": "UP on the day and the UP is the GAP - unchanged from round 1. Round-2 sharpening: the intraday term is now DERIVED as slightly NEGATIVE (-20) rather than positive, so the day is the gap minus a stub instead of the gap plus a stub. The catch-up window prints the day's high early, the inherited final-hour aligned sell resumes as the heaviest phase, and the close settles back to just under the gap."
+   },
+   "expected_magnitude_usd": 560,
+   "expected_magnitude_band_usd": [
+    450,
+    700
+   ],
+   "overnight_gap_usd": 580,
+   "onset_time_et": "02:31",
+   "turn_time_et": "08:31",
+   "trend_vs_chop": "chop_around_a_held_gap",
+   "continuation_vs_reversal": "continuation",
+   "path_p50_curve": [
+    [20, 0],
+    [22, 300],
+    [0, 440],
+    [2, 540],
+    [4, 580],
+    [6, 650],
+    [8, 700],
+    [10, 520],
+    [12, 540],
+    [14, 555],
+    [16, 560]
+   ],
+   "confidence": "medium_high",
+   "weight_assigned": {
+    "blind": 0.25,
+    "causal_mbo": 0.75,
+    "note": "Split unchanged from round 1, but the reasoning is re-based. The blind's -550 came from an asserted 'spent / age-5 down chain' that the inherited cum trajectory falsifies outright, so its SIGN stays rejected. Round 2 does give the blind's instinct that the day would not extend slightly more credit than round 1 did - the realized exit is softer than round 1 believed - but that instinct belongs entirely in the intraday share and never in the sign, so it buys no weight back. Confidence drops high -> medium_high because the in-block survival distribution of a non-terminal absorbed phase is very wide (0.36 to 1.54) and my ph1 claim rate is the one soft parameter in the day."
+   },
+   "flow_conviction_by_phase": [
+    {
+     "phase": 1,
+     "window_et": "reopen-overnight-into-early-us",
+     "sflow": -561,
+     "pxchg": 220,
+     "vol": 6948,
+     "flow_conviction": -1,
+     "read": "ABSORPTION on the thin reopen (ph_absorb TRUE): sell aggression absorbed under a rising price = the second seam's covering firing as the first did. Direction = sign of price = UP. ROUND-2 CHANGE: claim rate set at the BASE 0.55 (+120, round 1 used 0.6 -> +130), and explicitly NOT raised. It is a NON-TERMINAL phase with a full session left to give it back, extension is high (cum +2110), and the 08:00 ET morning cycle carries nothing near-dated (-0.028 for 05-18, +0.171, +0.025, +0.081) - the exact mirror of the gate that upgraded 0511's ph3. Measured in-block this phase's realized survival to the close was 0.36, the lowest of any non-terminal absorbed phase in the block, so 0.55 is if anything generous; I hold it there rather than move to the realized figure."
+    },
+    {
+     "phase": 2,
+     "window_et": "us-morning-midday",
+     "sflow": -871,
+     "pxchg": -150,
+     "vol": 51869,
+     "flow_conviction": 1,
+     "read": "ALIGNED SELL on the day's heaviest volume = genuine sell delivery, DOWN, claimed IN FULL at -150 by the same rule that claims 0511's ph2 in full. ROUND-2 IDENTIFICATION: this phase IS the inherited final-hour aligned sell, realized. The 0515 exit crossed the seam with last_hour_dir -1 / last_hour_signed_flow -1, the gap did not cancel it, and it resumed here. That is why the inherited press must be booked ONCE, here, and not also charged against ph1 - A's framing invites that double-count and I refuse it. It moves price only -150 on 51869 lots because it is fighting a gap the positioning keeps re-funding."
+    },
+    {
+     "phase": 3,
+     "window_et": "afternoon-into-close",
+     "sflow": 327,
+     "pxchg": 10,
+     "vol": 23513,
+     "flow_conviction": 1,
+     "read": "ALIGNED BUY at ~zero price change = a dead phase. Aligned-with-price at zero magnitude is not a direction claim; it closes the day at the gap. Claimed at face, +10."
+    }
+   ],
+   "magnitude_derivation": "gap 580 (same positioning-derived seam quantum; the term FIRMED in round 2 because it now rests on the block's own realized first-seam precedent rather than on a narrative exit read, but the p50 is NOT raised - see evidence_rejected on WoW scaling) + ph1 120 (0.55 of the +220 absorbed seam pop: non-terminal, high extension, flat forward driver) + ph2 -150 (ALIGNED sell, claimed in full; this is the inherited press realized) + ph3 +10 (dead) = 560. ROUND-2 CHANGE vs round 1's 640, and it is a DOWNGRADE that moves AWAY from the realized +660, which I am making deliberately: round 1 reached 640 by claiming ph1 at 0.6 (+130, i.e. under-claiming the raw +220 by 90) and then adding back a +70 'un-discharged covering stub'. That stub double-counts the COT - the un-discharged worsening delta is ALREADY the thing the gap term is derived from, and there is no third bucket for it. Two errors of opposite sign partly cancelling is not a derivation. Round 2 removes the stub, keeps a single coherent claim rule, and accepts an err of -100 instead of preserving a -20 that was reached incoherently. Band [450,700] tightened from round 1's [480,790], width 310 -> 250: gap term tightened to [500,640] on in-block realized precedent, intraday envelope [-50,+60] where the ceiling carries the possibility that the absorbed seam pop survives in full. HONEST CONSTRAINT, unchanged: the intraday AMPLITUDE (+710 high at 08:31, -370 low at 09:50) is not claimed in the p50 - at high extension only the net around the gap is derivable from open-time state.",
+   "a_bridge_taken_or_overridden": {
+    "taken": [
+     "THE REALIZED 0515 EXIT STATE, IN FULL - taken, and independently verified rather than accepted on A's word. g19_he24_he1_handoffs.json 20260518 (boundary_kind weekend_reopen) gives close 2.961, close_off_low_frac 0.76, high_et 12:49, low_et 07:56, last_hour_dir -1, last_hour_signed_flow -1, chain_polarity +1, chain_age 3, cum +2110; g19_mbo_evidence.json 20260515 reproduces it arithmetically (open 2.929, high_exc 530, low_exc -350, close 2.961 => close_off_low (320+350)/880 = 0.761, hi_et 12:49:01, lo_et 07:56:38). The realized state is self-consistent and E's round-1 narrative of it (close on_high, last_hour aligned_buy_conviction, chain_age 4) is not. My round-1 evidence_used quoted E's narrative verbatim as 'THE INHERITANCE FIX' - that quotation is now corrected. E's phase-3 read (+703 sflow / +130 px, aligned buy) is true at PHASE granularity and simply does not survive to the final hour; for a weekend handoff the last hour is the state that crosses the seam.",
+     "CHAIN AGE 3, not 4 - taken, per boundary.chain_label_must_track_realized_cum. cum +2110 is unchanged and was never in dispute.",
+     "DIRECTION UP HELD DESPITE THE SOFTER EXIT - taken, and I re-ran the 'spent' bar myself rather than taking A's conclusion. Both legs fail: (a) a spent claim requires positive flow_conviction under FALLING price on the exit session, and 0515 shows the opposite (ph2 -662 sflow under +240 px = sell absorbed under rising price, absorb_session false, session sflow +486 under a +320 up day); (b) the COT WoW must be flat or improving, and it is -12576, MORE worsening than -10244. A single final-hour give-back does not qualify. Direction stays UP - and this is a REFUSAL to change direction, not a direction change.",
+     "GAP TERM FIRMING - taken. The +580 quantum now rests on the block's own realized first seam rather than on E's exit narrative, which is why the gap BAND tightened even though the p50 did not move.",
+     "FLAT FORWARD DRIVER - taken and verified: weather_forecast_cycle.sunday_reopen asof 2026-05-17 17:59 ET gives d_gw_hdd +0.034 (05-18), -0.017 (05-19), regime hard_cool vs_normal -0.671. No weather peak to sell and nothing fresh to run on.",
+     "EARLY-WINDOW-HIGH TIMING - taken. A's round-2 timing sharpening matches my own turn read (turn_down 08:31) and I keep it."
+    ],
+    "overridden": [
+     "MAGNITUDE: A suggests 600 (band [420,760]) and states it deliberately held its p50 unmoved. I own the number and set 560. The difference is that A's intraday term (+40) is a judgement call inside a band, while mine is signed phase arithmetic: +120 (absorbed seam pop at 0.55) -150 (aligned sell in full) +10 (dead) = -20. My intraday is NEGATIVE, A's is positive, and A's own new round-2 scenario - 'gap fires then the inherited sell press takes the intraday negative', which A gives 14% - is in my read the BASE case for the intraday term, because the press did not merely threaten to resume, it resumed as the day's heaviest phase.",
+     "A'S BAND: A opened the floor to 420 and left the ceiling at 760. I set [450,700]. The floor comes up because my p50 already books the negative intraday that A's floor was reserving room for - having taken the downside into the p50, I do not also need it in the floor. The ceiling comes down to 700 because the only way past it is a gap quantum above its own honest band.",
+     "A'S TREATMENT OF THE INHERITED PRESS AS A SEPARATE MULTIPLIER: overridden as a double-count. A lists the inherited aligned sell as a suppressor of the intraday term alongside extension. But the press is REALIZED as ph2's -871/-150; charging ph1's claim rate for it as well would count the same object twice. It is booked once, at full weight, in ph2.",
+     "THE +70 COVERING STUB from my OWN round 1: overridden by me, not by A. A did not ask for this. It double-counted the COT delta that the gap term is already derived from."
+    ]
+   },
+   "handoff_in_used": {
+    "source": "g19_he24_he1_handoffs.json 20260518, boundary_kind weekend_reopen, prior_date 20260515, prior_owner E, receiving_owner B",
+    "realized_state_taken": {
+     "close_px": 2.961,
+     "open_px_prior": 2.929,
+     "prior_day_move_usd": 320,
+     "close_off_low_frac": 0.76,
+     "last_hour_dir": -1,
+     "last_hour_signed_flow": -1,
+     "low_et": "07:56",
+     "high_et": "12:49",
+     "low_late": false,
+     "high_late": false,
+     "chain_polarity": 1,
+     "chain_age_sessions": 3,
+     "cum_from_anchor_usd": 2110
+    },
+    "carry_rule_applied": "Weekend: Monday inherits the Friday CLOSE (2.961) plus chain state, NOT the Friday day-move (+320); the reopen gap SIGN is noise as a tape object and is derived from positioning instead.",
+    "what_it_changed_vs_round_1": "Three things. (1) INTENSITY DOWNGRADE: round 1 consumed E's 'close on_high / aligned_buy_conviction' and the realized 0.76 close with a 12:49 high and a final-hour aligned SELL is materially softer. This does not touch the gap sign - positioning owns that - but it is why the intraday term can no longer carry a positive residual stub. (2) THE PRESS IS AN OBJECT, NOT A MOOD: the inherited last_hour_dir -1 / last_hour_signed_flow -1 is an unfinished down-press that crosses the seam, and I can now point to exactly where it landed - ph2, the day's heaviest phase, -871 sflow / -150 px on 51869 lots. That converts a vague 'extension mutes the intraday' into a named mechanism with a named phase. (3) CHAIN AGE 4 -> 3, taken as authoritative over any narrative count. Net effect on the number: 640 -> 560.",
+    "conflicts_refused": "E's round-1 handoff_out note ends with a parenthetical asserting the forward outcomes of 0518 and 0519. A flagged and discarded it; I likewise refuse it and no part of this day rests on it - a handoff carries STATE, never an outcome, and an upstream forward-outcome assertion is not evidence at any round. I also note that A's own hindsight_ledger enumerates realized 0518 values (open 3.019, close 3.027, day-move +660) as explicit disclosure; I have used none of them as inputs. Where I cite realized 0518 tape it is as the refine-side owner of the day, which is my causal evidence by construction, not an inherited claim."
+   },
+   "evidence_used": [
+    "THE REALIZED 0515 EXIT STATE from g19_he24_he1_handoffs.json (see handoff_in_used), cross-verified against g19_mbo_evidence.json 20260515. This REPLACES round 1's use of E's narrative handoff_out.",
+    "COT (pub 2026-05-15 15:30 ET, pre-reopen, decision-legit): managed_money_net -120065, 1y pctile 0.94 (MORE extreme than 0508's 2.83), chg_wow -12576 (MORE worsening). A short getting more crowded is a short still covering => the spent downgrade is BLOCKED by the gate.",
+    "weather_forecast_cycle.sunday_reopen asof 2026-05-17 17:59 ET: d_gw_hdd +0.034 (05-18), -0.017 (05-19); regime hard_cool, vs_normal -0.671. Flat forward driver - the gap has nothing to run on. Contrast +0.531 into 0511.",
+    "weather_forecast_cycle.weekday_open asof 2026-05-18 08:00 ET (inside the catch-up window): d_gw_hdd -0.028 (05-18), +0.171, +0.025, +0.081 - nothing near-dated. This is the mirror of the gate that upgraded 0511's afternoon claim, and here it holds the claim rate DOWN.",
+    "tape_conditions D-1 (0515, never masked): big_print_b_share 0.506 and quote_bid_share 0.526 both above aggressor session_b_share 0.464; phase_signed_flow [445,-662,703] with session total +486 into a +320 up day = resting bids and blocks leaning BUY against a selling aggressor = the covering-absorption tell. Corroborating only; the book layer stands down.",
+    "0518 realized phase table + ph_absorb [true,false,false], turn_down 08:31 (turn_mag 630), onset 02:31 up, high_exc +710 / low_exc -370 = the covering pop is front-loaded into the catch-up window and the aligned-sell phase takes it back, leaving the gap.",
+    "Extension state cum_from_anchor +2110, chain age 3 at the seam => gap-dominated sizing.",
+    "IN-BLOCK MEASUREMENT, new in round 2: survival-to-close of every non-terminal absorbed phase in g19 - 0518 ph1 0.36, 0513 ph2 0.83, 0520 ph2 1.07, 0519 ph2 1.48, 0515 ph2 1.54. The dispersion is what justifies putting the uncertainty in the band and keeping the p50 claim conservative."
+   ],
+   "evidence_rejected": [
+    "The blind's 'spent / self-limiting / age-5 down chain' downgrade. REJECTED, unchanged and now on firmer ground: (a) the COT WoW delta is MORE worsening; (b) a spent claim requires POSITIVE flow_conviction under FALLING price on the exit session and 0515 had the opposite; (c) the chain age/polarity were asserted against the realized cum trajectory (2.750 -> 2.961 over the block's first four sessions).",
+    "'The overnight up-gap is a head-fake the catch-up reverses' (monday.overnight_headfake_into_catchup as the blind applied it). REJECTED: the play fires only when the gap does NOT confirm its own flow sense; here ph1 is absorbed sell under RISING price, so the gap confirms the covering mechanism and the play does not fire.",
+    "Session-total signed flow -1105 as a DOWN sign - REJECTED: the session closed UP on negative total flow; that IS the covering signature.",
+    "REJECTED IN ROUND 2, AND IT IS MY OWN ROUND-1 REASONING: the '+70 un-discharged covering stub'. The un-discharged worsening delta is the object the gap term is derived FROM; adding it again as an intraday residual counts it twice. Removing it costs me 80 of accuracy against the realized number and I removed it anyway.",
+    "REJECTED IN ROUND 2: raising the second seam's gap quantum above 580 on the ground that the COT is 23% more worsening. That would put the gap near 713, outside its own honest band, on a linearity n=1 does not establish - and it would close distance to the realized day-move by mis-sizing a component. Refused.",
+    "REJECTED IN ROUND 2: setting ph1's claim rate from the in-block median survival of non-terminal absorbed phases (~1.07), which would imply claiming the +220 in full and landing on 660. The median pools five phases with completely different extension and driver states; conditioning on THIS phase's state (high extension, flat driver, non-terminal) points to the low end of the distribution, and the one in-block case matching that condition is this phase itself. Pooling as a conclusion is barred by the guardrails and would here be indistinguishable from fitting."
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer stands down (no book_trustworthy verdict at the reopen: no execution authority, conviction under floor, book incomplete). quote_bid_share used only as a corroborating resting-lean, never as a standalone sign.",
+    "Minute-grain imb_flow demoted to diagnostic (Monday sampling artifact).",
+    "Intraday AMPLITUDE (high +710 at 08:31, low -370 at 09:50) not claimed in the p50 - at high extension only the net around the gap is derivable from open-time state.",
+    "vol_regime null in state (masked one-shot) - not used.",
+    "g19_mbo_feature_states.jsonl and g19_mbo_l1_manifest.json do not exist for g19; worked from g19_mbo_evidence.json as in round 1. Named, not worked around."
+   ],
+   "selection_reason": "Regular Monday off the block's second weekend seam - B owns it. The refined call FLIPS the blind's sign on inherited-state and positioning-delta grounds and allocates the magnitude entirely to the gap, with a slightly negative intraday.",
+   "mbo_verdict": "UP, 560 (round 1: 640; blind -550; actual +660; refined err -100, was -20). Direction unchanged and the refusal to flip it is itself a round-2 decision - the softer realized exit fails both legs of the spent bar. The number moves DOWN and away from the actual on purpose: round 1's 640 was the sum of an under-claimed absorbed phase and an unsupported COT stub of nearly equal and opposite size, and round 2 will not keep a number that netted right for incoherent reasons. The day is the gap (+580) plus a derived intraday of -20.",
+   "handoff_out": {
+    "exit_type": "gap_held_intraday_exhausted_but_final_hour_RE-ARMING",
+    "close_location": "mid_range (close_off_low_frac 0.42); the day's high was set at 08:31 and given back",
+    "close_usd_from_anchor": 2770,
+    "last_hour_dir": "up",
+    "last_hour_flow": "sell aggression absorbed under a RISING price - NEGATIVE conviction, covering re-engaging at the bell",
+    "chain_polarity": "up",
+    "chain_age_sessions": 4,
+    "self_correction_vs_round_1": "My round-1 handoff_out said last_hour_dir 'flat' with 'aligned_buy_at_zero_magnitude' and chain_age 5. The realized state in g19_he24_he1_handoffs.json 20260519 gives last_hour_dir +1 under last_hour_signed_flow -1 - a negative-conviction final hour, i.e. absorbed sell under a rising price, which is the covering signature and NOT a dead phase - and chain_age 4. Corrected here. close_off_low_frac 0.42 confirms the mid-range close I did read correctly. Note this correction runs the OPPOSITE way to my 0511 one: there I overstated the exit, here I understated it.",
+    "note": "For C (0519) and E (0520, the roll seam): the covering chain is age-4 at cum +2770 and its DAYTIME engine is dead - the heaviest phase was an aligned SELL and the day survived on the seam gap alone. But do not inherit that as exhaustion: the FINAL HOUR flipped back to negative-conviction absorption, i.e. the covering re-engaged at the bell without a seam to do it. That is a re-arming, and it says the seam is not the only re-funding window while the COT keeps worsening. The binding constraint is now extension, not conviction: structure.covering_extension_distribution_flip needs extension AND a REVERSED absorption tell, and the tell is not reversed here, so the crest risk is real but not yet triggered and belongs to the roll seam rather than to the next session."
+   }
+  }
+ ],
+ "summary": {
+  "days_scored": 2,
+  "round": 2,
+  "direction_changes_from_r1": 0,
+  "20260511": {
+   "refined_dir": "up",
+   "r1_magnitude_usd": 1620,
+   "r2_magnitude_usd": 1690,
+   "blind": -450,
+   "actual": 1740,
+   "r1_err_vs_actual": -120,
+   "r2_err_vs_actual": -50,
+   "blind_err_vs_actual": -2190,
+   "sign_flipped_from_blind": true,
+   "what_moved_it": "one claim rate. The terminal absorbed phase (ph3, sell -1526 absorbed under +300) goes 0.55 -> 0.80 because it is TERMINAL (no later phase can take it back, only the settle tail can) and because the 08:00 ET model cycle landing inside the catch-up window carried a fresh front-week cold add (+0.952 / +1.101), which re-funds the covering into the settle. Gap, ph1 and the aligned ph2 are all unchanged.",
+   "handoff_in": "empty by construction - block open, no in-block prior session; anchored to 2.750 with anchor last-hour dir -1",
+   "a_bridge": "direction, gap-first +580, the stand-down and the NEW weekend forward-driver check all TAKEN; magnitude OVERRIDDEN (1550 -> 1690, above A's p50, inside A's ceiling) and A's session-long treatment of the inherited press OVERRIDDEN on window-test grounds"
+  },
+  "20260518": {
+   "refined_dir": "up",
+   "r1_magnitude_usd": 640,
+   "r2_magnitude_usd": 560,
+   "blind": -550,
+   "actual": 660,
+   "r1_err_vs_actual": -20,
+   "r2_err_vs_actual": -100,
+   "blind_err_vs_actual": -1210,
+   "sign_flipped_from_blind": true,
+   "what_moved_it": "the realized handoff downgraded the inherited exit's INTENSITY (0.76 off low with a 12:49 high and a final-hour ALIGNED SELL, not a close-on-high buy-conviction bell; chain age 3 not 4) and named the inherited press as an object that lands in a specific phase. Applying it coherently meant deleting my own round-1 '+70 un-discharged covering stub' as a double-count of the COT already inside the gap term, leaving gap 580 + ph1 120 + ph2 -150 + ph3 10 = 560. This moves AWAY from the realized 660 and I made the change anyway.",
+   "handoff_in": "weekend_reopen boundary carrying the REALIZED Fri 0515 exit state; taken as authoritative over E's narrative after independent verification against g19_mbo_evidence.json",
+   "a_bridge": "the realized exit state, the chain-age correction, the refusal to flip on the softer exit, the gap-term firming, the flat forward driver and the early-window-high timing all TAKEN (each re-verified against grp19_state.json / the evidence file rather than accepted on A's word); magnitude OVERRIDDEN (600 -> 560), band OVERRIDDEN ([420,760] -> [450,700]), and A's inherited-press-as-separate-multiplier OVERRIDDEN as a double-count of ph2"
+  },
+  "sum_abs_err_vs_actual_usd": 150,
+  "mean_abs_err_vs_actual_usd": 75,
+  "r1_mean_abs_err_vs_actual_usd": 70,
+  "blind_sum_abs_err_usd": 3400,
+  "blind_mean_abs_err_usd": 1700,
+  "dir_hits_refined": 2,
+  "dir_hits_blind": 0,
+  "round2_scorecard_note": "My round-2 mean abs error is 75 against round 1's 70 - I did NOT halve it, and I am reporting that plainly rather than dressing it up. 0511 improved as intended (120 -> 50) off a genuinely new decision-legit input. 0518 got worse (20 -> 100) because the new evidence removed the support for part of my round-1 number, and the round-1 accuracy on that day turns out to have been the net of two offsetting errors: an absorbed phase under-claimed by ~90 and an unsupported +70 stub added back. Given the fairness requirement on this specific block - where the brain contains plays merged from these exact days, several written from my own round-1 findings - preserving a number I can no longer derive would be the more dangerous outcome than posting a larger honest error. Both numbers remain UNDER the actual and neither was moved toward it by any term I could not derive.",
+  "honest_bar_note": "0511 leaves ~50 unclaimed (the leg into the 16:11 settle print inside the terminal absorbed phase). 0518 leaves ~100 unclaimed (the absorbed seam pop is claimed at 0.55 of its raw +220 rather than at the in-block median survival of ~1.07, because pooling that median across phases with different extension and driver states is barred and would be indistinguishable from fitting). Nothing was tuned to the realized number: 1690 = 580 + 40 + 830 + 0.80x300; 560 = 580 + 0.55x220 - 150 + 10.",
+  "what_round_2_actually_contributed": "Three things, none of which needed the realized Monday tape. (1) A CLAIM-RATE GATE for absorbed phases with two measurable inputs - terminal vs non-terminal position in the session, and the sign of the model-cycle delta at that phase's horizon (weekday_open is stamped 08:00 ET, inside the catch-up window, so it is decision-legit for the afternoon). It upgrades 0511's afternoon and holds 0518's seam pop down, from the same rule. (2) THE INHERITED PRESS HAS A HALF-LIFE THAT ENDS AT THE WINDOW TEST, read off which extreme the 06-10 ET window prints: a window LOW with the gap intact means the press completed and failed and the afternoon is unconstrained (0511); a window HIGH with a turn down inside it means the press survived the seam and owns the US session (0518, where it is literally ph2). This also kills a double-count, because once the press is realized as an aligned phase it must not also discount the seam phase. (3) SYMMETRIC EXIT-INTENSITY DISCIPLINE: A caught E overstating the 0515 exit; applying the identical test to my own round-1 handoffs found I overstated 0511's exit in the same direction (I wrote close on_high / last_hour up; realized is 0.92 off low with last_hour_dir 0 under sell flow) and understated 0518's in the opposite direction (I wrote a dead aligned-buy final hour; realized is a negative-conviction absorbed final hour, i.e. covering re-engaging). Both are corrected in this file's handoff_out blocks. The failure mode is not directional bias, it is narrative intensity drifting away from hour-granularity state, and it is cheap to enforce because close_off_low_frac, last_hour_dir and last_hour_signed_flow all travel in the handoff and are never masked."
+ },
+ "brain_proposals": [
+  {
+   "id": "monday.absorbed_phase_claim_rate_gate",
+   "class": "magnitude.absorbed_phase_sizing",
+   "general_rule": "An ABSORBED phase (signed flow opposing price, ph_absorb true) has its DIRECTION set by the sign of price - that is settled doctrine - but its claimable MAGNITUDE is not a constant fraction. Set the claim rate from two measurable inputs available at the phase's own horizon: (i) POSITION IN SESSION - a TERMINAL absorbed phase can only be given back by the settle tail and is claimed high (~0.8); a NON-TERMINAL absorbed phase has a full session of round-trip exposure and is claimed low (~0.55) unless (ii) upgrades it; (ii) FORWARD-DRIVER DELTA at that phase's horizon - the model-cycle delta available before the phase begins (sunday_reopen cycle for a seam/overnight phase; weekday_open cycle, stamped 08:00 ET, for an afternoon phase). A positive near-dated add upgrades the claim by roughly +0.25; flat or negative holds it at base. Never set the rate from a pooled in-block survival average: the dispersion is enormous and its structure is exactly the conditioning this rule encodes.",
+   "evidence": "g19, both Mondays, same rule opposite outcomes. 0511 ph3 (sell -1526 absorbed under +300, TERMINAL) with weekday_open d_gw_hdd +0.952 (05-14) / +1.101 (05-15) at 08:00 ET -> claim 0.80 = +240, and the phase in fact ran to a 16:11 session high. 0518 ph1 (sell -561 absorbed under +220, NON-TERMINAL seam phase, cum +2110) with sunday_reopen d_gw_hdd +0.034 and weekday_open -0.028 -> claim 0.55 = +120, and the phase in fact survived only 0.36 to the close, the lowest of any non-terminal absorbed phase in the block. In-block survival of non-terminal absorbed phases spans 0.36 / 0.83 / 1.07 / 1.48 / 1.54 - a median-based constant would have been wrong on both days.",
+   "scope": "magnitude sizing of any absorbed phase on any day-class; a sizing companion to structure.covering_absorption_directional_tell, which fixes the SIGN and is silent on the fraction",
+   "requires": "phase table with ph_absorb + phase ordinal (open_time for position) + weather_forecast_cycle.sunday_reopen / weekday_open delta_vs_prior_by_horizon (both pre-phase, decision-legit)",
+   "forward_evidence": "n=2 within g19 spanning both ends of the gate; the driver-delta arm is forward-testable on any day with a phase-level absorption flag"
+  },
+  {
+   "id": "monday.inherited_last_hour_press_half_life",
+   "class": "boundary.press_carry_across_the_seam",
+   "general_rule": "An inherited final-hour ALIGNED press (last_hour_dir and last_hour_signed_flow of the SAME sign in the handoff) is a live, unfinished object that crosses the seam - the gap does not cancel it - but it is NOT a session-long tax on the intraday term. It has a half-life that ends at the catch-up window test, and the window's own extreme is the readout. If the 06-10 ET window prints the day's LOW and the gap survives, the press has completed and failed; it stops constraining the session and the afternoon is sized without it. If the window prints the day's HIGH and price turns down inside the window, the press survived the seam and owns the US session, where it will appear as an ALIGNED phase in the phase table. Book the press EXACTLY ONCE: if it is realized as an aligned phase, that phase's full-weight claim IS the press, and the seam phase must not be discounted for it again.",
+   "evidence": "g19: both seams inherited last_hour_dir -1 with last_hour_signed_flow -1 (0508 into 0511; realized 0515 into 0518), so the inherited press is constant across the pair, yet the two days behave oppositely and the window tells you which in advance of the afternoon. 0511's window printed the LOW at 06:20 (-260 off the open, gap intact), turn_up, and the day then ran to +1740 with its high at the 16:11 close - the press was dead by 06:20. 0518's window printed the HIGH at 08:31, turn_down at 08:31, and the press then appeared as ph2 (-871 sflow / -150 px on 51869 lots, the day's heaviest phase), holding the day to +660 of which +580 was the gap.",
+   "scope": "any day inheriting a handoff whose last_hour_dir and last_hour_signed_flow agree; sharpens monday.covering_regime_catchup_is_a_gap_test by giving the window a second job (press adjudication) beyond gap validation, and prevents the double-count that arises when the press is also treated as a standing multiplier",
+   "requires": "handoff last_hour_dir + last_hour_signed_flow (open_time, never masked) + the window's realized extreme and turn (needs_intraday_reveal for the live adjudication; MBO-measured here)",
+   "forward_evidence": "n=2 within g19 with opposite window shapes and a constant inherited press - the cleanest available separation of press-from-extension; forward-testable on any seam day"
+  },
+  {
+   "id": "process.exit_intensity_must_track_hour_granularity_state",
+   "class": "process.handoff_integrity",
+   "general_rule": "A handoff_out's exit LABEL must be checkable against the three hour-granularity fields that travel in the boundary chain and are never masked - close_off_low_frac, last_hour_dir, last_hour_signed_flow - and no owner may assert an exit intensity those fields do not support. Specifically: 'closed on its high' requires close_off_low_frac at or near 1.0, not merely an upper-range close; a final-hour conviction claim must match the SIGN PAIR of last_hour_dir and last_hour_signed_flow (same sign = aligned press, opposite sign = absorption); and a phase-table read that disagrees with the final hour loses, because for a weekend handoff the LAST HOUR is the state that crosses the seam. This is a two-way constraint: overstating an exit inflates the receiver's continuation prior, understating one hides a re-arming.",
+   "evidence": "g19, three instances found by applying one test. (1) E's round-1 0515 handoff_out claimed close_location on_high / last_hour aligned_buy_conviction / chain_age 4; realized is close_off_low 0.76 with the high at 12:49, last_hour_dir -1 with last_hour_signed_flow -1 (aligned SELL), chain_age 3 - an overstatement that fed my round-1 0518 read. (2) Applying the same test to my own round-1 0511 handoff_out: I wrote close_location on_high / last_hour_dir up / absorbed_sell_under_rising_price; realized is close_off_low 0.92 with the close ~120 below the 16:11 high and last_hour_dir 0 under last_hour_signed_flow -1 - the same overstatement, one seam earlier, in the file that fed C. (3) My round-1 0518 handoff_out understated in the other direction: I wrote a dead 'aligned_buy_at_zero_magnitude' final hour, but last_hour_dir +1 under last_hour_signed_flow -1 is negative-conviction absorption, i.e. covering RE-ENGAGING at the bell without a seam - materially different for the receiver. The failure mode is narrative intensity drifting from state, not directional bias, and it appears in three of the block's handoffs.",
+   "scope": "every owner's handoff_out at every boundary; a coordinator-enforceable integrity check that sits alongside boundary.chain_label_must_track_realized_cum (that play constrains chain polarity/age against realized cum; this one constrains exit intensity against realized hour-granularity state)",
+   "requires": "close_off_low_frac + last_hour_dir + last_hour_signed_flow from the boundary chain (open_time, never masked)",
+   "forward_evidence": "n=3 within g19 across two owners and both directions of error; costless to enforce mechanically and forward-testable as a coordinator check on any block with a handoff chain"
+  }
+ ]
+}

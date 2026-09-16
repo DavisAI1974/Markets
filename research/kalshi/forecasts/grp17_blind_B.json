@@ -1,0 +1,886 @@
+{
+ "specialist": "B",
+ "lens": "Monday catch-up",
+ "group": "g17",
+ "brain_version": "s102.5",
+ "forecast_schema_version": "ng.v2",
+ "days_owned": [
+  "20260413",
+  "20260420"
+ ],
+ "days": [
+  {
+   "date": "20260413",
+   "dow": "Mon",
+   "archetype": "monday_carry_s1void_injection_bleed",
+   "reasoning": "First Monday of G17, inherits the 0410 anchor 2.653 across the weekend seam. G16 bled bearishly 3.035->2.653 (S3 injection-bearish, under-sized); 0410 was a clean crest-trim -190. Direction from the D-1 (Friday 0410) tape tilt: session_b_share 0.445 (SELL, <0.50), big_print_b_share 0.526 (mild buy - mixed, why not a big down day). monday.catchup_window_tilt_gate: carry the inherited bleed side; no weekend cold driver realizes (near-window HDD 2.2gw deep S1-void, mod_cool warm-cut ZERO sign authority) so no sell-the-news add and no fresh-shot gap. overnight_headfake gate: no confirming/opposing overnight driver -> flat drift, the 06-10 catch-up window reasserts the sell tilt DOWN. seam_chainage_accommodation_gate: inherited chain is MATURE (age>=4, G16 two-week bleed) -> late-buy ABSORBED -> size DEEP, close near low. s1void_injection_chain_bleed: chain-sided Monday-carry = TREND day-class band ~ -450..-780 with the live sub-0.50 sell tape. CAP: COT MM-net 1y pctile 6.6 (extreme short) + price sitting on the 2.653 block low + mild big-print buy 0.526 = exhaustion/bounce risk that holds it off the deep end. p50 -520.",
+   "regime": {
+    "day_class": "monday",
+    "seasonal_state": "S3_shoulder_S1void",
+    "demand_regime": "injection_low_demand",
+    "curve_regime": "contango",
+    "storage_phase": "injection_building_surplus",
+    "vol_regime": "unknown_masked",
+    "dominant_driver": "storage_trajectory_injection_bleed",
+    "selector_mode": "select_chain_sided_down"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "monday.catchup_window_tilt_gate",
+     "inputs": {
+      "D1_session_b_share": 0.445,
+      "weekend_driver": "none_S1void",
+      "inherited_exit_type": "crest_trim_fadeable_0410"
+     },
+     "thresholds": {
+      "b_share_neutral": 0.5
+     },
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -450,
+      -780
+     ],
+     "note": "carry inherited bleed; no cold driver to fade or extend; catch-up reasserts sell tilt"
+    },
+    {
+     "rule_id": "monday.seam_chainage_accommodation_gate",
+     "inputs": {
+      "inherited_chain_age": ">=4_mature",
+      "chain_polarity": "down"
+     },
+     "thresholds": {
+      "mature_age": 3
+     },
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "depth_deep",
+     "magnitude_band_usd": [
+      -500,
+      -780
+     ],
+     "note": "mature chain -> late buy absorbed -> deep, close near low, absorb_session True"
+    },
+    {
+     "rule_id": "magnitude.s1void_injection_chain_bleed",
+     "inputs": {
+      "day_class": "monday_carry_trend",
+      "D1_session_b_share": 0.445,
+      "near_window_hdd_gw": 3.3
+     },
+     "thresholds": {
+      "s1void_base_gw": 20,
+      "sell_tape": 0.5
+     },
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -450,
+      -780
+     ],
+     "note": "trend day-class band; live sub-0.50 sell tape delivers band, do not damp to stub"
+    },
+    {
+     "rule_id": "monday.overnight_headfake_into_catchup",
+     "inputs": {
+      "overnight_driver": "none",
+      "overnight_flow_confirm": "na"
+     },
+     "thresholds": {},
+     "scope_pass": true,
+     "ownership_rank": 4,
+     "direction_effect": "neutral",
+     "magnitude_band_usd": [
+      0,
+      0
+     ],
+     "note": "no gap head-fake this Monday; overnight is flat drift"
+    },
+    {
+     "rule_id": "structure.friday_exhausted_extreme_giveback",
+     "inputs": {
+      "friday_0410_move": -190,
+      "cum_at_block_low": true,
+      "cot_mm_net_pctile_1y": 6.6
+     },
+     "thresholds": {
+      "large_run_usd": 1200
+     },
+     "scope_pass": false,
+     "ownership_rank": 5,
+     "direction_effect": "cap_only",
+     "magnitude_band_usd": [
+      0,
+      0
+     ],
+     "note": "0410 was a small -190 trim not a large blow-off run -> does not FLIP; contributes only an exhaustion/bounce CAP (COT extreme short, price on the low)"
+    },
+    {
+     "rule_id": "daytype.monday_weekend_gap",
+     "inputs": {
+      "material_gap": false,
+      "weekend_new_info": "none"
+     },
+     "thresholds": {},
+     "scope_pass": true,
+     "ownership_rank": 6,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -450,
+      -780
+     ],
+     "note": "no material gap -> carry Friday side (R3 Friday-carry arm)"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.2,
+     "flat": 0.35,
+     "down": 0.45
+    },
+    "us_open": {
+     "up": 0.22,
+     "flat": 0.2,
+     "down": 0.58
+    },
+    "settle": {
+     "up": 0.25,
+     "flat": 0.2,
+     "down": 0.55
+    },
+    "close": {
+     "up": 0.26,
+     "flat": 0.18,
+     "down": 0.56
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": -500,
+    "stdev": 420,
+    "p10": -1150,
+    "p25": -780,
+    "p50": -520,
+    "p75": -180,
+    "p90": 250,
+    "bins": [
+     {
+      "range_usd": [
+       -2000,
+       -900
+      ],
+      "probability": 0.15
+     },
+     {
+      "range_usd": [
+       -900,
+       -500
+      ],
+      "probability": 0.3
+     },
+     {
+      "range_usd": [
+       -500,
+       -150
+      ],
+      "probability": 0.28
+     },
+     {
+      "range_usd": [
+       -150,
+       150
+      ],
+      "probability": 0.12
+     },
+     {
+      "range_usd": [
+       150,
+       600
+      ],
+      "probability": 0.1
+     },
+     {
+      "range_usd": [
+       600,
+       2000
+      ],
+      "probability": 0.05
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "06:00",
+     "end_et": "10:00",
+     "probability": 0.6,
+     "expected_direction": "down",
+     "catalyst": "catch-up window reasserts D-1 (0410) sell tilt"
+    },
+    {
+     "start_et": "10:00",
+     "end_et": "16:00",
+     "probability": 0.55,
+     "expected_direction": "down",
+     "catalyst": "midday bleed continuation, mature-chain absorption pins near low"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.55,
+    "chop": 0.45
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.55,
+    "reversal": 0.25,
+    "hold": 0.2
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18,
+     "p10": -30,
+     "p50": 0,
+     "p90": 30
+    },
+    {
+     "et_hr": 20,
+     "p10": -60,
+     "p50": -10,
+     "p90": 55
+    },
+    {
+     "et_hr": 22,
+     "p10": -90,
+     "p50": -20,
+     "p90": 80
+    },
+    {
+     "et_hr": 0,
+     "p10": -130,
+     "p50": -30,
+     "p90": 105
+    },
+    {
+     "et_hr": 2,
+     "p10": -170,
+     "p50": -40,
+     "p90": 125
+    },
+    {
+     "et_hr": 4,
+     "p10": -200,
+     "p50": -40,
+     "p90": 145
+    },
+    {
+     "et_hr": 6,
+     "p10": -240,
+     "p50": -50,
+     "p90": 160
+    },
+    {
+     "et_hr": 8,
+     "p10": -420,
+     "p50": -150,
+     "p90": 170
+    },
+    {
+     "et_hr": 10,
+     "p10": -620,
+     "p50": -280,
+     "p90": 180
+    },
+    {
+     "et_hr": 12,
+     "p10": -820,
+     "p50": -400,
+     "p90": 200
+    },
+    {
+     "et_hr": 14,
+     "p10": -1000,
+     "p50": -480,
+     "p90": 225
+    },
+    {
+     "et_hr": 16,
+     "p10": -1150,
+     "p50": -520,
+     "p90": 250
+    }
+   ],
+   "guess_curve": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -10
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -30
+    ],
+    [
+     2,
+     -40
+    ],
+    [
+     4,
+     -40
+    ],
+    [
+     6,
+     -50
+    ],
+    [
+     8,
+     -150
+    ],
+    [
+     10,
+     -280
+    ],
+    [
+     12,
+     -400
+    ],
+    [
+     14,
+     -480
+    ],
+    [
+     16,
+     -520
+    ]
+   ],
+   "overnight_gap_usd": -40,
+   "guessed_net_usd": -520,
+   "fwd_curve_lean": "contango; NGK26/NGM26 spread -0.158 (front soft, building-surplus bearish); no roll seam yet (May leg through 0420)",
+   "confidence": {
+    "overall": 0.5,
+    "direction": 0.55,
+    "magnitude": 0.4,
+    "timing": 0.5
+   },
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp17_state one-shot mask vintage 20260410 (s101.3 item10)",
+    "missing_inputs": [
+     "vol_regime(masked_null)"
+    ],
+    "stale_inputs": [
+     "contract_structure/cash_basis frozen at 20260410 anchor vintage"
+    ],
+    "partial_inputs": [],
+    "prohibited_inputs_removed": [
+     "dip_imb_level",
+     "target_day_price"
+    ],
+    "flags": [
+     "weekend_gap_magnitude irreducible (no weekend-cycle model data)",
+     "A weekend-bridge read not consumed (panel spawn) - noted"
+    ]
+   },
+   "scenario_components": [
+    {
+     "name": "chain_sided_bleed_continue",
+     "probability": 0.62,
+     "direction": "down",
+     "distribution": {
+      "p50": -560,
+      "band": [
+       -780,
+       -350
+      ]
+     },
+     "governing_driver": "s1void_injection_chain_bleed + mature-chain absorption",
+     "invalidation_conditions": [
+      "catch-up window prints buy-share>0.55 with price up",
+      "a fresh cold-add clears 16.4gw"
+     ]
+    },
+    {
+     "name": "exhaustion_bounce",
+     "probability": 0.28,
+     "direction": "up",
+     "distribution": {
+      "p50": 300,
+      "band": [
+       100,
+       600
+      ]
+     },
+     "governing_driver": "COT extreme-short (6.6 pctile) squeeze off the 2.653 block low",
+     "invalidation_conditions": [
+      "bleed resumes below 2.63",
+      "sell tape deepens intra-window"
+     ]
+    },
+    {
+     "name": "quiet_hold",
+     "probability": 0.1,
+     "direction": "flat",
+     "distribution": {
+      "p50": -50,
+      "band": [
+       -150,
+       150
+      ]
+     },
+     "governing_driver": "thin S1-void low-demand day",
+     "invalidation_conditions": [
+      "any storage/positioning catalyst prints"
+     ]
+    }
+   ]
+  },
+  {
+   "date": "20260420",
+   "dow": "Mon",
+   "archetype": "monday_coldadd_gap_then_catchup_fade",
+   "reasoning": "Second Monday of G17, inherits the expected 0417 Friday exit (E-owned; reasoned from doctrine). D-1 (0417) tape tilt: session_b_share 0.379 (STRONG SELL, well <0.50), big_print_b_share 0.50 (neutral), thinner (15987 trades). Strong sell tape into the weekend => inherited monday_bias = the S1-void injection bleed continues DOWN. Weather twist: 0420 D0 HDD 11.9gw / vs_normal +3.99 (mod_heat late cold-add) but it PEAKS on 0420 itself and decays (D+1 9.4, D+2 5.8, D+3 3.8) and is SUB-BAND (peak <16.4gw). selector.divergence_resolution: sub-band cold-add (a) fails the 16.4 gate AND (b) D-1 b_share 0.379 fails the 0.50 buy-confirm gate -> DOWN wins; the cold-add owns AT MOST the reopen GAP, earns NO intraday day-lean. weekend.carry_realization_flip: the cold-add realizes ON Monday (D0 peak) -> catch-up window is a SELL-THE-NEWS fade (0406 form). overnight_headfake_into_catchup: the Sunday-reopen gap UP on the sub-band cold prints on a strong-sell D-1 tape = a HEAD-FAKE; the 06-10 catch-up reasserts DOWN. seam_chainage_accommodation_gate: inherited chain very mature (age>=5) -> absorbed -> deep; but the reopen cold-gap offsets the net. p50 -400 (day-move = small gap-up then bleed reasserts).",
+   "regime": {
+    "day_class": "monday",
+    "seasonal_state": "S3_shoulder_S1void",
+    "demand_regime": "injection_low_demand_subband_coldadd",
+    "curve_regime": "contango",
+    "storage_phase": "injection_building_surplus",
+    "vol_regime": "unknown_masked",
+    "dominant_driver": "storage_trajectory_bleed_vs_subband_coldadd_gap",
+    "selector_mode": "select_down_gap_fade"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "selector.divergence_resolution",
+     "inputs": {
+      "near_window_max_hdd_gw": 11.9,
+      "D1_session_b_share": 0.379
+     },
+     "thresholds": {
+      "hdd_authority_gw": 16.4,
+      "buy_confirm_b_share": 0.5
+     },
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -450,
+      -700
+     ],
+     "note": "BOTH gates fail (11.9<16.4 AND 0.379<0.50) -> DOWN wins; cold-add owns only the reopen gap, no day-lean"
+    },
+    {
+     "rule_id": "weekend.carry_realization_flip",
+     "inputs": {
+      "driver_peak_day": "0420_D0",
+      "realizes": "monday"
+     },
+     "thresholds": {},
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -350,
+      -550
+     ],
+     "note": "cold-add realizes ON Monday -> catch-up = sell-the-news fade (0406 form)"
+    },
+    {
+     "rule_id": "monday.overnight_headfake_into_catchup",
+     "inputs": {
+      "overnight_gap": "up_coldadd",
+      "overnight_flow_confirm": "opposes_D1_sell_tape"
+     },
+     "thresholds": {
+      "b_share_neutral": 0.5
+     },
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      0,
+      0
+     ],
+     "note": "reopen up-gap on strong-sell D-1 tape = head-fake; do not inherit gap sign; catch-up reverses it"
+    },
+    {
+     "rule_id": "magnitude.s1void_injection_chain_bleed",
+     "inputs": {
+      "day_class": "monday_carry_trend",
+      "D1_session_b_share": 0.379,
+      "near_window_hdd_gw": 11.9
+     },
+     "thresholds": {
+      "s1void_base_gw": 20,
+      "sell_tape": 0.5
+     },
+     "scope_pass": true,
+     "ownership_rank": 4,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -450,
+      -780
+     ],
+     "note": "live strong sell tape (0.379) chain-sided trend day; band delivered, offset upward by the cold reopen gap"
+    },
+    {
+     "rule_id": "monday.seam_chainage_accommodation_gate",
+     "inputs": {
+      "inherited_chain_age": ">=5_mature",
+      "chain_polarity": "down"
+     },
+     "thresholds": {
+      "mature_age": 3
+     },
+     "scope_pass": true,
+     "ownership_rank": 5,
+     "direction_effect": "depth_deep",
+     "magnitude_band_usd": [
+      -500,
+      -780
+     ],
+     "note": "very mature chain absorbs the late buy -> deep close; net capped by the reopen gap"
+    },
+    {
+     "rule_id": "daytype.monday_weekend_gap",
+     "inputs": {
+      "material_gap": true,
+      "gap_dir": "up_subband_cold",
+      "gap_owns": "reopen_only"
+     },
+     "thresholds": {},
+     "scope_pass": true,
+     "ownership_rank": 6,
+     "direction_effect": "fade",
+     "magnitude_band_usd": [
+      100,
+      300
+     ],
+     "note": "gap-fade arm: sub-band cold gap at reopen faded through the catch-up window"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.5,
+     "flat": 0.25,
+     "down": 0.25
+    },
+    "us_open": {
+     "up": 0.25,
+     "flat": 0.2,
+     "down": 0.55
+    },
+    "settle": {
+     "up": 0.25,
+     "flat": 0.2,
+     "down": 0.55
+    },
+    "close": {
+     "up": 0.26,
+     "flat": 0.2,
+     "down": 0.54
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": -380,
+    "stdev": 430,
+    "p10": -1050,
+    "p25": -700,
+    "p50": -400,
+    "p75": -50,
+    "p90": 400,
+    "bins": [
+     {
+      "range_usd": [
+       -2000,
+       -850
+      ],
+      "probability": 0.13
+     },
+     {
+      "range_usd": [
+       -850,
+       -450
+      ],
+      "probability": 0.27
+     },
+     {
+      "range_usd": [
+       -450,
+       -150
+      ],
+      "probability": 0.25
+     },
+     {
+      "range_usd": [
+       -150,
+       250
+      ],
+      "probability": 0.2
+     },
+     {
+      "range_usd": [
+       250,
+       650
+      ],
+      "probability": 0.1
+     },
+     {
+      "range_usd": [
+       650,
+       2000
+      ],
+      "probability": 0.05
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "18:00",
+     "end_et": "04:00",
+     "probability": 0.5,
+     "expected_direction": "up",
+     "catalyst": "Sunday reopen sub-band cold-add gap (head-fake, owns reopen only)"
+    },
+    {
+     "start_et": "06:00",
+     "end_et": "10:00",
+     "probability": 0.55,
+     "expected_direction": "down",
+     "catalyst": "catch-up window sell-the-news fade of the cold-add (strong D-1 sell tape 0.379)"
+    },
+    {
+     "start_et": "10:00",
+     "end_et": "16:00",
+     "probability": 0.5,
+     "expected_direction": "down",
+     "catalyst": "injection bleed reasserts, mature-chain absorption"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.45,
+    "chop": 0.55
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.45,
+    "reversal": 0.3,
+    "hold": 0.25
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18,
+     "p10": -40,
+     "p50": 0,
+     "p90": 60
+    },
+    {
+     "et_hr": 20,
+     "p10": -40,
+     "p50": 40,
+     "p90": 140
+    },
+    {
+     "et_hr": 22,
+     "p10": -30,
+     "p50": 90,
+     "p90": 220
+    },
+    {
+     "et_hr": 0,
+     "p10": -20,
+     "p50": 140,
+     "p90": 300
+    },
+    {
+     "et_hr": 2,
+     "p10": 0,
+     "p50": 180,
+     "p90": 360
+    },
+    {
+     "et_hr": 4,
+     "p10": -40,
+     "p50": 170,
+     "p90": 380
+    },
+    {
+     "et_hr": 6,
+     "p10": -120,
+     "p50": 120,
+     "p90": 380
+    },
+    {
+     "et_hr": 8,
+     "p10": -320,
+     "p50": 20,
+     "p90": 340
+    },
+    {
+     "et_hr": 10,
+     "p10": -520,
+     "p50": -120,
+     "p90": 300
+    },
+    {
+     "et_hr": 12,
+     "p10": -720,
+     "p50": -260,
+     "p90": 260
+    },
+    {
+     "et_hr": 14,
+     "p10": -920,
+     "p50": -360,
+     "p90": 300
+    },
+    {
+     "et_hr": 16,
+     "p10": -1050,
+     "p50": -400,
+     "p90": 400
+    }
+   ],
+   "guess_curve": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     40
+    ],
+    [
+     22,
+     90
+    ],
+    [
+     0,
+     140
+    ],
+    [
+     2,
+     180
+    ],
+    [
+     4,
+     170
+    ],
+    [
+     6,
+     120
+    ],
+    [
+     8,
+     20
+    ],
+    [
+     10,
+     -120
+    ],
+    [
+     12,
+     -260
+    ],
+    [
+     14,
+     -360
+    ],
+    [
+     16,
+     -400
+    ]
+   ],
+   "overnight_gap_usd": 180,
+   "guessed_net_usd": -400,
+   "fwd_curve_lean": "contango; NGK26/NGM26 -0.158; still May leg (roll seam is 0421, AFTER 0420); front soft on building surplus",
+   "confidence": {
+    "overall": 0.45,
+    "direction": 0.5,
+    "magnitude": 0.38,
+    "timing": 0.5
+   },
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp17_state one-shot mask vintage 20260410 (s101.3 item10)",
+    "missing_inputs": [
+     "vol_regime(masked_null)",
+     "0417_Friday_exit_type(E-owned,reasoned from doctrine)"
+    ],
+    "stale_inputs": [
+     "contract_structure/cash_basis frozen at 20260410 anchor vintage"
+    ],
+    "partial_inputs": [
+     "inherited monday_bias inferred, not read from E"
+    ],
+    "prohibited_inputs_removed": [
+     "dip_imb_level",
+     "target_day_price"
+    ],
+    "flags": [
+     "weekend cold-add gap magnitude irreducible (weekend_gap_delivery data build)",
+     "sub-band cold-add: reopen-gap size uncertain",
+     "A weekend-bridge read not consumed"
+    ]
+   },
+   "scenario_components": [
+    {
+     "name": "gap_up_then_bleed_fade",
+     "probability": 0.58,
+     "direction": "down",
+     "distribution": {
+      "p50": -400,
+      "band": [
+       -650,
+       -150
+      ]
+     },
+     "governing_driver": "selector.divergence_resolution (both gates fail) + carry_realization_flip",
+     "invalidation_conditions": [
+      "cold-add clears 16.4gw on the D-1 vintage",
+      "catch-up buy-share>0.55 with sustained price up"
+     ]
+    },
+    {
+     "name": "coldadd_holds_up",
+     "probability": 0.25,
+     "direction": "up",
+     "distribution": {
+      "p50": 350,
+      "band": [
+       150,
+       650
+      ]
+     },
+     "governing_driver": "cold-add sustained + COT extreme-short (0.94 pctile) squeeze",
+     "invalidation_conditions": [
+      "b_share stays sub-0.45 through the window",
+      "HDD forecast trims intraday"
+     ]
+    },
+    {
+     "name": "quiet_round_trip",
+     "probability": 0.17,
+     "direction": "flat",
+     "distribution": {
+      "p50": -60,
+      "band": [
+       -150,
+       150
+      ]
+     },
+     "governing_driver": "gap up then full round-trip to flat (0326-style counter round-trip)",
+     "invalidation_conditions": [
+      "a directional catalyst prints"
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,105 @@
+{
+ "specialist": "B",
+ "lens": "Monday catch-up (06-10 ET weekend-repricing window); Sunday-fold: Monday = Fri close -> Mon close",
+ "group": "g17",
+ "brain_version": "s102.6",
+ "round": 1,
+ "days_owned": ["20260413", "20260420"],
+ "doctrine_note": "Blind stays the CORE predictor; MBO is a POSTERIOR update. Direction stays with the D-1 (Friday+Sunday) trade tilt the blind consumed (E's handoff), MBO = turn+absorption confirmation. Minute-grain imb_flow DEMOTED to diagnostic (Monday sampling artifact). Book layer STOOD DOWN both days (no book_trustworthy verdict; ph_absorb all-false, no execution_authority) -> trade-flow only, phase table + session turn are the primary object. Magnitudes DERIVED from the phase table + A's bridge + chain-age gate, never fitted to the actual. Consumed A's weekend bridge (grp17_blind_A_bridge.json); recorded taken-vs-overridden per day. A informs, B decides, B owns the number.",
+ "cross_cutting_mbo_finding": "Both owned Mondays are ONE mechanism (monday.overnight_headfake_into_catchup + catchup_window_tilt_gate, ALIGNED-carry arm): a large overnight UP-gap (0413 ~+460 no driver / 0420 ~+450 on a real cold-shot) that the 06-10 catch-up window FADED via a turn_down at 07:48 ET on BOTH days (07:48:51 and 07:48:52 - an essentially identical desk-repricing fingerprint, per-event n=2, NOT pooled), after which aligned sell flow (flow_conviction ALIGNED: signed_flow<0 AND price<0 in ph2/ph3, ph_absorb false) reasserted the inherited D-1 sell tilt into the close. The blind OVER-SIZED both fades (-520, -400) because it keyed the fade off the mature-chain continuation size; the MBO shows the down is REAL but capped - by chain-exhaustion on 0413 (A: 'down mostly spent, grind not thrust') and by the LIVE unrealized-ahead cold-shot on 0420 (A: driver realizes INTO Monday, not sell-the-news) - so both DAY-MOVES (from prior close) are far shallower than the blind's, especially 0420 where the up-gap offsets the sell to near-flat. Gap SIGN treated as non-derivable noise on both; direction taken from the catch-up conviction, not the gap.",
+ "days": [
+  {
+   "date": "20260413",
+   "dow": "Mon",
+   "day_class": "regular_monday",
+   "blind_direction": "DOWN",
+   "blind_net_usd": -520,
+   "posterior_direction_by_horizon": {
+    "overnight_reopen_18_06": "UP head-fake (gap up ~+460 above the 2.653 anchor; gap SIGN non-derivable noise, magnitude not claimed) - thin, no forward bull driver (A: weather warm/bearish)",
+    "catchup_06_10": "DOWN - turn_down at 07:48 ET (in-window) reverses the head-fake; catch-up signed-flow-vs-price = ALIGNED sell (confirm, not sell-the-news; no driver realized over the weekend)",
+    "close_post_10": "DOWN - aligned sell ph2 (-1921/px-330) + ph3 (-1222/px-220) carry to a close near the intraday low (mature-chain deep pin), but the DAY-MOVE from prior close is capped by the head-fake gap"
+   },
+   "expected_magnitude_usd": -340,
+   "expected_magnitude_band_usd": [-250, -430],
+   "onset_time_et": "00:20",
+   "turn_time_et": "07:48",
+   "trend_vs_chop": "trend (clean aligned sell after the catch-up turn)",
+   "continuation_vs_reversal": "continuation of the D-1 sell tilt (the overnight UP was a head-fake reversed back to trend, NOT a day-level reversal)",
+   "path_p50_curve": [[18, 0], [20, 30], [22, 50], [0, 60], [2, 70], [4, 80], [6, 90], [8, 0], [10, -130], [12, -240], [14, -320], [16, -340]],
+   "confidence": 0.6,
+   "weight_assigned": {"blind": 0.55, "causal_mbo": 0.45},
+   "evidence_used": [
+    "MBO turn_down @ 07:48 ET (in the 06-10 catch-up window) reversing the overnight head-fake up (high_exc +240 @ 07:48 -> low_exc -840 @ 13:00)",
+    "phase conviction ALIGNED: ph2 sflow -1921 / px -330 and ph3 sflow -1222 / px -220 (sell flow WITH falling price) = genuine down delivery, not absorption (ph_absorb all false)",
+    "A weekend bridge: SOFT-BEARISH-TO-NEUTRAL, LOW MAGNITUDE, 'down mostly spent - grind not thrust', no forward bull driver over the 0410->0413 seam (warm/bearish weather)",
+    "monday.seam_chainage_accommodation_gate: inherited chain MATURE (age high, MM short-and-growing) -> deep intraday pin (close near low), continuation-down not accommodated",
+    "catchup_window_tilt_gate: E.driver did NOT realize over the weekend -> catch-up is a CONFIRM/carry, not a sell-the-news fade"
+   ],
+   "evidence_rejected": [
+    "overnight gap SIGN (+460 up) - non-derivable noise; not inherited as the day direction (monday.overnight_headfake_into_catchup)",
+    "minute-grain imb_flow - demoted to diagnostic (known Monday sampling artifact, flips faster than its autocorrelation)",
+    "blind -520 fresh-continuation size - refuted by chain-exhaustion (A) + the head-fake gap that caps the DAY-MOVE"
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer STOOD DOWN: no book_trustworthy verdict (ph_absorb all false, no execution_authority / conviction floor met) - trade-flow only, do NOT let a raw book div/imb read alter the carry"
+   ],
+   "selection_reason": "B owns regular Mondays; catch-up-window turn is the decisive object; posterior refines the blind's over-sized fade to the causally-supported exhaustion-capped down.",
+   "mbo_verdict": "trade-flow CONFIRMS DOWN (aligned sell through the catch-up + afternoon); book stood down. Magnitude MODERATE-DOWN (~-340), shallower than the blind's -520 because the mature down-chain is exhausting (A) and the overnight head-fake up-gap caps the net day-move.",
+   "handoff_out": {
+    "close_state": "closed near the intraday low (deep pin), aligned sell into the close, chain polarity DOWN and mature (age advanced +1)",
+    "last_hour": "down/aligned-sell (no covering divergence into the close)",
+    "note_for_C_0414": "the down-chain is intact and mature; a Tue continuation is the base case but the cumulative extreme deepens - watch for the first big-print buy-absorption (accumulation arm) that C owns."
+   }
+  },
+  {
+   "date": "20260420",
+   "dow": "Mon",
+   "day_class": "regular_monday",
+   "blind_direction": "DOWN",
+   "blind_net_usd": -400,
+   "posterior_direction_by_horizon": {
+    "overnight_reopen_18_06": "UP bounce (gap up ~+450; this time a REAL forward driver - A's late-season cold shot, 0420 HDD +3.99 vs normal, realizing INTO Monday) - but gap MAGNITUDE not claimed, sign non-derivable",
+    "catchup_06_10": "DOWN turn - turn_down at 07:48 ET fades the up-gap; catch-up = ALIGNED sell reasserting the D-1 tilt (E's 0417 handoff: 'sellers resume', D-1 b_share 0.379). E's DOWN read wins over A's UP-lean on the SIGN, but the cold-shot CAPS the down",
+    "close_post_10": "DOWN but SMALL - ph3 aligned sell (-823/px-450) pins the intraday deep (mature chain absorbs the bounce), yet the DAY-MOVE from prior close is near-flat because the large cold-shot up-gap offsets the sell"
+   },
+   "expected_magnitude_usd": -90,
+   "expected_magnitude_band_usd": [-220, 40],
+   "onset_time_et": "09:08",
+   "turn_time_et": "07:48",
+   "trend_vs_chop": "chop-to-trend (up head-fake/bounce, then a clean aligned sell leg after the catch-up turn)",
+   "continuation_vs_reversal": "intraday continuation of the D-1 sell tilt, but NET day two-sided / near-flat (cold-shot up-driver roughly offsets the sell-fade)",
+   "path_p50_curve": [[18, 0], [20, 40], [22, 80], [0, 110], [2, 130], [4, 140], [6, 140], [8, 60], [10, -20], [12, -60], [14, -80], [16, -90]],
+   "confidence": 0.5,
+   "weight_assigned": {"blind": 0.45, "causal_mbo": 0.55},
+   "evidence_used": [
+    "MBO turn_down @ 07:48 ET (catch-up window) FADING the cold-shot up-gap; high_exc +260 @ 07:48 -> low_exc -650 @ 18:00",
+    "phase conviction ALIGNED: ph2 sflow -761 / px -60 and ph3 sflow -823 / px -450 (sell flow WITH falling price) = the D-1 sellers resumed, confirming E's 0417 handoff ('sellers resume; D-1 0420 b_share 0.379')",
+    "A weekend bridge cold-shot: a REAL unrealized-ahead bull driver realizing INTO Monday (NOT sell-the-news) -> live SUPPORT that CAPS the sell-fade (why the net day is near-flat, not a -400 fade)",
+    "monday.seam_chainage_accommodation_gate: inherited chain MATURE (age ~5+, MM record-short-and-growing) -> intraday the up-bounce is ABSORBED (close near low), but the DAY-MOVE is offset by the up-gap",
+    "catchup_window_tilt_gate: driver realizes INTO Monday -> the catch-up is a capped carry-down, not a full sell-the-news fade"
+   ],
+   "evidence_rejected": [
+    "A's UP-lean as the day SIGN - the MBO catch-up turn_down + aligned sell shows E's DOWN was right on sign (sellers won the window); A's cold-shot is retained as a magnitude CAP, not the direction",
+    "overnight gap SIGN/magnitude (+450 up) - non-derivable noise; not the day direction",
+    "minute-grain imb_flow - demoted to diagnostic (Monday sampling artifact)",
+    "blind -400 fade size - refuted: the fade is real but capped by the live cold-shot; the net day is near-flat"
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer STOOD DOWN: no book_trustworthy verdict (ph_absorb all false, no execution_authority) - trade-flow only",
+    "A vs E direction tension explicitly RESOLVED by the MBO catch-up conviction (turn_down + aligned sell = E's sign), rather than averaged"
+   ],
+   "selection_reason": "B owns regular Mondays; the A(up)-vs-E(down) seam tension is decided by the catch-up-window MBO turn+conviction, which B alone reads; posterior corrects the blind's over-sized fade to a near-flat capped down.",
+   "mbo_verdict": "trade-flow CONFIRMS a small DOWN (aligned sell won the catch-up) but the LIVE cold-shot up-driver caps the net near flat (~-90); the mature chain absorbs the bounce intraday, yet the large up-gap offsets it. Book stood down. This is the catchup_window capped-carry case, not a full fade.",
+   "handoff_out": {
+    "close_state": "closed near the intraday low but the NET day near-flat; chain polarity DOWN, mature (record-short exhaustion), the 0420->0421 May->June roll seam is imminent (NGK26->NGM26, never-traded leg change on 0421)",
+    "last_hour": "down/aligned-sell; the cold-shot support held the day off a full fade",
+    "note_for_E_0421": "the seam leg change (NGM26) passes as never-traded - do NOT carry the NGK26 price level across; the underlying down-chain is mature-and-exhausting into NGK26 expiry week, cover-fuel building."
+   }
+  }
+ ],
+ "summary": {
+  "0413": "posterior DOWN, day-move -340 USD (blind 0.55 / causal_mbo 0.45); catch-up turn_down @07:48 + aligned sell carried the D-1 sell tilt, but a mature exhausting down-chain (A: 'grind not thrust') and the faded overnight head-fake up-gap cap it below the blind's -520.",
+  "0420": "posterior DOWN but near-flat, day-move -90 USD (blind 0.45 / causal_mbo 0.55); catch-up turn_down @07:48 faded the cold-shot up-gap and aligned sell resumed (E's DOWN wins the sign over A's UP-lean), but the LIVE unrealized-ahead cold-shot caps the net near flat - not the blind's -400 fade.",
+  "cross_cutting": "identical 07:48 ET catch-up turn on both Mondays: overnight UP-gap -> in-window turn_down -> aligned-sell carry; blind over-sized both fades, MBO shows the down is real but exhaustion-capped (0413) / cold-shot-capped (0420)."
+ }
+}

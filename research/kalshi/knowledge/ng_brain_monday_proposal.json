@@ -1,0 +1,87 @@
+{
+  "proposal": "MONDAY (day-class B) catch-up cleanup - the downstream consumer of the corrected Friday + mid-week handoff",
+  "author": "Specialist B (Monday weekend-information repricing / 06-10 ET catch-up window)",
+  "session": "S104 solo mission",
+  "base_brain": "s102.4 (knowledge/ng_brain.json)",
+  "status": "PROVISIONAL - proposed plays/amendments only; incumbents NOT edited; forward_evidence NONE (G17+ is the forward test)",
+  "premise": "Greg: 'we get killed on Mondays' - and the wrecks are largely INHERITED ('we missed Monday because we missed Friday'). Quantified across G6-G16: blind Monday DIRECTION is wrong-signed on 11 of 22 Mondays; 10 of the 10 non-holiday wrong-sign Mondays are FRIDAY-ROOTED cascades that the CORRECTED Friday exit_type + monday_bias (specialist E) flip to the right sign. What remains after a clean inheritance is a Monday-NATIVE MAGNITUDE residual clustering into four buckets. These plays fix three of them; the fourth (fresh-shot gap size) is declared a data build.",
+  "consumes": {
+    "from_friday_proposal (ng_brain_friday_proposal.json, specialist E)": "handoff_out fields exit_type + monday_bias + chain_age_sessions + last_hour_signed_flow + driver_realization; the weekend.carry_realization_flip verdict; the do-not-inherit-the-Friday-label structural fix.",
+    "from_midweek_proposal (ng_brain_midweek_proposal.json, specialist C)": "corrected_exit_read_protocol fields chain_polarity_and_age + conviction_verdict + exhaustion_state (Sunday/Friday close feeding the seam)."
+  },
+  "supporting_doc": "scratchpad/monday_fix_summary.md (full per-Monday blind->corrected->rules table + the four residual buckets + unexplained days)",
+  "do_not_edit": "ng_brain.json and all existing forecast/score/proposal files are untouched by this proposal.",
+
+  "proposed_plays": [
+    {
+      "id": "monday.seam_chainage_accommodation_gate",
+      "target": "magnitude",
+      "trigger": "a carry-Monday (R3 carries the D-1 side, no fresh-shot gap) after the 06-10 catch-up carry, sizing the late-session ph2 depth",
+      "read": "the inherited SEAM chain-age carried across the overnight seam (E.handoff_out.chain_age_sessions / C.chain_polarity_and_age): the ph2 late-buy phase is ACCOMMODATED on a YOUNG chain (age<=2 -> price lifts, close OFF the low) or ABSORBED on a MATURE chain (age>=3 -> price still falls, close NEAR the low)",
+      "call": "young inherited chain -> size the day SHALLOW (close off-low, absorb_session False); mature inherited chain -> size the day DEEP (close near-low, absorb_session True). Chain-age is the LEADING indicator of the ph2 outcome and therefore of how deep the day pins - it calls it WITHOUT a book read. Demote the minute-grain imb_flow (a known Monday sampling artifact) to a diagnostic.",
+      "evidence": "MBO-PROVEN n=2 both scales on G15: 0316 age-1 down chain -> ph2 buy +959 ACCOMMODATED (+140 px) -> close off low 0.29 -> shallow -540 (my posterior -570, err -30); 0323 age-3 down chain cum-890 -> ph2 buy +2409 ABSORBED (price still -290) -> close near low 0.14 -> deep -1080 (my posterior -1080, err 0). Generalizes off G15: deepens 1117 (continuing mature down-chain absorbed -> -1510; corr -900 -> rule -1400) and confirms shallow priced carries (1124 +90).",
+      "status": "PROVISIONAL",
+      "confidence": 0.55,
+      "requires": "chain age + polarity carried across the seam (open_time_only from E/C handoff); the ph2 accommodation/absorption fingerprint is MBO-measured for G15 only - all-Monday extension is a DATA build",
+      "scope": "carry-Monday day-move MAGNITUDE / close-off-extreme; does not set direction",
+      "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
+      "provenance": "generalized from the G15 MBO round-2 specialist-B HE24->HE1 seam finding (forecasts/grp15_mbo_specialist_B_r2.json)",
+      "caveats": "Does NOT explain gap-driven Mondays (1027) or crash reactive tails (0202/0309 - the tail is beyond the accommodation/absorption band, reactive, not claimed at open). Overlaps incumbent monday.window_deep_book_shakeout: the seam chain-age is the decision-time-legit LEADING indicator of the SAME ph2 outcome that play's 06:00 L1-10 book read approximates - chain-age calls it in advance, the book confirms intra-window."
+    },
+    {
+      "id": "monday.overnight_headfake_into_catchup",
+      "target": "direction",
+      "trigger": "a Monday whose overnight (ph0, ~20:00-06:00 ET) session prints a gap that does NOT confirm the inherited D-1 tilt (price drifts one way on flat-to-opposite signed flow)",
+      "read": "the overnight thin-book move vs its own flow: a gap on NON-CONFIRMING flow (sell-share <0.50 while price is up, or the signed-flow sign opposes the price move) is a HEAD-FAKE, not the day's direction. Gap SIGN is noise (E's do-not-inherit-the-label fix at the overnight scale).",
+      "call": "do NOT inherit the overnight gap sign. The 06-10 ET catch-up window is where the D-1 (Friday+Sunday) trade tilt reasserts; the head-fake REVERSES before/through the window into the ph1 carry. Direction stays with the inherited E.monday_bias, confirmed by the catch-up window's signed-flow-vs-price conviction.",
+      "evidence": "MBO-PROVEN n=2 on G15: 0316 overnight +490 to 02:21 on ph0 sflow -493 -> reversed -930 ph1 carry-down; 0323 overnight +1270 to 03:52 on ph0 sflow -26 -> reversed -1920 ph1 carry-down. Generalizes to the wrong-sign weekend-gap-up Mondays 1110/1117 (up gaps inherited, tape carried DOWN with the D-1 momentum) and 0302 (a warm-cut-DOWN gap that FAILED -> catch-up faded it UP).",
+      "status": "PROVISIONAL",
+      "confidence": 0.5,
+      "requires": "overnight signed flow vs price (needs_intraday_reveal for the flow tell; MBO-measured for G15 only, archetype+curve inference elsewhere)",
+      "scope": "Monday direction gate at the 06-10 catch-up window",
+      "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
+      "caveats": "A DIRECTION gate only - sizes nothing. Does not fix the fresh-shot gap MAGNITUDE (1027) - that is weekend_gap_delivery's data build. On a Monday whose overnight gap DOES confirm the D-1 tilt (fresh-shot cold add), the gap is real and this play does not fire (see the incumbent block_gap_ownership / weekend_gap_delivery)."
+    },
+    {
+      "id": "monday.catchup_window_tilt_gate",
+      "target": "direction",
+      "trigger": "every non-holiday Monday, at the 06-10 ET catch-up window",
+      "read": "direction = the inherited D-1 (Friday+Sunday) trade tilt = E.monday_bias / C.conviction_verdict, NOT the gap sign or the Friday day-net. The catch-up window's own signed-flow-vs-price conviction CONFIRMS (ALIGNED) or FADES (a driver that realized over the weekend -> sell-the-news) that tilt.",
+      "call": "carry the inherited monday_bias through the window; if E.driver_realization says the driver realized over the weekend, the catch-up is a FADE (sell-the-news), not an extend. This is the Monday operationalization of the flow-is-the-primary-direction-gate finding (NG_FORECASTER_PROBLEM_MEMO_S103 sec 5/7): flow gates SIGN, the fundamental families set magnitude/where-it-can-go.",
+      "evidence": "carry-realization fades n>=2 (from E, spanning groups): 0223 (cold peak realized weekend -> catch-up faded -1790, corr+rule -1500); 0406 (cold-add realized ext-weekend -> faded -470, rule -450); 0309 (3-day up-run realized to warm crest -> catch-up faded -3020). Aligned carries: 0330 (positioning-spent expiry-covering -> resume pre-covering down -650); 0209 (roll-window-open carry down -830).",
+      "status": "PROVISIONAL",
+      "confidence": 0.5,
+      "requires": "E.monday_bias + E.driver_realization (open_time_only) + the catch-up window conviction (needs_intraday_reveal for the live confirm)",
+      "scope": "Monday direction at the catch-up window; consumes the Friday/Sunday handoff, never the gap sign",
+      "forward_evidence": "NONE - proposed S104; G17+ is the forward test",
+      "caveats": "Direction/timing only. The sell-the-news FADE DEPTH on the crash days (0202/0309) is sized by seam_chainage + crash class but the extreme reactive tail is honest-under (not claimed at open). Sub-threshold cold (0406, HDD ~15.8) prices ONCE in the reopen gap then the tape reasserts - do not treat a sub-threshold shoulder cold add like a winter cold add."
+    }
+  ],
+
+  "proposed_amendments_incumbents_untouched": [
+    {
+      "target_play": "daytype.monday_weekend_gap (id 8)",
+      "amendment": "ADOPT E's proposed exit-state-inheritance clause AND add the intra-window mechanics R3 currently lacks. R3's read (fade mature-extreme gap / extend fresh-turn / carry Friday side) is keyed off the GAP; re-key it off the inherited E.exit_type + E.monday_bias (never the gap sign / Friday label - the 10 wrong-sign cascade Mondays), then apply INSIDE the 06-10 window: (a) monday.overnight_headfake_into_catchup screens the gap for a non-confirming head-fake; (b) monday.catchup_window_tilt_gate carries/fades the inherited tilt; (c) monday.seam_chainage_accommodation_gate sizes the ph2 depth. The 'often a REVERSAL' lean stays RETIRED - the apparent 'reversals' were the overnight head-fake reversing back to the D-1 tilt, not a day-level reversal.",
+      "reason": "R3 is correct in spirit but keyed off the wrong object (the gap). Keying it off the inherited Friday EXIT-STATE fixes the cascade cases (0202, 0223, 0309, 1110, 1117, 1201, 1215, 1222, 0105, 0406) where the gap sign alone mis-led Monday."
+    },
+    {
+      "target_play": "monday.window_deep_book_shakeout (id: monday.window_deep_book_shakeout)",
+      "amendment": "record that the inherited SEAM chain-age (monday.seam_chainage_accommodation_gate) is a decision-time-legit LEADING indicator of the SAME ph2 accommodation-vs-absorption outcome this play approximates from the 06:00 L1-10 resting book. Chain-age calls the outcome IN ADVANCE (no book needed); the book read is the intra-window CONFIRM. They are complementary (STACK, never head-to-head): chain-age at the open + book at 06:00 + the intraday recruitment confirm this play already carries.",
+      "reason": "the play already found the 06:00 book approximates the caught/stacked side (6/7); the seam chain-age is the cheaper, earlier, open-time-legit version of the same read and closes the play's own 'Monday-specificity unproven / no open-time predictor' gap."
+    },
+    {
+      "target_doctrine": "doctrine_tier3.day_class_toolbags (Monday day-class B)",
+      "amendment": "record the Monday consumption rule: Monday reads E.handoff_out {exit_type, monday_bias, chain_age_sessions, driver_realization, last_hour_signed_flow} - STATE, never the Friday day-net or directional label. The 06-10 ET catch-up window is where Monday decides: screen the overnight gap for a head-fake, carry/fade the inherited tilt (catch-up_window_tilt_gate), size the ph2 depth by the inherited seam chain-age (seam_chainage_accommodation_gate). Direction stays with the D-1 (Friday+Sunday) trade tilt; the minute-grain imb_flow is a diagnostic only (Monday sampling artifact).",
+      "reason": "closes the enumeration of exactly what the Monday day-class consumes from the corrected Friday/mid-week handoff, consistent with the toolbag principle that only STATE survives the seam."
+    }
+  ],
+
+  "unexplained_or_still_missed": {
+    "fresh_shot_weekend_gap_magnitude": "1027 (+6590 gap, day-move +5890): direction fine (Friday was mis-called DOWN; the up-reversal was starting), but the fresh-shot gap SIZE is IRREDUCIBLE by rule - the incumbent weekend_gap_delivery / block_gap_ownership DATA build (Sat/Sun 00Z/12Z model runs). Also covers G11 0119 (out of committed numbers). My rules address gap SIGN and session shape, not fresh-shot gap size.",
+    "crash_reactive_tails": "0202 (-4260) and 0309 (-3020): corrected inheritance + seam_chainage flip the sign and size the confirmed give-back/crash class (-2900 / -2200), but the extreme tail beyond the confirmed band is REACTIVE and not claimed at the open (doctrine: honest under-claim). Residuals +1360 / +820 are declared, not a rule failure.",
+    "shoulder_regime_magnitude": "0302 (+1020): direction right (catch-up fades the failed warm-cut-down gap up), but the under-size is the S3-shoulder warm-cut-inversion regime-boundary magnitude problem (the same regime-scoping gap the problem-memo sec 6.4 flags). PARTIAL - sign + part of the size only.",
+    "holiday_mondays": "0216 Presidents Day is a different day-class (extended-weekend reopen belongs to A) - defer to the holiday/catch-up doctrine, not the regular-Monday mechanisms.",
+    "g11_sunday_shock_cases": "0119 and 0126 are Sunday-fresh-shock-gap reversals (catalyst consumed by the Sunday gap), NOT Friday-rooted - incumbent weekend_gap_delivery / reaction_corollary owns them, out of this cleanup's scope; and the committed G11 score file carries no numbers to re-derive.",
+    "data_limitation": "the overnight head-fake and ph2 accommodation/absorption fingerprints are MBO-PROVEN only where MBO ran (G15). For every other Monday exit-type/head-fake was inferred from archetype+curve+calendar; extending the flow measurement to all Mondays is a DATA build, declared not hand-waved (same caveat E carries on the Friday exit-type)."
+  }
+}

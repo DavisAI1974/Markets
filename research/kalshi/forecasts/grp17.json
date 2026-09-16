@@ -1,0 +1,687 @@
+{
+ "group": "g17",
+ "phase": "blind",
+ "brain_version": "s102.5",
+ "anchor": 2.653,
+ "sum_abs_err_usd": 4510,
+ "mean_abs_err_usd": 451,
+ "dir_hits": 5,
+ "n": 10,
+ "days": [
+  {
+   "date": "20260413",
+   "dow": "Mon",
+   "owner": "B",
+   "guess_day_move_usd": -520,
+   "overnight_gap_usd": -40,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -10
+    ],
+    [
+     22,
+     -20
+    ],
+    [
+     0,
+     -30
+    ],
+    [
+     2,
+     -40
+    ],
+    [
+     4,
+     -40
+    ],
+    [
+     6,
+     -50
+    ],
+    [
+     8,
+     -150
+    ],
+    [
+     10,
+     -280
+    ],
+    [
+     12,
+     -400
+    ],
+    [
+     14,
+     -480
+    ],
+    [
+     16,
+     -520
+    ]
+   ],
+   "handoff_out": null,
+   "actual_day_move_usd": -330,
+   "err_usd": -190,
+   "dir_hit": true,
+   "actual_close": 2.62
+  },
+  {
+   "date": "20260414",
+   "dow": "Tue",
+   "owner": "C",
+   "guess_day_move_usd": -520,
+   "overnight_gap_usd": -140,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -70
+    ],
+    [
+     22,
+     -140
+    ],
+    [
+     0,
+     -210
+    ],
+    [
+     2,
+     -280
+    ],
+    [
+     4,
+     -330
+    ],
+    [
+     6,
+     -380
+    ],
+    [
+     8,
+     -420
+    ],
+    [
+     10,
+     -460
+    ],
+    [
+     12,
+     -490
+    ],
+    [
+     14,
+     -510
+    ],
+    [
+     16,
+     -520
+    ]
+   ],
+   "handoff_out": null,
+   "actual_day_move_usd": -290,
+   "err_usd": -230,
+   "dir_hit": true,
+   "actual_close": 2.591
+  },
+  {
+   "date": "20260415",
+   "dow": "Wed",
+   "owner": "C",
+   "guess_day_move_usd": -130,
+   "overnight_gap_usd": -30,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -15
+    ],
+    [
+     22,
+     -30
+    ],
+    [
+     0,
+     -50
+    ],
+    [
+     2,
+     -70
+    ],
+    [
+     4,
+     -85
+    ],
+    [
+     6,
+     -100
+    ],
+    [
+     8,
+     -110
+    ],
+    [
+     10,
+     -120
+    ],
+    [
+     12,
+     -125
+    ],
+    [
+     14,
+     -128
+    ],
+    [
+     16,
+     -130
+    ]
+   ],
+   "handoff_out": null,
+   "actual_day_move_usd": 80,
+   "err_usd": -210,
+   "dir_hit": false,
+   "actual_close": 2.599
+  },
+  {
+   "date": "20260416",
+   "dow": "Thu",
+   "owner": "D",
+   "guess_day_move_usd": -400,
+   "overnight_gap_usd": -10,
+   "path_p50": [
+    [
+     18.0,
+     0
+    ],
+    [
+     22.0,
+     -10
+    ],
+    [
+     2.0,
+     -25
+    ],
+    [
+     6.0,
+     -45
+    ],
+    [
+     8.0,
+     -65
+    ],
+    [
+     9.5,
+     -85
+    ],
+    [
+     10.5,
+     -180
+    ],
+    [
+     11.0,
+     -260
+    ],
+    [
+     12.0,
+     -330
+    ],
+    [
+     14.25,
+     -375
+    ],
+    [
+     17.0,
+     -400
+    ]
+   ],
+   "handoff_out": null,
+   "actual_day_move_usd": 720,
+   "err_usd": -1120,
+   "dir_hit": false,
+   "actual_close": 2.671
+  },
+  {
+   "date": "20260417",
+   "dow": "Fri",
+   "owner": "E",
+   "guess_day_move_usd": 350,
+   "overnight_gap_usd": 40,
+   "path_p50": [
+    [
+     18.0,
+     0.0
+    ],
+    [
+     20.0,
+     17.5
+    ],
+    [
+     22.0,
+     42.0
+    ],
+    [
+     0.5,
+     63.0
+    ],
+    [
+     3.0,
+     87.5
+    ],
+    [
+     6.0,
+     115.5
+    ],
+    [
+     8.0,
+     147.0
+    ],
+    [
+     9.5,
+     192.5
+    ],
+    [
+     11.0,
+     231.0
+    ],
+    [
+     13.0,
+     273.0
+    ],
+    [
+     14.5,
+     308.0
+    ],
+    [
+     16.0,
+     336.0
+    ],
+    [
+     17.0,
+     350.0
+    ]
+   ],
+   "handoff_out": {
+    "close_px": 2.568,
+    "close_px_note": "GUESSED (price state masked); ~-0.085 net bleed from 2.653 anchor then +0.035 Friday covering",
+    "cum_from_anchor_usd": -850,
+    "chain_polarity": "down",
+    "chain_age_sessions": 5,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "divergent_up_vs_sell_tilt",
+    "conviction": "DIVERGENT-covering",
+    "close_off_extreme_frac": 0.4,
+    "positioning_calendar": {
+     "expiry": false,
+     "opex": false,
+     "index_roll_window_open_monday": true,
+     "note": "May->June roll seam is Tue 0421; NGK26 LTD/opex the following week"
+    },
+    "driver_realization": {
+     "driver": "injection_bearish_bleed_plus_short_crowding",
+     "peak_day_et": "not_before_monday",
+     "realizes_before_monday": false
+    },
+    "exit_type": "positioning_spent_fade",
+    "monday_bias": "down lean, small-to-moderate size (Friday covering spent; sellers resume - D-1 0420 b_share 0.379 confirms fresh Monday sell)",
+    "sunday_gap_owner": "chain_drift"
+   },
+   "actual_day_move_usd": 40,
+   "err_usd": 310,
+   "dir_hit": true,
+   "actual_close": 2.675
+  },
+  {
+   "date": "20260420",
+   "dow": "Mon",
+   "owner": "B",
+   "guess_day_move_usd": -400,
+   "overnight_gap_usd": 180,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     40
+    ],
+    [
+     22,
+     90
+    ],
+    [
+     0,
+     140
+    ],
+    [
+     2,
+     180
+    ],
+    [
+     4,
+     170
+    ],
+    [
+     6,
+     120
+    ],
+    [
+     8,
+     20
+    ],
+    [
+     10,
+     -120
+    ],
+    [
+     12,
+     -260
+    ],
+    [
+     14,
+     -360
+    ],
+    [
+     16,
+     -400
+    ]
+   ],
+   "handoff_out": null,
+   "actual_day_move_usd": -60,
+   "err_usd": -340,
+   "dir_hit": true,
+   "actual_close": 2.669
+  },
+  {
+   "date": "20260421",
+   "dow": "Tue",
+   "owner": "E",
+   "guess_day_move_usd": -150,
+   "overnight_gap_usd": -40,
+   "path_p50": [
+    [
+     18.0,
+     -0.0
+    ],
+    [
+     20.0,
+     -7.5
+    ],
+    [
+     22.0,
+     -18.0
+    ],
+    [
+     0.5,
+     -27.0
+    ],
+    [
+     3.0,
+     -37.5
+    ],
+    [
+     6.0,
+     -49.5
+    ],
+    [
+     8.0,
+     -63.0
+    ],
+    [
+     9.5,
+     -82.5
+    ],
+    [
+     11.0,
+     -99.0
+    ],
+    [
+     13.0,
+     -117.0
+    ],
+    [
+     14.5,
+     -132.0
+    ],
+    [
+     16.0,
+     -144.0
+    ],
+    [
+     17.0,
+     -150.0
+    ]
+   ],
+   "handoff_out": null,
+   "actual_day_move_usd": 260,
+   "err_usd": -410,
+   "dir_hit": false,
+   "actual_close": 2.838
+  },
+  {
+   "date": "20260422",
+   "dow": "Wed",
+   "owner": "C",
+   "guess_day_move_usd": -100,
+   "overnight_gap_usd": -25,
+   "path_p50": [
+    [
+     18,
+     0
+    ],
+    [
+     20,
+     -10
+    ],
+    [
+     22,
+     -25
+    ],
+    [
+     0,
+     -40
+    ],
+    [
+     2,
+     -55
+    ],
+    [
+     4,
+     -68
+    ],
+    [
+     6,
+     -78
+    ],
+    [
+     8,
+     -86
+    ],
+    [
+     10,
+     -92
+    ],
+    [
+     12,
+     -96
+    ],
+    [
+     14,
+     -98
+    ],
+    [
+     16,
+     -100
+    ]
+   ],
+   "handoff_out": null,
+   "actual_day_move_usd": 140,
+   "err_usd": -240,
+   "dir_hit": false,
+   "actual_close": 2.852
+  },
+  {
+   "date": "20260423",
+   "dow": "Thu",
+   "owner": "D",
+   "guess_day_move_usd": -420,
+   "overnight_gap_usd": -12,
+   "path_p50": [
+    [
+     18.0,
+     0
+    ],
+    [
+     22.0,
+     -12
+    ],
+    [
+     2.0,
+     -30
+    ],
+    [
+     6.0,
+     -50
+    ],
+    [
+     8.0,
+     -70
+    ],
+    [
+     9.5,
+     -95
+    ],
+    [
+     10.5,
+     -190
+    ],
+    [
+     11.0,
+     -280
+    ],
+    [
+     12.0,
+     -350
+    ],
+    [
+     14.25,
+     -395
+    ],
+    [
+     17.0,
+     -420
+    ]
+   ],
+   "handoff_out": null,
+   "actual_day_move_usd": -1250,
+   "err_usd": 830,
+   "dir_hit": true,
+   "actual_close": 2.727
+  },
+  {
+   "date": "20260424",
+   "dow": "Fri",
+   "owner": "E",
+   "guess_day_move_usd": 250,
+   "overnight_gap_usd": 30,
+   "path_p50": [
+    [
+     18.0,
+     0.0
+    ],
+    [
+     20.0,
+     12.5
+    ],
+    [
+     22.0,
+     30.0
+    ],
+    [
+     0.5,
+     45.0
+    ],
+    [
+     3.0,
+     62.5
+    ],
+    [
+     6.0,
+     82.5
+    ],
+    [
+     8.0,
+     105.0
+    ],
+    [
+     9.5,
+     137.5
+    ],
+    [
+     11.0,
+     165.0
+    ],
+    [
+     13.0,
+     195.0
+    ],
+    [
+     14.5,
+     220.0
+    ],
+    [
+     16.0,
+     240.0
+    ],
+    [
+     17.0,
+     250.0
+    ]
+   ],
+   "handoff_out": {
+    "close_px": 2.72,
+    "close_px_note": "GUESSED, on June/NGM26 leg (post-0421 roll); ~+0.158 above the May-equivalent economic level",
+    "cum_from_anchor_usd": -1000,
+    "cum_note": "roll-adjusted ECONOMIC move from 2.653 May anchor (mechanical +0.158 offset excluded)",
+    "chain_polarity": "down_at_record_short_exhaustion",
+    "chain_age_sessions": 10,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "divergent_up_vs_sell_tilt",
+    "conviction": "DIVERGENT-covering",
+    "close_off_extreme_frac": 0.4,
+    "positioning_calendar": {
+     "expiry": true,
+     "opex": true,
+     "index_roll_window_open_monday": false,
+     "note": "NGK26 opex Mon 0427, LTD/expiry Tue 0428 - the coming week is expiry week"
+    },
+    "driver_realization": {
+     "driver": "record_short_exhaustion_plus_pre_expiry_covering",
+     "peak_day_et": "expiry_week_0427_0428",
+     "realizes_before_monday": false
+    },
+    "exit_type": "positioning_spent_fade",
+    "monday_bias": "up-biased but two-sided (short-covering/squeeze risk into opex Mon 0427 + expiry Tue 0428 at record-short 0.94-pctile); moderate size, expiry-mechanical",
+    "sunday_gap_owner": "structural"
+   },
+   "actual_day_move_usd": -380,
+   "err_usd": 630,
+   "dir_hit": false,
+   "actual_close": 2.689
+  }
+ ]
+}

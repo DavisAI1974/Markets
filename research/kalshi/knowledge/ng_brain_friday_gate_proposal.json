@@ -1,0 +1,35 @@
+{
+  "proposal": "S105 - E's Friday self-analysis prescriptions #1 + #2 turned into plays BEFORE the G17 blind (drop-in JOB 0). Source: CASCADE_S104_friday_self_analysis.md. Merge to brain on Greg's go; until then E consults these via its blind lens. Both PROVISIONAL, forward_evidence NONE - G17 is the first forward test.",
+  "base_brain_version": "s102.5",
+  "plays": [
+    {
+      "id": "daytype.friday_turn_exhaustion_gate",
+      "target": "friday_direction",
+      "trigger": "any Friday (or weekend-feeding / pre-holiday day) BEFORE a direction sign is emitted",
+      "read": "run an explicit turn/exhaustion check on state ALREADY in decision_state, never a day-class default or a straight chain-extrapolation: chain_age>=4 (mature); cum-from-anchor at a session/block extreme; positioning percentile at an extreme (COT / options-implied); D-1 give-back or a D-1 flow tilt opposing the chain; based-vs-stretched chain state; the crest-realization window",
+      "call": "if the exhaustion/turn signals fire, the Friday sign is the TURN direction (reversal / give-back / dead-cat), NOT the chain continuation. The prior-over-state default is FORBIDDEN as the direction source - the sign must come from the exit-state. A continuation sign is only emitted when the turn check is clean (young chain, not-extreme cum, aligned D-1 flow).",
+      "evidence": "E self-analysis: 13/18 Friday misses (72%) are one flaw = PRIOR-OVER-STATE. TEX cases extending an exhausting move: 0102(-1250 vs -700), 1226(+1900 vs +660), 1212(+1050 vs -1190), 0130(+150 vs +4990). TEX cases missing the turn/bounce: 1024, 1031, 0306, 1219, 0227, 0109. MOM mislabeled-range: 1107, 1114. Every one had the turn/exhaustion inputs PRESENT at decision time (zero wrong signs from absent data). Cascade prevented ~9 downstream days / ~23,130 USD, ratio 1.25x.",
+      "status": "PROPOSAL",
+      "confidence": "direction-fix is FREE/reasoning; the residual magnitude tail (fresh-shot blow-off, carry far-tail) stays honest-under and needs the weekend model-run build (separate)",
+      "requires": "chain age/cum/positioning/D-1 flow are all open_time decision_state fields (blind-applicable); no MBO or realized target-day data",
+      "scope": "the Friday DIRECTION sign only; magnitude governed by the existing bands. Does not fire on a clean young-chain continuation.",
+      "forward_evidence": "NONE - proposed S105; G17 (0417, 0424) is the first blind forward test",
+      "caveats": "the self-limiting counter-case: a mechanical settle-spent covering close (0327 class) is wrong-signed but does NOT cascade (the pre-covering carry resumes) - the gate must not force a continuation there; it hands to friday_crest_trim_discriminator + positioning_spent_fade.",
+      "provenance": "CASCADE_S104_friday_self_analysis.md prescription #1"
+    },
+    {
+      "id": "daytype.friday_crest_trim_discriminator",
+      "target": "friday_direction",
+      "trigger": "a Friday where the crest-trim / weekend_crest_friday play is a candidate",
+      "read": "add the two discriminators the crest-trim trigger was missing (it fired BOTH ways - 0327 false-positive, 0313 false-negative): (1) based-vs-stretched: crest-trim fires ONLY on a STRETCHED chain near a cum-extreme, never on a BASED chain (recent bounce + hold); (2) covering-vs-squaring: price UP into settle AGAINST sell flow = COVERING = positioning_spent (do NOT fade as a crest-trim), vs genuine same-side position-squaring at a stretched extreme = the trim",
+      "call": "fire crest_trim_fadeable only when STRETCHED + squaring; route a based-chain or a covering-close OUT of crest-trim (to friday_turn_exhaustion_gate / positioning_spent_fade). Stops the play mis-firing on both polarities.",
+      "evidence": "0327: crest-trim fired DOWN on a BASED chain (0325 bounce + 0326 hold) that was expiry COVERING up (+1150) - false positive. 0313: crest-trim MISSED a real weekend position-squaring trim (called up-grind, tape broke down -1010) - false negative. Opposite errors on one under-specified trigger = the same under-application flaw.",
+      "status": "PROPOSAL",
+      "confidence": "reasoning discriminators, decision-time-present (chain based-vs-stretched, last-hour dir-vs-flow); the flow tell is MBO-proven only for G15, archetype+curve+calendar-inferred elsewhere (same data_gap E carries)",
+      "requires": "chain state (open_time); last-hour dir-vs-flow (MBO-measured for G15; inferred otherwise)",
+      "scope": "conditions the crest-trim / weekend_crest_friday trigger; does not change its magnitude band",
+      "forward_evidence": "NONE - proposed S105; G17 is the first forward test",
+      "provenance": "CASCADE_S104_friday_self_analysis.md prescription #2"
+    }
+  ]
+}

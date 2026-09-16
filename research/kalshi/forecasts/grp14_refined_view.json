@@ -1,0 +1,757 @@
+{
+ "group": 14,
+ "tag": "g14_refined_v2",
+ "brain_version": "s101.6+s102-proposals",
+ "anchor": {
+  "date": "20260227",
+  "price": 2.857,
+  "last_hour_dir": "down"
+ },
+ "note": "S102 refined walk. Sides = incumbent rules fed REAL day-N-1 tape (B audit 12/12). Magnitudes derived per condition class; A cand-1 (warm-cut headroom gate), cand-2 (positioning_saturation_turn rung), cand-3 (unowned-premium full fade), C slider S1/S2/S3. DECLARED residuals (named, never re-fit): 0305 shoulder-aging of the winter resume band (+1300 call vs shoulder reality; first instance, G15 tests proposed shoulder bands); 0308 Sunday envelope break (+1030 vs <=690 all 20 prior; n=1 covering-regime+DST); 0311 fed-recovery tail (2nd instance w/ 0121, standing).",
+ "days": [
+  {
+   "date": "20260301",
+   "dow": "Sun",
+   "archetype": "saturation counter-gap (new rung) + thin Sunday drift",
+   "overnight_gap_usd": 800,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -160
+    ],
+    [
+     0,
+     -240
+    ],
+    [
+     2,
+     -280
+    ],
+    [
+     4,
+     -300
+    ],
+    [
+     6,
+     -320
+    ],
+    [
+     8,
+     -340
+    ],
+    [
+     10,
+     -360
+    ],
+    [
+     12,
+     -380
+    ],
+    [
+     14,
+     -400
+    ],
+    [
+     16,
+     -400
+    ],
+    [
+     18,
+     -400
+    ],
+    [
+     20,
+     -400
+    ]
+   ],
+   "guessed_net_usd": -400,
+   "derivation": "gap: positioning_saturation_turn rung (A cand-2): both books 1y short extreme (12.26/0.94 pct) + climax add -97k + projectable deficit flip (cons -121 vs ~-76 5yr wk) + contango-under-withdraw turn window; moderate class +600..+1500, LOWER HALF (catalyst scheduled not printed) = +800. Session: drift band -200..-600 (saturation gap births no chain, 1130 form) = -400."
+  },
+  {
+   "date": "20260302",
+   "dow": "Mon",
+   "archetype": "R3 EXTEND arm - counter-catalyst gap at a fresh turn out of basing",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -69
+    ],
+    [
+     0,
+     58
+    ],
+    [
+     2,
+     34
+    ],
+    [
+     4,
+     506
+    ],
+    [
+     6,
+     518
+    ],
+    [
+     8,
+     460
+    ],
+    [
+     10,
+     494
+    ],
+    [
+     12,
+     586
+    ],
+    [
+     14,
+     966
+    ],
+    [
+     16,
+     1162
+    ],
+    [
+     18,
+     1173
+    ],
+    [
+     20,
+     1150
+    ]
+   ],
+   "guessed_net_usd": 1150,
+   "derivation": "B audit: G13 chain SPENT on tape (3 closes +-700), 0301 gap counter + held = fresh-turn config (1019->1020/0111->0112 form); catch-up window ratifies. Counter-gap extension day-1 band +800..+1500 mid = +1150."
+  },
+  {
+   "date": "20260303",
+   "dow": "Tue",
+   "archetype": "R4 young-swing extension day 2",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     32
+    ],
+    [
+     0,
+     80
+    ],
+    [
+     2,
+     176
+    ],
+    [
+     4,
+     384
+    ],
+    [
+     6,
+     784
+    ],
+    [
+     8,
+     752
+    ],
+    [
+     10,
+     944
+    ],
+    [
+     12,
+     1016
+    ],
+    [
+     14,
+     1224
+    ],
+    [
+     16,
+     856
+    ],
+    [
+     18,
+     784
+    ],
+    [
+     20,
+     800
+    ]
+   ],
+   "guessed_net_usd": 800,
+   "derivation": "Young chain (born 0302, C1 1.7-2.6x basing band; the missed birth). Extensions chain, never fade strength. Fed-recovery day-2 class band bottom +800 (slider damps to bottom). Warm wall at D+1 = revision-inert (priced strip)."
+  },
+  {
+   "date": "20260304",
+   "dow": "Wed",
+   "archetype": "R1 symmetric one-day alternation give-back",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -160
+    ],
+    [
+     0,
+     -128
+    ],
+    [
+     2,
+     56
+    ],
+    [
+     4,
+     104
+    ],
+    [
+     6,
+     168
+    ],
+    [
+     8,
+     -64
+    ],
+    [
+     10,
+     -776
+    ],
+    [
+     12,
+     -592
+    ],
+    [
+     14,
+     -752
+    ],
+    [
+     16,
+     -944
+    ],
+    [
+     18,
+     -824
+    ],
+    [
+     20,
+     -800
+    ]
+   ],
+   "guessed_net_usd": -800,
+   "derivation": "0303 closed 65% off its high + late flat = stalled extension -> one-day give-back, ramp-shallow class -700..-900 = -800."
+  },
+  {
+   "date": "20260305",
+   "dow": "Thu",
+   "archetype": "R1 resume + storage-Thursday chain-sided (agreeing print, live young chain)",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     77
+    ],
+    [
+     0,
+     60
+    ],
+    [
+     2,
+     204
+    ],
+    [
+     4,
+     154
+    ],
+    [
+     6,
+     99
+    ],
+    [
+     8,
+     182
+    ],
+    [
+     10,
+     363
+    ],
+    [
+     12,
+     379
+    ],
+    [
+     14,
+     588
+    ],
+    [
+     16,
+     517
+    ],
+    [
+     18,
+     539
+    ],
+    [
+     20,
+     550
+    ]
+   ],
+   "guessed_net_usd": 550,
+   "derivation": "0304 exhausted give-back (35% recovery + late up-tick) -> resume, print day sizes up; ITER-2 DERIVED: shoulder_weather_band_void gate - near-window max 13.4 <= 13.5, no S2/S3 -> weather delivery band VOID; residual class = B4 in-chain agreeing-print +400..+700 -> +550. R2 leg up post-print."
+  },
+  {
+   "date": "20260306",
+   "dow": "Fri",
+   "archetype": "Friday bag: chain resume + deficit-flip digestion; roll flow = cap never sign",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -16
+    ],
+    [
+     0,
+     16
+    ],
+    [
+     2,
+     82
+    ],
+    [
+     4,
+     462
+    ],
+    [
+     6,
+     544
+    ],
+    [
+     8,
+     561
+    ],
+    [
+     10,
+     726
+    ],
+    [
+     12,
+     1336
+    ],
+    [
+     14,
+     1930
+    ],
+    [
+     16,
+     1749
+    ],
+    [
+     18,
+     1650
+    ],
+    [
+     20,
+     1650
+    ]
+   ],
+   "guessed_net_usd": 1650,
+   "derivation": "-131 print flipped vs_5yr to -11 DEFICIT + trough-end dating in the 08:00 cycle re-adds; resume band +1300..+2000 upper-mid = +1650. GSCI d1 counter-pressure scoped to cap (0306 refutes roll sign authority, n=2 split)."
+  },
+  {
+   "date": "20260308",
+   "dow": "Sun",
+   "archetype": "chain-drift gap WITH the live covering swing (weather rung VOID on headroom)",
+   "overnight_gap_usd": 1100,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     440
+    ],
+    [
+     0,
+     660
+    ],
+    [
+     2,
+     770
+    ],
+    [
+     4,
+     825
+    ],
+    [
+     6,
+     880
+    ],
+    [
+     8,
+     935
+    ],
+    [
+     10,
+     990
+    ],
+    [
+     12,
+     1045
+    ],
+    [
+     14,
+     1100
+    ],
+    [
+     16,
+     1100
+    ],
+    [
+     18,
+     1100
+    ],
+    [
+     20,
+     1100
+    ]
+   ],
+   "guessed_net_usd": 1100,
+   "derivation": "gap: warm rung void (post-cut days 5.8-9.8 abs gw-HDD, below the 13.5 failure ceiling; A cand-1 gate); saturation still armed + first covering print (LD1 +44k) -> chain-drift band +600..+1600 at chain sign, mid = +1100 (0306 closed at fresh cum-extreme). Session ITER-2 DERIVED: weekend_chain_drift_day_move - chain-drift content is a DAY-MOVE budget; covering regime (LD1 +44k first covering print) doubles class mid -> budget 2200; session = budget - gap = +1100. The envelope was never the binding object."
+  },
+  {
+   "date": "20260309",
+   "dow": "Mon",
+   "archetype": "R3 gap-FADE (mature-swing gap to fresh cum-extreme) = full unowned-premium fade",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     0
+    ],
+    [
+     0,
+     92
+    ],
+    [
+     2,
+     152
+    ],
+    [
+     4,
+     0
+    ],
+    [
+     6,
+     30
+    ],
+    [
+     8,
+     -366
+    ],
+    [
+     10,
+     -2440
+    ],
+    [
+     12,
+     -3416
+    ],
+    [
+     14,
+     -3690
+    ],
+    [
+     16,
+     -3599
+    ],
+    [
+     18,
+     -3294
+    ],
+    [
+     20,
+     -3050
+    ]
+   ],
+   "guessed_net_usd": -3050,
+   "derivation": "Gap +1220 WITH the mature 5-session swing to +5500 cum -> R3 fade arm (1109->1110 form). Magnitude = A cand-3 composite: no Bcf mass owned the weekend premium + covering WoW stalled (-377) + trough bottom realizes at the open -> core -(gap + Sun net) = -2250 + ramp-shallow stub -700..-900 -> band -2950..-3150 = -3050. Close owned by afternoon chain (0223 form)."
+  },
+  {
+   "date": "20260310",
+   "dow": "Tue",
+   "archetype": "B1 post-crash pause (termination-to-basing; no down-birth, driver behind)",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -25
+    ],
+    [
+     0,
+     -40
+    ],
+    [
+     2,
+     -60
+    ],
+    [
+     4,
+     -90
+    ],
+    [
+     6,
+     -150
+    ],
+    [
+     8,
+     -225
+    ],
+    [
+     10,
+     -290
+    ],
+    [
+     12,
+     -350
+    ],
+    [
+     14,
+     -410
+    ],
+    [
+     16,
+     -460
+    ],
+    [
+     18,
+     -500
+    ],
+    [
+     20,
+     -500
+    ]
+   ],
+   "guessed_net_usd": -500,
+   "derivation": "0309 C1 break = TERMINATION only (cold shot live in models = no bearish forward driver); crash close does not chain; pause band 300..700 at down sign = -500."
+  },
+  {
+   "date": "20260311",
+   "dow": "Wed",
+   "archetype": "pricing-time SHOCK arm - cold add prices AT APPEARANCE (FAR-window jump)",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -60
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     520
+    ],
+    [
+     4,
+     520
+    ],
+    [
+     6,
+     740
+    ],
+    [
+     8,
+     960
+    ],
+    [
+     10,
+     1360
+    ],
+    [
+     12,
+     1440
+    ],
+    [
+     14,
+     1760
+    ],
+    [
+     16,
+     1720
+    ],
+    [
+     18,
+     1900
+    ],
+    [
+     20,
+     2000
+    ]
+   ],
+   "guessed_net_usd": 2000,
+   "derivation": "3/16 +4.0 AND 3/17 +7.9 vs normal enter (far-hi 16.4->24.6 in 2 days; count the FAR window in shoulder, C S2) + 12th-pctile shorts = fuel; ITER-2 DERIVED: unpriced_shot_extension - far window rising 2 consecutive cycles incl fire day (16.4->21.5->24.6), shot unpriced since onset, MM 12.26 pctile fuel -> extended band [1.35..2.55]x band top; S1-void shoulder -> class bottom = +2000."
+  },
+  {
+   "date": "20260312",
+   "dow": "Thu",
+   "archetype": "1120 alternation-precedence: print day after a violent extension = give-back, leg round-trips",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -5
+    ],
+    [
+     0,
+     -10
+    ],
+    [
+     2,
+     -15
+    ],
+    [
+     4,
+     -20
+    ],
+    [
+     6,
+     -30
+    ],
+    [
+     8,
+     -50
+    ],
+    [
+     10,
+     -75
+    ],
+    [
+     12,
+     -112
+    ],
+    [
+     14,
+     -162
+    ],
+    [
+     16,
+     -212
+    ],
+    [
+     18,
+     -250
+    ],
+    [
+     20,
+     -250
+    ]
+   ],
+   "guessed_net_usd": -250,
+   "derivation": "0311 closed AT its extreme after +2030 -> alternation beats swing-side (n=3: 1002/1120/0312); hold/give-back band -200..-600 top = -250; R2 leg up with swing post-print, round-trips."
+  },
+  {
+   "date": "20260313",
+   "dow": "Fri",
+   "archetype": "priced-shot weekend-crest Friday (B's rule candidate; terminal-squaring promoted)",
+   "overnight_gap_usd": 0,
+   "guess_curve": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -108
+    ],
+    [
+     0,
+     27
+    ],
+    [
+     2,
+     -45
+    ],
+    [
+     4,
+     144
+    ],
+    [
+     6,
+     90
+    ],
+    [
+     8,
+     -54
+    ],
+    [
+     10,
+     -945
+    ],
+    [
+     12,
+     -810
+    ],
+    [
+     14,
+     -1053
+    ],
+    [
+     16,
+     -765
+    ],
+    [
+     18,
+     -900
+    ],
+    [
+     20,
+     -900
+    ]
+   ],
+   "guessed_net_usd": -900,
+   "derivation": "Chain stretched near block high + driver fully PRICED with realization crossing the closure + evening run trims the shot (-4 gw) -> counter-chain after the morning; basing-counter class -600..-1200 mid-high = -900. n=4-5 spanning G9/G13/G14 both polarities."
+  }
+ ]
+}

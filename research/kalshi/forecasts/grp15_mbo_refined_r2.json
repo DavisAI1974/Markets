@@ -1,0 +1,777 @@
+{
+ "group": 15,
+ "tag": "g15_mbo_r2",
+ "round": 2,
+ "kind": "5_specialist_posterior_refine",
+ "brain_version": "s102.3+mbo",
+ "anchor": {
+  "date": "20260313",
+  "price": 3.132,
+  "contract": "NGJ26",
+  "last_hour_dir": "down"
+ },
+ "price_basis": "two-leg Kalshi underlying NGJ26(1008)->NGK26(996), 0320 seam never-traded",
+ "method": "5 day-class specialists (A weekend/B Monday/C core/D Thu-EIA/E Fri-expiry) -> coordinator SELECTS owner per day, NO averaging; posterior update of the immutable blind",
+ "seam_offset": -0.037,
+ "days": [
+  {
+   "date": "20260315",
+   "owner_specialist": "A",
+   "blind_net_usd": -150,
+   "refined_net_usd": -450,
+   "refined_path_p50": [
+    [
+     18.0,
+     0
+    ],
+    [
+     18.25,
+     -60
+    ],
+    [
+     18.5,
+     -220
+    ],
+    [
+     19.0,
+     -330
+    ],
+    [
+     19.5,
+     -410
+    ],
+    [
+     20.0,
+     -450
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight": "flat",
+    "us_open": "down",
+    "settle": "down",
+    "close": "down"
+   },
+   "confidence": 0.68,
+   "selection_reason": "Weekend/Sunday-reopen specialist owns the day (weekend_gap + sunday_session, 0313->0315 closure, block open). Chain_drift priced-stub is the coordinator's owner; MBO stands down; trade-flow confirms; KEEP the immutable blind. Round 2: no incoming handoff; anchor-exit inheritance confirms the hold.",
+   "mbo_verdict": "NEUTRAL-to-marginally-helpful, correctly SUBORDINATED (unchanged from round 1). The MBO layer stood itself down (thin Sunday, execution_authority False, conviction 0.000) exactly as the weekend lens predicts. As shadow it carried a real, coherent reopen-buy-then-exhaust-to-consumed-BID sequence agreeing with the down call, but added NOTHING over trade-flow and would have MISLED long if given autho",
+   "execution_authority": false
+  },
+  {
+   "date": "20260316",
+   "owner_specialist": "B",
+   "blind_net_usd": -650,
+   "refined_net_usd": -570,
+   "refined_path_p50": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     150
+    ],
+    [
+     0,
+     300
+    ],
+    [
+     2,
+     460
+    ],
+    [
+     4,
+     180
+    ],
+    [
+     6,
+     -120
+    ],
+    [
+     8,
+     -360
+    ],
+    [
+     10,
+     -620
+    ],
+    [
+     12,
+     -880
+    ],
+    [
+     14,
+     -820
+    ],
+    [
+     16,
+     -680
+    ],
+    [
+     18,
+     -600
+    ],
+    [
+     20,
+     -570
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight_20_02": "up head-fake (deep-book shakeout, +490 peak 02:21 ET) - price up on NEGATIVE flow (ph0 sflow -493), non-confirming; inheriting a Sunday that already rejected its reopen up-spike and closed at its low (age-1 down chain) this pop is not front-run",
+    "carry_02_06": "down (reversal off the shakeout top, carry-down onset 02:21)",
+    "catchup_06_10": "down - the R3 carry delivers through the 06-10 window",
+    "midday_10_14": "down to the session low (-980 excursion, 13:11 ET)",
+    "close_14_20": "partial UP bounce - ph2 buy flow +959 ACCOMMODATED (+140 px), close off the low (0.29); foreshadowed by the Sunday last-hour buy flow the handoff carried",
+    "net": "down"
+   },
+   "confidence": 0.66,
+   "selection_reason": "Monday-catchup lens: the blind's R3 carry-down is confirmed by the ph1 delivery flow AND by the inherited age-1 down-chain seam; the specialist adds the overnight-shakeout turn and the late-accommodation off-low close the blind could not see. Round 2 changed nothing on direction or magnitude - the h",
+   "mbo_verdict": "HELP (modest), HELD from round 1. Direction unchanged (down, blind correct). MAGNITUDE: holds the round-1 -570 (actual day-move -540) - the seam INDEPENDENTLY confirms the off-low close via the age-1 chain + Sunday buy-flow-absorption signature, so the trim from the blind -650 is now supported by two lines (ph2 accommodation AND the inherited seam state), not one. TURN/PATH: the 02:21 shakeout-top",
+   "execution_authority": false
+  },
+  {
+   "date": "20260317",
+   "owner_specialist": "C",
+   "blind_net_usd": 150,
+   "refined_net_usd": 30,
+   "refined_path_p50": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -40
+    ],
+    [
+     0,
+     -90
+    ],
+    [
+     4,
+     -150
+    ],
+    [
+     6,
+     -110
+    ],
+    [
+     8,
+     190
+    ],
+    [
+     10,
+     110
+    ],
+    [
+     12,
+     50
+    ],
+    [
+     14,
+     20
+    ],
+    [
+     16,
+     10
+    ],
+    [
+     18,
+     20
+    ],
+    [
+     20,
+     30
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight_to_am": "mild down/flat probe - the prior late-bounce is spent (it did not carry to my open), then the 05:34 low",
+    "midday_to_close": "morning pop into 08:30 that gives back; whipsaw hold, marginally negative tilt"
+   },
+   "confidence": "moderate",
+   "selection_reason": "core-tape specialist owns the non-catalyst core hold day; MBO/handoff used only to shade the hold, keep the blind.",
+   "mbo_verdict": "HELP (mild). Round 2 tightens: the failed overnight carry of 0316's late bounce (handoff last_hour_dir +1 -> flat open) removes the upward residual I implicitly left in the round-1 +50; combined with the phase-3 fade and the 08:30 give-back, the derived hold sits marginally negative at ~+30. Direction unchanged (hold), no chase.",
+   "execution_authority": false
+  },
+  {
+   "date": "20260318",
+   "owner_specialist": "C",
+   "blind_net_usd": -400,
+   "refined_net_usd": 1500,
+   "refined_path_p50": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -350
+    ],
+    [
+     0,
+     -650
+    ],
+    [
+     2,
+     -900
+    ],
+    [
+     4,
+     -300
+    ],
+    [
+     6,
+     200
+    ],
+    [
+     8,
+     600
+    ],
+    [
+     10,
+     1000
+    ],
+    [
+     12,
+     1300
+    ],
+    [
+     14,
+     1550
+    ],
+    [
+     16,
+     1650
+    ],
+    [
+     18,
+     1500
+    ],
+    [
+     20,
+     1500
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight": "DOWN probe / stop-run below the origin shelf into ~02:24 ET (false breakdown to ~2.92)",
+    "am_to_close": "REVERSAL UP - give-back-exhaustion turn, close at/near the high"
+   },
+   "confidence": "moderate (direction high, magnitude-tail reactive)",
+   "selection_reason": "core-tape specialist owns the give-back-exhaustion turn; posterior flips direction (round 1) and round 2 GROUNDS the magnitude hold in the boundary state - prior-exit-DOWN gates the tail out.",
+   "mbo_verdict": "MIXED, net HELP at the coarse grain; round 2 CONFIRMS the round-1 hold at +1500 with an explicit boundary justification. The refine IMPROVES DIRECTION (real edge: do not press the -400 short, flip to up) via the D-1 buy-absorption + origin-shelf floor + the give-back-exhaustion structure. It does NOT license moving to +1900: the handoff shows the prior session exited DOWN (last_hour_dir -1), so th",
+   "execution_authority": false
+  },
+  {
+   "date": "20260319",
+   "owner_specialist": "D",
+   "blind_net_usd": -800,
+   "refined_net_usd": -1050,
+   "refined_path_p50": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -120
+    ],
+    [
+     0,
+     -210
+    ],
+    [
+     2,
+     -320
+    ],
+    [
+     4,
+     -360
+    ],
+    [
+     6,
+     -180
+    ],
+    [
+     8,
+     350
+    ],
+    [
+     10,
+     120
+    ],
+    [
+     12,
+     -430
+    ],
+    [
+     14,
+     -720
+    ],
+    [
+     16,
+     -980
+    ],
+    [
+     18,
+     -1200
+    ],
+    [
+     20,
+     -1050
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight_20_06": "down (onset down 00:50 ET, thr 500; phase1 sflow +34 but pxchg -370). The 0318 strong up-close did NOT carry as an overnight HOLD - the tape dipped first",
+    "preprint_06_1030": "UP counter-probe to the session high +470 at 09:31 ET, then turn_down 09:31 (BEFORE the print). ROUND 2 RE-READ: this morning probe is the INHERITED up-momentum from 0318's give-back-exhaustion bounce exhausting - not a random counter-probe. Sub-conviction (imbL ~0), pre-print, legit",
+    "postprint_1030_close": "DOWN, chain-sided - the +31 injection (loose vs 5yr, bearish) reasserts the down move over the exhausted up-carry; delivery back-loaded, phase3 sflow -1438 / px -880, session low -1250 at 18:33 ET"
+   },
+   "confidence": 0.75,
+   "selection_reason": "Thursday EIA storage-print catalyst governs (the print, not the Thursday, owns the day). Chain-sided print (loose injection agrees with the running down-chain) -> the with-print leg delivers its full band; specialist D confirms and deepens, and the handoff explains the inherited morning up-carry.",
+   "mbo_verdict": "HELP (unchanged from round 1). Confirms DIRECTION (down) and the chain-SIDED print delivery, and the ROUND-2 handoff adds the causal WHY for the shape: the pre-print +470 probe is the inherited 0318 up-carry exhausting, sized as a fade by the prior day's mature-bounce exhaustion state. Magnitude HOLDS at -1050 (round-1 err +30, actual -1080) - the handoff supplies no new magnitude evidence and the",
+   "execution_authority": false
+  },
+  {
+   "date": "20260320",
+   "owner_specialist": "E",
+   "blind_net_usd": -250,
+   "refined_net_usd": -110,
+   "refined_path_p50": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     50
+    ],
+    [
+     0,
+     150
+    ],
+    [
+     2,
+     250
+    ],
+    [
+     4,
+     400
+    ],
+    [
+     6,
+     550
+    ],
+    [
+     8,
+     -200
+    ],
+    [
+     10,
+     -600
+    ],
+    [
+     12,
+     -350
+    ],
+    [
+     14,
+     -200
+    ],
+    [
+     16,
+     -100
+    ],
+    [
+     18,
+     -105
+    ],
+    [
+     20,
+     -110
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight_20_06": "up (mild probe; ph1 pxchg +320, high +580 at 06:04)",
+    "morning_06_10": "down (sell-off to the -660 low at 09:26; ph2 pxchg -780, ph_absorb TRUE)",
+    "afternoon_10_close": "recover, net small down (ph3 pxchg +370 on +1880 flow; close -80)",
+    "net_day": "down-SHALLOW (near flat) - absorbed continuation of a chain already exhausting"
+   },
+   "confidence": "LOW-MODERATE (quiet settle-digestion Friday; low materiality; seam dominates and is never-traded) - handoff raises confidence, not magnitude",
+   "selection_reason": "Friday/roll specialist: flow-calendar read first (empty but for the seam), seam never-traded, trade-flow absorption + inherited seller-exhaustion -> shallow-down posterior.",
+   "mbo_verdict": "HELP (mild). The positive session signed-flow (+3519) + ph2 absorption confirm the down-drift is absorbed, supporting a shallow near-flat outcome. Round 2: the incoming handoff (late-low-bought-back-with-buy-flow on 0319) is the SAME exhaustion fingerprint, so it reinforces the shallow read and lets me hold near-flat with more confidence. Book layer would have whipsawed me and is stood down.",
+   "execution_authority": false
+  },
+  {
+   "date": "20260322",
+   "owner_specialist": "A",
+   "blind_net_usd": -200,
+   "refined_net_usd": -600,
+   "refined_path_p50": [
+    [
+     18.0,
+     0
+    ],
+    [
+     18.17,
+     -420
+    ],
+    [
+     18.5,
+     -520
+    ],
+    [
+     19.0,
+     -580
+    ],
+    [
+     19.5,
+     -610
+    ],
+    [
+     20.0,
+     -600
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight": "flat",
+    "us_open": "down",
+    "settle": "down",
+    "close": "down"
+   },
+   "confidence": 0.62,
+   "selection_reason": "Weekend/Sunday-reopen specialist owns the day (weekend_gap + sunday_session, 0320->0322 closure, weekend_reopen boundary from E). Chain_drift budget-form is the coordinator's owner; MBO disabled on data quality; trade-flow confirms; KEEP the immutable blind. Round 2: the handoff reconciled the chain",
+   "mbo_verdict": "MBO HURT-POTENTIAL, correctly DISABLED = net neutral (unchanged from round 1). The reconstructed book never completed and was flagged bad all session, so any book-based feature (the 18:56 consumed=ASK / far_side_recruitment 0.615 print) would have been FALSE PRECISION. The engine correctly withheld authority. Falling back to trade-flow gave a mild down confirmation, and the blind budget-form day-m",
+   "execution_authority": false
+  },
+  {
+   "date": "20260323",
+   "owner_specialist": "B",
+   "blind_net_usd": -800,
+   "refined_net_usd": -1080,
+   "refined_path_p50": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     500
+    ],
+    [
+     0,
+     950
+    ],
+    [
+     2,
+     1150
+    ],
+    [
+     4,
+     1250
+    ],
+    [
+     6,
+     700
+    ],
+    [
+     8,
+     0
+    ],
+    [
+     10,
+     -600
+    ],
+    [
+     12,
+     -1050
+    ],
+    [
+     14,
+     -1420
+    ],
+    [
+     16,
+     -1250
+    ],
+    [
+     18,
+     -1150
+    ],
+    [
+     20,
+     -1080
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight_20_04": "large UP head-fake (deep-book shakeout, +1270 peak 03:52 ET) on ~flat flow (ph0 sflow -26 vs +1140 px) = severe divergence, no real buying; inheriting an age-3 mature down chain that front-loaded-flushed Sunday and rejected its high, this pop is not front-run",
+    "carry_04_06": "down (violent reversal off the shakeout top, carry-down onset 03:52)",
+    "catchup_06_10": "down - the R3 carry delivers hard through the 06-10 window",
+    "midday_10_14": "down, accelerating to the session low (-1460 excursion, 14:35 ET)",
+    "close_14_20": "down held - ph2 buy flow +2409 ABSORBED (price still -290), close pins NEAR the low (0.14); the mature seam chain called this absorption in advance",
+    "net": "down"
+   },
+   "confidence": 0.7,
+   "selection_reason": "Monday-catchup lens: the blind's R3 carry-down and its 'far add does not price' decision are both confirmed by flow AND by the inherited mature down-chain; the specialist's value is deepening the magnitude via the ph1 delivery + ph2 absorption that the blind's state-only view under-sized. Round 2 ch",
+   "mbo_verdict": "HELP (substantial, on MAGNITUDE), HELD from round 1. Direction unchanged (down, blind correct; the blind also correctly declined the far-window cold-add up-temptation). The blind UNDER-sized at -800; the ph1 violent delivery (-1920 on 58k vol) plus ph2 ABSORPTION (buy +2409 but price -290, absorb_session True) deepen the posterior to -1080 (actual day-move -1090, err ~10). Round 2 confirms this de",
+   "execution_authority": false
+  },
+  {
+   "date": "20260324",
+   "owner_specialist": "C",
+   "blind_net_usd": -450,
+   "refined_net_usd": -400,
+   "refined_path_p50": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     150
+    ],
+    [
+     0,
+     100
+    ],
+    [
+     2,
+     -50
+    ],
+    [
+     6,
+     -250
+    ],
+    [
+     10,
+     -320
+    ],
+    [
+     12,
+     -420
+    ],
+    [
+     14,
+     -520
+    ],
+    [
+     16,
+     -450
+    ],
+    [
+     20,
+     -400
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight": "up pop (buy flow) into 21:49 ET high, then rejected/absorbed",
+    "am_to_close": "DOWN - young-extension resume, give-back into the close (capped)"
+   },
+   "confidence": "moderate-high",
+   "selection_reason": "core-tape specialist: capped continuation-down; MBO for absorption/turn shape, flow rejected for direction, handoff confirms the cap.",
+   "mbo_verdict": "HELP on SHAPE, HURT on FLOW-direction; round 2 HOLDS -400. The handoff sharpens WHY the -400 is right rather than moving it: the prior near-low close with absorbed late buys says the down-chain (now age 4) is intact but the late-buy accommodation caps and slightly wanes the leg - a capped continuation, not a fresh leg, and the overnight pop is a rejected false start. Direction stays down (D-1 heav",
+   "execution_authority": false
+  },
+  {
+   "date": "20260325",
+   "owner_specialist": "C",
+   "blind_net_usd": 250,
+   "refined_net_usd": 600,
+   "refined_path_p50": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     -230
+    ],
+    [
+     0,
+     -200
+    ],
+    [
+     4,
+     -140
+    ],
+    [
+     6,
+     0
+    ],
+    [
+     8,
+     -30
+    ],
+    [
+     10,
+     180
+    ],
+    [
+     12,
+     500
+    ],
+    [
+     14,
+     560
+    ],
+    [
+     16,
+     600
+    ],
+    [
+     18,
+     640
+    ],
+    [
+     20,
+     600
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight": "final down-flush to the cum-low into ~20:38 ET, then TURN UP at the session open",
+    "am_to_close": "UP - aligned buy-driven basing bounce off a maximally-loaded spring; catalysts ahead so it builds"
+   },
+   "confidence": "moderate-good (my cleanest MBO-helps day)",
+   "selection_reason": "core-tape specialist owns the sell-climax exhaustion -> aligned reversal bounce; posterior sizes up (round 1) and round 2 firms it on the deeper boundary state, still capped for ahead-catalysts.",
+   "mbo_verdict": "HELP (cleanest of my four); round 2 MOVES +560 -> +600. The handoff makes the exhaustion boundary one notch deeper than round-1 credited (age-5 / cum -2350 block-extreme + D-1 sell climax closing near the low = a firmer-loaded spring), which firms the confirmed first-day bounce base to ~+600 while the ahead-catalyst cap + the prior-exit-DOWN gate keep it honestly below the +660 tail. turn_up at op",
+   "execution_authority": false
+  },
+  {
+   "date": "20260326",
+   "owner_specialist": "D",
+   "blind_net_usd": 900,
+   "refined_net_usd": -50,
+   "refined_path_p50": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     40
+    ],
+    [
+     0,
+     90
+    ],
+    [
+     2,
+     150
+    ],
+    [
+     4,
+     190
+    ],
+    [
+     6,
+     150
+    ],
+    [
+     8,
+     130
+    ],
+    [
+     10,
+     110
+    ],
+    [
+     12,
+     500
+    ],
+    [
+     14,
+     320
+    ],
+    [
+     16,
+     -450
+    ],
+    [
+     18,
+     -150
+    ],
+    [
+     20,
+     -60
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight_20_06": "mild up (onset UP 04:34 ET, thr 250; phase1 sflow -12, px +110) - a thin overnight up-bias continuing the 0325 bounce, but sub-conviction",
+    "preprint_06_1030": "SELL-COIL into the print - imbalance turns negative 09:05-10:05 (imbL -0.32 -> -0.40, cons=BID = sellers hitting bids); a divergence vs the blind's clean bullish up-print expectation (legit pre-10:30 evidence)",
+    "postprint_1030_1300": "UP leg DELIVERS to the session high +600 at 13:04 ET - leg direction matches the blind BUT it rides on ABSORPTION (phase2 sflow -3175 NEGATIVE while px +390 up) = short-covering into supply, NO buy-flow conviction",
+    "postprint_1300_close": "REVERSAL - turn_down 13:04, give-back to the low -480 at 16:12 ET (phase3 sflow -409, px -550), close FLAT -60"
+   },
+   "confidence": 0.72,
+   "selection_reason": "Thursday EIA storage-print catalyst governs, and this is the COUNTER-print case (bullish -44 draw against the running down-chain in deep S1-void). Counter-print + no seasonal amplifier + a prior-close bounce already fading -> the up-leg delivers then round-trips; specialist D's flow-conviction read ",
+   "mbo_verdict": "HELP (strong - the block's over-size correction, unchanged from round 1). The blind called +900 UP to the close; MBO shows the up-leg DID deliver intraday (peak +600 at 13:04) but ROUND-TRIPPED to flat (close -60), because the entire up-leg ran on ABSORPTION (phase2 sflow -3175 under px +390) = short-covering with no buy conviction. ROUND 2 adds an INDEPENDENT confirmer from the handoff: the 0325 ",
+   "execution_authority": false
+  },
+  {
+   "date": "20260327",
+   "owner_specialist": "E",
+   "blind_net_usd": -350,
+   "refined_net_usd": 1050,
+   "refined_path_p50": [
+    [
+     20,
+     0
+    ],
+    [
+     22,
+     150
+    ],
+    [
+     0,
+     350
+    ],
+    [
+     2,
+     450
+    ],
+    [
+     4,
+     650
+    ],
+    [
+     6,
+     1000
+    ],
+    [
+     8,
+     1400
+    ],
+    [
+     10,
+     1150
+    ],
+    [
+     12,
+     1050
+    ],
+    [
+     14,
+     1100
+    ],
+    [
+     16,
+     1120
+    ],
+    [
+     18,
+     1120
+    ],
+    [
+     20,
+     1050
+    ]
+   ],
+   "posterior_direction_by_horizon": {
+    "overnight_20_03": "up (ph1 pxchg +440 on +421 buy flow; onset up 03:43)",
+    "morning_03_10": "up STRONG (covering; morning high +1410 at 08:22; ph2 pxchg +430 AGAINST -1013 sell flow = absorption)",
+    "afternoon_10_close": "HOLD UP (ph3 pxchg +280 against -1878 sell flow; slight trim off the +1410 high; close +1160, low_exc only -60)",
+    "net_day": "UP STRONG (short-covering into settle)"
+   },
+   "confidence": "HIGH on direction (absorption signature decisive, now handoff-seeded), MODERATE-HIGH on magnitude (~+900..+1200 band, honest-under)",
+   "selection_reason": "Friday/expiry specialist: flow-calendar first identifies April expiry -> expiry-day form split (no stranded premium -> covering-into-settle, not short-the-expiry). MBO tape confirms covering over crest-trim decisively; the handoff seeds the onset and confirms the base.",
+   "mbo_verdict": "HELP DECISIVELY. The absorb_session=TRUE + negative-signed-flow-with-price-UP + BID-consumed-weakening fingerprint is the short-covering-into-settle diagnosis that FLIPS the blind's -350 crest-trim to a ~+1050 expiry-covering rally. Round 2: the incoming handoff (0326 based + late buy-flow absorption) SEEDS the overnight covering onset and reinforces the up direction, while the 0326 up-leg round-t",
+   "execution_authority": false
+  }
+ ]
+}

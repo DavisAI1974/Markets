@@ -1,0 +1,1084 @@
+{
+ "specialist": "E",
+ "lens": "Friday/expiry/roll",
+ "group": "g17",
+ "brain_version": "s102.5",
+ "forecast_schema_version": "ng.v2",
+ "days_owned": [
+  "20260417",
+  "20260421",
+  "20260424"
+ ],
+ "days": [
+  {
+   "date": "2026-04-17",
+   "dow": "Fri",
+   "archetype": "weekend_feeding_friday_covering_giveback",
+   "reasoning": "Friday turn/exhaustion GATE fires: mature bearish injection-bleed chain (chain_age>=4 from G16), COT managed-money net -86,033 at 6.6 1y-pctile (crowded short), and D-1 (0416, EIA print) aggregate sell-tilt b_share 0.415 BUT big_print_b_share 0.692 = big money BUYING into the down chain (DIVERGENT-covering). Prior-over-state chain-down continuation is FORBIDDEN by the gate. crest_trim routed OUT (covering-close, not stretched-squaring) to positioning_spent_fade. Thin post-EIA Friday tape (12,784 trades) + crowded shorts squaring into the weekend -> modest UP covering give-back, self-limiting. Shoulder S3, weather low-authority (gw_hdd 2.862, warmer-than-normal -5.83 but run_delta +0.312 = mild cooling nudge, not decisive).",
+   "regime": {
+    "day_class": "friday_weekend_feeding",
+    "seasonal_state": "S3_shoulder_injection",
+    "demand_regime": "low_shoulder",
+    "curve_regime": "contango",
+    "storage_phase": "injection_build",
+    "vol_regime": "unknown_masked",
+    "dominant_driver": "short_covering_exhaustion_giveback",
+    "selector_mode": "turn_gate_override_of_chain"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "daytype.friday_turn_exhaustion_gate",
+     "inputs": {
+      "chain_age_sessions": 5,
+      "cot_mm_net_pctile_1y": 6.6,
+      "d1_b_share": 0.415,
+      "d1_big_print_b_share": 0.692,
+      "chain_state": "stretched"
+     },
+     "thresholds": {
+      "chain_age>=": 4,
+      "pctile_extreme<=": 15,
+      "d1_flow_opposes_chain": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "turn_up_giveback",
+     "magnitude_band_usd": [
+      150,
+      1100
+     ],
+     "note": "gate fires -> sign is the turn (up), NOT chain-down continuation"
+    },
+    {
+     "rule_id": "daytype.friday_crest_trim_discriminator",
+     "inputs": {
+      "chain": "stretched",
+      "last_hour_dir_vs_flow": "up_against_sell_flow"
+     },
+     "thresholds": {
+      "crest_trim_only_if": "stretched+squaring"
+     },
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "route_to_positioning_spent_fade",
+     "magnitude_band_usd": [
+      150,
+      900
+     ],
+     "note": "covering-close (up vs sell flow) = positioning_spent, NOT a fadeable crest_trim"
+    },
+    {
+     "rule_id": "positioning.managed_money_short_crowding",
+     "inputs": {
+      "mm_net": -86033,
+      "pctile_1y": 6.6
+     },
+     "thresholds": {
+      "crowded_short_pctile<=": 15
+     },
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "caps_downside_supports_covering",
+     "magnitude_band_usd": [
+      0,
+      600
+     ],
+     "note": "crowded short = weekend covering risk, LEAD not timing"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.34,
+     "flat": 0.4,
+     "down": 0.26
+    },
+    "us_open": {
+     "up": 0.4,
+     "flat": 0.34,
+     "down": 0.26
+    },
+    "settle": {
+     "up": 0.46,
+     "flat": 0.3,
+     "down": 0.24
+    },
+    "close": {
+     "up": 0.48,
+     "flat": 0.28,
+     "down": 0.24
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": 350,
+    "stdev": 480,
+    "p10": -420,
+    "p25": -30,
+    "p50": 350,
+    "p75": 720,
+    "p90": 1150,
+    "bins": [
+     {
+      "bucket_usd": "<= -600",
+      "probability": 0.09
+     },
+     {
+      "bucket_usd": "-600..-200",
+      "probability": 0.14
+     },
+     {
+      "bucket_usd": "-200..+150",
+      "probability": 0.22
+     },
+     {
+      "bucket_usd": "+150..+600",
+      "probability": 0.3
+     },
+     {
+      "bucket_usd": "+600..+1200",
+      "probability": 0.18
+     },
+     {
+      "bucket_usd": ">= +1200",
+      "probability": 0.07
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "09:30",
+     "end_et": "11:00",
+     "probability": 0.45,
+     "expected_direction": "up",
+     "catalyst": "US-open short covering after crowded-short week"
+    },
+    {
+     "start_et": "13:30",
+     "end_et": "16:00",
+     "probability": 0.5,
+     "expected_direction": "up",
+     "catalyst": "pre-weekend position squaring / covering into settle"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.42,
+    "chop": 0.58
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.3,
+    "reversal": 0.46,
+    "hold": 0.24
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18.0,
+     "p10": 0.0,
+     "p50": 0.0,
+     "p90": 0.0
+    },
+    {
+     "et_hr": 20.0,
+     "p10": -21.0,
+     "p50": 17.5,
+     "p90": 57.5
+    },
+    {
+     "et_hr": 22.0,
+     "p10": -50.4,
+     "p50": 42.0,
+     "p90": 138.0
+    },
+    {
+     "et_hr": 0.5,
+     "p10": -75.6,
+     "p50": 63.0,
+     "p90": 207.0
+    },
+    {
+     "et_hr": 3.0,
+     "p10": -105.0,
+     "p50": 87.5,
+     "p90": 287.5
+    },
+    {
+     "et_hr": 6.0,
+     "p10": -138.6,
+     "p50": 115.5,
+     "p90": 379.5
+    },
+    {
+     "et_hr": 8.0,
+     "p10": -176.4,
+     "p50": 147.0,
+     "p90": 483.0
+    },
+    {
+     "et_hr": 9.5,
+     "p10": -231.0,
+     "p50": 192.5,
+     "p90": 632.5
+    },
+    {
+     "et_hr": 11.0,
+     "p10": -277.2,
+     "p50": 231.0,
+     "p90": 759.0
+    },
+    {
+     "et_hr": 13.0,
+     "p10": -327.6,
+     "p50": 273.0,
+     "p90": 897.0
+    },
+    {
+     "et_hr": 14.5,
+     "p10": -369.6,
+     "p50": 308.0,
+     "p90": 1012.0
+    },
+    {
+     "et_hr": 16.0,
+     "p10": -403.2,
+     "p50": 336.0,
+     "p90": 1104.0
+    },
+    {
+     "et_hr": 17.0,
+     "p10": -420.0,
+     "p50": 350.0,
+     "p90": 1150.0
+    }
+   ],
+   "overnight_gap_usd": 40,
+   "guess_curve": [
+    0.0,
+    17.5,
+    42.0,
+    63.0,
+    87.5,
+    115.5,
+    147.0,
+    192.5,
+    231.0,
+    273.0,
+    308.0,
+    336.0,
+    350.0
+   ],
+   "guessed_net_usd": 350,
+   "fwd_curve_lean": "contango_next_higher_by_0.158",
+   "confidence": {
+    "overall": 0.5,
+    "direction": 0.55,
+    "magnitude": 0.42,
+    "timing": 0.45
+   },
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp17_state_masked_one_shot",
+    "missing_inputs": [
+     "vol_regime",
+     "target_day_price_state(masked)"
+    ],
+    "stale_inputs": [
+     "cash_basis(weekly)",
+     "hh_spot(4d)"
+    ],
+    "partial_inputs": [
+     "intra_block_price_path(unknown,inferred_from_tape_tilt)"
+    ],
+    "prohibited_inputs_removed": [
+     "dip_imb_level",
+     "target_day_tape"
+    ],
+    "flags": [
+     "weekend_gap_uncertainty",
+     "masked_price_state",
+     "covering_selflimiting"
+    ]
+   },
+   "scenario_components": [
+    {
+     "name": "weekend_short_covering_giveback",
+     "probability": 0.55,
+     "direction": "up",
+     "distribution": {
+      "p50": 350,
+      "p10": -100,
+      "p90": 1150
+     },
+     "governing_driver": "crowded-short squaring into weekend",
+     "invalidation_conditions": [
+      "fresh bearish storage/weather shock",
+      "b_share collapses <0.38 intraday"
+     ]
+    },
+    {
+     "name": "injection_bleed_continuation",
+     "probability": 0.32,
+     "direction": "down",
+     "distribution": {
+      "p50": -300,
+      "p10": -800,
+      "p90": 0
+     },
+     "governing_driver": "S3 injection-bearish fundamental persists",
+     "invalidation_conditions": [
+      "big-print buying sustains",
+      "break above prior swing"
+     ]
+    },
+    {
+     "name": "quiet_thin_drift",
+     "probability": 0.13,
+     "direction": "flat",
+     "distribution": {
+      "p50": 0,
+      "p10": -200,
+      "p90": 250
+     },
+     "governing_driver": "thin post-EIA Friday, no catalyst",
+     "invalidation_conditions": [
+      "volume surge"
+     ]
+    }
+   ],
+   "handoff_out": {
+    "close_px": 2.568,
+    "close_px_note": "GUESSED (price state masked); ~-0.085 net bleed from 2.653 anchor then +0.035 Friday covering",
+    "cum_from_anchor_usd": -850,
+    "chain_polarity": "down",
+    "chain_age_sessions": 5,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "divergent_up_vs_sell_tilt",
+    "conviction": "DIVERGENT-covering",
+    "close_off_extreme_frac": 0.4,
+    "positioning_calendar": {
+     "expiry": false,
+     "opex": false,
+     "index_roll_window_open_monday": true,
+     "note": "May->June roll seam is Tue 0421; NGK26 LTD/opex the following week"
+    },
+    "driver_realization": {
+     "driver": "injection_bearish_bleed_plus_short_crowding",
+     "peak_day_et": "not_before_monday",
+     "realizes_before_monday": false
+    },
+    "exit_type": "positioning_spent_fade",
+    "monday_bias": "down lean, small-to-moderate size (Friday covering spent; sellers resume - D-1 0420 b_share 0.379 confirms fresh Monday sell)",
+    "sunday_gap_owner": "chain_drift"
+   }
+  },
+  {
+   "date": "2026-04-21",
+   "dow": "Tue",
+   "archetype": "may_june_roll_seam_record_short_stall",
+   "reasoning": "May/NGK26 -> June/NGM26 roll seam: forecast the ECONOMIC move on the June/NGM26 leg; the mechanical May->June contango offset ~+0.158 (+1,580 USD, June trades higher) is marked SCORING-ONLY, never traded. Not a Friday so the weekend-square gate is not primary, but the exhaustion context dominates: COT managed-money net -114,095 at 0.94 1y-pctile = RECORD short (essentially cannot get more short). D-1 (0420 Monday) b_share 0.379 = heaviest fresh sell tilt of the block -> down-momentum. BUT record-short + a mild cold shot (gw_hdd 8.893, +1.205 vs normal) caps downside and risks an intra-week covering stall. Warming run_delta -0.545 is the offsetting bearish nudge. Net: flat-to-mild-DOWN on the June leg, small, genuinely two-sided.",
+   "regime": {
+    "day_class": "roll_seam_tuesday",
+    "seasonal_state": "S3_shoulder_injection",
+    "demand_regime": "low_shoulder_mild_coldshot",
+    "curve_regime": "contango",
+    "storage_phase": "injection_build",
+    "vol_regime": "unknown_masked",
+    "dominant_driver": "roll_flow_plus_record_short_exhaustion",
+    "selector_mode": "bimodal_preserve"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "structure.roll_seam_never_traded",
+     "inputs": {
+      "front": "NGK26",
+      "next": "NGM26",
+      "spread": -0.158
+     },
+     "thresholds": {
+      "seam_day": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "forecast_june_economic_only",
+     "magnitude_band_usd": [
+      -800,
+      600
+     ],
+     "note": "mechanical +0.158 offset scoring-only; guessed_net is economic June move"
+    },
+    {
+     "rule_id": "positioning.managed_money_short_crowding",
+     "inputs": {
+      "mm_net": -114095,
+      "pctile_1y": 0.94
+     },
+     "thresholds": {
+      "crowded_short_pctile<=": 15
+     },
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "caps_downside_stall_risk",
+     "magnitude_band_usd": [
+      0,
+      600
+     ],
+     "note": "record 0.94-pctile short = downside exhausted, LEAD not timing"
+    },
+    {
+     "rule_id": "flow.prior_session_sell_tilt",
+     "inputs": {
+      "d1_b_share": 0.379
+     },
+     "thresholds": {
+      "sell_tilt<": 0.42
+     },
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "down_momentum",
+     "magnitude_band_usd": [
+      -600,
+      0
+     ],
+     "note": "heaviest fresh Monday sell of the block"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.3,
+     "flat": 0.36,
+     "down": 0.34
+    },
+    "us_open": {
+     "up": 0.32,
+     "flat": 0.32,
+     "down": 0.36
+    },
+    "settle": {
+     "up": 0.33,
+     "flat": 0.31,
+     "down": 0.36
+    },
+    "close": {
+     "up": 0.33,
+     "flat": 0.3,
+     "down": 0.37
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": -150,
+    "stdev": 430,
+    "p10": -820,
+    "p25": -430,
+    "p50": -150,
+    "p75": 180,
+    "p90": 560,
+    "bins": [
+     {
+      "bucket_usd": "<= -800",
+      "probability": 0.1
+     },
+     {
+      "bucket_usd": "-800..-350",
+      "probability": 0.2
+     },
+     {
+      "bucket_usd": "-350..0",
+      "probability": 0.28
+     },
+     {
+      "bucket_usd": "0..+300",
+      "probability": 0.26
+     },
+     {
+      "bucket_usd": "+300..+700",
+      "probability": 0.12
+     },
+     {
+      "bucket_usd": ">= +700",
+      "probability": 0.04
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "09:30",
+     "end_et": "11:30",
+     "probability": 0.45,
+     "expected_direction": "down",
+     "catalyst": "roll-flow + follow-through of Monday selling on June leg"
+    },
+    {
+     "start_et": "13:00",
+     "end_et": "15:00",
+     "probability": 0.4,
+     "expected_direction": "flat",
+     "catalyst": "record-short covering stall vs roll pressure"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.38,
+    "chop": 0.62
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.4,
+    "reversal": 0.3,
+    "hold": 0.3
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18.0,
+     "p10": 0.0,
+     "p50": -0.0,
+     "p90": 0.0
+    },
+    {
+     "et_hr": 20.0,
+     "p10": -41.0,
+     "p50": -7.5,
+     "p90": 28.0
+    },
+    {
+     "et_hr": 22.0,
+     "p10": -98.4,
+     "p50": -18.0,
+     "p90": 67.2
+    },
+    {
+     "et_hr": 0.5,
+     "p10": -147.6,
+     "p50": -27.0,
+     "p90": 100.8
+    },
+    {
+     "et_hr": 3.0,
+     "p10": -205.0,
+     "p50": -37.5,
+     "p90": 140.0
+    },
+    {
+     "et_hr": 6.0,
+     "p10": -270.6,
+     "p50": -49.5,
+     "p90": 184.8
+    },
+    {
+     "et_hr": 8.0,
+     "p10": -344.4,
+     "p50": -63.0,
+     "p90": 235.2
+    },
+    {
+     "et_hr": 9.5,
+     "p10": -451.0,
+     "p50": -82.5,
+     "p90": 308.0
+    },
+    {
+     "et_hr": 11.0,
+     "p10": -541.2,
+     "p50": -99.0,
+     "p90": 369.6
+    },
+    {
+     "et_hr": 13.0,
+     "p10": -639.6,
+     "p50": -117.0,
+     "p90": 436.8
+    },
+    {
+     "et_hr": 14.5,
+     "p10": -721.6,
+     "p50": -132.0,
+     "p90": 492.8
+    },
+    {
+     "et_hr": 16.0,
+     "p10": -787.2,
+     "p50": -144.0,
+     "p90": 537.6
+    },
+    {
+     "et_hr": 17.0,
+     "p10": -820.0,
+     "p50": -150.0,
+     "p90": 560.0
+    }
+   ],
+   "overnight_gap_usd": -40,
+   "guess_curve": [
+    -0.0,
+    -7.5,
+    -18.0,
+    -27.0,
+    -37.5,
+    -49.5,
+    -63.0,
+    -82.5,
+    -99.0,
+    -117.0,
+    -132.0,
+    -144.0,
+    -150.0
+   ],
+   "guessed_net_usd": -150,
+   "fwd_curve_lean": "contango_now_on_NGM26_leg_mechanical_offset_+0.158_scoring_only",
+   "confidence": {
+    "overall": 0.44,
+    "direction": 0.42,
+    "magnitude": 0.4,
+    "timing": 0.4
+   },
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp17_state_masked_one_shot",
+    "missing_inputs": [
+     "vol_regime",
+     "target_day_price_state(masked)"
+    ],
+    "stale_inputs": [
+     "cash_basis(weekly)"
+    ],
+    "partial_inputs": [
+     "intra_block_price_path(inferred)",
+     "roll_seam_economic_vs_mechanical_split"
+    ],
+    "prohibited_inputs_removed": [
+     "dip_imb_level",
+     "target_day_tape"
+    ],
+    "flags": [
+     "roll_seam_mechanical_offset_scoring_only",
+     "record_short_exhaustion_two_sided",
+     "masked_price_state"
+    ]
+   },
+   "scenario_components": [
+    {
+     "name": "monday_sell_followthrough",
+     "probability": 0.42,
+     "direction": "down",
+     "distribution": {
+      "p50": -350,
+      "p10": -820,
+      "p90": 50
+     },
+     "governing_driver": "heaviest block sell tilt + roll pressure",
+     "invalidation_conditions": [
+      "cold shot verifies bullish",
+      "record short covers"
+     ]
+    },
+    {
+     "name": "record_short_covering_stall",
+     "probability": 0.4,
+     "direction": "flat",
+     "distribution": {
+      "p50": 50,
+      "p10": -250,
+      "p90": 450
+     },
+     "governing_driver": "0.94-pctile short exhaustion + cold shot",
+     "invalidation_conditions": [
+      "fresh bearish storage read",
+      "warming trend dominates"
+     ]
+    },
+    {
+     "name": "coldshot_covering_pop",
+     "probability": 0.18,
+     "direction": "up",
+     "distribution": {
+      "p50": 400,
+      "p10": 100,
+      "p90": 700
+     },
+     "governing_driver": "gw_hdd 8.893 cold shot sparks squeeze",
+     "invalidation_conditions": [
+      "run_delta warming confirms fade"
+     ]
+    }
+   ]
+  },
+  {
+   "date": "2026-04-24",
+   "dow": "Fri",
+   "archetype": "weekend_feeding_friday_pre_expiry_covering",
+   "reasoning": "Friday turn/exhaustion GATE at MAX strength: COT managed-money net -114,095 at 0.94 1y-pctile = RECORD short; very mature chain (~9-10 sessions across both weeks); D-1 (0423, EIA print) VERY heavy 47,691 trades (33/min) with near-balanced tilt b_share 0.459 / big_print 0.536 = churn/ABSORPTION signature (buyers meeting sellers at the extreme = base-building). Weekend-feeding AND the week ahead carries NGK26 opex (Mon 0427) + expiry (Tue 0428) -> pre-expiry-week short-covering/squaring risk. crest_trim routed OUT (absorption/covering, not stretched-squaring). Prior-over-state chain-down FORBIDDEN. Headwind: shoulder weather bearish (gw_hdd 3.997, warmer -2.969, warming run_delta -0.674) low-authority -> keeps the covering call MODEST. Forecast on the June/NGM26 leg (post-roll). Net: mild UP covering/squaring, honest-small, wide two-sided.",
+   "regime": {
+    "day_class": "friday_weekend_feeding_pre_expiry",
+    "seasonal_state": "S3_shoulder_injection",
+    "demand_regime": "low_shoulder",
+    "curve_regime": "contango",
+    "storage_phase": "injection_build",
+    "vol_regime": "unknown_masked",
+    "dominant_driver": "record_short_exhaustion_pre_expiry_covering",
+    "selector_mode": "turn_gate_override_of_chain"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "daytype.friday_turn_exhaustion_gate",
+     "inputs": {
+      "chain_age_sessions": 10,
+      "cot_mm_net_pctile_1y": 0.94,
+      "d1_b_share": 0.459,
+      "d1_n_trades": 47691,
+      "chain_state": "stretched_absorbing"
+     },
+     "thresholds": {
+      "chain_age>=": 4,
+      "pctile_extreme<=": 15,
+      "d1_absorption": true
+     },
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "turn_up_covering",
+     "magnitude_band_usd": [
+      150,
+      1080
+     ],
+     "note": "record short + D-1 absorption -> covering, not chain-down continuation"
+    },
+    {
+     "rule_id": "daytype.friday_crest_trim_discriminator",
+     "inputs": {
+      "chain": "stretched_at_record_extreme",
+      "d1_flow": "heavy_churn_absorption"
+     },
+     "thresholds": {
+      "crest_trim_only_if": "stretched+squaring"
+     },
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "route_to_positioning_spent_fade",
+     "magnitude_band_usd": [
+      150,
+      900
+     ],
+     "note": "absorption/covering, not fadeable crest_trim"
+    },
+    {
+     "rule_id": "positioning.managed_money_short_crowding",
+     "inputs": {
+      "mm_net": -114095,
+      "pctile_1y": 0.94
+     },
+     "thresholds": {
+      "crowded_short_pctile<=": 15
+     },
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "supports_covering_caps_down",
+     "magnitude_band_usd": [
+      0,
+      800
+     ],
+     "note": "record short into expiry week = squeeze risk"
+    },
+    {
+     "rule_id": "weather.shoulder_low_authority_bearish",
+     "inputs": {
+      "gw_hdd": 3.997,
+      "vs_normal": -2.969,
+      "run_delta": -0.674
+     },
+     "thresholds": {
+      "shoulder_authority": "low"
+     },
+     "scope_pass": true,
+     "ownership_rank": 4,
+     "direction_effect": "mild_down_headwind",
+     "magnitude_band_usd": [
+      -400,
+      0
+     ],
+     "note": "warmer + warming = bearish, but low-authority in S3; caps the covering upside"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.33,
+     "flat": 0.38,
+     "down": 0.29
+    },
+    "us_open": {
+     "up": 0.38,
+     "flat": 0.33,
+     "down": 0.29
+    },
+    "settle": {
+     "up": 0.43,
+     "flat": 0.3,
+     "down": 0.27
+    },
+    "close": {
+     "up": 0.45,
+     "flat": 0.28,
+     "down": 0.27
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": 250,
+    "stdev": 500,
+    "p10": -560,
+    "p25": -120,
+    "p50": 250,
+    "p75": 620,
+    "p90": 1080,
+    "bins": [
+     {
+      "bucket_usd": "<= -600",
+      "probability": 0.1
+     },
+     {
+      "bucket_usd": "-600..-200",
+      "probability": 0.16
+     },
+     {
+      "bucket_usd": "-200..+150",
+      "probability": 0.24
+     },
+     {
+      "bucket_usd": "+150..+600",
+      "probability": 0.29
+     },
+     {
+      "bucket_usd": "+600..+1200",
+      "probability": 0.15
+     },
+     {
+      "bucket_usd": ">= +1200",
+      "probability": 0.06
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "09:30",
+     "end_et": "11:30",
+     "probability": 0.44,
+     "expected_direction": "up",
+     "catalyst": "US-open covering ahead of expiry week + weekend"
+    },
+    {
+     "start_et": "13:00",
+     "end_et": "16:00",
+     "probability": 0.5,
+     "expected_direction": "up",
+     "catalyst": "pre-expiry-week short squaring into settle"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.4,
+    "chop": 0.6
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.28,
+    "reversal": 0.44,
+    "hold": 0.28
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18.0,
+     "p10": 0.0,
+     "p50": 0.0,
+     "p90": 0.0
+    },
+    {
+     "et_hr": 20.0,
+     "p10": -28.0,
+     "p50": 12.5,
+     "p90": 54.0
+    },
+    {
+     "et_hr": 22.0,
+     "p10": -67.2,
+     "p50": 30.0,
+     "p90": 129.6
+    },
+    {
+     "et_hr": 0.5,
+     "p10": -100.8,
+     "p50": 45.0,
+     "p90": 194.4
+    },
+    {
+     "et_hr": 3.0,
+     "p10": -140.0,
+     "p50": 62.5,
+     "p90": 270.0
+    },
+    {
+     "et_hr": 6.0,
+     "p10": -184.8,
+     "p50": 82.5,
+     "p90": 356.4
+    },
+    {
+     "et_hr": 8.0,
+     "p10": -235.2,
+     "p50": 105.0,
+     "p90": 453.6
+    },
+    {
+     "et_hr": 9.5,
+     "p10": -308.0,
+     "p50": 137.5,
+     "p90": 594.0
+    },
+    {
+     "et_hr": 11.0,
+     "p10": -369.6,
+     "p50": 165.0,
+     "p90": 712.8
+    },
+    {
+     "et_hr": 13.0,
+     "p10": -436.8,
+     "p50": 195.0,
+     "p90": 842.4
+    },
+    {
+     "et_hr": 14.5,
+     "p10": -492.8,
+     "p50": 220.0,
+     "p90": 950.4
+    },
+    {
+     "et_hr": 16.0,
+     "p10": -537.6,
+     "p50": 240.0,
+     "p90": 1036.8
+    },
+    {
+     "et_hr": 17.0,
+     "p10": -560.0,
+     "p50": 250.0,
+     "p90": 1080.0
+    }
+   ],
+   "overnight_gap_usd": 30,
+   "guess_curve": [
+    0.0,
+    12.5,
+    30.0,
+    45.0,
+    62.5,
+    82.5,
+    105.0,
+    137.5,
+    165.0,
+    195.0,
+    220.0,
+    240.0,
+    250.0
+   ],
+   "guessed_net_usd": 250,
+   "fwd_curve_lean": "contango_on_NGM26_leg_expiry_week_ahead",
+   "confidence": {
+    "overall": 0.47,
+    "direction": 0.5,
+    "magnitude": 0.4,
+    "timing": 0.44
+   },
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp17_state_masked_one_shot",
+    "missing_inputs": [
+     "vol_regime",
+     "target_day_price_state(masked)"
+    ],
+    "stale_inputs": [
+     "cash_basis(weekly)"
+    ],
+    "partial_inputs": [
+     "intra_block_price_path(inferred)",
+     "june_leg_level(post_roll)"
+    ],
+    "prohibited_inputs_removed": [
+     "dip_imb_level",
+     "target_day_tape"
+    ],
+    "flags": [
+     "weekend_gap_uncertainty",
+     "pre_expiry_week_mechanics",
+     "record_short_squeeze_risk",
+     "masked_price_state"
+    ]
+   },
+   "scenario_components": [
+    {
+     "name": "pre_expiry_weekend_covering",
+     "probability": 0.52,
+     "direction": "up",
+     "distribution": {
+      "p50": 300,
+      "p10": -120,
+      "p90": 1080
+     },
+     "governing_driver": "record-short squaring ahead of opex/expiry week + weekend",
+     "invalidation_conditions": [
+      "fresh bearish storage shock",
+      "warming weather dominates flow"
+     ]
+    },
+    {
+     "name": "shoulder_bleed_continuation",
+     "probability": 0.33,
+     "direction": "down",
+     "distribution": {
+      "p50": -300,
+      "p10": -560,
+      "p90": 50
+     },
+     "governing_driver": "bearish shoulder weather + persistent sell tilt",
+     "invalidation_conditions": [
+      "absorption resolves up",
+      "short-squeeze trigger"
+     ]
+    },
+    {
+     "name": "expiry_churn_flat",
+     "probability": 0.15,
+     "direction": "flat",
+     "distribution": {
+      "p50": 0,
+      "p10": -200,
+      "p90": 250
+     },
+     "governing_driver": "heavy two-sided pre-expiry churn nets flat",
+     "invalidation_conditions": [
+      "directional break on volume"
+     ]
+    }
+   ],
+   "handoff_out": {
+    "close_px": 2.72,
+    "close_px_note": "GUESSED, on June/NGM26 leg (post-0421 roll); ~+0.158 above the May-equivalent economic level",
+    "cum_from_anchor_usd": -1000,
+    "cum_note": "roll-adjusted ECONOMIC move from 2.653 May anchor (mechanical +0.158 offset excluded)",
+    "chain_polarity": "down_at_record_short_exhaustion",
+    "chain_age_sessions": 10,
+    "exhaustion_flag": true,
+    "last_hour_dir": "up",
+    "last_hour_signed_flow": "divergent_up_vs_sell_tilt",
+    "conviction": "DIVERGENT-covering",
+    "close_off_extreme_frac": 0.4,
+    "positioning_calendar": {
+     "expiry": true,
+     "opex": true,
+     "index_roll_window_open_monday": false,
+     "note": "NGK26 opex Mon 0427, LTD/expiry Tue 0428 - the coming week is expiry week"
+    },
+    "driver_realization": {
+     "driver": "record_short_exhaustion_plus_pre_expiry_covering",
+     "peak_day_et": "expiry_week_0427_0428",
+     "realizes_before_monday": false
+    },
+    "exit_type": "positioning_spent_fade",
+    "monday_bias": "up-biased but two-sided (short-covering/squeeze risk into opex Mon 0427 + expiry Tue 0428 at record-short 0.94-pctile); moderate size, expiry-mechanical",
+    "sunday_gap_owner": "structural"
+   }
+  }
+ ]
+}

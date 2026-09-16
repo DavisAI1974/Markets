@@ -1,0 +1,68 @@
+{
+ "note": "VERIFIED RETRACTIONS, S112. Greg: 'if the old claims are no longer valid, ditch them. They're just noise if they aren't valid.' Every entry below was checked against the brain AND its cited source file before being written here - the 82-play audit's screen flagged 34 of 82 plays, and a regex hit is not evidence enough to delete content, which is the same error that produced holes #8 and #9. Only claims verified against their source appear here. A retracted claim leaves the brain entirely; git holds every prior version, so nothing is lost (D34: git is the record, the brain is the working set).",
+ "session": "S112",
+ "retractions": [
+  {
+   "play_id": "monday.catchup_window_tilt_gate",
+   "field": "forward",
+   "disposition": "KEEP_AS_GUARD",
+   "claim": "Calls the Monday DAY-MOVE sign 4/4 on the walk's four scorable weekend seams.",
+   "why_invalid": "The play's own record contradicts it twice. Its assumption_retired block says of 0601 that consulting this gate on the state actually served 'REPRODUCES +350' against a realized -990; and the very field making the 4/4 claim writes, in its mechanism clause, '0601 leg +690 against a day of -990'. A day cannot be both a 4/4 member and a documented wrong sign. The S112 decline audit scored all four seams from the blind record: 0518 -550 vs +660 wrong, 0601 +350 vs -990 wrong, 0608 -420 vs -890 right, 0615 +320 vs +160 right. The honest tally is 2 of 4. On the six Mondays after the prior-session stub defect was fixed, the gate's owner went 3 of 6.",
+   "evidence": "research/kalshi/knowledge/ng_brain.json (the play's own assumption_retired and mechanism fields) + research/kalshi/forecasts/g21_blind_round1/grp21_mbo_specialist_B.json + research/kalshi/STANDDOWN_AUDIT_S112.json",
+   "keep_as_guard_because": "A 4/4 that is really 2/4 is noise, but the REASON it is 2/4 is a live warning: this gate keys on an agent output (E.monday_bias / C.conviction_verdict) rather than a served field, so no state file can ever contradict it and every miss so far has been excused by its input. That is a reason not to trust it unattended, which is exactly Greg's test for keeping something.",
+   "replacement": [
+    {
+     "tag": "forward_evidence",
+     "text": "MEASURED S112 on the blind record, four scorable weekend seams: 0518 -550 vs +660 WRONG, 0601 +350 vs -990 WRONG, 0608 -420 vs -890 right, 0615 +320 vs +160 right = 2 of 4. On the six Mondays after the prior-session stub fix the gate's owner went 3 of 6."
+    },
+    {
+     "tag": "instrument_caveat_s112",
+     "text": "The gate keys on an AGENT OUTPUT (E.monday_bias / C.conviction_verdict), not on a served field, so its calls cannot be recomputed from any state file and no state file can contradict them. Every recorded miss has been excused by its input (stub on 0601, roll contamination on 0629). Substituting the served Friday tilt gives 5 of 9."
+    }
+   ]
+  },
+  {
+   "play_id": "selector.midblock_right_the_ship",
+   "field": "forward",
+   "disposition": "DELETE",
+   "claim": "G17 refine r2: the HE24->HE1 coordination halved error 24->11 (10/10) with zero direction changes - the mid-block re-derivation working.",
+   "why_invalid": "This play's ONLY action is a direction change, so a run with ZERO direction changes is a run in which it never fired. Crediting it with that run is the S108 signature in its purest form: an outcome banked as evidence for a mechanism that was absent. The S112 audit scored the four real blind unlocks at 2 of 4 (0616 hit, 0617 miss, 0618 hit, 0506 miss) and only the 0506 miss is recorded anywhere.",
+   "evidence": "research/kalshi/BRAIN_AUDIT_S112.json (selector.midblock_right_the_ship) + the play's own forward field, which credits a zero-direction-change run",
+   "replacement": [
+    {
+     "tag": "forward_evidence",
+     "text": "G18: RTS fired 0506 UP but the turn did not deliver (buy absorbed, DOWN) - the mid-block re-derivation must confirm the turn DELIVERED, not just that the stack built. | MEASURED S112 across the four real blind unlocks: 2 of 4 (0616 hit, 0617 miss, 0618 hit, 0506 miss)."
+    }
+   ]
+  },
+  {
+   "play_id": "daytype.covering_giveback_self_limiting",
+   "field": "instances",
+   "instance_date": "20260619",
+   "instance_action": "dont",
+   "disposition": "DELETE",
+   "claim": "The 20260619 instance, banked as supports_or_contradicts='supports' and scored JUSTIFIED by the S112 decline audit - 'Actual -110. No second covering rally. The decline limb held on the same instrument that had fired four sessions earlier.'",
+   "why_invalid": "The owning specialist declared the day VOID for this play and said so in writing. research/kalshi/forecasts/grp21_mbo_specialist_A.json, field for_the_merge_do_not_bank_this: 'Do not bank 0619 as forward evidence for structure.failed_rally_tell, for daytype.covering_giveback_self_limiting (de-triggered, not tested), or for the blind's sign channel on this day.' The instance was sourced from E's file, which did not carry A's void declaration. A de-triggered day is not a test the play passed - it is a day the play was never asked. Banking it as support inside a MECHANISM_VERIFIED play is a corrupt library entry in D32's exact sense: a day recorded as explained when it was not. AND THE CONTAMINATION PROPAGATED: the decline audit scored this row JUSTIFIED - a good, judged decline - because its batch was given E's file and not A's. Two independent passes both banked a day the owning specialist had declared never asked. That is why 'do not bank' has to be honoured mechanically rather than remembered.",
+   "evidence": "research/kalshi/forecasts/grp21_mbo_specialist_A.json (for_the_merge_do_not_bank_this, verbatim) + research/kalshi/forecasts/standdown_audit/batch_2.json",
+   "self_inflicted": "This instance was added by the S112 backfill earlier in this same session - by me, from BRAIN_AUDIT_S112.json - and was caught by the decline audit running afterwards. Recorded rather than quietly removed, per the standing rule that corrections are stated and not absorbed."
+  },
+  {
+   "play_id": "monday.catchup_window_tilt_gate",
+   "field": "legacy_notes",
+   "legacy_key": "forward_evidence_g21_leg_vs_day",
+   "disposition": "DELETE",
+   "claim": "The SHADOW COPY of the 4/4 claim, preserved verbatim by the D29 migration.",
+   "why_invalid": "Identical text to the retracted forward field, and false for the identical reason. The brain is loaded whole at every spawn, so a shadow copy is served exactly as readably as the live field.",
+   "evidence": "research/kalshi/knowledge/ng_brain.json legacy_notes.forward_evidence_g21_leg_vs_day"
+  },
+  {
+   "play_id": "selector.midblock_right_the_ship",
+   "field": "legacy_notes",
+   "legacy_key": "forward_evidence",
+   "disposition": "DELETE",
+   "claim": "The SHADOW COPY of the zero-direction-changes credit, preserved verbatim by the D29 migration.",
+   "why_invalid": "Identical text to the retracted forward field. Retracting the live field alone left the claim fully readable in legacy_notes.",
+   "evidence": "research/kalshi/knowledge/ng_brain.json legacy_notes.forward_evidence"
+  }
+ ]
+}

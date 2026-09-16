@@ -1,0 +1,67 @@
+{
+ "note": "EIA WEEKLY COAL BASIN SPOT PRICES - an ACCRUAL. The free endpoint carries a rolling FIVE-WEEK window and EIA states the historical series is proprietary and cannot be released, so any week not captured while it is in the window is lost permanently. Prompt-quarter delivery, USD per short ton, S&P Global via EIA with permission. Sticky by nature - never lead with a week-over-week change.",
+ "source_url": "https://www.eia.gov/coal/markets/coal_markets_json.php",
+ "weeks": {
+  "2026-07-31": {
+   "week_ending": "2026-07-31",
+   "units": "usd_per_short_ton",
+   "basis": "prompt_quarter_delivery",
+   "source": "EIA Coal Markets (S&P Global, republished with permission)",
+   "central_appalachia": 82,
+   "northern_appalachia": 70,
+   "illinois_basin": 55.5,
+   "powder_river_basin": 14.65,
+   "uinta_basin": 25.3,
+   "first_seen_utc_date": "2026-08-05"
+  },
+  "2026-07-24": {
+   "week_ending": "2026-07-24",
+   "units": "usd_per_short_ton",
+   "basis": "prompt_quarter_delivery",
+   "source": "EIA Coal Markets (S&P Global, republished with permission)",
+   "central_appalachia": 82,
+   "northern_appalachia": 70,
+   "illinois_basin": 55.5,
+   "powder_river_basin": 14.65,
+   "uinta_basin": 25.3,
+   "first_seen_utc_date": "2026-08-05"
+  },
+  "2026-07-17": {
+   "week_ending": "2026-07-17",
+   "units": "usd_per_short_ton",
+   "basis": "prompt_quarter_delivery",
+   "source": "EIA Coal Markets (S&P Global, republished with permission)",
+   "central_appalachia": 82,
+   "northern_appalachia": 70,
+   "illinois_basin": 55.5,
+   "powder_river_basin": 14.65,
+   "uinta_basin": 25.3,
+   "first_seen_utc_date": "2026-08-05"
+  },
+  "2026-07-10": {
+   "week_ending": "2026-07-10",
+   "units": "usd_per_short_ton",
+   "basis": "prompt_quarter_delivery",
+   "source": "EIA Coal Markets (S&P Global, republished with permission)",
+   "central_appalachia": 82,
+   "northern_appalachia": 71,
+   "illinois_basin": 56,
+   "powder_river_basin": 14.7,
+   "uinta_basin": 25.3,
+   "first_seen_utc_date": "2026-08-05"
+  },
+  "2026-07-03": {
+   "week_ending": "2026-07-03",
+   "units": "usd_per_short_ton",
+   "basis": "prompt_quarter_delivery",
+   "source": "EIA Coal Markets (S&P Global, republished with permission)",
+   "central_appalachia": 82,
+   "northern_appalachia": 71,
+   "illinois_basin": 56,
+   "powder_river_basin": 14.7,
+   "uinta_basin": 25.3,
+   "first_seen_utc_date": "2026-08-05"
+  }
+ },
+ "n_weeks": 5
+}

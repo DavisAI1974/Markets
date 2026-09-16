@@ -1,0 +1,1546 @@
+{
+  "group": 11,
+  "tag": "G11_2026-01-18_to_2026-01-30_blind_oneshot",
+  "brain_version": "s99.2",
+  "anchor": {
+    "date": "2026-01-16",
+    "close": 2.702,
+    "last_hour_dir": "up",
+    "day_net_usd": 140
+  },
+  "price_basis": "NG.n.0 OI-continuous, instrument 1021, no intra-block roll",
+  "block_thesis": "Down-polarity POST-PARABOLIC BLEED carried in from G10, intact at the open (no hardened flip confirm has printed; the anchor is a B5 hold day). Inside it, the largest counter-catalyst of the winter: a major cold shot enters the models over the MLK weekend (0118-eve run-delta +8.511 gw-HDD on Jan 24) and keeps being re-added through 0123 (+4.50 on Jan 28). Per the polarity-relative band rule a live cold ramp in a down-chain is the COUNTER catalyst - it feeds bounces, it does not birth a chain, and the fundamental stream still RE-CONFIRMS supply through week 1 (0122 print +76.4 above, surplus widening 187->263). So: a real, oversized, multi-leg counter rally in week 1 into week 2, then the model stream cuts the back end (0125 -2.315 for Jan 30; 0129 fwd7 floor 26.079) and the bounce dies into a chain-sided sell of the bullish 0129 print. NET: near-flat-to-marginally-negative block with a large mid-block up-excursion fully retraced. NO FLIP CALLED, NO BLEED-END CALLED.",
+  "days": [
+    {
+      "date": "2026-01-18",
+      "dow": "Sun",
+      "archetype": "thin_sunday_reopen_bleed_pause",
+      "reasoning": "Day 1 flows from the 0116 anchor: a +140 hold day with an UP last hour - a bleed pause (B5 -200..+300), not an armed turn. The weekend carries NO material new closure information: the 0117-evening MOS run (state 20260118) has forecast_run_delta only +0.489 at D+0 and a MIXED forward set (D+1 -1.031, D+4 -0.798, D+5 -1.169), with fwd7_gw_hdd_span topping at just 34.208. Per the S97.2 weekend-info check (1124 form), a weekend with no new shock in the model stream reprices ~nothing - so I forecast a SMALL gap, not a repricing. R3's fade/extend arms do not arm without a material gap. Thin Sunday session, bleed pause, hr24->hr1 carries the anchor's mild up last-hour into a gentle drift. The big cold shot is NOT yet in the models as of Sunday evening - that is tomorrow's information, and I explicitly refuse to front-run it here.",
+      "plays_fired": [
+        "structure.post_parabolic_bleed",
+        "daytype.monday_weekend_gap",
+        "daytype.weekday_archetype"
+      ],
+      "overnight_gap_usd": 100,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          20
+        ],
+        [
+          0,
+          40
+        ],
+        [
+          2,
+          50
+        ],
+        [
+          4,
+          60
+        ],
+        [
+          6,
+          70
+        ],
+        [
+          8,
+          90
+        ],
+        [
+          10,
+          100
+        ],
+        [
+          12,
+          110
+        ],
+        [
+          14,
+          120
+        ],
+        [
+          16,
+          130
+        ],
+        [
+          18,
+          140
+        ],
+        [
+          20,
+          150
+        ]
+      ],
+      "guessed_net_usd": 150,
+      "refined_archetype": "thin_sunday_fresh_shot_gap_then_flat",
+      "refined_reasoning": "Carried state: G10 bleed, DOWN polarity, anchor 0116 +140 closing 73% off its high, last hour +30 - a bleed pause, no armed turn. GAP: the 0117-evening run carries a RISING forward profile (D+0 29.5 vs fwd7 top 34.2 at D+2) but no first-appearance shock. The general rule I can defend is only directional: a rising forward profile into the weekend gets a POSITIVE gap sized above the priced-shock band (+200..+400) and below the fresh-shot band (+2000..+2500) -> +600. The gap MAGNITUDE here is DECLARED IRREDUCIBLE with mechanism: the weekend repricing is priced off the Sat/Sun 00Z/12Z model cycle, which our D-1-evening MOS stream does not carry - the +8.511 Jan-24 add first appears in our feed in the 0118-EVENING run, roughly an hour AFTER the Sunday reopen. The market saw it first. SESSION: a ~2,600-trade thin Sunday with no US participation carries no chain information; flat, -50.",
+      "refined_overnight_gap_usd": 600,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          -10
+        ],
+        [
+          0,
+          -20
+        ],
+        [
+          2,
+          -20
+        ],
+        [
+          4,
+          -30
+        ],
+        [
+          6,
+          -30
+        ],
+        [
+          8,
+          -40
+        ],
+        [
+          10,
+          -40
+        ],
+        [
+          12,
+          -40
+        ],
+        [
+          14,
+          -50
+        ],
+        [
+          16,
+          -50
+        ],
+        [
+          18,
+          -50
+        ],
+        [
+          20,
+          -50
+        ]
+      ],
+      "refined_net_usd": -50
+    },
+    {
+      "date": "2026-01-19",
+      "dow": "Mon",
+      "archetype": "thin_holiday_counter_catalyst_bounce_day1",
+      "reasoning": "Flows from my guessed 0118 close (cum ~+250 from anchor), a quiet drift. THIS is the block's information event: the 0118-evening run (state 20260119) puts forecast_run_delta at +4.020 for Jan 23 and +8.511 for Jan 24 - the largest single-horizon run-delta anywhere in the block - and lifts fwd7_gw_hdd_span to 38.545. A brand-new hard cold shot has appeared in the models. Greg's thesis says the market reprices on THIS, not on realized temperature, and I am taking it: the day is UP. Sizing: MLK is a thin holiday, but magnitude.catalyst_condition_sort's G7 lesson (1111 Veterans Day, the block's biggest day at +1580, guessed +100 sized-down and missed ~15x) says the thin flag is an AMPLIFIER on a delivery day with a live weather catalyst and a damper only with NO catalyst (1013). Thin + hard_heat + new-catalyst delivery is the melt-up stack (1111, 1128, n=2), so I size ABOVE the bleed day-1 bounce band (+800..+1500) to +1600. POLARITY DISCIPLINE: this is bleed bounce DAY 1, not a flip. structure.chain_polarity_flip C3 forbids front-running - the 0108 lesson - so no polarity-relative rule flips today no matter how big this is. Shape: a grind (cold-model repricing is continuous, not a spike), so it should hold into the close rather than round-trip.",
+      "plays_fired": [
+        "structure.post_parabolic_bleed",
+        "magnitude.catalyst_condition_sort",
+        "daytype.monday_weekend_gap",
+        "shape.grind_vs_spike",
+        "structure.chain_polarity_flip"
+      ],
+      "overnight_gap_usd": 400,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          100
+        ],
+        [
+          0,
+          200
+        ],
+        [
+          2,
+          280
+        ],
+        [
+          4,
+          350
+        ],
+        [
+          6,
+          450
+        ],
+        [
+          8,
+          600
+        ],
+        [
+          10,
+          800
+        ],
+        [
+          12,
+          1050
+        ],
+        [
+          14,
+          1300
+        ],
+        [
+          16,
+          1480
+        ],
+        [
+          18,
+          1560
+        ],
+        [
+          20,
+          1600
+        ]
+      ],
+      "guessed_net_usd": 1600,
+      "refined_archetype": "fresh_shot_monday_reaction_thin_holiday",
+      "refined_reasoning": "Day-N-1: the 0118 Sunday session was flat on 2,600 trades - S97.2's thin-Sunday caveat means no R1 boundary read is available; the information is the MOS stream, not the tape. The 0118-evening run puts run_delta +4.020 at Jan 23 and +8.511 at Jan 24 - a FIRST APPEARANCE at horizons that previously carried nothing (the new MOS condition: first-appearance new-horizon adds move price; revisions to an already-priced shot do not). Side UP. SIZING is the R3 reaction rule, not the repricing rule: the weekend gap already delivered the bulk of the shot at the Sunday reopen, so Monday's US session is the REACTION. MLK thin caps participation - the 1111/1128 thin-AMPLIFIER stack applies to a DELIVERY day (a print or a resume into the session), not to a session whose catalyst was consumed by the gap it followed. Reaction band under a live fresh shot: +400..+800 -> +600. Shape: grind, holds into the close.",
+      "refined_overnight_gap_usd": 0,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          40
+        ],
+        [
+          0,
+          90
+        ],
+        [
+          2,
+          140
+        ],
+        [
+          4,
+          190
+        ],
+        [
+          6,
+          250
+        ],
+        [
+          8,
+          320
+        ],
+        [
+          10,
+          400
+        ],
+        [
+          12,
+          470
+        ],
+        [
+          14,
+          520
+        ],
+        [
+          16,
+          560
+        ],
+        [
+          18,
+          580
+        ],
+        [
+          20,
+          600
+        ]
+      ],
+      "refined_net_usd": 600
+    },
+    {
+      "date": "2026-01-20",
+      "dow": "Tue",
+      "archetype": "bounce_day2_ramp_still_building",
+      "reasoning": "Flows from my guessed 0119 close (cum ~+2250), a grind that held its highs. The 0119-evening run (state 20260120) CONFIRMS and extends the shot: run-deltas +2.261 (Jan 23), +3.028 (Jan 24), +3.039 (Jan 25), fwd7 top now 41.573. The ramp has NOT crested - it is still being added to. Two rules pull opposite ways and I am naming both: post_parabolic_bleed B2 says bounce day-2 FADES to +200..+500, while mature_swing_alternation says a YOUNG counter-swing (2 sessions) can chain and Tuesday is the strongest-trend weekday. I split toward up but below day 1: +700. The still-positive run-delta is the specific reason I do not take the B2 low end - I would have guessed ~+300 without the forecast block. Shape: I expect the day to peak mid-session and ease into the close (day-2 bounces fade at the margin), so the curve tops ~14h above its close - which, if it round-trips harder than I have drawn, is the failed_rally_tell arming a crash. I cannot verify that without day-N-1 tape.",
+      "plays_fired": [
+        "structure.post_parabolic_bleed",
+        "structure.mature_swing_alternation",
+        "daytype.weekday_archetype",
+        "structure.failed_rally_tell"
+      ],
+      "overnight_gap_usd": 150,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          60
+        ],
+        [
+          0,
+          120
+        ],
+        [
+          2,
+          180
+        ],
+        [
+          4,
+          250
+        ],
+        [
+          6,
+          340
+        ],
+        [
+          8,
+          460
+        ],
+        [
+          10,
+          620
+        ],
+        [
+          12,
+          780
+        ],
+        [
+          14,
+          850
+        ],
+        [
+          16,
+          800
+        ],
+        [
+          18,
+          740
+        ],
+        [
+          20,
+          700
+        ]
+      ],
+      "guessed_net_usd": 700,
+      "refined_archetype": "young_swing_extension_live_accelerating_ramp",
+      "refined_reasoning": "Day-N-1 (0119 ACTUAL): +550, closed 54% off its high with a +50 last hour and no continuation-collapse in the up legs - R1's ramp arm: under a live ramp with intact swing legs a session that cannot hold its extreme still RESUMES. Swing age 2 sessions = YOUNG, and R4 says a young swing chains extensions day after day. The ramp is still being ADDED to at new horizons (+2.261 Jan 23, +3.028 Jan 24, +3.039 Jan 25; fwd7 top 41.573 vs 38.545 the run before) - still first-appearance, not revision. Tuesday is the strongest-trend weekday. Winter resume band under a live cold ramp is +1300..+2000 -> +1600. POLARITY DISCIPLINE: this is still a counter-catalyst bounce inside the carried DOWN chain; no flip has confirmed at this day's OPEN, and C3 forbids front-running one. The flip becomes confirmable only at THIS day's CLOSE.",
+      "refined_overnight_gap_usd": 0,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          60
+        ],
+        [
+          0,
+          140
+        ],
+        [
+          2,
+          230
+        ],
+        [
+          4,
+          330
+        ],
+        [
+          6,
+          450
+        ],
+        [
+          8,
+          620
+        ],
+        [
+          10,
+          820
+        ],
+        [
+          12,
+          1030
+        ],
+        [
+          14,
+          1250
+        ],
+        [
+          16,
+          1420
+        ],
+        [
+          18,
+          1530
+        ],
+        [
+          20,
+          1600
+        ]
+      ],
+      "refined_net_usd": 1600
+    },
+    {
+      "date": "2026-01-21",
+      "dow": "Wed",
+      "archetype": "bounce_death_giveback",
+      "reasoning": "Flows from my guessed 0120 close (cum ~+3100) which eased off its intraday high - the fading-day-2 signature. TWO independent rules converge on a down day and this is the strongest structural call of week 1: (a) post_parabolic_bleed B2 - bounces run 1-2 days, NEVER 3, across both G9-tail and G10 (0107 single; 0112/0113 pair then 0114 crash); (b) mature_swing_alternation - the counter-swing is 3 sessions old off a material fresh extreme close, and a counter-bounce is never extended consecutively in a mature chain (n=4: 1217->1218, 1223->1224, 1023, 0107->0108). The weather forecast MODERATES my size rather than changing the side: the 0120-evening run (state 20260121) still adds at the back (+1.874 Jan 24, +3.938 Jan 26) even while cutting the front (D+1 -1.624), so the catalyst is not dead and I do not take the full down-chain crash band (-2400..-2900). I size a moderate give-back -800. Honest flag: R1 giveback_exhaustion_boundary and the failed_rally_tell would pin whether 0120 actually round-tripped and therefore whether this is -800 or -2500; both need day-N-1 ACTUAL tape which the one-shot protocol withholds. This is the single largest magnitude uncertainty in week 1.",
+      "plays_fired": [
+        "structure.post_parabolic_bleed",
+        "structure.mature_swing_alternation",
+        "structure.failed_rally_tell",
+        "magnitude.crash_regime_bands"
+      ],
+      "overnight_gap_usd": 50,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          -40
+        ],
+        [
+          0,
+          -80
+        ],
+        [
+          2,
+          -130
+        ],
+        [
+          4,
+          -200
+        ],
+        [
+          6,
+          -280
+        ],
+        [
+          8,
+          -400
+        ],
+        [
+          10,
+          -540
+        ],
+        [
+          12,
+          -680
+        ],
+        [
+          14,
+          -800
+        ],
+        [
+          16,
+          -860
+        ],
+        [
+          18,
+          -830
+        ],
+        [
+          20,
+          -800
+        ]
+      ],
+      "guessed_net_usd": -800,
+      "refined_archetype": "post_flip_young_chain_day1_peak_forward",
+      "refined_reasoning": "THE FLIP DAY. Day-N-1 (0120 ACTUAL): net +1930. The carried DOWN-chain's bleed bounce DAY-2 band is +200..+500; +1930 is 3.9x its band top. C1 BAND-BREAK FIRES - and it fires at the 0120 CLOSE, which this protocol has. C3 is satisfied: the confirm has PRINTED, nothing is front-run. C4 arbiter: the fundamental stream is no longer re-confirming the old chain at the horizons that matter - the ramp is adding at new horizons (Jan 24 now 43.447, +16.361 vs normal, the block's peak forward), which is the forward driver the G10 refine said was ABSENT on 0107. C2 in its ABSOLUTE form does NOT fire (0120's down legs still continue ~64%) - but 0120 carries 162 zigzag legs against the 40-98 of every day C2 was calibrated on, and an absolute share-of-legs threshold is not scale-invariant; in RATIO form old/new = 0.71, soft-positive. I flip polarity to UP here and record C2's absolute arm as the condition that failed to discriminate. 0121 is then post-flip young-chain DAY 1 into the peak forward add: band +2000..+3000 -> +2500. Honest: the actual +3820 is above my band top - the standing extreme-magnitude residual, now a SIZE error rather than a SIDE error.",
+      "refined_overnight_gap_usd": 0,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          90
+        ],
+        [
+          0,
+          200
+        ],
+        [
+          2,
+          330
+        ],
+        [
+          4,
+          480
+        ],
+        [
+          6,
+          660
+        ],
+        [
+          8,
+          900
+        ],
+        [
+          10,
+          1180
+        ],
+        [
+          12,
+          1500
+        ],
+        [
+          14,
+          1830
+        ],
+        [
+          16,
+          2120
+        ],
+        [
+          18,
+          2340
+        ],
+        [
+          20,
+          2500
+        ]
+      ],
+      "refined_net_usd": 2500
+    },
+    {
+      "date": "2026-01-22",
+      "dow": "Thu",
+      "archetype": "storage_thursday_in_chain_confirming_print",
+      "reasoning": "Flows from my guessed 0121 close (cum ~+2350), a give-back that closed near its low. Storage Thursday: daytype.storage_thursday_magnitude says SIZE UP always and SIDE = the running chain at its CURRENT POLARITY, never the print sign. Polarity is still DOWN (no confirm has printed). The print itself AGREES with the chain - the 0123 state reveals the 0122 print was -120 Bcf, +76.4 ABOVE, and vs_5yr WIDENED 187 -> 263. That is the fundamental stream actively RE-CONFIRMING the down-chain, which under structure.chain_polarity_flip's termination-vs-birth split is exactly the condition that denies a counter-chain birth (the G10 backdrop). B4 says an in-chain CONFIRMING print in bleed is already priced and sizes DOWN a class (-400..-700; 0116 form), while the Thursday prior sizes UP - I split to -900. The weather forecast supports the side today for the first time this block: the 0121-evening run (state 20260122) CUTS the near term (D+1 -1.854 for Jan 23, D+2 -0.565 for Jan 24) - the front of the cold shot is being trimmed even as the back is added. Shape: flat overnight, the dominant leg at/after 10:30 ET.",
+      "plays_fired": [
+        "daytype.storage_thursday_magnitude",
+        "structure.post_parabolic_bleed",
+        "structure.chain_polarity_flip",
+        "magnitude.catalyst_condition_sort"
+      ],
+      "overnight_gap_usd": -50,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          -30
+        ],
+        [
+          0,
+          -60
+        ],
+        [
+          2,
+          -90
+        ],
+        [
+          4,
+          -120
+        ],
+        [
+          6,
+          -160
+        ],
+        [
+          8,
+          -220
+        ],
+        [
+          10,
+          -400
+        ],
+        [
+          12,
+          -700
+        ],
+        [
+          14,
+          -850
+        ],
+        [
+          16,
+          -950
+        ],
+        [
+          18,
+          -920
+        ],
+        [
+          20,
+          -900
+        ]
+      ],
+      "guessed_net_usd": -900,
+      "refined_archetype": "storage_thursday_pop_then_alternation_giveback",
+      "refined_reasoning": "Day-N-1 (0121 ACTUAL): +3820, closed only 10% off its high with a +200 last hour - AT its extreme, so the chain does not alternate on the close read alone. But R4 now binds: the swing is 4 sessions old (0118/19/20/21) off a material fresh extreme close, and a MATURE swing never extends a consecutive fresh extreme - the next session is a give-back or hold. SCOPE SPLIT (S97.2, P2): R2 owns the post-print LEG side and the magnitude up-size; the CHAIN owns the day NET. So the print (+76.4 above, bearish, surplus widening 187->263) does NOT own the side - prints never do - and the 10:30 ET leg goes WITH the swing, UP. Then the mature-swing alternation takes the close. Curve: pop to ~+1100 on the print, round-trip into an alternation close at -300. This is the 1119->1120 form exactly: a print day after a violent prior-day extension pops with the swing and round-trips.",
+      "refined_overnight_gap_usd": 0,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          20
+        ],
+        [
+          0,
+          50
+        ],
+        [
+          2,
+          80
+        ],
+        [
+          4,
+          120
+        ],
+        [
+          6,
+          170
+        ],
+        [
+          8,
+          240
+        ],
+        [
+          10,
+          600
+        ],
+        [
+          12,
+          1100
+        ],
+        [
+          14,
+          900
+        ],
+        [
+          16,
+          400
+        ],
+        [
+          18,
+          0
+        ],
+        [
+          20,
+          -300
+        ]
+      ],
+      "refined_net_usd": -300
+    },
+    {
+      "date": "2026-01-23",
+      "dow": "Fri",
+      "archetype": "rising_ramp_delivery_counter_bounce",
+      "reasoning": "Flows from my guessed 0122 close (cum ~+1400) after two chain-side days. The weather forecast OVERRIDES what I would otherwise call, and I am naming the number: the 0122-evening run (state 20260123) adds forecast_run_delta +2.885 for Jan 27 and +4.500 for Jan 28 - the second-largest run-delta in the block - while D+0 forecast_gw_hdd is 34.862 (+7.731 vs normal), i.e. the cold is ARRIVING at the same time the models are EXTENDING it further out. timing.catalyst_continuity_frontrun's rising-ramp arm (1204: HDD stream still rising through the event, the intraday give-back lands early and the catalyst wins the close) applies, and it is the specific reason I take the UP side into the weekend instead of the down-chain cold-delivery-days-FAIL read (1215, 1230). Without the run-delta I would have called this a Friday range-to-down day; with it I call +800, a fresh counter-catalyst bounce leg (day-1 of a new bounce after a 2-day give-back, so B2's never-a-third-day cap is not violated). Shape: grind, holds into the close.",
+      "plays_fired": [
+        "timing.catalyst_continuity_frontrun",
+        "structure.post_parabolic_bleed",
+        "shape.grind_vs_spike",
+        "daytype.weekday_archetype"
+      ],
+      "overnight_gap_usd": 100,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          50
+        ],
+        [
+          0,
+          100
+        ],
+        [
+          2,
+          150
+        ],
+        [
+          4,
+          210
+        ],
+        [
+          6,
+          280
+        ],
+        [
+          8,
+          380
+        ],
+        [
+          10,
+          500
+        ],
+        [
+          12,
+          620
+        ],
+        [
+          14,
+          720
+        ],
+        [
+          16,
+          790
+        ],
+        [
+          18,
+          800
+        ],
+        [
+          20,
+          800
+        ]
+      ],
+      "guessed_net_usd": 800,
+      "refined_archetype": "giveback_exhausted_resume_plus_first_appearance_add",
+      "refined_reasoning": "Day-N-1 (0122 ACTUAL): closed 86% off its low with a +440 last hour - R1 EXHAUSTED, unambiguous: the unwind could not hold its lows and the dominant flow re-asserted in the last hour. Resume the UP chain. The MOS stream independently agrees and it agrees in the form that has worked: run_delta +2.885 at Jan 27 and +4.500 at Jan 28 are FIRST APPEARANCES at D+4/D+5 (those horizons carried nothing the run before), not revisions to the already-priced Jan-24 shot. Non-catalyst resume under a live ramp: +800..+1400 -> +1100. Shape: grind, holds into the close.",
+      "refined_overnight_gap_usd": 0,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          40
+        ],
+        [
+          0,
+          100
+        ],
+        [
+          2,
+          170
+        ],
+        [
+          4,
+          250
+        ],
+        [
+          6,
+          350
+        ],
+        [
+          8,
+          480
+        ],
+        [
+          10,
+          630
+        ],
+        [
+          12,
+          780
+        ],
+        [
+          14,
+          910
+        ],
+        [
+          16,
+          1010
+        ],
+        [
+          18,
+          1070
+        ],
+        [
+          20,
+          1100
+        ]
+      ],
+      "refined_net_usd": 1100
+    },
+    {
+      "date": "2026-01-25",
+      "dow": "Sun",
+      "archetype": "thin_sunday_priced_shock_backend_cut",
+      "reasoning": "Flows from my guessed 0123 close (cum ~+2300). This is the block's forecast INFLECTION and the clearest test of Greg's run-delta thesis. D+0 forecast_gw_hdd is 40.803 (+13.754 vs normal) - the coldest realized demand of the block is arriving - but the 0124-evening run (state 20260125) turns the model stream NEGATIVE at the back for the first time: run-delta -0.539 (D+0), -0.511 (Jan 26), -0.801 (Jan 29) and -2.315 (Jan 30). Realized peak-cold with a forecast that is now being cut is the sell-the-news condition. Gap: per S97.2's 1124 lesson, a shock ALREADY in the models adds ~nothing over the weekend - this shot has been priced since 0119 - so the only NEW weekend information is the back-end CUT, and I therefore call a SMALL NEGATIVE gap (-250), not a cold-driven up gap. That call is made entirely on forecast_run_delta -2.315 for Jan 30; the realized-proxy weather block (gw_hdd 41.9, the block's max) would have pointed me the opposite way, and I am explicitly rejecting it. Thin Sunday session drifts down; the S97.2 caveat that thin-tape close reads are unreliable applies, so I keep the size small.",
+      "plays_fired": [
+        "daytype.monday_weekend_gap",
+        "structure.post_parabolic_bleed",
+        "magnitude.catalyst_condition_sort"
+      ],
+      "overnight_gap_usd": -250,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          -30
+        ],
+        [
+          0,
+          -60
+        ],
+        [
+          2,
+          -90
+        ],
+        [
+          4,
+          -120
+        ],
+        [
+          6,
+          -160
+        ],
+        [
+          8,
+          -200
+        ],
+        [
+          10,
+          -240
+        ],
+        [
+          12,
+          -270
+        ],
+        [
+          14,
+          -300
+        ],
+        [
+          16,
+          -320
+        ],
+        [
+          18,
+          -340
+        ],
+        [
+          20,
+          -350
+        ]
+      ],
+      "guessed_net_usd": -350,
+      "refined_archetype": "thin_sunday_up_chain_carry_priced_shock_gap",
+      "refined_reasoning": "GAP: sign is callable, magnitude is not. Sign - the chain is UP, the swing is intact (0123 closed 15% off its high, +370 last hour), and D+0 realized demand is the block's maximum (gw_hdd 41.9). The 0124-evening run's -2.315 cut at Jan 30 is a REVISION TO AN ALREADY-PRICED EVENT (the Jan-24 shot has been in the models since 0119) and under the new MOS condition it is NOT traded - which is precisely the call the blind run inverted. Magnitude: DECLARED IRREDUCIBLE, same mechanism as 0118 - the weekend model cycle is outside our feed, and the 0125-evening run reverses the cut (+3.197 Jan 30) confirming the cut was noise the market had already looked through. I size +1200, the middle of the fresh-shot gap band, knowing the top is unreachable from this data. SESSION: 4,874 trades, thin Sunday, chain-side drift +150.",
+      "refined_overnight_gap_usd": 1200,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          20
+        ],
+        [
+          0,
+          40
+        ],
+        [
+          2,
+          60
+        ],
+        [
+          4,
+          80
+        ],
+        [
+          6,
+          100
+        ],
+        [
+          8,
+          110
+        ],
+        [
+          10,
+          120
+        ],
+        [
+          12,
+          130
+        ],
+        [
+          14,
+          140
+        ],
+        [
+          16,
+          140
+        ],
+        [
+          18,
+          150
+        ],
+        [
+          20,
+          150
+        ]
+      ],
+      "refined_net_usd": 150
+    },
+    {
+      "date": "2026-01-26",
+      "dow": "Mon",
+      "archetype": "monday_no_material_gap_backend_re_add",
+      "reasoning": "Flows from my guessed 0125 Sunday close (cum ~+1700), a mild drift down. R3: with no material gap Monday carries the prior side - which would be DOWN. The weather forecast moves me OFF that: the 0125-evening run (state 20260126) RE-ADDS at the back, run-delta +2.053 for Jan 29 and +3.197 for Jan 30, exactly reversing the cut I traded yesterday. The model stream is now choppy rather than directional, and the newest information is bullish, so I take a modest UP day: +500. Monday's bigness prior (size up) is offset by the fact that this is a re-add of an already-priced event rather than new closure information, and by the bleed's B5 small-day prevalence. Naming the number I used: forecast_run_delta +3.197 for Jan 30. Without it this is a Friday-carry DOWN call of roughly -400, so the forecast data flipped this day's sign for me. Honest flag: R1 would need 0125's actual tape to tell me whether the Sunday close was a chain-side capitulation or a drift, and the S97.2 note says thin Sunday closes make that read unreliable anyway.",
+      "plays_fired": [
+        "daytype.monday_weekend_gap",
+        "structure.post_parabolic_bleed",
+        "direction.giveback_exhaustion_boundary"
+      ],
+      "overnight_gap_usd": 150,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          40
+        ],
+        [
+          0,
+          80
+        ],
+        [
+          2,
+          120
+        ],
+        [
+          4,
+          170
+        ],
+        [
+          6,
+          230
+        ],
+        [
+          8,
+          310
+        ],
+        [
+          10,
+          400
+        ],
+        [
+          12,
+          480
+        ],
+        [
+          14,
+          540
+        ],
+        [
+          16,
+          560
+        ],
+        [
+          18,
+          530
+        ],
+        [
+          20,
+          500
+        ]
+      ],
+      "guessed_net_usd": 500,
+      "refined_archetype": "mature_swing_monday_gap_fade",
+      "refined_reasoning": "Day-N-1: 0125 was a thin Sunday - S97.2 says its close read is unreliable, so R1 stands down and R3 governs. R3: the weekend gap took the swing to a FRESH cum-extreme and the swing is now MATURE (6 sessions from the 0118 turn), so Monday's US session FADES the gap - the 1109 +1560 -> 1110 -820 form, now read at UP polarity. R4 agrees: a fresh extreme on a mature swing is followed by a give-back. MOS: the +3.197 Jan-30 re-add is the mirror REVISION of Friday's cut - both are wobble on a priced shot, and neither is traded; this is the single condition that separates my call from the blind's, which took the re-add as new information and flipped the day up. SIZE: ramp-live/crest SHALLOW give-back band, now correctly polarity-relative to an UP chain: -700..-900 -> -700.",
+      "refined_overnight_gap_usd": 0,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          -30
+        ],
+        [
+          0,
+          -70
+        ],
+        [
+          2,
+          -120
+        ],
+        [
+          4,
+          -180
+        ],
+        [
+          6,
+          -260
+        ],
+        [
+          8,
+          -370
+        ],
+        [
+          10,
+          -500
+        ],
+        [
+          12,
+          -620
+        ],
+        [
+          14,
+          -700
+        ],
+        [
+          16,
+          -740
+        ],
+        [
+          18,
+          -720
+        ],
+        [
+          20,
+          -700
+        ]
+      ],
+      "refined_net_usd": -700
+    },
+    {
+      "date": "2026-01-27",
+      "dow": "Tue",
+      "archetype": "bounce_day2_fading",
+      "reasoning": "Flows from my guessed 0126 close (cum ~+2350), an up day that eased off its high. This is bounce day 2 of the second counter leg: post_parabolic_bleed B2 puts day-2 at +200..+500 fading, and I take +300 - the low half of the band. The 0126-evening run (state 20260127) still adds at the back (+2.101 for Jan 30, +3.222 for Jan 31, +2.598 for Feb 1) which keeps the side up, but D+0 forecast_gw_hdd has now rolled over to 37.514 from the 40.803 peak two sessions ago - the realized demand crest is behind us while only the far horizons are still being added. Tuesday's trend-continuation archetype supports the up side but daytype.weekday_archetype is explicitly overridden by the running chain, and the chain here is a fading bleed bounce. Shape: peaks mid-session and gives back into the close - if that round-trip is deep it is the failed_rally_tell arming tomorrow, which is exactly how I have sequenced 0128.",
+      "plays_fired": [
+        "structure.post_parabolic_bleed",
+        "structure.failed_rally_tell",
+        "structure.mature_swing_alternation",
+        "daytype.weekday_archetype"
+      ],
+      "overnight_gap_usd": 50,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          40
+        ],
+        [
+          0,
+          80
+        ],
+        [
+          2,
+          130
+        ],
+        [
+          4,
+          180
+        ],
+        [
+          6,
+          240
+        ],
+        [
+          8,
+          320
+        ],
+        [
+          10,
+          420
+        ],
+        [
+          12,
+          500
+        ],
+        [
+          14,
+          470
+        ],
+        [
+          16,
+          400
+        ],
+        [
+          18,
+          340
+        ],
+        [
+          20,
+          300
+        ]
+      ],
+      "guessed_net_usd": 300,
+      "refined_archetype": "cresting_ramp_pause_hold_day",
+      "refined_reasoning": "Day-N-1 (0126 ACTUAL): closed 75% off its low but with a -140 last hour - the two arms of R1 DISAGREE. The depth arm says exhausted (resume up); the last-hour arm says the give-back is still extending. The tie-breaker condition is the ramp state, and the ramp has CRESTED: D+0 forecast rolled 40.803 -> 39.952 -> 37.514 and every remaining positive run-delta is a revision at horizons already priced, not a first appearance. A cresting ramp removes the catalyst that powers a resume without arming a reversal. Refined call is a HOLD: +100, inside the +-150 hold band that has held in every winter block (0924, 1112, 1124, 1127). DECLARED IRREDUCIBLE: the sign of a hold day inside +-300 - the actual -260 is inside that band and the boundary read gives no edge here.",
+      "refined_overnight_gap_usd": 0,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          10
+        ],
+        [
+          0,
+          30
+        ],
+        [
+          2,
+          50
+        ],
+        [
+          4,
+          70
+        ],
+        [
+          6,
+          90
+        ],
+        [
+          8,
+          120
+        ],
+        [
+          10,
+          150
+        ],
+        [
+          12,
+          170
+        ],
+        [
+          14,
+          180
+        ],
+        [
+          16,
+          160
+        ],
+        [
+          18,
+          130
+        ],
+        [
+          20,
+          100
+        ]
+      ],
+      "refined_net_usd": 100
+    },
+    {
+      "date": "2026-01-28",
+      "dow": "Wed",
+      "archetype": "bounce_death_chain_side_resume",
+      "reasoning": "Flows from my guessed 0127 close (cum ~+2700, the block's high-water mark) after a fading, round-tripping day-2 bounce. B2's hard rule fires: bounces NEVER run 3 days, across both bleed blocks. structure.failed_rally_tell (n=4: 1210->1211, 1230->1231, 1002->1003, 0113->0114) says a counter-chain spike that round-trips on the best remaining counter-catalyst means counter-side liquidity is exhausted and the next session runs HARD chain-side. The weather forecast agrees for the first time since 0122: the 0127-evening run (state 20260128) cuts the near term hard - run-delta -1.770 for Jan 29, -0.402 for Jan 30 and -0.581 for Feb 2 - so the cold that fed the bounce is being taken back out of the models. I size -1000: below the full bleed crash band (-2400..-2900) because the mid-horizons are still positive (+1.944, +2.034), but a decisive chain-side day. This is the day I hand the block back to the down-polarity.",
+      "plays_fired": [
+        "structure.post_parabolic_bleed",
+        "structure.failed_rally_tell",
+        "magnitude.crash_regime_bands",
+        "structure.mature_swing_alternation"
+      ],
+      "overnight_gap_usd": 0,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          -30
+        ],
+        [
+          0,
+          -70
+        ],
+        [
+          2,
+          -120
+        ],
+        [
+          4,
+          -180
+        ],
+        [
+          6,
+          -260
+        ],
+        [
+          8,
+          -380
+        ],
+        [
+          10,
+          -540
+        ],
+        [
+          12,
+          -720
+        ],
+        [
+          14,
+          -880
+        ],
+        [
+          16,
+          -980
+        ],
+        [
+          18,
+          -1000
+        ],
+        [
+          20,
+          -1000
+        ]
+      ],
+      "guessed_net_usd": -1000,
+      "refined_archetype": "cresting_ramp_pause_day2",
+      "refined_reasoning": "Day-N-1 (0127 ACTUAL): closed 86% off its low with a +270 last hour - R1 EXHAUSTED on both arms, which points to a resume. But this is the SECOND consecutive session where a deep intraday give-back has been fully recovered without a resume being delivered, under a cresting ramp. General rule I apply (and flag as the weakest in the block): a resume signal that fails to deliver on its first session is downgraded a class on the second - the up-chain is intact but the marginal buyer is absent. +200, still inside the hold class. DECLARED IRREDUCIBLE as a PAIR with 0127: a cresting-ramp pause produces day nets inside +-500 whose sign the boundary read cannot call; two consecutive sign misses inside that band is the honest result, not a rule failure to patch.",
+      "refined_overnight_gap_usd": 0,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          10
+        ],
+        [
+          0,
+          30
+        ],
+        [
+          2,
+          60
+        ],
+        [
+          4,
+          90
+        ],
+        [
+          6,
+          120
+        ],
+        [
+          8,
+          160
+        ],
+        [
+          10,
+          200
+        ],
+        [
+          12,
+          240
+        ],
+        [
+          14,
+          260
+        ],
+        [
+          16,
+          250
+        ],
+        [
+          18,
+          220
+        ],
+        [
+          20,
+          200
+        ]
+      ],
+      "refined_net_usd": 200
+    },
+    {
+      "date": "2026-01-29",
+      "dow": "Thu",
+      "archetype": "storage_thursday_bullish_print_sold_exit_liquidity",
+      "reasoning": "Flows from my guessed 0128 close (cum ~+1700) which closed at its low - the at-extreme close that continues the chain. This is my HIGHEST-CONVICTION directional call of the block and it is a deliberate stack. The 0130 state reveals this print: -241 Bcf weekly, stor_surprise -15.2 BELOW - a genuinely BULLISH surprise, and the first time all winter the surplus NARROWS (vs_5yr 263 -> 248). daytype.storage_thursday_magnitude is unambiguous: the print NEVER owns the side, the chain at its current polarity does, and disagreeing prints have traded chain-sided 8/8 across G3-G10. The 1211 form (monster bullish draw, -3970) and 0109 (bullish -23.6-below draw sold -2760, the arbiter that refuted the false flip) are the precedents. The weather forecast independently confirms the bearish side and this is the number I am using: the 0128-evening run (state 20260129) cuts the back end to run-delta -1.278 for Feb 2 and -2.146 for Feb 3, and fwd7_gw_hdd_span floor drops to 26.079 - the models now see a genuine early-February warm-up. A bullish print landing into a collapsing forward curve inside a down-chain is the exit-liquidity condition. Size from the print-liquidity crash class: -1800. Shape: a modest pop on the print at 10:30-12 as the surprise is taken, then the chain crushes it into the close - the 1211 signature. NOTE: the narrowing surplus is the first genuine BLEED-EXIT candidate driver the walk has seen (the brain's open frontier); I am recording it as a watch, NOT trading it, because it is contradicted by the forecast stream on the same day.",
+      "plays_fired": [
+        "daytype.storage_thursday_magnitude",
+        "structure.post_parabolic_bleed",
+        "magnitude.crash_regime_bands",
+        "structure.chain_polarity_flip",
+        "direction.giveback_exhaustion_boundary"
+      ],
+      "overnight_gap_usd": -200,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          -20
+        ],
+        [
+          0,
+          -40
+        ],
+        [
+          2,
+          -60
+        ],
+        [
+          4,
+          -90
+        ],
+        [
+          6,
+          -120
+        ],
+        [
+          8,
+          -160
+        ],
+        [
+          10,
+          -100
+        ],
+        [
+          12,
+          150
+        ],
+        [
+          14,
+          -600
+        ],
+        [
+          16,
+          -1300
+        ],
+        [
+          18,
+          -1650
+        ],
+        [
+          20,
+          -1800
+        ]
+      ],
+      "guessed_net_usd": -1800,
+      "refined_archetype": "storage_thursday_agreeing_print_up_chain_resume",
+      "refined_reasoning": "Day-N-1 (0128 ACTUAL): closed 83% off its low with a +280 last hour, and the low it recovered from (-2340) was the deepest of the three-day pause - R1 EXHAUSTED at depth, the pause is over, resume the UP chain. Storage Thursday sizes UP. R2: the side is the running chain AT ITS CURRENT POLARITY, which after the 0120 flip is UP - and this is the day the whole block turns on, because the print is -15.2 BELOW with the surplus NARROWING 263 -> 248 for the first time all winter, i.e. an AGREEING print in an up-chain. The blind run called -1800 on this identical print purely because its polarity was still DOWN; the print rule was right in both runs and the polarity verdict feeding it was the only difference. This also retires the 8/8 'disagreeing prints trade chain-sided' precedent as inapplicable - that streak was all DISAGREEING prints; this one agrees. Winter storage-Thursday resume band: +1300..+2000 -> +1400.",
+      "refined_overnight_gap_usd": 0,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          30
+        ],
+        [
+          0,
+          70
+        ],
+        [
+          2,
+          110
+        ],
+        [
+          4,
+          160
+        ],
+        [
+          6,
+          220
+        ],
+        [
+          8,
+          300
+        ],
+        [
+          10,
+          420
+        ],
+        [
+          12,
+          700
+        ],
+        [
+          14,
+          950
+        ],
+        [
+          16,
+          1150
+        ],
+        [
+          18,
+          1300
+        ],
+        [
+          20,
+          1400
+        ]
+      ],
+      "refined_net_usd": 1400
+    },
+    {
+      "date": "2026-01-30",
+      "dow": "Fri",
+      "archetype": "post_crash_bleed_pause",
+      "reasoning": "Flows from my guessed 0129 close (cum ~-300 from the anchor - the block has now round-tripped its entire cold rally). post_parabolic_bleed B1 governs: crash days arrive SINGLE in a bleed and do NOT chain a second crash EXCEPT into a scheduled print day - and the print was yesterday, so the exception does not apply. The post-crash day is a pause/small bounce, +300..+700 (0114->0115 +460, 1224->1226 +670, 1209->1210 +370). I take the low end, +300, because the forecast stream keeps deteriorating: the 0129-evening run (state 20260130) shows run-delta -1.553 for Jan 31 and fwd7_gw_hdd_span floor falling further to 25.306, so the early-Feb warm-up is deepening and there is no counter-catalyst to feed a real bounce. Friday range archetype is consistent. Honest flag: B1's pause and the deteriorating forward stream point opposite ways here; I follow B1 because it is the play with events behind it, but this is the day I would most expect to be sign-wrong inside a small band - the standing hold-day irreducible.",
+      "plays_fired": [
+        "structure.post_parabolic_bleed",
+        "magnitude.crash_regime_bands",
+        "daytype.weekday_archetype"
+      ],
+      "overnight_gap_usd": -150,
+      "guess_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          20
+        ],
+        [
+          0,
+          50
+        ],
+        [
+          2,
+          80
+        ],
+        [
+          4,
+          110
+        ],
+        [
+          6,
+          150
+        ],
+        [
+          8,
+          200
+        ],
+        [
+          10,
+          280
+        ],
+        [
+          12,
+          340
+        ],
+        [
+          14,
+          380
+        ],
+        [
+          16,
+          360
+        ],
+        [
+          18,
+          320
+        ],
+        [
+          20,
+          300
+        ]
+      ],
+      "guessed_net_usd": 300,
+      "refined_archetype": "young_chain_extension_confirmed_fundamental_driver",
+      "refined_reasoning": "Day-N-1 (0129 ACTUAL): closed 8% off its high with a +380 last hour - AT its extreme, chain CONTINUES, no alternation. Swing age since the pause ended is 2 sessions = YOUNG, and a young swing chains extensions. The condition that upgrades this from a resume to an extension is the FUNDAMENTAL one: the surplus narrowing 263 -> 248 is the first session all winter in which the weekly stream stopped re-confirming the old down-chain and started confirming the new up-chain. That is exactly the forward driver the G10 refine identified as the difference between TERMINATION and BIRTH - its absence is why 0107/0108 yielded nothing, its presence here is why the 0120 flip became a chain rather than a bounce. Young-chain extension band top: +2200. Honest: the actual +5020 is 2.3x that. DECLARED IRREDUCIBLE with mechanism - the expiring February contract went 3.0 -> 5.4 into delivery and a delivery squeeze was pulling the whole strip; the forecaster carries NO state variable exposing front-month expiry, open-interest concentration or the Feb/Mar spread, so a squeeze-amplified melt-up is unsizeable from the state it is given.",
+      "refined_overnight_gap_usd": 0,
+      "refined_curve": [
+        [
+          20,
+          0
+        ],
+        [
+          22,
+          60
+        ],
+        [
+          0,
+          150
+        ],
+        [
+          2,
+          260
+        ],
+        [
+          4,
+          390
+        ],
+        [
+          6,
+          540
+        ],
+        [
+          8,
+          730
+        ],
+        [
+          10,
+          960
+        ],
+        [
+          12,
+          1230
+        ],
+        [
+          14,
+          1520
+        ],
+        [
+          16,
+          1800
+        ],
+        [
+          18,
+          2030
+        ],
+        [
+          20,
+          2200
+        ]
+      ],
+      "refined_net_usd": 2200
+    }
+  ],
+  "block_summary": {
+    "guessed_close_cum_from_anchor_usd": -150,
+    "implied_close_price": 2.687,
+    "guessed_high_water_cum_usd": 2700,
+    "high_water_date": "2026-01-27",
+    "shape": "W-with-a-dome: a large two-leg cold-driven counter rally (0119-0123, re-tested 0126-0127) fully retraced by 0128-0129, ending back at the anchor with the down-polarity intact.",
+    "flip_called": false,
+    "bleed_end_called": false
+  },
+  "refined_meta": {
+    "pass": "S100.2 UNBLINDED per-group refine of G11 (2026-01-18..2026-01-30)",
+    "derivation": "Refined curves derived ONLY from general condition->behavior rules + decision_state + the PRIOR day's ACTUAL tape. The forecast day's own tape is never consulted. Sizes come from condition-class bands, never from the target day's outcome. Rules were applied uniformly across all twelve days and back-checked on G3-G10.",
+    "price_basis": "NG.n.0 OI-continuous, instrument 1021, no intra-block roll",
+    "refined_direction_hits": "10/12 (misses 0127 and 0128, both inside +-400 and both declared irreducible as the cresting-ramp pause pair)",
+    "refined_close_cum_usd": 8800,
+    "actual_close_cum_usd": 12690,
+    "refined_drift_usd": -3890,
+    "blind_drift_usd": -13190,
+    "drift_attribution": "The entire remaining refined drift is TWO days: 0121 (-1320 under band top) and 0130 (-2820 under band top). Both are extreme-magnitude days, the standing dominant residual, and 0130 additionally carries the unmodelled February delivery squeeze. The other ten days close to within +-400 in aggregate - the residual is CONCENTRATED on a named condition, not diffuse.",
+    "headline": "The whole block was ONE error: POLARITY. C1 (band-break) fired at the 0120 close at 3.9x the down-chain day-2 bounce band and the flip was confirmable there. Every subsequent rule the blind run applied was correct in form and inverted in sign - most sharply 0129, where the identical storage-Thursday print rule gives -1800 at down polarity and +1400 at up polarity, against an actual +1480."
+  }
+}

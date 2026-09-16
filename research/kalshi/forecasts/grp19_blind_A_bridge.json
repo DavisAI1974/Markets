@@ -1,0 +1,123 @@
+{
+ "specialist": "A",
+ "group": "g19",
+ "brain_version": "s102.9",
+ "role": "weekend_seam_bridge",
+ "note": "A informs, B decides and owns the Monday number. Blind: scenarios+probabilities from chain polarity/age + Friday close + COT + non-price tape/L1; NO realized reopen print. covering_absorption_directional_tell weighed per seam. MULT $10,000/1.000. Basis June/NGM26 both Mondays (pre-seam).",
+ "bridges": [
+  {
+   "seam": "0508->0511",
+   "monday": "20260511",
+   "monday_dow": "Mon",
+   "anchor_session": "20260508",
+   "friday_exit_consumed": {
+    "exit_type": "delivered_sell_down",
+    "exit_type_source": "0508 is the block ANCHOR (not an E-owned Friday); exit read reconstructed from the never-masked 0508 tape",
+    "monday_bias_inherited": "down (delivered)",
+    "sanity_check_vs_chain_state": "CONFIRMED delivered sell: session_signed_flow -3214, phase_signed_flow [-27,-495,-2692] = selling ACCELERATING into the close (last phase -2692, phase_b_share 0.437), session_b_share 0.451, big_print_b_share 0.458 (big prints SOLD too - NO buy absorption), l1 quote_bid_share 0.509. This is a fresh aligned delivered down-leg (age 1), NOT a covering-absorbed close.",
+    "covering_absorption_tell_fires": false,
+    "covering_absorption_tell_note": "the NEW tell requires SELL absorbed under a RISING price at the Friday close; here big prints were sell-tilted 0.458 and price fell -> tell does NOT fire off the 0508 close itself. No structural covering-up licensed from the close alone."
+   },
+   "reopen_scenarios": [
+    {
+     "name": "covering_catch_up_turn_up",
+     "probability": 0.40,
+     "gap_behavior": "gap_rejection_of_the_delivered_down",
+     "direction": "up",
+     "driver": "MM net crowded short at 2.83 1y-pctile AND worsening (-10,244 wow) = a stretched short pressing into a delivered low; the Monday catch-up is where the short-covering reversal begins to load (a based-low turn). No fresh bearish weekend catalyst; days_to_next_eia 3 (0514) so the print is not a weekend event.",
+     "invalidation": ["fresh bearish weekend weather/storage shock", "reopen prints net-sell with big-print sell continuing"]
+    },
+    {
+     "name": "gap_persistence_delivered_down",
+     "probability": 0.37,
+     "gap_behavior": "gap_persistence",
+     "direction": "down",
+     "driver": "the 0508 last-hour -2692 accelerating sell is FRESH and aligned; overnight/reopen carries the delivered momentum before the covering bid appears. Near-term (overnight/US-open) this is the higher-odds early lean.",
+     "invalidation": ["reopen bases immediately / bid absorbs the open sell", "crowded-short covering fires early"]
+    },
+    {
+     "name": "flat_two_sided_chop",
+     "probability": 0.23,
+     "gap_behavior": "mixed",
+     "direction": "flat",
+     "driver": "low-vol S3 shoulder, mid-band digestion of the delivered move, pre-EIA (0514) positioning two-sided.",
+     "invalidation": ["a directional catalyst appears"]
+    }
+   ],
+   "gap_ownership": {
+    "owner": "chain_drift",
+    "spent_vs_unrealized_ahead": "SPENT (delivered)",
+    "note": "the 0508 down is a climactic last-hour print (-2692 = a large fraction realized Friday), not an unrealized-ahead move. A spent delivered down-climax INTO a 2.83-pctile crowded short is the classic covering-reversal setup - i.e. the downside fuel is largely used, the up-reversal fuel is loading. Gap-persistence-down is therefore a SHALLOW-follow-through continuation, not a fresh chain birth."
+   },
+   "driver_realization_check": {
+    "driver": "crowded_short_covering_rally",
+    "peak_landed_over_weekend": false,
+    "sell_the_news_risk": "none",
+    "note": "the covering-rally driver had NOT begun at the 0508 close (shorts were still pressing down, MM net worsening). It realizes DURING 0511-0515 (peak 0515). So NOTHING to sell-the-news over this weekend; the driver is AHEAD (covering fuel unrealized) -> the multi-day tilt is UP building off the Monday."
+   },
+   "monday_bias_confirmed_or_adjusted": {
+    "bias_to_B": "turn / up-small, LOW-CONVICTION",
+    "confirmed_or_adjusted": "ADJUSTED from the inherited 'down (delivered)'",
+    "size_guidance": "SMALL, two-sided",
+    "why": "Structure hands two opposing forces: (1) a fresh delivered 0508 down-close (early reopen gap-persistence-DOWN risk), vs (2) a 2.83-pctile crowded-short extreme into a spent down-climax (the covering reversal the multi-day regime realizes by 0515). Net: 0511 is a TURN/BASE day - B should NOT extend the 0508 down as a strong lean. Expect early gap-persistence-down risk in the overnight/US-open, then the crowded-short covering to base and lift; net-close tilt slightly UP but near coin-flip. Size small, carry an explicit both-sided read; the covering-catch-up up-scenario is the one that grows through 0511-0514."
+   }
+  },
+  {
+   "seam": "0515->0518",
+   "monday": "20260518",
+   "monday_dow": "Mon",
+   "anchor_session": "20260515",
+   "friday_exit_consumed": {
+    "exit_type": "momentum_carry",
+    "exit_type_source": "E's grp19_blind_E 0515 handoff_out",
+    "monday_bias_inherited": "up lean, small (covering continues into 0518; leg maturing; June-roll/opex week ahead; mid-week bearish-EIA 0521 counter-risk; do NOT extend UP past a fresh give-back)",
+    "sanity_check_vs_chain_state": "CONFIRMED. 0515 tape: session_signed_flow +486, phase_signed_flow [+445,-662,+703] = last phase net BUY (+703, phase_b_share 0.474); session_b_share 0.464 (sell aggressor majority) yet net +486 with big_print_b_share 0.506 (buy-tilted) and l1 quote_bid_share 0.526 (resting liquidity bid-leaning) = sells ABSORBED under a lift -> covering-absorption directional tell FIRES on the 0515 close. Chain polarity up, age 5 (maturing, mild flag), exhaustion_flag false, close_off_extreme_frac 0.25. Modest magnitude (+486 session) and a mid-phase sell (-662) confirm 'maturing but not spent'.",
+    "covering_absorption_tell_fires": true,
+    "covering_absorption_tell_note": "SELL aggressor majority (b_share 0.464) absorbed under a net-buy lift with buy-tilted big prints (0.506) and resting bid (0.526) = a crowded-short covering-absorbed close -> reprices UP into Monday. Directional tell, not exhaustion."
+   },
+   "reopen_scenarios": [
+    {
+     "name": "covering_catch_up_gap_persistence_up",
+     "probability": 0.48,
+     "gap_behavior": "gap_persistence",
+     "direction": "up",
+     "driver": "the 0515 covering-absorbed close + COT MM net at 0.94 1y-pctile (even MORE extreme than 0508's 2.83, still worsening -12,576 wow) = large unrealized covering fuel repricing up into the Monday reopen. Driver peak NOT yet realized (E: realizes_before_monday=false).",
+     "invalidation": ["reopen prints net-sell / big-print sell", "bearish weekend catalyst", "opex/expiry de-risk sells the front early"]
+    },
+    {
+     "name": "maturing_leg_giveback",
+     "probability": 0.30,
+     "gap_behavior": "gap_rejection",
+     "direction": "down",
+     "driver": "chain age 5 (maturing), the 0515 mid-phase sell (-662), and a Friday-into-weekend pop giving back; opex(0526)/expiry(0527)/June-roll week de-risk trims the maturing up-leg. This is the leg E flags as maturing and the one that rolls over on the 0521 EIA (E's own 0522 give-back).",
+     "invalidation": ["last-hour reopen flow stays net-buy", "fresh covering surge / short capitulation"]
+    },
+    {
+     "name": "flat_chop_pre_opex",
+     "probability": 0.22,
+     "gap_behavior": "mixed",
+     "direction": "flat",
+     "driver": "low-vol S3 shoulder; positioning coil into opex(0526)/expiry(0527)/June-roll and the 0521 EIA; two-sided pre-event chop.",
+     "invalidation": ["a directional catalyst appears"]
+    }
+   ],
+   "gap_ownership": {
+    "owner": "chain_drift",
+    "spent_vs_unrealized_ahead": "UNREALIZED-AHEAD",
+    "note": "the 0515 up is a momentum_carry with the covering peak NOT realized before Monday (E: realizes_before_monday=false). COT at 0.94 pctile = the ammunition for continued covering is still on the book. Gap owned by chain_drift, unrealized-ahead -> up-persistence favored at the reopen. Caveat: the leg is maturing (age 5->6) so the unrealized fuel is DIMINISHING, not fresh."
+   },
+   "driver_realization_check": {
+    "driver": "crowded_short_covering_rally",
+    "peak_landed_over_weekend": false,
+    "sell_the_news_risk": "low_at_reopen_rising_mid_week",
+    "note": "covering peak did NOT land over the weekend -> NO sell-the-news at the 0518 reopen; up bias holds into Monday. BUT the exhaustion catalysts are AHEAD and mid-week: opex 0526 / expiry 0527 / June-roll + the 0521 EIA. E's own 0522 read is the rally rolling over post-EIA. So the up is SMALL and time-boxed - it should not be extended past a fresh give-back."
+   },
+   "monday_bias_confirmed_or_adjusted": {
+    "bias_to_B": "up-small",
+    "confirmed_or_adjusted": "CONFIRMED (E's up-small lean stands)",
+    "size_guidance": "SMALL",
+    "why": "The covering-absorption tell fires on the 0515 close, COT is even more extreme than the prior week (0.94 pctile, worsening) supporting continued covering, and the driver is unrealized-ahead -> Monday 0518 leans UP, gap-persistence of the covering carry. B confirms up-small. Size SMALL: chain age 5->6 (maturing), a 0515 mid-phase sell, and opex/expiry/June-roll + the 0521 EIA are the exhaustion catalysts ahead. Do NOT extend the up past a give-back; carry the maturing-leg give-back (0.30) as the live counter."
+   }
+  }
+ ]
+}

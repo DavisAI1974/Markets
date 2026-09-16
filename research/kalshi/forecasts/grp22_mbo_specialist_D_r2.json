@@ -1,0 +1,235 @@
+{
+ "specialist": "D",
+ "lens": "EIA storage Thursday (mbo_specialist_D.md)",
+ "group": "g22",
+ "brain_version": "s103.7",
+ "round": 2,
+ "days_owned": ["20260625", "20260702"],
+ "doctrine_note": "Round 2 = the HE24->HE1 boundary pass, per mbo_refine_shared.md. Started FROM the round-1 posterior (forecasts/grp22_mbo_specialist_D.json), not from scratch. The old blind stays the CORE predictor; MBO remains a posterior update. Handoff channel: renders/ng_refine_s95/g22_exit_states.json (precomputed from the ACTUAL tape, refine-only). The prior owner of both incoming days (0624, 0701) emitted NO handoff_out in round 1 (checked handoff fields only, per protocol - no other specialist content read), so the incoming read is the tape-derived exit STATE alone; that chain gap is itself the condition the coordinator's Friday sign-off rule now enforces. The handoff carries STATE, never the day-net: the -500/+790 prior day-moves were interpreted, not inherited as numbers. DIRECTION CHANGES: none made on either day - the r2 rule requires NEW causal evidence and both handoffs CORROBORATE the r1 signs. MBO BOOK layer: g22_mbo_evidence.json serves no book_trustworthy / execution_authority / conviction-floor fields (reconfirmed in the raw slices) - book read STANDS DOWN, trade-flow only.",
+ "cross_cutting_mbo_finding": "THE INCOMING EXIT'S LAST-HOUR (dir, signed_flow) PAIR SORTED BOTH SEAMS, AND BOTH PRINTS RESOLVED AT THE CATALYST WHAT THE SEAM INHERITED. 0624 exited dir +1 on signed_flow -1 (CROSSED pair: the +790 break's final hour was already rising-on-net-sell = pre-absorbed, closing 0.97 off-low with the high 19:17 INTO the boundary) -> 0625's seam carried the break just ~2 hours (+190 by 22:00), stalled, and the morning extension proved a CEILING (spike top +850-vs-open at 09:01:38, turn_down mag 890, faded pre-print); the day round-tripped to a -60 close. 0701 exited dir -1 on signed_flow -1 (ALIGNED pair: give-back close AT the lows, 0.12 off-low, sellers still delivering at the bell = NOT exhausted) -> 0702's seam carried residual delivery, but on the CATALYST clock, not front-run: flat until the 03:03 onset, then -490 by 08:59, and the turn WAITED for the print (10:30:08 stop-run to a marginal new low -530, ~$40-50 under the overnight low, absorbed in seconds). Sorter, offered as the r2 addendum to my r1 proposal P1 (reopen->10:30 window doctrine): CROSSED exit pair = fade the seam extension (it is a ceiling/floor, sized by the prior day's absorption); ALIGNED exit pair = expect residual delivery in the overnight/early-morning window and DO NOT front-run the turn - on EIA Thursdays it arrives at the print, where the inherited imbalance exhausts. Corollary both days demonstrate: the post-print reclaim targets the BOUNDARY (prior close / channel), which is why both day-nets were tiny (-60, 0) under $1,280/$1,380 of travel. n=2 in-group (plus the 0416/0430 g17 gate pair rhyming on the aligned side) - offered for spanning-group validation, NOT a brain edit.",
+ "days": [
+  {
+   "specialist": "D",
+   "group": "g22",
+   "date": "20260625",
+   "dow": "Thu",
+   "round": 2,
+   "mode": "refine_r2",
+   "brain_version": "s103.7",
+   "day_class": "EIA storage print day (10:30 ET, report week 06-19) + NG options expiry (days_to_opex 0) + D-1 to NGN26 futures LTD 06-26; scored leg NGQ26",
+   "blind_direction": "down",
+   "blind_net_usd": -110,
+   "blind_err_usd": -50,
+   "blind_dir_hit": true,
+   "actual_day_move_usd": -60,
+   "r1_posterior": {"expected_magnitude_usd": -70, "band": [-250, 150], "turn_time_et": "09:01", "file": "forecasts/grp22_mbo_specialist_D.json"},
+   "handoff_in_used": {
+    "source": "g22_exit_states.json 20260624 (tape-derived; prior owner emitted no r1 handoff_out - state-only inheritance, declared)",
+    "state_taken": {
+     "close_px": 3.27,
+     "day_move_usd": 790,
+     "close_off_low_frac": 0.97,
+     "high_late": "true (high_et 19:17 - the break topped INTO the boundary seam)",
+     "last_hour_dir": 1,
+     "last_hour_signed_flow": -1,
+     "chain": "up-break day 1 off a -560/-730 two-day slide; cum_from_anchor +720 (the break reclaimed the whole slide)",
+     "gap_into_my_day_usd": -20
+    },
+    "interpretation": "A CROSSED exit pair: rising last hour on net-sell flow = the break entered the seam PRE-ABSORBED (covering-quality at its own close). Per round-2 protocol step 2 the seam extension is sized by this exhaustion state: momentum carries through the boundary but the morning extension is a CEILING to fade, not a base - delivery continues (aligned ph1 +766 flow / +620 px) yet any spike top absorbs. Realized exactly so: +190 by 22:00 carry-through, settle-back, 03:14 onset wave to +600 by 04:00, spike top +850-vs-open at 09:01:38 (turn_down mag 890) faded to +340 by 10:29 BEFORE the print.",
+    "what_it_tightened": [
+     "up-side band +150 -> +80: a close above +80 needs an aligned afternoon up-phase; the incoming pre-absorbed state plus realized ph3 absorption (+1,202 flow / -290 px) deny it",
+     "down-side band -250 -> -180: the print left the seasonal story IMPROVED (76 Bcf, vs_5yr 114 -> 112, in-line vs ~77-78 normal) so it could not re-side the block; the slope channel bought the whole flush back inside ~70 min - a sub--180 close required a re-siding print that did not exist",
+     "seam timing: the 22:00 carry-through pop and 00:00-02:00 settle-back are the pre-absorbed-break signature (no fresh delivery until the 03:14 onset); r1 curve seam slack tightened to the realized grid",
+     "morning-top class: the top forms AT THE END of the overnight delivery wave (09:01, before the pre-print window), spike-shaped (grid 08:00 +350 / 10:00 +380 around an +830-vs-prior-close spike) - a ceiling, not a trend"
+    ],
+    "what_it_could_not_change": "Direction (none needed - handoff corroborates down_small); the phase-sum magnitude derivation; the print-window mechanism (catalyst-owned, not boundary-owned)."
+   },
+   "posterior_direction_by_horizon": {
+    "overnight_2000_0314": "up_carry_then_stall - boundary carry-through +190 by 22:00, settle-back +130/+90 through 00:00-02:00; no fresh delivery until onset",
+    "overnight_0314_0400": "up - aligned thin delivery wave (ph1 +766/+620 on 7,419 lots) to +600 by 04:00",
+    "morning_0400_0901": "up_into_spike_top - hold +580 (06:00), digest +350 (08:00), spike top +850-vs-open 09:01:38, turn_down mag 890",
+    "pre_print_0901_1030": "down_fade - to +340 at 10:29",
+    "print_1030_1048": "down_hard - -770 in 18 minutes pinned to the release, low -500-vs-open at 10:48:21",
+    "digestion_1048_1400": "up_full_reclaim - +210 by 12:00 (reclaim TO the boundary/channel, then stall), settle/opex push +280-300 into 14:00",
+    "settle_opex_1400_1530": "down_absorbed - the push fails to -260 at 15:00",
+    "late_1530_1700": "flat_sag - close -40 net-of-open, -60 day-move",
+    "day_net": "down_small"
+   },
+   "expected_magnitude_usd": -70,
+   "expected_magnitude_band_usd": [-180, 80],
+   "magnitude_derivation": "UNCHANGED point, TIGHTENED band. Point: phase-table sum ph1 +620, ph2 -380, ph3 -290 = -50 net-of-open; gap -20 -> -70 day-move (same derivation as r1; the handoff does not touch the phase sums). Band: both sides now boundary-derived - up +80 capped by the crossed incoming pair + ph3 absorption (no aligned up-phase available), down -180 floored by the unmoved seasonal story + channel defense (flush reclaimed in ~70 min). Honest bar: anything tighter than ~+/-100 on the point is tape-reading, declared not claimed.",
+   "onset_time_et": "03:14",
+   "turn_time_et": "09:01",
+   "secondary_turns_et": [
+    "10:48 post-print low -> reclaim turn (print-window excursion -500-vs-open; downsample showed -430/-490, evidence authoritative)",
+    "14:00-15:00 settle/opex push (+300) absorbed -> flush to -260"
+   ],
+   "trend_vs_chop": "chop",
+   "continuation_vs_reversal": "reversal",
+   "path_p50_curve": [[20, -20], [22, 160], [0, 130], [2, 90], [4, 590], [6, 570], [8, 350], [10, 380], [12, 200], [14, 280], [16, -60]],
+   "path_note": "cum USD vs prior close 3.270 from the 20:00 reopen; final point carries the close (r1 convention). Intra-bucket extremes the 2-hourly clock cannot carry, declared: spike top +830-vs-prior-close / +850-vs-open at 09:01:38 (between the 8 and 10 marks); print flush low -500-vs-open (~-520 vs prior close) at 10:48:21 (between 10 and 12; grid clips to -430); 15:00 absorbed flush -260 (between 14 and 16). Downsampled extremes are lower bounds throughout - evidence-file extremes authoritative.",
+   "confidence": "high",
+   "confidence_detail": "High on the causal decomposition (unchanged from r1 - every leg carries a generator and a flow verdict) and RAISED on the seam segment: the incoming exit state explains the 22:00 carry/stall and the ceiling-top class that r1 could only describe. Medium on forward-usable generality: the crossed-pair seam sorter is n=2 in-group.",
+   "weight_assigned": {"blind": 0.55, "causal_mbo": 0.45},
+   "weight_reason": "Unchanged from r1: the blind stays core (sign right, net within $50, coil class right, gate's full-band denial vindicated). The r2 handoff consumption sharpens the causal layer's window read but adds no ground for shifting the split.",
+   "direction_change": "NONE - r2 rule: direction changes need new causal evidence; the incoming state corroborates the r1 down_small round-trip.",
+   "r1_corrections": [
+    "Path-curve seam slack tightened to the realized grid ([22] 150->160 vs ~+190 realized, [0] 80->130, [4] 580->590, [6] 560->570, [8] 320->350, [10] 330->380, [12] 180->200, [14] 250->280) - smoothing corrections only; all r1 0625 clock marks verified against the continuous file, no mechanism changes",
+    "The r1 '+790 top' is standardized to the evidence file's authoritative +850-vs-open (+830 vs prior close) at 09:01:38, with the downsample figures declared as lower bounds"
+   ],
+   "evidence_used": [
+    "g22_exit_states.json 20260624 - THE INCOMING HANDOFF (close 3.27, +790, 0.97 off-low, high_late 19:17, last_hour dir +1 on signed_flow -1)",
+    "g22_actual.json days[]: 0624 cum_from_anchor +720; 0625 gap -20, day_move -60, net -40, cum +660",
+    "g22_mbo_evidence.json 20260625 (reverified raw): phases [+766/+620/7419, -12/-380/70526, +1202/-290/41429], ph_absorb [f,f,true], total_sflow +1956, onset 03:14 up, turn_down 09:01:38 mag 890, hi 09:01:38 / lo 10:48:21, high_exc +850 / low_exc -500 vs open, n_trades 51,708 (block max)",
+    "g22_actual.json continuous (re-pulled at the grid, vs prior close 3.270): 20:00 -20, 22:00 +190, 00:00 +140, 02:00 +90, 04:00 +600, 06:00 +580, 08:00 +350, 10:00 +390, 10:29 +340, 10:48 -430 (clipped), 12:00 +210, 14:00 +300, 15:00 -260, 16:00 -40",
+    "grp22_state.json 20260625 storage_consensus: 67.0 strictly-pre-print / 74.0 post-print capture / gap 7.0 = house_disagreement exactly; 0626 vintage verifies actual 76 (level 2835, vs_5yr 114 -> 112) - full reconstruction unchanged from r1",
+    "grid_stack (period 06-23): est_gas_burn 33.0 -> 39.3 Bcf/d ramp, gas_chg_7d +535,474 MWh, wind flat - the slope channel that bought the flush back",
+    "model_disagreement: MAV 18Z warmer than MET 12Z (+0.624/+1.222 gw-CDD h0/h1), coverage 0.0 beyond D+1 (declared hole)",
+    "flow_calendar: is_eia_print_day true, is_opex_day true, futures LTD 06-26; cot: MM net -84,909 at 25.47 pctile, WoW +37,708 covering-spent (caps the up tail)",
+    "forecasts/grp22_mbo_specialist_D.json - the r1 posterior this round starts from"
+   ],
+   "evidence_rejected": [
+    "the incoming day-net +790 as a number to inherit - the handoff carries STATE only (protocol step 1); the +790-vs-prior-close top at 09:01 mirroring the D-1 day-move is NOT claimed as a rule (n=1 curiosity, declared)",
+    "storage_consensus post-print 74.0 headline for decision-time use (unchanged from r1; used only to quantify the trap)",
+    "top-level stor_surprise -5.0 - the PRIOR (06-18) print's seasonal-proxy surprise, mislabel-shaped trap (unchanged)",
+    "options_surface - defective (strikes 10x off); the 14:00-15:00 opex/settle window swung $560 unsized",
+    "ph2 nominal flow_conviction +1 - degenerate at 0.02% imbalance on 70,526 lots; declared null",
+    "weather_forecast_cycle morning delta - HDD-only channel in a CDD block (unchanged)"
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer stands down - no book_trustworthy / execution_authority / conviction-floor fields served (reconfirmed in the raw evidence slice); trade-flow phases + realized curve only",
+    "options pin mechanism described never sized - pin ladder unrecoverable; scored leg NGQ26 while expiring options settle vs NGN26",
+    "squeeze plays - no squeeze signature into the 06-26 LTD on my leg (the 09:01 top faded pre-print rather than ratcheting); state unchanged from blind"
+   ],
+   "selection_reason": "EIA-Thursday print day with print, opex and D-1-to-futures-LTD stacked; D owns the print-anchored lens.",
+   "mbo_verdict": "Unchanged mechanism, boundary-tightened: a three-round-trip chop day whose first leg is now READ, not just described - the pre-absorbed 0624 break (crossed exit pair) delivered its residual through the seam (aligned ph1, +1 conviction) into a spike CEILING at 09:01 (the covering-financed break could not finance a second day of highs); the print owned the WINDOW (-770 in 18 min off a decision-time +9 Bcf bearish surprise vs the 67 pre-print consensus); the slope channel owned the reclaim (TO the boundary, +210 by 12:00, then stall); ph3 absorption (-1 conviction, +1,202 flow / -290 px) owned the close. Flow conviction per phase +1 / null / -1. The day-net stays boundary-anchored and small because the print improved the seasonal story and could not re-side the block. Blind -110 -> posterior -70 on a -60 actual; the r2 pass narrows the band to [-180, +80] off the handoff state.",
+   "handoff_out": {
+    "for": "20260626 (owner E; NGN26 futures LTD day)",
+    "exit_type": "post-print digestion close under buy-side absorption - the settle/opex push (+300 at 14:00) failed to -260 and the close sagged to -40 net-of-open (-60 day-move) at 0.34 off-low",
+    "close_px": 3.264,
+    "last_hour_dir": -1,
+    "last_hour_signed_flow": -1,
+    "last_hour_read": "small aligned sell into the bell = the ph3 absorption RESOLVING, not a fresh delivery - the session's total flow was +1,956 with the afternoon's +1,202 bought into a sagging price; do not read the -1/-1 pair as an aligned down-chain exit",
+    "exhaustion_state": "both impulses exhausted same-session: the up-break's extension absorbed at 09:01, the print's flush reclaimed by 12:00; close sits $6 under the 3.270 boundary",
+    "chain_polarity": "TWO-SIDED / unresolved, age 1 off the 0624 break; cum_from_anchor +660",
+    "conviction_verdict": "ph3 NEGATIVE (absorption) is the operative close-side read",
+    "what_next_day_should_inherit": "(1) the slope channel is live and DEFENDED - a bearish print could not hold below it for 90 minutes; (2) the up side is ABSORBED, not delivered - expect reclaim-and-stall, not a clean up leg; (3) futures LTD on NGN26 - calendar noise reaches NGQ26 through the spread as in today's 14:00-15:00 window",
+    "verification_tick_declared": "0626 realized +230 with an 08:40 morning high and a 0.23 off-low close - the reclaim-and-stall shape as handed off (refine-visible confirmation, recorded not claimed as skill)"
+   },
+   "proposal_pointer": "r1 proposal set stands unchanged (print-inside-a-slope doctrine; renewable-subtractor credit arm; two forward-evidence ticks; consensus/stor_surprise field-naming). r2 ADDS the boundary-state seam sorter (crossed pair = fade the seam extension) as an addendum to P1 - see cross_cutting_mbo_finding; n=2 in-group, spanning-group validation requested, no brain edit."
+  },
+  {
+   "specialist": "D",
+   "group": "g22",
+   "date": "20260702",
+   "dow": "Thu",
+   "round": 2,
+   "mode": "refine_r2",
+   "brain_version": "s103.7",
+   "day_class": "EIA storage print day (10:30 ET, week ending 06-26; consensus 81 pre-print==frozen, actual -1.4 below); full session, NGQ26 leg; last FULL session before the 0703 holiday session and the July-4 closure; CDD-hill peak day (realized gw_cdd 18.7 = block max)",
+   "blind_direction": "up",
+   "blind_net_usd": 200,
+   "blind_err_usd": 200,
+   "blind_dir_hit": false,
+   "actual_day_move_usd": 0,
+   "r1_posterior": {"expected_magnitude_usd": 0, "band": [-150, 150], "turn_time_et": "10:30", "file": "forecasts/grp22_mbo_specialist_D.json"},
+   "handoff_in_used": {
+    "source": "g22_exit_states.json 20260701 (tape-derived; prior owner emitted no r1 handoff_out - state-only inheritance, declared)",
+    "state_taken": {
+     "close_px": 3.204,
+     "day_move_usd": -500,
+     "close_off_low_frac": 0.12,
+     "shape": "morning two-way whipsaw (low 08:40, high 09:02) then an all-session give-back closing AT the lows without undercutting the 08:40 low",
+     "last_hour_dir": -1,
+     "last_hour_signed_flow": -1,
+     "chain": "give-back day erasing 0630's +790; cum_from_anchor +60 - the whole June structure round-tripped to the anchor",
+     "gap_into_my_day_usd": 0
+    },
+    "interpretation": "An ALIGNED exit pair: falling last hour on net-sell flow, closing 0.12 off-low = the seller was STILL DELIVERING at the bell, NOT exhausted. Per protocol step 2 the seam inherits residual delivery and the turn must NOT be front-run - it waits for an absorption event. On my catalyst clock that event is the print: the seam ran flat until the 03:03 onset (02:00 +30), delivered -270 by 04:00 and -490 by 08:59 (aligned thin ph1 -126/-280), and exhaustion arrived AT 10:30:08 - a ten-second stop-run to -530, a MARGINAL new low ~$40-50 under the overnight low, absorbed on ph2 (-1,612 flow for +20 of price). The gate arithmetic is boundary-quantified: 0701 -500 plus my overnight/print excursion -490/-530 is a ~-1,000 same-side run into the print = over-extension limb (a); D-1 incoherence (sflow -73 pause vs big prints 0.567/0.574 BUY) = limb (b); two limbs -> counter-tilt, the blind's own call.",
+    "what_it_tightened": [
+     "SEAM TIMING (the r2 catch): my r1 path curve front-ran the onset (r1 [2,-240] vs realized +30; the tape was FLAT 20:00->03:00). Corrected: residual delivery does not leak into the early seam - it runs in the overnight/early-morning window (03:03->08:59), the P1 window made boundary-precise",
+     "flush-depth class: the print low bottoms within ~$50 of the overnight low (stop-run-into-the-absorber, marginal-new-low class) - the down tail is bounded by absorption, not by delivery",
+     "band +/-150 -> [-120, +100]: down side - a close below -120 requires post-print ALIGNED sell delivery, which the two-limb gate fire fades and the realized ph2 absorption refutes; up side - the reclaim is covering-financed (ph3 -1,123 flow under +250 px), extension beyond the boundary round-trips absent an aligned up phase (none printed on any up-leg this week)",
+     "the 0 point RE-DERIVED from the boundary: reclaim-to-boundary complete (close == prior close 3.204 exactly, gap 0), extension denied - the flat net is now a boundary consequence, not only a phase-sum residual"
+    ],
+    "what_it_could_not_change": "Direction (r1 flat/reversal-at-the-print corroborated); the print-exhaustion mechanism; the covering-quality verdict on the recovery."
+   },
+   "posterior_direction_by_horizon": {
+    "reopen_2000_0303": "flat_drift - 0 to -70; the seam does NOT front-run the residual delivery (r2 correction: r1 spread the slide across the night; the tape held +30 at 02:00 until the 03:03 onset)",
+    "overnight_0303_0900": "down - aligned thin delivery (ph1 -126/-280 on 5,650 lots): -270 by 04:00, -150 bounce at 06:00, -430 at 08:00, -490 at 08:59",
+    "pre_print_0900_1030": "two_way_net_lower - 09:44 bounce to -140, re-slide to -240 at 10:29:57; the day's low is made AT the print",
+    "print_1030_1200": "up_off_absorbed_flush - ten-second flush to -530 at 10:30:08 (marginal new low, ~$40-50 under the overnight low) on a print that was -1.4 BELOW consensus; absorbs (ph2 -1,612/+20), 10:39 retest holds ~-490; stabilizes -230/-330",
+    "digestion_1200_1553": "up_grind_covering_quality - 12:00 shelf retest -250, then the ph3 grind (-1,123 flow / +250 px, absorb-flagged): -60 by 13:00, +60 by 14:00, extension high +160 at 15:53 (r2 correction: r1 ran this segment ~1h early)",
+    "close_1553_1700": "fade_to_flat - the extension round-trips (+110 at the 16:00 grid -> 0 at the bell); last_hour_dir -1 is the give-back tail, not a delivery",
+    "day_net": "flat (0)"
+   },
+   "expected_magnitude_usd": 0,
+   "expected_magnitude_band_usd": [-120, 100],
+   "magnitude_derivation": "UNCHANGED point, TIGHTENED band, STRENGTHENED derivation. Point: absorption_is_reversal sizes the reversal at the full reclaim span (+530, the flush+overnight excursion, never damped); the extension BEYOND the reclaim requires an ALIGNED phase that never printed, so the day nets to the reclaim target - and r2 makes that target explicit: the BOUNDARY (prior close 3.204; realized close == boundary exactly). Band: down -120 bounded by the marginal-new-low absorption class + gate fire (post-print aligned sell delivery is the only path lower and it is the faded limb); up +100 bounded by covering-quality (every week-2 up-leg absorb-flagged; extensions round-trip).",
+   "onset_time_et": "03:03",
+   "turn_time_et": "10:30",
+   "turn_time_detail": "10:30:08.79 - the print tick itself (turn_up mag 530)",
+   "secondary_turns_et": [
+    "08:59 overnight-low shelf (-490) -> 09:44 bounce (-140) - pre-print two-way, no turn claimed",
+    "15:53 extension high (+160) -> last-hour fade to flat"
+   ],
+   "trend_vs_chop": "two_legged_round_trip - a real down trend into the print (-530) and a real absorbed up trend out of it (+690 low-to-high), netting to zero; chop only at the day-net altitude",
+   "continuation_vs_reversal": "reversal - at the catalyst: the inherited chain delivery exhausts on an absorbed stop-run at a marginal new low; per the eia gate's post-print clause the block lean re-anchors off down; NOT an up-chain birth (the recovery is covering-financed, no aligned phase)",
+   "path_p50_curve": [[20, 0], [22, -40], [0, -70], [2, 30], [4, -270], [6, -150], [8, -430], [10, -230], [12, -250], [14, 60], [16, 0]],
+   "path_note": "cum USD vs prior close 3.204 from the 20:00 reopen; final point carries the close (r1 convention; the realized 16:00 grid was +110 with the last-hour fade to 0 - declared). Intra-bucket extremes the 2-hourly clock cannot carry, declared: overnight low -490 at 08:59 (between 8 and 10); print-tick flush low -530 at 10:30:08 (between 10 and 12); 09:44 bounce -140; extension high +160 at 15:53 (between 14 and 16). The seam segment and the digestion segment are the r2 boundary-pass corrections (see r1_corrections).",
+   "confidence": "high",
+   "confidence_detail": "High on the causal mechanism (turn at the print tick, two absorb-flagged phases, all-session flow-vs-price divergence: total sflow -2,861 under a flat close) - unchanged. RAISED on timing: the seam now matches the 03:03 onset and the digestion matches the authoritative afternoon grind; both r1 timing slacks are named and fixed rather than smoothed over.",
+   "weight_assigned": {"blind": 0.4, "causal_mbo": 0.6},
+   "weight_reason": "Unchanged from r1: the blind supplied the correct topology (V into a late-morning low, counter-tilt off the gate, small-day class) and its +200 was the day's MFE side; the causal layer supplies the print-tick turn, the overnight chain re-assignment, and the absorption verdict that trims +200 to flat. The r2 handoff corroborates rather than shifts the split.",
+   "direction_change": "NONE - r2 rule: direction changes need new causal evidence; the incoming aligned-seller state corroborates the r1 read (residual delivery into the print, reversal at the catalyst, flat boundary close).",
+   "r1_corrections": [
+    "SEAM: r1 path curve front-ran the onset - it carried [0,-80],[2,-240] while the authoritative curve reads 00:00 -70, 02:00 +30 with the 03:03 onset; corrected to flat-until-onset. This is exactly the boundary-pass discipline: an aligned incoming seller licenses overnight delivery in the DELIVERY WINDOW, not a reopen-anchored drift",
+    "DIGESTION CLOCK: r1 stated '12:00 -60; 13:00 +60; 14:00 -150 settle-window retest' - the authoritative marks are 12:00 -250/-260 (the retest, of the morning shelf), 13:00 -60, 14:00 +60; there was NO post-14:00 retest. The r1 afternoon narrative ran ~1 hour early; reclaim completes ~14:00, not 12:00-13:00. Curve points [12] -80 -> -250 and [14] -60 -> +60 corrected accordingly",
+    "The r1 'reclaim completes through 12:00-13:00' horizon label is superseded by digestion_1200_1553 above"
+   ],
+   "evidence_used": [
+    "g22_exit_states.json 20260701 - THE INCOMING HANDOFF (close 3.204, -500, 0.12 off-low, low 08:40 / high 09:02 morning whipsaw, last_hour dir -1 on signed_flow -1 = aligned, non-exhausted)",
+    "g22_actual.json days[]: 0701 cum_from_anchor +60; 0702 gap 0, day_move 0, net 0, cum +60 - the boundary reclaim is exact",
+    "g22_mbo_evidence.json 20260702 (reverified raw): turn_up 530 at 10:30:08.79 = the print tick; lo 10:30:08 / hi 15:53:36; onset 03:03 down; phases [-126/-280/5650, -1612/+20/56411 ABSORB, -1123/+250/22726 ABSORB]; total sflow -2,861 vs day net 0; high_exc +160 / low_exc -530",
+    "g22_actual.json continuous (re-pulled at the grid, vs prior close 3.204): 20:00 0, 22:00 -70(offset pt), 00:00 -70, 02:00 +30, 04:00 -270, 06:00 -150, 08:00 -420, 08:59 -490, 09:44 -140, 10:00 -230, 10:31 -330, 12:00 -260, 13:00 -60, 14:00 +60, 15:53 ~+100(grid; true high +160), 16:00 +110, 16:45 +40, close 0",
+    "stor_surprise -1.4 'below' + storage_consensus pre-print 06:22Z snapshot 81.0 == frozen 81.0: a hair-TIGHT print into a morning that had sold to -490 pricing a loose one; the trapped side was the pre-print seller (unchanged from r1)",
+    "tape_conditions D-1 0701: sflow -73 pause, big prints 0.567/0.574 BUY on 94 - the incoherent-D-1 limb (b); with the boundary-quantified ~-1,000 run = limb (a), the gate fired 2-of-3 (the blind's counter-tilt, causally vindicated)",
+    "grid_stack (period 06-30): wind 1,967,808 MWh = -8.0% off the 06-29 peak, gas +5.8% d/d, est_gas_burn 42.6 Bcf/d block max, demand above BA day-ahead - the renewable subtractor RECEDING (component check passes on my day)",
+    "weather + model_disagreement: realized gw_cdd 18.7 = hill peak; h0/h1 MAV 18.868/18.919 still rising at decision time - the 0703 roll-off was NOT decision-visible (unchanged)",
+    "daytype.eia_preprint_overextension_gate post-print clause: counter-delivery on absorbing flow RE-ANCHORS the block lean - fired; 0703 realized +410 confirms the carry",
+    "forecasts/grp22_mbo_specialist_D.json - the r1 posterior this round starts from"
+   ],
+   "evidence_rejected": [
+    "the incoming day-net -500 as a number to inherit - STATE only (protocol step 1); gap sign noise n/a (gap 0)",
+    "absorb_session=false - wrong altitude for a two-legged day; per-phase flags [f,t,t] carry the verdict (unchanged)",
+    "the print surprise SIGN as a direction driver - the -1.4 below (bullish) print's first reaction was a -230 SELL flush; the surprise resolved WHICH side was trapped, not direction (lens standing rule)",
+    "vol_regime n0 sigma - era-degraded (S110 audit f3, ~0.265 of the leg tape); backdrop only",
+    "contract_structure / squeeze_watch - frozen to expired NGN26, not decision-legit; flow_calendar used as the live clock",
+    "options_surface - block-declared defect",
+    "last_hour_dir -1 as a bearish exit signal for 0703 - the give-back tail of a round-trip, not a delivery; close_off_low 0.77 is the sturdier exit read (0703 +410 confirms)"
+   ],
+   "stand_down_reasons": [
+    "MBO BOOK layer stands down - no book_trustworthy / execution_authority / conviction-floor fields served (reconfirmed in the raw evidence slice); trade-flow conviction + turn timing + realized curve only",
+    "direction.flow_nowcast - no intraday dip_imb_level reveal in the refine slice; not invoked",
+    "squeeze conjunction plays - spread limb frozen at the 0619 vintage on an expired front; dte 18 on NGQ26; squeeze state UNKNOWN both directions"
+   ],
+   "selection_reason": "D owns the EIA-Thursday day-class; 20260702 is the week's storage print day and the last full session before the holiday.",
+   "mbo_verdict": "PRINT = EXHAUSTION, NOT IGNITION - now boundary-anchored end to end. The aligned 0701 exit (selling at the bell, at the lows) handed my seam an unfinished chain; the seam took delivery ONLY in its window (flat to 03:03, then -490 by 08:59 on thin aligned flow) - no front-running, exactly as the handoff state prescribed. The 10:30:00 release ran the stops to a marginal new low (-530, ~$40-50 under the overnight low) on a hair-BULLISH print and the flush ABSORBED in seconds (ph2 -1,612 flow for +20 px); the 10:39 retest held; the session turned on the print tick (turn_up 530). The recovery ran entirely covering-quality (ph3 -1,123 flow under +250 px, absorb-flagged): it reclaimed the absorbed excursion TO THE BOUNDARY (close == prior close exactly) and could not earn a dollar past it - the +160 extension at 15:53 faded to a dead-flat close. Flow conviction per phase: aligned / negative / negative. Blind +200 -> posterior 0, band [-120, +100]. The r1 window audit stands (the blind's chain leg sat in the wrong window); r2 adds my OWN r1 timing slacks, named and fixed: the seam front-run and the hour-early digestion clock.",
+   "handoff_out": {
+    "for": "20260703 (owner A; holiday session before the July-4 closure - WEEKEND-FEEDING: this exit read is what Sunday/Monday-equivalent inherits, coordinator sign-off applies to A's day and consumes this)",
+    "exit_type": "print-exhaustion round trip closed dead flat AT the boundary - close == prior close 3.204, day-move 0, close_off_low 0.77 (upper third), after +690 low-to-high of travel",
+    "close_px": 3.204,
+    "last_hour_dir": -1,
+    "last_hour_signed_flow": -1,
+    "last_hour_read": "the -1/-1 pair here is the GIVE-BACK TAIL of a covering-financed extension (+160 at 15:53 -> 0), NOT an aligned delivery exit - the session's defining fact is total sflow -2,861 under a FLAT close (all-session absorption); reading the last hour as bearish would repeat the exact mistake my r1 flagged, and 0703's realized +410 confirms it was noise",
+    "exhaustion_state": "the down-chain's delivery was REFUSED at the print (stop-run absorbed at a marginal new low); the block lean re-anchors off down per the eia gate's post-print clause. The up side is covering-financed - reclaim complete to the boundary, extension refused - so no up-chain birth is claimed either. Two-sided exhaustion at the anchor: cum_from_anchor +60, the whole June structure round-tripped",
+    "chain_polarity": "down-chain TERMINATED-at-catalyst (not reversed into a confirmed up-chain); age 0 from the print",
+    "conviction_verdict": "ph2/ph3 NEGATIVE (absorption) - the operative read for the recovery's quality",
+    "what_next_day_should_inherit": "(1) carry-not-crest into a thin holiday session: expect damped drift on the reclaim side, not a re-fire of either impulse (covering spent, sellers refused); (2) do NOT read my last-hour -1/-1 as bearish (see last_hour_read); (3) decision-visibility caveat: the CDD crest roll-off (18.7 -> 17.5) was NOT visible on my day (h1 MAV still 18.919 rising) - check the 0703 morning cycles for its first decision-visible appearance before crediting the heat any further; (4) holiday microstructure: verify early-close vs full-closure class before sizing the settle window",
+    "verification_tick_declared": "0703 realized +410 with a 10:07 high and no late re-fire - the damped-drift-up carry as handed off (refine-visible confirmation, recorded not claimed as skill)"
+   },
+   "proposal_pointer": "r1 proposals P1 (reopen->10:30 window doctrine), P2 (covering-quality cap - the asymmetric slope's up-side made mechanical) and P3 (renewable subtractor two-way component check) stand unchanged. r2 ADDS the boundary-state seam sorter (aligned pair = residual delivery in the window, turn at the catalyst, never front-run) as the P1 addendum - see cross_cutting_mbo_finding. My 0702 seam correction is itself the demonstration: even the r1 CAUSAL smooth front-ran the onset; the handoff state is what disciplines the seam. n=2 in-group; spanning-group validation requested; no brain edit."
+  }
+ ],
+ "summary": "Round 2 boundary pass, specialist D, g22, two EIA Thursdays. NO direction changes (none licensed - both handoffs corroborate r1). 0625: point -70 unchanged (phase-sum derivation), band tightened [-250,+150] -> [-180,+80] off the CROSSED 0624 exit pair (+790 break entering the seam pre-absorbed: last hour +1 dir on -1 flow, high 19:17 into the boundary) - seam carry-through then ceiling-top at 09:01, print owns the window, channel owns the reclaim, ph3 absorption owns the -40/-60 close; actual -60. 0702: point 0 unchanged but RE-DERIVED as reclaim-to-boundary (close == prior close exactly), band tightened [-150,+150] -> [-120,+100] off the ALIGNED 0701 exit pair (give-back close AT the lows, sellers delivering at the bell = non-exhausted) - residual delivery runs ONLY in the 03:03->08:59 window, exhausts on the print-tick stop-run (-530, marginal new low, absorbed), covering-quality reclaim, extension refused; actual 0. Two r1 timing slacks on 0702 named and fixed (seam front-run; hour-early digestion clock). handoff_out emitted for both days; 0702's feeds A's weekend-feeding 0703 with the explicit do-not-read-the-last-hour-as-bearish instruction (0703 +410 confirms). Cross-cutting: the incoming exit's last-hour (dir, flow) pair sorts the seam - crossed = fade the extension, aligned = delivery in the window with the turn waiting at the catalyst; reclaim targets the boundary. n=2 in-group, offered as the P1 addendum for spanning-group validation, no brain edits."
+}

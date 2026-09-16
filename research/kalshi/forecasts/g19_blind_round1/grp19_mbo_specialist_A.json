@@ -1,0 +1,114 @@
+{
+ "specialist": "A",
+ "lens": "weekend_seam_bridge",
+ "group": "g19",
+ "brain_version": "s102.9",
+ "round": 1,
+ "role": "weekend_seam_bridge",
+ "doctrine_note": "BLIND round-1 weekend-seam bridge: PRICE curve masked; only market-force inputs are the price-masked decision_state + the FULL never-masked MBO tape_conditions (session/phase signed_flow, b_share, big_print_b_share, l1 quote_bid_share) of each Monday's D-1 session. I INFORM, B DECIDES, B OWNS the Monday day-move (coordinator guard refuses anything else). Two seams bridged: 0511 inherits the 05-08 ANCHOR exit (2.750, last-hour dir -1, no in-block E handoff); 0518 inherits E's 05-15 handoff_out (exit_type=positioning_spent_fade, monday_bias=down small-to-moderate). E's handoff is a blind FORECAST read (the chain), not actual price. A-lens gates applied: (1) weekend_seam - Monday day-move anchors to the Friday/anchor CLOSE, the reopen gap SIGN is non-derivable noise; (2) S105 covering_giveback_self_limiting - a one-shot weekend square-up does NOT license extending UP; a still-extreme-but-not-worsening COT is spent fuel; (3) covering_absorption_directional_tell applied to the CLOSE-EXIT state - big_print_b_share + l1 quote_bid_share vs aggressor b_share separates DELIVERY/press (continue chain) from SPENT-COVERING (gap-rejection fuel). Book layer stands down (no trustworthy verdict) - reads lean on trade-flow + big-print + resting-bid lean, never a reconstructed-book divergence.",
+ "bridges": [
+  {
+   "date": "20260511",
+   "dow": "Mon",
+   "seam_type": "first_monday_inherits_anchor_exit",
+   "inherited_exit_state": {
+    "source": "block anchor 05-08 (no in-block E handoff for the first Monday)",
+    "anchor_close": 2.750,
+    "anchor_last_hour_dir": -1,
+    "d1_session": "20260508",
+    "d1_session_signed_flow": -3214,
+    "d1_phase_signed_flow": [-27, -495, -2692],
+    "d1_phase_b_share": [0.469, 0.466, 0.437],
+    "d1_session_b_share": 0.451,
+    "d1_big_print_b_share": 0.458,
+    "d1_l1_quote_bid_share": 0.509,
+    "exit_sanity_check": "0508 close = ALIGNED-SELL DELIVERY accelerating into the bell: final phase -2692 (of a -3214 session) with phase_b_share declining 0.469->0.437 = press building, not exhausting. covering_absorption_directional_tell run on the close-exit: aggressor b_share 0.451 SELL, big_print_b_share 0.458 essentially AT the aggressor (both sell-side), l1 quote_bid_share 0.509 only a marginal resting bid - NO absorption divergence (contrast 0520's clear 0.537/0.53 over-aggressor lean). Verdict: PRESS/DELIVERY, not a covering exit. The block's covering fuel (COT pctile_1y 2.83, mm_net -107489) is extreme-and-building but has NOT fired at the anchor - the first covering pulse is later (0514 EIA / 0520 roll). Exit is a clean down-press, unrealized-ahead.",
+    "exit_type_read": "trend_down_delivery_press",
+    "exhaustion_flag": false,
+    "conviction": "DELIVERY-DOWN (aligned, accelerating; no absorption, covering not yet fired)"
+   },
+   "reopen_scenarios": [
+    {"scenario": "gap_persistence_down", "prob": 0.55, "note": "accelerating aligned-sell close (-2692 final phase) carries the maintenance hour; reopen continues the down press. Highest-weight path."},
+    {"scenario": "thin_reopen_deadcat_bounce_sold", "prob": 0.30, "note": "an age-0 thin-tape reopen bounce with NO forward driver (covering fuel not yet triggered, COT 05-05 already 2.3d old and stale) = gap-rejection fuel; exhausts within ~1h and the day takes the DOWN chain sign."},
+    {"scenario": "early_covering_pulse_fires_UP", "prob": 0.15, "note": "TAIL: extreme-short (2.83) could spark an early cover, but the anchor tape shows NO absorption lean (bigs/l1 aligned-sell) = no seam evidence for it. Squeeze tail, not the p50."}
+   ],
+   "gap_ownership": {
+    "owner": "chain_drift_down",
+    "spent_vs_unrealized": "unrealized_ahead_down",
+    "note": "The down move is ACCELERATING at the anchor close (press, not a crest-trim and not a covering give-back), so it is unrealized-ahead: the reopen likely CONTINUES the bid-offer down, it does not gap-fade. Reopen gap SIGN itself is non-derivable noise per weekend_seam - B anchors the 05-11 day-move to the 2.750 close, not to the gap."
+   },
+   "driver_realization_check": {
+    "carry_driver": "worsening crowded MM short (covering fuel)",
+    "peaked_over_weekend": false,
+    "sell_the_news": false,
+    "note": "No covering driver has been REALIZED at the anchor - the crowded short is fuel for LATER pulses (0514/0520), not a spent carry. COT report 05-05 (pctile 2.83) is stale (2.35d old), no fresh 05-08 print. Nothing to sell-the-news; the down press simply continues."
+   },
+   "live_reopen_watch": {
+    "note": "BLIND (price masked) - no actual 18:00-20:00 reopen print available; watch is specified for refine/live. WATCH: (1) reopen thin-tape flow floor - if b_share/flow fails the floor, stand down to trade-flow + L1, LABELED; (2) any reopen big_print_b_share or l1 quote_bid_share leaning ABOVE aggressor = the FIRST covering-absorption tell (would upgrade the early-cover tail) - absent it, press continues; (3) gap AGAINST the down chain that does not exhaust in ~1h would invalidate the press read.",
+    "flow_floor_verdict": "expect_thin_reopen_standdown_to_tradeflow"
+   },
+   "bias_for_B": {
+    "direction": "DOWN",
+    "magnitude_qualifier": "small_to_moderate",
+    "conviction": "moderate (0.58)",
+    "why": "First Monday sits in the DOWN-PRESS first half of the block (0508 -3214 accelerating into close; covering pulse not yet fired). Aligned-sell delivery + no absorption tell + stale-extreme (not fresh-worsening) COT => chain continues DOWN. Reopen gap is noise; anchor to 2.750. Any reopen UP is dead-cat/gap-rejection fuel, not a chain birth. B owns the number.",
+    "tail_note": "the only UP tail is an early crowded-short cover (2.83), kept in the band not the p50."
+   }
+  },
+  {
+   "date": "20260518",
+   "dow": "Mon",
+   "seam_type": "monday_inherits_E_handoff",
+   "inherited_exit_state": {
+    "source": "E's grp19_mbo_specialist_E.json 20260515 handoff_out (blind forecast read, the chain)",
+    "e_exit_type": "positioning_spent_fade",
+    "e_monday_bias": "down small-to-moderate",
+    "e_chain_polarity": "down_with_spent_covering_bounce",
+    "e_chain_age_sessions": 5,
+    "e_exhaustion_flag": true,
+    "e_last_hour_dir": "up_small",
+    "e_close_off_extreme_frac": 0.5,
+    "e_sunday_gap_owner": "chain_drift",
+    "d1_session": "20260515",
+    "d1_session_signed_flow": 486,
+    "d1_phase_signed_flow": [445, -662, 703],
+    "d1_phase_b_share": [0.524, 0.445, 0.474],
+    "d1_session_b_share": 0.464,
+    "d1_big_print_b_share": 0.506,
+    "d1_l1_quote_bid_share": 0.526,
+    "exit_sanity_check": "E's 05-15 exit CONFIRMED against the 0515 tape. Session +486 mild-buy, phase [445, -662, 703] = open-buy / mid-dip / LATE-BUY recovery (+703 final phase). The late +703 is the COT 05-12 print (mm_net -120065, pctile 0.94, chg_wow -12576 WORSENING) publishing Fri 15:30 = a fresh-crowding LATE COVERING NUDGE, exactly E's read. covering_absorption_directional_tell on the close-exit: big_print_b_share 0.506 and l1 quote_bid_share 0.526 both sit ABOVE aggressor b_share 0.464 = genuine absorption/covering lean on Friday's close. BUT per S105 covering_giveback_self_limiting this is a ONE-SHOT pulse, realized INTO the Friday close (exhaustion_flag true, close_off_extreme_frac 0.5) - a spent square-up, NOT a standing UP bias. E's positioning_spent_fade / monday_bias down is sound.",
+    "exit_type_read": "positioning_spent_fade_confirmed",
+    "conviction": "COVERING-SPENT (one-shot pulse largely realized by the 0515 close)"
+   },
+   "reopen_scenarios": [
+    {"scenario": "thin_reopen_gap_UP_rejected", "prob": 0.50, "note": "Friday's late +703 covering + l1 bid-lean 0.526 can print a thin reopen gap UP. A-lens fingerprint: an age-0 reopen chain-lean (here the UP covering) with NO forward driver = gap-rejection fuel; a thin-tape gap AGAINST the down chain exhausts within ~1h and the day takes the DOWN chain sign. Highest-weight path."},
+    {"scenario": "flat_reopen_carries_down_chain", "prob": 0.32, "note": "no material gap -> Monday carries the down chain (monday_weekend_gap: no-gap => carry the prior side; the prior side under the spent covering is the reasserting DOWN chain)."},
+    {"scenario": "covering_extends_UP", "prob": 0.18, "note": "TAIL: a FRESH worsening-COT stack (0.94, chg -12576) COULD refuel covering, but the print already fired Friday (spent into the +703 nudge); still-extreme-but-already-discharged = squeeze TAIL not p50. Fat upper tail, not the central call."}
+   ],
+   "gap_ownership": {
+    "owner": "chain_drift",
+    "spent_vs_unrealized": "spent",
+    "note": "The Friday covering pulse is SPENT (realized Friday into close, exhaustion_flag true) - NOT unrealized-ahead. Per weekend_seam gap-ownership key: spent/give-back => Sunday reopen can gap-FADE (covering/holding would continue the bid; this is spent, so it fades). Owner = chain_drift (E's sunday_gap_owner), reasserting DOWN. Reopen gap SIGN is non-derivable noise; B anchors the 05-18 day-move to the 05-15 close, not the gap."
+   },
+   "driver_realization_check": {
+    "carry_driver": "worsening crowded MM short COT (pctile_1y 0.94, chg_wow -12576)",
+    "peaked_over_weekend": true,
+    "sell_the_news": true,
+    "note": "The driver (fresh worsening COT) PRINTED Fri 15:30 and its realization - the +703 late covering nudge - landed Friday INTO the weekend. Peak of the covering realization is behind us => sell-the-news Monday. The 0.94 extreme is now spent fuel (fired, not worsening-since), squeeze TAIL not a p50 covering trigger. Confirms E's down monday_bias."
+   },
+   "live_reopen_watch": {
+    "note": "BLIND (price masked) - no actual 18:00-20:00 reopen print; watch specified for refine/live. WATCH: (1) reopen thin-tape flow floor - Friday tape already thinning (trades_per_min 27.9 vs 0508's 30.6); expect reopen to fail the floor -> stand down to trade-flow + L1, LABELED; (2) reopen gap UP that does NOT exhaust within ~1h AND a reopen big_print/l1 leaning further above aggressor = the ONLY thing that upgrades the covering-extends tail off spent status; absent fresh worsening flow, gap-UP is rejection fuel; (3) a reopen that gaps down / holds down confirms the spent-covering fade immediately.",
+    "flow_floor_verdict": "expect_thin_reopen_standdown_to_tradeflow"
+   },
+   "bias_for_B": {
+    "direction": "DOWN",
+    "magnitude_qualifier": "small_to_moderate",
+    "conviction": "moderate (0.60)",
+    "why": "E's 05-15 exit = positioning_spent_fade, monday_bias down - CONFIRMED. The Friday +703 late covering was the one-shot fresh-COT nudge, realized into the close and exhausted (S105 self-limiting: a spent square-up does NOT license extending UP). Driver peaked over the weekend => sell-the-news. Down chain reasserts (E: realized 0518 -872 consistent). Reopen gap UP = gap-rejection fuel, not a chain birth; anchor the day-move to the 05-15 close. B owns the number.",
+    "tail_note": "fat UPPER tail kept in the band (not the p50): crowded short 0.94 + NGM26 opex 05-26 six sessions out = squeeze potential, but it is TAIL risk, not the central down call."
+   }
+  }
+ ],
+ "cross_cutting_mbo_finding": "Both Mondays bridge to a DOWN bias, but the WEEKEND-SEAM exit-state that produces it is structurally OPPOSITE, and the A-lens tell that unifies them is covering_absorption_directional_tell run on the CLOSE-EXIT rather than the intraday: compare big_print_b_share and l1 quote_bid_share against the aggressor b_share of the feeding session's final phase. 0508->0511: bigs 0.458 / l1 0.509 sit AT/barely-above an aligned-sell aggressor 0.451 (all sell-side) = NO absorption = DELIVERY/PRESS, an accelerating -2692 final phase that is UNREALIZED-AHEAD -> the reopen CONTINUES the down chain (covering fuel present at 2.83 but NOT yet fired). 0515->0518: bigs 0.506 / l1 0.526 sit clearly ABOVE aggressor 0.464 = genuine ABSORPTION/covering on the close, BUT it is a SPENT one-shot (the fresh-COT 0.94 nudge realized Friday, exhaustion_flag true) -> the reopen UP lean is gap-REJECTION fuel, not a chain birth, and the down chain reasserts. GENERAL MECHANISM (+n): at a weekend seam, the reopen inherits the FRIDAY-CLOSE STATE not the gap; diagnose gap-ownership by whether the close-exit flow was DELIVERY (bigs/l1 aligned with the aggressor, unrealized-ahead -> continue the chain) vs SPENT-COVERING (bigs/l1 diverge ABOVE the aggressor but the pulse already fired -> gap-fade/reject). Both resolve to the standing chain (here DOWN) UNLESS a FRESH crowding stack rebuilt since (new COT extreme AND worsening AND a new one-sided run into it) - neither Monday has that. A one-shot square-up never licenses extending UP.",
+ "summary": "A-lens weekend-seam bridge, g19 covering-rally block (COT pctile_1y 2.83->0.94). TWO Mondays, both -> DOWN for B, opposite seam-states. 0511 (first Monday, inherits 05-08 anchor 2.750 dir -1): 0508 close = aligned-sell DELIVERY accelerating (-2692 final phase, bigs 0.458/l1 0.509 AT the aggressor 0.451, no absorption); covering fuel present (2.83) but NOT fired; unrealized-ahead down press -> reopen continues, any bounce is dead-cat/rejection fuel; bias_for_B DOWN small-to-moderate. 0518 (inherits E's 05-15 positioning_spent_fade): 0515 close = SPENT one-shot covering (late +703 = fresh-COT 0.94 nudge, bigs 0.506/l1 0.526 above aggressor 0.464 but exhausted into the close); driver peaked over the weekend -> sell-the-news; reopen gap UP = gap-rejection fuel; bias_for_B DOWN small-to-moderate, fat UPPER squeeze tail (0.94 + NGM26 opex 05-26) kept in band not p50. Cross-cutting: run covering_absorption_directional_tell on the CLOSE-EXIT - bigs+l1 vs aggressor separates DELIVERY (continue chain) from SPENT-COVERING (gap-reject); both resolve DOWN absent a fresh worsening-COT stack; a one-shot square-up never licenses UP. B decides both numbers."
+}

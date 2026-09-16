@@ -1,0 +1,125 @@
+{
+ "specialist": "D",
+ "group": "g22",
+ "date": "20260625",
+ "dow": "Thu",
+ "round": 1,
+ "mode": "refine",
+ "brain_version": "s103.7",
+ "day_class": "EIA storage print day (10:30 ET, report week 06-19) + NG options expiry (options_expiry_date 2026-06-25, days_to_opex 0) + D-1 to NGN26 futures LTD 06-26; scored leg NGQ26",
+ "blind_direction": "down",
+ "blind_net_usd": -110,
+ "blind_err_usd": -50,
+ "blind_dir_hit": true,
+ "actual_day_move_usd": -60,
+ "consensus_reconstruction_reverified": {
+  "pre_print_consensus_bcf": 67.0,
+  "pre_print_capture": "tradingeconomics snapshot 2026-06-25T06:25:05Z, actual column blank at capture (strictly pre-print); corroborated by investing.com's frozen forecast row also reading 67.0",
+  "served_headline_bcf": 74.0,
+  "served_headline_capture": "first post-print snapshot 2026-06-26T06:23:40Z; final_capture_is_post_print=true as declared",
+  "gap_check": "74.0 - 67.0 = 7.0 = house_disagreement_bcf EXACTLY - reconstruction CONFIRMED as declared in the spawn parameters",
+  "actual_print_bcf": 76,
+  "actual_print_verification": "0626 state vintage: level 2835 - 2759 = 76, weekly_chg 76, vs_5yr 114 -> 112",
+  "decision_time_surprise_bcf": 9,
+  "served_frozen_surprise_bcf": 2,
+  "seasonal_read": "+76 vs a ~77-78 Bcf 5yr-normal week = seasonally IN LINE; the print IMPROVED the surplus story 2 Bcf (114 -> 112) - it could not re-side the block",
+  "stor_surprise_field_warning": "top-level stor_surprise -5.0 on my slice is the PRIOR (06-18) print's seasonal-proxy surprise (73 vs ~78 5yr-normal), NOT this print's surprise on any basis - a second mislabel-shaped trap on a print-day slice, declared",
+  "what_the_price_curve_says": "The market traded a GENUINE bearish surprise: -770 in 18 minutes pinned to the print (10:29 ET +340 -> 10:48 -430/-490 low-of-day). A +2 in-line print inside a 7 Bcf dispersion does not deliver an $800 flush on the clock second of the release; a +9 into a +112 surplus does. The curve CORROBORATES 67 as the market-clearing expectation and the blind's decline of the already-priced limb (c). Declared caveat: TE may have legitimately updated 67 -> 74 inside the uncapturable 06:25Z-10:30 window; the corroboration is market-implied, not an archive capture.",
+  "does_the_curve_change_the_mechanism": "The reconstruction STANDS. What the curve ADDS: the surprise's entire life was ONE window - the flush was fully reclaimed within ~70 minutes (+210 by 12:00). The print sized the day's RANGE (realized $1,280 ~= n0_range_20_mean $1,244 off an 18th-pctile vintage), never its NET. The blind's small-net coil call was right; its flat-pre-print window model was wrong (see blind_mechanism_audit)."
+ },
+ "posterior_direction_by_horizon": {
+  "overnight_2000_0400": "up",
+  "morning_0400_0901": "up_into_top",
+  "pre_print_0901_1030": "down_fade",
+  "print_1030_1048": "down_hard",
+  "digestion_1048_1400": "up_full_reclaim",
+  "settle_opex_1400_1500": "down_absorbed",
+  "late_1500_1700": "flat",
+  "day_net": "down_small"
+ },
+ "expected_magnitude_usd": -70,
+ "expected_magnitude_band_usd": [-250, 150],
+ "magnitude_derivation": "DERIVED, not fitted: phase-table sum ph1 +620, ph2 -380, ph3 -290 = -50 net-of-open; gap -20 -> -70 day-move. The round-trip form with a ph3 buy-absorption close supports a small net, biased slightly down; anything tighter than ~+/-100 is tape-reading and is declared as such, not claimed as forecast skill.",
+ "onset_time_et": "03:14",
+ "turn_time_et": "09:01",
+ "secondary_turns_et": [
+  "10:48 post-print low -> reclaim turn (the print window's full excursion, -490)",
+  "14:00-15:00 settle/opex push (+300) absorbed -> flush to -260"
+ ],
+ "trend_vs_chop": "chop",
+ "continuation_vs_reversal": "reversal",
+ "path_p50_curve": [
+  [20, 0],
+  [22, 150],
+  [0, 80],
+  [2, 90],
+  [4, 580],
+  [6, 560],
+  [8, 320],
+  [10, 330],
+  [12, 180],
+  [14, 250],
+  [16, -60]
+ ],
+ "path_note": "cum USD vs prior close 3.270 from the 20:00 reopen. The 2-hourly clock CANNOT carry the day's two defining intra-bucket extremes: the +790 top at 09:00 (pre-print) and the -490 low at 10:48 (print window); both are declared here rather than smoothed away. Downsampled-curve extremes are lower bounds (evidence high_exc +850-vs-open vs curve +790-vs-prior-close).",
+ "confidence": "high",
+ "confidence_detail": "High on the causal decomposition - the curve is visible and all three round trips carry a named generator and a flow verdict. Medium on the forward-usable rule content: the print-window-vs-slope-channel interaction is n=2 inside this group only.",
+ "weight_assigned": {
+  "blind": 0.55,
+  "causal_mbo": 0.45
+ },
+ "weight_reason": "The blind stays core: sign right, net within $50, coil class right, gate's full-band denial vindicated (neither impulse held). The causal layer's 0.45 is earned by correcting the WINDOW structure the blind explicitly got wrong - its own falsification clause (i) fires as measured.",
+ "blind_mechanism_audit": {
+  "falsification_clause_i_preprint_share": "FIRED: 44.4% of the session's total variation ($6,260 of $14,090 on the downsampled curve) printed before 10:30, and the day's HIGH (+790) printed at 09:00. The blind's 'materially flat pre-print' claim (12.5% of intraday move) is REFUTED as measured, by its own clause. Net right, window wrong - and per the blind's own words the window is what gets extrapolated.",
+  "falsification_clause_ii_monotone_postprint": "did not fire - the post-print move round-tripped (flush -490 reclaimed to +210 by 12:00).",
+  "falsification_clause_iii_band": "did not fire (-60 inside -560..+400).",
+  "what_the_blind_got_right": "sign; net within $50; the coil/small-net day-class (51,708 trades = block max yet net -60); the eia gate's full-band denial; declining limb (c) not-pre-priced (now verified against the curve); declaring the 14:00-14:30 opex/settle window live without sizing it (it swung $560 and netted ~0 - exactly the declared shape).",
+  "what_the_blind_missed_and_why": "The entire pre-print UP structure (+790 by 09:00). Two generators were visible-but-unread: (1) D-1 0624 was a +790 BREAK day closing 0.97 off-low with a LATE high (19:17) - price-masked, so the blind labeled the chain 'decelerating down-chain gone flat' off flow-only evidence (+311 neutral); flow-only CANNOT distinguish a coil from an absorbed break - a structural blind limit, not a play error; (2) the rising burn/CDD slope channel (grid_stack est_gas_burn 33.0 -> 39.3 Bcf/d, gas_chg_7d +535,474 MWh, MAV 18Z warmer than MET 12Z by +0.624/+1.222 gw-CDD at h0/h1) was read as backdrop, not direction - under the S109 asymmetric-slope doctrine it was the live pre-print direction channel on the hill's lower slope."
+ },
+ "mbo_verdict": "A three-round-trip chop day, each leg with a flow verdict. Ph1 (~reopen->04:00, reconstructed): +766 flow / +620 px on 7,419 lots - ALIGNED conviction (+1), thin-tape overnight delivery of the slope channel; delivers. Ph2 (~04:00->12:00): -12 flow on 70,526 lots under a $1,280 range - a NET-ZERO two-sided auction across top (09:01 turn_down, mag 890), print flush (10:30->10:48, -770 in 18 min) and full reclaim (+210 by 12:00); conviction DEGENERATE-NULL (0.02% imbalance), declared rather than counted as aligned. Ph3 (~12:00->close): +1,202 flow / -290 px, absorb=true - NEGATIVE conviction: aggressive buying absorbed by passive sellers; the 14:00 settle/opex push (+300) fails to -260 and the close sags to -40. direction.flow_conviction_sign_gate per phase: +1 / null / -1. direction.absorption_is_reversal (refine-computable, EIA scope) called the close side - both impulses round-tripped and the ph3 absorption decided a small-negative close, exactly the play's claim that on print days absorption outranks surprise sign and D-1 tilt. The blind's flow.price_free_absorption_proxy read ('absorber present, take the turn SMALL') is CONFIRMED by the realized ph3 flag on the same day - a forward-evidence tick for that PROPOSED play. Phase->clock boundaries were reconstructed by matching phase pxchg cumsum to the realized curve - a refine-only privilege, and exactly the mapping the blind lens is on record as needing.",
+ "evidence_used": [
+  "g22_mbo_evidence.json 20260625: phases [+766/+620/7419, -12/-380/70526, +1202/-290/41429], ph_absorb [f,f,true], total_sflow +1956, onset 03:14 up, turn_down 09:01 mag 890, hi 09:01:38 / lo 10:48:21, n_trades 51,708 (block max)",
+  "g22_actual.json continuous, session clock marks vs prior close 3.270: 04:00 +600, 09:00 +790 HIGH, 10:00 +320, 10:30 +340, 10:35 -190, 10:48 -490 LOW, 12:00 +210, 14:00 +300, 15:00 -260, 16:00 -40, day_move -60; pre-10:30 total-variation share 44.4%",
+  "g22_exit_states.json 20260624: close 3.27, day +790, close_off_low_frac 0.97, high_late true (19:17) - the D-1 up-break the blind could not see",
+  "grp22_state.json 20260625 storage_consensus estimates array: 67.0 strictly-pre-print (06:25:05Z, actual column blank) / 74.0 first-post-print capture / 7.0 gap = house_disagreement exactly",
+  "grp22_state.json 20260626 storage vintage: level 2835, weekly_chg 76, vs_5yr 112 (actual print verification)",
+  "grid_stack (period 06-23, age 2): US48 est_gas_burn 39.3 Bcf/d (33.0 -> 39.3 ramp), gas_chg_7d +535,474 MWh, wind 1,071,933 MWh not surging, solar 1,168,216 MWh",
+  "model_disagreement: MAV 18Z warmer than MET 12Z, spread_gw_cdd +0.624 h0 / +1.222 h1, coverage 1.0 at h0/h1 and 0.0 beyond (declared hole)",
+  "flow_calendar: is_eia_print_day true, is_opex_day true (options_expiry_date 06-25), futures LTD 06-26 (days_to_futures_expiry 1), cme_early_close false",
+  "vol_regime n0: sigma_10 614, range_20_mean 1,244, prev_range 620, range_pctile 18.3 - the print normalized the realized range to the 20d mean off a low-range vintage",
+  "tape_conditions (D-1 0624): sflow +311, session_b_share_two_sided 0.503, big prints 49 @ 0.490 two-sided / 0.466 size-weighted, quote_bid_share 0.477 (the blind's gate inputs, re-confirmed)",
+  "cot: MM net -84,909 at 25.47 pctile 1y, WoW +37,708 improving (covering spent - capped the up tail, per the blind)",
+  "forecasts/g22_blind_round1/grp22_mbo_specialist_D.json: the immutable starting point, including its own falsification clauses"
+ ],
+ "evidence_rejected": [
+  "storage_consensus.consensus_chg_bcf 74.0 headline for decision-time use - post-print capture (final_capture_is_post_print true); used only to reconstruct and quantify the trap",
+  "top-level stor_surprise -5.0 - it is the PRIOR (06-18) print's seasonal-proxy surprise, not this print's surprise; reading it as a same-day bullish surprise would invert the actual +9 bearish decision-time surprise",
+  "options_surface - defective as declared (strikes 10x off, oi_weighted_strike not a pin); no pin recoverable even though the 14:00-15:00 opex/settle window visibly swung $560",
+  "weather_forecast_cycle morning delta (d0 +0.129 gw-HDD) - an HDD-only channel in a CDD block; overnight-ramp attribution rests on the CDD model spread + grid burn ramp instead",
+  "ph2 nominal flow_conviction +1 (sign(-12)*sign(-380)) - degenerate at 0.02% imbalance on 70,526 lots; declared null, not counted",
+  "contract_structure NGQ26 settle 3.276 vs anchor 3.198 disagreement - pre-block, unused, already flagged in the blind"
+ ],
+ "stand_down_reasons": [
+  "MBO BOOK layer: g22_mbo_evidence.json serves no book_trustworthy / execution_authority / conviction-floor verdict - book-based conclusions STAND DOWN per doctrine; the causal read runs on trade-flow phases + the realized curve only",
+  "options pin mechanism: described, never sized - the pin ladder is unrecoverable (defective options_surface) and the scored leg is NGQ26 while today's expiring options settle against NGN26 (calendar-spread reach only)",
+  "squeeze plays: unchanged from blind - the spread limb of squeeze_watch is price-derived and was masked at forecast time; nothing in the realized curve shows a squeeze signature into the 06-26 LTD on my leg (the 09:00 top faded pre-print rather than ratcheting), so no retroactive squeeze claim is made"
+ ],
+ "selection_reason": "EIA-Thursday print day with the print, opex and D-1-to-futures-LTD stacked; specialist D owns the print-anchored lens (pre-print positioning / delivery / post-delivery digestion).",
+ "handoff_out": {
+  "note": "0625 is not weekend-feeding (0626 follows); emitted voluntarily for E.",
+  "exit_type": "post-print digestion close under buy-side absorption - the afternoon push failed into the settle, close -40 net at 0.34 off the low",
+  "close_price": 3.264,
+  "last_hour_dir": -1,
+  "chain_polarity": "TWO-SIDED / unresolved - the 0624 up-break survived the bearish print (flush fully reclaimed) but could not extend (ph3 absorbed); neither a confirmed up-chain nor a resumed down-chain",
+  "what_0626_should_inherit": "(1) the slope channel is live and defended - a bearish print could not hold below the channel for even 90 minutes; (2) the up side is being ABSORBED, not delivered - ph3 +1,202 flow lost $290; expect continued reclaim-and-stall rather than a clean up leg; (3) futures LTD day on NGN26 - calendar noise reaches NGQ26 through the spread, as it did in today's 14:00-15:00 window"
+ },
+ "proposal_contribution": "TWO NAMED-TARGET CONTRIBUTIONS plus two forward-evidence ticks, all as text, no brain edits. (1) EIA PRINT INSIDE A RISING CDD/BURN HILL (directive target 1, answered on my day): the print owns the WINDOW, the slope owns the CLOSE-SIDE, and neither owns the NET unless the print moves the seasonal surplus story. Evidence 0625: a decision-time +9 Bcf bearish surprise (76 vs pre-print 67) delivered -770 in 18 minutes pinned to 10:30; the rising-burn slope channel bought ALL of it back within ~70 minutes (+210 by 12:00); the close was decided by ph3 absorption at -40; and the print left the surplus BETTER (vs_5yr 114 -> 112, +76 vs ~77-78 normal = seasonally in line), so it could not re-side the block. Second instance 0702 (same group): the day's LOW printed at 10:30:08 - the print window again - then reclaimed to a 0 close at close_off_low 0.77 on ph2/ph3 sell-flow absorption; mirror-signed, same structure. Proposed general form (extends daytype.storage_thursday_magnitude under the S109 asymmetric-slope doctrine): on a print day inside a live weather slope, (a) the PRE-PRINT structure and the POST-FLUSH reclaim take the SLOPE side (mild kills demand big; heat adds, but only some - the reclaim returns TO the channel, never births a new leg); (b) the decision-time surprise sizes the print-window EXCURSION, and the realized range normalizes toward range_20_mean even off a low-range vol vintage (0625: $1,280 vs mean $1,244 off an 18.3 pctile); (c) the DAY NET stays chain/absorption-owned and SMALL unless the print moves the actual-vs-5yr-normal seasonal story, in which case the standing swing rule takes over. n=2 IN-GROUP only (0625, 0702) - offered for spanning-group validation (candidate: G21 0618 re-read, next summer print group), NOT a brain edit. (2) RENEWABLE SUBTRACTOR, CREDIT ARM (directive target 2): my day is the confirming mirror of the 0629 miss. The slope channel was CREDITABLE on 0625 precisely because grid_stack showed the ramp was GAS: est_gas_burn 33.0 -> 39.3 Bcf/d, gas_chg_7d +535,474 MWh, wind flat - and the reclaims delivered. 0629 (wind +62%, burn -4.2 Bcf/d while CDD arrived) is the debit arm of the same rule: CDD credits gas only NET of the renewable stack - read grid_stack wind/solar/est_gas_burn BEFORE crediting a CDD slope to gas. Both arms now instantiated inside g22 (0625/0702 credit, 0629 debit); same spanning-group caveat. (3) FORWARD-EVIDENCE TICK for flow.price_free_absorption_proxy (PROPOSED, n=2): the blind fired it off open-time fields ('absorber present, take the turn SMALL') and the realized ph3 (absorb=true, +1,202 flow under -290 price) confirms the read on the same session - record n+1. (4) FORWARD-EVIDENCE TICK for direction.absorption_is_reversal on EIA days: the ph3 absorption verdict, not the surprise sign and not the D-1 tilt, called the close side on a day where BOTH impulses round-tripped. FIELD-NAMING RE-AFFIRMATION with new market-implied corroboration: the curve traded 67, not 74 - an $800 flush on the release second is inconsistent with a +2 in-line print inside a 7 Bcf dispersion; on print days the top-level consensus_chg_bcf must carry the pre-print value, and top-level stor_surprise on a print-day slice should be renamed or stamped (it is the PRIOR print's seasonal surprise).",
+ "defects_flagged": [
+  "storage_consensus post-print headline - RE-VERIFIED and quantified (67 pre-print / 74 post-capture / gap 7 = house_disagreement exactly; actual 76), with market-implied corroboration added: the curve traded the 67 expectation",
+  "top-level stor_surprise on a print-day slice is the PRIOR print's seasonal surprise (-5.0 = 06-18's 73 vs ~78 normal) - mislabel-shaped trap adjacent to the consensus trap, worth a rename or an explicit vintage stamp",
+  "options_surface unusable on the block's one opex day; the 14:00-15:00 settle/opex window visibly swung $560 - a working strike ladder had a real, measurable use here",
+  "phase tables carry no clock boundaries - in refine I reconstructed them from the curve (ph1 ~reopen->04:00, ph2 ~04:00->12:00, ph3 ~12:00->close); the blind EIA lens is on record needing exactly this mapping and cannot have it (re-affirms the S105 flag)",
+  "forward CDD ladder coverage 0.0 beyond D+1 (model_disagreement h2-h7 null) - BINDS on the hill: from 06-25 the following week's 14.8 -> 18.7 CDD leg was invisible, which is the block-level missed-hill root named in the run directive",
+  "downsampled continuous curve extremes are lower bounds (curve high +790-vs-prior-close vs evidence high_exc +850-vs-open; close 3.267 last-point vs official 3.264) - declared, not a contradiction"
+ ]
+}

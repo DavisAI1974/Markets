@@ -1,0 +1,135 @@
+{
+ "tag": "grp11",
+ "brain_version": "s99.2",
+ "price_basis": "NG.n.0 iid1021",
+ "direction_hits": 6,
+ "n_days": 12,
+ "close_cum_actual": 12690,
+ "close_cum_guess": -500,
+ "drift": -13190,
+ "final_price_actual": 4.416,
+ "anchor": 2.702,
+ "final_move_incl_gaps": 17140,
+ "days": [
+  {
+   "date": "2026-01-18",
+   "dow": "Sun",
+   "gap_actual": 2100,
+   "gap_guess": 100,
+   "net_actual": -10,
+   "net_guess": 150,
+   "dir_hit": false,
+   "archetype": "thin_sunday_reopen_bleed_pause"
+  },
+  {
+   "date": "2026-01-19",
+   "dow": "Mon",
+   "gap_actual": 10,
+   "gap_guess": 400,
+   "net_actual": 550,
+   "net_guess": 1600,
+   "dir_hit": true,
+   "archetype": "thin_holiday_counter_catalyst_bounce_day1"
+  },
+  {
+   "date": "2026-01-20",
+   "dow": "Tue",
+   "gap_actual": 0,
+   "gap_guess": 150,
+   "net_actual": 1930,
+   "net_guess": 700,
+   "dir_hit": true,
+   "archetype": "bounce_day2_ramp_still_building"
+  },
+  {
+   "date": "2026-01-21",
+   "dow": "Wed",
+   "gap_actual": -10,
+   "gap_guess": 50,
+   "net_actual": 3820,
+   "net_guess": -800,
+   "dir_hit": false,
+   "archetype": "bounce_death_giveback"
+  },
+  {
+   "date": "2026-01-22",
+   "dow": "Thu",
+   "gap_actual": -20,
+   "gap_guess": -50,
+   "net_actual": -170,
+   "net_guess": -900,
+   "dir_hit": true,
+   "archetype": "storage_thursday_in_chain_confirming_print"
+  },
+  {
+   "date": "2026-01-23",
+   "dow": "Fri",
+   "gap_actual": 40,
+   "gap_guess": 100,
+   "net_actual": 1170,
+   "net_guess": 800,
+   "dir_hit": true,
+   "archetype": "rising_ramp_delivery_counter_bounce"
+  },
+  {
+   "date": "2026-01-25",
+   "dow": "Sun",
+   "gap_actual": 2480,
+   "gap_guess": -250,
+   "net_actual": 180,
+   "net_guess": -350,
+   "dir_hit": false,
+   "archetype": "thin_sunday_priced_shock_backend_cut"
+  },
+  {
+   "date": "2026-01-26",
+   "dow": "Mon",
+   "gap_actual": -80,
+   "gap_guess": 150,
+   "net_actual": -620,
+   "net_guess": 500,
+   "dir_hit": false,
+   "archetype": "monday_no_material_gap_backend_re_add"
+  },
+  {
+   "date": "2026-01-27",
+   "dow": "Tue",
+   "gap_actual": -10,
+   "gap_guess": 50,
+   "net_actual": -260,
+   "net_guess": 300,
+   "dir_hit": false,
+   "archetype": "bounce_day2_fading"
+  },
+  {
+   "date": "2026-01-28",
+   "dow": "Wed",
+   "gap_actual": -20,
+   "gap_guess": 0,
+   "net_actual": -400,
+   "net_guess": -1000,
+   "dir_hit": true,
+   "archetype": "bounce_death_chain_side_resume"
+  },
+  {
+   "date": "2026-01-29",
+   "dow": "Thu",
+   "gap_actual": -10,
+   "gap_guess": -200,
+   "net_actual": 1480,
+   "net_guess": -1800,
+   "dir_hit": false,
+   "archetype": "storage_thursday_bullish_print_sold_exit_liquidity"
+  },
+  {
+   "date": "2026-01-30",
+   "dow": "Fri",
+   "gap_actual": -30,
+   "gap_guess": -150,
+   "net_actual": 5020,
+   "net_guess": 300,
+   "dir_hit": true,
+   "archetype": "post_crash_bleed_pause"
+  }
+ ]
+}

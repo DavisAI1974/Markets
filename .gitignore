@@ -92,6 +92,9 @@ data/pyth_ticks/
 data/nymex_mbp10/
 data/nymex_cont/
 
+# Kalshi NG store (feed L, S98 gate: definitions+trades+candles; git = CODE, S3 = DATA)
+data/kalshi_ng/
+
 # Level-hit dataset output (S82, local research map)
 data/level_hits_*.json
 
@@ -102,3 +105,20 @@ data/nws_temp/
 data/nymex_curve/
 data/forecast/
 data/nymex_analog/
+
+# S94: local NG/CL tape cache pulled from S3 (raw MBP-10, huge, re-pullable) — never commit
+research/kalshi/data/nymex_cont/
+research/kalshi/data/
+weather/mos_asof/raw/
+data/nymex_cont_n0/
+data/nymex_cont_n1/
+data/cot/raw/
+data/contract_structure/NG_statistics_raw.json.gz
+
+# S100 doctrine alignment: git = CODE, S3 = DATA (platform_sync pull restores local stores).
+# The last 7 legacy-tracked store files untracked 2026-07-20; S3 manifests are authoritative.
+data/
+
+# S114: rehearsal artifacts (suffix _b) - regenerable from stage_group --suffix, and per D34
+# data/ is disposable. The REHEARSAL STATE is not a record; the committed g22 state is.
+research/kalshi/renders/ng_refine_s95/*_b.json

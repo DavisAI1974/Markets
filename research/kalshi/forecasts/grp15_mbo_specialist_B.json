@@ -1,0 +1,98 @@
+{
+  "specialist": "B",
+  "lens": "monday_catchup",
+  "group": 15,
+  "brain_version": "s102.1",
+  "execution": "SHADOW",
+  "doctrine": "Posterior update of the IMMUTABLE blind (grp15.json). The blind stays the core predictor; MBO/L1 flow adjusts ONLY where causal evidence is material. Never a replacement forecast. Both my days are R3 Friday-carry Mondays in the blind - I test whether MBO flow confirms carry-down or shows a deep-book shakeout/reversal.",
+  "data_quality_note": "Across BOTH my days every feature-state row carries stand_down_reason 'mbo_mapping_flags' and execution_authority is NEVER granted (0/73 rows 0316, 0/71 rows 0323). Per doctrine piece 8 the reconstructed BOOK is not trustworthy here: queue depth, far_side_recruitment and the 1-min imb_level/imb_flow tick series get REDUCED authority. Trades remain valid, so I lean on the TRADE-FLOW phase structure (signed flow x price change x volume) + session turns, and LABEL the book limitation. Weak book data must not create false precision - confidence capped accordingly. This is SHADOW throughout.",
+  "cross_day_finding": "Both Mondays are the SAME microstructure at different scale: an overnight thin-book SHAKEOUT UP (0316 +490 to 02:21; 0323 +1270 to 03:52) printed on NON-confirming flow (ph0 sflow -493 / -26 while price rises = divergence, not real buying), which REVERSES before/through the 06-10 ET catch-up window into a violent carry-DOWN (ph1: -930 on 43k vol / -1920 on 58k vol), then a late buy-flow phase (ph2 sflow +959 / +2409). The DISCRIMINATOR is ph2 absorption: 0316's late buying was ACCOMMODATED (price +140, close off the low, absorb_session False) while 0323's was ABSORBED (price -290 despite +2409 buy flow, absorb_session True) so the close pinned near the low. The blind's flagged monday.window_deep_book_shakeout ('needs the live 06:00 book') is now RESOLVED by the MBO: the shakeout is an overnight UP head-fake that PRECEDES the carry-down, it does not invalidate the R3 carry thesis.",
+  "days": [
+    {
+      "date": "20260316",
+      "dow": "Mon",
+      "instrument": "NGJ26 (1008, correct pre-roll April leg - on-basis)",
+      "blind_direction": "down",
+      "blind_net_usd": -650,
+      "posterior_direction_by_horizon": {
+        "overnight_20_02": "up head-fake (deep-book shakeout, +490 peak 02:21 ET) - price up on NEGATIVE flow, non-confirming",
+        "carry_02_06": "down (reversal off the shakeout top, carry-down onset 02:21)",
+        "catchup_06_10": "down - the R3 carry delivers through the catch-up window",
+        "midday_10_14": "down to the session low (-980 excursion, 13:11 ET)",
+        "close_14_20": "partial UP bounce - ph2 buy flow +959 accommodated (+140 px), close off the low",
+        "net": "down"
+      },
+      "expected_magnitude_usd": -570,
+      "onset_time_et": "2026-03-16 02:21 ET (carry-down onset, immediately after the overnight shakeout top)",
+      "turn_time_et": "2026-03-16 02:21 ET shakeout-top turn_down (mag 1040); secondary low-turn 13:11 ET into the late bounce",
+      "trend_vs_chop": "trend down, bracketed by an overnight up head-fake and a modest late bounce (mild chop at the edges, trending core)",
+      "continuation_vs_reversal": "continuation (R3 carry-down) with a genuine late PARTIAL reversal - not a day-level reversal",
+      "path_p50_curve": [[20,0],[22,150],[0,300],[2,460],[4,180],[6,-120],[8,-360],[10,-620],[12,-880],[14,-820],[16,-680],[18,-600],[20,-570]],
+      "confidence": 0.62,
+      "weight_assigned": 0.5,
+      "evidence_used": [
+        "phase-flow structure: ph0 +230 px on -493 sflow (up-shakeout on sell flow = divergence/non-confirming); ph1 -930 px on 43229 vol sell flow (the carry delivery); ph2 +140 px on +959 sflow (late buy ACCOMMODATED, close off low)",
+        "turn_down 02:21 ET (mag 1040 off +490) = the overnight shakeout resolving down before the catch-up window",
+        "session low -980 at 13:11 ET (deeper excursion than the blind's -680 low) with absorb_session False (bounce real, not absorbed)",
+        "div_exhausting flags at 20:34 / 03:04 corroborating the up head-fake exhausting into the down carry"
+      ],
+      "evidence_rejected": [
+        "the 1-min imb_level / imb_flow tick series (sign-flips every few minutes, e.g. +0.29 to -0.50 overnight; noise under mbo_mapping_flags, no exec authority) - a naive minute-grain flow-follower would have been whipsawed LONG on the overnight pop",
+        "far_side_recruitment / queue-depth reads (book low-authority under persistent mbo_mapping_flags; values are tiny and unstable)"
+      ],
+      "stand_down_reasons": [
+        "mbo_mapping_flags on every row -> book/queue conclusions disabled; trade-flow only",
+        "execution_authority never granted (0/73 rows) -> SHADOW, no live fire",
+        "insufficient_recent_trades during thin overnight/settle minutes -> those windows read from phase flow, not tick book"
+      ],
+      "mbo_verdict": "HELP (modest). Direction unchanged (down, blind correct). MAGNITUDE: trims the close from blind -650 toward -570 (actual -550) by crediting the ph2 buy accommodation - the blind drew the close near its low, MBO says off the low. TURN/PATH: materially better - MBO resolves the blind's deferred deep-book-shakeout as an overnight UP head-fake at 02:21 that precedes (does not threaten) the carry-down, and identifies the 13:11 low. HOW IT COULD HURT: read at TICK grain the overnight up + noisy positive imb minutes would have signalled a false reversal-to-up; only the phase/divergence framing (price-up-on-sell-flow) saves the call.",
+      "selection_reason": "Monday-catchup lens: the blind's R3 Friday-carry-down is CONFIRMED by the ph1 delivery flow; the specialist adds the overnight-shakeout turn and the late-accommodation close-off-low that the blind could not see. Kept the blind as the core; adjusted magnitude ~80 and the path shape only."
+    },
+    {
+      "date": "20260323",
+      "dow": "Mon",
+      "instrument": "NGK26 (996, correct post-roll May leg - on-basis)",
+      "blind_direction": "down",
+      "blind_net_usd": -800,
+      "posterior_direction_by_horizon": {
+        "overnight_20_04": "large UP head-fake (deep-book shakeout, +1270 peak 03:52 ET) on ~flat flow (ph0 sflow -26 vs +1140 px) = severe divergence, no real buying",
+        "carry_04_06": "down (violent reversal off the shakeout top, carry-down onset 03:52)",
+        "catchup_06_10": "down - the R3 carry delivers hard through the catch-up window",
+        "midday_10_14": "down, accelerating to the session low (-1460 excursion, 14:35 ET)",
+        "close_14_20": "down held - ph2 buy flow +2409 ABSORBED (price still -290), close pins NEAR the low",
+        "net": "down"
+      },
+      "expected_magnitude_usd": -1080,
+      "onset_time_et": "2026-03-23 03:52 ET (carry-down onset, after the large overnight shakeout top)",
+      "turn_time_et": "2026-03-23 03:52 ET shakeout-top turn_down (mag 2360); session low 14:35 ET (no late bounce - absorbed)",
+      "trend_vs_chop": "strong trend down (absorb_session True), preceded only by the overnight up head-fake",
+      "continuation_vs_reversal": "continuation (R3 carry-down), close NEAR the low - late buy flow absorbed, no reversal",
+      "path_p50_curve": [[20,0],[22,500],[0,950],[2,1150],[4,1250],[6,700],[8,0],[10,-600],[12,-1050],[14,-1420],[16,-1250],[18,-1150],[20,-1080]],
+      "confidence": 0.66,
+      "weight_assigned": 0.6,
+      "evidence_used": [
+        "phase-flow structure: ph0 +1140 px on -26 sflow (huge up-shakeout on NO flow = severe divergence); ph1 -1920 px on 58094 vol sell flow (violent carry delivery - the biggest single-phase move of my two days); ph2 -290 px DESPITE +2409 sflow (buy flow ABSORBED)",
+        "absorb_session True + ph2 absorb True = heavy late buying meeting heavier resting sell supply -> close pins near the low, NOT a recovery",
+        "turn_down 03:52 ET (mag 2360 off +1270) = overnight shakeout resolving down before the catch-up window",
+        "session low -1460 at 14:35 ET (blind drew low ~-970) - the carry ran far deeper than the blind sized"
+      ],
+      "evidence_rejected": [
+        "the 1-min imb_level / imb_flow tick series (e.g. +0.55 imb_level at 20:05 during the up head-fake; +1.0/+1.2 imb_flow spikes overnight) - would have false-signalled LONG into the +1270 pop; noise under mbo_mapping_flags, no exec authority",
+        "far_side_recruitment / queue reads (book low-authority, mapping_flags throughout)"
+      ],
+      "stand_down_reasons": [
+        "mbo_mapping_flags on every row -> book/queue conclusions disabled; trade-flow only",
+        "execution_authority never granted (0/71 rows) -> SHADOW, no live fire",
+        "insufficient_recent_trades in thin overnight/settle minutes -> phase flow used there, not tick book"
+      ],
+      "mbo_verdict": "HELP (substantial, on MAGNITUDE). Direction unchanged (down, blind correct; the blind also correctly declined the far-window cold-add up-temptation). The blind UNDER-sized at -800; the ph1 violent delivery (-1920 on 58k vol) says the carry-down was far larger, and the ph2 ABSORPTION (buy +2409 but price -290, absorb_session True) says the close holds near the low - together the posterior deepens to -1080, closing almost the entire 290 gap to the actual -1090. TURN: MBO identifies the 03:52 overnight-shakeout top. HOW IT COULD HURT: same as 0316 - at tick grain the +1270 overnight pop with positive imb minutes reads as a reversal-to-up; only the divergence/phase framing keeps the carry-down call.",
+      "selection_reason": "Monday-catchup lens: the blind's R3 carry-down direction and its 'far add does not price' decision are BOTH confirmed by flow; the specialist's value is deepening the magnitude via the ph1 delivery + ph2 absorption reads that the blind's state-only view under-sized. The MBO's absorb_session flag is the reason the close stays near the low here (vs 0316's bounce) - the discriminator between the two otherwise-identical Mondays."
+    }
+  ],
+  "summary": {
+    "0316": "Blind -650 down -> posterior -570 down (actual -550). MBO HELP (modest): direction kept, magnitude trimmed ~80 toward actual via late buy-accommodation, overnight shakeout-up turn + 13:11 low identified.",
+    "0323": "Blind -800 down -> posterior -1080 down (actual -1090). MBO HELP (substantial): direction kept, magnitude DEEPENED ~280 to nearly match actual via the violent ph1 delivery + ph2 absorption/absorb_session read.",
+    "helped_or_hurt": "HELP on both, net POSITIVE for the Monday-catchup lens. MBO's contribution was TIMING/TURNS (both days: an overnight thin-book UP head-fake that resolves into carry-down before the 06-10 catch-up window) and MAGNITUDE (0323 especially, deepening the under-sized blind toward the actual). Where MBO would HURT: only if read at 1-min tick grain - the noisy imb_level/imb_flow series and the raw overnight up-price would have generated false LONG signals; the persistent mbo_mapping_flags correctly withheld execution_authority and forced a trade-flow/phase read, which is exactly what carried the signal. The book layer added nothing trustworthy here (mapping_flags throughout); all lift came from signed trade-flow phase structure + session turns.",
+    "vs_prior_state_refine_benchmark": "Consistent with grp15_refined_view (0316 -580, 0323 -980/-1000; both hit). The MBO posterior lands at -570 / -1080 - same direction, 0323 marginally deeper (closer to actual -1090) because the ph1/ph2 flow made the under-sizing explicit rather than inferred."
+  }
+}

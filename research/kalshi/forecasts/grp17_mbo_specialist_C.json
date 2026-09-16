@@ -1,0 +1,119 @@
+{
+ "specialist": "C",
+ "lens": "core intraday tape - accumulation arm + right-the-ship (mid-block turn re-derivation)",
+ "group": "g17",
+ "brain_version": "s102.6",
+ "round": 1,
+ "days_owned": ["20260414", "20260415", "20260422"],
+ "anchor": 2.653,
+ "doctrine_note": "Blind stays the CORE predictor; MBO is a POSTERIOR turn/absorption update. Direction stays with the D-1 tilt UNLESS a mid-block turn stack has BUILT (structure.accumulation_arm_turn + selector.midblock_right_the_ship). The accumulation window is >=2 big-print-buy fires (>=0.55) over the last ~5 sessions, NON-consecutive, under a sub-0.50 sell tape against an extreme-and-worsening COT short. Magnitudes DERIVED from phase/absorption state, never fitted to actual; honest under-100; the reactive roll/seam tail is not mine to claim. Book layer stands down every day (no book_trustworthy verdict).",
+ "cross_cutting_mbo_finding": "The tweaked accumulation logic explains the G17 mid-block turn CAUSALLY, and the >=2-of-~5 NON-consecutive window is what makes it work. The buy-absorption sequence is spaced/every-other (04-14 0.583, 04-16 0.692, 04-21 0.609) under a persistent sub-0.50 sell session tape (0.423/0.446/0.452) while the COT short worsens to a record (futures MM net pctile 6.6 -> 0.94, ICE LD1 pinned 0.94, chg_wow -18k -> -28k). A strict 2-of-3-consecutive window sees zero of this and rides the S3-down default straight through the turn - which is exactly the blind's 0415/0422 misses. The window count as-of each open discriminates cleanly WITHOUT over-firing: 0414 has 0 recent fires (stays DOWN, correct), 0415 has 1 fire (below threshold - stays a genuine TRANSITION/bimodal, not a confident flip), 0422 has 3 fires + all RTS conditions met (COT record-short AND worsening; chain based/reversed off 0421; no new cum-extreme) so the arm FIRES and RTS unlocks the selector from chain-down to turn-side. Mechanism = accumulation: big buyers absorb the sell tape without capitulation (0414 already prints 0.583 buy on its own down day), the absorbed flow flips aligned-UP intraday on 0415 (ph2/ph3 signed buy +1326/+1914 with price rising = ALIGNED conviction, not absorption-under-falling), and delivers on the June leg 0422. Honest limit: the arm gives the SIGN, not the magnitude - the 0421 roll seam + squeeze did much of the reactive up-move, so I claim only the confirmed-turn portion.",
+ "days": [
+  {
+   "date": "20260414",
+   "dow": "Tue",
+   "day_class": "core_tuesday_young_down_chain_under_absorption",
+   "blind_direction": "down",
+   "blind_net_usd": -520,
+   "posterior_direction_by_horizon": {"open_to_mid": "down", "mid_to_close": "down_damped", "close": "down"},
+   "expected_magnitude_usd": -300,
+   "expected_magnitude_band_usd": [-410, -190],
+   "onset_time_et": "22:00",
+   "turn_time_et": null,
+   "trend_vs_chop": "trend_down_absorbed",
+   "continuation_vs_reversal": "continuation",
+   "path_p50_curve": [[18, 0], [20, -70], [22, -140], [0, -190], [2, -220], [4, -240], [6, -255], [8, -270], [10, -285], [12, -295], [14, -300], [16, -300]],
+   "confidence": "medium-high",
+   "weight_assigned": {"blind": 0.65, "causal_mbo": 0.35},
+   "evidence_used": [
+    "MBO turn_down net -290 = aligned down conviction, confirms DOWN sign",
+    "D-1 (0413) session_b_share 0.423 + big_print_b_share 0.472 = sell tape, no buy-absorption fire yet - accumulation arm silent, honestly stays chain-sided",
+    "young down-chain from 2.653 anchor (age ~2); D-1 close 2.62 continuing lower",
+    "0414's OWN session big_print_b_share 0.583 = buyers ABSORBING intraday (no capitulation) -> caps magnitude, damps the blind's -520"
+   ],
+   "evidence_rejected": [
+    "blind -520 over-size = systematic shoulder S3-down over-sizing (magnitude.s1void / shoulder_counter_print_damping); the absorption floor pulls it in to ~-300",
+    "MBO book/div layer (no book_trustworthy verdict) - stood down"
+   ],
+   "stand_down_reasons": [
+    "accumulation arm does NOT fire (0 buy-absorption fires in the window as-of 0414 open) - no basis to move the sign off DOWN",
+    "MBO book layer stood down (execution_authority/conviction floor not met)"
+   ],
+   "selection_reason": "core Tuesday, no calendar catalyst; C is default owner. Turn stack has NOT built - down continuation, but sized to the absorption floor not the naked chain slope.",
+   "mbo_verdict": "aligned_down_conviction_damped_by_building_accumulation_floor"
+  },
+  {
+   "date": "20260415",
+   "dow": "Wed",
+   "day_class": "core_wednesday_turn_transition_stack_below_threshold",
+   "blind_direction": "down",
+   "blind_net_usd": -130,
+   "posterior_direction_by_horizon": {"open_to_mid": "flat_slight_down", "mid_to_close": "up_turn_beginning", "close": "flat_to_up"},
+   "expected_magnitude_usd": 40,
+   "expected_magnitude_band_usd": [-60, 130],
+   "onset_time_et": "02:00",
+   "turn_time_et": "06:00",
+   "trend_vs_chop": "chop_turning",
+   "continuation_vs_reversal": "reversal_beginning",
+   "path_p50_curve": [[18, 0], [20, -15], [22, -30], [0, -35], [2, -30], [4, -15], [6, 0], [8, 15], [10, 25], [12, 32], [14, 38], [16, 40]],
+   "confidence": "low",
+   "weight_assigned": {"blind": 0.45, "causal_mbo": 0.55},
+   "evidence_used": [
+    "MBO ph2/ph3 signed BUY flow +1326/+1914 with price RISING = ALIGNED buy conviction (flow_conviction positive), the turn beginning to deliver - not absorption-under-falling",
+    "D-1 (0414) big_print_b_share 0.583 = FIRST buy-absorption fire enters the window; COT extreme+worsening (net -86k, pctile 6.6 futures / 0.94 ICE LD1)",
+    "the accumulation stack is BUILDING but at 0415 open holds only 1 fire (below the >=2 threshold)"
+   ],
+   "evidence_rejected": [
+    "blind DOWN -130 chain-default - the down thesis broke intraday as the absorbed flow flipped aligned-up",
+    "MBO book layer - stood down"
+   ],
+   "stand_down_reasons": [
+    "literal accumulation arm NOT at threshold pre-open (1 fire, needs >=2) - so I do NOT claim a confident UP; I emit a genuine flat-to-up bimodal, honest under-claim",
+    "MBO book layer stood down"
+   ],
+   "selection_reason": "core Wednesday, C owns. First crack of the mid-block turn: the stack is one fire short of unlock, so this is a TRANSITION day (sign lifted off confident DOWN to flat/turn-pending), not yet the full flip.",
+   "mbo_verdict": "absorption_transitioning_to_aligned_buy_first_turn_crack_bimodal_flat_to_up"
+  },
+  {
+   "date": "20260422",
+   "dow": "Wed",
+   "day_class": "core_wednesday_accumulation_arm_fires_rts_unlock_june_leg",
+   "blind_direction": "down",
+   "blind_net_usd": -100,
+   "posterior_direction_by_horizon": {"open_to_mid": "flat_up", "mid_to_close": "up", "close": "up"},
+   "expected_magnitude_usd": 110,
+   "expected_magnitude_band_usd": [10, 210],
+   "onset_time_et": "00:00",
+   "turn_time_et": "22:00",
+   "trend_vs_chop": "trend_up_mixed",
+   "continuation_vs_reversal": "reversal_confirmed",
+   "path_p50_curve": [[18, 0], [20, -10], [22, -20], [0, -10], [2, 10], [4, 30], [6, 50], [8, 68], [10, 85], [12, 98], [14, 106], [16, 110]],
+   "confidence": "medium",
+   "weight_assigned": {"blind": 0.35, "causal_mbo": 0.65},
+   "evidence_used": [
+    "structure.accumulation_arm_turn FIRES: 3 non-consecutive big-print-buy fires in the ~5-session window (0414 0.583, 0416 0.692, 0421 0.609) under a sub-0.50 sell tape (0.423/0.446/0.452)",
+    "selector.midblock_right_the_ship UNLOCK: COT record short AND worsening (futures MM net pctile 6.6->0.94, net -86k->-114k, chg_wow -18k->-28k; ICE LD1 pinned 0.94) + chain based/reversed off 0421 (+260) with no new down cum-extreme >=2 sessions",
+    "MBO net +150 (June/NGM26 leg) confirms the up delivery"
+   ],
+   "evidence_rejected": [
+    "blind DOWN -100 chain-default - RTS overrides: the S3-down default is not sign-certain merely because the HDD>=16.4 catalyst-override is gated out in the shoulder",
+    "MBO book layer - stood down"
+   ],
+   "stand_down_reasons": [
+    "June-leg two-sidedness ('mixed') + the reactive 0421 roll-seam/squeeze tail cap conviction and magnitude - the arm gives the SIGN, not the full move; honest under-claim on magnitude",
+    "MBO book layer stood down"
+   ],
+   "selection_reason": "core Wednesday, C owns. The turn stack is fully built and confirmed here (arm literal-fires + all RTS conditions met), so the selector unlocks from chain-down to turn-side and 0422 takes the UP sign.",
+   "mbo_verdict": "turn_confirmed_aligned_buy_arm_fires_sign_to_turn_side_magnitude_capped_by_june_leg_mix"
+  }
+ ],
+ "summary": {
+  "posterior_dir_calls": {"20260414": "down", "20260415": "flat_to_up", "20260422": "up"},
+  "posterior_magnitudes_usd": {"20260414": -300, "20260415": 40, "20260422": 110},
+  "blind_magnitudes_usd": {"20260414": -520, "20260415": -130, "20260422": -100},
+  "sign_changes_vs_blind": ["20260415 down->flat/up (transition, stack below threshold)", "20260422 down->up (accumulation arm fires + RTS unlock)"],
+  "sign_held_vs_blind": ["20260414 down (damped)"],
+  "book_layer_status": "stood down all 3 days (no book_trustworthy verdict) - trade-flow/absorption read only",
+  "honest_note": "0422 up is claimed as the confirmed-turn portion only; the 0421 roll seam + squeeze reactive tail is excluded. All three magnitudes derived from absorption/COT/phase state, not fitted."
+ }
+}

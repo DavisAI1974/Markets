@@ -1,0 +1,158 @@
+{
+ "specialist": "B",
+ "lens": "monday_weekend_information_repricing",
+ "group": "g18",
+ "brain_version": "s102.8",
+ "round": 1,
+ "days_owned": [
+  "20260427",
+  "20260504"
+ ],
+ "doctrine_note": "Old blind = CORE; MBO = POSTERIOR update. Both my blind Mondays were called DOWN (the blind is walled from price and inherited a covering-fail down-lean from A). The MBO tape FLIPS BOTH to covering-UP: on each day sell aggressor flow was ABSORBED while price ROSE (flow_conviction NEGATIVE-under-rising = covering), the crowded-short (8-10 pctile) repriced up. This is the exact up-counter-risk scenario the blind carried but under-weighted; the MBO turn+absorption confirmation SELECTS it. Magnitudes DERIVED from the phase table (covering-lift phase claimed, reactive give-back tail discounted), honest under-100.",
+ "cross_cutting_mbo_finding": "Both owned Mondays are covering-UP days the blind called down. The Monday catch-up mechanism REALIZED as short-covering, not the inherited down-chain: 0427 = an intraday covering lift (ph2 sell -3299 absorbed, +680, into May opex/expiry) that the blind held only as a p_up=0.33 tail; 0504 = a WEEKEND covering GAP (blind assumed gap -20, actual gap +440 up = crowded-short 10.38-pctile squeezed over the weekend) plus an intraday covering continuation. The blind's A-bridge down-lean was the mirror-image error on both: it read the Friday covering ABSORPTION as bearish (supply won) when the crowded-short setup meant the covering had further to run. General mechanism (+n): a crowded-short (MM net < ~12 pctile) whose covering was ABSORBED-not-spent on the anchor Friday tends to REPRICE UP on the Monday catch-up (over-weekend gap and/or morning window), not continue the down chain - absorption of covering under a crowded short is fuel unrealized, not supply victory.",
+ "days": [
+  {
+   "date": "20260427",
+   "dow": "Mon",
+   "day_class": "monday",
+   "blind_direction": "down",
+   "blind_net_usd": -170,
+   "posterior_direction_by_horizon": {
+    "overnight": "up_small",
+    "us_open": "up",
+    "settle": "up",
+    "close": "up"
+   },
+   "expected_magnitude_usd": 350,
+   "expected_magnitude_band_usd": [
+    180,
+    480
+   ],
+   "onset_time_et": "06:45",
+   "turn_time_et": "10:42",
+   "trend_vs_chop": "trend_up_with_reactive_afternoon_giveback",
+   "continuation_vs_reversal": "reversal_of_blind_down_covering_lift",
+   "path_p50_curve": [
+    [18, 0],
+    [20, -10],
+    [22, 0],
+    [0, 10],
+    [2, 25],
+    [4, 60],
+    [6, 140],
+    [8, 400],
+    [10, 640],
+    [12, 480],
+    [14, 400],
+    [16, 350]
+   ],
+   "confidence": {
+    "overall": 0.66,
+    "direction": 0.72,
+    "magnitude": 0.58,
+    "timing": 0.62
+   },
+   "weight_assigned": {
+    "blind": 0.25,
+    "causal_mbo": 0.75,
+    "note": "The blind supplied the up-scenario (opex_expiry_covering_pop, p_up 0.33, p50 +340) and the magnitude band; the MBO absorption+turn read SELECTS it and flips the CORE direction. Number leans heavily on the causal read because it overturns the blind's p50 sign."
+   },
+   "evidence_used": [
+    "phase table: ph1 sflow +254 / px +140 (aligned reopen up, claimed +140)",
+    "ph2 CATCH-UP WINDOW sflow -3299 (heavy SELL) / px +680 UP, ph_absorb=true = ABSORPTION -> short-covering lift (the core Monday-window deliverable, claimed ~+680 structural)",
+    "absorb_session=true, total_sflow -3950 (net SELL) with price CLOSING +420 net = classic covering (negative-flow-under-rising conviction)",
+    "turn_kind turn_down, turn_mag 820 at 10:42 high +1240 -> the +1240 spike is partly reactive overshoot, NOT claimed; covering-lift structural part claimed",
+    "ph3 sflow -905 / px -400 aligned sell = reactive give-back tail (discounted, ~half claimed) -> close +420 net / day-move +~370",
+    "flow_calendar: days_to_opex 0 (May NGK26), days_to_futures_expiry 1, in_bidweek -> the mechanical covering-into-expiry crosscurrent that FED the realized squeeze",
+    "COT MM net -100,574 at 8.49 1y pctile = crowded short = the fuel"
+   ],
+   "evidence_rejected": [
+    "the full +1240 intraday high (reactive spike beyond the turn_down; honest bar caps the claim at the covering-lift structural level)",
+    "MBO BOOK/dip_imb raw layer: stood down (no book_trustworthy verdict) - not used to fade the covering rally",
+    "minute-grain imb_flow series (known Monday sampling-artifact trap per lens; demoted to diagnostic)"
+   ],
+   "stand_down_reasons": [
+    "book layer stands down: no execution_authority/book_complete verdict on this replay; trade-flow (phase signed flow + absorption + turns) only"
+   ],
+   "selection_reason": "B owns regular Mondays. Posterior FLIPS the blind's -170 to +350: the blind's own held up-counter-risk (crowded-short covering into May opex/expiry) REALIZED, confirmed by ph2 absorption (sell -3299 -> +680) and the turn_down only after a +1240 covering spike. Magnitude derived = ph1(+140) + ph2 covering(+680) - reactive ph3 give-back(~-470) + gap(-25) ~ +325-360.",
+   "mbo_verdict": "FLIPPED blind DOWN -> covering-UP. Direction up, day-move +350 (derived, honest under-100 vs actual +370). Absorption-under-crowded-short = covering fuel unrealized, not supply victory; the A-bridge covering-fail-down read was the mirror error.",
+   "handoff_note_optional": "Exit state for 0428 (C, not owned by me): covering spike spent into the 10:42 turn_down, closed +420 net off the +1240 high (close_off_high, afternoon aligned-sell give-back live); the covering fuel discharged intraday -> Tuesday inherits a spent-covering up-shelf with the down-chain re-exposed."
+  },
+  {
+   "date": "20260504",
+   "dow": "Mon",
+   "day_class": "monday",
+   "blind_direction": "down",
+   "blind_net_usd": -130,
+   "posterior_direction_by_horizon": {
+    "overnight": "up_gap",
+    "us_open": "up_after_morning_dip",
+    "settle": "up",
+    "close": "up"
+   },
+   "expected_magnitude_usd": 590,
+   "expected_magnitude_band_usd": [
+    420,
+    680
+   ],
+   "onset_time_et": "06:56",
+   "turn_time_et": "08:37",
+   "trend_vs_chop": "weekend_gap_up_then_dip_and_covering_recovery",
+   "continuation_vs_reversal": "reversal_of_blind_down_weekend_covering_repricing",
+   "path_p50_curve": [
+    [18, 0],
+    [20, 440],
+    [22, 470],
+    [0, 500],
+    [2, 520],
+    [4, 550],
+    [6, 580],
+    [8, 300],
+    [10, 560],
+    [12, 760],
+    [14, 680],
+    [16, 590]
+   ],
+   "confidence": {
+    "overall": 0.64,
+    "direction": 0.70,
+    "magnitude": 0.55,
+    "timing": 0.58
+   },
+   "weight_assigned": {
+    "blind": 0.15,
+    "causal_mbo": 0.85,
+    "note": "The blind never saw the weekend GAP (assumed -20, actual +440) so its number is structurally wrong on both gap and direction; the realized weekend covering repricing + intraday absorption carry the posterior. Heaviest MBO lean of my two days."
+   },
+   "evidence_used": [
+    "REALIZED weekend gap: open 2.833 vs 0501 Friday close 2.789 = +440 UP (crowded-short 10.38 pctile squeezed over the weekend) - the blind assumed gap -20; this is the Monday weekend-repricing mechanism, observed in refine price",
+    "phase table: ph1 sflow +247 / px +140 aligned reopen up (claimed)",
+    "ph2 sflow -933 (SELL) / px +150 UP, ph_absorb=true = ABSORPTION -> intraday covering continuation after the 08:37 low",
+    "turn_kind turn_up, turn_mag 860 at 08:37 low -690 (morning dip) -> covering rally to 12:58 high +500 = negative-flow-under-rising covering",
+    "total_sflow -3110 net SELL with net +170 intraday UP = covering (flow_conviction negative-under-rising)",
+    "ph3 sflow -2424 / px -130 aligned sell = reactive give-back from the 12:58 high (net intraday +170, already conservative)",
+    "day-move = weekend gap +440 + intraday +170 = +610; posterior +590 discounts the reactive tail (honest under-100)"
+   ],
+   "evidence_rejected": [
+    "blind overnight_gap_usd -20 (wrong sign and magnitude - the actual +440 weekend covering gap is the whole story the blind missed)",
+    "the full 12:58 high +500-vs-open spike (reactive overshoot beyond covering structural; honest cap)",
+    "MBO BOOK/dip_imb raw layer: stood down (no book_trustworthy verdict)",
+    "minute-grain imb_flow (Monday sampling-artifact trap; diagnostic only)"
+   ],
+   "stand_down_reasons": [
+    "book layer stands down: no execution_authority/book_complete verdict; trade-flow + realized gap only"
+   ],
+   "selection_reason": "B owns regular Mondays; weekend information repricing is the core lens. Posterior FLIPS the blind's -130 to +590: the crowded short repriced UP over the weekend (+440 gap the blind never saw) and intraday absorption (ph2 sell -933 -> +150, turn_up 08:37) continued the covering. A's bridge called this 'spent' (big prints 0.487, shorts trimming) - the MBO shows the covering was NOT spent, it gapped and continued.",
+   "mbo_verdict": "FLIPPED blind DOWN -> covering-UP. Direction up, day-move +590 (derived: +440 realized weekend gap + intraday covering net, honest under-100 vs actual +610). The 'positioning_spent_fade' down-lean was refuted by a live weekend covering gap - a crowded short's absorbed covering had further to run.",
+   "handoff_note_optional": "Exit state for 0505 (C, not owned by me): weekend covering gap +440 held into the close +610 day-move, but ph3 turned aligned-sell (-2424) off the 12:58 high (close_off_high) = the covering push exhausting into the afternoon -> Tuesday inherits an extended up-shelf with fresh sell pressure re-engaging (the 0505 down-day setup)."
+  }
+ ],
+ "summary": {
+  "days_owned": 2,
+  "both_flipped": true,
+  "posterior_0427": {"direction": "up", "day_move_usd": 350, "blind_was": -170, "actual": 370},
+  "posterior_0504": {"direction": "up", "day_move_usd": 590, "blind_was": -130, "actual": 610},
+  "mechanism": "crowded-short covering ABSORBED on the anchor Friday = fuel unrealized, not supply victory -> the Monday catch-up reprices UP (0427 intraday window, 0504 weekend gap). The A-bridge covering-fail/spent down-lean was the mirror error on both.",
+  "book_layer": "stood down both days (no trustworthy verdict); trade-flow + turns + realized price only"
+ }
+}

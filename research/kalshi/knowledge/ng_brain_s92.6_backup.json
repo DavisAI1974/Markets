@@ -1,0 +1,307 @@
+{
+ "meta": {
+  "market": "NG",
+  "version": "s92.6",
+  "built_pass": 1,
+  "purpose": "The machine BRAIN the forecast/coach agents load as context and apply. SINGLE SOURCE OF TRUTH - the brain is THIS one file (meta + reasoning_method + plays + mechanisms + open_frontier + ruled_out): WHAT he knows and HOW he reasons, together. The human-readable ../NG_BEHAVIOR_KNOWLEDGE.md is a GENERATED VIEW of this file (brain_view.py) - do not hand-maintain it. Each pass MERGES (refine confidence + add plays/method); nothing is overwritten blindly.",
+  "guard": "GENERAL rules with mechanism + n only - never memorized specific days. Skill is judged on days NEVER touched in any pass (true holdout) + forward-live, not on the training year. A coach that curve-fits noise loses money adaptively; a coach matching the live moment to general patterns adapts correctly.",
+  "regime_scope": "12 warm-season days (Jul-Sep 2025), contango-flat. Winter/backwardation + Mondays NOT yet in-sample.",
+  "risk_gate": "Every play is provisional-until-live: must clear the size-vs-fee wall and paper-trade on Kalshi demo before real orders. The coach adapts WITHIN bounded risk caps.",
+  "s92.2_note": "Added timing.subsecond_reversal_exhaustion (the coin/BTC sub-second look-ahead tested on NG, S90) as an execution-layer turn-timing HYPOTHESIS + native-tick frontier. No Group-2 lesson merge yet (pending scorecard).",
+  "s92.3_note": "Group-2 merge (unseen warm-season days blind-forecast then scored, scratchpad/grp2_score.json). MERGE not rewrite: all 8 prior plays + mechanisms preserved. Lessons stated PER-EVENT, NEVER averaged/pooled/counted (Greg, load-bearing: any mean/median/X-of-N blurs the per-event fingerprint): (1) MONDAY = big mover via weekend-gap reprice, NOT range - promoted clock.weekend_gap OPEN->provisional + new play daytype.monday_weekend_gap, the 3 Mondays named individually: 0707 actual dominant +$1530 (guessed +$180), 0728 -$1240 (guessed +$170), 0818 -$710 (guessed -$650); direction differed per day (up/down/down), bigness is the lesson not side. (2) STORAGE THURSDAY big - new play daytype.storage_thursday_magnitude, named individually: 0710 +$1860 (guessed -$330), 0828 +$1310 (guessed +$420). (3) MAGNITUDE candidate (magnitude.warm_season_scale_candidate, HYPOTHESIS) - the guesses were dwarfed on specific days (0707 +$1530 vs +$180, 0710 +$1860 vs -$330, 0728 -$1240 vs +$170, 0730 -$1460 vs +$400, 0828 +$1310 vs +$420); ANTI-LOCK-IN flag: too-small-prior vs higher-vol-summer-2025-regime UNRESOLVED on one group, did NOT rescale; and NOT uniform - the trend-day bets 0820/0826/0818 OVERSHOT. (4) DIRECTION unchanged: the days that missed were 0710, 0728, 0730, 0820, 0826, 0829; the two big-surprise trend days 0820 (guessed UP $880 -> actual DOWN $370) and 0826 (guessed UP $850 -> actual DOWN $560) went OPPOSITE -> surprise != direction; from-flat direction stays OPEN. Every pattern is a per-regime observation until it recurs; winter untested.",
+  "s92.6_note": "Consecutive-block merge s92.3 -> +G3 -> +G4 -> +G5, folded in CHRONOLOGICAL order (blinded scorecards only, scratchpad/grp{3,4,5}_score.json + _forecasts.json; NO rich-tape / characterize_day - that unblinded dig is a separate later step). MERGE not rewrite: all 11 prior plays preserved, refined confidences + 1 play added. PER-EVENT only, NEVER averaged/pooled/counted (Greg). THE BIGGEST LEAD (new play direction.cross_block_reversion, HYPOTHESIS n=3): CROSS-BLOCK REVERSION - each block tends to REVERSE / give back the prior block's net move, so the agent's block-OPEN directional lean kept landing CONTRA the market. Per-event chronology: G3 (Sep8-24) block fell 3.07->2.86, the +150 Bcf storage SURPLUS correctly called the block DOWN-trajectory; intraday per-day direction was a coin-flip (dir_ok mixed) and magnitude ran under on the big days (0916 act +1330 vs guess -140; 0918 -1560 vs -650). G4 (Sep24-Oct7) block REVERSED UP 2.86->3.51 - agent extended G3's downtrend and was WRONG week 1 (0925 +1160, 0929 Mon +1240 both guessed DOWN), then caught the up-move week 2 (1001/1002/1006/1007 dir_ok true) but under-sized (1007 +1620 vs +460). G5 (Oct8-21) block a V, fell 3.51->2.92 then rallied 3.52 - agent leaned UP and was WRONG week 1 (1008 -1980 guessed up), then caught the 1016 turn-DOWN and the 1020 Monday REVERSAL UP (+2770 guessed +580 = ~5x under); Columbus Day 1013 thin-holiday handled right. Weekend-gap Monday REVERSALS are huge and badly under-sized (1020 +2770; 0929 +1240). Fundamentals (surplus/HDD) are a slow BACKDROP for block-trajectory, NOT a short-term direction/timing signal - caveat added to daytype.surprise_magnitude + daytype.storage_thursday_magnitude."
+ },
+ "reasoning_method": {
+  "note": "HOW he reasons - the general method he applies every day (the mind), distinct from plays (WHAT he knows, the facts). Added S95 (Greg: his reasoning belongs in the brain, and the brain is ONE file). Per-event, never averaged; drift is a DESCRIPTOR to tie to conditions, never point-fit. Only GENERAL method lives here; per-day reasoning lives in the committed forecast record and is PROMOTED here only when it generalizes.",
+  "continuous_frame": "Reason CONTINUOUSLY, one day into the next. Each day's forecast FLOWS from the prior day's close + trajectory + running state - a continuation-or-turn of the running path, NEVER a from-flat isolated event. hr24 of day N connects to hr1 of day N+1; the block is ONE flowing path, not sawtooth resets.",
+  "anchor": "Start each block from the ACTUAL hr24 (last-hour price + net direction) of the day BEFORE the block (blind-safe, past/known). Within the block, each day flows from the agent's OWN prior-day guessed close.",
+  "block_open_lean": "At a block boundary, LEAN AGAINST the prior block's net move (direction.cross_block_reversion) - do NOT extend the trend across the seam; weigh whether last-hour momentum + a fundamental turn signal a reversal at the open. A lean to weight, not a hard fade - confirm with intraday flow.",
+  "fundamentals_role": "Storage surplus/deficit + HDD/CDD regime = a SLOW BLOCK-TRAJECTORY BACKDROP (the +150 Bcf surplus called G3 down), NEVER a day-level or pre-print side/timing signal.",
+  "daytype_priors": "Monday = big weekend-gap mover, often a REVERSAL of the block's recent direction, size UP hard (except thin holidays e.g. Columbus Day - size DOWN). Storage Thursday = large dominant leg, size UP, side unknown at the open. Fri = range. Never pool across DOW.",
+  "intraday_side": "Bias each day toward the RUNNING TREND (continuation base case), name candidate TURNS; treat intraday side as a continuation-of-trajectory question, not a from-flat coin-flip. The live flow nowcast (dip_imb_level) is the EXECUTION-layer side call on the lagging Kalshi mark, NOT an open-time forecast input.",
+  "magnitude_sizing": "Size each day's expected swing vs the running trajectory + regime: shoulder-season smaller, WINTER bigger. The warm-season prior has run UNDER on big days (unresolved: scale-too-small vs autumn-higher-vol) - size per event, do NOT globally rescale. Use the magnitude staircase ($350 crossing = 92% ride) as the real-time continuation read.",
+  "shape_and_exit": "A slow GRIND holds; a front-loaded SPIKE round-trips. RIDE while the far side is being RECRUITED (turn_far_thinning negative = ladder growing ahead); EXIT when it flips to eaten AND support collapses (the 2-factor reversal top).",
+  "discipline": "PER-EVENT only, never average/pool/count. Drift is a DESCRIPTOR - tie each day's miss to its CONDITIONS (match/no-match the live moment), never point-fit or minimize it. GENERAL rules (mechanism + n) only; never a memorized day."
+ },
+ "plays": [
+  {
+   "id": "direction.flow_nowcast",
+   "target": "direction",
+   "trigger": "a leg is forming (order-flow window ~300s around the trigger push)",
+   "read": "dip_imb_level (Lee-Ready buy-minus-sell flow imbalance, signed)",
+   "call": "NG's side = sign(dip_imb_level) when strong (|dip_imb_level| >= 0.15); fire on the LAGGING Kalshi mark on that side",
+   "evidence": {
+    "n_strong_oos": 34,
+    "rate_oos": 1.0,
+    "learn_days": "0.94-1.00 on 9/12",
+    "monotone": "0.68(|dip|<.05) -> 0.84 -> 0.94 -> 0.93"
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.85,
+   "exemplars": [
+    "07-24 idx5126 dip+0.59->up $270",
+    "07-24 idx7216 dip-0.49->down $110",
+    "OOS 07-15/07-30/08-15 strong-flow 34/34"
+   ],
+   "caveats": "NOWCAST (flow overlaps the nascent leg), not a from-flat forecast. Direction only - correctly-signed legs still round-trip (size separately). Warm-season."
+  },
+  {
+   "id": "direction.book_contrarian",
+   "target": "direction",
+   "trigger": "at entry, when flow (dip_imb_level) is flat/ambiguous",
+   "read": "imb_R (resting-book imbalance at entry)",
+   "call": "fade the heavy resting side - ask-heavy book -> price runs UP through it (wall = fuel, not floor)",
+   "evidence": {
+    "ask_heavy_up": 0.61,
+    "n_ask": 158,
+    "bid_heavy_up": 0.42,
+    "n_bid": 121,
+    "flow_beats_book_when_disagree": "262/293 = 0.89"
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.5,
+   "exemplars": [],
+   "caveats": "Weaker than flow; use only as a tie-breaker when flow is flat."
+  },
+  {
+   "id": "ride.magnitude_staircase",
+   "target": "sustain",
+   "trigger": "a leg's favorable peak crosses a $ threshold in real time",
+   "read": "peak_usd reached so far",
+   "call": "RIDE - continuation rises with size: $50->0.43, $150->0.57, $250->0.75, $350->0.92, $500->1.00. The ~$350 crossing is a 92% 'stay in' event; $500 was 11/11.",
+   "evidence": {
+    "n_350": 38,
+    "cont_350": 0.92,
+    "n_500": 11,
+    "cont_500": 1.0
+   },
+   "status": "STABLE",
+   "confidence": 0.9,
+   "exemplars": [
+    "07-03 idx17768 $1060 ret.83",
+    "08-06 idx9611 $840 ret.98",
+    "07-16 idx28757 $560 ret.91"
+   ],
+   "caveats": "peak_usd is realized-so-far; the CROSSING is the usable real-time event, not the final peak."
+  },
+  {
+   "id": "exit.recruitment_reversal",
+   "target": "turn",
+   "trigger": "a big leg maturing - watch the far-side book as price runs",
+   "read": "turn_far_thinning (far-ladder change entry->now) + turn_aligned_push (book support at the level)",
+   "call": "STAY while the far side is being RECRUITED (new resting liquidity steps in ahead, turn_far_thinning negative = ladder growing). EXIT when it flips to eaten/stalled (turn_far_thinning >0) AND support collapses (turn_exhaustion deep) - both firing = a genuine reversal top.",
+   "evidence": {
+    "held_far_thin_med": -0.156,
+    "reversed_far_thin_med": 0.0,
+    "n_big": 101,
+    "support_at_top": "cont 0.39 (apush>+.05) vs 0.24 (<-.05)"
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.6,
+   "exemplars": [
+    "HELD 08-06 idx9611 up$840 tft-0.55",
+    "REVERSED 07-03 idx22125 dn$390 ret.13 tft+0.55",
+    "REVERSED 09-03 idx18622 up$310 ret-.13 tft+0.53"
+   ],
+   "caveats": "Reframed from n=3 'fuel spent' to n=101 RECRUITMENT. Measured entry->peak (diagnostic); the LIVE running turn-track (far_thinning crossing neg->pos as the run matures) is the next build - not yet validated as a live exit."
+  },
+  {
+   "id": "shape.grind_vs_spike",
+   "target": "sustain",
+   "trigger": "how the leg is being built",
+   "read": "fast_capture / peaked_fast",
+   "call": "a slow GRIND holds (ride); a front-loaded SPIKE round-trips (scalp/skip). Of legs that held, ~1/111 spiked fast.",
+   "evidence": {
+    "held_that_spiked": "1/111"
+   },
+   "status": "STABLE",
+   "confidence": 0.85,
+   "exemplars": [],
+   "caveats": "Shape is partly realized-as-it-goes; usable once the first ~60s of build is seen."
+  },
+  {
+   "id": "daytype.surprise_magnitude",
+   "target": "daytype",
+   "trigger": "at the open, from the week's EIA storage surprise",
+   "read": "|stor_surprise| (Bcf vs seasonal)",
+   "call": "big |surprise| (>=~20) -> expect a TREND day (bigger legs); near-consensus -> range/chop day. SIGN does NOT sort direction.",
+   "evidence": {
+    "blind_hits": "08-12/13, 08-07, 08-21 were the big days",
+    "distinct_prints": 6
+   },
+   "status": "PROVISIONAL_WEAKENED",
+   "confidence": 0.35,
+   "exemplars": [
+    "08-08 Fri stayed range despite +25.6 (weekday overrides)",
+    "Grp2 0820 big-|surprise| trend-bet guessed UP $880 -> actual DOWN $370 (opposite)",
+    "Grp2 0826 big-|surprise| trend-bet guessed UP $850 -> actual DOWN $560 (opposite)"
+   ],
+   "caveats": "Did NOT reproduce on continuation-rate in the multi-target pass; season-confounded, ~6 prints. A weak day-level prior only. Group-2 REINFORCES sign!=direction, per event: 0820 guessed UP $880 -> actual DOWN $370; 0826 guessed UP $850 -> actual DOWN $560 - both big-surprise trend bets went OPPOSITE and overshot the guess. Surprise magnitude does not sort direction. From-flat direction stays OPEN. G3/G4/G5 SHARPEN the level: fundamentals (the +150 Bcf storage SURPLUS in G3) work as a slow BLOCK-TRAJECTORY BACKDROP - the surplus correctly called G3's block DOWN 3.07->2.86 - but they are NOT a short-term intraday direction/timing signal (G3 per-day dir_ok was a coin-flip). Read fundamentals as block-direction backdrop, never as a day-level side/timing call."
+  },
+  {
+   "id": "daytype.weekday_archetype",
+   "target": "daytype",
+   "trigger": "at the open, from the weekday",
+   "read": "day of week",
+   "call": "Wed = US-session up-lean; Thu = storage catalyst AT the 10:30 ET print AND now a BIG-magnitude day (Grp2, see daytype.storage_thursday_magnitude); Fri = range, OVERRIDES surprise; Tue = strongest-trend weekday; Mon = weekend-gap BIG mover (Grp2 n=3, see daytype.monday_weekend_gap), NO longer 'range/uncharacterized'.",
+   "evidence": {},
+   "status": "PROVISIONAL",
+   "confidence": 0.4,
+   "exemplars": [
+    "all 3 learn Wednesdays net up",
+    "08-08 Fri range despite big surprise",
+    "Grp2 Mondays 0707 +$1530 / 0728 -$1240 / 0818 -$710 all big (not range)"
+   ],
+   "caveats": "Never pool across DOW. Mon = now PROVISIONAL big-mover (weekend-gap, Grp2 n=3), was OPEN; direction still mixed. Thu magnitude up-sized (Grp2 n=2). Warm-season only; per-regime until it recurs."
+  },
+  {
+   "id": "timing.subsecond_reversal_exhaustion",
+   "target": "turn",
+   "trigger": "at a maturing leg's turn - the crypto/coin (BTC) fine-resolution price-reversal + dipole-EXHAUSTION edge (S36/S37), tested on NG NYMEX futures DIRECTLY (S90), not Kalshi",
+   "read": "dipole EXHAUSTION (order-flow imbalance COLLAPSING toward 0.5 = leader weakening) stacked with fine-resolution price-reversal timing (odcore/info_dipole.py, gated-swing stack)",
+   "call": "EXECUTION-LAYER turn-timing ONLY (never a from-flat open forecast). Near a turn the exhaustion-collapse marks the real reversal and fine price-reversal pins entry ~5-6bps off the turn (vs ~9-11 at 1-min). Use for turn/exit timing on the futures tape and to fire on the lagging Kalshi mark. The coins showed this edge; NG carries a faint right-signed version of it.",
+   "evidence": {
+    "ng_exhaustion_pulse_pp": 2.7,
+    "detail": "oppose+exhaust 0.410 vs trend+strengthen 0.382 = +2.7pp (BTC-direction); EXHAUSTION does the work - static divergence did NOT transfer (opposite sign)",
+    "crypto_source": "S36/S37: 1-sec timing enters ~5-6bps off the true turn vs ~9-11bps at 1-min",
+    "n": "1 NG trend day (2025-07-17, 34.5k trades), 1-sec binned"
+   },
+   "status": "HYPOTHESIS",
+   "confidence": 0.25,
+   "exemplars": [],
+   "caveats": "SMALL BUT REAL and RIGHT-SIGNED - the coins' edge carries a faint pulse onto NG. LOAD-BEARING (Greg S90): the 1-sec canary is FAR too coarse; the real edge lives at NATIVE TICK / ms-us (our MBP-10 tape is nanosecond ts_event/ts_recv). 1-sec binning threw away the resolution the edge lives at. Real test pending at native tick, per-cell (tod x regime x vol), event-time; fees secondary (HFT/latency audience). EXECUTION-layer - do NOT use as a blind open-time curve input."
+  },
+  {
+   "id": "daytype.monday_weekend_gap",
+   "target": "daytype",
+   "trigger": "at the open on a MONDAY (Sunday-evening reopen)",
+   "read": "day of week = Monday + accumulated weekend information",
+   "call": "Monday = a BIG mover, NOT range/chop. The weekend info gap (news/weather/supply over the closed weekend) reprices at the Sun-eve reopen -> a large dominant leg. BIGNESS is the lesson; SIDE was mixed (up and down both seen) -> do NOT infer direction from Monday-ness. NEW ANGLE (G4/G5): the weekend-gap Monday is often a REVERSAL of the prior trajectory AND the single most badly UNDER-SIZED event - the Monday reprice runs several times the default magnitude prior. Size Mondays up hard, especially when they reverse the block's recent direction.",
+   "evidence": {
+    "n_summer_2025_group2": 3,
+    "per_event": "0707 actual dominant +$1530 (guessed range +$180); 0728 -$1240 (guessed +$170); 0818 -$710 (guessed -$650, close only because surprise_magnitude separately flagged it a trend day)",
+    "direction_per_event": "0707 up, 0728 down, 0818 down - side differed each Monday",
+    "reversal_undersize_per_event_g3g4g5": "0929 Mon (G4) actual +$1240 (guessed -$640, wrong side AND ~2x under - the G3->G4 up-reversal); 1020 Mon (G5) actual +$2770 (guessed +$580 = ~5x under, the block V-bottom REVERSAL UP); 1006 Mon (G4) +$1150 (guessed +$600); Mondays big across the board - 0908 +$1260 (guessed -$450), 0915 -$1150 (guessed +$450), 0922 -$1410 (guessed -$500). 1013 Mon (Columbus/thin holiday) the lone quiet one, handled right (guessed small, dir_ok)."
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.5,
+   "exemplars": [
+    "Mon 0707 +$1530 (guessed range $180)",
+    "Mon 0728 -$1240 (guessed $170)",
+    "Mon 1020 +$2770 (guessed +$580, ~5x under, block-V reversal up)",
+    "Mon 0929 +$1240 (guessed -$640, wrong side, G3->G4 reversal)"
+   ],
+   "caveats": "Now seen across Group-2 + G3/G4/G5 (still warm-season). Confidence 0.4->0.5. Promotes clock.weekend_gap: Monday = big-mover via the weekend-gap reprice, frequently a REVERSAL and badly under-sized (1020 +$2770 vs +$580; 0929 +$1240 vs -$640). Bigness (and now: size-up + reversal-lean) is the lesson, not a fixed side. Columbus-Day-type thin holidays (1013) are the exception - quiet, size DOWN. Per-regime until winter/backwardation. Never a memorized-day rule - the MECHANISM (weekend info accumulation -> Sun-eve reprice) + the named events is the claim."
+  },
+  {
+   "id": "daytype.storage_thursday_magnitude",
+   "target": "daytype",
+   "trigger": "at the open on a storage THURSDAY (EIA print 10:30 ET)",
+   "read": "day of week = Thursday storage-print day",
+   "call": "Up-size the storage-Thursday MAGNITUDE prior: both Group-2 Thursdays produced LARGE dominant legs at/after the print. Expect a bigger-than-default move on storage Thursdays. Magnitude only - the print is unknown at the open so SIDE stays a coin flip.",
+   "evidence": {
+    "n_group2": 2,
+    "per_event": "0710 actual dominant +$1860 (guessed -$330); 0828 +$1310 (guessed +$420)",
+    "per_event_g3g4g5": "0911 Thu (G3) -$1180 (guessed -$540, side right, ~2x under); 0918 Thu (G3) -$1560 (guessed -$650, side right, under); 0925 Thu (G4) +$1160 (guessed -$330, wrong side); 1002 Thu (G4) +$1360 (guessed +$760, side right, under); 1009 Thu (G5) -$1010 (guessed +$450, wrong side); 1016 Thu (G5) -$1190 (guessed -$300, side right, ~4x under, caught the block-V turn down). Every storage Thursday across G3/G4/G5 was a LARGE dominant leg and consistently UNDER-forecast; SIDE was mixed per event (right on 0911/0918/1002/1016, wrong on 0925/1009)."
+   },
+   "status": "PROVISIONAL",
+   "confidence": 0.45,
+   "exemplars": [
+    "Thu 0710 +$1860 (guessed -$330)",
+    "Thu 1016 -$1190 (guessed -$300, block-V turn-down)",
+    "Thu 0925 +$1160 (guessed -$330, wrong side)"
+   ],
+   "caveats": "Group-2 (n=2) + all six G3/G4/G5 storage Thursdays reinforce the MAGNITUDE prior (every one a large dominant leg, all under-forecast); confidence 0.35->0.45. SIDE stays a coin flip at the open - the print is unknown and side landed mixed per event (right on 0911/0918/1002/1016, wrong on 0925/1009). FUNDAMENTALS caveat: the storage surprise is a BACKDROP catalyst for magnitude, NOT a pre-print direction/timing signal - do not lean side off it before 10:30 ET. Complements the clock.storage_thursday mechanism (the catalyst) with a magnitude prior. Per-regime until it recurs (warm-season only)."
+  },
+  {
+   "id": "magnitude.warm_season_scale_candidate",
+   "target": "magnitude",
+   "trigger": "when sizing the expected dominant-move magnitude on a warm-season day",
+   "read": "Group-2 blind-forecast magnitude error, named PER DAY (guessed peak vs actual dominant move)",
+   "call": "CANDIDATE correction ONLY: on specific Group-2 days the actual dominant move DWARFED the guess. Named individually (LEADS, not a rule): 0707 +$1530 vs guess +$180; 0710 +$1860 vs -$330; 0728 -$1240 vs +$170; 0730 -$1460 vs +$400; 0828 +$1310 vs +$420. Nudge the magnitude prior UP modestly and provisionally on this evidence - do NOT globally rescale.",
+   "evidence": {
+    "under_forecast_days": "0707 +$1530 vs +$180; 0710 +$1860 vs -$330; 0728 -$1240 vs +$170; 0730 -$1460 vs +$400; 0828 +$1310 vs +$420; 0702 +$1040 vs +$470; 0715 +$820 vs +$200; 0725 +$460 vs +$210; 0829 -$620 vs +$380",
+    "over_forecast_days": "0818 -$710 vs guess -$650; 0820 -$370 vs +$880; 0826 -$560 vs +$850 (the surprise-magnitude 'trend-day' bets OVERSHOT; 0820/0826 also went the wrong direction)",
+    "under_forecast_days_g3": "0908 +$1260 vs -$450; 0910 -$950 vs +$370; 0911 -$1180 vs -$540; 0915 -$1150 vs +$450; 0916 +$1330 vs -$140; 0918 -$1560 vs -$650; 0922 -$1410 vs -$500; 0923 +$690 vs -$300",
+    "under_forecast_days_g4": "0925 +$1160 vs -$330; 0929 +$1240 vs -$640; 1001 +$1590 vs +$360; 1002 +$1360 vs +$760; 1006 +$1150 vs +$600; 1007 +$1620 vs +$460",
+    "under_forecast_days_g5": "1008 -$1980 vs +$320; 1010 -$1490 vs +$150; 1014 -$910 vs +$360; 1016 -$1190 vs -$300; 1020 +$2770 vs +$580; 1021 +$1100 vs +$440",
+    "nuance": "The Group-2 error was mixed (under on range/storage days, over on the 3 surprise trend-day bets). ACROSS G3/G4/G5 (three consecutive blocks) the actual dominant move dwarfed the guessed peak on nearly EVERY big day - a persistent, one-directional UNDER-forecast (1020 +$2770 vs +$580 the extreme, ~5x). Each day stands on its own; no average, no ratio, no count taken - the list is per-event LEADS."
+   },
+   "status": "HYPOTHESIS",
+   "confidence": 0.3,
+   "exemplars": [],
+   "caveats": "ANTI-LOCK-IN (Greg, load-bearing): confidence 0.2->0.3 because the UNDER-forecast now RECURS across three more consecutive blocks (G3/G4/G5), strengthening reading (A) the brain's warm-season magnitude scale is simply too small - BUT reading (B) autumn-2025 was a genuinely higher-vol / block-reversal regime is still live and UNRESOLVED. Still do NOT globally rescale off these blocks, and do NOT pool the days into a ratio - each day is its own LEAD pinpointing the WHEN. The under-forecast is worst on weekend-gap Monday reversals (1020, 0929) and storage Thursdays (see those plays). Revisit once a winter/backwardation group lands."
+  },
+  {
+   "id": "direction.cross_block_reversion",
+   "target": "direction",
+   "trigger": "at a BLOCK boundary (the open of a new ~2-week block), when setting the block-level directional lean",
+   "read": "the SIGN of the prior block's net move (block open->close) + where the current block opens relative to it",
+   "call": "LEAN AGAINST the prior block's trajectory, do NOT extend it. The block tends to REVERSE / give back the prior block's net move; trend-continuation across a block boundary repeatedly landed CONTRA the market. A block that just ran DOWN is a candidate to turn UP next block (and vice-versa); expect the turn early in the new block. TURN-lean, not a precise from-flat side call - pair with intraday flow (direction.flow_nowcast) for the actual day-level side.",
+   "evidence": {
+    "n": 3,
+    "per_event_chronology": "G3 (Sep8-24) block fell 3.07->2.86 (down, correctly called by the +150 Bcf storage surplus backdrop). G4 (Sep24-Oct7) REVERSED UP 2.86->3.51 - the agent EXTENDED G3's downtrend and was wrong week 1: 0925 actual +$1160 (guessed DOWN -$330), 0929 Mon +$1240 (guessed DOWN -$640); it only caught the up-move week 2 (1001/1002/1006/1007 dir_ok true). G5 (Oct8-21) was a V that gave back G4's up then re-rallied 3.51->2.92->3.52 - the agent leaned UP and was wrong week 1: 1008 actual -$1980 (guessed UP +$320); it then caught the 1016 turn-DOWN and the 1020 Monday reversal UP.",
+    "pattern": "G3 down -> G4 up -> G5 down-then-up: each block reversed / gave back the prior block's net move; the block-OPEN continuation lean was wrong at every boundary."
+   },
+   "status": "HYPOTHESIS",
+   "confidence": 0.3,
+   "exemplars": [
+    "G3->G4 boundary: extended G3 down into G4, wrong (0925 +$1160, 0929 +$1240 both guessed down)",
+    "G4->G5 boundary: leaned up into G5, wrong week 1 (1008 -$1980 guessed up)",
+    "G5 recovery caught late (1016 turn-down, 1020 +$2770 reversal up)"
+   ],
+   "caveats": "n=3 consecutive blocks, ONE regime (autumn-2025 warm-season, contango). A BLOCK-LEVEL lead, distinct from the intraday direction.flow_nowcast. The MECHANISM is unproven - could be genuine reversion of ~2-week swings, or could be the agent's specific trend-extending bias; either way, block-open trend-continuation is DANGEROUS here. Do NOT harden into 'always fade the last block' - it is a lean to weight against continuation, confirmed by intraday flow. Fundamentals are a slow backdrop (they got G3's block direction right) but did NOT anticipate the G3->G4 or G4->G5 reversals. Winter/backwardation + a 4th independent block are the decisive tests."
+  }
+ ],
+ "mechanisms": [
+  {
+   "id": "clock.storage_thursday",
+   "text": "Weekly EIA storage print Thu 10:30 ET is the one scheduled catalyst; busiest Thursday hour."
+  },
+  {
+   "id": "clock.us_session",
+   "text": "US session ~08-16 ET decides the day's range; overnight is thin drift. STABLE."
+  },
+  {
+   "id": "clock.weekend_gap",
+   "text": "Weekend info accumulates -> Monday reprices at the Sun-eve reopen -> distinct shape. Group-2 (n=3) promotes this from OPEN toward a PROVISIONAL pattern: Monday = a BIG mover, not range (0707 +$1530, 0728 -$1240, 0818 -$710; direction MIXED, bigness is the lesson). See play daytype.monday_weekend_gap. Per-regime (one group, warm-season) until it recurs."
+  },
+  {
+   "id": "regime.seasonal",
+   "text": "Summer=cooling/weather-led; winter=heating, bigger swings, withdrawal. Winter UNKNOWN until full year."
+  },
+  {
+   "id": "supply.unmeasured",
+   "text": "LNG feedgas / production / pipeline outages are real drivers, currently NO feed. Data gap."
+  }
+ ],
+ "open_frontier": [
+  "DIRECTION from-flat FORECAST (vs today's nowcast) - can we call the leg's side BEFORE it forms?",
+  "LIVE running turn-track - far_thinning crossing neg->pos in real time as the exit trigger.",
+  "WINTER / backwardation regime - the decisive out-of-regime test (all 12 days were contango).",
+  "MONDAY shape - Group-2 characterizes Monday as a weekend-gap BIG mover (n=3, provisional, daytype.monday_weekend_gap); confirm the bigness recurs on more groups + winter, and whether the weekend gap ever sorts SIDE.",
+  "MAGNITUDE SCALE vs REGIME - is the brain's warm-season magnitude prior simply too small, OR was summer-2025 (Group-2) a higher-vol regime than the S92 learn set? Unresolved on one group (magnitude.warm_season_scale_candidate); needs a 2nd independent group before any global rescale.",
+  "DIRECTION data: forward news, real desk consensus, day-ahead/spot pipeline noms, overnight-lean.",
+  "NATIVE-TICK / ms test of the coin (BTC) sub-second price-reversal + dipole-EXHAUSTION edge on NG futures (S90 faint +2.7pp right-signed at 1-sec; real edge is ms-us, not 1-sec) - per-cell, event-time, net-of-fee."
+ ],
+ "ruled_out_by_target": {
+  "note": "NOISE across all four targets (direction/sustain/turn/peak) in the warm-season multi-target pass - but only warm-season, retest in winter:",
+  "signals": [
+   "aligned_imb",
+   "aligned_imb_R",
+   "exhaustion",
+   "spread_ratio",
+   "pre_vol",
+   "coiled_split",
+   "dip_aligned_flow",
+   "dip_mi_flow",
+   "bid_dep_entry",
+   "ask_dep_entry",
+   "temp_regime",
+   "gw_hdd",
+   "gw_cdd",
+   "gw_precip",
+   "curve_regime(contango-flat)"
+  ]
+ }
+}

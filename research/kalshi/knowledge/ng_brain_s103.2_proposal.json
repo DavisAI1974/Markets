@@ -1,0 +1,90 @@
+{
+ "meta": {
+  "market": "NG",
+  "version": "s103.2",
+  "supersedes": "s103.1",
+  "built_pass": "S107",
+  "purpose": "TARGETED ADJUDICATION, not a group merge. S107 fixed a data defect (forecast_harness omitted big_print_b_share from the flow_read copy-through, so the COUNT-based series shadowed the SIZE-WEIGHTED one under the same key). One s103.1 play was merged on evidence produced by that defect and must be re-adjudicated. Additionally proposes a measured thin-tape guard on the 0.55 bar. STRICTLY SCOPED: exactly one existing play is amended (one sentence struck), one new play is added. All other 60 plays byte-identical.",
+  "guard": "GENERAL rules with mechanism + n only - never memorized specific days.",
+  "adjudication_rule": "Incumbents byte-identical. A play merged on defective evidence is re-opened on the corrected series, not deleted on suspicion.",
+  "status": "PROPOSAL - requires Greg's go. The brain is NEVER edited directly."
+ },
+
+ "the_defect_that_forces_this": {
+  "what": "forecast_harness.py:630 copied four flow_read fields into tape_conditions and omitted big_print_b_share. _tape_day_stats' COUNT-based value (big_b / len(bigs)) therefore shadowed flow_read's SIZE-WEIGHTED value (big_b / big_tot lots) under the identical key name.",
+  "consequence": "Every play keyed on big_print_b_share has been reading a different measurement than the one flow_read computes and than the doctrine describes.",
+  "fixed_in": "S107, commit 4c8c2fc. big_print_b_share is now copied through and labelled with big_print_b_share_basis = size_weighted.",
+  "the_two_series_are_not_a_scale_shift": "Some sessions read HIGHER size-weighted, some LOWER (G20 0526 0.494 -> 0.425; G21 0617 0.438 -> 0.305). They are different measurements, so no monotone re-scaling of the old threshold recovers the new one."
+ },
+
+ "amendment_1": {
+  "play_id": "direction.flow_conviction_sign_gate",
+  "action": "STRIKE ONE SENTENCE from `call`; amend `evidence.g19`; leave every other field byte-identical.",
+  "strike": "This sign gate REPLACES big_print_b_share>=0.55 as the direction discriminator.",
+  "amend_evidence_g19_from": "the 0.55 arm NEVER fired (block max 0.537) yet covering discharged full on every day; flow_conviction called 10/10 signs",
+  "amend_evidence_g19_to": "flow_conviction called 10/10 signs on G19. The companion claim that the 0.55 arm never fired is WITHDRAWN: block max 0.537 was the COUNT-based series; on the corrected SIZE-WEIGHTED series G19 0519 reaches 0.550 and the arm DOES fire. The two gates were never measured against each other on the same series.",
+  "why_the_replaces_claim_fails": [
+   "CORRUPT EVIDENCE. The sole stated ground for retiring the 0.55 arm was that it never fires. On the corrected series it fires on G19 0519, G20 0525, G21 0611 and G21 0616.",
+   "CHANNEL MISMATCH - the deeper reason, and it holds regardless of the data defect. flow_conviction = sign(signed_flow) * sign(price_change) REQUIRES REALIZED PRICE; the play's own caveats already say 'REFINE-side gate: the blind cannot compute it'. big_print_b_share is an OPEN-TIME, NON-PRICE tape_conditions field the blind CAN compute. A refine-only gate cannot replace a blind-available one - they do not compete for the same slot. Letting 'REPLACES' stand would retire the blind's only instrument in that role and leave it with nothing, which is the S105 hamstrung-blind failure in a new form.",
+   "COLLATERAL DEPENDENCE. Two other live plays key on the 0.55 bar and would be undermined by a wholesale retirement: structure.accumulation_arm_turn (big_print_b_share >= 0.55 on >= 2 of the last ~5 sessions, non-consecutive) and daytype.eia_preprint_overextension_gate (D-1 flow coherence via session_b_share vs big_print_b_share)."
+  ],
+  "net_effect": "flow_conviction_sign_gate is KEPT, unchanged in substance, as the REFINE-side sign gate. The 0.55 arm is KEPT as the BLIND-side, open-time arm. They are complements on different channels, not rivals. Nothing is deleted."
+ },
+
+ "amendment_2_new_play": {
+  "id": "flow.big_print_bshare_thin_tape_guard",
+  "target": "direction",
+  "trigger": "before applying ANY big_print_b_share threshold (the 0.55 conviction arm, accumulation_arm_turn, eia_preprint_overextension_gate flow-coherence)",
+  "read": "big_prints_n for the session the ratio is computed on - the SAMPLE SIZE behind the ratio",
+  "call": "Below ~20 big prints in the session, the 0.55 bar OVER-FIRES on noise: raise the bar to ~0.60 for that session, or stand the arm down and say so. At or above ~20 big prints, 0.55 stands as measured. Do NOT float the bar by season - see the negative result below.",
+  "mechanism": "big_print_b_share is a proportion. Its dispersion is governed by the number of big prints behind it, so on a thin tape it wanders away from 0.50 for purely statistical reasons and an absolute bar silently becomes a looser bar. Measured: the thinnest quartile carries roughly DOUBLE the dispersion of the other three - sd 0.255 (median 9 big prints) versus 0.132 / 0.120 / 0.127. corr(|b_share - 0.50|, log big_prints_n) = -0.465, so extremity is substantially a thin-sample artifact.",
+  "evidence": {
+   "n": "204 sessions with a usable big-print read, 2025-11-02 through 2026-07-20 (spans winter, shoulder and summer), computed on the CORRECTED size-weighted series",
+   "pooled": "mean 0.461, sd 0.169, p50 0.479; 0.55 sits at the 72.5th percentile and fires on 27.5% of sessions",
+   "equal_fire_rate_bar_by_big_print_quartile": {
+    "q1 (<=20 big prints, median 9)": "sd 0.255, fixed 0.55 fires 31.4%, equal-rate bar 0.579",
+    "q2 (21-48, median 34)": "sd 0.132, fires 26.9%, equal-rate bar 0.536",
+    "q3 (49-87, median 68)": "sd 0.120, fires 23.5%, equal-rate bar 0.544",
+    "q4 (>87, median 130)": "sd 0.127, fires 28.0%, equal-rate bar 0.547"
+   },
+   "shape": "The equal-rate bar is a STEP, not a smooth decay - elevated only in the thinnest quartile and flat (0.536-0.547) across the other three. That is why the guard is a single thin-tape condition and not a continuous function.",
+   "guard_effect_measured": "Per-quartile fire-rate spread under a FIXED 0.55 is 7.9pp [31.4, 26.9, 23.5, 28.0]. Under the guard (0.60 when big_prints_n <= ~20, else 0.55) it is 4.5pp [23.5, 26.9, 23.5, 28.0]. The fixed bar is already reasonably well behaved; the thin quartile is the only material offender and the guard is a modest, targeted correction - it is NOT a large effect and should not be sold as one."
+  },
+  "negative_result_reported": {
+   "tested_and_REJECTED": "the smooth noise model bar = 0.50 + k/sqrt(big_prints_n)",
+   "result": "WORSE than the fixed bar at every k tested. Per-quartile fire-rate spread: k=0.25 -> 18.5pp, k=0.33 -> 22.4pp, k=0.40 -> 22.3pp, k=0.50 -> 16.3pp, versus FIXED 0.55 -> 7.9pp. The 1/sqrt(n) form over-corrects the thick tail, where the empirical equal-rate bar has already flattened, so it ends up FIRING MORE on the thickest quartile than the thinnest - the opposite of the intent.",
+   "why_this_is_reported": "Result Discipline: the elegant form was tested first and lost badly to the crude one. Recording the loss is what stops it being re-proposed next session."
+  },
+  "status": "PROPOSAL",
+  "confidence": 0.72,
+  "requires": ["tape_conditions.big_prints_n", "tape_conditions.big_print_b_share (size_weighted basis)"],
+  "scope": "any play keyed on a big_print_b_share threshold; open-time, so blind-available",
+  "falsifier": "If thin-tape sessions (big_prints_n < 20) that clear 0.55 but not 0.60 go on to deliver conviction-consistent direction at the same rate as thick-tape 0.55 fires, the guard is wrong and should be withdrawn.",
+  "forward_evidence": "NONE. Rides G20+."
+ },
+
+ "the_seasonal_question_answered": {
+  "question": "Greg, S107: does the 0.55 value need to float depending on time of year or other market conditions?",
+  "time_of_year": "NO. Measured across 204 sessions, the fire rate of a fixed 0.55 is flat by season: winter 25.3% (n=95), shoulder 29.2% (n=72), summer 29.7% (n=37). The bar that would produce an identical fire rate in each season is 0.524 / 0.550 / 0.553 - inside noise, and the spread has no monotone seasonal shape. By month the fire rate does move (17.4% in 202602 on n=23 to 43.5% in 202512 on n=23), but that tracks the regime of each individual month, not a seasonal cycle, and the monthly cells are far too thin to carry a calibration.",
+  "other_market_conditions": "YES, one: TAPE THICKNESS, via big_prints_n. That is the amendment_2 guard. It is a data-sufficiency condition rather than a market condition - the bar itself is not moving, the reliability of the measurement behind it is.",
+  "doctrine_note": "Reported per-cell, never pooled as the final word. The pooled line is context only."
+ },
+
+ "what_is_NOT_changed": {
+  "count": "60 of 61 plays byte-identical; direction.flow_conviction_sign_gate amended by striking one sentence and correcting one evidence line; 1 new play proposed.",
+  "explicitly_kept": [
+   "direction.flow_conviction_sign_gate - kept in full as the REFINE-side per-phase sign gate",
+   "structure.accumulation_arm_turn - the >=0.55 on >=2-of-~5 window is untouched (it now reads the corrected series and gains the thin-tape guard)",
+   "daytype.eia_preprint_overextension_gate - untouched",
+   "all six other plays merged in s103.1 from the G19 post-mortem"
+  ],
+  "not_proposed": "No re-run or re-scoring of G18/G19 on the corrected series. Greg S107: build forward off past runs, do not fix old ones; a second full pass over all groups follows the first."
+ },
+
+ "provenance": {
+  "session": "S107",
+  "trigger": "Greg: 'if it's a read that's based on something we've fixed then use the best option and get rid of the other one. and will that value always be .55 or does it need to float depending on time of year or other market conditions?'",
+  "study_script": "scratchpad/bshare_study.py (session-local; the measured table is reproduced in full above)",
+  "data_fix": "commit 4c8c2fc"
+ }
+}

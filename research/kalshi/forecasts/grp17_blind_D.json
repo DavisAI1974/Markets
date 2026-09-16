@@ -1,0 +1,881 @@
+{
+ "specialist": "D",
+ "lens": "Thursday EIA",
+ "group": "g17",
+ "brain_version": "s102.5",
+ "forecast_schema_version": "ng.v2",
+ "days_owned": [
+  "20260416",
+  "20260423"
+ ],
+ "days": [
+  {
+   "date": "20260416",
+   "dow": "Thu",
+   "archetype": "eia_storage_thursday_chain_sided_injection_bleed",
+   "reasoning": "S3 shoulder injection print Thursday inside the G16->G17 bearish bleed (anchor 2.653, last-hour DOWN/flat). Decision-legit pre-print consensus is NULL for this print (the TE 51.0 is a post-print frozen capture; the 04-14 pre-print snapshot carried no value) - the prior is built from the building-surplus trajectory (L48 +49/wk, vs_5yr +58, vs_year +70; last print 0409 actual ~49-50 vs 46 = +3/+4 loose) and D-1 tape. D-1 (0415) session_b 0.472 sell-tilted (big_print_b 0.522 mildly buy = a minor internal divergence, not a price-vs-flow flip flag). Direction anchors DOWN to the D-1 tilt + down-chain; the print reweights, it does not license a sign flip on surprise alone. Post-print is delivery-vs-absorption I cannot see blind -> scenarios: chain-sided loose/build deliver-and-carry = full shoulder band down; counter (tight/draw-relative) print pop = S1-void-damped round-trip toward flat. selector.divergence_resolution defaults S3-bearish DOWN (no cold-add: near-window HDD ~2-4 gw, deep S1-void; session_b <0.50).",
+   "regime": {
+    "day_class": "eia_thursday_print",
+    "seasonal_state": "S3_shoulder_injection_S1void",
+    "demand_regime": "shoulder_low_hdd",
+    "curve_regime": "contango",
+    "storage_phase": "injection_building_surplus",
+    "vol_regime": "masked_null",
+    "dominant_driver": "storage_print_within_chain_sided_down_bleed",
+    "selector_mode": "s3_bearish_default"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "daytype.storage_thursday_magnitude",
+     "inputs": {
+      "dow": "Thu",
+      "eia_print_et": "10:30",
+      "chain": "down_bleed"
+     },
+     "thresholds": "print-Thursday magnitude up-size; R2 owns post-print leg = running swing (down); day net owned by chain",
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -450,
+      -780
+     ],
+     "note": "chain-sided down; leg sides with the running swing, not the print sign"
+    },
+    {
+     "rule_id": "magnitude.s1void_injection_chain_bleed",
+     "inputs": {
+      "phase": "injection_building_surplus",
+      "near_window_hdd_gw": "~2-4",
+      "d1_session_b": 0.472
+     },
+     "thresholds": "S1-void inject + storage inject + loose prints + D-1 b<0.50 -> chain-sided down delivers full band (trend -450..-780; coil -100..-250)",
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -450,
+      -650
+     ],
+     "note": "print day, moderate activity (D-1 50856 lots); building-surplus print class, trend band but tempered by mild big-print buy"
+    },
+    {
+     "rule_id": "selector.divergence_resolution",
+     "inputs": {
+      "near_window_max_hdd_gw": "<16.4",
+      "d1_session_b": 0.472,
+      "regime": "S1void_injection"
+     },
+     "thresholds": "cold-add UP wins only if HDD>=16.4 AND b_share>=0.50; else default S3-bearish DOWN",
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "down",
+     "magnitude_band_usd": null,
+     "note": "neither gate holds -> DOWN default; no cold-add day-lean"
+    },
+    {
+     "rule_id": "daytype.surprise_magnitude",
+     "inputs": {
+      "decision_legit_consensus": null,
+      "prior_surprise_bcf": "+3/+4 loose"
+     },
+     "thresholds": "big |surprise| -> bigger leg; near-consensus -> chop; SIGN does not sort side",
+     "scope_pass": true,
+     "ownership_rank": 4,
+     "direction_effect": "none_side",
+     "magnitude_band_usd": [
+      150,
+      650
+     ],
+     "note": "consensus unknown blind -> surprise magnitude unknown; prior week ran modestly loose"
+    },
+    {
+     "rule_id": "magnitude.shoulder_counter_print_damping",
+     "inputs": {
+      "s1_state": "void",
+      "print_vs_chain": "counter_scenario"
+     },
+     "thresholds": "a COUNTER print in S1-void damps day-net toward flat (~0..+300); chain-sided still delivers band",
+     "scope_pass": true,
+     "ownership_rank": 5,
+     "direction_effect": "up_damped",
+     "magnitude_band_usd": [
+      0,
+      300
+     ],
+     "note": "governs the counter-print pop scenario only (tight/draw-relative build) -> round-trip"
+    },
+    {
+     "rule_id": "magnitude.catalyst_condition_sort",
+     "inputs": {
+      "condition": "storage_thursday"
+     },
+     "thresholds": "up-size storage Thursday magnitude",
+     "scope_pass": true,
+     "ownership_rank": 6,
+     "direction_effect": "magnitude_up",
+     "magnitude_band_usd": [
+      300,
+      650
+     ],
+     "note": "single up-sizer (no Monday/seam compound)"
+    },
+    {
+     "rule_id": "boundary.prior_close_flow_direction_disagreement",
+     "inputs": {
+      "d1_session_b": 0.472,
+      "d1_big_print_b": 0.522,
+      "d1_price_dir": "masked"
+     },
+     "thresholds": "price-vs-flow last-hour disagreement arms a seam reversal",
+     "scope_pass": false,
+     "ownership_rank": 7,
+     "direction_effect": "none",
+     "magnitude_band_usd": null,
+     "note": "prior-close PRICE direction is masked; only a mild internal session-vs-bigprint split (0.472/0.522). Not a flip flag, held as a small counter-tell"
+    },
+    {
+     "rule_id": "magnitude.shoulder_weather_band_void",
+     "inputs": {
+      "near_window_max_hdd_gw": "~2-4"
+     },
+     "thresholds": "near-window max <=13.5 gw -> weather band VOID",
+     "scope_pass": true,
+     "ownership_rank": 8,
+     "direction_effect": "none",
+     "magnitude_band_usd": null,
+     "note": "deep S1-void; weather grants no size, day owned by storage/chain co-conditions"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.2,
+     "flat": 0.38,
+     "down": 0.42
+    },
+    "us_open": {
+     "up": 0.22,
+     "flat": 0.33,
+     "down": 0.45
+    },
+    "settle": {
+     "up": 0.28,
+     "flat": 0.22,
+     "down": 0.5
+    },
+    "close": {
+     "up": 0.25,
+     "flat": 0.23,
+     "down": 0.52
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": -330,
+    "stdev": 360,
+    "p10": -680,
+    "p25": -540,
+    "p50": -400,
+    "p75": -80,
+    "p90": 260,
+    "bins": [
+     {
+      "label": "<-600",
+      "probability": 0.18
+     },
+     {
+      "label": "-600..-300",
+      "probability": 0.3
+     },
+     {
+      "label": "-300..-100",
+      "probability": 0.19
+     },
+     {
+      "label": "-100..+100",
+      "probability": 0.13
+     },
+     {
+      "label": "+100..+300",
+      "probability": 0.14
+     },
+     {
+      "label": ">+300",
+      "probability": 0.06
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "18:00",
+     "end_et": "08:00",
+     "probability": 0.55,
+     "expected_direction": "down_flat",
+     "catalyst": "overnight_chain_carry"
+    },
+    {
+     "start_et": "08:00",
+     "end_et": "10:30",
+     "probability": 0.5,
+     "expected_direction": "down_flat",
+     "catalyst": "pre_print_positioning"
+    },
+    {
+     "start_et": "10:30",
+     "end_et": "11:00",
+     "probability": 0.65,
+     "expected_direction": "two_sided_impulse",
+     "catalyst": "eia_storage_print"
+    },
+    {
+     "start_et": "11:00",
+     "end_et": "14:00",
+     "probability": 0.55,
+     "expected_direction": "down",
+     "catalyst": "post_print_delivery_vs_absorption"
+    },
+    {
+     "start_et": "14:00",
+     "end_et": "17:00",
+     "probability": 0.52,
+     "expected_direction": "down",
+     "catalyst": "settle_close_carry"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.52,
+    "chop": 0.48
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.5,
+    "reversal": 0.28,
+    "hold": 0.22
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18.0,
+     "p10": 0,
+     "p50": 0,
+     "p90": 0
+    },
+    {
+     "et_hr": 22.0,
+     "p10": -40,
+     "p50": -10,
+     "p90": 30
+    },
+    {
+     "et_hr": 2.0,
+     "p10": -80,
+     "p50": -25,
+     "p90": 45
+    },
+    {
+     "et_hr": 6.0,
+     "p10": -110,
+     "p50": -45,
+     "p90": 50
+    },
+    {
+     "et_hr": 8.0,
+     "p10": -140,
+     "p50": -65,
+     "p90": 60
+    },
+    {
+     "et_hr": 9.5,
+     "p10": -170,
+     "p50": -85,
+     "p90": 75
+    },
+    {
+     "et_hr": 10.5,
+     "p10": -430,
+     "p50": -180,
+     "p90": 200
+    },
+    {
+     "et_hr": 11.0,
+     "p10": -490,
+     "p50": -260,
+     "p90": 150
+    },
+    {
+     "et_hr": 12.0,
+     "p10": -540,
+     "p50": -330,
+     "p90": 110
+    },
+    {
+     "et_hr": 14.25,
+     "p10": -580,
+     "p50": -375,
+     "p90": 80
+    },
+    {
+     "et_hr": 17.0,
+     "p10": -680,
+     "p50": -400,
+     "p90": 60
+    }
+   ],
+   "guess_curve": [
+    {
+     "et_hr": 18.0,
+     "p50": 0
+    },
+    {
+     "et_hr": 22.0,
+     "p50": -10
+    },
+    {
+     "et_hr": 2.0,
+     "p50": -25
+    },
+    {
+     "et_hr": 6.0,
+     "p50": -45
+    },
+    {
+     "et_hr": 8.0,
+     "p50": -65
+    },
+    {
+     "et_hr": 9.5,
+     "p50": -85
+    },
+    {
+     "et_hr": 10.5,
+     "p50": -180
+    },
+    {
+     "et_hr": 11.0,
+     "p50": -260
+    },
+    {
+     "et_hr": 12.0,
+     "p50": -330
+    },
+    {
+     "et_hr": 14.25,
+     "p50": -375
+    },
+    {
+     "et_hr": 17.0,
+     "p50": -400
+    }
+   ],
+   "overnight_gap_usd": -10,
+   "guessed_net_usd": -400,
+   "fwd_curve_lean": "down_contango_injection_bleed",
+   "confidence": {
+    "overall": 0.5,
+    "direction": 0.55,
+    "magnitude": 0.45,
+    "timing": 0.6
+   },
+   "scenario_components": [
+    {
+     "name": "chain_sided_deliver_and_carry",
+     "probability": 0.55,
+     "direction": "down",
+     "distribution": {
+      "p10": -680,
+      "p50": -520,
+      "p90": -250
+     },
+     "governing_driver": "s1void_injection_chain_bleed (loose/building-surplus print confirms the down-chain, live sell tape)",
+     "invalidation_conditions": "a genuine buy-tape at the open (session_b>0.50) or a tight draw-relative print"
+    },
+    {
+     "name": "counter_print_pop_round_trip",
+     "probability": 0.3,
+     "direction": "up_then_fade",
+     "distribution": {
+      "p10": -120,
+      "p50": 120,
+      "p90": 320
+     },
+     "governing_driver": "shoulder_counter_print_damping (S1-void damps a counter print toward flat)",
+     "invalidation_conditions": "the pop is delivered and held past settle (would flip to a true up day)"
+    },
+    {
+     "name": "near_consensus_chop",
+     "probability": 0.15,
+     "direction": "flat",
+     "distribution": {
+      "p10": -200,
+      "p50": -60,
+      "p90": 120
+     },
+     "governing_driver": "surprise_magnitude near-consensus -> range/chop",
+     "invalidation_conditions": "a large |surprise| print"
+    }
+   ],
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp17_state_s95render_mask_s101.3",
+    "missing_inputs": [
+     "pre_print_storage_consensus (post-print only, left null)",
+     "vol_regime (masked_one_shot null)",
+     "stor_surprise (null, store hole Mar-Jul)"
+    ],
+    "stale_inputs": [
+     "storage_regional as_of 2026-04-09",
+     "steo apr26 age 9d",
+     "cash_basis vintage 2026-04-10 age 4d"
+    ],
+    "partial_inputs": [
+     "storage_consensus (trajectory only, no legit point estimate)"
+    ],
+    "prohibited_inputs_removed": [
+     "dip_imb_level",
+     "target-day price curve",
+     "post-print consensus 51.0 Bcf",
+     "post-print actual 59-60 Bcf"
+    ],
+    "flags": [
+     "consensus_null_blind",
+     "two_sided_print_scenarios",
+     "low_anchor_turn_risk",
+     "mild_bigprint_counter_tell"
+    ]
+   }
+  },
+  {
+   "date": "20260423",
+   "dow": "Thu",
+   "archetype": "eia_storage_thursday_chain_sided_injection_bleed",
+   "reasoning": "S3 shoulder injection print Thursday, now on June/NGM26 (post 04-21 seam), inside the continuing bearish bleed. Decision-legit PRE-PRINT consensus IS available: 96 Bcf build (TE snapshot 2026-04-23T06:31Z = 02:31 ET, strictly pre-print) - a large spring-ramp injection. Last week's print (0416, for 04-10) ran a big LOOSE surprise: actual ~59-60 vs 51 = +8/+9 (more build than expected = bearish confirmation the market has already absorbed). D-1 (0422) tape uniformly sell: session_b 0.415 AND big_print_b 0.40 (aligned bearish, lower activity 19812 trades). Direction anchors DOWN with higher conviction than 0416 (uniform sell tape + big consensus build + prior loose surprise). Print reweights, no blind sign flip on surprise alone. Scenarios: a loose/on-consensus big build deliver-and-carry = full shoulder band down; a tight (<96) draw-relative build pops up then S1-void-damps to a round-trip. Note: May opex/expiry week (opex 04-27, expiry 04-28) adds complex churn/round-trip risk though our basis is June. selector.divergence_resolution defaults S3-bearish DOWN (near-window HDD ~3 gw, session_b<0.50).",
+   "regime": {
+    "day_class": "eia_thursday_print",
+    "seasonal_state": "S3_shoulder_injection_S1void",
+    "demand_regime": "shoulder_low_hdd",
+    "curve_regime": "contango",
+    "storage_phase": "injection_building_surplus",
+    "vol_regime": "masked_null",
+    "dominant_driver": "large_build_storage_print_within_chain_sided_down_bleed",
+    "selector_mode": "s3_bearish_default"
+   },
+   "rule_trace": [
+    {
+     "rule_id": "daytype.storage_thursday_magnitude",
+     "inputs": {
+      "dow": "Thu",
+      "eia_print_et": "10:30",
+      "consensus_bcf": 96,
+      "chain": "down_bleed"
+     },
+     "thresholds": "print-Thursday up-size; R2 leg = running swing (down); day net owned by chain",
+     "scope_pass": true,
+     "ownership_rank": 1,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -450,
+      -780
+     ],
+     "note": "large 96 Bcf build consensus; chain-sided down leg"
+    },
+    {
+     "rule_id": "magnitude.s1void_injection_chain_bleed",
+     "inputs": {
+      "phase": "injection_building_surplus",
+      "near_window_hdd_gw": "~3",
+      "d1_session_b": 0.415,
+      "d1_big_print_b": 0.4
+     },
+     "thresholds": "S1-void inject + inject phase + loose prints + D-1 b<0.50 -> chain-sided down delivers full band",
+     "scope_pass": true,
+     "ownership_rank": 2,
+     "direction_effect": "down",
+     "magnitude_band_usd": [
+      -450,
+      -650
+     ],
+     "note": "uniform sell tape (0.415/0.40) = strong live-chain confirmation; trend band; lower activity tempers the top of the band"
+    },
+    {
+     "rule_id": "selector.divergence_resolution",
+     "inputs": {
+      "near_window_max_hdd_gw": "<16.4",
+      "d1_session_b": 0.415,
+      "regime": "S1void_injection"
+     },
+     "thresholds": "cold-add UP wins only if HDD>=16.4 AND b_share>=0.50; else S3-bearish DOWN",
+     "scope_pass": true,
+     "ownership_rank": 3,
+     "direction_effect": "down",
+     "magnitude_band_usd": null,
+     "note": "both gates fail hard -> DOWN default, high conviction"
+    },
+    {
+     "rule_id": "daytype.surprise_magnitude",
+     "inputs": {
+      "decision_legit_consensus": 96,
+      "prior_surprise_bcf": "+8/+9 loose"
+     },
+     "thresholds": "big |surprise| -> bigger leg; near-consensus -> chop; SIGN does not sort side",
+     "scope_pass": true,
+     "ownership_rank": 4,
+     "direction_effect": "none_side",
+     "magnitude_band_usd": [
+      150,
+      700
+     ],
+     "note": "a large 96 headline + prior loose run raises odds the print delivers a sizable leg either way"
+    },
+    {
+     "rule_id": "magnitude.shoulder_counter_print_damping",
+     "inputs": {
+      "s1_state": "void",
+      "print_vs_chain": "counter_scenario"
+     },
+     "thresholds": "COUNTER print (tight <96 draw-relative) in S1-void damps day-net toward flat (~0..+300)",
+     "scope_pass": true,
+     "ownership_rank": 5,
+     "direction_effect": "up_damped",
+     "magnitude_band_usd": [
+      0,
+      300
+     ],
+     "note": "governs the tight-build pop scenario -> round-trip"
+    },
+    {
+     "rule_id": "magnitude.catalyst_condition_sort",
+     "inputs": {
+      "condition": "storage_thursday+opex_expiry_week"
+     },
+     "thresholds": "up-size storage Thursday; opex/expiry-week churn adds round-trip risk",
+     "scope_pass": true,
+     "ownership_rank": 6,
+     "direction_effect": "magnitude_up",
+     "magnitude_band_usd": [
+      300,
+      700
+     ],
+     "note": "May opex 04-27 / expiry 04-28 in the complex; basis is June so damped, not compounded"
+    },
+    {
+     "rule_id": "boundary.prior_close_flow_direction_disagreement",
+     "inputs": {
+      "d1_session_b": 0.415,
+      "d1_big_print_b": 0.4,
+      "d1_price_dir": "masked"
+     },
+     "thresholds": "price-vs-flow last-hour disagreement arms a seam reversal",
+     "scope_pass": false,
+     "ownership_rank": 7,
+     "direction_effect": "none",
+     "magnitude_band_usd": null,
+     "note": "flow uniformly sell and (masked) price presumed chain-sided down = aligned, no disagreement; carry as normal"
+    },
+    {
+     "rule_id": "magnitude.shoulder_weather_band_void",
+     "inputs": {
+      "near_window_max_hdd_gw": "~3"
+     },
+     "thresholds": "near-window max <=13.5 gw -> weather band VOID",
+     "scope_pass": true,
+     "ownership_rank": 8,
+     "direction_effect": "none",
+     "magnitude_band_usd": null,
+     "note": "deep S1-void; weather grants no size"
+    }
+   ],
+   "direction_probabilities": {
+    "overnight": {
+     "up": 0.18,
+     "flat": 0.36,
+     "down": 0.46
+    },
+    "us_open": {
+     "up": 0.22,
+     "flat": 0.3,
+     "down": 0.48
+    },
+    "settle": {
+     "up": 0.27,
+     "flat": 0.2,
+     "down": 0.53
+    },
+    "close": {
+     "up": 0.25,
+     "flat": 0.2,
+     "down": 0.55
+    }
+   },
+   "move_size_distribution_usd": {
+    "flat_band": 150,
+    "mean": -380,
+    "stdev": 370,
+    "p10": -720,
+    "p25": -560,
+    "p50": -420,
+    "p75": -120,
+    "p90": 240,
+    "bins": [
+     {
+      "label": "<-600",
+      "probability": 0.2
+     },
+     {
+      "label": "-600..-300",
+      "probability": 0.31
+     },
+     {
+      "label": "-300..-100",
+      "probability": 0.18
+     },
+     {
+      "label": "-100..+100",
+      "probability": 0.12
+     },
+     {
+      "label": "+100..+300",
+      "probability": 0.13
+     },
+     {
+      "label": ">+300",
+      "probability": 0.06
+     }
+    ]
+   },
+   "timing_windows": [
+    {
+     "start_et": "18:00",
+     "end_et": "08:00",
+     "probability": 0.58,
+     "expected_direction": "down_flat",
+     "catalyst": "overnight_chain_carry_sell_tape"
+    },
+    {
+     "start_et": "08:00",
+     "end_et": "10:30",
+     "probability": 0.52,
+     "expected_direction": "down_flat",
+     "catalyst": "pre_print_positioning"
+    },
+    {
+     "start_et": "10:30",
+     "end_et": "11:00",
+     "probability": 0.66,
+     "expected_direction": "two_sided_impulse",
+     "catalyst": "eia_storage_print_96bcf_consensus"
+    },
+    {
+     "start_et": "11:00",
+     "end_et": "14:00",
+     "probability": 0.57,
+     "expected_direction": "down",
+     "catalyst": "post_print_delivery_vs_absorption"
+    },
+    {
+     "start_et": "14:00",
+     "end_et": "17:00",
+     "probability": 0.52,
+     "expected_direction": "down",
+     "catalyst": "settle_close_opex_week_churn"
+    }
+   ],
+   "shape_probabilities": {
+    "trend": 0.55,
+    "chop": 0.45
+   },
+   "continuation_reversal_probabilities": {
+    "continuation": 0.52,
+    "reversal": 0.27,
+    "hold": 0.21
+   },
+   "path_distribution": [
+    {
+     "et_hr": 18.0,
+     "p10": 0,
+     "p50": 0,
+     "p90": 0
+    },
+    {
+     "et_hr": 22.0,
+     "p10": -45,
+     "p50": -12,
+     "p90": 28
+    },
+    {
+     "et_hr": 2.0,
+     "p10": -85,
+     "p50": -30,
+     "p90": 40
+    },
+    {
+     "et_hr": 6.0,
+     "p10": -120,
+     "p50": -50,
+     "p90": 45
+    },
+    {
+     "et_hr": 8.0,
+     "p10": -150,
+     "p50": -70,
+     "p90": 55
+    },
+    {
+     "et_hr": 9.5,
+     "p10": -185,
+     "p50": -95,
+     "p90": 70
+    },
+    {
+     "et_hr": 10.5,
+     "p10": -450,
+     "p50": -190,
+     "p90": 190
+    },
+    {
+     "et_hr": 11.0,
+     "p10": -510,
+     "p50": -280,
+     "p90": 140
+    },
+    {
+     "et_hr": 12.0,
+     "p10": -560,
+     "p50": -350,
+     "p90": 100
+    },
+    {
+     "et_hr": 14.25,
+     "p10": -610,
+     "p50": -395,
+     "p90": 70
+    },
+    {
+     "et_hr": 17.0,
+     "p10": -720,
+     "p50": -420,
+     "p90": 55
+    }
+   ],
+   "guess_curve": [
+    {
+     "et_hr": 18.0,
+     "p50": 0
+    },
+    {
+     "et_hr": 22.0,
+     "p50": -12
+    },
+    {
+     "et_hr": 2.0,
+     "p50": -30
+    },
+    {
+     "et_hr": 6.0,
+     "p50": -50
+    },
+    {
+     "et_hr": 8.0,
+     "p50": -70
+    },
+    {
+     "et_hr": 9.5,
+     "p50": -95
+    },
+    {
+     "et_hr": 10.5,
+     "p50": -190
+    },
+    {
+     "et_hr": 11.0,
+     "p50": -280
+    },
+    {
+     "et_hr": 12.0,
+     "p50": -350
+    },
+    {
+     "et_hr": 14.25,
+     "p50": -395
+    },
+    {
+     "et_hr": 17.0,
+     "p50": -420
+    }
+   ],
+   "overnight_gap_usd": -12,
+   "guessed_net_usd": -420,
+   "fwd_curve_lean": "down_contango_injection_bleed",
+   "confidence": {
+    "overall": 0.55,
+    "direction": 0.6,
+    "magnitude": 0.48,
+    "timing": 0.62
+   },
+   "scenario_components": [
+    {
+     "name": "chain_sided_deliver_and_carry",
+     "probability": 0.57,
+     "direction": "down",
+     "distribution": {
+      "p10": -720,
+      "p50": -540,
+      "p90": -260
+     },
+     "governing_driver": "s1void_injection_chain_bleed (large/loose build confirms down-chain, uniform sell tape 0.415/0.40)",
+     "invalidation_conditions": "a buy-tape open or a tight <96 draw-relative print"
+    },
+    {
+     "name": "counter_print_pop_round_trip",
+     "probability": 0.3,
+     "direction": "up_then_fade",
+     "distribution": {
+      "p10": -120,
+      "p50": 110,
+      "p90": 300
+     },
+     "governing_driver": "shoulder_counter_print_damping (tight build pops, S1-void damps to round-trip)",
+     "invalidation_conditions": "the pop delivered and held past settle"
+    },
+    {
+     "name": "near_consensus_chop",
+     "probability": 0.13,
+     "direction": "flat",
+     "distribution": {
+      "p10": -220,
+      "p50": -70,
+      "p90": 120
+     },
+     "governing_driver": "surprise_magnitude near-consensus + opex-week two-way churn",
+     "invalidation_conditions": "a large |surprise| vs 96"
+    }
+   ],
+   "data_quality": {
+    "blind_wall_passed": true,
+    "state_audit_version": "grp17_state_s95render_mask_s101.3",
+    "missing_inputs": [
+     "vol_regime (masked_one_shot null)",
+     "stor_surprise (null, store hole Mar-Jul)"
+    ],
+    "stale_inputs": [
+     "storage_regional as_of 2026-04-09",
+     "steo apr26 age 9d",
+     "cash_basis vintage 2026-04-10"
+    ],
+    "partial_inputs": [
+     "storage_consensus final 94 is post-print; used the 96 pre-print snapshot only"
+    ],
+    "prohibited_inputs_removed": [
+     "dip_imb_level",
+     "target-day price curve",
+     "post-print consensus_final 94 Bcf",
+     "post-print actual"
+    ],
+    "flags": [
+     "pre_print_consensus_96_legit",
+     "two_sided_print_scenarios",
+     "opex_expiry_week_churn",
+     "june_basis_post_seam",
+     "low_anchor_turn_risk"
+    ]
+   }
+  }
+ ]
+}

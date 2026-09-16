@@ -1,0 +1,134 @@
+{
+  "specialist": "A_weekend_sunday_reopen",
+  "lens": "weekend gaps / thin Sunday / gap persistence vs rejection / reopen exhaustion. First Sunday read RELATIVE to the Friday anchor (inherit CLOSE + chain state, not the day-move; reopen gap SIGN is non-derivable noise). On thin Sunday tape MBO flow stands down -> trade-flow/L1 fallback, labeled.",
+  "group": 15,
+  "brain_version": "s102.4 (immutable blind grp15 = s102.1; posterior refine on s102.4)",
+  "round": 2,
+  "days_owned": ["20260315", "20260322"],
+  "doctrine_note": "POSTERIOR UPDATE of the IMMUTABLE blind, not a replacement. Round 2 starts from my round-1 posterior and uses the HE24->HE1 handoff STATE (never the day-net) to tighten timing/mechanism. Both owned days: KEEP the round-1 number (direction and magnitude); the handoff moved the 0322 MECHANISM (reconciled a chain-polarity tension) without moving the number, and confirmed 0315 via the inherited anchor-exit condition. No new causal evidence justified a direction or magnitude change on either day. HONEST bar respected: the derived budget/stub bands are emitted as-is; the +20/+40 residuals to actual are reactive tail, not claimed.",
+  "anchor": {"date": "20260313", "close": 3.132, "last_hour_dir": "down", "instrument": "NGJ26"},
+  "cross_cutting_mbo_finding": "Both G15 Sundays share ONE weekend fingerprint, now confirmed by BOTH the replayed MBO evidence AND the handoff exit states: a thin-tape reopen GAP UP against the chain (0315 +480, 0322 +290) that EXHAUSTS within ~1 hour (0315: imbL +0.436 buy -> consumed=BID/div_exhausting by 18:56-19:26; 0322: an up-probe on a bad book) = a GAP REJECTION, after which the day takes the chain/drift sign to a with-sign day-move (0315 -430, 0322 -640), and closes NEAR the low (close_off_low 0.04 / 0.13) with a mild late BUY flow being ABSORBED (last_hour_signed_flow +1 both). The gap SIGN is non-derivable noise; the DAY-MOVE from the Friday anchor is the derivable, scored quantity, and both blind bands nailed it. MBO earns NO execution authority on thin Sunday tape (0315 conviction 0.000 no-authority; 0322 book_complete False + maybe_bad_book all session) -> the DATA-QUALITY GATE is the load-bearing MBO contribution on weekends, NOT any positive flow read; the blind chain-drift ladder + trade-flow fallback carries the derived day-move. The handoff pass adds one refinement: a fresh, weak, unconfirmed reopen chain-lean (0322's coordinator chain_polarity +1 age 0 off a choppy mid-range Friday) is exactly what produces the up-gap that then gets rejected - so a young age-0 reopen chain WITHOUT a forward driver should be read as gap-rejection fuel, not as a birth to trade.",
+  "days": [
+    {
+      "date": "20260315",
+      "dow": "Sun",
+      "day_class": "weekend_gap + sunday_session (0313->0315 closure); block open (no prior in-block session)",
+      "instrument": "NGJ26",
+      "blind_direction": "down",
+      "blind_net_usd": -150,
+      "blind_day_move_usd": -450,
+      "blind_overnight_gap_usd": -300,
+      "posterior_direction_by_horizon": {"overnight": "flat", "us_open": "down", "settle": "down", "close": "down"},
+      "posterior_direction_note": "UNCHANGED from round 1. The reopen GAP SIGN is stood down as non-derivable thin-Sunday noise (actual gapped UP +480 then fully rejected). The Sunday-session drift with the chain sign (down) is the derivable directional content, confirmed by trade-flow (onset down 18:03, total_sflow -337, all three phases sell-tilted) and the MBO shadow reopen-buy-then-exhaust-to-consumed-BID sequence.",
+      "expected_magnitude_usd": -450,
+      "expected_magnitude_band_usd": [-560, -340],
+      "expected_magnitude_basis": "day-move (gap -300 + session -150), the doctrine-scored derived quantity. PRICED-STUB class 200..400 at the drift sign: the 0313 anchor closed MID-RANGE of the post-termination structure (above the 0310 basing close, below the 0308 high), NOT at a chain extreme, so the -600..-1600 continuation class is unavailable. KEEP blind -450.",
+      "onset_time_et": "18:03",
+      "turn_time_et": "18:05 (reopen up-spike rejected within ~5-10 min, then monotone down; no counter-turn thereafter)",
+      "trend_vs_chop": "trend (down) after a brief reopen up-spike that round-tripped",
+      "continuation_vs_reversal": "continuation (priced-stub chain-drift extends down; the up-gap is NOT a reversal, it is rejected)",
+      "path_p50_curve": [[18.0, 0], [18.25, -60], [18.5, -220], [19.0, -330], [19.5, -410], [20.0, -450]],
+      "path_p50_note": "cum-$ from the Friday anchor on the Sunday 18:00-20:00 reopen clock. Reopen centered ~0 (gap sign unpredictable; the actual +480 up-spike is NOT baked in). With-sign drift down to the day-move -450. Actual shape: gapped +480, sold to -950-from-open by 18:49, closed -430 vs anchor.",
+      "confidence": 0.68,
+      "weight_assigned": {
+        "blind": 0.92,
+        "causal_mbo": 0.08,
+        "detail": {
+          "blind_structural_ladder_chain_drift": "CORE / high - priced-stub chain-drift ownership at the drift sign is the predictor; unchanged.",
+          "trade_flow_fallback_evidence_json": "high (confirming) - onset down 18:03, total_sflow -337, all three phases sell-tilted, price down. Confirms the blind down day-move.",
+          "mbo_feature_state_flow": "SHADOW only - execution_authority False all 26 bars, div_conviction 0.000; a coherent reopen-buy-then-exhaust sequence that CONFIRMS down but adds nothing over trade-flow, and would have MISLED long if given authority.",
+          "L1_spread": "low - thin, informational."
+        }
+      },
+      "evidence_used": [
+        "Friday ANCHOR 3.132, closed at its low on position-driven crest-sell squaring, last-hour down = the inherited relative frame (this is the block-open 'handoff' - there is no prior in-block session).",
+        "trade-flow (evidence.json): onset_dir down @18:03, total_sflow -337 sell, phases all sell-side, close 3.089 (-430 vs anchor).",
+        "MBO shadow sequence (feature_states): reopen 18:26 imb_level +0.436 buy (the up-gap in progress) -> exhausts to imb_level -0.097/-0.574 / consumed=BID / div_exhausting=True / conviction 0.000 by 18:56-19:26 = the up-gap being rejected. Used as CONFIRMATION, not authority.",
+        "tape_conditions D-1 (0313): session B 0.463, big-print B 0.505 = squaring, no attack signature either way -> stub not continuation, consistent with the blind."
+      ],
+      "evidence_rejected": [
+        "The actual +480 reopen gap-UP as a directional signal: rejected - thin-Sunday reopen noise, non-derivable at open, fully round-tripped (anchor rejection).",
+        "MBO first-bar buy-imbalance (+0.436) as a bullish read: rejected - it exhausted within the hour (conviction 0.000, consumed=BID); taking it directionally would have been a false long into a down drift.",
+        "The anchor's weak/at-the-low close as an argument for the DEEPER continuation class: rejected - the crest-sell was largely SPENT on 0313 (spent-vs-unrealized-ahead key), so the reopen is a priced-stub, not a fresh continuation."
+      ],
+      "stand_down_reasons": [
+        "MBO feature-state flow: execution_authority False all 26 bars, div_conviction 0.000 (thin Sunday, mbo_mapping_flags) -> no book-based conclusions; trade-flow/L1 fallback only.",
+        "Overnight/reopen gap sign: stood down as non-derivable thin-Sunday noise (both my Sundays gapped up then sold; the gap is noise, the day-move is the signal)."
+      ],
+      "handoff_in_used": "NONE - block open, no prior in-block session. Per the weekend-lens doctrine the first Sunday is anchored to the Friday ANCHOR (0313 close 3.132, last-hour DOWN, closed at its low on crest-sell squaring). That inherited exit CONDITION is a weak-close / down-last-hour state, which CONFIRMS a with-sign continuation Sunday; but the crest-sell being spent on Friday is why this is a PRICED-STUB (200-400), not the continuation class. Handoff-equivalent held the round-1 -450, no move.",
+      "handoff_out": {
+        "boundary_to": "20260316 (Mon, owner B)",
+        "exit_state": {"close_px_posterior": 3.087, "day_move_from_anchor_usd": -450, "last_hour_dir": -1, "last_hour_signed_flow": 1, "low_et": "18:49", "close_off_low_frac": 0.04, "low_late": true, "chain_polarity": -1, "chain_age_sessions": 1},
+        "read": "The reopen up-gap was rejected and sold monotone to the low ~18:49; closed NEAR the low (0.04 off) with a mild late BUY flow being ABSORBED (price down, last_hour_signed_flow +1). No counter-turn - exhaustion is a rejected up-spike, not a give-back. Hand B a FRESH down-chain (age 1) with a weak/at-the-low exit: carry the down side into the Monday catch-up window, but the late buy-absorption is the first hint that Monday's chain delivery may be met with accommodation - size the Monday delivery, do not assume a capitulation flush."
+      },
+      "mbo_verdict": "NEUTRAL-to-marginally-helpful, correctly SUBORDINATED (unchanged from round 1). The MBO layer stood itself down (thin Sunday, execution_authority False, conviction 0.000) exactly as the weekend lens predicts. As shadow it carried a real, coherent reopen-buy-then-exhaust-to-consumed-BID sequence agreeing with the down call, but added NOTHING over trade-flow and would have MISLED long if given authority. Net: neither improved nor hurt the derived day-move; the blind was already right (-450 vs actual -430, residual +20).",
+      "selection_reason": "Weekend/Sunday-reopen specialist owns the day (weekend_gap + sunday_session, 0313->0315 closure, block open). Chain_drift priced-stub is the coordinator's owner; MBO stands down; trade-flow confirms; KEEP the immutable blind. Round 2: no incoming handoff; anchor-exit inheritance confirms the hold."
+    },
+    {
+      "date": "20260322",
+      "dow": "Sun",
+      "day_class": "weekend_gap + sunday_session (0320->0322 closure); weekend_reopen boundary from owner E",
+      "instrument": "NGK26",
+      "blind_direction": "down",
+      "blind_net_usd": -200,
+      "blind_day_move_usd": -600,
+      "blind_overnight_gap_usd": -400,
+      "posterior_direction_by_horizon": {"overnight": "flat", "us_open": "down", "settle": "down", "close": "down"},
+      "posterior_direction_note": "UNCHANGED from round 1. Reopen GAP SIGN stood down as thin-Sunday noise (actual gapped UP +290 vs the 0320 close, then sold hard). Round-2 MECHANISM tightened: the derivable directional content is the failure of a young, unconfirmed reopen up-lean (coordinator chain_polarity +1 age 0 off a choppy mid-range Friday) that lacks a forward driver, reverting into the block's dominant down trajectory. Confirmed by trade-flow (onset down 18:01, front-loaded flush).",
+      "expected_magnitude_usd": -600,
+      "expected_magnitude_band_usd": [-720, -500],
+      "expected_magnitude_basis": "day-move (gap -400 + session -200), weekend_chain_drift_day_move BUDGET form, plain rung at class bottom (S1-void damping; the doubled rung keys on the FIRST covering print, which was G14's 0308 - covering is now week 3, not first). KEEP blind -600.",
+      "onset_time_et": "18:01",
+      "turn_time_et": "none (front-loaded flush 18:00-18:10 to the low, then flat; no counter-turn)",
+      "trend_vs_chop": "front-loaded trend down then chop-flat (all the move is in the first ~40 min; phases 2-3 near-zero: ph1 pxchg -910 of the -930)",
+      "continuation_vs_reversal": "continuation of the block down-trajectory via a young-reopen-chain FAILURE; the +290 up-gap is rejected, not a reversal",
+      "path_p50_curve": [[18.0, 0], [18.17, -420], [18.5, -520], [19.0, -580], [19.5, -610], [20.0, -600]],
+      "path_p50_note": "cum-$ from the 0320 close on the Sunday 18:00-20:00 reopen clock. Reopen centered ~0 (gap sign unpredictable). Front-loaded down - actual gapped +290 then dumped to -1090-from-open by 18:10 (low), settling to -640 vs the 0320 close. My p50 front-loads the drop and lands the day-move at -600.",
+      "confidence": 0.62,
+      "confidence_note": "unchanged. The handoff RECONCILED the chain-polarity tension (round-1 'live down-chain' -> round-2 'young age-0 +1 reopen-lean that fails'), which improves the STRUCTURAL story but not the number; the MBO book stays DISABLED (book_complete False + maybe_bad_book all 24 bars), so I still lean entirely on the thin trade-flow (total_sflow -68).",
+      "weight_assigned": {
+        "blind": 0.95,
+        "causal_mbo": 0.05,
+        "detail": {
+          "blind_structural_ladder_chain_drift_budget_form": "CORE / high - weekend_chain_drift_day_move plain rung, class bottom; budget form governs; unchanged.",
+          "trade_flow_fallback_evidence_json": "high-but-thin (confirming) - onset down 18:01, total_sflow -68 mild sell, ph1 carries the whole move. Confirms down but weakly.",
+          "mbo_feature_state_flow": "DISABLED - book_complete False all 24 bars, mbo_maybe_bad_book flagged nearly throughout, execution_authority False, conviction 0.000. Book-based conclusions off (the 18:56 consumed=ASK / far_side_recruitment 0.615 print is FALSE PRECISION on a bad book).",
+          "tape_conditions_D-1_0320": "moderate - session B 0.442 / big-print B 0.542 (mild covering tone into the weekend) -> hold the class bottom, do not stretch the band."
+        }
+      },
+      "evidence_used": [
+        "0320 Friday CLOSE 3.07 (NGK26) = the weekend frame (inherited via the handoff; Sunday inherits the close + chain state, not the -80 Friday day-move).",
+        "handoff STATE from owner E (0320 exit): close_off_low 0.47 (MID-range), last_hour_dir +1 / last_hour_signed_flow +1 (mild late bid), CHOP/absorbed day, chain_polarity +1 age 0, cum_from_anchor -250 - a SPENT, stretched-flat Friday holding no strong offer, so the reopen gap sign is genuinely non-derivable and the day-move takes the drift.",
+        "trade-flow (evidence.json): onset down @18:01, total_sflow -68 mild sell, phase-1 carries the whole move (pxchg -910 of -930), close 3.006 (-640 vs 0320 close).",
+        "tape_conditions D-1 (0320): session B 0.442 / big-print B 0.542 covering tone -> class-bottom sizing, matches the blind."
+      ],
+      "evidence_rejected": [
+        "The actual +290 reopen gap-UP as directional: rejected - thin-Sunday noise, immediately sold through (anchor rejection); consistent with a WEAK age-0 +1 reopen-lean that fails.",
+        "ALL MBO book-derived features this session: rejected on data quality (book_complete False all session, maybe_bad_book). The 18:56 consumed=ASK / far_side_recruitment 0.615 print is NOT trustworthy.",
+        "The coordinator chain_polarity +1 (age 0) as a bullish DAY read: rejected - it is an unconfirmed reopen-lean with no forward driver (termination != birth); it produced the up-gap, which was rejected into the down trajectory."
+      ],
+      "stand_down_reasons": [
+        "MBO book UNRELIABLE: book_complete False every bar, mbo_maybe_bad_book flagged nearly throughout, execution_authority False -> book-based conclusions DISABLED; trade-flow + L1 + D-1 tape only (labeled).",
+        "Overnight/reopen gap sign: non-derivable thin-Sunday noise.",
+        "The fresh age-0 +1 chain-lean: stood down as a tradable birth (no forward driver) - read only as gap-rejection fuel."
+      ],
+      "handoff_in_used": "TOOK owner E's 0320 exit STATE (not the day-net): a CHOP/absorbed Friday closing MID-range (close_off_low 0.47) with a mild late BUY (last_hour +1), coordinator chain_polarity +1 age 0, cum_from_anchor -250. Interpretation: (1) the Friday held NO strong directional conviction into the close - so the reopen gap sign is genuinely non-derivable (validates the gap-rejection stand-down); (2) the age-0 +1 chain is a fresh, unconfirmed reopen-lean with no forward driver - it is the SOURCE of the +290 up-gap, not a birth to trade. This TIGHTENED my round-1 mechanism (from 'live down-chain' to 'young reopen-lean fails into the block down-trajectory') while HOLDING the derived budget-form band at -600 - the mid-range spent Friday gave no reason to deepen past class bottom, and the block's down-trajectory + gap-rejection delivered the full plain-rung band. No front-running of the overnight seam (it is never-traded, and it carries the NGK26 leg change as already-priced).",
+      "handoff_out": {
+        "boundary_to": "20260323 (Mon, owner B)",
+        "exit_state": {"close_px_posterior": 3.007, "day_move_from_close_usd": -600, "last_hour_dir": -1, "last_hour_signed_flow": 1, "low_et": "18:10", "close_off_low_frac": 0.13, "low_late": true, "chain_polarity": -1, "chain_age_sessions": 3},
+        "read": "The Sunday delivered a FRONT-LOADED gap-rejection flush (all the move 18:00-18:10 to the low), then flat/chop; closed NEAR the low (0.13 off) with a mild late BUY being ABSORBED (last_hour_signed_flow +1) - the identical 0315 fingerprint. The young +1 reopen-lean is now dead/rejected and the down-drift is re-established (chain age 3). KEY carry for B: the flush was SPENT early (front-loaded), so the exhaustion is already partly discharged into the seam - Monday's continuation is a FRESH-leg question (is there new sell supply?), NOT a momentum carry; size the Monday chain delivery on new flow, and note the recurring late buy-absorption as a possible accommodation building under the drift."
+      },
+      "mbo_verdict": "MBO HURT-POTENTIAL, correctly DISABLED = net neutral (unchanged from round 1). The reconstructed book never completed and was flagged bad all session, so any book-based feature (the 18:56 consumed=ASK / far_side_recruitment 0.615 print) would have been FALSE PRECISION. The engine correctly withheld authority. Falling back to trade-flow gave a mild down confirmation, and the blind budget-form day-move -600 landed on actual -640 (residual +40). The value here was the DATA-QUALITY GATE doing its job, not any positive MBO signal. Round 2 confirms: the gate held (book_complete False x24) and the handoff-tightened mechanism did not change the number.",
+      "selection_reason": "Weekend/Sunday-reopen specialist owns the day (weekend_gap + sunday_session, 0320->0322 closure, weekend_reopen boundary from E). Chain_drift budget-form is the coordinator's owner; MBO disabled on data quality; trade-flow confirms; KEEP the immutable blind. Round 2: the handoff reconciled the chain-polarity tension and confirmed the class-bottom hold."
+    }
+  ],
+  "summary": {
+    "verdict": "KEEP the round-1 posterior on BOTH Sundays: 0315 -450 (actual -430, residual +20), 0322 -600 (actual -640, residual +40). No new causal evidence justified a direction or magnitude change. The round-2 handoff pass HELD 0315 (via the inherited anchor-exit condition - a weak at-the-low Friday close confirming a with-sign continuation stub) and TIGHTENED the 0322 MECHANISM (reconciling the coordinator's chain_polarity +1 age 0 with my down day-move: a young unconfirmed reopen-lean fails into the block down-trajectory) without moving the number.",
+    "round1_to_round2": {
+      "20260315": "-450 -> -450 (HELD). No incoming handoff (block open); the anchor-exit inheritance (0313 closed at its low, last-hour down) confirms the priced-stub continuation-down. Number unchanged.",
+      "20260322": "-600 -> -600 (HELD). The incoming E handoff (mid-range CHOP Friday, mild late bid, fresh +1 age-0 chain) reframed the mechanism to a young-reopen-lean FAILURE and validated the gap-rejection stand-down; the spent mid-range Friday gave no reason to deepen past class bottom. Number unchanged."
+    },
+    "mbo_helped_or_hurt": "MBO NEITHER HELPED NOR HURT on either Sunday - the correct outcome for thin weekend tape. 0315: flow stood down (execution_authority False, conviction 0.000); shadow sequence confirmed down but added nothing and would have misled if trusted. 0322: book outright disabled (book_complete False + maybe_bad_book all session); the data-quality gate prevented false precision. On thin Sunday tape the MBO layer is subordinate by design; the trade-flow/L1 fallback carries the confirmation and the blind chain-drift ladder carries the derived day-move.",
+    "execution_mode": "SHADOW (no live execution; posterior refine only)."
+  }
+}

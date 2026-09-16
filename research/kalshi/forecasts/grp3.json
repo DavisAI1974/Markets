@@ -1,0 +1,154 @@
+{
+  "group": 3,
+  "tag": "g3",
+  "brain_version": "s92.6",
+  "refine_pass": "s95.2_fullcurve",
+  "s95_2_note": "S95.2 FULL UNBLINDED refine on ROLL-CLEAN data, adding a RENDERABLE refined guess CURVE per day. G3 contains NO contract roll (the one roll in G3-5 is at the G3->G4 seam, Sep24->25, +0.276, handled in grp4). Curves are cum_from_open in $ (MULT=10000) on the ET grid [20,22,0,2,4,6,8,10,12,14,16,18,20], reasoned day-into-day from the prior day's GUESSED close (anchor Sep5 hr24=3.026, last hour down), by applying GENERAL condition->behavior rules to each day's decision-state - NOT by tracing the actual. Overnight gap guessed ~0 everywhere (overnight is thin drift; no general rule forecasts gap direction). G6 holdout folded: cross-block reversion is a GIVE-BACK not a sustained reversal (a block can V back), fundamentals are an unreliable block-direction cue near the seasonal transition, and MAGNITUDE is the dominant residual error. PER-EVENT, no averages, no point-fitting.",
+  "block_trajectory": "fell 3.072 (0908 open) -> 2.869 (0924 close); the +150 Bcf storage SURPLUS + high-CDD injection backdrop correctly called the block DOWN. Intraday per-day side was a coin-flip; block bottomed 0922 (2.801, roll-clean cum-extreme -2250) and had already turned UP by 0923/0924 (bounce+hold) before the G4 seam - the swing-exhaustion turn began BEFORE the seam.",
+  "anchor": {"date": "20250905", "price": 3.026, "last_hour_dir": "down"},
+  "fingerprint_finding": {
+    "status": "story A CONFIRMED via a cleaner signal (continuation-asymmetry + flow), not via turn_far_thinning recruitment (that part REVISED)",
+    "0916_counter_trend_grind_up": "STRONG up continuation-asymmetry: dominant UP legs continued 5/15 while COUNTER (block-down) legs continued only 1/11 - the block-down attempts DIED intraday, the counter-trend up grind carried. Held up-legs' dip_imb_level sign matched dir 4/4. CONFIRMS: flow + continuation-asymmetry CALL the counter-trend side; the block trend does NOT veto a counter-trend grind. NOTE (open problem): this counter-trend grind is NOT callable AT THE OPEN - the refined guess for 0916 honestly leans with the block (down) and misses; the turn is only readable once the grind forms.",
+    "0908_two_sided_monday": "WEAK asymmetry (DOM up 5/13 vs COUNTER 6/17) - matches its two-sided spike-then-fade character (net only +190). All peaked_fast legs FADED (4/4). CONFIRMS spike->fade at leg level.",
+    "revised_recruitment": "turn_far_thinning did NOT confirm as the hold-vs-fade / recruitment discriminator: held up-legs on 0916 were only 1/4 negative-tft. Hold-vs-fade is carried by continuation/retention + peaked_fast, NOT by far_thinning sign.",
+    "still_wanted": ["0923 (G3 bottom bounce - not in the fingerprint set)"]
+  },
+  "curve_where_tracks_vs_misses": "TRACKS (refined rules earn the side): 0910 Wed grind-down (block trend overrides Wed up-lean), 0911/0918 storage-Thursday down sized up, 0922 Monday continuation-down sized up, 0923 swing-reversal-up off the 0922 cum-extreme (the refined win - orig guessed down). MISSES honestly: 0908 Monday (guessed small-up fade, side ok, magnitude of the pop light), 0915 two-sided Monday V (side of dominant leg hard), 0916 counter-trend grind-up (guessed down, the unsolved intra-block turn). UNDER-sizes on the catalyst days (0911/0918/0922) - magnitude is the dominant residual, as in G6.",
+  "days": [
+    {
+      "date": "20250908", "dow": "Mon", "group": 3, "archetype": "weekend_gap_monday_spike_fade",
+      "guess_usd": -450, "actual_usd": 1260,
+      "drift": "Guessed DOWN extending the anchor-down lean; actual gapped UP overnight (+460) and grinded to +740 by hr6 before fading to +190 net. Miss-side.",
+      "conditions": ["weekend_gap_monday", "block_open", "counter_to_anchor_down", "spike_then_fade_shape"],
+      "overnight_gap_usd": 0, "guessed_net_usd": 300,
+      "guess_curve": [[20,0],[22,300],[0,400],[2,550],[4,600],[6,550],[8,350],[10,300],[12,250],[14,300],[16,280],[18,300],[20,300]],
+      "refined_reasoning": "A weekend-gap Monday reprices at the Sun-eve reopen and frequently OPENS AGAINST the running lean (anchor-down -> lean the Monday UP as a reversal of the recent direction). Model an early-loaded pop that FADES by the US session (spike round-trips) -> small positive net. Size the Monday move up but hold the side only while the leg grinds. Refined side (up-fade) is right; magnitude of the early pop is under."
+    },
+    {
+      "date": "20250909", "dow": "Tue", "group": 3, "archetype": "noncatalyst_chop",
+      "guess_usd": null, "actual_usd": 120,
+      "drift": "Small up chop (+120 net), no dominant leg; unscored.",
+      "conditions": ["quiet_midblock", "no_catalyst"],
+      "overnight_gap_usd": 0, "guessed_net_usd": -150,
+      "guess_curve": [[20,0],[22,-40],[0,-60],[2,-30],[4,-80],[6,-100],[8,-120],[10,-150],[12,-180],[14,-150],[16,-130],[18,-140],[20,-150]],
+      "refined_reasoning": "Non-catalyst Tuesday without a fresh gap or print chops small; default magnitude is roughly right on no-catalyst days (the under-forecast is concentrated on catalyst days). Lean with the block (down) but keep it small."
+    },
+    {
+      "date": "20250910", "dow": "Wed", "group": 3, "archetype": "wed_block_trend_grind_down",
+      "guess_usd": 370, "actual_usd": -950,
+      "drift": "Guessed UP on the Wed up-lean archetype; actual grinded DOWN steadily from hr6. Miss-side.",
+      "conditions": ["wed_uplean_archetype_failed", "grind_down", "block_downtrend"],
+      "overnight_gap_usd": 0, "guessed_net_usd": -500,
+      "guess_curve": [[20,0],[22,-50],[0,-60],[2,-40],[4,-80],[6,-150],[8,-280],[10,-380],[12,-450],[14,-500],[16,-520],[18,-500],[20,-500]],
+      "refined_reasoning": "The Wednesday up-lean is a weak weekday prior OVERRIDDEN by the running block trajectory: inside a down block a Wed grinds down all session. Defer weekday archetypes to the trajectory + intraday flow. Refined side (down) now right; magnitude modest (non-catalyst)."
+    },
+    {
+      "date": "20250911", "dow": "Thu", "group": 3, "archetype": "storage_thursday_with_block",
+      "guess_usd": -540, "actual_usd": -1180,
+      "drift": "Side right (down) but ~2x under. Flat until hr10 then post-print plunge. Print-driven grind down.",
+      "conditions": ["storage_thursday", "print_driven_leg", "side_right", "undersized"],
+      "overnight_gap_usd": 0, "guessed_net_usd": -1000,
+      "guess_curve": [[20,0],[22,-20],[0,-40],[2,-30],[4,0],[6,-20],[8,-80],[10,-250],[12,-600],[14,-850],[16,-1000],[18,-1000],[20,-1000]],
+      "refined_reasoning": "Storage Thursday delivers a large dominant leg AT/AFTER the 10:30 ET print (flat pre-print, then a sustained grind). Size storage-Thursday magnitude UP structurally; side is a coin-flip at the open but leans with the bearish surplus backdrop when the block already trends that way - a Thursday firing WITH the block is the largest-magnitude configuration. Still undersized (magnitude residual)."
+    },
+    {
+      "date": "20250912", "dow": "Fri", "group": 3, "archetype": "friday_range",
+      "guess_usd": null, "actual_usd": 280,
+      "drift": "Small up (+280); a mid-session bounce faded. Unscored.",
+      "conditions": ["friday_range", "no_catalyst"],
+      "overnight_gap_usd": 0, "guessed_net_usd": -150,
+      "guess_curve": [[20,0],[22,-30],[0,-50],[2,-60],[4,-40],[6,0],[8,80],[10,50],[12,-50],[14,-120],[16,-150],[18,-150],[20,-150]],
+      "refined_reasoning": "Friday without a catalyst reverts toward range; a mid-day pop round-trips. Fri range prior holds when no gap/print is present."
+    },
+    {
+      "date": "20250914", "dow": "Sun", "group": 3, "archetype": "sunday_carry",
+      "guess_usd": null, "actual_usd": 340,
+      "drift": "Sunday reopen carry (+340 flat line). Unscored.",
+      "conditions": ["sunday_carry"],
+      "overnight_gap_usd": 0, "guessed_net_usd": 50,
+      "guess_curve": [[20,0],[22,50],[0,50],[2,50],[4,50],[6,50],[8,50],[10,50],[12,50],[14,50],[16,50],[18,50],[20,50]],
+      "refined_reasoning": "Sunday reopen is a flat carry row (the reprice shows up on the Monday, not the thin Sunday tape); guess a flat near-zero line, do not size Sunday as an active day. The weekend gap direction is not forecastable, so overnight gap is guessed 0."
+    },
+    {
+      "date": "20250915", "dow": "Mon", "group": 3, "archetype": "weekend_gap_monday_two_sided",
+      "guess_usd": 450, "actual_usd": -1150,
+      "drift": "Two-sided Monday V: slid to -600 by hr8 (dominant down leg, scored -1150) then recovered to +610, closed +200 net. Guessed up; dominant leg was down. Miss-side on the dominant leg.",
+      "conditions": ["weekend_gap_monday", "two_sided_V", "dominant_leg_down"],
+      "overnight_gap_usd": 0, "guessed_net_usd": -200,
+      "guess_curve": [[20,0],[22,-100],[0,-150],[2,-100],[4,-250],[6,-450],[8,-700],[10,-500],[12,-300],[14,-100],[16,-150],[18,-200],[20,-200]],
+      "refined_reasoning": "Weekend-gap Mondays are BIG and often two-sided (a dominant early leg then a reversal); SIDE is not fixed by Monday-ness. Not yet at a stretched extreme, so lean the dominant leg WITH the block (down) and size up, but model a partial recover (two-sided V) -> small net. Side of the dominant leg is a coin-flip resolved intraday."
+    },
+    {
+      "date": "20250916", "dow": "Tue", "group": 3, "archetype": "tuesday_continuation_lean_MISS",
+      "guess_usd": -140, "actual_usd": 1330,
+      "drift": "Guessed slightly DOWN continuing the block downtrend; actual was a sustained GRIND UP all day. Miss-side, big. Counter-trend day inside a down block.",
+      "conditions": ["tuesday_trend", "counter_trend_grind_up", "grind_shape_holds", "undersized", "open_problem_intra_block_turn"],
+      "overnight_gap_usd": 0, "guessed_net_usd": -200,
+      "guess_curve": [[20,0],[22,-30],[0,-50],[2,-40],[4,-80],[6,-120],[8,-180],[10,-200],[12,-220],[14,-200],[16,-180],[18,-190],[20,-200]],
+      "refined_reasoning": "HONEST MISS by design. A counter-trend grind-up HOLDS and rides (shape.grind_vs_spike; fingerprint 0916 dom-up 5/15 vs counter 1/11), but the grind is NOT callable AT THE OPEN - no open-time signal distinguishes it from a continuation day. Refined rule leans Tuesday WITH the block (down, small) and misses. This is the unsolved intra-block-turn / week-2-recovery problem the G6 holdout re-flagged; the refined curve shows it as a miss rather than hindsight-tracing the up-grind."
+    },
+    {
+      "date": "20250917", "dow": "Wed", "group": 3, "archetype": "wed_spike_roundtrip",
+      "guess_usd": null, "actual_usd": -430,
+      "drift": "Up to +310 hr10 then reversed down to -500 hr16, closed -430. Spike-up round-trip into a down close. Unscored.",
+      "conditions": ["spike_up_roundtrip", "block_downtrend"],
+      "overnight_gap_usd": 0, "guessed_net_usd": -200,
+      "guess_curve": [[20,0],[22,-30],[0,-50],[2,-80],[4,-40],[6,50],[8,150],[10,100],[12,-50],[14,-150],[16,-200],[18,-200],[20,-200]],
+      "refined_reasoning": "Inside a down block a mid-day up spike that stalls round-trips back to the trend; the spike shape is the tell it is a fade, not a turn. Small down net."
+    },
+    {
+      "date": "20250918", "dow": "Thu", "group": 3, "archetype": "storage_thursday_with_block",
+      "guess_usd": -650, "actual_usd": -1560,
+      "drift": "Side right (down), ~2.4x under. Flat to hr10 then post-print crash. Largest G3 down leg.",
+      "conditions": ["storage_thursday", "print_driven_leg", "side_right", "undersized"],
+      "overnight_gap_usd": 0, "guessed_net_usd": -1000,
+      "guess_curve": [[20,0],[22,10],[0,20],[2,0],[4,-40],[6,-20],[8,-80],[10,-300],[12,-700],[14,-900],[16,-1000],[18,-1000],[20,-1000]],
+      "refined_reasoning": "Storage-Thursday magnitude is structurally under-forecast: the post-print grind was the block's biggest single leg. Size Thursday up; when the print fires WITH the established block-down it is the largest-magnitude configuration. Side right, still undersized."
+    },
+    {
+      "date": "20250919", "dow": "Fri", "group": 3, "archetype": "friday_range",
+      "guess_usd": null, "actual_usd": -250,
+      "drift": "Small down (-250) continuation. Unscored.",
+      "conditions": ["friday_range", "mild_continuation"],
+      "overnight_gap_usd": 0, "guessed_net_usd": -200,
+      "guess_curve": [[20,0],[22,-30],[0,-60],[2,-100],[4,-120],[6,-150],[8,-180],[10,-220],[12,-200],[14,-230],[16,-200],[18,-200],[20,-200]],
+      "refined_reasoning": "Friday reverts toward range even in a trend block; the residual drift follows the block (down) but is small."
+    },
+    {
+      "date": "20250921", "dow": "Sun", "group": 3, "archetype": "sunday_carry",
+      "guess_usd": null, "actual_usd": 140,
+      "drift": "Sunday carry (+140 flat). Unscored.",
+      "conditions": ["sunday_carry"],
+      "overnight_gap_usd": 0, "guessed_net_usd": 50,
+      "guess_curve": [[20,0],[22,50],[0,50],[2,50],[4,50],[6,50],[8,50],[10,50],[12,50],[14,50],[16,50],[18,50],[20,50]],
+      "refined_reasoning": "Sunday carry row; the weekend reprice lands on Monday 0922. Flat near-zero, overnight gap guessed 0."
+    },
+    {
+      "date": "20250922", "dow": "Mon", "group": 3, "archetype": "weekend_gap_monday_continuation",
+      "guess_usd": -500, "actual_usd": -1410,
+      "drift": "Side right (down), ~2.8x under. US-session grind down to the block low (2.801). Weekend-gap Monday, a CONTINUATION down.",
+      "conditions": ["weekend_gap_monday", "continuation_down", "block_extreme_low", "side_right", "undersized"],
+      "overnight_gap_usd": 0, "guessed_net_usd": -900,
+      "guess_curve": [[20,0],[22,-20],[0,-40],[2,-100],[4,-150],[6,-300],[8,-500],[10,-600],[12,-750],[14,-800],[16,-880],[18,-900],[20,-900]],
+      "refined_reasoning": "Weekend-gap Mondays are big in EITHER direction: with the block still firmly bearish and not yet clearly exhausted, lean the Monday to CONTINUE the block down and size up. Bigness is the invariant; side follows whether the weekend info extends or reverses the trajectory. A block reaching a fresh cum-extreme here (roll-clean -2250) is the setup for the next-swing reversal (0923). Side right, undersized."
+    },
+    {
+      "date": "20250923", "dow": "Tue", "group": 3, "archetype": "swing_reversal_off_extreme",
+      "guess_usd": -300, "actual_usd": 690,
+      "drift": "Guessed DOWN extending the block; actual BOUNCED off the block low (down to -200 hr8, then +640 hr16). Miss-side. Intra-block V-bottom turn.",
+      "conditions": ["swing_reversal_off_extreme", "tuesday_trend", "block_bottom", "counter_trend_up"],
+      "overnight_gap_usd": 0, "guessed_net_usd": 500,
+      "guess_curve": [[20,0],[22,-30],[0,-80],[2,-120],[4,-100],[6,-50],[8,50],[10,250],[12,350],[14,450],[16,500],[18,500],[20,500]],
+      "refined_reasoning": "SWING-EXHAUSTION REVERSION applied intra-block (the refined WIN): after a block runs to a cum-extreme (0922 low), weight a reversal UP, do not extend the trend into the extreme. Model an early dip that fails then a bounce that holds. Refined side (up) now right where the original guessed down. The turn begins BEFORE the calendar seam."
+    },
+    {
+      "date": "20250924", "dow": "Wed", "group": 3, "archetype": "pre_seam_turn_hold",
+      "guess_usd": null, "actual_usd": 50,
+      "drift": "Choppy flat (+50), held the 0923 bounce. Unscored. Last G3 day before the seam.",
+      "conditions": ["turn_confirmation", "pre_seam", "held_bounce"],
+      "overnight_gap_usd": 0, "guessed_net_usd": 150,
+      "guess_curve": [[20,0],[22,20],[0,40],[2,-20],[4,-60],[6,-40],[8,20],[10,120],[12,150],[14,130],[16,150],[18,150],[20,150]],
+      "refined_reasoning": "The last 1-2 days of a block carry the seam signal: 0923 turned up and 0924 HELD it, telegraphing the G3->G4 up-turn BEFORE the seam. Read the last-day momentum into a seam as the reversal cue, not as noise to be over-ridden by trend-continuation. Small up hold."
+    }
+  ]
+}

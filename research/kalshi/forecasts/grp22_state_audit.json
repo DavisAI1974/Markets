@@ -1,0 +1,281 @@
+{
+ "group": "g22",
+ "phase": "audit",
+ "auditor_note": "Read only the sandbox state (state.json, g22_anchor.json, mbo_refine_shared.md, ng_brain.json). No realized prices consulted; every finding below is derivable at open time. No fixes applied.",
+ "block": {"sessions": 10, "span": "20260622..20260703", "anchor": "20260619 3.198 (Juneteenth half-session)", "scored_leg": "ng_mbo_ngq26", "eia_thursdays": ["20260625", "20260702"]},
+
+ "findings": [
+  {
+   "id": "f1",
+   "severity": "severe",
+   "field": "squeeze_watch.days_to_calendar_front_expiry_live / calendar_front_symbol_live / calendar_limb_satisfied_live",
+   "days": ["20260622", "20260623", "20260624", "20260625", "20260626", "20260629", "20260630", "20260701", "20260702", "20260703"],
+   "claim": "The 'live' calendar limb is not live: it is the frozen anchor value copied under a _live name, constant at 5 / NGN26 / satisfied=true on all ten days, and it contradicts its own declared source on nine of them.",
+   "evidence": "squeeze_watch serves days_to_calendar_front_expiry_live=5 and calendar_front_symbol_live='NGN26' identically on every day. Its own calendar_limb_basis says the value 'is DETERMINISTIC CALENDAR from flow_calendar and is never masked'. flow_calendar on the same days serves days_to_futures_expiry = 4,3,2,1,0 (0622-0626, front NGN26) then 21,20,19,18,18 (0629-0703, front_symbol_calendar NGQ26). Only 20260621->0622 could ever have read 5, and it reads 4. Worse in week 2: the state's own frozen_structure_stale block on 0629-0703 states live_front_symbol_calendar='NGQ26' and squeeze_watch on the same days states calendar_front_symbol_live='NGN26' AND frozen_front_expired=true, inside one object. calendar_limb_satisfied_live=true (the play's dte<=7 window) is therefore a confident FALSE POSITIVE on 0629-0703 where the live dte is 18-21. The active_false_negative prose ('the frozen vintage reports days_to_calendar_front_expiry=5 while the LIVE calendar says 5 - inside the play's own <=7 window') is a false statement on 9 of 10 days, and it is a semantic carried in PROSE, not in a bar.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "high",
+   "plays_affected": ["structure.squeeze_unwind", "tape.squeeze_ignition_flush_conjunction", "tape.squeeze_ratchet_confirm", "magnitude.block_gap_ownership", "daytype.storage_thursday_magnitude", "structure.chain_polarity_flip", "daytype.covering_giveback_self_limiting"],
+   "impact": "The block instructs the specialist in prose to 'Take the note's SCOPE consequence (delivery mechanics own the tape)' and the note's scope consequence is 'demand-regime bands are out of scope'. On 0629-0703 that suppresses the demand/weather band read on five sessions - including EIA Thursday 0702 and the weekend-feeding holiday 0703 - on a leg that is 18-21 business days from its own expiry. In week 1 the same field understates the countdown by one day at every step. This is the mirror image of the S108 defect the S108 fix was supposed to close: that one produced a false negative inside the window, this one produces a false positive outside it.",
+   "guard_proposed": "Assert squeeze_watch.days_to_calendar_front_expiry_live == flow_calendar.days_to_futures_expiry AND squeeze_watch.calendar_front_symbol_live == flow_calendar.front_symbol_calendar on every day; hard-fail on mismatch. Additionally assert calendar_limb_satisfied_live == (days_to_calendar_front_expiry_live <= 7), and forbid frozen_front_expired=true co-existing with a calendar_front_symbol_live equal to the expired symbol.",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f2",
+   "severity": "severe",
+   "field": "storage_consensus.next_print.consensus_chg_bcf (and consensus_pre_print_bcf)",
+   "days": ["20260622", "20260623", "20260624", "20260626", "20260629", "20260630", "20260701", "20260703"],
+   "claim": "The headline pre-print consensus is a POST-PRINT capture served on pre-print decision days, under a block as_of equal to the decision date; it has already converged toward the actual, shrinking the apparent surprise.",
+   "evidence": "20260622 (days_to_print 3): next_print.consensus_chg_bcf=74.0, source='tradingeconomics_final_frozen', final_capture_is_post_print=true. Its own estimates array dates that 74.0 to snapshot_utc 2026-06-26T06:23:40Z - the day AFTER the 06-25 print. The only strictly pre-print alternative in the block (67.0) is snapshotted 2026-06-25T06:25:05Z, still three days after the 0622 decision point. Same values are re-served on 0623 (dtp 2) and 0624 (dtp 1). The 06-25 actual (storage as_of 2026-06-25, weekly_chg 76) means: knowable-at-decision surprise = 76-67 = +9; served surprise = 76-74 = +2. The served consensus destroys 78 percent of the true surprise. The 07-02 print repeats the pattern (81.0 served on 0626/0629/0630/0701 from a 2026-07-04T06:23:08Z snapshot; here pre-print and final happen to agree at 81, actual 87). On 20260703 the state serves the 07-09 print's consensus_chg_bcf=49.0, dated by its own estimates array to 2026-07-10T06:21:54Z - a week past the decision day and past the print.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "med",
+   "plays_affected": ["daytype.eia_preprint_overextension_gate", "daytype.storage_thursday_magnitude", "daytype.surprise_magnitude", "magnitude.catalyst_condition_sort", "signal.mos_first_appearance_vs_revision"],
+   "impact": "EIA Thursdays were 3,530 of G20's 7,880 total error, and G22 carries two of them. eia_preprint_overextension_gate limb (c) is 'SURPRISE ALREADY PRICED >= 1 week' and storage_thursday_magnitude sizes off the surprise. A consensus that has already absorbed the market's pre-print repositioning makes the print look pre-priced when it was not, and systematically under-sizes the print reaction. Measurement confidence is high because the block dates its own snapshots; mechanism confidence is med because n=2 prints here (one converged 7 Bcf, one did not move at all).",
+   "guard_proposed": "Assert that every consensus estimate consumed on day D has snapshot_utc <= the session's open (D-1 18:00 ET). Where only a post-print capture exists, serve null in consensus_chg_bcf and expose the value under a distinctly named post_print_* key that no play reads, rather than under the field a pre-print reader consumes.",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f3",
+   "severity": "severe",
+   "field": "squeeze_watch.sessions_since_prompt_expiry / last_prompt_symbol / unwind_watch",
+   "days": ["20260629", "20260630", "20260701", "20260702", "20260703"],
+   "claim": "The dead-sponsor arm is frozen on the May prompt and reports unwind_watch=false across the roll, on precisely the weekend seam where the July prompt had just expired.",
+   "evidence": "All ten days serve last_prompt_symbol='NGM26', last_prompt_expiry='2026-05-27', sessions_since_prompt_expiry=16, unwind_watch=false. flow_calendar puts NGN26's expiry at 2026-06-26 with is_expiry_day=true, and the block's own frozen_structure_stale confirms the front rolled. So on 20260629 the true last prompt expiry is NGN26 / 2026-06-26 and sessions_since_prompt_expiry is 1, not 16. unwind_note defines the arm as 'a prompt expiry within ~3 sessions with premium stranded in the front'; 0629 is 1 session past a prompt expiry and unwind_watch reads false. frozen_structure_stale does NOT cover this: it scopes itself to 'fields keyed to the calendar front' and directs the reader to flow_calendar, which carries no prompt-expiry or sessions-since field at all, so no live substitute is available anywhere in the state.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "high",
+   "plays_affected": ["magnitude.block_gap_ownership", "structure.squeeze_unwind", "daytype.friday_exit_decomposition", "monday.seam_chainage_accommodation_gate"],
+   "impact": "block_gap_ownership's strict ownership order puts ANCHOR_STRUCTURAL first, and 'squeeze sponsor DEAD with premium still in the front' is one of its three structural triggers, sized as gap = -E. A false unwind_watch on the 0626->0629 weekend seam sends the gap owner straight to branch (2) WEEKEND_CYCLE_WEATHER or (3) CHAIN_DRIFT and forecloses the structural branch without evaluating it. This is the same failure shape as the G19 non-falsifiable covering rule: the condition is never tested, so it can never fire.",
+   "guard_proposed": "Derive last_prompt_symbol / last_prompt_expiry / sessions_since_prompt_expiry from flow_calendar's live expiry clock rather than the frozen vintage, and assert last_prompt_expiry <= the decision date on every day. Extend frozen_structure_stale to name every frozen field for which no live substitute exists, rather than only the calendar-front-keyed ones.",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f4",
+   "severity": "high",
+   "field": "flow_calendar.days_to_futures_expiry / is_expiry_day / is_opex_day / options_expiry_date; contract_structure.days_to_front_expiry / days_to_calendar_front_expiry",
+   "days": ["20260622", "20260623", "20260624", "20260625", "20260626"],
+   "claim": "Every expiry and opex clock in the state is keyed to a contract that is not the scored leg, and no served field carries the scored leg's own countdown.",
+   "evidence": "The scored leg is ng_mbo_ngq26 (Aug, expiry 2026-07-29) on all ten days. In week 1 the state serves: flow_calendar.front_symbol_calendar='NGN26', futures_expiry_date='2026-06-26', days_to_futures_expiry 4/3/2/1/0, is_expiry_day=true on 20260626, options_expiry_date='2026-06-25' with is_opex_day=true on 20260625. contract_structure offers two other clocks and neither is the leg's: days_to_calendar_front_expiry=5 (NGN26) and days_to_front_expiry=48 (front_symbol='NGU26', the OI front, expiry 2026-08-27). Symbol inventory across the whole file: NGN26 appears in 8 leaf paths, NGU26 in 2, NGQ26 only as calendar_next_symbol / next_symbol / a live-front label / an options month - never with a dte. So on 20260626 the state says 'expiry day, 0 days to expiry' about a contract the block does not score, and the scored leg's true 25-business-day countdown appears nowhere.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "med",
+   "plays_affected": ["daytype.friday_exit_decomposition", "daytype.weekend_crest_friday", "daytype.friday_crest_trim_discriminator", "magnitude.block_gap_ownership", "structure.mature_swing_alternation", "direction.giveback_exhaustion_boundary", "monday.catchup_window_tilt_gate"],
+   "impact": "friday_exit_decomposition exit-type (2) POSITIONING_SPENT_FADE keys explicitly on 'futures expiry / opex pin / weekend squaring / index-roll LAST day'. 20260626 is the weekend-feeding Friday, is the day the coordinator's FRIDAY SIGN-OFF requires a handoff_out from, and is flagged is_expiry_day=true - so E is very likely to classify it POSITIONING_SPENT_FADE and hand Monday a 'fade the positioning half' bias built on the July contract's expiry, not the Aug leg's. Mechanism confidence is med, not high, because July's final settlement genuinely pulls flow through the complex and into the Aug leg via the roll; the defect is that the state never distinguishes 'the complex has an expiry' from 'your instrument expires', and the plays are written for the second.",
+   "guard_proposed": "Serve scored_leg_symbol, scored_leg_expiry and days_to_scored_leg_expiry as first-class fields in flow_calendar, and assert on every day that at least one served dte corresponds to the leg named in tape_conditions.source_store. Rename or qualify is_expiry_day / is_opex_day when the expiring contract is not the scored leg.",
+   "guard_kind": "schema",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f5",
+   "severity": "high",
+   "field": "weather_forecast.horizons[] / run_delta[] / fwd7_gw_hdd_span; weather_forecast_cycle.weekday_open + sunday_reopen; model_disagreement.summary",
+   "days": ["20260622", "20260623", "20260624", "20260625", "20260626", "20260629", "20260630", "20260701", "20260702", "20260703"],
+   "claim": "Every forward-looking weather ladder and every cycle-delta in a deep-summer block is HDD-only, i.e. computed on a quantity sitting at its noise floor while the live driver (CDD) is 100x larger and moving.",
+   "evidence": "Across the block forecast_gw_hdd runs 0.034-0.244 while forecast_gw_cdd runs 7.817-18.868 and rises monotonically 14.815 -> 18.868 through week 2. Leaf inventory: horizons[] carries forecast_gw_hdd and forecast_vs_normal only (no cdd, 80 rows); run_delta[] carries d_gw_hdd only (80 rows); fwd7_gw_hdd_span is HDD; weather_forecast_cycle.weekday_open and .sunday_reopen carry gw_hdd_d0, vs_normal_d0 and delta_vs_prior_by_horizon[].d_gw_hdd with zero CDD anywhere; model_disagreement.summary reports max_abs_spread_gw_hdd / mean_abs_spread_over_overlap on HDD. There is no *_vs_normal field on CDD anywhere in the file (4 'normal' leaf paths, all HDD). This is not a data limitation: forecast_run_delta_cdd exists at top level, and model_disagreement.disagreement[] already carries mav_gw_cdd, met_gw_cdd and spread_gw_cdd per horizon - on 20260622 h0 spread_gw_cdd=1.099 against the summarised abs_spread_gw_hdd=0.422. Concrete contradiction the reader is left with: on 20260624 forecast_regime flips mod_cool -> hard_cool (CDD-driven, forecast_gw_cdd 10.022) while forecast_gw_hdd DROPS 0.107 -> 0.051 and forecast_vs_normal goes further below normal, -0.031 -> -0.078. Two blocks in one state describing the same fact in opposite directions, with no CDD ladder available to resolve it.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "high",
+   "plays_affected": ["magnitude.weekend_gap_delivery", "magnitude.block_gap_ownership", "magnitude.shoulder_weather_band_void", "magnitude.warm_season_scale_candidate", "selector.divergence_resolution", "magnitude.catalyst_condition_sort", "signal.mos_first_appearance_vs_revision"],
+   "impact": "block_gap_ownership step (2) WEEKEND_CYCLE_WEATHER splits fresh (+1500..+2500) from priced (+200..+400) on the weekend cycle's delta. The only field serving that decision is weather_forecast_cycle.sunday_reopen.delta_vs_prior_by_horizon[].d_gw_hdd, which on 20260622 reads +0.017/-0.045/+0.067/-0.031/+0.076/+0.070 - visually indistinguishable from zero on a 0.05 base. A specialist reads 'no fresh weather', takes the priced arm, and the block's actual summer demand signal never enters the gap decision. Both Monday seams and the Independence-Day weekend seam are exposed. selector.divergence_resolution's catalyst override is gated on HDD>=16.4, a bar that is unreachable by construction in July and therefore silently never fires.",
+   "guard_proposed": "Emit the CDD ladder alongside the HDD ladder in horizons[], run_delta[], both weather_forecast_cycle limbs and model_disagreement.summary, plus a cdd_vs_normal. Then add a seasonal assertion: if forecast_gw_cdd exceeds forecast_gw_hdd by more than ~5x on a majority of block days, hard-fail any state whose forward ladders are HDD-only.",
+   "guard_kind": "schema",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f6",
+   "severity": "high",
+   "field": "options_surface.months[].top5_oi_strikes[].strike and oi_weighted_strike",
+   "days": ["20260622", "20260623", "20260624", "20260625", "20260626", "20260629", "20260630", "20260701", "20260702", "20260703"],
+   "claim": "The strike ladder is served at 1/10 of the contract's price scale (the G21 10x factor reproduces exactly here), and the block's own note instructs the reader to perform the comparison that the scale error breaks; separately, oi_weighted_strike is not decision-usable even after unscaling.",
+   "evidence": "Served NGN26 top-5 strikes: 0.35, 0.325, 0.30, 0.40, 0.275, against contract_structure.calendar_front_settle=3.233 and calendar_next_settle=3.276. At 10x these are 3.50, 3.25, 3.00, 4.00, 2.75 - a coherent pin map (3.25 balanced 24,281c/24,103p straddling the 3.233 settle, 3.50 call-heavy 46,813/12,216, 3.00 put-heavy 8,244/38,722), so the 10x is confirmed and the ladder IS recoverable. The block note reads 'distance-from-settle is the agent's read against contract_structure's calendar-front settle'; performed as written it returns ~2.9 for every strike, i.e. 'all options 290 cents out of the money, no pin structure'. Nothing anywhere declares the scale. Second defect: oi_weighted_strike=0.5289 (NGN26) and 0.5250 (NGQ26) unscale to 5.289 and 5.250 against a 3.233 settle - these are OI-weighted means over 311/304 strikes dragged by a long call tail, not pin estimates, and reading them as such implies a massive upside skew that is an artifact. Third: the NGN26 limb is dead from 20260626 onward (opex 2026-06-25) and frozen_structure_stale names contract_structure and squeeze_watch but not options_surface.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "high",
+   "plays_affected": [],
+   "impact": "No brain play reads options_surface (grep: 0 of 67 mention options_surface or strike), so this generates a confident FALSE NEGATIVE - 'there is no pin structure in this block' - rather than a wrong signal. That is why it is high and not severe. It still costs the block the pin/unpin read on an opex day (20260625, is_opex_day=true) and it wastes specialist attention: a careful reader will spend budget trying to reconcile a ladder that cannot be reconciled as served.",
+   "guard_proposed": "Assert that the OI-weighted strike and the modal strike of every served month lie within a plausible band of the same block's calendar_front_settle (say 0.5x-2.0x); hard-fail otherwise. This catches a scale error without needing to know the scale. Replace oi_weighted_strike with a nearest-wall / pin-distance measure computed on strikes within a bounded moneyness window, and extend frozen_structure_stale to name options_surface months whose opex has passed.",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f7",
+   "severity": "medium",
+   "field": "holiday.effect vs flow_calendar.cme_session_class / cme_early_close / is_cme_business_day / business_day_of_month",
+   "days": ["20260703"],
+   "claim": "The one holiday session in the block describes itself four ways at once, and a specialist who owns it cannot determine whether it trades, for how long, or whether it is scored.",
+   "evidence": "20260703 serves holiday={name:'Independence_Day_obs', effect:'closed'}; flow_calendar.cme_holiday=true, cme_holiday_name='Independence_Day_observed', cme_session_class='partial_session', cme_early_close=false, is_cme_business_day=false, business_day_of_month=null. 'closed' and 'partial_session' cannot both hold. 'partial_session' and cme_early_close=false cannot both hold. And the day is unambiguously scored: it is one of the block's ten sessions and its tape_conditions carries a full 34,889-trade prior session (20260702), so a specialist is being asked to forecast a day the state calls closed. cme_early_close is the only field that would carry the close time and it says there is no early close.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "high",
+   "plays_affected": ["daytype.thin_session_range_invariance", "daytype.friday_exit_decomposition", "daytype.weekend_crest_friday", "magnitude.block_gap_ownership", "daytype.friday_turn_exhaustion_gate", "monday.catchup_window_tilt_gate"],
+   "impact": "0703 is weekend-feeding and A owns it, so the coordinator's FRIDAY SIGN-OFF will refuse to assemble it without a handoff_out. A specialist reading effect='closed' may emit a zero day-move or no handoff at all, hard-failing the coordinator; one reading 'partial_session' with cme_early_close=false has no close time to place a p50 curve against. thin_session_range_invariance ('when participation falls, price per unit of flow rises roughly as fast, so excursions survive even though the net does not') is the play written for exactly this day and it needs the session length the state does not give. Note the anchor session 20260619 has the same shape and IS resolvable from the tape (see f10), so the fix has a precedent to copy.",
+   "guard_proposed": "Assert a single session-shape truth per day: holiday.effect in {closed, early_close, normal} must agree with cme_session_class, and cme_early_close must be true whenever cme_session_class='partial_session'. Serve session_close_et explicitly on any non-normal day. Hard-fail a scored day whose declared effect is 'closed'.",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f8",
+   "severity": "medium",
+   "field": "tape_conditions.phase_signed_flow / phase_b_share / phase_volume_lots / phase_n_trades (phase boundary definition)",
+   "days": ["20260622", "20260623", "20260624", "20260625", "20260626", "20260629", "20260630", "20260701", "20260702", "20260703"],
+   "claim": "The three-phase tape table carries no time boundaries anywhere in the state, and the two Sunday stubs prove the phases are session-relative rather than clock-fixed - so no phase can be mapped to the EIA print, the open, or the close.",
+   "evidence": "phase_volume_note explains what the phases are FOR but never says what they ARE. Derived session spans from n_trades/trades_per_min: full leg sessions 1435-1442 min (24.0h), the 20260621 stub 119 min (1.99h), the 20260628 stub 121 min (2.02h). Both stubs nonetheless populate all three phases - 20260621 phase_n_trades share [0.54, 0.39, 0.07], 20260628 [0.85, 0.06, 0.09]. Under fixed clock bins a 2-hour reopen would put 100 percent in one bin. Therefore phases are session-relative, so on a full session a phase is ~8 hours and on a stub ~40 minutes, and the same field name spans a 12x difference in window length with nothing declaring it.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "med",
+   "plays_affected": ["direction.flow_conviction_sign_gate", "timing.catalyst_continuity_frontrun", "flow.passive_ladder_displacement", "daytype.friday_exit_close_location_over_flow_shape", "daytype.eia_preprint_overextension_gate", "structure.covering_absorption_directional_tell"],
+   "impact": "flow_conviction is defined per phase; passive_ladder_displacement limb (b) is 'final-phase volume at or above the session maximum'; catalyst_continuity_frontrun and every emitted onset_time_et / turn_time_et need clock time. On the two EIA Thursdays a specialist must decide which phase contains the 10:30 ET print and the state gives no basis. On the two Monday stubs, phase-3 volume is 17 and 29 lots against bands calibrated on full sessions. Mechanism confidence is med because the practical harm depends on how hard a specialist leans on phase timing, which varies by lens.",
+   "guard_proposed": "Serve phase_boundaries_et (an explicit list of [start, end] ET times) alongside every phase array, and assert the boundaries reconcile with the session's derived span. Do not require a fix to the phase definition - require that whatever it is, it is stated.",
+   "guard_kind": "schema",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f9",
+   "severity": "medium",
+   "field": "tape_conditions.prior_full_session (n_trades / trades_per_min) for session 20260626",
+   "days": ["20260629"],
+   "claim": "Session 20260626's tape spans a derived 21.0 hours against 24.0 on every other full leg session in the block - an undeclared three-hour shortfall on the weekend-feeding Friday.",
+   "evidence": "n_trades / trades_per_min gives the measured span. 20260622 1439 min, 20260623 1440, 20260624 1438, 20260625 1440, 20260629 1440, 20260630 1435, 20260701 1438, 20260702 1442 - eight sessions inside 1435-1442. 20260626: 48,072 / 38.2 = 1258 min = 20.97h, 182 minutes short. trades_per_min is served to 1 dp so the span is 1258 +/- 2 min; this is not a rounding artifact. The only other short session in the file is 20260619 at 1020 min (17.0h), which is the known Juneteenth half-session. 20260626 is a normal full trading Friday.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "low",
+   "plays_affected": ["daytype.friday_exit_decomposition", "daytype.friday_exit_close_location_over_flow_shape", "daytype.weekend_crest_friday", "magnitude.block_gap_ownership", "flow.passive_ladder_displacement"],
+   "impact": "Two readings and I cannot separate them from state alone. (a) A genuine three-hour no-trade window at the Thursday-evening reopen, in which case the numbers are right and the span is just information. (b) Three hours of tape missing from the leg store, in which case n_trades, volume_lots, session_signed_flow, big_prints_n and the phase table for 20260626 are all undercounted - and 20260626 is the Friday whose exit read the whole E->A->B weekend chain inherits, and the day the coordinator will not assemble without a handoff_out. Note 20260626 also carries the block's most extreme big-print reading (big_print_b_share 0.783 on 210 prints), so it is a day the specialists will lean on hard. Mechanism confidence is low deliberately: the measurement is certain, the cause is not.",
+   "guard_proposed": "Serve session_span_minutes (or first/last trade timestamps) explicitly and assert it against the calendar's expected session length, with an allowed deviation only on days flow_calendar marks as holiday or early-close. Resolving this one needs the raw leg tape - it cannot be settled inside the state.",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": false
+  },
+
+  {
+   "id": "f10",
+   "severity": "medium",
+   "field": "tape_conditions.prior_full_session (the field name and note_stub) on 20260622",
+   "days": ["20260622"],
+   "claim": "The Monday 20260622 'prior_full_session' limb is the Juneteenth HALF session, and the state calls it a full session with no shortened-session declaration anywhere inside the state file.",
+   "evidence": "The 20260622 limb serves session 20260619 with n_trades 6,935 against a block full-session median of ~35,000 (19 percent), volume_lots 12,148 against 69,964-130,053, big_prints_n 2, leg_count_150 9. Its derived span is 6,935 / 6.8 = 1020 min = 17.0h against 24.0h on every normal session - so the state DOES carry the evidence, but only as an arithmetic consequence of two fields, and note_stub asserts the opposite in words: 'prior_full_session carries the last FULL session (normally the Friday) - the D-1 trade tilt doctrine puts direction on'. The holiday character is declared only in a separate artifact, g22_anchor.json's holiday_caveat, and that caveat is scoped to the anchor's LAST-HOUR direction, not to this limb's session tilt.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "med",
+   "plays_affected": ["monday.catchup_window_tilt_gate", "flow.big_print_bshare_thin_tape_guard", "daytype.monday_weekend_gap", "magnitude.block_gap_ownership", "boundary.prior_close_flow_direction_disagreement", "daytype.thin_session_range_invariance"],
+   "impact": "B owns the Monday and the doctrine puts DIRECTION on the D-1 trade tilt, which here is a 17-hour half-session's tilt presented as a Friday's. big_print_bshare_thin_tape_guard exists for exactly this (below ~20 prints raise the bar to ~0.60) and the limb has 2 prints with big_print_b_share 0.536 - degenerate, and the guard only fires if the reader notices the print count. Partially mitigated: the specialists are spawned with g22_anchor.json, which does declare the half-session, so this is a labelling defect rather than a hidden one. That is why it is medium and not high.",
+   "guard_proposed": "Carry a session_class field ('normal' / 'holiday_half' / 'reopen_stub') and a session_span_minutes on every tape_conditions limb including prior_full_session, and hard-fail any limb named *_full_session whose span is materially below the block's normal-session span without a class declaring it.",
+   "guard_kind": "schema",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f11",
+   "severity": "medium",
+   "field": "tape_conditions.source_store = 'nymex_cont_n0' on the two Sunday reopen stubs",
+   "days": ["20260622", "20260629"],
+   "claim": "The two Sunday stubs are served from a different store than the scored leg, in identical field names, on a measurement basis the state itself proves is not the same - and on 20260621 that store is very likely the pre-roll July contract.",
+   "evidence": "Internal proof that the two stores do not measure the same quantity: for the SAME calendar date 2026-06-19, vol_regime.n0_prev_trades = 1,835 (nymex_cont_n0) while tape_conditions.prior_full_session.n_trades = 6,935 (leg:ng_mbo_ngq26) - a 3.8x disagreement between two blocks of the same state file. Whichever basis is right, n_trades / volume_lots / trades_per_min are not comparable across the two stores, and the stubs serve them under the same names with no scale declaration. Separately on the instrument: CLAUDE.md's own S104 record states 'per-contract legs required for roll-straddling groups - NG.n.0 is the wrong pre-roll leg'; G22 straddles the 2026-06-26 July LTD and 20260621 sits five sessions before it, so a pre-roll n0 on that date would be NGN26, not the scored NGQ26. 20260628 falls after the LTD so its n0 is probably the leg by coincidence - an asymmetry the state does not mention. No contract symbol is served for the nymex_cont_n0 store, so I cannot close this from state alone.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "low",
+   "plays_affected": ["daytype.monday_weekend_gap", "monday.window_deep_book_shakeout", "monday.overnight_headfake_into_catchup", "flow.big_print_bshare_thin_tape_guard", "daytype.thin_session_range_invariance", "magnitude.block_gap_ownership"],
+   "impact": "The Sunday stub is the GAP-FORMING session and its own note_stub says so. Every participation-scaled read on the Monday - how thin is thin, is the tilt worth taking, does the thin-tape guard fire - compares the stub's 191/194 trades against the leg's 30,000-50,000. If the stub is measured on a different basis (proven) and possibly a different contract (unproven), that comparison is meaningless in a way no field-level check can see. I am stating the measurement basis disagreement as fact and the wrong-instrument reading as a hypothesis; do not bank the second one off the first.",
+   "guard_proposed": "Serve the resolved contract symbol for every store, including nymex_cont_n0, and assert it equals the block's scored leg on every tape_conditions limb - or, where it cannot, refuse to serve the limb in the leg's field names. Settling this needs the store's symbol map, which is not in the state.",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": false
+  },
+
+  {
+   "id": "f12",
+   "severity": "medium",
+   "field": "vol_regime.v0_* (all fourteen v0 fields)",
+   "days": ["20260622", "20260623", "20260624", "20260625", "20260626", "20260629", "20260630", "20260701", "20260702", "20260703"],
+   "claim": "The volume-basis half of the magnitude conditioner is null on every day of the block, declared only by a generic 'insufficient prior sessions', in exactly the regime the block's own note names as the one where the two bases diverge 3x.",
+   "evidence": "v0_win_n_5 = v0_win_n_10 = v0_win_n_20 = 0 and all fourteen v0_* leaves are null on all ten days. The block's note reads: 'magnitude conditioner only; n0/v0 bases never mixed (same-window v0 sigma can read 3x n0 across the G11 expiry week - the basis IS the difference); None = insufficient prior sessions on that basis, never calm'. G22 contains the 2026-06-26 July expiry. So the note itself asserts that the missing basis is the one that matters here, and the reason given for its absence ('insufficient prior sessions') is implausible for a series that has run through every prior group - it reads like the path/store class of hole #6 (weather empty on every staged group from a path mismatch) rather than a genuine history gap.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "med",
+   "plays_affected": ["ride.magnitude_staircase", "magnitude.crash_regime_bands", "magnitude.weekend_gap_delivery", "magnitude.warm_season_scale_candidate", "magnitude.unpriced_shot_extension", "daytype.thin_session_range_invariance"],
+   "impact": "MAGNITUDE is the brain's own stated dominant residual and vol_regime is the module built to condition it; S107 recorded five groups scaled without it. Here it is half-present, and the missing half is the expiry-week half. Every band in the block is sized off n0 alone, which the note says can be a third of the right scale during an expiry week. Declared-but-generically, so this ranks medium rather than high.",
+   "guard_proposed": "Distinguish 'basis absent' from 'basis has too few sessions' with separate reasons, and hard-fail a block that straddles an expiry with the v0 basis absent, since the block's own doctrine says the two bases diverge there.",
+   "guard_kind": "presence",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f13",
+   "severity": "low",
+   "field": "cash_basis.age_days",
+   "days": ["20260622", "20260623", "20260624", "20260625", "20260626", "20260629", "20260630", "20260701", "20260702", "20260703"],
+   "claim": "The staleness meter on the physical basis gauge is frozen alongside the price mask and reports 4 days on every day of the block, when the true age of the underlying gas day runs 4 to 17 days.",
+   "evidence": "cash_basis is masked_one_shot with vintage_asof 20260619 and serves hh_spot_gas_day='2026-06-16' with age_days=4 identically on all ten days. On 20260703 a 2026-06-16 gas day is 17 days old. Unlike contract_structure, which gets a frozen_structure_stale companion in week 2, cash_basis carries no staleness declaration on any day. Only hh_spot and front_settle are legitimately price-masked; age_days is a calendar quantity and freezing it is the frozen-but-live class.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "high",
+   "plays_affected": ["boundary.chain_staleness_gate"],
+   "impact": "A specialist judging whether the physical delivery-stress gauge is current is told 4 days when the answer is up to 17, and the block's own note anchors the reader's sense of what 'weekly staleness' means. Low severity because the block is explicitly masked_one_shot with a vintage_asof, so the reader has the means to work it out; the field just contradicts them.",
+   "guard_proposed": "Recompute age_days live from the decision date against hh_spot_gas_day on every masked block, or null it and declare it frozen. Any *_age_days or *_days_since field inside a masked_one_shot block should be either live-derived or explicitly nulled - never frozen and served as current.",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f14",
+   "severity": "low",
+   "field": "g22_anchor.json.session_activity.session_b_share; g22_anchor.json.last_hour.derived_dir",
+   "days": ["20260619 (anchor)"],
+   "claim": "Two under-declarations in the anchor artifact: a reconstructed value republished as a measurement, and a direction derived from a two-tick net.",
+   "evidence": "(a) session_activity.session_b_share=0.362 is copied from tape_conditions.prior_full_session, where the state declares session_b_share_basis='RECONSTRUCTED S109 from session_b_share_two_sided x (1 - unsided_volume_frac) ... carries up to ~0.002 of rounding error'. The anchor carries no such declaration and labels its source 'the true tape, scored leg'. (b) anchor_lasthr_dir=-1 rests on last_hour net_usd=-20 (3.200 -> 3.198, two ticks) inside a last-hour high/low range of 3.206/3.195 ($110). The holiday_caveat declares the thin TAPE but not that the net sits at the price resolution floor. Note the same last_hour block yields a more robust reading it does not name: the close sits at 27 percent of the last-hour range, i.e. near the low.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "high",
+   "plays_affected": ["boundary.prior_close_flow_direction_disagreement", "magnitude.block_gap_ownership", "midweek.prior_exit_lasthour_magnitude_gate", "daytype.friday_exit_decomposition"],
+   "impact": "anchor_lasthr_dir feeds the E->A->B weekend seam and is one of two inputs to the prior-close-vs-flow disagreement tell. A -1 built on two ticks should be weighted as a coin flip, and the caveat as written invites a reader to discount the TAPE while trusting the DIRECTION - the wrong way round. Low severity because the underlying numbers are all present and a careful reader can see it.",
+   "guard_proposed": "Propagate *_basis declarations into any artifact that republishes a state value. Emit anchor_lasthr_dir as null (or with an explicit low-confidence flag) when |net_usd| is below a materiality floor relative to the last-hour range, rather than signing a two-tick net.",
+   "guard_kind": "schema",
+   "stake_a_run_on_it": true
+  },
+
+  {
+   "id": "f15",
+   "severity": "low",
+   "field": "storage_consensus.note",
+   "days": ["20260622", "20260623", "20260624", "20260625", "20260626", "20260629", "20260630", "20260701", "20260702", "20260703"],
+   "claim": "The block's own note tells the reader its data is absent for this window while the block is fully populated for this window.",
+   "evidence": "note: 'survey consensus ADDITIVE to stor_surprise (seasonal proxy) - both carried; store spans Sep 2025 - Mar 5 2026, None outside (named forward hole Mar-Jul 2026)'. The block nonetheless serves June and July 2026 consensus, actuals and surprises on every day. The coverage claim belongs to storage_vintage (as_of 2026-03-05, age_days 109-120), which is genuinely stuck there.",
+   "confidence_measurement": "high",
+   "confidence_mechanism": "high",
+   "plays_affected": ["daytype.eia_preprint_overextension_gate", "daytype.storage_thursday_magnitude"],
+   "impact": "A specialist who reads the note first may discard a populated block as a known hole and skip the consensus read entirely on both EIA Thursdays. Trivial to fix, non-trivial to notice.",
+   "guard_proposed": "Assert that a block declaring a coverage hole over a date range serves no values inside that range.",
+   "guard_kind": "reconciliation",
+   "stake_a_run_on_it": true
+  }
+ ],
+
+ "clean": [
+  "S109 b_share REPAIR VERIFIED. session_b_share == session_b_share_two_sided * (1 - unsided_volume_frac) holds on all 12 served sessions (10 day-blocks + 2 prior_full_session limbs), max deviation 0.0006, consistent with the declared ~0.002 rounding tolerance. The session_b_share_basis RECONSTRUCTED declaration is present on exactly the 10 leg-store readings and correctly absent on the 2 nymex_cont_n0 stubs, which computed cleanly on the original path. No new defect introduced by the repair. Zero hard-0.0 readings anywhere.",
+  "LEVEL CHECK, the one the G21 trial missed, PASSES. session_signed_flow reconciles independently against volume_lots * (1 - unsided_volume_frac) * (2*two_sided - 1) on all 12 sessions; max residual 93 lots on a 119,374-lot session, all within 3-dp share rounding. Crucially the block's three near-zero nets are corroborated rather than orphaned: 20260701 sf=-73 sits on two_sided=0.500, 20260624 sf=+311 on 0.503, 20260626 sf=+871 on 0.504. A destroyed net would not track its own b_share to that precision. These are balanced sessions, not defects.",
+  "Phase decomposition exact on all 12 sessions: sum(phase_volume_lots)==volume_lots, sum(phase_n_trades)==n_trades, sum(phase_signed_flow)==session_signed_flow, no exceptions. Per-phase unsided fractions back-derived from phase_b_share/phase_b_share_two_sided reconcile volume-weighted to the served session unsided_volume_frac within 0.002 on every session.",
+  "NO OFF-INSTRUMENT SIGNATURE ON THE LEG TAPE. quote_updates/n_trades - the exact ratio that exposed hole #8 on G21 - runs 3.7, 4.7, 5.3, 5.9 | 5.2, 7.7, 10.0, 7.3, 10.1 across the nine leg sessions. It trends smoothly and does NOT step at the 2026-06-26 roll boundary (it falls, 5.9 -> 5.2). Lots-per-trade likewise runs 2.11-2.65 with no discontinuity. The leg tape shows no contract switch.",
+  "unsided_volume_frac steps 0.131-0.163 (week 1) -> 0.045-0.063 (week 2) across the July LTD. Examined as a possible defect and cleared: the b_share identity holds on both sides of the step, the step lands exactly on the expiry, and roll/spread volume collapsing after LTD is a sufficient mechanism. Not a finding.",
+  "COT BLIND WALL EXEMPLARY. The 2026-06-16 report was publication_delayed=true to Monday 2026-06-22 15:30 ET by Juneteenth. The state correctly serves the OLDER 2026-06-09 report on 20260622 and only releases the 06-16 report (managed_money_net -84,909, chg_wow +37,708) from 20260623 onward. The 06-23 report published Friday 06-26 15:30 ET appears from 20260629. Both walls correct to the hour. age_days declared.",
+  "STORAGE PRINT AVAILABILITY CLEAN. storage serves as_of 2026-06-18 on 0622-0625 (including the print day 0625 itself), rolls to 2026-06-25 on 0626, and to 2026-07-02 on 0703. stor_surprise moves in lockstep. No print appears on or before its own release. No leak.",
+  "PRICE MASK INTACT. Swept every numeric leaf in the plausible NG price band across all ten days: the only price-scale values are contract_structure.calendar_front_settle 3.233 / calendar_next_settle 3.276 (curve_asof 2026-06-18) and cash_basis.front_settle 3.239 / hh_spot 3.10 (gas day 2026-06-16) - all pre-anchor, all under masked_one_shot with vintage_asof 20260619. Zero in-window price, close, day-move or return content anywhere in the file.",
+  "freeze_risk is POPULATED, not empty (my first pass mis-read it). Both cycle limbs carry per-basin tmin ladders for MAF/OKC/PIT/SHV at 70-79F with zero sub-threshold days at all three thresholds - correct and unremarkable for late June. The null first_below/last_below leaves are the correct encoding of 'never below'.",
+  "nuclear_outages: daily, age_days 1 throughout, capacity_out_mw 1,163-3,375 with chg_1d/chg_7d internally consistent day over day. grid_stack: EIA-930 per-BA, age_days 2 throughout, gas_share/solar_share reconcile against the served MWh. solar: deterministic day-length march, smooth. steo_vintage: jun26 issue frozen, knowable_from 2026-06-10, age_days incrementing correctly, month_prev/cur/next rolling correctly at the 07-01 boundary. storage_regional, storage_vintage: age-declared. All sound.",
+  "ngwu_balance S/D levels are null on all ten days but DECLARED twice - sd_live=false plus the note 'LEVELS dead after 2025-09-24 (named gap)'. The vessel line is continuous (36/35/36 departures). Declared, not silent; grid_stack's est_gas_burn_bcfd is the standing substitute and correctly labels itself an estimate.",
+  "weather (realized) shows no partial-fetch-tail signature on the block's last day: 20260703 gw_cdd 17.5 against 18.7 the day before, in a series that ran 9.0, 8.1, 9.7, 10.0, 10.0, 14.8, 15.7, 17.0, 18.7, 17.5. A truncated tail would read materially LOW, and this does not. See uncheckable for why this is suggestive rather than conclusive.",
+  "weather_forecast run-delta values repeat exactly (0.034 on three consecutive days, -0.003 twice). Examined as a possible stale-value tell and cleared: every value in the series is a multiple of ~0.017, i.e. the 16-metro gas-weighted quantisation, so repeats are expected at this magnitude.",
+  "contract_structure.front_next_spread_chg_3d/5d are null on all days, correctly paired with front_next_pair_changed_3d/5d=true. Correct encoding of 'the pair changed, the delta is undefined' - not a hole.",
+  "The frozen_structure_stale block itself (week 2) is the best-executed declaration in the file: it names the expired frozen front, names the live one, names which blocks are not decision-legit, and points at the never-masked substitute. f1/f3 are findings about what it fails to cover, not about the block."
+ ],
+
+ "uncheckable": [
+  "Whether the two Sunday reopen stubs sit on NGN26 or NGQ26. No contract symbol is served for the nymex_cont_n0 store anywhere in the state. Needs the store's symbol map. (f11 states the measurement-basis disagreement as fact and the instrument question as a hypothesis; keep them separate.)",
+  "The cause of the 182-minute span shortfall on session 20260626 (f9). Needs the raw leg tape's first and last trade timestamps. The measurement is certain from n_trades/trades_per_min; the mechanism cannot be settled in-file.",
+  "Hole #7's partial-fetch-tail class on the weather block. The served weather block carries no coverage or hours field at all (unlike weather_forecast, which carries per-horizon coverage), so 20260703 - the exposed last-day-of-pull position - cannot be tested. The shape argument in `clean` is suggestive, not proof. A coverage field on the realized weather block would close this permanently.",
+  "big_prints_n against leg_count_150. The ratio swings 2.23 -> 12.71 across the block (267 prints against 21 legs on 20260629 versus 210 against 37 on 20260626) and the definition of the big-print threshold is not served, so I could not decide whether this is the post-roll outright regime concentrating size or a counting defect. Examined, inconclusive, deliberately NOT raised as a finding.",
+  "Whether the tape phases are equal-thirds of the session or event-defined. The stubs prove only that they are session-relative, not clock-fixed (f8).",
+  "The absolute correctness of the leg tape's levels. There is no independent same-quantity measurement of the NGQ26 tape inside this file, so the tape verdict rests on cross-field algebra plus the roll-boundary ratio test, not on reconciliation against an external source. That is weaker than the S108 scored-leg reconciliation and I am flagging it rather than overclaiming.",
+  "vol_regime's n0 series basis. n0_prev_trades=1,835 for 2026-06-19 against the leg's 6,935 for the same date proves the two differ, but not whether the cause is a different contract, a downsampled render, or a different session window. Same blocker as f11."
+ ],
+
+ "stake_vs_judgement": {
+  "would_stake_a_run_on": ["f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f10", "f12", "f13", "f14", "f15"],
+  "judgement_needs_external_check": ["f9", "f11"]
+ }
+}

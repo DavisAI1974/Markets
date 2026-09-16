@@ -1,0 +1,85 @@
+{
+  "specialist": "D",
+  "lens": "Thursday EIA storage print - pre-print over-extension gate + post-print re-anchor",
+  "group": "g18",
+  "brain_version": "s102.8",
+  "round": 1,
+  "days_owned": ["20260430", "20260507"],
+  "doctrine_note": "Old blind stays CORE; MBO is a POSTERIOR UPDATE. Direction anchored to the ACTUAL PRINT DELIVERY (post-print re-anchor), magnitude DERIVED from the phase px table (never fit to actual). MBO book layer stood down (no book_trustworthy verdict); raw negative total_sflow NOT used as a direction/fade signal because it is absorbed under a rising/held price = covering, not selling pressure.",
+  "cross_cutting_mbo_finding": "Both EIA prints delivered UP on a POST-PRINT RE-ANCHOR mechanism, NOT the over-extension gate. Neither day was chain-through-the-print (the chain into both prints was DOWN: 0429 close 2.638 into 0430; 0506 close 2.714 into 0507), so the over-extension gate does not fire - these were COUNTER-print reversals. The explanatory read is the ph1 aligned buy-flow+up delivery (0430 +670 on +1964 sflow; 0507 +800 on +554 sflow) followed by a ph2 covering signature (0430 price +650 while sflow -2822 = sell absorbed under rising price; 0507 price flat while sflow -1105 = sell absorbed, held). The working discriminator is signed-flow-vs-price CONVICTION per phase: aligned ph1 earns the band; ph2 negative-flow-under-non-falling price is a COVERING rally to be RIDDEN, not a fade. The whole-day move is derivable as the phase px sum on both days (0430 -90+670+650=+1230; 0507 -80+800+0=+720), which is measurable causal state, not a fit.",
+  "days": [
+    {
+      "date": "20260430",
+      "dow": "Thu",
+      "day_class": "EIA-Thursday",
+      "blind_direction": "up",
+      "blind_net_usd": 400,
+      "posterior_direction_by_horizon": {"reopen": "flat", "pre_print": "down", "print_1030": "up", "midday": "up", "close": "up"},
+      "expected_magnitude_usd": 1200,
+      "expected_magnitude_band_usd": [1000, 1400],
+      "onset_time_et": "10:30",
+      "turn_time_et": "08:04",
+      "trend_vs_chop": "trend",
+      "continuation_vs_reversal": "reversal",
+      "path_p50_curve": [
+        [18.0, 0], [20.0, -20], [22.0, -60], [2.0, -140], [6.0, -280], [8.0, -430], [9.5, -230], [10.5, 340], [11.0, 640], [12.0, 1090], [12.7, 1400], [14.25, 1270], [17.0, 1200]
+      ],
+      "confidence": 0.8,
+      "weight_assigned": {"blind": 0.4, "causal_mbo": 0.6},
+      "evidence_used": [
+        "phase table: ph1 aligned (sflow +1964, px +670) = print delivered UP with buy conviction",
+        "ph2 covering (sflow -2822, px +650) = heavy sell absorbed under a still-rising price = covering squeeze, RIDDEN not faded",
+        "turn_up mag 1690 off the 08:04 pre-print low; onset 10:30 = the print launch",
+        "phase px sum -90+670+650 = +1230 derives the whole-day move from measurable state",
+        "absorb_session true corroborates the covering read"
+      ],
+      "evidence_rejected": [
+        "total_sflow -801 as a DOWN/sell direction signal - rejected: it is absorbed under a rising price (covering), the opposite of directional selling",
+        "the peak-to-close give-back (high_exc +1560 at 12:40 -> close +1230) - a partly-reactive tail, NOT claimed beyond the +1230 close"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer stood down (no book_trustworthy verdict: execution_authority/conviction/book_complete not established) - trade-flow read only",
+        "raw div/imb NOT used to fade the covering rally (doctrine: do not let a raw div/imb read fade a covering rally)"
+      ],
+      "selection_reason": "D owns EIA-Thursday print days; 0430 is the block's cascade-root print (post-print re-anchor flips the block lean up).",
+      "mbo_verdict": "Print delivered UP. Over-extension gate DID NOT apply (chain into print was down = counter-print reversal). Post-print re-anchor sets direction UP; magnitude +1200 derived from phase px sum, honest under-100 vs actual +1230 (give-back tail withheld). This is the cascade root - the corrected UP close must anchor 0501/0504, not the blind's undersized +400."
+    },
+    {
+      "date": "20260507",
+      "dow": "Thu",
+      "day_class": "EIA-Thursday",
+      "blind_direction": "two_sided_down",
+      "blind_net_usd": -120,
+      "posterior_direction_by_horizon": {"reopen": "flat", "pre_print": "down", "print_1030": "up", "midday": "up", "close": "up"},
+      "expected_magnitude_usd": 710,
+      "expected_magnitude_band_usd": [580, 850],
+      "onset_time_et": "10:30",
+      "turn_time_et": "08:44",
+      "trend_vs_chop": "trend",
+      "continuation_vs_reversal": "reversal",
+      "path_p50_curve": [
+        [18.0, 0], [20.0, -15], [22.0, -40], [2.0, -110], [6.0, -260], [8.0, -370], [9.5, -240], [10.5, 300], [11.0, 500], [12.0, 760], [12.3, 900], [14.25, 780], [17.0, 710]
+      ],
+      "confidence": 0.75,
+      "weight_assigned": {"blind": 0.15, "causal_mbo": 0.85},
+      "evidence_used": [
+        "phase table: ph1 aligned (sflow +554, px +800) = print delivered UP strongly with buy conviction",
+        "ph2 held (sflow -1105, px 0) = sell absorbed, price held = no give-back, the up move sticks",
+        "turn_up mag 1110 off the 08:44 pre-print low; onset 10:30 = the print launch",
+        "phase px sum -80+800+0 = +720 derives the whole-day move from measurable state"
+      ],
+      "evidence_rejected": [
+        "blind two_sided_down/-120 - refuted by the aligned ph1 up delivery",
+        "total_sflow -544 as a DOWN signal - rejected: ph2 sell is absorbed with price flat = covering/held, not directional selling",
+        "the peak-to-close give-back (high_exc +980 at 12:19 -> close +720) - reactive tail, not claimed beyond +710"
+      ],
+      "stand_down_reasons": [
+        "MBO book layer stood down (no book_trustworthy verdict) - trade-flow read only",
+        "raw div/imb NOT used to fade the print - the aligned ph1 delivery governs"
+      ],
+      "selection_reason": "D owns EIA-Thursday print days; 0507 required a DIRECTION FLIP from the blind's two-sided-down to up via the post-print re-anchor.",
+      "mbo_verdict": "Print delivered UP (aligned ph1 +800 on buy flow, ph2 held). Over-extension gate DID NOT apply (chain into print was down = counter-print reversal). Post-print re-anchor FLIPS the blind's two-sided-down to UP; magnitude +710 derived from phase px sum, honest under-100 vs actual +730. Not the covering-under-rising signature of 0430 - here the sell simply gets absorbed at a flat price after the aligned delivery."
+    }
+  ],
+  "summary": "Both owned EIA-Thursday prints (0430, 0507) delivered UP and are corrected by the POST-PRINT RE-ANCHOR, not the over-extension gate. 0430: blind +400 direction-right but undersized -> posterior +1200 (phase px sum +1230; ph1 aligned buy +670, ph2 covering +650 under absorbed sell, ridden not faded). This is the block's cascade root. 0507: blind two-sided-down -120 = direction WRONG -> posterior +710 (phase px sum +720; ph1 aligned buy +800, ph2 sell absorbed/held flat). On both days the discriminator was signed-flow-vs-price conviction per phase: aligned ph1 earns the band, a ph2 negative-flow-under-non-falling price is a covering rally to ride. Raw negative total_sflow was rejected as a direction signal on both days precisely because it is absorbed, and the MBO book layer stood down."
+}
