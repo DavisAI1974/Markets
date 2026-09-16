@@ -171,8 +171,12 @@ def _completion(mode):
 @pytest.mark.parametrize('adapter_class,builder', [
     (FinalDipoleClassroomPrincipalAdapter, prepare_final_cycle),
     (IntegratedDipoleClassroomPrincipalAdapter, prepare_integrated_cycle),
+    (IntegratedDipoleClassroomPrincipalAdapter, prepare_final_cycle),
 ])
 def test_final_adapter_keeps_answer_key_material_out_of_the_principal_directory(tmp_path,monkeypatch,adapter_class,builder):
+    # The integrated adapter rebinds the final adapter's methods onto the base classroom adapter without the
+    # hardened class in its MRO; the same two-turn flow must hold for it (the reviewer's method-rebinding question),
+    # on its own integrated package and on a final-cycle package (the ccode review commit 61c73a2d case).
     history=(_completion('TEACH'),_completion('TEACH'),_completion('GUIDED'),_completion('GUIDED'))
     package=builder(_teacher(),request_id='run-cycle-00',cycle_index=0,cycle_count=CYCLE_COUNT,
         source_hash=HEX_B,as_of=2_000_000,through_cursor=6,history=history)
