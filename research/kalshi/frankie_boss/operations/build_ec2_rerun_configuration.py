@@ -17,6 +17,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import subprocess
 
 SOURCE_CONFIGURATION_SHA256 = 'a5eef9157130a596da4d5b62e9be2a268f95a561987b59481de4642f33b29f38'
 SOURCE_RUN_ID = 'frankie-boss-own-source-sunday-20260915'
@@ -34,6 +35,57 @@ def boolean(value):
     if value == 'true': return True
     if value == 'false': return False
     raise argparse.ArgumentTypeError('expected true or false')
+
+
+def completion_ref_contains_commit(repository, ref, boss_commit):
+    """Fail closed unless the remote workflow branch contains the reviewed BOSS commit.
+
+    `gh workflow run --ref` chooses which workflow YAML GitHub executes. Resolve that
+    branch from origin instead of trusting a local tracking ref, fetch only its commit
+    object when necessary, then require the reviewed BOSS commit to be its ancestor.
+    This does not move a local branch or merge anything.
+    """
+    repository=Path(repository).resolve()
+    if not repository.is_dir():
+        raise SystemExit('host repository required to verify completion workflow ref')
+    if ref.startswith('refs/heads/'):
+        remote_ref=ref
+    elif ref.startswith('refs/'):
+        raise SystemExit('completion workflow ref must be a branch ref')
+    else:
+        remote_ref='refs/heads/'+ref
+    try:
+        rows=subprocess.check_output(
+            ['git','ls-remote','--heads','origin',remote_ref],cwd=repository,text=True,
+            stderr=subprocess.STDOUT).splitlines()
+    except subprocess.CalledProcessError as error:
+        raise SystemExit('unable to resolve completion workflow ref from origin') from error
+    parsed=[]
+    for row in rows:
+        parts=row.split()
+        if len(parts)==2 and parts[1]==remote_ref and re.fullmatch(r'[0-9a-f]{40}',parts[0]):
+            parsed.append(parts[0])
+    if len(set(parsed))!=1:
+        raise SystemExit('completion workflow ref must resolve to one remote branch tip')
+    tip=parsed[0]
+    try:
+        subprocess.run(['git','cat-file','-e',boss_commit+'^{commit}'],cwd=repository,check=True,
+                       stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError as error:
+        raise SystemExit('reviewed BOSS commit is not present in the host repository') from error
+    try:
+        subprocess.run(['git','cat-file','-e',tip+'^{commit}'],cwd=repository,check=True,
+                       stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        try:
+            subprocess.run(['git','fetch','--no-tags','--quiet','origin',tip],cwd=repository,check=True,
+                           stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+        except subprocess.CalledProcessError as error:
+            raise SystemExit('unable to fetch completion workflow branch tip for ancestry verification') from error
+    if subprocess.run(['git','merge-base','--is-ancestor',boss_commit,tip],cwd=repository,
+                      stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode!=0:
+        raise SystemExit('completion workflow ref does not contain the reviewed BOSS commit')
+    return tip
 
 
 def main():
@@ -73,6 +125,8 @@ def main():
         raise SystemExit('explicit safe completion workflow ref required')
     if args.completion_workflow_ref=='codex/full-frankie-boss-connection-20260915':
         raise SystemExit('completion workflow ref cannot point back to the divergent lineage')
+    completion_tip=completion_ref_contains_commit(
+        config['host_runtime']['repository'],args.completion_workflow_ref,args.boss_commit)
     if any(value<1 for value in (args.torch_intraop_threads,args.torch_interop_threads,
                                   args.minimum_logical_cpus,args.minimum_memory_gib)):
         raise SystemExit('positive explicit runtime resources required')
@@ -103,7 +157,7 @@ def main():
     with out.open('xb') as stream:stream.write(raw)
     print(json.dumps(dict(schema='FRANKIE_EC2_RERUN_CONFIGURATION_BUILT_V1',out=str(out),
         run_id=args.run_id,run_directory=str(run_directory),boss_commit=args.boss_commit,
-        completion_workflow_ref=args.completion_workflow_ref,
+        completion_workflow_ref=args.completion_workflow_ref,completion_workflow_tip=completion_tip,
         cycle0_preparation_reused=False,configuration_sha256=hashlib.sha256(raw).hexdigest())))
     return 0
 
