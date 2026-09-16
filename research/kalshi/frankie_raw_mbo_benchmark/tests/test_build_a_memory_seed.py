@@ -16,6 +16,7 @@ import unittest
 from pathlib import Path
 
 from research.kalshi.frankie_raw_mbo_benchmark.build_a_memory_seed import (
+    own_a_memory_runs,
     CORRECTIONS,
     SEED_PATH,
     SEED_SCHEMA,
@@ -111,6 +112,25 @@ class SeedContentTest(unittest.TestCase):
         for path in expected:
             with self.subTest(path=path):
                 self.assertEqual(self.by_path[path]["provenance"]["run_id"], "frankie-a-clean-rt-33605852433-1")
+
+    def test_every_committed_a_memory_run_of_his_own_is_present_whole_and_discovered_not_named(self) -> None:
+        """Greg, 2026-09-16: his findings from the previous Sunday run go into his knowledge base,
+        and the carry is automatic - a run committed under principal_runs/ is seeded by the
+        next --write with no edit to the builder."""
+        runs = own_a_memory_runs(REPO_ROOT)
+        self.assertTrue(runs, "at least one A_MEMORY run of his own is committed")
+        for directory, run_id in runs:
+            expected = files_under(directory)
+            self.assertIn(directory + "principal_outputs/RECEIPT.json", expected, "the run filed its output bundle")
+            self.assertTrue(expected <= set(self.by_path), sorted(expected - set(self.by_path)))
+            for path in expected:
+                with self.subTest(path=path):
+                    provenance = self.by_path[path]["provenance"]
+                    self.assertEqual(provenance["run_id"], run_id)
+                    self.assertEqual(provenance["included_as"], "PAST_RUN_OUTPUT")
+                    self.assertEqual(provenance["correction"], "POST_CORRECTION")
+                    self.assertTrue(provenance["group_id"].startswith("own_run_"), provenance["group_id"])
+                    self.assertIn("his own run", provenance["label"].lower())
 
     def test_the_wrong_data_run_is_present_whole_and_labelled_as_the_wrong_data_run(self) -> None:
         """D86 / D76: included AS the wrong-data run, labelled, never filtered."""

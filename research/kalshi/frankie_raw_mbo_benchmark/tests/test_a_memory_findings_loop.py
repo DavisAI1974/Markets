@@ -280,12 +280,16 @@ class SeedIntegrationTest(unittest.TestCase):
 
         self.assertIn("finding_memory", seed)
         findings = seed["finding_memory"]["findings"]
-        self.assertEqual(len(findings), 45)
+        # The temporary root carries every committed seed entry, so every committed findings
+        # artifact of his own is in it (since 2026-09-16 the seed carries his runs whole) and
+        # the count is the committed count plus the one admitted here - derived, never typed.
+        committed = build_finding_memory(REPO_ROOT)["findings"]
+        self.assertEqual(len(findings), len(committed) + 1)
         by_id = {row["id"]: row for row in findings}
         self.assertEqual(by_id["F-IN-SEED"]["status"], "NEW")
         self.assertEqual(
             sum(row["status"] == "VERIFIED" for row in findings),
-            44,
+            sum(row["status"] == "VERIFIED" for row in committed),
         )
         historical_paths = {entry["path"] for entry in seed["entries"]}
         self.assertIn(

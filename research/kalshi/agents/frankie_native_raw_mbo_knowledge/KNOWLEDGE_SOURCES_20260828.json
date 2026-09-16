@@ -1052,6 +1052,48 @@
    "arms": [
     "A_MEMORY"
    ],
+   "authority": "POSITIVE_NATIVE_EVIDENCE",
+   "id": "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_findings_report_md",
+   "kind": "MARKDOWN",
+   "load_mode": "RETRIEVAL",
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/frankie-a-memory-rt-33746436209-1/frankie_findings_report.md",
+   "roles": [
+    "REAL_TIME_FRANKIE",
+    "FORECASTER_FRANKIE"
+   ]
+  },
+  {
+   "arms": [
+    "A_MEMORY"
+   ],
+   "authority": "POSITIVE_NATIVE_EVIDENCE",
+   "id": "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_principal_findings_json",
+   "kind": "JSON",
+   "load_mode": "RETRIEVAL",
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/frankie-a-memory-rt-33746436209-1/frankie_principal_findings.json",
+   "roles": [
+    "REAL_TIME_FRANKIE",
+    "FORECASTER_FRANKIE"
+   ]
+  },
+  {
+   "arms": [
+    "A_MEMORY"
+   ],
+   "authority": "POSITIVE_NATIVE_EVIDENCE_RECEIPT",
+   "id": "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_principal_outputs_receipt_json",
+   "kind": "JSON",
+   "load_mode": "RETRIEVAL",
+   "path": "research/kalshi/frankie_raw_mbo_benchmark/principal_runs/frankie-a-memory-rt-33746436209-1/principal_outputs/RECEIPT.json",
+   "roles": [
+    "REAL_TIME_FRANKIE",
+    "FORECASTER_FRANKIE"
+   ]
+  },
+  {
+   "arms": [
+    "A_MEMORY"
+   ],
    "authority": "PROMOTED_POSITIVE_NATIVE_KNOWLEDGE",
    "id": "seed_a_memory_20260902",
    "kind": "JSON",
@@ -1215,7 +1257,10 @@
     "keep_research_ng_exhaustion_polarity_not_primary_target_correction_20260819_md",
     "keep_research_ng_exhaustion_v3_nonauthoritative_results_extra_agent_v4_carryforward_20260820_md",
     "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_md",
-    "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_json"
+    "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_json",
+    "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_findings_report_md",
+    "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_principal_findings_json",
+    "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_principal_outputs_receipt_json"
    ],
    "role": "FORECASTER_FRANKIE"
   },
@@ -1308,7 +1353,10 @@
     "keep_research_ng_exhaustion_polarity_not_primary_target_correction_20260819_md",
     "keep_research_ng_exhaustion_v3_nonauthoritative_results_extra_agent_v4_carryforward_20260820_md",
     "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_md",
-    "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_json"
+    "keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_json",
+    "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_findings_report_md",
+    "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_frankie_principal_findings_json",
+    "own_run_research_kalshi_frankie_raw_mbo_benchmark_principal_runs_frankie_a_memory_rt_33746436209_1_principal_outputs_receipt_json"
    ],
    "role": "REAL_TIME_FRANKIE"
   }

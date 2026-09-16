@@ -31,14 +31,18 @@ from research.kalshi.frankie_raw_mbo_benchmark.refresh_native_frankie_knowledge 
 from research.kalshi.frankie_raw_mbo_benchmark.register_a_memory_knowledge import (
     ARM,
     KEEP_ID_PREFIX,
+    OWN_RUN_FILES,
+    OWN_RUN_ID_PREFIX,
     SPEC_PATH,
     RegistrationError,
     keep_artifacts,
     kind_for_path,
     main as register_main,
+    own_run_artifacts,
     register,
     render_spec,
 )
+from research.kalshi.frankie_raw_mbo_benchmark.build_a_memory_seed import own_a_memory_runs
 
 MANIFEST_PATH = "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json"
 
@@ -63,6 +67,47 @@ def input_bindings(registry: dict) -> dict[str, list[tuple[str, str]]]:
                 if pair not in out.setdefault(path, []):
                     out[path].append(pair)
     return out
+
+
+class OwnRunArtifactsTest(unittest.TestCase):
+    """Greg, 2026-09-16: every committed A_MEMORY run of his own registers the files he reads
+    whole - report, findings, output receipt, and the two run documents when filed - as
+    RETRIEVAL artifacts, discovered from principal_runs/, never typed."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.rows = own_run_artifacts(REPO_ROOT)
+        cls.by_path = {row["path"]: row for row in cls.rows}
+
+    def test_one_row_per_registered_file_of_every_committed_run(self) -> None:
+        runs = own_a_memory_runs(REPO_ROOT)
+        self.assertTrue(runs)
+        for directory, _run_id in runs:
+            for name, authority, optional in OWN_RUN_FILES:
+                path = directory + name
+                exists = (REPO_ROOT / path).is_file()
+                with self.subTest(path=path):
+                    if not exists:
+                        self.assertTrue(optional, f"required file missing: {path}")
+                        self.assertNotIn(path, self.by_path)
+                        continue
+                    row = self.by_path[path]
+                    self.assertEqual(row["authority"], authority)
+                    self.assertEqual(row["load_mode"], "RETRIEVAL")
+                    self.assertEqual(row["arms"], [ARM])
+                    self.assertTrue(row["id"].startswith(OWN_RUN_ID_PREFIX))
+                    self.assertIn(row["kind"], ALLOWED_KINDS)
+
+    def test_the_rows_reach_both_memory_profiles_of_the_committed_spec(self) -> None:
+        spec = committed_spec()
+        by_id = {row["id"]: row for row in spec["artifacts"]}
+        memory = [p for p in spec["profiles"].values() if p["arm"] == ARM]
+        self.assertEqual(len(memory), 2)
+        for row in self.rows:
+            with self.subTest(artifact=row["id"]):
+                self.assertEqual(by_id[row["id"]], row)
+                for profile in memory:
+                    self.assertIn(row["id"], profile["retrieval_catalog"])
 
 
 class KeepArtifactsTest(unittest.TestCase):
@@ -158,7 +203,7 @@ class RegisterSpecTest(unittest.TestCase):
                     self.assertIn(row["id"], profile["retrieval_catalog"])
 
     def test_the_hand_maintained_base_artifacts_are_unchanged(self) -> None:
-        base = {row["id"]: row for row in self.committed["artifacts"] if not row["id"].startswith(KEEP_ID_PREFIX)}
+        base = {row["id"]: row for row in self.committed["artifacts"] if not row["id"].startswith((KEEP_ID_PREFIX, OWN_RUN_ID_PREFIX))}
         for artifact_id, row in base.items():
             with self.subTest(artifact=artifact_id):
                 self.assertEqual(self.artifacts[artifact_id], row)
@@ -194,7 +239,7 @@ class RegisterSpecTest(unittest.TestCase):
         target = root / SPEC_PATH
         target.parent.mkdir(parents=True)
         stale = json.loads(json.dumps(self.committed))
-        stale["artifacts"] = [row for row in stale["artifacts"] if not row["id"].startswith(KEEP_ID_PREFIX)]
+        stale["artifacts"] = [row for row in stale["artifacts"] if not row["id"].startswith((KEEP_ID_PREFIX, OWN_RUN_ID_PREFIX))]
         target.write_text(render_spec(stale), encoding="utf-8")
         # --repo-root is where the inventory and the KEEP files are classified from; --spec is
         # the file being checked or written. They are separate so a copy can be checked.

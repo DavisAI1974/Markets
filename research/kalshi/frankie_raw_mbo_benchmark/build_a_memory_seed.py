@@ -71,7 +71,10 @@ from research.kalshi.frankie_raw_mbo_benchmark.render_frankie_report import (
 )
 
 SEED_SCHEMA = "FRANKIE_A_MEMORY_SEED_V1"
-SEED_VERSION = "a-memory-seed-20260902-v1"
+SEED_VERSION = "a-memory-seed-20260902-v2"
+"""v2 (2026-09-16): every committed A_MEMORY run of his own is carried whole, discovered under
+principal_runs/, per the seed's day-two rule; v1 carried only their findings artifacts and none
+of their files."""
 SEED_PATH = A_MEMORY_SEED_PATH
 MISSION_PATH = "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md"
 PKG = "research/kalshi/frankie_raw_mbo_benchmark/"
@@ -83,6 +86,17 @@ FINDING_MEMORY_SCHEMA = "FRANKIE_A_MEMORY_FINDINGS_V1"
 KNOWLEDGE_DIR = "research/kalshi/agents/frankie_native_raw_mbo_knowledge/"
 LAST_RUN_DIR = PKG + "principal_runs/33605852433/"
 LAST_RUN_FINDINGS = LAST_RUN_DIR + "frankie_principal_findings.json"
+#: His own last A_MEMORY Sunday run, carried whole (Greg, 2026-09-16: "we definitely need to get
+#: his findings from the previous sun run into his knowledge base. he would have knowledge of the
+#: 18 calcs if this were the real world"). The 30 append-only ledgers and their receipt, the
+#: findings, the report, his five own scripts, the reconciliation, cadence and cutoff records, the
+#: receipts he ran under and the prompt and bundle he read. Measured before this: the seed's
+#: finding_memory carried the run's 18 findings but its entries named none of its files.
+#: Discovered, never typed: every directory under principal_runs/ whose findings artifact names arm
+#: A_MEMORY and the principal-findings schema is one of his own runs and carries whole. A run that
+#: lands there after this file was written is carried by the next --write with no edit here; that
+#: is the automation Greg asked for (2026-09-16: "we won't be able to watch for jsons 24/7").
+OUTPUT_BUNDLE_DIRNAME = "principal_outputs"
 WRONG_DATA_DIR = PKG + "prior_memory/workmode-32851909748-1/"
 PRE_CORRECTION = "PRE_CORRECTION"
 POST_CORRECTION = "POST_CORRECTION"
@@ -104,7 +118,9 @@ HEADER = (
     "about whether it truthfully represents that run. From day two the memory is his own prior-day "
     "frozen outputs plus this "
     "seed. Keep-everything (D76): nothing is filtered for him, and the reduced wrong-data run "
-    "32851909748-1 is here AS the wrong-data run."
+    "32851909748-1 is here AS the wrong-data run. From v2 every committed A_MEMORY run of his own "
+    "under principal_runs/ is carried whole and automatically: its append-only ledgers, receipt, "
+    "findings, report and scripts, listed by path and sha256, per the day-two rule below."
 )
 CORRECTION_REFERENCE = (
     "The correction is the corrected raw-MBO A-arm procedure of 2026-08-28 "
@@ -388,24 +404,82 @@ class SeedGroup:
         return re.fullmatch(self.filename_pattern, name) is not None
 
 
-def _last_run_id(root: Path) -> str:
-    """The last run's own run id, read from its committed findings, never typed."""
-    findings = root / LAST_RUN_FINDINGS
+def _run_id_of(root: Path, findings_relative: str) -> str:
+    """A run's own run id, read from its committed findings, never typed."""
+    findings = root / findings_relative
     try:
         body = json.loads(findings.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise SeedBuildError(f"the last run's findings are not readable: {LAST_RUN_FINDINGS} ({exc})") from exc
+        raise SeedBuildError(f"the run's findings are not readable: {findings_relative} ({exc})") from exc
     run_id = body.get("run_id") if isinstance(body, dict) else None
     if not isinstance(run_id, str) or not run_id:
-        raise SeedBuildError(f"{LAST_RUN_FINDINGS} carries no run_id")
+        raise SeedBuildError(f"{findings_relative} carries no run_id")
     return run_id
+
+
+def _last_run_id(root: Path) -> str:
+    return _run_id_of(root, LAST_RUN_FINDINGS)
+
+
+def own_a_memory_runs(root: Path) -> list[tuple[str, str]]:
+    """(directory, run_id) for every committed A_MEMORY principal run, in run-id order.
+
+    A run directory without a findings artifact is not a run (nothing to carry); one whose
+    artifact names another arm is the retired A_CLEAN record and is seeded by its own group.
+    """
+    runs = root / PRINCIPAL_RUNS_DIR
+    found: list[tuple[str, str]] = []
+    if not runs.is_dir():
+        return found
+    for artifact in sorted(runs.glob("*/" + FINDING_ARTIFACT_NAME)):
+        try:
+            body = json.loads(artifact.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise SeedBuildError(f"principal findings are not readable: {artifact} ({exc})") from exc
+        if not isinstance(body, dict) or body.get("arm") != "A_MEMORY":
+            continue
+        if body.get("schema") != PRINCIPAL_FINDINGS_SCHEMA:
+            raise SeedBuildError(f"{artifact} uses schema {body.get('schema')!r}, expected {PRINCIPAL_FINDINGS_SCHEMA}")
+        run_id = body.get("run_id")
+        if not isinstance(run_id, str) or not run_id.strip():
+            raise SeedBuildError(f"{artifact} carries no run_id")
+        relative = artifact.parent.relative_to(root).as_posix() + "/"
+        if relative == LAST_RUN_DIR:
+            continue
+        found.append((relative, run_id))
+    return sorted(found, key=lambda row: row[1])
+
+
+def _own_run_group(directory: str, run_id: str) -> "SeedGroup":
+    bundle = f"{directory}{OUTPUT_BUNDLE_DIRNAME}/RECEIPT.json"
+    return SeedGroup(
+        group_id="own_run_" + re.sub(r"[^a-z0-9]+", "_", run_id.lower()).strip("_"),
+        directory=directory,
+        filename_pattern=r".+",
+        run_id=run_id,
+        data_surface=(
+            "the three exact ledgers of the run streamed to him whole and verified (exact member "
+            "rows, exact lifecycle and runway rows, legacy observable rows) plus the runner's "
+            "calculation_result.json; native raw MBO through the corrected runner"
+        ),
+        correction=POST_CORRECTION,
+        included_as=PAST_RUN_OUTPUT,
+        label=(
+            f"HIS OWN RUN {run_id}, carried whole per the day-two rule: the append-only output "
+            "ledgers and their RECEIPT.json (every contract section computed by him, D81), the "
+            "findings, the report, his own scripts, the reconciliation, cadence and cutoff records, "
+            "the receipts he ran under, and the prompt and bundle he read"
+        ),
+        basis=f"{directory}{FINDING_ARTIFACT_NAME} (run_id, arm, source_day) and {bundle} (the ledgers, validated)",
+    )
 
 
 def seed_groups(root: Path | str = REPO_ROOT) -> tuple[SeedGroup, ...]:
     """The provenance rules, in seed order. A file two rules match is a refusal (checked)."""
     root = Path(root)
     wrong_data_run_id = WRONG_DATA_DIR.rstrip("/").rsplit("/", 1)[-1].removeprefix("workmode-")
-    return (
+    own = tuple(_own_run_group(directory, run_id) for directory, run_id in own_a_memory_runs(root))
+    return own + (
         SeedGroup(
             group_id="last_run_33605852433",
             directory=LAST_RUN_DIR,
@@ -535,7 +609,7 @@ def seed_groups(root: Path | str = REPO_ROOT) -> tuple[SeedGroup, ...]:
 def _candidates(root: Path) -> list[str]:
     """Every file the rules are answerable for, repo-relative, sorted."""
     found: set[str] = set()
-    for directory in (LAST_RUN_DIR, WRONG_DATA_DIR):
+    for directory in (*(d for d, _ in own_a_memory_runs(root)), LAST_RUN_DIR, WRONG_DATA_DIR):
         base = root / directory
         if not base.is_dir():
             raise SeedBuildError(f"past-run directory is missing: {directory}")

@@ -73,8 +73,22 @@ SPEC_PATH = KNOWLEDGE_DIR + "KNOWLEDGE_SOURCES_20260828.json"
 KEEP_ID_PREFIX = "keep_"
 SEED_ID_PREFIX = "seed_"
 SEED_ARTIFACT_ID = SEED_ID_PREFIX + "a_memory_20260902"
-GENERATED_ID_PREFIXES = (KEEP_ID_PREFIX, SEED_ID_PREFIX)
+OWN_RUN_ID_PREFIX = "own_run_"
+GENERATED_ID_PREFIXES = (KEEP_ID_PREFIX, SEED_ID_PREFIX, OWN_RUN_ID_PREFIX)
 """Rows this script owns and regenerates; everything else is a hand-maintained base row."""
+#: Greg, 2026-09-16: "we definitely need to get his findings from the previous sun run into his
+#: knowledge base". Every committed A_MEMORY run of his own (discovered by the seed builder,
+#: never typed) registers these files as RETRIEVAL artifacts: the report, the findings, the
+#: output-bundle receipt, and the two run documents when the run filed them (what he learned,
+#: in his own words). The seed carries every file of the run by hash; these rows make the ones
+#: he reads whole retrievable by id.
+OWN_RUN_FILES = (
+    ("frankie_findings_report.md", "POSITIVE_NATIVE_EVIDENCE", False),
+    ("frankie_principal_findings.json", "POSITIVE_NATIVE_EVIDENCE", False),
+    ("principal_outputs/RECEIPT.json", "POSITIVE_NATIVE_EVIDENCE_RECEIPT", False),
+    ("FRANKIE_WHAT_HE_LEARNED.md", "POSITIVE_NATIVE_EVIDENCE", True),
+    ("FRANKIE_IN_HIS_OWN_WORDS.md", "POSITIVE_NATIVE_EVIDENCE", True),
+)
 INVENTORY_AUTHORITY = "BINDING_CURRENT"
 KIND_BY_EXTENSION = {"md": "MARKDOWN", "json": "JSON", "py": "PYTHON_SOURCE"}
 RETIRED_EXTERNAL_BINDINGS = frozenset({"a_memory_prior_lessons_package"})
@@ -151,6 +165,41 @@ def keep_artifacts(registry: Mapping[str, Any], repo_root: Path | str = REPO_ROO
     return rows
 
 
+def own_run_artifacts(repo_root: Path | str = REPO_ROOT) -> list[dict[str, Any]]:
+    """One RETRIEVAL artifact row per registered file of every committed A_MEMORY run of his own.
+
+    Runs are discovered by `build_a_memory_seed.own_a_memory_runs`; a file marked optional is
+    registered only when the run filed it (runs before the two-document contract have no
+    documents), a required file missing is a refusal.
+    """
+    from research.kalshi.frankie_raw_mbo_benchmark.build_a_memory_seed import own_a_memory_runs
+
+    root = Path(repo_root)
+    rows: list[dict[str, Any]] = []
+    for directory, run_id in own_a_memory_runs(root):
+        for name, authority, optional in OWN_RUN_FILES:
+            path = directory + name
+            if not (root / path).is_file():
+                if optional:
+                    continue
+                raise RegistrationError(f"own run {run_id} lacks {name}; a run without it is not carried")
+            rows.append(
+                {
+                    "id": artifact_id(OWN_RUN_ID_PREFIX, path),
+                    "path": path,
+                    "kind": kind_for_path(path),
+                    "authority": authority,
+                    "arms": [ARM],
+                    "roles": list(ROLES),
+                    "load_mode": "RETRIEVAL",
+                }
+            )
+    ids = [row["id"] for row in rows]
+    if len(ids) != len(set(ids)):
+        raise RegistrationError("derived own-run artifact ids collide")
+    return rows
+
+
 def _generated(artifact_id: str) -> bool:
     return artifact_id.startswith(GENERATED_ID_PREFIXES)
 
@@ -190,8 +239,9 @@ def register(
     """
     out = json.loads(json.dumps(spec))
     keep = keep_artifacts(registry, repo_root)
+    own = own_run_artifacts(repo_root)
     seed = seed_artifact(registry, repo_root)
-    generated = keep + [seed]
+    generated = keep + own + [seed]
     base = [row for row in out["artifacts"] if not _generated(row["id"])]
     base_paths = {row["path"] for row in base}
     clash = sorted(row["path"] for row in generated if row["path"] in base_paths)
@@ -200,7 +250,7 @@ def register(
             f"generated paths already registered as hand-maintained artifacts (paths must be unique): {clash}"
         )
     out["artifacts"] = base + generated
-    keep_ids = [row["id"] for row in keep]
+    keep_ids = [row["id"] for row in keep] + [row["id"] for row in own]
     for profile in out["profiles"].values():
         if profile["arm"] != ARM:
             continue
@@ -241,7 +291,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     rendered = render_spec(generated)
     keep_count = sum(1 for row in generated["artifacts"] if row["id"].startswith(KEEP_ID_PREFIX))
-    summary = f"{keep_count} KEEP artifacts and the seed {SEED_ARTIFACT_ID} routed to {ARM}"
+    own_count = sum(1 for row in generated["artifacts"] if row["id"].startswith(OWN_RUN_ID_PREFIX))
+    summary = f"{keep_count} KEEP artifacts, {own_count} own-run artifacts and the seed {SEED_ARTIFACT_ID} routed to {ARM}"
     if args.write:
         target.write_text(rendered, encoding="utf-8")
         print(f"wrote {target}: {summary}; run refresh_native_frankie_knowledge --write")
