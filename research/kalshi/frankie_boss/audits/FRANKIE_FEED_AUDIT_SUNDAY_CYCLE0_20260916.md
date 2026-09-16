@@ -124,5 +124,21 @@ sealed set is derived, never typed: 9 sealed layer ids, 4 section-K paths, 10 St
    the model-visible knowledge, a new knowledge identity in the frozen receiver: Greg's go, then
    wiring, not building.
 
+7. **The cycle-00 run analysis was not written by Frankie.** Greg, on reading it: "here's the
+   analysis that codex did for frankie but frankie didn't do it himself. he should be doing it
+   himself and more in depth." The retained record agrees: the analysis is the `lessons` entry of
+   the BOSS principal response, the host-attested session that wrote it is
+   `codex:first-run-using-agent-skills-continue-4:/root` with model identity "GPT-6 (Codex; exact
+   deployment suffix not exposed to this agent)", and the request it answered instructs the
+   principal to "reuse the preserved Frankie-authored 18-section evidence with its original
+   authorship; do not rerun completed calculations". Frankie's own run on the box (33746436209)
+   names its principal as `claude-fable-5-1`. Two different sessions stood in as Frankie on the two
+   runs, and the BOSS one was asked for a summary over retained sections, not an analysis. What
+   Greg wants as Frankie's required output, produced by Frankie in his own run and carried into
+   the seed: his findings, his opinion of the build, his opinion of the data, his suggestions, in
+   depth, beside the 18 section ledgers. That is a contract and wiring change (the spawn contract
+   and the output-bundle gate), a new knowledge identity, and it needs his go before anything is
+   edited in the frozen receiver.
+
 Nothing in the ingestion path was found dropped, filtered or rerouted. What the crosswalk
 measures is exactly what the registry declares Frankie must be fed, and for cycle 0 it was.
