@@ -76,7 +76,7 @@ def main():
         sys.argv = [argument for argument in sys.argv if argument != '--ec2-resume']
 
     # Import only after the numeric runtime policy is fixed. The classroom module
-    # wraps, but does not replace, the lawful actual host implementation.
+    # composes the lawful host explicitly; it does not rebind host/runtime globals.
     from research.kalshi.frankie_boss.operations import run_actual_sunday_classroom as actual
     from research.kalshi.frankie_boss.source_lineage_resume import verify_closed_source_lineage
 
@@ -91,8 +91,7 @@ def main():
                 runtime.learning_event = lambda value: self.probe.call('training_event', value)
             return runtime
 
-    actual.ActualHost = EC2ActualHost
-    return actual.main()
+    return actual.main(host_class=EC2ActualHost)
 
 
 if __name__ == '__main__':
