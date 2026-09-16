@@ -12,7 +12,7 @@ from .granite_cloud_resume import validate_resume, stop_owned_once
 from .granite_run_artifacts import canonical
 from .granite_runpod_tokenizer import LocalTokenizerAdmission
 
-POD_ID = 'jvs75m56w8f73q'
+POD_ID = 'ycf4v6lmave6xw'
 SCHEMA = 'GRANITE_RETAINED_LEASE_V1'
 
 
@@ -85,11 +85,20 @@ def start_once(api, journal, info, manifest, startup, *, now, request_body,
             or not 0 <= now-arm.get('at', 0) <= 20):
         raise ValueError('fresh independent startup observer required')
     pod = api.request('GET', '/v2/pods/'+POD_ID)
-    validate_resume(info, pod, manifest)
+    migrated_live = pod['status'] == 'RUNNING' and info['intent']['name'].endswith('-migration')
+    if migrated_live:
+        from .granite_cloud_resume import validate_running_migration
+        validate_running_migration(info, pod, manifest)
+    else:
+        validate_resume(info, pod, manifest)
     expiry = validate_url_freshness(pod['env'], configuration, now=now)
     journal.put('startup-capability-expiry.json', dict(earliest_expiry=expiry))
     active_runs.claim(digest)
     journal.put('retained-start-intent.json', intent, once=True)
+    if migrated_live:
+        result = dict(status='observe_migrated_start', pod_id=POD_ID, startup_sha256=digest)
+        journal.put('retained-start-result.json', result, once=True)
+        return result
     try:
         api.request('POST', '/v2/pods/'+POD_ID+'/action', {'action': 'start'})
     except Exception as error:
