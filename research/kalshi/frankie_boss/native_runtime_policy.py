@@ -64,8 +64,12 @@ def apply_native_runtime_policy(configuration):
             or torch.are_deterministic_algorithms_enabled() != policy['deterministic_algorithms']):
         raise RuntimeError('declared native runtime policy was not applied exactly')
 
+    # Persist only resume-stable host facts here. Dynamic available memory/RSS is
+    # recorded separately by the per-step resource diagnostics.
+    stable_host = {name:snapshot.get(name) for name in
+        ('platform_system','platform_release','platform_machine','logical_cpus','cpu_model','system_memory_total_bytes')}
     return dict(schema='FRANKIE_NATIVE_HOST_RUNTIME_IDENTITY_V1', parent_run_id=policy['parent_run_id'],
         run_id=configuration['run_id'], numeric_identity='NEW', python=sys.version,
         python_version=platform.python_version(), torch=str(torch.__version__), numpy=np.__version__,
         torch_intraop_threads=torch.get_num_threads(), torch_interop_threads=torch.get_num_interop_threads(),
-        deterministic_algorithms=torch.are_deterministic_algorithms_enabled(), **snapshot)
+        deterministic_algorithms=torch.are_deterministic_algorithms_enabled(), **stable_host)
