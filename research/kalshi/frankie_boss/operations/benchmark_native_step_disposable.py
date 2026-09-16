@@ -10,10 +10,6 @@ substage timestamps, process RSS/peak RSS and the exception TYPE AND MESSAGE (th
 scratch diagnostics for the operator, never evidence). Nothing on disk in the repository is
 modified, so the host's code-hash identity is the lawful one.
 
-The benchmark also installs the same recovery-only closed-source-lineage verifier used by the
-EC2 wrapper. That verifier changes only the sidecar liveness predicate to the repository's
-existing journal_prefix_snapshot._sidecars rule; all lineage hashes/tails/anchors remain exact.
-
 What it never does: call Granite or Frankie, read stdin credentials (stdin is /dev/null, so
 the first credential request of cycle 1 stops the host), or touch the ORIGINAL run
 directory. Verify the original afterwards by hash; the clone is garbage when done.
@@ -149,16 +145,6 @@ def main():
 
     sys.stdin = io.TextIOWrapper(open(os.devnull, 'rb'))  # no credential can ever be read
     from research.kalshi.frankie_boss.operations import run_actual_sunday as actual
-    from research.kalshi.frankie_boss.source_lineage_resume import verify_closed_source_lineage
-
-    # Recovery correctness fix only: preserve every lawful source-lineage check while using
-    # the already-audited hot-sidecar definition so the benchmark cannot fail merely because
-    # a prior read-only SQLite open left header-only WAL/SHM residue.
-    def source_lineage(self, source, ingestion):
-        return verify_closed_source_lineage(self, source, ingestion,
-            verified_json=actual.verified_json, verified=actual.verified)
-    actual.ActualHost.source_lineage = source_lineage
-
     # The host never prints exception text; for a scratch benchmark we want the innermost
     # failing host method and its message, so wrap every method the host class defines.
     for name, member in list(vars(actual.ActualHost).items()):
