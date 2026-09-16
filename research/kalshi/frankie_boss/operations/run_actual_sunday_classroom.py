@@ -3,6 +3,7 @@
 The lawful host remains byte-for-byte separate.  This wrapper only:
 - reuses the already prepared governed teacher attachment from PreparedContextCache;
 - builds and retains the per-cycle Dipole classroom package without rerunning teacher math;
+- hardens model-visible correction/taper/statistics transport without changing teacher evidence;
 - injects that package into SundayRuntime for the existing principal boundary;
 - extends the existing recorded-session waiter to the same-session correction turn.
 
@@ -14,7 +15,11 @@ import json
 from pathlib import Path
 import time
 
-from research.kalshi.frankie_boss.dipole_classroom import prepare_cycle
+from research.kalshi.frankie_boss import source_contract_runtime
+from research.kalshi.frankie_boss.dipole_classroom_hardening import (
+    HardenedDipoleClassroomPrincipalAdapter,
+    prepare_hardened_cycle,
+)
 from research.kalshi.frankie_boss.dipole_classroom_session import CORRECTION_REQUEST_SCHEMA
 from research.kalshi.frankie_boss.operations import run_actual_sunday as base
 
@@ -107,7 +112,7 @@ class ClassroomActualHost(base.ActualHost):
             raise ValueError("classroom must reuse exact prepared governed teacher attachment")
         index=binding["cycle_index"];request_id=f"{self.config['run_id']}-cycle-{index:02d}"
         previous,prior_grade=self._previous_source_and_grade(index)
-        package=prepare_cycle(teacher,request_id=request_id,cycle_index=index,
+        package=prepare_hardened_cycle(teacher,request_id=request_id,cycle_index=index,
             source_hash=binding["source_hash"],as_of=binding["as_of"],through_cursor=binding["through_cursor"],
             previous_snapshot=previous,history=self._history(index),prior_grade=prior_grade)
         if tuple(package["source"]["context_cursors"])!=tuple(self.cache.receipt["context_cursors"]):
@@ -145,6 +150,10 @@ imports=base.imports
 
 
 def main():
+    # source_contract_runtime.make_principal_adapter resolves this module-global
+    # class at call time. Patch only the classroom wrapper path; the base principal
+    # and lawful Sunday host remain unchanged.
+    source_contract_runtime.DipoleClassroomPrincipalAdapter=HardenedDipoleClassroomPrincipalAdapter
     base.ActualHost=ActualHost
     base.await_recorded_principal=await_recorded_principal
     return base.main()
