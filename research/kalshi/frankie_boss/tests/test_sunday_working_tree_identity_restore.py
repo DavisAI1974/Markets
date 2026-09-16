@@ -73,7 +73,13 @@ def test_line_ending_normalization_is_refused(tmp_path):
     identity,_=load_identity_manifest(identity_path,require_sunday=False)
     path=source.joinpath(*CRITICAL_PATHS[0].split('/'))
     path.write_bytes(path.read_bytes().replace(b'\r\n',b'\n'))
+    # The byte audit itself must refuse normalised bytes. On the real Sunday tree git status stays
+    # clean under normalisation, so the SHA-256 check is the one that has to fire; test it directly.
     with pytest.raises(ValueError,match='disk SHA-256 differs'):
+        audit_working_tree(source,identity,verify_git=False)
+    # With Git verification on, the fixture repository (no autocrlf) also reports the file modified;
+    # either refusal is fail-closed and the destination is never created.
+    with pytest.raises(ValueError,match='disk SHA-256 differs|Git-clean'):
         audit_working_tree(source,identity,verify_git=True)
 
 
@@ -82,7 +88,7 @@ def test_source_mismatch_fails_before_destination_is_created(tmp_path):
     identity,_=load_identity_manifest(identity_path,require_sunday=False)
     path=source.joinpath(*CRITICAL_PATHS[-1].split('/'));path.write_bytes(b'wrong bytes\n')
     destination=tmp_path/'never-created'
-    with pytest.raises(ValueError,match='disk SHA-256 differs'):
+    with pytest.raises(ValueError,match='disk SHA-256 differs|Git-clean'):
         copy_verified_working_tree(source,destination,identity,enforce_historical_path=False)
     assert not destination.exists()
 
@@ -101,3 +107,35 @@ def test_production_loader_refuses_a_small_fixture_manifest(tmp_path):
     _,identity_path,_,_=_fixture(tmp_path)
     with pytest.raises(ValueError,match='historical Sunday working-tree manifest identity differs'):
         load_identity_manifest(identity_path,require_sunday=True)
+
+
+def test_sparse_checkout_skip_worktree_files_are_recorded_not_refused(tmp_path):
+    """The Sunday repository is a sparse checkout with 1,149 absent skip-worktree files."""
+    source,identity_path,requirements_path,originals=_fixture(tmp_path)
+    identity,identity_raw=load_identity_manifest(identity_path,require_sunday=False)
+    load_requirements(requirements_path,identity,identity_raw)
+    extra=source/'docs'/'absent.md';extra.parent.mkdir(exist_ok=True);extra.write_bytes(b'tracked then sparse\n')
+    _run(source,'add','docs/absent.md');_run(source,'-c','user.name=t','-c','user.email=t@t','commit','-q','-m','sparse member')
+    _run(source,'update-index','--skip-worktree','docs/absent.md');extra.unlink()
+    assert _run(source,'status','--porcelain=v1','--untracked-files=no')==''
+    body=json.loads(identity_path.read_text(encoding='utf-8'));body['head']=_run(source,'rev-parse','HEAD')
+    identity_path.write_text(json.dumps(body),encoding='utf-8')
+    identity,_=load_identity_manifest(identity_path,require_sunday=False)
+    destination=tmp_path/'restored-sparse'
+    result=copy_verified_working_tree(source,destination,identity,enforce_historical_path=False)
+    assert result['sparse_skip_worktree_absent']==1 and result['sparse_checkout'] is True
+    assert not (destination/'docs'/'absent.md').exists()
+    assert _run(destination,'status','--porcelain=v1','--untracked-files=no')==''
+    for rel,raw in originals.items():
+        assert destination.joinpath(*rel.split('/')).read_bytes()==raw
+
+
+def test_windows_long_staging_path_is_refused_before_any_copy(tmp_path):
+    import os
+    if os.name!='nt':pytest.skip('Windows path limit only')
+    source,identity_path,_,_=_fixture(tmp_path)
+    identity,_=load_identity_manifest(identity_path,require_sunday=False)
+    deep=tmp_path.joinpath(*(['d'*40]*5))/'Markets'  # well past 260 characters once .partial-<hex> is appended
+    with pytest.raises(ValueError,match='core.longpaths'):
+        copy_verified_working_tree(source,deep,identity,enforce_historical_path=False)
+    assert not deep.exists() and not any(deep.parent.glob('Markets.partial-*')) if deep.parent.exists() else True

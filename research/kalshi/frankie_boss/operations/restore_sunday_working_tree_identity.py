@@ -48,7 +48,11 @@ def _sha256_file(path):
 
 
 def _git_blob_sha(raw):
-    return hashlib.sha1(b'blob '+str(len(raw)).encode()+b'\0'+raw).hexdigest()
+    # git hash-object hashes the NORMALISED content (text files are stored LF) and the
+    # requirements file binds that value. On an autocrlf checkout the manifest's on-disk bytes
+    # are CRLF, so hashing raw bytes refused the real manifest (measured 2026-09-16).
+    normalised=raw.replace(b'\r\n',b'\n')
+    return hashlib.sha1(b'blob '+str(len(normalised)).encode()+b'\0'+normalised).hexdigest()
 
 
 def _canonical(value):
@@ -93,7 +97,9 @@ def load_identity_manifest(path, *, require_sunday=True):
     if require_sunday:
         if body['head']!=SUNDAY_HEAD or len(rows)!=SUNDAY_IDENTITY_FILES:
             raise ValueError('historical Sunday working-tree manifest identity differs')
-        if tuple(critical)!=CRITICAL_PATHS:
+        # Set equality: the identity manifest lists files in sorted path order while CRITICAL_PATHS
+        # is grouped by role. The ordered comparison refused the real manifest (measured 2026-09-16).
+        if sorted(critical)!=sorted(CRITICAL_PATHS):
             raise ValueError('historical unreproducible working-tree set differs')
     return body,raw
 
@@ -174,8 +180,40 @@ def _tracked_paths(root):
     return tuple(sorted(index))
 
 
+def _skip_worktree_paths(root):
+    """Tracked entries a sparse checkout deliberately leaves absent (git ls-files -v marks them S).
+
+    The Sunday repository is a sparse checkout: measured 2026-09-16, 1,149 of its tracked files
+    are skip-worktree and absent, none under research/kalshi/frankie_boss or research/refrag.
+    """
+    raw=_git(root,'ls-files','-v','-z',text=False);result=set()
+    for item in raw.split(b'\0'):
+        if item[:2]==b'S ':result.add(item[2:].decode('utf-8'))
+    return result
+
+
 def _same_path(left,right):
     return os.path.normcase(os.path.normpath(str(left)))==os.path.normcase(os.path.normpath(str(right)))
+
+
+WINDOWS_MAX_PATH = 260
+
+
+def _refuse_windows_long_paths(source, staging, tracked):
+    """Git without core.longpaths cannot open a file whose full path reaches 260 characters.
+
+    Measured 2026-09-16: a staging copy under a deep scratch path put five tracked files at
+    260-265 characters; git reported them modified although their bytes were identical, and the
+    byte-exact audit refused a correct copy. Refuse before staging instead of after copying.
+    """
+    if os.name!='nt':return
+    try:longpaths=_git(source,'config','--get','core.longpaths').strip().lower()=='true'
+    except ValueError:longpaths=False
+    if longpaths:return
+    longest=max((len(str(staging.joinpath(*PurePosixPath(rel).parts))),rel) for rel in tracked)
+    if longest[0]>=WINDOWS_MAX_PATH:
+        raise ValueError(f'staging path would reach {longest[0]} characters for {longest[1]}; '
+                         'choose a shorter destination or set core.longpaths=true before restoring')
 
 
 def copy_verified_working_tree(source, destination, identity, *, enforce_historical_path=True):
@@ -188,7 +226,13 @@ def copy_verified_working_tree(source, destination, identity, *, enforce_histori
         if not _same_path(destination,expected):raise ValueError('restore destination differs from original Sunday repository path')
     source_audit=audit_working_tree(source,identity,verify_git=True)
     tracked=_tracked_paths(source)
+    sparse=_skip_worktree_paths(source)
+    identity_paths={row['path'] for row in identity['files']}
+    absent_identity=sorted(rel for rel in sparse if rel in identity_paths and not source.joinpath(*PurePosixPath(rel).parts).is_file())
+    if absent_identity:raise ValueError('identity file is absent from the sparse working tree: '+absent_identity[0])
+    skipped=[]
     staging=destination.with_name(destination.name+'.partial-'+uuid.uuid4().hex)
+    _refuse_windows_long_paths(source,staging,tracked)
     destination.parent.mkdir(parents=True,exist_ok=True)
     if staging.exists():raise FileExistsError('unique restore staging directory already exists')
     staging.mkdir()
@@ -197,6 +241,8 @@ def copy_verified_working_tree(source, destination, identity, *, enforce_histori
         for rel in tracked:
             src=source.joinpath(*PurePosixPath(rel).parts)
             dst=staging.joinpath(*PurePosixPath(rel).parts)
+            if rel in sparse and not src.exists():
+                skipped.append(rel);continue  # sparse checkout: the copied .git index carries the same flag
             if src.is_symlink() or not src.is_file():
                 raise ValueError('tracked restore member must be a regular file: '+rel)
             dst.parent.mkdir(parents=True,exist_ok=True)
@@ -212,7 +258,8 @@ def copy_verified_working_tree(source, destination, identity, *, enforce_histori
     destination_audit=audit_working_tree(destination,identity,verify_git=True)
     if destination_audit['identity_set_sha256']!=source_audit['identity_set_sha256']:
         raise ValueError('final restored working-tree bytes differ from verified source')
-    return dict(source=source_audit,destination=destination_audit,tracked_files_copied=len(tracked))
+    return dict(source=source_audit,destination=destination_audit,tracked_files_copied=len(tracked)-len(skipped),
+        sparse_skip_worktree_absent=len(skipped),sparse_checkout=bool(skipped))
 
 
 def main():

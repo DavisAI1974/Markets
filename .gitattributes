@@ -14,3 +14,6 @@ research/kalshi/frankie_boss/tests/fixtures/granite_prompts/** -text
 
 # Exact official cancellation schema reference is checked at runtime.
 research/kalshi/frankie_boss/provenance/kalshi-cancel-order-v2-20260915.md -text
+
+# Byte-exact Sunday working-tree captures: mixed CRLF/LF bytes that git normalisation would destroy
+research/kalshi/frankie_boss/sunday_20260915_package/FB/sunday-launch-20260915/Markets/** -text

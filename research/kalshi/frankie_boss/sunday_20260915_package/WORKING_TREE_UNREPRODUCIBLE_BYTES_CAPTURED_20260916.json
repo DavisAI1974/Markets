@@ -1,0 +1,63 @@
+{
+ "captured_from": "E:/Codex/Frankie-BOSS-20260915/sunday-launch-20260915/Markets",
+ "files": [
+  {
+   "bytes": 14668,
+   "crlf_lines": 221,
+   "disk_sha256": "40742bbdd0cf60c36aadf40cec3e81a22ed6c356f760279e77ce01b53a824f89",
+   "git_blob": "9c265dcd65104e4a91a935b1d7b00616ae6bdd23",
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/sunday-launch-20260915/Markets/research/kalshi/frankie_boss/c15_teacher.py",
+   "lf_only_lines": 19,
+   "path": "research/kalshi/frankie_boss/c15_teacher.py"
+  },
+  {
+   "bytes": 19374,
+   "crlf_lines": 278,
+   "disk_sha256": "55b9487c47181ec2ac6de6f5ccb8012397a8bd906abc37158db2bc1d9a9e90e9",
+   "git_blob": "19c438b8c014ddaa59e5f019bd2fef90f5dd8ba9",
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/sunday-launch-20260915/Markets/research/kalshi/frankie_boss/c15_teacher_r3.py",
+   "lf_only_lines": 99,
+   "path": "research/kalshi/frankie_boss/c15_teacher_r3.py"
+  },
+  {
+   "bytes": 18811,
+   "crlf_lines": 319,
+   "disk_sha256": "ee1d45b6d4f02bb14b4766ae672858f51443a4433c0edc58e414283760cd24b5",
+   "git_blob": "901725c7824c16741811edfe45276b85f0cc1b15",
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/sunday-launch-20260915/Markets/research/kalshi/frankie_boss/feedback_cycle.py",
+   "lf_only_lines": 7,
+   "path": "research/kalshi/frankie_boss/feedback_cycle.py"
+  },
+  {
+   "bytes": 4428,
+   "crlf_lines": 2,
+   "disk_sha256": "7cf53afa59f46cbb66934c105efcbd1eba608f24d0f354d5c09b26680e4ffe91",
+   "git_blob": "d6075d0a0806f0b5c78c26c7a012bfb94f7e7a7b",
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/sunday-launch-20260915/Markets/research/kalshi/frankie_boss/operations/package_final_committed.py",
+   "lf_only_lines": 46,
+   "path": "research/kalshi/frankie_boss/operations/package_final_committed.py"
+  },
+  {
+   "bytes": 13021,
+   "crlf_lines": 3,
+   "disk_sha256": "d6c9fd9e1fbc3709a0a8f2a2e9488264daad32737560fa2de2e82b1d29aa2785",
+   "git_blob": "20810c868145a296b8c858157d80bfd9a43e21a4",
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/sunday-launch-20260915/Markets/research/kalshi/frankie_boss/operations/seal_final_prelaunch_candidate.py",
+   "lf_only_lines": 147,
+   "path": "research/kalshi/frankie_boss/operations/seal_final_prelaunch_candidate.py"
+  },
+  {
+   "bytes": 10994,
+   "crlf_lines": 173,
+   "disk_sha256": "40ace66b0db5608b17ce7b645aa84f588c62f95f31477ea7b1271f054549ff4c",
+   "git_blob": "ca5c160167d5c1d99dc15ca24c602fa1b4daccb3",
+   "git_path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/sunday-launch-20260915/Markets/research/kalshi/frankie_boss/sunday_native_runtime.py",
+   "lf_only_lines": 7,
+   "path": "research/kalshi/frankie_boss/sunday_native_runtime.py"
+  }
+ ],
+ "historical_head": "050c5056c3657a954d6a3ee17f3a216999930768",
+ "historical_repository": "E:\\Codex\\Frankie-BOSS-20260915\\sunday-launch-20260915\\Markets",
+ "note": "Byte-exact copies of the six tracked files whose Sunday working-tree bytes no git checkout can reproduce (mixed CRLF/LF after an in-place edit; git normalises on commit so the blobs are unchanged). Stored under the package mirror root so the restoration package no longer depends on the E: drive surviving. A restore that overlays these six files on a clean CRLF checkout of the historical head reproduces all 161 identity hashes.",
+ "schema": "FRANKIE_SUNDAY_UNREPRODUCIBLE_WORKING_TREE_BYTES_CAPTURED_V1"
+}
