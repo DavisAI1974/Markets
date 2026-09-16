@@ -3,7 +3,7 @@
 This wrapper preserves the lawful Sunday host and compact-reader lineage. It only:
 - requires a new run directory/run id on first launch;
 - applies and records the declared numeric/toolchain policy before model creation;
-- permits later prepare/recovery resume only under the exact persisted host identity;
+- permits later prepare/recovery resume only under the exact stable host identity;
 - enables safe native-step substage/resource diagnostics.
 
 It never adopts the failed cycle-00 run directory or training checkpoint.
@@ -19,8 +19,22 @@ import sys
 from research.kalshi.frankie_boss.native_runtime_policy import apply_native_runtime_policy
 
 
+_STABLE_IDENTITY_FIELDS = (
+    'schema', 'parent_run_id', 'run_id', 'numeric_identity', 'python', 'python_version',
+    'torch', 'numpy', 'torch_intraop_threads', 'torch_interop_threads',
+    'deterministic_algorithms', 'platform_system', 'platform_release', 'platform_machine',
+    'logical_cpus', 'cpu_model', 'system_memory_total_bytes',
+)
+
+
 def _canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
+
+
+def _stable_identity(value):
+    if type(value) is not dict or any(name not in value for name in _STABLE_IDENTITY_FIELDS):
+        raise ValueError('native host runtime identity is incomplete')
+    return {name: value[name] for name in _STABLE_IDENTITY_FIELDS}
 
 
 def _write_new(path, value):
@@ -47,8 +61,8 @@ def main():
         if not args.ec2_resume or not identity_path.is_file():
             raise FileExistsError('existing directory is not an explicitly resumable NEW EC2 run')
         retained = json.loads(identity_path.read_bytes())
-        if _canonical(retained) != _canonical(identity):
-            raise RuntimeError('EC2 resume host/toolchain identity differs from first launch')
+        if _canonical(_stable_identity(retained)) != _canonical(_stable_identity(identity)):
+            raise RuntimeError('EC2 resume stable host/toolchain identity differs from first launch')
     else:
         if args.ec2_resume:
             raise FileNotFoundError('EC2 resume requested before the NEW run exists')
