@@ -144,3 +144,23 @@ sealed set is derived, never typed: 9 sealed layer ids, 4 section-K paths, 10 St
 
 Nothing in the ingestion path was found dropped, filtered or rerouted. What the crosswalk
 measures is exactly what the registry declares Frankie must be fed, and for cycle 0 it was.
+
+8. **BUILT, on the receiver branch `ccode/frankie-receiver-feed-20260916` (cut from the frozen
+   receiver `342f5728`, worktree `E:\Markets-receiver`), Greg's "do all 3" plus the automation.**
+   (1) The seed carries every committed A_MEMORY run of his own, discovered under
+   `principal_runs/`, whole: run 33746436209-1 goes from 0 file entries to 49 (seed v2, 82
+   entries), and `register_a_memory_knowledge` registers its report, findings and output receipt
+   as retrieval artifacts (manifest 79). (2) Two required output ledgers, printed as two
+   documents beside his artifact: `what_he_learned` (statement, standing against the served
+   lesson, sections, exact member groups or a stated basis) and `in_his_own_words` (FINDINGS,
+   BUILD, DATA, SUGGESTION, every topic required); `finalize` takes both, the spawn prompt asks
+   for both, the required set is 32. (3) `prepare_boss_attachment` runs the staging output
+   gate over the artifact and its `principal_outputs/` and records the verdict in the
+   preparation receipt; omitting the bundle must be stated. Automation:
+   `carry_run_into_memory --write --run-id <id>` gates, renders, rebuilds (seed, register,
+   rebind, refresh, each checked) and leaves `principal_runs/carry_receipts/<run_id>.json`;
+   `--check --all` recomputes it. The Sunday run is carried: gate verdict "receipt and chains
+   verified, filed under the prior 30-ledger contract", documents not filed (the run predates
+   them). Receiver suite 2,189 tests green. Two things follow from this: the block run must pin
+   the new receiver commit (the Sunday-rerun configuration pins `342f5728`), and the old carry
+   workflow should call this tool instead of the four bare commands; no workflow until Greg says.
