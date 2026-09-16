@@ -117,10 +117,14 @@ sealed set is derived, never typed: 9 sealed layer ids, 4 section-K paths, 10 St
    calculations were run by Frankie himself and are on disk in the required form. What remains
    true from the first reading: his findings JSON labels cover 13 of 18 sections (the ledgers cover
    all 18); his report carries no opinion of the build, of the data, or suggestions, and the spawn
-   prompt asked for none; and the A-memory seed carries zero entries from this run, so the
-   Sunday-15 bundle taught him nothing from his own last Sunday. Nothing in the BOSS or crosswalk
-   path verified the bundle: the crosswalk was run without `--outputs-receipt`, which is why it
-   read ten outputs pending.
+   prompt asked for none; and the A-memory seed's file ENTRIES (33) carry none of this run's files (its 30
+   ledgers, report and scripts) because the seed builder's file scan is pinned to the
+   33605852433 directory; but the seed's `finding_memory` DOES carry this run's 18 findings,
+   labelled NEW with provenance `frankie-a-memory-rt-33746436209-1` (62 findings in all: 44
+   VERIFIED historical plus these 18), and that seed (244,923 bytes, sha `b814bb58…`) is the
+   manifest artifact the Sunday-15 bundle embedded. So his last Sunday's findings did reach him;
+   his last Sunday's ledgers and report did not. The crosswalk was run without
+   `--outputs-receipt`, which is why it read ten outputs pending.
 
 7. **The cycle-00 run analysis was not written by Frankie.** Greg, on reading it: "here's the
    analysis that codex did for frankie but frankie didn't do it himself. he should be doing it
