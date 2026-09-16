@@ -1,0 +1,92 @@
+{
+ "archive_prefix": "nymex/ng_mbo_5y_v0/native/2021-10",
+ "block": "20211004_20211006",
+ "bucket": "bento-568968024170-us-east-2-an",
+ "canonical_source_rewritten": false,
+ "causal_clock": "ts_recv_ns",
+ "halt_utc_hour": 21,
+ "ingested": false,
+ "manifest_hash": "eb68cb23845a00985cf3e25ad6b23230d7765cb0a8af235b926e67e914ced55c",
+ "model_calls": 0,
+ "prefix": "frankie/block_20211004_20211006/sources",
+ "prefixes_built": false,
+ "role": "HELD_OUT_BLIND_BLOCK",
+ "sampled": false,
+ "scheduled": false,
+ "schema": "BOSS_BLOCK_SOURCE_MANIFEST_V1",
+ "sessions": [
+  {
+   "after_halt": 56782,
+   "before_halt": 245,
+   "day_utc": "20211003",
+   "first_ts_recv_ns": 1633277168244072526,
+   "instruments": 1,
+   "last_ts_recv_ns": 1633305596372071705,
+   "mbo_records": 57027,
+   "member_key": "glbx-mdp3-20211003.mbo.dbn.zst"
+  },
+  {
+   "after_halt": 19182,
+   "before_halt": 1975176,
+   "day_utc": "20211004",
+   "first_ts_recv_ns": 1633305600000000000,
+   "instruments": 1,
+   "last_ts_recv_ns": 1633391999955312214,
+   "mbo_records": 1994358,
+   "member_key": "glbx-mdp3-20211004.mbo.dbn.zst"
+  },
+  {
+   "after_halt": 26248,
+   "before_halt": 2085682,
+   "day_utc": "20211005",
+   "first_ts_recv_ns": 1633392000000000000,
+   "instruments": 1,
+   "last_ts_recv_ns": 1633478399954928144,
+   "mbo_records": 2111930,
+   "member_key": "glbx-mdp3-20211005.mbo.dbn.zst"
+  },
+  {
+   "after_halt": 29413,
+   "before_halt": 2278747,
+   "day_utc": "20211006",
+   "first_ts_recv_ns": 1633478400000000000,
+   "instruments": 1,
+   "last_ts_recv_ns": 1633564799909162543,
+   "mbo_records": 2308160,
+   "member_key": "glbx-mdp3-20211006.mbo.dbn.zst"
+  }
+ ],
+ "source_kind": "NATIVE_DBN_MBO",
+ "sources": [
+  {
+   "mbo_records": 57027,
+   "member_index": 0,
+   "member_key": "glbx-mdp3-20211003.mbo.dbn.zst",
+   "sha256": "4380bd9ba83a5badc4839e12785aa464817b87e3fac11176b951e7b474446d88",
+   "size_bytes": 973355
+  },
+  {
+   "mbo_records": 1994358,
+   "member_index": 1,
+   "member_key": "glbx-mdp3-20211004.mbo.dbn.zst",
+   "sha256": "8ed47cc0a68cf40cae9fde45e158142978076e60d3f9fc7cf940196babfddc0a",
+   "size_bytes": 34300424
+  },
+  {
+   "mbo_records": 2111930,
+   "member_index": 2,
+   "member_key": "glbx-mdp3-20211005.mbo.dbn.zst",
+   "sha256": "a4a12f9578da762412884e7f559a123361eaa3a153bec0db59dfb3ba6224a874",
+   "size_bytes": 36192430
+  },
+  {
+   "mbo_records": 2308160,
+   "member_index": 3,
+   "member_key": "glbx-mdp3-20211006.mbo.dbn.zst",
+   "sha256": "a6766a1c92eb6cf224fd2c71c070090bf85b5e2453c5dc322a2050c2ea4fbc44",
+   "size_bytes": 39566060
+  }
+ ],
+ "staged_unix": 1789548054,
+ "total_mbo_records": 6471475
+}
