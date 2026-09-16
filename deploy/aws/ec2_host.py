@@ -60,7 +60,9 @@ def main():
     parser.add_argument('--region', default='us-east-2')
     parser.add_argument('--env-file')
     parser.add_argument('--hourly', type=float, default=1.80)
-    parser.add_argument('action', choices=('status', 'start', 'stop'))
+    parser.add_argument('--label', default='', help='snapshot: short label written into the Name tag')
+    parser.add_argument('--device', default='xvdf', help='snapshot: block device of the data volume (E:), default xvdf')
+    parser.add_argument('action', choices=('status', 'start', 'stop', 'snapshot', 'snapshots'))
     args = parser.parse_args()
     if args.env_file:
         load_env_file(args.env_file)
@@ -81,6 +83,32 @@ def main():
             ec2.stop_instances(InstanceIds=[args.instance])
         wait_state(ec2, args.instance, 'stopped')
         report(describe(ec2, args.instance), args.hourly)
+    elif args.action == 'snapshot':
+        # Point-in-time EBS snapshot of the data volume: survives terminate, corruption and a bad cycle.
+        # Taken while STOPPED it is crash-consistent by construction; while running it is still consistent
+        # for files not being written. Incremental: only changed blocks are stored after the first.
+        r = ec2.describe_instances(InstanceIds=[args.instance])['Reservations'][0]['Instances'][0]
+        volumes = {m['DeviceName'].replace('/dev/', ''): m['Ebs']['VolumeId'] for m in r['BlockDeviceMappings']}
+        if args.device not in volumes:
+            raise SystemExit(f'device {args.device} not attached; attached: {sorted(volumes)}')
+        name = f"{args.instance}-{args.device}-{datetime.datetime.now(datetime.timezone.utc):%Y%m%dT%H%M%SZ}" + (f'-{args.label}' if args.label else '')
+        snap = ec2.create_snapshot(VolumeId=volumes[args.device], Description=name,
+                                   TagSpecifications=[{'ResourceType': 'snapshot', 'Tags': [{'Key': 'Name', 'Value': name},
+                                                       {'Key': 'Instance', 'Value': args.instance}, {'Key': 'Device', 'Value': args.device}]}])
+        print(f"snapshot {snap['SnapshotId']} of {volumes[args.device]} ({args.device}) started, state={snap['State']}, name={name}")
+        deadline = time.time() + 3600
+        while time.time() < deadline:
+            state = ec2.describe_snapshots(SnapshotIds=[snap['SnapshotId']])['Snapshots'][0]
+            if state['State'] == 'completed':
+                print(f"snapshot {snap['SnapshotId']} completed, {state['VolumeSize']} GiB volume"); break
+            if state['State'] == 'error':
+                raise SystemExit('snapshot failed')
+            time.sleep(15)
+    elif args.action == 'snapshots':
+        snaps = ec2.describe_snapshots(Filters=[{'Name': 'tag:Instance', 'Values': [args.instance]}])['Snapshots']
+        for s_ in sorted(snaps, key=lambda x: x['StartTime']):
+            tags = {t['Key']: t['Value'] for t in s_.get('Tags', [])}
+            print(f"{s_['SnapshotId']} {s_['StartTime']:%Y-%m-%dT%H:%MZ} {s_['State']:9} {s_['VolumeSize']:4} GiB {tags.get('Name','')}")
     return 0
 
 
