@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 
 from .dipole_classroom_render import render_transcript
+from .dipole_classroom_resolution import bind_resolution_requirement, validate_correction_resolutions
 from .dipole_classroom_session import (
     correction_request,
     finish,
@@ -152,7 +153,8 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
         self._retain("dipole-classroom-teachback.json", teachback)
         self._retain("dipole-classroom-post-grade.json", grade)
 
-        correction = correction_request(original_request_sha256=digest(request), response=initial_response, grade=grade)
+        correction = bind_resolution_requirement(correction_request(
+            original_request_sha256=digest(request), response=initial_response, grade=grade))
         correction_path = self.directory / "classroom-correction-request.json"
         created = False
         if correction_path.exists():
@@ -169,8 +171,10 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
             self._record_correction_response(correction, dispatched)
         correction_envelope = json.loads(response_path.read_bytes())
         self._attest_host(correction_envelope["response"], correction_envelope["host_attestation"], correction)
-        acknowledgement = validate_correction_response(correction=correction,
+        base_acknowledgement = validate_correction_response(correction=correction,
             response=correction_envelope["response"], initial_response=initial_response, grade=grade)
+        acknowledgement = validate_correction_resolutions(
+            correction_envelope["response"].get("dipole_acknowledgement"), grade, base_acknowledgement)
         self._retain("dipole-classroom-acknowledgement.json", acknowledgement)
         completion = finish(self.classroom_package, teachback=teachback, grade=grade, acknowledgement=acknowledgement)
         self._retain("dipole-classroom-completion.json", completion)
@@ -184,6 +188,7 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
             "exhaustive_audit_hash":completion["exhaustive_audit_hash"],
             "observation_claims_reviewed":completion["observation_claims_reviewed"],
             "relationship_pairs_explicitly_reviewed":completion["relationship_pairs_explicitly_reviewed"],
+            "correction_resolutions":len(acknowledgement["correction_resolutions"]),
             "transcript":file_witness(transcript_path),
             "initial_session_id":initial_response["session_id"],
             "correction_session_id":correction_envelope["response"]["session_id"],
