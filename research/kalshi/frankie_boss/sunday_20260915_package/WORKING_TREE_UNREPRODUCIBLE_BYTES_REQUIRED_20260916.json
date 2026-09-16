@@ -1,0 +1,42 @@
+{
+  "schema": "FRANKIE_SUNDAY_WORKING_TREE_EXTERNAL_BYTES_REQUIREMENTS_V1",
+  "identity_manifest": "WORKING_TREE_IDENTITY_BYTES_20260915.json",
+  "identity_manifest_git_blob": "0f1b2bc91aef88dbe0328411816cfffefc32705d",
+  "historical_head": "050c5056c3657a954d6a3ee17f3a216999930768",
+  "bytes_embedded": false,
+  "external_byte_exact_source_required": true,
+  "reconstruction_from_git_forbidden": true,
+  "reason": "These tracked files have on-disk bytes that match neither an all-LF nor an all-CRLF checkout. Git stores the normalized blobs, so hashes and line-ending counts cannot reconstruct the historical bytes. A lawful historical restore must copy these bytes from a surviving or captured Sunday working tree and verify SHA-256 before and after the copy.",
+  "files": [
+    {
+      "path": "research/kalshi/frankie_boss/c15_teacher.py",
+      "disk_sha256": "40742bbdd0cf60c36aadf40cec3e81a22ed6c356f760279e77ce01b53a824f89",
+      "identity_effect": "control teacher_binding"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/c15_teacher_r3.py",
+      "disk_sha256": "55b9487c47181ec2ac6de6f5ccb8012397a8bd906abc37158db2bc1d9a9e90e9",
+      "identity_effect": "R3 teacher_binding"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/sunday_native_runtime.py",
+      "disk_sha256": "40ace66b0db5608b17ce7b645aa84f588c62f95f31477ea7b1271f054549ff4c",
+      "identity_effect": "cycles 1-18 prefix-seed runtime_code_sha256"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/feedback_cycle.py",
+      "disk_sha256": "ee1d45b6d4f02bb14b4766ae672858f51443a4433c0edc58e414283760cd24b5",
+      "identity_effect": "historical host code hash"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/operations/package_final_committed.py",
+      "disk_sha256": "7cf53afa59f46cbb66934c105efcbd1eba608f24d0f354d5c09b26680e4ffe91",
+      "identity_effect": "working-tree identity only; no Sunday science effect identified"
+    },
+    {
+      "path": "research/kalshi/frankie_boss/operations/seal_final_prelaunch_candidate.py",
+      "disk_sha256": "d6c9fd9e1fbc3709a0a8f2a2e9488264daad32737560fa2de2e82b1d29aa2785",
+      "identity_effect": "working-tree identity only; no Sunday science effect identified"
+    }
+  ]
+}
