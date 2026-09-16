@@ -221,6 +221,9 @@ class CompactReader:
     def entries(self):
         yield from verified_rows(self.rows(), self.count, self.head_hash)
 
+    def append(self, *args, **kwargs):
+        raise PermissionError('compact reader is read-only; the container is sealed')
+
     def stored_tail(self):
         """(count, head) from the seal, O(1); the compact analogue of the raw journal's stored tail."""
         rows = self.db.execute('SELECT format,count,head FROM seal').fetchall()

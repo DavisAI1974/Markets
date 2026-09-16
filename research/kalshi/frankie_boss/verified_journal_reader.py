@@ -156,6 +156,21 @@ class VerifiedJournalReader:
             "SELECT ordinal, digest FROM entries ORDER BY ordinal DESC LIMIT 1").fetchone()
         return (row[0] + 1, row[1]) if row else (0, GENESIS_HASH)
 
+    def stored_tail(self):
+        """(count, head) as stored on disk right now, through a FRESH read-only connection.
+
+        The reader's own connection may sit inside a read snapshot; a fresh connection sees a
+        second handle's append. This is the reader-side contract the prepared-context cache calls
+        (every reader class provides it) instead of running SQL against the file itself.
+        """
+        connection = sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True)
+        try:
+            row = connection.execute(
+                "SELECT ordinal, digest FROM entries ORDER BY ordinal DESC LIMIT 1").fetchone()
+        finally:
+            connection.close()
+        return (row[0] + 1, row[1]) if row else (0, GENESIS_HASH)
+
     def verify(self, *, count, head_hash):
         for _ in self.entries():
             pass

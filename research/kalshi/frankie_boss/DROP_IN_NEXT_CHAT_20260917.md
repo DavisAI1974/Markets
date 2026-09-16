@@ -28,6 +28,22 @@ runtime/token review), then `SPEC_PREPARED_SOURCE_ONCE_20260916.md`.
 - Block Oct 4-6 sources staged: `frankie/block_20211004_20211006/sources/` on S3, manifest
   `blocks/BLOCK_20211004_20211006_SOURCE_MANIFEST.json`. NOTHING ingested, scheduled or prefixed.
 
+## First business next chat
+
+1. Start the host, run a DRY `prime_cache` on the retained cycle-1 compact prefix through the
+   compact-source host (no training step), stop the host. This is the on-host proof of the cycle-1
+   fix (review §7); everything else about that fix is measured and green on the workstation.
+2. The architecture reviewer (Claude Desktop) has the review document; its questions are in §0/§7
+   (block-level re-pin vs full re-drain), §1.1 (pinned witness vs runtime scan) and §3 (packet
+   recipes). Land nothing from §8's after-Sunday list before the Sunday run.
+3. Branch hygiene: the dual-compute branches must rebase onto this branch's reader fix (§7).
+4. `.github/workflows/boss_frankie_tests.yml` is written and UNCOMMITTED on the workstation,
+   pending Greg settling the flow (`SPEC_UNATTENDED_DAILY_PIPELINE_20260916.md`) and the result of
+   a full local suite run, which was not completed this session.
+5. Block Oct 4-6: sources staged with seam and halt checks clean (manifest hash `75c7134d…`);
+   the ingestion path must be built per review §2 before any ingestion; session identity (§2.7)
+   is a decision for Greg.
+
 ## Greg's standing orders from 2026-09-16
 
 1. One more Sunday run by itself first. The 19-cycle run stays behind his explicit go; when it

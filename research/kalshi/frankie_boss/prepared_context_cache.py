@@ -51,17 +51,28 @@ def _sha256(value, name):
 
 
 def _stored_tail(journal):
-    """The stored tail, not the handle's cached attributes: a second handle's append is visible."""
-    if hasattr(journal, 'stored_tail'):
-        # A compact prefix (CompactReader / FrankieCompactReader) has no `entries` table; its
-        # stored tail is the seal. Cycle 1 of the Sunday run is the first compact prefix.
-        return journal.stored_tail()
-    connection = sqlite3.connect(Path(journal.path).resolve().as_uri() + '?mode=ro', uri=True)
-    try:
-        row = connection.execute('SELECT ordinal, digest FROM entries ORDER BY ordinal DESC LIMIT 1').fetchone()
-    finally:
-        connection.close()
-    return (row[0] + 1, row[1]) if row else (0, evidence_hash(dict(schema=JOURNAL_SCHEMA)))
+    """The stored tail as the READER reports it, not SQL run by the cache against the file.
+
+    Every reader class provides stored_tail(): VerifiedJournalReader reads the `entries` tail
+    through a fresh read-only connection (so a second handle's append is visible); CompactReader
+    and FrankieCompactReader read the seal, O(1), no block decoded. The cache used to run
+    `SELECT ... FROM entries` itself, which is why a compact prefix (no `entries` table) failed
+    here on the first compact cycle and nothing had told anyone.
+    """
+    stored_tail = getattr(journal, 'stored_tail', None)
+    if stored_tail is not None:
+        return stored_tail()
+    if type(journal).__name__ == 'EvidenceJournal':
+        # The writer class lives in c15_journal.py, which is in the native model identity; its
+        # stored_tail() method lands with the next declared identity. Until then this one named
+        # class keeps the original tail read (fresh read-only connection, `entries` tail).
+        connection = sqlite3.connect(Path(journal.path).resolve().as_uri() + '?mode=ro', uri=True)
+        try:
+            row = connection.execute('SELECT ordinal, digest FROM entries ORDER BY ordinal DESC LIMIT 1').fetchone()
+        finally:
+            connection.close()
+        return (row[0] + 1, row[1]) if row else (0, evidence_hash(dict(schema=JOURNAL_SCHEMA)))
+    raise TypeError(f'{type(journal).__name__} provides no stored_tail(); every reader class must')
 
 
 class PreparedContextCache:
