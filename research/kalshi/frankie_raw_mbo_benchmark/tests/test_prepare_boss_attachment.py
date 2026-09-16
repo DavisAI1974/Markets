@@ -108,3 +108,85 @@ def test_preparation_cannot_write_inside_export(tmp_path, monkeypatch):
     with pytest.raises(boss.AttachmentError, match='must not mutate'):
         prep.prepare(**kwargs)
     assert not kwargs['output_directory'].exists()
+
+
+# --- the output-bundle gate (Greg, 2026-09-16: enforce it after the run, never trust the cited hash) ---
+
+def _gated_inputs(tmp_path, monkeypatch):
+    from research.kalshi.frankie_raw_mbo_benchmark.tests.outputs_bundle_fixture import build_bundle, write_bundle
+    from research.kalshi.frankie_raw_mbo_benchmark.tests.test_native_staging import delivered_artifact
+    kwargs, pins = inputs(tmp_path, monkeypatch)
+    delivery = json.loads(kwargs['delivery_receipt'].read_bytes())
+    knowledge = sha(b'knowledge-receipt')
+    outputs_dir = tmp_path / 'principal_outputs'
+    receipt = write_bundle(build_bundle(delivery_receipt_sha256=delivery['receipt_sha256'], knowledge_receipt_sha256=knowledge, run_id=pins['agent']['run_id']), outputs_dir)
+    artifact = delivered_artifact(run_id=pins['agent']['run_id'], delivery_receipt_sha256=delivery['receipt_sha256'],
+                                  outputs_receipt_sha256=receipt['receipt_sha256'], knowledge_receipt_sha256=knowledge)
+    artifact_path = tmp_path / 'frankie_principal_findings.json'
+    artifact_path.write_bytes(encoded(artifact))
+    return kwargs, artifact_path, outputs_dir, artifact
+
+
+def test_the_gate_validates_the_bundle_the_artifact_cites_and_records_it(tmp_path, monkeypatch):
+    kwargs, artifact_path, outputs_dir, artifact = _gated_inputs(tmp_path, monkeypatch)
+    receipt = prep.prepare(**kwargs, principal_artifact=artifact_path, outputs_dir=outputs_dir)
+    gate = receipt['output_bundle_gate']
+    assert gate['status'] == prep.OUTPUT_BUNDLE_GATE_VALIDATED
+    assert gate['outputs_receipt_sha256'] == artifact['outputs_receipt_sha256']
+    assert 'what_he_learned' in gate['required_ledger_ids'] and 'in_his_own_words' in gate['required_ledger_ids']
+    assert set(gate['ledgers']) == set(gate['required_ledger_ids'])
+    assert gate['principal_artifact']['sha256'] == sha(artifact_path.read_bytes())
+
+
+def test_without_the_bundle_the_gate_is_recorded_as_not_presented_never_passed(tmp_path, monkeypatch):
+    kwargs, _ = inputs(tmp_path, monkeypatch)
+    receipt = prep.prepare(**kwargs)
+    assert receipt['output_bundle_gate'] == {'status': prep.OUTPUT_BUNDLE_GATE_NOT_PRESENTED}
+
+
+def test_one_half_of_the_gate_is_refused(tmp_path, monkeypatch):
+    kwargs, artifact_path, outputs_dir, _ = _gated_inputs(tmp_path, monkeypatch)
+    with pytest.raises(ValueError, match='both'):
+        prep.prepare(**kwargs, principal_artifact=artifact_path)
+    with pytest.raises(ValueError, match='both'):
+        prep.prepare(**kwargs, outputs_dir=outputs_dir)
+    assert not kwargs['output_directory'].exists()
+
+
+@pytest.mark.parametrize('field,value,needle', [
+    ('outputs_receipt_sha256', 'f' * 64, 'different set of outputs'),
+    ('outputs_receipt_sha256', None, 'no outputs_receipt_sha256'),
+    ('run_id', 'another-run', 'not the pinned'),
+    ('arm', 'A_CLEAN', 'not the pinned'),
+    ('delivery_receipt_sha256', 'e' * 64, 'delivery receipt other than'),
+])
+def test_a_cited_hash_or_identity_the_bundle_does_not_carry_is_refused(tmp_path, monkeypatch, field, value, needle):
+    kwargs, artifact_path, outputs_dir, artifact = _gated_inputs(tmp_path, monkeypatch)
+    artifact[field] = value
+    artifact_path.write_bytes(encoded(artifact))
+    with pytest.raises(ValueError, match=needle):
+        prep.prepare(**kwargs, principal_artifact=artifact_path, outputs_dir=outputs_dir)
+    assert not kwargs['output_directory'].exists()
+
+
+def test_a_tampered_ledger_is_refused_by_the_validator(tmp_path, monkeypatch):
+    kwargs, artifact_path, outputs_dir, _ = _gated_inputs(tmp_path, monkeypatch)
+    target = outputs_dir / 'ledgers' / 'in_his_own_words.json'
+    body = json.loads(target.read_bytes())
+    body['entries'][0]['body']['statement'] = 'edited after filing'
+    target.write_bytes(encoded(body))
+    with pytest.raises(ValueError, match='output-bundle gate refused'):
+        prep.prepare(**kwargs, principal_artifact=artifact_path, outputs_dir=outputs_dir)
+
+
+def test_the_command_line_requires_the_gate_or_an_explicit_waiver(tmp_path, monkeypatch, capsys):
+    kwargs, artifact_path, outputs_dir, _ = _gated_inputs(tmp_path, monkeypatch)
+    argv = []
+    for name, value in kwargs.items():
+        argv += ['--' + name.replace('_', '-'), str(value)]
+    with pytest.raises(SystemExit) as refused:
+        prep.main(argv)
+    assert refused.value.code == 2
+    assert 'without-output-bundle' in capsys.readouterr().err
+    assert prep.main(argv + ['--principal-artifact', str(artifact_path), '--outputs-dir', str(outputs_dir)]) == 0
+    assert 'output bundle gate: VALIDATED' in capsys.readouterr().out
