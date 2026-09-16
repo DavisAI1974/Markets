@@ -101,5 +101,28 @@ sealed set is derived, never typed: 9 sealed layer ids, 4 section-K paths, 10 St
    248,922 bytes, sha `6f9dbb37…`, is exactly what the session request attached), so the feed was
    right; the hazard is any future render from the working branch. Not touched here.
 
+6. **Frankie's own run (33746436209) filed none of its 30 required output ledgers, and its
+   findings are NOT in his knowledge base.** Greg: "he would have knowledge of the 18 calcs if
+   this were the real world." Measured in the receiver's `principal_runs/frankie-a-memory-rt-33746436209-1/`:
+   `principal_outputs/` is empty (the validator: "no RECEIPT.json ...; nothing was written here"),
+   so 0 of the 30 required ledgers (10 registry outputs + 18 contract sections 4.0, 4.0b,
+   4.1-4.16 + raw-MBO classification + knowledge verification) exist, although the spawn prompt
+   said the output-bundle gate refuses the spawn if any section ledger is absent, and his artifact
+   cites an `outputs_receipt_sha256` (`ac42944a…`) that no file on disk carries. What he did file:
+   `frankie_principal_findings.json` (18 finding entries under combined labels), a 107 KB findings
+   report, and five scripts of his own (`frankie_own_pass/finalize/findings/artifact/raw_traversal`),
+   his `own_computation` note saying every section was computed by his pass. Section coverage of
+   the findings: 13 of 18 (4.2, 4.5, 4.12, 4.14 and 4.15 have no finding). The report has no
+   section on his opinion of the build, of the data, or suggestions; the spawn prompt asked only
+   for zero-value elimination advice on raw-data layers. The A-memory seed
+   (`A_MEMORY_SEED_20260902.json`, 33 entries) is built from the earlier run 33605852433 and the
+   wrong-data run; it carries **zero entries from 33746436209**, so the Sunday-15 bundle (which
+   embeds the seed) taught him nothing from his own last Sunday. The tools to close both halves
+   exist and are unwired: `build_a_memory_seed.py` registers committed past-run outputs into the
+   seed and `refresh_native_frankie_knowledge --write` re-hashes the manifest; the output-bundle
+   gate (`native_principal_outputs`) validates the ledgers. Registering the run's outputs changes
+   the model-visible knowledge, a new knowledge identity in the frozen receiver: Greg's go, then
+   wiring, not building.
+
 Nothing in the ingestion path was found dropped, filtered or rerouted. What the crosswalk
 measures is exactly what the registry declares Frankie must be fed, and for cycle 0 it was.
