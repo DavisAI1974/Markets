@@ -229,7 +229,32 @@ def main():
             payload=dict(payload);stage=payload.pop('stage');last_learner_event['value']=stage
             if stage.endswith('_complete'):last_completed_substage['value']=stage
             log.write('learner.'+stage,**payload)
-        learner=learning.NativeForecastLearner(host.context,host.decoder,host.optimizer,config,event=learner_event)
+        import inspect
+        if 'event' in inspect.signature(learning.NativeForecastLearner.__init__).parameters:
+            learner=learning.NativeForecastLearner(host.context,host.decoder,host.optimizer,config,event=learner_event)
+        else:
+            # The lawful 050c5056 learner predates the diagnostic callback. Its retained feedback
+            # is bound to that tree's exact on-disk bytes, so to measure the step against it the
+            # substages come from in-memory wrappers around the same calls instead. Pure
+            # observation: arguments and results pass through untouched.
+            import functools
+            from research.kalshi.frankie_boss import b1_reasoner, context_session
+            def observed(owner,name,stage):
+                original=getattr(owner,name)
+                @functools.wraps(original)
+                def wrapped(*a,**k):
+                    learner_event(dict(stage=stage+'_start',request_id=request_id,elapsed_seconds=time.perf_counter()-log.started))
+                    try: result=original(*a,**k)
+                    except BaseException as error:
+                        learner_event(dict(stage='step_failed',request_id=request_id,elapsed_seconds=time.perf_counter()-log.started,error_type=type(error).__name__)); raise
+                    learner_event(dict(stage=stage+'_complete',request_id=request_id,elapsed_seconds=time.perf_counter()-log.started)); return result
+                setattr(owner,name,wrapped)
+            observed(context_session.ContextSessionRunner,'_prepare','prepare')
+            observed(b1_reasoner.B1Reasoner,'forward_decision','forward')
+            observed(torch.Tensor,'backward','backward')
+            observed(torch.optim.Optimizer,'step','optimizer')
+            log.write('learner_without_event_callback',substages='in-memory wrappers')
+            learner=learning.NativeForecastLearner(host.context,host.decoder,host.optimizer,config)
 
         log.write('learner_step_start',feedback_hash=feedback.digest);started=time.perf_counter()
         result=learner.step(request_id=request_id,as_of=binding['as_of'],through_cursor=binding['through_cursor'],

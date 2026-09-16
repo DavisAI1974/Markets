@@ -153,6 +153,87 @@ letter, `core.autocrlf=true`, venv at its path with 3.13.7 / 2.9.1+cpu / 2.3.5 /
 `--fresh-checkpoint` at 8 and 16 threads; (5) keep the instance running for all 19 cycles
 (strict identity retained, per Greg); (6) Greg authorises.
 
+### 1.6 Third pass (2026-09-16): ChatGPT's direct harness checked, run, and what it exposed
+
+ChatGPT's `chatgpt/frankie-lawful-recovery-direct-benchmark-20260916` (`b9c5d4d8`) ports my
+three second-pass files byte-identically, adds `operations/benchmark_native_learner_direct.py`
+(option 2 as specified), the `completion_ref_contains_commit` ancestry guard, and five focused
+tests. Reviewed: the harness uses the host's own `source()`, `prefix()`, `_training()`,
+`bind_cycle` and `learning_config`; every signature it relies on exists; feedback is rebuilt
+typed and rejected unless its digest matches the saved `feedback_hash`; the clone is never
+written (state goes to a sibling work directory); no critic, principal, coordinator or
+`apply_completed`. The ancestry guard resolves the ref on origin, fetches without moving a
+branch and requires `merge-base --is-ancestor`; correct. All five new tests pass here, plus
+completion (3), diagnostics (4) and migration (5). The only science-file diff from `050c5056`
+is the already-reviewed learner telemetry.
+
+**Run 1, this checkout (`b9c5d4d8`), 4 threads, fresh checkpoint:** identity stack cleared in
+35 s (source verified, binding rebuilt from the schedule, prefix-00 verified, fresh checkpoint
+at 1.05 GB peak, feedback rebuilt and hash-verified). `_prepare` took 480 s. The step then
+refused: `training source/input differs from completed forecast`. Diagnosis: native weights,
+optimizer, normaliser and config identical to the failed run; only `teacher_binding` differs.
+
+**Why, and it is a restoration finding, not a harness bug:** `JournalTeacherR3.binding` and
+`JournalTeacher.binding` hash the ON-DISK BYTES of `c15_teacher_r3.py`, `c15_normalizer_r3.py`,
+`c15_teacher.py`, `c15_normalizer.py`, `c15_dstate.py`, `c15_observer.py`, `c15_builder.py`. The
+checkout that ran the failed cycle has MIXED line endings in six files (an in-place edit wrote
+LF lines into CRLF files; git normalises on commit, so the blobs are identical and `git status`
+is clean). Same git blob, same CRLF count, different bytes:
+
+| file | CRLF lines | LF lines | identity it feeds |
+|---|---|---|---|
+| c15_teacher_r3.py | 278 | 99 | teacher_binding (R3) |
+| c15_teacher.py | 221 | 19 | teacher_binding (control) |
+| sunday_native_runtime.py | 173 | 7 | prefix seeds' `runtime_code_sha256`, cycles 1-18 |
+| feedback_cycle.py | 319 | 7 | host code hash only |
+| operations/package_final_committed.py | 2 | 46 | none |
+| operations/seal_final_prelaunch_candidate.py | 3 | 147 | none |
+
+No git checkout, CRLF or LF, can reproduce those bytes (161 files checked, 6 unreproducible;
+`sunday_20260915_package/WORKING_TREE_IDENTITY_BYTES_20260915.json` pins all 161 on-disk
+hashes). Consequences: (a) every retained cycle-0 context receipt, the initialization identity,
+the feedback's `input_hash` and the 18 sealed prefix seeds are bound to that working tree, not
+to commit `050c5056`; (b) the path-preserving Windows restoration must copy those working-tree
+bytes (the `/host_runtime/repository` directory input I excluded from the package as "on the
+remote" is NOT fully on the remote for identity purposes) or accept that retained witnesses
+cannot be re-verified and seeds must be regenerated; (c) a NEW run on a clean checkout is
+fine, but it is a new teacher identity as well as a new numeric identity, and must be declared
+as such. The first-pass condition "`core.autocrlf=true`" was necessary but not sufficient.
+
+**Run 2, the lawful mixed-ending tree itself (`050c5056` checkout), 4 threads, fresh
+checkpoint:** the harness was extended so the pre-telemetry learner (no `event` parameter)
+gets its substages from in-memory wrappers instead. Feedback verified, `_prepare` 531 s, and
+the input hash MATCHED, which closes the diagnosis. The step then reproduced the Sunday
+failure exactly, and this time the message is retained:
+
+| substage | wall (cumulative) | private bytes | working set |
+|---|---|---|---|
+| identity stack, fresh checkpoint | 35 s | 0.68 GB | 0.52 GB |
+| `_prepare` (two prefix drains, encoding, teacher attach) | 566 s (+531 s) | 0.74 GB | 0.59 GB |
+| causal scan (`journal_prefix` future-event check) | 728 s (+162 s) | 0.74 GB | 0.59 GB |
+| `forward_decision` | failed at 758 s (+30 s) | **10.10 GB** (pagefile peak 10.13 GB) | 4.13 GB (peak 6.21 GB) |
+
+`RuntimeError: [enforce fail at alloc_cpu.cpp:121] DefaultCPUAllocator: not enough memory`
+inside the forward, 30 s in, on a 16 GB host with about 5 GB free. The Sunday run died in
+`boss_training` after 761 s with a RuntimeError it did not retain; this is that error. Three
+conclusions the gate needed:
+
+1. **The native step is memory-bound, not thread-bound.** The forward alone commits over
+   10 GB for 3,262 rows in float64 and was not finished; backward roughly doubles the live
+   activations, and later cycles run 4,096 rows. Expect 25-30 GB for a full step at 4,096 rows.
+   Benchmark on 128 GB (`r7i.4xlarge`) so memory cannot be the variable; 64 GB
+   (`m7i.4xlarge`) is the smallest class worth trying afterwards; 32 GB (`c7i.4xlarge`) is out.
+   More threads would not have saved Sunday.
+2. **Per-cycle preparation is 693 s of single-threaded Python on this CPU** (531 s prepare +
+   162 s causal scan) before any tensor work. Over 19 cycles that is about 3.7 hours of pure
+   re-preparation, which is the measured cost behind Part 2's first recommendation (the
+   preparation/model receipt split and sealed preparation).
+3. **The harness works end to end** on the tree that produced the evidence and is the tool
+   for the 8-vs-16 measurement on the restored host: `--repository <that tree>`, the failed
+   run's own configuration with `run_directory` pointed at a scratch clone, `--threads N`. It
+   needs the mixed-ending working tree (item 1.6 above), not a fresh checkout, to reuse the
+   retained feedback.
+
 ## Part 2 - token condensation and cycle reuse, grounded in what the repo already has
 
 Greg's instruction was to start from the condenser stacks already in Frankie. They are:
