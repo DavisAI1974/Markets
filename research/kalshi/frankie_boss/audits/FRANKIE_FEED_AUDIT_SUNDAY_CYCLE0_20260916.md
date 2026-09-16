@@ -72,8 +72,17 @@ sealed set is derived, never typed: 9 sealed layer ids, 4 section-K paths, 10 St
    hashes and its proof layer binds the same file, so the crosswalk marks it
    DEGENERATE_PROOF_SAME_AS_SUBJECT. It needs an independently produced receipt over the seed.
    Receiver-side; predates today.
-3. Cycle 0's own response has not been run through the outputs validator, so whether Frankie
-   filed the ten append-only ledgers in that response is not yet measured. Next.
+3. **The ten append-only output layers are not produced on the BOSS path, by construction.**
+   Cycle 0's retained response (14,280 bytes) carries `feedback` (29 timing labels through source
+   cursor 6053), one `lessons` entry (the run analysis), the 18 preserved sections cited by hash,
+   and the session identity; no output ledger. The BOSS session request instructs Frankie to
+   "reuse the preserved Frankie-authored 18-section evidence with its original authorship; do not
+   rerun completed calculations", while the registry's `append_only_outputs` group (and D81) has
+   him compute every contract section himself as the stream advances and file a ledger per
+   section. The two are different output surfaces: the receiver's `OutputBundle` belongs to the
+   A-arm real-time path, and the BOSS feedback path never asks for it. So `outputs_pending = 10`
+   on every BOSS cycle is a policy fact, not a wiring fault. Which surface the block run should
+   fill is Greg's ruling; it is not a fix.
 4. The classroom's audit directory and principal artifacts have no entry in `AUTHORITY_MAP.json`.
    Add them with a declared writer before the post-integration audit.
 
