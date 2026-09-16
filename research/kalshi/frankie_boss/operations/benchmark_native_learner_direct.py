@@ -62,13 +62,25 @@ class Log:
     def __init__(self, path):
         self.path = Path(path); self.path.parent.mkdir(parents=True, exist_ok=True)
         self.started = time.perf_counter(); self.lock = threading.Lock()
+        self.max_rss = self.max_private = self.max_peak_rss = self.max_peak_pagefile = 0
 
     def write(self, stage, **values):
-        record = dict(stage=stage, t=round(time.perf_counter()-self.started, 3),
-                      unix=time.time(), **_rss(), **values)
-        with self.lock, self.path.open('a', encoding='utf-8') as stream:
-            stream.write(json.dumps(record, sort_keys=True, default=str)+'\n')
+        memory=_rss()
+        with self.lock:
+            self.max_rss=max(self.max_rss,int(memory.get('rss') or 0))
+            self.max_private=max(self.max_private,int(memory.get('private') or 0))
+            self.max_peak_rss=max(self.max_peak_rss,int(memory.get('peak_rss') or 0))
+            self.max_peak_pagefile=max(self.max_peak_pagefile,int(memory.get('peak_pagefile') or 0))
+            record = dict(stage=stage, t=round(time.perf_counter()-self.started, 3),
+                          unix=time.time(), **memory, **values)
+            with self.path.open('a', encoding='utf-8') as stream:
+                stream.write(json.dumps(record, sort_keys=True, default=str)+'\n')
         print('BENCH '+json.dumps(record, sort_keys=True, default=str), flush=True)
+
+    def peaks(self):
+        with self.lock:
+            return dict(observed_max_rss=self.max_rss,observed_max_private=self.max_private,
+                        process_peak_rss=self.max_peak_rss,process_peak_pagefile=self.max_peak_pagefile)
 
 
 def _load_stage(db_path, request_id, stage, *, unpack, evidence_hash):
@@ -161,6 +173,7 @@ def main():
         torch=torch.__version__,python=sys.version.split()[0],cpus=os.cpu_count())
 
     host=actual.ActualHost(bench_configuration); stop=threading.Event()
+    last_learner_event={'value':None};last_completed_substage={'value':None}
     def sampler():
         while not stop.wait(args.sample_seconds): log.write('sample')
     threading.Thread(target=sampler,daemon=True).start()
@@ -213,28 +226,35 @@ def main():
             timing_policy_hash=binding['timing_policy_hash'],query_policy_hash=binding['query_policy_hash'],
             split_hash=binding['split_hash'])
         def learner_event(payload):
-            payload=dict(payload); stage=payload.pop('stage'); log.write('learner.'+stage,**payload)
+            payload=dict(payload);stage=payload.pop('stage');last_learner_event['value']=stage
+            if stage.endswith('_complete'):last_completed_substage['value']=stage
+            log.write('learner.'+stage,**payload)
         learner=learning.NativeForecastLearner(host.context,host.decoder,host.optimizer,config,event=learner_event)
 
-        log.write('learner_step_start',feedback_hash=feedback.digest); started=time.perf_counter()
+        log.write('learner_step_start',feedback_hash=feedback.digest);started=time.perf_counter()
         result=learner.step(request_id=request_id,as_of=binding['as_of'],through_cursor=binding['through_cursor'],
             source_hash=binding['source_hash'],input_hash=feedback.input_hash,sessions=binding['sessions'],
             expected_sessions_hash=binding['expected_sessions_hash'],feedback=feedback,
             expected_feedback_hash=feedback.digest,learning_cutoff_ns=binding['learning_cutoff_ns'])
-        elapsed=time.perf_counter()-started; result_hash=c15_journal.evidence_hash(result)
+        elapsed=time.perf_counter()-started;result_hash=c15_journal.evidence_hash(result)
         log.write('learner_step_complete',wall_seconds=elapsed,result_hash=result_hash,
+                  last_learner_event=last_learner_event['value'],last_completed_substage=last_completed_substage['value'],
                   checkpoint_persisted=False,production_state_advanced=False)
         print(json.dumps(dict(schema='FRANKIE_NATIVE_LEARNER_DIRECT_BENCHMARK_V1',request_id=request_id,
             threads=args.threads,interop_threads=args.interop_threads,wall_seconds=elapsed,
-            result_hash=result_hash,feedback_hash=feedback.digest,checkpoint_persisted=False,
-            production_state_advanced=False,**_rss()),sort_keys=True),flush=True)
+            result_hash=result_hash,feedback_hash=feedback.digest,last_learner_event=last_learner_event['value'],
+            last_completed_substage=last_completed_substage['value'],checkpoint_persisted=False,
+            production_state_advanced=False,**log.peaks(),**_rss()),sort_keys=True),flush=True)
         return 0
     except BaseException as error:
-        log.write('driver_failed',error_type=type(error).__name__,error_message=str(error)[:500]); raise
+        log.write('driver_failed',error_type=type(error).__name__,error_message=str(error)[:500],
+                  last_learner_event=last_learner_event['value'],last_completed_substage=last_completed_substage['value'],
+                  **log.peaks())
+        raise
     finally:
         stop.set()
         try: host.close()
-        finally: log.write('driver_end')
+        finally: log.write('driver_end',**log.peaks())
 
 
 if __name__=='__main__': raise SystemExit(main())
