@@ -1,0 +1,1 @@
+Freeze this staging branch here. Further work must start from clean commit 7981d0936a1c929d0b965ad9908fdcdcadd4f0cd on a new branch.
