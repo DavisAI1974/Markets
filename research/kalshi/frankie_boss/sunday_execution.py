@@ -35,6 +35,12 @@ def _plain(value):
     return value
 
 
+def _adapter_identity(adapter_class):
+    if type(adapter_class) is not type:
+        raise ValueError('explicit Dipole classroom principal adapter class required')
+    return f'{adapter_class.__module__}:{adapter_class.__qualname__}'
+
+
 def _save(path,body):
     raw=canonical_bytes(pack(body))
     if Path(path).exists():
@@ -142,8 +148,9 @@ class SundayRuntime:
     source_journal_path: str
     source_journal_checkpoint: dict
     # Construction stays compatible with pre-classroom callers (harnesses, tests); execution
-    # does not: run_cycle refuses a runtime whose package is not bound to its request.
+    # does not: run_cycle refuses a runtime whose package/adapter are not bound to its request.
     classroom_package: dict | None = None
+    principal_adapter_class: type | None = None
     context_encoding: str = 'compact_v1'
     context_encoding_options: dict | None = None
     controller_event: Callable | None = None
@@ -167,6 +174,7 @@ class _LazyPrincipal:
                 boss_journal_path=self.runtime.source_journal_path,
                 source_journal_checkpoint=self.runtime.source_journal_checkpoint,
                 classroom_package=self.runtime.classroom_package,
+                adapter_class=self.runtime.principal_adapter_class,
                 directory=self.directory/'principal',**self.configuration)
         return self.adapter
 
@@ -229,6 +237,7 @@ class SundayExecution:
                 classroom_binding_hash=runtime.classroom_package['binding'].get('classroom_binding_hash')
                 if type(classroom_binding_hash) is not str or len(classroom_binding_hash)!=64:
                     raise ValueError('runtime Dipole classroom binding hash required')
+                principal_adapter_identity=_adapter_identity(runtime.principal_adapter_class)
                 if runtime.checkpoint.checkpoint_hash!=runtime.expected_checkpoint_hash:
                     raise ValueError('runtime training state differs from trusted checkpoint')
                 controller_journal=book=None
@@ -260,6 +269,7 @@ class SundayExecution:
                             expected_critic_config_hash=runtime.expected_critic_config_hash,
                             expected_critic_identity_hash=runtime.expected_critic_identity_hash,
                             classroom_binding_hash=classroom_binding_hash,
+                            principal_adapter_identity=principal_adapter_identity,
                             context_encoding=runtime.context_encoding,input_hash=runtime.input_hash,
                             **({'context_encoding_options':_plain(runtime.context_encoding_options)} if runtime.context_encoding_options is not None else {}),
                             source_journal_checkpoint=runtime.source_journal_checkpoint,
@@ -272,7 +282,8 @@ class SundayExecution:
                                 plan['source_journal_path']!=str(Path(runtime.source_journal_path).resolve()) or
                                 plan['input_hash']!=runtime.input_hash or plan['context_encoding']!=runtime.context_encoding or
                                 plan.get('context_encoding_options')!=_plain(runtime.context_encoding_options) or
-                                plan.get('classroom_binding_hash')!=classroom_binding_hash):
+                                plan.get('classroom_binding_hash')!=classroom_binding_hash or
+                                plan.get('principal_adapter_identity')!=principal_adapter_identity):
                             raise ValueError('retained source/admission/classroom identity differs')
                         if plan['controller_kwargs']['sessions']!=_plain(binding['sessions']):
                             raise ValueError('retained request plan has different authored sessions')
