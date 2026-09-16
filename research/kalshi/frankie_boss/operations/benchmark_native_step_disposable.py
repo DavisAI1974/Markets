@@ -83,18 +83,37 @@ class Log:
 
 def _wrap(log, owner, name, stage):
     original = getattr(owner, name)
+    import inspect
 
-    @functools.wraps(original)
-    def wrapped(*args, **kwargs):
-        log.write(stage + '_start')
-        try:
-            result = original(*args, **kwargs)
-        except BaseException as error:
-            log.write(stage + '_failed', error_type=type(error).__name__, error_message=str(error)[:500])
-            raise
-        log.write(stage + '_complete')
-        return result
+    if inspect.iscoroutinefunction(original):
+        @functools.wraps(original)
+        async def wrapped(*args, **kwargs):
+            log.write(stage + '_start')
+            try:
+                result = await original(*args, **kwargs)
+            except BaseException as error:
+                log.write(stage + '_failed', error_type=type(error).__name__, error_message=str(error)[:500])
+                raise
+            log.write(stage + '_complete')
+            return result
+    else:
+        @functools.wraps(original)
+        def wrapped(*args, **kwargs):
+            log.write(stage + '_start')
+            try:
+                result = original(*args, **kwargs)
+            except BaseException as error:
+                log.write(stage + '_failed', error_type=type(error).__name__, error_message=str(error)[:500])
+                raise
+            log.write(stage + '_complete')
+            return result
     setattr(owner, name, wrapped)
+
+
+def _wrap_class(log, owner, prefix, skip=()):
+    for name, member in list(vars(owner).items()):
+        if callable(member) and not name.startswith('__') and name not in skip:
+            _wrap(log, owner, name, prefix + name)
 
 
 def main():
@@ -107,6 +126,9 @@ def main():
     group.add_argument('--keep-checkpoint', action='store_true')
     group.add_argument('--fresh-checkpoint', action='store_true')
     parser.add_argument('--sample-seconds', type=float, default=2.0)
+    parser.add_argument('--reviewed-repository', default=None,
+                        help='checkout of the reviewed recovery branch whose Pod identity and sidecar-tolerant '
+                             'lineage verifier are applied IN MEMORY to the scratch modules (benchmark only)')
     args = parser.parse_args()
 
     repository = Path(args.repository).resolve()
@@ -147,15 +169,68 @@ def main():
     from research.kalshi.frankie_boss.operations import run_actual_sunday as actual
     # The host never prints exception text; for a scratch benchmark we want the innermost
     # failing host method and its message, so wrap every method the host class defines.
-    for name, member in list(vars(actual.ActualHost).items()):
-        if callable(member) and not name.startswith('__'):
-            _wrap(log, actual.ActualHost, name, 'host.' + name)
+    _wrap_class(log, actual.ActualHost, 'host.', skip=('progress', 'save', 'load', 'phase', 'recovery_progress', 'encoding_options'))
+    from research.kalshi.frankie_boss import sunday_execution, feedback_cycle, frankie_principal_adapter
+    _wrap_class(log, sunday_execution.SundayExecution, 'execution.')
+    _wrap_class(log, feedback_cycle.CycleCoordinator, 'coordinator.', skip=('_save', '_load', '_observe'))
+    _wrap_class(log, frankie_principal_adapter.FrankiePrincipalAdapter, 'principal.')
+    # Scratch diagnostics only: the principal attestation compares an opaque config hash, so log
+    # the material it hashes (paths, commits, file hashes; never prompt text or credentials) and the
+    # retained hash it is compared against, to pin which field a cloned run directory changes.
+    principal_class = frankie_principal_adapter.FrankiePrincipalAdapter
+    original_config_hash = principal_class._config_hash
+    original_request = principal_class._request
+
+    def logged_config_hash(self):
+        material = {'receiver_root': str(self.receiver_root), 'receiver_commit': self.receiver_commit,
+                    'python': self.python, 'preparation': {k: str(v) for k, v in self.preparation.items()},
+                    'render': {k: str(v) for k, v in self.render.items()},
+                    'protected_files': self.protected_files, 'section_evidence': self.section_evidence,
+                    'feedback_contract_keys': sorted(self.feedback_contract) if isinstance(self.feedback_contract, dict) else None}
+        digest = original_config_hash(self)
+        log.write('principal_config_material', config_hash=digest, material=material)
+        return digest
+
+    def logged_request(self, request_id, attachment):
+        log.write('principal_attachment_config_hash', retained=attachment.get('config_hash'))
+        return original_request(self, request_id, attachment)
+    principal_class._config_hash = logged_config_hash
+    principal_class._request = logged_request
+    if args.reviewed_repository:
+        # BENCHMARK-ONLY, in memory: apply the two reviewed recovery semantics from the reviewed
+        # branch onto the 050c5056 scratch modules without touching that checkout's bytes.
+        # 1. The retained Pod identity of the aa12fd09 port (the scratch lineage still pins the
+        #    retired Pod, so its own service check can never pass against the real readiness dir).
+        # 2. The recovery-only lineage verifier, which differs from the lawful one by exactly the
+        #    sidecar liveness predicate (journal_prefix_snapshot._sidecars). Every other check runs
+        #    unchanged. Nothing is skipped; the same checks run with the reviewed values.
+        import importlib.util
+        import re
+        reviewed = Path(args.reviewed_repository).resolve() / 'research' / 'kalshi' / 'frankie_boss'
+        lifecycle_text = (reviewed / 'granite_retained_lifecycle.py').read_text(encoding='utf-8')
+        pod_id = re.search(r"^POD_ID = '([A-Za-z0-9]+)'", lifecycle_text, re.M).group(1)
+        from research.kalshi.frankie_boss import granite_retained_lifecycle as lifecycle
+        log.write('reviewed_semantics_applied_in_memory', scratch_pod_id=lifecycle.POD_ID, reviewed_pod_id=pod_id)
+        lifecycle.POD_ID = pod_id
+        # Load the reviewed helper as a submodule of the scratch package so its relative import of
+        # journal_prefix_snapshot resolves to the scratch checkout's identical lawful file.
+        spec = importlib.util.spec_from_file_location(
+            'research.kalshi.frankie_boss.source_lineage_resume_reviewed', reviewed / 'source_lineage_resume.py')
+        helper = importlib.util.module_from_spec(spec)
+        helper.__package__ = 'research.kalshi.frankie_boss'
+        spec.loader.exec_module(helper)
+
+        def source_lineage(self, source, ingestion):
+            return helper.verify_closed_source_lineage(self, source, ingestion,
+                                                       verified_json=actual.verified_json, verified=actual.verified)
+        actual.ActualHost.source_lineage = source_lineage
+        _wrap(log, actual.ActualHost, 'source_lineage', 'host.source_lineage_reviewed')
     sys.argv = ['run_actual_sunday', '--configuration', args.configuration]
     try:
         code = actual.main()
     finally:
         stop.set()
-        log.write('driver_end', **_rss())
+        log.write('driver_end')
     log.write('host_exit', code=code)
     return 0
 

@@ -22,7 +22,7 @@ class Journal:
 
 
 def test_completion_requires_exact_startup_and_retains_outcome_before_marker():
-    startup = dict(request_sha256='a'*64, pod_id='jvs75m56w8f73q')
+    startup = dict(request_sha256='a'*64, pod_id='ycf4v6lmave6xw')  # migrated retained Pod, see aa12fd09 port
     digest = hashlib.sha256(canonical(startup)).hexdigest()
     journal = Journal(startup)
     fields = dict(request_sha256='a'*64, startup_sha256=digest,
