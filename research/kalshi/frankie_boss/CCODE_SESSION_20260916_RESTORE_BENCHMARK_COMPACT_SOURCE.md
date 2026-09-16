@@ -87,8 +87,12 @@ Recommendation: 8, the host's physical core count and its default.
 | cycle-1 prefix, compact, 15 workers | 12,108 | 7.7 s | 0.63 ms |
 
 A full 114k-row drain is therefore about 72 s with 15 workers, and each cycle drains its prefix
-about five times (`_prepare` twice, the critic causal scan, the learner causal scan, the checkpoint
-export), which is the hour over 19 cycles. `SPEC_PREPARED_SOURCE_ONCE_20260916.md` takes that to one
+about four times (`_prepare` twice when the cache is primed, the critic causal scan, the learner
+causal scan, the checkpoint export), which is the hour over 19 cycles. Correction from the host
+review: the lawful host primes the prepared-context cache before the critic request and keeps it
+through the learner step, so the 311-334 s `_prepare` inside the step measured by the harness is
+paid in production only on a RESUMED cycle (`run_actual_sunday.py:729-730` primes only when the
+controller stage is absent); the harness never primes. `SPEC_PREPARED_SOURCE_ONCE_20260916.md` takes that to one
 verified-table open plus about 256 tail blocks per cycle; it is a new native identity and is for
 the run after Sunday.
 
