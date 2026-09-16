@@ -16,7 +16,6 @@ import argparse
 import json
 import os
 from pathlib import Path
-import sqlite3
 import sys
 
 from research.kalshi.frankie_boss.native_runtime_policy import apply_native_runtime_policy
@@ -79,40 +78,12 @@ def main():
     # Import only after the numeric runtime policy is fixed. The production host
     # still enforces its exact checked-out boss_commit and all existing receipts.
     from research.kalshi.frankie_boss.operations import run_actual_sunday as actual
-    from research.kalshi.frankie_boss.journal_prefix_snapshot import _sidecars
+    from research.kalshi.frankie_boss.source_lineage_resume import verify_closed_source_lineage
 
     class EC2ActualHost(actual.ActualHost):
         def source_lineage(self, source, ingestion):
-            """Lawful lineage verification with the existing hot-sidecar definition."""
-            lineage=actual.verified_json(self.host['source_lineage'])
-            if (lineage.get('schema')!='FRANKIE_CLOSED_SOURCE_LINEAGE_V1' or
-                Path(lineage['final_source_path']).resolve()!=(source/'source.sqlite').resolve() or not lineage['links']):
-                raise ValueError('explicit closed source lineage required')
-            child=(source/'source.sqlite').resolve();seen=set()
-            for index,link in enumerate(lineage['links']):
-                witness=link['recovery_receipt'];recovery=actual.verified_json(witness);parent=link['closed_parent']
-                path=Path(parent['path']).resolve()
-                if (str(path) in seen or path==child or Path(recovery['recovered_path']).resolve()!=child or
-                    Path(recovery['parent_path']).resolve()!=path or recovery['existing_entries_rewritten']!=0 or
-                    any(parent[k]!=recovery['parent'][k] for k in ('sha256','count','head_hash')) or
-                    (index==0 and witness['sha256']!=ingestion['recovery_receipt_sha256'])):
-                    raise ValueError('closed lineage differs from actual recovery receipts')
-                if _sidecars(path):
-                    raise ValueError('lineage parent must be closed before verification')
-                actual.verified(parent)
-                connection=sqlite3.connect(path.as_uri()+'?mode=ro',uri=True)
-                try:tail=connection.execute('SELECT ordinal,digest FROM entries ORDER BY ordinal DESC LIMIT 1').fetchone()
-                finally:connection.close()
-                if tail is None or (tail[0]+1,tail[1])!=(parent['count'],parent['head_hash']):
-                    raise ValueError('closed lineage parent differs from independently supplied tail')
-                connection=sqlite3.connect(child.as_uri()+'?mode=ro',uri=True)
-                try:anchor=connection.execute('SELECT digest FROM entries WHERE ordinal=?',(recovery['journal_count']-1,)).fetchone()
-                finally:connection.close()
-                if anchor is None or anchor[0]!=recovery['journal_hash']:
-                    raise ValueError('child no longer contains its verified rehydration boundary')
-                self.source_origins[str(path)]=parent['count']//2*2
-                seen.add(str(path));child=path
-            self.save('verified-source-lineage.c15.json',dict(witness=self.host['source_lineage'],lineage=lineage))
+            return verify_closed_source_lineage(self, source, ingestion,
+                verified_json=actual.verified_json, verified=actual.verified)
 
         def runtime(self, binding, cycle_directory, retained_plan):
             runtime = super().runtime(binding, cycle_directory, retained_plan)
