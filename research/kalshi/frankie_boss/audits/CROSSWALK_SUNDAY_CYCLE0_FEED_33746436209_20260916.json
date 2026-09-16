@@ -1,0 +1,2198 @@
+{
+  "arm": "A_MEMORY",
+  "crosswalk_sha256": "3c1db7e93c2dc2698bf2037a96dad264c6c52a9e6fb2e7aa66b03867022dedef",
+  "delivery_receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542",
+  "knowledge_receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4",
+  "layers": [
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md",
+        "detail": "knowledge receipt: DELIVERED, 1 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "binding_common_controls",
+      "layer_id": "controlling_rt_mission",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_a_arm_launch.py",
+        "kind": "FILE",
+        "line": 76,
+        "module": "native_a_arm_launch",
+        "symbol": "MISSION_PATH"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md",
+        "detail": "knowledge receipt: DELIVERED, 1 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "binding_common_controls",
+      "layer_id": "native_calculation_contract",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_a_arm_launch.py",
+        "kind": "FILE",
+        "line": 79,
+        "module": "native_a_arm_launch",
+        "symbol": "CONTRACT_PATH"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json",
+        "detail": "knowledge receipt: DELIVERED, 1 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "binding_common_controls",
+      "layer_id": "anchored_knowledge_manifest",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_a_arm_launch.py",
+        "kind": "FILE",
+        "line": 82,
+        "module": "native_a_arm_launch",
+        "symbol": "KNOWLEDGE_MANIFEST_PATH"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_SOURCES_20260828.json",
+        "detail": "knowledge receipt: DELIVERED, 1 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "binding_common_controls",
+      "layer_id": "selected_same_arm_profile",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_SOURCES_20260828.json",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_SOURCES_20260828.json",
+        "kind": "FILE",
+        "line": 1,
+        "module": null,
+        "symbol": null
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": false,
+      "evidence": {
+        "carrier": null,
+        "detail": "arm A_MEMORY is not in the group's arms ['A_CLEAN']",
+        "kind": "REGISTRY",
+        "receipt_sha256": null
+      },
+      "group_id": "a_clean_overlay",
+      "layer_id": "a_clean_promoted_positive_capsule",
+      "policy": "ARM_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json",
+        "kind": "FILE",
+        "line": 60,
+        "module": null,
+        "symbol": "A_CLEAN_POSITIVE_KNOWLEDGE_20260828.md"
+      },
+      "status": "NOT_APPLICABLE"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md",
+        "detail": "knowledge receipt: DELIVERED, 1 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "a_memory_overlay",
+      "layer_id": "a_memory_promoted_positive_capsule",
+      "policy": "ARM_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json",
+        "kind": "FILE",
+        "line": 76,
+        "module": null,
+        "symbol": "A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json",
+        "detail": "knowledge receipt: DELIVERED, 1 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "a_memory_overlay",
+      "layer_id": "a_memory_prior_lessons_package",
+      "policy": "ARM_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/build_a_memory_seed.py",
+        "kind": "FILE",
+        "line": 1,
+        "module": "build_a_memory_seed",
+        "symbol": "SEED_PATH"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json",
+        "detail": "proof and its subject bind the same file identity; the seed currently contains its own per-entry hashes because no independently produced receipt exists; bind a real independent receipt over the seed to close this status",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "a_memory_overlay",
+      "layer_id": "a_memory_prior_package_proof",
+      "policy": "ARM_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/build_a_memory_seed.py",
+        "kind": "FILE",
+        "line": 1,
+        "module": "build_a_memory_seed",
+        "symbol": "seed_hash"
+      },
+      "status": "DEGENERATE_PROOF_SAME_AS_SUBJECT"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/knowledge/ng_brain.json",
+        "detail": "knowledge receipt: DELIVERED, 1 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "current_brain_runtime",
+      "layer_id": "authoritative_s135_construction",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/knowledge/ng_brain.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/knowledge/ng_brain.json",
+        "detail": "knowledge receipt: DELIVERED, 1 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "current_brain_runtime",
+      "layer_id": "complete_s105_9_brain",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/knowledge/ng_brain.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/knowledge/ng_brain.json",
+        "detail": "knowledge receipt: DELIVERED, 1 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "current_brain_runtime",
+      "layer_id": "doctrine_reasoning_play_index_evidence",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/knowledge/ng_brain.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/knowledge/ng_brain.json",
+        "detail": "knowledge receipt: DELIVERED, 1 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "current_brain_runtime",
+      "layer_id": "lawful_prior_session_carry",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/knowledge/ng_brain.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/kalshi/knowledge/ng_brain.json, research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md, research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md, research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
+        "detail": "knowledge receipt: DELIVERED, 5 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "current_brain_runtime",
+      "layer_id": "october_outcome_wall_enforcement",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/kalshi/knowledge/ng_brain.json, research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md, research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md, research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md, research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md, research/ng_exhaustion_chain_canonical_table_20260817.py, research/ng_exhaustion_week_chain_state_roster_20260817.py, research/ng_exhaustion_week_continuous_roster_20260817.py, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+        "detail": "knowledge receipt: DELIVERED, 10 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "frozen_learned_structure",
+      "layer_id": "learned_d_structures_and_families",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md, research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md, research/ng_exhaustion_chain_canonical_table_20260817.py, research/ng_exhaustion_week_chain_state_roster_20260817.py, research/ng_exhaustion_week_continuous_roster_20260817.py, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/ng_exhaustion_chain_canonical_table_20260817.py, research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json, research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md",
+        "detail": "knowledge receipt: DELIVERED, 5 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "frozen_learned_structure",
+      "layer_id": "learned_dipoles_and_geometry",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/ng_exhaustion_chain_canonical_table_20260817.py, research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json, research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md, research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py, research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md, research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+        "detail": "knowledge receipt: DELIVERED, 8 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "frozen_learned_structure",
+      "layer_id": "learned_pair_triplet_recurrence",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md, research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py, research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md, research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json, research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py, research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py, research/ng_exhaustion_chain_state_enrich_20260817.py, research/ng_exhaustion_week_chain_state_roster_20260817.py, research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md, research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json, research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+        "detail": "knowledge receipt: DELIVERED, 13 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "frozen_learned_structure",
+      "layer_id": "learned_chains_extensions_reappearances_ancestry",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json, research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py, research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py, research/ng_exhaustion_chain_state_enrich_20260817.py, research/ng_exhaustion_week_chain_state_roster_20260817.py, research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md, research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json, research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILE_LAUNCH_20260817.json, research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md, research/ng_exhaustion_chain_canonical_54w_merge_20260817.py, research/ng_exhaustion_chain_canonical_54w_shard_20260817.py, research/ng_exhaustion_chain_phase1_discovery_20260817.py, research/ng_exhaustion_chain_phase1_causal_54w_20260817.py, research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py, research/ng_exhaustion_chain_phase1_falsifier_54w_20260817.py, research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py, research/ng_exhaustion_chain_phase1_structural_54w_20260817.py, research/ng_exhaustion_chain_phase1_reconcile_55w_20260817.py",
+        "detail": "knowledge receipt: DELIVERED, 17 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "frozen_learned_structure",
+      "layer_id": "phase1_discoveries_structural_falsifiers",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json, research/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILE_LAUNCH_20260817.json, research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md, research/ng_exhaustion_chain_canonical_54w_merge_20260817.py, research/ng_exhaustion_chain_canonical_54w_shard_20260817.py, research/ng_exhaustion_chain_phase1_discovery_20260817.py, research/ng_exhaustion_chain_phase1_causal_54w_20260817.py, research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py, research/ng_exhaustion_chain_phase1_falsifier_54w_20260817.py, research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py, research/ng_exhaustion_chain_phase1_structural_54w_20260817.py, research/ng_exhaustion_chain_phase1_reconcile_55w_20260817.py",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md, research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_ADDENDUM_POX_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POX_BRANCH_RECONCILIATION_V2_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json, research/NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json, research/ng_exhaustion_chain_phase2_characterize_20260817.py, research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py, research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json, research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json, research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json",
+        "detail": "knowledge receipt: DELIVERED, 17 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "frozen_learned_structure",
+      "layer_id": "phase2_findings_modules_timing_pox_negatives",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md, research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_ADDENDUM_POX_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POX_BRANCH_RECONCILIATION_V2_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md, research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json, research/NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json, research/ng_exhaustion_chain_phase2_characterize_20260817.py, research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py, research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json, research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json, research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json, research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md, research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json, research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md, research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md, research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md, research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md, research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md, research/ng_exhaustion_chain_phase2_characterize_20260817.py, research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+        "detail": "knowledge receipt: DELIVERED, 11 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "frozen_learned_structure",
+      "layer_id": "predecessor_ancestry_unresolved_chain_state",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json, research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md, research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json, research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md, research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md, research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md, research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md, research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md, research/ng_exhaustion_chain_phase2_characterize_20260817.py, research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md, research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md, research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md, research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md, research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md, research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md, research/ng_exhaustion_chain_phase2_characterize_20260817.py, research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json, research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json, research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+        "detail": "knowledge receipt: DELIVERED, 11 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "frozen_learned_structure",
+      "layer_id": "historical_timing_lifespan_context",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md, research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md, research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md, research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md, research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md, research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md, research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md, research/ng_exhaustion_chain_phase2_characterize_20260817.py, research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json, research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json, research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md, research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_ADDENDUM_20260820.md, research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md, research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md, research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md, research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json, research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json, research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json, research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json, research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md, research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json, research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md, research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md, research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md, research/NG_EXHAUSTION_CONTINUOUS_LIVE_INFORMATION_CORRECTION_20260819.md, research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md, research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md, research/NG_EXHAUSTION_POLARITY_NOT_PRIMARY_TARGET_CORRECTION_20260819.md, research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md, research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md, research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md",
+        "detail": "knowledge receipt: DELIVERED, 23 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "frozen_learned_structure",
+      "layer_id": "learned_structure_proposal_index_material",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md, research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_ADDENDUM_20260820.md, research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md, research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md, research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md, research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json, research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json, research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json, research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json, research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md, research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md, research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json, research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md, research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md, research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md, research/NG_EXHAUSTION_CONTINUOUS_LIVE_INFORMATION_CORRECTION_20260819.md, research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md, research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md, research/NG_EXHAUSTION_POLARITY_NOT_PRIMARY_TARGET_CORRECTION_20260819.md, research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md, research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md, research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_knowledge_delivery.py",
+        "kind": "FILE",
+        "line": null,
+        "module": "native_knowledge_delivery",
+        "symbol": "KNOWLEDGE_LAYER_SOURCES"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json, research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md, research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md",
+        "detail": "knowledge receipt: DELIVERED, 3 file(s)",
+        "kind": "KNOWLEDGE_RECEIPT",
+        "receipt_sha256": "6dc5825b578ac6fd3a6afa5b13c76bcd359a857d738610e64b02efb654891ea4"
+      },
+      "group_id": "corrected_extra_agent_carryforward",
+      "layer_id": "extra_agent_corrected_information_and_gap_diagnoses",
+      "policy": "STATIC_REQUIRED_INPUT",
+      "producer": {
+        "carrier": "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json + .md + research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py",
+        "kind": "FILE",
+        "line": 62,
+        "module": "native_ingestion_layer_registry",
+        "symbol": "ALLOWED_V3_SOURCE_PATHS"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "source_day (+ raw_symbol, instrument_id); the roster identity is raw_mbo_source_manifest",
+        "detail": "carriers present: source_day, raw_symbol, instrument_id, raw_actions[].source_dbn_object, raw_actions[].source_dbn_sha256",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "canonical_raw_dbn_mbo",
+      "layer_id": "canonical_sep_nov_2021_dbn_mbo_objects",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "source_day (+ raw_symbol, instrument_id); the roster identity is raw_mbo_source_manifest",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+        "kind": "ROW_FIELD",
+        "line": 305,
+        "module": "native_replay_driver",
+        "symbol": "_source_day"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "source_day; the window [2021-10-01, 2021-11-01) is the roster's",
+        "detail": "carriers present: source_day",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "canonical_raw_dbn_mbo",
+      "layer_id": "october_first_source_window",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "source_day; the window [2021-10-01, 2021-11-01) is the roster's",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/raw_mbo_source_manifest.py",
+        "kind": "ROW_FIELD",
+        "line": 33,
+        "module": "raw_mbo_source_manifest",
+        "symbol": "EXPECTED_ROSTER"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "snapshot_bootstrap_only, source_role",
+        "detail": "carriers present: snapshot_bootstrap_only, source_role",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "canonical_raw_dbn_mbo",
+      "layer_id": "canonical_predecessor_bootstrap_objects",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "snapshot_bootstrap_only, source_role",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 722,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "event_frame"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "raw_actions[] (action, side, price_raw, size, order_id, flags, sequence, ts_event_ns, ts_recv_ns)",
+        "detail": "carriers present: raw_actions[], raw_actions[].action, raw_actions[].order_id",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "canonical_raw_dbn_mbo",
+      "layer_id": "native_acmrtfn_messages",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "raw_actions[] (action, side, price_raw, size, order_id, flags, sequence, ts_event_ns, ts_recv_ns)",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 149,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "NormalizedMbo.public_dict"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "snapshot_bootstrap_only; capture_observations (book_clear*, tob_side_wipe*); integrity",
+        "detail": "carriers present: snapshot_bootstrap_only, capture_observations, integrity, raw_actions[].is_snapshot",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "canonical_raw_dbn_mbo",
+      "layer_id": "snapshot_bootstrap_reset_messages",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "snapshot_bootstrap_only; capture_observations (book_clear*, tob_side_wipe*); integrity",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_full_capture_adapter.py",
+        "kind": "ROW_FIELD",
+        "line": 148,
+        "module": "native_full_capture_adapter",
+        "symbol": "_observe_before"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "schema, adapter_revision, census_view, instrument_id, raw_symbol, publisher_id, channel_id, sequence, ts_event_ns, ts_recv_ns, ts_in_delta_ns, integrity",
+        "detail": "carriers present: adapter_revision, census_view, publisher_id, channel_id, sequence, ts_event_ns, ts_recv_ns, ts_in_delta_ns, integrity, raw_actions[].source_dbn_sha256",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "canonical_raw_dbn_mbo",
+      "layer_id": "raw_source_identity_provenance_clocks_integrity",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "schema, adapter_revision, census_view, instrument_id, raw_symbol, publisher_id, channel_id, sequence, ts_event_ns, ts_recv_ns, ts_in_delta_ns, integrity",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 703,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "event_frame"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "raw_actions[] where action == A, with raw_actions[].book_effect",
+        "detail": "carriers present: raw_actions[]",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "order_lifecycle",
+      "layer_id": "order_lifecycle_adds",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "raw_actions[] where action == A, with raw_actions[].book_effect",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 415,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "_add_order"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "raw_actions[] where action == C, with raw_actions[].book_effect (removed, size_delta)",
+        "detail": "carriers present: raw_actions[]",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "order_lifecycle",
+      "layer_id": "order_lifecycle_cancels",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "raw_actions[] where action == C, with raw_actions[].book_effect (removed, size_delta)",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 433,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "_cancel"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "raw_actions[] where action == M, with raw_actions[].book_effect (priority_lost)",
+        "detail": "carriers present: raw_actions[]",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "order_lifecycle",
+      "layer_id": "order_lifecycle_modifies",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "raw_actions[] where action == M, with raw_actions[].book_effect (priority_lost)",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 451,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "_modify"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "activity.<window>.priority_lost_modify_count (a replace is an M that loses priority: price change or size increase)",
+        "detail": "carriers present: activity_since.*.priority_lost_modify_count, raw_actions[].book_effect",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "order_lifecycle",
+      "layer_id": "order_lifecycle_replaces",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "activity.<window>.priority_lost_modify_count (a replace is an M that loses priority: price change or size increase)",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 472,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "_modify"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "legacy_observable_rows (one ten-level projection per T action) + activity.<window>.trade_*_aggressor_qty; raw_actions[] where action == T is carried on the member row",
+        "detail": "carriers present: activity_since.*.trade_buy_aggressor_qty, activity_since.*.trade_sell_aggressor_qty, raw_actions[], legacy `action`, legacy `price`, legacy `size`, legacy `ts_recv`",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "order_lifecycle",
+      "layer_id": "order_lifecycle_trades",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "legacy_observable_rows (one ten-level projection per T action) + activity.<window>.trade_*_aggressor_qty; raw_actions[] where action == T is carried on the member row",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 744,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "_legacy_control_row"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "structure.fill_disposition (filled / cancelled / modified / unresolved fill order ids); raw_actions[] where action == F is carried on the member row",
+        "detail": "carriers present: structure.fill_disposition, structure.fill_disposition.class, structure.fill_disposition.filled_order_ids, raw_actions[]",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "order_lifecycle",
+      "layer_id": "order_lifecycle_fills",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "structure.fill_disposition (filled / cancelled / modified / unresolved fill order ids); raw_actions[] where action == F is carried on the member row",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/a_memory_member_first_recalculation_20260828.py",
+        "kind": "ROW_FIELD",
+        "line": 176,
+        "module": "a_memory_member_first_recalculation_20260828",
+        "symbol": "fill_disposition"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "capture_observations.book_clear / book_clear_orders_removed / book_clear_qty_removed; integrity_delta",
+        "detail": "carriers present: capture_observations, integrity_delta, raw_actions[].book_effect",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "order_lifecycle",
+      "layer_id": "order_lifecycle_clears",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "capture_observations.book_clear / book_clear_orders_removed / book_clear_qty_removed; integrity_delta",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_full_capture_adapter.py",
+        "kind": "ROW_FIELD",
+        "line": 148,
+        "module": "native_full_capture_adapter",
+        "symbol": "_observe_before"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "structure.order_ids[], structure.distinct_order_id_count, structure.fill_disposition; integrity.duplicate_add_order_id / modify_side_change / modify_missing_treated_as_add",
+        "detail": "carriers present: structure.order_ids[], structure.distinct_order_id_count, structure.fill_disposition, raw_actions[].order_id",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "order_lifecycle",
+      "layer_id": "order_identity_transitions",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "structure.order_ids[], structure.distinct_order_id_count, structure.fill_disposition; integrity.duplicate_add_order_id / modify_side_change / modify_missing_treated_as_add",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/a_memory_member_first_recalculation_20260828.py",
+        "kind": "ROW_FIELD",
+        "line": 187,
+        "module": "a_memory_member_first_recalculation_20260828",
+        "symbol": "describe_structure"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "session_phase, continuity_segment (ExchangeSessionRule via member_clock_row); raw_symbol, instrument_id",
+        "detail": "carriers present: session_phase, continuity_segment, raw_symbol, instrument_id",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "order_lifecycle",
+      "layer_id": "contract_session_roll_state",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "session_phase, continuity_segment (ExchangeSessionRule via member_clock_row); raw_symbol, instrument_id",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+        "kind": "ROW_FIELD",
+        "line": 117,
+        "module": "native_replay_driver",
+        "symbol": "ExchangeSessionRule"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "book_full.bid_levels_full[] / ask_levels_full[] (whole book), book_full.bid_depth_full / ask_depth_full",
+        "detail": "carriers present: book_full.bid_levels_full[], book_full.ask_levels_full, book_full.bid_depth_full, book_full.ask_depth_full",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "full_book_fifo_queue",
+      "layer_id": "full_bid_ask_depth",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "book_full.bid_levels_full[] / ask_levels_full[] (whole book), book_full.bid_depth_full / ask_depth_full",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_full_capture_adapter.py",
+        "kind": "ROW_FIELD",
+        "line": 184,
+        "module": "native_full_capture_adapter",
+        "symbol": "_enrich"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "book_full.bid_price_level_count_full / ask_price_level_count_full, bid_order_count_full / ask_order_count_full, book_full.bid_levels_full[].order_count",
+        "detail": "carriers present: book_full.bid_price_level_count_full, book_full.ask_price_level_count_full, book_full.bid_order_count_full, book_full.ask_order_count_full, book_full.bid_levels_full[].order_count",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "full_book_fifo_queue",
+      "layer_id": "price_level_and_order_counts",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "book_full.bid_price_level_count_full / ask_price_level_count_full, bid_order_count_full / ask_order_count_full, book_full.bid_levels_full[].order_count",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 676,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "book_snapshot"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "book_full.bid_levels_full[].fifo_queue[] (order_id, size, volume_ahead, priority_recv_ns, priority_sequence, priority_age_s)",
+        "detail": "carriers present: book_full.bid_levels_full[].fifo_queue[].order_id, book_full.bid_levels_full[].fifo_queue[].size, book_full.bid_levels_full[].fifo_queue[].volume_ahead, book_full.bid_levels_full[].fifo_queue[].priority_recv_ns, book_full.bid_levels_full[].fifo_queue[].priority_sequence",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "full_book_fifo_queue",
+      "layer_id": "fifo_queues",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "book_full.bid_levels_full[].fifo_queue[] (order_id, size, volume_ahead, priority_recv_ns, priority_sequence, priority_age_s)",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 626,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "InstrumentBook._level"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "book_full.bid_levels_full[].front_order_age_s / queue_age_median_s / queue_age_p90_s, fifo_queue[].priority_age_s; survival: lifecycle `queue` rows (4.6)",
+        "detail": "carriers present: book_full.bid_levels_full[].front_order_age_s, book_full.bid_levels_full[].queue_age_median_s, book_full.bid_levels_full[].queue_age_p90_s, book_full.bid_levels_full[].fifo_queue[].priority_age_s, lifecycle `queue` (20005 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "full_book_fifo_queue",
+      "layer_id": "queue_age_and_survival",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "book_full.bid_levels_full[].front_order_age_s / queue_age_median_s / queue_age_p90_s, fifo_queue[].priority_age_s; survival: lifecycle `queue` rows (4.6)",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 620,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "InstrumentBook._level"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "book_full.bid_levels_full[].largest_order_share (+ front_order_size)",
+        "detail": "carriers present: book_full.bid_levels_full[].largest_order_share, book_full.bid_levels_full[].front_order_size",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "full_book_fifo_queue",
+      "layer_id": "queue_concentration",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "book_full.bid_levels_full[].largest_order_share (+ front_order_size)",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 624,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "InstrumentBook._level"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "book_full.bid_levels_full[].fifo_queue[].volume_ahead (orders ahead = position in fifo_queue); at the instant an order rests: native_rt_book.ReplayBook.view_with_basis for 4.6",
+        "detail": "carriers present: book_full.bid_levels_full[].fifo_queue[].volume_ahead",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "full_book_fifo_queue",
+      "layer_id": "orders_and_volume_ahead",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "book_full.bid_levels_full[].fifo_queue[].volume_ahead (orders ahead = position in fifo_queue); at the instant an order rests: native_rt_book.ReplayBook.view_with_basis for 4.6",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 633,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "InstrumentBook._level"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "book_full.spread / mid / depth_imbalance_n / depth_imbalance_full; book_regime.relative_imbalance",
+        "detail": "carriers present: book_full.spread, book_full.mid, book_full.depth_imbalance_n, book_full.depth_imbalance_full, book_regime.relative_imbalance",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "full_book_fifo_queue",
+      "layer_id": "spread_and_depth_imbalance",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "book_full.spread / mid / depth_imbalance_n / depth_imbalance_full; book_regime.relative_imbalance",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 665,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "book_snapshot"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "integrity_delta (per group), capture_observations (cumulative), snapshot_bootstrap_only",
+        "detail": "carriers present: integrity_delta, capture_observations, snapshot_bootstrap_only",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "full_book_fifo_queue",
+      "layer_id": "complete_state_reset_bootstrap_receipts",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "integrity_delta (per group), capture_observations (cumulative), snapshot_bootstrap_only",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_full_capture_adapter.py",
+        "kind": "ROW_FIELD",
+        "line": 191,
+        "module": "native_full_capture_adapter",
+        "symbol": "_enrich"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "activity.<window>.action_count / action_qty / action_side_qty; activity_full.<window>.action_side_count / top_level_qty_by_action; structure.action_counts / side_counts",
+        "detail": "carriers present: activity_since.*.action_count, activity_since.*.action_qty, activity_since.*.action_side_qty, activity_since.*.action_side_count, activity_since.*.top_level_qty_by_action, structure.side_counts",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "microstructure_mechanics",
+      "layer_id": "mechanics_actions_by_side_and_level",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "activity.<window>.action_count / action_qty / action_side_qty; activity_full.<window>.action_side_count / top_level_qty_by_action; structure.action_counts / side_counts",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 252,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "_RollingActivityWindow.snapshot"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "activity.<window>.trade_buy_aggressor_qty / trade_sell_aggressor_qty / trade_aggressor_imbalance; per second: lifecycle `flow_substrate` rows (window_signed_flow, polarity)",
+        "detail": "carriers present: activity_since.*.trade_buy_aggressor_qty, activity_since.*.trade_sell_aggressor_qty, activity_since.*.trade_aggressor_imbalance, lifecycle `flow_substrate` (17992 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "microstructure_mechanics",
+      "layer_id": "aggressor_and_native_signed_flow",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "activity.<window>.trade_buy_aggressor_qty / trade_sell_aggressor_qty / trade_aggressor_imbalance; per second: lifecycle `flow_substrate` rows (window_signed_flow, polarity)",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 253,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "_RollingActivityWindow.snapshot"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `replenishment` rows (4.7 removals, refills, matured horizons); activity.<window>.top_level_cancel_qty_derived",
+        "detail": "carriers present: activity_since.*.top_level_cancel_qty_derived, lifecycle `replenishment` (73480 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "microstructure_mechanics",
+      "layer_id": "depletion_and_replenishment",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `replenishment` rows (4.7 removals, refills, matured horizons); activity.<window>.top_level_cancel_qty_derived",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+        "kind": "LEDGER",
+        "line": 1058,
+        "module": "native_replay_driver",
+        "symbol": "replenishment"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `replenishment` (time-to-restoration) and `absorption` (4.8 runways) rows",
+        "detail": "carriers present: lifecycle `replenishment` (73480 rows), lifecycle `absorption` (43569 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "microstructure_mechanics",
+      "layer_id": "resilience_and_recovery",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `replenishment` (time-to-restoration) and `absorption` (4.8 runways) rows",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+        "kind": "LEDGER",
+        "line": 1233,
+        "module": "native_replay_driver",
+        "symbol": "absorption"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "activity.<window>.add_cancel_churn / priority_lost_modify_count / event_count",
+        "detail": "carriers present: activity_since.*.add_cancel_churn, activity_since.*.priority_lost_modify_count, activity_since.*.event_count",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "microstructure_mechanics",
+      "layer_id": "churn_and_queue_turnover",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "activity.<window>.add_cancel_churn / priority_lost_modify_count / event_count",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "ROW_FIELD",
+        "line": 265,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "_RollingActivityWindow.snapshot"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "book_full.best_bid / best_ask / mid; book_regime.* (4.2 per group); structure.price_raw_min / price_raw_max / price_raw_span; lifecycle `ladder` rows (4.9)",
+        "detail": "carriers present: book_full.best_bid, book_full.best_ask, book_full.mid, book_regime.best_bid, book_regime.total_depth, structure.price_raw_span, lifecycle `ladder` (87138 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "microstructure_mechanics",
+      "layer_id": "price_and_book_path",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "book_full.best_bid / best_ask / mid; book_regime.* (4.2 per group); structure.price_raw_min / price_raw_max / price_raw_span; lifecycle `ladder` rows (4.9)",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_book_regime.py",
+        "kind": "ROW_FIELD",
+        "line": 225,
+        "module": "native_book_regime",
+        "symbol": "observe_snapshot"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "integrity, integrity_delta, capture_observations (sequence_gap*, over_cancel*, book_clear*, tob_side_wipe*), activity_full.<window>.receive_order_clean, activity.<window>.missing_reference_count, sequence_contiguous",
+        "detail": "carriers present: integrity, integrity_delta, capture_observations, activity_since.*.receive_order_clean, activity_since.*.missing_reference_count, sequence_contiguous",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "microstructure_mechanics",
+      "layer_id": "missingness_and_integrity_flags",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "integrity, integrity_delta, capture_observations (sequence_gap*, over_cancel*, book_clear*, tob_side_wipe*), activity_full.<window>.receive_order_clean, activity.<window>.missing_reference_count, sequence_contiguous",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_full_capture_adapter.py",
+        "kind": "ROW_FIELD",
+        "line": 127,
+        "module": "native_full_capture_adapter",
+        "symbol": "_observe_before"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "legacy_observable_rows[].price, bid_px_00, ask_px_00 (per T action and at group end)",
+        "detail": "carriers present: legacy `price`, legacy `bid_px_00`, legacy `ask_px_00`",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "legacy_observable_crosswalk",
+      "layer_id": "legacy_price",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "legacy_observable_rows[].price, bid_px_00, ask_px_00 (per T action and at group end)",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "LEDGER",
+        "line": 768,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "_legacy_control_row"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "legacy_observable_rows[].action / price / size / bid_px_00 / ask_px_00 / ts_recv -> per-second buy and sell volume by touch (SecondBinner); lifecycle `flow_substrate` rows",
+        "detail": "carriers present: lifecycle `flow_substrate` (17992 rows), legacy `action`, legacy `price`, legacy `size`, legacy `bid_px_00`, legacy `ask_px_00`, legacy `ts_recv`",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "legacy_observable_crosswalk",
+      "layer_id": "legacy_native_signed_flow",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "legacy_observable_rows[].action / price / size / bid_px_00 / ask_px_00 / ts_recv -> per-second buy and sell volume by touch (SecondBinner); lifecycle `flow_substrate` rows",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py",
+        "kind": "LEDGER",
+        "line": 50,
+        "module": "native_roll20",
+        "symbol": "NATIVE_SOURCE_FIELDS"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `flow_substrate` rows (roll20_value per completed second) computed from the legacy rows",
+        "detail": "carriers present: lifecycle `flow_substrate` (17992 rows), legacy `action`, legacy `size`, legacy `ts_recv`",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "legacy_observable_crosswalk",
+      "layer_id": "legacy_per_second_roll20",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `flow_substrate` rows (roll20_value per completed second) computed from the legacy rows",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py",
+        "kind": "LEDGER",
+        "line": 222,
+        "module": "native_roll20",
+        "symbol": "roll20"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "legacy_observable_rows[].bid_sz_00..09 / ask_sz_00..09 / bid_ct_00..09 / ask_ct_00..09",
+        "detail": "carriers present: legacy `bid_sz_00`, legacy `ask_sz_00`, legacy `bid_ct_00`, legacy `ask_ct_00`, legacy `bid_sz_09`, legacy `ask_sz_09`",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "legacy_observable_crosswalk",
+      "layer_id": "legacy_book_imbalance",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "legacy_observable_rows[].bid_sz_00..09 / ask_sz_00..09 / bid_ct_00..09 / ask_ct_00..09",
+        "file": "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+        "kind": "LEDGER",
+        "line": 777,
+        "module": "ng_exhaustion_mbo_v4_state_adapter_20260820",
+        "symbol": "_legacy_control_row"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "structure.candidate_family_id / action_string / side_string / discovery_status / matches_carried_native_family / mirror (member row); lifecycle `lineage` and `episode` rows",
+        "detail": "carriers present: structure.candidate_family_id, structure.action_string, structure.discovery_status, structure.matches_carried_native_family, structure.mirror.orientation, lifecycle `lineage` (21651 rows), lifecycle `episode` (182 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "legacy_observable_crosswalk",
+      "layer_id": "legacy_structure_observables",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "structure.candidate_family_id / action_string / side_string / discovery_status / matches_carried_native_family / mirror (member row); lifecycle `lineage` and `episode` rows",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/a_memory_member_first_recalculation_20260828.py",
+        "kind": "ROW_FIELD",
+        "line": 170,
+        "module": "a_memory_member_first_recalculation_20260828",
+        "symbol": "describe_structure"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `flow_substrate` rows (roll20_value, window_signed_flow, polarity per second); dipole state: lifecycle `episode` rows (4.12)",
+        "detail": "carriers present: lifecycle `flow_substrate` (17992 rows), lifecycle `episode` (182 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "derived_geometry",
+      "layer_id": "derived_roll20_and_dipole_state",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `flow_substrate` rows (roll20_value, window_signed_flow, polarity per second); dipole state: lifecycle `episode` rows (4.12)",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_flow_substrate.py",
+        "kind": "LEDGER",
+        "line": 428,
+        "module": "native_flow_substrate",
+        "symbol": "complete_second"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "structure.candidate_family_id / action_string / side_string / mirror.*; lifecycle `lineage` rows (4.13)",
+        "detail": "carriers present: structure.candidate_family_id, structure.side_string, structure.mirror.orientation, structure.mirror.mirror_pair_key, lifecycle `lineage` (21651 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "derived_geometry",
+      "layer_id": "derived_d_family_geometry",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "structure.candidate_family_id / action_string / side_string / mirror.*; lifecycle `lineage` rows (4.13)",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/a_memory_member_first_recalculation_20260828.py",
+        "kind": "ROW_FIELD",
+        "line": 200,
+        "module": "a_memory_member_first_recalculation_20260828",
+        "symbol": "describe_structure"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "structure.discovery_status (CARRIED_SEED_MATCH | OPEN_WORLD_CANDIDATE), structure.carried_native_family; result layers.open_world_indexes",
+        "detail": "carriers present: structure.discovery_status, structure.carried_native_family, structure.matches_carried_native_family",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "derived_geometry",
+      "layer_id": "derived_open_world_predecessor_state",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "structure.discovery_status (CARRIED_SEED_MATCH | OPEN_WORLD_CANDIDATE), structure.carried_native_family; result layers.open_world_indexes",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/a_memory_member_first_recalculation_20260828.py",
+        "kind": "ROW_FIELD",
+        "line": 207,
+        "module": "a_memory_member_first_recalculation_20260828",
+        "symbol": "describe_structure"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `lineage` rows (4.13, ORDER_ID_LINEAGE_V1) and `recurrence` rows (4.14 gaps)",
+        "detail": "carriers present: lifecycle `lineage` (21651 rows), lifecycle `recurrence` (43569 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "derived_geometry",
+      "layer_id": "derived_ancestry_gaps",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `lineage` rows (4.13, ORDER_ID_LINEAGE_V1) and `recurrence` rows (4.14 gaps)",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+        "kind": "LEDGER",
+        "line": 451,
+        "module": "native_replay_driver",
+        "symbol": "LineageGraph"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `lineage` rows (still-open lineages) and `episode` rows (4.10 exhaustion state)",
+        "detail": "carriers present: lifecycle `lineage` (21651 rows), lifecycle `episode` (182 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "derived_geometry",
+      "layer_id": "derived_unresolved_age_chain_trajectory",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `lineage` rows (still-open lineages) and `episode` rows (4.10 exhaustion state)",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+        "kind": "LEDGER",
+        "line": 788,
+        "module": "native_replay_driver",
+        "symbol": "_retain_episode_rows"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "book_regime.* per group; book_full.best_bid / mid; lifecycle `flow_substrate` and `ladder` rows",
+        "detail": "carriers present: book_regime.best_bid, book_regime.total_depth, book_regime.order_count, book_full.mid, lifecycle `flow_substrate` (17992 rows), lifecycle `ladder` (87138 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "derived_geometry",
+      "layer_id": "derived_price_flow_book_paths",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "book_regime.* per group; book_full.best_bid / mid; lifecycle `flow_substrate` and `ladder` rows",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_book_regime.py",
+        "kind": "ROW_FIELD",
+        "line": 168,
+        "module": "native_book_regime",
+        "symbol": "observe_snapshot"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "activity_full.<window>.* ; book_full.bid_levels_full[].fifo_queue[]; capture_observations; lifecycle `queue` rows (4.6)",
+        "detail": "carriers present: activity_since.*.top_level_qty_by_action, activity_since.*.action_side_count, book_full.bid_levels_full[].fifo_queue[], capture_observations, lifecycle `queue` (20005 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "derived_geometry",
+      "layer_id": "derived_v4_mechanics_fifo_features",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "activity_full.<window>.* ; book_full.bid_levels_full[].fifo_queue[]; capture_observations; lifecycle `queue` rows (4.6)",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_full_capture_adapter.py",
+        "kind": "ROW_FIELD",
+        "line": 201,
+        "module": "native_full_capture_adapter",
+        "symbol": "_window_extras"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "clocks.first_lawful_availability_ns, causal_availability_clock (member); lifecycle rows: the delivery-time rule native_causal_stream.lifecycle_availability, NOT a stamped field",
+        "detail": "carriers present: clocks.first_lawful_availability_ns, causal_availability_clock",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "derived_geometry",
+      "layer_id": "derived_feature_availability_timestamps",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "clocks.first_lawful_availability_ns, causal_availability_clock (member); lifecycle rows: the delivery-time rule native_causal_stream.lifecycle_availability, NOT a stamped field",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_clocks.py",
+        "kind": "ROW_FIELD",
+        "line": 202,
+        "module": "native_clocks",
+        "symbol": "member_clock_row"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `episode` rows (4.10 exhaustion state, 4.12 dipole runway) opened at a candidate's available_second",
+        "detail": "carriers present: lifecycle `episode` (182 rows), lifecycle `candidate` (91 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "prebirth_opportunity",
+      "layer_id": "prebirth_predecessor_at_risk_state",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `episode` rows (4.10 exhaustion state, 4.12 dipole runway) opened at a candidate's available_second",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+        "kind": "LEDGER",
+        "line": 737,
+        "module": "native_replay_driver",
+        "symbol": "_open_candidate"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `lineage` rows (open, extended, censored lineages)",
+        "detail": "carriers present: lifecycle `lineage` (21651 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "prebirth_opportunity",
+      "layer_id": "prebirth_unresolved_chain_extension_state",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `lineage` rows (open, extended, censored lineages)",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+        "kind": "LEDGER",
+        "line": 451,
+        "module": "native_replay_driver",
+        "symbol": "LineageGraph"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `lineage` rows: a group's initiating order id parents the ids it touched first",
+        "detail": "carriers present: lifecycle `lineage` (21651 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "prebirth_opportunity",
+      "layer_id": "prebirth_ancestry_successor_opportunity",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `lineage` rows: a group's initiating order id parents the ids it touched first",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+        "kind": "LEDGER",
+        "line": 151,
+        "module": "native_replay_driver",
+        "symbol": "LINEAGE_SIGNATURE"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `episode` rows carrying 4.11 failed_states; `detector_coverage` rows (4.0b rejections)",
+        "detail": "carriers present: lifecycle `detector_coverage` (1 rows), lifecycle `episode` (182 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "prebirth_opportunity",
+      "layer_id": "prebirth_stopped_chain_false_context_controls",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `episode` rows carrying 4.11 failed_states; `detector_coverage` rows (4.0b rejections)",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_recognition.py",
+        "kind": "LEDGER",
+        "line": 80,
+        "module": "native_recognition",
+        "symbol": "note_failed_state"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `episode` rows with MISSED / CENSORED outcomes (4.11) and `detector_coverage` rows",
+        "detail": "carriers present: lifecycle `detector_coverage` (1 rows), lifecycle `episode` (182 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "prebirth_opportunity",
+      "layer_id": "prebirth_negative_opportunity_cases",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `episode` rows with MISSED / CENSORED outcomes (4.11) and `detector_coverage` rows",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_recognition.py",
+        "kind": "LEDGER",
+        "line": 102,
+        "module": "native_recognition",
+        "symbol": "mark_missed"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "clocks.first_component_ts_event_ns; ts_event_ns (F_LAST record); receipt clocks.event_time_ns",
+        "detail": "carriers present: clocks.first_component_ts_event_ns, ts_event_ns",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "causal_clocks",
+      "layer_id": "clock_event_time",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "clocks.first_component_ts_event_ns; ts_event_ns (F_LAST record); receipt clocks.event_time_ns",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_clocks.py",
+        "kind": "ROW_FIELD",
+        "line": 199,
+        "module": "native_clocks",
+        "symbol": "member_clock_row"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "clocks.first_component_ts_recv_ns, clocks.f_last_ts_recv_ns; ts_recv_ns; receipt clocks.receive_time_ns",
+        "detail": "carriers present: clocks.first_component_ts_recv_ns, clocks.f_last_ts_recv_ns, ts_recv_ns",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "causal_clocks",
+      "layer_id": "clock_receive_time",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "clocks.first_component_ts_recv_ns, clocks.f_last_ts_recv_ns; ts_recv_ns; receipt clocks.receive_time_ns",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_clocks.py",
+        "kind": "ROW_FIELD",
+        "line": 200,
+        "module": "native_clocks",
+        "symbol": "member_clock_row"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "clocks.first_lawful_availability_ns (= clocks.f_last_ts_recv_ns); receipt clocks.availability_time_ns",
+        "detail": "carriers present: clocks.first_lawful_availability_ns, clocks.f_last_ts_recv_ns",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "causal_clocks",
+      "layer_id": "clock_event_known_by",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "clocks.first_lawful_availability_ns (= clocks.f_last_ts_recv_ns); receipt clocks.availability_time_ns",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_clocks.py",
+        "kind": "ROW_FIELD",
+        "line": 202,
+        "module": "native_clocks",
+        "symbol": "member_clock_row"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "clocks.first_lawful_availability_ns (member features); candidate rows: available_second; other lifecycle rows: native_causal_stream.lifecycle_availability at delivery",
+        "detail": "carriers present: clocks.first_lawful_availability_ns",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "causal_clocks",
+      "layer_id": "clock_feature_availability",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "clocks.first_lawful_availability_ns (member features); candidate rows: available_second; other lifecycle rows: native_causal_stream.lifecycle_availability at delivery",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_clocks.py",
+        "kind": "ROW_FIELD",
+        "line": 202,
+        "module": "native_clocks",
+        "symbol": "member_clock_row"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "lifecycle `episode` rows: recognized_recv_ns (first lawful call) and precursor_recv_ns; `candidate` rows: available_second. NOT on the member row the receipt names for this group",
+        "detail": "carriers present: lifecycle `episode` (182 rows), lifecycle `candidate` (91 rows)",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "causal_clocks",
+      "layer_id": "clock_prospective_discovery_confirmation",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "lifecycle `episode` rows: recognized_recv_ns (first lawful call) and precursor_recv_ns; `candidate` rows: available_second. NOT on the member row the receipt names for this group",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_recognition.py",
+        "kind": "LEDGER",
+        "line": 83,
+        "module": "native_recognition",
+        "symbol": "record_call"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "clocks.decision_ts_recv_ns with decision_basis (REPLAY_EARLIEST_LAWFUL_AVAILABILITY by default); receipt clocks.decision_time_ns",
+        "detail": "carriers present: clocks.decision_ts_recv_ns, decision_basis, f_last_to_decision_delay_ns",
+        "kind": "DELIVERY_RECEIPT",
+        "receipt_sha256": "8df1ff9a5f006a4e48246d31335d525859a2bb372d35dca53e1afa914243b542"
+      },
+      "group_id": "causal_clocks",
+      "layer_id": "clock_model_evaluation",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "clocks.decision_ts_recv_ns with decision_basis (REPLAY_EARLIEST_LAWFUL_AVAILABILITY by default); receipt clocks.decision_time_ns",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_clocks.py",
+        "kind": "ROW_FIELD",
+        "line": 203,
+        "module": "native_clocks",
+        "symbol": "member_clock_row"
+      },
+      "status": "DELIVERED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "output_first_locks_and_no_locks",
+        "detail": "lock time is stamped by principal ledger `output_first_locks_and_no_locks` when Frankie files it; no ingestion producer exists",
+        "kind": "PRINCIPAL_OUTPUT_LEDGER",
+        "receipt_sha256": null
+      },
+      "group_id": "causal_clocks",
+      "layer_id": "clock_lock_time",
+      "policy": "CAUSAL_STREAM_REQUIRED",
+      "producer": {
+        "carrier": "none in the ingestion path; lock time is Frankie's OUTPUT",
+        "file": null,
+        "kind": "NO_PRODUCER_FOUND",
+        "line": null,
+        "module": null,
+        "symbol": null
+      },
+      "status": "PRINCIPAL_STAMPED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "detail": "all_absent true over 23 tokens",
+        "kind": "SEALED_ABSENCE_PROOF",
+        "receipt_sha256": "19af6d54197cc53733353f2267922e364dccaf7726d5c1d24f1e14587662e438"
+      },
+      "group_id": "sealed_target_timing",
+      "layer_id": "later_outcome_reveal",
+      "policy": "SEALED_FOR_A_SCOPE",
+      "producer": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py",
+        "kind": "SEALED_OBJECT",
+        "line": 69,
+        "module": "native_ingestion_layer_registry",
+        "symbol": "SEALED_LAYER_IDS"
+      },
+      "status": "SEALED_PROVEN"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "detail": "all_absent true over 23 tokens",
+        "kind": "SEALED_ABSENCE_PROOF",
+        "receipt_sha256": "19af6d54197cc53733353f2267922e364dccaf7726d5c1d24f1e14587662e438"
+      },
+      "group_id": "sealed_target_timing",
+      "layer_id": "target_ground_truth_onset_time",
+      "policy": "SEALED_FOR_A_SCOPE",
+      "producer": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py",
+        "kind": "SEALED_OBJECT",
+        "line": 69,
+        "module": "native_ingestion_layer_registry",
+        "symbol": "SEALED_LAYER_IDS"
+      },
+      "status": "SEALED_PROVEN"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "none: SHADOW_DISABLED, nothing opts it in",
+        "detail": "D5: nothing opts the shadow component in",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "provisional_shadow",
+      "layer_id": "s137_cognitive_shadow_runtime",
+      "policy": "PROVISIONAL_SHADOW",
+      "producer": {
+        "carrier": "none: SHADOW_DISABLED, nothing opts it in",
+        "file": "research/kalshi/frankie_s137_cognitive_runtime.py",
+        "kind": "SHADOW",
+        "line": 1,
+        "module": "frankie_s137_cognitive_runtime",
+        "symbol": null
+      },
+      "status": "SHADOW_DISABLED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "none: SHADOW_DISABLED, nothing opts it in",
+        "detail": "D5: nothing opts the shadow component in",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "provisional_shadow",
+      "layer_id": "hipporag_associative_retrieval",
+      "policy": "PROVISIONAL_SHADOW",
+      "producer": {
+        "carrier": "none: SHADOW_DISABLED, nothing opts it in",
+        "file": "research/kalshi/frankie_hipporag_p0_retrieval.py",
+        "kind": "SHADOW",
+        "line": 1,
+        "module": "frankie_hipporag_p0_retrieval",
+        "symbol": null
+      },
+      "status": "SHADOW_DISABLED"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "detail": "all_absent true over 23 tokens",
+        "kind": "SEALED_ABSENCE_PROOF",
+        "receipt_sha256": "19af6d54197cc53733353f2267922e364dccaf7726d5c1d24f1e14587662e438"
+      },
+      "group_id": "sealed_step1_answer",
+      "layer_id": "step1_existing_october_seconds",
+      "policy": "SEALED_FOR_A_SCOPE",
+      "producer": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py",
+        "kind": "SEALED_OBJECT",
+        "line": 69,
+        "module": "native_ingestion_layer_registry",
+        "symbol": "SEALED_LAYER_IDS"
+      },
+      "status": "SEALED_PROVEN"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "detail": "all_absent true over 23 tokens",
+        "kind": "SEALED_ABSENCE_PROOF",
+        "receipt_sha256": "19af6d54197cc53733353f2267922e364dccaf7726d5c1d24f1e14587662e438"
+      },
+      "group_id": "sealed_step1_answer",
+      "layer_id": "step1_populations",
+      "policy": "SEALED_FOR_A_SCOPE",
+      "producer": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py",
+        "kind": "SEALED_OBJECT",
+        "line": 69,
+        "module": "native_ingestion_layer_registry",
+        "symbol": "SEALED_LAYER_IDS"
+      },
+      "status": "SEALED_PROVEN"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "detail": "all_absent true over 23 tokens",
+        "kind": "SEALED_ABSENCE_PROOF",
+        "receipt_sha256": "19af6d54197cc53733353f2267922e364dccaf7726d5c1d24f1e14587662e438"
+      },
+      "group_id": "sealed_step1_answer",
+      "layer_id": "step1_crosswalks",
+      "policy": "SEALED_FOR_A_SCOPE",
+      "producer": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py",
+        "kind": "SEALED_OBJECT",
+        "line": 69,
+        "module": "native_ingestion_layer_registry",
+        "symbol": "SEALED_LAYER_IDS"
+      },
+      "status": "SEALED_PROVEN"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "detail": "all_absent true over 23 tokens",
+        "kind": "SEALED_ABSENCE_PROOF",
+        "receipt_sha256": "19af6d54197cc53733353f2267922e364dccaf7726d5c1d24f1e14587662e438"
+      },
+      "group_id": "sealed_step1_answer",
+      "layer_id": "step1_target_membership_receipts",
+      "policy": "SEALED_FOR_A_SCOPE",
+      "producer": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py",
+        "kind": "SEALED_OBJECT",
+        "line": 69,
+        "module": "native_ingestion_layer_registry",
+        "symbol": "SEALED_LAYER_IDS"
+      },
+      "status": "SEALED_PROVEN"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "detail": "all_absent true over 23 tokens",
+        "kind": "SEALED_ABSENCE_PROOF",
+        "receipt_sha256": "19af6d54197cc53733353f2267922e364dccaf7726d5c1d24f1e14587662e438"
+      },
+      "group_id": "sealed_step1_answer",
+      "layer_id": "step1_labels_and_classifications",
+      "policy": "SEALED_FOR_A_SCOPE",
+      "producer": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py",
+        "kind": "SEALED_OBJECT",
+        "line": 69,
+        "module": "native_ingestion_layer_registry",
+        "symbol": "SEALED_LAYER_IDS"
+      },
+      "status": "SEALED_PROVEN"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "detail": "all_absent true over 23 tokens",
+        "kind": "SEALED_ABSENCE_PROOF",
+        "receipt_sha256": "19af6d54197cc53733353f2267922e364dccaf7726d5c1d24f1e14587662e438"
+      },
+      "group_id": "sealed_step1_answer",
+      "layer_id": "step1_result_prefixes",
+      "policy": "SEALED_FOR_A_SCOPE",
+      "producer": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py",
+        "kind": "SEALED_OBJECT",
+        "line": 69,
+        "module": "native_ingestion_layer_registry",
+        "symbol": "SEALED_LAYER_IDS"
+      },
+      "status": "SEALED_PROVEN"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "detail": "all_absent true over 23 tokens",
+        "kind": "SEALED_ABSENCE_PROOF",
+        "receipt_sha256": "19af6d54197cc53733353f2267922e364dccaf7726d5c1d24f1e14587662e438"
+      },
+      "group_id": "sealed_step1_answer",
+      "layer_id": "step1_reconciliation_outputs",
+      "policy": "SEALED_FOR_A_SCOPE",
+      "producer": {
+        "carrier": "sealed_object_set(registry, repo_root): ABSENT from the prompt and every delivered path",
+        "file": "research/kalshi/frankie_raw_mbo_benchmark/native_ingestion_layer_registry.py",
+        "kind": "SEALED_OBJECT",
+        "line": 69,
+        "module": "native_ingestion_layer_registry",
+        "symbol": "SEALED_LAYER_IDS"
+      },
+      "status": "SEALED_PROVEN"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "detail": "no outputs receipt",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "append_only_outputs",
+      "layer_id": "output_state_and_state_delta_movie",
+      "policy": "APPEND_ONLY_OUTPUT",
+      "producer": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+        "kind": "PRINCIPAL_OUTPUT",
+        "line": 283,
+        "module": "native_principal_outputs",
+        "symbol": null
+      },
+      "status": "OUTPUT_PENDING"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "detail": "no outputs receipt",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "append_only_outputs",
+      "layer_id": "output_frankie_reasoning_movie",
+      "policy": "APPEND_ONLY_OUTPUT",
+      "producer": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+        "kind": "PRINCIPAL_OUTPUT",
+        "line": 287,
+        "module": "native_principal_outputs",
+        "symbol": null
+      },
+      "status": "OUTPUT_PENDING"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "detail": "no outputs receipt",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "append_only_outputs",
+      "layer_id": "output_probability_movie",
+      "policy": "APPEND_ONLY_OUTPUT",
+      "producer": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+        "kind": "PRINCIPAL_OUTPUT",
+        "line": 291,
+        "module": "native_principal_outputs",
+        "symbol": null
+      },
+      "status": "OUTPUT_PENDING"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "detail": "no outputs receipt",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "append_only_outputs",
+      "layer_id": "output_candidate_discoveries",
+      "policy": "APPEND_ONLY_OUTPUT",
+      "producer": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+        "kind": "PRINCIPAL_OUTPUT",
+        "line": 295,
+        "module": "native_principal_outputs",
+        "symbol": null
+      },
+      "status": "OUTPUT_PENDING"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "detail": "no outputs receipt",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "append_only_outputs",
+      "layer_id": "output_first_locks_and_no_locks",
+      "policy": "APPEND_ONLY_OUTPUT",
+      "producer": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+        "kind": "PRINCIPAL_OUTPUT",
+        "line": 299,
+        "module": "native_principal_outputs",
+        "symbol": null
+      },
+      "status": "OUTPUT_PENDING"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "detail": "no outputs receipt",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "append_only_outputs",
+      "layer_id": "output_negative_sparse_inconclusive_ledger",
+      "policy": "APPEND_ONLY_OUTPUT",
+      "producer": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+        "kind": "PRINCIPAL_OUTPUT",
+        "line": 303,
+        "module": "native_principal_outputs",
+        "symbol": null
+      },
+      "status": "OUTPUT_PENDING"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "detail": "no outputs receipt",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "append_only_outputs",
+      "layer_id": "output_knowledge_retrieval_receipts",
+      "policy": "APPEND_ONLY_OUTPUT",
+      "producer": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+        "kind": "PRINCIPAL_OUTPUT",
+        "line": 307,
+        "module": "native_principal_outputs",
+        "symbol": null
+      },
+      "status": "OUTPUT_PENDING"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "detail": "no outputs receipt",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "append_only_outputs",
+      "layer_id": "output_provider_invocation_response_receipts",
+      "policy": "APPEND_ONLY_OUTPUT",
+      "producer": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+        "kind": "PRINCIPAL_OUTPUT",
+        "line": 311,
+        "module": "native_principal_outputs",
+        "symbol": null
+      },
+      "status": "OUTPUT_PENDING"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "detail": "no outputs receipt",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "append_only_outputs",
+      "layer_id": "output_answer_wall_access_receipts",
+      "policy": "APPEND_ONLY_OUTPUT",
+      "producer": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+        "kind": "PRINCIPAL_OUTPUT",
+        "line": 315,
+        "module": "native_principal_outputs",
+        "symbol": null
+      },
+      "status": "OUTPUT_PENDING"
+    },
+    {
+      "arm_applicable": true,
+      "evidence": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "detail": "no outputs receipt",
+        "kind": "NONE",
+        "receipt_sha256": null
+      },
+      "group_id": "append_only_outputs",
+      "layer_id": "output_source_state_manifest_code_model_run_hashes",
+      "policy": "APPEND_ONLY_OUTPUT",
+      "producer": {
+        "carrier": "his append-only ledger whose ledger id equals this layer id",
+        "file": "research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json",
+        "kind": "PRINCIPAL_OUTPUT",
+        "line": 319,
+        "module": "native_principal_outputs",
+        "symbol": null
+      },
+      "status": "OUTPUT_PENDING"
+    }
+  ],
+  "legacy_keys_source": "DELIVERED_LEDGER_FIRST_ROWS",
+  "member_paths_source": "RESULT_FIELD_CENSUS",
+  "member_rows_censused": 43569,
+  "member_scan_bound": null,
+  "outputs_receipt_sha256": null,
+  "registry_sha256": "239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1",
+  "result_hash": "c406eee730401de16165b46091ac3042a1ca49d9025bbaefa9aa272bf52e420b",
+  "result_verdict": "ACCEPTED",
+  "schema": "FRANKIE_NATIVE_RAW_MBO_LAYER_CROSSWALK_V1",
+  "sealed_proof_sha256": "19af6d54197cc53733353f2267922e364dccaf7726d5c1d24f1e14587662e438",
+  "stream_complete": true,
+  "stream_receipt_sha256": "21a57f04090da622dd7ed7fa253b105f87c7749bf7aa7f3d89ed356ab3f19c72",
+  "totals": {
+    "applicable": 98,
+    "bound_to_inventory_document": 0,
+    "by_group": {
+      "a_clean_overlay": {
+        "NOT_APPLICABLE": 1
+      },
+      "a_memory_overlay": {
+        "DEGENERATE_PROOF_SAME_AS_SUBJECT": 1,
+        "DELIVERED": 2
+      },
+      "append_only_outputs": {
+        "OUTPUT_PENDING": 10
+      },
+      "binding_common_controls": {
+        "DELIVERED": 4
+      },
+      "canonical_raw_dbn_mbo": {
+        "DELIVERED": 6
+      },
+      "causal_clocks": {
+        "DELIVERED": 6,
+        "PRINCIPAL_STAMPED": 1
+      },
+      "corrected_extra_agent_carryforward": {
+        "DELIVERED": 1
+      },
+      "current_brain_runtime": {
+        "DELIVERED": 5
+      },
+      "derived_geometry": {
+        "DELIVERED": 8
+      },
+      "frozen_learned_structure": {
+        "DELIVERED": 9
+      },
+      "full_book_fifo_queue": {
+        "DELIVERED": 8
+      },
+      "legacy_observable_crosswalk": {
+        "DELIVERED": 5
+      },
+      "microstructure_mechanics": {
+        "DELIVERED": 7
+      },
+      "order_lifecycle": {
+        "DELIVERED": 9
+      },
+      "prebirth_opportunity": {
+        "DELIVERED": 5
+      },
+      "provisional_shadow": {
+        "SHADOW_DISABLED": 2
+      },
+      "sealed_step1_answer": {
+        "SEALED_PROVEN": 7
+      },
+      "sealed_target_timing": {
+        "SEALED_PROVEN": 2
+      }
+    },
+    "by_status": {
+      "BOUND_TO_INVENTORY_DOCUMENT": 0,
+      "CENSUS_ABSENT": 0,
+      "DEGENERATE_PROOF_SAME_AS_SUBJECT": 1,
+      "DELIVERED": 75,
+      "NOT_APPLICABLE": 1,
+      "NO_PRODUCER_FOUND": 0,
+      "OUTPUT_FILED": 0,
+      "OUTPUT_PENDING": 10,
+      "PRINCIPAL_STAMPED": 1,
+      "PRODUCED_NOT_DELIVERED": 0,
+      "RECEIPTED_CARRIER_ABSENT": 0,
+      "RECEIPTED_CARRIER_ABSENT_FROM_SCANNED_PREFIX": 0,
+      "SEALED_PROVEN": 9,
+      "SEALED_UNPROVEN": 0,
+      "SHADOW_DISABLED": 2
+    },
+    "carrier_claim_mismatches": 0,
+    "census_absent": 0,
+    "degenerate_proof_same_as_subject": 1,
+    "delivered": 75,
+    "inputs_accounted": 77,
+    "inputs_applicable": 77,
+    "inputs_delivered": 75,
+    "inputs_not_delivered": 2,
+    "no_producer_found": 0,
+    "not_applicable": 1,
+    "outputs_filed": 0,
+    "outputs_pending": 10,
+    "principal_stamped": 1,
+    "produced_not_delivered": 0,
+    "receipted_carrier_absent": 0,
+    "receipted_carrier_absent_from_scanned_prefix": 0,
+    "registered": 99,
+    "sealed_proven": 9,
+    "sealed_unproven": 0,
+    "shadow_disabled": 2
+  }
+}
