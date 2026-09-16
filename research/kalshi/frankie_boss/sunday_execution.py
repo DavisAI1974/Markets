@@ -141,7 +141,9 @@ class SundayRuntime:
     critic_factory: Callable
     source_journal_path: str
     source_journal_checkpoint: dict
-    classroom_package: dict
+    # Construction stays compatible with pre-classroom callers (harnesses, tests); execution
+    # does not: run_cycle refuses a runtime whose package is not bound to its request.
+    classroom_package: dict | None = None
     context_encoding: str = 'compact_v1'
     context_encoding_options: dict | None = None
     controller_event: Callable | None = None

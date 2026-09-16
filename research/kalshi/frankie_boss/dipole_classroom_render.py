@@ -138,9 +138,19 @@ def render_grade(grade: Mapping) -> str:
 
 def render_acknowledgement(ack: Mapping) -> str:
     if ack.get("schema")!=ACK_SCHEMA:raise ValueError("Dipole correction acknowledgement required")
-    return "\n".join(["# Frankie acknowledges Dipole's correction","",f"Same session: `{ack['session_id']}`",
+    parts=["# Frankie acknowledges Dipole's correction","",f"Same session: `{ack['session_id']}`",
         f"Acknowledged: `{ack['acknowledged']}`",f"Resolved correction IDs: `{ack['resolved_correction_ids']}`",
-        f"Remaining disagreements: `{ack['remaining_disagreements']}`",f"What I will change: {ack['what_i_will_change']}",""])
+        f"Remaining disagreements: `{ack['remaining_disagreements']}`",f"What I will change: {ack['what_i_will_change']}",""]
+    resolutions=ack.get("correction_resolutions")
+    if resolutions is not None:
+        # One corrected-understanding statement per correction ID is the evidence that Frankie
+        # understood the correction; it belongs in the readable transcript, not only in the JSON.
+        parts += ["## Frankie's corrected understanding, per correction",""]
+        if not resolutions:parts.append("No correction was required, so no corrected understanding was needed.")
+        for item in resolutions:
+            parts.append(f"- `{item['correction_id']}`: {item['corrected_understanding']}")
+        parts.append("")
+    return "\n".join(parts)
 
 
 def render_transcript(pre_message: Mapping, teachback: Mapping, grade: Mapping, acknowledgement: Mapping) -> str:

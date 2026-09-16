@@ -150,3 +150,30 @@ def test_correction_must_return_from_same_frankie_session():
         'request_sha256':correction['request_sha256'],'dipole_acknowledgement':_ack(grade)}
     with pytest.raises(ValueError,match='same Frankie session'):
         validate_correction_response(correction=correction,response=wrong,initial_response=initial,grade=grade)
+
+
+def test_corrected_understanding_is_required_per_correction_and_rendered():
+    from research.kalshi.frankie_boss.dipole_classroom_render import render_transcript
+    from research.kalshi.frankie_boss.dipole_classroom_resolution import bind_resolution_requirement, validate_correction_resolutions
+    package=_package();initial=_response(package)
+    first=initial['dipole_observation_review'][0]['observations'][0];first['value']=first['value']+1.0
+    teachback,grade=grade_initial_response(package,initial)
+    assert grade['correction_ids']
+    correction=bind_resolution_requirement(correction_request(original_request_sha256='d'*64,response=initial,grade=grade))
+    assert 'correction_resolutions' in correction['instruction']
+    raw_ack=_ack(grade)
+    correction_response={'session_id':'frankie-session','model_identity_as_reported_by_session':'frankie-model',
+        'request_sha256':correction['request_sha256'],'dipole_acknowledgement':raw_ack}
+    base=validate_correction_response(correction=correction,response=correction_response,initial_response=initial,grade=grade)
+    with pytest.raises(ValueError,match='corrected-understanding record'):
+        validate_correction_resolutions(raw_ack,grade,base)  # an ID echo alone is not enough
+    raw_ack['correction_resolutions']=[{'correction_id':cid,'corrected_understanding':f'I now read {cid} from the retained value, not my own guess.'}
+        for cid in grade['correction_ids']]
+    ack=validate_correction_resolutions(raw_ack,grade,base)
+    assert [r['correction_id'] for r in ack['correction_resolutions']]==list(grade['correction_ids'])
+    transcript=render_transcript(package['pre_message'],teachback,grade,ack)
+    assert "Frankie's corrected understanding, per correction" in transcript
+    for cid in grade['correction_ids']:
+        assert f'`{cid}`: I now read {cid}' in transcript
+    completed=finish(package,teachback=teachback,grade=grade,acknowledgement=ack)
+    assert completed['teacher_complete'] is True and completed['mastered'] is False

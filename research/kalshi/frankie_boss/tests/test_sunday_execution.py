@@ -77,7 +77,12 @@ def test_full_request_plan_is_saved_before_coordinator_or_critic_call(tmp_path,m
     monkeypatch.setattr(execution_module,'assemble_request',assemble)
     monkeypatch.setattr(execution_module,'native_model_pin',lambda bridge:'e'*64)
     monkeypatch.setattr(execution_module,'learning_config',lambda *args,**kwargs:SimpleNamespace(digest='f'*64))
-    runtime=execution_module.SundayRuntime(context=None,decoder=None,optimizer=None,
+    # The classroom is mandatory at execution: run_cycle refuses a runtime whose package is not
+    # bound to this exact request id, so the base composition test binds a real one.
+    from research.kalshi.frankie_boss.dipole_classroom import prepare_cycle
+    from test_dipole_classroom_session import _teacher, HEX_B
+    classroom=prepare_cycle(_teacher(),request_id='request-cycle-00',cycle_index=0,source_hash=HEX_B,as_of=2_000_000,through_cursor=6)
+    runtime=execution_module.SundayRuntime(context=None,decoder=None,optimizer=None,classroom_package=classroom,
         checkpoint=SimpleNamespace(checkpoint_hash='1'*64),expected_checkpoint_hash='1'*64,
         development_identity={},refresh_policy=None,input_hash='d'*64,expected_native_hash='e'*64,
         expected_critic_config_hash='2'*64,expected_critic_identity_hash='3'*64,
