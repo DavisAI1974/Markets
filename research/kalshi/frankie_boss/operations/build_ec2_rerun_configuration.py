@@ -41,9 +41,10 @@ def completion_ref_contains_commit(repository, ref, boss_commit):
     """Fail closed unless the remote workflow branch contains the reviewed BOSS commit.
 
     `gh workflow run --ref` chooses which workflow YAML GitHub executes. Resolve that
-    branch from origin instead of trusting a local tracking ref, fetch only its commit
-    object when necessary, then require the reviewed BOSS commit to be its ancestor.
-    This does not move a local branch or merge anything.
+    branch from origin instead of trusting a local tracking ref, fetch its branch history
+    into FETCH_HEAD without moving any local branch, then require boss_commit to be its
+    ancestor. This also works when the restored checkout has not fetched the reviewed
+    commit objects yet.
     """
     repository=Path(repository).resolve()
     if not repository.is_dir():
@@ -69,19 +70,17 @@ def completion_ref_contains_commit(repository, ref, boss_commit):
         raise SystemExit('completion workflow ref must resolve to one remote branch tip')
     tip=parsed[0]
     try:
-        subprocess.run(['git','cat-file','-e',boss_commit+'^{commit}'],cwd=repository,check=True,
+        subprocess.run(['git','fetch','--no-tags','--quiet','origin',remote_ref],cwd=repository,check=True,
                        stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError as error:
-        raise SystemExit('reviewed BOSS commit is not present in the host repository') from error
-    try:
-        subprocess.run(['git','cat-file','-e',tip+'^{commit}'],cwd=repository,check=True,
-                       stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError:
+        raise SystemExit('unable to fetch completion workflow branch for ancestry verification') from error
+    for commit,message in ((tip,'completion workflow branch tip is not a commit'),
+                           (boss_commit,'reviewed BOSS commit is not present after fetching workflow branch')):
         try:
-            subprocess.run(['git','fetch','--no-tags','--quiet','origin',tip],cwd=repository,check=True,
+            subprocess.run(['git','cat-file','-e',commit+'^{commit}'],cwd=repository,check=True,
                            stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         except subprocess.CalledProcessError as error:
-            raise SystemExit('unable to fetch completion workflow branch tip for ancestry verification') from error
+            raise SystemExit(message) from error
     if subprocess.run(['git','merge-base','--is-ancestor',boss_commit,tip],cwd=repository,
                       stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode!=0:
         raise SystemExit('completion workflow ref does not contain the reviewed BOSS commit')
