@@ -1,0 +1,1 @@
+This branch accumulated non-authoritative restoration-package staging commits after the validated EC2 resume fix at `7981d0936a1c929d0b965ad9908fdcdcadd4f0cd`. Use the clean recovery branch cut from that commit for all further work. No result-bearing run is authorized from this staging branch.
