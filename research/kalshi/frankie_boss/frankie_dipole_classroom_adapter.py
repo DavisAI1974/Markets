@@ -1,18 +1,10 @@
 """Frankie principal adapter with a mandatory two-turn Dipole classroom.
 
 This subclasses the existing durable principal boundary instead of creating a
-second model path.  The ordinary feedback/lessons envelope is returned unchanged,
-but only after:
-
-1. Dipole's model-visible lesson is attached to the original principal request.
-2. The same Frankie response supplies a complete 19-dimension teach-back.
-3. The audit-only teacher key grades that teach-back locally.
-4. Dipole's correction is durably sent back to the same session.
-5. The same session acknowledges/resolves every correction.
-6. The teacher-complete gate passes and an exact transcript is retained.
-
-The audit-only teacher key is persisted locally and is never placed in the model
-attachment or correction request before Frankie's initial answer.
+second model path. The ordinary feedback/lessons envelope is returned unchanged,
+but only after the complete classroom finishes. The audit-only teacher key is
+persisted locally and never placed in the model attachment before Frankie's first
+answer.
 """
 from __future__ import annotations
 
@@ -22,7 +14,6 @@ from pathlib import Path
 
 from .dipole_classroom_render import render_transcript
 from .dipole_classroom_session import (
-    CORRECTION_REQUEST_SCHEMA,
     correction_request,
     finish,
     grade_initial_response,
@@ -83,8 +74,6 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
         attachment = dict(attachment)
         attachment["dipole_classroom"] = visible
         attachment["attachment_hash"] = digest({k:v for k,v in attachment.items() if k != "attachment_hash"})
-        # Retain both sides of the disclosure boundary.  Only pre-message/binding
-        # appear in attachment; the key remains local for post-answer grading.
         self._retain("dipole-classroom-source.json", self.classroom_package["source"])
         self._retain("dipole-classroom-teacher-key.audit.json", self.classroom_package["teacher_key"])
         self._retain("dipole-classroom-pre-message.json", self.classroom_package["pre_message"])
@@ -98,15 +87,22 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
             raise ValueError("principal attachment Dipole classroom differs from model-visible contract")
         request = dict(request)
         request["instruction"] += (
-            " Before giving feedback, complete the attached Dipole classroom lesson. Your response must "
-            "include dipole_teachback with schema DIPOLE_CLASSROOM_TEACHBACK_V1. Cover all 19 dimensions "
-            "in governed order. For every dimension provide state_counts for PRESENT/MISSING/INVALID/ABLATED, "
-            "terminal_state, first-to-last PRESENT direction, what happened, why, the market behavior, the "
-            "FIFO/full-book/order link where applicable, evidence, uncertainty, and any specific relationships. "
-            "Set relationship_pairs_considered to 171 after considering the complete pair surface. Distinguish "
-            "observation, interpretation, hypothesis, and anything not yet knowable. Set future_outcome_claimed "
-            "false. The host will then return Dipole's point-by-point grade to this same session; you must resolve "
-            "and acknowledge every correction before this cycle can complete."
+            " Before giving feedback, complete the attached Dipole classroom lesson. Your response must include "
+            "dipole_teachback with schema DIPOLE_CLASSROOM_TEACHBACK_V1 and cover all 19 dimensions in governed "
+            "order. For every dimension provide state_counts for PRESENT/MISSING/INVALID/ABLATED, terminal_state, "
+            "first-to-last PRESENT direction, what happened, why, market behavior, FIFO/full-book/order linkage "
+            "where justified, evidence, uncertainty, and any specifically notable relationships. Set "
+            "relationship_pairs_considered to 171 and future_outcome_claimed false. In addition, provide "
+            "dipole_observation_review as exactly 19 ordered objects {name, observations}; observations must include "
+            "every retained cursor for that dimension as {cursor,state,value,explanation}, with value null for every "
+            "non-PRESENT state. Also provide dipole_relationship_scan as exactly 171 canonical ordered pair objects "
+            "{left,right,direction_relation,correlation_interpretation,developing_structure}; direction_relation must "
+            "be SAME_DIRECTION, OPPOSITE_DIRECTION, or UNRESOLVED, correlation_interpretation must explain what the "
+            "current causal evidence does or does not support, and developing_structure must be null or an explicitly "
+            "labeled hypothesis. Do not skip repetitive, neutral, missing, invalid, or ablated evidence. Distinguish "
+            "observation, interpretation, hypothesis, and anything not yet knowable. The host will return Dipole's "
+            "point-by-point grade to this same session; you must resolve and acknowledge every correction before this "
+            "cycle can complete."
         )
         request["dipole_classroom_model_visible_hash"] = visible["model_visible_hash"]
         return request
@@ -148,9 +144,6 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
         return body
 
     def _recover_with_classroom(self, request_id, attachment, *, dispatch_followup):
-        # Existing principal validation remains authoritative for feedback, frozen
-        # sections, identity and host attestation. It returns the legacy envelope
-        # that the coordinator already understands.
         envelope = super().recover(request_id, attachment)
         request = json.loads((self.directory / "session-request.json").read_bytes())
         retained = json.loads((self.directory / "session-response.json").read_bytes())
@@ -188,12 +181,12 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
             "classroom_binding_hash":self.classroom_package["binding"]["classroom_binding_hash"],
             "teacher_key_hash":self.classroom_package["teacher_key"]["teacher_key_hash"],
             "completion_hash":completion["completion_hash"],
+            "exhaustive_audit_hash":completion["exhaustive_audit_hash"],
+            "observation_claims_reviewed":completion["observation_claims_reviewed"],
+            "relationship_pairs_explicitly_reviewed":completion["relationship_pairs_explicitly_reviewed"],
             "transcript":file_witness(transcript_path),
             "initial_session_id":initial_response["session_id"],
             "correction_session_id":correction_envelope["response"]["session_id"],
             "teacher_complete":completion["teacher_complete"],
         })
-        # Deliberately return the legacy envelope unchanged so the existing cycle
-        # coordinator, feedback verifier, Memory A separation and training contract
-        # remain untouched. Classroom completion is a prerequisite to this return.
         return envelope
