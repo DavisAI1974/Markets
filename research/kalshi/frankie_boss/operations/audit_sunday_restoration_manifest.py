@@ -7,11 +7,13 @@ attested bulk-hash addendum. Path and byte count alone are never sufficient.
 
 The original restoration manifest is immutable evidence. Missing hashes are closed
 by an addendum produced from the closed source workstation, never by editing that
-manifest in place.
+manifest in place. Path normalization below is comparison-only; evidence bytes are
+never rewritten.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -24,13 +26,24 @@ def _digest(value):
     return value if isinstance(value, str) and SHA256.fullmatch(value) else None
 
 
-def _addendum_hashes(addendum, manifest):
+def _path_key(value):
+    if type(value) is not str:
+        raise ValueError('string restoration path required')
+    return value.replace('\\','/').lower()
+
+
+def _addendum_hashes(addendum, manifest, manifest_content_sha256=None):
     if addendum is None:
         return {}
     if type(addendum) is not dict or addendum.get('schema') != ADDENDUM_SCHEMA:
         raise ValueError('reviewed Sunday bulk-hash addendum required')
     if addendum.get('manifest_configuration_sha256') != manifest.get('configuration_sha256'):
         raise ValueError('bulk-hash addendum belongs to another restoration manifest')
+    declared_manifest_hash=_digest(addendum.get('manifest_content_sha256'))
+    if declared_manifest_hash is None:
+        raise ValueError('bulk-hash addendum must bind the exact manifest bytes')
+    if manifest_content_sha256 is not None and declared_manifest_hash != manifest_content_sha256:
+        raise ValueError('bulk-hash addendum exact manifest hash differs')
     rows = addendum.get('files')
     if type(rows) is not list or not rows:
         raise ValueError('bulk-hash addendum files required')
@@ -44,14 +57,16 @@ def _addendum_hashes(addendum, manifest):
             raise ValueError('bulk-hash addendum requires exact SHA-256')
         if row.get('closed') is not True or row.get('sidecars_absent') is not True:
             raise ValueError('bulk-hash addendum requires closed file and absent SQLite sidecars')
-        key = Path(row['path']).as_posix().lower()
+        if row.get('verified_full_reads') != 2:
+            raise ValueError('bulk-hash addendum requires two matching full-file hash reads')
+        key = _path_key(row['path'])
         if key in result and result[key] != (row['bytes'], digest):
             raise ValueError('conflicting duplicate bulk-hash addendum row')
         result[key] = (row['bytes'], digest)
     return result
 
 
-def audit(manifest, addendum=None):
+def audit(manifest, addendum=None, manifest_content_sha256=None):
     if type(manifest) is not dict or manifest.get('schema') != 'FRANKIE_SUNDAY_RESTORATION_MANIFEST_V1':
         raise ValueError('reviewed Sunday restoration manifest required')
     files = manifest.get('files')
@@ -68,9 +83,9 @@ def audit(manifest, addendum=None):
                 raise ValueError('invalid '+collection+' row')
             digest = _digest(row.get('sha256'))
             if digest is not None:
-                independent.setdefault(Path(row['path']).as_posix().lower(), set()).add(digest)
+                independent.setdefault(_path_key(row['path']), set()).add(digest)
 
-    additions = _addendum_hashes(addendum, manifest)
+    additions = _addendum_hashes(addendum, manifest, manifest_content_sha256)
     bulk = []
     gaps = []
     conflicts = []
@@ -79,7 +94,7 @@ def audit(manifest, addendum=None):
             raise ValueError('invalid restoration file row')
         if row['in_git']:
             continue
-        path = Path(row['original_path']).as_posix().lower()
+        path = _path_key(row['original_path'])
         row_digest = _digest(row.get('sha256'))
         witness_digests = independent.get(path, set())
         addendum_record = additions.get(path)
@@ -102,7 +117,7 @@ def audit(manifest, addendum=None):
         elif len(candidates) != 1:
             conflicts.append(dict(record, candidate_sha256s=sorted(candidates)))
 
-    bulk_paths = {Path(row['original_path']).as_posix().lower() for row in bulk}
+    bulk_paths = {_path_key(row['original_path']) for row in bulk}
     extras = sorted(path for path in additions if path not in bulk_paths)
     if extras:
         raise ValueError('bulk-hash addendum contains paths outside manifest bulk set')
@@ -121,10 +136,11 @@ def main():
     parser.add_argument('--bulk-hash-addendum')
     parser.add_argument('--out')
     args=parser.parse_args()
-    manifest=json.loads(Path(args.manifest).read_bytes())
+    manifest_raw=Path(args.manifest).read_bytes()
+    manifest=json.loads(manifest_raw)
     addendum=(json.loads(Path(args.bulk_hash_addendum).read_bytes())
               if args.bulk_hash_addendum else None)
-    result=audit(manifest,addendum)
+    result=audit(manifest,addendum,hashlib.sha256(manifest_raw).hexdigest())
     raw=json.dumps(result,indent=2,sort_keys=True).encode()+b'\n'
     if args.out:
         Path(args.out).write_bytes(raw)
