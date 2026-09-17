@@ -1,0 +1,9 @@
+# Runtime alignment validation
+
+Native source is frozen at 96e26f7d5e8100cca93288d5f44d9550ab5cfd9a. The full scientific family plus journal regression tests passed at validation commit 0036d02e61d8a2b3ccfc7b417d1d34869ba5ca1b: 1,093 passed and one skipped. Receiver validation passed 352 tests and 234 subtests. [Actual checks run](https://github.com/DavisAI1974/Markets/actions/runs/35188383679).
+
+The selected pinned AWS vLLM image actually injects VLLM_ENABLE_CUDA_COMPATIBILITY=0 and VLLM_USAGE_SOURCE=production-docker-image. The aligned startup verifier explicitly pins these measured values and continues to reject other controlled overrides. Model manifest, image digest, served model, full file verification, 131,072-token context and runtime source/version checks remain enforced. Provider logs show all four model shards loaded, 148,096 GPU cache tokens and engine readiness. These startup observations precede the new request-specific observer and are not substituted for its fresh readiness proof.
+
+The journal now closes parent SDK connection pools before isolated operations. A null SDK exception response no longer masks ConnectionClosedError as AttributeError. Diagnostics report safe code locations, missing attribute names and object type, and exclude exception arguments and object representations. Three real Linux isolation checks passed, including private exception argument suppression and deadline child cleanup; four journal regression tests passed in the full family.
+
+The earlier admitted attempt a7b72cf923f906c791e4a927dc72b7c61fa25f7ac263e66bb154be67056c22d8 is retained as an attempt without inference. Its observer configuration is preserved; it is not overwritten or silently repinned. The separately named runtime-aligned native run is preparing a new first input. No new classroom completion or new principal assessment has been claimed at this point.
