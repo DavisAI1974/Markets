@@ -1,0 +1,78 @@
+name: Frankie day pipeline (beginning to end)
+
+# Dispatch only. No cron until Greg turns it on: a scheduled dispatch can carry no `go`, so the
+# chain would run the data plane (stages 1-4) and stop at the HOLD receipt before cycles.
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'Trading day YYYYMMDD'
+        required: true
+      go:
+        description: "Greg's go: the day's source manifest hash. Empty = data plane only, HOLD before cycles."
+        required: false
+        default: ''
+      until:
+        description: 'Stop after this stage (optional)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write   # the receipts under runs/<DAY>/ are committed; git is the record
+
+concurrency:
+  group: frankie-day-${{ inputs.day }}
+  cancel-in-progress: false
+
+jobs:
+  day:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1380
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_EC2_METADATA_DISABLED: 'true'
+      PYTHONPATH: .:research/kalshi/frankie_boss
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Dependencies (S3, EC2, SSM, DBN decode)
+        run: python -m pip install --quiet boto3 zstandard "databento-dbn==0.62.0"
+      - name: Run the chain from the first missing receipt
+        run: |
+          set -euo pipefail
+          python research/kalshi/frankie_boss/operations/day_pipeline.py \
+            --configuration research/kalshi/frankie_boss/operations/day_pipeline.configuration.json \
+            --day "${{ inputs.day }}" \
+            ${{ inputs.go != '' && format('--go {0}', inputs.go) || '' }} \
+            ${{ inputs.until != '' && format('--until {0}', inputs.until) || '' }} \
+            --runs-root research/kalshi/frankie_boss/runs
+      - name: Stop the host (always)
+        if: always()
+        run: |
+          python research/kalshi/frankie_boss/operations/day_pipeline.py \
+            --configuration research/kalshi/frankie_boss/operations/day_pipeline.configuration.json \
+            --day "${{ inputs.day }}" --host-stop --runs-root research/kalshi/frankie_boss/runs
+      - name: Commit the receipts (always)
+        if: always()
+        run: |
+          set -euo pipefail
+          git config user.name 'frankie-day-pipeline'
+          git config user.email 'frankie-day-pipeline@users.noreply.github.com'
+          git add research/kalshi/frankie_boss/runs research/kalshi/frankie_boss/blocks || true
+          git diff --staged --quiet && exit 0
+          git commit -m "runs/${{ inputs.day }}: day pipeline receipts (run ${{ github.run_id }})"
+          git push
+      - name: Job summary = the receipts
+        if: always()
+        run: |
+          for f in research/kalshi/frankie_boss/runs/${{ inputs.day }}/*.json; do
+            [ -f "$f" ] || continue
+            echo "### $(basename "$f")" >> "$GITHUB_STEP_SUMMARY"; echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat "$f" >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
+          done

@@ -1,0 +1,23 @@
+{
+ "_note": "Pipeline configuration read by operations/day_pipeline.py. No credential, no desktop path (D34). Host scripts run over SSM and must end with one line: PIPELINE_RECEIPT {json} carrying the gate fields in day_pipeline.GATES. The Windows host uses .ps1 today; the Linux host image (spec prerequisite 5) swaps these for .sh with no other change.",
+ "ec2_host": "deploy/aws/ec2_host.py",
+ "ssm_run": "deploy/aws/ssm_run_ps1.py",
+ "instance": "i-0e90ee6110ef609aa",
+ "region": "us-east-2",
+ "bucket": "bento-568968024170-us-east-2-an",
+ "block": "BLOCK_DAY",
+ "archive": "nymex/ng_mbo_5y_v0/native/2021-10",
+ "blocks_dir": "research/kalshi/frankie_boss/blocks",
+ "stage_block_sources": "research/kalshi/frankie_boss/operations/stage_block_sources.py",
+ "upload_restore_set": "research/kalshi/frankie_boss/operations/upload_sunday_restore_set.py",
+ "restore_prefix": "frankie/days",
+ "minimum_prefixes": 19,
+ "host_scripts": {
+  "ingest": "deploy/aws/host/day_ingest.ps1",
+  "schedule_prefixes": "deploy/aws/host/day_schedule_prefixes.ps1",
+  "cycles": "deploy/aws/host/day_cycles.ps1"
+ },
+ "ingest_timeout": 21600,
+ "prefix_timeout": 7200,
+ "cycles_timeout": 43200
+}
