@@ -1,7 +1,7 @@
 name: Frankie day pipeline (beginning to end; the actual combined Sunday journal stack is its ingest job)
 # The chain of SPEC_UNATTENDED_DAILY_PIPELINE_20260916.md around the journal stack that produced the
 # gold-standard first run (GitHub run 34962256086). Dispatch only: a schedule could carry no `go`, so it
-# would only ever run the data plane. The `journal` job is the original workflow's job, unchanged.
+# would only ever run the data plane. Ingestion uses the existing combined journal stack.
 on:
   workflow_dispatch:
     inputs:
@@ -21,9 +21,15 @@ on:
         required: false
         default: 'runner'
       runner:
-        description: "Runner label for the journal job. Default = the first run's 4-vCPU runner; a larger runner (32 or 48 vCPU) only shortens the wall time: the stack pins the first CPU to the parent and gives every other CPU a worker, and the output is byte-identical by construction (ordered partitions, ordered bounded queue)."
+        description: "AWS 32-vCPU ingest runner in us-east-1. Native Frankie runs separately on the 16-vCPU host with 8 threads."
         required: false
-        default: 'ubuntu-24.04'
+        default: 'frankie-ingest32-20260917'
+      cycles:
+        description: 'First two cycles, or resume all nineteen in the same run directory.'
+        type: choice
+        options: ['2', '19']
+        default: '2'
+        required: true
   push:
     branches: [codex/journal-reduction-stack-20260915]
     paths: [.github/frankie-journal-stack-request.json]
@@ -42,6 +48,8 @@ jobs:
     if: github.repository == 'DavisAI1974/Markets' && inputs.day != ''
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    outputs:
+      ingest_present: ${{ steps.existing.outputs.ingest_present }}
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -57,8 +65,36 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97 zstandard "databento-dbn==0.62.0"
+      - name: Require the Sunday bound to the current snapshot request
+        env:
+          TRADING_DAY: ${{ inputs.day }}
+        run: test "$TRADING_DAY" = 20211003
+      - name: Restart the native host on every dispatch
+        env:
+          TRADING_DAY: ${{ inputs.day }}
+        run: python "$PIPELINE" --configuration "$PIPELINE_CONFIGURATION" --day "$TRADING_DAY" --ensure-host-online
       - name: Stage sources and start the host (receipts 00, 01)
         run: python "$PIPELINE" --configuration "$PIPELINE_CONFIGURATION" --day "${{ inputs.day }}" --until host-start --runs-root "$RUNS_ROOT"
+      - name: Check for an admitted ingest receipt
+        id: existing
+        env:
+          TRADING_DAY: ${{ inputs.day }}
+        run: |
+          python - <<'PY'
+          import importlib.util, json, os
+          from pathlib import Path
+          spec = importlib.util.spec_from_file_location('day_pipeline', os.environ['PIPELINE'])
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          pipeline = module.DayPipeline(json.loads(Path(os.environ['PIPELINE_CONFIGURATION']).read_bytes()),
+                                 os.environ['TRADING_DAY'], runs_root=os.environ['RUNS_ROOT'])
+          receipt = pipeline.receipt('ingest')
+          if receipt:
+              pipeline.require('schedule-prefixes')
+              pipeline.reconcile_ingest(receipt['gate']['journal_count'])
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+              stream.write(f"ingest_present={'true' if receipt else 'false'}\n")
+          PY
       - name: Commit the receipts
         run: |
           git config user.name "github-actions[bot]"
@@ -68,7 +104,7 @@ jobs:
   journal:
     # Runs after `sources` on a dispatch; on the original push trigger `sources` is skipped (no day
     # input) and this job must still run exactly as before, so a skipped need is not a failure here.
-    if: github.repository == 'DavisAI1974/Markets' && !cancelled() && needs.sources.result != 'failure' && inputs.ingest_on != 'host'
+    if: github.repository == 'DavisAI1974/Markets' && !cancelled() && needs.sources.result != 'failure' && inputs.ingest_on != 'host' && needs.sources.outputs.ingest_present != 'true'
     needs: [sources]
     runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
     timeout-minutes: 360
@@ -150,8 +186,8 @@ jobs:
   host:
     # Stages 3/4-7 on the native host over SSM (receipts 02/03-06). Cycles runs only under `go` = the source manifest hash.
     # With ingest_on=host the journal job is skipped and this job runs the stack over SSM on the host's CPUs.
-    if: github.repository == 'DavisAI1974/Markets' && inputs.day != '' && !cancelled() && needs.journal.result != 'failure'
-    needs: [journal]
+    if: github.repository == 'DavisAI1974/Markets' && inputs.day != '' && !cancelled() && needs.sources.result == 'success' && (needs.journal.result == 'success' || needs.journal.result == 'skipped')
+    needs: [sources, journal]
     runs-on: ubuntu-24.04
     timeout-minutes: 1380
     env:
@@ -170,20 +206,22 @@ jobs:
           python-version: '3.13'
       - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
       - uses: actions/download-artifact@v4
-        if: inputs.ingest_on != 'host'
+        if: needs.journal.result == 'success'
         with:
           name: day-receipts-ingest-${{ inputs.day }}-${{ github.run_id }}
           path: ${{ env.RUNS_ROOT }}/${{ inputs.day }}
       - name: Run the remaining stages from the first missing receipt
+        env:
+          TRADING_DAY: ${{ inputs.day }}
+          SOURCE_GO: ${{ inputs.go }}
+          UNTIL_STAGE: ${{ inputs.until }}
+          CYCLE_LIMIT: ${{ inputs.cycles || '2' }}
         run: |
           set -euo pipefail
-          python "$PIPELINE" --configuration "$PIPELINE_CONFIGURATION" --day "${{ inputs.day }}" \
-            ${{ inputs.go != '' && format('--go {0}', inputs.go) || '' }} \
-            ${{ inputs.until != '' && format('--until {0}', inputs.until) || '' }} \
-            --runs-root "$RUNS_ROOT"
-      - name: Stop the host (always)
-        if: always()
-        run: python "$PIPELINE" --configuration "$PIPELINE_CONFIGURATION" --day "${{ inputs.day }}" --host-stop --runs-root "$RUNS_ROOT"
+          arguments=(--configuration "$PIPELINE_CONFIGURATION" --day "$TRADING_DAY" --cycles "$CYCLE_LIMIT" --runs-root "$RUNS_ROOT")
+          [ -z "$SOURCE_GO" ] || arguments+=(--go "$SOURCE_GO")
+          [ -z "$UNTIL_STAGE" ] || arguments+=(--until "$UNTIL_STAGE")
+          python "$PIPELINE" "${arguments[@]}"
       - name: Commit the receipts (always)
         if: always()
         run: |
@@ -199,3 +237,33 @@ jobs:
             echo "### $(basename "$f")" >> "$GITHUB_STEP_SUMMARY"; echo '```json' >> "$GITHUB_STEP_SUMMARY"
             cat "$f" >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
           done
+  cleanup:
+    # Also runs when a failed journal prevents the native job from starting.
+    if: always() && github.repository == 'DavisAI1974/Markets' && inputs.day == '20211003'
+    needs: [sources, journal, host]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_EC2_METADATA_DISABLED: 'true'
+      PYTHONPATH: .:research/kalshi/frankie_boss
+      TRADING_DAY: ${{ inputs.day }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Stop both AWS machines after result preservation
+        run: python "$PIPELINE" --configuration "$PIPELINE_CONFIGURATION" --day "$TRADING_DAY" --stop-compute --runs-root "$RUNS_ROOT"
+      - name: Preserve shutdown receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: compute-stop-${{ github.run_id }}
+          path: ${{ env.RUNS_ROOT }}/${{ inputs.day }}/*stop.json
+          if-no-files-found: error

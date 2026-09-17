@@ -12,7 +12,13 @@
  "upload_restore_set": "research/kalshi/frankie_boss/operations/upload_sunday_restore_set.py",
  "restore_prefix": "frankie/days",
  "ingest_on": "runner",
- "_ingest_on": "runner = the gold-standard journal stack as the workflow's own job (4-vCPU runner, parent + 3 workers, recorded with --record); host = the same stack over SSM on the declared instance (parent + every other CPU), for the 32/48-CPU host once Greg names it and its OS",
+ "_ingest_on": "The existing journal job uses the authorized 32-vCPU AWS Linux runner in us-east-1. Native Frankie uses the existing 16-vCPU Windows host in us-east-2, with 8 native threads. These are separate machines.",
+ "ingest_runner": {
+  "instance": "i-035994afa8bdf66a5",
+  "region": "us-east-1",
+  "label": "frankie-ingest32-20260917",
+  "vcpus": 32
+ },
  "minimum_prefixes": 19,
  "host_scripts": {
   "ingest": null,
@@ -21,11 +27,11 @@
  },
  "_host_scripts": "ingest is null on purpose (Greg, 2026-09-17): ingestion stays the journal-stack job already on git, recorded with --record ingest. There is no second ingestion path to build or pay for. ingest_on: host would now be refused by name rather than run a script that does not exist.",
  "host_variables": {
-  "ToolsRoot": "HOST_TOOLS_ROOT",
-  "Python": "HOST_PYTHON",
-  "RunRoot": "HOST_RUN_ROOT"
+  "ToolsRoot": "C:/tools/Frankie-20260919/Markets",
+  "Python": "C:/Codex/Frankie-BOSS-20260919/actual-host-python/Scripts/python.exe",
+  "RunRoot": "C:/Codex/Frankie-BOSS-20260919/days"
  },
- "_host_variables": "Filled when Greg authors the fresh run configuration; the scripts refuse any value still reading HOST_*. ToolsRoot is the lawful checkout at the reviewed BOSS commit (the retained scripts used C:\\tools\\Markets), Python the host interpreter, RunRoot the parent holding <RunRoot>\\<Day>\\actual-host-configuration.json and that day's run directory.",
+ "_host_variables": "Fresh C: host paths: reviewed BOSS tools, isolated native Python, and fresh day configuration/results. No new files on E:.",
  "ingest_timeout": 21600,
  "prefix_timeout": 7200,
  "cycles_timeout": 43200

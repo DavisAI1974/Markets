@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 # Stage 5 (cycles) of the unattended day pipeline: the day's result-bearing cycles, by wrapping
-# operations/run_actual_sunday_compact_source.py --configuration. That runner composes the
+# operations/run_actual_sunday_ec2.py --configuration --compact-source-tools. That runner fixes
+# the native numeric policy before model construction, then composes the
 # compact-source host over the integrated classroom host and refuses when the classroom
 # runner/adapter is absent from the lawful checkout (audit finding 3), so the base adapter can
 # never be the one that runs.
@@ -19,6 +20,8 @@ foreach ($required in 'Day', 'ToolsRoot', 'Python', 'RunRoot') {
     }
 }
 $dayDirectory = Join-Path $RunRoot $Day
+if (-not (Get-Variable CycleLimit -ErrorAction SilentlyContinue)) { $CycleLimit = 19 }
+if ([int]$CycleLimit -lt 1 -or [int]$CycleLimit -gt 19) { throw 'CycleLimit must be 1 through 19' }
 $configurationPath = Join-Path $dayDirectory 'actual-host-configuration.json'
 if (-not (Test-Path $configurationPath)) { throw "no run configuration for $Day at $configurationPath" }
 $configuration = Get-Content $configurationPath -Raw | ConvertFrom-Json
@@ -31,7 +34,9 @@ $expected = @((Get-Content $manifestPath -Raw | ConvertFrom-Json).witnesses).Cou
 
 $git = Get-Command git -ErrorAction SilentlyContinue
 if ($git) { Write-Output ("TOOLS_HEAD=" + (& $git.Source -C $ToolsRoot rev-parse HEAD)) }
-$tool = Join-Path $ToolsRoot 'research\kalshi\frankie_boss\operations\run_actual_sunday_compact_source.py'
+$tool = Join-Path $ToolsRoot 'research\kalshi\frankie_boss\operations\run_actual_sunday_ec2.py'
+$resume = ''
+if (Test-Path (Join-Path $configuration.run_directory 'native-host-runtime.json')) { $resume = '--ec2-resume' }
 $log = Join-Path $dayDirectory 'day-cycles.log'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 Push-Location $ToolsRoot
@@ -39,7 +44,7 @@ try {
     # cmd.exe owns the redirection, as in the retained host scripts: under
     # $ErrorActionPreference='Stop' PowerShell turns a native command's first stderr line into a
     # terminating error, which is how two earlier runs lost their tracebacks.
-    & cmd.exe /c "`"$Python`" `"$tool`" --configuration `"$configurationPath`" --tools-root `"$ToolsRoot`" > `"$log`" 2>&1"
+    & cmd.exe /c "`"$Python`" `"$tool`" --configuration `"$configurationPath`" --compact-source-tools `"$ToolsRoot`" --cycles $CycleLimit $resume > `"$log`" 2>&1"
     $code = $LASTEXITCODE
 } finally { Pop-Location }
 if (Test-Path $log) {
@@ -55,10 +60,12 @@ if (Test-Path $log) {
 }
 if ($code -ne 0 -or -not $statusLine) { throw "cycles exited $code for $Day; last status: $statusLine" }
 $status = $statusLine | ConvertFrom-Json
-if ($status.status -ne 'all_nineteen_cycles_complete') {
+if ($status.status -ne 'all_nineteen_cycles_complete' -and $status.status -ne 'requested_cycles_complete') {
     throw "cycles did not complete for $Day; runner reported '$($status.status)'"
 }
 $receipt = [ordered]@{
+    status           = $status.status
+    requested_cycles = [int]$CycleLimit
     cycles_completed = [int]$status.cycles
     cycles_total     = $expected
     day              = $Day

@@ -69,11 +69,14 @@ def receipt_line(output):
 
 
 class DayPipeline:
-    def __init__(self, configuration, day, *, runner=subprocess_runner, runs_root='runs', now=time.time):
+    def __init__(self, configuration, day, *, runner=subprocess_runner, runs_root='runs', now=time.time, cycle_limit=19):
         self.c, self.day, self.run, self.now = dict(configuration), str(day), runner, now
         if not self.day.isdigit() or len(self.day) != 8:
             raise ValueError('day must be YYYYMMDD')
         self.directory = Path(runs_root) / self.day
+        if type(cycle_limit) is not int or not 1 <= cycle_limit <= 19:
+            raise ValueError('cycle_limit must be from 1 through 19')
+        self.cycle_limit = cycle_limit
         self.python = self.c.get('python', sys.executable)
 
     # ---- receipts -------------------------------------------------------------------------
@@ -129,6 +132,8 @@ class DayPipeline:
                    '--script', script, '--timeout', str(timeout), '--set', f'Day={self.day}']
         for name, value in sorted((self.c.get('host_variables') or {}).items()):
             command += ['--set', f'{name}={value}']
+        if script_key == 'cycles':
+            command += ['--set', f'CycleLimit={self.cycle_limit}']
         return command
 
     def _ec2(self, action, *extra):
@@ -226,6 +231,25 @@ class DayPipeline:
         code, output = self.run(command, timeout=self.c.get('stage_timeout', 13 * 3600))
         if code != 0:
             raise StageRefused(f'{stage} exited {code}: {output[-1500:]}')
+        if stage == 'cycles':
+            value = receipt_line(output)
+            if value.get('status') == 'requested_cycles_complete':
+                if (value.get('day') != self.day or value.get('cycles_total') != 19
+                        or value.get('cycles_completed') != self.cycle_limit
+                        or value.get('requested_cycles') != self.cycle_limit
+                        or self.cycle_limit == 19):
+                    raise StageRefused('partial cycles receipt differs from the requested batch')
+                path = self.directory / f'04-cycles-batch-{self.cycle_limit:02d}.json'
+                if path.exists():
+                    if json.loads(path.read_bytes())['gate'] != value:
+                        raise StageRefused('retained partial cycles receipt changed')
+                else:
+                    record = dict(schema=SCHEMA, day=self.day, stage=stage, status='PARTIAL',
+                                  gate=value, at=self.now(), command=command,
+                                  previous_receipt_sha256=hashlib.sha256(canonical(self.receipt('schedule-prefixes'))).hexdigest())
+                    with path.open('xb') as handle:
+                        handle.write(canonical(record) + b'\n')
+                return 'partial'
         self.write(stage, self.gate_of(stage, output), command=command)
         return 'done'
 
@@ -234,7 +258,7 @@ class DayPipeline:
         outcome = {}
         for stage in STAGES:
             outcome[stage] = self.run_stage(stage, go=go)
-            if outcome[stage] == 'hold' or stage == until:
+            if outcome[stage] in ('hold', 'partial') or stage == until:
                 break
         return outcome
 
@@ -260,7 +284,7 @@ class DayPipeline:
             if parallelism < MIN_PARALLELISM_SHARE * len(workers):
                 raise StageRefused(f'workers collapsed: {parallelism} CPUs busy for {len(workers)} dedicated worker CPUs')
             gate = dict(journal_count=completion.get('count', value.get('source_records')),
-                        journal_hash=completion.get('head_hash', value.get('completion_digest')),
+                        journal_hash=completion.get('journal_hash', completion.get('head_hash', value.get('completion_digest'))),
                         compact_sha256=value.get('compact_sha256'),
                         journal_entries=value.get('journal_entries'), github_run_id=value.get('github_run_id'),
                         parent_cpu=value.get('parent_cpu'), worker_cpus=list(workers), parallelism=parallelism,
@@ -282,6 +306,39 @@ class DayPipeline:
         if code != 0:
             raise StageRefused('host stop failed: ' + output[-1000:])
 
+    def ensure_host_online(self):
+        """A historical startup receipt does not describe today's EC2 power state."""
+        code, output = self.run(self._ec2('start'), timeout=1200)
+        if code != 0 or 'SSM Online' not in output:
+            raise StageRefused('host restart did not reach SSM Online')
+
+    def stop_compute(self):
+        """Try both stops independently, including when the native stop fails."""
+        failure = None
+        try:
+            self.host_stop()
+        except Exception as error:
+            failure = error
+        ingest = self.c.get('ingest_runner')
+        if ingest:
+            command = [self.python, self.c['ec2_host'], '--instance', ingest['instance'],
+                       '--region', ingest['region'], 'stop']
+            try:
+                code, output = self.run(command, timeout=1200)
+                stopped = code == 0 and 'stopped' in output
+                self.directory.mkdir(parents=True, exist_ok=True)
+                (self.directory / 'ingest-runner-stop.json').write_bytes(canonical(dict(
+                    schema=SCHEMA, day=self.day, stage='ingest-runner-stop', at=self.now(),
+                    instance=ingest['instance'], region=ingest['region'], returncode=code,
+                    stopped=stopped)) + b'\n')
+                if not stopped:
+                    raise StageRefused('ingest runner stop failed')
+            except Exception as error:
+                if failure is None:
+                    failure = error
+        if failure is not None:
+            raise failure
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
@@ -290,18 +347,27 @@ def main(argv=None):
     parser.add_argument('--go', default=None, help="the day's source manifest hash; without it the chain stops before cycles")
     parser.add_argument('--until', default=None, choices=STAGES)
     parser.add_argument('--host-stop', action='store_true')
+    parser.add_argument('--stop-compute', action='store_true')
+    parser.add_argument('--ensure-host-online', action='store_true')
     parser.add_argument('--record', default=None, choices=STAGES, help='record a stage that ran as its own job')
     parser.add_argument('--from', dest='receipt_from', default=None, help="that job's verification receipt")
     parser.add_argument('--runs-root', default='runs')
+    parser.add_argument('--cycles', type=int, choices=range(1, 20), default=19)
     args = parser.parse_args(argv)
     configuration = json.loads(Path(args.configuration).read_bytes())
     if any(word in json.dumps(configuration).lower() for word in ('secret', 'api_key', 'password', 'token')):
         raise SystemExit('pipeline configuration must contain no credential')
-    pipeline = DayPipeline(configuration, args.day, runs_root=args.runs_root)
+    pipeline = DayPipeline(configuration, args.day, runs_root=args.runs_root, cycle_limit=args.cycles)
     if args.host_stop:
         pipeline.host_stop()
         return 0
     try:
+        if args.stop_compute:
+            pipeline.stop_compute()
+            return 0
+        if args.ensure_host_online:
+            pipeline.ensure_host_online()
+            return 0
         if args.record:
             print(json.dumps(dict(status='ok', day=args.day, stages={args.record: pipeline.record_external(args.record, args.receipt_from)})), flush=True)
             return 0

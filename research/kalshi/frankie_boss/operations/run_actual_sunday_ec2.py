@@ -50,7 +50,8 @@ def main():
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument('--configuration', required=True)
     parser.add_argument('--ec2-resume', action='store_true')
-    args, _ = parser.parse_known_args()
+    parser.add_argument('--compact-source-tools')
+    args, remaining = parser.parse_known_args()
     configuration = json.loads(Path(args.configuration).read_bytes())
     if configuration.get('schema') != 'FRANKIE_BOSS_ACTUAL_HOST_CONFIGURATION_V1':
         raise ValueError('actual Sunday host configuration required')
@@ -72,16 +73,23 @@ def main():
         run_directory.mkdir(parents=True, exist_ok=False)
         _write_new(identity_path, identity)
 
-    if args.ec2_resume:
-        sys.argv = [argument for argument in sys.argv if argument != '--ec2-resume']
+    sys.argv = [sys.argv[0], '--configuration', args.configuration] + remaining
 
     # Import only after the numeric runtime policy is fixed. The classroom module
     # composes the lawful host explicitly; it does not rebind host/runtime globals.
     from research.kalshi.frankie_boss.operations import run_actual_sunday_classroom as actual
     from research.kalshi.frankie_boss.source_lineage_resume import verify_closed_source_lineage
 
-    class EC2ActualHost(actual.ActualHost):
+    base_host = actual.ActualHost
+    if args.compact_source_tools:
+        from research.kalshi.frankie_boss.operations import run_actual_sunday as lawful
+        from research.kalshi.frankie_boss.operations.run_actual_sunday_compact_source import host_class
+        base_host = host_class(lawful, args.compact_source_tools, base=actual.ActualHost)
+
+    class EC2ActualHost(base_host):
         def source_lineage(self, source, ingestion):
+            if args.compact_source_tools:
+                return super().source_lineage(source, ingestion)
             return verify_closed_source_lineage(self, source, ingestion,
                 verified_json=actual.verified_json, verified=actual.verified)
 

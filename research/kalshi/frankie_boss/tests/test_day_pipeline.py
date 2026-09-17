@@ -35,6 +35,30 @@ def runner(calls, failing=()):
     return run
 
 
+def test_resume_restarts_stopped_host_without_rewriting_start_receipt(tmp_path):
+    calls = []
+    pipeline = dp.DayPipeline(CONFIG, '20211003', runner=runner(calls), runs_root=tmp_path)
+    pipeline.resume(until='host-start')
+    original = pipeline.path('host-start').read_bytes()
+    pipeline.ensure_host_online()
+    assert calls[-1][-1] == 'start'
+    assert pipeline.path('host-start').read_bytes() == original
+
+
+def test_cleanup_stops_ingest_in_its_own_region_even_if_native_stop_fails(tmp_path):
+    calls = []
+    def run(argv, *, timeout):
+        calls.append(argv)
+        return (1, 'failed') if 'i-1' in argv else (0, 'state=stopped')
+    config = dict(CONFIG, ingest_runner=dict(instance='i-32', region='us-east-1'))
+    pipeline = dp.DayPipeline(config, '20211003', runner=run, runs_root=tmp_path)
+    with pytest.raises(dp.StageRefused, match='host stop failed'):
+        pipeline.stop_compute()
+    assert len(calls) == 2
+    assert 'i-32' in calls[1] and 'us-east-1' in calls[1]
+    assert json.loads((pipeline.directory / 'ingest-runner-stop.json').read_bytes())['stopped']
+
+
 def test_chain_holds_before_the_result_bearing_stage_then_resumes_under_the_exact_go(tmp_path):
     calls = []
     pipeline = dp.DayPipeline(dict(CONFIG, ingest_on='host'), '20211004', runner=runner(calls), runs_root=tmp_path, now=lambda: 1.)
@@ -52,6 +76,29 @@ def test_chain_holds_before_the_result_bearing_stage_then_resumes_under_the_exac
     assert receipts[1]['previous_receipt_sha256'] == dp.hashlib.sha256(dp.canonical(receipts[0])).hexdigest()
     assert pipeline.resume(go='h'*64) == {s: 'present' for s in dp.STAGES}   # idempotent: no command runs again
     assert len(calls) == 7
+
+
+def test_two_cycle_batch_does_not_admit_packaging_and_full_resume_finishes(tmp_path):
+    calls = []
+    run = runner(calls)
+    def batch_runner(argv, *, timeout):
+        if 'cycles.ps1' in argv and 'CycleLimit=2' in argv:
+            calls.append(argv)
+            return 0, 'PIPELINE_RECEIPT ' + json.dumps(dict(
+                status='requested_cycles_complete', cycles_completed=2, cycles_total=19,
+                requested_cycles=2, day='20211003'))
+        return run(argv, timeout=timeout)
+    pipeline = dp.DayPipeline(dict(CONFIG, ingest_on='host'), '20211003',
+                             runner=batch_runner, runs_root=tmp_path, cycle_limit=2)
+    result = pipeline.resume(go='h'*64)
+    assert result['cycles'] == 'partial' and 'package-upload' not in result
+    assert pipeline.receipt('cycles') is None
+    with pytest.raises(dp.StageRefused, match='needs the cycles receipt'):
+        pipeline.run_stage('package-upload')
+    resumed = dp.DayPipeline(dict(CONFIG, ingest_on='host'), '20211003',
+                            runner=batch_runner, runs_root=tmp_path)
+    assert resumed.resume(go='h'*64)['cycles'] == 'done'
+    assert resumed.receipt('cycles')['gate']['cycles_completed'] == 19
 
 
 def test_ingest_on_the_runner_is_only_ever_recorded_never_run_over_ssm(tmp_path):
