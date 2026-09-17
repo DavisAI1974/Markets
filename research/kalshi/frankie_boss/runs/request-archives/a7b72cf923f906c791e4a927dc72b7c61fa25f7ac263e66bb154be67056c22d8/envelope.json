@@ -1,8 +1,8 @@
 {
-  "ciphertext_sha256": "7a28cb4d078b2f3362f6c7e703fd2112a864f611731187ce1551a9964f7f5b8b",
+  "ciphertext_sha256": "c1e4e752bef524c854a322987ffdd0a8bfc28ff4b872d89c90c4b1bf04831b2c",
   "key_parameter": "/markets/frankie/request-transport/pilot-20260919",
   "key_region": "us-east-2",
-  "nonce_hex": "896bc02c47b170e5b2904cad",
+  "nonce_hex": "9b8c815e653a210f6887b947",
   "request_sha256": "a7b72cf923f906c791e4a927dc72b7c61fa25f7ac263e66bb154be67056c22d8",
   "schema": "FRANKIE_GIT_REQUEST_ARCHIVE_V1"
 }
