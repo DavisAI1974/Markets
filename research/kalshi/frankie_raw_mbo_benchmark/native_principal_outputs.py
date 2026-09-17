@@ -1446,6 +1446,7 @@ def validate_output_bundle(
     contract_text: str,
     knowledge_receipt_sha256: str | None = None,
     delivery_receipt_sha256: str | None = None,
+    include_run_documents: bool = True,
 ) -> dict[str, Any]:
     """Every required ledger present, every chain intact, every rule met - or refuse.
 
@@ -1489,7 +1490,11 @@ def validate_output_bundle(
                 f"bundle cites knowledge-delivery receipt {cited}, not the run's {knowledge_receipt_sha256}"
             )
 
+    if type(include_run_documents) is not bool:
+        raise PrincipalOutputError('include_run_documents must be boolean')
     required = required_ledger_ids(registry, contract_text)
+    if not include_run_documents:
+        required = tuple(lid for lid in required if lid not in RUN_DOCUMENT_LEDGERS)
     ledgers = body.get("ledgers")
     if not isinstance(ledgers, Mapping):
         raise PrincipalOutputError("bundle carries no ledgers mapping")
@@ -1549,6 +1554,7 @@ def validate_output_bundle_dir(
     contract_text: str,
     knowledge_receipt_sha256: str | None = None,
     delivery_receipt_sha256: str | None = None,
+    include_run_documents: bool = True,
 ) -> dict[str, Any]:
     """The staging form: load what the principal wrote, re-verifying every chain, then validate."""
     return validate_output_bundle(
@@ -1557,6 +1563,7 @@ def validate_output_bundle_dir(
         contract_text=contract_text,
         knowledge_receipt_sha256=knowledge_receipt_sha256,
         delivery_receipt_sha256=delivery_receipt_sha256,
+        include_run_documents=include_run_documents,
     )
 
 

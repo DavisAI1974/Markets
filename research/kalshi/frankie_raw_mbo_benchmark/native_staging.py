@@ -476,6 +476,7 @@ def _validate_outputs(
     cited_delivery: str | None,
     outputs_dir: Path | None,
     knowledge_receipt_sha256: str | None,
+    include_run_documents: bool = True,
 ) -> tuple[str | None, dict[str, Any] | None]:
     """The staging gate's call into the output validator. Returns (receipt sha, receipt).
 
@@ -517,6 +518,7 @@ def _validate_outputs(
             contract_text=CONTRACT_PATH.read_text(encoding="utf-8"),
             knowledge_receipt_sha256=knowledge_receipt_sha256,
             delivery_receipt_sha256=cited_delivery,
+            include_run_documents=include_run_documents,
         )
     except (PrincipalOutputError, OSError, ValueError) as exc:
         raise StagingError(f"the principal's output bundle was refused: {exc}") from exc

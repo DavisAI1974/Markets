@@ -40,7 +40,7 @@ def _pinned_file(path, expected):
     return raw
 
 
-def output_bundle_gate(*, principal_artifact, outputs_dir, delivery_receipt_sha256, expected_run_id, expected_arm):
+def output_bundle_gate(*, principal_artifact, outputs_dir, delivery_receipt_sha256, expected_run_id, expected_arm, output_ledger_count=32):
     """Validate the principal's bundle on disk against the artifact that cites it, or refuse.
 
     Both paths given: the artifact must name the run and arm the pins name, cite the delivery
@@ -49,6 +49,8 @@ def output_bundle_gate(*, principal_artifact, outputs_dir, delivery_receipt_sha2
     NOT_PRESENTED, never silently passed, and a downstream carry refuses that. One without
     the other is refused here.
     """
+    if type(output_ledger_count) is not int or output_ledger_count not in (30, 32):
+        raise receiver.AttachmentError('output_ledger_count must be 30 or 32')
     if principal_artifact is None and outputs_dir is None:
         return {'status': OUTPUT_BUNDLE_GATE_NOT_PRESENTED}
     if principal_artifact is None or outputs_dir is None:
@@ -70,7 +72,8 @@ def output_bundle_gate(*, principal_artifact, outputs_dir, delivery_receipt_sha2
         raise receiver.AttachmentError('principal artifact cites no outputs_receipt_sha256; a delivered run without its outputs is a failed spawn')
     try:
         cited, receipt = _validate_outputs(artifact, cited_delivery=delivery_receipt_sha256, outputs_dir=Path(outputs_dir),
-                                           knowledge_receipt_sha256=artifact.get('knowledge_receipt_sha256'))
+                                           knowledge_receipt_sha256=artifact.get('knowledge_receipt_sha256'),
+                                           include_run_documents=output_ledger_count == 32)
     except StagingError as exc:
         raise receiver.AttachmentError(f'output-bundle gate refused: {exc}') from exc
     return {'status': OUTPUT_BUNDLE_GATE_VALIDATED, 'principal_artifact': _witness(artifact_raw),
@@ -81,7 +84,7 @@ def output_bundle_gate(*, principal_artifact, outputs_dir, delivery_receipt_sha2
 
 def prepare(*, pins_path, expected_pins_sha256, directory, result_path,
             delivery_receipt, mapping_artifact, output_directory,
-            principal_artifact=None, outputs_dir=None):
+            principal_artifact=None, outputs_dir=None, output_ledger_count=32):
     """Verify fresh local bytes and exclusively create the three preparation files.
 
     The externally supplied SHA256 must pin the canonical coordinator record.
@@ -128,7 +131,8 @@ def prepare(*, pins_path, expected_pins_sha256, directory, result_path,
             result_path=result_path, delivery_receipt=delivery_receipt)
     gate = output_bundle_gate(principal_artifact=principal_artifact, outputs_dir=outputs_dir,
                               delivery_receipt_sha256=accepted.receipt['agent']['delivery_receipt_sha256'],
-                              expected_run_id=pins['agent']['run_id'], expected_arm=pins['agent']['arm'])
+                              expected_run_id=pins['agent']['run_id'], expected_arm=pins['agent']['arm'],
+                              output_ledger_count=output_ledger_count)
     # Detect changed pin/input files during verification, and a changed code HEAD.
     _pinned_file(pins_path, expected_pins_sha256)
     _pinned_file(result_path, pins['result_file_sha256'])
@@ -170,6 +174,8 @@ def main(argv=None):
         parser.add_argument('--' + name, required=True)
     parser.add_argument('--principal-artifact', default=None, help='the run principal findings artifact citing outputs_receipt_sha256')
     parser.add_argument('--outputs-dir', default=None, help='the run principal_outputs directory the artifact cites')
+    parser.add_argument('--output-ledger-count', type=int, choices=(30, 32), default=32,
+                        help='explicit pilot policy: 30 preserves all scientific ledgers; 32 includes both run documents')
     parser.add_argument('--without-output-bundle', action='store_true',
                         help='explicitly prepare with no output bundle; the receipt records the gate as NOT_PRESENTED')
     args = parser.parse_args(argv)
