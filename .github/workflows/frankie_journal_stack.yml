@@ -6,8 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       day:
-        description: 'Trading day YYYYMMDD'
-        required: true
+        description: "Trading day YYYYMMDD. EMPTY = reduction only: the journal job alone on the pinned snapshot, no sources job, no EC2 host, no host stages (they gate on day != ''). That is the mode the push trigger already runs in."
+        required: false
+        default: ''
       go:
         description: "Greg's go: the day's source manifest hash. Empty = data plane only, HOLD before cycles."
         required: false
