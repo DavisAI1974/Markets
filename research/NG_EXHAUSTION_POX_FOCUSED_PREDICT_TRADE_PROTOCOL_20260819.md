@@ -1,23 +1,38 @@
-# NG Exhaustion Focused POX Predictability + Tradeability Protocol — 2026-08-19
+# NG Exhaustion Focused POX Predictability + Tradeability Protocol — no-clock correction 2026-09-17
 
-Status: **ACTIVE ISOLATED RESEARCH CONTRACT; FIXED 3,429 POPULATION; NO PROMOTION; NO PERMANENT FRANKIE MERGE.**
+Status: **BLOCKED FAIL-CLOSED ON THE MISSING AUTHORITATIVE CASE LEDGER; FIXED 3,429 POPULATION; EVENT-DRIVEN; NO PROMOTION; NO PERMANENT FRANKIE MERGE.**
 
-## Non-negotiable population contract
+## Controlling contracts
 
-For this focused line, the working population and branch partition are settled inputs, not research questions:
+- Population: `FIXED_3429_DO_NOT_REOPEN`.
+- Timing: `EVENT_DRIVEN_NO_FIXED_INTERVALS`.
+- No-clock contract: `research/NG_EXHAUSTION_POX_NO_CLOCK_CONTRACT_20260917.json`.
+- Total cases: **3,429**.
+- Later FLIP: **1,444**.
+- Later SAME: **1,985**.
+- Approximate initial sign persistence through historical +60 observation: **94.4%**.
 
-- total cases: **3,429**;
-- later FLIP branch: **1,546** (45.1%);
-- later SAME branch: **1,883** (54.9%);
-- initial sign persistence through +60: approximately **94.4%**.
+The +60 fact is frozen historical evidence/diagnostic context only. **It is not an entry, exit, hold, reversal, management, checkpoint, feature-window, or retry timer.**
 
-`population_reconciliation = FIXED_3429_DO_NOT_REOPEN`
+The authoritative case ledger must contain exactly 3,429 unique identities partitioned 1,444 FLIP / 1,985 SAME. A mismatch or missing ledger fails closed. Do not reconstruct, relabel, or replace it from canonical adjacency, the smaller historical POX subset, the 1,718+1,711 provenance, or the roster-derived superseded split.
 
-Do **not** re-derive the 3,429 from canonical adjacency, seed-state triples, lineage enumeration, reveal/held provenance, or any other alternative population construction. Do **not** spend research time reconfirming these counts. Under the explicit latest user authority on 2026-08-19, the operational load-time assertion is exactly 3,429 unique rows partitioned 1,546 FLIP / 1,883 SAME from frozen roster artifact `9279235031`. A mismatch is a ledger/input error and must fail closed; it is not permission to invent a different population.
+## The no-clock rule
 
-No case may be deleted because it is losing, short, delayed, choppy, false, low-confidence, non-executable at an early checkpoint, or inconsistent with an aggregate rule. Checkpoint availability is an annotation on a preserved row, never a population filter.
+Frankie/POX timing is caused by the market and the causal state, not by elapsed seconds.
 
-## Immutable / protected boundary
+There are no authorized fixed checkpoint grids, fixed entry-delay grids, fixed hold horizons, fixed timeout exits, fixed temporal-lookback gates, or hidden fallback timers in this focused path. In particular, there is no operational `+0/+1/+2/...`, five-second cadence, `+5/+10/+20/+30/+60` hold schedule, or other wall-clock schedule controlling a decision.
+
+Evaluation advances when a new causally completed market/state event becomes available. A prediction or action records the exact causal event timestamp that caused it. Entry uses the first eligible raw quote/trade at or after that exact timestamp. Continue, close, reverse, successor/re-origin, and stand-down actions require an explicit causal state transition or model decision.
+
+Elapsed time and durations may be calculated **after the fact** for diagnostics, distributions, audit, and reporting. They cannot cause a prediction, entry, exit, retry, reversal, reset, or feature gate.
+
+## Preserve every case and every causal observation
+
+No case may be deleted because it is losing, zero, choppy, delayed, false, low-confidence, non-executable, short-lived, or inconvenient. Missing raw execution or unavailable causal state is an annotation, never permission to drop a row.
+
+No silent dropping, arbitrary truncation, averaging, smoothing, or normalization of raw evidence is authorized. Retained observations must reach computation rather than merely storage.
+
+## Protected boundary
 
 Do not modify or retune:
 
@@ -25,153 +40,93 @@ Do not modify or retune:
 - canonical evidence rows;
 - Phase-1 lineage or scores;
 - finalized Phase-2 findings;
-- frozen runway clock;
+- frozen runway clock as historical evidence;
 - permanent Frankie;
 - Frankie 1;
 - `research/kalshi/spawn.py`;
 - frozen SSOS play.
 
-This study is additive only.
+The no-clock correction changes the focused POX research/execution scheduling layer; it does not rewrite frozen evidence.
 
 ## Authoritative master ledger
 
-All focused POX work must be ledger-driven. The master case ledger is the source of case identity and FLIP/SAME labels. The runner must **not** construct the 3,429 population from the canonical event table.
+All focused POX work is ledger-driven. The ledger supplies case identity and FLIP/SAME labels. Canonical evidence and raw NG tape may be joined only after those identities are loaded, solely to attach causal state, timestamps, and executable market data. Enrichment cannot add, remove, or relabel a case.
 
-Each ledger row must preserve at minimum:
+Until the authoritative 3,429 / 1,444 / 1,985 case-level ledger is supplied and validated, downstream modeling and execution remain blocked.
 
-- stable `case_id`;
-- event/session identity sufficient to join to causal tape/canonical data;
-- event polarity/direction;
-- authoritative `branch_label` in `{FLIP,SAME}`;
-- causal signal/checkpoint timestamps when available;
-- availability flags rather than row deletion when a checkpoint cannot be evaluated;
-- any outcome fields used only as labels/economics, never leaked into earlier features.
+## Contamination wall
 
-The canonical event table and raw tape may be joined **after** case identity is loaded, solely to attach causal features, timestamps, and executable prices.
+Do not open or use independent D0-D5 result artifacts while selecting POX rules, thresholds, features, entries, exits, or strategy. The POX-vs-D0-D5 incremental crosswalk remains deferred until the standalone POX rules are frozen.
 
-## Chronology / contamination wall
+The contamination-safe negative remains valid context: generic D1 immediate/+0 behavior failed tune profitability and was effectively flat gross before costs. It must not be transferred into POX as an entry rule.
 
-Complete and freeze this POX study standalone before reading or using independent D0-D5 result artifacts.
+## Stage 1 — event-driven initial continuation and execution
 
-Allowed inputs:
+The approximately 94.4% historical +60 persistence is fixed context; do not retest the population fact. The research question is when the individual instance itself supplies sufficient causal information for an executable action.
 
-- authoritative fixed 3,429 POX case ledger;
-- immutable canonical event data only as a join/enrichment source;
-- authoritative raw NG tape;
-- previously finalized POX findings and protected-management semantics;
-- contamination-safe entry-timing methodology/results that predate the independent D0-D5 result pass.
+For every case, process the causal event stream in order. At each new causally completed state/event, the model may emit no-call or a first valid call. Once a call is emitted, record:
 
-Forbidden during POX rule selection:
-
-- D0 standalone result artifact;
-- D1-D5 predictability result artifact;
-- D1-D5 chain-birth result artifact;
-- any threshold, feature, rule, or trade decision selected from those independent outcomes.
-
-The POX-vs-D0-D5 incremental crosswalk remains deferred until POX is independently frozen.
-
-## Target A — earliest causal POX call
-
-Determine the earliest causal timestamp at which POX membership/identity can be called with stable out-of-time value. If a candidate-universe/control ledger is required for a binary POX-membership model, it must be supplied separately and must never redefine the fixed 3,429 positive population.
-
-Pre-birth forecasting is the primary objective. Each instance's prior clock starts at its last causally confirmed predecessor and advances toward birth on the mirrored cadence: the exact predecessor-confirmation boundary, then aligned five-second checkpoints, then `-5,-4,-3,-2,-1`. There is no fixed prior horizon. If no causally confirmed predecessor exists, do not invent a predecessor-anchored prior window.
-
-Only the pre-birth no-call residual enters nonnegative H. H is `0,1,2,3,4,5`, then every five seconds until that instance's first confident call or its causal terminal. There is no fixed H maximum. The POX-membership terminal is the second before the next frozen exhaustion candidate or authoritative tape end; the FLIP/SAME terminal is the second before the branch becomes causally known or authoritative tape end.
-
-Use only information available by the checkpoint. The earliest validated checkpoint wins; do not delay a valid earlier signal merely because a later checkpoint scores better.
-
-Use a strict first-call cascade. Every case that receives a pre-birth call is removed from all nonnegative-H runs, whether that call is correct or wrong. Only the pre-birth no-call residual may enter H, and each residual case records its first predictive H. Never allow the realized outcome to decide whether a case receives a retry.
-
-The causal information set should be as rich as the normally observable market state permits: full dense detector, price, quote, MBP-10 depth, trade, volume, flow, and available MBO prefixes through the completed checkpoint second. Match the V3 continuous live-state surface, including raw price direction/velocity/ranges, dense 61-second price and roll-20 dipole paths, signed-flow windows, book lags/changes/dense path, time since the week's first trade, and causal clock. Raw unoriented market state is available at birth H0. Target-specific event polarity, family/structure, confirmation timing, and polarity-oriented state remain withheld until causal confirmation; future price, branch identity, and all observations from the following second onward are forbidden. Execution starts no earlier than the next second boundary.
-
-Feature versions are additive layers. The existing causal/raw surface and the complete V3 live-state block remain intact. V4 is appended as a separately named layer and may not replace, rename, or shadow V3 fields.
-
-If the candidate/control universe is unavailable, mark Target A `BLOCKED_MISSING_CONTROL_UNIVERSE` and continue Targets B/C where their required fixed-ledger inputs exist. Do not fabricate negatives.
-
-## Target B — initial continuation and executable economics
-
-Treat the strong near-term initial continuation as its own first-stage target. Do not jump directly to the later FLIP/SAME branch.
-
-At each candidate causal entry checkpoint, attach executable raw-tape economics in the case direction using the first eligible raw trade/quote at or after the exact signal timestamp. Report:
-
-- exact signal and entry timestamps;
-- +5/+10/+20/+30/+60 fixed holds;
-- gross ticks;
-- net ticks under 0.5 / 1.0 / 2.0 tick round-trip stress;
-- MFE / MAE;
+- exact causal signal event/timestamp;
+- exact first eligible raw quote/trade used for execution;
+- actual entry price;
+- every later causal action/state transition relevant to management;
+- gross and net ticks for segments bounded by actual causal action events;
+- 0.5 / 1.0 / 2.0 tick round-trip cost stress;
+- MFE/MAE between actual entry and actual causal exit/action event;
 - positive-trade and positive-week fractions;
-- chronological block stability;
-- losing/zero/choppy/non-executable rows explicitly preserved.
+- chronological/OOT stability;
+- all losing, zero, choppy, false, open-without-causal-exit, and non-executable cases.
 
-The approximately 94.4% initial sign-persistence fact is fixed context. The research question is **how early and how profitably it can be executed**, not whether the population/count should be rediscovered.
+There is no fixed hold-horizon comparison in the active decision path.
 
-A contamination-safe prior entry-timing result already showed that generic D1 +0 entry did not pass its tune profitability gate. Therefore no generic immediate-entry rule may be borrowed into POX; POX economics must validate on its own fixed population.
+If an honest separate candidate/control universe is unavailable for POX membership classification, mark that classifier `BLOCKED_MISSING_CONTROL_UNIVERSE`; do not fabricate negatives. This does not authorize changing the fixed positive population.
 
-## Target C — predict later FLIP vs SAME
+## Stage 2 — event-driven FLIP/SAME prediction
 
-Within all 3,429 preserved cases, predict the authoritative future `branch_label` using only causal information available by each checkpoint. Run the pre-birth pass first. Nonnegative H is evaluated only on the no-call residual; it is not an independent rerun of the entire population.
+Across all fixed 3,429 cases, predict the future FLIP/SAME label from causal prefixes only. Re-evaluate only when new causal information arrives. Never backdate the call to an earlier wall-clock checkpoint.
 
-Report:
+Report support/base rate, AUC when defined, Brier score/gain, log-loss/gain, calibration/confidence, top-confidence lift, separate FLIP/SAME errors, and earliest stable chronological OOT value. “Earliest” means the earliest **causal event/state** at which stable value exists, not the earliest member of a predefined seconds grid.
 
-- base rate and support at every checkpoint;
-- Brier score and gain vs chronological base rate;
-- log loss and gain vs chronological base rate;
-- AUC when defined;
-- calibration/confidence buckets;
-- top-confidence lift;
-- FLIP errors and SAME errors separately;
-- earliest checkpoint with stable OOT value;
-- whether the prediction is strong enough to alter management of the initial continuation trade.
+## Stage 3 — branch knowability and management
 
-The future branch label may never appear in features before it is observationally knowable.
+Separate prediction from observation. Record the exact causal event where the later branch becomes observationally known. Compare causal actions available at their actual timestamps:
 
-## Target D — observational branch knowability
+- continue current state;
+- close;
+- reverse only when separately validated and causally signaled;
+- successor/new state;
+- stand down/reset.
 
-Separate prediction from observation. Record the first timestamp at which the branch is causally known under the frozen detector/state contract. Never backdate branch knowledge.
+A successor is a new origin. Old ancestry/direction is not inherited automatically and cannot be carried forward merely because a timer expired.
 
-Report distributions from initial POX signal to:
+## Stage 4 — delayed SAME / re-expression
 
-- branch precursor / successor t0 if applicable;
-- branch causal confirmation;
-- initial +60 management boundary.
+Delayed SAME/re-expression is a separate watch/re-entry problem. A later trusted causal setup may create a new trade opportunity. It does not erase the original loss and does not create automatic recovery re-entry.
 
-## Target E — hold / exit / reset / re-entry
+No elapsed-time threshold may itself trigger the re-entry.
 
-Preserve the finalized Phase-2 management semantics as the baseline and compare only new additive candidates:
+## Validation discipline
 
-- fixed initial-continuation holds;
-- normal +60 exit/reset;
-- continue at a later causal branch checkpoint;
-- reverse only at a separately validated causal checkpoint;
-- follow a newly confirmed successor state only when separately validated;
-- stand down/reset;
-- delayed SAME/re-expression watch and re-entry only from a later trusted causal setup.
-
-A later exhaustion/branch checkpoint is a new state origin. Old ancestry is not automatically inherited. A realized delayed recovery never erases the original loss and never creates automatic re-entry permission.
-
-## Model / validation discipline
-
-Use chronological/blocked OOT validation. Thresholds must be selected without held/final confirmation information. Preserve all failed and conditional rules under:
+Use chronological/blocked OOT validation. Preserve failed and conditional rules under:
 
 `FLAG_AND_DECOMPOSE_NOT_AUTO_KILL`
 
-No result from this pass is promoted into a frozen play. Fresh prospective/OOT validation is required before promotion.
+No result from this pass is promoted into a frozen play or permanent brain. Fresh prospective/OOT validation remains required before promotion.
 
-## Required durable outputs
+## Required durable outputs before D0-D5 crosswalk
 
-Produce:
+1. authoritative 3,429 / 1,444 / 1,985 case ledger or immutable exact reference;
+2. ledger hash and validation report;
+3. event-driven/no-clock contract validation;
+4. earliest causal call or explicit control-universe blocker;
+5. event-bounded initial-continuation execution economics;
+6. event-driven FLIP/SAME predictor results;
+7. exact causal branch-knowability events;
+8. action economics bounded by causal state transitions;
+9. delayed SAME/re-expression watch results;
+10. failed/conditional rule ledger;
+11. brain proposal only;
+12. trade-strategy proposal only;
+13. explicit deferred D0-D5 crosswalk marker.
 
-1. authoritative 3,429 master case ledger or an exact immutable reference to it;
-2. ledger validation report with `FIXED_3429_DO_NOT_REOPEN`;
-3. earliest causal POX-call results or explicit control-universe blocker;
-4. initial-continuation raw-tape economics;
-5. FLIP-vs-SAME branch predictor results;
-6. branch observational-knowability timing;
-7. successor/reset/action economics;
-8. delayed/re-expression watch results;
-9. failed/conditional rule ledger;
-10. brain proposal — proposal only;
-11. separate trade-strategy proposal — proposal only;
-12. explicit deferred D0-D5 incremental crosswalk marker.
-
-No permanent Frankie merge and no frozen-play mutation are authorized by this protocol.
+No fixed timing grid may be reintroduced as a convenience fallback.
