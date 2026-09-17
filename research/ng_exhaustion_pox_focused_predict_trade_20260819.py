@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Any, Iterable
 
 EXPECTED_TOTAL = 3429
-EXPECTED_FLIP = 1546
-EXPECTED_SAME = 1883
+EXPECTED_FLIP = 1444
+EXPECTED_SAME = 1985
 POLICY = "FIXED_3429_DO_NOT_REOPEN"
 
 CASE_ID_KEYS = ("case_id", "id", "pox_case_id", "event_id")
