@@ -327,7 +327,9 @@ def materialize(source, output, steps, *, parent_count, parent_head_hash, bindin
     return results
 
 
-def main(configuration_path):
+def main(configuration_path, *, cycles=19):
+    if type(cycles) is not int or cycles not in (2,19):
+        raise ValueError('prefix batch must contain two or nineteen cycles')
     configuration = json.loads(Path(configuration_path).read_bytes())
     source, ingestion, completion, schedule, lineage = validate_inputs(configuration)
     manifest=read_pinned(configuration['source_manifest'])
@@ -378,26 +380,29 @@ def main(configuration_path):
             if json.loads(binding_path.read_bytes()) != binding:
                 raise ValueError('retained prefix batch identity changed')
         else: save_new(binding_path, binding)
-        results = materialize(journal, output, schedule['steps'], parent_count=completion['journal_count'],
+        results = materialize(journal, output, schedule['steps'][:cycles], parent_count=completion['journal_count'],
                               parent_head_hash=completion['journal_hash'], binding_sha256=sha(binding_path),
                               scope=scope,entity=entity,t_ctx=t_ctx,copier=copier)
         progress(output, 'verifying_final_source_physical_pin')
         if sha(journal) != ingestion['journal_sha256']:
             raise ValueError('source physical bytes changed during prefix batch')
-        result = dict(schema='FRANKIE_FULL_SUNDAY_PREFIX_WITNESSES_V1', binding=witness(binding_path),
-                      witnesses=[witness(first_path)] + results, prefixes=19, source_records=57027,
+        result = dict(schema=('FRANKIE_FULL_SUNDAY_PREFIX_WITNESSES_V1' if cycles == 19 else 'FRANKIE_SUNDAY_PREFIX_BATCH_V1'), binding=witness(binding_path),
+                      witnesses=[witness(first_path)] + results, prefixes=cycles, source_records=57027,
                       model_calls=0, source_replays=0,
                       prefix_seed_witnesses={str(index):witness(output/f'prefix-{index:02d}-packet-seed.json')
-                                             for index in range(1,19)})
-        final = output / 'full19-prefix-witnesses.json'
+                                             for index in range(1,cycles)})
+        if cycles != 19: result['scheduled_cycles'] = 19
+        final = output / ('full19-prefix-witnesses.json' if cycles == 19 else 'prefix-batch-02.json')
         if final.exists():
             if json.loads(final.read_bytes()) != result: raise ValueError('final prefix manifest changed')
         else: save_new(final, result)
-        progress(output, 'complete', prefixes=19, manifest_sha256=sha(final))
+        progress(output, 'complete', prefixes=cycles, manifest_sha256=sha(final))
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--configuration', required=True)
-    main(parser.parse_args().configuration)
+    parser.add_argument('--cycles',type=int,choices=(2,19),default=19)
+    args=parser.parse_args()
+    main(args.configuration,cycles=args.cycles)
 
