@@ -244,7 +244,8 @@ def validate_inputs(configuration):
         raise ValueError('independently verified closed lineage required')
     # Receipt is emitted only after driver.close(), but explicitly reject active
     # progress too. A concurrent schedule reader may leave empty WAL sidecars.
-    source_progress = json.loads((source / 'progress' / 'progress.json').read_bytes())
+    source_progress = (read_pinned(host['source_progress']) if 'source_progress' in host
+        else json.loads((source / 'progress' / 'progress.json').read_bytes()))
     phase = source_progress.get('phase')
     if phase != 'complete':
         raise ValueError('source worker has not published complete progress')
