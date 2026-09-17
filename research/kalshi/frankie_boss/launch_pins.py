@@ -8,7 +8,7 @@ reviewer at validation time (it is the tip carrying these pins, which this file 
 import re
 
 NEXT_RUN = {
-    'receiver_commit': '2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134',           # ccode/frankie-receiver-feed-20260916: 32 output ledgers + output-bundle gate
+    'receiver_commit': '7b98617bdbbc2476666db9cf1c018c8efe6878da',           # reviewed receiver: explicit 30/32 gate and sealed proof producer
     'completion_workflow_ref': None,       # the retired smoke completion ref must not be carried; a new ref is Greg's call
     'granite_context': 131072,             # the only Granite context (CLAUDE.md standing rule)
     'context_encoding': 'stacked_v1',
