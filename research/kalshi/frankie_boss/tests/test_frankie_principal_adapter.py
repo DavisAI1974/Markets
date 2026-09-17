@@ -291,3 +291,27 @@ def test_sealed_proof_is_verified_and_a_receiver_without_its_repository_refuses_
     witness=adapter._memory_witness()
     assert witness['files']['A']['sha256']==adapter.protected_files['A']['sha256']
     assert witness['receipt_sha256']!=adapter.protected_files['A']['sha256']
+
+
+@pytest.mark.parametrize('count', [30, 32])
+def test_declared_pilot_count_controls_gate_and_configuration_identity(tmp_path, count):
+    from frankie_principal_adapter import admission_policy
+    adapter, _ = case(tmp_path)
+    before = adapter._config_hash()
+    adapter.admission = admission_policy({'output_bundle': {'principal_artifact': 'artifact.json',
+        'outputs_dir': 'outputs', 'output_ledger_count': count}, 'sealed_proof': 'proof.json'}, retained_prompt=True)
+    assert adapter._config_hash() != before
+    ids = [f'ledger-{i:02d}' for i in range(count)]
+    adapter._check_output_bundle_gate({'output_bundle_gate': {'status': 'VALIDATED',
+        'required_ledger_ids': ids, 'ledgers': {i: {} for i in ids}}})
+    with pytest.raises(ValueError, match=str(count)):
+        adapter._check_output_bundle_gate({'output_bundle_gate': {'status': 'VALIDATED',
+            'required_ledger_ids': ids[:-1], 'ledgers': {i: {} for i in ids[:-1]}}})
+
+
+@pytest.mark.parametrize('count', [0, 29, 31, True, '30'])
+def test_pilot_ledger_count_refuses_invalid_configuration(count):
+    from frankie_principal_adapter import admission_policy
+    with pytest.raises(ValueError, match='output_bundle'):
+        admission_policy({'output_bundle': {'principal_artifact': 'artifact.json', 'outputs_dir': 'outputs',
+            'output_ledger_count': count}, 'sealed_proof': 'proof.json'}, retained_prompt=True)
