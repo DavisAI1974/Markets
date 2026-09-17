@@ -149,7 +149,7 @@ def test_raw_framing(service, extra, status):
     with socket.create_connection(('127.0.0.1', front.server_port), timeout=2) as sock:
         sock.sendall(b'POST /v1/chat/completions HTTP/1.1\r\nHost: localhost\r\nAuthorization: Bearer '
                      + KEY.encode() + b'\r\nContent-Type: application/json\r\n' + extra + b'\r\n')
-        assert str(status).encode() in sock.recv(4096).split(b'\r\n')[0]
+        assert str(status).encode() in sock.recv(65536).split(b'\r\n')[0]
     assert not calls
 
 
@@ -158,7 +158,7 @@ def test_unknown_method_does_not_echo(service, capsys):
     with socket.create_connection(('127.0.0.1', front.server_port), timeout=2) as sock:
         sock.sendall(b'SECRET_METHOD / HTTP/1.0\r\n\r\n')
         received = b''
-        while chunk := sock.recv(4096):
+        while chunk := sock.recv(65536):
             received += chunk
     assert b'501' in received and b'SECRET_METHOD' not in received
     assert not calls and 'SECRET_METHOD' not in capsys.readouterr().err
@@ -182,7 +182,7 @@ def test_client_whole_deadline(service, monkeypatch):
     with socket.create_connection(('127.0.0.1', front.server_port), timeout=2) as sock:
         sock.sendall(b'POST /v1/chat/completions HTTP/1.1\r\n')
         time.sleep(.2)
-        assert sock.recv(4096) == b''
+        assert sock.recv(65536) == b''
     assert not calls
 
 
@@ -212,7 +212,7 @@ def test_duplicate_authorization_is_refused(service):
     with socket.create_connection(('127.0.0.1', front.server_port), timeout=2) as sock:
         line = b'Authorization: Bearer ' + KEY.encode() + b'\r\n'
         sock.sendall(b'GET /health HTTP/1.0\r\n' + line + line + b'\r\n')
-        assert b'401' in sock.recv(4096).split(b'\r\n')[0]
+        assert b'401' in sock.recv(65536).split(b'\r\n')[0]
     assert not calls
 
 
@@ -227,7 +227,7 @@ def test_backend_budget_clamped_to_whole_client_deadline(service, monkeypatch):
         time.sleep(.2)
         started = time.monotonic()
         sock.sendall(BODY)
-        assert sock.recv(4096) == b''
+        assert sock.recv(65536) == b''
         # A new unauthenticated request can be refused promptly: the single
         # proxy worker did not keep its own upstream socket open for another80s.
         assert request(auth=None)[0] == 401
@@ -241,11 +241,11 @@ def test_model_required_before_bind(model):
         proxy.make_server(KEY, ('127.0.0.1', 0), model=model)
 
 
-def test_retired_smoke_service_context_is_refused_everywhere():
+def test_only_the_pinned_service_context_is_accepted_everywhere():
     with pytest.raises(ValueError, match='service context'):
-        proxy.make_server(KEY, ('127.0.0.1', 0), model='granite', service_context=4096)
+        proxy.make_server(KEY, ('127.0.0.1', 0), model='granite', service_context=8192)
     with pytest.raises(ValueError, match='service context'):
-        proxy._chat(BODY, 'granite', service_context=4096)
+        proxy._chat(BODY, 'granite', service_context=8192)
     server = proxy.make_server(KEY, ('127.0.0.1', 0), model='granite')
     try:
         assert server.service_context == 131072
@@ -254,6 +254,6 @@ def test_retired_smoke_service_context_is_refused_everywhere():
     large = json.loads(BODY); large['max_tokens'] = 8193
     proxy._chat(json.dumps(large).encode(), 'granite')  # the old 1,200 ceiling is gone: bounded by the context alone
     assert proxy.environment_service_context({'GRANITE_MAX_MODEL_LEN': '131072'}) == 131072
-    for environment in ({}, {'GRANITE_MAX_MODEL_LEN': '4096'}, {'GRANITE_MAX_MODEL_LEN': 'x'}):
+    for environment in ({}, {'GRANITE_MAX_MODEL_LEN': '8192'}, {'GRANITE_MAX_MODEL_LEN': 'x'}):
         with pytest.raises(ValueError, match='GRANITE_MAX_MODEL_LEN'):
             proxy.environment_service_context(environment)

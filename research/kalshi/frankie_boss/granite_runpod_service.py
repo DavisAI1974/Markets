@@ -204,10 +204,10 @@ class RunpodShadowService:
     async def _critique(self, snapshot, request_id, encoding, max_prompt_bytes):
         if not self.enabled:
             return None
-        # The finite direct_v1 critic (one bounded HTTPS exchange under a request timeout) was the 4,096-token smoke
+        # The finite direct_v1 critic (one bounded HTTPS exchange under a request timeout) was the retired smoke
         # transport. RunpodConfig no longer admits a finite request_timeout, so an enabled base service cannot be
         # built; the open-ended and durable-jobs subclasses carry the live request paths (Greg, 2026-09-16).
-        raise ValueError('finite direct Runpod critic retired with the 4096 smoke context; use the open-ended or durable jobs service')
+        raise ValueError('finite direct Runpod critic retired with the smoke context; use the open-ended or durable jobs service')
 
 
 def build_runpod_service(*, enabled=False, config=None, identity=None, api_key=None,

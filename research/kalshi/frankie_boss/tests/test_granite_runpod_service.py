@@ -66,7 +66,7 @@ def test_finite_request_timeout_is_retired_with_the_smoke_context(timeout):
         service.RunpodConfig('test123', 'granite42-smoke', timeout, 'a' * 64)
     assert service.RunpodConfig('test123', 'granite42-smoke', None, 'a' * 64).context == 131072
     with pytest.raises(ValueError, match='131072'):
-        service.RunpodConfig('test123', 'granite42-smoke', None, 'a' * 64, 4096)
+        service.RunpodConfig('test123', 'granite42-smoke', None, 'a' * 64, 8192)
 
 
 def test_base_critic_refuses_if_ever_reached(source):

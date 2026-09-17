@@ -70,7 +70,7 @@ def test_retained_start_requires_actual_capacity_and_fresh_independent_arm(monke
                          admitted_request=dict(admission, input_tokens=131072))
     with pytest.raises(ValueError, match='admission'):
         resume(api, journal, info, {}, lease, now=1002,
-                         admitted_request=dict(admission, context=4096))
+                         admitted_request=dict(admission, context=8192))
     assert not api.calls
 
 

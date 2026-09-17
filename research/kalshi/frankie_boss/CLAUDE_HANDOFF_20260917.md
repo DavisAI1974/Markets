@@ -20,8 +20,8 @@ record with SHAs, conflict resolution and test evidence: `CLAUDE_RECONCILIATION_
    = 131072` is the only admissible context; output is bounded by the context alone (the 1,200 ceiling is gone); the
    proxy refuses to start without the pinned `GRANITE_MAX_MODEL_LEN`. Retired with it, per Greg: the finite-timeout
    direct Runpod critic (RunpodConfig admits only open-ended transport), the bounded cloud smoke launch controller, and
-   the pinned 4096 smoke admission receipt `runpod_cloud_admission.json` (deleted). Remaining 4096 literals in Granite
-   code: two BYTE bounds named as bytes (`MAX_PROBE_BODY_BYTES`, `MAX_RECORD_BYTES`) and the two retirement messages.
+   the pinned smoke admission receipt `runpod_cloud_admission.json` (deleted). No Granite module or Granite/Sunday test
+   carries the literal any more (byte bounds re-sized to 2048 bytes; refusal tests use other wrong values).
 4. Prefix / reducer-stack verification: the prefix builder, snapshot, conformance reader, journal reader, stack
    execution and both Sunday operations scripts are blob-identical to the first run's runtime pin `9a8f3f46`. Nothing to
    revert. The 19 prefixes: `sunday_20260915_package/FB/actual-prefixes/`. First-run journal: 57,027 records = 114,054
@@ -37,7 +37,7 @@ record with SHAs, conflict resolution and test evidence: `CLAUDE_RECONCILIATION_
 Family command (from repo root, `PYTHONPATH=.:research/kalshi/frankie_boss:research/kalshi/frankie_boss/tests`):
 `python -m pytest -q research/kalshi/frankie_boss/tests/test_granite*.py tests/test_sunday*.py tests/test_run_actual*.py
 tests/test_frankie_controller.py tests/test_actual_host*.py --deselect
-"…/test_granite_retained_host.py::test_open_run_explicit_completion_still_stops_retained_pod"` -> 981 passed, 8 failed,
+"…/test_granite_retained_host.py::test_open_run_explicit_completion_still_stops_retained_pod"` -> 979 passed, 8 failed,
 28 errors, 1 skipped.
 
 - 8 FAILED:
@@ -57,6 +57,13 @@ tests/test_frankie_controller.py tests/test_actual_host*.py --deselect
 - Also pre-existing in that file: `test_cleanup_uses_cached_ownership_without_storage` fails.
 - Environment notes: this container needed CPU torch, zstandard and boto3 installed; `transformers`/`databento` are
   absent (some tests in the wider suite need them). Windows PYTHONPATH uses `;`.
+
+## Two questions answered (Greg, 2026-09-17)
+
+- Is the smoke transport needed? No. The live route is jobs_v1 open-ended on the retained Pod. RunpodConfig now admits
+  only 131072 and open-ended transport, so the smoke transport cannot be built again; its code path refuses.
+- Was the journal reducer changed or dropped? Neither. The first run's reducer stack is on this tree and its equivalence
+  tests pass; the prefix machinery is byte-identical to runtime pin `9a8f3f46`. Nothing to fix, nothing removed.
 
 ## Open, in priority order
 

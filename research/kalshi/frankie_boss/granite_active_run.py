@@ -3,7 +3,7 @@ import hashlib
 import json
 import re
 
-MAX_RECORD_BYTES = 4096  # S3 active-run record size in BYTES; not a token context
+MAX_RECORD_BYTES = 2048  # S3 active-run record size in BYTES (a small fixed JSON); not a token context
 
 from .granite_cloud_resume import _owned, _stop_result
 

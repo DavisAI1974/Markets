@@ -365,10 +365,10 @@ def publish_service(journal, pod_id, intent, records):
 
 
 def controller(journal, api):
-    # The bounded cloud smoke launch was built on the 4,096-token smoke context and its pinned smoke admission
+    # The bounded cloud smoke launch was built on the retired smoke context and its pinned smoke admission
     # receipt. Both are retired (Greg, 2026-09-16): the receipt artifact is deleted and this entry refuses before
     # reading any intent or touching the provider. The retained host path is the only Granite launch route.
-    raise ValueError('bounded smoke launch retired with the 4096 context; use the retained host path')
+    raise ValueError('bounded smoke launch retired with the smoke context; use the retained host path')
     if os.environ['GITHUB_RUN_ATTEMPT'] != '1':
         raise ValueError('controller rerun refused')
     if journal.get('intent.json') is not None:

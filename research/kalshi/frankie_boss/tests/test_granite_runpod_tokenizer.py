@@ -142,10 +142,10 @@ def test_local_evidence_rejected_before_loader(tmp_path, damage):
     assert loads == []
 
 
-def test_retired_smoke_context_is_refused_and_the_service_context_is_the_default(tmp_path):
+def test_other_contexts_are_refused_and_the_service_context_is_the_default(tmp_path):
     options, _, _ = synthetic(tmp_path)
     with pytest.raises(ValueError):
-        m.LocalTokenizerAdmission(tmp_path, context=4096, **options)
+        m.LocalTokenizerAdmission(tmp_path, context=8192, **options)
     admit = m.LocalTokenizerAdmission(tmp_path, **options)
     assert admit(request())['context'] == 131072
     # The old 1,200-token output ceiling went with the smoke context: output is bounded by the context alone.

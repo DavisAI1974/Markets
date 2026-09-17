@@ -193,3 +193,22 @@ does not appear in any receipt; 7,129 blocks is the recorded figure. On this tre
 first run's runtime pin `9a8f3f46`. Only `compact_journal.py` (+46/-4), `prepared_context_cache.py` (+22/-7) and
 `c15_journal.py` (+24/-11) differ, all from the later reduction-stack work and all pinned byte-identical in output by
 `tests/test_reduction_stack_equivalence.py`. Nothing in the prefix machinery was changed or needs reverting.
+
+## Final sweep 2026-09-17 (Greg: "take the 4096 out", no literal left)
+
+No Granite module or Granite/Sunday test carries the literal any more. The two byte bounds are re-sized to 2048 bytes
+(`MAX_PROBE_BODY_BYTES`, `MAX_RECORD_BYTES`; the probe body and the active-run record are a few hundred bytes), the
+retirement messages say "smoke context", and every refusal test uses another wrong value (8192 / 65536 / a string) so
+the guarantee "only 131072 is admissible" is kept without naming the retired number. The only 4096 left in
+`frankie_boss` code is the NATIVE row context in `sunday_native_runtime.py` (`context_rows`, `n_norm`, `t_ctx`) plus
+its mirrors in `native_mbo_encoder.T_CTX`, `sunday_schedule.model_context_rows` and the prefix-builder guard: a
+modelling parameter pending Greg's row count, not Granite. Family run: 979 passed / 8 failed / 28 errors, nothing
+introduced against the untouched baseline.
+
+Answers recorded for the log. (1) The finite smoke transport is not needed: the live route is jobs_v1 open-ended on
+the retained Pod; RunpodConfig is fixed to admit only 131072 and open-ended transport, so nothing can build the smoke
+transport again. (2) The journal reducer was not changed and nothing was dropped: the first run's reducer stack
+(compact 16-entry gzip blocks, single-pass conformance, parent + affinity-bound workers) is on this tree and its
+equivalence tests pass (`test_reduction_stack_equivalence.py` 4/4, `test_prepared_context_cache.py` 8/8,
+`test_run_actual_sunday_compact_source.py` 4/4, `test_compact_source.py`, `test_compact_journal.py`); the prefix
+machinery is byte-identical to runtime pin `9a8f3f46`.

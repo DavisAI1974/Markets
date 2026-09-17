@@ -34,7 +34,7 @@ def _shutdown(sock):
         pass
 
 
-MAX_PROBE_BODY_BYTES = 4096  # HTTP body BYTES of the fixed smoke probe request; not a token context
+MAX_PROBE_BODY_BYTES = 2048  # HTTP body BYTES of the fixed probe request (a few hundred bytes); not a token context
 
 
 def https_exchange(pod_id, method, path, body, key, timeout):

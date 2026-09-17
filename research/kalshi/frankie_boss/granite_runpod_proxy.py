@@ -38,7 +38,7 @@ def _pairs(items):
     return value
 
 
-SERVICE_CONTEXT = 131072  # the only supported service context; the 4,096-token smoke context is retired
+SERVICE_CONTEXT = 131072  # the only supported service context; the old smoke context is retired
 
 
 def environment_service_context(environment):

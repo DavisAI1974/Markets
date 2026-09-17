@@ -67,6 +67,7 @@ def test_real_bootstrap_roster_includes_json_and_manifest_download():
         pins.validate_url_freshness({'RP_BOOTSTRAP_URLS': json.dumps(urls)}, value, now=now+10)
 
 
-def test_retired_smoke_service_context_is_refused():
-    with pytest.raises(ValueError):
-        pins.validate_configuration(dict(candidate(), service_context=4096))
+def test_other_service_contexts_are_refused():
+    for context in (8192, 65536, '131072'):
+        with pytest.raises(ValueError):
+            pins.validate_configuration(dict(candidate(), service_context=context))

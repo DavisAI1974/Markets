@@ -14,7 +14,7 @@ def test_long_candidate_is_open_ended_only_and_the_smoke_context_is_refused():
     assert candidate.context==131072
     assert candidate.config_hash==RunpodConfig('retainedpod','granite42',None,'a'*64,131072).config_hash
     with pytest.raises(ValueError):RunpodConfig('retainedpod','granite42',60,'a'*64,131072)
-    with pytest.raises(ValueError,match='131072'):RunpodConfig('retainedpod','granite42',None,'a'*64,4096)
+    with pytest.raises(ValueError,match='131072'):RunpodConfig('retainedpod','granite42',None,'a'*64,65536)
 
 
 @pytest.mark.parametrize('length',[8192,65536,131073])
@@ -33,7 +33,6 @@ def test_long_startup_parent_exact_prefill_argv_and_override_rejection(tmp_path,
     env=startup.launch_environment(max_model_len=131072,served_model='granite42')
     receipt=startup.prepare_startup(tmp_path,manifest,env,runtime_facts=runtime_fixture)
     assert receipt['argv'][-3:]==['--enable-chunked-prefill','--max-num-batched-tokens','2048']
-    with pytest.raises(ValueError):startup.launch_environment(max_model_len=4096,served_model='granite42')
     class Child:
         def wait(self,timeout):return 0
     def spawn(argv,**kwargs):

@@ -49,7 +49,7 @@ def test_unexpected_supervisor_metadata_refused(value):
 
 
 def test_bounded_smoke_launch_is_retired_before_any_intent_or_provider_call(monkeypatch, tmp_path):
-    # The bounded cloud smoke was built on the 4,096-token smoke context and its pinned admission receipt. Both are
+    # The bounded cloud smoke was built on the retired smoke context and its pinned admission receipt. Both are
     # retired: the receipt artifact is gone from the tree and the controller refuses at entry (Greg, 2026-09-16).
     monkeypatch.setenv('GITHUB_RUN_ATTEMPT', '1')
     monkeypatch.setattr(cloud, 'OUT', tmp_path)
@@ -62,6 +62,6 @@ def test_bounded_smoke_launch_is_retired_before_any_intent_or_provider_call(monk
     class API:
         def request(self, *args, **kwargs): pytest.fail('provider must not be called on a retired launch')
     journal = Journal()
-    with pytest.raises(ValueError, match='retired with the 4096 context'):
+    with pytest.raises(ValueError, match='retired with the smoke context'):
         cloud.controller(journal, API())
     assert journal.values == {}

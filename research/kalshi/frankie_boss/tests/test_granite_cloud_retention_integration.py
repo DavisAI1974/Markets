@@ -115,7 +115,7 @@ def test_capture_saves_safe_local_evidence_before_s3_write_failure(monkeypatch, 
 
 def test_controller_launch_is_retired_and_never_reaches_the_provider(monkeypatch, tmp_path):
     # Formerly the provider-failure stop/retain lifecycle through the bounded smoke controller. That launch route is
-    # retired with the 4,096-token smoke context; the stop/retain lifecycle stays covered by the control and retained
+    # retired with the smoke context; the stop/retain lifecycle stays covered by the control and retained
     # host tests. The controller must refuse before touching the journal, the provider or the bootstrap stage.
     monkeypatch.setattr(cloud, 'OUT', tmp_path)
     monkeypatch.setenv('GITHUB_RUN_ATTEMPT', '1')
@@ -125,6 +125,6 @@ def test_controller_launch_is_retired_and_never_reaches_the_provider(monkeypatch
         def put(self, name, value, **kwargs): pytest.fail('retired launch must not write the journal')
     class API:
         def request(self, *args, **kwargs): pytest.fail('retired launch must not call the provider')
-    with pytest.raises(ValueError, match='retired with the 4096 context'):
+    with pytest.raises(ValueError, match='retired with the smoke context'):
         cloud.controller(Journal(), API())
     assert not (tmp_path / 'pod-info.json').exists() and not (tmp_path / 'service-ready.json').exists()

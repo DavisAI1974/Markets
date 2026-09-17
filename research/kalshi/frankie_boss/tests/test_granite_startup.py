@@ -25,7 +25,7 @@ def test_bootstrap_environment_uses_pinned_supervisor_command_and_no_model_downl
     assert sum(len(k.encode())+len(v.encode()) for k,v in env.items())<32768
 
 
-@pytest.mark.parametrize('length',[True,0,-1,1.5,'131072',4096,8192])
+@pytest.mark.parametrize('length',[True,0,-1,1.5,'131072',8192,65536])
 def test_bootstrap_requires_explicit_positive_runtime_context(length):
     with pytest.raises(ValueError):s.launch_environment(max_model_len=length,served_model='granite42-test')
 

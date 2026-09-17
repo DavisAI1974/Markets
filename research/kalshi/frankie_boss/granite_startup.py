@@ -24,7 +24,7 @@ COMMAND = 'python3 ' + BOOTSTRAP_PATH
 IMAGE_IDENTITY_FILE = Path(__file__).with_name('granite_image_identity.json')
 
 
-MAX_MODEL_LEN = 131072  # the only supported runtime context; the 4,096-token smoke context is retired
+MAX_MODEL_LEN = 131072  # the only supported runtime context; the old smoke context is retired
 
 
 def digest_file(path):
