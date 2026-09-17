@@ -16,6 +16,10 @@ on:
         description: 'Stop after this stage (optional): stage-sources host-start ingest schedule-prefixes cycles package-upload snapshot-stop'
         required: false
         default: ''
+      runner:
+        description: "Runner label for the journal job. Default = the first run's 4-vCPU runner; a larger runner (32 or 48 vCPU) only shortens the wall time: the stack pins the first CPU to the parent and gives every other CPU a worker, and the output is byte-identical by construction (ordered partitions, ordered bounded queue)."
+        required: false
+        default: 'ubuntu-24.04'
   push:
     branches: [codex/journal-reduction-stack-20260915]
     paths: [.github/frankie-journal-stack-request.json]
@@ -62,7 +66,7 @@ jobs:
     # input) and this job must still run exactly as before, so a skipped need is not a failure here.
     if: github.repository == 'DavisAI1974/Markets' && !cancelled() && needs.sources.result != 'failure'
     needs: [sources]
-    runs-on: ubuntu-24.04
+    runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
     timeout-minutes: 360
     env:
       PYTHONDONTWRITEBYTECODE: '1'
