@@ -1,6 +1,6 @@
 # Spec: the unattended day pipeline (beginning to end, nobody babysitting)
 
-Status: design, 2026-09-16, sequenced after the Sunday run. Greg: "we need a workflow that gets
+Status: ORCHESTRATOR BUILT 2026-09-17 (`operations/day_pipeline.py`, `.github/workflows/frankie_day_pipeline.yml`, dispatch only, no cron); the three host scripts under `deploy/aws/host/` are the remaining piece (prerequisites 1-6 below still hold). Design 2026-09-16, sequenced after the Sunday run. Greg: "we need a workflow that gets
 this thing going from beginning to end without us." Built with the ci-cd-and-automation skill's
 shape: one orchestrating GitHub Actions workflow, every stage idempotent, every stage gated by a
 receipt the next stage verifies, credentials never in files, cost bounded by starting and stopping

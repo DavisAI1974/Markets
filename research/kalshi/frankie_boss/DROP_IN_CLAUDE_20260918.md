@@ -58,3 +58,19 @@ Order for the next chat:
 3. Seal with `seal_final_prelaunch_candidate.py`; `--verify-source-only` on a scratch directory (no model).
 4. Pre-launch checklist (shipping-and-launch, tailored): pins validate; receiver checkout at the pinned commit with its parent repository (finding 8: `_code()` now refuses cleanly otherwise); sealed-absence proof file present (receiver `native_sealed_absence.prove_sealed_absent` has no producer yet: either produce it or declare NOT_PRESENTED/UNPROVEN only under a retained prompt); keys in `~/.config/markets/env`; rollback = the retained Pod stops through the ownership protocol (`completion_cleanup`), data retained; monitoring = the retained-host watchdog + `IncompleteModelOutput` alert.
 5. Launch only on Greg's explicit go, via `run_actual_sunday_ec2.py --configuration`.
+
+## Beginning-to-end workflow (Greg, 2026-09-17: "finish workflow for beginning to end frankie")
+
+BUILT: `operations/day_pipeline.py` (the orchestrator of `SPEC_UNATTENDED_DAILY_PIPELINE_20260916.md`: seven idempotent
+stages, one git receipt each under `runs/<DAY>/`, gate = the previous receipt's fields, resume from the first missing
+receipt, HOLD before cycles without `--go <source manifest hash>`, host stop as the always-step; `test_day_pipeline.py`
+2/2) and `.github/workflows/frankie_day_pipeline.yml` (workflow_dispatch ONLY: day, go, until; commits the receipts;
+no cron until Greg turns it on). Configuration: `operations/day_pipeline.configuration.json` (no credential, no desktop
+path).
+
+NOT YET (the next chat, on Opus): the three host scripts the configuration names under `deploy/aws/host/`
+(`day_ingest.ps1`, `day_schedule_prefixes.ps1`, `day_cycles.ps1`), each ending with one `PIPELINE_RECEIPT {json}` line
+carrying its gate fields (`day_pipeline.GATES`). They wrap what exists: `ingest_block_sources.py` (ingest),
+`build_remaining_sunday_prefixes.py` (prefixes), `run_actual_sunday_compact_source.py --configuration` (cycles, now
+classroom-composed). Prerequisites 1-6 of the spec still hold; prerequisite 6 (Pod credential via SSM parameter on
+stdin) is not built, so cycles rely on the host's existing credential path. Dispatching the workflow is Greg's go.
