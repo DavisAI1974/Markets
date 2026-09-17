@@ -116,8 +116,20 @@ class DayPipeline:
 
     # ---- stages -----------------------------------------------------------------------------
     def _ssm(self, script_key, timeout):
-        return [self.python, self.c['ssm_run'], '--instance', self.c['instance'], '--region', self.c['region'],
-                '--script', self.c['host_scripts'][script_key], '--timeout', str(timeout)]
+        """The host stage's SSM command, or None when the configuration declares no script for it.
+
+        The script file is sent verbatim, so everything per-run reaches it as a prepended PowerShell
+        assignment: Day always, plus whatever host_variables declares (the host's roots live in the
+        configuration, which main() scans, and never as a literal inside a script).
+        """
+        script = (self.c.get('host_scripts') or {}).get(script_key)
+        if not script:
+            return None
+        command = [self.python, self.c['ssm_run'], '--instance', self.c['instance'], '--region', self.c['region'],
+                   '--script', script, '--timeout', str(timeout), '--set', f'Day={self.day}']
+        for name, value in sorted((self.c.get('host_variables') or {}).items()):
+            command += ['--set', f'{name}={value}']
+        return command
 
     def _ec2(self, action, *extra):
         return [self.python, self.c['ec2_host'], '--instance', self.c['instance'], '--region', self.c['region'], action, *extra]
@@ -187,6 +199,8 @@ class DayPipeline:
                     manifest_hash=expected, at=self.now()), indent=1, sort_keys=True).encode() + b'\n')
                 return 'hold'
         command = self.commands()[stage]
+        if command is None:
+            raise StageRefused(f'the configuration declares no host script for {stage}')
         code, output = self.run(command, timeout=self.c.get('stage_timeout', 13 * 3600))
         if code != 0:
             raise StageRefused(f'{stage} exited {code}: {output[-1500:]}')

@@ -36,6 +36,14 @@
   resume, HOLD before cycles without a go, measured CPU-dedication gate). Native host `i-0e90ee6110ef609aa` RESIZED to
   r7i.8xlarge (32 vCPU), stopped. 32 = the Pod's CPUs, 48 = the reader's worker cap, 8 = native threads. Next chat:
   `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260918.md`.
+- **The two host scripts are BUILT (2026-09-17, third session)**: `deploy/aws/host/day_schedule_prefixes.ps1` and
+  `day_cycles.ps1`, each reading back the tool's OWN manifest/status rather than inventing a count, each ending in one
+  `PIPELINE_RECEIPT` line. The day and the host roots now reach a verbatim-sent script as `ssm_run_ps1.py --set`
+  assignments declared in `host_variables` (placeholders until the fresh configuration is authored), so no path lives
+  in a script. **There is no host ingest script and there must not be one (Greg): ingestion stays the journal-stack
+  job already on git - no second path, no Databento charge.** Family run at open: 1018 passed, 1 skipped, 0 failed.
+  Neither script has been executed (no PowerShell in the container, host under HOLD); their contract is held by
+  `tests/test_host_day_scripts.py`, every assertion negative-tested.
 - **Memory A is VALID (Greg, 2026-09-17).** No validation day or separate source day exists or is required; the
   crosswalk's DEGENERATE_PROOF_SAME_AS_SUBJECT is an accounted status that gates nothing. Attestation in code:
   `frankie_principal_adapter.MEMORY_A_ATTESTATION`. Launch runbook from yesterday's wrappers: `DROP_IN_CLAUDE_20260918.md`.

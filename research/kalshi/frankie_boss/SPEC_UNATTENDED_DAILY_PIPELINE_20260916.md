@@ -1,6 +1,6 @@
 # Spec: the unattended day pipeline (beginning to end, nobody babysitting)
 
-Status: ORCHESTRATOR BUILT 2026-09-17 (`operations/day_pipeline.py`, `.github/workflows/frankie_day_pipeline.yml`, dispatch only, no cron); the three host scripts under `deploy/aws/host/` are the remaining piece (prerequisites 1-6 below still hold). Design 2026-09-16, sequenced after the Sunday run. Greg: "we need a workflow that gets
+Status: ORCHESTRATOR BUILT 2026-09-17 (`operations/day_pipeline.py`, `.github/workflows/frankie_day_pipeline.yml`, dispatch only, no cron); the two host scripts the configuration names are BUILT 2026-09-17 (`deploy/aws/host/day_schedule_prefixes.ps1`, `day_cycles.ps1`, unexecuted - no PowerShell in the test container and the host is under HOLD; each takes its day and roots as `ssm_run_ps1.py --set` assignments and ends with one `PIPELINE_RECEIPT` line). There is no third: host ingest is null on purpose (Greg) because ingestion stays the journal-stack job already on git. Prerequisites 1-6 below still hold, and 6 (the Pod credential on stdin, which SSM does not give a sent script) is the live blocker on stage 5. Design 2026-09-16, sequenced after the Sunday run. Greg: "we need a workflow that gets
 this thing going from beginning to end without us." Built with the ci-cd-and-automation skill's
 shape: one orchestrating GitHub Actions workflow, every stage idempotent, every stage gated by a
 receipt the next stage verifies, credentials never in files, cost bounded by starting and stopping

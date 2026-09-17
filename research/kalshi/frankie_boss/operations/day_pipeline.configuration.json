@@ -1,5 +1,5 @@
 {
- "_note": "Pipeline configuration read by operations/day_pipeline.py. No credential, no desktop path (D34). Host scripts run over SSM and must end with one line: PIPELINE_RECEIPT {json} carrying the gate fields in day_pipeline.GATES. The Windows host uses .ps1 today; the Linux host image (spec prerequisite 5) swaps these for .sh with no other change.",
+ "_note": "Pipeline configuration read by operations/day_pipeline.py. No credential, no desktop path (D34). Host scripts run over SSM and must end with one line: PIPELINE_RECEIPT {json} carrying the gate fields in day_pipeline.GATES. Everything per-run reaches a host script as a prepended PowerShell assignment: $Day always, plus host_variables. The Windows host uses .ps1 today; the Linux host image (spec prerequisite 5) swaps these for .sh with no other change.",
  "ec2_host": "deploy/aws/ec2_host.py",
  "ssm_run": "deploy/aws/ssm_run_ps1.py",
  "instance": "i-0e90ee6110ef609aa",
@@ -15,10 +15,17 @@
  "_ingest_on": "runner = the gold-standard journal stack as the workflow's own job (4-vCPU runner, parent + 3 workers, recorded with --record); host = the same stack over SSM on the declared instance (parent + every other CPU), for the 32/48-CPU host once Greg names it and its OS",
  "minimum_prefixes": 19,
  "host_scripts": {
-  "ingest": "deploy/aws/host/day_ingest.ps1",
+  "ingest": null,
   "schedule_prefixes": "deploy/aws/host/day_schedule_prefixes.ps1",
   "cycles": "deploy/aws/host/day_cycles.ps1"
  },
+ "_host_scripts": "ingest is null on purpose (Greg, 2026-09-17): ingestion stays the journal-stack job already on git, recorded with --record ingest. There is no second ingestion path to build or pay for. ingest_on: host would now be refused by name rather than run a script that does not exist.",
+ "host_variables": {
+  "ToolsRoot": "HOST_TOOLS_ROOT",
+  "Python": "HOST_PYTHON",
+  "RunRoot": "HOST_RUN_ROOT"
+ },
+ "_host_variables": "Filled when Greg authors the fresh run configuration; the scripts refuse any value still reading HOST_*. ToolsRoot is the lawful checkout at the reviewed BOSS commit (the retained scripts used C:\\tools\\Markets), Python the host interpreter, RunRoot the parent holding <RunRoot>\\<Day>\\actual-host-configuration.json and that day's run directory.",
  "ingest_timeout": 21600,
  "prefix_timeout": 7200,
  "cycles_timeout": 43200

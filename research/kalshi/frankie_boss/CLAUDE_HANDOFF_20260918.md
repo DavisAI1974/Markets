@@ -139,3 +139,65 @@ Not run this session: the family suite. Next chat opens with ONE family run befo
   `PIPELINE_RECEIPT {json}` line carrying its gate fields); the Pod credential via SSM parameter; the receiver-side
   sealed-absence proof producer; the receiver binding of the BOSS Memory A witness; the fresh configuration (reviewed
   BOSS tip + new completion ref, Greg); `T_CTX` untouched by Greg's call; NO family run this session.
+
+## 2026-09-17, third session (Opus, using-agent-skills then shipping-and-launch): the family run, and the two host scripts
+
+No Frankie, Granite, Pod, EC2, S3 or workflow action; no dispatch; nothing result-bearing. Git-only work plus the
+container package installs the previous session listed. Launch stays HOLD.
+
+**The family run, first business, on the tip `d0966ee`**: `1018 passed, 1 skipped, 0 failed, 0 errors, nothing
+deselected` in 99.7 s - the 09-18 baseline reproduced exactly. **Item 1 (`T_CTX`) did not surface**, so per Greg's
+call the row count is untouched again.
+
+**The gap the scripts could not be written around.** `day_pipeline._ssm()` built `ssm_run_ps1.py --instance ...
+--script <path> --timeout N` and passed **no day**, while `ssm_run_ps1.py` sends the script file verbatim with no
+substitution and the day / `run_directory` / `run_id` live inside the host-side run configuration. So a host script
+had zero per-run information. Greg's call: pass it over SSM.
+
+- `ssm_run_ps1.py` gains `--set NAME=VALUE` (repeatable), prepended as a PowerShell **single-quoted** assignment,
+  which is literal - no interpolation, no subexpression. A name that is not a bare identifier, or a value carrying a
+  quote or a newline, is **refused rather than escaped**, so there is still no quoting logic in that file.
+- `day_pipeline._ssm()` passes `--set Day=<day>` plus every entry of a new `host_variables` map. The host's roots
+  therefore live in the pipeline configuration (which `main()` already credential-scans and D34 audits), never as a
+  literal inside a script that is sent to a live host.
+- `_ssm()` returns `None` when no script is declared for a stage and `run_stage` refuses by name, so a null entry is
+  a clean refusal instead of a missing-file error.
+
+**The scripts** `deploy/aws/host/day_schedule_prefixes.ps1` (stage 4) and `day_cycles.ps1` (stage 5). Each refuses any
+of `$Day/$ToolsRoot/$Python/$RunRoot` the sender did not supply or that still reads `HOST_*`; runs its tool through
+`cmd.exe` so the redirection is owned there (the retained-script trap: under `Stop`, a native command's first stderr
+line becomes a terminating error, which cost two earlier runs their tracebacks); tails its log; and ends with ONE
+`PIPELINE_RECEIPT {json}` line. **Neither script rebuilds anything and neither invents a number**: the prefix receipt
+is read back from the builder's own `full19-prefix-witnesses.json` (and refuses if `witnesses` disagrees with
+`prefixes`), and the cycles receipt comes from the runner's own `all_nineteen_cycles_complete` line - an incomplete
+run throws with the runner's own status and resumes next dispatch from the same run directory, rather than the script
+counting directories and guessing.
+
+**`host_scripts.ingest` is null on purpose (Greg, this session)**: *"Don't use bento. I get charges for that. Why
+don't you use the workflow that is already there on git?"* Ingestion stays the journal-stack job already on git,
+recorded with `--record ingest`. There is no second ingestion path to build or pay for, and the reason is now carried
+in the configuration and asserted by a test, so a later session cannot quietly add one. **Measured while checking it:
+nothing in this chain bills Databento** - `stage_block_sources.count_records` calls `db.DBNStore.from_bytes(raw)`, a
+local decode of bytes already fetched from S3, and there is no `Historical`/`Live` client or `DATABENTO_API_KEY` read
+anywhere under `frankie_boss/`. The only paid resources in the chain are S3 and the EC2 host.
+
+**What is proven and what is not.** `test_day_pipeline.py` 6/6 and a new `test_host_day_scripts.py` 8/8. **There is no
+PowerShell in this container and the host is under HOLD, so neither script has ever been executed.** What the new file
+checks is the contract the orchestrator depends on: the four variables are named and an unfilled `HOST_*` placeholder
+is refused; exactly one `PIPELINE_RECEIPT` line and it is last; its fields cover that stage's `day_pipeline.GATES`;
+and no drive-letter path or credential word travels in a verbatim script. **Every one of those assertions was
+negative-tested by mutating the real file until it fired** (NC-3's lesson: a guard whose firing branch never executed
+is not tested) - drive literal, credential word, a second receipt line, a receipt that is not last, a renamed gate
+field, a weakened placeholder check, and all four `--set` refusals.
+
+**Open, and each one is Greg's.**
+1. `host_variables` carries `HOST_TOOLS_ROOT` / `HOST_PYTHON` / `HOST_RUN_ROOT` placeholders. They are filled when the
+   fresh run configuration is authored; until then both scripts refuse. The retained scripts used `C:\tools\Markets`
+   for the tools checkout.
+2. The scripts expect the day's run configuration at `<RunRoot>\<Day>\actual-host-configuration.json`. Nothing places
+   it yet - that is the fresh-configuration step, and its `host_runtime.prefixes_directory` is what both scripts read.
+3. `frankie_journal_stack.yml`'s `ingest_on` input still offers `host`, which now lands on the clean refusal above.
+   **The workflow was NOT edited** - that needs Greg's go - so the stale description is recorded here instead.
+4. Spec prerequisite 6 is still the real blocker on stage 5: the Pod credential reaches the runner on **stdin**, and a
+   script sent over SSM has no stdin. Declared in `day_cycles.ps1`'s header rather than papered over. Until it is an
+   SSM parameter read once, a cycle needing the Granite critic cannot complete from the chain.

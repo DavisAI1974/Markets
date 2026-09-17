@@ -1,10 +1,16 @@
 """Send a PowerShell script file to a Windows EC2 instance over SSM and wait for it.
 
-Reads the script bytes verbatim (no shell quoting anywhere), sends AWS-RunPowerShellScript, polls
+Reads the script bytes verbatim (only --set prepends assignments), sends AWS-RunPowerShellScript, polls
 until it finishes, prints stdout and stderr, and exits nonzero unless SSM reports Success.
 
     python deploy/aws/ssm_run_ps1.py --instance i-... --region us-east-2 --script path.ps1 [--timeout 1800]
+        [--set Day=20211004 --set ToolsRoot=C:\\tools\\Markets ...]
 Credentials come from the environment or, if --env-file is given, from lines of NAME=value.
+
+--set is the ONLY substitution: each NAME=VALUE is prepended to the script as a PowerShell
+single-quoted assignment, which is literal (no interpolation, no subexpression). A name that is
+not a bare identifier, or a value carrying a single quote or a newline, is refused rather than
+escaped, so there is still no quoting logic anywhere in this file.
 """
 import argparse
 import os
@@ -20,6 +26,17 @@ def load_env_file(path):
             os.environ[m.group(1)] = m.group(2).strip()
 
 
+def preamble(variables):
+    """NAME=VALUE pairs as literal PowerShell assignments above the script body."""
+    lines = []
+    for item in variables:
+        name, sep, value = item.partition('=')
+        if not sep or not re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*', name) or "'" in value or '\n' in value:
+            raise SystemExit('--set expects NAME=VALUE with a bare name and no quote or newline in the value')
+        lines.append("$%s = '%s'" % (name, value))
+    return ''.join(line + '\n' for line in lines)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--instance', required=True)
@@ -28,12 +45,14 @@ def main():
     parser.add_argument('--timeout', type=int, default=1800)
     parser.add_argument('--env-file')
     parser.add_argument('--comment', default='')
+    parser.add_argument('--set', dest='variables', action='append', default=[], metavar='NAME=VALUE',
+                        help='prepend $NAME = ' + "'VALUE'" + ' above the script body')
     args = parser.parse_args()
     if args.env_file:
         load_env_file(args.env_file)
     import boto3
     ssm = boto3.client('ssm', region_name=args.region)
-    script = open(args.script, encoding='utf-8').read()
+    script = preamble(args.variables) + open(args.script, encoding='utf-8').read()
     command = ssm.send_command(InstanceIds=[args.instance], DocumentName='AWS-RunPowerShellScript',
                                Parameters={'commands': [script]}, TimeoutSeconds=args.timeout,
                                Comment=args.comment[:100])['Command']['CommandId']

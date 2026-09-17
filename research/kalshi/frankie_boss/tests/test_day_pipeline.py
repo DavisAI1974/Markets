@@ -100,3 +100,30 @@ def test_ingest_is_recorded_from_the_journal_stack_verification_receipt(tmp_path
     other.resume(until='host-start')
     with pytest.raises(dp.StageRefused, match='not a verified'):
         other.record_external('ingest', receipt)
+
+
+def test_host_stages_carry_the_day_and_the_declared_host_variables(tmp_path):
+    calls = []
+    variables = dict(ToolsRoot='C:\\tools\\Markets', RunRoot='D:\\frankie\\runs', Python='D:\\py\\python.exe')
+    pipeline = dp.DayPipeline(dict(CONFIG, ingest_on='host', host_variables=variables), '20211004',
+                              runner=runner(calls), runs_root=tmp_path, now=lambda: 1.)
+    pipeline.resume(until='schedule-prefixes')
+    for script in ('ingest.ps1', 'prefix.ps1'):
+        argv = next(a for a in calls if script in a)
+        pairs = [argv[i + 1] for i, part in enumerate(argv) if part == '--set']
+        assert pairs == ['Day=20211004', 'Python=D:\\py\\python.exe', 'RunRoot=D:\\frankie\\runs',
+                         'ToolsRoot=C:\\tools\\Markets']
+    # The script file is still named verbatim: the day reaches it only as a --set value.
+    argv = next(a for a in calls if 'prefix.ps1' in a)
+    carriers = [part for part in argv if '20211004' in part]
+    assert carriers == ['Day=20211004'] and argv[argv.index('--script') + 1] == 'prefix.ps1'
+
+
+def test_a_stage_whose_host_script_is_not_declared_is_refused_by_name(tmp_path):
+    calls = []
+    scripts = dict(CONFIG['host_scripts'], ingest=None)
+    pipeline = dp.DayPipeline(dict(CONFIG, ingest_on='host', host_scripts=scripts), '20211004',
+                              runner=runner(calls), runs_root=tmp_path)
+    with pytest.raises(dp.StageRefused, match='declares no host script for ingest'):
+        pipeline.resume()
+    assert pipeline.receipt('host-start') and not any('ingest' in ' '.join(argv) for argv in calls)
