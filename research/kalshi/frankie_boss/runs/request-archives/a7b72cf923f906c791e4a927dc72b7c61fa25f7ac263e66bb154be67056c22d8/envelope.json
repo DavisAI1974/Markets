@@ -1,0 +1,8 @@
+{
+  "ciphertext_sha256": "7a28cb4d078b2f3362f6c7e703fd2112a864f611731187ce1551a9964f7f5b8b",
+  "key_parameter": "/markets/frankie/request-transport/pilot-20260919",
+  "key_region": "us-east-2",
+  "nonce_hex": "896bc02c47b170e5b2904cad",
+  "request_sha256": "a7b72cf923f906c791e4a927dc72b7c61fa25f7ac263e66bb154be67056c22d8",
+  "schema": "FRANKIE_GIT_REQUEST_ARCHIVE_V1"
+}
