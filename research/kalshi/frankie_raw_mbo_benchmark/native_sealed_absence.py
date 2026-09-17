@@ -242,7 +242,7 @@ def prove_sealed_absent(
 
 
 def write_sealed_proof(*, prompt, knowledge_receipt, knowledge_bundle,
-                       delivery_receipt, output, repo_root=REPO_ROOT):
+                       delivery_receipt, output, repo_root=REPO_ROOT, repo_commit=None, verify_existing=False):
     """Produce an immutable proof from the actual receiver input files.
 
     The existing knowledge validator binds the receipt and bundle to the frozen
@@ -257,6 +257,14 @@ def write_sealed_proof(*, prompt, knowledge_receipt, knowledge_bundle,
     target = Path(output).resolve()
     if target.is_relative_to(root):
         raise SealedAbsenceError('proof output must be outside the frozen receiver checkout')
+    if repo_commit is not None:
+        import subprocess
+        if not re.fullmatch('[0-9a-f]{40}', str(repo_commit)):
+            raise SealedAbsenceError('exact knowledge repository commit required')
+        head = subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip()
+        changed = subprocess.check_output(['git','status','--porcelain','--','research'],cwd=root,text=True)
+        if head != repo_commit or changed.strip():
+            raise SealedAbsenceError('frozen knowledge repository commit or sources changed')
     prompt_bytes = Path(prompt).read_bytes()
     if not prompt_bytes.strip():
         raise SealedAbsenceError('an actual nonempty prompt is required')
@@ -270,6 +278,13 @@ def write_sealed_proof(*, prompt, knowledge_receipt, knowledge_bundle,
     surfaces.update(surfaces_from_delivery(
         knowledge_receipt=knowledge, model_visible_context=bundle, delivery_receipt=delivered))
     proof = prove_sealed_absent(sealed_object_set(repo_root=root), surfaces)
+    if repo_commit is not None:
+        proof['knowledge_repository'] = dict(path=str(root),commit=repo_commit)
+        proof['receipt_sha256'] = canonical_hash(proof,omit='receipt_sha256')
+    if verify_existing:
+        if target.read_bytes() != canonical_bytes(proof):
+            raise SealedAbsenceError('retained sealed proof differs from the actual input surfaces')
+        return proof
     target.parent.mkdir(parents=True, exist_ok=True)
     with target.open('xb') as stream:
         stream.write(canonical_bytes(proof))
@@ -284,7 +299,12 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description='Produce sealed-absence proof from the actual principal inputs; no model call.')
     for name in ('prompt','knowledge-receipt','knowledge-bundle','delivery-receipt','output'):
         parser.add_argument('--' + name, required=True)
+    parser.add_argument('--repo-root',default=str(REPO_ROOT))
+    parser.add_argument('--repo-commit')
+    parser.add_argument('--verify-existing',action='store_true')
     args = parser.parse_args(argv)
+    if Path(args.repo_root).resolve() != Path(REPO_ROOT).resolve() and args.repo_commit is None:
+        parser.error('an external frozen knowledge repository requires --repo-commit')
     try:
         proof = write_sealed_proof(**vars(args))
     except (ValueError, OSError) as error:
