@@ -293,13 +293,14 @@ jobs:
       - run: python -m pip install numpy==2.3.5 boto3==1.42.23 botocore==1.42.97 cffi databento-dbn==0.62.0 zstandard pytest cryptography==46.0.3 requests pyyaml
       - name: Complete scientific family and changed launch controls
         run: |
-          python -m pytest -q research/kalshi/frankie_boss/tests/test_granite*.py research/kalshi/frankie_boss/tests/test_sunday*.py research/kalshi/frankie_boss/tests/test_run_actual*.py research/kalshi/frankie_boss/tests/test_frankie_controller.py research/kalshi/frankie_boss/tests/test_actual_host*.py research/kalshi/frankie_boss/tests/test_day_pipeline.py research/kalshi/frankie_boss/tests/test_classroom_recovery_reconciliation.py research/kalshi/frankie_boss/tests/test_stage_block_sources.py research/kalshi/frankie_boss/tests/test_frankie_principal_adapter.py research/kalshi/frankie_boss/tests/test_launch_pins.py
+          python -m pytest -q research/kalshi/frankie_boss/tests/test_granite*.py research/kalshi/frankie_boss/tests/test_sunday*.py research/kalshi/frankie_boss/tests/test_run_actual*.py research/kalshi/frankie_boss/tests/test_frankie_controller.py research/kalshi/frankie_boss/tests/test_actual_host*.py research/kalshi/frankie_boss/tests/test_day_pipeline.py research/kalshi/frankie_boss/tests/test_classroom_recovery_reconciliation.py research/kalshi/frankie_boss/tests/test_stage_block_sources.py research/kalshi/frankie_boss/tests/test_frankie_principal_adapter.py research/kalshi/frankie_boss/tests/test_launch_pins.py research/kalshi/frankie_boss/tests/test_git_request_archive.py
       - name: Validate workflow YAML
         run: |
           python - <<'PY'
           from pathlib import Path
           import yaml
-          yaml.safe_load(Path('.github/workflows/frankie_journal_stack.yml').read_text())
+          for name in ('frankie_journal_stack.yml', 'frankie_retained_granite.yml'):
+              yaml.safe_load((Path('.github/workflows')/name).read_text())
           PY
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
