@@ -1,0 +1,96 @@
+{
+  "archive_bytes": 16514631,
+  "archive_sha256": "d1a7acd95d6da734318216c7dd6b1ac72c45062a22c7a45dbfff213fe8070438",
+  "encrypted_key_base64": "QVHSRF5xZ7eSy8LjVdG9lJP7MstPMJpIItdtmTboc/uNBjEy5qbehEJvoPx3/HdMl/FWJGwySp02dkmIlDvn2DE6oKI7zfPQaf2nyToDygFtU7OpGYWJtrCYxijzpimSbCjh/EmgyPvUEh8BLpQgoXo7m4YYAL5NRFd2zQb07/4hZNaO4Azy05BGf6MW7D5oV/LjOS47d6yyghqfxDQb439yGO+0xhM2yoqLi5axQkqbBHvTJ5P0b0wb9Zh9a8fCZvpRtqtOZetKkbzBjOv3LbSLjGOFtI+Lx5dSsArNGXYXXxD1TGQAhePGjKYqVsJbOB641glv8SepDPr4u1eDIpcVIPNOp5jiU8e4bvCCkB9fp6epDqYUGIs3uBkSIpeX/8URjebjCxZ+f+yPYi/nSYPh284eP1G4bEgMVVayvyKoVrg8x8SGuA5TAFQoHxVr4awTjcXsJ//LWzOu5JAM0Bw7lwCjlq2Y6Z8qQLONz+drpDcYoxtDhdlrKjdhhuvZ",
+  "encryption": "AES-256-GCM",
+  "files": [
+    {
+      "bytes": 18247680,
+      "path": "journal.compact.sqlite",
+      "sha256": "f54402594bb62f435ead061c9516fb936e7b5d7c91307e0262ddc6fab8256c37"
+    },
+    {
+      "bytes": 589,
+      "path": "progress.json",
+      "sha256": "cd92cc8ba6eaae6076be6e3c8fa3b854755d73fbeacc30e97e4b8f6c22e0a126"
+    },
+    {
+      "bytes": 1940,
+      "path": "progress.jsonl",
+      "sha256": "defac56dae02b873223e5b601cba76d51ca80a937ff34b2b7c3e43d54f52b69b"
+    },
+    {
+      "bytes": 10519,
+      "path": "runtime/research/kalshi/frankie_boss/c15_builder.py",
+      "sha256": "6f1c9050a7e1da226fe1828c4667020d2536e2607971c468df96f615edba66bd"
+    },
+    {
+      "bytes": 6319,
+      "path": "runtime/research/kalshi/frankie_boss/c15_journal.py",
+      "sha256": "898b1671c867b8b10b664dd948cc73890a79fa786b6244dfe5164d6c6503586e"
+    },
+    {
+      "bytes": 1417,
+      "path": "runtime/research/kalshi/frankie_boss/c15_observer.py",
+      "sha256": "223a7841f79b9e530cbe1b96f4c058f9bd23e73016f329ba977e2078a27d7871"
+    },
+    {
+      "bytes": 1063,
+      "path": "runtime/research/kalshi/frankie_boss/c15_registry.py",
+      "sha256": "f32f3c58a3bbdef821420ef189da12e87319db09962b980ce8ef1589eb5c49cb"
+    },
+    {
+      "bytes": 21360,
+      "path": "runtime/research/kalshi/frankie_boss/causal_packet.py",
+      "sha256": "35c1713b043068cee5bbcc6494be3a9faec397598f9437e0161b92e585a8900b"
+    },
+    {
+      "bytes": 32492,
+      "path": "runtime/research/kalshi/frankie_boss/causal_prefix.py",
+      "sha256": "283189f6826936c6db6b515e47b066241224fb6d4ce34983af6a9fc2711e2dd3"
+    },
+    {
+      "bytes": 33334,
+      "path": "runtime/research/kalshi/frankie_boss/causal_prefix_records.py",
+      "sha256": "aacace350fa8d157ea0d6778aaad8c2317072903eea5720a8f1150f03388c094"
+    },
+    {
+      "bytes": 15065,
+      "path": "runtime/research/kalshi/frankie_boss/mbo_resume_state.py",
+      "sha256": "73b34445c92e8aeab1ad9ed1241f080fb4194e68eb15bb5ae51336cc6f0807ca"
+    },
+    {
+      "bytes": 9211,
+      "path": "runtime/research/kalshi/frankie_boss/raw_mbo_source_manifest.py",
+      "sha256": "7abb52c0ef186977988277b72ea9101e4566f0a74ba2e579a1efba0428f8333e"
+    },
+    {
+      "bytes": 1452,
+      "path": "runtime/research/kalshi/frankie_boss/selected_source_scope.py",
+      "sha256": "b71b3873ed02dbd9da15066e7cb79575b63e2e755bf23e5c93ed9f46891fd980"
+    },
+    {
+      "bytes": 7947,
+      "path": "runtime/research/kalshi/frankie_boss/source_conformance.py",
+      "sha256": "0dd7e21b6533f5f8a68722678f147e41d2ebbea766f796b801eeb3daabb66876"
+    },
+    {
+      "bytes": 42349,
+      "path": "runtime/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+      "sha256": "dbf751bfb877cda9df304afc66c7d7fef9460441ccf030e82edd100f445bcd17"
+    }
+  ],
+  "github_run_id": "35178520927",
+  "key_wrapping": "RSA-OAEP-SHA256",
+  "parts": [
+    {
+      "aad": "FRANKIE_JOURNAL_GIT_ARCHIVE_V1:0",
+      "bytes": 16514647,
+      "nonce_base64": "mkVaocrdEXhSnH+O",
+      "path": "part-00000.aesgcm",
+      "sha256": "52568fb5df5935eab11f1d3bfac090f8c2eb72d02a7efa9dd68fc14d0289e544"
+    }
+  ],
+  "recipient_public_key_sha256": "b437c74b14c4b79183ba12cec80d8f21b05c890d0fd71a73238a8f9afb4bd1a5",
+  "schema": "FRANKIE_JOURNAL_GIT_ARCHIVE_V1"
+}
