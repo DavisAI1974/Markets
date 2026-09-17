@@ -37,6 +37,8 @@ def validate_startup(receipt, plan, manifest):
         '--dtype','bfloat16','--tensor-parallel-size','1','--pipeline-parallel-size','1','--data-parallel-size','1',
         '--max-num-seqs','1','--max-model-len',env['GRANITE_MAX_MODEL_LEN'],'--gpu-memory-utilization','0.9',
         '--generation-config','vllm']
+    if env['GRANITE_MAX_MODEL_LEN']==str(s.MAX_MODEL_LEN):  # the long-context prefill pin granite_startup adds
+        argv+=['--enable-chunked-prefill','--max-num-batched-tokens','2048']
     expected=dict(schema='GRANITE_STARTUP_RUNTIME_V1',mount=mount,image_digest=s.IMAGE_DIGEST,
         bootstrap_sha256=s.digest_file(s.__file__),argv=argv,environment=env,
         generation_policy=dict(temperature=0,thinking=False,output_limit='explicit request max_tokens',

@@ -16,11 +16,11 @@ def runtime():
 @pytest.fixture
 def evidence(monkeypatch):
     monkeypatch.setattr(a,'APPROVED_ACCOUNT_SHA256',hashlib.sha256(b'123456789012').hexdigest())
-    plan=d.make_plan(account_sha_checked='123456789012',run_id='test',max_model_len=3000,served_model='granite42-test',now=1000)
+    plan=d.make_plan(account_sha_checked='123456789012',run_id='test',max_model_len=s.MAX_MODEL_LEN,served_model='granite42-test',now=1000)
     manifest=a.strict_json(a.DEFAULT_MANIFEST.read_bytes())
     mount=dict(schema='GRANITE_MOUNT_VERIFICATION_V1',manifest_sha256=a.manifest_digest(manifest),
         files=manifest['files'],bytes=sum(r['size'] for r in manifest['files']),verifier_sha256=s.digest_file(a.__file__))
-    monkeypatch.setattr(a,'verify_directory',lambda *args:mount)
+    monkeypatch.setattr(a,'verify_directory',lambda *args,**kwargs:mount)
     receipt=s.prepare_startup('/opt/ml/model',manifest,plan['model']['PrimaryContainer']['Environment'],runtime_facts=runtime)
     receipt['argv']=[v.replace('\\','/') for v in receipt['argv']]
     return plan,manifest,receipt
