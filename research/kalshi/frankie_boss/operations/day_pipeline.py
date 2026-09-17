@@ -132,7 +132,7 @@ class DayPipeline:
                    '--script', script, '--timeout', str(timeout), '--set', f'Day={self.day}']
         for name, value in sorted((self.c.get('host_variables') or {}).items()):
             command += ['--set', f'{name}={value}']
-        if script_key == 'cycles':
+        if script_key in ('cycles', 'schedule_prefixes'):
             command += ['--set', f'CycleLimit={self.cycle_limit}']
         return command
 
@@ -177,7 +177,7 @@ class DayPipeline:
         gate = {name: value.get(name) for name in GATES[stage]}
         if any(gate[name] is None for name in gate):
             raise StageRefused(f'{stage} receipt line lacks {[n for n in gate if gate[n] is None]}')
-        if stage == 'schedule-prefixes' and gate['prefix_count'] < self.c.get('minimum_prefixes', 19):
+        if stage == 'schedule-prefixes' and gate['prefix_count'] < min(self.c.get('minimum_prefixes', 19), self.cycle_limit):
             raise StageRefused('fewer prefixes than the day requires')
         if stage == 'cycles' and gate['cycles_completed'] != gate['cycles_total']:
             raise StageRefused('cycles incomplete; resume with the same run directory')
