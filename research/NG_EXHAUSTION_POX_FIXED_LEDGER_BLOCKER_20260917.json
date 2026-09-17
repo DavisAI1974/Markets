@@ -1,0 +1,60 @@
+{
+  "date": "2026-09-17",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "status": "BLOCKED_FAIL_CLOSED_MISSING_AUTHORITATIVE_LEDGER",
+  "population_policy": "FIXED_3429_DO_NOT_REOPEN",
+  "required_population": {
+    "total": 3429,
+    "flip": 1444,
+    "same": 1985,
+    "initial_sign_persistence_through_plus60_approx": 0.944
+  },
+  "authoritative_case_ledger": {
+    "located": false,
+    "reference": null,
+    "sha256": null,
+    "resume_condition": "Supply an already-authoritative case-level ledger with exactly 3429 unique identities and authoritative labels split 1444 FLIP / 1985 SAME. Validate once, freeze its reference/hash, then immediately continue the causal join and standalone Stages 1-4."
+  },
+  "rejected_superseded_ledger": {
+    "workflow_run_id": 32333628389,
+    "artifact_id": 9295682958,
+    "artifact_expired": true,
+    "sha256": "328d66e664337b2ebaa8c408c5b5fe465748e36f7e9d5bd56dbb00ec345e3827",
+    "observed_total": 3429,
+    "observed_flip": 1546,
+    "observed_same": 1883,
+    "reason": "Superseded label split; must not be relabeled, reconciled, or used as a replacement population."
+  },
+  "recovery_findings": {
+    "corrected_gate_commit_before_regression": "cb3a74664ea9bb4ac20a4bac4714297b455f0dc7",
+    "regression_commit": "b5d5cf08eed762e1bfec1d11287a5522e4a7c392",
+    "regression": "Roster-derived materialization replaced the supplied-authoritative-ledger gate and changed the fixed split to 1546/1883.",
+    "repaired_runner_and_launch": true,
+    "repaired_workflow_is_external_authoritative_ledger_only": true
+  },
+  "explicitly_not_performed": [
+    "population reconfirmation",
+    "canonical P/O/X adjacency enumeration",
+    "smaller historical POX subset comparison",
+    "1718+1711 provenance investigation",
+    "roster-derived replacement labels",
+    "Phase-2 finding reopening",
+    "Stage-1 economics on the wrong ledger",
+    "Stage-2 FLIP/SAME modeling on the wrong ledger",
+    "Stage-3 management modeling on the wrong ledger",
+    "Stage-4 delayed-SAME modeling on the wrong ledger",
+    "D0-D5 result artifact access",
+    "permanent brain merge",
+    "play promotion"
+  ],
+  "membership_classifier": {
+    "status": "BLOCKED_UNLESS_SEPARATE_HONEST_CONTROL_UNIVERSE_IS_SUPPLIED",
+    "controls_may_not_redefine_fixed_3429": true
+  },
+  "downstream_safety_note": "The existing large standalone analysis/raw-execution scripts still contain the superseded 1546/1883 constants and were not executed. The restored workflow stops at the corrected authoritative-ledger gate so those scripts cannot be reached through the workflow until the fixed ledger exists and their constants are corrected without changing research logic.",
+  "contamination_wall": {
+    "D0_D5_opened": false,
+    "incremental_crosswalk": "DEFERRED_UNTIL_STANDALONE_POX_IS_INDEPENDENTLY_FROZEN"
+  },
+  "promotion_authorized": false
+}
