@@ -192,3 +192,26 @@ class ProveSealedAbsentTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+def test_producer_binds_actual_inputs_and_refuses_changed_or_contaminated_replay(tmp_path):
+    import pytest
+    from research.kalshi.frankie_raw_mbo_benchmark.native_sealed_absence import write_sealed_proof
+    from research.kalshi.frankie_raw_mbo_benchmark.native_ingestion_layer_registry import canonical_bytes
+    delivery=build_knowledge_delivery()
+    prompt=tmp_path/'prompt.md'; prompt.write_bytes(b'actual current BOSS attachment')
+    receipt=tmp_path/'KNOWLEDGE_RECEIPT.json';receipt.write_bytes(canonical_bytes(delivery.receipt))
+    bundle=tmp_path/'KNOWLEDGE_BUNDLE.md';bundle.write_bytes(delivery.model_visible_context)
+    paths=tmp_path/'delivery.json';paths.write_text(json.dumps({'ledgers':{'raw':{'file':'raw.jsonl'}}}))
+    args=dict(prompt=prompt,knowledge_receipt=receipt,knowledge_bundle=bundle,delivery_receipt=paths,output=tmp_path/'proof.json')
+    proof=write_sealed_proof(**args)
+    assert proof['surfaces_scanned']['prompt']['sha256']==hashlib.sha256(prompt.read_bytes()).hexdigest()
+    assert write_sealed_proof(**args,verify_existing=True)==proof
+    prompt.write_bytes(b'different current BOSS attachment')
+    with pytest.raises(SealedAbsenceError,match='actual input surfaces'):
+        write_sealed_proof(**args,verify_existing=True)
+    prompt.write_text('target_ground_truth_onset_time')
+    with pytest.raises(SealedAbsenceError,match='prompt'):
+        write_sealed_proof(**args,verify_existing=True)
+    prompt.write_text('clean')
+    with pytest.raises(SealedAbsenceError,match='repository commit'):
+        write_sealed_proof(**args,repo_commit='a'*40)
