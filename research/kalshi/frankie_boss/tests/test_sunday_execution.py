@@ -8,6 +8,33 @@ from research.kalshi.frankie_boss.c15_journal import EvidenceJournal
 from research.kalshi.frankie_boss.frankie_principal_adapter import canonical, digest
 
 
+def test_two_cycle_batch_stops_then_full_resume_preserves_order():
+    execution = object.__new__(SundayExecution)
+    completed = {}
+    fresh = []
+
+    async def run_cycle(index):
+        if index not in completed:
+            fresh.append(index)
+            completed[index] = {'cycle_index': index}
+        return completed[index]
+
+    execution.run_cycle = run_cycle
+    first = asyncio.run(execution.run_remaining(cycles=2))
+    assert fresh == [0, 1] and len(first) == 2
+    full = asyncio.run(execution.run_remaining())
+    assert fresh == list(range(19)) and len(full) == 19
+    assert full[:2] == first
+
+
+@pytest.mark.parametrize('cycles', [0, 20, -1, True, 1.5])
+def test_invalid_cycle_batch_refuses_before_runtime(cycles):
+    execution = object.__new__(SundayExecution)
+    execution.run_cycle = lambda index: pytest.fail('invalid batch reached runtime')
+    with pytest.raises(ValueError, match='cycles'):
+        asyncio.run(execution.run_remaining(cycles=cycles))
+
+
 def test_append_witness_recovers_both_not_committed_and_committed_states(tmp_path):
     path=tmp_path/'journal.sqlite';witness=JournalWitness(path,tmp_path/'witnesses','test-owner')
     assert witness.checkpoint() is None

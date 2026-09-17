@@ -328,8 +328,10 @@ class SundayExecution:
                     if controller_journal is not None:controller_journal.close()
                     if runtime.release is not None:runtime.release()
 
-    async def run_remaining(self):
+    async def run_remaining(self, *, cycles=19):
         """Run in order until complete or an actual host principal handoff is pending."""
+        if type(cycles) is not int or not 1 <= cycles <= 19:
+            raise ValueError('cycles must be an integer from 1 through 19')
         results=[]
-        for index in range(19):results.append(await self.run_cycle(index))
+        for index in range(cycles):results.append(await self.run_cycle(index))
         return tuple(results)

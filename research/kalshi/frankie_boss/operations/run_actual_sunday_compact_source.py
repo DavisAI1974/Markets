@@ -205,6 +205,7 @@ def main():
     parser.add_argument('--run-directory', help='disposable directory for --verify-source-only')
     parser.add_argument('--tools-root', help='checkout holding compact_source.py when the lawful tree predates it')
     parser.add_argument('--prepare-only', action='store_true')
+    parser.add_argument('--cycles', type=int, choices=range(1, 20), default=19)
     args = parser.parse_args()
     configuration = json.loads(Path(args.configuration).read_bytes())
     if args.verify_source_only:
@@ -216,7 +217,7 @@ def main():
     # Compose over the integrated classroom host; the classroom main() takes the class explicitly and
     # rebinds no module global, so the base adapter can never be the one that runs.
     host = host_class(actual, args.tools_root, base=classroom.ActualHost)
-    sys.argv = [sys.argv[0], '--configuration', args.configuration] + (['--prepare-only'] if args.prepare_only else [])
+    sys.argv = [sys.argv[0], '--configuration', args.configuration, '--cycles', str(args.cycles)] + (['--prepare-only'] if args.prepare_only else [])
     return classroom.main(host_class=host)
 
 
