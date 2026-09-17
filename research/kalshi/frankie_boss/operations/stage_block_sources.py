@@ -40,21 +40,43 @@ def load_env_file(path):
 
 
 def count_records(raw, day):
-    import databento as db
-    frame = db.DBNStore.from_bytes(raw).to_df(pretty_ts=False, map_symbols=False)
-    ts = frame.index.astype('int64')
+    import io
+    from contextlib import ExitStack
+    import databento_dbn as dbn
+    import zstandard as zstd
+    from research.kalshi.frankie_boss.mbo_source import _decompressed
     halt = int(dt.datetime(int(day[:4]), int(day[4:6]), int(day[6:]), HALT_UTC_HOUR, tzinfo=dt.timezone.utc).timestamp() * 1e9)
-    before = int((ts < halt).sum())
-    flags = frame['flags'].astype(int).values
+    count=before=groups=0
+    first=last=None
+    instruments=set();flags=bytearray();metadata=None
+    # Decode only archived bytes with the SDK already installed by the workflow.
+    # Reuse the source reader's complete-frame/truncation guard, without ingesting.
+    with ExitStack() as stack:
+        stream=_decompressed(io.BytesIO(raw),zstd,stack)
+        decoder=dbn.DBNDecoder(upgrade_policy=dbn.VersionUpgradePolicy.AS_IS)
+        for chunk in iter(lambda:stream.read(1<<20),b''):
+            for record in decoder.write_and_decode(chunk):
+                if type(record) is dbn.Metadata:
+                    if metadata is not None or str(record.schema)!='mbo':raise ValueError('one MBO metadata header required')
+                    metadata=record
+                    continue
+                if metadata is None or type(record) is not dbn.MBOMsg:
+                    raise ValueError('non-MBO record in declared MBO source; no record is skipped')
+                stamp=int(record.ts_recv);flag=int(record.flags)
+                count+=1;before+=stamp<halt;groups+=bool(flag&0x80)
+                first=stamp if first is None else min(first,stamp)
+                last=stamp if last is None else max(last,stamp)
+                instruments.add(record.instrument_id);flags.append(flag)
+        if decoder.buffer() or metadata is None or count==0:
+            raise ValueError('complete nonempty MBO source required')
     # Seam checks (ingestion review 9.2/9.3): the builder refuses a member transition or a session
     # change inside an open group, and F_LAST (flag 0x80) closes a group. So the LAST record of every
     # day file must be F_LAST, and if the halt is a session boundary the last pre-halt record must be too.
     last_is_f_last = bool(flags[-1] & 0x80)
-    halt_boundary_f_last = bool(flags[before - 1] & 0x80) if 0 < before < len(frame) else None
-    f_last_groups = int((flags & 0x80).astype(bool).sum())
-    return dict(mbo_records=int(len(frame)), before_halt=before, after_halt=int(len(frame)) - before,
-                first_ts_recv_ns=int(ts.min()), last_ts_recv_ns=int(ts.max()),
-                instruments=int(frame['instrument_id'].nunique()), f_last_groups=f_last_groups,
+    halt_boundary_f_last = bool(flags[before - 1] & 0x80) if 0 < before < count else None
+    return dict(mbo_records=count, before_halt=before, after_halt=count - before,
+                first_ts_recv_ns=first, last_ts_recv_ns=last,
+                instruments=len(instruments), f_last_groups=groups,
                 last_record_f_last=last_is_f_last, halt_boundary_f_last=halt_boundary_f_last)
 
 
