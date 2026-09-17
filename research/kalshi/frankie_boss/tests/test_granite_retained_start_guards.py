@@ -32,7 +32,8 @@ def test_start_claim_precedes_action_and_failure_never_authorizes_repeat(monkeyp
     class Api:
         def request(self, method, path, body=None):
             if method == 'GET':
-                return dict(env={'RP_BOOTSTRAP_URLS': json.dumps({name:
+                # A stopped Pod: the ported migration rebind reads the status before start.
+                return dict(status='EXITED', env={'RP_BOOTSTRAP_URLS': json.dumps({name:
                     'https://bucket.s3.amazonaws.com/'+name+'?X-Amz-Date=20260915T000000Z&X-Amz-Expires=900'
                     for name in ('example.py', 'runpod_bundle.json')})})
             calls.append(path)

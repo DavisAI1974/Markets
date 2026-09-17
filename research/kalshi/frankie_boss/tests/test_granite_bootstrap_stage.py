@@ -40,10 +40,11 @@ def bundle(tmp_path):
 def test_conditional_writes_readback_and_existing_reuse(tmp_path):
     digest = bundle(tmp_path); client = Client()
     result = stage.stage_bundle(client, tmp_path, digest, now=lambda: 1000)
-    assert len(client.puts) == 8 and len(result['urls']) == 8
+    staged = len(stage.package.FILES)+1  # the roster plus runpod_bundle.json
+    assert len(client.puts) == staged and len(result['urls']) == staged
     assert result['expires_at'] == 1900 and result['pod_actions'] == 0
     stage.stage_bundle(client, tmp_path, digest)
-    assert len(client.puts) == 8
+    assert len(client.puts) == staged
 
 
 def test_changed_local_file_refused_before_any_remote_operation(tmp_path):
