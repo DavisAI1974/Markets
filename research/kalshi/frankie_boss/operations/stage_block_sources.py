@@ -44,7 +44,7 @@ def count_records(raw, day):
     from contextlib import ExitStack
     import databento_dbn as dbn
     import zstandard as zstd
-    from research.kalshi.frankie_boss.mbo_source import _decompressed
+    from mbo_source import _decompressed
     halt = int(dt.datetime(int(day[:4]), int(day[4:6]), int(day[6:]), HALT_UTC_HOUR, tzinfo=dt.timezone.utc).timestamp() * 1e9)
     count=before=groups=0
     first=last=None

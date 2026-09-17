@@ -30,3 +30,24 @@ def test_installed_dbn_decoder_counts_every_record_and_preserves_seams(monkeypat
 def test_empty_or_truncated_source_is_refused():
     with pytest.raises(ValueError):count_records(fixture([]),'20211003')
     with pytest.raises(ValueError):count_records(fixture([record(1)])[:-4],'20211003')
+
+
+def test_standalone_staging_needs_no_model_dependencies(tmp_path):
+    import subprocess
+    import sys
+    from pathlib import Path
+    raw = tmp_path / 'source.dbn.zst'
+    raw.write_bytes(fixture([record(1)]))
+    root = Path(__file__).resolve().parents[4]
+    script = """
+import sys
+from pathlib import Path
+sys.modules['torch'] = None
+sys.modules['databento'] = None
+sys.path.insert(0, str(Path(sys.argv[1]) / 'research/kalshi/frankie_boss/operations'))
+from stage_block_sources import count_records
+assert count_records(Path(sys.argv[2]).read_bytes(), '20211003')['mbo_records'] == 1
+"""
+    done = subprocess.run([sys.executable, '-c', script, str(root), str(raw)],
+                          capture_output=True, text=True)
+    assert done.returncode == 0, done.stderr
