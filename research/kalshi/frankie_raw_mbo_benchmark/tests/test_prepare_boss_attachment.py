@@ -190,3 +190,51 @@ def test_the_command_line_requires_the_gate_or_an_explicit_waiver(tmp_path, monk
     assert 'without-output-bundle' in capsys.readouterr().err
     assert prep.main(argv + ['--principal-artifact', str(artifact_path), '--outputs-dir', str(outputs_dir)]) == 0
     assert 'output bundle gate: VALIDATED' in capsys.readouterr().out
+
+
+def _thirty_ledger_inputs(tmp_path, monkeypatch):
+    from research.kalshi.frankie_raw_mbo_benchmark import native_principal_outputs as outputs
+    from research.kalshi.frankie_raw_mbo_benchmark.tests.outputs_bundle_fixture import build_bundle, write_bundle
+    kwargs, pins = inputs(tmp_path, monkeypatch)
+    delivery = json.loads(kwargs['delivery_receipt'].read_bytes())
+    knowledge = sha(b'knowledge-receipt')
+    bundle = build_bundle(delivery_receipt_sha256=delivery['receipt_sha256'],
+                          knowledge_receipt_sha256=knowledge, run_id=pins['agent']['run_id'])
+    for lid in outputs.RUN_DOCUMENT_LEDGERS:
+        del bundle._ledgers[lid]
+    bundle.required_ledger_ids = tuple(lid for lid in bundle.required_ledger_ids
+                                     if lid not in outputs.RUN_DOCUMENT_LEDGERS)
+    target = tmp_path / 'principal_outputs'
+    receipt = write_bundle(bundle, target)
+    artifact = dict(run_id=pins['agent']['run_id'], arm=bundle.arm, role=bundle.role,
+                    delivery_receipt_sha256=delivery['receipt_sha256'],
+                    knowledge_receipt_sha256=knowledge, outputs_receipt_sha256=receipt['receipt_sha256'])
+    path = tmp_path / 'principal.json'
+    path.write_bytes(encoded(artifact))
+    return kwargs, path, target, artifact
+
+
+def test_thirty_ledger_option_preserves_all_scientific_chains_and_original_receipt(tmp_path, monkeypatch):
+    kwargs, path, target, artifact = _thirty_ledger_inputs(tmp_path, monkeypatch)
+    with pytest.raises(ValueError, match='required output ledger'):
+        prep.prepare(**kwargs, principal_artifact=path, outputs_dir=target)
+    receipt = prep.prepare(**kwargs, principal_artifact=path, outputs_dir=target, output_ledger_count=30)
+    gate = receipt['output_bundle_gate']
+    assert gate['outputs_receipt_sha256'] == artifact['outputs_receipt_sha256']
+    assert len(gate['required_ledger_ids']) == 30
+    assert all('contract_section_' + section in gate['required_ledger_ids']
+               for section in ('4.0', '4.0b', '4.1', '4.16'))
+
+
+def test_thirty_ledger_option_does_not_waive_missing_scientific_evidence(tmp_path, monkeypatch):
+    kwargs, path, target, artifact = _thirty_ledger_inputs(tmp_path, monkeypatch)
+    (target / 'ledgers' / 'contract_section_4.1.json').unlink()
+    with pytest.raises(ValueError, match='no ledger file'):
+        prep.prepare(**kwargs, principal_artifact=path, outputs_dir=target, output_ledger_count=30)
+
+
+@pytest.mark.parametrize('count', [0, 18, 29, 31, True])
+def test_pilot_count_cannot_reduce_the_scientific_baseline(tmp_path, monkeypatch, count):
+    kwargs, path, target, _ = _thirty_ledger_inputs(tmp_path, monkeypatch)
+    with pytest.raises(ValueError, match='30 or 32'):
+        prep.prepare(**kwargs, principal_artifact=path, outputs_dir=target, output_ledger_count=count)
