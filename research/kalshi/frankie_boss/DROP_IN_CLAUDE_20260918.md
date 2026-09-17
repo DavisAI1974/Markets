@@ -61,11 +61,16 @@ Order for the next chat:
 
 ## Beginning-to-end workflow (Greg, 2026-09-17: "finish workflow for beginning to end frankie")
 
+UPDATED THE STARTED WORKFLOW (Greg): `.github/workflows/frankie_journal_stack.yml`, the one that ran the gold-standard
+journal stack (run 34962256086), is now the beginning-to-end chain: job `sources` (stage-sources + host-start on the
+runner), the ORIGINAL `journal` job unchanged (its verification receipt is recorded as the ingest stage), job `host`
+(schedule-prefixes, cycles under go, package-upload, snapshot-stop over SSM; host stop always; receipts committed).
+The separate `frankie_day_pipeline.yml` was folded in and removed.
+
 BUILT: `operations/day_pipeline.py` (the orchestrator of `SPEC_UNATTENDED_DAILY_PIPELINE_20260916.md`: seven idempotent
 stages, one git receipt each under `runs/<DAY>/`, gate = the previous receipt's fields, resume from the first missing
 receipt, HOLD before cycles without `--go <source manifest hash>`, host stop as the always-step; `test_day_pipeline.py`
-2/2) and `.github/workflows/frankie_day_pipeline.yml` (workflow_dispatch ONLY: day, go, until; commits the receipts;
-no cron until Greg turns it on). Configuration: `operations/day_pipeline.configuration.json` (no credential, no desktop
+2/2) (dispatch inputs day, go, until on the updated workflow above; no cron until Greg turns it on). Configuration: `operations/day_pipeline.configuration.json` (no credential, no desktop
 path).
 
 NOT YET (the next chat, on Opus): the three host scripts the configuration names under `deploy/aws/host/`
