@@ -565,10 +565,14 @@ class ActualHost:
         # The original first request began at genesis. Preserve its exact options.
         if index==0:return dict(scope_public=self.scope.public_dict(),prefix_seed=None)
         manifest=verified_json(self.host['prefix_manifest'])
-        if (manifest.get('schema')!='FRANKIE_FULL_SUNDAY_PREFIX_WITNESSES_V1'
-                or manifest['prefixes']!=19 or manifest['source_records']!=57027
-                or len(manifest['witnesses'])!=19):
-            raise ValueError('independently pinned full Sunday prefix manifest required')
+        full = manifest.get('schema') == 'FRANKIE_FULL_SUNDAY_PREFIX_WITNESSES_V1' and manifest.get('prefixes') == 19
+        pilot = (manifest.get('schema') == 'FRANKIE_SUNDAY_PREFIX_BATCH_V1'
+            and manifest.get('prefixes') == 2 and manifest.get('scheduled_cycles') == 19
+            and getattr(self, 'cycle_limit', 19) <= 2)
+        if (not (full or pilot) or manifest.get('source_records') != 57027
+                or len(manifest.get('witnesses', [])) != manifest.get('prefixes')
+                or index >= manifest['prefixes']):
+            raise ValueError('independently pinned Sunday prefix manifest covering the requested cycles required')
         files=verified_json(manifest['witnesses'][index])
         receipt=verified_json(files['receipt'])
         selection=verified_json(manifest['prefix_seed_witnesses'][str(index)])
