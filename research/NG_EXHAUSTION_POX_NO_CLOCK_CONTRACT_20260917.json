@@ -1,0 +1,58 @@
+{
+  "name": "NG exhaustion focused POX no-clock timing contract",
+  "date": "2026-09-17",
+  "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
+  "policy": "EVENT_DRIVEN_NO_FIXED_INTERVALS",
+  "authority_note": "Restores the standing no-clock architecture: decisions are caused by market/event state, never elapsed wall-clock intervals.",
+  "population": {
+    "policy": "FIXED_3429_DO_NOT_REOPEN",
+    "total": 3429,
+    "flip": 1444,
+    "same": 1985,
+    "authoritative_case_ledger_required": true
+  },
+  "timing": {
+    "fixed_checkpoint_grid_authorized": false,
+    "fixed_entry_delay_grid_authorized": false,
+    "fixed_hold_horizons_authorized": false,
+    "fixed_timeout_exit_authorized": false,
+    "fixed_temporal_lookback_gates_authorized": false,
+    "hidden_fallback_timer_authorized": false,
+    "decision_trigger": "EACH_NEW_CAUSALLY_COMPLETED_MARKET_OR_MODEL_STATE_EVENT",
+    "signal_timestamp": "EXACT_CAUSAL_EVENT_TIMESTAMP",
+    "entry_execution": "FIRST_ELIGIBLE_RAW_QUOTE_OR_TRADE_AT_OR_AFTER_EXACT_SIGNAL_TIMESTAMP",
+    "management_trigger": "EXPLICIT_CAUSAL_STATE_TRANSITION_OR_MODEL_DECISION",
+    "exit_trigger": "EXPLICIT_CAUSAL_CLOSE_REVERSE_SUCCESSOR_REORIGIN_OR_STANDDOWN_EVENT",
+    "successor_semantics": "NEW_ORIGIN; NO AUTOMATIC_ANCESTRY_OR_DIRECTION_INHERITANCE",
+    "elapsed_time_use": "POST_HOC_DIAGNOSTIC_ONLY; NEVER_A_DECISION_TRIGGER"
+  },
+  "historical_plus60": {
+    "initial_sign_persistence_approx": 0.944,
+    "status": "FROZEN_HISTORICAL_LABEL_AND_DIAGNOSTIC_ONLY",
+    "may_trigger_entry": false,
+    "may_trigger_exit": false,
+    "may_trigger_hold": false,
+    "may_trigger_reverse": false,
+    "may_trigger_management": false,
+    "may_define_checkpoint_cadence": false
+  },
+  "economics": {
+    "segment_boundaries": "ACTUAL_CAUSAL_ACTION_EVENTS_ONLY",
+    "cost_stress_round_trip_ticks": [0.5, 1.0, 2.0],
+    "mfe_mae_window": "BETWEEN_ACTUAL_ENTRY_AND_ACTUAL_CAUSAL_EXIT_EVENTS",
+    "non_executable_and_open_segments": "PRESERVE_AND_ANNOTATE; DO_NOT_DROP"
+  },
+  "protected": {
+    "frozen_exhaustion_detector_mutated": false,
+    "canonical_evidence_mutated": false,
+    "phase1_lineage_scores_mutated": false,
+    "phase2_findings_mutated": false,
+    "frozen_runway_clock_mutated": false,
+    "permanent_frankie_mutated": false,
+    "frankie1_mutated": false,
+    "spawn_py_mutated": false,
+    "ssos_play_mutated": false
+  },
+  "research_status": "BLOCKED_FAIL_CLOSED_MISSING_AUTHORITATIVE_3429_CASE_LEDGER",
+  "promotion_authorized": false
+}
