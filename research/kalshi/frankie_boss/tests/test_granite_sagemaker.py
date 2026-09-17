@@ -67,12 +67,29 @@ def test_real_sdk_chat_payload_and_raw_evidence():
     assert service.config_hash == result.config_hash
 
 
-@pytest.mark.parametrize('kind', ['length', 'thinking', 'tools', 'wrong_model', 'choices', 'role', 'audio'])
+def test_length_finish_is_the_incomplete_output_alert_and_closes_stream():
+    # finish_reason 'length' is context exhaustion: it propagates as the alert
+    # with the usage counts retained, never as a transport error or partial output.
+    from research.kalshi.frankie_boss.granite_shadow import IncompleteModelOutput
+    data = output()
+    data['choices'][0]['finish_reason'] = 'length'
+    raw = json.dumps(data).encode(); wrapped = response(raw)
+    stream = wrapped['Body']._raw_stream
+    class Client:
+        def invoke_endpoint(self, **kwargs): return wrapped
+    service = build_sagemaker_service(enabled=True, config=config(), identity=identity(),
+                                      client_factory=lambda cfg: Client())
+    with pytest.raises(IncompleteModelOutput) as failure:
+        asyncio.run(service.critique(snapshot(), request_id='x'))
+    assert failure.value.details == dict(finish_reason='length', usage_counts=output()['usage'])
+    assert stream.closed
+
+
+@pytest.mark.parametrize('kind', ['thinking', 'tools', 'wrong_model', 'choices', 'role', 'audio'])
 def test_unsupported_outputs_reject_and_close_stream(kind):
     data = output()
     choice = data['choices'][0]
-    if kind == 'length': choice['finish_reason'] = 'length'
-    elif kind == 'thinking': choice['message']['reasoning'] = 'not allowed'
+    if kind == 'thinking': choice['message']['reasoning'] = 'not allowed'
     elif kind == 'tools': choice['message']['tool_calls'] = [{'id': 'tool'}]
     elif kind == 'wrong_model': data['model'] = 'different'
     elif kind == 'choices': data['choices'].append(choice.copy())
