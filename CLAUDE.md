@@ -31,6 +31,11 @@
   per-module declarations (audit finding 6, second slice). Container needs `cffi` + `databento-dbn==0.62.0`. See
   `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260918.md`.**
 - Launch is HOLD. No Frankie, Granite, Pod, EC2 or result-bearing action without Greg's explicit go.
+- **The beginning-to-end chain is BUILT (2026-09-17)**: `.github/workflows/frankie_journal_stack.yml` (the started one)
+  now runs sources -> journal (gold standard, unchanged) -> host stages via `operations/day_pipeline.py` (git receipts,
+  resume, HOLD before cycles without a go, measured CPU-dedication gate). Native host `i-0e90ee6110ef609aa` RESIZED to
+  r7i.8xlarge (32 vCPU), stopped. 32 = the Pod's CPUs, 48 = the reader's worker cap, 8 = native threads. Next chat:
+  `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260918.md`.
 - **Memory A is VALID (Greg, 2026-09-17).** No validation day or separate source day exists or is required; the
   crosswalk's DEGENERATE_PROOF_SAME_AS_SUBJECT is an accounted status that gates nothing. Attestation in code:
   `frankie_principal_adapter.MEMORY_A_ATTESTATION`. Launch runbook from yesterday's wrappers: `DROP_IN_CLAUDE_20260918.md`.

@@ -108,3 +108,34 @@ tests surface a problem with it, then dig into the number.
 | 8 remote receiver checkout without parent repository | BOSS refuses cleanly; host verification HOLD | `_code()` now refuses with `frozen receiver checkout is not a git repository at <root>; restore the receiver parent repository at the pinned commit` instead of a raw subprocess error. Verifying the actual checkout on the stopped host is a host action under HOLD |
 
 Not run this session: the family suite. Next chat opens with ONE family run before anything else.
+
+## Later the same day (2026-09-17, second session, Fable): the chain, the CPUs, the resize
+
+- **The started workflow became the beginning-to-end chain.** `.github/workflows/frankie_journal_stack.yml` (the one that
+  ran the gold-standard journal stack, run 34962256086) now carries: job `sources` (stage sources + host start), the
+  ORIGINAL `journal` job unchanged (its verification receipt recorded as ingest, receipt 02), job `host` (prefixes,
+  cycles under `go`, package, snapshot over SSM; host stop always; receipts committed, rendered as the job summary).
+  Dispatch inputs: day, go, until, ingest_on (runner|host), runner (label). No cron. The push trigger on the codex branch
+  still runs the journal job alone (a skipped `sources` is not a failure). Codex reviewed the CPU code read-only against
+  the receipt commit `549efa73` and the pin `9a8f3f46`: dedication byte-identical; one progress-only hunk.
+- **Orchestrator** `operations/day_pipeline.py` + `operations/day_pipeline.configuration.json` (no credential, no
+  desktop path): seven idempotent stages, one git receipt each under `runs/<DAY>/`, gate = previous receipt's fields,
+  resume from the first missing receipt, HOLD before cycles without `--go <source manifest hash>`, `--record ingest
+  --from verification-receipt.json`, `--host-stop`. **CPU dedication is a measured gate**: worker CPU seconds per wall
+  second (busy CPUs) must be at least half the dedicated worker CPUs (first run 2.9 on 3 = 0.97); a collapsed pool is
+  refused with the numbers. `test_day_pipeline.py` 4/4.
+- **The numbers, settled**: 32 = the Pod (Granite's CPUs; no worker pool, nothing declares threads there); 48 =
+  `data_workers`, the compact reader's worker CAP (host CPUs minus the reserved consumer CPU decide the count), not a
+  machine; 8 = the native step's declared thread identity; the old t3.xlarge data box is not in the pipeline.
+- **Native host RESIZED** `i-0e90ee6110ef609aa` r7i.4xlarge -> r7i.8xlarge (32 vCPU / 256 GiB) while stopped, from this
+  session with `ec2_host.py resize --type` (new action, stopped-only, readback-verified). The reader cap now resolves
+  to 31 workers. Cost default in `ec2_host.py` is 3.60/h. Greg's decision; ingest stays on the runner by default.
+- **Memory A is VALID (Greg)**: no validation day or separate source day exists in code; the crosswalk's
+  DEGENERATE_PROOF_SAME_AS_SUBJECT is an ACCOUNTED status that gates nothing. Attestation in code
+  (`frankie_principal_adapter.MEMORY_A_ATTESTATION`, written into every `memory-a-witness.json`).
+- **Keys**: the AWS pair was installed in this container only (`~/.config/markets/env`, `~/.aws/credentials`, 600) for
+  the resize; it does not survive the container. Rotation stays deferred until after the walk (standing decision).
+- **Not done**: the host scripts `deploy/aws/host/day_schedule_prefixes.ps1` and `day_cycles.ps1` (each ends with one
+  `PIPELINE_RECEIPT {json}` line carrying its gate fields); the Pod credential via SSM parameter; the receiver-side
+  sealed-absence proof producer; the receiver binding of the BOSS Memory A witness; the fresh configuration (reviewed
+  BOSS tip + new completion ref, Greg); `T_CTX` untouched by Greg's call; NO family run this session.
