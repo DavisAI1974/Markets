@@ -235,7 +235,15 @@ def validate_runtime_or_fail(records, manifest):
 def prepare(journal, api, info, manifest):
     digest, witness = request_inputs()
     configuration = runtime_configuration(journal)
-    body = read_object(journal, REQUEST_BUCKET, REQUEST_PREFIX+digest+'.json', MAX_REQUEST_BYTES)
+    archive = Path(__file__).parent/'runs'/'request-archives'/digest
+    if (archive/'envelope.json').is_file():
+        import boto3
+        from .git_request_archive import read_request_archive
+        body = read_request_archive(archive, digest, boto3.client('ssm', region_name='us-east-2'))
+        if len(body) > MAX_REQUEST_BYTES:
+            raise ValueError('bounded actual Git request required')
+    else:
+        body = read_object(journal, REQUEST_BUCKET, REQUEST_PREFIX+digest+'.json', MAX_REQUEST_BYTES)
     if hashlib.sha256(body).hexdigest() != digest:
         raise ValueError('actual staged request differs from its trusted digest')
     admit = tokenizer(journal, manifest, context=configuration['service_context'])
