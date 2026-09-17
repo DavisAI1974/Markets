@@ -30,6 +30,11 @@ on:
         options: ['2', '19']
         default: '2'
         required: true
+      keep_compute:
+        description: 'Keep AWS hosts available for the next cycle batch.'
+        type: boolean
+        default: true
+        required: false
       checks_only:
         description: 'Validate launch code without starting AWS machines or processing source data.'
         type: boolean
@@ -233,7 +238,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$RUNS_ROOT/${{ inputs.day }}"
-          git diff --staged --quiet || (git commit -m "runs/${{ inputs.day }}: day pipeline receipts (run ${{ github.run_id }}) [skip ci]" && git pull --rebase && git push)
+          git diff --staged --quiet || (git commit -m "runs/${{ inputs.day }}: day pipeline receipts (run ${{ github.run_id }}) [skip ci]" && git fetch --no-tags origin "${{ github.ref_name }}" && git rebase FETCH_HEAD && git push origin "HEAD:${{ github.ref_name }}")
       - name: Job summary = the receipts
         if: always()
         run: |
@@ -244,7 +249,7 @@ jobs:
           done
   cleanup:
     # Also runs when a failed journal prevents the native job from starting.
-    if: always() && github.repository == 'DavisAI1974/Markets' && inputs.day == '20211003' && !inputs.checks_only
+    if: always() && github.repository == 'DavisAI1974/Markets' && inputs.day == '20211003' && !inputs.checks_only && !inputs.keep_compute
     needs: [sources, journal, host]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -288,7 +293,7 @@ jobs:
       - run: python -m pip install numpy==2.3.5 boto3==1.42.23 botocore==1.42.97 cffi databento-dbn==0.62.0 zstandard pytest cryptography==46.0.3 requests pyyaml
       - name: Complete scientific family and changed launch controls
         run: |
-          python -m pytest -q research/kalshi/frankie_boss/tests/test_granite*.py research/kalshi/frankie_boss/tests/test_sunday*.py research/kalshi/frankie_boss/tests/test_run_actual*.py research/kalshi/frankie_boss/tests/test_frankie_controller.py research/kalshi/frankie_boss/tests/test_actual_host*.py research/kalshi/frankie_boss/tests/test_day_pipeline.py research/kalshi/frankie_boss/tests/test_classroom_recovery_reconciliation.py research/kalshi/frankie_boss/tests/test_stage_block_sources.py
+          python -m pytest -q research/kalshi/frankie_boss/tests/test_granite*.py research/kalshi/frankie_boss/tests/test_sunday*.py research/kalshi/frankie_boss/tests/test_run_actual*.py research/kalshi/frankie_boss/tests/test_frankie_controller.py research/kalshi/frankie_boss/tests/test_actual_host*.py research/kalshi/frankie_boss/tests/test_day_pipeline.py research/kalshi/frankie_boss/tests/test_classroom_recovery_reconciliation.py research/kalshi/frankie_boss/tests/test_stage_block_sources.py research/kalshi/frankie_boss/tests/test_frankie_principal_adapter.py research/kalshi/frankie_boss/tests/test_launch_pins.py
       - name: Validate workflow YAML
         run: |
           python - <<'PY'
@@ -302,4 +307,4 @@ jobs:
           path: receiver
       - name: Verify receiver sealed proof production and rendering
         working-directory: receiver
-        run: python -m pytest -q research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_sealed_absence.py research/kalshi/frankie_raw_mbo_benchmark/tests/test_emit_frankie_spawn.py
+        run: python -m pytest -q research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_sealed_absence.py research/kalshi/frankie_raw_mbo_benchmark/tests/test_emit_frankie_spawn.py research/kalshi/frankie_raw_mbo_benchmark/tests/test_prepare_boss_attachment.py research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_principal_outputs.py research/kalshi/frankie_raw_mbo_benchmark/tests/test_native_staging.py
