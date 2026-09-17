@@ -147,6 +147,9 @@ CURRENT_RECEIVER_REQUIRED_LEDGERS = 32              # receiver 2ebb8ce8: 30 + wh
 SEALED_PROOF_SCHEMA = 'FRANKIE_SEALED_ABSENCE_PROOF_V1'
 SEALED_UNPROVEN = 'UNPROVEN'
 ADMISSION_UNDECLARED = 'UNDECLARED'
+MEMORY_A_ATTESTATION = ('Greg Davis, 2026-09-17: the frozen pre-Sunday Memory A seed is declared VALID as served. '
+    'The crosswalk status DEGENERATE_PROOF_SAME_AS_SUBJECT is an accounted input status (the seed proves itself by '
+    'design, D86/D88) and gates nothing; no validation day or separate source day exists or is required.')
 
 
 def admission_policy(admission, *, retained_prompt):
@@ -315,6 +318,7 @@ class FrankiePrincipalAdapter:
         DEGENERATE_PROOF_SAME_AS_SUBJECT.
         """
         record = {'schema': 'FRANKIE_BOSS_MEMORY_A_WITNESS_V1', 'produced_by': 'BOSS principal adapter',
+            'operator_attestation': MEMORY_A_ATTESTATION,
             'files': {name: dict(path=str(Path(w['path']).resolve()), **file_witness(w['path']))
                       for name, w in self.protected_files.items()},
             'knowledge_receipt_sha256': self.render['knowledge-receipt-sha256'],

@@ -31,6 +31,9 @@
   per-module declarations (audit finding 6, second slice). Container needs `cffi` + `databento-dbn==0.62.0`. See
   `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260918.md`.**
 - Launch is HOLD. No Frankie, Granite, Pod, EC2 or result-bearing action without Greg's explicit go.
+- **Memory A is VALID (Greg, 2026-09-17).** No validation day or separate source day exists or is required; the
+  crosswalk's DEGENERATE_PROOF_SAME_AS_SUBJECT is an accounted status that gates nothing. Attestation in code:
+  `frankie_principal_adapter.MEMORY_A_ATTESTATION`. Launch runbook from yesterday's wrappers: `DROP_IN_CLAUDE_20260918.md`.
 - **Audit findings 2-8 (2026-09-17, second session): 3 and 6 closed; 4/5/2+7/8 landed on the BOSS side** (explicit
   `principal_admission` per run, never silent; compact-source dispatch composes through the classroom runner or refuses;
   `launch_pins.py` refuses the stale 2026-09-15 configuration). Record: last section of

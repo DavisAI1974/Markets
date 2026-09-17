@@ -37,3 +37,24 @@ blocks, 715 s). Receiver `2ebb8ce8` is a sibling checkout, not merged. Launch is
 - The first run's prefixes/reducer stack are the gold standard; for new days change dates only, never rebuild.
 - Shrinking/optimizing the packet is one of the most important jobs. 8 threads, fixed. Per-event, never average.
 - No Frankie/Granite/Pod/EC2/result-bearing action, no workflow, without Greg's explicit go. Nothing on local disk: git and S3.
+
+## Launch runbook (Greg, 2026-09-17: start from yesterday's wrappers; bare-minimum tests; launch stays HOLD until his go)
+
+Decision recorded: **Memory A is VALID (Greg).** No code anywhere names a "validation day"; the retained configuration
+key `source_day_required` is read by nothing; the crosswalk's DEGENERATE_PROOF_SAME_AS_SUBJECT is an ACCOUNTED input
+status that gates nothing. The attestation lives in code (`frankie_principal_adapter.MEMORY_A_ATTESTATION`) inside every
+`memory-a-witness.json` BOSS writes. Audit finding 5 is CLOSED by decision.
+
+The templates (all in `operations/`, all from 2026-09-16/17, unchanged):
+- `restore_sunday_set_on_host.py --bucket --prefix --tools --receipt` : restore the Sunday set on the host from S3, byte-verified.
+- `restore_sunday_working_tree_identity.py` : ONLY for the historical 050c5056 identity; a NEW run uses a clean checkout of the reviewed BOSS tip, not this.
+- `seal_final_prelaunch_candidate.py --commit --audit-directory --configuration --host-script --bootstrap --helper --principal-instructions` : seal the candidate (import/--help never read data or cloud).
+- `run_actual_sunday_ec2.py --configuration [--ec2-resume]` : the launch wrapper; new run directory/run id, numeric policy recorded, principal routed through the classroom wrapper.
+- `run_actual_sunday_compact_source.py --configuration --verify-source-only --run-directory <scratch>` : compact-source verification (no model); the result-bearing route now composes through the classroom runner.
+
+Order for the next chat:
+1. ONE family run (`test_granite*`, `test_sunday*`, `test_run_actual*`, `test_frankie_controller`, `test_actual_host*`). If item 1 (`T_CTX`) surfaces there, then dig into the number; otherwise leave it.
+2. Author the fresh configuration by copying the 2026-09-15 one and changing ONLY: `host_runtime.boss_commit` (reviewed tip), `receiver_commit` (2ebb8ce8, full sha in `launch_pins.NEXT_RUN`), `host_runtime.completion_workflow_ref` (Greg's new ref), `host_runtime.native_threads: 8`, `host_runtime.science_byte_exceptions` (from `launch_pins`), `principal_admission` (artifact + outputs dir + sealed proof path), all paths host-side (no `E:` desktop path, D34), a NEW `run_directory`/`run_id`. Then `launch_pins.validate(config, boss_commit=<tip>)` must pass with zero problems.
+3. Seal with `seal_final_prelaunch_candidate.py`; `--verify-source-only` on a scratch directory (no model).
+4. Pre-launch checklist (shipping-and-launch, tailored): pins validate; receiver checkout at the pinned commit with its parent repository (finding 8: `_code()` now refuses cleanly otherwise); sealed-absence proof file present (receiver `native_sealed_absence.prove_sealed_absent` has no producer yet: either produce it or declare NOT_PRESENTED/UNPROVEN only under a retained prompt); keys in `~/.config/markets/env`; rollback = the retained Pod stops through the ownership protocol (`completion_cleanup`), data retained; monitoring = the retained-host watchdog + `IncompleteModelOutput` alert.
+5. Launch only on Greg's explicit go, via `run_actual_sunday_ec2.py --configuration`.
