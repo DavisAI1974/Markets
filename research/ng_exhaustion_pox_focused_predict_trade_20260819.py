@@ -13,6 +13,7 @@ EXPECTED_TOTAL = 3429
 EXPECTED_FLIP = 1444
 EXPECTED_SAME = 1985
 POLICY = "FIXED_3429_DO_NOT_REOPEN"
+TIMING_POLICY = "EVENT_DRIVEN_NO_FIXED_INTERVALS"
 
 CASE_ID_KEYS = ("case_id", "id", "pox_case_id", "event_id")
 BRANCH_KEYS = ("branch_label", "branch", "later_branch", "successor_branch")
@@ -122,14 +123,13 @@ def validate_fixed_population(rows: list[dict[str, Any]]) -> dict[str, Any]:
 def write_normalized(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     opener = gzip.open if path.suffix == ".gz" else open
-    mode = "wt"
-    kwargs = {"encoding": "utf-8"}
-    with opener(path, mode, **kwargs) as f:
+    with opener(path, "wt", encoding="utf-8") as f:
         for r in rows:
             src = dict(r["source_row"])
             src["case_id"] = r["case_id"]
             src["branch_label"] = r["branch_label"]
             src["population_policy"] = POLICY
+            src["timing_policy"] = TIMING_POLICY
             f.write(json.dumps(src, sort_keys=True) + "\n")
 
 
@@ -137,7 +137,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(
         description=(
             "Focused POX fixed-ledger gate. This program intentionally does NOT derive the 3,429 population "
-            "from canonical adjacency. Canonical/raw inputs belong to later enrichment and modeling stages."
+            "from canonical adjacency and intentionally defines no fixed timing grid."
         )
     )
     ap.add_argument("--ledger", required=True, help="authoritative 3,429-case JSON/JSONL ledger (.gz accepted)")
@@ -162,13 +162,21 @@ def main() -> None:
             "sha256": _sha256(ledger),
         },
         "population": population,
-        "initial_sign_persistence_through_plus60_approx": 0.944,
+        "timing_policy": TIMING_POLICY,
+        "fixed_checkpoint_grid_authorized": False,
+        "fixed_entry_delay_grid_authorized": False,
+        "fixed_hold_horizons_authorized": False,
+        "fixed_timeout_exit_authorized": False,
+        "historical_plus60": {
+            "initial_sign_persistence_approx": 0.944,
+            "role": "FROZEN_HISTORICAL_LABEL_AND_DIAGNOSTIC_ONLY_NOT_A_DECISION_TIMER",
+        },
         "next_stages": {
             "target_A_pox_identity": "REQUIRES_SEPARATE_CAUSAL_CANDIDATE_CONTROL_UNIVERSE_IF_BINARY_MEMBERSHIP_MODEL_IS_RUN",
-            "target_B_initial_continuation": "READY_AFTER_LEDGER_JOIN_TO_RAW_TAPE_AND_SIGNAL_TIMESTAMPS",
-            "target_C_flip_same": "READY_AFTER_LEDGER_JOIN_TO_CAUSAL_FEATURE_PREFIXES",
-            "target_D_branch_knowability": "READY_AFTER_LEDGER_JOIN_TO_FROZEN_CAUSAL_TIMESTAMPS",
-            "target_E_management": "READY_AFTER_TARGET_B_C_D_OUTPUTS",
+            "target_B_initial_continuation": "EVENT_DRIVEN_AFTER_LEDGER_JOIN_TO_RAW_TAPE_AND_CAUSAL_EVENT_TIMESTAMPS",
+            "target_C_flip_same": "EVENT_DRIVEN_AFTER_LEDGER_JOIN_TO_CAUSAL_FEATURE_PREFIXES",
+            "target_D_branch_knowability": "USE_EXACT_FROZEN_CAUSAL_STATE_EVENTS_NOT_CLOCK_CHECKPOINTS",
+            "target_E_management": "ONLY_EXPLICIT_CAUSAL_STATE_TRANSITIONS_OR_MODEL_ACTIONS",
         },
         "D0_D5_incremental_crosswalk": "DEFERRED_UNTIL_POX_AND_D0_D5_ARE_INDEPENDENTLY_FROZEN",
         "protected_mutations": {
