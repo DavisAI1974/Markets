@@ -36,7 +36,22 @@ def bounded_call(operation, seconds=12):
         except ValueError as error:
             result = ('value', str(error))
         except BaseException as error:
-            result = ('error', type(error).__name__)
+            detail = type(error).__name__
+            if isinstance(error, AttributeError):
+                # Retain code locations only; exception arguments and object
+                # representations can contain credentials or request content.
+                frames = []
+                trace = error.__traceback__
+                while trace is not None and len(frames) < 16:
+                    frame = trace.tb_frame
+                    module = frame.f_globals.get('__name__', '')
+                    function = frame.f_code.co_name
+                    if (isinstance(module, str) and re.fullmatch(r'[A-Za-z0-9_.]+', module)
+                            and re.fullmatch(r'[A-Za-z0-9_<>]+', function)):
+                        frames.append(dict(module=module, function=function, line=trace.tb_lineno))
+                    trace = trace.tb_next
+                detail += ' code_locations=' + json.dumps(frames, sort_keys=True)
+            result = ('error', detail)
         try:
             writer.sendall(pickle.dumps(result))
         finally:
