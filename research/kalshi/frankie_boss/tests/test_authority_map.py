@@ -149,13 +149,23 @@ def test_new_direct_writer_or_protected_memory_write_is_detected(source, kind):
 def test_actual_boss_direct_journal_users_match_declared_semantic_owners():
     rules = registry()['collision_check']
     actual = {kind: {} for kind in ('journal_constructors', 'journal_appends', 'physical_connects')}
+    declared_writers = {path: set(entry['symbols']) for path, entry in rules['declared_principal_directory_writers'].items()}
+    flagged_writers = {}
     for path in BOSS.rglob('*.py'):
         relative = path.relative_to(BOSS)
         if any(part in rules['exclude_directories'] for part in relative.parts[:-1]):
             continue
         for kind, symbol, line in inspect_source(path.read_text(encoding='utf-8-sig'), rules):
+            if kind == 'protected_write':
+                assert symbol in declared_writers.get(relative.as_posix(), ()), f'{relative}:{line}: forbidden {kind}'
+                flagged_writers.setdefault(relative.as_posix(), set()).add(symbol)
+                continue
             assert kind in actual, f'{relative}:{line}: forbidden {kind}'
             actual[kind].setdefault(relative.as_posix(), set()).add(symbol)
+    assert flagged_writers == declared_writers, 'declared principal-directory writers are stale; update the declaration explicitly'
+    for path, entry in rules['declared_principal_directory_writers'].items():
+        assert entry['reason']
+        assert set(entry['symbols']) <= definitions((BOSS / path).read_text(encoding='utf-8-sig'))
     for kind, modules in actual.items():
         declared = {path: set(symbols) for path, symbols in rules[kind].items()}
         assert modules == declared, f'{kind}: direct store users changed; update ownership decision explicitly'

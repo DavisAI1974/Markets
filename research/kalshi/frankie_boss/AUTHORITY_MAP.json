@@ -6,7 +6,8 @@
   "corrections": [
     "Protected legacy BLD-1 eleven-field model emission and additive BOSS twelve-field deterministic projection are distinct interfaces; disposition remains required in BOSS.",
     "Granite is required in the final build. Historical shadow names do not make it optional. Critiques and native forecasts remain producer evidence, never independent Frankie-agent findings.",
-    "Native BOSS has no knowledge store or Memory A writer. This is not a claim that the whole repository or the separate agent lineage has no memory writer."
+    "Native BOSS has no knowledge store or Memory A writer. This is not a claim that the whole repository or the separate agent lineage has no memory writer.",
+    "The Dipole classroom is mandatory in the final composition. Its answer key and full grade are host audit evidence retained outside the model-facing principal directory; the principal sees only the model-visible contract, its own teachback and the correction it must acknowledge."
   ],
   "stores": [
     {
@@ -291,6 +292,52 @@
       "identity": "Seed source-file digests, mission pin, knowledge registration/bundle/receipt hashes.",
       "protection": "Agent lineage writer exists; it preserves original44 VERIFIED findings and carries separately admitted NEW findings. This does not permit modifying frozen comparison memory.",
       "attribution": "Only admitted agent findings with original attribution/provenance; producer forecasts never become findings automatically."
+    },
+    {
+      "id": "principal_session_artifacts",
+      "location": "Caller-supplied principal directory (adapter `directory`), required to be outside the frozen receiver checkout; the receiver preparation lands in its `receiver/` subdirectory.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/frankie_principal_adapter.py",
+        "symbol": "FrankiePrincipalAdapter"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/frankie_principal_adapter.py",
+          "symbol": "FrankiePrincipalAdapter.recover"
+        },
+        {
+          "path": "research/kalshi/frankie_boss/frankie_principal_adapter.py",
+          "symbol": "FrankiePrincipalAdapter.verify"
+        },
+        {
+          "path": "research/kalshi/frankie_boss/frankie_dipole_classroom_adapter.py",
+          "symbol": "DipoleClassroomPrincipalAdapter.prepare"
+        }
+      ],
+      "identity": "adapter-config.json config hash (receiver root/commit, preparation, render); receiver preparation receipt bound to the handoff directory; attachment_hash; session-request/session-response pair; FRANKIE_BOSS_SESSION_RECEIPT_V1 receipt_sha256 minted by the host, never by the principal.",
+      "protection": "Create-once retention; a partial receiver preparation is renamed and kept, never overwritten or deleted. Model-facing surface: only the model-visible classroom contract, pre-message, teachback, acknowledgement, completion, transcript and receipt may be retained here by the classroom subclass. The teacher key and the full grade are never written into this directory.",
+      "attribution": "Session responses, lessons and feedback are principal-agent output under the host receipt. Classroom pre-messages and model-visible contracts are host-supplied inputs, not agent findings."
+    },
+    {
+      "id": "classroom_audit_evidence",
+      "location": "Host-owned classroom audit directory (adapter `audit_directory`, default `<principal directory>/../classroom-audit`), refused if equal to or inside the model-facing principal directory.",
+      "writer": {
+        "path": "research/kalshi/frankie_boss/frankie_dipole_classroom_adapter.py",
+        "symbol": "DipoleClassroomPrincipalAdapter._retain_audit"
+      },
+      "readers": [
+        {
+          "path": "research/kalshi/frankie_boss/frankie_dipole_classroom_adapter.py",
+          "symbol": "DipoleClassroomPrincipalAdapter._recover_with_classroom"
+        },
+        {
+          "path": "research/kalshi/frankie_boss/dipole_classroom.py",
+          "symbol": "audit_teacher_complete"
+        }
+      ],
+      "identity": "classroom_binding_hash and teacher_key_hash from the validated classroom package; dipole-classroom-source.json, dipole-classroom-teacher-key.audit.json and dipole-classroom-post-grade.json retained create-once and byte-identical on re-retention.",
+      "protection": "Answer-key material (teacher key, full point-by-point grade) lives only here, outside the principal directory; re-retention with different bytes is a refusal. No writer other than the classroom adapter; the integrated and final adapters inherit this same admission.",
+      "attribution": "Deterministic teacher-key mathematics and host grading of the principal teachback; grades are host evidence, never principal-agent findings."
     }
   ],
   "legacy_maintenance_examples": [
@@ -312,19 +359,22 @@
     "exclude_directories": [
       "tests",
       "provenance",
-      "__pycache__"
+      "__pycache__",
+      "sunday_20260915_package"
     ],
     "detects": [
       "New direct EvidenceJournal constructors including import aliases and module aliases.",
       "Append calls on file-local constructor aliases or explicit journal/_journal attributes outside listed semantic methods.",
       "Direct sqlite3.connect bypasses outside EvidenceJournal.__init__.",
-      "Protected knowledge/MemoryA path writes/deletes/renames using literal path fragments, path variables and simple local aliases; BOSS imports of legacy admission/cognition modules."
+      "Protected knowledge/MemoryA path writes/deletes/renames using literal path fragments, path variables and simple local aliases; BOSS imports of legacy admission/cognition modules.",
+      "Protected-path writes are forbidden unless the (file, symbol) is declared under declared_principal_directory_writers with its reason; a declaration for a symbol the checker no longer flags is stale and refused."
     ],
     "limitations": [
       "Static source checks, not a Python security sandbox or whole-repository single-writer proof.",
       "Cannot resolve arbitrary dynamic paths, reflection, runtime reassignment, interprocedural aliases, subprocess IO or external code.",
       "Dynamic journal path identity remains the callers checkpoint/lease responsibility; public owner APIs may be called by orchestrators.",
-      "Tests parse AST and read pinned external Git blobs; they never import legacy modules with top-level side effects."
+      "Tests parse AST and read pinned external Git blobs; they never import legacy modules with top-level side effects.",
+      "sunday_20260915_package is the retained first-run package copy (gold standard, dates-only changes); its vendored modules are excluded so the live modules are the only scanned identity."
     ],
     "protected_path_markers": [
       "ng_brain.json",
@@ -394,6 +444,18 @@
       "c15_journal.py": [
         "EvidenceJournal.__init__"
       ]
+    },
+    "declared_principal_directory_writers": {
+      "frankie_principal_adapter.py": {
+        "symbols": [
+          "_write",
+          "FrankiePrincipalAdapter.__init__",
+          "FrankiePrincipalAdapter._run",
+          "FrankiePrincipalAdapter.prepare",
+          "FrankiePrincipalAdapter._render_retained"
+        ],
+        "reason": "The principal adapter reads the frozen pre-Sunday knowledge receipt and bundle (read-only witnesses) and writes only its own principal-directory artifacts: adapter-config.json, the receiver preparation, prompt.md and the retained original render. The file-local checker taints every write in the file through those names; none of these writes targets a knowledge or Memory A path. Store: principal_session_artifacts."
+      }
     }
   }
 }
