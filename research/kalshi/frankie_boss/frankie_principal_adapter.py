@@ -175,7 +175,14 @@ def admission_policy(admission, *, retained_prompt):
             and type(bundle.get('output_ledger_count', 32)) is int
             and bundle.get('output_ledger_count', 32) in (30, 32)):
         raise ValueError('output_bundle must name principal_artifact and outputs_dir, or declare NOT_PRESENTED')
-    if sealed != SEALED_UNPROVEN and not (type(sealed) is str and sealed):
+    producer = (type(sealed) is dict and set(sealed) == {'producer', 'repo_root', 'repo_commit'}
+        and sealed['producer'] == 'native_sealed_absence'
+        and type(sealed['repo_root']) is str and bool(sealed['repo_root'])
+        and type(sealed['repo_commit']) is str and len(sealed['repo_commit']) == 40
+        and all(c in '0123456789abcdef' for c in sealed['repo_commit']))
+    if producer and not retained_prompt:
+        raise ValueError('sealed proof producer requires the retained prompt route')
+    if sealed != SEALED_UNPROVEN and not producer and not (type(sealed) is str and sealed):
         raise ValueError('sealed_proof must be a FRANKIE_SEALED_ABSENCE_PROOF_V1 path, or declare UNPROVEN')
     if not retained_prompt and (bundle == OUTPUT_BUNDLE_GATE_NOT_PRESENTED or sealed == SEALED_UNPROVEN):
         raise ValueError('a newly rendered principal run is never exempt: NOT_PRESENTED/UNPROVEN are admissible '
@@ -332,6 +339,19 @@ class FrankiePrincipalAdapter:
 
     def _admission_record(self):
         declared = self._declared()
+        sealed = declared['sealed_proof']
+        if type(sealed) is dict:
+            proof = self.directory / 'sealed-proof.json'
+            prompt = self.directory / 'prompt.md'
+            if not prompt.is_file():
+                raise ValueError('actual composed principal prompt required before sealed proof')
+            args = dict(prompt=prompt, knowledge_receipt=self.render['knowledge-receipt'],
+                knowledge_bundle=Path(self.render['knowledge-receipt']).parent / 'KNOWLEDGE_BUNDLE.md',
+                delivery_receipt=self.preparation['delivery_receipt'], output=proof,
+                repo_root=sealed['repo_root'], repo_commit=sealed['repo_commit'])
+            if proof.exists(): args['verify_existing'] = True
+            self._run('native_sealed_absence', args)
+            sealed = str(proof)
         witness = self._memory_witness()
         path = self.directory / 'memory-a-witness.json'
         if path.exists():
@@ -341,12 +361,12 @@ class FrankiePrincipalAdapter:
             _write(path, witness)
         return {'output_bundle_policy': OUTPUT_BUNDLE_GATE_NOT_PRESENTED
                     if declared['output_bundle'] == OUTPUT_BUNDLE_GATE_NOT_PRESENTED else OUTPUT_BUNDLE_GATE_VALIDATED,
-                'sealed_absence': sealed_absence(declared['sealed_proof']),
+                'sealed_absence': sealed_absence(sealed),
                 'memory_a_witness_sha256': witness['receipt_sha256']}
 
     def prepare(self, handoff_directory):
         self._files()
-        admission = self._admission_record()
+        admission = None if type(self._declared()['sealed_proof']) is dict else self._admission_record()
         config = {'config_hash': self._config_hash()}
         config_path = self.directory / 'adapter-config.json'
         if config_path.exists():
@@ -382,6 +402,8 @@ class FrankiePrincipalAdapter:
                 self._run('emit_frankie_spawn', dict({k:v for k,v in self.render.items() if k not in ('knowledge-receipt-sha256', 'knowledge-bundle-sha256')}, output=prompt,
                     **{'boss-attachment-request': prepared / 'attachment-request.json'}))
         knowledge_bundle = Path(self.render['knowledge-receipt']).parent / 'KNOWLEDGE_BUNDLE.md'
+        if admission is None:
+            admission = self._admission_record()
         attachment = {'config_hash': self._config_hash(), 'preparation_receipt': receipt, 'prompt': str(prompt),
             'knowledge_bundle': str(knowledge_bundle), 'knowledge_bundle_witness': file_witness(knowledge_bundle),
             'prompt_witness': file_witness(prompt), 'section_evidence': self.section_evidence,
