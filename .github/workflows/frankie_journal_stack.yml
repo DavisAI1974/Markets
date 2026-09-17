@@ -30,6 +30,11 @@ on:
         options: ['2', '19']
         default: '2'
         required: true
+      checks_only:
+        description: 'Validate launch code without starting AWS machines or processing source data.'
+        type: boolean
+        default: false
+        required: false
   push:
     branches: [codex/journal-reduction-stack-20260915]
     paths: [.github/frankie-journal-stack-request.json]
@@ -45,7 +50,7 @@ env:
 jobs:
   sources:
     # Stage 1 on the runner: the day's source files pinned into S3 with a manifest (receipt 00).
-    if: github.repository == 'DavisAI1974/Markets' && inputs.day != ''
+    if: github.repository == 'DavisAI1974/Markets' && inputs.day != '' && !inputs.checks_only
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     outputs:
