@@ -50,6 +50,8 @@ def test_unknown_controller_id_is_left_to_watchdog(monkeypatch, tmp_path):
 def test_journal_requires_exact_content_readback(monkeypatch):
     monkeypatch.setattr(cloud.control, 'bounded_call', lambda operation: operation())
     class Client:
+        def close(self):
+            pass
         def put_object(self, **kwargs):
             assert kwargs['IfNoneMatch'] == '*'
             assert kwargs['ServerSideEncryption'] == 'AES256'
