@@ -1,0 +1,46 @@
+{
+ "archive_prefix": "nymex/ng_mbo_5y_v0/native/2021-10",
+ "block": "BLOCK_DAY",
+ "bucket": "bento-568968024170-us-east-2-an",
+ "canonical_source_rewritten": false,
+ "causal_clock": "ts_recv_ns",
+ "halt_boundaries_close_groups": true,
+ "halt_utc_hour": 21,
+ "ingested": false,
+ "manifest_hash": "0eb2c2acdccc17f8ad2d64d00b74a0c93b477c0418651a7f290d53f19d5710b0",
+ "member_seams_close_groups": true,
+ "model_calls": 0,
+ "prefix": "frankie/block_BLOCK_DAY/sources",
+ "prefixes_built": false,
+ "role": "HELD_OUT_BLIND_BLOCK",
+ "sampled": false,
+ "scheduled": false,
+ "schema": "BOSS_BLOCK_SOURCE_MANIFEST_V1",
+ "sessions": [
+  {
+   "after_halt": 56782,
+   "before_halt": 245,
+   "day_utc": "20211003",
+   "f_last_groups": 43569,
+   "first_ts_recv_ns": 1633277168244072526,
+   "halt_boundary_f_last": true,
+   "instruments": 1,
+   "last_record_f_last": true,
+   "last_ts_recv_ns": 1633305596372071705,
+   "mbo_records": 57027,
+   "member_key": "glbx-mdp3-20211003.mbo.dbn.zst"
+  }
+ ],
+ "source_kind": "NATIVE_DBN_MBO",
+ "sources": [
+  {
+   "mbo_records": 57027,
+   "member_index": 0,
+   "member_key": "glbx-mdp3-20211003.mbo.dbn.zst",
+   "sha256": "4380bd9ba83a5badc4839e12785aa464817b87e3fac11176b951e7b474446d88",
+   "size_bytes": 973355
+  }
+ ],
+ "staged_unix": 1789618979,
+ "total_mbo_records": 57027
+}
