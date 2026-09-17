@@ -272,7 +272,9 @@ class ActualHost:
                 or not re.fullmatch(r'/[A-Za-z0-9_./-]{1,1000}',str(source['name']))
                 or not re.fullmatch(r'[a-z]{2}(?:-[a-z]+)+-\d',str(source['region']))
                 or not source['trigger_directory']
-                or not re.fullmatch('[0-9a-f]{64}',str(request_id))
+                or not (re.fullmatch('[0-9a-f]{64}',str(request_id)) or
+                    (re.fullmatch(r'[A-Za-z0-9_-]{1,128}',str(getattr(self,'config',{}).get('run_id',''))) and
+                     request_id in {f"{self.config['run_id']}-cycle-{index:02d}" for index in range(19)}))
                 or schema not in ('FRANKIE_ACTUAL_EXECUTE_V1','FRANKIE_ACTUAL_RESUME_JOB_V1')):
             raise ValueError('explicit SSM credential source and request identity required')
         path=Path(source['trigger_directory'])/request_id/(schema+'.json')
