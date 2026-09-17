@@ -258,6 +258,47 @@ class ActualHost:
     def save(self,name,value):self.api.driver._save(self.directory/name,value)
     def load(self,name):return self.api.driver._load(self.directory/name)
 
+    def read_execution_trigger(self,schema,fields,request_id):
+        """SSM supplies the private key once; request-bound readiness stays public.
+
+        The operator publishes an immutable, credential-free trigger at
+        <trigger_directory>/<request_id>/<schema>.json after the retained service
+        observer has produced its actual readiness. All existing readiness and
+        same-job checks below still apply. No timeout authorizes another attempt.
+        """
+        source=self.host.get('pod_credential_ssm')
+        if source is None:return read_trigger(schema,fields)
+        if (type(source) is not dict or set(source)!={'name','region','trigger_directory'}
+                or not re.fullmatch(r'/[A-Za-z0-9_./-]{1,1000}',str(source['name']))
+                or not re.fullmatch(r'[a-z]{2}(?:-[a-z]+)+-\d',str(source['region']))
+                or not source['trigger_directory']
+                or not re.fullmatch('[0-9a-f]{64}',str(request_id))
+                or schema not in ('FRANKIE_ACTUAL_EXECUTE_V1','FRANKIE_ACTUAL_RESUME_JOB_V1')):
+            raise ValueError('explicit SSM credential source and request identity required')
+        path=Path(source['trigger_directory'])/request_id/(schema+'.json')
+        print(json.dumps(dict(status='waiting_for_request_bound_service_trigger',request_id=request_id)),flush=True)
+        while not path.exists():time.sleep(1)
+        with path.open('rb') as stream:raw=stream.read(32769)
+        if len(raw)>32768:raise ValueError('bounded execution trigger required')
+        try:trigger=json.loads(raw)
+        except (ValueError,UnicodeError):raise ValueError('valid public execution trigger required') from None
+        if type(trigger) is not dict or set(trigger)!={'schema'}|set(fields) or trigger['schema']!=schema:
+            raise ValueError('credential-free explicit host execution trigger required')
+        if not hasattr(self,'_ssm_pod_key'):
+            import boto3
+            from botocore.config import Config
+            try:
+                client=boto3.client('ssm',region_name=source['region'],
+                    config=Config(connect_timeout=5,read_timeout=10,retries={'total_max_attempts':1}))
+                parameter=client.get_parameter(Name=source['name'],WithDecryption=True)['Parameter']
+                key=parameter['Value']
+                if parameter['Type']!='SecureString' or type(key) is not str or not re.fullmatch('[A-Za-z0-9_-]{32,256}',key):
+                    raise ValueError('invalid private parameter')
+            except Exception:
+                raise ValueError('private SSM credential unavailable or invalid') from None
+            self._ssm_pod_key=key
+        return self._ssm_pod_key,trigger
+
     def progress(self,phase,**values):
         if getattr(self,'probe',None) is not None:self.probe.advance(phase,**values)
 
@@ -762,7 +803,7 @@ class ActualHost:
             self.progress('granite_request',unit='requests')
             # This is the only credential entrance. No credential is copied to any
             # config, artifact, exception text, environment, subprocess or log.
-            key,trigger=read_trigger('FRANKIE_ACTUAL_EXECUTE_V1',('readiness_directory','service_pins_sha256'))
+            key,trigger=self.read_execution_trigger('FRANKIE_ACTUAL_EXECUTE_V1',('readiness_directory','service_pins_sha256'),request_id)
             ready=Path(trigger['readiness_directory']).resolve()
             pins=verified_json(dict(path=str(ready/'service-pins.json'),sha256=trigger['service_pins_sha256']))
             service=dict(directory=str(ready),pins_sha256=trigger['service_pins_sha256'],
@@ -777,7 +818,7 @@ class ActualHost:
             dispatches=list((cycle_directory/'critic-spool').glob('*/dispatch.json'))
             if not controller_done and (not dispatches or any(not p.with_name('outcome.json').exists() for p in dispatches)):
                 print(json.dumps(dict(status='same_job_recovery_requires_in_memory_credential',request_id=request_id)),flush=True)
-                key,trigger=read_trigger('FRANKIE_ACTUAL_RESUME_JOB_V1',('request_id','service_pins_sha256'))
+                key,trigger=self.read_execution_trigger('FRANKIE_ACTUAL_RESUME_JOB_V1',('request_id','service_pins_sha256'),request_id)
                 if trigger['request_id']!=request_id or trigger['service_pins_sha256']!=service['pins_sha256']:
                     raise ValueError('same-job recovery differs from retained service witness')
         for name,digest in service['files'].items():verified(dict(path=str(ready/name),sha256=digest))
@@ -839,6 +880,7 @@ class ActualHost:
         return await runner.run_remaining()
 
     def close(self):
+        if hasattr(self,'_ssm_pod_key'):del self._ssm_pod_key
         self.close_cache()
         for obj in (self.checkpoint,self.coordinator):
             if obj is not None:obj.close()

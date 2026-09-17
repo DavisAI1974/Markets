@@ -9,10 +9,9 @@ $ErrorActionPreference = 'Stop'
 # manifest hash; without it the chain writes a HOLD receipt and this script is never sent.
 #
 # $Day, $ToolsRoot, $Python and $RunRoot are prepended by ssm_run_ps1.py --set from the pipeline
-# configuration, so this file carries no path literal and no credential. OPEN PREREQUISITE (spec
-# prerequisite 6, still not built): the Pod credential reaches the runner on stdin, and SSM gives
-# a sent script no stdin. Until that is wired as an SSM parameter read once, a cycle needing the
-# Granite critic cannot complete from here. The LAST line is the stage's receipt.
+# configuration, so this file carries no path literal and no credential. host_runtime must declare
+# pod_credential_ssm (name, region, trigger_directory): the Python process reads the private SSM
+# value once and waits for each request's public readiness trigger. The LAST line is the stage receipt.
 foreach ($required in 'Day', 'ToolsRoot', 'Python', 'RunRoot') {
     $value = Get-Variable -Name $required -ValueOnly -ErrorAction SilentlyContinue
     if (-not $value -or $value -like 'HOST_*') {
@@ -23,6 +22,7 @@ $dayDirectory = Join-Path $RunRoot $Day
 $configurationPath = Join-Path $dayDirectory 'actual-host-configuration.json'
 if (-not (Test-Path $configurationPath)) { throw "no run configuration for $Day at $configurationPath" }
 $configuration = Get-Content $configurationPath -Raw | ConvertFrom-Json
+if (-not $configuration.host_runtime.pod_credential_ssm) { throw 'cycles over SSM require pod_credential_ssm' }
 $prefixesDirectory = $configuration.host_runtime.prefixes_directory
 if (-not $prefixesDirectory) { throw "run configuration for $Day declares no host_runtime.prefixes_directory" }
 $manifestPath = Join-Path $prefixesDirectory 'full19-prefix-witnesses.json'
