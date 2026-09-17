@@ -3,7 +3,7 @@
     python deploy/aws/ec2_host.py --instance i-... status|start|stop [--env-file scratchpad/aws.env]
 
 Prints the instance state, type, KeepRunning tag, hours since launch and the approximate cost at
---hourly (default 1.80, the r7i.4xlarge Windows rate). Never prints a credential. `start` waits
+--hourly (default 3.60, the r7i.8xlarge Windows rate since the 2026-09-17 resize). Never prints a credential. `start` waits
 until the SSM agent reports Online so a runner can follow immediately; `stop` waits until stopped.
 """
 import argparse
@@ -59,7 +59,7 @@ def main():
     parser.add_argument('--instance', required=True)
     parser.add_argument('--region', default='us-east-2')
     parser.add_argument('--env-file')
-    parser.add_argument('--hourly', type=float, default=1.80)
+    parser.add_argument('--hourly', type=float, default=3.60)  # r7i.8xlarge Windows since 2026-09-17 (was 1.80 at r7i.4xlarge)
     parser.add_argument('--label', default='', help='snapshot: short label written into the Name tag')
     parser.add_argument('--device', default='xvdf', help='snapshot: block device of the data volume (E:), default xvdf')
     parser.add_argument('--type', default='', help='resize: the new instance type (r7i.8xlarge = 32 vCPU/256 GiB, r7i.12xlarge = 48 vCPU/384 GiB)')

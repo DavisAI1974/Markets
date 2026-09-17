@@ -87,3 +87,11 @@ progress-only hunk (+5/-1: logical entries, compressed blocks done/total, percen
 `9a8f3f46` resolves on Codex's side and its execution file is byte-identical too. Two qualifications, both mine:
 the journal job now `needs: [sources]` (fixed the same day so the original push trigger still runs it when
 `sources` is skipped) and carries two ingest-receipt steps after its unchanged CPU steps. No run was executed.
+
+## Native host RESIZED (Greg's go, 2026-09-17): `i-0e90ee6110ef609aa` r7i.4xlarge -> r7i.8xlarge
+
+Done from this session with `ec2_host.py resize --type r7i.8xlarge` while stopped; readback `state=stopped
+type=r7i.8xlarge KeepRunning=false profile=Ssm`. 32 vCPU / 256 GiB from the next start: the compact reader's
+`data_workers=48` cap now resolves to 31 dedicated workers (CPU 0 reserved for the ordered consumer); the native
+step's 8 threads are unchanged. Cost line: `ec2_host.py --hourly` default is now 3.60. Volumes, profile and tags
+untouched. The 48 in the record is that cap, not a machine; 32 is the Pod (Granite's CPUs, no worker pool).
