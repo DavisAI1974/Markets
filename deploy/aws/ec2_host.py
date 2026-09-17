@@ -62,7 +62,8 @@ def main():
     parser.add_argument('--hourly', type=float, default=1.80)
     parser.add_argument('--label', default='', help='snapshot: short label written into the Name tag')
     parser.add_argument('--device', default='xvdf', help='snapshot: block device of the data volume (E:), default xvdf')
-    parser.add_argument('action', choices=('status', 'start', 'stop', 'snapshot', 'snapshots'))
+    parser.add_argument('--type', default='', help='resize: the new instance type (r7i.8xlarge = 32 vCPU/256 GiB, r7i.12xlarge = 48 vCPU/384 GiB)')
+    parser.add_argument('action', choices=('status', 'start', 'stop', 'snapshot', 'snapshots', 'resize'))
     args = parser.parse_args()
     if args.env_file:
         load_env_file(args.env_file)
@@ -83,6 +84,23 @@ def main():
             ec2.stop_instances(InstanceIds=[args.instance])
         wait_state(ec2, args.instance, 'stopped')
         report(describe(ec2, args.instance), args.hourly)
+    elif args.action == 'resize':
+        # Instance type changes only while STOPPED (EC2 refuses otherwise); the volumes, the SSM profile
+        # and the KeepRunning tag are untouched. The compact reader's data_workers=48 is a cap, so a larger
+        # type simply yields more dedicated worker CPUs (vCPUs minus the reserved consumer CPU).
+        if not args.type:
+            raise SystemExit('resize requires --type')
+        if info['state'] != 'stopped':
+            raise SystemExit(f"resize requires a stopped instance; state={info['state']} (run stop first)")
+        if info['type'] == args.type:
+            print(f'already {args.type}; nothing changed')
+        else:
+            ec2.modify_instance_attribute(InstanceId=args.instance, InstanceType={'Value': args.type})
+            after = describe(ec2, args.instance)
+            if after['type'] != args.type:
+                raise SystemExit(f"resize did not take: type={after['type']}")
+            print(f"resized {info['type']} -> {after['type']} (stopped; starts at the new size on the next start)")
+            report(after, args.hourly)
     elif args.action == 'snapshot':
         # Point-in-time EBS snapshot of the data volume: survives terminate, corruption and a bad cycle.
         # Taken while STOPPED it is crash-consistent by construction; while running it is still consistent
