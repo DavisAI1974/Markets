@@ -212,3 +212,22 @@ transport again. (2) The journal reducer was not changed and nothing was dropped
 equivalence tests pass (`test_reduction_stack_equivalence.py` 4/4, `test_prepared_context_cache.py` 8/8,
 `test_run_actual_sunday_compact_source.py` 4/4, `test_compact_source.py`, `test_compact_journal.py`); the prefix
 machinery is byte-identical to runtime pin `9a8f3f46`.
+
+
+## Correction 2026-09-17: the "about 1,200 boxes" was right, and this file's answer was wrong
+
+Above, this file recorded that *"the number Greg recalled as 'about 1,200 boxes' does not appear in any receipt;
+7,129 blocks is the recorded figure."* That treated his number as a faulty memory when it was a TARGET, and it sent
+the question away instead of asking what set 7,129.
+
+What sets it: `journal_stack_execution.MigratingConformanceReader.entries()` partitioned the journal with a
+hardcoded literal - `range(0, count, 16)` and `min(16, ...)` - and every partition becomes exactly one block. So
+114,054 / 16 = 7,129, which is the whole derivation. `CompactWriter`'s `block_bytes` (4 MiB) and `MAX_ROWS` (256)
+never applied on this path at all: the loop INSERTs each partition's block directly and bypasses
+`CompactWriter.add`. Nobody had chosen 16 as a size; it was never revisited.
+
+`PARTITION_ENTRIES = 96` (Greg's call, 2026-09-17) gives 114,054 / 96 = **1,189 boxes**. It also cuts per-partition
+overhead six-fold: each partition opens the source read-only and runs three queries, so 7,129 opens become 1,189.
+The journal is invariant - same entries, same bytes, same order, same completion and seal, proved on a real run of
+the reader at 96 and at 16 over the same fixture (`tests/test_partition_packing.py`). The compact container's bytes
+and sha256 change by design.

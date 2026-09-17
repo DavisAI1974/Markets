@@ -14,7 +14,7 @@ from pathlib import Path
 import sqlite3
 import time
 
-from compact_journal import CompactWriter, encode_block, decode_block, verified_partition, MAX_BYTES
+from compact_journal import CompactWriter, encode_block, decode_block, verified_partition, MAX_BYTES, MAX_ROWS
 from compact_conformance_reader import project_entries
 from verified_journal_reader import GENESIS_HASH
 
@@ -61,10 +61,27 @@ def _convert_partition(path, start, length):
         cpu_seconds=time.process_time()-cpu, wall_seconds=time.perf_counter()-wall)
 
 
+# Entries per partition, and therefore per block: each partition becomes exactly one block, so this
+# alone sets the box count (114,054 first-run entries / 96 = 1,189 blocks; at the previous hardcoded
+# 16 it was 7,129). Greg's call, 2026-09-17: about 1,200 boxes. It also cuts the per-partition
+# overhead six-fold - every partition opens the source read-only and runs three queries, so 7,129
+# opens become 1,189. Bounded above by encode_block's MAX_ROWS (256) and by _convert_partition's
+# MAX_BYTES check, which refuses an oversized partition rather than writing one.
+#
+# CHANGING THIS CHANGES THE COMPACT JOURNAL'S BYTES AND sha256. The decoded entries, the count and
+# the head hash are invariant (test_partition_packing.py proves it), but the first run's
+# compact_sha256 19603159... no longer reproduces; a run under this value is a new baseline.
+PARTITION_ENTRIES = 96
+
+
 class MigratingConformanceReader:
-    def __init__(self, source, *, expected_count, expected_head_hash, output, worker_cpus, emit):
+    def __init__(self, source, *, expected_count, expected_head_hash, output, worker_cpus, emit,
+                 partition_entries=PARTITION_ENTRIES):
         if not worker_cpus or len(set(worker_cpus)) != len(worker_cpus):
             raise ValueError('distinct dedicated worker CPUs required')
+        if type(partition_entries) is not int or not 0 < partition_entries <= MAX_ROWS:
+            raise ValueError('partition entries must be a positive count within the block row bound')
+        self.partition_entries = partition_entries
         self.source, self.output = Path(source), Path(output)
         self.count, self.head_hash = expected_count, expected_head_hash
         self.worker_cpus, self.emit = tuple(worker_cpus), emit
@@ -77,7 +94,7 @@ class MigratingConformanceReader:
         assignments = context.Queue()
         for cpu in self.worker_cpus:
             assignments.put(cpu)
-        starts = iter(range(0,self.count,16))
+        starts = iter(range(0,self.count,self.partition_entries))
         completed, previous = 0, GENESIS_HASH
         started, last_emit = time.perf_counter(), 0.0
         try:
@@ -89,7 +106,7 @@ class MigratingConformanceReader:
                     if start is None:
                         return False
                     pending.append((time.perf_counter(),pool.submit(_convert_partition,
-                        str(self.source),start,min(16,self.count-start))))
+                        str(self.source),start,min(self.partition_entries,self.count-start))))
                     return True
                 for _ in range(2*len(self.worker_cpus)):
                     if not submit():

@@ -253,3 +253,62 @@ receipt - it cannot make the journal job reduce the right day. Parameterizing th
 request, and the hard-coded `20260915` publication path) by `inputs.day` is a workflow change, and workflow changes
 need Greg's go, so nothing was edited. Until then a day other than the first run's will stop at ingest with the two
 counts named, which is the correct outcome.
+
+### Greg's correction, same session: the box count, and the scale problem behind it
+
+**My evidence was wrong and he was right to push.** I read `ingested: false` / `prefixes_built: false` in
+`blocks/BLOCK_20211004_20211006_SOURCE_MANIFEST.json` as proof those days were not done. **Nothing in the repo ever
+writes those flags true** - `stage_block_sources.py` writes them `false` at stage time and no code path updates
+them. They are stage-time literals, not a state report. Withdrawn.
+
+**What the Actions history does show** (not an argument, just what I could find): `frankie_journal_stack.yml` has
+exactly ONE run ever - 34962256086, 2026-09-15 11:14:54 to 11:29:55, success - and the codex output branch's last
+commit is 2026-09-15 21:29. Nothing on 09-16 or 09-17. If the four days were ingested elsewhere (a Codex session,
+the host directly, another repo), that is where to look; it did not go through this workflow. Separately,
+`ng_exhaustion_step1_receipt_count_20260823.yml` fires on every push to this branch and has failed 677 consecutive
+times - noise worth killing.
+
+**THE SCALE PROBLEM IS REAL, AND IT IS CPU-BOUND.** From the first run's receipt, not memory: 57,027 records,
+715.19 s wall, 50.37 s parent CPU + 2,079.29 s worker CPU on 3 workers. **2,079/715 = 2.91 of 3 CPUs busy, 97%
+dedication**, so the 715 s is compute, not transfer - there is no fixed overhead to amortise away. **37.3 ms of CPU
+per record**, and it scales straight:
+
+| | records | CPU-h | 4-vCPU runner | 32-vCPU host |
+|---|---|---|---|---|
+| Sunday 20211003 | 57,027 | 0.6 | 12 min | - |
+| one weekday | 1,994,358 | 20.7 | 6.9 h | 0.7 h |
+| the 4-day block | 6,471,475 | 67.1 | 22.4 h | 2.2 h |
+| 4 weeks | ~34,000,000 | 352.7 | 4.9 days | 11.4 h |
+
+Sunday is **1.6%** of the four-day block. Twelve minutes on the smallest day is exactly what hid this.
+
+**THE BOX COUNT: 7,129 came from a hardcoded literal nobody had chosen.**
+`journal_stack_execution.MigratingConformanceReader.entries()` partitioned with `range(0, count, 16)` and
+`min(16, ...)`, and **every partition becomes exactly one block**, so 114,054 / 16 = 7,129 - the whole derivation.
+`CompactWriter`'s `block_bytes` (4 MiB) and `MAX_ROWS` (256) never applied on this path: the loop INSERTs each
+partition's block directly and bypasses `CompactWriter.add`. The blocks were averaging far under the byte budget
+and nothing was flushing them but the literal.
+
+**Now `PARTITION_ENTRIES = 96`** (Greg's call): 114,054 / 96 = **1,189 boxes**, his "about 1,200". It also cuts
+per-partition overhead six-fold - each partition opens the source read-only and runs three queries, so 7,129 opens
+become 1,189. The length is a constructor keyword bounded by `MAX_ROWS`, so a bad value refuses rather than writes
+a malformed block, and `_convert_partition`'s existing `MAX_BYTES` check still refuses an oversized partition.
+
+**Proved, not asserted**: `tests/test_partition_packing.py` runs the REAL reader over the same fixture at 96 and at
+16 and asserts the projected entries, their order, the count, the head hash and the completion are identical while
+the box count differs exactly as the arithmetic says; plus the first-run arithmetic (96 -> 1,189, 16 -> 7,129) and
+refusal of an out-of-bound length. 7/7. Reduction stack + single-pass + compact: 26 passed. The workflow's own
+standalone gate `test_journal_stack_execution.py` passes. **Family run after the change: 1018 passed, 1 skipped,
+0 failed** - unchanged.
+
+**THE BASELINE MOVES, DELIBERATELY.** The compact container's bytes and `compact_sha256` change; the first run's
+`19603159...` no longer reproduces and a run under 96 is a new baseline. The prefixes and the reducer logic are
+untouched - only the packing. The one live pin of that sha
+(`operations/restore_existing_journal_archive.py`) restores the historical archive itself and is unaffected.
+CLAUDE.md's "never rebuild these" rule now carries this as its one declared exception, so a later session does not
+revert 96 to 16 believing it is protecting the gold standard.
+
+**Still open on cost**: 37.3 ms/record is not explained by the packing alone. Six-fold fewer partitions removes
+per-partition overhead, but the per-entry work (canonical re-serialisation, per-entry sha256, gzip level 6) has not
+been profiled - and it cannot be profiled here, because the real bundle is 11.7 GB behind S3. The next measured run
+gives the new per-record number; if it has not moved much, that profile is the next job.

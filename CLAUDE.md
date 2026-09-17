@@ -17,7 +17,7 @@
   34962256086 (parent + 3 affinity-bound workers); 19 prefixes (`sunday_20260915_package/FB/actual-prefixes/`), each
   seed = the top T_CTX rows by receive time and cursor, `derivable: true`. Verified 2026-09-17: the prefix builder,
   snapshot, conformance reader, journal reader, stack execution and both Sunday operations scripts on the integrated
-  tree are byte-identical to the first run's runtime pin `9a8f3f46`. Never rebuild these; change dates only.
+  tree are byte-identical to the first run's runtime pin `9a8f3f46`. Never rebuild these; change dates only. **ONE DELIBERATE EXCEPTION (Greg, 2026-09-17): the partition/box packing.** `journal_stack_execution.PARTITION_ENTRIES` was a hardcoded `16` and is now **96** - each partition becomes exactly one block, so 16 is what produced 7,129 boxes; 96 puts the first run at **1,189, Greg's "about 1,200"**. The decoded entries, count and head hash are INVARIANT (`tests/test_partition_packing.py` proves it on a real run); the compact container's bytes and `compact_sha256` DO change, so the first run's `19603159...` no longer reproduces and a run under 96 is a new baseline. **Do not revert this to 16 as gold-standard protection** - the prefixes and the reducer logic are untouched, only the packing moved.
 - **The native row context `T_CTX = 4096` is a provisional value** (its own comment says so). Greg has retired the
   4,096-row cycle in prose at least three times; it was never changed in code, so every token projection re-derives it.
   Do NOT quote projections at 4,096 rows. The replacement row count is Greg's modelling call and is still pending.
