@@ -120,6 +120,9 @@ def bootstrap_command(rows, bundle_sha, bucket, directory=package.ROOT, *, open_
     """Private AWS downloads followed by the unchanged pre-import verifier."""
     if type(open_ended) is not bool:
         raise ValueError('explicit bootstrap runtime mode required')
+    # The reviewed command embeds dict repr. Restore its defined key order after
+    # canonical journal JSON readback, so observer replacement reproduces the pin.
+    rows = [dict(path=row['path'], size=row['size'], sha256=row['sha256']) for row in rows]
     roster = rows + [{'path': 'runpod_bundle.json', 'size': None, 'sha256': bundle_sha}]
     prefix = f'''import hashlib,http.client,json,os,pathlib,shutil,signal,urllib.parse
 p=pathlib.Path({directory!r})
