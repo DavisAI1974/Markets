@@ -82,7 +82,7 @@ def main():
             expected_manifest_sha256=export['manifest_sha256'],boss_journal_path=plan['source_journal_path'],
             source_journal_checkpoint=plan['source_journal_checkpoint'],mapping_directory=str(Path(config['mapping']['path']).parent),
             expected_mapping_sha256=config['mapping']['sha256'],receiver_root=config['receiver_root'],
-            receiver_commit=config['receiver_commit'],python=sys.executable,directory=principal,
+            receiver_commit=config['receiver_commit'],python=sys.executable,directory=principal,admission=config.get('principal_admission'),
             retained_directory=str(Path(config['retained_witnesses']['path']).parent),
             expected_retained_witnesses_sha256=config['retained_witnesses']['sha256'],
             delivery_receipt=config['delivery_receipt']['path'],expected_delivery_file_sha256=config['delivery_receipt']['sha256'],

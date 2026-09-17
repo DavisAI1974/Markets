@@ -2,7 +2,7 @@
 import json
 import pytest
 from frankie_principal_adapter import (FrankiePrincipalAdapter, PrincipalPending, PrincipalNotDispatched, SECTIONS,
-    canonical, digest, file_witness, rebind_delivery_receipt)
+    canonical, digest, file_witness, rebind_delivery_receipt, sealed_absence)
 
 
 def case(tmp_path, executor=None):
@@ -17,12 +17,12 @@ def case(tmp_path, executor=None):
             'knowledge-bundle-sha256': 'b'*64, 'retained-prompt':str(prompt),
             'retained-prompt-sha256':file_witness(prompt)['sha256']}, protected_files={'A': witness},
         section_evidence={section: witness for section in SECTIONS}, feedback_contract={},
-        session_executor=executor)
+        session_executor=executor, admission={'output_bundle': 'NOT_PRESENTED', 'sealed_proof': 'UNPROVEN'})
     # These tests isolate the session boundary; production prepare runs frozen receiver.
     adapter._check_preparation = lambda receipt: None
     attachment = {'config_hash': adapter._config_hash(), 'prompt': str(prompt), 'prompt_witness': file_witness(prompt),
         'knowledge_bundle': str(evidence), 'knowledge_bundle_witness': file_witness(evidence),
-        'preparation_receipt': {}}
+        'preparation_receipt': {}, 'admission': adapter._admission_record()}
     attachment['attachment_hash'] = digest(attachment)
     return adapter, attachment
 
@@ -240,7 +240,9 @@ def test_constructor_enforces_pinned_memory_and_emitter_path_identity(tmp_path):
     args=dict(receiver_root=adapter.receiver_root,receiver_commit=adapter.receiver_commit,
         python=adapter.python,directory=tmp_path/'other',preparation={'result_path':str(tmp_path/'result.json'),
             'delivery_receipt':str(tmp_path/'delivery.json')},protected_files=adapter.protected_files,
-        section_evidence=adapter.section_evidence,feedback_contract={})
+        section_evidence=adapter.section_evidence,feedback_contract={},
+        admission={'output_bundle':{'principal_artifact':str(tmp_path/'artifact.json'),'outputs_dir':str(tmp_path/'outputs')},
+                   'sealed_proof':str(tmp_path/'sealed.json')})
     render={'knowledge-receipt':str(tmp_path/'knowledge.json'),'knowledge-receipt-sha256':'a'*64,
         'knowledge-bundle-sha256':'b'*64}
     created=FrankiePrincipalAdapter(**args,render=render)
@@ -249,3 +251,43 @@ def test_constructor_enforces_pinned_memory_and_emitter_path_identity(tmp_path):
         FrankiePrincipalAdapter(**args,render={'knowledge-receipt':'unpinned'})
     with pytest.raises(ValueError,match='emitter paths differ'):
         FrankiePrincipalAdapter(**args,render=dict(render,result='wrong.json'))
+
+
+def test_admission_is_declared_never_inferred_and_a_new_render_is_never_exempt(tmp_path):
+    adapter,_=case(tmp_path)
+    args=dict(receiver_root=adapter.receiver_root,receiver_commit=adapter.receiver_commit,python=adapter.python,
+        directory=tmp_path/'other',preparation={'result_path':str(tmp_path/'result.json'),
+            'delivery_receipt':str(tmp_path/'delivery.json')},protected_files=adapter.protected_files,
+        section_evidence=adapter.section_evidence,feedback_contract={})
+    emitter={'knowledge-receipt':str(tmp_path/'knowledge.json'),'knowledge-receipt-sha256':'a'*64,'knowledge-bundle-sha256':'b'*64}
+    undeclared=FrankiePrincipalAdapter(**args,render=emitter)
+    with pytest.raises(ValueError,match='undeclared'):undeclared.prepare(tmp_path)
+    with pytest.raises(ValueError,match='never exempt'):
+        FrankiePrincipalAdapter(**args,render=emitter,admission={'output_bundle':'NOT_PRESENTED','sealed_proof':'UNPROVEN'})
+    with pytest.raises(ValueError,match='explicitly'):
+        FrankiePrincipalAdapter(**args,render=emitter,admission={'output_bundle':'NOT_PRESENTED'})
+
+
+def test_output_bundle_gate_must_match_the_declared_policy_with_every_current_ledger(tmp_path):
+    adapter,_=case(tmp_path)
+    adapter._check_output_bundle_gate({'output_bundle_gate':{'status':'NOT_PRESENTED'}})
+    with pytest.raises(ValueError,match='historical'):adapter._check_output_bundle_gate({'output_bundle_gate':{'status':'VALIDATED'}})
+    adapter.admission['output_bundle']={'principal_artifact':'artifact.json','outputs_dir':'outputs'}
+    ids=[f'ledger-{i:02d}' for i in range(32)]
+    adapter._check_output_bundle_gate({'output_bundle_gate':{'status':'VALIDATED','required_ledger_ids':ids,'ledgers':{i:{} for i in ids}}})
+    with pytest.raises(ValueError,match='32'):
+        adapter._check_output_bundle_gate({'output_bundle_gate':{'status':'VALIDATED','required_ledger_ids':ids[:30],'ledgers':{i:{} for i in ids[:30]}}})
+    with pytest.raises(ValueError,match='did not validate'):adapter._check_output_bundle_gate({'output_bundle_gate':{'status':'NOT_PRESENTED'}})
+
+
+def test_sealed_proof_is_verified_and_a_receiver_without_its_repository_refuses_cleanly(tmp_path):
+    proof=tmp_path/'sealed.json'
+    proof.write_text(json.dumps({'schema':'FRANKIE_SEALED_ABSENCE_PROOF_V1','all_absent':True,'tokens_checked':9,'receipt_sha256':'c'*64}))
+    assert sealed_absence(str(proof))['status']=='PROVEN'
+    proof.write_text(json.dumps({'schema':'FRANKIE_SEALED_ABSENCE_PROOF_V1','all_absent':False,'tokens_checked':9,'receipt_sha256':'c'*64}))
+    with pytest.raises(ValueError,match='absent'):sealed_absence(str(proof))
+    adapter,_=case(tmp_path)
+    with pytest.raises(ValueError,match='not a git repository'):adapter._code()
+    witness=adapter._memory_witness()
+    assert witness['files']['A']['sha256']==adapter.protected_files['A']['sha256']
+    assert witness['receipt_sha256']!=adapter.protected_files['A']['sha256']

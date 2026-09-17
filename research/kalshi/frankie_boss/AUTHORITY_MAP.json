@@ -412,6 +412,21 @@
       ],
       "execution_ledger.py": [
         "ExecutionLedger.__init__"
+      ],
+      "frankie_source_mapping.py": [
+        "bind_prefix"
+      ],
+      "journal_prefix_snapshot.py": [
+        "snapshot_journal_prefix"
+      ],
+      "online_source_prefix.py": [
+        "snapshot_closed_prefix"
+      ],
+      "source_recovery.py": [
+        "rehydrate_source"
+      ],
+      "sunday_execution.py": [
+        "JournalWitness.checkpoint"
       ]
     },
     "journal_appends": {
@@ -443,6 +458,74 @@
     "physical_connects": {
       "c15_journal.py": [
         "EvidenceJournal.__init__"
+      ],
+      "boss_training_checkpoint.py": [
+        "BossTrainingCheckpoint.__init__"
+      ],
+      "closed_source_lineage.py": [
+        "build_closed_lineage"
+      ],
+      "compact_conformance_reader.py": [
+        "_verify_partition"
+      ],
+      "compact_journal.py": [
+        "CompactReader.__init__",
+        "CompactWriter.__init__"
+      ],
+      "compact_journal_snapshot.py": [
+        "snapshot_compact_prefix"
+      ],
+      "compact_source.py": [
+        "CompactSource.__init__"
+      ],
+      "feedback_cycle.py": [
+        "CycleCoordinator.__init__"
+      ],
+      "frankie_journal_reader.py": [
+        "_read_block"
+      ],
+      "granite_runpod_jobs.py": [
+        "JobStore._db"
+      ],
+      "granite_runpod_probe.py": [
+        "run_probe"
+      ],
+      "journal_prefix_snapshot.py": [
+        "snapshot_journal_prefix"
+      ],
+      "journal_stack_execution.py": [
+        "_convert_partition"
+      ],
+      "online_source_prefix.py": [
+        "snapshot_closed_prefix"
+      ],
+      "operations/benchmark_native_learner_direct.py": [
+        "_load_stage"
+      ],
+      "operations/benchmark_reduction_stack.py": [
+        "main"
+      ],
+      "operations/ingest_block_sources.py": [
+        "compare_raw_and_compact"
+      ],
+      "operations/run_actual_sunday.py": [
+        "ActualHost._training",
+        "ActualHost.prefix",
+        "ActualHost.source_lineage"
+      ],
+      "prepared_context_cache.py": [
+        "_stored_tail"
+      ],
+      "source_lineage_resume.py": [
+        "verify_closed_source_lineage"
+      ],
+      "source_recovery.py": [
+        "_ReplayJournal.__init__",
+        "rehydrate_source"
+      ],
+      "verified_journal_reader.py": [
+        "VerifiedJournalReader.__init__",
+        "VerifiedJournalReader.stored_tail"
       ]
     },
     "declared_principal_directory_writers": {
@@ -455,6 +538,197 @@
           "FrankiePrincipalAdapter._render_retained"
         ],
         "reason": "The principal adapter reads the frozen pre-Sunday knowledge receipt and bundle (read-only witnesses) and writes only its own principal-directory artifacts: adapter-config.json, the receiver preparation, prompt.md and the retained original render. The file-local checker taints every write in the file through those names; none of these writes targets a knowledge or Memory A path. Store: principal_session_artifacts."
+      }
+    },
+    "direct_store_users": {
+      "note": "Audit finding 6, second slice (2026-09-17): every direct store user the collision check flags, with its semantic-owner decision. A symbol listed under journal_constructors/physical_connects below MUST appear here with its role; a blanket declaration would defeat the check, so each entry names role (reader | writer | creator | reader+creator), store and the evidence (the connect mode or constructor form).",
+      "users": {
+        "boss_training_checkpoint.py": {
+          "BossTrainingCheckpoint.__init__": {
+            "role": "writer",
+            "store": "boss_training_checkpoint",
+            "evidence": "owns its own retained native training checkpoint database (not a journal)"
+          }
+        },
+        "closed_source_lineage.py": {
+          "build_closed_lineage": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store; hashes the lineage parent"
+          }
+        },
+        "compact_conformance_reader.py": {
+          "_verify_partition": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store; single-pass conformance of the reducer stack (first-run gold standard, never rebuilt)"
+          }
+        },
+        "compact_journal.py": {
+          "CompactReader.__init__": {
+            "role": "reader",
+            "store": "compact_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store"
+          },
+          "CompactWriter.__init__": {
+            "role": "writer",
+            "store": "compact_journal",
+            "evidence": "the reducer stack's one compact-journal writer (16-entry gzip blocks; first-run gold standard, never rebuilt)"
+          }
+        },
+        "compact_journal_snapshot.py": {
+          "snapshot_compact_prefix": {
+            "role": "reader",
+            "store": "compact_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store; the prefix builder reads one verified block per answer"
+          }
+        },
+        "compact_source.py": {
+          "CompactSource.__init__": {
+            "role": "reader",
+            "store": "compact_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store; sealed container pinned to the host witness (sha256, bytes, count, head)"
+          }
+        },
+        "feedback_cycle.py": {
+          "CycleCoordinator.__init__": {
+            "role": "writer",
+            "store": "cycle_stages_and_lessons",
+            "evidence": "owns cycles.sqlite and lessons.sqlite (stages, lessons); frozen Memory A is read through its hash only"
+          }
+        },
+        "frankie_journal_reader.py": {
+          "_read_block": {
+            "role": "reader",
+            "store": "compact_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store"
+          }
+        },
+        "granite_runpod_jobs.py": {
+          "JobStore._db": {
+            "role": "writer",
+            "store": "pod_job_store",
+            "evidence": "Pod-local durable jobs_v1 store on the retained Pod; not a BOSS journal"
+          }
+        },
+        "granite_runpod_probe.py": {
+          "run_probe": {
+            "role": "writer",
+            "store": "probe_attempts",
+            "evidence": "local single-attempt guard (attempts table); records one Pod inference attempt per pod_id"
+          }
+        },
+        "journal_prefix_snapshot.py": {
+          "snapshot_journal_prefix": {
+            "role": "reader+creator",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store on the source; EvidenceJournal(create=True) creates the NEW staging prefix journal it snapshots into"
+          }
+        },
+        "journal_stack_execution.py": {
+          "_convert_partition": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store; reducer stack partition conversion (first-run gold standard)"
+          }
+        },
+        "online_source_prefix.py": {
+          "snapshot_closed_prefix": {
+            "role": "reader+creator",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store on the source; EvidenceJournal(create=True) creates the closed prefix destination, then reopens it read-only for verification"
+          }
+        },
+        "operations/benchmark_native_learner_direct.py": {
+          "_load_stage": {
+            "role": "reader",
+            "store": "cycle_stages_and_lessons",
+            "evidence": "SELECT only over retained stages (default-mode connect; disposable benchmark)"
+          }
+        },
+        "operations/benchmark_reduction_stack.py": {
+          "main": {
+            "role": "reader",
+            "store": "synthetic_fixture",
+            "evidence": "immutable read-only URI on the input and a plain connect on a synthetic fixture the script itself created; disposable benchmark"
+          }
+        },
+        "operations/ingest_block_sources.py": {
+          "compare_raw_and_compact": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store; raw-vs-compact comparison"
+          }
+        },
+        "operations/run_actual_sunday.py": {
+          "ActualHost._training": {
+            "role": "reader",
+            "store": "cycle_stages_and_lessons",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store"
+          },
+          "ActualHost.prefix": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store; one row digest from the raw origin per cycle"
+          },
+          "ActualHost.source_lineage": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store; both raw journals' tails and anchors"
+          }
+        },
+        "prepared_context_cache.py": {
+          "_stored_tail": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store; reader-owned stored_tail (science-byte exception 7, pinned blob)"
+          }
+        },
+        "source_lineage_resume.py": {
+          "verify_closed_source_lineage": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store"
+          }
+        },
+        "source_recovery.py": {
+          "_ReplayJournal.__init__": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store on the parent"
+          },
+          "rehydrate_source": {
+            "role": "creator",
+            "store": "source_journal",
+            "evidence": "creates a NEW destination (open xb) filled by sqlite backup from the read-only parent; never opens an existing journal for writing"
+          }
+        },
+        "verified_journal_reader.py": {
+          "VerifiedJournalReader.__init__": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store"
+          },
+          "VerifiedJournalReader.stored_tail": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "reader: sqlite3 read-only URI (?mode=ro); never writes the store"
+          }
+        },
+        "frankie_source_mapping.py": {
+          "bind_prefix": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "EvidenceJournal opened to iterate entries and verify count/head against the independent checkpoint; no append"
+          }
+        },
+        "sunday_execution.py": {
+          "JournalWitness.checkpoint": {
+            "role": "reader",
+            "store": "source_journal",
+            "evidence": "EvidenceJournal opened to verify count/head against the precommitted append witness, closed in finally; no append"
+          }
+        }
       }
     }
   }

@@ -826,6 +826,7 @@ class ActualHost:
             create=not (self.directory/'cycles.sqlite').exists(),phase_callback=self.phase)
         principal=dict(mapping_directory=str(Path(c['mapping']['path']).parent),expected_mapping_sha256=c['mapping']['sha256'],
             receiver_root=c['receiver_root'],receiver_commit=c['receiver_commit'],python=sys.executable,
+            admission=c.get('principal_admission'),  # audit finding 4: declared per run; undeclared refuses at use
             retained_directory=str(Path(c['retained_witnesses']['path']).parent),expected_retained_witnesses_sha256=c['retained_witnesses']['sha256'],
             delivery_receipt=c['delivery_receipt']['path'],expected_delivery_file_sha256=c['delivery_receipt']['sha256'],
             result_path=c['calculation_result']['path'],

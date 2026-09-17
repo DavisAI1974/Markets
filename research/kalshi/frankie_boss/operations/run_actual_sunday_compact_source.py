@@ -12,7 +12,8 @@ tests/test_run_actual_sunday_compact_source.py holds prefix() to the lawful text
     python run_actual_sunday_compact_source.py --configuration host.json --verify-source-only --run-directory <scratch>
         source() + prefix() for all 19 cycles, no model, no training; writes compact-source-verification.json
     python run_actual_sunday_compact_source.py --configuration host.json
-        the lawful main() with this host class substituted (everything else identical)
+        the integrated classroom main() with this host class composed over the classroom host
+        (refuses when the classroom runner/adapter is absent from the lawful checkout)
 """
 from __future__ import annotations
 
@@ -41,12 +42,15 @@ def _load_compact_source(tools_root=None):
     raise ImportError('compact_source.py not found')
 
 
-def host_class(actual, tools_root=None):
-    """Subclass actual.ActualHost (the caller's checkout) with compact-source verification."""
+def host_class(actual, tools_root=None, base=None):
+    """Subclass the host (actual.ActualHost, or the integrated classroom host) with compact-source verification."""
     compact_source = _load_compact_source(tools_root)
     Path = actual.Path; json = actual.json
+    base = actual.ActualHost if base is None else base
+    if not (isinstance(base, type) and issubclass(base, actual.ActualHost)):
+        raise ValueError('compact-source host must extend the lawful ActualHost of the same checkout')
 
-    class CompactSourceHost(actual.ActualHost):
+    class CompactSourceHost(base):
         def compact_source(self):
             if getattr(self, '_compact', None) is None:
                 witness = self.host['compact_journal']
@@ -137,6 +141,23 @@ def _lawful(repository):
     return actual
 
 
+def _classroom(actual):
+    """The integrated classroom runner of the SAME lawful checkout, or a refusal before any dispatch.
+
+    Audit finding 3: substituting a compact-source host into the base actual.main() selects the base
+    principal adapter. Result-bearing dispatch composes through run_actual_sunday_classroom instead,
+    and refuses when the classroom package/adapter is absent from the lawful tree.
+    """
+    try:
+        from research.kalshi.frankie_boss.operations import run_actual_sunday_classroom as classroom
+    except ImportError as error:
+        raise SystemExit('compact-source dispatch refused: the integrated classroom runner/adapter is absent '
+                         'from the lawful checkout (' + str(error) + ')')
+    if classroom.base is not actual or not issubclass(classroom.ActualHost, actual.ActualHost):
+        raise SystemExit('compact-source dispatch refused: classroom runner is not bound to the lawful checkout')
+    return classroom
+
+
 def verify_source_only(configuration, run_directory, tools_root=None):
     """source() and prefix() for every scheduled cycle with no model, no training and no service."""
     run_directory = Path(run_directory).resolve()
@@ -191,9 +212,12 @@ def main():
             raise SystemExit('--run-directory required with --verify-source-only')
         return verify_source_only(configuration, args.run_directory, args.tools_root)
     actual = _lawful(configuration['host_runtime']['repository'])
-    actual.ActualHost = host_class(actual, args.tools_root)   # the lawful main() then runs unchanged
+    classroom = _classroom(actual)
+    # Compose over the integrated classroom host; the classroom main() takes the class explicitly and
+    # rebinds no module global, so the base adapter can never be the one that runs.
+    host = host_class(actual, args.tools_root, base=classroom.ActualHost)
     sys.argv = [sys.argv[0], '--configuration', args.configuration] + (['--prepare-only'] if args.prepare_only else [])
-    return actual.main()
+    return classroom.main(host_class=host)
 
 
 if __name__ == '__main__':

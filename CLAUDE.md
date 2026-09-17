@@ -31,6 +31,10 @@
   per-module declarations (audit finding 6, second slice). Container needs `cffi` + `databento-dbn==0.62.0`. See
   `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260918.md`.**
 - Launch is HOLD. No Frankie, Granite, Pod, EC2 or result-bearing action without Greg's explicit go.
+- **Audit findings 2-8 (2026-09-17, second session): 3 and 6 closed; 4/5/2+7/8 landed on the BOSS side** (explicit
+  `principal_admission` per run, never silent; compact-source dispatch composes through the classroom runner or refuses;
+  `launch_pins.py` refuses the stale 2026-09-15 configuration). Record: last section of
+  `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260918.md`. Item 1 (`T_CTX`) untouched by Greg's call.
 
 
 ## S114 — G24 WALKED BLIND (6/10) AND IT TIES DOING NOTHING, THE RENEWABLES FORCING IS WIRED, AND EVERY REPORTED DEFECT IS CLOSED (read `SESSION_HANDOFF_2026-08-06_S114.md` + `DROP_IN_S115.md`)

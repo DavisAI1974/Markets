@@ -229,6 +229,7 @@ class ClassroomActualHost(base.ActualHost):
             receiver_root=c["receiver_root"],
             receiver_commit=c["receiver_commit"],
             python=sys.executable,
+            admission=c.get("principal_admission"),
             retained_directory=str(Path(c["retained_witnesses"]["path"]).parent),
             expected_retained_witnesses_sha256=c["retained_witnesses"]["sha256"],
             delivery_receipt=c["delivery_receipt"]["path"],

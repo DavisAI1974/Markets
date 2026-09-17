@@ -24,7 +24,11 @@ blocks, 715 s). Receiver `2ebb8ce8` is a sibling checkout, not merged. Launch is
 2. The pre-existing test errors listed in the handoff: 8 failures, the 28 `test_granite_coordinator.py` setup errors
    (fixture `max_model_len=3000`, then a second setup problem), the `test_granite_retained_host.py` stall. Identical on
    the untouched tree; not introduced by the retirement work. Fix the root causes, never skip or deselect to get green.
-3. Audit findings 2-8 (see handoff), then the token shrinks 3.1-3.4, then the CPU items.
+3. Audit findings 2-8: 3 and 6 CLOSED; 4, 5, 2/7, 8 landed on the BOSS side (see the last section of
+   `CLAUDE_HANDOFF_20260918.md`). Still pending: receiver produces the sealed-absence proof file; receiver binds the BOSS
+   Memory A witness into the knowledge receipt; the fresh configuration (reviewed BOSS tip + new completion ref, Greg);
+   host verification of the receiver checkout (HOLD). Then the token shrinks 3.1-3.4, then the CPU items.
+   OPEN WITH ONE FAMILY RUN: the second session verified each slice by its own test file only.
 
 ## Standing orders (Greg)
 

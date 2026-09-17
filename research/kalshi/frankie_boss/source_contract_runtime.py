@@ -76,7 +76,7 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
         boss_journal_path, source_journal_checkpoint, mapping_directory, expected_mapping_sha256,
         receiver_root, receiver_commit, python, directory, retained_directory,
         expected_retained_witnesses_sha256, delivery_receipt, expected_delivery_file_sha256,
-        result_path, classroom_package, session_executor=None, adapter_class=None):
+        result_path, classroom_package, session_executor=None, adapter_class=None, admission=None):
     """Build the per-prefix receiver pins plus mandatory Dipole classroom.
 
     Each cycle gets its own directory. All expected hashes/checkpoints are supplied
@@ -149,7 +149,7 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
     adapter_class = DipoleClassroomPrincipalAdapter if adapter_class is None else adapter_class
     if type(adapter_class) is not type or not issubclass(adapter_class, DipoleClassroomPrincipalAdapter):
         raise ValueError('principal adapter class must preserve the mandatory Dipole classroom contract')
-    return adapter_class(receiver_root=receiver_root,receiver_commit=receiver_commit,python=python,
+    return adapter_class(receiver_root=receiver_root,receiver_commit=receiver_commit,python=python,admission=admission,
         directory=directory,preparation={'pins_path':str(pins_path),'expected_pins_sha256':digest(pins),
             'result_path':str(Path(result_path).resolve()),'delivery_receipt':str(Path(delivery_receipt).resolve()),
             'mapping_artifact':str(mapping_file)},

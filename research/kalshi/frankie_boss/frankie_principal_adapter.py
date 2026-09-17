@@ -141,6 +141,56 @@ def retained_knowledge(receipt_path, receipt_sha256, bundle_path, bundle_sha256)
     return receipt
 
 
+OUTPUT_BUNDLE_GATE_VALIDATED = 'VALIDATED'          # receiver prepare_boss_attachment.OUTPUT_BUNDLE_GATE_*
+OUTPUT_BUNDLE_GATE_NOT_PRESENTED = 'NOT_PRESENTED'
+CURRENT_RECEIVER_REQUIRED_LEDGERS = 32              # receiver 2ebb8ce8: 30 + what_he_learned + in_his_own_words
+SEALED_PROOF_SCHEMA = 'FRANKIE_SEALED_ABSENCE_PROOF_V1'
+SEALED_UNPROVEN = 'UNPROVEN'
+ADMISSION_UNDECLARED = 'UNDECLARED'
+
+
+def admission_policy(admission, *, retained_prompt):
+    """The per-run admission on the BOSS boundary (audit finding 4): declared, never inferred.
+
+    output_bundle: {'principal_artifact', 'outputs_dir'} (the receiver validates the principal's
+    output ledgers against the artifact citing them) or the literal 'NOT_PRESENTED', the declared
+    historical policy. sealed_proof: a FRANKIE_SEALED_ABSENCE_PROOF_V1 path, or the literal
+    'UNPROVEN' under the same historical rule. The historical literals are admissible only with a
+    retained prompt: a newly rendered run is never exempt. None is ADMISSION_UNDECLARED, which
+    every use (prepare, request, recover) refuses; it exists so a retained configuration that
+    predates the policy fails at use with the exact missing declaration named.
+    """
+    if admission is None:
+        return ADMISSION_UNDECLARED
+    if type(admission) is not dict or set(admission) != {'output_bundle', 'sealed_proof'}:
+        raise ValueError('principal admission must declare output_bundle and sealed_proof explicitly')
+    bundle, sealed = admission['output_bundle'], admission['sealed_proof']
+    if bundle != OUTPUT_BUNDLE_GATE_NOT_PRESENTED and not (type(bundle) is dict
+            and set(bundle) == {'principal_artifact', 'outputs_dir'}
+            and all(type(value) is str and value for value in bundle.values())):
+        raise ValueError('output_bundle must name principal_artifact and outputs_dir, or declare NOT_PRESENTED')
+    if sealed != SEALED_UNPROVEN and not (type(sealed) is str and sealed):
+        raise ValueError('sealed_proof must be a FRANKIE_SEALED_ABSENCE_PROOF_V1 path, or declare UNPROVEN')
+    if not retained_prompt and (bundle == OUTPUT_BUNDLE_GATE_NOT_PRESENTED or sealed == SEALED_UNPROVEN):
+        raise ValueError('a newly rendered principal run is never exempt: NOT_PRESENTED/UNPROVEN are admissible '
+                         'only with a retained prompt')
+    return {'output_bundle': bundle if bundle == OUTPUT_BUNDLE_GATE_NOT_PRESENTED else dict(bundle),
+            'sealed_proof': sealed}
+
+
+def sealed_absence(path):
+    """Verify a receiver-produced sealed-absence proof; its witness travels in the attachment."""
+    if path == SEALED_UNPROVEN:
+        return {'status': 'SEALED_UNPROVEN'}
+    proof = json.loads(Path(path).read_bytes())
+    if (type(proof) is not dict or proof.get('schema') != SEALED_PROOF_SCHEMA or proof.get('all_absent') is not True
+            or type(proof.get('tokens_checked')) is not int or proof['tokens_checked'] <= 0
+            or type(proof.get('receipt_sha256')) is not str or len(proof['receipt_sha256']) != 64):
+        raise ValueError('sealed-absence proof must be FRANKIE_SEALED_ABSENCE_PROOF_V1 with every sealed token absent')
+    return {'status': 'PROVEN', 'path': str(Path(path).resolve()), 'tokens_checked': proof['tokens_checked'],
+            'receipt_sha256': proof['receipt_sha256'], **file_witness(path)}
+
+
 class FrankiePrincipalAdapter:
     """Durable outbox/inbox around a real frozen receiver and authorized session.
 
@@ -153,7 +203,7 @@ class FrankiePrincipalAdapter:
     """
     def __init__(self, *, receiver_root, receiver_commit, python, directory,
                  preparation, render, protected_files, section_evidence,
-                 feedback_contract, session_executor=None):
+                 feedback_contract, session_executor=None, admission=None):
         self.receiver_root = Path(receiver_root).resolve()
         self.receiver_commit = receiver_commit
         self.python = str(python)
@@ -188,6 +238,14 @@ class FrankiePrincipalAdapter:
         self.section_evidence = section_evidence
         self.feedback_contract = json.loads(canonical(feedback_contract))
         self.session_executor = session_executor
+        self.admission = admission_policy(admission, retained_prompt=bool(self.render.get('retained-prompt')))
+        if self.admission != ADMISSION_UNDECLARED and self.admission['sealed_proof'] != SEALED_UNPROVEN \
+                and not self.render.get('retained-prompt'):
+            # The emitter receives the same proof the attachment witnesses (emit_frankie_spawn --sealed-proof).
+            supplied = self.render.get('sealed-proof', self.admission['sealed_proof'])
+            if Path(supplied).resolve() != Path(self.admission['sealed_proof']).resolve():
+                raise ValueError('emitter sealed-proof differs from the declared admission')
+            self.render['sealed-proof'] = str(Path(supplied).resolve())
 
     def _config_hash(self):
         return digest({'receiver_root': str(self.receiver_root), 'receiver_commit': self.receiver_commit,
@@ -197,7 +255,14 @@ class FrankiePrincipalAdapter:
             'feedback_contract': self.feedback_contract, 'mechanism': 'AGENT_SESSION'})
 
     def _code(self):
-        observed = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=self.receiver_root, text=True).strip()
+        try:
+            observed = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=self.receiver_root, text=True,
+                                               stderr=subprocess.STDOUT).strip()
+        except (subprocess.CalledProcessError, OSError) as error:
+            # Finding 8: a restored receiver worktree without its parent repository reads an empty HEAD.
+            raise ValueError('frozen receiver checkout is not a git repository at ' + str(self.receiver_root)
+                             + '; restore the receiver parent repository at the pinned commit before any '
+                             'principal request') from error
         if observed != self.receiver_commit:
             raise ValueError('frozen receiver commit differs')
         changed = subprocess.check_output(['git', 'status', '--porcelain', '--', 'research'], cwd=self.receiver_root, text=True)
@@ -213,14 +278,67 @@ class FrankiePrincipalAdapter:
         self._code()
         command = [self.python, '-m', 'research.kalshi.frankie_raw_mbo_benchmark.' + module]
         for name, value in args.items():
-            command.extend(['--' + name.replace('_', '-'), str(value)])
+            flag = '--' + name.replace('_', '-')
+            command.extend([flag] if value is True else [flag, str(value)])
         result = subprocess.run(command, cwd=self.receiver_root, capture_output=True, check=False)
         if result.returncode:
             raise ValueError(f'{module} refused: ' + result.stderr.decode('utf-8', errors='replace')[-2000:])
         self._code()
 
+    def _declared(self):
+        if self.admission == ADMISSION_UNDECLARED:
+            raise ValueError('principal admission undeclared: the host configuration must carry principal_admission '
+                             '(output_bundle: principal_artifact + outputs_dir or NOT_PRESENTED; sealed_proof: path or UNPROVEN)')
+        return self.admission
+
+    def _check_output_bundle_gate(self, receipt):
+        """The receiver's gate must match the declared policy; VALIDATED means every current ledger."""
+        gate = receipt.get('output_bundle_gate')
+        bundle = self._declared()['output_bundle']
+        if bundle == OUTPUT_BUNDLE_GATE_NOT_PRESENTED:
+            if gate != {'status': OUTPUT_BUNDLE_GATE_NOT_PRESENTED}:
+                raise ValueError('receiver output-bundle gate differs from the declared historical NOT_PRESENTED policy')
+            return
+        if type(gate) is not dict or gate.get('status') != OUTPUT_BUNDLE_GATE_VALIDATED:
+            raise ValueError('receiver preparation did not validate the principal output bundle')
+        required, ledgers = gate.get('required_ledger_ids'), gate.get('ledgers')
+        if (type(required) is not list or len(set(required)) != CURRENT_RECEIVER_REQUIRED_LEDGERS
+                or type(ledgers) is not dict or set(ledgers) != set(required)):
+            raise ValueError(f'the current receiver requires all {CURRENT_RECEIVER_REQUIRED_LEDGERS} output ledgers validated')
+
+    def _memory_witness(self):
+        """Finding 5: BOSS's own receipt over the frozen Memory A files it serves.
+
+        Produced by BOSS from the served bytes, independently of the seed's self-hashes, so its
+        file identity is never the subject's own; binding it into the knowledge receipt's
+        a_memory_prior_package_proof layer is the receiver-side step that clears
+        DEGENERATE_PROOF_SAME_AS_SUBJECT.
+        """
+        record = {'schema': 'FRANKIE_BOSS_MEMORY_A_WITNESS_V1', 'produced_by': 'BOSS principal adapter',
+            'files': {name: dict(path=str(Path(w['path']).resolve()), **file_witness(w['path']))
+                      for name, w in self.protected_files.items()},
+            'knowledge_receipt_sha256': self.render['knowledge-receipt-sha256'],
+            'knowledge_bundle_sha256': self.render['knowledge-bundle-sha256']}
+        record['receipt_sha256'] = digest(record)
+        return record
+
+    def _admission_record(self):
+        declared = self._declared()
+        witness = self._memory_witness()
+        path = self.directory / 'memory-a-witness.json'
+        if path.exists():
+            if json.loads(path.read_bytes()) != witness:
+                raise ValueError('retained Memory A witness differs from the served frozen memory')
+        else:
+            _write(path, witness)
+        return {'output_bundle_policy': OUTPUT_BUNDLE_GATE_NOT_PRESENTED
+                    if declared['output_bundle'] == OUTPUT_BUNDLE_GATE_NOT_PRESENTED else OUTPUT_BUNDLE_GATE_VALIDATED,
+                'sealed_absence': sealed_absence(declared['sealed_proof']),
+                'memory_a_witness_sha256': witness['receipt_sha256']}
+
     def prepare(self, handoff_directory):
         self._files()
+        admission = self._admission_record()
         config = {'config_hash': self._config_hash()}
         config_path = self.directory / 'adapter-config.json'
         if config_path.exists():
@@ -237,8 +355,10 @@ class FrankiePrincipalAdapter:
             retained = self.directory / ('receiver.partial-' + uuid.uuid4().hex)
             prepared.rename(retained)  # preserve incomplete evidence; never overwrite/delete
         if not receipt_file.exists():
+            bundle = self._declared()['output_bundle']
+            policy = {'without_output_bundle': True} if bundle == OUTPUT_BUNDLE_GATE_NOT_PRESENTED else dict(bundle)
             self._run('prepare_boss_attachment', dict(self.preparation,
-                directory=handoff_directory, output_directory=prepared))
+                directory=handoff_directory, output_directory=prepared, **policy))
         receipt = _checked_receipt(receipt_file)
         if receipt['input_paths']['directory'] != handoff_directory:
             raise ValueError('retained receiver receipt belongs to another handoff')
@@ -257,7 +377,8 @@ class FrankiePrincipalAdapter:
         attachment = {'config_hash': self._config_hash(), 'preparation_receipt': receipt, 'prompt': str(prompt),
             'knowledge_bundle': str(knowledge_bundle), 'knowledge_bundle_witness': file_witness(knowledge_bundle),
             'prompt_witness': file_witness(prompt), 'section_evidence': self.section_evidence,
-            'protected_files': self.protected_files, 'feedback_contract': self.feedback_contract}
+            'protected_files': self.protected_files, 'feedback_contract': self.feedback_contract,
+            'admission': admission}
         attachment['attachment_hash'] = digest(attachment)
         return attachment
 
@@ -335,6 +456,7 @@ class FrankiePrincipalAdapter:
         for name, witness in receipt['outputs'].items():
             if file_witness(self.directory / 'receiver' / name) != witness:
                 raise ValueError('receiver preparation output changed')
+        self._check_output_bundle_gate(receipt)
 
     def _request(self, request_id, attachment):
         self._files()
@@ -347,8 +469,10 @@ class FrankiePrincipalAdapter:
         if file_witness(attachment['knowledge_bundle']) != attachment['knowledge_bundle_witness']:
             raise ValueError('principal knowledge bundle changed')
         self._check_preparation(attachment['preparation_receipt'])
+        if attachment.get('admission') != self._admission_record():
+            raise ValueError('principal admission (output bundle, sealed absence, Memory A witness) changed since preparation')
         return {'schema': 'FRANKIE_BOSS_SESSION_REQUEST_V1', 'request_id': request_id,
-            'attachment': attachment, 'mechanism': 'AGENT_SESSION',
+            'attachment': attachment, 'mechanism': 'AGENT_SESSION', 'admission': attachment['admission'],
             'instruction': ('Read the full delivered causal evidence and actual BOSS attributed input. '
                 'Reuse the preserved Frankie-authored 18-section evidence with its original authorship; '
                 'do not rerun completed calculations or substitute runner findings. This authorized run '
@@ -444,7 +568,8 @@ class FrankiePrincipalAdapter:
         if 'principal_receipt_hash' in feedback:
             raise ValueError('principal must not mint its own host receipt hash')
         feedback['principal_receipt_hash'] = receipt['receipt_sha256']
-        return {'feedback': feedback, 'lessons': response['lessons'], 'principal_receipt': receipt}
+        return {'feedback': feedback, 'lessons': response['lessons'], 'principal_receipt': receipt,
+                'admission': request['admission']}
 
     def verify(self, envelope, request_id, input_hash, source_hash, learning_cutoff_ns):
         request = json.loads((self.directory / 'session-request.json').read_bytes())
