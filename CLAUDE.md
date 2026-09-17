@@ -9,7 +9,8 @@
   behaviour changes in `research/kalshi/frankie_boss/CLAUDE_RECONCILIATION_20260916.md`). Retired with it, on Greg's
   'no relitigation, no artifacts lying around': the finite-timeout direct Runpod critic (RunpodConfig admits only
   open-ended), the bounded cloud smoke launch controller, and the pinned 4096 smoke admission receipt (deleted).
-  The only 4096 literals left in Granite code are two BYTE bounds named as bytes and the retirement messages.
+  Final sweep 2026-09-17: no Granite module or Granite/Sunday test carries the literal any more (byte bounds re-sized,
+  refusal tests use other wrong values). The smoke workflow is deleted. Only the NATIVE row context still holds it.
 - **The first run's reducer stack and prefixes are the GOLD STANDARD for ingestion (Greg, 2026-09-17)**: 57,027 records
   = 114,054 INPUT/APPLIED entries -> 7,129 gzip blocks of 16 entries (20.9x), verified in 715 s wall on GitHub run
   34962256086 (parent + 3 affinity-bound workers); 19 prefixes (`sunday_20260915_package/FB/actual-prefixes/`), each
