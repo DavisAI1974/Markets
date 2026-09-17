@@ -50,6 +50,10 @@ def bounded_call(operation, seconds=12):
                             and re.fullmatch(r'[A-Za-z0-9_<>]+', function)):
                         frames.append(dict(module=module, function=function, line=trace.tb_lineno))
                     trace = trace.tb_next
+                attribute = getattr(error, 'name', None)
+                if isinstance(attribute, str) and re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]{0,63}', attribute):
+                    detail += ' missing_attribute=' + attribute
+                detail += ' object_type=' + type(getattr(error, 'obj', None)).__name__
                 detail += ' code_locations=' + json.dumps(frames, sort_keys=True)
             result = ('error', detail)
         try:
