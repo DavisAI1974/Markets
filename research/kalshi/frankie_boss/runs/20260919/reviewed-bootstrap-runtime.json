@@ -1,0 +1,52 @@
+{
+  "schema": "GRANITE_RETAINED_RUNTIME_CONFIGURATION_V1",
+  "files": [
+    {
+      "path": "granite_runpod.py",
+      "size": 14397,
+      "sha256": "684893ce7089e784dcf0c0dd5329cef3cc486df4fb99646458d678615c45bf5a"
+    },
+    {
+      "path": "granite_runpod_proxy.py",
+      "size": 14087,
+      "sha256": "90843b27a10c4a1ec49e538bd89fec19fee469df841cf23a538935972fa1d036"
+    },
+    {
+      "path": "granite_runpod_jobs.py",
+      "size": 10132,
+      "sha256": "7c1e5ae64310b53e7735b0cdd43504759236c39b90ebd2ea1e48e0579875582d"
+    },
+    {
+      "path": "granite_startup.py",
+      "size": 9864,
+      "sha256": "82580b9b41c1da0204114c110d62100e5a91db707c0e918180ab36d5dad9b864"
+    },
+    {
+      "path": "granite_run_artifacts.py",
+      "size": 15983,
+      "sha256": "8a1e07529fd4b88456e689cfc0525ebe0f07b3d4552ce74ae0c6c22e4f701b0e"
+    },
+    {
+      "path": "granite_artifacts_manifest.json",
+      "size": 1864,
+      "sha256": "adf5304a845900b4395c2593c5d270ae727867cc9a164132510acb95d5a3091a"
+    },
+    {
+      "path": "granite_image_identity.json",
+      "size": 1285,
+      "sha256": "f0f619cb1ed40cbd797631ad60a3c77033d9659066ab9dee729a4a7e3e413b5e"
+    },
+    {
+      "path": "granite_runpod_progress.py",
+      "size": 10233,
+      "sha256": "baf8213087b6880189aec0afcc4a04dc69a8655c964cded90d8bfdafb7659864"
+    }
+  ],
+  "bundle_sha256": "4ed085d3e4f696e7f05121b6a261150f2da2284afd8e28fda03abe369d1e8367",
+  "supervisor_command_sha256": "e9e446f6b7c5c50a61c46a1482d7a10d5d675e6a3a50ee6005fceb705b8af5a0",
+  "source_commit": "2c2462b81812b365409efc774d8e7d5c80d20673",
+  "context_encoding": "stacked_v1",
+  "service_context": 131072,
+  "transport_protocol": "jobs_v1",
+  "bootstrap_directory": "/opt/ml/additional-model-data-sources/bootstrap-reviewed-2c2462"
+}
