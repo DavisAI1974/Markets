@@ -12,6 +12,8 @@ foreach ($required in 'Day', 'ToolsRoot', 'Python', 'RunRoot') {
         throw "$required was not supplied by ssm_run_ps1.py --set (value: '$value')"
     }
 }
+if (-not (Get-Variable CycleLimit -ErrorAction SilentlyContinue)) { $CycleLimit = 19 }
+if ([int]$CycleLimit -ne 2 -and [int]$CycleLimit -ne 19) { throw 'Prefix batch must be two or nineteen cycles' }
 $dayDirectory = Join-Path $RunRoot $Day
 $configurationPath = Join-Path $dayDirectory 'actual-host-configuration.json'
 if (-not (Test-Path $configurationPath)) { throw "no run configuration for $Day at $configurationPath" }
@@ -29,7 +31,7 @@ try {
     # cmd.exe owns the redirection: under $ErrorActionPreference='Stop' PowerShell turns a native
     # command's first stderr line into a terminating error, which is how two earlier runs lost
     # their tracebacks.
-    & cmd.exe /c "`"$Python`" `"$tool`" --configuration `"$configurationPath`" > `"$log`" 2>&1"
+    & cmd.exe /c "`"$Python`" `"$tool`" --configuration `"$configurationPath`" --cycles $CycleLimit > `"$log`" 2>&1"
     $code = $LASTEXITCODE
 } finally { Pop-Location }
 if (Test-Path $log) {
@@ -38,7 +40,8 @@ if (Test-Path $log) {
 if ($code -ne 0) { throw "build_remaining_sunday_prefixes exited $code for $Day" }
 
 # The receipt is read back from what the builder wrote, never from this script's expectations.
-$manifestPath = Join-Path $prefixesDirectory 'full19-prefix-witnesses.json'
+$manifestName = if ([int]$CycleLimit -eq 19) { 'full19-prefix-witnesses.json' } else { 'prefix-batch-02.json' }
+$manifestPath = Join-Path $prefixesDirectory $manifestName
 if (-not (Test-Path $manifestPath)) { throw "the builder left no full19-prefix-witnesses.json in $prefixesDirectory" }
 $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
 $witnessed = @($manifest.witnesses).Count
