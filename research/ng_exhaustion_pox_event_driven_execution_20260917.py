@@ -16,7 +16,7 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -41,9 +41,6 @@ ALLOWED_ACTIONS = {
     "STAND_DOWN",
 }
 
-# These names represent forbidden clock-driven decision mechanics. The check is
-# semantic and recursive so a nested config cannot smuggle a timer into an
-# otherwise event-driven action row.
 FORBIDDEN_TIMING_KEY_FRAGMENTS = (
     "checkpoint_s",
     "delay_s",
@@ -224,12 +221,12 @@ def validate_causal_actions(
         "cases_without_causal_action_events": len(cases) - len(cases_with_events),
         "causal_action_event_count": len(events),
         "action_counts": dict(sorted(action_counts.items())),
-        "fixed_checkpoint_grid_used": false,
-        "fixed_entry_delay_grid_used": false,
-        "fixed_hold_horizons_used": false,
-        "fixed_timeout_exit_used": false,
-        "fixed_temporal_lookback_gate_used": false,
-        "elapsed_time_decision_trigger_used": false,
+        "fixed_checkpoint_grid_used": False,
+        "fixed_entry_delay_grid_used": False,
+        "fixed_hold_horizons_used": False,
+        "fixed_timeout_exit_used": False,
+        "fixed_temporal_lookback_gate_used": False,
+        "elapsed_time_decision_trigger_used": False,
         "historical_plus60_role": "DIAGNOSTIC_LABEL_CONTEXT_ONLY_NOT_A_DECISION_TIMER",
         "raw_execution_rule": "FIRST_ELIGIBLE_RAW_QUOTE_OR_TRADE_AT_OR_AFTER_EXACT_CAUSAL_ACTION_TIMESTAMP",
     }
