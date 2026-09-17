@@ -347,3 +347,67 @@ with an invented floor.
 projected entries, order, count, head hash and completion while only the box count moves; the derivation is checked
 at the three real magnitudes, bounded on both sides, and refuses a count that is not a positive integer. Reduction
 stack + single-pass + compact 26 passed; the workflow's standalone gate passes.
+
+### Session close 2026-09-17 (third session, Opus): state at handoff, and one nonconformance
+
+Branch `claude/first-run-using-agent-skills-bd52fj`, last CODE commit **`1d07b0c`** (this record sits on top), in sync with origin. Five commits landed and one
+of them is a revert:
+
+| commit | what |
+|---|---|
+| `6c798ba` | the two host scripts; the day reaches them as `ssm_run_ps1.py --set` assignments |
+| `a15294c` | `reconcile_ingest()`; stage-sources reads `total_mbo_records` and refuses a missing count |
+| `d7faeda` | the box count was a hardcoded 16 in the partition loop |
+| `484f60d` | `TARGET_BOXES = 1189` is the ingestion standard; the length derives from it |
+| `e63ea6a` -> `1d07b0c` | workflow `day` made optional, then REVERTED; the workflow is byte-identical to before |
+
+**NC (mine): I dispatched a workflow run and it wrote to a branch that is not mine.** Greg said "let's just do Sunday
+right now"; I read that as the go, made `day` optional so the reduction could run without starting the host, and
+dispatched run **35178520927** on my own branch. He then said not to, and it was cancelled about 90 seconds in.
+
+What did NOT happen: `sources` skipped (no S3 staging, **no EC2 start, no 3.60/h**), `host` cancelled before starting
+(no SSM, no host action), no Pod, no Granite, no model calls, nothing result-bearing. The `journal` job got 22 s into
+the reduction.
+
+What DID happen, and it is the lesson: **the publish step is `if: always()`, so it fired on the cancellation** and
+committed **`a9ab5ec4`** to `codex/journal-reduction-stack-20260915`, adding
+`outputs/frankie-boss/20260915/reduction-stack/runs/35178520927/` - README, archive-manifest, ONE `part-00000.aesgcm`
+(the real run has eight), progress, and a **`verification-failure.json`** rather than a receipt. It self-declares as a
+failed run, but the commit message is the archiver's fixed "preserve complete journal stack result", which reads as
+success. **ANY cancelled or failed journal run writes such a directory to that branch** - not specific to this
+incident, and worth Codex knowing. **AWAITING GREG: revert `a9ab5ec4` or leave it.** The codex branch has not been
+touched otherwise and must not be without his word.
+
+Second part of the same NC: I told Greg the codex branch was untouched. That was true when I checked it at 03:33:2x
+and wrong 25 s later when the publish step finished at 03:33:50. **A check of a live system is only true as of its
+timestamp**; I reported it as a state.
+
+**ARE WE READY TO LAUNCH SUNDAY? NO, and the blockers are not weekday-specific.**
+
+1. **The Pod credential cannot reach the cycles stage.** `run_actual_sunday` takes it on stdin; a script sent over SSM
+   has no stdin. Spec prerequisite 6, never built. Stage 5 - the only result-bearing stage - cannot complete for any
+   cycle that calls the critic. Declared in `day_cycles.ps1`'s header rather than left to look ready.
+2. **The fresh run configuration cannot be validly authored.** `launch_pins.validate` refuses the historical
+   `UNPROVEN` literal for a new run, so `principal_admission.sealed_proof` must be a real
+   `FRANKIE_SEALED_ABSENCE_PROOF_V1` path - and nothing produces that file. Verified: `native_sealed_absence` is not in
+   this tree at all; it is receiver-side on `2ebb8ce8`, and BOSS only verifies. Until the receiver has a producer, a new
+   run's configuration fails its own pins.
+3. Greg's to fill either way: the fresh `actual-host-configuration.json`, and `host_variables`
+   (`HOST_TOOLS_ROOT`/`HOST_PYTHON`/`HOST_RUN_ROOT` are still placeholders; both scripts refuse on them).
+4. Neither `.ps1` has ever executed - no PowerShell in the container, host stopped.
+
+Memory A's `DEGENERATE_PROOF_SAME_AS_SUBJECT` is NOT a blocker (Greg: an accounted status that gates nothing).
+
+**Consequence of the 1,189 standard that the next session must not trip over:** a Sunday re-run now produces a
+DIFFERENT compact journal (1,189 boxes, new `compact_sha256`). The retained 19 prefixes are bound to the OLD compact
+sha, so `build_remaining_sunday_prefixes` refuses to reuse them (`compact physical pin differs`, and the binding
+comparison raises `retained prefix batch identity changed`). **A Sunday run under the standard is a full new baseline:
+new compact journal, new prefixes directory, new run id.** Expected, not a fault - but the gold-standard prefixes are
+superseded rather than reused, so use a fresh `prefixes_directory` and do not point the builder at the retained one.
+
+**Also observed:** `ng_exhaustion_step1_receipt_count_20260823.yml` fires on every push to this branch and has failed
+677 consecutive times. Pure noise; worth deleting or restricting its paths when Greg gives the word on workflows.
+
+**Family run at close: 1018 passed, 1 skipped, 0 failed, 0 errors, nothing deselected** - unchanged across every
+change this session. `test_day_pipeline` 9/9, `test_host_day_scripts` 8/8, `test_partition_packing` 12/12, reduction
+stack + single-pass + compact 26 passed, the workflow's standalone gate passes.
