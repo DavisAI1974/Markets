@@ -103,7 +103,7 @@ def test_real_client_default_refuses_unmeasured_input(tmp_path):
         fixture.close()
 
 
-@pytest.mark.parametrize('output_tokens',[1200,4096])
+@pytest.mark.parametrize('output_tokens',[1200,2048])
 def test_capacity_counts_complete_template_and_refuses_oversize(tmp_path,monkeypatch,output_tokens):
     import sys
     from types import SimpleNamespace
@@ -113,7 +113,7 @@ def test_capacity_counts_complete_template_and_refuses_oversize(tmp_path,monkeyp
     directory.mkdir()
     rows = []
     for name in sorted(artifacts.FILES):
-        data = json.dumps({'max_position_embeddings':4096}).encode() if name == 'config.json' else name.encode()
+        data = json.dumps({'max_position_embeddings':2048}).encode() if name == 'config.json' else name.encode()
         rows.append(dict(path=name,size=len(data),sha256=hashlib.sha256(data).hexdigest()))
         if name in live.TOKENIZER_FILES:
             (directory/name).write_bytes(data)
@@ -134,7 +134,7 @@ def test_capacity_counts_complete_template_and_refuses_oversize(tmp_path,monkeyp
             return [17,18,19] if kwargs.get('return_dict',True) is False else {'input_ids':[17,18,19]}
     monkeypatch.setitem(sys.modules,'transformers',SimpleNamespace(AutoTokenizer=Tokenizer))
     try:
-        if output_tokens == 4096:
+        if output_tokens == 2048:
             with pytest.raises(ValueError,match='exceed model positional limit'):
                 live.measure_fixture(fixture,directory,output_tokens=output_tokens)
             assert not (fixture.directory/'token-admission.json').exists()

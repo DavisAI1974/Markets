@@ -7,7 +7,7 @@ from research.kalshi.frankie_boss import granite_runpod_proxy as proxy
 
 def test_open_boot_passes_no_deadline_and_uses_its_versioned_proxy(monkeypatch, tmp_path, capsys):
     monkeypatch.setattr(boot, 'verify_bundle', lambda *args: {})
-    env = boot.startup.launch_environment(max_model_len=4096, served_model='granite42-smoke')
+    env = boot.startup.launch_environment(max_model_len=131072, served_model='granite42-smoke')
     env.update(RUNPOD_GRANITE_API_KEY='private-test-key-'*3,
                RUNPOD_GRANITE_LIFETIME_SECONDS='none', SUPERVISOR_PROGRAM__APP_COMMAND='verified versioned command')
     env['RUNPOD_SUPERVISOR_COMMAND_SHA256'] = hashlib.sha256(env['SUPERVISOR_PROGRAM__APP_COMMAND'].encode()).hexdigest()

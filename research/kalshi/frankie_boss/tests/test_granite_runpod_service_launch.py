@@ -51,6 +51,9 @@ def test_unexpected_supervisor_metadata_refused(value):
 @pytest.mark.parametrize('publication_fails', [False, True])
 def test_service_launch_keeps_ready_pod_and_cleans_failure(monkeypatch, tmp_path, publication_fails):
     monkeypatch.setenv('GITHUB_RUN_ATTEMPT', '1')
+    # The pinned smoke admission on disk records the retired 4096 context, so the real gate refuses it (pinned by
+    # the test below); the lifecycle under test starts after that gate, which sibling probe tests stub the same way.
+    monkeypatch.setattr(cloud.admission, 'validate_receipt', lambda value, digest: cloud.admission.request_bytes())
     monkeypatch.setattr(cloud, 'OUT', tmp_path)
     monkeypatch.setattr(cloud.time, 'time', lambda: 1000)
     monkeypatch.setattr(cloud.secrets, 'token_hex', lambda _: 'a' * 32)
@@ -108,3 +111,20 @@ def test_service_launch_keeps_ready_pod_and_cleans_failure(monkeypatch, tmp_path
         assert 'controller-finished.json' not in journal.values
     assert checked == [records]
     assert exchanges == [('GET', '/health')]
+
+
+def test_pinned_smoke_admission_records_the_retired_context_and_is_refused_before_any_provider_call(monkeypatch, tmp_path):
+    monkeypatch.setenv('GITHUB_RUN_ATTEMPT', '1')
+    monkeypatch.setattr(cloud, 'OUT', tmp_path)
+    admitted = json.loads((cloud.ROOT / 'runpod_cloud_admission.json').read_text())
+    assert admitted['context'] == 4096 and cloud.admission.CONTEXT == 131072
+    class Journal:
+        def __init__(self): self.values = {}
+        def get(self, name): return self.values.get(name)
+        def put(self, name, value, **kwargs): self.values[name] = value
+    class API:
+        def request(self, *args, **kwargs): pytest.fail('provider must not be called on a retired admission')
+    journal = Journal()
+    with pytest.raises(ValueError, match='frozen smoke request'):
+        cloud.controller(journal, API())
+    assert journal.values == {}

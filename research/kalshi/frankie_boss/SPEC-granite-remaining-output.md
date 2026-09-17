@@ -1,5 +1,10 @@
 # Remaining-context output and explicit incomplete-response alert
 
+> **Correction (Greg, 2026-09-16): the 4,096-token Granite service context is RETIRED.** The only Granite context is
+> 131,072 with output budget = remaining context and the incomplete-output alert. Every statement below that gives
+> 4096 as the current or accepted service context, or a 1,200-token output ceiling tied to it, is historical. The code
+> removal is recorded in `CLAUDE_RECONCILIATION_20260916.md`.
+
 The actual stacked route uses output_budget=remaining_context. LocalTokenizerAdmission.with_remaining_output(body) measures the unchanged complete chat prompt once and returns a canonical body plus admission with max_tokens=context-input_tokens. The selected runtime remains physically limited to 131,072 tokens; EOS can end generation earlier. No application-specific 1,200 or 8,192 cap applies to this candidate. Legacy defaults remain unchanged.
 
 The proxy reads the pinned GRANITE_MAX_MODEL_LEN into its service context. Proxy, tokenizer, service identity and stacked request-builder gates accept output up to the selected physical context; exact local admission requires positive output and input plus output no greater than context. Only max_tokens changes in the request.

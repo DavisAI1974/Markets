@@ -332,8 +332,8 @@ def capture_progress(journal, pod, intent, manifest, collector, records):
 
 
 def validate_runtime(records, admitted):
-    context = admitted.get('context', 4096)
-    if type(context) is not int or context not in (4096, 131072):
+    context = admitted.get('context')
+    if type(context) is not int or context != admission.CONTEXT:
         raise ValueError('explicit supported runtime context required')
     startup = records['startup']['startup']
     facts = startup['runtime']

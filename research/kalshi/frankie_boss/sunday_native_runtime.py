@@ -21,6 +21,7 @@ from .context_session import ContextReceipt, ContextSessionRunner, journal_prefi
 from .forecast_heads import NativeForecastHeads
 from .granite_context import map_native_context
 from .granite_context_route import context_route
+from .granite_runpod_admission import CONTEXT as SERVICE_CONTEXT
 from .granite_run_artifacts import canonical
 from .native_forecast_learning import LearningConfig, optimizer_identity
 from .native_forecast_refresh import NativeForecastRefresh, session_registry_hash
@@ -139,15 +140,15 @@ def current_training_identity(context, decoder, optimizer, checkpoint, *, expect
 def prepare_critic_request(context, *, as_of, through_cursor, source_as_of,
                            served_model_name='granite42-smoke', output_tokens=1200,
                            context_encoding='compact_v1', context_encoding_options=None,
-                           service_context=4096):
+                           service_context=SERVICE_CONTEXT):
     """No forward, remote call or publication. Preserve every prepared context row.
 
     Return exact compact service bytes for LocalTokenizerAdmission; capacity
     failure must be resolved before any paid Pod resume. No truncation/fallback.
     """
-    if (type(service_context) is not int or service_context not in (4096, 131072)
+    if (type(service_context) is not int or service_context != SERVICE_CONTEXT
             or type(output_tokens) is not int
-            or not 1 <= output_tokens <= (service_context if service_context == 131072 else 1200)):
+            or not 1 <= output_tokens <= service_context):
         raise ValueError('explicit service-compatible output token budget required')
     tokens, info, input_hash, teacher, rows = context._prepare(as_of, through_cursor)
     if any(row['normalized']['ts_event_ns'] > source_as_of

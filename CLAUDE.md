@@ -6,8 +6,9 @@
 - **The Granite 4,096-token context is RETIRED. Remove `4096` from ALL Granite-related code**: the `service_context` /
   `CONTEXT` / `max_model_len` defaults, every `(4096, 131072)` allowlist, the 1,200-output ceiling tied to it, and the
   retained-lifecycle resume gate. The only Granite context is 131,072 with output = remaining context and the
-  incomplete-output alert (`IncompleteModelOutput`, `output-incomplete.json`). Inventory of the sites to remove is in
-  `research/kalshi/frankie_boss/CLAUDE_RECONCILIATION_20260916.md`.
+  incomplete-output alert (`IncompleteModelOutput`, `output-incomplete.json`). **DONE 2026-09-17 for 12 of 13 files**
+  (record + behaviour changes in `research/kalshi/frankie_boss/CLAUDE_RECONCILIATION_20260916.md`); the one holdout is
+  `RunpodConfig` in `granite_runpod_service.py`, pending Greg's call on retiring the finite-timeout smoke transport.
 - **The native row context `T_CTX = 4096` is a provisional value** (its own comment says so). Greg has retired the
   4,096-row cycle in prose at least three times; it was never changed in code, so every token projection re-derives it.
   Do NOT quote projections at 4,096 rows. The replacement row count is Greg's modelling call and is still pending.

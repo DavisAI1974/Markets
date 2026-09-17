@@ -33,7 +33,7 @@ def inputs(monkeypatch):
     journal = Journal()
     monkeypatch.setattr(life, 'validate_resume', lambda *a: None)
     monkeypatch.setattr(life, 'LocalTokenizerAdmission', Admission)
-    admission = dict(request_sha256=hashlib.sha256(b'actual').hexdigest(), input_tokens=100, output_tokens=1200, context=4096)
+    admission = dict(request_sha256=hashlib.sha256(b'actual').hexdigest(), input_tokens=100, output_tokens=1200, context=131072)
     return info, lease, journal, admission
 
 
@@ -67,7 +67,10 @@ def test_retained_start_requires_actual_capacity_and_fresh_independent_arm(monke
     arm(api, journal, info, lease, now=1001)
     with pytest.raises(ValueError, match='admission'):
         resume(api, journal, info, {}, lease, now=1002,
-                         admitted_request=dict(admission, input_tokens=4096))
+                         admitted_request=dict(admission, input_tokens=131072))
+    with pytest.raises(ValueError, match='admission'):
+        resume(api, journal, info, {}, lease, now=1002,
+                         admitted_request=dict(admission, context=4096))
     assert not api.calls
 
 

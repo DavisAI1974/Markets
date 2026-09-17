@@ -107,7 +107,7 @@ def test_pod_info_has_safe_actual_config_without_secrets():
         'packages': {'torch': '2.11.0', 'tokenizers': '0.22.2', 'SECRET': 'PRIVATE'},
         'gpu_count': 1, 'gpu': 'NVIDIA L40S', 'gpu_total_memory': 48000000000,
         'python': '3.12.3', 'cuda': '13.0', 'SECRET': 'PRIVATE'},
-        'environment': {'GRANITE_MAX_MODEL_LEN': '4096', 'TOKEN': 'PRIVATE'}}}}
+        'environment': {'GRANITE_MAX_MODEL_LEN': '131072', 'TOKEN': 'PRIVATE'}}}}
     info = resume.capture_pod_info(item, intent(), manifest(), snapshot(), runtime)
     assert info['pod']['mounts']['persistent'] == {'path': '/opt/ml', 'size': 50}
     assert info['model']['manifest_sha256'] == artifacts.manifest_digest(manifest())

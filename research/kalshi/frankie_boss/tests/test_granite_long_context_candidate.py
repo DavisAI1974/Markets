@@ -32,8 +32,7 @@ def test_long_startup_parent_exact_prefill_argv_and_override_rejection(tmp_path,
     env=startup.launch_environment(max_model_len=131072,served_model='granite42')
     receipt=startup.prepare_startup(tmp_path,manifest,env,runtime_facts=runtime_fixture)
     assert receipt['argv'][-3:]==['--enable-chunked-prefill','--max-num-batched-tokens','2048']
-    legacy=startup.prepare_startup(tmp_path,manifest,startup.launch_environment(max_model_len=4096,served_model='granite42'),runtime_facts=runtime_fixture)
-    assert '--enable-chunked-prefill' not in legacy['argv']
+    with pytest.raises(ValueError):startup.launch_environment(max_model_len=4096,served_model='granite42')
     class Child:
         def wait(self,timeout):return 0
     def spawn(argv,**kwargs):
@@ -41,7 +40,7 @@ def test_long_startup_parent_exact_prefill_argv_and_override_rejection(tmp_path,
         Path(argv[-1]).write_text(json.dumps(receipt));return Child()
     monkeypatch.setattr(runpod,'stop_children',lambda _:None)
     assert runpod.prepare_process(tmp_path,manifest,env,deadline=None,popen=spawn)['argv']==receipt['argv']
-    receipt['argv'][-1]='4096'
+    receipt['argv'][-1]='8192'
     with pytest.raises(ValueError,match='arguments'):runpod.prepare_process(tmp_path,manifest,env,deadline=None,popen=spawn)
     with pytest.raises(ValueError,match='override'):
         startup.prepare_startup(tmp_path,manifest,dict(env,VLLM_ENABLE_CHUNKED_PREFILL='0'),runtime_facts=runtime_fixture)

@@ -115,6 +115,9 @@ def test_capture_saves_safe_local_evidence_before_s3_write_failure(monkeypatch, 
 
 def test_controller_provider_failure_stops_retains_and_captures_without_delete(monkeypatch, tmp_path):
     clock = [1000]
+    # The pinned smoke admission on disk records the retired 4096 context, so the real gate refuses it (pinned by
+    # the test below); the lifecycle under test starts after that gate, which sibling probe tests stub the same way.
+    monkeypatch.setattr(cloud.admission, 'validate_receipt', lambda value, digest: cloud.admission.request_bytes())
     monkeypatch.setattr(cloud, 'OUT', tmp_path)
     monkeypatch.setattr(cloud.time, 'time', lambda: clock[0])
     monkeypatch.setattr(cloud.secrets, 'token_hex', lambda _: 'a' * 32)

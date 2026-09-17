@@ -40,7 +40,7 @@ def test_full_requests_measured_each_time_and_loaded_once(tmp_path):
     first, second = request(), request('A completely different prompt')
     for body in (first, second):
         assert admit(body) == dict(request_sha256=hashlib.sha256(body).hexdigest(),
-            input_tokens=3, output_tokens=1200, context=4096, tokenizer_sha256=admit.tokenizer_sha256)
+            input_tokens=3, output_tokens=1200, context=131072, tokenizer_sha256=admit.tokenizer_sha256)
     assert len(loads) == 1 and loads[0][1] == dict(local_files_only=True, trust_remote_code=False)
     assert calls == [(m.artifacts.strict_json(body)['messages'], m.invocation()) for body in (first, second)]
     assert calls[0][1]['truncation'] is False
@@ -61,7 +61,7 @@ def test_identity_matches_production_manifest_convention_and_is_defensive(tmp_pa
 
 
 @pytest.mark.parametrize('updates', [dict(model='another'), dict(temperature=0.1), dict(temperature=False),
-    dict(stream=0), dict(stream=True), dict(max_tokens=True), dict(max_tokens=0), dict(max_tokens=1201),
+    dict(stream=0), dict(stream=True), dict(max_tokens=True), dict(max_tokens=0), dict(max_tokens=131073),
     dict(chat_template_kwargs={'enable_thinking': True}), dict(chat_template_kwargs={'enable_thinking': False, 'x': 1}),
     dict(messages=[dict(role='system', content='x')]), dict(messages=[dict(role='user', content='x', extra=1)]),
     dict(messages=[dict(role='user', content='x'), dict(role='user', content='y')]), dict(extra='secret')])
@@ -84,7 +84,7 @@ def test_malformed_noncanonical_or_oversized_body_rejected(tmp_path, body):
     assert calls == []
 
 
-@pytest.mark.parametrize('ids', [[], [True], [-1], [1.5], [1] * 2897, {'input_ids': [1]}])
+@pytest.mark.parametrize('ids', [[], [True], [-1], [1.5], [1] * (131072 - 1200 + 1), {'input_ids': [1]}])
 def test_bad_or_overflow_token_output_refuses(tmp_path, ids):
     options, _, _ = synthetic(tmp_path, ids)
     admit = m.LocalTokenizerAdmission(tmp_path, **options)
@@ -140,3 +140,13 @@ def test_local_evidence_rejected_before_loader(tmp_path, damage):
     with pytest.raises(ValueError):
         m.LocalTokenizerAdmission(tmp_path, **options)
     assert loads == []
+
+
+def test_retired_smoke_context_is_refused_and_the_service_context_is_the_default(tmp_path):
+    options, _, _ = synthetic(tmp_path)
+    with pytest.raises(ValueError):
+        m.LocalTokenizerAdmission(tmp_path, context=4096, **options)
+    admit = m.LocalTokenizerAdmission(tmp_path, **options)
+    assert admit(request())['context'] == 131072
+    # The old 1,200-token output ceiling went with the smoke context: output is bounded by the context alone.
+    assert admit(request(max_tokens=8193))['output_tokens'] == 8193

@@ -13,7 +13,7 @@ TOKENIZER_VERSIONS={'transformers':'5.8.0','tokenizers':'0.22.2'}
 
 REQUEST={'model':'granite42-smoke','messages':[{'role':'user','content':'Reply exactly READY.'}],
          'temperature':0,'max_tokens':16,'stream':False,'chat_template_kwargs':{'enable_thinking':False}}
-CONTEXT=4096
+CONTEXT=131072  # the only Granite service context; the 4,096-token smoke context is retired (Greg, 2026-09-16)
 INVOCATION=dict(tokenize=True,add_generation_prompt=True,enable_thinking=False,
                 return_dict=False,truncation=False,padding=False,return_tensors=None)
 

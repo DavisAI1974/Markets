@@ -71,6 +71,8 @@ def test_runtime_verifier_uses_explicit_long_context_pin():
     cloud.validate_runtime(records, dict(model_manifest_sha256='a'*64, context=131072))
     with pytest.raises(ValueError):
         cloud.validate_runtime(records, dict(model_manifest_sha256='a'*64))
+    with pytest.raises(ValueError):
+        cloud.validate_runtime(records, dict(model_manifest_sha256='a'*64, context=4096))
 
 
 def test_watchdog_reconciles_acknowledged_stop_before_any_unrelated_exited_read(monkeypatch, tmp_path):

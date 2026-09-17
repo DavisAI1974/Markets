@@ -3,6 +3,8 @@ import hashlib
 import json
 import re
 
+MAX_RECORD_BYTES = 4096  # S3 active-run record size in BYTES; not a token context
+
 from .granite_cloud_resume import _owned, _stop_result
 
 
@@ -25,8 +27,8 @@ class ActiveRunStore:
                 return None, None
             raise
         with response['Body'] as stream:
-            raw = stream.read(4097)
-        if len(raw) > 4096 or len(raw) != response['ContentLength']:
+            raw = stream.read(MAX_RECORD_BYTES + 1)
+        if len(raw) > MAX_RECORD_BYTES or len(raw) != response['ContentLength']:
             raise ValueError('invalid active-run record size')
         value = json.loads(raw)
         if (set(value) != {'schema', 'pod_id', 'startup_sha256', 'phase'}

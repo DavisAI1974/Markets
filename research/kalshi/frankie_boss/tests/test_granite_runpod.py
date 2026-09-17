@@ -104,7 +104,7 @@ def test_boot_reuses_startup_and_keeps_secret_out_of_evidence(tmp_path,monkeypat
     manifest_path=tmp_path/'manifest.json';manifest_path.write_bytes(r.artifacts.canonical(manifest))
     monkeypatch.setattr(r.artifacts,'DEFAULT_MANIFEST',manifest_path)
     monkeypatch.setattr(r,'verify_bundle',lambda *a: {})
-    env=r.startup.launch_environment(max_model_len=4096,served_model='granite42-smoke')
+    env=r.startup.launch_environment(max_model_len=131072,served_model='granite42-smoke')
     env.update(RUNPOD_GRANITE_API_KEY='test-private-secret-'*3,RUNPOD_GRANITE_LIFETIME_SECONDS='60',
                SUPERVISOR_PROGRAM__APP_COMMAND='python3 '+r.BOOT)
     env['RUNPOD_SUPERVISOR_COMMAND_SHA256']=hashlib.sha256(env['SUPERVISOR_PROGRAM__APP_COMMAND'].encode()).hexdigest()
@@ -176,7 +176,7 @@ def test_verification_whole_process_timeout_stops_it(monkeypatch,tmp_path):
 
 def test_unapproved_controlled_environment_refuses_before_stage(monkeypatch):
     monkeypatch.setattr(r,'verify_bundle',lambda *a:{})
-    env=r.startup.launch_environment(max_model_len=4096,served_model='granite42-smoke')
+    env=r.startup.launch_environment(max_model_len=131072,served_model='granite42-smoke')
     env.update(RUNPOD_GRANITE_API_KEY='x'*40,RUNPOD_GRANITE_LIFETIME_SECONDS='60',
                SUPERVISOR_PROGRAM__APP_COMMAND='python3 '+r.BOOT,SM_VLLM_UNAPPROVED='yes')
     env['RUNPOD_SUPERVISOR_COMMAND_SHA256']=hashlib.sha256(env['SUPERVISOR_PROGRAM__APP_COMMAND'].encode()).hexdigest()

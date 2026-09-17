@@ -10,6 +10,7 @@ import re
 
 from .granite_cloud_resume import validate_resume, stop_owned_once
 from .granite_run_artifacts import canonical
+from .granite_runpod_admission import CONTEXT
 from .granite_runpod_tokenizer import LocalTokenizerAdmission
 
 POD_ID = 'ycf4v6lmave6xw'
@@ -192,11 +193,11 @@ def resume_once(api, journal, info, manifest, lease, *, now, request_body,
         raise ValueError('actual pinned local tokenizer and exact request bytes required')
     admitted_request = tokenizer_admission(request_body)
     if (admitted_request.get('request_sha256') != lease['request_sha256']
-            or admitted_request.get('context') != 4096
+            or admitted_request.get('context') != CONTEXT
             or type(admitted_request.get('input_tokens')) is not int
             or type(admitted_request.get('output_tokens')) is not int
             or admitted_request['input_tokens'] < 1 or admitted_request['output_tokens'] < 1
-            or admitted_request['input_tokens']+admitted_request['output_tokens'] > 4096):
+            or admitted_request['input_tokens']+admitted_request['output_tokens'] > CONTEXT):
         raise ValueError('full actual request admission required before resuming compute')
     arm = journal.get('retained-armed.json')
     _watchdog(expected_watchdog_identity, lease)
@@ -219,7 +220,7 @@ def resume_once(api, journal, info, manifest, lease, *, now, request_body,
 def verified_service_inputs(info, manifest, lease, *, runtime_receipt,
                             expected_runtime_sha256, tokenizer_admission,
                             output_tokens, request_timeout=None, startup_intent=None,
-                            context_encoding='compact_v1', service_context=4096,
+                            context_encoding='compact_v1', service_context=CONTEXT,
                             transport_protocol='direct_v1'):
     """Assemble transport only from this lease's complete startup/health receipt.
 

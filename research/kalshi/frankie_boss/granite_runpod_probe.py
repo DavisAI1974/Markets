@@ -34,12 +34,15 @@ def _shutdown(sock):
         pass
 
 
+MAX_PROBE_BODY_BYTES = 4096  # HTTP body BYTES of the fixed smoke probe request; not a token context
+
+
 def https_exchange(pod_id, method, path, body, key, timeout):
     """Fixed public Runpod route; stdlib DNS may return after timeout, never sends late."""
     if (not re.fullmatch(r'[a-z0-9]{1,64}', pod_id)
             or type(key) is not str or not re.fullmatch(r'[A-Za-z0-9_-]{32,256}', key)
             or (method, path) not in (('GET', '/health'), ('POST', '/v1/chat/completions'))
-            or type(body) is not bytes or len(body) > 4096
+            or type(body) is not bytes or len(body) > MAX_PROBE_BODY_BYTES
             or not 0 < timeout <= 80):
         raise ValueError('fixed probe transport contract required')
     deadline = time.monotonic() + timeout

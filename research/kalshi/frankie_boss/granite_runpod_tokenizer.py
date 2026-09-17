@@ -26,8 +26,8 @@ class LocalTokenizerAdmission:
                  loader=None, version_reader=None, manifest=None):
         if (type(served_model_name) is not str
                 or not re.fullmatch('[A-Za-z0-9_.-]{1,100}', served_model_name)
-                or type(context) is not int or context not in (CONTEXT, 131072)):
-            raise ValueError('explicit served model and supported 4096 or 131072 context required')
+                or type(context) is not int or context != CONTEXT):
+            raise ValueError('explicit served model and the supported 131072 service context required')
         self._model = served_model_name
         self._context = context
         self.evidence_class = ('SYNTHETIC_TOKENIZER' if any(
@@ -101,7 +101,7 @@ class LocalTokenizerAdmission:
                     or type(request['temperature']) not in (int, float) or request['temperature'] != 0
                     or request['stream'] is not False
                     or type(request['max_tokens']) is not int
-                    or not 1 <= request['max_tokens'] <= (self._context if self._context == 131072 else 1200)
+                    or not 1 <= request['max_tokens'] <= self._context
                     or type(request['chat_template_kwargs']) is not dict
                     or set(request['chat_template_kwargs']) != {'enable_thinking'}
                     or request['chat_template_kwargs']['enable_thinking'] is not False

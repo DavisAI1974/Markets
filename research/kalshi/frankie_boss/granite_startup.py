@@ -24,13 +24,16 @@ COMMAND = 'python3 ' + BOOTSTRAP_PATH
 IMAGE_IDENTITY_FILE = Path(__file__).with_name('granite_image_identity.json')
 
 
+MAX_MODEL_LEN = 131072  # the only supported runtime context; the 4,096-token smoke context is retired
+
+
 def digest_file(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
 def launch_environment(*, max_model_len, served_model, transport_protocol='direct_v1'):
-    if type(max_model_len) is not int or max_model_len not in (4096, 131072):
-        raise ValueError('explicit supported 4096 or 131072 runtime context required')
+    if type(max_model_len) is not int or max_model_len != MAX_MODEL_LEN:
+        raise ValueError('explicit supported 131072 runtime context required')
     if type(served_model) is not str or not re.fullmatch('[A-Za-z0-9_.-]{1,100}', served_model):
         raise ValueError('explicit served model name required')
     if transport_protocol not in ('direct_v1', 'jobs_v1'):

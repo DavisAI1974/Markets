@@ -19,7 +19,7 @@ def guarded(name, *args, **kwargs):
     return original(name, *args, **kwargs)
 builtins.__import__ = guarded
 import granite_runpod_admission
-assert granite_runpod_admission.CONTEXT == 4096
+assert granite_runpod_admission.CONTEXT == 131072
 '''
     subprocess.run([sys.executable, '-c', code, str(Path(m.__file__).parent)],
                    check=True, capture_output=True, timeout=10)
@@ -60,14 +60,14 @@ def test_exact_request_tokens_and_no_truncation(tmp_path):
     with pytest.raises(ValueError):m.validate_receipt(receipt,digest(receipt))
 
 
-@pytest.mark.parametrize('ids',[[],[True],[-1],[1.0],list(range(4081))])
+@pytest.mark.parametrize('ids',[[],[True],[-1],[1.0],list(range(131057))])
 def test_invalid_or_oversized_token_stream_refuses(tmp_path,ids):
     with pytest.raises(ValueError):admitted(tmp_path,ids)
 
 
 def test_exact_context_boundary(tmp_path):
-    receipt,_=admitted(tmp_path,list(range(4080)))
-    assert receipt['total_tokens']==4096
+    receipt,_=admitted(tmp_path,list(range(131056)))
+    assert receipt['total_tokens']==131072
 
 
 @pytest.mark.parametrize('damage',['request','tokens','context','model','versions','truncation','receipt_pin'])

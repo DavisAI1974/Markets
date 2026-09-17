@@ -1,5 +1,10 @@
 # Runpod preparation closeout — 2026-09-15
 
+> **Correction (Greg, 2026-09-16): the 4,096-token Granite service context is RETIRED.** The only Granite context is
+> 131,072 with output budget = remaining context and the incomplete-output alert. Every statement below that gives
+> 4096 as the current or accepted service context, or a 1,200-token output ceiling tied to it, is historical. The code
+> removal is recorded in `CLAUDE_RECONCILIATION_20260916.md`.
+
 ## Later host-control completion
 
 Tested code `934ef5b7549c3e98c5eef7ae3e733054333d055f` adds a frozen-request tokenizer

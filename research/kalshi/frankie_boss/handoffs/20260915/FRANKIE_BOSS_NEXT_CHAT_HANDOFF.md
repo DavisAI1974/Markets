@@ -1,5 +1,10 @@
 # Frankie + BOSS + Granite: continuation handoff
 
+> **Correction (Greg, 2026-09-16): the 4,096-token Granite service context is RETIRED.** The only Granite context is
+> 131,072 with output budget = remaining context and the incomplete-output alert. Every statement below that gives
+> 4096 as the current or accepted service context, or a 1,200-token output ceiling tied to it, is historical. The code
+> removal is recorded in `CLAUDE_RECONCILIATION_20260916.md`.
+
 Updated September 15, 2026. This file is the current continuation checkpoint. Read it before older launch notes, which describe superseded failures and a previously running Pod.
 
 ## User direction and honest status

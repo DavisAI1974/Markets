@@ -124,7 +124,7 @@ def test_invalid_key_never_listens(key):
 
 
 @pytest.mark.parametrize('change', [
-    {'model': 'other'}, {'max_tokens': 1201}, {'max_tokens': True},
+    {'model': 'other'}, {'max_tokens': 131073}, {'max_tokens': True},
     {'temperature': 0.1}, {'stream': True}, {'stream': 0},
     {'chat_template_kwargs': {'enable_thinking': 0}}, {'tools': []},
     {'messages': [{'role': 'user', 'content': [{'type': 'image_url', 'image_url': 'https://example.com'}]}]},
@@ -239,3 +239,21 @@ def test_backend_budget_clamped_to_whole_client_deadline(service, monkeypatch):
 def test_model_required_before_bind(model):
     with pytest.raises(ValueError, match='model'):
         proxy.make_server(KEY, ('127.0.0.1', 0), model=model)
+
+
+def test_retired_smoke_service_context_is_refused_everywhere():
+    with pytest.raises(ValueError, match='service context'):
+        proxy.make_server(KEY, ('127.0.0.1', 0), model='granite', service_context=4096)
+    with pytest.raises(ValueError, match='service context'):
+        proxy._chat(BODY, 'granite', service_context=4096)
+    server = proxy.make_server(KEY, ('127.0.0.1', 0), model='granite')
+    try:
+        assert server.service_context == 131072
+    finally:
+        server.server_close()
+    large = json.loads(BODY); large['max_tokens'] = 8193
+    proxy._chat(json.dumps(large).encode(), 'granite')  # the old 1,200 ceiling is gone: bounded by the context alone
+    assert proxy.environment_service_context({'GRANITE_MAX_MODEL_LEN': '131072'}) == 131072
+    for environment in ({}, {'GRANITE_MAX_MODEL_LEN': '4096'}, {'GRANITE_MAX_MODEL_LEN': 'x'}):
+        with pytest.raises(ValueError, match='GRANITE_MAX_MODEL_LEN'):
+            proxy.environment_service_context(environment)

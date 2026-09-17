@@ -15,24 +15,24 @@ def runtime_fixture():
 
 
 def test_bootstrap_environment_uses_pinned_supervisor_command_and_no_model_download():
-    env=s.launch_environment(max_model_len=4096,served_model='granite42-test')
+    env=s.launch_environment(max_model_len=131072,served_model='granite42-test')
     assert env['SUPERVISOR_PROGRAM__APP_COMMAND']=='python3 /opt/ml/additional-model-data-sources/bootstrap/granite_startup.py'
     assert env['HF_HUB_OFFLINE']=='1'
     assert env['STANDARD_AUTO_INSTALL_REQ']=='false'
     assert env['SUPERVISOR_PROGRAM__APP_AUTORESTART']=='false'
-    assert env['GRANITE_MAX_MODEL_LEN']=='4096'
+    assert env['GRANITE_MAX_MODEL_LEN']=='131072'
     assert all(len(k.encode())<=1024 and len(v.encode())<=1024 for k,v in env.items())
     assert sum(len(k.encode())+len(v.encode()) for k,v in env.items())<32768
 
 
-@pytest.mark.parametrize('length',[True,0,-1,1.5,'4096'])
+@pytest.mark.parametrize('length',[True,0,-1,1.5,'131072',4096,8192])
 def test_bootstrap_requires_explicit_positive_runtime_context(length):
     with pytest.raises(ValueError):s.launch_environment(max_model_len=length,served_model='granite42-test')
 
 
 def test_bootstrap_uses_real_file_receipt_and_explicit_generation_limits(tmp_path):
     manifest,_=fixture(tmp_path)
-    env=s.launch_environment(max_model_len=4096,served_model='granite42-test')
+    env=s.launch_environment(max_model_len=131072,served_model='granite42-test')
     env['GRANITE_MANIFEST_SHA256']=a.manifest_digest(manifest)
     facts=runtime_fixture()
     receipt=s.prepare_startup(tmp_path,manifest,env,runtime_facts=lambda:facts)
@@ -41,7 +41,7 @@ def test_bootstrap_uses_real_file_receipt_and_explicit_generation_limits(tmp_pat
     args=receipt['argv']
     assert args[0:3]==['python3','-m','vllm.entrypoints.openai.api_server']
     assert args[args.index('--model')+1]==str(tmp_path)
-    assert args[args.index('--max-model-len')+1]=='4096'
+    assert args[args.index('--max-model-len')+1]=='131072'
     assert args[args.index('--max-num-seqs')+1]=='1'
     assert '--trust-remote-code' not in args
     assert '--enable-lora' not in args
@@ -52,7 +52,7 @@ def test_bootstrap_uses_real_file_receipt_and_explicit_generation_limits(tmp_pat
 @pytest.mark.parametrize('damage',['model','manifest-pin','source-pin','extra-supervisor','zero-gpu','two-gpu','runtime-source'])
 def test_startup_fails_before_server_on_any_identity_or_gpu_mismatch(tmp_path,damage):
     manifest,_=fixture(tmp_path)
-    env=s.launch_environment(max_model_len=4096,served_model='granite42-test')
+    env=s.launch_environment(max_model_len=131072,served_model='granite42-test')
     env['GRANITE_MANIFEST_SHA256']=a.manifest_digest(manifest)
     facts=runtime_fixture()
     if damage=='model':(tmp_path/'config.json').write_bytes(b'corrupt')

@@ -10,7 +10,7 @@ def measure_request_capacity(body, tokenizer_directory):
     """
     from .granite_run_artifacts import strict_json
     from .granite_runpod_tokenizer import LocalTokenizerAdmission, MAX_REQUEST_BYTES
-    from .granite_runpod_admission import invocation
+    from .granite_runpod_admission import CONTEXT, invocation
     from pathlib import Path
     request = strict_json(body)
     if canonical(request) != body:
@@ -27,5 +27,5 @@ def measure_request_capacity(body, tokenizer_directory):
         token_ids_sha256=hashlib.sha256(canonical(ids)).hexdigest(),
         tokenizer_sha256=verifier.tokenizer_sha256, positional_limit=positional_limit,
         fits_model_positions=total <= positional_limit,
-        fits_accepted_service=total <= 4096 and len(body) <= MAX_REQUEST_BYTES,
+        fits_accepted_service=total <= CONTEXT and len(body) <= MAX_REQUEST_BYTES,
         service_admission=False, truncated=False)

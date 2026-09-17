@@ -14,7 +14,7 @@ def synthetic_account(monkeypatch):
 
 
 def plan():
-    return d.make_plan(account_sha_checked='123456789012',run_id='test1',max_model_len=4096,
+    return d.make_plan(account_sha_checked='123456789012',run_id='test1',max_model_len=131072,
                        served_model='granite42-test',now=1000)
 
 
@@ -25,7 +25,7 @@ def test_plan_pins_one_gpu_model_bytes_bootstrap_and_absolute_cleanup_deadline()
     assert variant['InstanceType']=='ml.g6e.2xlarge' and variant['InitialInstanceCount']==1
     assert variant['ContainerStartupHealthCheckTimeoutInSeconds']==1200
     assert p['model']['PrimaryContainer']['Image'].endswith('@'+s.IMAGE_DIGEST)
-    assert p['model']['PrimaryContainer']['Environment']==s.launch_environment(max_model_len=4096,served_model='granite42-test')
+    assert p['model']['PrimaryContainer']['Environment']==s.launch_environment(max_model_len=131072,served_model='granite42-test')
     assert p['model']['PrimaryContainer']['AdditionalModelDataSources'][0]['ChannelName']=='bootstrap'
     assert p['compute_budget_usd']=='2.10195'
 

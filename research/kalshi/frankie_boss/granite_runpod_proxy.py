@@ -38,13 +38,24 @@ def _pairs(items):
     return value
 
 
+SERVICE_CONTEXT = 131072  # the only supported service context; the 4,096-token smoke context is retired
+
+
+def environment_service_context(environment):
+    """The Pod's pinned GRANITE_MAX_MODEL_LEN; absent, malformed or any other context is refused."""
+    value = environment.get('GRANITE_MAX_MODEL_LEN')
+    if type(value) is not str or not re.fullmatch(r'[0-9]{1,7}', value) or int(value) != SERVICE_CONTEXT:
+        raise ValueError('GRANITE_MAX_MODEL_LEN must be the pinned supported service context')
+    return SERVICE_CONTEXT
+
+
 def _json(raw):
     return json.loads(raw.decode('utf-8'), object_pairs_hook=_pairs,
                       parse_constant=lambda _: (_ for _ in ()).throw(ValueError('nonfinite')))
 
 
-def _chat(raw, model, *, service_context=4096):
-    if type(service_context) is not int or service_context not in (4096, 131072):
+def _chat(raw, model, *, service_context=SERVICE_CONTEXT):
+    if type(service_context) is not int or service_context != SERVICE_CONTEXT:
         raise ValueError('explicit supported service context required')
     data = _json(raw)
     allowed = {'model', 'messages', 'max_tokens', 'temperature', 'top_p', 'seed',
@@ -58,7 +69,7 @@ def _chat(raw, model, *, service_context=4096):
             or template['enable_thinking'] is not False):
         raise ValueError('thinking must be disabled')
     n = data.get('max_tokens')
-    if type(n) is not int or not 1 <= n <= (service_context if service_context == 131072 else 1200):
+    if type(n) is not int or not 1 <= n <= service_context:
         raise ValueError('token bound')
     if type(data.get('temperature')) not in (int, float) or data['temperature'] != 0:
         raise ValueError('deterministic temperature required')
@@ -267,7 +278,7 @@ class _Server(ThreadingHTTPServer):
 
 
 def make_server(secret, address=('0.0.0.0', 8081), *, model, open_ended=False,
-                transport_protocol='direct_v1', spool=SPOOL, service_context=4096):
+                transport_protocol='direct_v1', spool=SPOOL, service_context=SERVICE_CONTEXT):
     """Address is a local-test seam; main fixes deployment port and host."""
     if type(secret) is not str or not re.fullmatch(r'[A-Za-z0-9_-]{32,256}', secret):
         raise ValueError('required proxy secret invalid')
@@ -277,7 +288,7 @@ def make_server(secret, address=('0.0.0.0', 8081), *, model, open_ended=False,
         raise ValueError('explicit proxy runtime mode required')
     if transport_protocol not in ('direct_v1', 'jobs_v1'):
         raise ValueError('explicit proxy transport protocol required')
-    if type(service_context) is not int or service_context not in (4096, 131072):
+    if type(service_context) is not int or service_context != SERVICE_CONTEXT:
         raise ValueError('explicit supported service context required')
     server = _Server(address, _Handler)
     server.secret = secret.encode('ascii')
@@ -299,7 +310,7 @@ def main():
     with make_server(os.environ.get('RUNPOD_GRANITE_API_KEY'),
                      model=os.environ.get('GRANITE_SERVED_MODEL'),
                      transport_protocol=os.environ.get('GRANITE_TRANSPORT_PROTOCOL', 'direct_v1'),
-                     service_context=int(os.environ.get('GRANITE_MAX_MODEL_LEN', '4096')),
+                     service_context=environment_service_context(os.environ),
                      open_ended=os.environ.get('RUNPOD_GRANITE_LIFETIME_SECONDS') == 'none') as server:
         server.serve_forever()
 

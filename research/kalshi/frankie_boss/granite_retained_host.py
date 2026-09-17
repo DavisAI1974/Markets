@@ -91,7 +91,7 @@ def read_object(journal, bucket, key, maximum):
     return raw
 
 
-def tokenizer(journal, manifest, *, context=4096):
+def tokenizer(journal, manifest, *, context):
     directory = Path('work/retained-tokenizer')
     directory.mkdir(parents=True, exist_ok=False)
     for row in manifest['files']:

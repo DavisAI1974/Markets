@@ -11,10 +11,11 @@ from research.kalshi.frankie_boss.tests.test_granite_runpod_tokenizer import syn
 from research.kalshi.frankie_boss.tests.test_granite_durable_job_client import configured,Remote
 
 
-def test_explicit_long_context_reserves8192_and_keeps_legacy_limit(tmp_path):
+def test_explicit_long_context_reserves8192_and_refuses_the_retired_smoke_context(tmp_path):
     body=request('unchanged',max_tokens=8192)
     proxy._chat(body,'granite42-smoke',service_context=131072)
-    with pytest.raises(ValueError):proxy._chat(body,'granite42-smoke')
+    proxy._chat(body,'granite42-smoke')
+    with pytest.raises(ValueError):proxy._chat(body,'granite42-smoke',service_context=4096)
     proxy._chat(request(max_tokens=8193),'granite42-smoke',service_context=131072)
     ids=[1]*(131072-8192)
     options,_,_=synthetic(tmp_path,ids)
@@ -22,7 +23,7 @@ def test_explicit_long_context_reserves8192_and_keeps_legacy_limit(tmp_path):
     assert admit(body)['output_tokens']==8192
     ids.append(1)
     with pytest.raises(ValueError):admit(body)
-    with pytest.raises(ValueError):tokenizer.LocalTokenizerAdmission(tmp_path,**options)(body)
+    with pytest.raises(ValueError):tokenizer.LocalTokenizerAdmission(tmp_path,context=4096,**options)
 
 
 def test_stacked_output8192_reaches_existing_preparation_without_altering_it():
@@ -30,7 +31,7 @@ def test_stacked_output8192_reaches_existing_preparation_without_altering_it():
     class Context:
         def _prepare(self,*args):raise Reached()
     with pytest.raises(Reached):native.prepare_critic_request(Context(),as_of=2,through_cursor=0,source_as_of=1,context_encoding='stacked_v1',service_context=131072,output_tokens=8192)
-    with pytest.raises(ValueError):native.prepare_critic_request(Context(),as_of=2,through_cursor=0,source_as_of=1,output_tokens=8192)
+    with pytest.raises(ValueError):native.prepare_critic_request(Context(),as_of=2,through_cursor=0,source_as_of=1,service_context=4096,output_tokens=8192)
 
 
 def test_capacity_alert_retains_usage_and_propagates_without_redispatch(tmp_path,monkeypatch):

@@ -6,6 +6,7 @@ import re
 from urllib.parse import parse_qs, urlsplit
 
 from .granite_run_artifacts import canonical
+from .granite_runpod_admission import CONTEXT
 
 
 def validate_configuration(value):
@@ -14,7 +15,7 @@ def validate_configuration(value):
     if (type(value) is not dict or set(value) != fields
             or value['schema'] != 'GRANITE_RETAINED_RUNTIME_CONFIGURATION_V1'
             or value['context_encoding'] not in ('compact_v1', 'stacked_v1')
-            or type(value['service_context']) is not int or value['service_context'] not in (4096, 131072)
+            or type(value['service_context']) is not int or value['service_context'] != CONTEXT
             or value['transport_protocol'] not in ('direct_v1', 'jobs_v1')
             or not re.fullmatch('[0-9a-f]{40}', str(value['source_commit']))
             or not re.fullmatch('/opt/ml/additional-model-data-sources/[a-z0-9-]+', str(value['bootstrap_directory']))):

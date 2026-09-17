@@ -14,7 +14,7 @@ REQUEST = b'{"model":"granite","messages":[{"role":"user","content":"Say OK."}],
 def setup(tmp_path, monkeypatch):
     monkeypatch.setattr(probe.admission, 'validate_receipt', lambda value, digest: REQUEST)
     kwargs = dict(pod_id='testpod1', expected_pod_id='testpod1',
-                  admission_receipt={'input_tokens': 3, 'output_tokens': 16, 'context': 4096},
+                  admission_receipt={'input_tokens': 3, 'output_tokens': 16, 'context': 131072},
                   expected_admission_sha256='a' * 64, journal_path=tmp_path/'probe.sqlite', api_key=KEY)
     return kwargs
 
