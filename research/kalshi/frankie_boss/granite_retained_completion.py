@@ -14,6 +14,9 @@ def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
 
 
+JOURNAL_GENERATION = 'migration-ycf4v6lmave6xw-a004983e93b9'
+HISTORICAL_GENERATION = 'migration-ycf4v6lmave6xw'
+
 FIELDS = {'request_sha256', 'startup_sha256', 'outcome_sha256', 'job_id', 'code_commit'}
 
 
@@ -48,20 +51,24 @@ def main():
     # Validate before placing user-supplied bytes in a journal path.
     if not re.fullmatch('[0-9a-f]{64}', fields['request_sha256']):
         raise ValueError('exact request digest required')
-    journal = CompletionJournal(fields['request_sha256'])
+    journal = CompletionJournal(fields['request_sha256'], generation=os.environ.get('JOURNAL_GENERATION', JOURNAL_GENERATION))
     print(canonical(publish_completion(journal, fields)).decode())
 
 
 class CompletionJournal:
     """Only the existing scoped bucket and this request's three journal objects."""
-    def __init__(self, request_sha256):
+    def __init__(self, request_sha256, *, generation=JOURNAL_GENERATION):
+        if generation not in (JOURNAL_GENERATION, HISTORICAL_GENERATION):
+            raise ValueError('reviewed journal generation required')
+        if type(request_sha256) is not str or not re.fullmatch('[0-9a-f]{64}', request_sha256):
+            raise ValueError('exact request digest required')
         import boto3
         from botocore.config import Config
         self.client = boto3.client('s3', region_name='us-east-1', config=Config(
             connect_timeout=5, read_timeout=10,
             retries={'total_max_attempts': 2, 'mode': 'standard'}))
         self.bucket = 'frankie-granite42-568968024170-us-east-1'
-        self.prefix = 'retained-granite/' + request_sha256 + '/migration-ycf4v6lmave6xw-a004983e93b9/'
+        self.prefix = 'retained-granite/' + request_sha256 + '/' + generation + '/'
 
     def get(self, name):
         try:
