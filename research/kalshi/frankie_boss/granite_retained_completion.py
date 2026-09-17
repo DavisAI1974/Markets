@@ -61,7 +61,7 @@ class CompletionJournal:
             connect_timeout=5, read_timeout=10,
             retries={'total_max_attempts': 2, 'mode': 'standard'}))
         self.bucket = 'frankie-granite42-568968024170-us-east-1'
-        self.prefix = 'retained-granite/' + request_sha256 + '/migration-ycf4v6lmave6xw/'
+        self.prefix = 'retained-granite/' + request_sha256 + '/migration-ycf4v6lmave6xw-a004983e93b9/'
 
     def get(self, name):
         try:
