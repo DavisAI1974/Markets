@@ -65,7 +65,7 @@ class Journal:
         try:
             result = self.client.get_object(Bucket=self.bucket, Key=self.prefix + name)
         except Exception as error:
-            if getattr(error, 'response', {}).get('Error', {}).get('Code') == 'NoSuchKey':
+            if (getattr(error, 'response', None) or {}).get('Error', {}).get('Code') == 'NoSuchKey':
                 return None
             raise
         with result['Body'] as body:
