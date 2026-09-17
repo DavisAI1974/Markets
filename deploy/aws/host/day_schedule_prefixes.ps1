@@ -26,6 +26,7 @@ if ($git) { Write-Output ("TOOLS_HEAD=" + (& $git.Source -C $ToolsRoot rev-parse
 $tool = Join-Path $ToolsRoot 'research\kalshi\frankie_boss\operations\build_remaining_sunday_prefixes.py'
 $log = Join-Path $dayDirectory 'day-schedule-prefixes.log'
 $env:PYTHONDONTWRITEBYTECODE = '1'
+$env:PYTHONPATH = $ToolsRoot
 Push-Location $ToolsRoot
 try {
     # cmd.exe owns the redirection: under $ErrorActionPreference='Stop' PowerShell turns a native
