@@ -162,7 +162,7 @@ def test_host_stages_carry_the_day_and_the_declared_host_variables(tmp_path):
         argv = next(a for a in calls if script in a)
         pairs = [argv[i + 1] for i, part in enumerate(argv) if part == '--set']
         assert pairs == ['Day=20211004', 'Python=D:\\py\\python.exe', 'RunRoot=D:\\frankie\\runs',
-                         'ToolsRoot=C:\\tools\\Markets']
+                         'ToolsRoot=C:\\tools\\Markets'] + (['CycleLimit=19'] if script == 'prefix.ps1' else [])
     # The script file is still named verbatim: the day reaches it only as a --set value.
     argv = next(a for a in calls if 'prefix.ps1' in a)
     carriers = [part for part in argv if '20211004' in part]
