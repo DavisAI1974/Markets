@@ -41,6 +41,7 @@ $resume = ''
 if (Test-Path (Join-Path $configuration.run_directory 'native-host-runtime.json')) { $resume = '--ec2-resume' }
 $log = Join-Path $dayDirectory 'day-cycles.log'
 $env:PYTHONDONTWRITEBYTECODE = '1'
+$env:PYTHONPATH = $ToolsRoot
 Push-Location $ToolsRoot
 try {
     # cmd.exe owns the redirection, as in the retained host scripts: under
