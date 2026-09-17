@@ -30,7 +30,7 @@ from .granite_startup_pins import persist_configuration
 OUT = Path('work/retained-granite')
 INFO_SHA256 = '0e059d18cbfaef80e5171dbfefc0b91d5d66376cd9ec8a19b639c135b81f751c'
 PRIOR_RUN = '34928264918'
-JOURNAL_GENERATION = 'migration-ycf4v6lmave6xw'
+JOURNAL_GENERATION = 'migration-ycf4v6lmave6xw-a004983e93b9'
 MIGRATION_RECEIPT = Path(__file__).with_name('granite_retained_migration_receipt.json')
 REQUEST_BUCKET = 'bento-568968024170-us-east-2-an'
 REQUEST_PREFIX = 'nymex/ng_mbo_5y_v0/frankie/boss_requests/'
