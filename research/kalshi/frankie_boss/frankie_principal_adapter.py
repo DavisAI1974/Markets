@@ -307,10 +307,11 @@ class FrankiePrincipalAdapter:
             return
         if type(gate) is not dict or gate.get('status') != OUTPUT_BUNDLE_GATE_VALIDATED:
             raise ValueError('receiver preparation did not validate the principal output bundle')
+        expected = bundle.get('output_ledger_count', CURRENT_RECEIVER_REQUIRED_LEDGERS)
         required, ledgers = gate.get('required_ledger_ids'), gate.get('ledgers')
-        if (type(required) is not list or len(set(required)) != CURRENT_RECEIVER_REQUIRED_LEDGERS
+        if (type(required) is not list or len(set(required)) != expected
                 or type(ledgers) is not dict or set(ledgers) != set(required)):
-            raise ValueError(f'the current receiver requires all {CURRENT_RECEIVER_REQUIRED_LEDGERS} output ledgers validated')
+            raise ValueError(f'the declared receiver policy requires all {expected} output ledgers validated')
 
     def _memory_witness(self):
         """Finding 5: BOSS's own receipt over the frozen Memory A files it serves.
