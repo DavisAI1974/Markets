@@ -3,9 +3,10 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import pytest
 import boto3
 import yaml
-from research.kalshi.frankie_boss.granite_retained_completion import CompletionJournal, publish_completion, canonical
+from research.kalshi.frankie_boss.granite_retained_completion import CompletionJournal, publish_completion, canonical, HISTORICAL_GENERATION
 from research.kalshi.frankie_boss.granite_retained_host import JOURNAL_GENERATION
 
 def test_completion_keeps_failed_generation_untouched(monkeypatch):
@@ -47,3 +48,20 @@ def test_publication_workflow_keeps_native_checkout_validation():
     assert publisher['with']['ref'] == '${{ github.sha }}'
     assert execution['working-directory'] == 'native'
     assert execution['run'] == 'python ../publication/research/kalshi/frankie_boss/granite_retained_completion.py'
+
+def test_historical_completion_requires_its_actual_startup(monkeypatch):
+    request = 'a'*64
+    startup = dict(request_sha256=request, pod_id='ycf4v6lmave6xw')
+    objects = {'retained-granite/'+request+'/'+HISTORICAL_GENERATION+'/retained-startup.json':canonical(startup)}
+    class Client:
+        def get_object(self, **kwargs):
+            raw=objects[kwargs['Key']]
+            return dict(Body=io.BytesIO(raw),ContentLength=len(raw))
+    monkeypatch.setattr(boto3,'client',lambda *a,**kw:Client())
+    journal=CompletionJournal(request,generation=HISTORICAL_GENERATION)
+    fields=dict(request_sha256=request,startup_sha256='b'*64,outcome_sha256='c'*64,job_id='d'*64,code_commit='e'*40)
+    with pytest.raises(ValueError,match='differs from retained startup'):
+        publish_completion(journal,fields)
+    assert len(objects)==1
+    with pytest.raises(ValueError,match='reviewed journal generation'):
+        CompletionJournal(request,generation='../../another')
