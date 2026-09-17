@@ -81,14 +81,13 @@ tests/test_frankie_controller.py tests/test_actual_host*.py --deselect
 4. CPU: declare 8 threads in the fresh final configuration (nothing committed carries it yet); block ingestion
    `--workers` defaults to inline, pass cores-minus-one on Linux; the review's free CPU wins (fresh 15-process pool per
    drain importing torch, double row verification, two fsyncs per record, double pack) are unapplied.
-5. `.github/workflows/granite_runpod_cloud_smoke.yml` still exists and would fail closed at the retired controller;
-   deleting it is Greg's call.
+5. `.github/workflows/granite_runpod_cloud_smoke.yml` DELETED (Greg's yes, 2026-09-17); the retired controller it drove
+   still refuses at entry if invoked any other way.
 6. `codex/journal-reduction-stack-20260915` carries one code file not on this tree:
    `operations/archive_completed_sunday_prefixes.py` (191 lines); the other 30 commits are outputs/documents.
 7. The repo is PUBLIC (GitHub API: visibility public, forking allowed); handoffs carry the SSH proxy user, instance id
    and bucket name with the account number.
-8. Carry the CLAUDE.md Frankie block to the trunk `claude/kalshi-s79-kickoff-ij8t9o` (needs Greg's permission to push
-   there).
+8. CLAUDE.md Frankie block carried to the trunk `claude/kalshi-s79-kickoff-ij8t9o` (Greg's yes, 2026-09-17).
 
 ## Do not
 
