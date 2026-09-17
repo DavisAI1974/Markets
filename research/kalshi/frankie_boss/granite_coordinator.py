@@ -32,13 +32,9 @@ def validate_startup(receipt, plan, manifest):
     env=plan['model']['PrimaryContainer']['Environment']
     mount=dict(schema='GRANITE_MOUNT_VERIFICATION_V1',manifest_sha256=a.manifest_digest(manifest),
         files=manifest['files'],bytes=sum(r['size'] for r in manifest['files']),verifier_sha256=s.digest_file(a.__file__))
-    argv=['python3','-m','vllm.entrypoints.openai.api_server','--host','0.0.0.0','--port','8080',
-        '--model','/opt/ml/model','--tokenizer','/opt/ml/model','--served-model-name',env['GRANITE_SERVED_MODEL'],
-        '--dtype','bfloat16','--tensor-parallel-size','1','--pipeline-parallel-size','1','--data-parallel-size','1',
-        '--max-num-seqs','1','--max-model-len',env['GRANITE_MAX_MODEL_LEN'],'--gpu-memory-utilization','0.9',
-        '--generation-config','vllm']
-    if env['GRANITE_MAX_MODEL_LEN']==str(s.MAX_MODEL_LEN):  # the long-context prefill pin granite_startup adds
-        argv+=['--enable-chunked-prefill','--max-num-batched-tokens','2048']
+    # One builder for the Pod's receipt and the coordinator's expectation: a second hand-written
+    # copy is how the chunked-prefill flags drifted and every 131072 receipt came to be refused.
+    argv=s.vllm_argv('/opt/ml/model',int(env['GRANITE_MAX_MODEL_LEN']),env['GRANITE_SERVED_MODEL'])
     expected=dict(schema='GRANITE_STARTUP_RUNTIME_V1',mount=mount,image_digest=s.IMAGE_DIGEST,
         bootstrap_sha256=s.digest_file(s.__file__),argv=argv,environment=env,
         generation_policy=dict(temperature=0,thinking=False,output_limit='explicit request max_tokens',

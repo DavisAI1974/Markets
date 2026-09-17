@@ -23,6 +23,11 @@ the untouched tree: 8 failed, 981 passed, 28 errors, 1 deselected (matches the 0
 | 3 `test_granite_context_stacked` + `test_granite_request_stage` | ENVIRONMENT: `databento_dbn` absent (codec pins SDK 0.62.0 exactly) and `cryptography` broken without `cffi` | `pip install cffi "databento-dbn==0.62.0"` (no commit) |
 | `test_granite_sagemaker::test_native_boundary...` order-dependent | pytest imports `frankie_boss/__init__.py` as package at first setup and prepends `research/kalshi` to `sys.path`; a bare `forecast_contract` imported lazily then resolves to `research/kalshi/forecast_contract.py` (no `sha256_digest`). Only name the two directories share | `tests/conftest.py` caches the intended module at collection (`a34b67c`) |
 
+Follow-up (same day, second session): the coordinator no longer keeps its own copy of the vLLM argv. One builder,
+`granite_startup.vllm_argv(directory, max_model_len, served_model)`, produces both the Pod's startup receipt and the
+coordinator's expectation, so the two cannot drift again. `test_granite_coordinator.py` + `test_granite_startup.py`: 47
+passed. No hash of `granite_startup.py` is pinned in the repo (the bundle digest is computed at stage time).
+
 Real code weakness surfaced, not changed: `granite_retained_lifecycle.start_once` reads `info['intent']['name']` for a
 RUNNING Pod; an intent without a name is a KeyError, not a clean refusal.
 

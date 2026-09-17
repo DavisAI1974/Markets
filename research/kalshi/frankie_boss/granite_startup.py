@@ -84,6 +84,18 @@ def runtime_facts():
                 '/usr/local/bin/sagemaker_entrypoint.sh': digest_file('/usr/local/bin/sagemaker_entrypoint.sh')}}
 
 
+def vllm_argv(directory, max_model_len, served_model):
+    """The one vLLM command line; the coordinator validates receipts against this same builder."""
+    argv = ['python3', '-m', 'vllm.entrypoints.openai.api_server', '--host', '0.0.0.0', '--port', '8080',
+            '--model', str(directory), '--tokenizer', str(directory), '--served-model-name', served_model,
+            '--dtype', 'bfloat16', '--tensor-parallel-size', '1', '--pipeline-parallel-size', '1',
+            '--data-parallel-size', '1', '--max-num-seqs', '1', '--max-model-len', str(max_model_len),
+            '--gpu-memory-utilization', '0.9', '--generation-config', 'vllm']
+    if max_model_len == MAX_MODEL_LEN:
+        argv += ['--enable-chunked-prefill', '--max-num-batched-tokens', '2048']
+    return argv
+
+
 def prepare_startup(directory, manifest, environment, *, runtime_facts=runtime_facts, progress=None):
     directory = Path(directory)
     try:
@@ -108,13 +120,7 @@ def prepare_startup(directory, manifest, environment, *, runtime_facts=runtime_f
             facts.get('packages', {}).get('model-hosting-container-standards') != image_identity['supervisor_version'] or
             facts.get('packages', {}).get('vllm') != '0.20.2'):
         raise ValueError('installed runtime source/version mismatch')
-    argv = ['python3', '-m', 'vllm.entrypoints.openai.api_server', '--host', '0.0.0.0', '--port', '8080',
-            '--model', str(directory), '--tokenizer', str(directory), '--served-model-name', environment['GRANITE_SERVED_MODEL'],
-            '--dtype', 'bfloat16', '--tensor-parallel-size', '1', '--pipeline-parallel-size', '1',
-            '--data-parallel-size', '1', '--max-num-seqs', '1', '--max-model-len', str(length),
-            '--gpu-memory-utilization', '0.9', '--generation-config', 'vllm']
-    if length == 131072:
-        argv += ['--enable-chunked-prefill', '--max-num-batched-tokens', '2048']
+    argv = vllm_argv(directory, length, environment['GRANITE_SERVED_MODEL'])
     return {'schema': 'GRANITE_STARTUP_RUNTIME_V1', 'mount': mount, 'runtime': facts,
             'image_digest': IMAGE_DIGEST, 'bootstrap_sha256': digest_file(__file__),
             'argv': argv, 'environment': expected,
