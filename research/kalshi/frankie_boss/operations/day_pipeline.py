@@ -154,7 +154,12 @@ class DayPipeline:
         if stage == 'stage-sources':
             if value.get('status') != 'block_sources_staged':
                 raise StageRefused('stage_block_sources did not report block_sources_staged')
-            return dict(manifest=value['manifest'], manifest_hash=value['manifest_hash'], records=value.get('records', value.get('mbo_records')))
+            # stage_block_sources prints total_mbo_records; the other two names are older spellings.
+            # A missing count must refuse here, because a null records field is 'present' to require().
+            records = next((value[name] for name in ('total_mbo_records', 'records', 'mbo_records') if value.get(name) is not None), None)
+            if records is None:
+                raise StageRefused('stage-sources receipt line carries no source record count')
+            return dict(manifest=value['manifest'], manifest_hash=value['manifest_hash'], records=records)
         if stage == 'host-start':
             if 'SSM Online' not in output:
                 raise StageRefused('host did not reach SSM Online')
@@ -179,7 +184,24 @@ class DayPipeline:
             gate.update(worker_cpus=list(workers), wall_seconds=wall, parallelism=round(seconds / wall, 3))
             if gate['parallelism'] < MIN_PARALLELISM_SHARE * len(workers):
                 raise StageRefused(f"workers collapsed: {gate['parallelism']} CPUs busy for {len(workers)} dedicated worker CPUs")
+            self.reconcile_ingest(gate['journal_count'])
         return gate
+
+    def reconcile_ingest(self, count):
+        """An ingest receipt is about THIS day only if it reduced the records this day staged.
+
+        The journal job is pinned to one snapshot request, so a receipt from another day's
+        reduction is verified, self-consistent, well formed and about the wrong source. No field
+        check can see that; only this comparison against a count built by a different step, from
+        different bytes, can. (S108 hole #8: consistency was never the test.)
+        """
+        staged = self.receipt('stage-sources')
+        if staged is None:
+            raise StageRefused('ingest cannot be reconciled: this day has no stage-sources receipt')
+        expected = staged['gate']['records']
+        if count != expected:
+            raise StageRefused(f'ingest receipt reduced {count} records; {self.day} staged {expected}. '
+                               'The journal job reduces the snapshot named in its pinned request, not the staged day.')
 
     def run_stage(self, stage, *, go=None):
         if self.receipt(stage) is not None:
@@ -247,6 +269,7 @@ class DayPipeline:
             raise StageRefused(f'{stage} has no external receipt form')
         if any(gate[name] is None for name in GATES[stage]):
             raise StageRefused(f'{stage} receipt lacks {[n for n in GATES[stage] if gate[n] is None]}')
+        self.reconcile_ingest(gate['journal_count'])
         self.write(stage, gate, command=['record', stage, str(receipt_path)])
         return 'done'
 

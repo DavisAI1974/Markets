@@ -201,3 +201,55 @@ field, a weakened placeholder check, and all four `--set` refusals.
 4. Spec prerequisite 6 is still the real blocker on stage 5: the Pod credential reaches the runner on **stdin**, and a
    script sent over SSM has no stdin. Declared in `day_cycles.ps1`'s header rather than papered over. Until it is an
    SSM parameter read once, a cycle needing the Granite critic cannot complete from the chain.
+
+### Same session, after Greg's questions: two real defects, both found by asking "is it still going to hit the reducer?"
+
+**Nothing runs from Databento, and the historical days are already in AWS.** The archive the chain reads is
+`s3://bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/2021-10`. It was put there by the workflow Greg
+means, `.github/workflows/ng_historical_mbo_5y_to_s3_20260820.yml` (`PREFIX: nymex/ng_mbo_5y_v0`), which is the ONLY
+thing in the repo that reads `DATABENTO_API_KEY` - and it must not be re-run, because that one WOULD charge. The
+bucket is merely NAMED bento; it is Greg's S3 bucket, not the vendor. `stage_block_sources.py` does an S3-to-S3
+copy plus `db.DBNStore.from_bytes(raw)`, a local decode of bytes already fetched. No `Historical`/`Live` client
+exists anywhere under `frankie_boss/`.
+
+**Does it still get reduced? Yes, in exactly one place, and the prefix step is not it.** The reduction is
+`operations/run_journal_stack.py` ("combined reductions") in the workflow's `journal` job. The prefix builder's
+copier `compact_journal_snapshot.snapshot_compact_prefix` VERIFIES the compact journal's sha256 and READS it through
+`VerifiedJournalReader` - it never re-reduces.
+
+**Are the prefixes already ingested? For the first run's day only.** The 19 retained prefixes in
+`sunday_20260915_package/FB/actual-prefixes/` are the 2021-10-03 Sunday reopen, 57,027 records. The staged block
+`blocks/BLOCK_20211004_20211006_SOURCE_MANIFEST.json` says for itself: `role: HELD_OUT_BLIND_BLOCK`,
+`ingested: false`, `prefixes_built: false`, `scheduled: false`, `total_mbo_records: 6,471,475` over four members
+(20211003 57,027 + 20211004 1,994,358 + 20211005 2,111,930 + 20211006 2,308,160). So those days have no prefixes
+yet. **And the gold standard cannot be rebuilt by accident**: `materialize` calls the copier ONLY when a prefix's
+receipt is absent, otherwise it re-verifies the snapshot sha; `save_new` is `xb`; the binding and
+`full19-prefix-witnesses.json` are compared for equality and reused. Pointed at the retained directory the builder
+copies nothing and writes nothing.
+
+**DEFECT A - the journal job is pinned to ONE bundle, so an ingest receipt could be filed against a day it did not
+reduce.** `parallel_source/cloud_transfer.load_request()` reads `.github/frankie-parallel-source-request.json`
+hard-coded; it names a single `archive_sha256`/`bundle_manifest_sha256` (the first run's snapshot, 57,027 records)
+and takes no day. The publication path is hard-coded `outputs/frankie-boss/20260915/reduction-stack`. So on a
+dispatch with `--day 20211004`: `sources` stages that day correctly, `journal` reduces the FIXED first-run bundle,
+and `--record ingest` files that receipt as 20211004's ingest. Every gate passed: a verified
+`FRANKIE_COMBINED_JOURNAL_EXECUTION_V1` with sound CPU dedication. **This is S108 hole #8's shape exactly** -
+present, numeric, right owner, self-consistent, and about the wrong source; consistency was never the test.
+
+**DEFECT B - the staged record count was being recorded as null.** `gate_of('stage-sources')` read
+`records`/`mbo_records`; `stage_block_sources.py` prints **`total_mbo_records`**. The early `return` skips the
+None check the other stages get, and `require()` only asks whether the KEY is present - so `records: null` passed
+the gate. **The unit test hid it**: the fixture printed `records=6470000`, a key the real tool never emits, so the
+test asserted a contract reality does not honour.
+
+**Both fixed in `day_pipeline.py`, and B is what makes A's guard possible.** `gate_of('stage-sources')` now reads
+`total_mbo_records` first (older spellings kept) and refuses a line with no count at all. New
+`reconcile_ingest(count)` requires the ingest receipt's `journal_count` to equal the day's staged records, on BOTH
+ingest paths (`record_external` and the SSM host path), and names both numbers when it refuses. The fixture now
+prints what the tool prints. `test_day_pipeline.py` 9/9 (three new), `test_host_day_scripts.py` 8/8.
+
+**Open, Greg's call: the workflow itself is still pinned.** The orchestrator can now only REFUSE a mismatched
+receipt - it cannot make the journal job reduce the right day. Parameterizing the `journal` job (its snapshot
+request, and the hard-coded `20260915` publication path) by `inputs.day` is a workflow change, and workflow changes
+need Greg's go, so nothing was edited. Until then a day other than the first run's will stop at ingest with the two
+counts named, which is the correct outcome.

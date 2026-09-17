@@ -10,7 +10,10 @@ CONFIG = dict(python='py', ssm_run='ssm.py', ec2_host='ec2.py', instance='i-1', 
               blocks_dir='blocks', restore_prefix='frankie/days',
               host_scripts=dict(ingest='ingest.ps1', schedule_prefixes='prefix.ps1', cycles='cycles.ps1'))
 OUT = {
-    'stage.py': json.dumps(dict(status='block_sources_staged', manifest='blocks/m.json', manifest_hash='h'*64, records=6470000)),
+    # The real final line of stage_block_sources.py: total_mbo_records, not records. 57027 is the
+    # 20211003 Sunday reopen, the count the gold-standard first run reduced.
+    'stage.py': json.dumps(dict(status='block_sources_staged', manifest='blocks/m.json', manifest_hash='h'*64,
+                                total_mbo_records=57027)),
     'start': 'state=running\nSSM Online: True',
     'ingest.ps1': 'PIPELINE_RECEIPT ' + json.dumps(dict(journal_count=57027, journal_hash='j'*64, compact_sha256='c'*64,
                                                        worker_cpus=list(range(1, 32)), wall_seconds=120.0, worker_cpu_seconds=2100.0)),
@@ -127,3 +130,51 @@ def test_a_stage_whose_host_script_is_not_declared_is_refused_by_name(tmp_path):
     with pytest.raises(dp.StageRefused, match='declares no host script for ingest'):
         pipeline.resume()
     assert pipeline.receipt('host-start') and not any('ingest' in ' '.join(argv) for argv in calls)
+
+
+def test_the_staged_record_count_is_read_from_the_line_the_tool_really_prints(tmp_path):
+    pipeline = dp.DayPipeline(CONFIG, '20211004', runs_root=tmp_path)
+    line = json.dumps(dict(status='block_sources_staged', manifest='m.json', manifest_hash='h'*64,
+                           total_mbo_records=6471475))
+    assert pipeline.gate_of('stage-sources', line)['records'] == 6471475
+    # A null count used to be recorded and pass require(), because a present key is not a value.
+    with pytest.raises(dp.StageRefused, match='no source record count'):
+        pipeline.gate_of('stage-sources', json.dumps(dict(status='block_sources_staged', manifest='m.json',
+                                                          manifest_hash='h'*64)))
+
+
+def test_an_ingest_receipt_for_another_days_reduction_is_refused_on_the_count(tmp_path):
+    calls = []
+    pipeline = dp.DayPipeline(CONFIG, '20211004', runner=runner(calls), runs_root=tmp_path)
+    pipeline.resume(until='host-start')
+    assert pipeline.receipt('stage-sources')['gate']['records'] == 57027
+    other_day = tmp_path / 'other.json'
+    other_day.write_text(json.dumps(dict(schema='FRANKIE_COMBINED_JOURNAL_EXECUTION_V1', status='verified',
+        source_records=1994358, completion=dict(count=1994358, head_hash='j'*64), compact_sha256='c'*64,
+        parent_cpu=0, worker_cpus=[1, 2, 3], wall_seconds=715.19, worker_cpu_seconds=2079.29)))
+    # The journal job is pinned to one snapshot request, so this receipt is verified, self-consistent
+    # and about the wrong source. Only the staged count sees it.
+    with pytest.raises(dp.StageRefused, match='reduced 1994358 records; 20211004 staged 57027'):
+        pipeline.record_external('ingest', other_day)
+    assert pipeline.receipt('ingest') is None
+    matching = tmp_path / 'matching.json'
+    matching.write_text(json.dumps(dict(schema='FRANKIE_COMBINED_JOURNAL_EXECUTION_V1', status='verified',
+        source_records=57027, completion=dict(count=57027, head_hash='j'*64), compact_sha256='c'*64,
+        parent_cpu=0, worker_cpus=[1, 2, 3], wall_seconds=715.19, worker_cpu_seconds=2079.29)))
+    assert pipeline.record_external('ingest', matching) == 'done'
+
+
+def test_the_host_ingest_path_is_reconciled_on_the_same_count(tmp_path):
+    calls = []
+    wrong = dict(OUT, **{'ingest.ps1': 'PIPELINE_RECEIPT ' + json.dumps(dict(
+        journal_count=1994358, journal_hash='j'*64, compact_sha256='c'*64,
+        worker_cpus=list(range(1, 32)), wall_seconds=120.0, worker_cpu_seconds=2100.0))})
+
+    def run(argv, *, timeout):
+        calls.append(argv)
+        return 0, wrong[next(k for k in wrong if k in argv)]
+
+    pipeline = dp.DayPipeline(dict(CONFIG, ingest_on='host'), '20211004', runner=run, runs_root=tmp_path)
+    with pytest.raises(dp.StageRefused, match='reduced 1994358 records; 20211004 staged 57027'):
+        pipeline.resume()
+    assert pipeline.receipt('ingest') is None

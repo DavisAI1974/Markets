@@ -44,6 +44,25 @@
   job already on git - no second path, no Databento charge.** Family run at open: 1018 passed, 1 skipped, 0 failed.
   Neither script has been executed (no PowerShell in the container, host under HOLD); their contract is held by
   `tests/test_host_day_scripts.py`, every assertion negative-tested.
+- **TWO DEFECTS found by Greg's question "does it get reduced still?" (2026-09-17), both fixed in
+  `day_pipeline.py`.** (A) The workflow's `journal` job is **pinned to one snapshot request**
+  (`.github/frankie-parallel-source-request.json`, the first run's 57,027-record bundle; hard-coded `20260915`
+  publication path) and takes no day, so a dispatch on any other day would stage that day, reduce the FIXED bundle,
+  and file the receipt as that day's ingest - a verified, self-consistent receipt about the wrong source, S108 hole
+  #8's exact shape. (B) `gate_of('stage-sources')` read `records`/`mbo_records` while the tool prints
+  **`total_mbo_records`**, so the count was recorded as **null** and passed `require()` (a present key is not a
+  value); the unit test hid it with a fixture printing a key the tool never emits. **New
+  `reconcile_ingest()` requires the ingest receipt's count to equal the day's staged records on BOTH ingest paths.**
+  **The workflow is still pinned - parameterizing it is Greg's call**; until then a wrong day stops at ingest with
+  both numbers named.
+- **Nothing in the day chain touches Databento.** Historical days are already in S3 at
+  `nymex/ng_mbo_5y_v0/native/2021-10`, put there by `ng_historical_mbo_5y_to_s3_20260820.yml` - the ONLY workflow
+  holding `DATABENTO_API_KEY`, and the only one that would charge. The bucket is merely NAMED bento.
+  `stage_block_sources` decodes bytes already fetched from S3. **Reduction happens in exactly one place**
+  (`run_journal_stack.py`, the ingest job); the prefix builder verifies the compact journal's sha and READS it, and
+  `materialize` re-copies nothing whose receipt exists, so the gold standard cannot be rebuilt by accident.
+  The retained 19 prefixes are the 20211003 Sunday (57,027 records); the staged block 20211004-20211006 declares
+  `ingested: false`, `prefixes_built: false`, 6,471,475 records - those days have no prefixes yet.
 - **Memory A is VALID (Greg, 2026-09-17).** No validation day or separate source day exists or is required; the
   crosswalk's DEGENERATE_PROOF_SAME_AS_SUBJECT is an accounted status that gates nothing. Attestation in code:
   `frankie_principal_adapter.MEMORY_A_ATTESTATION`. Launch runbook from yesterday's wrappers: `DROP_IN_CLAUDE_20260918.md`.
