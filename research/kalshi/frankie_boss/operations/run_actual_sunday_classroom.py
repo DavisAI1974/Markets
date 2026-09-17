@@ -21,7 +21,9 @@ from research.kalshi.frankie_boss.dipole_classroom_session import CORRECTION_REQ
 from research.kalshi.frankie_boss.operations import run_actual_sunday as base
 INITIAL_REQUEST_SCHEMA="FRANKIE_BOSS_SESSION_REQUEST_V1"
 
+GREG_PREBIRTH_AUTHORITY_TOP5_MARKER = "GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION_V1"
 GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION = (
+    GREG_PREBIRTH_AUTHORITY_TOP5_MARKER+": "
     "Greg has a direct research question that Frankie himself must answer in the printed run analysis; "
     "the host/assistant must not rank or substitute the answer. First, state whether earliest causal/prebirth "
     "recognition remains your research target: predict the exhaustion before birth when the causal evidence "
@@ -43,6 +45,11 @@ GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION = (
     "needed to choose honestly is not model-visible in this session, say the five-item selection is BLOCKED and name "
     "the exact missing inventory instead of guessing or inventing five."
 )
+
+def _install_greg_research_question():
+    current=frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION
+    if GREG_PREBIRTH_AUTHORITY_TOP5_MARKER not in current:
+        frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION=current+" "+GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION
 
 def _load_json(path):return json.loads(Path(path).read_bytes())
 
@@ -120,7 +127,5 @@ class ClassroomActualHost(base.ActualHost):
 ActualHost=ClassroomActualHost;verified=base.verified;verified_json=base.verified_json;PreparationComplete=base.PreparationComplete;HostProbe=base.HostProbe;ReleasableHostLock=base.ReleasableHostLock;imports=base.imports
 
 def main():
-    frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION=(
-        frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION+" "+GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION
-    )
+    _install_greg_research_question()
     source_contract_runtime.DipoleClassroomPrincipalAdapter=FinalDipoleClassroomPrincipalAdapter;base.ActualHost=ActualHost;base.await_recorded_principal=await_recorded_principal;return base.main()
