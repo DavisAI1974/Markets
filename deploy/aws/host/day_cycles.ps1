@@ -28,9 +28,11 @@ $configuration = Get-Content $configurationPath -Raw | ConvertFrom-Json
 if (-not $configuration.host_runtime.pod_credential_ssm) { throw 'cycles over SSM require pod_credential_ssm' }
 $prefixesDirectory = $configuration.host_runtime.prefixes_directory
 if (-not $prefixesDirectory) { throw "run configuration for $Day declares no host_runtime.prefixes_directory" }
-$manifestPath = Join-Path $prefixesDirectory 'full19-prefix-witnesses.json'
+$manifestPath = $configuration.host_runtime.prefix_manifest.path
 if (-not (Test-Path $manifestPath)) { throw "cycles need the prefix manifest first; none at $manifestPath" }
-$expected = @((Get-Content $manifestPath -Raw | ConvertFrom-Json).witnesses).Count
+$available = @((Get-Content $manifestPath -Raw | ConvertFrom-Json).witnesses).Count
+if ($available -lt [int]$CycleLimit) { throw 'Requested cycles lack verified prefixes' }
+$expected = 19
 
 $git = Get-Command git -ErrorAction SilentlyContinue
 if ($git) { Write-Output ("TOOLS_HEAD=" + (& $git.Source -C $ToolsRoot rev-parse HEAD)) }
