@@ -16,6 +16,10 @@ on:
         description: 'Stop after this stage (optional): stage-sources host-start ingest schedule-prefixes cycles package-upload snapshot-stop'
         required: false
         default: ''
+      ingest_on:
+        description: "runner = the journal job on GitHub (default); host = the journal stack over SSM on the configured instance with every CPU it has (needs ingest_on: host in the pipeline configuration too)"
+        required: false
+        default: 'runner'
       runner:
         description: "Runner label for the journal job. Default = the first run's 4-vCPU runner; a larger runner (32 or 48 vCPU) only shortens the wall time: the stack pins the first CPU to the parent and gives every other CPU a worker, and the output is byte-identical by construction (ordered partitions, ordered bounded queue)."
         required: false
@@ -64,7 +68,7 @@ jobs:
   journal:
     # Runs after `sources` on a dispatch; on the original push trigger `sources` is skipped (no day
     # input) and this job must still run exactly as before, so a skipped need is not a failure here.
-    if: github.repository == 'DavisAI1974/Markets' && !cancelled() && needs.sources.result != 'failure'
+    if: github.repository == 'DavisAI1974/Markets' && !cancelled() && needs.sources.result != 'failure' && inputs.ingest_on != 'host'
     needs: [sources]
     runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
     timeout-minutes: 360
@@ -144,8 +148,9 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
   host:
-    # Stages 4-7 on the native host over SSM (receipts 03-06). Cycles runs only under `go` = the source manifest hash.
-    if: github.repository == 'DavisAI1974/Markets' && inputs.day != ''
+    # Stages 3/4-7 on the native host over SSM (receipts 02/03-06). Cycles runs only under `go` = the source manifest hash.
+    # With ingest_on=host the journal job is skipped and this job runs the stack over SSM on the host's CPUs.
+    if: github.repository == 'DavisAI1974/Markets' && inputs.day != '' && !cancelled() && needs.journal.result != 'failure'
     needs: [journal]
     runs-on: ubuntu-24.04
     timeout-minutes: 1380
@@ -165,6 +170,7 @@ jobs:
           python-version: '3.13'
       - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
       - uses: actions/download-artifact@v4
+        if: inputs.ingest_on != 'host'
         with:
           name: day-receipts-ingest-${{ inputs.day }}-${{ github.run_id }}
           path: ${{ env.RUNS_ROOT }}/${{ inputs.day }}

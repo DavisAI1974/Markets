@@ -12,7 +12,8 @@ CONFIG = dict(python='py', ssm_run='ssm.py', ec2_host='ec2.py', instance='i-1', 
 OUT = {
     'stage.py': json.dumps(dict(status='block_sources_staged', manifest='blocks/m.json', manifest_hash='h'*64, records=6470000)),
     'start': 'state=running\nSSM Online: True',
-    'ingest.ps1': 'PIPELINE_RECEIPT ' + json.dumps(dict(journal_count=57027, journal_hash='j'*64, compact_sha256='c'*64)),
+    'ingest.ps1': 'PIPELINE_RECEIPT ' + json.dumps(dict(journal_count=57027, journal_hash='j'*64, compact_sha256='c'*64,
+                                                       worker_cpus=list(range(1, 32)), wall_seconds=120.0, worker_cpu_seconds=2100.0)),
     'prefix.ps1': 'PIPELINE_RECEIPT ' + json.dumps(dict(prefix_count=19, prefixes_sha256='p'*64)),
     'cycles.ps1': 'PIPELINE_RECEIPT ' + json.dumps(dict(cycles_completed=19, cycles_total=19)),
     'upload.py': json.dumps(dict(upload_manifest_sha256='u'*64)),
@@ -33,7 +34,7 @@ def runner(calls, failing=()):
 
 def test_chain_holds_before_the_result_bearing_stage_then_resumes_under_the_exact_go(tmp_path):
     calls = []
-    pipeline = dp.DayPipeline(CONFIG, '20211004', runner=runner(calls), runs_root=tmp_path, now=lambda: 1.)
+    pipeline = dp.DayPipeline(dict(CONFIG, ingest_on='host'), '20211004', runner=runner(calls), runs_root=tmp_path, now=lambda: 1.)
     assert pipeline.resume() == {s: 'done' for s in dp.STAGES[:4]} | {'cycles': 'hold'}
     assert (tmp_path / '20211004' / '04-cycles.HOLD.json').exists() and not pipeline.path('cycles').exists()
     with pytest.raises(dp.StageRefused, match='needs the cycles receipt'):
@@ -50,9 +51,20 @@ def test_chain_holds_before_the_result_bearing_stage_then_resumes_under_the_exac
     assert len(calls) == 7
 
 
+def test_ingest_on_the_runner_is_only_ever_recorded_never_run_over_ssm(tmp_path):
+    calls = []
+    pipeline = dp.DayPipeline(CONFIG, '20211004', runner=runner(calls), runs_root=tmp_path)
+    with pytest.raises(dp.StageRefused, match='record its receipt with --record ingest'):
+        pipeline.resume()
+    assert pipeline.receipt('host-start') and not any('ingest.ps1' in argv for argv in calls)
+    host = dp.DayPipeline(dict(CONFIG, ingest_on='host'), '20211005', runner=runner(calls), runs_root=tmp_path)
+    host.resume(until='ingest')
+    assert host.receipt('ingest')['gate']['parallelism'] == 17.5
+
+
 def test_failed_stage_keeps_earlier_receipts_and_the_host_stop_always_runs(tmp_path):
     calls = []
-    pipeline = dp.DayPipeline(CONFIG, '20211004', runner=runner(calls, failing=('ingest.ps1',)), runs_root=tmp_path)
+    pipeline = dp.DayPipeline(dict(CONFIG, ingest_on='host'), '20211004', runner=runner(calls, failing=('ingest.ps1',)), runs_root=tmp_path)
     with pytest.raises(dp.StageRefused, match='ingest exited 1'):
         pipeline.resume()
     assert pipeline.receipt('host-start') and pipeline.receipt('ingest') is None

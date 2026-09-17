@@ -159,12 +159,25 @@ class DayPipeline:
             raise StageRefused('fewer prefixes than the day requires')
         if stage == 'cycles' and gate['cycles_completed'] != gate['cycles_total']:
             raise StageRefused('cycles incomplete; resume with the same run directory')
+        if stage == 'ingest':
+            # Same dedication gate as the recorded runner job: busy CPUs vs dedicated worker CPUs.
+            workers, wall, seconds = value.get('worker_cpus') or [], value.get('wall_seconds'), value.get('worker_cpu_seconds')
+            if not workers or not wall or seconds is None:
+                raise StageRefused('host ingest receipt carries no worker CPU dedication evidence')
+            gate.update(worker_cpus=list(workers), wall_seconds=wall, parallelism=round(seconds / wall, 3))
+            if gate['parallelism'] < MIN_PARALLELISM_SHARE * len(workers):
+                raise StageRefused(f"workers collapsed: {gate['parallelism']} CPUs busy for {len(workers)} dedicated worker CPUs")
         return gate
 
     def run_stage(self, stage, *, go=None):
         if self.receipt(stage) is not None:
             return 'present'
         self.require(stage)
+        if stage == 'ingest' and self.c.get('ingest_on', 'runner') != 'host':
+            # The gold-standard journal stack runs as the workflow's own job on the runner and is recorded
+            # with --record; only ingest_on: host runs it over SSM on the declared host.
+            raise StageRefused('ingest runs as the workflow journal job; record its receipt with --record ingest '
+                               '(set ingest_on: host in the configuration to run it over SSM instead)')
         if stage == RESULT_BEARING:
             expected = self.receipt('stage-sources')['gate']['manifest_hash']
             if go != expected:

@@ -11,6 +11,8 @@
  "stage_block_sources": "research/kalshi/frankie_boss/operations/stage_block_sources.py",
  "upload_restore_set": "research/kalshi/frankie_boss/operations/upload_sunday_restore_set.py",
  "restore_prefix": "frankie/days",
+ "ingest_on": "runner",
+ "_ingest_on": "runner = the gold-standard journal stack as the workflow's own job (4-vCPU runner, parent + 3 workers, recorded with --record); host = the same stack over SSM on the declared instance (parent + every other CPU), for the 32/48-CPU host once Greg names it and its OS",
  "minimum_prefixes": 19,
  "host_scripts": {
   "ingest": "deploy/aws/host/day_ingest.ps1",
