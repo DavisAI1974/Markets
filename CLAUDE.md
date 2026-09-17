@@ -25,6 +25,11 @@
   Shrinking/optimizing the packet is one of the most important jobs. **114,054 is the journal ENTRY count (2 x 57,027
   records, INPUT + APPLIED), not a token count** -- do not let it surface as "114k tokens".
 - **Native step thread count is a declared numeric identity**: 8, fixed for the whole run, recorded in the numeric policy.
+- **2026-09-18: the pre-existing Granite/Sunday test errors are root-caused and fixed (family 1018 passed, 0 errors,
+  nothing deselected; the retained-host stall was a journal stub without a client looping under a frozen clock). One
+  test is now visibly red on purpose: `test_authority_map`'s ownership drift for the compact-source/reducer stack needs
+  per-module declarations (audit finding 6, second slice). Container needs `cffi` + `databento-dbn==0.62.0`. See
+  `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260918.md`.**
 - Launch is HOLD. No Frankie, Granite, Pod, EC2 or result-bearing action without Greg's explicit go.
 
 
