@@ -1,4 +1,4 @@
-name: NG Exhaustion Focused POX Fixed-Ledger Gate 20260819
+name: NG Exhaustion Focused POX Fixed-Ledger + No-Clock Gate 20260917
 
 on:
   workflow_dispatch:
@@ -17,8 +17,8 @@ permissions:
   actions: read
 
 jobs:
-  fixed-ledger-gate:
-    name: Validate immutable 3,429 / 1,444 / 1,985 POX ledger without rediscovery
+  fixed-ledger-no-clock-gate:
+    name: Validate immutable 3,429 / 1,444 / 1,985 ledger and event-driven timing contract
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -31,24 +31,64 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Verify fixed-population contract and compile gate
+      - name: Verify fixed-population and no-clock contracts
         run: |
           set -euo pipefail
-          python -m py_compile research/ng_exhaustion_pox_focused_predict_trade_20260819.py
+          python -m py_compile \
+            research/ng_exhaustion_pox_focused_predict_trade_20260819.py \
+            research/ng_exhaustion_pox_event_driven_execution_20260917.py \
+            research/ng_exhaustion_pox_standalone_analysis_20260819.py \
+            research/ng_exhaustion_pox_raw_execution_20260819.py
           python - <<'PY'
           import json
           from pathlib import Path
+
           launch=json.loads(Path('research/NG_EXHAUSTION_POX_FOCUSED_LAUNCH_20260819.json').read_text())
+          clock=json.loads(Path('research/NG_EXHAUSTION_POX_NO_CLOCK_CONTRACT_20260917.json').read_text())
           protocol=Path('research/NG_EXHAUSTION_POX_FOCUSED_PREDICT_TRADE_PROTOCOL_20260819.md').read_text()
+          old_analysis=Path('research/ng_exhaustion_pox_standalone_analysis_20260819.py').read_text()
+          old_exec=Path('research/ng_exhaustion_pox_raw_execution_20260819.py').read_text()
+          new_exec=Path('research/ng_exhaustion_pox_event_driven_execution_20260917.py').read_text()
+
           assert launch['population_reconciliation']=='FIXED_3429_DO_NOT_REOPEN'
-          assert launch['master_population_expected']==3429
-          assert launch['expected_flip']==1444
-          assert launch['expected_same']==1985
+          assert (launch['master_population_expected'], launch['expected_flip'], launch['expected_same']) == (3429,1444,1985)
           assert launch['population_rediscovery_authorized'] is False
           assert launch['canonical_adjacency_population_enumeration_authorized'] is False
           assert launch['roster_derived_label_materialization_authorized'] is False
+
+          assert launch['timing_policy']=='EVENT_DRIVEN_NO_FIXED_INTERVALS'
+          for key in (
+              'fixed_checkpoint_grid_authorized',
+              'fixed_entry_delay_grid_authorized',
+              'fixed_hold_horizons_authorized',
+              'fixed_timeout_exit_authorized',
+              'fixed_temporal_lookback_gates_authorized',
+              'hidden_fallback_timer_authorized',
+          ):
+              assert launch[key] is False, key
+
+          assert clock['policy']=='EVENT_DRIVEN_NO_FIXED_INTERVALS'
+          timing=clock['timing']
+          assert timing['fixed_checkpoint_grid_authorized'] is False
+          assert timing['fixed_entry_delay_grid_authorized'] is False
+          assert timing['fixed_hold_horizons_authorized'] is False
+          assert timing['fixed_timeout_exit_authorized'] is False
+          assert timing['fixed_temporal_lookback_gates_authorized'] is False
+          assert timing['hidden_fallback_timer_authorized'] is False
+          assert clock['historical_plus60']['may_trigger_entry'] is False
+          assert clock['historical_plus60']['may_trigger_exit'] is False
+          assert clock['historical_plus60']['may_trigger_management'] is False
+
+          assert 'EVENT_DRIVEN_NO_FIXED_INTERVALS' in protocol
           assert 'FIXED_3429_DO_NOT_REOPEN' in protocol
-          print('fixed POX contract: PASS')
+          assert 'SUPERSEDED_FIXED_INTERVAL_RUNNER_DISABLED' in old_analysis
+          assert 'SUPERSEDED_FIXED_HOLD_RUNNER_DISABLED' in old_exec
+          assert 'HOLDS_S =' not in old_exec
+          assert 'WINDOWS_S =' not in old_analysis
+          assert 'TIMING_POLICY = "EVENT_DRIVEN_NO_FIXED_INTERVALS"' in new_exec
+          assert 'HOLDS_S =' not in new_exec
+          assert 'WINDOWS_S =' not in new_exec
+          print('fixed POX population + no-clock timing contract: PASS')
           PY
 
       - name: Download supplied authoritative ledger artifact
@@ -85,6 +125,11 @@ jobs:
           assert (d['population']['total'],d['population']['flip'],d['population']['same'])==(3429,1444,1985)
           assert d['population']['population_rediscovery_performed'] is False
           assert d['population']['canonical_adjacency_enumeration_performed'] is False
+          assert d['timing_policy']=='EVENT_DRIVEN_NO_FIXED_INTERVALS'
+          assert d['fixed_checkpoint_grid_authorized'] is False
+          assert d['fixed_entry_delay_grid_authorized'] is False
+          assert d['fixed_hold_horizons_authorized'] is False
+          assert d['fixed_timeout_exit_authorized'] is False
           assert d['promotion_performed'] is False
           assert not any(d['protected_mutations'].values())
           print(json.dumps(d, indent=2, sort_keys=True))
@@ -92,16 +137,18 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ng-exhaustion-pox-fixed-ledger-validation-20260819
+          name: ng-exhaustion-pox-fixed-ledger-no-clock-validation-20260917
           path: |
             /tmp/NG_EXHAUSTION_POX_FIXED_LEDGER_VALIDATION_20260819.json
             /tmp/NG_EXHAUSTION_POX_FIXED_3429_NORMALIZED_20260819.jsonl.gz
           if-no-files-found: error
           retention-days: 14
 
-      - name: Preserve standalone boundary
+      - name: Preserve standalone and no-clock boundaries
         run: |
           echo 'Gate passed only for a supplied authoritative 3,429 / 1,444 / 1,985 ledger.'
-          echo 'No roster-derived labels, canonical-adjacency population reconstruction, or smaller-subset fallback is authorized.'
+          echo 'Timing is event-driven: no fixed checkpoint, entry-delay, hold, timeout, or hidden fallback clock is authorized.'
+          echo 'Historical +60 is frozen evidence/diagnostic context only and cannot trigger a trade action.'
+          echo 'No roster-derived labels, canonical-adjacency reconstruction, or smaller-subset fallback is authorized.'
           echo 'Do not read D0-D5 result artifacts until standalone POX rule selection is frozen.'
           echo 'No detector/canonical/frozen play/brain/strategy mutation or promotion was performed.'
