@@ -50,6 +50,10 @@ def launch_environment(*, max_model_len, served_model, transport_protocol='direc
         'TRANSFORMERS_OFFLINE': '1',
         'HF_HUB_DISABLE_TELEMETRY': '1',
         'VLLM_NO_USAGE_STATS': '1',
+        # Measured defaults from the exact pinned AWS vLLM image. Retain
+        # explicit values so every other VLLM override is still refused.
+        'VLLM_ENABLE_CUDA_COMPATIBILITY': '0',
+        'VLLM_USAGE_SOURCE': 'production-docker-image',
         'GRANITE_MAX_MODEL_LEN': str(max_model_len),
         'GRANITE_SERVED_MODEL': served_model,
         'GRANITE_IMAGE_DIGEST': IMAGE_DIGEST,
