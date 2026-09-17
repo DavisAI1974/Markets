@@ -239,3 +239,61 @@ def prove_sealed_absent(
             + "; ".join(clear[:8])
         )
     return proof
+
+
+def write_sealed_proof(*, prompt, knowledge_receipt, knowledge_bundle,
+                       delivery_receipt, output, repo_root=REPO_ROOT):
+    """Produce an immutable proof from the actual receiver input files.
+
+    The existing knowledge validator binds the receipt and bundle to the frozen
+    corpus. The existing proof protocol scans prompt and bundle bytes plus the
+    knowledge and delivered path lists; it does not claim absence in every
+    referenced retrieval document's body.
+    This produces no prompt, runs no principal, and changes no input file.
+    """
+    import os
+    from research.kalshi.frankie_raw_mbo_benchmark.native_knowledge_delivery import validate_delivered_knowledge
+    root = Path(repo_root).resolve()
+    target = Path(output).resolve()
+    if target.is_relative_to(root):
+        raise SealedAbsenceError('proof output must be outside the frozen receiver checkout')
+    prompt_bytes = Path(prompt).read_bytes()
+    if not prompt_bytes.strip():
+        raise SealedAbsenceError('an actual nonempty prompt is required')
+    knowledge = json.loads(Path(knowledge_receipt).read_bytes())
+    bundle = Path(knowledge_bundle).read_bytes()
+    validate_delivered_knowledge(knowledge, bundle, repo_root=root)
+    delivered = json.loads(Path(delivery_receipt).read_bytes())
+    if type(delivered) is not dict or not _delivery_surface(delivered).strip():
+        raise SealedAbsenceError('delivery receipt with actual delivered paths required')
+    surfaces = {'prompt': prompt_bytes}
+    surfaces.update(surfaces_from_delivery(
+        knowledge_receipt=knowledge, model_visible_context=bundle, delivery_receipt=delivered))
+    proof = prove_sealed_absent(sealed_object_set(repo_root=root), surfaces)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open('xb') as stream:
+        stream.write(canonical_bytes(proof))
+        stream.flush()
+        os.fsync(stream.fileno())
+    return proof
+
+
+def main(argv=None):
+    import argparse
+    import sys
+    parser = argparse.ArgumentParser(description='Produce sealed-absence proof from the actual principal inputs; no model call.')
+    for name in ('prompt','knowledge-receipt','knowledge-bundle','delivery-receipt','output'):
+        parser.add_argument('--' + name, required=True)
+    args = parser.parse_args(argv)
+    try:
+        proof = write_sealed_proof(**vars(args))
+    except (ValueError, OSError) as error:
+        print('REFUSED: ' + str(error), file=sys.stderr)
+        return 2
+    print(json.dumps(dict(schema=PROOF_SCHEMA,all_absent=proof['all_absent'],
+        tokens_checked=proof['tokens_checked'],receipt_sha256=proof['receipt_sha256'],output=args.output)))
+    return 0
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
