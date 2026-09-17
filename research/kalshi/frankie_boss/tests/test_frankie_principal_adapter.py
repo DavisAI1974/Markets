@@ -315,3 +315,36 @@ def test_pilot_ledger_count_refuses_invalid_configuration(count):
     with pytest.raises(ValueError, match='output_bundle'):
         admission_policy({'output_bundle': {'principal_artifact': 'artifact.json', 'outputs_dir': 'outputs',
             'output_ledger_count': count}, 'sealed_proof': 'proof.json'}, retained_prompt=True)
+
+def test_receiver_producer_waits_for_actual_prompt_and_uses_cycle_directory(tmp_path):
+    from frankie_principal_adapter import admission_policy
+    adapter, _ = case(tmp_path)
+    adapter.admission = admission_policy({'output_bundle': 'NOT_PRESENTED',
+        'sealed_proof': {'producer': 'native_sealed_absence', 'repo_root': 'frozen', 'repo_commit': 'a'*40}},
+        retained_prompt=True)
+    calls = []
+    adapter._run = lambda module, args: calls.append((module, args))
+    with pytest.raises(ValueError, match='actual composed'):
+        adapter._admission_record()
+    assert calls == []
+    (adapter.directory / 'prompt.md').write_bytes(b'actual historical prompt plus current BOSS block')
+    adapter.preparation['delivery_receipt'] = 'delivered.json'
+    def produce(module, args):
+        calls.append((module,args))
+        assert args['prompt'].read_bytes().endswith(b'current BOSS block')
+        assert args['output'] == adapter.directory/'sealed-proof.json'
+        if not args.get('verify_existing'):
+            args['output'].write_text(json.dumps({'schema':'FRANKIE_SEALED_ABSENCE_PROOF_V1',
+                'all_absent':True,'tokens_checked':23,'receipt_sha256':'b'*64}))
+    adapter._run = produce
+    first = adapter._admission_record()
+    assert first['sealed_absence']['status'] == 'PROVEN'
+    assert adapter._admission_record() == first
+    assert calls[1][1]['verify_existing'] is True
+
+def test_receiver_producer_cannot_use_circular_fresh_emitter_route():
+    from frankie_principal_adapter import admission_policy
+    with pytest.raises(ValueError, match='retained prompt route'):
+        admission_policy({'output_bundle': {'principal_artifact':'artifact.json','outputs_dir':'outputs'},
+            'sealed_proof': {'producer':'native_sealed_absence','repo_root':'frozen','repo_commit':'a'*40}},
+            retained_prompt=False)
