@@ -72,3 +72,27 @@ def test_unconfigured_host_keeps_existing_stdin_protocol(monkeypatch):
     expected = ('private', {'schema': 'example'})
     monkeypatch.setattr(actual, 'read_trigger', lambda *a: expected)
     assert h.read_execution_trigger('example', (), 'a'*64) == expected
+
+def test_actual_cycle_identity_uses_the_same_private_bridge(tmp_path, monkeypatch):
+    client = SSM()
+    h = host(tmp_path, monkeypatch, client)
+    h.config = {'run_id': 'frankie-sunday'}
+    request_id = 'frankie-sunday-cycle-00'
+    write_trigger(tmp_path, request_id, 'FRANKIE_ACTUAL_EXECUTE_V1',
+                  readiness_directory='ready', service_pins_sha256='c' * 64)
+    key, _ = h.read_execution_trigger('FRANKIE_ACTUAL_EXECUTE_V1',
+                                     ('readiness_directory', 'service_pins_sha256'), request_id)
+    assert key == client.value
+    assert len(client.calls) == 1
+
+
+@pytest.mark.parametrize('request_id', ['../frankie-sunday-cycle-00',
+                         'another-run-cycle-00', 'frankie-sunday-cycle-19'])
+def test_foreign_or_unsafe_cycle_identity_is_refused_before_ssm(tmp_path, monkeypatch, request_id):
+    client = SSM()
+    h = host(tmp_path, monkeypatch, client)
+    h.config = {'run_id': 'frankie-sunday'}
+    with pytest.raises(ValueError):
+        h.read_execution_trigger('FRANKIE_ACTUAL_EXECUTE_V1',
+                                 ('readiness_directory', 'service_pins_sha256'), request_id)
+    assert client.calls == []
