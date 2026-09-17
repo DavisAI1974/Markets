@@ -37,6 +37,7 @@ GATES = {   # the fields the stage's receipt must carry for the next stage to ru
     'snapshot-stop': ('snapshot_id', 'host_state'),
 }
 MARKER = 'PIPELINE_RECEIPT '
+MIN_PARALLELISM_SHARE = 0.5   # busy CPUs must be at least half the dedicated worker CPUs (first run: 0.97)
 
 
 class StageRefused(RuntimeError):
@@ -200,11 +201,21 @@ class DayPipeline:
             if value.get('schema') != 'FRANKIE_COMBINED_JOURNAL_EXECUTION_V1' or value.get('status') != 'verified':
                 raise StageRefused('journal stack receipt is not a verified FRANKIE_COMBINED_JOURNAL_EXECUTION_V1')
             completion = value.get('completion') or {}
+            workers = value.get('worker_cpus') or []
+            wall, worker_seconds = value.get('wall_seconds'), value.get('worker_cpu_seconds')
+            # CPU dedication is measured, not assumed: worker CPU seconds per wall second is the number of
+            # CPUs that were actually busy at once. The first run: 2,079 / 715 = 2.9 on 3 workers.
+            parallelism = round(worker_seconds / wall, 3) if wall and worker_seconds is not None else None
+            if not workers or parallelism is None:
+                raise StageRefused('journal stack receipt carries no worker CPU dedication evidence')
+            if parallelism < MIN_PARALLELISM_SHARE * len(workers):
+                raise StageRefused(f'workers collapsed: {parallelism} CPUs busy for {len(workers)} dedicated worker CPUs')
             gate = dict(journal_count=completion.get('count', value.get('source_records')),
                         journal_hash=completion.get('head_hash', value.get('completion_digest')),
                         compact_sha256=value.get('compact_sha256'),
                         journal_entries=value.get('journal_entries'), github_run_id=value.get('github_run_id'),
-                        receipt_sha256=hashlib.sha256(raw).hexdigest())
+                        parent_cpu=value.get('parent_cpu'), worker_cpus=list(workers), parallelism=parallelism,
+                        wall_seconds=wall, receipt_sha256=hashlib.sha256(raw).hexdigest())
         else:
             raise StageRefused(f'{stage} has no external receipt form')
         if any(gate[name] is None for name in GATES[stage]):

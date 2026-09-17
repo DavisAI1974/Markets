@@ -69,10 +69,19 @@ def test_ingest_is_recorded_from_the_journal_stack_verification_receipt(tmp_path
     receipt = tmp_path / 'verification-receipt.json'
     receipt.write_text(json.dumps(dict(schema='FRANKIE_COMBINED_JOURNAL_EXECUTION_V1', status='verified',
         source_records=57027, journal_entries=114054, completion=dict(count=57027, head_hash='j'*64, digest='d'*64),
-        completion_digest='d'*64, compact_sha256='c'*64, github_run_id='34962256086')))
+        completion_digest='d'*64, compact_sha256='c'*64, github_run_id='34962256086',
+        parent_cpu=0, worker_cpus=[1, 2, 3], wall_seconds=715.19, worker_cpu_seconds=2079.29)))
     assert pipeline.record_external('ingest', receipt) == 'done'
     gate = pipeline.receipt('ingest')['gate']
     assert (gate['journal_count'], gate['journal_hash'], gate['compact_sha256'], gate['journal_entries']) == (57027, 'j'*64, 'c'*64, 114054)
+    assert gate['worker_cpus'] == [1, 2, 3] and gate['parallelism'] == 2.907
+    collapsed = tmp_path / 'collapsed.json'
+    collapsed.write_text(json.dumps(dict(json.loads(receipt.read_text()), worker_cpus=list(range(1, 32)),
+                                         wall_seconds=2100.0, worker_cpu_seconds=2079.29)))
+    third = dp.DayPipeline(CONFIG, '20211006', runner=runner(calls), runs_root=tmp_path)
+    third.resume(until='host-start')
+    with pytest.raises(dp.StageRefused, match='collapsed: 0.99 CPUs busy for 31'):
+        third.record_external('ingest', collapsed)
     assert pipeline.record_external('ingest', receipt) == 'present'
     receipt.write_text(json.dumps(dict(schema='FRANKIE_COMBINED_JOURNAL_EXECUTION_V1', status='attention')))
     other = dp.DayPipeline(CONFIG, '20211005', runner=runner(calls), runs_root=tmp_path)
