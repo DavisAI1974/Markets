@@ -3,17 +3,20 @@
   "branch": "chatgpt/ng-exhaustion-entry-timing-revival-20260818",
   "status": "BLOCKED_FAIL_CLOSED_MISSING_AUTHORITATIVE_LEDGER",
   "population_policy": "FIXED_3429_DO_NOT_REOPEN",
+  "timing_policy": "EVENT_DRIVEN_NO_FIXED_INTERVALS",
+  "no_clock_contract": "research/NG_EXHAUSTION_POX_NO_CLOCK_CONTRACT_20260917.json",
   "required_population": {
     "total": 3429,
     "flip": 1444,
     "same": 1985,
-    "initial_sign_persistence_through_plus60_approx": 0.944
+    "initial_sign_persistence_through_plus60_approx": 0.944,
+    "plus60_role": "FROZEN_HISTORICAL_LABEL_AND_DIAGNOSTIC_ONLY_NOT_A_DECISION_TIMER"
   },
   "authoritative_case_ledger": {
     "located": false,
     "reference": null,
     "sha256": null,
-    "resume_condition": "Supply an already-authoritative case-level ledger with exactly 3429 unique identities and authoritative labels split 1444 FLIP / 1985 SAME. Validate once, freeze its reference/hash, then immediately continue the causal join and standalone Stages 1-4."
+    "resume_condition": "Supply an already-authoritative case-level ledger with exactly 3429 unique identities and authoritative labels split 1444 FLIP / 1985 SAME. Validate once, freeze its reference/hash, then continue causal event-driven standalone Stages 1-4 with no fixed timing grid."
   },
   "rejected_superseded_ledger": {
     "workflow_run_id": 32333628389,
@@ -27,10 +30,13 @@
   },
   "recovery_findings": {
     "corrected_gate_commit_before_regression": "cb3a74664ea9bb4ac20a4bac4714297b455f0dc7",
-    "regression_commit": "b5d5cf08eed762e1bfec1d11287a5522e4a7c392",
-    "regression": "Roster-derived materialization replaced the supplied-authoritative-ledger gate and changed the fixed split to 1546/1883.",
+    "population_regression_commit": "b5d5cf08eed762e1bfec1d11287a5522e4a7c392",
+    "population_regression": "Roster-derived materialization replaced the supplied-authoritative-ledger gate and changed the fixed split to 1546/1883.",
+    "timing_regression": "August focused POX analyzer/executor retained executable wall-clock checkpoint grids, fixed temporal windows, and fixed hold horizons despite the older standing no-clock architecture.",
+    "timing_repair": "Active launch/protocol/workflow now enforce EVENT_DRIVEN_NO_FIXED_INTERVALS. Superseded fixed-interval analyzer/executor are fail-closed tombstones. Replacement action gate rejects timer-bearing decision rows.",
     "repaired_runner_and_launch": true,
-    "repaired_workflow_is_external_authoritative_ledger_only": true
+    "repaired_workflow_is_external_authoritative_ledger_only": true,
+    "repaired_workflow_enforces_no_clock": true
   },
   "explicitly_not_performed": [
     "population reconfirmation",
@@ -51,7 +57,17 @@
     "status": "BLOCKED_UNLESS_SEPARATE_HONEST_CONTROL_UNIVERSE_IS_SUPPLIED",
     "controls_may_not_redefine_fixed_3429": true
   },
-  "downstream_safety_note": "The existing large standalone analysis/raw-execution scripts still contain the superseded 1546/1883 constants and were not executed. The restored workflow stops at the corrected authoritative-ledger gate so those scripts cannot be reached through the workflow until the fixed ledger exists and their constants are corrected without changing research logic.",
+  "downstream_safety": {
+    "superseded_fixed_interval_analysis_runner_executable": false,
+    "superseded_fixed_hold_execution_runner_executable": false,
+    "replacement": "research/ng_exhaustion_pox_event_driven_execution_20260917.py",
+    "fixed_checkpoint_grid_authorized": false,
+    "fixed_entry_delay_grid_authorized": false,
+    "fixed_hold_horizons_authorized": false,
+    "fixed_timeout_exit_authorized": false,
+    "fixed_temporal_lookback_gates_authorized": false,
+    "hidden_fallback_timer_authorized": false
+  },
   "contamination_wall": {
     "D0_D5_opened": false,
     "incremental_crosswalk": "DEFERRED_UNTIL_STANDALONE_POX_IS_INDEPENDENTLY_FROZEN"
