@@ -169,8 +169,11 @@ def admission_policy(admission, *, retained_prompt):
         raise ValueError('principal admission must declare output_bundle and sealed_proof explicitly')
     bundle, sealed = admission['output_bundle'], admission['sealed_proof']
     if bundle != OUTPUT_BUNDLE_GATE_NOT_PRESENTED and not (type(bundle) is dict
-            and set(bundle) == {'principal_artifact', 'outputs_dir'}
-            and all(type(value) is str and value for value in bundle.values())):
+            and {'principal_artifact', 'outputs_dir'} <= set(bundle)
+            and set(bundle) <= {'principal_artifact', 'outputs_dir', 'output_ledger_count'}
+            and all(type(bundle[key]) is str and bundle[key] for key in ('principal_artifact', 'outputs_dir'))
+            and type(bundle.get('output_ledger_count', 32)) is int
+            and bundle.get('output_ledger_count', 32) in (30, 32)):
         raise ValueError('output_bundle must name principal_artifact and outputs_dir, or declare NOT_PRESENTED')
     if sealed != SEALED_UNPROVEN and not (type(sealed) is str and sealed):
         raise ValueError('sealed_proof must be a FRANKIE_SEALED_ABSENCE_PROOF_V1 path, or declare UNPROVEN')
