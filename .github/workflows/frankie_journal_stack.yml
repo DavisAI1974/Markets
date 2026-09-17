@@ -1,16 +1,65 @@
-name: Actual combined Sunday journal stack
+name: Frankie day pipeline (beginning to end; the actual combined Sunday journal stack is its ingest job)
+# The chain of SPEC_UNATTENDED_DAILY_PIPELINE_20260916.md around the journal stack that produced the
+# gold-standard first run (GitHub run 34962256086). Dispatch only: a schedule could carry no `go`, so it
+# would only ever run the data plane. The `journal` job is the original workflow's job, unchanged.
 on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'Trading day YYYYMMDD'
+        required: true
+      go:
+        description: "Greg's go: the day's source manifest hash. Empty = data plane only, HOLD before cycles."
+        required: false
+        default: ''
+      until:
+        description: 'Stop after this stage (optional): stage-sources host-start ingest schedule-prefixes cycles package-upload snapshot-stop'
+        required: false
+        default: ''
   push:
     branches: [codex/journal-reduction-stack-20260915]
     paths: [.github/frankie-journal-stack-request.json]
 permissions:
   contents: write
 concurrency:
-  group: frankie-journal-stack-${{ github.sha }}
+  group: frankie-day-${{ inputs.day || github.sha }}
   cancel-in-progress: false
+env:
+  PIPELINE: research/kalshi/frankie_boss/operations/day_pipeline.py
+  PIPELINE_CONFIGURATION: research/kalshi/frankie_boss/operations/day_pipeline.configuration.json
+  RUNS_ROOT: research/kalshi/frankie_boss/runs
 jobs:
+  sources:
+    # Stage 1 on the runner: the day's source files pinned into S3 with a manifest (receipt 00).
+    if: github.repository == 'DavisAI1974/Markets' && inputs.day != ''
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_EC2_METADATA_DISABLED: 'true'
+      PYTHONPATH: .:research/kalshi/frankie_boss
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97 zstandard "databento-dbn==0.62.0"
+      - name: Stage sources and start the host (receipts 00, 01)
+        run: python "$PIPELINE" --configuration "$PIPELINE_CONFIGURATION" --day "${{ inputs.day }}" --until host-start --runs-root "$RUNS_ROOT"
+      - name: Commit the receipts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$RUNS_ROOT/${{ inputs.day }}" research/kalshi/frankie_boss/blocks
+          git diff --staged --quiet || (git commit -m "runs/${{ inputs.day }}: sources and host-start receipts [skip ci]" && git push)
   journal:
     if: github.repository == 'DavisAI1974/Markets'
+    needs: [sources]
     runs-on: ubuntu-24.04
     timeout-minutes: 360
     env:
@@ -65,6 +114,19 @@ jobs:
             git commit -m "data: preserve complete journal stack result $GITHUB_RUN_ID [skip ci]"
             git push origin HEAD:refs/heads/codex/journal-reduction-stack-20260915
           fi
+      - name: Record the verified journal stack as the ingest stage (receipt 02)
+        if: inputs.day != ''
+        env:
+          PYTHONPATH: .:research/kalshi/frankie_boss
+        run: |
+          git fetch --depth 1 origin "${{ github.ref_name }}" && git checkout -q FETCH_HEAD -- "$RUNS_ROOT" 2>/dev/null || true
+          python "$PIPELINE" --configuration "$PIPELINE_CONFIGURATION" --day "${{ inputs.day }}" --record ingest --from "$RUNNER_TEMP/journal-stack-result/verification-receipt.json" --runs-root "$RUNS_ROOT"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: inputs.day != ''
+        with:
+          name: day-receipts-ingest-${{ inputs.day }}-${{ github.run_id }}
+          path: ${{ env.RUNS_ROOT }}/${{ inputs.day }}/02-ingest.json
+          if-no-files-found: error
       - name: Preserve nonsecret receipts even if Git publication needs attention
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -75,3 +137,53 @@ jobs:
             ${{ runner.temp }}/journal-stack-result/progress.json
           retention-days: 14
           if-no-files-found: warn
+  host:
+    # Stages 4-7 on the native host over SSM (receipts 03-06). Cycles runs only under `go` = the source manifest hash.
+    if: github.repository == 'DavisAI1974/Markets' && inputs.day != ''
+    needs: [journal]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1380
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_EC2_METADATA_DISABLED: 'true'
+      PYTHONPATH: .:research/kalshi/frankie_boss
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - uses: actions/download-artifact@v4
+        with:
+          name: day-receipts-ingest-${{ inputs.day }}-${{ github.run_id }}
+          path: ${{ env.RUNS_ROOT }}/${{ inputs.day }}
+      - name: Run the remaining stages from the first missing receipt
+        run: |
+          set -euo pipefail
+          python "$PIPELINE" --configuration "$PIPELINE_CONFIGURATION" --day "${{ inputs.day }}" \
+            ${{ inputs.go != '' && format('--go {0}', inputs.go) || '' }} \
+            ${{ inputs.until != '' && format('--until {0}', inputs.until) || '' }} \
+            --runs-root "$RUNS_ROOT"
+      - name: Stop the host (always)
+        if: always()
+        run: python "$PIPELINE" --configuration "$PIPELINE_CONFIGURATION" --day "${{ inputs.day }}" --host-stop --runs-root "$RUNS_ROOT"
+      - name: Commit the receipts (always)
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$RUNS_ROOT/${{ inputs.day }}"
+          git diff --staged --quiet || (git commit -m "runs/${{ inputs.day }}: day pipeline receipts (run ${{ github.run_id }}) [skip ci]" && git pull --rebase && git push)
+      - name: Job summary = the receipts
+        if: always()
+        run: |
+          for f in "$RUNS_ROOT/${{ inputs.day }}"/*.json; do
+            [ -f "$f" ] || continue
+            echo "### $(basename "$f")" >> "$GITHUB_STEP_SUMMARY"; echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat "$f" >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
+          done

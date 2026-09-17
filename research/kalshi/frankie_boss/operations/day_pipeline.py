@@ -188,6 +188,30 @@ class DayPipeline:
                 break
         return outcome
 
+    def record_external(self, stage, receipt_path):
+        """A stage that ran as its own workflow job (the gold-standard journal stack on the GitHub runner)
+        records its receipt here; the gate reads the job's verification receipt, never a claim."""
+        if self.receipt(stage) is not None:
+            return 'present'
+        self.require(stage)
+        raw = Path(receipt_path).read_bytes()
+        value = json.loads(raw)
+        if stage == 'ingest':
+            if value.get('schema') != 'FRANKIE_COMBINED_JOURNAL_EXECUTION_V1' or value.get('status') != 'verified':
+                raise StageRefused('journal stack receipt is not a verified FRANKIE_COMBINED_JOURNAL_EXECUTION_V1')
+            completion = value.get('completion') or {}
+            gate = dict(journal_count=completion.get('count', value.get('source_records')),
+                        journal_hash=completion.get('head_hash', value.get('completion_digest')),
+                        compact_sha256=value.get('compact_sha256'),
+                        journal_entries=value.get('journal_entries'), github_run_id=value.get('github_run_id'),
+                        receipt_sha256=hashlib.sha256(raw).hexdigest())
+        else:
+            raise StageRefused(f'{stage} has no external receipt form')
+        if any(gate[name] is None for name in GATES[stage]):
+            raise StageRefused(f'{stage} receipt lacks {[n for n in GATES[stage] if gate[n] is None]}')
+        self.write(stage, gate, command=['record', stage, str(receipt_path)])
+        return 'done'
+
     def host_stop(self):
         """The always() step: stop the host whatever happened; the stop is its own small receipt."""
         code, output = self.run(self._ec2('stop'), timeout=1200)
@@ -205,6 +229,8 @@ def main(argv=None):
     parser.add_argument('--go', default=None, help="the day's source manifest hash; without it the chain stops before cycles")
     parser.add_argument('--until', default=None, choices=STAGES)
     parser.add_argument('--host-stop', action='store_true')
+    parser.add_argument('--record', default=None, choices=STAGES, help='record a stage that ran as its own job')
+    parser.add_argument('--from', dest='receipt_from', default=None, help="that job's verification receipt")
     parser.add_argument('--runs-root', default='runs')
     args = parser.parse_args(argv)
     configuration = json.loads(Path(args.configuration).read_bytes())
@@ -215,6 +241,9 @@ def main(argv=None):
         pipeline.host_stop()
         return 0
     try:
+        if args.record:
+            print(json.dumps(dict(status='ok', day=args.day, stages={args.record: pipeline.record_external(args.record, args.receipt_from)})), flush=True)
+            return 0
         outcome = pipeline.resume(go=args.go, until=args.until)
     except StageRefused as error:
         print(json.dumps(dict(status='stage_refused', error=str(error))), flush=True)

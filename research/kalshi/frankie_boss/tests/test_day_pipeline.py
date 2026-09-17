@@ -60,3 +60,22 @@ def test_failed_stage_keeps_earlier_receipts_and_the_host_stop_always_runs(tmp_p
     assert json.loads((tmp_path / '20211004' / 'host-stop.json').read_bytes())['stopped'] is True
     with pytest.raises(dp.StageRefused, match='incomplete'):
         pipeline.gate_of('cycles', 'PIPELINE_RECEIPT {"cycles_completed": 3, "cycles_total": 19}')
+
+
+def test_ingest_is_recorded_from_the_journal_stack_verification_receipt(tmp_path):
+    calls = []
+    pipeline = dp.DayPipeline(CONFIG, '20211004', runner=runner(calls), runs_root=tmp_path)
+    pipeline.resume(until='host-start')
+    receipt = tmp_path / 'verification-receipt.json'
+    receipt.write_text(json.dumps(dict(schema='FRANKIE_COMBINED_JOURNAL_EXECUTION_V1', status='verified',
+        source_records=57027, journal_entries=114054, completion=dict(count=57027, head_hash='j'*64, digest='d'*64),
+        completion_digest='d'*64, compact_sha256='c'*64, github_run_id='34962256086')))
+    assert pipeline.record_external('ingest', receipt) == 'done'
+    gate = pipeline.receipt('ingest')['gate']
+    assert (gate['journal_count'], gate['journal_hash'], gate['compact_sha256'], gate['journal_entries']) == (57027, 'j'*64, 'c'*64, 114054)
+    assert pipeline.record_external('ingest', receipt) == 'present'
+    receipt.write_text(json.dumps(dict(schema='FRANKIE_COMBINED_JOURNAL_EXECUTION_V1', status='attention')))
+    other = dp.DayPipeline(CONFIG, '20211005', runner=runner(calls), runs_root=tmp_path)
+    other.resume(until='host-start')
+    with pytest.raises(dp.StageRefused, match='not a verified'):
+        other.record_external('ingest', receipt)
