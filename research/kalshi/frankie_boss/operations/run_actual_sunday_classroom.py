@@ -21,7 +21,10 @@ from research.kalshi.frankie_boss.dipole_classroom_session import CORRECTION_REQ
 from research.kalshi.frankie_boss.operations import run_actual_sunday as base
 INITIAL_REQUEST_SCHEMA="FRANKIE_BOSS_SESSION_REQUEST_V1"
 
-GREG_PREBIRTH_AUTHORITY_TOP5_MARKER = "GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION_V1"
+GREG_PREBIRTH_AUTHORITY_TOP5_MARKER = "GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION_V2"
+WIRED_TRADING_PLATFORM_INVENTORY_MARKER = "GREG_WIRED_TRADING_PLATFORM_INVENTORY_V1"
+WIRED_TRADING_PLATFORM_INVENTORY_PATH = Path(__file__).resolve().parents[1] / "FRANKIE_WIRED_TRADING_PLATFORM_INVENTORY.md"
+
 GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION = (
     GREG_PREBIRTH_AUTHORITY_TOP5_MARKER+": "
     "Greg has a direct research question that Frankie himself must answer in the printed run analysis; "
@@ -33,23 +36,29 @@ GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION = (
     "transitional/broader-structure-related. State whether you want a NEW calculation now specifically to measure "
     "whether authority persists, collapses, or transfers, or whether the existing calculations and evidence should "
     "be tested first. If you want a new calculation, define what it must measure and why, but do not silently add or "
-    "authorize it. Then, from the full currently served/candidate 1,900+ data-point surface actually visible to you, "
+    "authorize it. Then use the model-visible WIRED TRADING PLATFORM INVENTORY supplied with this instruction to "
     "choose exactly five inputs/calculations you want historical data wired into FIRST for a grouped multi-day pass. "
     "Choose the five yourself; do not accept an assistant-ranked list. For each of the five, give its exact available "
     "field/calculation identity or path, the causal reason you chose it, how it bears on prebirth and/or authority "
     "persistence/collapse/transfer, the historical depth/granularity you want for the initial grouped-day test, and "
-    "the observation that would make you keep it or reject it. This five-item selection is only the first historical "
-    "wiring tranche; the remaining 1,900+ surface stays available for later wiring if you still want it. Preserve all "
-    "records and the existing no-drop/no-truncation/no-averaging/no-smoothing/no-normalization evidence rules. Do not "
-    "change existing Frankie calculations or planes in answering this question. If the complete candidate inventory "
-    "needed to choose honestly is not model-visible in this session, say the five-item selection is BLOCKED and name "
-    "the exact missing inventory instead of guessing or inventing five."
+    "the observation that would make you keep it or reject it. If a datapoint/calculation you genuinely want is NOT "
+    "on the wired sheet, do not silently substitute a weaker proxy: state MISSING_FROM_WIRED_SHEET, name the exact "
+    "desired datapoint/calculation or definition, explain why you want it, and tell Greg it is missing. The larger "
+    "roughly 1,900+ discovered/candidate universe is not to be mislabeled as already live-wired. Preserve all records "
+    "and the existing no-drop/no-truncation/no-averaging/no-smoothing/no-normalization evidence rules. Do not change "
+    "existing Frankie calculations or planes in answering this question."
 )
 
 def _install_greg_research_question():
     current=frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION
     if GREG_PREBIRTH_AUTHORITY_TOP5_MARKER not in current:
-        frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION=current+" "+GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION
+        current=current+" "+GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION
+    if WIRED_TRADING_PLATFORM_INVENTORY_MARKER not in current:
+        if not WIRED_TRADING_PLATFORM_INVENTORY_PATH.exists():
+            raise ValueError("wired trading-platform inventory required for Frankie research question")
+        inventory=WIRED_TRADING_PLATFORM_INVENTORY_PATH.read_text(encoding="utf-8")
+        current=current+"\n\n"+WIRED_TRADING_PLATFORM_INVENTORY_MARKER+":\n"+inventory
+    frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION=current
 
 def _load_json(path):return json.loads(Path(path).read_bytes())
 
