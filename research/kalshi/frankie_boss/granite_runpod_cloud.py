@@ -47,6 +47,8 @@ class Journal:
         self.prefix = 'runpod-smoke/' + run_id + '/'
 
     def put_bytes(self, name, data, *, once=False):
+        if not control._IN_WORKER:
+            self.client.close()  # Parent reads must not leave a TLS pool across fork.
         return control.bounded_call(lambda: self._put_bytes(name, data, once=once))
 
     def _put_bytes(self, name, data, *, once=False):
@@ -59,6 +61,8 @@ class Journal:
             raise ValueError('journal readback mismatch')
 
     def get_bytes(self, name):
+        if not control._IN_WORKER:
+            self.client.close()  # Parent reads must not leave a TLS pool across fork.
         return control.bounded_call(lambda: self._get_bytes(name))
 
     def _get_bytes(self, name):
