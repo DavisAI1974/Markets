@@ -1,7 +1,7 @@
 """Runpod service configuration and the config-free HTTPS transport; no provider/model calls.
 
 The finite direct_v1 critic that this file once exercised (one bounded exchange under a request timeout) was the
-4,096-token smoke transport and is retired: RunpodConfig admits no finite request_timeout. The live request paths and
+old smoke transport and is retired: RunpodConfig admits no finite request_timeout. The live request paths and
 their behaviours (exact prompt, admission before HTTP, bounded raw provider receipts, capacity refusal, one dispatch)
 are covered by test_granite_open_ended_service.py and test_granite_durable_job_client.py.
 """
