@@ -79,3 +79,11 @@ carrying its gate fields (`day_pipeline.GATES`). They wrap what exists: `ingest_
 `build_remaining_sunday_prefixes.py` (prefixes), `run_actual_sunday_compact_source.py --configuration` (cycles, now
 classroom-composed). Prerequisites 1-6 of the spec still hold; prerequisite 6 (Pod credential via SSM parameter on
 stdin) is not built, so cycles rely on the host's existing credential path. Dispatching the workflow is Greg's go.
+
+Codex read-only review (Greg relayed, 2026-09-17), at `23eddf64` against the first run's receipt commit `549efa73`:
+CPU dedication byte-identical (parent = first available CPU, workers = the rest, in-flight limit 2x workers = 6 on
+CPUs 1-3); `run_journal_stack.py` and `cloud_transfer.py` byte-identical; `journal_stack_execution.py` one
+progress-only hunk (+5/-1: logical entries, compressed blocks done/total, percent by blocks, bytes saved). Pin
+`9a8f3f46` resolves on Codex's side and its execution file is byte-identical too. Two qualifications, both mine:
+the journal job now `needs: [sources]` (fixed the same day so the original push trigger still runs it when
+`sources` is skipped) and carries two ingest-receipt steps after its unchanged CPU steps. No run was executed.

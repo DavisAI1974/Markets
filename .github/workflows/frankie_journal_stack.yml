@@ -58,7 +58,9 @@ jobs:
           git add "$RUNS_ROOT/${{ inputs.day }}" research/kalshi/frankie_boss/blocks
           git diff --staged --quiet || (git commit -m "runs/${{ inputs.day }}: sources and host-start receipts [skip ci]" && git push)
   journal:
-    if: github.repository == 'DavisAI1974/Markets'
+    # Runs after `sources` on a dispatch; on the original push trigger `sources` is skipped (no day
+    # input) and this job must still run exactly as before, so a skipped need is not a failure here.
+    if: github.repository == 'DavisAI1974/Markets' && !cancelled() && needs.sources.result != 'failure'
     needs: [sources]
     runs-on: ubuntu-24.04
     timeout-minutes: 360
