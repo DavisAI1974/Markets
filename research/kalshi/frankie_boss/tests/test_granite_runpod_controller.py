@@ -26,7 +26,8 @@ def inputs(tmp_path, encoding='native_v1'):
         config=config, identity=identity, runtime_receipt=runtime, api_key=KEY,
         admit_request=admit, expected_native_hash=native_model_pin(bridge),
         expected_critic_config_hash=config.config_hash,
-        expected_critic_identity_hash=identity.identity_hash, context_encoding=encoding)
+        expected_critic_identity_hash=identity.identity_hash, context_encoding=encoding,
+        spool_directory=tmp_path/'critic-spool')
     request = dict(fixture.request, request_id='training-context/1')
     return arguments, request
 
@@ -88,7 +89,9 @@ def test_real_controller_exact_full_context_and_durable_replay(tmp_path, monkeyp
     restored = assembly.build_runpod_controller(**arguments)
     assert asyncio.run(restored.refresh(**request)) == result
     assert len(calls) == 1 and len(forwards) == 3
-    assert [e['phase'] for e in critic_events] == ['request_admission', 'request_sent', 'response_received']
+    # The open-ended service observes the durable boundaries (request sent, response persisted); admission is proven
+    # before dispatch and is not a separate observed phase as it was on the retired finite critic.
+    assert [e['phase'] for e in critic_events] == ['request_sent', 'response_persisted']
     assert controller_events
     restored_journal.close()
     bridge.book.close()

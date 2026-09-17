@@ -156,3 +156,40 @@ tests stub the receipt gate (as the probe tests already did) so the stop/retain 
 Family run (`test_granite*`, `test_sunday*`, `test_run_actual*`, `test_frankie_controller`, `test_actual_host*`, one
 pre-existing stall deselected): untouched tree 988 passed / 10 failed / 28 errors; this tree 994 passed / 10 failed /
 28 errors with the IDENTICAL failure and error set (the 28 errors are all `test_granite_coordinator.py` setup errors).
+
+## Completion 2026-09-17 (Greg: no relitigation; no 4096 artifacts left lying around)
+
+- `granite_runpod_service.py`: `RunpodConfig.context` defaults to and admits only `CONTEXT`; a finite `request_timeout`
+  is refused (the existing "long context requires open-ended transport" rule, now unconditional). The finite direct_v1
+  critic body in `RunpodShadowService._critique` (one bounded HTTPS exchange under a request timeout: the smoke
+  transport) is replaced by an explicit refusal; the open-ended and durable-jobs subclasses carry the live paths. Six
+  imports only that body used are removed. The base class stays because `OpenEndedRunpodService` subclasses it and
+  because the disabled service is built from it.
+- `granite_runpod_controller.build_runpod_controller` gains a `spool_directory` passthrough so it can assemble the
+  open-ended critic (it could only ever build the finite one before; no non-test caller).
+- `runpod_cloud_admission.json` (the real 4096-context smoke admission receipt) is DELETED and `ADMISSION_SHA` removed;
+  `granite_runpod_cloud.controller` (the bounded smoke launch) refuses at entry before reading any intent or touching the
+  provider. The workflow `.github/workflows/granite_runpod_cloud_smoke.yml` still exists (push/dispatch only) and would
+  now fail closed at that refusal; deleting it is Greg's call (standing rule: no workflow changes without him).
+- Tests: `test_granite_runpod_service.py` rewritten around the surviving surface (config refusals, base-critic
+  refusal, runtime binding, config hash without credentials, the config-free HTTPS bounds test); its 15 finite-critic
+  cases are gone because the transport they drove is gone, and their behaviours on the live paths are covered by
+  `test_granite_open_ended_service.py` and `test_granite_durable_job_client.py`. Finite-hash pin tests in the
+  open-ended, durable and long-context files now assert the open-ended hash and the refusals. The controller tests run
+  on the open-ended critic and assert its two observed phases (`request_sent`, `response_persisted`).
+- Family run (same command as above): 981 passed / 8 failed / 28 errors; nothing introduced against the untouched
+  baseline; the only two baseline failures no longer present are the two retired finite-transport tests.
+
+Prefix / reducer-stack verification (Greg: "find the prefixes for the first run; the gold standard"): the 19 prefixes
+live at `sunday_20260915_package/FB/actual-prefixes/` (00 witness; 01-18 packet-seed + receipt + witness;
+`full19-witnesses.json`). Each seed selects `TOP_T_CTX_BY_RECEIVE_TIME_AND_CURSOR` with 4,096 context cursors,
+`derivable: true`, bound to the compact parent (569,667,584 bytes). The compact journal of the first run: 57,027 records
+= 114,054 INPUT/APPLIED entries -> 7,129 gzip blocks of at most 16 entries, codec 20.9x, verified in 715.2 s wall
+(50.4 s parent CPU + 2,079 s worker CPU on CPUs 1-3) in GitHub run 34962256086 (receipt in
+`outputs/frankie-boss/20260915/reduction-stack/runs/34962256086/`). The number Greg recalled as "about 1,200 boxes"
+does not appear in any receipt; 7,129 blocks is the recorded figure. On this tree, `build_remaining_sunday_prefixes.py`,
+`compact_journal_snapshot.py`, `compact_conformance_reader.py`, `frankie_journal_reader.py`, `journal_stack_execution.py`,
+`context_session.py`, `operations/run_actual_sunday.py` and `operations/run_journal_stack.py` are blob-identical to the
+first run's runtime pin `9a8f3f46`. Only `compact_journal.py` (+46/-4), `prepared_context_cache.py` (+22/-7) and
+`c15_journal.py` (+24/-11) differ, all from the later reduction-stack work and all pinned byte-identical in output by
+`tests/test_reduction_stack_equivalence.py`. Nothing in the prefix machinery was changed or needs reverting.

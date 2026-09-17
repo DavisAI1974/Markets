@@ -100,20 +100,9 @@ def test_native_request_gate_depends_on_service_context_not_encoding(encoding):
     with pytest.raises(ValueError):native.prepare_critic_request(Context(),service_context=8192,**kwargs)
 
 
-def test_finite_worker_preserves_typed_incomplete_error(tmp_path,monkeypatch):
-    from research.kalshi.frankie_boss.granite_shadow import IncompleteModelOutput, ShadowRequest, _serve_request
+def test_finite_worker_is_retired_with_the_smoke_context(tmp_path):
+    # The typed incomplete-output alert on the live durable path is covered by
+    # test_capacity_alert_retains_usage_and_propagates_without_redispatch above.
     from research.kalshi.frankie_boss.tests.test_granite_open_ended_service import fixture
-    raw=service._json(dict(object='chat.completion',model='granite42-smoke',choices=[dict(index=0,finish_reason='length',message=dict(role='assistant',content='partial'))])).encode()
-    async def route(snapshot,identity,*,transport,**kwargs):
-        req=ShadowRequest('typed-finite',identity,'{}','c'*64,'unchanged prompt',1)
-        return await _serve_request(req,None,transport,lambda *a:pytest.fail('partial scoring forbidden'))
-    monkeypatch.setattr(service,'serve_context',route)
-    events=[];old,_=fixture(tmp_path,lambda *a:(200,raw))
-    startup=json.loads(old.identity.runtime_versions)
-    runtime=dict(outcome='service_ready',pod_id='test123',model='granite42-smoke',runtime=dict(startup=dict(startup=startup)))
-    critic=service.build_runpod_service(enabled=True,config=replace(old._config,request_timeout=1),
-        identity=old.identity,runtime_receipt=runtime,api_key=old._key,admit_request=old._admit,
-        exchange=old._exchange,event=events.append)
-    with pytest.raises(IncompleteModelOutput) as failure:asyncio.run(critic._critique(None,'typed-finite','native_v1',None))
-    assert failure.value.details['usage_counts']=={}
-    assert any(row.get('error_type')=='IncompleteModelOutput' for row in events)
+    old,_=fixture(tmp_path,lambda *a:(200,b''))
+    with pytest.raises(ValueError,match='open-ended'):replace(old._config,request_timeout=1)

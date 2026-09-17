@@ -6,9 +6,17 @@
 - **The Granite 4,096-token context is RETIRED. Remove `4096` from ALL Granite-related code**: the `service_context` /
   `CONTEXT` / `max_model_len` defaults, every `(4096, 131072)` allowlist, the 1,200-output ceiling tied to it, and the
   retained-lifecycle resume gate. The only Granite context is 131,072 with output = remaining context and the
-  incomplete-output alert (`IncompleteModelOutput`, `output-incomplete.json`). **DONE 2026-09-17 for 12 of 13 files**
-  (record + behaviour changes in `research/kalshi/frankie_boss/CLAUDE_RECONCILIATION_20260916.md`); the one holdout is
-  `RunpodConfig` in `granite_runpod_service.py`, pending Greg's call on retiring the finite-timeout smoke transport.
+  incomplete-output alert (`IncompleteModelOutput`, `output-incomplete.json`). **DONE 2026-09-17, all 13 files** (record +
+  behaviour changes in `research/kalshi/frankie_boss/CLAUDE_RECONCILIATION_20260916.md`). Retired with it, on Greg's
+  'no relitigation, no artifacts lying around': the finite-timeout direct Runpod critic (RunpodConfig admits only
+  open-ended), the bounded cloud smoke launch controller, and the pinned 4096 smoke admission receipt (deleted).
+  The only 4096 literals left in Granite code are two BYTE bounds named as bytes and the retirement messages.
+- **The first run's reducer stack and prefixes are the GOLD STANDARD for ingestion (Greg, 2026-09-17)**: 57,027 records
+  = 114,054 INPUT/APPLIED entries -> 7,129 gzip blocks of 16 entries (20.9x), verified in 715 s wall on GitHub run
+  34962256086 (parent + 3 affinity-bound workers); 19 prefixes (`sunday_20260915_package/FB/actual-prefixes/`), each
+  seed = the top T_CTX rows by receive time and cursor, `derivable: true`. Verified 2026-09-17: the prefix builder,
+  snapshot, conformance reader, journal reader, stack execution and both Sunday operations scripts on the integrated
+  tree are byte-identical to the first run's runtime pin `9a8f3f46`. Never rebuild these; change dates only.
 - **The native row context `T_CTX = 4096` is a provisional value** (its own comment says so). Greg has retired the
   4,096-row cycle in prose at least three times; it was never changed in code, so every token projection re-derives it.
   Do NOT quote projections at 4,096 rows. The replacement row count is Greg's modelling call and is still pending.

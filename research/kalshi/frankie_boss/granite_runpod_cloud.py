@@ -21,7 +21,6 @@ from . import granite_cloud_resume as resume
 
 BASE = 'b1d4eba5d945e6ef717737a0f08bedec0a982e89'
 BUNDLE_SHA = 'df88dabe6975c7fedc52dd1264273aea8cb4e2da2c0e02a7518fff1402a1e9e5'
-ADMISSION_SHA = '3af163e3732cc0fc586164a4f5981870dfdbadb0616393d64506fe5557b5ef7c'
 TOTAL_SECONDS = 1800
 PRIOR_STAGING_RUN = '34924522636'
 ROOT = Path(__file__).parent
@@ -366,13 +365,15 @@ def publish_service(journal, pod_id, intent, records):
 
 
 def controller(journal, api):
+    # The bounded cloud smoke launch was built on the 4,096-token smoke context and its pinned smoke admission
+    # receipt. Both are retired (Greg, 2026-09-16): the receipt artifact is deleted and this entry refuses before
+    # reading any intent or touching the provider. The retained host path is the only Granite launch route.
+    raise ValueError('bounded smoke launch retired with the 4096 context; use the retained host path')
     if os.environ['GITHUB_RUN_ATTEMPT'] != '1':
         raise ValueError('controller rerun refused')
     if journal.get('intent.json') is not None:
         raise ValueError('launch intent already consumed')
-    admitted_raw = (ROOT / 'runpod_cloud_admission.json').read_bytes()
-    admitted = artifacts.strict_json(admitted_raw)
-    admission.validate_receipt(admitted, ADMISSION_SHA)
+    admitted = None
     until = time.time() + 120
     while time.time() < until:
         ready = journal.get('watchdog-ready.json')

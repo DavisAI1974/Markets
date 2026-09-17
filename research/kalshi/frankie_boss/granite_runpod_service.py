@@ -1,6 +1,4 @@
 """Exact, per-request-admitted Granite critic transport; no allocation or retries."""
-import asyncio
-import base64
 from dataclasses import asdict, dataclass
 import hashlib
 import http.client
@@ -11,11 +9,11 @@ import ssl
 import threading
 import time
 
-from .granite_context_route import serve_context
 from .granite_runpod_admission import TOKENIZER_VERSIONS
+from .granite_runpod_admission import CONTEXT
 from .granite_runpod_probe import _remaining, _shutdown
-from .granite_sagemaker import SageMakerReceipt, _final_text, _hash, _json
-from .granite_shadow import GraniteIdentity, ShadowResponse, IncompleteModelOutput
+from .granite_sagemaker import _hash, _json
+from .granite_shadow import GraniteIdentity, IncompleteModelOutput
 
 MAX_REQUEST = 1024 * 1024
 MAX_RESPONSE = 4 * 1024 * 1024
@@ -28,7 +26,7 @@ class RunpodConfig:
     served_model_name: str
     request_timeout: float | None
     runtime_sha256: str
-    context: int = 4096
+    context: int = CONTEXT
     transport_protocol: str = 'direct_v1'
 
     def __post_init__(self):
@@ -41,9 +39,9 @@ class RunpodConfig:
         if self.request_timeout is not None and (type(self.request_timeout) not in (int, float)
                 or not math.isfinite(self.request_timeout) or not 0 < self.request_timeout <= 80):
             raise ValueError('request timeout must be positive and at most 80 seconds')
-        if type(self.context) is not int or self.context not in (4096, 131072):
-            raise ValueError('explicit supported 4096 or 131072 context required')
-        if self.context == 131072 and self.request_timeout is not None:
+        if type(self.context) is not int or self.context != CONTEXT:
+            raise ValueError('explicit supported 131072 context required')
+        if self.request_timeout is not None:
             raise ValueError('long-context candidate requires open-ended transport')
         if type(self.runtime_sha256) is not str or not re.fullmatch('[0-9a-f]{64}', self.runtime_sha256):
             raise ValueError('independently trusted runtime receipt hash required')
@@ -166,7 +164,7 @@ class RunpodShadowService:
             config.__post_init__()
             identity.__post_init__()
             if (identity.thinking or identity.quantization != 'none' or identity.weights_sha is not None
-                    or identity.max_tokens > (config.context if config.context == 131072 else 1200)):
+                    or identity.max_tokens > config.context):
                 raise ValueError('identity differs from pinned proxy/runtime capabilities')
             if not (getattr(self,'_recovery_only',False) and api_key is None) and (type(api_key) is not str or not re.fullmatch('[A-Za-z0-9_-]{32,256}', api_key)):
                 raise ValueError('private proxy credential required')
@@ -206,102 +204,10 @@ class RunpodShadowService:
     async def _critique(self, snapshot, request_id, encoding, max_prompt_bytes):
         if not self.enabled:
             return None
-        config_hash, config, identity = self.config_hash, self._config, self.identity
-        evidence = {'provider_json': None, 'error_type': None}
-
-        async def transport(request):
-            if request.identity != identity or request.timeout_seconds != config.request_timeout:
-                raise ValueError('foreign critic request')
-            if not self._busy.acquire(blocking=False):
-                evidence['error_type'] = 'Busy'
-                raise RuntimeError('underlying Runpod call still in flight')
-            loop = asyncio.get_running_loop()
-            future = loop.create_future()
-            started = time.monotonic()
-
-            def event(phase, admitted=None, status=None, error=None):
-                if self._event is not None:
-                    try:
-                        self._event(dict(phase=phase, request_hash=request.request_hash,
-                            elapsed_seconds=max(0, time.monotonic()-started),
-                            input_tokens=admitted['input_tokens'] if admitted else None,
-                            output_tokens=admitted['output_tokens'] if admitted else None,
-                            http_status=status, error_type=error))
-                    except Exception:
-                        pass  # Observation cannot trigger a retry or change acceptance.
-
-            def deliver(result, error):
-                if not future.done():
-                    if error is None:
-                        future.set_result(result)
-                    else:
-                        future.set_exception(error)
-
-            def work():
-                result = error = admitted = status = None
-                try:
-                    deadline = started + config.request_timeout
-                    body = _json(dict(model=config.served_model_name,
-                        messages=[dict(role='user', content=request.prompt_text)],
-                        temperature=identity.temperature, max_tokens=identity.max_tokens,
-                        stream=False, chat_template_kwargs=dict(enable_thinking=False))).encode()
-                    if len(body) > MAX_REQUEST:
-                        raise ValueError('exact request exceeds proxy byte capacity')
-                    event('request_admission')
-                    admitted = _admission(self._admit(body), body, config, identity)
-                    _remaining(deadline)
-                    event('request_sent', admitted)
-                    status, raw = self._exchange(config.pod_id, 'POST', '/v1/chat/completions',
-                                                body, self._key, _remaining(deadline))
-                    if type(status) is not int or not 100 <= status <= 599 or type(raw) is not bytes or len(raw) > MAX_RESPONSE:
-                        raise ValueError('invalid or oversized provider response')
-                    decoded = raw.decode('utf-8', errors='replace')
-                    unescaped = re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m[1], 16)), decoded)
-                    if self._key in unescaped:
-                        raise ValueError('provider echoed private credential')
-                    evidence['provider_json'] = _json(dict(response={'HTTPStatusCode': status},
-                        body_base64=base64.b64encode(raw).decode('ascii'), admission=admitted))
-                    event('response_received', admitted, status)
-                    _remaining(deadline)
-                    if status != 200:
-                        raise ValueError('provider HTTP failure')
-                    result = ShadowResponse(request.request_hash, identity.identity_hash,
-                                            _final_text(raw, config.served_model_name))
-                except Exception as exc:
-                    evidence['error_type'] = _error_type(exc)
-                    event('request_failed', admitted,
-                          status if type(status) is int and 100 <= status <= 599 else None,
-                          evidence['error_type'])
-                    error = exc if isinstance(exc, IncompleteModelOutput) else RuntimeError('Runpod critic request failed')
-                finally:
-                    self._busy.release()
-                    try:
-                        loop.call_soon_threadsafe(deliver, result, error)
-                    except RuntimeError:
-                        pass
-
-            try:
-                threading.Thread(target=work, daemon=True, name='granite-runpod-service').start()
-            except Exception:
-                self._busy.release()
-                raise
-            return await future
-
-        shadow = await serve_context(snapshot, identity, context_encoding=encoding,
-            request_id=request_id, timeout_seconds=config.request_timeout,
-            transport=transport, max_prompt_bytes=max_prompt_bytes)
-        if shadow.status == 'timeout':
-            evidence['error_type'] = 'TimeoutError'
-            if self._event is not None:
-                try:
-                    self._event(dict(phase='request_failed', request_hash=shadow.request.request_hash,
-                        elapsed_seconds=config.request_timeout, input_tokens=None, output_tokens=None,
-                        http_status=None, error_type='TimeoutError'))
-                except Exception:
-                    pass
-        return SageMakerReceipt(shadow, config_hash,
-            _hash(dict(config_hash=config_hash, request_hash=shadow.request.request_hash)),
-            evidence['provider_json'], evidence['error_type'])
+        # The finite direct_v1 critic (one bounded HTTPS exchange under a request timeout) was the 4,096-token smoke
+        # transport. RunpodConfig no longer admits a finite request_timeout, so an enabled base service cannot be
+        # built; the open-ended and durable-jobs subclasses carry the live request paths (Greg, 2026-09-16).
+        raise ValueError('finite direct Runpod critic retired with the 4096 smoke context; use the open-ended or durable jobs service')
 
 
 def build_runpod_service(*, enabled=False, config=None, identity=None, api_key=None,

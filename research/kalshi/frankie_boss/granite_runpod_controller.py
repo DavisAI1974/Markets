@@ -6,7 +6,8 @@ def build_runpod_controller(*, enabled=False, legacy=None, bridge=None, journal=
                             expected_critic_identity_hash=None, config=None, identity=None,
                             runtime_receipt=None, admit_request=None, api_key=None,
                             exchange=None, event=None, controller_event=None,
-                            context_encoding='native_v1'):
+                            context_encoding='native_v1',
+                            spool_directory=None):
     """Return the existing controller without refreshing or allocating resources.
 
     The caller supplies its real native bridge and durable controller journal,
@@ -25,7 +26,7 @@ def build_runpod_controller(*, enabled=False, legacy=None, bridge=None, journal=
     from .granite_runpod_service import build_runpod_service
     critic = build_runpod_service(enabled=True, config=config, identity=identity,
         runtime_receipt=runtime_receipt, admit_request=admit_request, api_key=api_key,
-        exchange=exchange, event=event)
+        exchange=exchange, event=event, spool_directory=spool_directory)
     return FrankieForecastController(enabled=True, bridge=bridge, journal=journal,
         critic=critic, expected_native_hash=expected_native_hash,
         expected_critic_config_hash=expected_critic_config_hash,

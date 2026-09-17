@@ -19,14 +19,14 @@ KEY='synthetic_private_'+'x'*40
 
 def fixture(tmp_path,exchange):
     startup=dict(schema='GRANITE_STARTUP_RUNTIME_V1',mount=dict(manifest_sha256='a'*64),
-        environment=dict(GRANITE_MAX_MODEL_LEN='4096',GRANITE_SERVED_MODEL='granite42-smoke'),
+        environment=dict(GRANITE_MAX_MODEL_LEN='131072',GRANITE_SERVED_MODEL='granite42-smoke'),
         runtime=dict(packages={'transformers':'5.8.0','tokenizers':'0.22.2'}))
     runtime=dict(outcome='service_ready',pod_id='test123',model='granite42-smoke',runtime=dict(startup=dict(startup=startup)))
     route=context_route('compact_v1')
     identity=GraniteIdentity('a'*64,None,'b'*64,'none',finite._json(startup),False,0,1200,
         hashlib.sha256(route.system_text.encode()).hexdigest(),SCHEMA_VERSION,route.parser_code_hash(),None)
     config=finite.RunpodConfig('test123','granite42-smoke',None,finite._hash(runtime))
-    def admit(body):return dict(request_sha256=hashlib.sha256(body).hexdigest(),input_tokens=10,output_tokens=1200,context=4096,tokenizer_sha256='b'*64)
+    def admit(body):return dict(request_sha256=hashlib.sha256(body).hexdigest(),input_tokens=10,output_tokens=1200,context=131072,tokenizer_sha256='b'*64)
     service=finite.build_runpod_service(enabled=True,config=config,identity=identity,runtime_receipt=runtime,
         api_key=KEY,admit_request=admit,exchange=exchange,spool_directory=tmp_path)
     return service,ShadowRequest('same-attempt',identity,'snapshot','c'*64,'actual synthetic prompt',None)
@@ -37,12 +37,13 @@ def raw_response():
         message=dict(role='assistant',content='retained result'))])).encode()
 
 
-def test_explicit_mode_preserves_finite_config_hash():
-    config=finite.RunpodConfig('test123','granite42-smoke',80,'a'*64)
-    old=finite._hash(dict(schema='GRANITE_RUNPOD_SERVICE_V1',**asdict(config),prompt_mode='exact_user_text',
+def test_finite_mode_is_retired_and_the_open_ended_hash_is_stable():
+    with pytest.raises(ValueError,match='open-ended'):finite.RunpodConfig('test123','granite42-smoke',80,'a'*64)
+    config=finite.RunpodConfig('test123','granite42-smoke',None,'a'*64)
+    fields=asdict(config);fields.pop('transport_protocol')
+    expected=finite._hash(dict(schema='GRANITE_RUNPOD_OPEN_ENDED_V1',**fields,prompt_mode='exact_user_text',
         enable_thinking=False,stream=False,max_request_bytes=finite.MAX_REQUEST,max_response_bytes=finite.MAX_RESPONSE,total_max_attempts=1))
-    assert config.config_hash==old
-    assert finite.RunpodConfig('test123','granite42-smoke',None,'a'*64).config_hash!=old
+    assert config.config_hash==expected and config.context==131072
     with pytest.raises(ValueError):finite.RunpodConfig('test123','granite42-smoke',float('inf'),'a'*64)
 
 

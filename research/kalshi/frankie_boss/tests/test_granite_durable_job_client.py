@@ -83,12 +83,13 @@ def test_exact_result_witness_mismatch_stays_pending_without_outcome(tmp_path):
     assert not list(tmp_path.glob('*/outcome.json'))
 
 
-def test_legacy_default_hash_omits_new_protocol_field():
-    config=service.RunpodConfig('test123','granite42-smoke',80,'a'*64)
-    expected=service._hash(dict(schema='GRANITE_RUNPOD_SERVICE_V1',pod_id='test123',served_model_name='granite42-smoke',
-        request_timeout=80,runtime_sha256='a'*64,context=4096,prompt_mode='exact_user_text',enable_thinking=False,stream=False,
+def test_default_direct_hash_omits_the_protocol_field_and_carries_the_only_context():
+    config=service.RunpodConfig('test123','granite42-smoke',None,'a'*64)
+    expected=service._hash(dict(schema='GRANITE_RUNPOD_OPEN_ENDED_V1',pod_id='test123',served_model_name='granite42-smoke',
+        request_timeout=None,runtime_sha256='a'*64,context=131072,prompt_mode='exact_user_text',enable_thinking=False,stream=False,
         max_request_bytes=service.MAX_REQUEST,max_response_bytes=service.MAX_RESPONSE,total_max_attempts=1))
     assert config.config_hash==expected
+    with pytest.raises(ValueError,match='open-ended'):service.RunpodConfig('test123','granite42-smoke',80,'a'*64)
 
 
 def test_predispatch_connect_failure_queries_before_create_and_transient_get_recovers(tmp_path,monkeypatch):

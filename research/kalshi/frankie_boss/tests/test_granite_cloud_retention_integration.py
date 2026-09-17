@@ -113,57 +113,18 @@ def test_capture_saves_safe_local_evidence_before_s3_write_failure(monkeypatch, 
     assert 'PRIVATE' not in (tmp_path / 'diagnostics.json').read_text()
 
 
-def test_controller_provider_failure_stops_retains_and_captures_without_delete(monkeypatch, tmp_path):
-    clock = [1000]
-    # The pinned smoke admission on disk records the retired 4096 context, so the real gate refuses it (pinned by
-    # the test below); the lifecycle under test starts after that gate, which sibling probe tests stub the same way.
-    monkeypatch.setattr(cloud.admission, 'validate_receipt', lambda value, digest: cloud.admission.request_bytes())
+def test_controller_launch_is_retired_and_never_reaches_the_provider(monkeypatch, tmp_path):
+    # Formerly the provider-failure stop/retain lifecycle through the bounded smoke controller. That launch route is
+    # retired with the 4,096-token smoke context; the stop/retain lifecycle stays covered by the control and retained
+    # host tests. The controller must refuse before touching the journal, the provider or the bootstrap stage.
     monkeypatch.setattr(cloud, 'OUT', tmp_path)
-    monkeypatch.setattr(cloud.time, 'time', lambda: clock[0])
-    monkeypatch.setattr(cloud.secrets, 'token_hex', lambda _: 'a' * 32)
-    monkeypatch.setattr(cloud.secrets, 'token_urlsafe', lambda _: 'PRIVATE')
     monkeypatch.setenv('GITHUB_RUN_ATTEMPT', '1')
-    rows = [{'path': name, 'size': 1, 'sha256': '0' * 64} for name in cloud.package.FILES]
-    monkeypatch.setattr(cloud, 'stage_bootstrap', lambda _: ({'files': rows}, {'private': 'PRIVATE'}))
-    monkeypatch.setattr(cloud, 'startup_logs', lambda *args: pytest.fail('GET failed before log read'))
+    monkeypatch.setattr(cloud, 'stage_bootstrap', lambda _: pytest.fail('retired launch must not stage'))
     class Journal:
-        bucket = 'expected-bucket'
-        records = {}
-        def get(self, name):
-            if name == 'watchdog-ready.json':
-                return {'at': clock[0]}
-            if name == 'armed.json':
-                return {'at': clock[0], 'intent_sha256': hashlib.sha256(cloud.canonical(self.records['intent.json'])).hexdigest()}
-            return self.records.get(name)
-        def put(self, name, value, **kwargs):
-            assert 'PRIVATE' not in json.dumps(value)
-            self.records[name] = copy.deepcopy(value)
-    class API(RetainedAPI):
-        failed = False
-        def request(self, method, path, body=None):
-            if method == 'POST' and path == '/v2/pods':
-                self.calls.append((clock[0], method, path, None))
-                self.pod['env'] = copy.deepcopy(body['env'])
-                return copy.deepcopy(self.pod)
-            if method == 'GET' and not self.failed:
-                self.failed = True
-                self.calls.append((clock[0], method, path, None))
-                raise cloud.control.ProviderError(503)
-            return super().request(method, path, body)
-    api, journal = API(clock), Journal()
-    with pytest.raises(cloud.control.ProviderError):
-        cloud.controller(journal, api)
-    assert journal.records['intent.json']['deadline'] == 2800
-    assert journal.records['intent.json']['cleanup_mode'] == 'stop_retain'
-    assert api.pod['status'] == 'EXITED'
-    assert journal.records['controller-cleanup.json']['status'] == 'confirmed_stopped'
-    info = json.loads((tmp_path / 'pod-info.json').read_text())
-    assert info['pod']['status'] == 'EXITED'
-    assert resume.validate_resume(info, api.pod, manifest()) == info
-    assert not (tmp_path / 'service-ready.json').exists()
-    assert all('PRIVATE' not in path.read_text() for path in tmp_path.glob('*.json'))
-
-
-@pytest.mark.parametrize('bad_status', ['confirmed_absent', 'stop_pending', 'absent_in_inventory', 'unresolved'])
-def test_terminate_or_pending_receipts_cannot_confirm_retention(bad_status):
-    assert not cloud.cleanup_confirmed({'status': bad_status}, launch_intent())
+        def get(self, name): pytest.fail('retired launch must not read the journal')
+        def put(self, name, value, **kwargs): pytest.fail('retired launch must not write the journal')
+    class API:
+        def request(self, *args, **kwargs): pytest.fail('retired launch must not call the provider')
+    with pytest.raises(ValueError, match='retired with the 4096 context'):
+        cloud.controller(Journal(), API())
+    assert not (tmp_path / 'pod-info.json').exists() and not (tmp_path / 'service-ready.json').exists()

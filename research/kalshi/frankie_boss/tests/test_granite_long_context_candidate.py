@@ -8,12 +8,13 @@ from test_granite_startup import runtime_fixture
 from research.kalshi.frankie_boss.granite_runpod_service import RunpodConfig
 
 
-def test_explicit_open_ended_long_candidate_preserves_legacy_finite_hash():
-    legacy=RunpodConfig('retainedpod','granite42',60,'a'*64)
-    assert legacy.config_hash=='7bd357cc175fc4bef45232268f0b1ba8ee26e385799845bc4a6c1b6f0db72b3b'
-    candidate=RunpodConfig('retainedpod','granite42',None,'a'*64,131072)
-    assert candidate.config_hash!=legacy.config_hash
+def test_long_candidate_is_open_ended_only_and_the_smoke_context_is_refused():
+    with pytest.raises(ValueError,match='open-ended'):RunpodConfig('retainedpod','granite42',60,'a'*64)
+    candidate=RunpodConfig('retainedpod','granite42',None,'a'*64)
+    assert candidate.context==131072
+    assert candidate.config_hash==RunpodConfig('retainedpod','granite42',None,'a'*64,131072).config_hash
     with pytest.raises(ValueError):RunpodConfig('retainedpod','granite42',60,'a'*64,131072)
+    with pytest.raises(ValueError,match='131072'):RunpodConfig('retainedpod','granite42',None,'a'*64,4096)
 
 
 @pytest.mark.parametrize('length',[8192,65536,131073])
