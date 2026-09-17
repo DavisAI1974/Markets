@@ -312,3 +312,38 @@ revert 96 to 16 believing it is protecting the gold standard.
 per-partition overhead, but the per-entry work (canonical re-serialisation, per-entry sha256, gzip level 6) has not
 been profiled - and it cannot be profiled here, because the real bundle is 11.7 GB behind S3. The next measured run
 gives the new per-record number; if it has not moved much, that profile is the next job.
+
+
+### Greg, same session: 1,189 IS the gold standard for ingestion going forward
+
+*"That 1200 was the thing that I thought I was calling the gold standard of what we want to do with the days we need
+to ingest going forward. It was 1189."* So the number is not a property of the first run to be reproduced - it is the
+TARGET for every day. Checked: `1189` appears nowhere in the repo or in any first-run artifact, so it was never a
+recorded figure; it is Greg's call.
+
+**Expressed as the standard rather than as a length.** `TARGET_BOXES = 1189`, and
+`partition_entries_for(count) = clamp(ceil(count/TARGET_BOXES), 1, MAX_ROWS)` derives the partition length per day.
+`MigratingConformanceReader(partition_entries=None)` (the default) derives it from `expected_count`; an explicit
+length is still accepted, which is how the equivalence test runs the same journal two ways.
+
+| day | entries | derived | boxes | |
+|---|---|---|---|---|
+| Sunday 20211003 | 114,054 | 96/box | **1,189** | the standard, exactly |
+| one weekday | 3,988,716 | 256/box | 15,581 | needs 3,355/box for 1,189; ceiling is 256 |
+| the 4-day block | 12,942,950 | 256/box | 50,559 | same ceiling |
+
+**THE STANDARD IS NOT REACHABLE ON A BIG DAY, AND THAT IS ARITHMETIC.** A box is bounded by `MAX_ROWS` (256 entries)
+and its bodies by `MAX_BYTES` (32 MiB); at ~100 KB per entry a 3,355-entry box would be ~350 MB. So a weekday clamps
+to the ceiling and takes the fewest boxes the format allows - still 2.7x fewer partitions than a flat 96 would give
+(15,581 vs 41,550), which is the direction the scale problem needs. **Getting a big day to 1,189 boxes requires
+changing the block format itself (both bounds), which is a separate decision and is NOT made here.**
+
+**Declared, not hidden**: a journal SMALLER than 1,189 entries cannot reach the standard and the derivation
+degenerates to one entry per box. No real session is near it - the smallest day we will ever see is the Sunday
+reopen at 114,054 entries, 96x above the boundary - so the regime is asserted in the test rather than papered over
+with an invented floor.
+
+`tests/test_partition_packing.py` 12/12: the real reader run over one fixture at 96 and at 16 yields identical
+projected entries, order, count, head hash and completion while only the box count moves; the derivation is checked
+at the three real magnitudes, bounded on both sides, and refuses a count that is not a positive integer. Reduction
+stack + single-pass + compact 26 passed; the workflow's standalone gate passes.

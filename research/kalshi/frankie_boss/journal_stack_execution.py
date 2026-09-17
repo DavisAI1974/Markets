@@ -61,24 +61,39 @@ def _convert_partition(path, start, length):
         cpu_seconds=time.process_time()-cpu, wall_seconds=time.perf_counter()-wall)
 
 
-# Entries per partition, and therefore per block: each partition becomes exactly one block, so this
-# alone sets the box count (114,054 first-run entries / 96 = 1,189 blocks; at the previous hardcoded
-# 16 it was 7,129). Greg's call, 2026-09-17: about 1,200 boxes. It also cuts the per-partition
-# overhead six-fold - every partition opens the source read-only and runs three queries, so 7,129
-# opens become 1,189. Bounded above by encode_block's MAX_ROWS (256) and by _convert_partition's
-# MAX_BYTES check, which refuses an oversized partition rather than writing one.
+# THE GOLD STANDARD FOR INGESTION GOING FORWARD (Greg, 2026-09-17): 1,189 boxes.
+#
+# Each partition becomes exactly one block, so the partition length alone sets the box count. It was
+# a hardcoded 16, which is the entire reason the first run produced 7,129 boxes; nobody had chosen
+# that size. The standard is now expressed as the BOX COUNT Greg called, and the length is derived
+# from it, so a day lands on 1,189 boxes wherever the format can hold them.
+#
+# It cannot always hold them, and that is arithmetic rather than a silent choice. A box is bounded
+# by MAX_ROWS entries, and its bodies by MAX_BYTES. The Sunday's 114,054 entries need 96 per box to
+# make 1,189 - comfortably inside both bounds. A weekday's ~3,988,716 would need ~3,355 per box,
+# thirteen times over MAX_ROWS, so it takes the largest box the format allows and lands on the
+# fewest boxes it can. Raising that ceiling is a block-format decision, not this one.
 #
 # CHANGING THIS CHANGES THE COMPACT JOURNAL'S BYTES AND sha256. The decoded entries, the count and
-# the head hash are invariant (test_partition_packing.py proves it), but the first run's
-# compact_sha256 19603159... no longer reproduces; a run under this value is a new baseline.
-PARTITION_ENTRIES = 96
+# the head hash are invariant (test_partition_packing.py proves it on a real run); the first run's
+# compact_sha256 19603159... no longer reproduces, and a run under this standard is a new baseline.
+TARGET_BOXES = 1189
+
+
+def partition_entries_for(count, *, target=TARGET_BOXES, ceiling=MAX_ROWS):
+    """Entries per partition, and therefore per box, for a journal of `count` entries."""
+    if type(count) is not int or count <= 0:
+        raise ValueError('positive entry count required')
+    return max(1, min(ceiling, -(-count // target)))
 
 
 class MigratingConformanceReader:
     def __init__(self, source, *, expected_count, expected_head_hash, output, worker_cpus, emit,
-                 partition_entries=PARTITION_ENTRIES):
+                 partition_entries=None):
         if not worker_cpus or len(set(worker_cpus)) != len(worker_cpus):
             raise ValueError('distinct dedicated worker CPUs required')
+        if partition_entries is None:                       # the standard, derived from this day's size
+            partition_entries = partition_entries_for(expected_count)
         if type(partition_entries) is not int or not 0 < partition_entries <= MAX_ROWS:
             raise ValueError('partition entries must be a positive count within the block row bound')
         self.partition_entries = partition_entries
