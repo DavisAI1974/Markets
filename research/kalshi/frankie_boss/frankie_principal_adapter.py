@@ -258,7 +258,7 @@ class FrankiePrincipalAdapter:
             'python': self.python, 'preparation': {k: str(v) for k, v in self.preparation.items()},
             'render': {k: str(v) for k, v in self.render.items()},
             'protected_files': self.protected_files, 'section_evidence': self.section_evidence,
-            'feedback_contract': self.feedback_contract, 'mechanism': 'AGENT_SESSION'})
+            'feedback_contract': self.feedback_contract, 'admission': self.admission, 'mechanism': 'AGENT_SESSION'})
 
     def _code(self):
         try:
