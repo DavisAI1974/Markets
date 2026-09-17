@@ -14,11 +14,35 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import time
+from research.kalshi.frankie_boss import frankie_principal_adapter
 from research.kalshi.frankie_boss import source_contract_runtime
 from research.kalshi.frankie_boss.dipole_classroom_final_review import FinalDipoleClassroomPrincipalAdapter, prepare_final_cycle
 from research.kalshi.frankie_boss.dipole_classroom_session import CORRECTION_REQUEST_SCHEMA
 from research.kalshi.frankie_boss.operations import run_actual_sunday as base
 INITIAL_REQUEST_SCHEMA="FRANKIE_BOSS_SESSION_REQUEST_V1"
+
+GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION = (
+    "Greg has a direct research question that Frankie himself must answer in the printed run analysis; "
+    "the host/assistant must not rank or substitute the answer. First, state whether earliest causal/prebirth "
+    "recognition remains your research target: predict the exhaustion before birth when the causal evidence "
+    "supports it, otherwise identify the earliest knowable point after formation. Next, evaluate the emerging "
+    "A/B/C Dipole-family interpretation as an authority question rather than a line-direction question: A has "
+    "looked like dominant/base authority, B more local/impulsive with weaker broader authority, and C more "
+    "transitional/broader-structure-related. State whether you want a NEW calculation now specifically to measure "
+    "whether authority persists, collapses, or transfers, or whether the existing calculations and evidence should "
+    "be tested first. If you want a new calculation, define what it must measure and why, but do not silently add or "
+    "authorize it. Then, from the full currently served/candidate 1,900+ data-point surface actually visible to you, "
+    "choose exactly five inputs/calculations you want historical data wired into FIRST for a grouped multi-day pass. "
+    "Choose the five yourself; do not accept an assistant-ranked list. For each of the five, give its exact available "
+    "field/calculation identity or path, the causal reason you chose it, how it bears on prebirth and/or authority "
+    "persistence/collapse/transfer, the historical depth/granularity you want for the initial grouped-day test, and "
+    "the observation that would make you keep it or reject it. This five-item selection is only the first historical "
+    "wiring tranche; the remaining 1,900+ surface stays available for later wiring if you still want it. Preserve all "
+    "records and the existing no-drop/no-truncation/no-averaging/no-smoothing/no-normalization evidence rules. Do not "
+    "change existing Frankie calculations or planes in answering this question. If the complete candidate inventory "
+    "needed to choose honestly is not model-visible in this session, say the five-item selection is BLOCKED and name "
+    "the exact missing inventory instead of guessing or inventing five."
+)
 
 def _load_json(path):return json.loads(Path(path).read_bytes())
 
@@ -96,4 +120,7 @@ class ClassroomActualHost(base.ActualHost):
 ActualHost=ClassroomActualHost;verified=base.verified;verified_json=base.verified_json;PreparationComplete=base.PreparationComplete;HostProbe=base.HostProbe;ReleasableHostLock=base.ReleasableHostLock;imports=base.imports
 
 def main():
+    frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION=(
+        frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION+" "+GREG_PREBIRTH_AUTHORITY_TOP5_QUESTION
+    )
     source_contract_runtime.DipoleClassroomPrincipalAdapter=FinalDipoleClassroomPrincipalAdapter;base.ActualHost=ActualHost;base.await_recorded_principal=await_recorded_principal;return base.main()
