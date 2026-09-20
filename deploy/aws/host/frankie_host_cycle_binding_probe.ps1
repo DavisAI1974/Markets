@@ -261,8 +261,8 @@ try:
         say('REPR host identity_hash =', repr(si['identity'].identity_hash))
         say('REPR pins identity_hash =', repr(pins['identity_hash']))
         say('line 843 REFUSES =', si['config'].config_hash != pins['config_hash'] or si['identity'].identity_hash != pins['identity_hash'])
-        say('REPR config   =', repr(si['config']))
-        say('REPR identity =', repr(si['identity']))
+        say('REPR config   =', repr(si['config'])[:400])
+        say('REPR identity =', repr(si['identity'])[:400])   # SSM caps output near 24 KB; the full runtime_versions dump hid section 7 (run 35518767510)
     except Exception as e:
         say('verified_service_inputs RAISED', type(e).__name__ + ':', e)
         say(traceback.format_exc())
