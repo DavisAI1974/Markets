@@ -420,3 +420,26 @@ evidence above is independent of that helper.
 Consequence: no configuration change can fix this; the host needs code at or after `c0749bc0`. That
 changes the pinned `boss_commit` and possibly the resume identity of the current run directory, so
 it is a run-identity decision, recorded here for Greg with the options in the session reply.
+
+### The two fixes, built (Greg: "I am giving you permission to do both things")
+
+Native side: `.github/workflows/frankie_host_advance.yml` + `deploy/aws/host/frankie_host_advance.ps1`
+move the host's tools checkout from `c9a86e74` to the declared frozen native runtime `96e26f7d`
+(which carries the request-id fix `c0749bc0`; between the two commits `run_actual_sunday.py`
+changes by that fix alone), refuse on a dirty tree, update only `host_runtime.boss_commit` in the
+sealed configuration with a dated backup of the file, verify the fix is present, and print a
+receipt. This is not a new pin: the handoff already declares 96e26f7d as the frozen runtime and the
+host was simply left behind it. The resume identity (`_STABLE_IDENTITY_FIELDS`) is runtime and
+platform only, with no code hash, so the existing run directory resumes.
+
+Pod side: `.github/workflows/frankie_refresh_bootstrap_urls.yml` +
+`operations/refresh_bootstrap_urls.py` implement runbook step 5 for URLs only: read the Pod's current
+`RP_BOOTSTRAP_URLS`, verify each referenced S3 object against the reviewed roster (size, sha256),
+presign the same bucket and key for 6 days (the validator allows up to 7), `PATCH /v2/pods/{id}` on
+`api.runpod.io` with every other environment value unchanged, read back and compare. Never prints a
+URL, key or environment value. The retained client refuses PATCH by design, so this is a separate
+narrow script. Both workflows are dispatch-only and start nothing.
+
+Order of operations from here: advance the host; refresh the URLs; re-dispatch the retained observer
+with the same three inputs (Pod start + readiness); deliver readiness and write the trigger;
+re-dispatch the day pipeline with the same inputs to resume at cycles.
