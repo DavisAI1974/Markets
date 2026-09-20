@@ -76,11 +76,9 @@ if ($stale.Count -eq 0) {
     Write-Output 'the batch binding matches the checkout; nothing is stale and nothing moves'
 } else {
     # 2. Move the code-pinned batch files aside. prefix-00-* is the first run's retained prefix: kept.
-    $candidates = @('remaining-prefix-binding.json', 'prefix-batch-02.json', 'remaining-prefix-progress.jsonl')
-    for ($index = 1; $index -lt [int]$CycleLimit; $index++) {
-        $tag = 'prefix-' + $index.ToString('00')
-        $candidates += @(($tag + '.sqlite'), ($tag + '-receipt.json'), ($tag + '-witness.json'), ($tag + '-packet-seed.json'))
-    }
+    # CycleLimit is refused unless it is 2, so the batch's only built prefix is prefix-01.
+    $candidates = @('remaining-prefix-binding.json', 'prefix-batch-02.json', 'remaining-prefix-progress.jsonl',
+        'prefix-01.sqlite', 'prefix-01-receipt.json', 'prefix-01-witness.json', 'prefix-01-packet-seed.json')
     $leaf = Split-Path $prefixes -Leaf
     $target = Join-Path (Join-Path (Split-Path $prefixes -Parent) 'superseded') ($leaf + '-' + $stamp + '-prefix-batch')
     foreach ($name in $candidates) {
@@ -121,7 +119,8 @@ if ($stale.Count -eq 0) {
     }
     $rebuilt = Get-Content $bindingPath -Raw | ConvertFrom-Json
     foreach ($pin in $pins) {
-        $value = if ($pin.name -like 'context_selection.*') { $rebuilt.context_selection.($pin.name.Substring(18)) } else { $rebuilt.($pin.name) }
+        $value = $rebuilt
+        foreach ($part in $pin.name.Split('.')) { $value = $value.$part }
         if ($value -ne (Sha (Join-Path $code $pin.file))) { throw ("rebuilt binding still differs from the checkout at " + $pin.name) }
     }
     # 4. The runner verifies the manifest by the configuration's witness: rewrite only that witness.

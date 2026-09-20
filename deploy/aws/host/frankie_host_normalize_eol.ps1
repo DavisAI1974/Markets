@@ -9,9 +9,10 @@
 # re-preparation. Reproduced byte for byte off the host: the CRLF-converted sources hash to the
 # host's parser_code_hash fcd6702a... and identity 6993d307...; the LF sources hash to the pins.
 #
-# What this does: sets core.autocrlf=false for THIS checkout only and rewrites the working tree
-# from the index (git checkout-index --force --all), which restores every tracked file to its
-# committed bytes. Nothing is deleted, no commit moves, no path is hand-edited. Refuses on a
+# What this does: sets core.autocrlf=false and core.eol=lf for THIS checkout only and re-checks out
+# the two hashed roots from HEAD (git rm --cached + git reset --hard; checkout-index rewrote nothing
+# on run 35514364576), which restores every tracked file under them to its committed bytes.
+# Nothing is deleted, no commit moves, no path is hand-edited. Refuses on a
 # dirty tree before and after. Counts the frankie_boss/refrag .py files carrying a CR byte before
 # and after (the three committed with CRLF stay as committed) and writes a receipt into the day
 # directory. Starts, stops and dispatches nothing. .gitattributes (-text on those globs) makes
@@ -30,8 +31,7 @@ if (-not (Test-Path $dayDirectory)) { throw "day directory missing: $dayDirector
 $dirty = & $git -C $ToolsRoot status --porcelain
 if ($dirty) { throw ("refusing: tools checkout is dirty:`n" + ($dirty -join "`n")) }
 $head = (& $git -C $ToolsRoot rev-parse HEAD).Trim()
-$autocrlfBefore = (& $git -C $ToolsRoot config --get core.autocrlf 2>$null)
-if (-not $autocrlfBefore) { $autocrlfBefore = (& $git -C $ToolsRoot config --global --get core.autocrlf 2>$null) }
+$autocrlfBefore = (& $git -C $ToolsRoot config --get core.autocrlf 2>$null)   # merges system, global and local scopes
 if (-not $autocrlfBefore) { $autocrlfBefore = 'unset' }
 
 function Count-CR([string]$root) {

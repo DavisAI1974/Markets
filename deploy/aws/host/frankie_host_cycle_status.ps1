@@ -38,5 +38,5 @@ if (Test-Path $cycle) {
 } else { Write-Output ("  absent: " + $cycle) }
 Write-Output "### run-directory progress"
 $progress = Join-Path $cfg.run_directory 'host-progress\progress.json'
-if (Test-Path $progress) { '  ' + (Get-Content $progress -Raw).Substring(0, [Math]::Min(600, (Get-Content $progress -Raw).Length)) }
+if (Test-Path $progress) { $text = Get-Content $progress -Raw; '  ' + $text.Substring(0, [Math]::Min(600, $text.Length)) }
 Write-Output '### done (read-only)'

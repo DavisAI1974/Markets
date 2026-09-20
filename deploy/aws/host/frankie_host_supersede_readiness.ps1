@@ -56,8 +56,7 @@ $moved = @()
 function Move-Recorded([string]$source, [string]$label) {
     if (-not (Test-Path $source)) { Write-Output ("  absent, skipped: " + $label); return }
     $item = Get-Item $source
-    $files = @()
-    if ($item.PSIsContainer) { $files = @(Get-ChildItem $source -Recurse -File) } else { $files = @($item) }
+    $files = if ($item.PSIsContainer) { @(Get-ChildItem $source -Recurse -File) } else { @($item) }
     $entries = @()
     foreach ($file in $files) {
         if ($file.Attributes -band [IO.FileAttributes]::ReparsePoint) { throw ("refusing: reparse point under " + $label) }

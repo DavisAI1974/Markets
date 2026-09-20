@@ -152,6 +152,7 @@ foreach ($relative in $candidates) {
     $destination = Join-Path $target $relative
     New-Item -ItemType Directory -Force -Path (Split-Path $destination -Parent) | Out-Null
     $item = Get-Item $source
+    $mtime = $item.LastWriteTimeUtc.ToString('s') + 'Z'   # read BEFORE the move: a directory (training-witnesses) recorded 1601 when read after it
     $digest = $null; $bytes = $null
     if (-not $item.PSIsContainer) {
         $digest = ([BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes($source)))).Replace('-', '').ToLower()
@@ -160,7 +161,7 @@ foreach ($relative in $candidates) {
     Move-Item -LiteralPath $source -Destination $destination
     if (Test-Path $source) { throw ("move left the source in place: " + $relative) }
     if (-not (Test-Path $destination)) { throw ("move lost the item: " + $relative) }
-    $moved += [ordered]@{ relative = $relative; destination = $destination; sha256 = $digest; bytes = $bytes; mtime_utc = $item.LastWriteTimeUtc.ToString('s') + 'Z' }
+    $moved += [ordered]@{ relative = $relative; destination = $destination; sha256 = $digest; bytes = $bytes; mtime_utc = $mtime }
     Write-Output ("  moved: " + $relative + "  sha256=" + $digest)
 }
 $receipt = [ordered]@{
