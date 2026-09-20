@@ -695,7 +695,23 @@ owner `transport`, `error_type ValueError`, 1.44 s after start, last status `{"s
 `run_actual_sunday.py` 812-843 (after the trigger read); the four candidate checks and the probe to
 name the real one are in `DROP_IN_CLAUDE_20260921.md`. `frankie_host_diag.yml` dispatched read-only.
 
-### State at close of this chat (2026-09-20, ~11:45Z)
+### Diag run 35508442554 (read-only, 11:39Z) narrows the cycles refusal
+
+Host `running`/SSM Online; `read_execution_trigger` returns on the real config (the request-id path is
+fine); the cycle-00 trigger exists with `service_pins_sha256 71129170...` and all readiness files present;
+the SSM credential reads OK. The host's own admitted witness (`host-ready-6d02c1fc....c15.json`) carries
+admission `{request_sha256, input_tokens 92439, output_tokens 38633, context 131072, tokenizer_sha256
+51e3c309...}` and it is EQUAL to `service-pins.admission` from the observer (checked key for key), so
+line 836 is ruled out. BUT that witness and its `host-preparation.c15.json` live under the 09-19 run
+directory `C:/Codex/Frankie-BOSS-20260919/actual-feedback-run/execution/cycle-00`, while the day
+pipeline's cycles stage runs with `RunRoot=C:/Codex/Frankie-BOSS-20260919/days` and `Day=20211003`. If
+the day directory carries its own `host-instance.c15.json` (a different uuid) or no
+`host-preparation.c15.json`, line 833 (`actual open run must follow this admitted live host instance`)
+or line 821 refuses in exactly this time. The probe must print: `actual-host-configuration.json
+run_directory`, the `host-instance.c15.json` instance_id in THAT directory, its cycle-00 listing, and
+the four comparisons with `repr`. The pipeline is not re-dispatched until that is on record.
+
+### State at close of this chat (2026-09-20, ~11:50Z)
 
 Pipeline run 35508198333 refused at cycles as above; root-causing it is the next chat's first job. Retained Pod `8vqdacl5t61rjx` RUNNING and adopted; `ycf4v6lmave6xw` EXITED and untouched;
 `hhxs2fk7511cz5` terminated on Greg's word. Host at `6b0b37fe`. Docs updated: `CLAUDE.md` (first

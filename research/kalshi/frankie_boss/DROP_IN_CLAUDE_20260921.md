@@ -24,11 +24,14 @@ the host). Candidates, in order of likelihood:
 3. `retained readiness differs from actual admission` (`retained_ready_signal`, an older host-ready record
    for this instance with different fields).
 4. line 843 `trusted host service pins differ` (config/identity hash after `verified_service_inputs`).
-**First job: a read-only host probe** in the style of `frankie_host_diag.ps1` section 1d that loads the
-delivered readiness and the host's own records and prints, with `repr`, each of those four comparisons
-and the real exception text. `frankie_host_diag.yml` was dispatched at ~11:45Z; read its output first
-(witness, trigger, cycles log). Do not re-dispatch the pipeline until the refusing check is named and
-fixed; every re-dispatch restarts the native host.
+Diag run 35508442554 already narrowed this (handoff, last section): candidate 2 is OUT (the observer's
+admission equals the host's, all five keys); the host witness `6d02c1fc...` and `host-preparation.c15.json`
+live under the 09-19 run directory `actual-feedback-run/execution/cycle-00`, while the cycles stage runs
+under `RunRoot=C:/Codex/Frankie-BOSS-20260919/days`, `Day=20211003`. **First job: a read-only host probe**
+(style: `frankie_host_diag.ps1` section 1d) that prints `actual-host-configuration.json run_directory`, the
+`host-instance.c15.json` instance_id in THAT directory, its cycle-00 listing, and the four comparisons
+with `repr` plus the real exception text. Do not re-dispatch the pipeline until the refusing check is
+named and fixed; every re-dispatch restarts the native host.
 
 ## Where everything is
 
