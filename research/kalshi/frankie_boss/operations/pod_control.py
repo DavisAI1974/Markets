@@ -3,6 +3,8 @@
     python research/kalshi/frankie_boss/operations/pod_control.py --pod ycf4v6lmave6xw --action inspect
     python research/kalshi/frankie_boss/operations/pod_control.py --pod ycf4v6lmave6xw --action start [--wait-seconds 300]
     python research/kalshi/frankie_boss/operations/pod_control.py --pod hhxs2fk7511cz5 --action terminate
+    python research/kalshi/frankie_boss/operations/pod_control.py --pod 8vqdacl5t61rjx --action restart
+        --wait-journal-key retained-granite/<request_sha256>/<generation>/retained-start-intent.json [--wait-seconds 900]
         [--retry-seconds 0]
 
 The retained observer (granite_retained_host prepare) submits POST /v2/pods/{id}/action {"action":"start"}
@@ -15,6 +17,12 @@ never our secret), polls the status transition, and prints a receipt line. It ne
 deletes anything, and it never prints an environment value. The one exception is --action terminate
 (Greg, 2026-09-20, for the stranded replacement hhxs2fk7511cz5): DELETE /v2/pods/{id} of an EXITED
 Pod that is NOT the retained Pod, confirmed by a 404 readback, with a receipt.
+
+--action restart is the adoption step for a RUNNING replacement: the retained observer's
+`observe_migrated_start` branch never starts the Pod and reads only container frames stamped after
+its own retained-startup record, so the container is restarted on the same host (the GPU stays
+allocated) once the observer has written the request's `retained-start-intent.json`, i.e. after it
+has validated the Pod and claimed the run. The key is polled in the private journal bucket.
 
 Run 35503440103 put the refusal on record: "There are not enough free GPUs on the host machine to
 start this pod." The Pod is pinned to its host by its pod volume, so the only remedy short of
@@ -69,7 +77,8 @@ def get_pod(key, pod_id):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pod', required=True)
-    parser.add_argument('--action', choices=('inspect', 'start', 'terminate'), default='inspect')
+    parser.add_argument('--action', choices=('inspect', 'start', 'terminate', 'restart'), default='inspect')
+    parser.add_argument('--wait-journal-key', default='')
     parser.add_argument('--wait-seconds', type=int, default=300)
     parser.add_argument('--retry-seconds', type=int, default=0)
     args = parser.parse_args()
@@ -80,6 +89,54 @@ def main():
     if args.action == 'inspect':
         print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_INSPECT_RECEIPT_V1', pod=args.pod,
                                           status=pod.get('status'), at=int(time.time()))))
+        return
+    if args.action == 'restart':
+        if args.pod != RETAINED_POD:
+            raise SystemExit('restart is only for the retained Pod')
+        if pod.get('status') != 'RUNNING' or not str(pod.get('name', '')).endswith('-migration'):
+            raise SystemExit('restart requires the RUNNING migrated Pod; status=%r' % (pod.get('status'),))
+        seen_at = None
+        if args.wait_journal_key:
+            import boto3
+            account = boto3.client('sts', region_name='us-east-1').get_caller_identity()['Account']
+            bucket = 'frankie-granite42-' + account + '-us-east-1'
+            s3 = boto3.client('s3', region_name='us-east-1')
+            deadline = time.time() + args.wait_seconds
+            while True:
+                try:
+                    head = s3.head_object(Bucket=bucket, Key=args.wait_journal_key)
+                    seen_at = time.time()
+                    print('JOURNAL_KEY_PRESENT %s last_modified=%s' % (args.wait_journal_key, head['LastModified'].isoformat()))
+                    break
+                except Exception as error:
+                    code = getattr(error, 'response', {}).get('Error', {}).get('Code')
+                    if code not in ('404', 'NoSuchKey', 'NotFound'):
+                        raise
+                if time.time() > deadline:
+                    print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_RESTART_RECEIPT_V1', pod=args.pod, outcome='journal_key_absent',
+                                                      journal_key=args.wait_journal_key, waited_seconds=args.wait_seconds)))
+                    raise SystemExit(2)
+                time.sleep(5)
+            pod = get_pod(key, args.pod)
+            if pod.get('status') != 'RUNNING':
+                raise SystemExit('Pod left RUNNING while waiting: %r' % (pod.get('status'),))
+        submitted_at = time.time()
+        status, data = control_call(key, 'POST', '/v2/pods/' + args.pod + '/action', {'action': 'restart'})
+        text = data[:2000].decode('utf-8', 'replace')
+        if status not in (200, 201, 204):
+            print('RESTART_REFUSED HTTP %d body=%s' % (status, text.strip()))
+            print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_RESTART_RECEIPT_V1', pod=args.pod, outcome='refused', http_status=status,
+                                              provider_body=text, journal_key=args.wait_journal_key, key_seen_at=seen_at)))
+            raise SystemExit(2)
+        transitions, last = [], None
+        for _ in range(12):
+            current = get_pod(key, args.pod).get('status')
+            if current != last:
+                transitions.append(dict(at=time.time(), status=current)); last = current
+            time.sleep(5)
+        print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_RESTART_RECEIPT_V1', pod=args.pod, outcome='accepted', http_status=status,
+                                          journal_key=args.wait_journal_key, key_seen_at=seen_at, submitted_at=submitted_at,
+                                          transitions=transitions, final_status=last)))
         return
     if args.action == 'terminate':
         if args.pod == RETAINED_POD:
