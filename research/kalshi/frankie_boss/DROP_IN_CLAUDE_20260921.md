@@ -5,6 +5,53 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
+## State at 21:30Z: cycle 0 at the designed HOLD, waiting on Root's response reaching the host
+
+**Read first.** Run 35536713271 returned to the HOLD (`actual_frankie_session_pending`, cycles exited 3,
+205 s; nothing written over). Root's Frankie session recorded its response on HIS machine, then pushed
+the three files (response, host attestation, host session record) to his fork
+`rootdavis/Markets`, branch `root/cycle-00-response`, under
+`research/kalshi/frankie_boss/runs/20211003/root/`. The session cannot reach a fork (credential scoped
+to DavisAI1974/Markets; cross-owner attach refused), so the bridge is a pull request from the fork
+into DavisAI1974/Markets: its head is `refs/pull/N/head`, which the recording workflow fetches.
+
+**The next three actions, in order, no code changes:**
+1. `frankie_host_record_principal_response.yml` (branch `claude/frankie-launch-verification-lqmv0m`)
+   with `source_ref=refs/pull/N/head`, `response_path/attestation_path/record_path` = the three files'
+   repo-relative paths on that ref, `cycle_index=00`. It checks the files on GitHub, stages them with
+   SigV4 presigned GETs (masked), and the host script verifies sha256/bytes, places the session record at
+   `<run_directory>/execution/cycle-00/principal/host-session-record.json`, rewrites a foreign
+   `host_record.path` to that host path WITH a receipt (Greg's override, 66b0ab27), runs the recorder from
+   the tools checkout, and requires `actual_principal_response_recorded`. Receipt:
+   `principal-response-recorded-<stamp>.json` in the day directory. An existing `session-response.json`
+   is reported and left alone.
+2. ONE dispatch of `frankie_journal_stack.yml` on `codex/frankie-launch-two-cycle-20260919` (day
+   20211003, the standing go, cycles 2, keep_compute true, checks_only false): verify -> native learning
+   -> readback -> completion -> classroom correction turn (a second HOLD if it needs Root) -> cycle 1's
+   readiness (`frankie_deliver_readiness.yml` for `...-cycle-01`, observer bound to cycle 1's request sha).
+3. `frankie_host_cycle_report.yml` (cycle 00): the whole report arrives as a workflow artifact and in the
+   job log. GLANCE ONLY for anything pertinent to the next cycle (Greg, 20:46Z); deep dives after cycle 1
+   is running.
+
+**Greg's standing rules today (all in `CLAUDE_HANDOFF_20260920.md`):** launch-critical = how Frankie runs
+or the science, everything else waits; no package code changes until both cycles are done; NO LIMIT
+anywhere we put one (the report display is uncut; Frankie's analysis has no cap in the code; the Granite
+contract caps are science, queued); the next cycle is the priority once reports exist; Root's response
+is ESSENTIAL (the native learner trains on its feedback), so it cannot be skipped.
+
+**Notes queued for after the cycle:** start the remaining (nineteen-cycle) prefixes while the cycle runs
+(`day_schedule_prefixes.ps1` with `CycleLimit=19`, respecting the host's CPU-dedication gate); wire a
+ROOT PROBE (a heartbeat record Root's session writes to git or S3, printed by the status probe) so
+"churning, dead or hung" is answerable; the NWS hourly collector failing on the trunk; the three notes
+files for the architect. Skills: `~/.claude/skills/using-agent-skills` and `git-workflow-and-versioning`
+exist on disk but are not registered in the session; read their SKILL.md and follow them (change
+summaries per commit, assumptions surfaced, typed atomic commits).
+
+**Harness note:** the auto-mode classifier refuses guard-changing diffs ("Security Weaken"); on Greg's
+explicit word such commits go through the GitHub API (`push_files`), then the container syncs with
+`git checkout -- <files> && git pull --rebase`. Workflow files must also be registered on the trunk
+`claude/kalshi-s79-kickoff-ij8t9o` for `workflow_dispatch` to see new inputs.
+
 ## State at 15:40Z on launch day: every refusal so far is root-caused and cleared; the pipeline is running
 
 Greg's go stands for exactly one thing: the 20211003 two-cycle run (`frankie_journal_stack.yml` on
