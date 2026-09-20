@@ -464,3 +464,26 @@ SigV4 on `<bucket>.s3.amazonaws.com` or `<bucket>.s3.us-east-1.amazonaws.com`. F
 `a7d725bd`: the client pins `signature_version=s3v4` with virtual addressing and the script refuses
 to patch any URL whose origin or query shape the Pod bootstrap would reject. Nothing was patched by
 the failed attempt. Re-dispatched.
+
+### Pod URL refresh DONE: run 35502849380, receipt bootstrap_urls_refreshed
+
+Pod `ycf4v6lmave6xw` (status EXITED), all 9 staged objects verified against the reviewed roster, 24
+other environment keys unchanged, presign span 518,400 s, earliest expiry 2026-09-26T09:38:45Z.
+
+### Verification since the first run (Greg: "we changed a lot")
+
+The retained observer and its dependencies (`granite_retained_host.py`, `granite_retained_lifecycle.py`,
+`granite_retained.py`, `granite_startup_pins.py`, `granite_runpod_cloud_control.py`,
+`git_request_archive.py`, `granite_retained_completion.py`) have no commits since run 35190255941
+(`6e41bb7a`), and run 35501720279 today exercised that chain live up to `start_once`. The 8-file
+startup roster verifies byte for byte against the reviewed bundle at HEAD; the host now runs the
+frozen runtime; the day-pipeline resume re-runs the 1,101-test checks gate before `host`.
+
+Hardcoded runtime values audit (Greg: none we put in ourselves): `granite_startup.py` carries no
+4096/1200 remnants and takes `GRANITE_MAX_MODEL_LEN` from the environment. Remaining literals are
+declared identities (`POD_ID`, `JOURNAL_GENERATION`, request bucket and prefix) and retired-smoke
+leftovers on dead paths: `TOTAL_SECONDS = 1800`, `BASE`, `BUNDLE_SHA` in `granite_runpod_cloud.py`
+(its `controller()` raises on entry) and the bounded-lease durations `(600, 900, 1200, 1800)` in
+`granite_retained_lifecycle.py`. Removing them is a `chore:` commit after the run, because any edit
+to a roster file re-pins the bundle. The new ops scripts' hardcoded host paths and ids are a
+`refactor:` commit after the run for the same reason.
