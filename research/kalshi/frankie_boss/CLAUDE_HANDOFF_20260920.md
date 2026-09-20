@@ -316,3 +316,35 @@ object fails it instantly. The diagnostic is extended to print the exact key set
 Independently of that: even with the shape check passing, this run would have waited on a trigger
 nobody wrote (no Pod, no observer readiness), up to the 12-hour ceiling. Both must be fixed for a
 resume to reach inference: the shape (if confirmed) and the four out-of-band prerequisites.
+
+### Diagnostic rounds 2-4 (runs 35500960450, 35501108073, 35501234105) and what they closed
+
+- `pod_credential_ssm` exact key set is `name,region,trigger_directory`: the shape check passes.
+- The host tools checkout `C:/tools/Frankie-20260919/Markets` is at `c9a86e74` (2026-09-17, detached),
+  and its `run_actual_sunday.py` carries `read_execution_trigger` and `pod_credential_ssm`; the
+  function is byte-identical to the branch tip, and no commit touched the file after 2026-09-17. The
+  stdin-fallback-from-old-code explanation is closed.
+- The cycle-00 witness exists: `host-ready-6d02c1fcafbd4c7e8aa09245d3f9e3e7.c15.json` (933 bytes,
+  C15 typed encoding), request `6cd46f98...`, `admitted_at` float64 bits `41daaade9f0d7885` =
+  1789622908.210481 (2026-09-17T05:28:28Z), admission 92,439 input / 38,633 output tokens at context
+  131,072, tokenizer `51e3c309...`. The cycle-00 directory holds the 151 KB critic request, the
+  21 MB pre-message, the 12 MB source and the 21 MB teacher key.
+- The host role CANNOT list the retained readiness bucket (`AccessDenied` on
+  `frankie-granite42-568968024170-us-east-1`), so readiness must be delivered to the host over SSM,
+  not pulled.
+- The retained Granite observer workflow (`frankie_retained_granite.yml`) is the built Pod-start and
+  readiness path: `prepare` decrypts the archived request, verifies the 8-file bootstrap roster
+  against `runtime_configuration_json` (the roster at this branch's HEAD matches the image-defaults
+  pins byte for byte), starts retained Pod `ycf4v6lmave6xw` with `start_once`, and uploads readiness
+  as artifact `retained-granite-ready-<run_id>` (9 files: observer, pod-info, run, service-pins,
+  service-ready, start, startup-bootstrap-pin, startup-intent, startup-progress). Its last success
+  was run 35190255941 (2026-09-17) with `LOCAL_READY_JSON = {request_sha256, host_instance_id,
+  admitted_at}` and `RUNTIME_CONFIGURATION_JSON` equal to
+  `runs/20260919/reviewed-bootstrap-image-defaults-runtime.json` (bundle `a004983e93b9...`, which is
+  also the suffix of the code's `JOURNAL_GENERATION`). `hold()` never stops the Pod; only a
+  confirmed-fatal or the native completion cleanup does.
+- Remaining unknown: `actual.main()` imports the driver from `host_runtime.repository` (the pinned
+  `boss_commit` checkout), separate from ToolsRoot; the diagnostic now reports that checkout, and runs
+  a 10-second probe calling `read_execution_trigger` on a bare host object with the real
+  configuration, which prints the actual exception message (the runtime scrubs it) or proves the call
+  waits on the absent trigger.
