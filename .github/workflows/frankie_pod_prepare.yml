@@ -30,6 +30,14 @@ on:
         description: 'Start and watch this EXITED replacement Pod instead of creating a new one'
         required: false
         default: ''
+      watch_pod:
+        description: 'Only watch this RUNNING replacement Pod (no create, no start)'
+        required: false
+        default: ''
+      on_timeout:
+        description: 'keep = a Pod still bootstrapping at the horizon stays RUNNING; stop = stop-retain it'
+        required: false
+        default: 'keep'
 permissions:
   contents: read
 concurrency:
@@ -60,7 +68,7 @@ jobs:
       - name: Create and watch the replacement Pod
         run: |
           STOP=""; if [ "${{ inputs.stop_after_ready }}" = "true" ]; then STOP="--stop-after-ready"; fi
-          PYTHONPATH="$GITHUB_WORKSPACE" python research/kalshi/frankie_boss/operations/pod_prepare.py --source-pod "${{ inputs.source_pod }}" --runtime-configuration research/kalshi/frankie_boss/runs/20260919/reviewed-bootstrap-image-defaults-runtime.json --data-centers "${{ inputs.data_centers }}" --cost-ceiling "${{ inputs.cost_ceiling }}" --wait-seconds "${{ inputs.wait_seconds }}" --resume-pod "${{ inputs.resume_pod }}" $STOP
+          PYTHONPATH="$GITHUB_WORKSPACE" python research/kalshi/frankie_boss/operations/pod_prepare.py --source-pod "${{ inputs.source_pod }}" --runtime-configuration research/kalshi/frankie_boss/runs/20260919/reviewed-bootstrap-image-defaults-runtime.json --data-centers "${{ inputs.data_centers }}" --cost-ceiling "${{ inputs.cost_ceiling }}" --wait-seconds "${{ inputs.wait_seconds }}" --resume-pod "${{ inputs.resume_pod }}" --watch-pod "${{ inputs.watch_pod }}" --on-timeout "${{ inputs.on_timeout }}" $STOP
       - name: Retain prepare evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

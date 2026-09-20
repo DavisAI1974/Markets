@@ -4,6 +4,8 @@
         --runtime-configuration <reviewed runtime configuration json> [--data-centers US-TX-4,...]
         [--cost-ceiling 1.25] [--wait-seconds 1800] [--stop-after-ready]
     ... --resume-pod hhxs2fk7511cz5     (start an EXITED replacement created earlier and watch it instead)
+    ... --watch-pod hhxs2fk7511cz5      (watch a RUNNING replacement; no create, no start)
+    ... --on-timeout keep|stop          (default keep: a Pod still bootstrapping at the horizon stays RUNNING)
 
 The retained Pod ycf4v6lmave6xw is pinned to a host whose L40S is taken ("There are not enough free
 GPUs on the host machine to start this pod", run 35503440103). This prepares a second Pod the
@@ -23,7 +25,10 @@ retained observer can adopt through the existing migration receipt mechanism
 Run 35504624757 created hhxs2fk7511cz5 (EUR-IS-2, LOW stock everywhere) and saw no bootstrap line
 in 30 minutes; --resume-pod restarts such a Pod on its now-cached host instead of creating another,
 and the watch prints the scrubbed Pod state plus a short raw tail of the container and system logs
-every five minutes so a silent bootstrap is diagnosable. The source Pod is only ever read. The new Pod is left RUNNING (it holds its GPU) unless
+every five minutes so a silent bootstrap is diagnosable. Run 35506279203 then showed that the GPU
+of a stop-retained Pod is taken within minutes under LOW stock, so the horizon no longer stops a
+Pod by default (--on-timeout keep) and --watch-pod lets short runs read progress without touching
+the Pod. The source Pod is only ever read. The new Pod is left RUNNING (it holds its GPU) unless
 --stop-after-ready is given; a Pod whose bootstrap evidence fails validation or times out is stopped
 (stop-retain), never terminated here. No inference is sent.
 """
@@ -213,6 +218,8 @@ def main():
     parser.add_argument('--wait-seconds', type=int, default=1800)
     parser.add_argument('--stop-after-ready', action='store_true')
     parser.add_argument('--resume-pod', default='')
+    parser.add_argument('--watch-pod', default='')
+    parser.add_argument('--on-timeout', choices=('keep', 'stop'), default='keep')
     args = parser.parse_args()
     key = os.environ['RUNPOD_API_KEY']
     api = control.Runpod(key)
@@ -226,7 +233,17 @@ def main():
     print('SOURCE ' + json.dumps(dict(pod=source['id'], status=source.get('status'), env_keys=len(source['env']),
                                       bootstrap_urls_expire_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(expiry)))))
 
-    if args.resume_pod:
+    if args.watch_pod:
+        pod = api.request('GET', '/v2/pods/' + args.watch_pod)
+        if pod.get('id') != args.watch_pod or not control.owned_pod(pod, intent):
+            raise SystemExit('watch Pod identity or ownership differs')
+        if pod.get('status') != 'RUNNING':
+            raise SystemExit('watch requires RUNNING, Pod is %r' % (pod.get('status'),))
+        data_centers, stock = [pod.get('dataCenterId')], {}
+        created_at = time.time()
+        pod_id = args.watch_pod
+        print('WATCHING ' + json.dumps(facts_of(pod, intent), sort_keys=True))
+    elif args.resume_pod:
         pod = api.request('GET', '/v2/pods/' + args.resume_pod)
         if pod.get('id') != args.resume_pod or not control.owned_pod(pod, intent):
             raise SystemExit('resume Pod identity or ownership differs')
@@ -317,7 +334,7 @@ def main():
         save('health.json', health)
         if args.stop_after_ready:
             stop = resume.stop_owned_once(api, intent, pod_id)
-    else:
+    elif outcome == 'runtime_evidence_refused' or args.on_timeout == 'stop':
         stop = resume.stop_owned_once(api, intent, pod_id)
     facts = facts_of(api.request('GET', '/v2/pods/' + pod_id), intent)
     save('pod-facts.json', facts)
@@ -325,6 +342,7 @@ def main():
                                       source_pod=args.source_pod, facts=facts, data_centers_offered=data_centers,
                                       stock=stock, created_at=created_at, ready_at=health and health['observed_at'],
                                       startup_event=records.get('startup', {}).get('started_at'), stop=stop,
+                                      on_timeout=args.on_timeout, telemetry_lines=len(seen),
                                       info_sha256=(json.loads((OUT / 'info-sha256.json').read_bytes()) if outcome == 'service_ready' else None)),
                                  sort_keys=True))
     if outcome != 'service_ready':
