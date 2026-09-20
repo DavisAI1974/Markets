@@ -1235,3 +1235,39 @@ host-service record primed the cache exactly as 842ec2ee intends, with the contr
 and the critic spool all untouched. Next on the host: `prepare_critic_request` (about 19 min this morning,
 14:46 -> 15:05), host-preparation + actual-critic-request (a7b72cf9) + host-ready, the immutable trigger read,
 host-service, then `recover` -> `actual_frankie_session_pending`.
+
+### 17:41Z: the resume re-prepared cycle 0 in four minutes, then the coordinator refused on its own saved binding
+
+Run 35525830210 did everything 842ec2ee intends: host-preparation re-written 17:37:49Z (the request is
+deterministic, a7b72cf9 again), host-service 17:37:50Z, request-plan 17:40:56Z, the immutable trigger and its
+readiness pins matched. Then `feedback_cycle.py:242` raised `cycle request identity changed` at 17:41:02Z: the
+coordinator's saved cycle binding (cycles.sqlite stage `binding`) carries `training_identities`, and that dict
+holds `code_hash`, which is `evidence_hash` over every `.py` in the package. The host was advanced three times
+today with the cycle open, so the binding the coordinator rebuilt from the current identity is not the one it
+saved at 14:46Z, and `_save` refuses differing bytes by design. The request id, the controller result and the
+retained principal request are exactly the same; only the code hash inside the binding moved. Provenance, not
+science (the priority rule), so it is overridden WITH A RECEIPT, never relaxed:
+
+- `CycleCoordinator._binding_supersede` (bad519b7): when the saved and the rebuilt binding differ, the
+  coordinator reads `<run>/cycles.sqlite.identity-supersede.json`. It accepts the new binding only if a
+  declaration there names this request id and the OLD code hash, and the two bindings become hash-equal once
+  the old identity's `code_hash` is replaced by the new one -- so a change in anything else (frozen memory,
+  learning, controller, the checkpoint digest) still refuses. The old binding is archived as stage
+  `binding-superseded-<old12>`, the binding row updated in place, and an acceptance record appended
+  (`FRANKIE_CYCLE_IDENTITY_SUPERSEDE_ACCEPTED_V1`). Nothing is deleted.
+- `operations/declare_identity_supersede.py` computes the checkout's code identity with the host's own map
+  (every `.py` under frankie_boss except tests, plus refrag, plus the host script), reads the saved binding
+  read-only, and appends the declaration with the reason and a receipt in the day directory
+  (`identity-supersede-declared-<stamp>.json`; statuses declared / already_declared / not_stale).
+- `frankie_host_declare_identity_supersede.yml` + `.ps1`: refuses unless the tools checkout is at the
+  configuration's `boss_commit` and no `run_actual_sunday` process is alive; values by `--set` only.
+- Tests: coordinator refuses without a declaration and when more than the code hash differs, accepts and
+  completes the run with one; the helper declares once and reports `not_stale` afterwards. Both files are
+  outside the pipeline's fixed family list and need torch, so `frankie_cycle_identity_ci.yml` runs them on
+  push (registered on the trunk with the operator workflow, trunk 0b0f4170).
+
+Order from here: family (checks_only) + the new CI green on bad519b7 -> advance the host -> supersede the
+code-bound state (moves the 842ec2ee identity records) -> declare the supersede for `<run_id>-cycle-00` ->
+re-dispatch. The resume re-primes and re-prepares once more (about four minutes now that the cache is warm),
+the coordinator accepts the binding on the declaration, and `recover` should end at
+`actual_frankie_session_pending` (exit 3) -- the designed HOLD for Root's Frankie session.
