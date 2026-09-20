@@ -842,3 +842,33 @@ Ship decision: GO on Greg's override; rollback = reverse Move-Item of the receip
 Deferred list (Greg: nothing on it changes the cycle calculations): #2 make the identity guard survive a lawful
 advance; #3 tests into CI; #4 drop-in cleanups + the four Mediums; #5 this record + the ycf4v6lmave6xw decision;
 code-simplification persona once everything is running.
+
+### Pipeline run 35512638774: past every earlier gate, REFUSED at line 843 -- ROOT CAUSE = CRLF on the host
+
+Host job ran 13:11:24Z-13:21:17Z: __init__ passed (fresh host-identity 12:57:43Z from run 35511984264),
+initialization 13:11:47Z, the full re-preparation (context cache 13:17:42Z, critic request 13:21:08Z,
+host-preparation and host-ready 13:21:09Z, host-service 13:21:09.5Z = line 817), then `ValueError` 0.5 s
+into phase `granite_request`, owner `granite`. Probe run 35513562221: line 836 admission EQUAL (the
+re-prepared request reproduced byte for byte, sha 6cd46f98...), line 837 EQUAL. Probe run 35513815821
+replayed lines 818-843 for real: `verified_service_inputs` RETURNED; `config_hash` EQUAL (f67f73a5...,
+POD_ID 8vqdacl5t61rjx both sides); **`identity_hash` DIFFERS: host 6993d307..., pins 1bd1027a...** ->
+line 843 `trusted host service pins differ`.
+
+The observer (run 35507527320, `f9092dce`) and the host (`6b0b37fe`) have byte-identical code for every
+identity input (`git diff` = one handoff doc). Reproduced off the host from the observer's readiness
+artifact: `GraniteIdentity` for `stacked_v1` computed here = **1bd1027a... = the pins**; the same
+computation with the sources converted to CRLF = parser_code_hash **fcd6702a...** and identity
+**6993d307... = the host**, byte for byte. Every `*_parser_code_hash` is sha256 over source FILE BYTES
+(granite_context*, granite_parser, c15_journal, causal_packet, the stacked route + codec ...); the
+observer runs on Linux (LF); the host is a Windows checkout with core.autocrlf=true. Latent since day
+one: line 843 was never reached on this host before today (the 09-17 run was prepare-only). It is the
+S110 lesson `.gitattributes` already records for the gold vault and the Sunday package, not yet applied
+to the code the identities cover.
+
+Fix (no science, no runner code): `94bc5729` `.gitattributes` `-text` for `research/kalshi/frankie_boss/**/*.py`
+and `research/refrag/**/*.py` (`-text`, not `eol=lf`: three files are committed with CRLF and must keep
+their blobs); `a00ef8a8` `frankie_host_normalize_eol.ps1` + workflow (core.autocrlf=false on the checkout,
+`git checkout-index --force --all`, CR census before/after, stacked-route worktree blob == committed
+blob, receipt into the day directory). Sequence: normalize -> advance the host to a commit carrying the
+attribute -> supersede (the code hashes change with the bytes, so host-identity and the training chain
+re-mint once more; stale by commit) -> re-dispatch. Receipts below as they land.

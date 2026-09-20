@@ -46,22 +46,40 @@ function Count-CR([string]$root) {
     return $hits
 }
 $before = Count-CR $ToolsRoot
+$probeFile = 'research/kalshi/frankie_boss/granite_context_stacked_route.py'
 Write-Output ("HEAD=" + $head + "  core.autocrlf(before)=" + $autocrlfBefore + "  .py files carrying CR (before)=" + $before.Count)
+# Which mechanism converts: every origin of the two settings, the attribute set, and the eol view.
+Write-Output "--- diagnostics before ---"
+& $git -C $ToolsRoot --version
+& $git -C $ToolsRoot config --show-origin --get-all core.autocrlf 2>$null | ForEach-Object { "  core.autocrlf: $_" }
+& $git -C $ToolsRoot config --show-origin --get-all core.eol 2>$null | ForEach-Object { "  core.eol: $_" }
+& $git -C $ToolsRoot config --show-origin --get-all core.attributesFile 2>$null | ForEach-Object { "  core.attributesFile: $_" }
+& $git -C $ToolsRoot check-attr -a -- $probeFile | ForEach-Object { "  attr: $_" }
+& $git -C $ToolsRoot ls-files --eol -- $probeFile | ForEach-Object { "  eol: $_" }
 
+# 2026-09-20 run 35514364576: checkout-index --force --all rewrote nothing (391 -> 391), so the
+# re-checkout is done the documented way: drop the two roots from the index and restore them from
+# HEAD with the corrected settings. The tree was verified clean above, so reset --hard loses nothing.
 & $git -C $ToolsRoot config core.autocrlf false
 if ($LASTEXITCODE -ne 0) { throw 'could not set core.autocrlf=false on the checkout' }
-& $git -C $ToolsRoot checkout-index --force --all
-if ($LASTEXITCODE -ne 0) { throw 'checkout-index failed; the working tree may be partially rewritten (re-run is safe)' }
+& $git -C $ToolsRoot config core.eol lf
+if ($LASTEXITCODE -ne 0) { throw 'could not set core.eol=lf on the checkout' }
+& $git -C $ToolsRoot rm --cached -r -q -- research/kalshi/frankie_boss research/refrag
+if ($LASTEXITCODE -ne 0) { throw 'git rm --cached failed; nothing on disk was changed (re-run is safe)' }
+& $git -C $ToolsRoot reset -q --hard HEAD
+if ($LASTEXITCODE -ne 0) { throw 'git reset --hard HEAD failed; re-run is safe, the index restores from HEAD' }
+$autocrlfAfter = (& $git -C $ToolsRoot config --get core.autocrlf).Trim()
 $after = Count-CR $ToolsRoot
+Write-Output "--- diagnostics after ---"
+& $git -C $ToolsRoot ls-files --eol -- $probeFile | ForEach-Object { "  eol: $_" }
 $dirtyAfter = & $git -C $ToolsRoot status --porcelain
 if ($dirtyAfter) { throw ("working tree not clean after normalisation:`n" + ($dirtyAfter -join "`n")) }
 # The committed-CRLF files are expected to keep their CR; every other hit must be gone.
 $committedCRLF = @(& $git -C $ToolsRoot grep -I -l -P '\r' HEAD -- 'research/kalshi/frankie_boss/*.py' 'research/refrag/*.py' 2>$null | ForEach-Object { $_ -replace '^HEAD:', '' })
-Write-Output ("core.autocrlf(after)=false  .py files carrying CR (after)=" + $after.Count + "  committed with CRLF=" + $committedCRLF.Count)
+Write-Output ("core.autocrlf(after)=" + $autocrlfAfter + "  core.eol(after)=lf  .py files carrying CR (after)=" + $after.Count + "  committed with CRLF=" + $committedCRLF.Count)
 $unexpected = @($after | Where-Object { $committedCRLF -notcontains $_ })
 if ($unexpected.Count -gt 0) { throw ("files still carry CR that the commit does not: " + ($unexpected -join ', ')) }
 # The one hash that refused: the stacked route source must now equal its committed blob.
-$probeFile = 'research/kalshi/frankie_boss/granite_context_stacked_route.py'
 $blob = (& $git -C $ToolsRoot rev-parse ("HEAD:" + $probeFile)).Trim()
 $worktree = (& $git -C $ToolsRoot hash-object (Join-Path $ToolsRoot $probeFile)).Trim()
 if ($blob -ne $worktree) { throw ("working-tree bytes of " + $probeFile + " still differ from the committed blob") }
@@ -70,7 +88,8 @@ $receipt = [ordered]@{
     tools            = $ToolsRoot
     head             = $head
     autocrlf_before  = $autocrlfBefore
-    autocrlf_after   = 'false'
+    autocrlf_after   = $autocrlfAfter
+    core_eol_after   = 'lf'
     cr_files_before  = $before.Count
     cr_files_after   = $after.Count
     committed_crlf   = $committedCRLF
