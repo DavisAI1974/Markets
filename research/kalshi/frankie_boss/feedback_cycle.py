@@ -180,6 +180,51 @@ class CycleCoordinator:
                 (request_id, stage, canonical_bytes(pack(value)), digest))
         return value
 
+    IDENTITY_SUPERSEDE_SUFFIX = '.identity-supersede.json'
+    IDENTITY_ACCEPTED_SUFFIX = '.identity-supersede-accepted.json'
+
+    def _binding_supersede(self, request_id, saved, binding):
+        """Accept a saved cycle binding whose ONLY difference is training_identities.code_hash.
+
+        The training identity encodes the hash of every source file, so a host code advance made
+        while a cycle is open (2026-09-20: the runner's own resume fixes) changes code_hash and
+        nothing else; the request, the controller result and the principal request are the same.
+        Nothing is accepted silently: an operator declaration next to the cycle store
+        (<cycles.sqlite>.identity-supersede.json) must name this request and the OLD code_hash it
+        supersedes (and the new one, when it names it); the old binding is archived under its own
+        stage before the new one replaces it, and the acceptance is appended to
+        <cycles.sqlite>.identity-supersede-accepted.json. Any other difference still refuses.
+        """
+        declared = Path(str(self.path) + self.IDENTITY_SUPERSEDE_SUFFIX)
+        if not declared.exists(): return False
+        try:
+            entries = json.loads(declared.read_bytes())
+        except ValueError:
+            return False
+        old_identities = saved.get('training_identities') if type(saved) is dict else None
+        new_identities = binding.get('training_identities')
+        if type(old_identities) is not dict or type(new_identities) is not dict: return False
+        old_hash, new_hash = old_identities.get('code_hash'), new_identities.get('code_hash')
+        if type(old_hash) is not str or type(new_hash) is not str or old_hash == new_hash: return False
+        masked = dict(saved, training_identities=dict(old_identities, code_hash=new_hash))
+        if evidence_hash(masked) != evidence_hash(binding): return False
+        if not any(type(e) is dict and e.get('request_id') == request_id and e.get('old_code_hash') == old_hash
+                   and e.get('new_code_hash') in (None, new_hash) for e in (entries if type(entries) is list else [])):
+            return False
+        archive = 'binding-superseded-' + old_hash[:12]
+        self._save(request_id, archive, saved)
+        with self.db:
+            self.db.execute('UPDATE stages SET payload=?, digest=? WHERE request=? AND stage=?',
+                (canonical_bytes(pack(binding)), evidence_hash(binding), request_id, 'binding'))
+        accepted = Path(str(self.path) + self.IDENTITY_ACCEPTED_SUFFIX)
+        record = dict(schema='FRANKIE_CYCLE_IDENTITY_SUPERSEDE_ACCEPTED_V1', request_id=request_id,
+                      old_code_hash=old_hash, new_code_hash=new_hash, archived_stage=archive)
+        existing = json.loads(accepted.read_bytes()) if accepted.exists() else []
+        if record not in existing:
+            existing.append(record)
+            accepted.write_bytes(json.dumps(existing, sort_keys=True, indent=1).encode())
+        return True
+
     def _observe(self, phase, request_id):
         if self.phase_callback is not None:
             self.phase_callback(phase, request_id=request_id)
@@ -238,7 +283,8 @@ class CycleCoordinator:
         async with self._lock:
             with _exclusive(str(self.path)+'.lock'):
                 saved = self._load(request_id, 'binding')
-                if saved is not None and evidence_hash(saved) != evidence_hash(binding):
+                if (saved is not None and evidence_hash(saved) != evidence_hash(binding)
+                        and not self._binding_supersede(request_id, saved, binding)):
                     raise ValueError('cycle request identity changed')
                 # The lookup deliberately precedes model/controller construction.
                 completed = self._load(request_id, 'complete')

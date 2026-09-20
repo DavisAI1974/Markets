@@ -181,3 +181,43 @@ def test_real_export_readback_binds_input_and_refuses_tamper(tmp_path, monkeypat
         cycle._export_verified(directory, export_args, result, learning)
     assert critic.calls == 1
     controller.journal.close(); bridge.book.close()
+
+
+def _saved_binding_with(store, args, code_hash):
+    checkpoint = args['checkpoint']
+    return dict(request_id='sun', controller=cycle._plain(args['controller_kwargs']),
+        learning=cycle._plain(args['learning_kwargs']),
+        training_identities=dict(checkpoint.identities, code_hash=code_hash),
+        frozen_memory_sha256=store.memory_hash)
+
+
+def test_binding_identity_supersede_needs_a_declaration_and_only_the_code_hash(tmp_path, monkeypatch):
+    # 2026-09-20: a host code advance during an open cycle changes training_identities.code_hash and
+    # nothing else; run 35525830210 refused 'cycle request identity changed'. Accepted only against
+    # an explicit declaration next to the cycle store, and only for that one difference.
+    import json
+    store, checkpoint, args, calls = fixture(tmp_path, monkeypatch)
+    old = 'x'*64
+    store._save('sun', 'binding', _saved_binding_with(store, args, old))
+    with pytest.raises(ValueError, match='cycle request identity changed'):
+        asyncio.run(store.run(**args))
+    declaration = Path(str(store.path)+store.IDENTITY_SUPERSEDE_SUFFIX)
+    declaration.write_text(json.dumps([dict(request_id='sun', old_code_hash=old, reason='advance')]))
+    # another difference besides code_hash still refuses
+    other = dict(_saved_binding_with(store, args, old), frozen_memory_sha256='9'*64)
+    with store.db:
+        store.db.execute('UPDATE stages SET payload=?, digest=? WHERE request=? AND stage=?',
+            (cycle.canonical_bytes(cycle.pack(other)), cycle.evidence_hash(other), 'sun', 'binding'))
+    with pytest.raises(ValueError, match='cycle request identity changed'):
+        asyncio.run(store.run(**args))
+    with store.db:
+        saved = _saved_binding_with(store, args, old)
+        store.db.execute('UPDATE stages SET payload=?, digest=? WHERE request=? AND stage=?',
+            (cycle.canonical_bytes(cycle.pack(saved)), cycle.evidence_hash(saved), 'sun', 'binding'))
+    result = asyncio.run(store.run(**args))
+    assert result['status'] == 'complete' and calls['learner'] == 1
+    assert store._load('sun', 'binding-superseded-'+old[:12])['training_identities']['code_hash'] == old
+    assert store._load('sun', 'binding')['training_identities']['code_hash'] == 'b'*64
+    accepted = json.loads(Path(str(store.path)+store.IDENTITY_ACCEPTED_SUFFIX).read_bytes())
+    assert accepted == [dict(schema='FRANKIE_CYCLE_IDENTITY_SUPERSEDE_ACCEPTED_V1', request_id='sun',
+        old_code_hash=old, new_code_hash='b'*64, archived_stage='binding-superseded-'+old[:12])]
