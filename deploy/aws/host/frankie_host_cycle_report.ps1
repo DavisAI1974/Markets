@@ -91,8 +91,27 @@ if spool.exists():
         if outcome.exists():
             o = json.loads(outcome.read_bytes())
             print(f'  job {job.name[:12]}: keys={sorted(o.keys())[:12]}')
-            for k in ('status', 'phase', 'finished_at', 'output_tokens', 'incomplete', 'outcome_sha256'):
+            for k in ('status', 'phase', 'finished_at', 'output_tokens', 'incomplete', 'outcome_sha256', 'http_status', 'body_sha256'):
                 if k in o: print(f'    {k}={short(o[k], 200)}')
+            if isinstance(o.get('body_base64'), str):
+                import base64
+                try:
+                    body = base64.b64decode(o['body_base64']).decode('utf-8', 'replace')
+                except Exception as error:
+                    body = f'<undecodable: {error}>'
+                text = body
+                try:
+                    parsed = json.loads(body)
+                    choices = parsed.get('choices') if isinstance(parsed, dict) else None
+                    if choices and isinstance(choices, list):
+                        message = choices[0].get('message') or {}
+                        text = message.get('content') or body
+                        usage = parsed.get('usage') or {}
+                        print(f"    critic usage: {json.dumps(usage, sort_keys=True)[:300]} finish_reason={choices[0].get('finish_reason')}")
+                except ValueError:
+                    pass
+                print(f'    critic body ({len(body)} bytes decoded); content follows, first 6000 chars:')
+                print(text[:6000])
 print('### cycle records (name  mtime  bytes)')
 if cycle.exists():
     for p in sorted(cycle.rglob('*'), key=lambda p: p.stat().st_mtime):
