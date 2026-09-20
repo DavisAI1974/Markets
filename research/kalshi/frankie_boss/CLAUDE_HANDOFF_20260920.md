@@ -1423,3 +1423,17 @@ the recorder matches the retained request). Then ONE dispatch of `frankie_journa
 `codex/frankie-launch-two-cycle-20260919` (same go, cycles 2, keep_compute) resumes at the first missing
 receipt: verify -> native learning -> checkpoint readback -> completion -> cycle 1, whose readiness needs a
 new observer bound to cycle 1's request sha and `frankie_deliver_readiness.yml` for `...-cycle-01`.
+
+**Acceptance records on the host, read back at 20:12Z** (binding-diff probe run 35534776633, read-only),
+`actual-feedback-run/cycles.sqlite.identity-supersede-accepted.json`:
+1. `FRANKIE_CYCLE_IDENTITY_SUPERSEDE_ACCEPTED_V1` (19:07Z run): code 25a0e087 -> 61b761c8, arm ee4ec20d ->
+   3a85e8bd, archived stage `binding-superseded-25a0e0874fc5`.
+2. `FRANKIE_CYCLE_IDENTITY_SUPERSEDE_ACCEPTED_V1` (20:10Z run): code 61b761c8 -> a019bb8d, arm 3a85e8bd ->
+   2cf7c9e2, archived stage `binding-superseded-61b761c85379`.
+3. `FRANKIE_CYCLE_EXPORT_PIN_SUPERSEDE_ACCEPTED_V1`: pin `boss_commit` 34a4feac -> 2b069fc2.
+Every superseded binding is archived under its own stage in `cycles.sqlite`; nothing deleted.
+
+Notes for after the run, all on this branch: `NOTES_FOR_CLAUDE_CHAT_20260920.md` (causes and cleanup),
+`SIMPLIFICATION_NOTES_20260920.md` (reviewer persona, code-simplification skill),
+`MASTER_WEAVE_20260920.md` (architect persona: inventory, the run as it ran with 33 hand-offs, the
+one-workflow state machine, 15 open questions).
