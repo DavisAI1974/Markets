@@ -53,3 +53,15 @@ and triplet recurrence; pre-birth opportunity; order lifecycle; full-book FIFO q
 derived geometry), and the ten append-only OUTPUT ledgers registered for Frankie were OUTPUT_PENDING with
 none filed, in the first Sunday run as well. From this cycle on the request instruction states the rule
 and names the ten ledgers; they are filed as lesson entries and rendered back to Frankie every later cycle.
+
+## 2026-09-20, the required calculation set is the registry itself, not a summary of it
+
+Greg Davis: "frankie (errantly) didn't do the aug calcs but the correct ones were done so don't look at who
+did them but look at the ones that were done." The set that was done is the native ingestion registry of
+the August 28 A_MEMORY recalculation (registry sha256 239a1480..., crosswalk of run 33746436209 on
+2026-09-16): 49 calculation layers in seven groups (order_lifecycle 9, full_book_fifo_queue 8,
+microstructure_mechanics 7, legacy_observable_crosswalk 5, derived_geometry 8, prebirth_opportunity 5,
+causal_clocks 7), compared against the nine frozen learned-structure layers. From this cycle on the request
+instruction names every layer verbatim and requires one `calculation_accounting` lesson entry giving each
+layer's status (derived, compared, could_not with reason); the constant is tested against the crosswalk
+file so it cannot drift from the registry. Cycle 0's request is re-rendered under this instruction.

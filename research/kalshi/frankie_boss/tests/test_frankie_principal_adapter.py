@@ -420,3 +420,30 @@ def test_request_instruction_makes_the_calculations_frankies_and_names_the_ten_o
     for ledger in OUTPUT_LEDGERS:
         assert ledger in RUN_ANALYSIS_INSTRUCTION, ledger
     assert 'without rerunning' not in RUN_ANALYSIS_INSTRUCTION
+
+
+def test_request_instruction_requires_the_registry_calculation_set_verbatim_from_the_crosswalk():
+    """Greg, 2026-09-20: 'don't look at who did them but look at the ones that were done'. The required
+    set is the registry's calculation layers as the 2026-09-16 crosswalk of the August 28 recalculation
+    lists them; the constant must equal that file, group by group, and the instruction must carry every
+    layer and demand a per-layer accounting entry."""
+    from pathlib import Path
+    from frankie_principal_adapter import (RUN_ANALYSIS_INSTRUCTION, REGISTRY_CALCULATION_SET,
+                                           FROZEN_LEARNED_STRUCTURE, CALCULATION_ACCOUNTING_LEDGER)
+    crosswalk = json.loads((Path(__file__).resolve().parents[1] / 'audits'
+                            / 'CROSSWALK_SUNDAY_CYCLE0_FEED_33746436209_20260916.json').read_bytes())
+    by_group = {}
+    for layer in crosswalk['layers']:
+        by_group.setdefault(layer['group_id'], []).append(layer['layer_id'])
+    assert len(crosswalk['layers']) == 99
+    for group, layers in REGISTRY_CALCULATION_SET:
+        assert list(layers) == by_group[group], group
+        assert all(l['policy'] == 'CAUSAL_STREAM_REQUIRED' for l in crosswalk['layers'] if l['group_id'] == group)
+    assert list(FROZEN_LEARNED_STRUCTURE) == by_group['frozen_learned_structure']
+    assert sum(len(layers) for _, layers in REGISTRY_CALCULATION_SET) == 49
+    for _, layers in REGISTRY_CALCULATION_SET:
+        for layer in layers:
+            assert layer in RUN_ANALYSIS_INSTRUCTION
+    assert 'THE REQUIRED SET IS THE REGISTRY' in RUN_ANALYSIS_INSTRUCTION
+    assert '"' + CALCULATION_ACCOUNTING_LEDGER + '"' in RUN_ANALYSIS_INSTRUCTION
+    assert 'no layer is omitted and no layer is delegated to a runner' in RUN_ANALYSIS_INSTRUCTION

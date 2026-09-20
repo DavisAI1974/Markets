@@ -39,6 +39,43 @@ OUTPUT_LEDGERS = (
     'output_negative_sparse_inconclusive_ledger', 'output_provider_invocation_response_receipts',
     'output_answer_wall_access_receipts', 'output_source_state_manifest_code_model_run_hashes')
 
+# The calculation set Frankie must derive himself on each cycle's rows: the layers of the native
+# ingestion registry (registry sha256 239a1480..., A_MEMORY arm, crosswalk of run 33746436209 on
+# 2026-09-16) that were CALCULATED on August 28 (Greg, 2026-09-20: "don't look at who did them but look
+# at the ones that were done"). Each group is a registry group_id and its layer_ids, verbatim; the
+# frozen learned structure is the comparison set, never the substitute.
+REGISTRY_CALCULATION_SET = (
+    ('order_lifecycle', ('order_lifecycle_adds', 'order_lifecycle_cancels', 'order_lifecycle_modifies',
+                         'order_lifecycle_replaces', 'order_lifecycle_trades', 'order_lifecycle_fills',
+                         'order_lifecycle_clears', 'order_identity_transitions', 'contract_session_roll_state')),
+    ('full_book_fifo_queue', ('full_bid_ask_depth', 'price_level_and_order_counts', 'fifo_queues',
+                              'queue_age_and_survival', 'queue_concentration', 'orders_and_volume_ahead',
+                              'spread_and_depth_imbalance', 'complete_state_reset_bootstrap_receipts')),
+    ('microstructure_mechanics', ('mechanics_actions_by_side_and_level', 'aggressor_and_native_signed_flow',
+                                  'depletion_and_replenishment', 'resilience_and_recovery',
+                                  'churn_and_queue_turnover', 'price_and_book_path',
+                                  'missingness_and_integrity_flags')),
+    ('legacy_observable_crosswalk', ('legacy_price', 'legacy_native_signed_flow', 'legacy_per_second_roll20',
+                                     'legacy_book_imbalance', 'legacy_structure_observables')),
+    ('derived_geometry', ('derived_roll20_and_dipole_state', 'derived_d_family_geometry',
+                          'derived_open_world_predecessor_state', 'derived_ancestry_gaps',
+                          'derived_unresolved_age_chain_trajectory', 'derived_price_flow_book_paths',
+                          'derived_v4_mechanics_fifo_features', 'derived_feature_availability_timestamps')),
+    ('prebirth_opportunity', ('prebirth_predecessor_at_risk_state', 'prebirth_unresolved_chain_extension_state',
+                              'prebirth_ancestry_successor_opportunity',
+                              'prebirth_stopped_chain_false_context_controls',
+                              'prebirth_negative_opportunity_cases')),
+    ('causal_clocks', ('clock_event_time', 'clock_receive_time', 'clock_event_known_by',
+                       'clock_feature_availability', 'clock_prospective_discovery_confirmation',
+                       'clock_model_evaluation', 'clock_lock_time')),
+)
+FROZEN_LEARNED_STRUCTURE = (
+    'learned_d_structures_and_families', 'learned_dipoles_and_geometry', 'learned_pair_triplet_recurrence',
+    'learned_chains_extensions_reappearances_ancestry', 'phase1_discoveries_structural_falsifiers',
+    'phase2_findings_modules_timing_pox_negatives', 'predecessor_ancestry_unresolved_chain_state',
+    'historical_timing_lifespan_context', 'learned_structure_proposal_index_material')
+CALCULATION_ACCOUNTING_LEDGER = 'calculation_accounting'
+
 RUN_ANALYSIS_INSTRUCTION = (
     'Print your own run analysis in the session output and retain the same Markdown text '
     'as a separate entry in lessons. Cover how this run has gone so far, your assessment '
@@ -54,7 +91,16 @@ RUN_ANALYSIS_INSTRUCTION = (
     'reappearances and ancestry, the D structures and families, the dipoles and geometry, the pair and '
     'triplet recurrences, and the pre-birth opportunities; compare what you derive with the retained '
     'sections and the frozen learned structure, and learn from every difference; the retained sections '
-    'are provenance, never a substitute for your own derivation. File the ten append-only output '
+    'are provenance, never a substitute for your own derivation. THE REQUIRED SET IS THE REGISTRY, not a '
+    'summary of it: the calculation layers of the native ingestion registry that the August 28 '
+    'recalculation (run 33746436209, A_MEMORY arm) carried, each derived by you on this cycle\'s rows, '
+    'group by group and layer by layer: '
+    + '; '.join(group + ' (' + ', '.join(layers) + ')' for group, layers in REGISTRY_CALCULATION_SET)
+    + '. Compare every derivation with the frozen learned structure layers (' + ', '.join(FROZEN_LEARNED_STRUCTURE)
+    + ') and with the retained sections. File ONE accounting entry in lessons, a JSON object whose "ledger" '
+    'field is "' + CALCULATION_ACCOUNTING_LEDGER + '", listing every layer above with its status: derived '
+    '(with where the derivation is written), compared (with what differed), or could_not (with the reason); '
+    'no layer is omitted and no layer is delegated to a runner. File the ten append-only output '
     'ledgers of the native ingestion registry as separate entries in lessons, each a JSON object whose '
     '"ledger" field is the registry name: ' + ', '.join(OUTPUT_LEDGERS) + '. A ledger you cannot fill '
     'is filed with its reason, never omitted. Every lesson entry is rendered back to you in each later '
