@@ -1695,3 +1695,40 @@ from here, once that advance and the family are green: `frankie_host_supersede_c
 Root's branch `root/cycle-00-response` does not exist yet (checked 22:03Z); anything he records against
 the OLD request (e0c461d7...) will be refused by the recorder, which is correct: the request he must
 answer is the re-rendered one.
+
+### 22:30Z: Greg: a FULL rerun of cycle 0 from the beginning, not steps; the piecewise re-issue is stopped
+
+Greg, 22:12Z: "Rerun classroom also." "When does exhaustion and d's run?" "By family you meant the group
+and not the family designations that we do in cycle 0." "Is this where we're supposed to have the extra
+CPUs powering our helpers during the cycle run?" "It feels like we are skipping steps doing things this
+way which is why i wanted a full rerun from the beginning and not steps. Did we do them one at a time like
+this and not concurrently with Frankie so that things can be correlated possibly by him?"
+
+Answered from the code (feedback_cycle.run, sunday_execution, the classroom adapter): the cycle's order is
+fixed and sequential, `boss_reasoning` (native BOSS forecast, then the Granite critic) -> `causal_handoff`
+(export into Frankie's package) -> `frankie_calculations` (Frankie's session: the request, the same-session
+classroom teach-back and the correction turn) -> `native_learning` -> `checkpoint_readback` ->
+`saved_completion`. Nothing on the machine computes exhaustion chains, D structures or families; the 49
+registry layers are delivered as inputs and the derivations are Frankie's, in his step; he correlates the
+machine's result after it is delivered, never concurrently, by design. The classroom adapter refuses a
+retained classroom artifact that differs, so a rerun must move `dipole-classroom-*` aside too (the
+principal-request supersede had kept them). "Family" in my messages meant the CI test family, not the
+D-families. The host's 32 vCPUs power the reader workers (cap 48) and the native step's 8 threads; nothing
+runs alongside Frankie's session and no helper agents exist for him (a design item if wanted).
+
+Piecewise, and stopped: the 22:06Z dispatch (run 35540633095) would have re-rendered only Frankie's request
+around the retained machine half (ABSTAIN, empty critique, export). Cancelled at 22:13Z before its host job
+started; nothing written. Built instead (f0910e6c): `feedback_cycle._cycle_supersede` (on a declaration with
+`supersede_cycle` and the OLD binding hash, and no retained principal output / feedback / training /
+completion, archives binding, controller, export, attachment and intent and clears them, so `run()` starts
+the cycle over), `declare_identity_supersede.py --supersede-cycle`, the declaration workflow's
+`supersede_cycle` input, and `frankie_host_supersede_cycle.yml` (moves `execution/cycle-00` whole and
+`handoff-<sha256(request id)>` aside with sha256 per file; refuses on a recorded response or a live runner).
+Trunk registration 820ad9d8. Family run dispatched on f0910e6c; host advance to f0910e6c dispatched (the
+run directory holds no code-bound file since the 22:04Z supersede, so no second code-bound supersede is
+needed; the saved binding is archived by the cycle supersede itself).
+
+Round from here: cycle-state supersede -> declare (`supersede_cycle=true`) -> ONE pipeline dispatch, which
+runs the native BOSS and mints a NEW Granite critic request -> readiness re-delivered for that request's sha
+(`frankie_retained_granite.yml` observer + `frankie_deliver_readiness.yml`, the 15:53Z round) -> re-dispatch
+-> critic -> export -> HOLD with the new Frankie request -> export to Root -> Root's task.
