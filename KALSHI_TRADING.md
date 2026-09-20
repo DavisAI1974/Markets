@@ -2,6 +2,15 @@
 
 ## 2026-09-20 — Frankie/BOSS launch day: the Pod that could not start, the replacement, the operator workflows
 
+- **`deploy/aws/host/frankie_host_supersede_code_bound_state.ps1`** + `.github/workflows/frankie_host_supersede_code_bound_state.yml`
+  — Greg's launch-day override (2026-09-20). MOVES (never deletes) the code-bound retained state of a run directory into a
+  dated sibling folder so the runner can re-enter it at the advanced host commit: host-identity, initialization,
+  training.sqlite + witnesses, execution/execution-identity, and in cycle-NN the preparation, service, context cache,
+  request plan, critic request and host-ready witness; plus a recursive scan for any other c15 record carrying the old
+  boss_commit. Reads both identity records (a fresh host-identity written by a refused run must not mask a stale
+  execution-identity), moves an identity only when stale, keeps host-instance (the delivered readiness is bound to it) and
+  native-host-runtime. Receipt `FRANKIE_CODE_BOUND_STATE_SUPERSEDED_V1` into the day directory. Re-runnable; refuses unless
+  tools HEAD equals the configuration's boss_commit. Tested as text by `tests/test_host_supersede_code_bound_state.py` (47).
 - **`deploy/aws/host/frankie_host_cycle_binding_probe.ps1`** + `.github/workflows/frankie_host_cycle_binding_probe.yml`
   — read-only probe that root-caused the cycles-stage refusal of pipeline run 35508198333. Dumps `day-cycles.log`, the
   `run_directory` the stage actually binds to, and each `ActualHost.__init__` refusal with `repr`: `retained_instance_id`,

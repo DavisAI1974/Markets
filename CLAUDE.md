@@ -3,9 +3,17 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
+- **PRIORITY RULE (Greg, 2026-09-20): launch-critical = anything that changes how Frankie runs or the science. Everything
+  else goes on the deferred list and waits; no fixing, no relitigating, until the run is launched.** The identity/evidence
+  guards and the tests are provenance, not science: when one blocks the launch, override it with a receipt and move on.
 - **2026-09-20 LAUNCH STATE (read `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md` first).** Greg's go for the
-  20211003 two-cycle run was given ("get this Sunday run going"); the pipeline is run 35508198333 on
-  `codex/frankie-launch-two-cycle-20260919`, resumed at cycles. **The retained Pod is now `8vqdacl5t61rjx` (US-MO-1)**:
+  20211003 two-cycle run stands. Run 35508198333 refused at cycles; ROOT CAUSE = the retained run directory
+  `actual-feedback-run` is code-bound to `c9a86e74` (host-identity, initialization, the training checkpoint digest and
+  everything pinned to it, plus `execution/execution-identity`), and `sunday_execution._save` refuses any re-entry by other
+  code. On Greg's override the code-bound files were MOVED aside (never deleted) with receipts (`frankie_host_supersede_
+  code_bound_state.yml`, runs 35511898591 + 35512598428) and the pipeline re-dispatched: **run 35512638774** on
+  `codex/frankie-launch-two-cycle-20260919`, host job past the refusal points and re-preparing at 13:11Z. Outcome in
+  `CLAUDE_HANDOFF_20260920.md`. **The retained Pod is now `8vqdacl5t61rjx` (US-MO-1)**:
   `ycf4v6lmave6xw` is stranded EXITED on a host whose L40S is taken (provider: "There are not enough free GPUs on the
   host machine to start this pod."), the replacement was prepared, bootstrapped and adopted with receipts, and the
   identity was re-minted in ONE place, `granite_retained_identity.py` (`POD_ID`, `JOURNAL_GENERATION`), plus the migration
