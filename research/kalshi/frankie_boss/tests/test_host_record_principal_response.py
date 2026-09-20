@@ -52,6 +52,11 @@ def test_every_delivered_file_is_verified_and_the_attestation_binds_the_record_o
     assert 'if ($got.Length -ne [int64]$expectedBytes -or $gotDigest -ne $expectedSha)' in CODE
     assert "$recordTarget = Join-Path $principal 'host-session-record.json'" in CODE
     assert 'if ((Normal $pinned.path) -ne (Normal $recordTarget))' in CODE
+    # Greg's override (21:05Z): a foreign host_record.path is rewritten to the host path WITH a receipt,
+    # into a new file, Root's original untouched; the record's bytes and sha256 are still verified unchanged.
+    assert '$attestation.host_record.path = $recordTarget' in CODE
+    assert 'host_attestation_path_rewritten_from = $attestationPathRewrittenFrom' in CODE
+    assert "Join-Path $incoming 'host-attestation.host-path.json'" in CODE
     assert 'if ($pinned.sha256 -ne $RecordSha256 -or [int64]$pinned.bytes -ne [int64]$RecordBytes)' in CODE
     assert "$principal = Join-Path (Join-Path (Join-Path $run 'execution') ('cycle-' + $CycleIndex)) 'principal'" in CODE
 
@@ -61,7 +66,7 @@ def test_nothing_written_over():
     assert 'refusing: a different host-session-record.json is present' in CODE
     assert 'if (Test-Path $incoming) { throw' in CODE
     writes = [line for line in CODE.splitlines() if 'Set-Content' in line or 'Copy-Item' in line or 'Tee-Object' in line]
-    assert len(writes) == 3  # the record placement, the recorder log tee, the receipt
+    assert len(writes) == 4  # the rewritten attestation (a new file), the record placement, the recorder log tee, the receipt
 
 
 def test_recorder_runs_from_the_tools_checkout_and_its_status_is_required():

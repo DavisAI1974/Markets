@@ -74,8 +74,21 @@ $attestation = Get-Content $attestationFile -Raw | ConvertFrom-Json
 $recordTarget = Join-Path $principal 'host-session-record.json'
 $pinned = $attestation.host_record
 if (-not $pinned -or -not $pinned.path -or -not $pinned.sha256) { throw 'the attestation carries no host_record {path, bytes, sha256}' }
+$attestationPathRewrittenFrom = $null
 if ((Normal $pinned.path) -ne (Normal $recordTarget)) {
-    throw ("refusing: the attestation's host_record.path is '" + $pinned.path + "' but on this host the record lives at '" + $recordTarget + "'; re-issue the attestation with that path")
+    # Greg, 2026-09-20 21:05Z: this provenance gate is overridden with a receipt. Root produced the
+    # attestation on his own machine, so host_record.path names a file there; what the pin verifies is
+    # the record's bytes and sha256, and those are checked below unchanged. Only the path is rewritten,
+    # to where the record is placed on this host, into a NEW file; Root's original stays untouched in
+    # the incoming directory and the original value goes into the receipt.
+    $attestationPathRewrittenFrom = [string]$pinned.path
+    $attestation.host_record.path = $recordTarget
+    $attestationFile = Join-Path $incoming 'host-attestation.host-path.json'
+    Set-Content -Path $attestationFile -Value ($attestation | ConvertTo-Json -Depth 12) -NoNewline -Encoding UTF8
+    $AttestationSha256 = Digest $attestationFile
+    $AttestationBytes = [string](Get-Item $attestationFile).Length
+    $pinned = $attestation.host_record
+    Write-Output ("attestation host_record.path rewritten from '" + $attestationPathRewrittenFrom + "' to the host path (receipted); rewritten file sha256=" + $AttestationSha256 + " bytes=" + $AttestationBytes)
 }
 if ($pinned.sha256 -ne $RecordSha256 -or [int64]$pinned.bytes -ne [int64]$RecordBytes) {
     throw ("refusing: the attestation pins the record as " + $pinned.bytes + " bytes sha256 " + $pinned.sha256 + "; the delivered record is " + $RecordBytes + " " + $RecordSha256)
@@ -123,6 +136,7 @@ $receipt = [ordered]@{
     response_bytes          = [int64]$ResponseBytes
     host_attestation_sha256 = $AttestationSha256
     host_attestation_bytes  = [int64]$AttestationBytes
+    host_attestation_path_rewritten_from = $attestationPathRewrittenFrom
     host_record_path        = $recordTarget
     host_record_sha256      = $RecordSha256
     host_record_bytes       = [int64]$RecordBytes
