@@ -360,3 +360,22 @@ admitted_at 1789622908.210481}` and `runtime_configuration_json` equal to
 ready, inference, finish and cleanup receipts follow only as they land. The retained Pod is
 `ycf4v6lmave6xw`; `hold()` never stops it, so GPU spend runs from a successful start until the
 native completion cleanup or a manual stop.
+
+### ROOT CAUSE CAPTURED (diagnostic run 35501729073, on-host probe)
+
+Calling `read_execution_trigger('FRANKIE_ACTUAL_EXECUTE_V1', ..., 'frankie-boss-sunday-two-cycle-20260919-cycle-00')`
+on a bare host object with the real sealed configuration raises immediately, with
+`pod_credential_ssm` present:
+
+    ValueError: explicit SSM credential source and request identity required
+    (run_actual_sunday.py, read_execution_trigger, the shape check at the top of the function)
+
+That is the message the runtime scrubbed from every log and receipt. It is the shape check, not the
+credential, the trigger, the stdin fallback or a second checkout. Every sub-condition of that check
+looks satisfied by the printed values (exact key set, name, region, trigger_directory, schema, the
+`run_id` form and the cycle-00 `request_id` form), so the failing condition must depend on something
+the printed values hide: an invisible character in a hand-authored field is the leading candidate.
+The next diagnostic prints `repr()` of every input and each sub-condition's boolean.
+
+The fix, once the condition is named, is in the sealed `actual-host-configuration.json` on the host
+(the first of Greg's two authorized actions), not in the code: the check is the design.
