@@ -60,31 +60,43 @@ if (Test-Path $cfg) {
 Write-Output "### 1d PROBE: call read_execution_trigger on a bare host object with the real config (10 s cap; prints the REAL exception message)"
 $tools = 'C:/tools/Frankie-20260919/Markets'
 if ((Test-Path $py) -and (Test-Path $tools) -and (Test-Path $cfg)) {
+  $out3 = Join-Path $env:TEMP 'frankie_diag_probe.out'
+  Remove-Item $out3 -ErrorAction SilentlyContinue
   $probe = @"
 import json, sys, threading, os, traceback
-sys.path.insert(0, r'$tools')
-from research.kalshi.frankie_boss.operations import run_actual_sunday as actual
-cfg = json.loads(open(r'$cfg', 'rb').read())
-h = actual.ActualHost.__new__(actual.ActualHost)
-h.config = cfg; h.host = cfg['host_runtime']
-print('probe module file:', actual.__file__)
-print('probe host has pod_credential_ssm:', 'pod_credential_ssm' in h.host)
-rid = cfg['run_id'] + '-cycle-00'
-result = {}
-def call():
-    try:
-        h.read_execution_trigger('FRANKIE_ACTUAL_EXECUTE_V1', ('readiness_directory', 'service_pins_sha256'), rid)
-        result['outcome'] = 'RETURNED'
-    except BaseException as e:
-        result['outcome'] = 'RAISED %s: %s' % (type(e).__name__, e)
-t = threading.Thread(target=call, daemon=True); t.start(); t.join(10)
-print('probe outcome:', result.get('outcome', 'STILL WAITING after 10 s (shape check passed; it is looping on the absent trigger)'))
-os._exit(0)
+log = open(r'$out3', 'a', encoding='ascii', errors='replace')
+def say(*a):
+    line = ' '.join(str(x) for x in a)
+    print(line, flush=True); log.write(line + '\n'); log.flush()
+try:
+    sys.path.insert(0, r'$tools')
+    from research.kalshi.frankie_boss.operations import run_actual_sunday as actual
+    cfg = json.loads(open(r'$cfg', 'rb').read())
+    h = actual.ActualHost.__new__(actual.ActualHost)
+    h.config = cfg; h.host = cfg['host_runtime']
+    say('probe module file:', actual.__file__)
+    say('probe host has pod_credential_ssm:', 'pod_credential_ssm' in h.host)
+    rid = cfg['run_id'] + '-cycle-00'
+    result = {}
+    def call():
+        try:
+            h.read_execution_trigger('FRANKIE_ACTUAL_EXECUTE_V1', ('readiness_directory', 'service_pins_sha256'), rid)
+            result['outcome'] = 'RETURNED'
+        except BaseException as e:
+            result['outcome'] = 'RAISED %s: %s' % (type(e).__name__, e)
+            result['trace'] = traceback.format_exc()
+    t = threading.Thread(target=call, daemon=True); t.start(); t.join(10)
+    say('probe outcome:', result.get('outcome', 'STILL WAITING after 10 s (shape check passed; it is looping on the absent trigger)'))
+    if 'trace' in result: say(result['trace'])
+except BaseException as e:
+    say('probe setup failed:', type(e).__name__, e); say(traceback.format_exc())
+log.close(); sys.stdout.flush(); os._exit(0)
 "@
   $tmp3 = Join-Path $env:TEMP 'frankie_diag_probe.py'; Set-Content -Path $tmp3 -Value $probe -Encoding ASCII
   Push-Location $tools; $env:PYTHONPATH = $tools; $env:PYTHONDONTWRITEBYTECODE = '1'
-  try { & cmd.exe /c "`"$py`" `"$tmp3`" 2>&1" } finally { Pop-Location }
-  Remove-Item $tmp3 -ErrorAction SilentlyContinue
+  try { & $py $tmp3 2>&1 | ForEach-Object { "$_" } } catch { Write-Output ("probe invocation error: " + $_) } finally { Pop-Location }
+  if (Test-Path $out3) { Write-Output "--- probe file capture ---"; Get-Content $out3 } else { Write-Output "probe file capture: NONE" }
+  Remove-Item $tmp3 -ErrorAction SilentlyContinue; Remove-Item $out3 -ErrorAction SilentlyContinue
 } else { Write-Output "probe skipped (python, tools or config missing)" }
 
 Write-Output "### 2 actual-host-configuration.json -> pod_credential_ssm, run_id"
