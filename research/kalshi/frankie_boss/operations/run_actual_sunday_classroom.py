@@ -367,7 +367,11 @@ def main(host_class=ActualHost):
             finally:
                 host.close()
     except Exception as error:
-        print(json.dumps(dict(status="stopped", error_type=type(error).__name__)), flush=True)
+        # Type and code locations only (base.stop_frames): never a message, local or stdin. This
+        # main, not base.main, is what run_actual_sunday_ec2 runs; run 35516396264 (2026-09-20)
+        # stopped here with a type-only record after base.main had already gained the frames.
+        print(json.dumps(dict(status="stopped", error_type=type(error).__name__,
+                              frames=base.stop_frames(error))), flush=True)
         return 1
 
 
