@@ -398,3 +398,25 @@ deadline, so the run was cancelled. The prepare artifact (`startup-bootstrap-pin
 
 Next on the Pod side: refresh `RP_BOOTSTRAP_URLS` with the built mechanism, then re-dispatch
 `frankie_retained_granite.yml` with the same three inputs.
+
+### ROOT CAUSE CONFIRMED: the host runs c9a86e74, which predates the request-id fix c0749bc0
+
+The repr probe (diagnostic run 35502069016) showed every sub-condition of the shape check TRUE on
+the host's real configuration, and the host's function still raising at line 277. In git, the raise
+is at line 277 in `c9a86e74` (946 lines) and at 279 in the tip (948 lines); the two-line difference
+is commit `c0749bc0` (2026-09-17 01:28 -0400, "fix(frankie): admit only this run's safe scheduled
+cycle trigger IDs"), which added the `<run_id>-cycle-NN` alternative to the 64-hex request-id rule.
+`c9a86e74` is `boss_commit` in the sealed host configuration and the HEAD of the host's tools
+checkout, and it does not contain that fix, so under the host's code the cycle-00 request id
+`frankie-boss-sunday-two-cycle-20260919-cycle-00` is refused before the trigger is ever looked for.
+That is the whole 34 ms. The probe's conditions were this session's re-implementation of the newer
+logic, which is why they all passed.
+
+Correction to an earlier line of this record: the claim that `read_execution_trigger` was
+byte-identical between `c9a86e74` and the tip was wrong; the comparison helper fed Python its own
+heredoc instead of the `git show` output, so both sides compared equal trivially. The line-number
+evidence above is independent of that helper.
+
+Consequence: no configuration change can fix this; the host needs code at or after `c0749bc0`. That
+changes the pinned `boss_commit` and possibly the resume identity of the current run directory, so
+it is a run-identity decision, recorded here for Greg with the options in the session reply.

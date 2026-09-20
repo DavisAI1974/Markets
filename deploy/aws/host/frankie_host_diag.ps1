@@ -57,6 +57,20 @@ if (Test-Path $cfg) {
   } else { Write-Output "lawful repository path missing or absent" }
 }
 
+Write-Output "### 1e is the host's run_actual_sunday.py the file committed at its HEAD? (dirty tree / stale file check)"
+if ($gitExe -and (Test-Path $tools)) {
+  Write-Output ("git status --porcelain (first 20): "); & $gitExe.Source -C $tools status --porcelain 2>&1 | Select-Object -First 20 | ForEach-Object { "  $_" }
+  Write-Output ("git diff --stat HEAD: "); & $gitExe.Source -C $tools diff --stat HEAD 2>&1 | Select-Object -Last 8 | ForEach-Object { "  $_" }
+  $ras2 = Join-Path $tools 'research/kalshi/frankie_boss/operations/run_actual_sunday.py'
+  if (Test-Path $ras2) {
+    $h2 = ([BitConverter]::ToString([System.Security.Cryptography.SHA256]::Create().ComputeHash([IO.File]::ReadAllBytes($ras2)))).Replace('-','').ToLower()
+    Write-Output ("host file sha256: " + $h2 + "  bytes=" + (Get-Item $ras2).Length)
+    Write-Output ("committed blob (git show HEAD:path | sha256): " + ((& $gitExe.Source -C $tools show 'HEAD:research/kalshi/frankie_boss/operations/run_actual_sunday.py' | Out-String -Stream | Measure-Object -Line).Lines) + " lines")
+    Write-Output "--- host file lines 261-282 ---"
+    Get-Content $ras2 | Select-Object -Skip 260 -First 22 | ForEach-Object { "  " + $_ }
+  }
+}
+
 Write-Output "### 1d PROBE: call read_execution_trigger on a bare host object with the real config (10 s cap; prints the REAL exception message)"
 $tools = 'C:/tools/Frankie-20260919/Markets'
 if ((Test-Path $py) -and (Test-Path $tools) -and (Test-Path $cfg)) {
