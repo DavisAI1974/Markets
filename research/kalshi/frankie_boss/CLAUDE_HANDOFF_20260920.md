@@ -443,3 +443,24 @@ narrow script. Both workflows are dispatch-only and start nothing.
 Order of operations from here: advance the host; refresh the URLs; re-dispatch the retained observer
 with the same three inputs (Pod start + readiness); deliver readiness and write the trigger;
 re-dispatch the day pipeline with the same inputs to resume at cycles.
+
+### Host advance DONE: run 35502759158, receipt FRANKIE_HOST_ADVANCE_RECEIPT_V1
+
+At 2026-09-20T09:36:28Z on `i-0e90ee6110ef609aa`, tools checkout `C:/tools/Frankie-20260919/Markets`
+moved `c9a86e74583f47821d5a9bb6759726bc59542519 -> 96e26f7d5e8100cca93288d5f44d9550ab5cfd9a`
+(tree was clean; the script refuses otherwise). `run_actual_sunday.py` now carries the cycle
+request-id fix (occurrences=2). `host_runtime.boss_commit` in
+`C:/Codex/Frankie-BOSS-20260919/days/20211003/actual-host-configuration.json` updated
+`c9a86e74... -> 96e26f7d...`, with the untouched file kept at
+`actual-host-configuration.json.before-advance-20260920T093628Z.json`. Rollback is
+`git checkout --detach c9a86e74...` plus restoring that backup.
+
+### Pod URL refresh: first attempt (run 35502760528) refused its own URL; fixed
+
+The refresh read the Pod, matched the roster and bundle sha, and verified every staged object
+against the reviewed roster, then stopped before patching because the URL it generated carried no
+`X-Amz-Date`: boto3 had signed with the legacy scheme. The validator and the Pod bootstrap require
+SigV4 on `<bucket>.s3.amazonaws.com` or `<bucket>.s3.us-east-1.amazonaws.com`. Fixed in
+`a7d725bd`: the client pins `signature_version=s3v4` with virtual addressing and the script refuses
+to patch any URL whose origin or query shape the Pod bootstrap would reject. Nothing was patched by
+the failed attempt. Re-dispatched.
