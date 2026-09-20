@@ -89,10 +89,9 @@ if response.exists():
     longest = max(range(len(entries)), key=lambda i: len(entries[i])) if entries else None
     for i, text in enumerate(entries):
         if i == longest:
-            print(f'  lesson[{i}] (the analysis, {len(text)} chars):'); print(text[:12000])
-            if len(text) > 12000: print(f'  ... [{len(text) - 12000} more chars]')
+            print(f'  lesson[{i}] (the analysis, {len(text)} chars, printed whole; SSM caps the console near 24 KB):'); print(text)
         else:
-            print(f'  lesson[{i}] {short(text, 300)}')
+            print(f'  lesson[{i}] {text}')
 spool = cycle/'critic-spool'
 print('### critic outcome')
 if spool.exists():
