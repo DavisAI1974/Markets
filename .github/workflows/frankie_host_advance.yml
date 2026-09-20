@@ -1,8 +1,12 @@
 name: Frankie advance native host tools to a commit
 # Moves the native host's tools checkout to an explicit descendant commit and records it as
-# boss_commit in the sealed host configuration (dated backup, receipt). First use 2026-09-20: the
-# frozen native runtime 96e26f7d (request-id fix). Second use: the re-minted retained Pod identity.
-# Refuses a dirty tree and a non-descendant target. Starts nothing.
+# boss_commit in the sealed host configuration (dated backup, receipt in the day directory).
+# First use 2026-09-20: the frozen native runtime 96e26f7d (request-id fix). Second use: the
+# re-minted retained Pod identity. Refuses a dirty tree and a non-descendant target. Starts
+# nothing. Inputs reach the shell through env, never by expression interpolation into run:.
+# KNOWN CONSEQUENCE (2026-09-20): a retained run directory is code-bound to the commit that
+# started it; after an advance it refuses re-entry until frankie_host_supersede_code_bound_state.yml
+# has moved the code-bound records aside (or the guard learns lawful advances, deferred item #2).
 on:
   workflow_dispatch:
     inputs:
@@ -13,6 +17,18 @@ on:
       target:
         description: 'Full 40-hex commit to check out on the host (must descend from the current checkout)'
         required: true
+      day:
+        description: 'Day whose sealed configuration records boss_commit'
+        required: false
+        default: '20211003'
+      run_root:
+        description: 'Day pipeline RunRoot on the host'
+        required: false
+        default: 'C:/Codex/Frankie-BOSS-20260919/days'
+      tools_root:
+        description: 'Host tools checkout'
+        required: false
+        default: 'C:/tools/Frankie-20260919/Markets'
 permissions:
   contents: read
 jobs:
@@ -33,4 +49,18 @@ jobs:
           python-version: '3.13'
       - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
       - name: Advance the tools checkout and record boss_commit
-        run: python deploy/aws/ssm_run_ps1.py --instance "${{ inputs.instance }}" --region us-east-2 --script deploy/aws/host/frankie_host_advance.ps1 --set "Target=${{ inputs.target }}" --timeout 600 --comment "advance tools to ${{ inputs.target }}"
+        env:
+          INSTANCE: ${{ inputs.instance }}
+          TARGET: ${{ inputs.target }}
+          DAY: ${{ inputs.day }}
+          RUN_ROOT: ${{ inputs.run_root }}
+          TOOLS_ROOT: ${{ inputs.tools_root }}
+        run: |
+          python deploy/aws/ssm_run_ps1.py \
+            --instance "$INSTANCE" --region us-east-2 \
+            --script deploy/aws/host/frankie_host_advance.ps1 \
+            --set "Target=$TARGET" \
+            --set "Day=$DAY" \
+            --set "RunRoot=$RUN_ROOT" \
+            --set "ToolsRoot=$TOOLS_ROOT" \
+            --timeout 600 --comment "advance tools to $TARGET"

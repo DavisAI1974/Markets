@@ -2,6 +2,7 @@ name: Frankie supersede code-bound retained state
 # Moves (never deletes) the code/checkpoint-bound retained files of a run directory into a dated
 # sibling folder so the runner re-mints them at the advanced host commit; receipt into the day
 # directory. Greg's call 2026-09-20: get the two-cycle run running. Dispatch only.
+# Inputs reach the shell through env, never by expression interpolation into run: (audit, Medium).
 on:
   workflow_dispatch:
     inputs:
@@ -29,6 +30,10 @@ on:
         description: 'Zero-padded cycle index whose preparation is superseded'
         required: false
         default: '00'
+      old_commit:
+        description: 'Only when both identity records are already gone: the 40-hex commit the stale records were written by'
+        required: false
+        default: ''
 permissions:
   contents: read
 jobs:
@@ -49,13 +54,22 @@ jobs:
           python-version: '3.13'
       - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
       - name: Supersede code-bound retained state over SSM
+        env:
+          INSTANCE: ${{ inputs.instance }}
+          DAY: ${{ inputs.day }}
+          RUN_ROOT: ${{ inputs.run_root }}
+          TOOLS_ROOT: ${{ inputs.tools_root }}
+          HOST_PYTHON: ${{ inputs.python }}
+          CYCLE_INDEX: ${{ inputs.cycle_index }}
+          OLD_COMMIT: ${{ inputs.old_commit }}
         run: |
           python deploy/aws/ssm_run_ps1.py \
-            --instance "${{ inputs.instance }}" --region us-east-2 \
+            --instance "$INSTANCE" --region us-east-2 \
             --script deploy/aws/host/frankie_host_supersede_code_bound_state.ps1 \
-            --set "Day=${{ inputs.day }}" \
-            --set "RunRoot=${{ inputs.run_root }}" \
-            --set "ToolsRoot=${{ inputs.tools_root }}" \
-            --set "Python=${{ inputs.python }}" \
-            --set "CycleIndex=${{ inputs.cycle_index }}" \
-            --timeout 300 --comment "supersede code-bound retained state for the 20211003 two-cycle run"
+            --set "Day=$DAY" \
+            --set "RunRoot=$RUN_ROOT" \
+            --set "ToolsRoot=$TOOLS_ROOT" \
+            --set "Python=$HOST_PYTHON" \
+            --set "CycleIndex=$CYCLE_INDEX" \
+            --set "OldCommit=$OLD_COMMIT" \
+            --timeout 300 --comment "supersede code-bound retained state for day $DAY"

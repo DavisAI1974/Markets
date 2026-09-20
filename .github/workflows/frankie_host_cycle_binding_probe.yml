@@ -1,9 +1,10 @@
 name: Frankie cycles-binding probe (read-only)
-# Names which check in run_actual_sunday.py 812-843 refused the cycles stage of pipeline run
-# 35508198333 (day 20211003). Reads the runner's own traceback from day-cycles.log, the
-# run_directory the stage binds to, the host-instance.c15.json in THAT directory, its cycle-00
-# listing, and each of the four comparisons with repr. Starts, stops, writes and re-dispatches
-# nothing; touches no SSM parameter. Dispatch only.
+# Names which check in run_actual_sunday.py refused the cycles stage of pipeline run
+# 35508198333 (day 20211003). Reads the runner's own log, the run_directory the stage binds to, the
+# host-instance.c15.json in THAT directory, its cycle-00 listing, and each of the __init__
+# comparisons with repr. Starts, stops, writes and re-dispatches nothing; touches no SSM
+# parameter. Dispatch only. Inputs reach the shell through env, never by expression
+# interpolation into run: (audit, Medium).
 on:
   workflow_dispatch:
     inputs:
@@ -63,13 +64,20 @@ jobs:
           print('SSM ping:', [(i['PingStatus'], i.get('PlatformName','')) for i in s.get('InstanceInformationList',[])] or 'not registered')
           PY
       - name: Cycles-binding probe over SSM (read-only)
+        env:
+          INSTANCE: ${{ inputs.instance }}
+          DAY: ${{ inputs.day }}
+          RUN_ROOT: ${{ inputs.run_root }}
+          TOOLS_ROOT: ${{ inputs.tools_root }}
+          HOST_PYTHON: ${{ inputs.python }}
+          CYCLE_INDEX: ${{ inputs.cycle_index }}
         run: |
           python deploy/aws/ssm_run_ps1.py \
-            --instance "${{ inputs.instance }}" --region us-east-2 \
+            --instance "$INSTANCE" --region us-east-2 \
             --script deploy/aws/host/frankie_host_cycle_binding_probe.ps1 \
-            --set "Day=${{ inputs.day }}" \
-            --set "RunRoot=${{ inputs.run_root }}" \
-            --set "ToolsRoot=${{ inputs.tools_root }}" \
-            --set "Python=${{ inputs.python }}" \
-            --set "CycleIndex=${{ inputs.cycle_index }}" \
-            --timeout 300 --comment "read-only cycles-binding probe for run 35508198333"
+            --set "Day=$DAY" \
+            --set "RunRoot=$RUN_ROOT" \
+            --set "ToolsRoot=$TOOLS_ROOT" \
+            --set "Python=$HOST_PYTHON" \
+            --set "CycleIndex=$CYCLE_INDEX" \
+            --timeout 300 --comment "read-only cycles-binding probe for day $DAY"
