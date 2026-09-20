@@ -31,7 +31,7 @@ import time
 CONTROL = 'api.runpod.io'
 SENSITIVE = ('key', 'secret', 'token', 'password', 'env')
 HOST_BUSY = 'not enough free GPUs on the host machine'
-RETAINED_POD = 'ycf4v6lmave6xw'   # never terminated here: it holds the retained model
+RETAINED_POD = '8vqdacl5t61rjx'   # never terminated here: it holds the retained model
 RETRY_INTERVAL = 60
 
 

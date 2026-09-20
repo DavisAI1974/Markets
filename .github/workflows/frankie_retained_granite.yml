@@ -1,0 +1,86 @@
+name: Retained Granite progress observer
+
+on:
+  workflow_dispatch:
+    inputs:
+      request_sha256:
+        description: SHA256 of the exact admitted request stored in its authenticated Git archive or the retained S3 request prefix
+        required: true
+        type: string
+      local_ready_json:
+        description: Exact local input-admitted witness JSON
+        required: true
+        type: string
+      runtime_configuration_json:
+        description: Immutable nonsecret bootstrap, source, context and protocol pins (required for initial start)
+        required: false
+        type: string
+  push:
+    branches: [codex/full-frankie-boss-connection-20260915]
+    paths: [.github/frankie-retained-lease-request.json]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: retained-granite-8vqdacl5t61rjx
+  cancel-in-progress: false
+
+jobs:
+  retained:
+    name: retained-${{ matrix.role }}
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        role: [watchdog, prepare]
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_EC2_METADATA_DISABLED: 'true'
+      AWS_DEFAULT_REGION: us-east-1
+      RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+      GH_TOKEN: ${{ github.token }}
+      REQUEST_SHA256: ${{ inputs.request_sha256 }}
+      LOCAL_READY_JSON: ${{ inputs.local_ready_json }}
+      RUNTIME_CONFIGURATION_JSON: ${{ inputs.runtime_configuration_json }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install accepted host dependencies
+        run: |
+          python -m pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install numpy==2.4.3 boto3==1.42.23 transformers==5.8.0 tokenizers==0.22.2 cryptography==46.0.3
+      - name: Run retained role without inference
+        run: python -m research.kalshi.frankie_boss.granite_retained_host ${{ matrix.role }}
+      - name: Publish fresh readiness for the local controller
+        if: matrix.role == 'prepare'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: retained-granite-ready-${{ github.run_id }}
+          path: work/retained-granite/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Observe until local stop or observer handoff
+        if: matrix.role == 'prepare'
+        run: python -m research.kalshi.frankie_boss.granite_retained_host hold
+      - name: Clean up only a confirmed fatal runtime or identity failure
+        if: always()
+        run: python -m research.kalshi.frankie_boss.granite_retained_host cleanup
+      - name: Retain role and cleanup evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: retained-granite-${{ matrix.role }}-${{ github.run_id }}
+          path: work/retained-granite/
+          retention-days: 30
+          if-no-files-found: warn
