@@ -65,6 +65,35 @@ if ($src -and $c.run_id) {
   if (Test-Path $tdir) { Write-Output "request dir listing:"; Get-ChildItem $tdir | ForEach-Object { "  " + $_.Name } }
 } else { Write-Output "skipped (no source/run_id)" }
 
+Write-Output "### 3b the local input-admitted witness (credential-free by design) and the cycle-00 directory"
+$cyc = 'C:/Codex/Frankie-BOSS-20260919/actual-feedback-run/execution/cycle-00'
+if (Test-Path $cyc) {
+  Write-Output "cycle-00 listing:"; Get-ChildItem $cyc | ForEach-Object { "  " + $_.Name + "  " + $_.Length }
+  $hr = Get-ChildItem $cyc -Filter 'host-ready-*.c15.json' | Select-Object -First 1
+  if ($hr) { Write-Output ("host-ready file: " + $hr.Name + " bytes=" + $hr.Length); Write-Output "----- BEGIN local_ready_json -----"; Get-Content $hr.FullName -Raw; Write-Output "----- END local_ready_json -----" }
+  else { Write-Output "host-ready file: NONE" }
+} else { Write-Output "cycle-00 directory ABSENT" }
+
+Write-Output "### 3c can the HOST role read the retained readiness bucket (us-east-1)?"
+if (Test-Path $py) {
+  $code2 = @"
+try:
+    import boto3, botocore
+    s3 = boto3.client('s3', region_name='us-east-1')
+    r = s3.list_objects_v2(Bucket='frankie-granite42-568968024170-us-east-1', Prefix='retained-granite/6cd46f983845fbd2ed88ec24ebf18f446cc3523a89307b03290351bd39d3b0dd/', MaxKeys=5)
+    keys = [o['Key'] for o in r.get('Contents', [])]
+    print('S3 LIST OK objects_under_new_request_prefix=%d' % len(keys))
+    for k in keys: print('  ' + k)
+except botocore.exceptions.ClientError as e:
+    print('S3 LIST FAIL code=%s' % e.response['Error']['Code'])
+except Exception as e:
+    print('S3 LIST FAIL type=%s' % type(e).__name__)
+"@
+  $tmp2 = Join-Path $env:TEMP 'frankie_diag_s3.py'; Set-Content -Path $tmp2 -Value $code2 -Encoding ASCII
+  & $py $tmp2
+  Remove-Item $tmp2 -ErrorAction SilentlyContinue
+} else { Write-Output "skipped (host python missing)" }
+
 Write-Output "### 4 SSM parameter readable by the HOST role (value never printed)"
 if ($src -and (Test-Path $py)) {
   $code = @"
