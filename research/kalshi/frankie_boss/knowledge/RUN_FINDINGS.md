@@ -78,3 +78,40 @@ nothing on the machine computes exhaustion chains, D structures or families; tho
 classroom, are Frankie's step, and he correlates the machine's result after it is delivered to him, never
 concurrently. The whole cycle is superseded with receipts (nothing deleted) and runs again under the current
 code so his request carries a fresh machine result and the classroom runs anew.
+
+## 2026-09-20, each cycle's calculation set is PINNED to the original group it repeats (Greg Davis, 22:23Z)
+
+"we need to pin cycle 0 calcs with the first group of calcs we did. Same with the 2nd and then the rest need to
+be pinned on when we came up with the rest of the original remaining calcs." From this cycle on the required set
+in each request is the cycle's committed pin (`knowledge/CYCLE_CALCULATION_PINS.json`, explained in
+`CYCLE_CALCULATION_PINS.md`), not the whole registry: cycle 0 = `legacy_observable_crosswalk` (first done
+2026-08-16: the roll20 dipole flow, native signed flow, price, book imbalance and structure observables every
+first exhaustion calculation ran on), cycle 1 = `derived_geometry` (2026-08-17: the chain study, its phase-2 D
+families, dipole state and geometry), cycle 2 = `prebirth_opportunity` (2026-08-19), cycle 3 = `causal_clocks`
+(2026-08-19), cycles 4-6 = `order_lifecycle`, `full_book_fifo_queue`, `microstructure_mechanics` (2026-08-20, the
+MBO V4 state adapter), cycles 7-18 = the complete registry as of the 2026-08-28 recalculation. Each pin names its
+source receipts with bytes and sha256 and is tested against the committed files and the registry crosswalk; the
+pin's witness rides in the request attachment and the cycle index is part of the adapter configuration hash, so
+no cycle renders a request without its pin. The reading applied ("group" = registry calculation group, ordered by
+the date first done) and the alternative ("group" = the dated research campaigns as run, beginning with the
+2026-08-16 families and blind test) are both recorded with receipts; switching is a data edit Greg owns.
+
+## 2026-09-20, audit: the exhaustion research is still the objective, in Frankie and in the code (Greg, 22:23Z)
+
+Greg: "make sure that exhaustion research hasn't been dropped as our objective and dropped from his manifest."
+Read, not assumed, document by document (the receiver-side files at the pinned receiver commit 7b98617b):
+PRESENT: the mission document (`frankie_native_raw_mbo_oct45_realtime_mission_20260828.md`, registry layer
+`controlling_rt_mission`, "Exhaustion is a central research axis ... determine how it forms, behaves, becomes
+detectable, persists, chains and ends", its six central questions, D as exhaustion-chain depth with no ceiling);
+the calculation contract (sections 4.10 exhaustion state, 4.11 prebirth and H+N, 4.12 dipole and opposing
+pressure, 4.13 chain families and D-depth, 4.14 recurrence, 4.16 fixed causal future-response); the eighteen
+sections in the historical prompt bytes; all six frozen learned-structure layers DELIVERED with their carriers on
+disk; the request instruction (derivations named, 49 layers, ten ledgers). WEAKENED: the knowledge manifest is a
+file index that carries the objective by reference only (hash-bound, left as is); the frozen Memory A seed's
+header states no objective (frozen, sha 4a47b09d, never edited; this ledger states it instead); the instruction
+named five of the seven derivation axes, now also "the causal clocks and the fixed H+N horizon responses".
+ABSENT, restored tonight: the dipole classroom never said its 19 C15 dimensions are the opposing-pressure surface
+of the exhaustion research (contract 4.12); its docstring and the model-visible classroom now state it
+(`research_objective`). Recorded for Frankie: the exhaustion research (chains with extensions, reappearances and
+ancestry; D structures and families; dipoles and geometry; pair and triplet recurrence; pre-birth; the causal
+clocks; the horizon times) IS the objective of every cycle; the eighteen sections exist to serve it.

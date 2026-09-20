@@ -1,5 +1,16 @@
 # Frankie boss / Sol replacement seam
 
+## Objective (never dropped; audited 2026-09-20)
+
+Frankie's objective is the EXHAUSTION research: how exhaustion forms, behaves, becomes detectable, persists,
+chains and ends; the exhaustion chains with their extensions, reappearances and ancestry; the D structures and
+families (D as chain depth, no ceiling); the dipoles and geometry; pair and triplet recurrence; pre-birth
+opportunity; the causal clocks and the fixed H+N horizon responses. The binding statement is the mission
+document `research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md` (registry layer
+`controlling_rt_mission`, on the frozen receiver checkout) and the calculation contract's sections 4.10-4.16.
+Every cycle's request orders these derivations (`frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION`) and pins
+the cycle's calculation set (`knowledge/CYCLE_CALCULATION_PINS.json`).
+
 This package is an additive from-scratch boss-model layer around Frankie's existing BLD-1 boundary.
 It does not replace or edit `spawn.py`, S135, the provider adapter, the 1,940-path/46-block capability
 surface, or ReFRAG governance.

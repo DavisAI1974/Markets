@@ -4,6 +4,14 @@ Started 2026-09-14 on the Granite contract slice. Basics only; the specs and
 handoffs in this directory remain the record. This file is a new name on purpose
 so nothing older is overwritten.
 
+## Objective (read first)
+
+The exhaustion research is Frankie's objective and the basis of the eighteen calculation sections: chains with
+extensions, reappearances and ancestry; D structures and families; dipoles and geometry; pair and triplet
+recurrence; pre-birth opportunity; the causal clocks; the horizon times. Mission document
+`research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md` (receiver side); per-cycle
+required set `knowledge/CYCLE_CALCULATION_PINS.json`; standing ledger `knowledge/RUN_FINDINGS.md`.
+
 ## Running the suites (Windows)
 
     PYTHONPATH=".;research/kalshi/frankie_boss;research/kalshi/frankie_boss/tests"
