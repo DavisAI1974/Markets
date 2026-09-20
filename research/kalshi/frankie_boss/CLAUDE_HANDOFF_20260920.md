@@ -962,3 +962,34 @@ whatever 03 exists). Correcting it means moving a receipt on `codex/frankie-laun
 a branch this session has no word to push to -- Greg's call.
 
 Pipeline re-dispatched ~14:56Z (same inputs). Check-in armed 15:07Z.
+
+### Run 35517953486 reached line 833; the request itself changed with the line endings; readiness RE-PINNED to a7b72cf9
+
+Pipeline run 35517953486 (14:55Z) went through the rebuilt classroom package, preparation, admission,
+the ready signal, the trigger read, the service record and line 843 (probe run 35518847724, section 6:
+host `identity_hash 1bd1027a...` = pins) and stopped at `run_actual_sunday.py:833` `startup admission
+differs from the actual prepared request`. Probe section 7 (run 35518847724) diffed the new
+host-preparation against both superseded copies (09-17 and 13:21Z): 43 equal keys, 12 differing --
+`request_sha256` `6cd46f98...` -> **`a7b72cf9...`**, and inside the receipt `model_hash`,
+`teacher_binding`, `teacher_hash`, `input_hash`, `native_snapshot_hash`, `encoded_snapshot_hash`,
+`prompt_sha256`, plus `native_pin` and `initial_checkpoint_hash`. Those identities are code-bound
+(`context_session._model_hash` folds module source bytes; the teacher binding likewise), so the same
+normalization that made line 843 pass necessarily changed the request: the 13:21Z CRLF preparation
+reproduced 6cd46f98 exactly, the LF preparation gives a7b72cf9. **a7b72cf9 is the request the observer
+world has always used** (its encrypted archive is on the branch under `runs/request-archives/`, and the
+09-19 migration journal ran under `retained-granite/a7b72cf9.../`); 6cd46f98 was the CRLF host's request.
+The 11:19Z adoption pinned 6cd46f98 with an LF identity: a readiness that could never satisfy both
+gates. Cycle 0 never ran inference on either.
+
+Re-pin, in order (15:19Z-): observer run 35507527320 (hold, 6cd46f98 world) CANCELLED at GitHub level --
+never a Pod action; observer **run 35519228804** dispatched on `c5d45b18` with `request_sha256 a7b72cf9...`,
+`local_ready_json {request_sha256 a7b72cf9..., host_instance_id 6d02c1fcafbd4c7e8aa09245d3f9e3e7,
+admitted_at 1789916729.1158657}` (the host's ready witness of 15:05:29Z, read by the probe) and
+`runtime_configuration_json` = `runs/20260919/reviewed-bootstrap-image-defaults-runtime.json` (bundle
+`a004983e93b9...`); `frankie_host_supersede_readiness.ps1` (run 35519230113) moves the request's trigger
+directory, readiness directory and cycle-00 `host-service.c15.json` aside with per-file sha256 (the
+delivery refuses while a trigger exists; the runner re-reads host-service, which pins the old readiness);
+`frankie_pod_control.yml` restart dispatched waiting on
+`retained-granite/a7b72cf9.../migration-8vqdacl5t61rjx-a004983e93b9/retained-start-intent.json` (the same
+adoption step as 11:21Z: the observer reads only frames stamped after its own startup record, and the Pod
+stays RUNNING throughout). Then: deliver readiness (ready_run_id 35519228804, request a7b72cf9), re-dispatch.
