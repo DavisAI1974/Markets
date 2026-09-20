@@ -1602,3 +1602,20 @@ machine is invisible). Shape for after this cycle: Root's session writes a small
 (session id, model identity, phase, last progress time, request sha) to a git branch or an S3 key at a
 fixed cadence; a read-only workflow (or the cycle-status probe) reads and prints it beside the host's
 status, and the pipeline's HOLD message names where it looked. Queued with the other after-cycle notes.
+
+### 21:25Z: Root pushed to his own fork (rootdavis/Markets, root/cycle-00-response); the bridge is a pull request
+
+The container cannot reach the fork: the session's GitHub credential is scoped to DavisAI1974/Markets
+(`git fetch` of the fork asks for a username), and a cross-owner attach is refused. The bridge that stays
+in scope: Root opens a PR from `rootdavis:root/cycle-00-response` into DavisAI1974/Markets (any base,
+never merged); its head is then `refs/pull/N/head` in the base repo, which
+`frankie_host_record_principal_response.yml` fetches as `source_ref`. Then the record run, then ONE
+pipeline dispatch.
+
+Greg's failure notifications, sorted: the pipeline failures on the launch branch are the HOLD exits
+(by design); `ng_exhaustion_step1_receipt_count_20260823.yml` had been invalid YAML since 44ea38bf (an
+unindented heredoc inside a block scalar), so every push to a branch carrying it spawned an instant
+failed run (895) -- removed from this branch only (2e2addb2; it is not on the trunk); the text-contract
+CI on the trunk failed because the trunk carries the registration but not the tests -- its steps now run
+only where the tests exist (2e2addb2 here, 0ce84a8d on the trunk); the NWS hourly collector failure on
+the trunk is unrelated and waits.
