@@ -1349,3 +1349,19 @@ State at 19:15Z: pipeline stopped at the export pin (exit 1, receipts committed 
 controller result, critic outcome, `principal/` (session-request.json 16:39:23Z) and the 18:51Z declaration are
 all retained; nothing deleted; the 46bb7c7c identity records sit under
 `superseded/actual-feedback-run-20260920T185054Z-code-46bb7c7c.../`.
+
+### 19:55Z: the export pin is covered; advanced, superseded, declared with all three old values, re-dispatched
+
+Greg's word at 19:20Z ("You do the commits and then do 2 in order"). The export-pin fix is on the branch as
+ba3e3a9a and 696f2275 (the acceptance record only compares pins both sides carry; the first CI run
+35533291204 failed on the test fixture's stub manifest, which has no boss_commit). CI 35533447876 green,
+family 35533451989 green, docs bullet 2b069fc2 on top (same code identity). Host advanced 8a4ef528 -> 2b069fc2
+(run 35533639210). Code-bound supersede run 35533701422 moved the 8a4ef528 identity records and cycle-00's
+19:07Z re-preparation. Declaration run 35533792976 (receipt `identity-supersede-declared-20260920T195425Z.json`,
+status `declared`; a first attempt, run 35533704067, was refused by `--set` for an apostrophe in the reason
+before it touched the host): request `...-cycle-00`, old code 61b761c8 (the binding as the 19:07Z acceptance
+left it) -> new a019bb8d, old arm 3a85e8bd, **old_boss_commit 34a4feac** (the checkout that exported the
+handoff at 15:56Z), old_agent_commit 7b98617b (the receiver, unchanged). Pipeline re-dispatched: **run
+35533855801** at 19:55:13Z. Expected: binding accepted (code hash + spent arm), export manifest accepted on the
+declared old boss_commit with a `FRANKIE_CYCLE_EXPORT_PIN_SUPERSEDE_ACCEPTED_V1` record, attachment and intent
+retained, `recover` -> `actual_frankie_session_pending` (exit 3).
