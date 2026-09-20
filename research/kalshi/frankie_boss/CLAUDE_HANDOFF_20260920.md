@@ -538,3 +538,48 @@ refusal is exactly the host-busy message; foreign refusals abort at once; attemp
 receipt). Dispatched with a 5.5 h horizon. The alternative, a fresh Pod on another host, means a new
 `POD_ID`, a new `JOURNAL_GENERATION`, a re-bootstrap of the model from `models/bootstrap/` and a
 re-review of the pinned identities: Greg's call, not taken here.
+
+### Greg: "Prepare the fresh pod in parallel" (2026-09-20)
+
+The current Pod is itself a migration: source `jvs75m56w8f73q` -> `ycf4v6lmave6xw`, re-pinned
+through `granite_retained_migration_receipt.json` (`GRANITE_POD_MIGRATION_V1`), `info_from_journal`
+(rewrites the accepted `runpod-smoke/34928264918/pod-info.json` into the migrated identity and
+checks `INFO_SHA256`), `POD_ID` and `JOURNAL_GENERATION`. A replacement Pod therefore needs no new
+mechanism: a second receipt chained from the same accepted info, a new `INFO_SHA256`, and a new
+`POD_ID`/`JOURNAL_GENERATION` (fresh journal, fresh active-run key, so the consumed start intent of
+the old generation cannot block it). The model (13 files, 17.6 GB) is downloaded by the Pod's
+bootstrap from Hugging Face (`ibm-granite/granite-4.2-8b`, pinned revision) and verified against the
+manifest; the 8 roster files come from S3 through `RP_BOOTSTRAP_URLS`, refreshed today until 09-26.
+
+Built and committed (`5336387f`, fix `a0e0ab69`): `frankie_pod_prepare.yml` + `operations/pod_prepare.py`.
+It reads the source Pod, verifies its environment against the reviewed runtime configuration
+(bundle sha, supervisor command sha, `none` lifetime, 131072, `jobs_v1`, URL freshness), picks data
+centers with L40S stock from `GET /v2/catalog/gpus?include=AVAILABILITY`, creates ONE Pod with the
+same name (`...-migration`, so `validate_intent`/`owned_pod` accept it), image, L40S x1
+(`minCudaVersion 13.0`), 100 GB disk, persistent `/opt/ml` 50 GB, port 8081/http and the source
+environment copied verbatim in memory, watches the container log for `GRANITE_RUNPOD_STARTUP` /
+`GRANITE_DISK`, validates them exactly as the observer does (`cloud.validate_runtime` + the open
+bootstrap pins), waits for an authenticated `/health` 200, and writes `pod-facts.json`,
+`migration-receipt-candidate.json`, `info-sha256.json` (INFO_SHA256, POD_ID, JOURNAL_GENERATION)
+and `startup-records.json` to artifact `pod-prepare-<run_id>`. A Pod priced above the ceiling,
+failing evidence or timing out is stop-retained. It leaves a healthy Pod RUNNING (holding its GPU,
+$1.09/h) unless `stop_after_ready=true`. Stubbed-provider dry run: 8 scenarios pass; the supervisor
+command pin `2d46c105...` reproduces at HEAD from the roster, bundle sha, bucket
+`frankie-granite42-<account>-us-east-1` and the reviewed bootstrap directory.
+
+Refactor `a4e14f20`: `granite_retained_identity.py` now declares `POD_ID`, `BUNDLE_PREFIX`,
+`JOURNAL_GENERATION`, `HISTORICAL_GENERATION` once; lifecycle and host import it; the standalone
+completion writer loads it by path. Values byte-identical; 20 retained tests pass. The re-mint to
+the fresh Pod is one `feat:` commit: the identity module, the migration receipt, `INFO_SHA256`, the
+four workflow defaults (`frankie_retained_granite.yml` concurrency group, completion generation
+options, refresh/control Pod defaults) and the three tests that name the Pod.
+
+First prepare run 35504518579 failed at import (`No module named 'research'`, file-path invocation);
+fixed with `PYTHONPATH` and re-dispatched.
+
+Adoption of a prepared Pod (decision pending): (a) EXITED path = stop-retain it, dispatch the
+observer, which POSTs the one start and reads fresh boot logs (the designed, tested path; the GPU is
+unreserved for the ~2-3 minutes between stop and start); or (b) RUNNING path = the observer's
+`observe_migrated_start` branch, which needs startup frames stamped after the observer's own
+`retained-startup.json`, so the Pod would have to be restarted after the observer starts. (a) is
+the default recommendation.
