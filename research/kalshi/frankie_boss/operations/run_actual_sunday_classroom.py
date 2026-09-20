@@ -23,6 +23,7 @@ from research.kalshi.frankie_boss.dipole_classroom_integration import (
     prepare_integrated_cycle,
 )
 from research.kalshi.frankie_boss.dipole_classroom_session import CORRECTION_REQUEST_SCHEMA
+from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
 from research.kalshi.frankie_boss.operations import run_actual_sunday as base
 
 INITIAL_REQUEST_SCHEMA = "FRANKIE_BOSS_SESSION_REQUEST_V1"
@@ -55,10 +56,14 @@ def await_recorded_principal(request, directory, host_lock, probe=None):
         )
     else:
         raise ValueError("known Frankie principal/classroom request schema required")
+    # The runner's live request holds tuples the c15 loader preserved; the durable file is
+    # its canonical JSON (lists). Compare the file with that same form (run 35522815675
+    # stopped here with 0 matches against a request it had just written itself).
+    expected = json_form(request)
     matches = [
         path
         for path in sorted(Path(directory).glob("execution/cycle-*/principal/" + request_name))
-        if _load_json(path) == request
+        if _load_json(path) == expected
     ]
     if len(matches) != 1:
         raise ValueError("unique retained Frankie classroom request required")
@@ -82,7 +87,7 @@ def await_recorded_principal(request, directory, host_lock, probe=None):
             time.sleep(1)
     finally:
         host_lock.acquire(wait=True)
-    if _load_json(request_path) != request:
+    if _load_json(request_path) != expected:
         raise ValueError("Frankie classroom request changed while awaiting response")
     result = _load_json(response_path)
     if type(result) is not dict or set(result) != {"response", "host_attestation"}:

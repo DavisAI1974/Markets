@@ -47,6 +47,17 @@ def canonical(value):
     return json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(',', ':'), allow_nan=False).encode()
 
 
+def json_form(value):
+    """The identity a durable record carries: its own canonical JSON, re-read.
+
+    Live request and correction objects hold tuples (the c15 loader preserves them) that
+    canonical JSON writes as lists, so a durable file can never equal the live object by
+    Python equality. Every comparison of a retained file against a live object goes through
+    this form; digests are unaffected because they already hash the canonical bytes.
+    """
+    return json.loads(canonical(value))
+
+
 def digest(value):
     return hashlib.sha256(canonical(value)).hexdigest()
 
@@ -517,7 +528,7 @@ class FrankiePrincipalAdapter:
         request = self._request(request_id, attachment)
         path = self.directory / 'session-request.json'
         if path.exists():
-            if json.loads(path.read_bytes()) != request:
+            if json.loads(path.read_bytes()) != json_form(request):
                 raise ValueError('session request identity changed')
             recovered = self.recover(request_id, attachment)
             if recovered is not None:
@@ -576,7 +587,7 @@ class FrankiePrincipalAdapter:
         if not response_path.exists():
             raise PrincipalPending('durable request exists without a response; wait for that session')
         request = self._request(request_id, attachment)
-        if json.loads(request_path.read_bytes()) != request:
+        if json.loads(request_path.read_bytes()) != json_form(request):
             raise ValueError('retained principal intent differs')
         retained = json.loads(response_path.read_bytes())
         response = retained['response']

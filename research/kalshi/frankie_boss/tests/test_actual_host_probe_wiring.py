@@ -72,6 +72,25 @@ class Wiring(unittest.TestCase):
             self.assertEqual(calls[1:3],['release',('acquire',True)])
             self.assertEqual(calls[-1][1]['completed'],1)
 
+    def test_waiter_matches_a_live_request_that_holds_tuples(self):
+        # Run 35522815675 (2026-09-20): the live request carried tuples the c15 loader preserved,
+        # the durable file was canonical JSON (lists), and the waiter found 0 matches against a
+        # request the adapter had just written itself. Identity is the canonical JSON form.
+        from research.kalshi.frankie_boss.frankie_principal_adapter import canonical
+        with tempfile.TemporaryDirectory() as tmp:
+            path=Path(tmp)/'execution/cycle-00/principal';path.mkdir(parents=True)
+            request={'schema':'FRANKIE_BOSS_SESSION_REQUEST_V1','request_id':'actual-test',
+                     'attachment':{'dipole_classroom':{'pre_message':{'rows':({'cursor':1,'state':'PRESENT'},)}}}}
+            response={'response':{},'host_attestation':{}}
+            (path/'session-request.json').write_bytes(canonical(request))
+            class Lock:
+                def release(self):(path/'session-response.json').write_text(json.dumps(response))
+                def acquire(self,wait=False):pass
+            with contextlib.redirect_stdout(io.StringIO()):
+                actual=host.await_recorded_principal(request,tmp,Lock(),None)
+            self.assertEqual(actual,response)
+            self.assertNotEqual(json.loads(canonical(request)),request)  # the defect: tuple vs list
+
     def test_main_attaches_before_host_and_both_callbacks_are_wired(self):
         tree=ast.parse(Path(host.__file__).read_text())
         main=next(n for n in tree.body if isinstance(n,ast.FunctionDef) and n.name=='main')

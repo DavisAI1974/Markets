@@ -31,6 +31,7 @@ from .frankie_principal_adapter import (
     canonical,
     digest,
     file_witness,
+    json_form,
     _write,
 )
 
@@ -124,7 +125,7 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
         request = self._request(request_id, attachment)
         path = self.directory / "session-request.json"
         if path.exists():
-            if json.loads(path.read_bytes()) != request:
+            if json.loads(path.read_bytes()) != json_form(request):
                 raise ValueError("session request identity changed")
             return self.recover(request_id, attachment)
         _write(path, request)
@@ -150,7 +151,7 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
         path = self.directory / "classroom-correction-response.json"
         body = {"response":dispatched["response"], "host_attestation":dispatched["host_attestation"]}
         if path.exists():
-            if json.loads(path.read_bytes()) != body:
+            if json.loads(path.read_bytes()) != json_form(body):
                 raise ValueError("retained classroom correction response changed")
         else:
             _write(path, body)
@@ -170,7 +171,7 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
         correction_path = self.directory / "classroom-correction-request.json"
         created = False
         if correction_path.exists():
-            if json.loads(correction_path.read_bytes()) != correction:
+            if json.loads(correction_path.read_bytes()) != json_form(correction):
                 raise ValueError("retained Dipole classroom correction request changed")
         else:
             _write(correction_path, correction);created = True
