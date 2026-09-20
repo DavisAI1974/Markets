@@ -35,6 +35,7 @@ from .frankie_principal_adapter import (
     digest,
     file_witness,
     _write,
+    json_form,
 )
 
 # Both are declared once in the core module; re-exported here for existing importers.
@@ -398,7 +399,7 @@ class HardenedDipoleClassroomPrincipalAdapter(DipoleClassroomPrincipalAdapter):
         correction_path = self.directory / "classroom-correction-request.json"
         created = False
         if correction_path.exists():
-            if json.loads(correction_path.read_bytes()) != correction:
+            if json.loads(correction_path.read_bytes()) != json_form(correction):
                 raise ValueError("retained Dipole classroom correction request changed")
         else:
             _write(correction_path, correction)

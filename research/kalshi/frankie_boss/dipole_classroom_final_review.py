@@ -26,7 +26,7 @@ from .c15_normalizer import COLUMNS
 from .dipole_classroom_render import render_acknowledgement, render_pre_message, render_teachback
 from .dipole_classroom_resolution import validate_correction_resolutions
 from .dipole_classroom_session import CORRECTION_REQUEST_SCHEMA, finish, grade_initial_response, validate_correction_response, validate_package
-from .frankie_principal_adapter import FrankiePrincipalAdapter, PrincipalPending, digest, file_witness, _write
+from .frankie_principal_adapter import FrankiePrincipalAdapter, PrincipalPending, digest, file_witness, _write, json_form
 NOVEL_FINDING_SCHEMA = 'FRANKIE_DIPOLE_NOVEL_FINDING_V1'
 NOVELTY_INVESTIGATION_SCHEMA = 'DIPOLE_NOVELTY_INVESTIGATION_V1'
 PRIOR_CORRECTION_SCHEMA = hardened.PRIOR_CORRECTION_SCHEMA
@@ -446,7 +446,7 @@ class FinalDipoleClassroomPrincipalAdapter(hardened.HardenedDipoleClassroomPrinc
         correction_path = self.directory / 'classroom-correction-request.json'
         created = False
         if correction_path.exists():
-            if json.loads(correction_path.read_bytes()) != correction:
+            if json.loads(correction_path.read_bytes()) != json_form(correction):
                 raise ValueError('retained Dipole classroom correction request changed')
         else:
             _write(correction_path, correction)
