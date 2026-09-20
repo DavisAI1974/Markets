@@ -184,15 +184,21 @@ class CycleCoordinator:
     IDENTITY_ACCEPTED_SUFFIX = '.identity-supersede-accepted.json'
 
     def _binding_supersede(self, request_id, saved, binding):
-        """Accept a saved cycle binding whose ONLY difference is training_identities.code_hash.
+        """Accept a saved cycle binding that differs only by a host code advance.
 
         The training identity encodes the hash of every source file, so a host code advance made
-        while a cycle is open (2026-09-20: the runner's own resume fixes) changes code_hash and
-        nothing else; the request, the controller result and the principal request are the same.
-        Nothing is accepted silently: an operator declaration next to the cycle store
+        while a cycle is open (2026-09-20: the runner's own resume fixes) changes
+        training_identities.code_hash; and because the training checkpoint digest encodes those
+        identities, the request plan's controller arm_hash (evidence over the initialization and
+        the CURRENT training identity, whose checkpoint_hash is that digest) changes with it while
+        the weights, optimizer, sessions and source are the same (run 35528504894 measured exactly
+        those two differences). The request, the controller result and the principal request are
+        unchanged. Nothing is accepted silently: an operator declaration next to the cycle store
         (<cycles.sqlite>.identity-supersede.json) must name this request and the OLD code_hash it
-        supersedes (and the new one, when it names it); the old binding is archived under its own
-        stage before the new one replaces it, and the acceptance is appended to
+        supersedes (and the new one, when it names it); an arm_hash difference is accepted only
+        when the declaration also names the OLD arm_hash and the controller result is already
+        retained (the arm is spent, nothing runs under the new one). The old binding is archived
+        under its own stage before the new one replaces it, and the acceptance is appended to
         <cycles.sqlite>.identity-supersede-accepted.json. Any other difference still refuses.
         """
         declared = Path(str(self.path) + self.IDENTITY_SUPERSEDE_SUFFIX)
@@ -207,9 +213,19 @@ class CycleCoordinator:
         old_hash, new_hash = old_identities.get('code_hash'), new_identities.get('code_hash')
         if type(old_hash) is not str or type(new_hash) is not str or old_hash == new_hash: return False
         masked = dict(saved, training_identities=dict(old_identities, code_hash=new_hash))
+        old_controller, new_controller = saved.get('controller'), binding.get('controller')
+        if type(old_controller) is not dict or type(new_controller) is not dict: return False
+        old_arm, new_arm = old_controller.get('arm_hash'), new_controller.get('arm_hash')
+        arm_change = old_arm != new_arm
+        if arm_change:
+            if type(old_arm) is not str or type(new_arm) is not str: return False
+            if self._load(request_id, 'controller') is None: return False  # the arm must be spent
+            masked = dict(masked, controller=dict(old_controller, arm_hash=new_arm))
         if evidence_hash(masked) != evidence_hash(binding): return False
         if not any(type(e) is dict and e.get('request_id') == request_id and e.get('old_code_hash') == old_hash
-                   and e.get('new_code_hash') in (None, new_hash) for e in (entries if type(entries) is list else [])):
+                   and e.get('new_code_hash') in (None, new_hash)
+                   and (not arm_change or e.get('old_arm_hash') == old_arm)
+                   for e in (entries if type(entries) is list else [])):
             return False
         archive = 'binding-superseded-' + old_hash[:12]
         self._save(request_id, archive, saved)
@@ -219,6 +235,8 @@ class CycleCoordinator:
         accepted = Path(str(self.path) + self.IDENTITY_ACCEPTED_SUFFIX)
         record = dict(schema='FRANKIE_CYCLE_IDENTITY_SUPERSEDE_ACCEPTED_V1', request_id=request_id,
                       old_code_hash=old_hash, new_code_hash=new_hash, archived_stage=archive)
+        if arm_change:
+            record.update(old_arm_hash=old_arm, new_arm_hash=new_arm)
         existing = json.loads(accepted.read_bytes()) if accepted.exists() else []
         if record not in existing:
             existing.append(record)

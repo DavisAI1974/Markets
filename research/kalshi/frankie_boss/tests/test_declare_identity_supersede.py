@@ -19,7 +19,7 @@ def _tree(root):
 
 def _store(run, code_hash):
     run.mkdir(parents=True, exist_ok=True)
-    binding = dict(request_id='r-cycle-00', controller={}, learning={}, training_identities=dict(
+    binding = dict(request_id='r-cycle-00', controller=dict(arm_hash='p'*64), learning={}, training_identities=dict(
         training_config_hash='a'*64, code_hash=code_hash, source_hash='c'*64, model_hash='d'*64),
         frozen_memory_sha256='m'*64)
     db = sqlite3.connect(run / 'cycles.sqlite')
@@ -47,6 +47,7 @@ def test_declares_once_and_reports_not_stale(tmp_path, capsys):
     assert declare.main(argv) == 0
     entries = json.loads((run / 'cycles.sqlite.identity-supersede.json').read_bytes())
     assert len(entries) == 1 and entries[0]['old_code_hash'] == 'x'*64 and entries[0]['new_code_hash'] == live
+    assert entries[0]['old_arm_hash'] == 'p'*64
     assert declare.main(argv) == 0
     assert len(json.loads((run / 'cycles.sqlite.identity-supersede.json').read_bytes())) == 1
     assert 'already_declared' in capsys.readouterr().out

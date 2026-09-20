@@ -6,8 +6,12 @@ source file) and nothing else; the cycle coordinator then refuses `cycle request
 `_binding_supersede` requires: it reads the OLD code_hash from the coordinator's saved binding
 (read-only), computes the CURRENT code identity exactly as run_actual_sunday.ActualHost does
 (every .py under research/kalshi/frankie_boss and research/refrag except tests, plus the host
-script under 'host_script'), and appends `{request_id, old_code_hash, new_code_hash, reason}` to
-<run_directory>/cycles.sqlite.identity-supersede.json with a receipt beside the day's receipts.
+script under 'host_script'), and appends `{request_id, old_code_hash, new_code_hash, old_arm_hash,
+reason}` to <run_directory>/cycles.sqlite.identity-supersede.json with a receipt beside the day's
+receipts. old_arm_hash is the saved binding's controller arm_hash: the request plan's arm encodes
+the training checkpoint digest, which encodes the code hash, so the advance changes it too; the
+coordinator accepts the new arm only against this named old one and only with the controller
+result already retained.
 It writes nothing else, never touches the cycle store, and declares nothing when the identity is
 not stale.
 
@@ -45,7 +49,7 @@ def code_identity(repo):
     return code, evidence_hash(code)
 
 
-def saved_code_hash(cycles_path, request_id):
+def saved_binding(cycles_path, request_id):
     connection = sqlite3.connect(Path(cycles_path).as_uri() + '?mode=ro', uri=True)
     try:
         row = connection.execute('SELECT payload, digest FROM stages WHERE request=? AND stage=?',
@@ -57,7 +61,7 @@ def saved_code_hash(cycles_path, request_id):
     value = unpack(json.loads(row[0]))
     if evidence_hash(value) != row[1]:
         raise SystemExit('saved binding digest differs')
-    return value['training_identities']['code_hash']
+    return value
 
 
 def main(argv=None):
@@ -72,21 +76,23 @@ def main(argv=None):
     cycles = run / 'cycles.sqlite'
     if not cycles.exists():
         raise SystemExit('cycle store missing: ' + str(cycles))
-    old = saved_code_hash(cycles, args.request_id)
+    saved = saved_binding(cycles, args.request_id)
+    old = saved['training_identities']['code_hash']
+    old_arm = saved['controller'].get('arm_hash') if type(saved.get('controller')) is dict else None
     _, new = code_identity(args.tools_root)
     stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
     declaration = Path(str(cycles) + DECLARATION_SUFFIX)
     entries = json.loads(declaration.read_bytes()) if declaration.exists() else []
     entry = dict(schema=SCHEMA, request_id=args.request_id, old_code_hash=old, new_code_hash=new,
-                 reason=args.reason, declared_at=stamp)
+                 old_arm_hash=old_arm, reason=args.reason, declared_at=stamp)
     status = 'not_stale' if old == new else ('already_declared' if any(
         e.get('request_id') == args.request_id and e.get('old_code_hash') == old and e.get('new_code_hash') == new
-        for e in entries) else 'declared')
+        and e.get('old_arm_hash') == old_arm for e in entries) else 'declared')
     if status == 'declared':
         entries.append(entry)
         declaration.write_bytes(json.dumps(entries, sort_keys=True, indent=1).encode())
     receipt = dict(schema=SCHEMA + '_RECEIPT', status=status, request_id=args.request_id, old_code_hash=old,
-                   new_code_hash=new, declaration=str(declaration), reason=args.reason, at=stamp)
+                   new_code_hash=new, old_arm_hash=old_arm, declaration=str(declaration), reason=args.reason, at=stamp)
     receipt_path = Path(args.receipt_directory) / ('identity-supersede-declared-' + stamp + '.json')
     receipt_path.write_bytes(json.dumps(receipt, sort_keys=True, indent=1).encode())
     print('RECEIPT ' + json.dumps(receipt, sort_keys=True))

@@ -221,3 +221,28 @@ def test_binding_identity_supersede_needs_a_declaration_and_only_the_code_hash(t
     accepted = json.loads(Path(str(store.path)+store.IDENTITY_ACCEPTED_SUFFIX).read_bytes())
     assert accepted == [dict(schema='FRANKIE_CYCLE_IDENTITY_SUPERSEDE_ACCEPTED_V1', request_id='sun',
         old_code_hash=old, new_code_hash='b'*64, archived_stage='binding-superseded-'+old[:12])]
+
+
+def test_binding_identity_supersede_accepts_a_spent_arm_only_when_declared(tmp_path, monkeypatch):
+    # 2026-09-20 run 35528504894: the request plan's controller arm_hash encodes the training
+    # checkpoint digest, which encodes code_hash, so the advance moved it too. Accepted only with the
+    # old arm named in the declaration and the controller result already retained.
+    import json
+    store, checkpoint, args, calls = fixture(tmp_path, monkeypatch)
+    old = 'x'*64
+    args['controller_kwargs'] = dict(arm_hash='q'*64)
+    saved = dict(_saved_binding_with(store, args, old), controller=dict(arm_hash='p'*64))
+    store._save('sun', 'binding', saved)
+    declaration = Path(str(store.path)+store.IDENTITY_SUPERSEDE_SUFFIX)
+    declaration.write_text(json.dumps([dict(request_id='sun', old_code_hash=old, reason='advance')]))
+    with pytest.raises(ValueError, match='cycle request identity changed'):  # arm not declared
+        asyncio.run(store.run(**args))
+    declaration.write_text(json.dumps([dict(request_id='sun', old_code_hash=old, old_arm_hash='p'*64, reason='advance')]))
+    with pytest.raises(ValueError, match='cycle request identity changed'):  # arm not spent
+        asyncio.run(store.run(**args))
+    store._save('sun', 'controller', dict(request_id='sun', request_hash='e'*64, status='complete', records=()))
+    result = asyncio.run(store.run(**args))
+    assert result['feedback_hash'] and calls['controller'] == 0 and calls['learner'] == 1
+    assert store._load('sun', 'binding')['controller'] == dict(arm_hash='q'*64)
+    accepted = json.loads(Path(str(store.path)+store.IDENTITY_ACCEPTED_SUFFIX).read_bytes())
+    assert accepted[0]['old_arm_hash'] == 'p'*64 and accepted[0]['new_arm_hash'] == 'q'*64
