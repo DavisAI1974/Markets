@@ -56,6 +56,12 @@ def validate_package(package: Mapping[str, Any]) -> dict:
     return dict(package)
 
 
+# Greg Davis, 2026-09-20: the exhaustion research is the objective; the classroom states it to Frankie.
+RESEARCH_OBJECTIVE = ("The 19 Dipole dimensions you review here are the opposing-pressure surface of the "
+    "EXHAUSTION research (calculation contract section 4.12): read them as part of exhaustion formation, "
+    "runway, chains and D-depth, pre-birth opportunity and the causal clocks, never as a subject of their own.")
+
+
 def model_visible_classroom(package: Mapping[str, Any]) -> dict:
     """Exactly what Frankie is allowed to see before answering; never the key."""
     package = validate_package(package)
@@ -64,6 +70,7 @@ def model_visible_classroom(package: Mapping[str, Any]) -> dict:
         "pre_message": package["pre_message"],
         "audit_key_withheld": True,
         "coverage_invariant": "ALL_19_DIPOLE_DIMENSIONS_EVERY_CYCLE",
+        "research_objective": RESEARCH_OBJECTIVE,
         "required_response_ledgers": {
             "dipole_observation_review": "EVERY_RETAINED_OBSERVATION_FOR_ALL_19_DIMENSIONS",
             "dipole_relationship_scan": PAIR_COUNT,

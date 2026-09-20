@@ -1,5 +1,12 @@
 """Auditable Dipole -> Frankie classroom protocol over governed C15 targets.
 
+Objective (audit 2026-09-20, Greg Davis: the exhaustion research is the objective and must be
+stated wherever Frankie is taught): the 19 C15 Dipole dimensions taught here are the opposing-
+pressure surface of the EXHAUSTION research (calculation contract section 4.12, "Dipole and
+opposing-pressure runway"); the classroom exists so Frankie reads dipole state as part of
+exhaustion formation, runway, chains and D-depth, pre-birth and the causal clocks, never as a
+subject of its own.
+
 Core rule: complete Dipole coverage is invariant; only who does the explaining
 changes.  Early cycles are full TEACH cycles.  Dipole may back away only after
 Frankie demonstrates mastery and acknowledges corrections.  The governed
