@@ -993,3 +993,19 @@ delivery refuses while a trigger exists; the runner re-reads host-service, which
 `retained-granite/a7b72cf9.../migration-8vqdacl5t61rjx-a004983e93b9/retained-start-intent.json` (the same
 adoption step as 11:21Z: the observer reads only frames stamped after its own startup record, and the Pod
 stays RUNNING throughout). Then: deliver readiness (ready_run_id 35519228804, request a7b72cf9), re-dispatch.
+
+### Observer run 35519228804 refused at the active-run claim; claim closed with a receipt; observer re-dispatched
+
+`retained-prepare` (15:20:56Z) passed the archived-request and admission gates and refused at
+`granite_active_run.claim`: `another active or stopping run owns this Pod`. The S3 record
+`retained-granite-pods/8vqdacl5t61rjx/active-run.json` was `phase active, startup_sha256 132d8b71e6b2...`
+= the 11:19Z observer's startup (run 35507527320, request 6cd46f98, cancelled at GitHub level at 15:19Z).
+The store releases a claim only through the completion cleanup, i.e. after a confirmed Pod STOP -- which
+loses the GPU under LOW L40S stock (standing lesson). Provenance guard on the launch path -> override with
+a receipt: `operations/active_run_supersede.py` + `frankie_active_run_supersede.yml` (a24c604c; inspect
+run 35519563150 printed the record; close run 35519639227 copied it server-side to
+`retained-granite-pods/8vqdacl5t61rjx/superseded/active-run-20260920T152754Z-132d8b71e6b2.json` and wrote
+`phase closed` with the store's conditional ETag; receipt `FRANKIE_ACTIVE_RUN_SUPERSEDED_V1`, no Runpod
+call). The Pod stayed RUNNING throughout. Observer re-dispatched as run 35519697015 (same three inputs);
+`frankie_pod_control.yml` restart re-dispatched waiting on the a7b72cf9 generation's
+`retained-start-intent.json` (the first wait, run 35519254224, was cancelled when the observer refused).
