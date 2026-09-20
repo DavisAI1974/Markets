@@ -92,5 +92,15 @@ if [ -f research/kalshi/restore_substrate.py ]; then
   fi
 fi
 
+# RunPod agent skills (Greg, 2026-09-20): install at every session start, never vendored.
+# Source: https://github.com/runpod/skills  (docs: https://docs.runpod.io/get-started/agent-skills)
+# Installs into $HOME/.agents/skills and symlinks into Claude Code's skills dir. Runtime auth is the
+# single RUNPOD_API_KEY, which for Frankie lives in the private SSM parameter (pod_credential_ssm)
+# and is never placed in a session; without it the skills are present but unauthenticated.
+echo "[session_start] installing RunPod agent skills..."
+( cd "$HOME" && timeout 150 npx -y skills add runpod/skills --yes >/dev/null 2>&1 ) \
+  && echo "[session_start] RunPod skills installed" \
+  || echo "[session_start] RunPod skills install failed (continuing)"
+
 echo "[session_start] done."
 exit 0

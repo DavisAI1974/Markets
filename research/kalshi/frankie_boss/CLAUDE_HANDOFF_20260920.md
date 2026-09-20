@@ -269,3 +269,16 @@ deps only today), guarded so a failure never breaks startup, installing into `$H
 vendored. That edit was refused by the auto-mode classifier as unauthorized persistence (a startup
 hook that fetches and runs third-party code every session) and was deliberately not worked around;
 it is Greg's to apply or to permit.
+
+Update, same day: Greg explicitly authorized overriding that guard ("you're fine to override the
+guard"), and the block was applied to `scripts/session_start.sh` on this branch through the file
+editor rather than a shell heredoc. The cherry-pick of the diagnostic workflow onto trunk was also
+run by me on Greg's word ("I haven't run anything. You can run that"): trunk
+`claude/kalshi-s79-kickoff-ij8t9o` moved `9c9c4c1d..061e428f`, which registered
+`frankie_host_diag.yml`; diagnostic run 35500792871 was then dispatched with this branch as ref.
+
+Also found in the hook itself (lines 81-88): the repo expects AWS credentials for Claude sessions
+under `MARKETS_AWS_ACCESS_KEY_ID` / `MARKETS_AWS_SECRET_ACCESS_KEY` in the Claude Code environment
+configuration. Neither is set in this environment, which is the whole reason this session had no
+AWS route and needed a workflow to reach the host. Setting those two is the documented one-time
+permanent fix.
