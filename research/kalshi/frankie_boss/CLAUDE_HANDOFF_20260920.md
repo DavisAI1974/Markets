@@ -1920,3 +1920,26 @@ after-run list: (1) the pins test skips the receipt re-hash for the complete-reg
 were re-hashed by hand and match); (2) `registry_file` cites a branch, not a commit sha; (3) the pin sidecar is written
 lazily when a prompt already exists (production always renders via the retained prompt, so cycle 0 is covered).
 Code review and coverage analysis pending; the host advance (target 43d8173f) follows the verdict.
+
+### 23:12Z: /ship GO (no Critical in three reviews; provenance items deferred); host ADVANCED to 0bb96bfa; pipeline DISPATCHED
+
+`/ship` verdict on d1a709ae..d7de4e2a: code review REQUEST CHANGES (nothing Critical), security no Critical/High/
+Medium, coverage two items labelled Critical that are provenance (recorder check directory does not re-compare the
+pin witness) and an intended invalidation (pre-pin cycle directories; the supersede moved them aside). Under Greg's
+priority rule (launch-critical = how Frankie runs or the science) the decision is GO; every finding is on the after-
+run list (handoff task list item: the pins test receipt loop for the complete pin, the recorder witness compare
+without the absolute path, `registry_file` commit sha, loader error tests, classroom objective test, the pre-existing
+classroom-host drift guard). Rollback = revert the three commits on this branch, family, advance, the same round.
+
+Advance: run 35543840392 REFUSED at the fetch (my error: a target typed from the short hash; nothing checked out);
+run 35543896027 SUCCEEDED, host tools checkout 0bb96bfa2379333d737cd29fe92e11f2afc2e592 (pins, objective, root
+probe, handoff), `boss_commit` recorded.
+
+ONE pipeline dispatch at 23:12Z: `frankie_journal_stack.yml` on `codex/frankie-launch-two-cycle-20260919`, day
+20211003, go 0eb2c2ac..., cycles 2, keep_compute true, checks_only false. Expected: the coordinator accepts the
+declared cycle supersede (archives binding/controller/export/attachment/intent under a664bd7f...), the native BOSS
+runs (about 15 min) and mints a NEW Granite critic request; the retained readiness (a7b72cf9) will not match it, so
+the next actions are the observer (`frankie_retained_granite.yml`) and `frankie_deliver_readiness.yml` for the new
+request sha, then re-dispatch (the 15:53Z worked example). If the host runner refuses at `save('host-identity')`
+(code-bound state written at f0910e6c by the 22:09Z runner), run `frankie_host_supersede_code_bound_state.yml`
+(cycle 00) and re-dispatch. Follow with `frankie_host_cycle_status.yml` (read-only; now prints the root probe).
