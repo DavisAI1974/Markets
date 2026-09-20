@@ -1286,3 +1286,25 @@ request `frankie-boss-sunday-two-cycle-20260919-cycle-00`, old code hash `25a0e0
 binding in cycles.sqlite), new `16874665...` (the 46bb7c7c checkout), declaration file
 `actual-feedback-run/cycles.sqlite.identity-supersede.json`. Pipeline re-dispatched: **run 35528504894**
 (`codex/frankie-launch-two-cycle-20260919`, go, cycles 2, keep_compute) at 18:16:05Z.
+
+### 18:31Z: declared, and still refused -- the arm hash moves with the code hash
+
+Run 35528504894 re-primed the cache (18:24:45Z), re-prepared cycle 0 and then refused at
+`feedback_cycle.py:288` at 18:31Z with the declaration in place. Rather than guess, a read-only host probe
+(`frankie_host_binding_diff.yml`, run 35529695569; `deploy/aws/host/frankie_host_binding_diff.ps1`, Python
+embedded so no host advance was needed) rebuilt the binding from what is on disk and printed only the
+differing key paths. Exactly two: `training_identities.code_hash` (25a0e087 -> 16874665, the declared pair)
+and **`controller.arm_hash`** (ee4ec20d -> 2f114887). Model, source and training-config identities are
+byte-equal, the learning kwargs are equal, the memory sha256 is equal. `arm_hash` is
+`evidence_hash(dict(initialization=development_identity, current=current_training_identity))`
+(`sunday_native_runtime.assemble_request`), and `current.checkpoint_hash` is the training checkpoint digest,
+which encodes the identities, which encode the code hash: the same provenance coupling, one level down.
+The weights, optimizer, sessions and source are the same; the controller ran under the old arm and its
+result is retained (stage `controller` 51698a32), so the arm is spent.
+
+Fix 963ee275: `_binding_supersede` accepts an `arm_hash` difference only when the declaration also names
+the OLD arm hash and the controller result is already retained; the acceptance record carries both arm
+hashes. The declaration helper now reads `old_arm_hash` from the saved binding, so a fresh declaration on
+the host (after the advance to 963ee275) appends a complete entry; the 18:13Z entry stays in the file as
+the record of the first attempt. Tests: undeclared arm refuses, declared-but-unspent refuses,
+declared-and-spent accepts without constructing a controller.
