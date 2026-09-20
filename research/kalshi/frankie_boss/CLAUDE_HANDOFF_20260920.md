@@ -1195,3 +1195,31 @@ pipeline is re-dispatched: `recover` finds the response, `verify` types the feed
 readback and output persistence follow, then cycle 1's preparation. Until the response exists, a re-dispatch
 resumes to `PrincipalPending` and the runner prints `actual_frankie_session_pending` (exit 3) -- which, once
 the fix is on the host, is also the proof that the retained intent now compares equal.
+
+### 17:13Z: the fix is on the host (advance 34a4feac -> 6fa7ef68), and the advance itself exposed the next refusal before it ran
+
+Family on 6fa7ef68 (json_form in every lineage: base adapter, classroom adapter, hardened and final-review
+adapters, both runners' waiters) = run 35524818705, 1102 passed, 1 skipped, receiver proof verified. Host
+advanced (run 35525125591, receipt `host-advance-20260920T171255Z.json`, boss_commit rewritten, configuration
+backed up); code-bound supersede (run 35525159493, receipt `superseded-code-bound-state-20260920T171337Z.json`)
+moved: initialization, training.sqlite, training-witnesses, host-identity, execution-identity, and cycle-00's
+host-preparation, host-service, host-context-cache, request-plan, actual-critic-request (a7b72cf9) and
+host-ready -- its full stale-code list, because `identities.code_hash = evidence_hash(self.code)` covers every
+`.py` under frankie_boss, so ANY code advance re-mints the training identity and the retained preparation
+pins (`initial_checkpoint_hash`) go stale. That is task #2's coupling, now hit MID-CYCLE.
+
+**The refusal it would have caused, read in code before dispatching:** `runtime()` takes the
+`controller_done` branch (cycle 0's controller result is in cycles.sqlite) and does `_load(preparation)` on the
+moved host-preparation -> FileNotFoundError. Two dispatched resumes (35525196011, 35525317089) were cancelled
+before their host job started; nothing on the host changed. Fix 842ec2ee: an absent host-service record always
+primes the context cache, re-prepares (the request is deterministic; a7b72cf9 again) and re-reads the immutable
+trigger, whose readiness pins (request sha and admission) must still match; a present record keeps the old
+path; the controller's completed result and the retained principal request/prompt are untouched. Cost: the
+~20 min context-cache + preparation compute once more. Family run on 842ec2ee dispatched (checks_only);
+then advance -> supersede (moves the 6fa7ef68 identity records) -> resume, expected to end at
+`actual_frankie_session_pending` (exit 3): cycle 0 re-pinned to the current training identity and waiting on
+Root's Frankie response.
+
+**Note for task #2 (Greg's design call):** every code advance during a run now costs a supersede plus a full
+re-preparation of the open cycle, because `code_hash` spans the whole package. Excluding the operations/adapter
+plumbing from the training identity, or pinning the identity at run start, would end that; not touched today.
