@@ -272,7 +272,8 @@ class CycleCoordinator:
         """Append one acceptance record per retained export pin that differs from the live one."""
         records = [dict(schema='FRANKIE_CYCLE_EXPORT_PIN_SUPERSEDE_ACCEPTED_V1', request_id=request_id,
                         pin=name, old=manifest[name], new=export_args[name])
-                   for name in self.EXPORT_PINS if manifest[name] != export_args[name]]
+                   for name in self.EXPORT_PINS
+                   if name in manifest and name in export_args and manifest[name] != export_args[name]]
         if not records: return
         accepted = Path(str(self.path) + self.IDENTITY_ACCEPTED_SUFFIX)
         existing = json.loads(accepted.read_bytes()) if accepted.exists() else []
