@@ -35,7 +35,7 @@
   now runs sources -> journal (gold standard, unchanged) -> host stages via `operations/day_pipeline.py` (git receipts,
   resume, HOLD before cycles without a go, measured CPU-dedication gate). Native host `i-0e90ee6110ef609aa` RESIZED to
   r7i.8xlarge (32 vCPU), stopped. 32 = the Pod's CPUs, 48 = the reader's worker cap, 8 = native threads. Next chat:
-  `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260919.md`.
+  `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260920.md`.
 - **The two host scripts are BUILT (2026-09-17, third session)**: `deploy/aws/host/day_schedule_prefixes.ps1` and
   `day_cycles.ps1`, each reading back the tool's OWN manifest/status rather than inventing a count, each ending in one
   `PIPELINE_RECEIPT` line. The day and the host roots now reach a verbatim-sent script as `ssm_run_ps1.py --set`
