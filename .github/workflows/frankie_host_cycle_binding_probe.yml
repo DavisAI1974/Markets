@@ -1,0 +1,75 @@
+name: Frankie cycles-binding probe (read-only)
+# Names which check in run_actual_sunday.py 812-843 refused the cycles stage of pipeline run
+# 35508198333 (day 20211003). Reads the runner's own traceback from day-cycles.log, the
+# run_directory the stage binds to, the host-instance.c15.json in THAT directory, its cycle-00
+# listing, and each of the four comparisons with repr. Starts, stops, writes and re-dispatches
+# nothing; touches no SSM parameter. Dispatch only.
+on:
+  workflow_dispatch:
+    inputs:
+      instance:
+        description: 'Native host instance id'
+        required: false
+        default: 'i-0e90ee6110ef609aa'
+      day:
+        description: 'Day whose cycles stage refused'
+        required: false
+        default: '20211003'
+      run_root:
+        description: 'Day pipeline RunRoot on the host'
+        required: false
+        default: 'C:/Codex/Frankie-BOSS-20260919/days'
+      tools_root:
+        description: 'Host tools checkout'
+        required: false
+        default: 'C:/tools/Frankie-20260919/Markets'
+      python:
+        description: 'Host actual-run interpreter'
+        required: false
+        default: 'C:/Codex/Frankie-BOSS-20260919/actual-host-python/Scripts/python.exe'
+      cycle_index:
+        description: 'Zero-padded cycle index to inspect'
+        required: false
+        default: '00'
+permissions:
+  contents: read
+jobs:
+  probe:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_EC2_METADATA_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Native host reachable (read-only)
+        env:
+          INSTANCE: ${{ inputs.instance }}
+        run: |
+          python - <<'PY'
+          import boto3, os
+          iid = os.environ['INSTANCE']
+          r = boto3.client('ec2', region_name='us-east-2').describe_instances(InstanceIds=[iid])
+          print('EC2 state:', [i['State']['Name'] for res in r['Reservations'] for i in res['Instances']])
+          s = boto3.client('ssm', region_name='us-east-2').describe_instance_information(Filters=[{'Key':'InstanceIds','Values':[iid]}])
+          print('SSM ping:', [(i['PingStatus'], i.get('PlatformName','')) for i in s.get('InstanceInformationList',[])] or 'not registered')
+          PY
+      - name: Cycles-binding probe over SSM (read-only)
+        run: |
+          python deploy/aws/ssm_run_ps1.py \
+            --instance "${{ inputs.instance }}" --region us-east-2 \
+            --script deploy/aws/host/frankie_host_cycle_binding_probe.ps1 \
+            --set "Day=${{ inputs.day }}" \
+            --set "RunRoot=${{ inputs.run_root }}" \
+            --set "ToolsRoot=${{ inputs.tools_root }}" \
+            --set "Python=${{ inputs.python }}" \
+            --set "CycleIndex=${{ inputs.cycle_index }}" \
+            --timeout 300 --comment "read-only cycles-binding probe for run 35508198333"
