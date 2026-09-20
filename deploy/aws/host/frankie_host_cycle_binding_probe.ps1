@@ -39,7 +39,10 @@ Write-Output "### 0 day-cycles.log (the runner catches the ValueError, so no tra
 $log = Join-Path $dayDirectory 'day-cycles.log'
 if (Test-Path $log) {
     Write-Output ("path=" + $log + "  bytes=" + (Get-Item $log).Length + "  modified=" + (Get-Item $log).LastWriteTimeUtc.ToString('s') + 'Z')
-    Get-Content $log | ForEach-Object { '  ' + $_.ToString().Substring(0, [Math]::Min(600, $_.ToString().Length)) }
+    # SSM caps command output near 24 KB; a full run's log is far larger. Status lines and the tail only.
+    Select-String -Path $log -Pattern '"status": ?"' | Select-Object -Last 8 | ForEach-Object { '  ' + $_.Line.Substring(0, [Math]::Min(300, $_.Line.Length)) }
+    Write-Output '  --- last 6 lines ---'
+    Get-Content $log -Tail 6 | ForEach-Object { '  ' + $_.ToString().Substring(0, [Math]::Min(300, $_.ToString().Length)) }
 } else { Write-Output ("NO_LOG at " + $log) }
 
 Write-Output "### 1 the run directory the cycles stage binds to (settled by run 35510320789; re-read)"
