@@ -65,4 +65,4 @@ jobs:
             --set "ToolsRoot=$TOOLS_ROOT" \
             --set "Python=$HOST_PYTHON" \
             --set "CycleIndex=$CYCLE_INDEX" \
-            --timeout 300 --comment "read-only cycle report for day $DAY"
+            --timeout 300 --tail 23000 --comment "read-only cycle report for day $DAY"
