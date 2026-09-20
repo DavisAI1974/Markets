@@ -641,3 +641,19 @@ tests updated; 20 retained tests pass. The old Pod's start-retry run 35503582348
 Adoption next: the Pod is RUNNING, so the observer takes `observe_migrated_start` and needs boot
 frames stamped after its own `retained-startup.json`; a `restart` action issued once that journal
 record exists gives it fresh `GRANITE_RUNPOD_STARTUP`/`GRANITE_DISK` frames on the same host.
+
+### ADOPTED: readiness published for 8vqdacl5t61rjx (observer run 35507527320)
+
+Observer dispatched 11:19:58Z on `f9092dce` with the same three inputs. `retained-prepare` passed
+the gates against the new Pod and wrote the new generation's `retained-start-intent.json` at
+11:21:30Z (`start.json`: `observe_migrated_start`, startup_sha256 `132d8b71...`). The restart
+control run 35507529987 saw that key at 11:21:29Z and the v2 restart was accepted at 11:21:30Z
+(receipt `FRANKIE_POD_RESTART_RECEIPT_V1`, Pod stayed RUNNING, uptime 1211 s at readback). Fresh
+boot frames followed: `startup_event_at` 11:22:15Z, `/health` 200 at 11:23:26Z, and the observer
+uploaded `retained-granite-ready-35507527320` at 11:23:30Z (9 files). Verified from the artifact:
+`service-ready.json` outcome `service_ready`, `inference_sent false`; `service-pins.json` bound to
+request `6cd46f98...`, runtime_sha256 `0cbe5d12...`, admission 92,439 input / 38,633 output tokens
+in 131,072; `pod-info.json` pod 8vqdacl5t61rjx, US-MO-1, base_url
+`https://8vqdacl5t61rjx-8081.proxy.runpod.net/v1`; `run.json` deadline null. The prepare job is
+now in `hold` (observes until the local stop; never stops the Pod). Delivery to the native host
+dispatched (`frankie_deliver_readiness.yml`, ready_run_id 35507527320).
