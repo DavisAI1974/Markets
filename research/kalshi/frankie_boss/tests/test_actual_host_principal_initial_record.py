@@ -22,6 +22,7 @@ class PendingClassroom(FrankiePrincipalAdapter):
 def test_initial_recording_does_not_claim_classroom_completion(tmp_path,fault):
     directory=tmp_path/'principal';directory.mkdir();(directory/'receiver').mkdir()
     request=dict(request_id='test-session',attachment=dict(preparation_receipt=dict(outputs=[])),admission=dict(status='TEST_FIXTURE'))
+    request['attachment']['attachment_hash']=digest({k:v for k,v in request['attachment'].items() if k!='attachment_hash'})
     (directory/'session-request.json').write_bytes(canonical(request))
     sections={'section-'+str(i):hashlib.sha256(str(i).encode()).hexdigest() for i in range(18)}
     adapter=PendingClassroom(directory,request,sections)
