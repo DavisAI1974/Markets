@@ -925,3 +925,40 @@ backup, one receipt. After it: supersede (host-identity pins the configuration),
 
 Other: CI workflow `frankie_host_scripts_ci.yml` is live (first run 35514824147 green). Pipeline dispatch
 inputs unchanged (day 20211003, cycles 2, keep_compute true, checks_only false, Greg's go hash).
+
+### Frames named it (run 35517121900); classroom package superseded; prefix batch rebuilt; re-dispatched 14:56Z
+
+Pipeline run 35517121900 (14:39Z, host at 34a4feac) stopped with the first frame-carrying record, innermost
+last: `run_actual_sunday_classroom.py:191 prime_cache` -> `sunday_execution.py:48 _save`, i.e. the
+classroom host rebuilds the Dipole classroom package for cycle 00 from the current code and prepared
+context and `_save` refused the bytes retained since 2026-09-17 05:25Z (written by the prepare-only run;
+cycle 0 never ran inference on them). The code-bound supersede had deliberately KEPT that package as
+"data-derived"; the frames show it is not. Which of the four differs is recorded by sha256 in the
+receipt for a later diff; the run does not depend on knowing.
+
+Two host actions, both receipted, both move-never-delete, run concurrently at 14:53Z:
+- `frankie_host_supersede_classroom_package.ps1` (run 35517866366): moved cycle-00
+  `host-dipole-classroom-{source,teacher-key,pre-message,binding}.c15.json` (11.9 MB / 21.2 MB /
+  21.2 MB / 1 KB, mtimes 09-17 05:25-05:26Z) to `superseded/actual-feedback-run-20260920T145402Z-classroom-cycle-00/`;
+  the adapter identity record stays (re-saved byte for byte); refuses when the cycle holds a completion.
+- `frankie_host_rebuild_prefix_batch.ps1` (run 35517867568): **all six code pins in
+  `remaining-prefix-binding.json` were stale** (script, copier, runtime, selection, compact copier, full
+  reader) -- the cycle-1 refusal was real. Moved the batch (binding, prefix-batch-02.json, progress
+  jsonl, prefix-01 sqlite/receipt/witness/packet-seed) to `superseded/prefixes-20260920T145353Z-prefix-batch/`,
+  re-ran the gold-standard builder: prefix-01 rebuilt and its seed re-verified in 25 s (6,054 records,
+  through_cursor 6053, snapshot 43,446,272 bytes), **witness sha unchanged 25cff19b...** -- the prefix
+  DATA is byte-identical, only the code pins moved. Manifest sha 01fcafd3... -> 10db8fe2...; the day
+  configuration's `prefix_manifest` witness rewritten (backup `actual-host-configuration.json.before-prefix-rebuild-20260920T145353Z.json`);
+  `host-identity.c15.json` (the one retained record pinning the configuration) moved aside so the
+  runner re-saves it. Done BEFORE the cycles dispatch on purpose: a supersede after cycle 0 would move
+  training.sqlite and destroy cycle 0's learning.
+  Receipt defect (fixed in the script afterwards): `bytes`/`mtime_utc` recorded null/1601 because the
+  FileInfo was read after Move-Item; the sha256 values are right.
+
+Left as is, on record: the git receipt `runs/20211003/03-schedule-prefixes.json` on the launch branch
+still names `prefixes_sha256 01fcafd3...` (the superseded manifest). It is provenance, not a gate
+(`day_cycles.ps1` reads the manifest path from the configuration, and the cycles receipt chains to
+whatever 03 exists). Correcting it means moving a receipt on `codex/frankie-launch-two-cycle-20260919`,
+a branch this session has no word to push to -- Greg's call.
+
+Pipeline re-dispatched ~14:56Z (same inputs). Check-in armed 15:07Z.

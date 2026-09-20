@@ -92,11 +92,12 @@ if ($stale.Count -eq 0) {
         $destination = Join-Path $target $name
         New-Item -ItemType Directory -Force -Path $target | Out-Null
         $item = Get-Item $source
+        $bytes = [int64]$item.Length; $mtime = $item.LastWriteTimeUtc.ToString('s') + 'Z'   # read BEFORE the move (run 35517867568 recorded null/1601 reading after)
         $digest = Sha $source
         Move-Item -LiteralPath $source -Destination $destination
         if (Test-Path $source) { throw ("move left the source in place: " + $name) }
         if (-not (Test-Path $destination)) { throw ("move lost the item: " + $name) }
-        $moved += [ordered]@{ name = $name; destination = $destination; sha256 = $digest; bytes = $item.Length; mtime_utc = $item.LastWriteTimeUtc.ToString('s') + 'Z' }
+        $moved += [ordered]@{ name = $name; destination = $destination; sha256 = $digest; bytes = $bytes; mtime_utc = $mtime }
         Write-Output ("  moved: " + $name + "  sha256=" + $digest)
     }
     # 3. The gold-standard builder, unchanged, invoked exactly as day_schedule_prefixes.ps1 invokes it.
@@ -151,6 +152,7 @@ if ($stale.Count -eq 0) {
     $identity = Join-Path $cfg.run_directory 'host-identity.c15.json'
     if (Test-Path $identity) {
         $item = Get-Item $identity
+        $bytes = [int64]$item.Length; $mtime = $item.LastWriteTimeUtc.ToString('s') + 'Z'
         $digest = Sha $identity
         $identityTarget = Join-Path (Join-Path (Split-Path $cfg.run_directory -Parent) 'superseded') ((Split-Path $cfg.run_directory -Leaf) + '-' + $stamp + '-prefix-batch-config')
         New-Item -ItemType Directory -Force -Path $identityTarget | Out-Null
@@ -158,7 +160,7 @@ if ($stale.Count -eq 0) {
         Move-Item -LiteralPath $identity -Destination $destination
         if (Test-Path $identity) { throw 'move left host-identity.c15.json in place' }
         if (-not (Test-Path $destination)) { throw 'move lost host-identity.c15.json' }
-        $moved += [ordered]@{ name = 'run_directory/host-identity.c15.json'; destination = $destination; sha256 = $digest; bytes = $item.Length; mtime_utc = $item.LastWriteTimeUtc.ToString('s') + 'Z' }
+        $moved += [ordered]@{ name = 'run_directory/host-identity.c15.json'; destination = $destination; sha256 = $digest; bytes = $bytes; mtime_utc = $mtime }
         Write-Output ("  moved: host-identity.c15.json (configuration-bound)  sha256=" + $digest)
     }
 }

@@ -53,12 +53,13 @@ foreach ($name in $names) {
     if ($item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) { throw ("refusing: not a plain file: " + $relative) }
     $destination = Join-Path $target $relative
     New-Item -ItemType Directory -Force -Path (Split-Path $destination -Parent) | Out-Null
+    $bytes = [int64]$item.Length; $mtime = $item.LastWriteTimeUtc.ToString('s') + 'Z'   # read BEFORE the move
     $digest = ([BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes($source)))).Replace('-', '').ToLower()
     Move-Item -LiteralPath $source -Destination $destination
     if (Test-Path $source) { throw ("move left the source in place: " + $relative) }
     if (-not (Test-Path $destination)) { throw ("move lost the item: " + $relative) }
-    $moved += [ordered]@{ relative = $relative; destination = $destination; sha256 = $digest; bytes = $item.Length; mtime_utc = $item.LastWriteTimeUtc.ToString('s') + 'Z' }
-    Write-Output ("  moved: " + $relative + "  sha256=" + $digest + "  bytes=" + $item.Length)
+    $moved += [ordered]@{ relative = $relative; destination = $destination; sha256 = $digest; bytes = $bytes; mtime_utc = $mtime }
+    Write-Output ("  moved: " + $relative + "  sha256=" + $digest + "  bytes=" + $bytes)
 }
 $receipt = [ordered]@{
     schema          = 'FRANKIE_CLASSROOM_PACKAGE_SUPERSEDED_V1'
