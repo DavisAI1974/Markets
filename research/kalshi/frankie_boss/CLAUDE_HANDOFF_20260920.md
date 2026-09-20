@@ -1541,3 +1541,13 @@ once the reports exist; a glance for anything pertinent, deep dives after it is 
 
 Standing order (Greg, 20:46Z): keep the next cycle running as the priority; the report deep dives wait
 until it is going.
+
+### 20:48Z: Root's response recorded (Greg); the pipeline is RE-DISPATCHED, run 35536713271
+
+Greg, 20:47Z: "Root's response is recorded, re-dispatch the pipeline." Dispatched `frankie_journal_stack.yml`
+on `codex/frankie-launch-two-cycle-20260919` (tip 19d3ef4c) with day 20211003, the standing go, cycles 2,
+keep_compute true, checks_only false: **run 35536713271**, started 20:48:26Z. Expected path: the host job
+resumes the retained run directory, `recover` finds the recorded response, verify -> native learning ->
+readback -> completion, then the classroom correction turn (a second HOLD if it needs Root) and cycle 1's
+readiness. A read-only `frankie_host_cycle_status.yml` probe was dispatched alongside to confirm the
+response file on the host. Outcome follows below as it lands.
