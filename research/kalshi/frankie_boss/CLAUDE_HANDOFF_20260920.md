@@ -1397,3 +1397,29 @@ means. Nothing here is proposed for the running two-cycle run.
 
 Recommendation: 1 now, 2 after the run. Either retires today's supersede path for tooling changes while
 leaving it in place for the case it was built for.
+
+### 20:10:42Z: THE HOLD. `actual_frankie_session_pending`, exit 3
+
+Pipeline run 35533855801 (host job 106139581455, 19:58Z -> 20:10:42Z): re-primed the cache (20:03:59Z),
+re-prepared cycle 0, and the coordinator ACCEPTED the 19:54Z declaration on all three moved values (code
+hash 61b761c8 -> a019bb8d, spent arm 3a85e8bd, retained export `boss_commit` 34a4feac); the export manifest
+verified on its content, the attachment and intent were retained, and `recover` raised PrincipalPending: the
+runner printed `{"status": "actual_frankie_session_pending", "run_directory":
+"C:/Codex/Frankie-BOSS-20260919/actual-feedback-run"}` and exited 3 (the day script reports that as a
+refusal; the pipeline commits the receipts either way). The progress record's last phase is
+`frankie_calculation`, owner `frankie`. This is the HOLD the protocol designs for: cycle 0's controller
+result, critic outcome, handoff export and principal request are all retained; nothing runs until Root's
+Frankie session records the response.
+
+Greg's word at 20:15Z: no package code changes until both cycles are done; the two notes files wait for after.
+
+**Root's session, cycle 0:** perform the Frankie analysis on
+`actual-feedback-run/execution/cycle-00/principal/prompt.md` (28,294,692 bytes; the retained
+`session-request.json` of 16:39:23Z is the durable request) and record it with
+`operations/record_actual_frankie_response.py --configuration <actual-host-configuration.json>
+--configuration-sha256 <sha> --cycle-index 0 --response <file> --response-sha256 <sha> --host-attestation
+<file> --host-attestation-sha256 <sha>` from the host tools checkout (2b069fc2; the `json_form` fix is on it, so
+the recorder matches the retained request). Then ONE dispatch of `frankie_journal_stack.yml` on
+`codex/frankie-launch-two-cycle-20260919` (same go, cycles 2, keep_compute) resumes at the first missing
+receipt: verify -> native learning -> checkpoint readback -> completion -> cycle 1, whose readiness needs a
+new observer bound to cycle 1's request sha and `frankie_deliver_readiness.yml` for `...-cycle-01`.
