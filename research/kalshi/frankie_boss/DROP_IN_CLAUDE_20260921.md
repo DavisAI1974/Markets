@@ -5,38 +5,40 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
-## State at 22:10Z: cycle 0's Frankie half is being re-issued on a new request; the machine half stays
+## State at 22:35Z: cycle 0 is re-run WHOLE from the beginning (Greg), not in steps
 
-**Read first.** Cycle 0's machine half ran once and is retained (native calculation, controller
-`incomplete`, empty Granite critique, hash-verified export). Its Frankie half NEVER ran: Root's reports of
-recording, a fork and a PR were not real (`rootdavis` is not a GitHub account), and the request he was
-sent (e0c461d7...) has now been SUPERSEDED (moved aside, receipted) because Greg ordered cycle 0 re-run
-under two changes to how Frankie runs: (1) the run-findings ledger `knowledge/RUN_FINDINGS.md` plus his own
-prior lessons are rendered into every prompt (47dd6e57); (2) the calculations are his, not the runner's:
-the request names the 49 registry calculation layers of the August 28 recalculation verbatim, requires a
-`calculation_accounting` lesson entry per layer, and the ten append-only output ledgers as lesson entries
-(56111bf1, a60f0b1b). Host advanced to a60f0b1b (run 35540449494); code-bound state superseded
-(receipt `superseded-code-bound-state-20260920T220441Z.json`); principal request superseded (receipt
-`principal-request-superseded-20260920T220438Z.json`); declaration with `supersede_principal=true` (run
-35540574706); then ONE pipeline dispatch re-prepares cycle 0 and returns to the HOLD with a NEW request.
-`CLAUDE_HANDOFF_20260920.md` 22:05Z has the receipts; its next section records the new request's hashes.
+**Read first.** Cycle 0's Frankie half never ran (Root's reports were not real). Greg, 22:12Z: "I wanted a
+full rerun from the beginning and not steps" and "Rerun classroom also." So the cycle is superseded whole
+with receipts (nothing deleted) and runs again under the current code in its fixed order: native BOSS ->
+Granite critic -> export -> Frankie's session (request + same-session classroom teach-back + correction) ->
+native learning -> readback -> completion. The 22:06Z piecewise dispatch (retained machine half, new
+Frankie request only) was cancelled before its host job started. Nothing on the machine computes exhaustion
+chains, D structures or families: the 49 registry layers are delivered as inputs and the derivations are
+Frankie's step, after the machine result reaches him; never concurrent. Two changes to how Frankie runs,
+both live in the request: the run-findings ledger + his prior lessons rendered whole (47dd6e57); the
+calculations are his, the required set is the registry, one `calculation_accounting` entry per layer and the
+ten output ledgers as lessons (56111bf1, a60f0b1b). Whole-cycle supersede: f0910e6c (`_cycle_supersede`,
+`--supersede-cycle`, `frankie_host_supersede_cycle.yml`, declaration input `supersede_cycle`).
+`CLAUDE_HANDOFF_20260920.md` 22:30Z has the answers and the receipts; its next section records the round.
 
 **The next actions, in order, no code changes:**
-1. When the pipeline is back at `actual_frankie_session_pending`: `frankie_host_export_principal_request.yml`
-   (cycle 00) exports the NEW `session-request.json`, `prompt.md`, `historical-prompt.md` to
-   `s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-request/cycle-00/<run id>/`;
+1. Host advanced to f0910e6c (family green first) -> `frankie_host_supersede_cycle.yml` (cycle 00, reason)
+   -> `frankie_host_declare_identity_supersede.yml` with `supersede_cycle=true` -> ONE dispatch of
+   `frankie_journal_stack.yml` on `codex/frankie-launch-two-cycle-20260919` (day 20211003, the standing go,
+   cycles 2, keep_compute true, checks_only false). The native BOSS runs and mints a NEW critic request; the
+   retained readiness (pinned to a7b72cf9) will not match it: run the `frankie_retained_granite.yml`
+   observer and `frankie_deliver_readiness.yml` for the new request sha (the 15:53Z round), re-dispatch;
+   the critic runs on Pod 8vqdacl5t61rjx, the export follows, and the pipeline HOLDs
+   (`actual_frankie_session_pending`) with the NEW cycle 0 request.
+2. `frankie_host_export_principal_request.yml` (cycle 00) exports `session-request.json`, `prompt.md`,
+   `historical-prompt.md` to `s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-request/cycle-00/<run id>/`;
    update `operations/ROOT_CYCLE_00_TASK_20260920.md` (keys, bytes, sha256) and hand it to Root.
-2. Root performs the session and pushes four files to `root/cycle-00-response` (DavisAI1974/Markets)
-   under `research/kalshi/frankie_boss/runs/20211003/root/`. Nothing counts until `git ls-remote`
-   shows the branch.
-3. `frankie_host_record_principal_response.yml` (`source_ref=root/cycle-00-response`, the three JSON
-   paths, cycle 00): stages by masked SigV4 presigned GET, the host verifies sha256/bytes, places the
-   session record, rewrites a foreign `host_record.path` with a receipt (66b0ab27), runs the recorder
-   on the host, requires `actual_principal_response_recorded`.
-4. ONE dispatch of `frankie_journal_stack.yml` on `codex/frankie-launch-two-cycle-20260919` (day
-   20211003, the standing go, cycles 2, keep_compute true, checks_only false): verify -> native learning
-   -> readback -> completion -> classroom correction turn -> cycle 1's readiness
-   (`frankie_deliver_readiness.yml` for `...-cycle-01`).
+3. Root performs the session (request, classroom teach-back, correction) and pushes four files to
+   `root/cycle-00-response` (DavisAI1974/Markets) under `research/kalshi/frankie_boss/runs/20211003/root/`.
+   Nothing counts until `git ls-remote` shows the branch.
+4. `frankie_host_record_principal_response.yml` (`source_ref=root/cycle-00-response`, the three JSON paths,
+   cycle 00), then ONE pipeline dispatch: verify -> native learning -> readback -> completion -> cycle 1's
+   readiness (`frankie_deliver_readiness.yml` for `...-cycle-01`).
 5. `frankie_host_cycle_report.yml` (cycle 00): GLANCE ONLY for the next cycle; deep dives later (Greg).
 
 **Greg's standing rules today (all in `CLAUDE_HANDOFF_20260920.md`):** launch-critical = how Frankie runs
