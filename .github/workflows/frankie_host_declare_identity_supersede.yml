@@ -34,6 +34,10 @@ on:
         description: "true: also declare that the cycle's saved principal attachment and intent may be superseded so its request is rendered again (the run-findings ledger enters the prompt; Greg, 2026-09-20)"
         required: false
         default: 'false'
+      supersede_cycle:
+        description: "true: also declare that EVERY live stage of the open cycle (binding, controller, export, attachment, intent) may be superseded so the cycle runs again from the beginning under the current code (Greg, 2026-09-20: a full rerun, not steps)"
+        required: false
+        default: 'false'
       reason:
         description: 'Why (goes into the declaration and the receipt)'
         required: true
@@ -66,6 +70,7 @@ jobs:
           CYCLE_INDEX: ${{ inputs.cycle_index }}
           REASON: ${{ inputs.reason }}
           SUPERSEDE_PRINCIPAL: ${{ inputs.supersede_principal }}
+          SUPERSEDE_CYCLE: ${{ inputs.supersede_cycle }}
         run: |
           python deploy/aws/ssm_run_ps1.py \
             --instance "$INSTANCE" --region us-east-2 \
@@ -77,4 +82,5 @@ jobs:
             --set "CycleIndex=$CYCLE_INDEX" \
             --set "Reason=$REASON" \
             --set "SupersedePrincipal=$SUPERSEDE_PRINCIPAL" \
+            --set "SupersedeCycle=$SUPERSEDE_CYCLE" \
             --timeout 600 --comment "declare cycle identity supersede for day $DAY"
