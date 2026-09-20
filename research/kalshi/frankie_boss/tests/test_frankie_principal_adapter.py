@@ -348,3 +348,61 @@ def test_receiver_producer_cannot_use_circular_fresh_emitter_route():
         admission_policy({'output_bundle': {'principal_artifact':'artifact.json','outputs_dir':'outputs'},
             'sealed_proof': {'producer':'native_sealed_absence','repo_root':'frozen','repo_commit':'a'*40}},
             retained_prompt=False)
+
+
+def test_retained_prompt_renders_the_run_findings_ledger_and_prior_lessons_never_hidden(tmp_path, monkeypatch):
+    """Greg, 2026-09-20: the run-findings ledger and Frankie's own prior lessons are rendered into the
+    prompt, exact bytes, witnessed beside it; Memory A and the historical prompt are untouched."""
+    import sqlite3
+    from frankie_principal_adapter import RUN_FINDINGS_SIDECAR
+    from c15_journal import pack
+    from causal_packet import canonical_bytes
+    module, receipt, bundle = retained_case(tmp_path, monkeypatch)
+    adapter, _ = case(tmp_path)
+    adapter.directory = tmp_path / 'run' / 'execution' / 'cycle-01' / 'principal'
+    adapter.directory.mkdir(parents=True)
+    prior = tmp_path / 'historical.md'
+    prior.write_bytes(b'ORIGINAL\ncomplete prior prompt\n')
+    ledger = tmp_path / 'RUN_FINDINGS.md'
+    ledger.write_bytes(b'# ledger\n2026-09-20: the critic returned zero hypotheses; recorded, not hidden.\n')
+    adapter.render = {'retained-prompt': str(prior), 'retained-prompt-sha256': file_witness(prior)['sha256'],
+        'knowledge-receipt': str(receipt), 'knowledge-receipt-sha256': file_witness(receipt)['sha256'],
+        'knowledge-bundle-sha256': file_witness(bundle)['sha256'], 'run-findings': str(ledger)}
+    adapter.preparation = {'delivery_receipt': str(tmp_path / 'new-delivery.json')}
+    adapter.feedback_contract = {'as_of': 500}
+    lessons = tmp_path / 'run' / 'lessons.sqlite'
+    db = sqlite3.connect(lessons)
+    db.execute('CREATE TABLE lessons (request TEXT PRIMARY KEY, available_ns INTEGER, payload BLOB, digest TEXT)')
+    for request, available_ns, text in (('cycle-00', 400, 'earlier lesson, visible'), ('cycle-07', 900, 'later lesson, not yet available')):
+        db.execute('INSERT INTO lessons VALUES (?,?,?,?)', (request, available_ns, canonical_bytes(pack({'lessons': [text]})), 'd'))
+    db.commit(); db.close()
+    exact_block = b'\nBOSS_AGENT_ATTRIBUTED_INPUT_V1\nVERIFIED EXACT BYTES\n'
+    adapter._receiver_input_block = lambda prepared: exact_block
+    output = tmp_path / 'current-prompt.md'
+    adapter._render_retained(output, tmp_path / 'receiver')
+    body = output.read_bytes()
+    assert body.endswith(b'# Preserved historical principal prompt (exact bytes follow)\n' + prior.read_bytes() + exact_block)
+    assert ledger.read_bytes() in body and file_witness(ledger)['sha256'].encode() in body
+    assert b'earlier lesson, visible' in body and b'later lesson, not yet available' not in body
+    assert b'available at or before as_of 500' in body
+    assert body.index(b'# Run findings ledger') < body.index(b'# Preserved historical principal prompt')
+    sidecar = json.loads((adapter.directory / RUN_FINDINGS_SIDECAR).read_bytes())
+    assert sidecar == dict(file_witness(ledger), path=str(ledger))
+    assert (adapter.directory / 'historical-prompt.md').read_bytes() == prior.read_bytes()
+
+
+def test_retained_prompt_without_lessons_store_says_so(tmp_path, monkeypatch):
+    module, receipt, bundle = retained_case(tmp_path, monkeypatch)
+    adapter, _ = case(tmp_path)
+    prior = tmp_path / 'historical.md'
+    prior.write_bytes(b'ORIGINAL\n')
+    ledger = tmp_path / 'RUN_FINDINGS.md'
+    ledger.write_bytes(b'# ledger\n')
+    adapter.render = {'retained-prompt': str(prior), 'retained-prompt-sha256': file_witness(prior)['sha256'],
+        'knowledge-receipt': str(receipt), 'knowledge-receipt-sha256': file_witness(receipt)['sha256'],
+        'knowledge-bundle-sha256': file_witness(bundle)['sha256'], 'run-findings': str(ledger)}
+    adapter.preparation = {'delivery_receipt': str(tmp_path / 'new-delivery.json')}
+    adapter._receiver_input_block = lambda prepared: b'\nBLOCK\n'
+    output = tmp_path / 'current-prompt.md'
+    adapter._render_retained(output, tmp_path / 'receiver')
+    assert b'(none recorded before this cycle)' in output.read_bytes()

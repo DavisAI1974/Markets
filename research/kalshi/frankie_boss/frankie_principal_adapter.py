@@ -20,6 +20,14 @@ except ImportError:
 
 FROZEN_MEMORY_SHA256 = '4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a'
 
+# Greg Davis, 2026-09-20: "we will make this info available to Frankie going forward on the Sunday runs
+# and all subsequent calc findings. We will not hide this." The committed, append-only run-findings
+# ledger is rendered into every prompt this adapter renders, exact bytes, witnessed in the request
+# attachment; Frankie's own prior lessons (the coordinator's lessons store) are rendered beside it.
+# The frozen Memory A and the eighteen historical sections are untouched: this is a separate block.
+RUN_FINDINGS_PATH = Path(__file__).resolve().parent / 'knowledge' / 'RUN_FINDINGS.md'
+RUN_FINDINGS_SIDECAR = 'run-findings-witness.json'
+
 SECTIONS = ('4.0', '4.0b') + tuple(f'4.{i}' for i in range(1, 17))
 
 RUN_ANALYSIS_INSTRUCTION = (
@@ -420,6 +428,12 @@ class FrankiePrincipalAdapter:
             'prompt_witness': file_witness(prompt), 'section_evidence': self.section_evidence,
             'protected_files': self.protected_files, 'feedback_contract': self.feedback_contract,
             'admission': admission}
+        # The run-findings witness exists only for prompts rendered with the ledger block; a prompt
+        # rendered before it (cycle 0 of the 20211003 run) carries no sidecar and its retained
+        # attachment stays byte-identical.
+        sidecar = self.directory / RUN_FINDINGS_SIDECAR
+        if sidecar.exists():
+            attachment['run_findings_witness'] = json.loads(sidecar.read_bytes())
         attachment['attachment_hash'] = digest(attachment)
         return attachment
 
@@ -455,6 +469,7 @@ class FrankiePrincipalAdapter:
             with original_copy.open('xb') as handle:
                 handle.write(original)
         block = self._receiver_input_block(prepared)
+        findings = self._run_findings_block()
         prefix = ("# Current authorized continuation\n"
             "Sunday 2021-10-03 is the sole source and run day. No separate source day or October 1 "
             "prerequisite applies. Reuse completed principal-authored sections with their original "
@@ -464,12 +479,47 @@ class FrankiePrincipalAdapter:
             "multi-day sequencing is overridden by this current single-day instruction.\n"
             "Actual local delivery: " + str(self.preparation['delivery_receipt']) + "\n"
             "Feedback contract: " + canonical(self.feedback_contract).decode() + "\n\n"
-            + RUN_ANALYSIS_INSTRUCTION + "\n\n"
-            "# Preserved historical principal prompt (exact bytes follow)\n").encode()
+            + RUN_ANALYSIS_INSTRUCTION + "\n\n").encode()
+        heading = b"# Preserved historical principal prompt (exact bytes follow)\n"
         with Path(prompt).open('xb') as handle:
-            handle.write(prefix + original + block)
+            handle.write(prefix + findings + heading + original + block)
             handle.flush()
             os.fsync(handle.fileno())
+
+    def _run_findings_block(self):
+        """Never hidden (Greg, 2026-09-20): the run-findings ledger, exact bytes, and Frankie's own prior
+        lessons available at or before this cycle's as_of, rendered whole (no limit). The ledger's
+        witness is saved beside the prompt so the attachment pins it on every later reconstruction."""
+        ledger_path = Path(self.render.get('run-findings') or RUN_FINDINGS_PATH)
+        ledger = ledger_path.read_bytes()
+        witness = dict(file_witness(ledger_path), path=str(ledger_path))
+        try:
+            from .c15_journal import unpack
+        except ImportError:
+            from c15_journal import unpack
+        import sqlite3
+        as_of = self.feedback_contract.get('as_of') if isinstance(self.feedback_contract, dict) else None
+        lessons_path = Path(self.directory).resolve().parents[2] / 'lessons.sqlite'
+        rendered = []
+        if lessons_path.is_file() and type(as_of) is int:
+            db = sqlite3.connect(lessons_path.as_uri() + '?mode=ro', uri=True)
+            try:
+                rows = db.execute('SELECT request, available_ns, payload FROM lessons WHERE available_ns<=? '
+                                  'ORDER BY available_ns, request', (as_of,)).fetchall()
+            finally:
+                db.close()
+            for request, available_ns, raw in rows:
+                record = unpack(json.loads(raw))
+                rendered.append(f'## Prior lesson: request {request}, available_ns {available_ns}\n'
+                                + json.dumps(record, indent=1, sort_keys=True, default=str) + '\n')
+        lessons_text = ''.join(rendered) if rendered else '(none recorded before this cycle)\n'
+        _write(Path(self.directory) / RUN_FINDINGS_SIDECAR, witness)
+        return (('# Run findings ledger (operator-recorded, never hidden; exact bytes of '
+                 + ledger_path.name + ', sha256 ' + witness['sha256'] + ')\n').encode()
+                + ledger
+                + ('\n# Prior lessons recorded by earlier cycles (lessons store, available at or before as_of '
+                   + str(as_of) + ')\n').encode()
+                + lessons_text.encode() + b'\n')
 
     def _check_preparation(self, receipt):
         self._code()
