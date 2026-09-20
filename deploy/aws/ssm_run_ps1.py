@@ -47,8 +47,10 @@ def main():
     parser.add_argument('--comment', default='')
     parser.add_argument('--set', dest='variables', action='append', default=[], metavar='NAME=VALUE',
                         help='prepend $NAME = ' + "'VALUE'" + ' above the script body')
-    parser.add_argument('--tail', type=int, default=6000,
-                        help='characters of the host stdout tail to print (SSM itself caps near 24000)')
+    parser.add_argument('--tail', type=int, default=0,
+                        help='print only this many trailing characters of the host stdout; 0 (the default) prints '
+                             'everything the SSM API returned (the API itself keeps about 24,000 characters; a '
+                             'longer output must travel by file, as the cycle report does)')
     args = parser.parse_args()
     if args.env_file:
         load_env_file(args.env_file)
@@ -70,7 +72,8 @@ def main():
         if status in ('Success', 'Failed', 'Cancelled', 'TimedOut'):
             break
     print('SSM status:', status)
-    print(inv.get('StandardOutputContent', '')[-max(1, args.tail):])
+    output = inv.get('StandardOutputContent', '')
+    print(output[-args.tail:] if args.tail > 0 else output)
     err = inv.get('StandardErrorContent', '')
     if err.strip():
         print('STDERR:', err[-2000:])

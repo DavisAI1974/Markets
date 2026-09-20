@@ -1,7 +1,11 @@
 name: Frankie cycle report on the native host (read-only)
 # How one cycle ran and what Frankie found: runner status lines, the coordinator's retained stages,
-# the verified feedback and lessons, the recorded principal response, the critic outcome, the cycle
-# records. Reads only. Dispatch only.
+# the verified feedback and lessons, the recorded principal response, the critic outcome, the
+# classroom status, the cycle records. Printed WHOLE (Greg, 2026-09-20: no limit): the SSM API keeps
+# only about 24,000 characters of console output, so the host writes the report to a file under the
+# day's run directory and uploads it through a presigned PUT signed here (the host role has no access
+# to the bucket; the URL is masked and never printed); this job then downloads it, prints it entire
+# in the log and attaches it as an artifact. Reads only on the host. Dispatch only.
 on:
   workflow_dispatch:
     inputs:
@@ -29,13 +33,17 @@ on:
         description: 'Zero-padded cycle index'
         required: false
         default: '00'
+      bucket:
+        description: 'Bucket the report file is uploaded to (host-reports/<day>/), by presigned PUT'
+        required: false
+        default: 'bento-568968024170-us-east-2-an'
 permissions:
   contents: read
 jobs:
   report:
     if: github.repository == 'DavisAI1974/Markets'
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 15
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -48,7 +56,29 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
-      - name: Cycle report over SSM (read-only)
+      - name: Sign a presigned PUT for the report file (masked, never printed)
+        id: sign
+        env:
+          DAY: ${{ inputs.day }}
+          CYCLE_INDEX: ${{ inputs.cycle_index }}
+          BUCKET: ${{ inputs.bucket }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import boto3
+          key = f"host-reports/{os.environ['DAY']}/cycle-{os.environ['CYCLE_INDEX']}-report-{os.environ['GITHUB_RUN_ID']}.txt"
+          url = boto3.client('s3', region_name='us-east-2').generate_presigned_url(
+              'put_object', Params={'Bucket': os.environ['BUCKET'], 'Key': key}, ExpiresIn=3600, HttpMethod='PUT')
+          if "'" in url or '\n' in url:
+              raise SystemExit('presigned URL carries a character ssm_run_ps1.py --set refuses')
+          print('::add-mask::' + url)
+          Path(os.environ['RUNNER_TEMP'], 'presigned-put.txt').write_text(url)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f"key={key}\n")
+          print('report will land at s3://' + os.environ['BUCKET'] + '/' + key)
+          PY
+      - name: Cycle report over SSM (read-only; console copy, cut by the SSM API near 24 KB)
         env:
           INSTANCE: ${{ inputs.instance }}
           DAY: ${{ inputs.day }}
@@ -65,4 +95,26 @@ jobs:
             --set "ToolsRoot=$TOOLS_ROOT" \
             --set "Python=$HOST_PYTHON" \
             --set "CycleIndex=$CYCLE_INDEX" \
-            --timeout 300 --tail 23000 --comment "read-only cycle report for day $DAY"
+            --set "Url=$(cat "$RUNNER_TEMP/presigned-put.txt")" \
+            --timeout 300 --tail 0 --comment "read-only cycle report for day $DAY"
+      - name: The whole report (downloaded from the bucket, printed entire)
+        env:
+          BUCKET: ${{ inputs.bucket }}
+          KEY: ${{ steps.sign.outputs.key }}
+        run: |
+          python - <<'PY'
+          import hashlib, os
+          from pathlib import Path
+          import boto3
+          body = boto3.client('s3', region_name='us-east-2').get_object(Bucket=os.environ['BUCKET'], Key=os.environ['KEY'])['Body'].read()
+          out = Path(os.environ['RUNNER_TEMP'], 'cycle-report.txt'); out.write_bytes(body)
+          print(f'REPORT bytes={len(body)} sha256={hashlib.sha256(body).hexdigest()} (compare with the REPORT_FILE line above)')
+          print('=' * 100)
+          print(body.decode('utf-8', 'replace'))
+          print('=' * 100)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cycle-report-${{ inputs.day }}-${{ inputs.cycle_index }}
+          path: ${{ runner.temp }}/cycle-report.txt
+          if-no-files-found: error
