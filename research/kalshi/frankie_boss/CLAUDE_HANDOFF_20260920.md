@@ -1136,3 +1136,17 @@ result and export retained), bind_prefix on the delivered index, the Frankie cal
 readback, output persistence, then cycle 1's preparation. Cycle 1 will need its own readiness (observer bound
 to cycle 1's request sha + `frankie_deliver_readiness.yml` with request_id `...-cycle-01`); the Pod's S3
 active-run claim reads `phase closed` (startup `09a4b695...`, inspected 16:24Z), so a new observer can claim.
+
+### 16:37Z: bind_prefix PASSED on the delivered index; cycle 0 is in the principal preparation
+
+Pipeline run 35522815675, host job 106110099868 (runner pids 2508 / 3128 since 16:31:15Z). Read-only status
+run 35523288457 at 16:37:58Z lists, new since the stop: `execution/cycle-00/principal/bound-mapping.json`
+16:37:15Z (1,243 bytes, the retained binding's size), `principal/preparation-pins.json` (2,034 bytes),
+`principal/adapter-config.json` (82 bytes) and `principal/frankie-prepare-iultmwhl/source-binding.json`
+16:37:16Z. Everything retained from the first pass is untouched (controller and native witnesses, the
+critic-spool with `outcome.json` 15:52:45Z, `completed-journal-pins.c15.json` 15:56:49Z,
+`principal-export.c15.json` 16:00:11Z). The run progress record reads phase `causal_delivery`, owner
+`transport`, with a `possible_stall` warning at 155 s of no reported progress: the transport reporter has
+nothing to count while the Frankie prepare runs in-process; the principal files above are the progress.
+Next expected: the Frankie calculation, native learning, readback, output persistence, then cycle 1's
+preparation and its readiness delivery.
