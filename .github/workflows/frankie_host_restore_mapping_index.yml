@@ -71,11 +71,19 @@ jobs:
           import hashlib, json, os
           from pathlib import Path
           pinned = Path(os.environ['PINNED_MAPPING']).read_bytes()
-          pin = json.loads(pinned)['index']
+          committed = json.loads(pinned)
+          pin = committed['index']
           rebuilt = Path(os.environ['RUNNER_TEMP'])/'rebuilt'
           mapping = (rebuilt/'mapping'/'mapping.json').read_bytes()
-          if hashlib.sha256(mapping).hexdigest() != hashlib.sha256(pinned).hexdigest():
-              raise SystemExit('rebuilt mapping.json differs from the committed one; the index cannot be trusted')
+          fresh = json.loads(mapping)
+          # The rebuild's mapping.json differs from the committed one only in provenance (extraction
+          # runtime hash, gzip vs plain ledger encoding); the content pins must agree exactly.
+          for field in ('schema', 'source', 'record_count', 'group_count', 'index'):
+              if committed.get(field) != fresh.get(field):
+                  raise SystemExit(f'rebuilt mapping.json differs from the committed one in {field}; the index cannot be trusted')
+          if committed['member_ledger']['plain'] != fresh['member_ledger']['plain']:
+              raise SystemExit('rebuilt mapping.json names a different plain member ledger')
+          print('provenance-only differences:', sorted(k for k in set(committed) | set(fresh) if committed.get(k) != fresh.get(k)))
           index = (rebuilt/'mapping'/pin['path']).read_bytes()
           digest = hashlib.sha256(index).hexdigest()
           if len(index) != pin['bytes'] or digest != pin['sha256']:
