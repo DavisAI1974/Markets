@@ -1518,3 +1518,26 @@ limit; here is each:
    whole remaining context (38,633 on cycle 0) and the critic used 124. Raising or removing these caps
    changes what Granite is asked to return, so under Greg's 20:15Z rule it waits until both cycles are
    done unless he says otherwise.
+
+### 20:47Z: the whole cycle report lands (run 35536537442); the glance shows nothing new for cycle 0
+
+`frankie_host_cycle_report.yml` run 35536537442 (tip 7f3c8283): the host wrote the report file under
+`days/20211003/reports/`, the presigned PUT into the granite bucket was accepted once signed SigV4
+explicitly (the two 403s were botocore's SigV2 downgrade for us-east-1 presigns plus the client's
+unsigned Content-Type; runs 35536268659 and 35536392114), the workflow downloaded it, printed it entire
+and attached it as artifact `cycle-report-20211003-00` (106,504 bytes zipped). The console copy now
+carries summary lines only, because the SSM API keeps the FIRST 24,000 characters and the report's echo
+had pushed the diagnostic lines out of view. The glance (Greg, 20:46Z: the next cycle is the priority
+once the reports exist; a glance for anything pertinent, deep dives after it is running):
+
+- Recorded principal response: ABSENT (no `principal/session-response.json` among the cycle records).
+  Cycle 0 still waits on Root's Frankie session; nothing has moved since the HOLD at 20:10:42Z.
+- Classroom: package complete (source, teacher key, pre-message, binding, adapter; TEACH,
+  INSTRUCTIONAL_COMPREHENSION, 19 cycles, 171 pairs, through_cursor 3261), audit files present,
+  model-visible pre-message present; correction turn NOT requested yet (no request, no response).
+- Controller result unchanged (`incomplete`, critic rejected on zero hypotheses); nothing in the report
+  changes what cycle 0 needs next: Root records the response, one re-dispatch, then the correction
+  turn, learning, completion, and only then cycle 1.
+
+Standing order (Greg, 20:46Z): keep the next cycle running as the priority; the report deep dives wait
+until it is going.
