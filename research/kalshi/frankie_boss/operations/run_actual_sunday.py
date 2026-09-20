@@ -779,11 +779,16 @@ class ActualHost:
         key=None
         request_id=f"{self.config['run_id']}-cycle-{binding['cycle_index']:02d}"
         controller_done=self.coordinator._load(request_id,'controller') is not None
-        if not controller_done:self.prime_cache(binding,cycle_directory)
         preparation=cycle_directory/'host-preparation.c15.json'
         service_record=cycle_directory/'host-service.c15.json'
+        # A completed controller whose host-service record is absent (superseded after a code advance:
+        # the training identity encodes code_hash, so the retained preparation pins went stale) is
+        # re-prepared and re-admitted against the same immutable trigger; the request is deterministic,
+        # so the delivered readiness pins must still match. Before 2026-09-20 this case raised
+        # FileNotFoundError at _load(preparation) below (pipeline run 35525196011 would have).
+        if not controller_done or not service_record.exists():self.prime_cache(binding,cycle_directory)
         recovering_critic=not controller_done and retained_plan is not None and service_record.exists() and any((cycle_directory/'critic-spool').glob('*/dispatch.json'))
-        if not controller_done and not service_record.exists():
+        if not service_record.exists():
             prepared=self.prepared_before_restart(binding,request_id,preparation)
             if prepared is None:
                 body,receipt=self.prepared_input(binding,cycle_directory)
