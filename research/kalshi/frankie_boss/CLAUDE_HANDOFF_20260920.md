@@ -1150,3 +1150,48 @@ critic-spool with `outcome.json` 15:52:45Z, `completed-journal-pins.c15.json` 15
 nothing to count while the Frankie prepare runs in-process; the principal files above are the progress.
 Next expected: the Frankie calculation, native learning, readback, output persistence, then cycle 1's
 preparation and its readiness delivery.
+
+### 16:39:27Z: cycle 0 STOPPED again, two seconds after writing its own session request; root-caused, fixed (90e63722)
+
+Host job 106110099868 (run 35522815675) ended `stage_refused`, `cycles exited 1`, `ValueError`, frames
+`run_actual_sunday_classroom.run:256 -> sunday_execution.run_remaining:336 -> run_cycle:318 ->
+feedback_cycle.run:288 -> to_thread -> sunday_execution._LazyPrincipal.execute:188 ->
+frankie_dipole_classroom_adapter.execute:133 -> run_actual_sunday_classroom.<lambda>:238 ->
+await_recorded_principal:64` = `raise ValueError("unique retained Frankie classroom request required")`.
+Status run 35523973643 (16:51Z) shows what the two minutes produced: `principal/receiver/{source-binding,
+attachment-request, preparation-receipt}.json` 16:38:41Z, `principal/historical-prompt.md` (158,950 bytes),
+`principal/prompt.md` (28,294,692 bytes, 16:38:54Z), `sealed-proof.json`, `memory-a-witness.json`,
+`classroom-audit/` (source 8.2 MB, teacher-key audit 14.9 MB), `principal/dipole-classroom-pre-message.json`,
+`principal/dipole-classroom-model-visible.json` (14.9 MB) and **`principal/session-request.json` 16:39:23Z,
+14,909,376 bytes** -- the Frankie prepare, the sealed proof and the classroom composition all succeeded. Progress
+record: phase `frankie_calculation`, owner `frankie`, `operation_failed`, ValueError.
+
+**Root cause (code, not state).** The waiter re-reads the durable request (`_load_json(path) == request`)
+and demands exactly one match; the adapter had written that file two seconds earlier from
+`canonical(request)` (plain `json.dumps`). The live request embeds the model-visible classroom loaded from the
+`.c15.json` package through `c15_journal.unpack`, which preserves TUPLES (`["tuple", ...]` kind); canonical
+JSON writes them as lists, and in Python `[...] != (...)`, so the file can never equal the live object and the
+match count was 0. The same comparison sits in the base adapter's `execute` (re-entry) and `recover`
+(`'retained principal intent differs'`), the classroom adapter's `execute`, correction request and correction
+response, and the waiter's post-wait check -- so the recorder helper (`record_actual_frankie_response.py`,
+which reconstructs the adapter and runs `recover`) would have refused Root's response for the same reason, and
+the second classroom turn would have refused too. Never exercised for real before today: the 20260915 package
+holds no `session-request.json`, so no host had reached this line. Fix 90e63722: `json_form(value) =
+json.loads(canonical(value))` in `frankie_principal_adapter`, and every comparison of a retained file against a
+live request/correction/response goes through it (seven sites); digests are untouched (they hash the canonical
+bytes already); regression test `test_waiter_matches_a_live_request_that_holds_tuples`. This container has no
+torch, so the family runs on GitHub: `frankie_journal_stack.yml` with `checks_only: true` on lqmv0m (the checks
+job only; no AWS, no data).
+
+**What the run is actually waiting for now (the designed HOLD, `ACTUAL_PRINCIPAL_RESPONSE_HANDOFF.md`).**
+With the request durable, the next actor is Root's authorized host session, not the pipeline: consume
+`execution/cycle-00/principal/session-request.json` with `prompt.md`, the frozen knowledge bundle, the 18
+section witnesses and the attributed BOSS attachment; perform the actual Frankie analysis; retain the session
+and output provenance; record it with `operations/record_actual_frankie_response.py --configuration
+<days/20211003/actual-host-configuration.json> --configuration-sha256 <sha> --cycle-index 0 --response <path>
+--response-sha256 <sha> --host-attestation <path> --host-attestation-sha256 <sha>` in the host's tools
+checkout (which must carry 90e63722 or later, or `recover` refuses the intent as differing). Then the
+pipeline is re-dispatched: `recover` finds the response, `verify` types the feedback, native learning,
+readback and output persistence follow, then cycle 1's preparation. Until the response exists, a re-dispatch
+resumes to `PrincipalPending` and the runner prints `actual_frankie_session_pending` (exit 3) -- which, once
+the fix is on the host, is also the proof that the retained intent now compares equal.
