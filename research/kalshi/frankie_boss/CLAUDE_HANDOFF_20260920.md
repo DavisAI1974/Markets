@@ -1551,3 +1551,11 @@ resumes the retained run directory, `recover` finds the recorded response, verif
 readback -> completion, then the classroom correction turn (a second HOLD if it needs Root) and cycle 1's
 readiness. A read-only `frankie_host_cycle_status.yml` probe was dispatched alongside to confirm the
 response file on the host. Outcome follows below as it lands.
+
+NOTE (Greg, 20:52Z, a note, not work yet): once this cycle is actually running, check whether the day's
+REMAINING prefixes (the nineteen-cycle batch; only the two-cycle batch `prefix-batch-02.json` exists on the
+host, prefix-00 retained + prefix-01 rebuilt 14:53Z) have been started, and if not start them while the
+cycle runs. The stage is `day_schedule_prefixes.ps1` with `CycleLimit=19` (the gold-standard builder,
+`build_remaining_sunday_prefixes.py --configuration`); the day configuration pins the two-cycle manifest, so
+switching the pin is part of that work, and the host's CPU-dedication gate for the native step has to be
+respected (measure before starting it beside a running cycle). Wait until the cycle is running.
