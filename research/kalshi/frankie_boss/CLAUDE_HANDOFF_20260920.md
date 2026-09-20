@@ -1009,3 +1009,26 @@ run 35519563150 printed the record; close run 35519639227 copied it server-side 
 call). The Pod stayed RUNNING throughout. Observer re-dispatched as run 35519697015 (same three inputs);
 `frankie_pod_control.yml` restart re-dispatched waiting on the a7b72cf9 generation's
 `retained-start-intent.json` (the first wait, run 35519254224, was cancelled when the observer refused).
+
+### READINESS RE-PINNED AND DELIVERED (observer 35519697015, restart 35519698821, delivery 35520040166); pipeline re-dispatched 15:36Z
+
+Observer run 35519697015 (`a24c604c`, request `a7b72cf9...`, the host's ready witness, the reviewed runtime
+configuration): `retained-prepare` passed every gate after the claim close, wrote the new generation's
+`retained-start-intent.json` at 15:31:12Z under
+`retained-granite/a7b72cf9.../migration-8vqdacl5t61rjx-a004983e93b9/`; Pod control run 35519698821 saw the
+key at 15:31:14Z and the v2 restart was accepted (HTTP 200, `FRANKIE_POD_RESTART_RECEIPT_V1`, final status
+RUNNING, uptime 14,824 s at readback -- the Pod never passed through EXITED). Fresh boot frames followed and
+the observer published `retained-granite-ready-35519697015` at 15:33:35Z (8,410 bytes); the prepare job is
+in `hold`. Delivery run 35520040166 (15:35:35Z): readiness bound to `a7b72cf9...` (refused otherwise), six
+files delivered under `C:/Codex/Frankie-BOSS-20260919/readiness/frankie-boss-sunday-two-cycle-20260919-cycle-00/`
+(service-pins `3ef91df3...`, pod-info `6f8efdf9...` = INFO_SHA256 unchanged, startup-intent `09a4b695...`,
+run `671deb95...`, service-ready `0474b6e7...`, observer `cb6efd2a...`), trigger
+`FRANKIE_ACTUAL_EXECUTE_V1.json` written for request `frankie-boss-sunday-two-cycle-20260919-cycle-00`;
+receipt `FRANKIE_READINESS_DELIVERY_RECEIPT_V1`.
+
+Pipeline `frankie_journal_stack.yml` re-dispatched at ~15:36Z on `codex/frankie-launch-two-cycle-20260919`
+(same inputs: day 20211003, Greg's go hash, cycles 2, keep_compute true, checks_only false). What the host
+should now do: __init__ (host-identity re-saved at the rewritten configuration), training re-mint, context
+cache, classroom package (equal bytes), `prepared_before_restart` accepting the retained a7b72cf9
+preparation, ready signal equal, trigger read, pins equal at lines 833 and 843, then the Granite critic
+request on Pod 8vqdacl5t61rjx. Recorded below only as it lands.
