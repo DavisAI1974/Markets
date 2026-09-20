@@ -25,6 +25,8 @@ def _store(run, code_hash):
     db = sqlite3.connect(run / 'cycles.sqlite')
     db.execute('CREATE TABLE stages (request TEXT, stage TEXT, payload BLOB, digest TEXT, PRIMARY KEY(request,stage))')
     db.execute('INSERT INTO stages VALUES (?,?,?,?)', ('r-cycle-00', 'binding', canonical_bytes(pack(binding)), evidence_hash(binding)))
+    export = dict(request_id='r-cycle-00', boss_commit='0'*40, agent_commit='1'*40)
+    db.execute('INSERT INTO stages VALUES (?,?,?,?)', ('r-cycle-00', 'export', canonical_bytes(pack(export)), evidence_hash(export)))
     db.commit(); db.close()
 
 
@@ -48,6 +50,7 @@ def test_declares_once_and_reports_not_stale(tmp_path, capsys):
     entries = json.loads((run / 'cycles.sqlite.identity-supersede.json').read_bytes())
     assert len(entries) == 1 and entries[0]['old_code_hash'] == 'x'*64 and entries[0]['new_code_hash'] == live
     assert entries[0]['old_arm_hash'] == 'p'*64
+    assert entries[0]['old_boss_commit'] == '0'*40 and entries[0]['old_agent_commit'] == '1'*40
     assert declare.main(argv) == 0
     assert len(json.loads((run / 'cycles.sqlite.identity-supersede.json').read_bytes())) == 1
     assert 'already_declared' in capsys.readouterr().out

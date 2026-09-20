@@ -89,16 +89,23 @@ def _exclusive(path):
                 fcntl.flock(stream, fcntl.LOCK_UN)
 
 
-def _export_verified(directory, export_args, result, learning):
-    """Real exporter plus readback; preserve unfinished exports for diagnosis."""
+def _export_verified(directory, export_args, result, learning, superseded=None):
+    """Real exporter plus readback; preserve unfinished exports for diagnosis.
+
+    superseded maps a pin name ('boss_commit', 'agent_commit') to the OLD values an operator
+    declaration accepts for a retained export (2026-09-20: a host code advance during an open
+    cycle moved boss_commit while the exported files, result and artifacts are hash-verified
+    below exactly as before). Undeclared differences still refuse.
+    """
     directory = Path(directory)
     if not directory.exists():
         staging = directory.with_name(directory.name+'.partial-'+uuid.uuid4().hex)
         export_handoff(staging, **export_args)
         staging.rename(directory)
     manifest = json.loads((directory/'manifest.json').read_text(encoding='utf-8'))
+    superseded = superseded or {}
     for name in ('request_id', 'boss_commit', 'agent_commit', 'controller_checkpoint', 'native_checkpoint'):
-        if manifest[name] != export_args[name]:
+        if manifest[name] != export_args[name] and manifest[name] not in superseded.get(name, ()):
             raise ValueError('retained export differs from independently supplied pins')
     if (manifest['request_id'] != result['request_id']
             or result.get('status') not in ('complete', 'incomplete')
@@ -243,6 +250,36 @@ class CycleCoordinator:
             accepted.write_bytes(json.dumps(existing, sort_keys=True, indent=1).encode())
         return True
 
+    EXPORT_PINS = ('boss_commit', 'agent_commit')
+
+    def _export_pin_supersede(self, request_id):
+        """OLD export pins the operator declaration names for this request (see _binding_supersede)."""
+        declared = Path(str(self.path) + self.IDENTITY_SUPERSEDE_SUFFIX)
+        if not declared.exists(): return {}
+        try:
+            entries = json.loads(declared.read_bytes())
+        except ValueError:
+            return {}
+        accepted = {}
+        for entry in (entries if type(entries) is list else []):
+            if type(entry) is not dict or entry.get('request_id') != request_id: continue
+            for name in self.EXPORT_PINS:
+                old = entry.get('old_' + name)
+                if type(old) is str and old: accepted.setdefault(name, set()).add(old)
+        return accepted
+
+    def _record_pin_supersede(self, request_id, manifest, export_args):
+        """Append one acceptance record per retained export pin that differs from the live one."""
+        records = [dict(schema='FRANKIE_CYCLE_EXPORT_PIN_SUPERSEDE_ACCEPTED_V1', request_id=request_id,
+                        pin=name, old=manifest[name], new=export_args[name])
+                   for name in self.EXPORT_PINS if manifest[name] != export_args[name]]
+        if not records: return
+        accepted = Path(str(self.path) + self.IDENTITY_ACCEPTED_SUFFIX)
+        existing = json.loads(accepted.read_bytes()) if accepted.exists() else []
+        added = [record for record in records if record not in existing]
+        if added:
+            accepted.write_bytes(json.dumps(existing + added, sort_keys=True, indent=1).encode())
+
     def _observe(self, phase, request_id):
         if self.phase_callback is not None:
             self.phase_callback(phase, request_id=request_id)
@@ -328,7 +365,9 @@ class CycleCoordinator:
                     if export_args.get('request_id', request_id) != request_id:
                         raise ValueError('export request identity differs from cycle request')
                     export_args = dict(export_args, request_id=request_id)
-                    manifest = _export_verified(directory, export_args, result, learning_kwargs)
+                    manifest = _export_verified(directory, export_args, result, learning_kwargs,
+                                                superseded=self._export_pin_supersede(request_id))
+                    self._record_pin_supersede(request_id, manifest, export_args)
                     self._save(request_id, 'export', manifest)
                     attachment = self._load(request_id, 'attachment')
                     if attachment is None:

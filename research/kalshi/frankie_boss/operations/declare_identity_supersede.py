@@ -49,18 +49,26 @@ def code_identity(repo):
     return code, evidence_hash(code)
 
 
-def saved_binding(cycles_path, request_id):
+def saved_stage(cycles_path, request_id, stage):
+    """The coordinator's retained stage for this request (read-only), or None when absent."""
     connection = sqlite3.connect(Path(cycles_path).as_uri() + '?mode=ro', uri=True)
     try:
         row = connection.execute('SELECT payload, digest FROM stages WHERE request=? AND stage=?',
-                                 (request_id, 'binding')).fetchone()
+                                 (request_id, stage)).fetchone()
     finally:
         connection.close()
     if row is None:
-        raise SystemExit('no saved binding for ' + request_id)
+        return None
     value = unpack(json.loads(row[0]))
     if evidence_hash(value) != row[1]:
-        raise SystemExit('saved binding digest differs')
+        raise SystemExit('saved ' + stage + ' digest differs')
+    return value
+
+
+def saved_binding(cycles_path, request_id):
+    value = saved_stage(cycles_path, request_id, 'binding')
+    if value is None:
+        raise SystemExit('no saved binding for ' + request_id)
     return value
 
 
@@ -79,20 +87,26 @@ def main(argv=None):
     saved = saved_binding(cycles, args.request_id)
     old = saved['training_identities']['code_hash']
     old_arm = saved['controller'].get('arm_hash') if type(saved.get('controller')) is dict else None
+    # The retained export manifest pins the exporting checkout (boss_commit) and the receiver
+    # (agent_commit); the coordinator accepts a moved pin only against the OLD value named here.
+    export = saved_stage(cycles, args.request_id, 'export') or {}
+    old_pins = {'old_' + name: export.get(name) for name in ('boss_commit', 'agent_commit')}
     _, new = code_identity(args.tools_root)
     stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
     declaration = Path(str(cycles) + DECLARATION_SUFFIX)
     entries = json.loads(declaration.read_bytes()) if declaration.exists() else []
     entry = dict(schema=SCHEMA, request_id=args.request_id, old_code_hash=old, new_code_hash=new,
-                 old_arm_hash=old_arm, reason=args.reason, declared_at=stamp)
+                 old_arm_hash=old_arm, reason=args.reason, declared_at=stamp, **old_pins)
     status = 'not_stale' if old == new else ('already_declared' if any(
         e.get('request_id') == args.request_id and e.get('old_code_hash') == old and e.get('new_code_hash') == new
-        and e.get('old_arm_hash') == old_arm for e in entries) else 'declared')
+        and e.get('old_arm_hash') == old_arm and all(e.get(k) == v for k, v in old_pins.items())
+        for e in entries) else 'declared')
     if status == 'declared':
         entries.append(entry)
         declaration.write_bytes(json.dumps(entries, sort_keys=True, indent=1).encode())
     receipt = dict(schema=SCHEMA + '_RECEIPT', status=status, request_id=args.request_id, old_code_hash=old,
-                   new_code_hash=new, old_arm_hash=old_arm, declaration=str(declaration), reason=args.reason, at=stamp)
+                   new_code_hash=new, old_arm_hash=old_arm, declaration=str(declaration), reason=args.reason, at=stamp,
+                   **old_pins)
     receipt_path = Path(args.receipt_directory) / ('identity-supersede-declared-' + stamp + '.json')
     receipt_path.write_bytes(json.dumps(receipt, sort_keys=True, indent=1).encode())
     print('RECEIPT ' + json.dumps(receipt, sort_keys=True))

@@ -175,12 +175,37 @@ def test_real_export_readback_binds_input_and_refuses_tamper(tmp_path, monkeypat
     directory = tmp_path/'export'
     manifest = cycle._export_verified(directory, export_args, result, learning)
     assert len(manifest['targets']) == len(result['records'])
+    # 2026-09-20 run 35530475076: a host code advance moves the live boss_commit while the retained
+    # export is byte-verified; accepted only against the OLD pin an operator declaration names.
+    moved = dict(export_args, boss_commit='f'*40)
+    with pytest.raises(ValueError, match='independently supplied pins'):
+        cycle._export_verified(directory, moved, result, learning)
+    with pytest.raises(ValueError, match='independently supplied pins'):
+        cycle._export_verified(directory, moved, result, learning, superseded={'boss_commit': {'e'*40}})
+    assert cycle._export_verified(directory, moved, result, learning,
+                                  superseded={'boss_commit': {manifest['boss_commit']}}) == manifest
     member = directory/manifest['targets'][0]['artifact_path']
     member.write_bytes(member.read_bytes()+b'changed')
     with pytest.raises(ValueError, match='member bytes changed'):
         cycle._export_verified(directory, export_args, result, learning)
     assert critic.calls == 1
     controller.journal.close(); bridge.book.close()
+
+
+def test_export_pin_supersede_reads_the_declaration_and_records_the_acceptance(tmp_path, monkeypatch):
+    import json
+    store, checkpoint, args, calls = fixture(tmp_path, monkeypatch)
+    assert store._export_pin_supersede('sun') == {}
+    declaration = Path(str(store.path)+store.IDENTITY_SUPERSEDE_SUFFIX)
+    declaration.write_text(json.dumps([dict(request_id='sun', old_code_hash='x'*64, old_boss_commit='0'*40),
+                                       dict(request_id='other', old_boss_commit='9'*40)]))
+    assert store._export_pin_supersede('sun') == {'boss_commit': {'0'*40}}
+    manifest = dict(boss_commit='0'*40, agent_commit='1'*40)
+    store._record_pin_supersede('sun', manifest, dict(boss_commit='f'*40, agent_commit='1'*40))
+    store._record_pin_supersede('sun', manifest, dict(boss_commit='f'*40, agent_commit='1'*40))
+    accepted = json.loads(Path(str(store.path)+store.IDENTITY_ACCEPTED_SUFFIX).read_bytes())
+    assert accepted == [dict(schema='FRANKIE_CYCLE_EXPORT_PIN_SUPERSEDE_ACCEPTED_V1', request_id='sun',
+                             pin='boss_commit', old='0'*40, new='f'*40)]
 
 
 def _saved_binding_with(store, args, code_hash):
