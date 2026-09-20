@@ -1,0 +1,57 @@
+name: Frankie deliver readiness and write the execution trigger
+# Second of Greg's two authorized actions (2026-09-20): take the readiness the retained Granite
+# observer published for an admitted request, place it on the native host, and write the
+# credential-free execution trigger the cycles stage waits for. Writes only: the readiness directory
+# and the trigger file. Never touches the Pod credential, never starts or stops anything.
+on:
+  workflow_dispatch:
+    inputs:
+      ready_run_id:
+        description: 'Run id of the frankie_retained_granite.yml run whose retained-granite-ready-<id> artifact to deliver'
+        required: true
+      request_id:
+        description: 'Cycle request id the trigger is for'
+        required: false
+        default: 'frankie-boss-sunday-two-cycle-20260919-cycle-00'
+      request_sha256:
+        description: 'The admitted request sha256 the readiness must be bound to (refused otherwise)'
+        required: false
+        default: '6cd46f983845fbd2ed88ec24ebf18f446cc3523a89307b03290351bd39d3b0dd'
+      instance:
+        description: 'Native host instance id'
+        required: false
+        default: 'i-0e90ee6110ef609aa'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  deliver:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_EC2_METADATA_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Fetch the published readiness artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: retained-granite-ready-${{ inputs.ready_run_id }}
+          run-id: ${{ inputs.ready_run_id }}
+          github-token: ${{ github.token }}
+          path: readiness
+      - name: Bind readiness to the admitted request and build the delivery script
+        env:
+          REQUEST_ID: ${{ inputs.request_id }}
+          REQUEST_SHA256: ${{ inputs.request_sha256 }}
+        run: python deploy/aws/host/build_readiness_delivery.py --readiness readiness --request-id "$REQUEST_ID" --request-sha256 "$REQUEST_SHA256" --out delivery.ps1
+      - name: Deliver readiness and write the trigger on the native host
+        run: python deploy/aws/ssm_run_ps1.py --instance "${{ inputs.instance }}" --region us-east-2 --script delivery.ps1 --timeout 300 --comment "deliver readiness ${{ inputs.ready_run_id }}"
