@@ -50,7 +50,8 @@ def test_the_only_file_written_is_the_report_and_it_is_never_written_over():
     opens = [line for line in PYTHON_CODE.splitlines() if '.open(' in line]
     assert opens == ["report_handle = report_path.open('x', encoding='utf-8', newline='\\n')"]
     assert "if report_path.exists(): raise SystemExit(" in PYTHON_CODE
-    assert "report_path = Path(sys.argv[4])" in PYTHON_CODE and 'sys.stdout = Tee(sys.stdout, report_handle)' in PYTHON_CODE
+    assert "report_path = Path(sys.argv[4])" in PYTHON_CODE and 'console, sys.stdout = sys.stdout, report_handle' in PYTHON_CODE
+    assert 'REPORT_WRITTEN' in PYTHON_CODE  # the console carries summary lines only; the file is the report
     assert "$report = Join-Path (Join-Path $dayDirectory 'reports')" in CODE
     assert '& $Python $probe $cfg.run_directory $CycleIndex $cfg.run_id $report' in CODE
     assert 'REPORT_FILE ' in CODE and 'Get-FileHash -Path $report -Algorithm SHA256' in CODE
@@ -67,7 +68,8 @@ def test_no_display_cut_anywhere():
 
 
 def test_upload_is_optional_and_the_url_is_never_printed():
-    assert 'Invoke-WebRequest -Uri $Url -Method Put -InFile $report' in CODE
+    assert 'Invoke-WebRequest -Uri $Url -Method Put -InFile $report -UseBasicParsing' in CODE and '-ContentType' not in CODE
+    assert CODE.count('Get-Content -Path $report -Raw -Encoding UTF8 | Write-Output') == 2  # refused, or no Url
     assert 'REPORT_UPLOADED' in CODE and 'REPORT_NOT_UPLOADED' in CODE and 'REPORT_UPLOAD_REFUSED' in CODE
     assert "-replace '<RequestId>.*?</RequestId>', ''" in CODE  # the refusal is named without its ids
     for line in CODE.splitlines():
@@ -91,6 +93,7 @@ def test_workflow_passes_every_variable_by_set_signs_a_masked_put_and_prints_the
     steps = workflow['jobs']['report']['steps']
     sign = next(s for s in steps if s.get('id') == 'sign')['run']
     assert "'put_object'" in sign and "print('::add-mask::' + url)" in sign and 'ExpiresIn=3600' in sign
+    assert "Config(signature_version='s3v4')" in sign
     assert "region_name='us-east-1'" in sign and inputs['bucket']['default'] == 'frankie-granite42-568968024170-us-east-1'
     ssm = next(s for s in steps if 'python deploy/aws/ssm_run_ps1.py' in s.get('run', ''))['run']
     assert '--script deploy/aws/host/frankie_host_cycle_report.ps1' in ssm and '--tail 0' in ssm

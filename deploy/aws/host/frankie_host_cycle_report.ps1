@@ -36,18 +36,12 @@ from research.kalshi.frankie_boss.c15_journal import unpack
 run, cycle_index = Path(sys.argv[1]), sys.argv[2]
 run_id = sys.argv[3]
 report_path = Path(sys.argv[4])
-class Tee:
-    # every line goes to the console (the SSM API keeps about 24,000 characters of it) and to the
-    # report file, which is the whole record
-    def __init__(self, console, handle): self.console, self.handle = console, handle
-    def write(self, text):
-        self.handle.write(text)
-        self.console.write(text.encode(self.console.encoding or 'utf-8', 'replace').decode(self.console.encoding or 'utf-8'))
-    def flush(self): self.handle.flush(); self.console.flush()
+# The report goes to the file only: the SSM API keeps the FIRST 24,000 characters of console output,
+# so echoing the report there would push the REPORT_FILE and upload lines out of view (run 35536392114).
 report_path.parent.mkdir(parents=True, exist_ok=True)
 if report_path.exists(): raise SystemExit(f'report file already exists, refusing to write over it: {report_path}')
 report_handle = report_path.open('x', encoding='utf-8', newline='\n')
-sys.stdout = Tee(sys.stdout, report_handle)
+console, sys.stdout = sys.stdout, report_handle
 request_id = f'{run_id}-cycle-{cycle_index}'
 cycle = run/'execution'/f'cycle-{cycle_index}'
 def load_c15(p): return unpack(json.loads(Path(p).read_bytes()))
@@ -168,7 +162,8 @@ if cycle.exists():
     for p in sorted(cycle.rglob('*'), key=lambda p: p.stat().st_mtime):
         if p.is_file(): print(f"  {p.relative_to(cycle)}  {p.stat().st_mtime:.0f}  {p.stat().st_size}")
 print('done (read-only; report file written whole)')
-sys.stdout.flush(); sys.stdout = sys.stdout.console; report_handle.close()
+sys.stdout.flush(); sys.stdout = console; report_handle.close()
+print(f'REPORT_WRITTEN {report_path.stat().st_size} bytes (the whole report; console shows only these summary lines)')
 '@
 Set-Content -Path $probe -Value $code -Encoding ASCII
 if (-not (Test-Path $Python)) { throw "host python missing: $Python" }
@@ -185,7 +180,7 @@ Write-Output ("REPORT_FILE " + $report + " bytes=" + $reportBytes + " sha256=" +
 if ($Url) {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $previous = $ProgressPreference; $ProgressPreference = 'SilentlyContinue'
-    try { Invoke-WebRequest -Uri $Url -Method Put -InFile $report -ContentType 'text/plain; charset=utf-8' -UseBasicParsing | Out-Null }
+    try { Invoke-WebRequest -Uri $Url -Method Put -InFile $report -UseBasicParsing | Out-Null }
     catch {
         # name the refusal (the S3 error code and message), never the URL
         $detail = ''
@@ -195,8 +190,13 @@ if ($Url) {
             $detail = ($detail -replace '<RequestId>.*?</RequestId>', '') -replace '<HostId>.*?</HostId>', ''
         } catch { $detail = $_.Exception.Message }
         Write-Output ("REPORT_UPLOAD_REFUSED " + $_.Exception.Message + " " + $detail)
+        Write-Output '### the report itself follows (the file stays on the host; the SSM API keeps about 24,000 characters of it)'
+        Get-Content -Path $report -Raw -Encoding UTF8 | Write-Output
         throw 'the report upload was refused (the file is on the host; see REPORT_FILE)'
     }
     finally { $ProgressPreference = $previous }
     Write-Output ("REPORT_UPLOADED bytes=" + $reportBytes + " sha256=" + $reportSha)
-} else { Write-Output 'REPORT_NOT_UPLOADED (no Url supplied; the console copy above may be cut by the SSM API)' }
+} else {
+    Write-Output 'REPORT_NOT_UPLOADED (no Url supplied); the report follows (the SSM API keeps about 24,000 characters of it)'
+    Get-Content -Path $report -Raw -Encoding UTF8 | Write-Output
+}
