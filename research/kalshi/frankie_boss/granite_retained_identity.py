@@ -7,7 +7,7 @@ journal lives under retained-granite/<request_sha256>/<JOURNAL_GENERATION>/, so 
 reviewed bundle opens a new generation. HISTORICAL_GENERATION names the first migrated Pod's journal
 before the bundle suffix existed; it is history and never moves.
 """
-POD_ID = 'ycf4v6lmave6xw'
+POD_ID = '8vqdacl5t61rjx'      # replacement prepared 2026-09-20 (run 35507136416); ycf4v6lmave6xw stranded on a GPU-less host
 BUNDLE_PREFIX = 'a004983e93b9'        # first 12 hex of the reviewed bundle sha256 (runs/20260919/reviewed-bootstrap-image-defaults-runtime.json)
 JOURNAL_GENERATION = 'migration-' + POD_ID + '-' + BUNDLE_PREFIX
 HISTORICAL_GENERATION = 'migration-ycf4v6lmave6xw'

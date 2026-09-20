@@ -8,7 +8,7 @@ on:
       pod:
         description: 'Retained Pod id'
         required: false
-        default: 'ycf4v6lmave6xw'
+        default: '8vqdacl5t61rjx'
       expires_seconds:
         description: 'Presign span in seconds (validator allows at most 604800)'
         required: false
