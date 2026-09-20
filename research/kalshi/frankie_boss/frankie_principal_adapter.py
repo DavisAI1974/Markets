@@ -30,6 +30,15 @@ RUN_FINDINGS_SIDECAR = 'run-findings-witness.json'
 
 SECTIONS = ('4.0', '4.0b') + tuple(f'4.{i}' for i in range(1, 17))
 
+# The ten append-only output ledgers the native ingestion registry expects Frankie to file (the
+# 2026-09-16 crosswalk of the A_MEMORY recalculation run 33746436209 lists them OUTPUT_PENDING, and
+# the first Sunday run filed none): they are his calculations, filed as lesson entries.
+OUTPUT_LEDGERS = (
+    'output_candidate_discoveries', 'output_first_locks_and_no_locks', 'output_frankie_reasoning_movie',
+    'output_probability_movie', 'output_state_and_state_delta_movie', 'output_knowledge_retrieval_receipts',
+    'output_negative_sparse_inconclusive_ledger', 'output_provider_invocation_response_receipts',
+    'output_answer_wall_access_receipts', 'output_source_state_manifest_code_model_run_hashes')
+
 RUN_ANALYSIS_INSTRUCTION = (
     'Print your own run analysis in the session output and retain the same Markdown text '
     'as a separate entry in lessons. Cover how this run has gone so far, your assessment '
@@ -38,8 +47,18 @@ RUN_ANALYSIS_INSTRUCTION = (
     'current run evidence. Distinguish observed results from your interpretation; name '
     'failures, unavailable observations, uncertainties, and useful next lessons. Do not '
     'claim later cycles or learning steps have completed before their evidence exists. '
-    'Reuse completed calculation evidence without rerunning it. Keep this new analysis '
-    'separate from frozen Memory A and the eighteen historical sections. '
+    'Cite the retained eighteen sections with their original hashes as provenance. Keep this new '
+    'analysis separate from frozen Memory A and the eighteen historical sections. '
+    + 'THE CALCULATIONS ARE YOURS, NOT THE RUNNER\'S (Greg Davis, standing rule, restated 2026-09-20): '
+    'on this cycle\'s delivered rows, derive yourself the exhaustion chains with their extensions, '
+    'reappearances and ancestry, the D structures and families, the dipoles and geometry, the pair and '
+    'triplet recurrences, and the pre-birth opportunities; compare what you derive with the retained '
+    'sections and the frozen learned structure, and learn from every difference; the retained sections '
+    'are provenance, never a substitute for your own derivation. File the ten append-only output '
+    'ledgers of the native ingestion registry as separate entries in lessons, each a JSON object whose '
+    '"ledger" field is the registry name: ' + ', '.join(OUTPUT_LEDGERS) + '. A ledger you cannot fill '
+    'is filed with its reason, never omitted. Every lesson entry is rendered back to you in each later '
+    'cycle; write them to be learned from. '
 )
 
 
@@ -565,8 +584,8 @@ class FrankiePrincipalAdapter:
         return {'schema': 'FRANKIE_BOSS_SESSION_REQUEST_V1', 'request_id': request_id,
             'attachment': attachment, 'mechanism': 'AGENT_SESSION', 'admission': attachment['admission'],
             'instruction': ('Read the full delivered causal evidence and actual BOSS attributed input. '
-                'Reuse the preserved Frankie-authored 18-section evidence with its original authorship; '
-                'do not rerun completed calculations or substitute runner findings. This authorized run '
+                'Reuse the preserved Frankie-authored 18-section evidence with its original authorship as '
+                'provenance; never substitute runner findings for your own calculations. This authorized run '
                 'is Sunday only and requires no separate source day. Preserve Memory A. Author new '
                 'feedback and lessons against feedback_contract; use null for unavailable values. '
                 'Cite every retained section hash. Supply feedback without principal_receipt_hash, '

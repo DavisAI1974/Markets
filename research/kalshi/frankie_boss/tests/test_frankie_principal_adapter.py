@@ -406,3 +406,17 @@ def test_retained_prompt_without_lessons_store_says_so(tmp_path, monkeypatch):
     output = tmp_path / 'current-prompt.md'
     adapter._render_retained(output, tmp_path / 'receiver')
     assert b'(none recorded before this cycle)' in output.read_bytes()
+
+
+def test_request_instruction_makes_the_calculations_frankies_and_names_the_ten_output_ledgers():
+    """Greg, 2026-09-20 (standing rule restated): the calculations are Frankie's, not the runner's; the
+    ten append-only output ledgers of the native ingestion registry are filed as lesson entries."""
+    from frankie_principal_adapter import RUN_ANALYSIS_INSTRUCTION, OUTPUT_LEDGERS
+    assert len(OUTPUT_LEDGERS) == 10 and len(set(OUTPUT_LEDGERS)) == 10
+    assert "THE CALCULATIONS ARE YOURS, NOT THE RUNNER'S" in RUN_ANALYSIS_INSTRUCTION
+    for name in ('exhaustion chains', 'D structures and families', 'dipoles and geometry', 'pair and triplet recurrences',
+                 'pre-birth opportunities', 'provenance, never a substitute'):
+        assert name in RUN_ANALYSIS_INSTRUCTION, name
+    for ledger in OUTPUT_LEDGERS:
+        assert ledger in RUN_ANALYSIS_INSTRUCTION, ledger
+    assert 'without rerunning' not in RUN_ANALYSIS_INSTRUCTION

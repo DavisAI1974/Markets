@@ -42,3 +42,14 @@ Observed, cycle 0, Frankie side:
 Concluded (operator): a cycle's machine result can exist and be retained while the learning from it
 has not happened; the two are separate facts and both are recorded here. The empty critique is a
 finding to be explained, not an error to be hidden.
+
+## 2026-09-20, standing rule restated by Greg Davis: the calculations are Frankie's, not the runner's
+
+"The calcs are not for runners to do. Frankie needs to be learning from these. This is something we have
+covered over and over." Measured against the registry of the August 28 A_MEMORY recalculation (run
+33746436209; crosswalk audit of 2026-09-16): all 77 applicable input layers were delivered to Frankie
+(chains with extensions, reappearances and ancestry; D structures and families; dipoles and geometry; pair
+and triplet recurrence; pre-birth opportunity; order lifecycle; full-book FIFO queue; microstructure;
+derived geometry), and the ten append-only OUTPUT ledgers registered for Frankie were OUTPUT_PENDING with
+none filed, in the first Sunday run as well. From this cycle on the request instruction states the rule
+and names the ten ledgers; they are filed as lesson entries and rendered back to Frankie every later cycle.
