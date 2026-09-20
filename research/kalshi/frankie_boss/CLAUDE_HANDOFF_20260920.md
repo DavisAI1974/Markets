@@ -657,3 +657,20 @@ in 131,072; `pod-info.json` pod 8vqdacl5t61rjx, US-MO-1, base_url
 `https://8vqdacl5t61rjx-8081.proxy.runpod.net/v1`; `run.json` deadline null. The prepare job is
 now in `hold` (observes until the local stop; never stops the Pod). Delivery to the native host
 dispatched (`frankie_deliver_readiness.yml`, ready_run_id 35507527320).
+
+### Readiness DELIVERED to the native host (run 35507896975); host advanced to the re-mint
+
+`frankie_deliver_readiness.yml` (ready_run_id 35507527320) at 11:28:13Z: SSM Success, six files
+delivered under `C:/Codex/Frankie-BOSS-20260919/readiness/frankie-boss-sunday-two-cycle-20260919-cycle-00/`
+(service-pins sha `71129170...`, pod-info sha `6f8efdf9...` = INFO_SHA256, startup-intent sha
+`132d8b71...` = the observer's startup digest, run, service-ready sha `0cbe5d12...` = runtime_sha256,
+observer), trigger `FRANKIE_ACTUAL_EXECUTE_V1.json` written for request
+`frankie-boss-sunday-two-cycle-20260919-cycle-00`; receipt `FRANKIE_READINESS_DELIVERY_RECEIPT_V1`.
+
+One more gate before the pipeline resumes: `granite_retained_lifecycle.verified_service_inputs`,
+which the host's `run_actual_sunday.py` calls, builds `RunpodConfig(POD_ID, ...)` from the
+checkout's own POD_ID, so at 96e26f7d the cycles stage would aim inference at the stranded Pod.
+The advance script now takes its target as an input (`6b0b37fe`, no hardcoded commit; refuses a
+non-descendant) and the host is being advanced to `6b0b37fe`, which is a pure descendant of
+96e26f7d: the actual-run scripts, day pipeline, journal stack and launch pins are byte-identical;
+what changes is the retained identity (re-mint), the ops scripts and tests.
