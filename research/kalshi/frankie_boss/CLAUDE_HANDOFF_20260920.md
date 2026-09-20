@@ -1365,3 +1365,35 @@ handoff at 15:56Z), old_agent_commit 7b98617b (the receiver, unchanged). Pipelin
 35533855801** at 19:55:13Z. Expected: binding accepted (code hash + spent arm), export manifest accepted on the
 declared old boss_commit with a `FRANKIE_CYCLE_EXPORT_PIN_SUPERSEDE_ACCEPTED_V1` record, attachment and intent
 retained, `recover` -> `actual_frankie_session_pending` (exit 3).
+
+### Task 2, the design call for Greg: make a lawful host advance survivable without a supersede
+
+Measured today, four times: `identities.code_hash = evidence_hash(self.code)` hashes every `.py` under
+`research/kalshi/frankie_boss` (except tests) and `research/refrag`, plus the host script. Because the
+training checkpoint digest encodes the identities, one changed line in an operations script re-mints, in
+order: the training identity (`initialization.c15.json`, `training.sqlite`, the witnesses), the host and
+execution identities, every cycle preparation pinned to the checkpoint (`initial_checkpoint_hash`,
+host-preparation, host-service, request-plan, host-ready), the request plan's `arm_hash`, the coordinator's
+saved binding, and the export manifest's `boss_commit`. None of those is the science: the weights, the
+optimizer, the sessions, the source prefix and the controller result were byte-identical across all four
+advances (the binding-diff probe measured it). Each advance during an open cycle costs advance + code-bound
+supersede + declaration + a re-priming/re-preparation of about 13 minutes.
+
+Three options, cheapest first; all keep every hash check on content and change only what "code identity"
+means. Nothing here is proposed for the running two-cycle run.
+
+1. **Scope the code identity to the science.** Hash the modules the training and inference path executes
+   (the native runtime, the training checkpoint, the journal/reducer stack, the controller, the critic
+   request builder) and leave `operations/`, the adapters' plumbing and the host runner out of `self.code`.
+   The excluded files still get a separate `tooling_hash` recorded in the receipts, so provenance is
+   complete without binding the checkpoint to it. Smallest change; the hard part is the list, which is a
+   declaration Greg owns.
+2. **Pin the identity at run start.** Mint `code_hash` once when the run directory is created and carry it
+   in `initialization.c15.json`; a later advance records `advanced_from`/`advanced_to` in the host identity
+   and the receipts but does not re-mint. The guard then refuses only an advance whose science-scoped hash
+   (option 1's list) differs. Slightly larger; makes the supersede machinery unnecessary for tooling fixes.
+3. **Keep everything as is** and rely on the receipted supersede built today. Zero code change, but every
+   tooling fix during a run stays a four-step operation and the declaration file grows an entry per advance.
+
+Recommendation: 1 now, 2 after the run. Either retires today's supersede path for tooling changes while
+leaving it in place for the case it was built for.
