@@ -7,8 +7,14 @@
 # checkout and that one field. Starts nothing.
 $ErrorActionPreference = 'Stop'
 if (-not $Target -or $Target -notmatch '^[0-9a-f]{40}$') { throw 'Target (full 40-hex commit) must be supplied with --set Target=<sha>' }
-$tools = 'C:/tools/Frankie-20260919/Markets'
-$cfg = 'C:/Codex/Frankie-BOSS-20260919/days/20211003/actual-host-configuration.json'
+# No path literal travels in this script (D34): Day, RunRoot and ToolsRoot arrive from ssm_run_ps1.py --set.
+foreach ($required in 'Day', 'RunRoot', 'ToolsRoot') {
+    $value = Get-Variable -Name $required -ValueOnly -ErrorAction SilentlyContinue
+    if (-not $value -or $value -like 'HOST_*') { throw "$required was not supplied by ssm_run_ps1.py --set (value: '$value')" }
+}
+$tools = $ToolsRoot
+$dayDirectory = Join-Path $RunRoot $Day
+$cfg = Join-Path $dayDirectory 'actual-host-configuration.json'
 $target = $Target
 $git = (Get-Command git -ErrorAction Stop).Source
 if (-not (Test-Path $tools)) { throw "tools checkout missing: $tools" }
@@ -42,4 +48,10 @@ $updated = [regex]::Replace($raw, $pattern, '"boss_commit": "' + $target + '"', 
 Set-Content -Path $cfg -Value $updated -NoNewline -Encoding UTF8
 $check = (Get-Content $cfg -Raw | ConvertFrom-Json).host_runtime.boss_commit
 if ($check -ne $target) { throw 'boss_commit did not update' }
-Write-Output ('RECEIPT ' + (@{schema='FRANKIE_HOST_ADVANCE_RECEIPT_V1'; tools=$tools; before=$before; after=$after; boss_commit_before=$oldBoss; boss_commit_after=$target; configuration_backup=$backup; at=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()} | ConvertTo-Json -Compress))
+# The receipt is kept on the host next to the configuration backup, not only printed: a later
+# supersede or a lawful-advance guard (deferred item #2) needs the before/after pair on disk.
+$receipt = [ordered]@{schema='FRANKIE_HOST_ADVANCE_RECEIPT_V1'; tools=$tools; before=$before; after=$after; boss_commit_before=$oldBoss; boss_commit_after=$target; run_directory=$c.run_directory; configuration_backup=$backup; at=[DateTimeOffset]::UtcNow.ToUnixTimeSeconds()}
+$receiptPath = Join-Path $dayDirectory ('host-advance-' + (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ') + '.json')
+Set-Content -Path $receiptPath -Value ($receipt | ConvertTo-Json) -NoNewline -Encoding UTF8
+Write-Output ("receipt: " + $receiptPath)
+Write-Output ('RECEIPT ' + ($receipt | ConvertTo-Json -Compress))
