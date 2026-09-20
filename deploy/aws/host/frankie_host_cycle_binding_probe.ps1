@@ -275,4 +275,75 @@ Set-Content -Path $tmp6 -Value $gate -Encoding ASCII
 & $Python $tmp6 2>&1 | Select-String -NotMatch 'DeprecationWarning|utcfromtimestamp' | ForEach-Object { "$_" }
 if (Test-Path $out6) { Write-Output '--- gate probe file capture ---'; Get-Content $out6 }
 Remove-Item $tmp6, $out6 -ErrorAction SilentlyContinue
+Write-Output "### 7 line 833 (run 35517953486): the NEW host-preparation against the SUPERSEDED one(s) and the delivered pins"
+# Which fields of the re-prepared request changed since the request the observer pinned (6cd46f98...).
+# Reads only; c15 payloads unpacked; long lists summarized by length; no credential path is opened.
+$out7 = Join-Path $env:TEMP 'frankie_prep_diff.out'
+Remove-Item $out7 -ErrorAction SilentlyContinue
+$diff = @"
+import json, sys, traceback, datetime
+from pathlib import Path
+TOOLS = r'$ToolsRoot'
+sys.path.insert(0, TOOLS)
+log = open(r'$out7', 'a', encoding='ascii', errors='replace')
+def say(*a):
+    line = ' '.join(str(x) for x in a)
+    print(line, flush=True); log.write(line + '\n'); log.flush()
+def flat(value, prefix=''):
+    out = {}
+    if isinstance(value, dict):
+        for k, v in value.items(): out.update(flat(v, prefix + str(k) + '.'))
+    elif isinstance(value, (list, tuple)) and len(value) > 12:
+        out[prefix.rstrip('.')] = '<list len %d>' % len(value)
+    elif isinstance(value, (list, tuple)):
+        for i, v in enumerate(value): out.update(flat(v, prefix + str(i) + '.'))
+    else:
+        out[prefix.rstrip('.')] = value
+    return out
+def when(path):
+    return datetime.datetime.fromtimestamp(path.stat().st_mtime, datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+try:
+    from research.kalshi.frankie_boss.c15_journal import unpack
+    cfg = json.loads(Path(r'$cfgPath').read_bytes())
+    run = Path(cfg['run_directory']); cycle = run / 'execution' / 'cycle-$CycleIndex'
+    request_id = '%s-cycle-$CycleIndex' % cfg['run_id']
+    new_path = cycle / 'host-preparation.c15.json'
+    say('new host-preparation exists =', new_path.exists(), '|', when(new_path) if new_path.exists() else '-')
+    olds = sorted((run.parent / 'superseded').glob(run.name + '-*/execution/cycle-$CycleIndex/host-preparation.c15.json'))
+    say('superseded host-preparation records =', len(olds))
+    new = unpack(json.loads(new_path.read_bytes())) if new_path.exists() else None
+    if new is not None:
+        adm = new['admission']
+        say('NEW request_sha256 =', adm.get('request_sha256'), '| input_tokens =', adm.get('input_tokens'), '| output_tokens =', adm.get('output_tokens'))
+        say('NEW receipt.prompt_sha256 =', new['receipt'].get('prompt_sha256'), '| encoded_snapshot_hash =', new['receipt'].get('encoded_snapshot_hash'), '| native_snapshot_hash =', new['receipt'].get('native_snapshot_hash'))
+        say('NEW context.input_hash =', new['receipt']['context'].get('input_hash'), '| model_hash =', new['receipt']['context'].get('model_hash'), '| teacher_hash =', new['receipt']['context'].get('teacher_hash'))
+    for old_path in olds:
+        old = unpack(json.loads(old_path.read_bytes()))
+        say('--- OLD', str(old_path.parent.parent.parent.name), when(old_path))
+        say('OLD request_sha256 =', old['admission'].get('request_sha256'), '| input_tokens =', old['admission'].get('input_tokens'), '| output_tokens =', old['admission'].get('output_tokens'))
+        if new is None: continue
+        a, b = flat(old), flat(new)
+        keys = sorted(set(a) | set(b))
+        same = [k for k in keys if a.get(k) == b.get(k)]
+        say('  equal keys =', len(same), '| differing keys =', len(keys) - len(same))
+        for k in keys:
+            if a.get(k) != b.get(k):
+                say('  DIFFERS', k, '| old =', repr(a.get(k))[:90], '| new =', repr(b.get(k))[:90])
+    source = cfg['host_runtime'].get('pod_credential_ssm') or {}
+    trigger_path = Path(source.get('trigger_directory', '')) / request_id / 'FRANKIE_ACTUAL_EXECUTE_V1.json'
+    say('trigger exists =', trigger_path.exists(), '|', str(trigger_path))
+    if trigger_path.exists():
+        trigger = json.loads(trigger_path.read_bytes())
+        pins = json.loads((Path(trigger['readiness_directory']) / 'service-pins.json').read_bytes())
+        say('PINS request_sha256 =', pins.get('request_sha256'), '| admission =', repr(pins.get('admission'))[:200])
+        if new is not None:
+            say('line 833 REFUSES =', pins['request_sha256'] != new['admission']['request_sha256'] or pins['admission'] != new['admission'])
+except BaseException as e:
+    say('prep diff failed:', type(e).__name__, e); say(traceback.format_exc())
+log.close(); sys.stdout.flush()
+"@
+$tmp7 = Join-Path $env:TEMP 'frankie_prep_diff.py'
+Set-Content -Path $tmp7 -Value $diff -Encoding ASCII
+& $Python $tmp7 2>&1 | Select-String -NotMatch 'DeprecationWarning' | ForEach-Object { "$_" }
+Remove-Item $tmp7, $out7 -ErrorAction SilentlyContinue
 Write-Output '### done (nothing was written, started, stopped or dispatched)'
