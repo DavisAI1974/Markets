@@ -674,3 +674,14 @@ The advance script now takes its target as an input (`6b0b37fe`, no hardcoded co
 non-descendant) and the host is being advanced to `6b0b37fe`, which is a pure descendant of
 96e26f7d: the actual-run scripts, day pipeline, journal stack and launch pins are byte-identical;
 what changes is the retained identity (re-mint), the ops scripts and tests.
+
+### Host advanced (run 35508051497) and the two-cycle pipeline RESUMED
+
+`FRANKIE_HOST_ADVANCE_RECEIPT_V1` at 11:31:18Z: tools checkout `96e26f7d` -> `6b0b37fe` (descendant
+check passed, `run_actual_sunday.py` carries the cycle request-id fix), `boss_commit` updated in
+`actual-host-configuration.json` with backup `...before-advance-20260920T113118Z.json`.
+Then `frankie_journal_stack.yml` dispatched at ~11:33Z on `codex/frankie-launch-two-cycle-20260919`
+with day 20211003, `go 0eb2c2acdccc17f8ad2d64d00b74a0c93b477c0418651a7f290d53f19d5710b0`, cycles 2,
+keep_compute true, checks_only false: sources -> journal (the finished 7,129-block ingest, receipt
+present) -> checks -> host (schedule-prefixes, cycles against Pod 8vqdacl5t61rjx, package-upload,
+snapshot-stop). Each receipt is recorded below as it lands; nothing is claimed ahead of it.
