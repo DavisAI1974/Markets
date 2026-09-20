@@ -108,3 +108,40 @@ is a configured standard, not an observation; prefixes 1 and 2 verified, 19 not 
 Historical receipts and earlier handoffs that carry the old flat list were left untouched, per the
 rule to append new evidence rather than rewrite receipts. The correction is made where it
 propagates from: this handoff and the `CLAUDE.md` Frankie block.
+
+## Locked in: the packing numbers, and the CI gap that let them keep being undone
+
+Greg, 2026-09-20: the 7,129 stack will be rebuilt to pack other days more compactly, but the numbers
+are to be locked first because they kept being undone.
+
+They are already locked, executably, in `tests/test_partition_packing.py`, which is stronger than any
+prose record:
+
+- `assert TARGET_BOXES == 1189` (the standard going forward)
+- `assert -(-sunday // 96) == 1189` and `assert partition_entries_for(sunday) == 96`
+- `assert -(-sunday // 16) == 7129`, commented as what the old hardcoded literal produced, so the
+  first run's box count is pinned as history rather than as a target
+- `assert -(-weekday // MAX_ROWS) == 15581`, the clamp on a day the standard cannot reach
+- the invariance proof: repacking yields the same entries, same bytes, same order and same seal,
+  while the box count and container bytes change
+
+Independently confirmed here by arithmetic: 114,054 / 16 = 7,129 boxes with 6 entries in the last,
+which matches `ACTUAL_RUN_STATUS.md`'s "the final block contains six original entries"; 114,054 / 96
+= 1,189 boxes, also with 6 in the last.
+
+**The gap: nothing runs that test.** `grep -rn partition_packing .github/` returns nothing, and the
+file matches none of the twelve globs in the checks step at `frankie_journal_stack.yml:296`. A revert
+of `TARGET_BOXES` to 16 would therefore pass all 1,101 checks green and be invisible. That is the
+likely mechanism behind the repeated undoing: the guard was written but never wired to CI, so nothing
+could refuse the next revert. The fix is one line, adding the file to that pytest list. It is a
+workflow edit and was NOT made here; it needs Greg's explicit authorization, since a go to run is not
+permission to change a workflow.
+
+The test could not be executed in this container: its import chain needs `torch`, which the checks
+job installs as CPU torch 2.9.1 and which is absent here. That is an environment gap, not a failure.
+
+**The contract for the coming rebuild**, already encoded in that test: decoded entries, their count,
+their order and the head hash/seal are invariant; the container bytes and `compact_sha256` are free
+to change. The first run's `compact_sha256 19603159...` no longer reproducing is the expected
+consequence of the packing standard, not a regression. Neither 7,129 nor 1,189 is a source fact:
+both are 114,054 divided by a packing choice, which is the derived-number rule above.
