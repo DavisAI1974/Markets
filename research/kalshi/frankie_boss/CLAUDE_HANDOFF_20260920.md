@@ -243,3 +243,29 @@ verify any of the four prerequisites; the run could not have reached inference.
    present, denied, or missing?
 
 Not done, deliberately: no re-dispatch, no host stop, no Pod start, no workflow edit.
+
+## RunPod agent skills: recovered from source; permanent install still needs Greg
+
+Greg, 2026-09-20: the Pod skills pasted into an earlier session were never committed and did not
+survive that container. They are RunPod's public package, so they were recovered from source rather
+than from the lost paste: https://github.com/runpod/skills (docs
+https://docs.runpod.io/get-started/agent-skills). Install: `npx skills add runpod/skills`; Claude Code
+plugin route: `/plugin marketplace add runpod/runpod-plugins-official` then `/plugin install
+runpod@runpod`. Eight skills land: companion-clis, flash, runpod, runpod-mcp, runpod-migrate,
+runpod-templates, runpod-usage, runpodctl. Installed and inspected in this session (scratchpad only).
+
+All eight authenticate with the single `RUNPOD_API_KEY`. For Frankie that key is the private SSM
+SecureString named by `host_runtime.pod_credential_ssm`, read once in memory on the native host and
+never placed in a session, so in a Claude session the skills are present but unauthenticated. Where
+the key IS available (the native host, or a GitHub Actions job holding the secret), `runpod-mcp`
+exposes Pod lifecycle (`create-pod`, endpoints, volumes, billing) through RunPod's hosted MCP
+(`claude mcp add --transport http runpod -s user https://mcp.getrunpod.io/ --header "Authorization:
+Bearer $RUNPOD_API_KEY"`), and `runpodctl` covers terminal, file transfer and SSH. That is the natural
+backbone for automating the Pod start, observer readiness and execution trigger for the next run,
+which today are out-of-band (see the four prerequisites above).
+
+The permanent install belongs in `scripts/session_start.sh` (the SessionStart hook; it installs pip
+deps only today), guarded so a failure never breaks startup, installing into `$HOME` and never
+vendored. That edit was refused by the auto-mode classifier as unauthorized persistence (a startup
+hook that fetches and runs third-party code every session) and was deliberately not worked around;
+it is Greg's to apply or to permit.
