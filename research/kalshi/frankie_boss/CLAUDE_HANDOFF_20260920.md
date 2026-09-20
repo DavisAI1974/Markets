@@ -1964,3 +1964,22 @@ Root probe: no session-response.json, no root/* branch, `root/cycle-00-response`
 for Root yet). Expected next: the native BOSS mints a NEW Granite critic request (`actual-critic-request.json`,
 `actual_input_admitted` with its sha256); the retained readiness is bound to a7b72cf9 so the runner will stop or wait
 at the request-bound trigger; then the observer + readiness delivery for the new sha and one re-dispatch.
+
+### 23:35Z: the rerun minted the SAME critic request a7b72cf9; readiness matched; the cycle is proceeding to the critic
+
+Probe 35545008742 (23:34Z): `actual_input_admitted` request_sha256 a7b72cf923f906c791e4a927dc72b7c61fa25f7ac263e66bb154be67056c22d8
+(actual-critic-request.json 151,132 bytes at 23:31:03Z, byte-for-byte the request of 15:52Z; the request is
+deterministic on the same rows and the same model identity), `waiting_for_request_bound_service_trigger` then
+`host-service.c15.json` written 23:31:04Z (the retained readiness for a7b72cf9 matched; no line-833 refusal),
+controller and native journals appending (native.sqlite 23:33:28Z, controller.sqlite 23:33:48Z). So NO observer /
+readiness round is needed for cycle 0; the critic runs on Pod 8vqdacl5t61rjx under the existing readiness.
+
+Found while preparing for a new sha (it will matter for CYCLE 1, whose request is new): the observer admits a
+request only from `runs/request-archives/<sha>/` or the S3 request prefix and the repository has no writer for
+either (MASTER_WEAVE_20260920.md fact 2; the 09-17 archive was committed out of band by Greg's account). Drafted,
+NOT committed (the auto-mode classifier refuses to commit a workflow file from this session; needs Greg's word
+and the API push): `.github/workflows/frankie_host_stage_critic_request.yml` +
+`deploy/aws/host/frankie_host_stage_critic_request.ps1`: the host uploads the minted request through a presigned
+PUT into the granite bucket, the job verifies bytes and sha256, encrypts exactly as `read_request_archive` decrypts
+(SSM transport key `/markets/frankie/request-transport/pilot-20260919`), round-trips and commits the archive to the
+branch it ran on. Both files sit untracked in this session's working tree until Greg decides.
