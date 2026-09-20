@@ -1983,3 +1983,29 @@ and the API push): `.github/workflows/frankie_host_stage_critic_request.yml` +
 PUT into the granite bucket, the job verifies bytes and sha256, encrypts exactly as `read_request_archive` decrypts
 (SSM transport key `/markets/frankie/request-transport/pilot-20260919`), round-trips and commits the archive to the
 branch it ran on. Both files sit untracked in this session's working tree until Greg decides.
+
+### 23:47Z: the critic attempt was AMBIGUOUS (Pod EXITED); cycle 0 superseded whole again; the FULL observer round is running (Greg)
+
+Correction to 23:35Z: "no observer round is needed" was wrong in effect. The retained Granite observer's lifecycle
+ends with a Pod stop after the critic call (`granite_retained_host.py` line 4: "performs its journaled critic call,
+then stops"); Pod 8vqdacl5t61rjx has been EXITED since the 15:56Z hold ended (inspect run 35545429736: status EXITED,
+startedAt 15:31:15Z). So each critic call needs the observer round to bring the service up, whatever the request sha.
+Greg (23:4xZ): fix the skip and rerun; the observer is not skipped for cycle 1 either.
+
+What happened: pipeline run 35544336615's runner reached `granite_request` at 23:37:56Z (critic-spool job
+3089b0b5..., request a7b72cf9, `job_not_found_same_id_create`, a submit-intent, no remote acceptance), the POST got
+no durable answer, `PendingTransport` -> status `same_critic_attempt_pending_or_ambiguous`, exit 4 at 23:38:06Z. The
+durable client never re-POSTs a job after an uncertain submission (by design), so the attempt is evidence, not
+retryable. S3 active-run claim: phase closed (startup 09a4b695), no block (inspect run 35545431573). Diag
+35545433675: the host's new ready witness for a7b72cf9 (`admitted_at 1789947063.7025023` = 23:31:03Z).
+
+Round, all existing workflows, receipts on the host: `frankie_host_supersede_cycle.yml` run 35545474954 (cycle 00
+moved aside whole at 23:43Z, the ambiguous spool with it); `frankie_host_declare_identity_supersede.yml` run
+35545569240 (`supersede_cycle=true`, declared); `frankie_host_supersede_readiness.ps1` now proceeds when the cycle
+directory is already superseded whole (58bf8fee; the spool-evidence guard is unchanged when it exists);
+`frankie_host_supersede_readiness.yml` dispatched 23:46Z (moves the a7b72cf9 trigger and readiness aside);
+`frankie_retained_granite.yml` observer dispatched 23:46Z on this branch (request a7b72cf9, the new host witness,
+the reviewed runtime configuration; the archive is on this branch). Next: the observer's prepare submits the one Pod
+START (EXITED -> RUNNING; if the host has no free L40S the provider refuses and the replacement-Pod path is Greg's
+call), publishes `retained-granite-ready-<run>`; then `frankie_deliver_readiness.yml` (ready_run_id, request
+a7b72cf9) and ONE pipeline dispatch.
