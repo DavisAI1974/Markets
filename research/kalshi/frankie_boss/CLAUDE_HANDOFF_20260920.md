@@ -1906,3 +1906,17 @@ host-instance, native-host-runtime.json, verified-*, host-prefix. Nothing delete
 
 `frankie_host_declare_identity_supersede.yml` dispatched 23:01Z with `supersede_cycle=true`. Then, on the `/ship`
 verdict for d7de4e2a: `frankie_host_advance.yml` target 43d8173f -> ONE pipeline dispatch.
+
+### 23:03Z: declared (supersede_cycle=true); /ship running on the pins commit before the host advance
+
+`frankie_host_declare_identity_supersede.yml` run 35543418829 (23:02:23Z, tools HEAD f0910e6c): `status: declared`,
+`supersede_cycle: true`, `old_binding_hash a664bd7f...`, `old_code_hash 166fbed7...`, `new_code_hash 5b089bb6...`,
+`old_arm_hash 3413d1b7...`, `old_boss_commit 34a4feac`, `old_agent_commit 7b98617b`; declaration file
+`actual-feedback-run/cycles.sqlite.identity-supersede.json`. The coordinator will archive every live stage of cycle 0
+under that binding hash on the next run and start the cycle over.
+
+`/ship` (Greg) on d1a709ae..d7de4e2a: security audit = no Critical/High/Medium, no secrets; three Low items for the
+after-run list: (1) the pins test skips the receipt re-hash for the complete-registry pin (cycles 7-18; all 30 receipts
+were re-hashed by hand and match); (2) `registry_file` cites a branch, not a commit sha; (3) the pin sidecar is written
+lazily when a prompt already exists (production always renders via the retained prompt, so cycle 0 is covered).
+Code review and coverage analysis pending; the host advance (target 43d8173f) follows the verdict.
