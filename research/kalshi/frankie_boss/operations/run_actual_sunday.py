@@ -25,6 +25,7 @@ import sqlite3
 import subprocess
 import sys
 import time
+import traceback
 import uuid
 from types import SimpleNamespace
 
@@ -896,6 +897,22 @@ class ActualHost:
 def sha_state(training,model):return hashlib.sha256(training.encode_state(model.state_dict())).hexdigest()
 
 
+def stop_frames(error,limit=12):
+    """Code locations of an exception and its chain: repo-relative file (bare name outside the
+    repository), line and function, innermost last. No message, argument, local or path root."""
+    root=Path(__file__).resolve().parents[4]
+    frames=[];seen=set()
+    while error is not None and id(error) not in seen and len(frames)<2*limit:
+        seen.add(id(error))
+        for frame in traceback.extract_tb(error.__traceback__)[-limit:]:
+            path=Path(frame.filename)
+            try:name=path.resolve().relative_to(root).as_posix()
+            except ValueError:name=path.name
+            frames.append(dict(error_type=type(error).__name__,file=name,line=frame.lineno,function=frame.name))
+        error=error.__cause__ if error.__cause__ is not None else (None if error.__suppress_context__ else error.__context__)
+    return frames[:2*limit]
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--configuration',required=True)
@@ -940,8 +957,10 @@ def main():
                 return 5
             finally:host.close()
     except Exception as error:
-        # Never interpolate exception messages, locals or received stdin.
-        print(json.dumps(dict(status='stopped',error_type=type(error).__name__)),flush=True)
+        # Never interpolate exception messages, locals or received stdin. The frames carry code
+        # locations only (repo-relative file, line, function) for the exception and its chain: a
+        # type-only stop record left run 35514761496 (2026-09-20) undiagnosable from the log.
+        print(json.dumps(dict(status='stopped',error_type=type(error).__name__,frames=stop_frames(error))),flush=True)
         return 1
 
 
