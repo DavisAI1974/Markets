@@ -112,6 +112,39 @@ if spool.exists():
                     pass
                 print(f'    critic body ({len(body)} bytes decoded); content follows, first 6000 chars:')
                 print(text[:6000])
+print('### classroom status')
+classroom_files = {
+    'package/source': cycle/'host-dipole-classroom-source.c15.json',
+    'package/teacher-key': cycle/'host-dipole-classroom-teacher-key.c15.json',
+    'package/pre-message': cycle/'host-dipole-classroom-pre-message.c15.json',
+    'package/binding': cycle/'host-dipole-classroom-binding.c15.json',
+    'package/adapter': cycle/'host-dipole-classroom-adapter.c15.json',
+    'audit/source': cycle/'classroom-audit'/'dipole-classroom-source.json',
+    'audit/teacher-key': cycle/'classroom-audit'/'dipole-classroom-teacher-key.audit.json',
+    'principal/pre-message': cycle/'principal'/'dipole-classroom-pre-message.json',
+    'principal/model-visible': cycle/'principal'/'dipole-classroom-model-visible.json',
+    'correction/request': cycle/'principal'/'classroom-correction-request.json',
+    'correction/response': cycle/'principal'/'classroom-correction-response.json',
+}
+for name, path in classroom_files.items():
+    print(f"  {name}: {'present ' + str(path.stat().st_size) + ' bytes' if path.exists() else 'absent'}")
+req, resp = classroom_files['correction/request'], classroom_files['correction/response']
+print('  correction turn:', 'recorded' if resp.exists() else ('PENDING (request written, no response)' if req.exists() else 'not requested yet'))
+for name in ('package/binding', 'package/adapter'):
+    path = classroom_files[name]
+    if path.exists():
+        try: print(f'  {name}: ' + json.dumps(load_c15(path), sort_keys=True, default=str)[:900])
+        except Exception as error: print(f'  {name}: unreadable ({error})')
+if req.exists():
+    try:
+        c = json.loads(req.read_bytes())
+        print('  correction request keys:', sorted(c.keys())[:12] if isinstance(c, dict) else type(c).__name__)
+    except ValueError as error: print(f'  correction request unreadable ({error})')
+if resp.exists():
+    try:
+        c = json.loads(resp.read_bytes())
+        print('  correction response keys:', sorted(c.keys())[:12] if isinstance(c, dict) else type(c).__name__)
+    except ValueError as error: print(f'  correction response unreadable ({error})')
 print('### cycle records (name  mtime  bytes)')
 if cycle.exists():
     for p in sorted(cycle.rglob('*'), key=lambda p: p.stat().st_mtime):
