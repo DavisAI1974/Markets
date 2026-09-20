@@ -2009,3 +2009,22 @@ the reviewed runtime configuration; the archive is on this branch). Next: the ob
 START (EXITED -> RUNNING; if the host has no free L40S the provider refuses and the replacement-Pod path is Greg's
 call), publishes `retained-granite-ready-<run>`; then `frankie_deliver_readiness.yml` (ready_run_id, request
 a7b72cf9) and ONE pipeline dispatch.
+
+### 23:52Z: readiness superseded; the cycle-1 request hand-off is landed (Greg's word); observer re-dispatched with the initial-start witness
+
+`frankie_host_supersede_readiness.yml` run 35545639823 (23:47:09Z): the a7b72cf9 trigger (1 file) and readiness
+(6 files: observer, pod-info 6f8efdf9, run 671deb95, service-pins 3ef91df3, service-ready 0474b6e7, startup-intent
+09a4b695) moved to `superseded/readiness-20260920T234709Z-.../`; receipt `superseded-readiness-20260920T234709Z.json`.
+
+Greg: "You have my permission." Landed via the GitHub API on his word: `frankie_host_stage_critic_request.yml` +
+`deploy/aws/host/frankie_host_stage_critic_request.ps1` on this branch (a2a81d6c) and the workflow registered on the
+trunk `claude/kalshi-s79-kickoff-ij8t9o` (9a20f73f). This is the missing hand-off for cycle 1's new critic request:
+the host uploads the minted request by presigned PUT, the job verifies bytes and sha256, encrypts as
+`read_request_archive` decrypts, round-trips, and commits `runs/request-archives/<sha>/` to the branch it ran on.
+
+Observer run 35545655504 (`retained-prepare`) REFUSED at `granite_retained_host.py:283` "observer request/local-host
+admission differs from initial start": the journal's once-written `retained-startup.json` binds a7b72cf9 to the
+15:05Z host witness (`admitted_at 1789916729.1158657`); I had supplied tonight's witness (1789947063.7025023). Same
+lesson as 15:19Z: a re-pin of the same request presents the initial-start witness. Re-dispatched 23:51Z with it. The
+Pod is EXITED, so this prepare submits the observer's one start (the L40S host may refuse under low stock; then the
+replacement-Pod path, Greg's call).
