@@ -59,7 +59,9 @@ if (Test-Path $target) {
     $incoming = Join-Path $mappingDirectory ('index.jsonl.incoming-' + $stamp)
     if (Test-Path $incoming) { throw ("incoming path already exists: " + $incoming) }
     Write-Output ("downloading s3://" + $Bucket + "/" + $Key + " with the host role")
-    & $Python -c 'import boto3, sys; boto3.client("s3", region_name="us-east-1").download_file(sys.argv[1], sys.argv[2], sys.argv[3])' $Bucket $Key $incoming
+    # Every string reaches python through argv: Windows PowerShell strips inner double quotes from a
+    # native command's arguments (run 35522551415: NameError 's3'), so the one-liner carries none.
+    & $Python -c 'import boto3, sys; boto3.client(sys.argv[1], region_name=sys.argv[2]).download_file(sys.argv[3], sys.argv[4], sys.argv[5])' s3 us-east-1 $Bucket $Key $incoming
     if ($LASTEXITCODE -ne 0) { throw ("download failed with exit code " + $LASTEXITCODE) }
     $got = Get-Item $incoming
     $gotDigest = Digest $incoming
