@@ -2028,3 +2028,16 @@ admission differs from initial start": the journal's once-written `retained-star
 lesson as 15:19Z: a re-pin of the same request presents the initial-start witness. Re-dispatched 23:51Z with it. The
 Pod is EXITED, so this prepare submits the observer's one start (the L40S host may refuse under low stock; then the
 replacement-Pod path, Greg's call).
+
+### 00:00Z (09-21): observer prepare admitted; it observes the EXISTING start intent, so the Pod start is the operator's; start dispatched
+
+Observer run 35545909225 `retained-prepare`: past the admission gates with the initial-start witness (running since
+23:53:21Z). `granite_retained_lifecycle.start_once` finds the journal's `retained-start-intent.json` (startup
+09a4b695, this generation) equal to its own intent and returns `observe_existing_start`: it submits no start and waits
+for fresh boot frames, exactly as at 15:31Z, when `frankie_pod_control.yml restart` supplied them on a RUNNING Pod.
+The Pod is EXITED (inspect runs 35545999635, 35546156453 at 23:54Z and 23:58Z), so the corresponding action now is
+`frankie_pod_control.yml` action=start, retry_seconds=900 (re-submits every 60 s while the host reports no free
+L40S), wait_seconds=300; dispatched 23:59Z under Greg's "don't skip the observer" (the round includes its Pod start).
+Then: the observer sees the boot, publishes `retained-granite-ready-35545909225`, `frankie_deliver_readiness.yml`
+(ready_run_id 35545909225, request a7b72cf9), ONE pipeline dispatch. If the provider refuses the start for want of a
+GPU, the replacement-Pod path (`frankie_pod_prepare.yml`) is Greg's call, as in the morning.
