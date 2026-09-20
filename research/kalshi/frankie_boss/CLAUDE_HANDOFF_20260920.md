@@ -685,3 +685,28 @@ with day 20211003, `go 0eb2c2acdccc17f8ad2d64d00b74a0c93b477c0418651a7f290d53f19
 keep_compute true, checks_only false: sources -> journal (the finished 7,129-block ingest, receipt
 present) -> checks -> host (schedule-prefixes, cycles against Pod 8vqdacl5t61rjx, package-upload,
 snapshot-stop). Each receipt is recorded below as it lands; nothing is claimed ahead of it.
+
+### Pipeline run 35508198333: REFUSED at cycles (data_delivery ValueError, scrubbed)
+
+Sources OK; journal skipped (ingest receipt present); checks OK; host job failed at 11:36:57Z: the
+cycles stage exited 1 with `FRANKIE_RUN_PROGRESS_V1` `code operation_failed`, phase `data_delivery`,
+owner `transport`, `error_type ValueError`, 1.44 s after start, last status `{"status": "stopped",
+"error_type": "ValueError"}`. No new receipt was committed. The refusal is inside
+`run_actual_sunday.py` 812-843 (after the trigger read); the four candidate checks and the probe to
+name the real one are in `DROP_IN_CLAUDE_20260921.md`. `frankie_host_diag.yml` dispatched read-only.
+
+### State at close of this chat (2026-09-20, ~11:45Z)
+
+Pipeline run 35508198333 refused at cycles as above; root-causing it is the next chat's first job. Retained Pod `8vqdacl5t61rjx` RUNNING and adopted; `ycf4v6lmave6xw` EXITED and untouched;
+`hhxs2fk7511cz5` terminated on Greg's word. Host at `6b0b37fe`. Docs updated: `CLAUDE.md` (first
+FRANKIE/BOSS bullet + the HOLD line), `KALSHI_TRADING.md` (new file section), this handoff, and the next
+box `DROP_IN_CLAUDE_20260921.md`. Nothing about the run's outcome is claimed here.
+
+CHANGES MADE today (code): `granite_retained_identity.py` (new), re-mint of receipt/INFO_SHA256/POD_ID,
+`operations/pod_control.py`, `operations/pod_prepare.py`, `operations/refresh_bootstrap_urls.py`,
+`deploy/aws/host/frankie_host_advance.ps1` (target as input), six operator workflows, three tests
+following the re-mint. DIDN'T TOUCH: the observer/lifecycle logic beyond the identity import, the
+pipeline workflow, the journal stack, the roster files, `run_actual_sunday*.py`. CONCERNS: the trunk holds
+partial cherry-picks (workflow registration only); `ycf4v6lmave6xw` still bills its volume; the old
+generation's journal (`migration-ycf4v6lmave6xw-a004983e93b9`) holds a consumed start intent that will
+never complete.

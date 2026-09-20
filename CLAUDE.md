@@ -1,8 +1,21 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-08-06, Session 114)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-20, Frankie/BOSS launch day)
 
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
+- **2026-09-20 LAUNCH STATE (read `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md` first).** Greg's go for the
+  20211003 two-cycle run was given ("get this Sunday run going"); the pipeline is run 35508198333 on
+  `codex/frankie-launch-two-cycle-20260919`, resumed at cycles. **The retained Pod is now `8vqdacl5t61rjx` (US-MO-1)**:
+  `ycf4v6lmave6xw` is stranded EXITED on a host whose L40S is taken (provider: "There are not enough free GPUs on the
+  host machine to start this pod."), the replacement was prepared, bootstrapped and adopted with receipts, and the
+  identity was re-minted in ONE place, `granite_retained_identity.py` (`POD_ID`, `JOURNAL_GENERATION`), plus the migration
+  receipt and `INFO_SHA256`. **Standing lessons, both measured today: (1) under LOW L40S stock a stopped Pod loses its GPU
+  within minutes, so a prepared Pod stays RUNNING and adoption never passes through EXITED (observer `observe_migrated_start`
+  + a `restart` issued after `retained-start-intent.json` exists); (2) the native host's `verified_service_inputs` aims
+  inference at the checkout's own `POD_ID`, so a re-mint must reach the host (`frankie_host_advance.yml`, target as input).**
+  Operator workflows (all receipted, no env value ever printed): `frankie_pod_control.yml` (inspect/start-with-retry/
+  restart/terminate), `frankie_pod_prepare.yml` (create/resume/watch a replacement), `frankie_refresh_bootstrap_urls.yml`,
+  `frankie_host_advance.yml`, `frankie_host_diag.yml`, `frankie_deliver_readiness.yml`. Record: `CLAUDE_HANDOFF_20260920.md`.
 - **The Granite 4,096-token context is RETIRED. Remove `4096` from ALL Granite-related code**: the `service_context` /
   `CONTEXT` / `max_model_len` defaults, every `(4096, 131072)` allowlist, the 1,200-output ceiling tied to it, and the
   retained-lifecycle resume gate. The only Granite context is 131,072 with output = remaining context and the
@@ -41,7 +54,8 @@
   test is now visibly red on purpose: `test_authority_map`'s ownership drift for the compact-source/reducer stack needs
   per-module declarations (audit finding 6, second slice). Container needs `cffi` + `databento-dbn==0.62.0`. See
   `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260918.md`.**
-- Launch is HOLD. No Frankie, Granite, Pod, EC2 or result-bearing action without Greg's explicit go.
+- Launch is HOLD by default. No Frankie, Granite, Pod, EC2 or result-bearing action without Greg's explicit go
+  (given 2026-09-20 for the 20211003 two-cycle run and for preparing/terminating the replacement Pod; nothing beyond it).
 - **The beginning-to-end chain is BUILT (2026-09-17)**: `.github/workflows/frankie_journal_stack.yml` (the started one)
   now runs sources -> journal (gold standard, unchanged) -> host stages via `operations/day_pipeline.py` (git receipts,
   resume, HOLD before cycles without a go, measured CPU-dedication gate). Native host `i-0e90ee6110ef609aa` RESIZED to

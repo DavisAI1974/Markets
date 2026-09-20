@@ -1,5 +1,33 @@
 # KALSHI TRADING — file index
 
+## 2026-09-20 — Frankie/BOSS launch day: the Pod that could not start, the replacement, the operator workflows
+
+- **`research/kalshi/frankie_boss/granite_retained_identity.py`** — the retained Pod's declared identities in ONE place
+  (`POD_ID`, `BUNDLE_PREFIX`, `JOURNAL_GENERATION`, `HISTORICAL_GENERATION`); lifecycle and host import it, the standalone
+  completion writer loads it by path. Re-minted to `8vqdacl5t61rjx` with `granite_retained_migration_receipt.json` and
+  `granite_retained_host.INFO_SHA256`.
+- **`research/kalshi/frankie_boss/operations/pod_control.py`** + `.github/workflows/frankie_pod_control.yml` — inspect
+  (env scrubbed), start with a host-busy retry loop (prints the provider's refusal body the lifecycle discards), restart
+  (adoption step: waits for the request's `retained-start-intent.json` in the journal bucket, then restarts on the same
+  host), terminate (never the retained Pod; 404 readback). Every action prints a receipt.
+- **`research/kalshi/frankie_boss/operations/pod_prepare.py`** + `.github/workflows/frankie_pod_prepare.yml` — prepare a
+  replacement retained Pod: copies the source Pod's environment verbatim in memory, picks data centers with L40S stock
+  from the v2 catalog, creates/resumes/watches, validates the bootstrap evidence exactly as the observer does, waits for
+  an authenticated health 200, writes the migration-receipt candidate + `INFO_SHA256` + generation. Keeps a
+  bootstrapping Pod RUNNING at the horizon (a stop loses the GPU). Stubbed-provider dry run: 11 scenarios.
+- **`research/kalshi/frankie_boss/operations/refresh_bootstrap_urls.py`** + `frankie_refresh_bootstrap_urls.yml` — runbook
+  step 5, URLs only: re-signs the exact staged bootstrap objects (SigV4, virtual-hosted) and patches `RP_BOOTSTRAP_URLS`,
+  every other environment value read back unchanged.
+- **`deploy/aws/host/frankie_host_advance.ps1`** + `frankie_host_advance.yml` — move the native host's tools checkout to
+  an explicit descendant commit (input, never hardcoded) and record `boss_commit` with a dated backup.
+- **`deploy/aws/host/frankie_host_diag.ps1`** + `frankie_host_diag.yml` — read-only host diagnostic (EC2/SSM state,
+  cycle log, configuration, trigger, witness, S3 and SSM-parameter access, lawful checkout probe).
+- **`deploy/aws/host/build_readiness_delivery.py`** + `frankie_deliver_readiness.yml` — downloads a published
+  `retained-granite-ready-<run>` artifact, refuses unless service-pins bind the request and `inference_sent` is false,
+  delivers the six files to the host's readiness directory and writes the immutable execution trigger.
+- **`research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md`** — the day's full record, every receipt in order.
+- **`research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`** — the next chat's box.
+
 ## S115 — the pre-paper-trade platform audit: the blind wall, the brain view, and the D47 failure
 
 - **`research/kalshi/brain_onedoc_fix_s115.py`** — closes the ONE-DOC holes in the brain (Greg:
