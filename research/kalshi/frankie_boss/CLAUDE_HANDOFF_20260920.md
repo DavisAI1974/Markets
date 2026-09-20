@@ -597,3 +597,18 @@ returned nothing. `133c42c3` adds `--resume-pod` (restart the EXITED Pod on its 
 instead of paying for another create) and five-minute diagnostics (scrubbed Pod state incl.
 `runtime`, plus a three-line raw tail of the system and container logs). Dispatched a resume of
 hhxs2fk7511cz5 with a 60-minute watch. The old-Pod retry loop (run 35503582348) is still cycling.
+
+### Resume run 35506279203: REFUSED, the same host-busy message, five minutes after the stop
+
+`hhxs2fk7511cz5` (EUR-IS-2) was stop-retained at 10:48:05Z by the horizon; the resume at 10:53:43Z
+got `HTTP 400 "There are not enough free GPUs on the host machine to start this pod."` So under
+LOW L40S stock a stopped Pod loses its GPU within minutes. Consequences, now in code (`420359ae`):
+the prepare horizon leaves a still-bootstrapping Pod RUNNING (`--on-timeout keep`, default) and a
+`--watch-pod` mode observes a RUNNING replacement in short runs so its diagnostics are readable
+without stopping anything. For adoption this also rules out the EXITED path (stop, then let the
+observer start): the observer must adopt a RUNNING Pod through `observe_migrated_start`, with a
+`restart` action issued after the observer's `retained-startup.json` exists so the boot frames
+post-date it. Two Pods are now stranded EXITED on GPU-less hosts: `ycf4v6lmave6xw` (the retained
+model, keep) and `hhxs2fk7511cz5` (nothing verified on its volume; terminate is Greg's call, it
+costs the volume while it exists). Third attempt dispatched: create with data centers
+US-TX-4, US-IL-1, US-MO-1 preferred, 15-minute watch, keep on timeout, then watch-only runs.
