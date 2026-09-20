@@ -1,11 +1,15 @@
-# Bring the native host's tools checkout up to the declared frozen native runtime (96e26f7d), which
-# carries the request-id fix c0749bc0 that the host's c9a86e74 lacks, and record the new boss_commit
-# in the sealed host configuration. Refuses on a dirty tree. Keeps a dated backup of the configuration.
-# Writes only the checkout and that one configuration field. Starts nothing.
+# Bring the native host's tools checkout to an explicit commit ($Target, a full 40-hex sha supplied by
+# ssm_run_ps1.py --set; never hardcoded here) and record it as boss_commit in the sealed host
+# configuration. First use (2026-09-20): 96e26f7d, the frozen native runtime carrying the request-id
+# fix. Second use: the re-minted retained Pod identity, because verified_service_inputs builds the
+# Runpod config from the checkout's POD_ID. Refuses on a dirty tree, refuses a target that is not a
+# descendant of the current checkout, keeps a dated backup of the configuration, writes only the
+# checkout and that one field. Starts nothing.
 $ErrorActionPreference = 'Stop'
+if (-not $Target -or $Target -notmatch '^[0-9a-f]{40}$') { throw 'Target (full 40-hex commit) must be supplied with --set Target=<sha>' }
 $tools = 'C:/tools/Frankie-20260919/Markets'
 $cfg = 'C:/Codex/Frankie-BOSS-20260919/days/20211003/actual-host-configuration.json'
-$target = '96e26f7d5e8100cca93288d5f44d9550ab5cfd9a'
+$target = $Target
 $git = (Get-Command git -ErrorAction Stop).Source
 if (-not (Test-Path $tools)) { throw "tools checkout missing: $tools" }
 $dirty = & $git -C $tools status --porcelain
@@ -13,9 +17,11 @@ if ($dirty) { throw ("refusing: tools checkout is dirty:`n" + ($dirty -join "`n"
 $before = (& $git -C $tools rev-parse HEAD).Trim()
 Write-Output ("before: " + $before)
 & $git -C $tools fetch -q origin $target
-if ($LASTEXITCODE -ne 0) { throw 'fetch of the frozen runtime commit failed' }
+if ($LASTEXITCODE -ne 0) { throw 'fetch of the target commit failed' }
+& $git -C $tools merge-base --is-ancestor $before $target
+if ($LASTEXITCODE -ne 0) { throw ("refusing: target " + $target + " does not descend from the current checkout " + $before) }
 & $git -C $tools checkout -q --detach $target
-if ($LASTEXITCODE -ne 0) { throw 'checkout of the frozen runtime commit failed' }
+if ($LASTEXITCODE -ne 0) { throw 'checkout of the target commit failed' }
 $after = (& $git -C $tools rev-parse HEAD).Trim()
 if ($after -ne $target) { throw ("checkout landed on " + $after) }
 Write-Output ("after:  " + $after)
