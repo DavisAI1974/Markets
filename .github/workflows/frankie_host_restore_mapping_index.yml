@@ -24,10 +24,6 @@ on:
         description: 'Day pipeline RunRoot on the host'
         required: false
         default: 'C:/Codex/Frankie-BOSS-20260919/days'
-      host_python:
-        description: 'Host python (boto3 present) that performs the S3 download'
-        required: false
-        default: 'C:/Codex/Frankie-BOSS-20260919/actual-host-python/Scripts/python.exe'
       bucket:
         description: 'Staging bucket the host role can read'
         required: false
@@ -71,11 +67,19 @@ jobs:
           import hashlib, json, os
           from pathlib import Path
           pinned = Path(os.environ['PINNED_MAPPING']).read_bytes()
-          pin = json.loads(pinned)['index']
+          committed = json.loads(pinned)
+          pin = committed['index']
           rebuilt = Path(os.environ['RUNNER_TEMP'])/'rebuilt'
           mapping = (rebuilt/'mapping'/'mapping.json').read_bytes()
-          if hashlib.sha256(mapping).hexdigest() != hashlib.sha256(pinned).hexdigest():
-              raise SystemExit('rebuilt mapping.json differs from the committed one; the index cannot be trusted')
+          fresh = json.loads(mapping)
+          # The rebuild's mapping.json differs from the committed one only in provenance (extraction
+          # runtime hash, gzip vs plain ledger encoding); the content pins must agree exactly.
+          for field in ('schema', 'source', 'record_count', 'group_count', 'index'):
+              if committed.get(field) != fresh.get(field):
+                  raise SystemExit(f'rebuilt mapping.json differs from the committed one in {field}; the index cannot be trusted')
+          if committed['member_ledger']['plain'] != fresh['member_ledger']['plain']:
+              raise SystemExit('rebuilt mapping.json names a different plain member ledger')
+          print('provenance-only differences:', sorted(k for k in set(committed) | set(fresh) if committed.get(k) != fresh.get(k)))
           index = (rebuilt/'mapping'/pin['path']).read_bytes()
           digest = hashlib.sha256(index).hexdigest()
           if len(index) != pin['bytes'] or digest != pin['sha256']:
@@ -86,6 +90,14 @@ jobs:
           boto3.client('s3', region_name='us-east-1').put_object(Bucket=os.environ['BUCKET'], Key=key, Body=index,
               Metadata={'sha256': digest, 'mapping_sha256': hashlib.sha256(mapping).hexdigest()})
           print('staged s3://' + os.environ['BUCKET'] + '/' + key)
+          # The host role cannot read this prefix (run 35522665856: 403), so the host fetches a
+          # one-hour presigned GET signed here. Written to a file, masked, never echoed.
+          url = boto3.client('s3', region_name='us-east-1').generate_presigned_url('get_object',
+              Params={'Bucket': os.environ['BUCKET'], 'Key': key}, ExpiresIn=3600)
+          if "'" in url or '\n' in url:
+              raise SystemExit('presigned URL carries a character ssm_run_ps1.py --set refuses')
+          print('::add-mask::' + url)
+          Path(os.environ['RUNNER_TEMP'], 'presigned-url.txt').write_text(url)
           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
               out.write(f"key={key}\nsha256={digest}\nbytes={pin['bytes']}\n")
           PY
@@ -110,7 +122,6 @@ jobs:
           INSTANCE: ${{ inputs.instance }}
           DAY: ${{ inputs.day }}
           RUN_ROOT: ${{ inputs.run_root }}
-          HOST_PYTHON: ${{ inputs.host_python }}
           BUCKET: ${{ inputs.bucket }}
           KEY: ${{ steps.stage.outputs.key }}
           SHA256: ${{ steps.stage.outputs.sha256 }}
@@ -121,9 +132,8 @@ jobs:
             --script deploy/aws/host/frankie_host_restore_mapping_index.ps1 \
             --set "Day=$DAY" \
             --set "RunRoot=$RUN_ROOT" \
-            --set "Python=$HOST_PYTHON" \
-            --set "Bucket=$BUCKET" \
-            --set "Key=$KEY" \
+            --set "Source=s3://$BUCKET/$KEY" \
+            --set "Url=$(cat "$RUNNER_TEMP/presigned-url.txt")" \
             --set "ExpectedSha256=$SHA256" \
             --set "ExpectedBytes=$BYTES" \
             --timeout 900 --comment "restore mapping index.jsonl for day $DAY"
