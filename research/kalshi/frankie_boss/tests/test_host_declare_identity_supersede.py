@@ -58,7 +58,7 @@ def test_workflow_passes_every_variable_by_set_and_requires_the_reason():
     workflow = yaml.safe_load(WORKFLOW.read_text())
     inputs = workflow[True]['workflow_dispatch']['inputs']
     assert inputs['reason']['required'] is True
-    assert set(inputs) == {'instance', 'day', 'run_root', 'tools_root', 'python', 'cycle_index', 'reason'}
+    assert set(inputs) == {'instance', 'day', 'run_root', 'tools_root', 'python', 'cycle_index', 'reason', 'supersede_principal'}
     run = workflow['jobs']['declare']['steps'][-1]['run']
     assert '--script deploy/aws/host/frankie_host_declare_identity_supersede.ps1' in run
     for name, env in (('Day', 'DAY'), ('RunRoot', 'RUN_ROOT'), ('ToolsRoot', 'TOOLS_ROOT'), ('Python', 'HOST_PYTHON'),

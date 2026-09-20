@@ -250,6 +250,52 @@ class CycleCoordinator:
             accepted.write_bytes(json.dumps(existing, sort_keys=True, indent=1).encode())
         return True
 
+    def _principal_supersede(self, request_id):
+        """Let an open cycle re-render its principal request, on an explicit declaration.
+
+        Greg, 2026-09-20 ("we are applying this to cycle 0 and re-running cycle 0"): the run-findings
+        ledger enters the prompt, so cycle 0's request must be rendered again. The saved `attachment`
+        stage pins the old prompt witness and the saved `principal_intent` pins that attachment, and
+        prepare() is never re-run while the attachment is retained. Nothing is accepted silently: the
+        declaration next to the cycle store must name this request with `supersede_principal` true and
+        the OLD attachment hash, and no principal output may be retained (a recorded response is never
+        superseded here; the on-disk request is moved aside by the receipted host script). Both stages
+        are archived under their own names before the live rows are cleared, and the acceptance is
+        appended to <cycles.sqlite>.identity-supersede-accepted.json.
+        """
+        saved = self._load(request_id, 'attachment')
+        if saved is None: return False
+        if self._load(request_id, 'principal_output') is not None: return False
+        declared = Path(str(self.path) + self.IDENTITY_SUPERSEDE_SUFFIX)
+        if not declared.exists(): return False
+        try:
+            entries = json.loads(declared.read_bytes())
+        except ValueError:
+            return False
+        old_hash = evidence_hash(saved)
+        if not any(type(e) is dict and e.get('request_id') == request_id and e.get('supersede_principal') is True
+                   and e.get('old_attachment_hash') == old_hash
+                   for e in (entries if type(entries) is list else [])):
+            return False
+        archive = 'attachment-superseded-' + old_hash[:12]
+        self._save(request_id, archive, saved)
+        intent = self._load(request_id, 'principal_intent')
+        intent_archive = None
+        if intent is not None:
+            intent_archive = 'principal_intent-superseded-' + old_hash[:12]
+            self._save(request_id, intent_archive, intent)
+        with self.db:
+            self.db.execute("DELETE FROM stages WHERE request=? AND stage IN ('attachment','principal_intent')",
+                            (request_id,))
+        accepted = Path(str(self.path) + self.IDENTITY_ACCEPTED_SUFFIX)
+        record = dict(schema='FRANKIE_CYCLE_PRINCIPAL_SUPERSEDE_ACCEPTED_V1', request_id=request_id,
+                      old_attachment_hash=old_hash, archived_stage=archive, archived_intent_stage=intent_archive)
+        existing = json.loads(accepted.read_bytes()) if accepted.exists() else []
+        if record not in existing:
+            existing.append(record)
+            accepted.write_bytes(json.dumps(existing, sort_keys=True, indent=1).encode())
+        return True
+
     EXPORT_PINS = ('boss_commit', 'agent_commit')
 
     def _export_pin_supersede(self, request_id):
@@ -370,6 +416,7 @@ class CycleCoordinator:
                                                 superseded=self._export_pin_supersede(request_id))
                     self._record_pin_supersede(request_id, manifest, export_args)
                     self._save(request_id, 'export', manifest)
+                    self._principal_supersede(request_id)
                     attachment = self._load(request_id, 'attachment')
                     if attachment is None:
                         attachment = await asyncio.to_thread(principal.prepare, directory)

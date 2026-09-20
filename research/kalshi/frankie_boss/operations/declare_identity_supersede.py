@@ -79,6 +79,10 @@ def main(argv=None):
     parser.add_argument('--request-id', required=True)
     parser.add_argument('--reason', required=True)
     parser.add_argument('--receipt-directory', required=True)
+    parser.add_argument('--supersede-principal', action='store_true',
+                        help='also declare that the saved principal attachment (and intent) may be superseded so the '
+                             'principal request is rendered again (Greg, 2026-09-20: the run-findings ledger enters '
+                             "cycle 0's prompt); records the OLD attachment hash the coordinator must match")
     args = parser.parse_args(argv)
     run = Path(args.run_directory)
     cycles = run / 'cycles.sqlite'
@@ -95,18 +99,30 @@ def main(argv=None):
     stamp = time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())
     declaration = Path(str(cycles) + DECLARATION_SUFFIX)
     entries = json.loads(declaration.read_bytes()) if declaration.exists() else []
+    principal = {}
+    if args.supersede_principal:
+        attachment = saved_stage(cycles, args.request_id, 'attachment')
+        if attachment is None:
+            raise SystemExit('no saved principal attachment to supersede for ' + args.request_id)
+        if saved_stage(cycles, args.request_id, 'principal_output') is not None:
+            raise SystemExit('a principal output is retained for ' + args.request_id + '; its request is never superseded')
+        principal = dict(supersede_principal=True, old_attachment_hash=evidence_hash(attachment))
     entry = dict(schema=SCHEMA, request_id=args.request_id, old_code_hash=old, new_code_hash=new,
-                 old_arm_hash=old_arm, reason=args.reason, declared_at=stamp, **old_pins)
-    status = 'not_stale' if old == new else ('already_declared' if any(
-        e.get('request_id') == args.request_id and e.get('old_code_hash') == old and e.get('new_code_hash') == new
-        and e.get('old_arm_hash') == old_arm and all(e.get(k) == v for k, v in old_pins.items())
-        for e in entries) else 'declared')
+                 old_arm_hash=old_arm, reason=args.reason, declared_at=stamp, **old_pins, **principal)
+    same = lambda e: (e.get('request_id') == args.request_id and e.get('old_code_hash') == old
+                      and e.get('new_code_hash') == new and e.get('old_arm_hash') == old_arm
+                      and all(e.get(k) == v for k, v in old_pins.items())
+                      and all(e.get(k) == v for k, v in principal.items()))
+    if old == new and not principal:
+        status = 'not_stale'
+    else:
+        status = 'already_declared' if any(same(e) for e in entries) else 'declared'
     if status == 'declared':
         entries.append(entry)
         declaration.write_bytes(json.dumps(entries, sort_keys=True, indent=1).encode())
     receipt = dict(schema=SCHEMA + '_RECEIPT', status=status, request_id=args.request_id, old_code_hash=old,
                    new_code_hash=new, old_arm_hash=old_arm, declaration=str(declaration), reason=args.reason, at=stamp,
-                   **old_pins)
+                   **old_pins, **principal)
     receipt_path = Path(args.receipt_directory) / ('identity-supersede-declared-' + stamp + '.json')
     receipt_path.write_bytes(json.dumps(receipt, sort_keys=True, indent=1).encode())
     print('RECEIPT ' + json.dumps(receipt, sort_keys=True))

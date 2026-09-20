@@ -271,3 +271,33 @@ def test_binding_identity_supersede_accepts_a_spent_arm_only_when_declared(tmp_p
     assert store._load('sun', 'binding')['controller'] == dict(arm_hash='q'*64)
     accepted = json.loads(Path(str(store.path)+store.IDENTITY_ACCEPTED_SUFFIX).read_bytes())
     assert accepted[0]['old_arm_hash'] == 'p'*64 and accepted[0]['new_arm_hash'] == 'q'*64
+
+
+def test_principal_supersede_needs_a_declaration_and_no_retained_output(tmp_path, monkeypatch):
+    # Greg, 2026-09-20: the run-findings ledger enters cycle 0's prompt, so the saved attachment (old
+    # prompt witness) and the saved principal intent are archived and cleared, only on a declaration
+    # naming the OLD attachment hash, and never once a principal output is retained.
+    import json
+    store, checkpoint, args, calls = fixture(tmp_path, monkeypatch)
+    attachment = dict(prompt='p', prompt_witness=dict(bytes=1, sha256='a'*64), attachment_hash='h'*64)
+    store._save('sun', 'attachment', attachment)
+    store._save('sun', 'principal_intent', dict(request_id='sun', attachment_hash='h'*64, controller_result_hash='c'*64))
+    old_hash = evidence_hash(attachment)
+    assert store._principal_supersede('sun') is False  # no declaration
+    assert store._load('sun', 'attachment') == attachment
+    declaration = Path(str(store.path)+store.IDENTITY_SUPERSEDE_SUFFIX)
+    declaration.write_text(json.dumps([dict(request_id='sun', supersede_principal=True, old_attachment_hash='z'*64)]))
+    assert store._principal_supersede('sun') is False  # wrong old hash
+    declaration.write_text(json.dumps([dict(request_id='sun', supersede_principal=True, old_attachment_hash=old_hash)]))
+    assert store._principal_supersede('sun') is True
+    assert store._load('sun', 'attachment') is None and store._load('sun', 'principal_intent') is None
+    assert store._load('sun', 'attachment-superseded-' + old_hash[:12]) == attachment
+    assert store._load('sun', 'principal_intent-superseded-' + old_hash[:12])['attachment_hash'] == 'h'*64
+    accepted = json.loads(Path(str(store.path)+store.IDENTITY_ACCEPTED_SUFFIX).read_bytes())
+    assert accepted[-1]['schema'] == 'FRANKIE_CYCLE_PRINCIPAL_SUPERSEDE_ACCEPTED_V1' and accepted[-1]['old_attachment_hash'] == old_hash
+    assert store._principal_supersede('sun') is False  # nothing live to supersede: idempotent
+    # a retained principal output is never superseded
+    store._save('sun', 'attachment', attachment)
+    store._save('sun', 'principal_output', dict(feedback={}, lessons=[]))
+    assert store._principal_supersede('sun') is False
+    assert store._load('sun', 'attachment') == attachment

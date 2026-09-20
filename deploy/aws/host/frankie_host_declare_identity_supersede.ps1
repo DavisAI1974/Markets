@@ -19,6 +19,11 @@ foreach ($required in 'Day', 'RunRoot', 'ToolsRoot', 'Python', 'Reason') {
 }
 if (-not (Get-Variable CycleIndex -ErrorAction SilentlyContinue)) { $CycleIndex = '00' }
 if ($CycleIndex -notmatch '^\d{2}$') { throw "CycleIndex must be two digits (value: '$CycleIndex')" }
+# Greg, 2026-09-20: 'true' also declares that the cycle's saved principal attachment and intent may be
+# superseded so the principal request is rendered again (the run-findings ledger enters the prompt).
+if (-not (Get-Variable SupersedePrincipal -ErrorAction SilentlyContinue)) { $SupersedePrincipal = 'false' }
+if ($SupersedePrincipal -notin @('true', 'false')) { throw "SupersedePrincipal must be true or false (value: '$SupersedePrincipal')" }
+$principalArgs = @(); if ($SupersedePrincipal -eq 'true') { $principalArgs = @('--supersede-principal') }
 $dayDirectory = Join-Path $RunRoot $Day
 $cfgPath = Join-Path $dayDirectory 'actual-host-configuration.json'
 if (-not (Test-Path $cfgPath)) { throw "no run configuration for $Day at $cfgPath" }
@@ -36,5 +41,5 @@ $helper = Join-Path $ToolsRoot 'research/kalshi/frankie_boss/operations/declare_
 if (-not (Test-Path $helper)) { throw "helper missing on this checkout: $helper" }
 $env:PYTHONPATH = $ToolsRoot
 Write-Output ("declaring for " + $requestId + " at tools HEAD " + $head)
-& $Python $helper --run-directory $runDirectory --tools-root $ToolsRoot --request-id $requestId --reason $Reason --receipt-directory $dayDirectory
+& $Python $helper --run-directory $runDirectory --tools-root $ToolsRoot --request-id $requestId --reason $Reason --receipt-directory $dayDirectory @principalArgs
 if ($LASTEXITCODE -ne 0) { throw ("declaration helper exited " + $LASTEXITCODE) }

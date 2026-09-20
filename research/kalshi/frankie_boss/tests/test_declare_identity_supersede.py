@@ -3,6 +3,8 @@ import json
 from pathlib import Path
 import sqlite3
 
+import pytest
+
 from research.kalshi.frankie_boss.c15_journal import canonical_bytes, evidence_hash, pack
 from research.kalshi.frankie_boss.operations import declare_identity_supersede as declare
 
@@ -61,3 +63,29 @@ def test_declares_once_and_reports_not_stale(tmp_path, capsys):
                          '--reason', 'advance', '--receipt-directory', str(receipts)]) == 0
     assert not (fresh / 'cycles.sqlite.identity-supersede.json').exists()
     assert 'not_stale' in capsys.readouterr().out
+
+
+def test_supersede_principal_declares_the_old_attachment_hash_even_when_not_stale(tmp_path, capsys):
+    _tree(tmp_path)
+    _, live = declare.code_identity(tmp_path)
+    run = tmp_path / 'run'
+    _store(run, live)
+    attachment = dict(prompt='p', prompt_witness=dict(bytes=1, sha256='a'*64), attachment_hash='h'*64)
+    db = sqlite3.connect(run / 'cycles.sqlite')
+    db.execute('INSERT INTO stages VALUES (?,?,?,?)', ('r-cycle-00', 'attachment', canonical_bytes(pack(attachment)), evidence_hash(attachment)))
+    db.commit(); db.close()
+    receipts = tmp_path / 'receipts'; receipts.mkdir()
+    argv = ['--run-directory', str(run), '--tools-root', str(tmp_path), '--request-id', 'r-cycle-00',
+            '--reason', 'ledger', '--receipt-directory', str(receipts), '--supersede-principal']
+    assert declare.main(argv) == 0
+    entries = json.loads((run / 'cycles.sqlite.identity-supersede.json').read_bytes())
+    assert len(entries) == 1 and entries[0]['supersede_principal'] is True
+    assert entries[0]['old_attachment_hash'] == evidence_hash(attachment)
+    assert declare.main(argv) == 0 and 'already_declared' in capsys.readouterr().out
+    # a retained principal output refuses the declaration
+    db = sqlite3.connect(run / 'cycles.sqlite')
+    output = dict(feedback={}, lessons=[])
+    db.execute('INSERT INTO stages VALUES (?,?,?,?)', ('r-cycle-00', 'principal_output', canonical_bytes(pack(output)), evidence_hash(output)))
+    db.commit(); db.close()
+    with pytest.raises(SystemExit, match='never superseded'):
+        declare.main(argv)
