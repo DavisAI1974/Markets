@@ -145,3 +145,101 @@ their order and the head hash/seal are invariant; the container bytes and `compa
 to change. The first run's `compact_sha256 19603159...` no longer reproducing is the expected
 consequence of the packing standard, not a regression. Neither 7,129 nor 1,189 is a source fact:
 both are 114,054 divided by a packing choice, which is the derived-number rule above.
+
+## Run 35498663360: the first result-bearing dispatch, and why it could not have succeeded
+
+Greg's go, 2026-09-20: "get this Sunday run going", reuse the finished 7,129 ingest, manual Pod start
+acceptable for this run only. Dispatched `frankie_journal_stack.yml` run 35498663360 on
+`codex/frankie-launch-two-cycle-20260919` at `a5ad20bc` with day 20211003, cycles 2,
+`go=0eb2c2ac...` (the day's source manifest hash, verified three ways: stored in the manifest,
+recomputed with `raw_mbo_source_manifest.manifest_hash`, and equal to the stage-sources receipt
+gate; 57,027 records), `checks_only=false`, `keep_compute=true`.
+
+What happened, all read back from the run and the branch:
+
+- `sources` success: the workflow restarted the native host itself (step "Restart the native host
+  on every dispatch"); receipts 00 and 01 were already present and were reused, not re-staged.
+- `journal` SKIPPED: `ingest_present=true`, so the 7,129-block ingest was reused. No repack at 96,
+  the first run's `compact_sha256 19603159...` untouched, the 32-vCPU ingest runner never needed.
+- `checks` success: the 1,101-test family and the receiver step passed again before any GPU time.
+- `host` FAILED. Stage 3 (schedule-prefixes) succeeded and pushed `03-schedule-prefixes.json` as
+  `19d3ef4c`. Stage 5 (cycles) failed: `owner granite`, `phase granite_request`,
+  `error_type ValueError`, `completed 0`, `cursor null`, `elapsed_seconds 382.1`,
+  `phase_elapsed_seconds 0.034`.
+- `cleanup` skipped (`keep_compute=true`); `snapshot-stop` never ran. The native host
+  `i-0e90ee6110ef609aa` was restarted by this run and NOTHING stopped it. No stop receipt exists
+  for this run; the `host-stop.json` on the branch predates it and is not evidence of a stop.
+
+No cycle-0 principal response, classroom grade, correction receipt or configuration receipt was
+produced. The Frankie state above is unchanged.
+
+### The cycles stage has four out-of-band prerequisites, and the workflow does none of them
+
+The seven pipeline stages are stage-sources, host-start, ingest, schedule-prefixes, cycles,
+package-upload, snapshot-stop. There is no Pod stage and the workflow file has no mention of a Pod.
+`day_cycles.ps1` only reads the Pod credential and waits for a readiness trigger. For the cycles
+stage to reach inference, all of the following must already be true, and none is done by the
+pipeline:
+
+1. a live Granite Pod;
+2. the retained observer having published actual readiness for this request (`service-pins.json`,
+   `service-ready.json`, `pod-info.json`, `run.json`, `startup-intent.json` in a readiness directory);
+3. an operator-written trigger at `<trigger_directory>/<run_id>-cycle-00/FRANKIE_ACTUAL_EXECUTE_V1.json`
+   carrying `readiness_directory` and `service_pins_sha256` (`operations/SSM_POD_CREDENTIAL.md`;
+   request ids are built as `f"{run_id}-cycle-{index:02d}"`, `run_actual_sunday.py:775`);
+4. the SecureString SSM parameter named in `host_runtime.pod_credential_ssm` readable by the host
+   instance role (`ssm:GetParameter`, plus `kms:Decrypt` under a customer key). The tested shape is
+   `{'name': '/markets/pod-service', 'region': 'us-east-2', 'trigger_directory': ...}`
+   (`tests/test_actual_host_ssm_credential.py:22`); the actual name is in the host configuration.
+
+`DROP_IN_CLAUDE_20260919.md` mentions none of trigger, readiness, observer or Pod start, and no
+trigger or readiness artifact is committed anywhere on the branch. Greg, 2026-09-20: the Pod start
+is not supposed to be manual; it is accepted as manual for this run and is to be fixed for the next.
+
+### Why 34 ms rules out the obvious cause, and what it leaves
+
+`read_execution_trigger` (`run_actual_sunday.py:261`) validates the credential-source shape first
+(instant ValueError `explicit SSM credential source and request identity required`), then prints
+`waiting_for_request_bound_service_trigger` and loops `while not path.exists(): time.sleep(1)` with
+NO timeout. An absent trigger therefore waits, up to the 12-hour `cycles_timeout`; it never fails.
+A 34 ms ValueError means the run did NOT die waiting for a Pod. Ranked by fit:
+
+1. Trigger present, SSM parameter missing or denied: `private SSM credential unavailable or
+   invalid`. An in-region GetParameter that returns AccessDenied or ParameterNotFound is on the
+   order of 30 ms, the closest fit to 34 ms.
+2. Trigger present but pointing at stale (2026-09-15) readiness: `startup admission differs from the
+   actual prepared request` or `trusted host service pins differ`. Instant.
+3. `pod_credential_ssm` shape invalid in the sealed host configuration: instant, and the `waiting`
+   line is never printed. `seal_final_prelaunch_candidate.py` reads `host_runtime` from its input
+   configuration rather than producing it, so that shape was authored out of band.
+
+### The ValueError message exists nowhere, by design
+
+`run_actual_sunday.py:944` catches `Exception`, prints `{"status":"stopped","error_type":...}` (type
+only; the comment reads "Never interpolate exception messages, locals or received stdin") and
+returns 1 without re-raising. `full_run_progress.failure()` writes only a safe type name. So the
+message is absent from the GitHub log, from `day-cycles.log`, and from every receipt. Pulling the
+host log cannot name the ValueError. It can still settle two things: whether
+`waiting_for_request_bound_service_trigger` was printed (present = cause 1 or 2; absent = cause 3),
+and the `actual_input_admitted` line carrying the `request_id`, which the manual route needs.
+
+Corrections made in the session record, both mine: (a) this session has no AWS access; the
+`AWS_ACCESS_KEY_ID` in its environment is a 14-character agent-proxy value and STS returns
+`InvalidClientTokenId`, verified with the proxy's own status (no relay failure, no credential
+substitution); I had said the opposite. (b) I said the host log would name the ValueError; it
+cannot. My dispatch verified the go-hash and that the workflow restarts the hosts, but did not
+verify any of the four prerequisites; the run could not have reached inference.
+
+### What settles it, in order, all on the host or in AWS (Greg only)
+
+1. `day-cycles.log` at `C:/Codex/Frankie-BOSS-20260919/days/20211003/`: is
+   `waiting_for_request_bound_service_trigger` present, and what `request_id` did
+   `actual_input_admitted` carry?
+2. `actual-host-configuration.json` in that day directory: `host_runtime.pod_credential_ssm`
+   (name, region, trigger_directory) and `run_id`.
+3. Does `<trigger_directory>/<run_id>-cycle-00/FRANKIE_ACTUAL_EXECUTE_V1.json` exist, and which
+   `readiness_directory` does it name?
+4. From the host role: `ssm get-parameter --name <name> --with-decryption --region <region>`:
+   present, denied, or missing?
+
+Not done, deliberately: no re-dispatch, no host stop, no Pod start, no workflow edit.
