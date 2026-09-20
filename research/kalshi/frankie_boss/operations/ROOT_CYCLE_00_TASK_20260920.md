@@ -28,8 +28,13 @@ Expected (refuse to proceed on any mismatch):
 `session-request.json` is the durable request (`FRANKIE_BOSS_SESSION_REQUEST_V1`); its `instruction`
 field is your instruction, including the run-analysis instruction. `prompt.md` is the delivered evidence
 (the 18 retained sections, the actual BOSS attributed input, the causal evidence). Read the full
-delivered evidence. Reuse the retained 18-section evidence with its original authorship; do not rerun
-completed calculations. Preserve Memory A. No limit on the analysis: say as much as it needs (Greg).
+delivered evidence. THE CALCULATIONS ARE YOURS, NOT A RUNNER'S (Greg, standing rule): the instruction
+names the 49 registry calculation layers you derive yourself on this cycle's rows, the nine frozen
+learned-structure layers you compare against, the one `calculation_accounting` lesson entry (every
+layer: derived / compared / could_not with reason) and the ten append-only output ledgers, each its own
+lesson entry. The retained 18 sections are provenance with their original authorship, never a substitute
+for your derivation. The prompt also carries the run-findings ledger and any prior lessons; read them.
+Preserve Memory A. No limit on the analysis: say as much as it needs (Greg).
 
 ## 3. Produce four files (shapes exactly as the 2026-09-15 first run, in git at
 `research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/`)
