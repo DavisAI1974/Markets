@@ -18,12 +18,23 @@
   seed = the top T_CTX rows by receive time and cursor, `derivable: true`. Verified 2026-09-17: the prefix builder,
   snapshot, conformance reader, journal reader, stack execution and both Sunday operations scripts on the integrated
   tree are byte-identical to the first run's runtime pin `9a8f3f46`. Never rebuild these; change dates only. **ONE DELIBERATE EXCEPTION (Greg, 2026-09-17): the box packing, and it is now ITS OWN standard.** **`journal_stack_execution.TARGET_BOXES = 1189` IS THE GOLD STANDARD FOR EVERY DAY WE INGEST GOING FORWARD** (Greg's words). Each partition becomes exactly one block, so the partition length alone sets the box count; it was a hardcoded `16` nobody had chosen, which is the entire reason the first run made 7,129 boxes. The length is now DERIVED from the standard (`partition_entries_for`), so the Sunday's 114,054 entries give 96/box = **exactly 1,189**. **It is not reachable on a big day and that is arithmetic, not a choice:** a weekday's ~3,988,716 entries would need ~3,355 per box against a `MAX_ROWS` ceiling of 256, so it clamps to 256 and takes the fewest boxes the format allows (15,581). Raising that ceiling is a block-format decision, still open. The decoded entries, count and head hash are INVARIANT (`tests/test_partition_packing.py` proves it on a real run); the compact container's bytes and `compact_sha256` DO change, so the first run's `19603159...` no longer reproduces and a run under 96 is a new baseline. **Do not revert this to 16 as gold-standard protection** - the prefixes and the reducer logic are untouched, only the packing moved.
+- **The source day is ONE measured number; everything else in that list is derived from it (Greg, 2026-09-20).
+  Never restate them as a flat list of "verified source facts" -- that framing is exactly what keeps having to be
+  fixed.** The single measurement is **57,027 source records**. **114,054 is not a second fact: it is exactly
+  2 x 57,027**, because every record emits one INPUT and one APPLIED entry; the relation holds exactly in all 18
+  committed prefix receipts (`journal_count == 2 * record_count`). Quoting the two side by side double-counts one
+  measurement. **1,189 is not a measurement at all**: `journal_stack_execution.TARGET_BOXES = 1189` is Greg's chosen
+  standard and `partition_entries_for` derives the partition length from it, clamping at `MAX_ROWS` on a big day, so
+  a day does not always land on 1,189. What IS independently verified is the seal -- `journal_hash d8de0394...`,
+  `state_hash d46ec933...`, pinned in `operations/parallel_source/verify_snapshot.py` -- and the verification status
+  of the prefixes, which is the first two, not all 19.
 - **The native row context `T_CTX = 4096` is a provisional value** (its own comment says so). Greg has retired the
   4,096-row cycle in prose at least three times; it was never changed in code, so every token projection re-derives it.
   Do NOT quote projections at 4,096 rows. The replacement row count is Greg's modelling call and is still pending.
 - **Token figures**: the proven packet is 92,427 input tokens at 3,262 rows (stacked_v1), leaving 38,645 output tokens.
   Shrinking/optimizing the packet is one of the most important jobs. **114,054 is the journal ENTRY count (2 x 57,027
-  records, INPUT + APPLIED), not a token count** -- do not let it surface as "114k tokens".
+  records, INPUT + APPLIED), not a token count** -- do not let it surface as "114k tokens", and see the derived-number
+  rule above before quoting it as a fact of its own at all.
 - **Native step thread count is a declared numeric identity**: 8, fixed for the whole run, recorded in the numeric policy.
 - **2026-09-18: the pre-existing Granite/Sunday test errors are root-caused and fixed (family 1018 passed, 0 errors,
   nothing deselected; the retained-host stall was a journal stub without a client looping under a frozen clock). One

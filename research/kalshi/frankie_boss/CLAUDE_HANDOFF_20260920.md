@@ -75,5 +75,36 @@ four artifacts above, and the service-ready record was written before inference 
 Both EC2 hosts remain last-verified stopped: native `i-0e90ee6110ef609aa` in us-east-2, ingest
 `i-035994afa8bdf66a5` in us-east-1. Neither was started, stopped or contacted here.
 
-Verified source facts are unchanged: 57,027 source records, 114,054 input plus applied entries, 1,189
-target boxes, and the first two prefixes verified. All 19 prefixes are not built.
+## Correction: the source facts are one measurement, not four (Greg, 2026-09-20)
+
+The handoff line that carried "57,027 source records, 114,054 input plus applied entries, 1,189
+target boxes, and the first two prefixes verified" as four verified source facts was wrong, and
+restating it is why the same number keeps having to be re-explained. It is one measurement and two
+derivations.
+
+- **57,027 source records** is the measurement. It is the `record_count`, `member_counts` and
+  `source_records` of the run 34962256086 verification receipt, and the `next_cursor` pinned in
+  `operations/parallel_source/verify_snapshot.py`.
+- **114,054 is not a second fact.** It is exactly 2 x 57,027, because every record emits one INPUT
+  and one APPLIED entry. The relation holds exactly in all 18 committed prefix receipts under
+  `sunday_20260915_package/FB/actual-prefixes/`: `journal_count == 2 * record_count` in every one,
+  checked. Quoting it beside 57,027 double-counts a single measurement, which is what makes it look
+  like independent corroboration when it is arithmetic. It is also not a token count.
+- **1,189 is not a measurement either.** `journal_stack_execution.py:80` is
+  `TARGET_BOXES = 1189`, Greg's chosen standard, and `partition_entries_for` derives the partition
+  length from the target rather than the other way round. For this day it yields 96 entries per box
+  and therefore 1,189 boxes; on a big day it clamps at `MAX_ROWS` and the day does not land on 1,189
+  at all. Calling it a verified source fact states a configuration constant as an observation.
+
+What is independently verified alongside the record count is the seal over that journal
+(`journal_hash d8de0394...`, `state_hash d46ec933...`, `scope_hash 7460b519...`, pinned in
+`verify_snapshot.py`), and the verification status of the prefixes, which is the first two. All 19
+prefixes are not built.
+
+The usable form, for anything that quotes this again: 57,027 source records, sealed by
+`journal_hash d8de0394...`; the journal entry count is that doubled by construction; the box count
+is a configured standard, not an observation; prefixes 1 and 2 verified, 19 not built.
+
+Historical receipts and earlier handoffs that carry the old flat list were left untouched, per the
+rule to append new evidence rather than rewrite receipts. The correction is made where it
+propagates from: this handoff and the `CLAUDE.md` Frankie block.
