@@ -150,6 +150,7 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
     if type(adapter_class) is not type or not issubclass(adapter_class, DipoleClassroomPrincipalAdapter):
         raise ValueError('principal adapter class must preserve the mandatory Dipole classroom contract')
     return adapter_class(receiver_root=receiver_root,receiver_commit=receiver_commit,python=python,admission=admission,
+        cycle_index=binding['cycle_index'],
         directory=directory,preparation={'pins_path':str(pins_path),'expected_pins_sha256':digest(pins),
             'result_path':str(Path(result_path).resolve()),'delivery_receipt':str(Path(delivery_receipt).resolve()),
             'mapping_artifact':str(mapping_file)},

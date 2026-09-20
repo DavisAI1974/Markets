@@ -17,7 +17,8 @@ def case(tmp_path, executor=None):
             'knowledge-bundle-sha256': 'b'*64, 'retained-prompt':str(prompt),
             'retained-prompt-sha256':file_witness(prompt)['sha256']}, protected_files={'A': witness},
         section_evidence={section: witness for section in SECTIONS}, feedback_contract={},
-        session_executor=executor, admission={'output_bundle': 'NOT_PRESENTED', 'sealed_proof': 'UNPROVEN'})
+        session_executor=executor, admission={'output_bundle': 'NOT_PRESENTED', 'sealed_proof': 'UNPROVEN'},
+        cycle_index=0)
     # These tests isolate the session boundary; production prepare runs frozen receiver.
     adapter._check_preparation = lambda receipt: None
     attachment = {'config_hash': adapter._config_hash(), 'prompt': str(prompt), 'prompt_witness': file_witness(prompt),
@@ -386,6 +387,7 @@ def test_retained_prompt_renders_the_run_findings_ledger_and_prior_lessons_never
     assert b'earlier lesson, visible' in body and b'later lesson, not yet available' not in body
     assert b'available at or before as_of 500' in body
     assert body.index(b'# Run findings ledger') < body.index(b'# Preserved historical principal prompt')
+    assert b"THIS CYCLE'S PIN (cycle 0)" in body and body.index(b"THIS CYCLE'S PIN") < body.index(b'# Run findings ledger')
     sidecar = json.loads((adapter.directory / RUN_FINDINGS_SIDECAR).read_bytes())
     assert sidecar == dict(file_witness(ledger), path=str(ledger))
     assert (adapter.directory / 'historical-prompt.md').read_bytes() == prior.read_bytes()
@@ -444,6 +446,103 @@ def test_request_instruction_requires_the_registry_calculation_set_verbatim_from
     for _, layers in REGISTRY_CALCULATION_SET:
         for layer in layers:
             assert layer in RUN_ANALYSIS_INSTRUCTION
-    assert 'THE REQUIRED SET IS THE REGISTRY' in RUN_ANALYSIS_INSTRUCTION
+    assert 'THE REQUIRED SET FOR EACH CYCLE IS ITS PIN' in RUN_ANALYSIS_INSTRUCTION
+    assert 'drawn from THE REGISTRY, not a summary of it' in RUN_ANALYSIS_INSTRUCTION
     assert '"' + CALCULATION_ACCOUNTING_LEDGER + '"' in RUN_ANALYSIS_INSTRUCTION
     assert 'no layer is omitted and no layer is delegated to a runner' in RUN_ANALYSIS_INSTRUCTION
+
+
+def _repo_root():
+    from pathlib import Path
+    return Path(__file__).resolve().parents[4]
+
+
+def _pins_document():
+    from pathlib import Path
+    from frankie_principal_adapter import CYCLE_CALCULATION_PINS_PATH, CYCLE_CALCULATION_PINS_SCHEMA
+    document = json.loads(Path(CYCLE_CALCULATION_PINS_PATH).read_bytes())
+    assert document['schema'] == CYCLE_CALCULATION_PINS_SCHEMA
+    return document
+
+
+def test_cycle_calculation_pins_are_committed_evidence_and_cover_every_cycle_once():
+    """Greg, 2026-09-20 22:23Z: cycle 0 is pinned to the first group of calculations we did, cycle 1 to the
+    second, later cycles to the remaining original calculations as of the date we came up with them. The
+    pin is evidence, not memory: every source receipt it names must be the committed file with that sha256,
+    every pinned layer must be a registry calculation layer, and the pins together must cover the registry."""
+    import hashlib
+    from pathlib import Path
+    from frankie_principal_adapter import REGISTRY_CALCULATION_SET, load_cycle_calculation_pin
+    document = _pins_document()
+    crosswalk = json.loads((Path(__file__).resolve().parents[1] / 'audits'
+                            / 'CROSSWALK_SUNDAY_CYCLE0_FEED_33746436209_20260916.json').read_bytes())
+    assert document['registry_sha256'] == crosswalk['registry_sha256']
+    registry = {layer['layer_id'] for layer in crosswalk['layers'] if layer['policy'] == 'CAUSAL_STREAM_REQUIRED'}
+    registry &= {layer for _, layers in REGISTRY_CALCULATION_SET for layer in layers}
+    assert len(registry) == 49
+    by_registry_group = {group: list(layers) for group, layers in REGISTRY_CALCULATION_SET}
+    covered = {}
+    pinned_layers = set()
+    root = _repo_root()
+    previous_date = ''
+    for pin in document['pins']:
+        assert pin['defined_on'] >= previous_date, pin['group']
+        previous_date = pin['defined_on']
+        for cycle in pin['cycles']:
+            assert cycle not in covered, cycle
+            covered[cycle] = pin['group']
+        assert pin['registry_layers'] and set(pin['registry_layers']) <= registry, pin['group']
+        if pin.get('complete_registry'):
+            assert set(pin['registry_layers']) == registry and pinned_layers == registry, pin['group']
+            continue
+        assert not pinned_layers & set(pin['registry_layers']), pin['group']
+        pinned_layers |= set(pin['registry_layers'])
+        assert pin['registry_layers'] == by_registry_group[pin['group']], pin['group']
+        assert pin['calculations'] and pin['source_receipts']
+        for receipt in pin['source_receipts']:
+            path = root / receipt['path']
+            assert path.is_file(), receipt['path']
+            body = path.read_bytes()
+            assert len(body) == receipt['bytes'] and hashlib.sha256(body).hexdigest() == receipt['sha256'], receipt['path']
+    assert sorted(covered) == list(range(19))
+    assert pinned_layers == registry
+    assert document['pins'][0]['cycles'] == [0] and document['pins'][1]['cycles'] == [1]
+    for index in range(19):
+        assert load_cycle_calculation_pin(index)['group'] == covered[index]
+
+
+def test_instruction_carries_this_cycles_pin_and_refuses_without_one(tmp_path):
+    from frankie_principal_adapter import (FrankiePrincipalAdapter, CYCLE_CALCULATION_PIN_SIDECAR,
+                                           RUN_ANALYSIS_INSTRUCTION, load_cycle_calculation_pin)
+    adapter, _ = case(tmp_path)
+    text = adapter._instruction()
+    pin = load_cycle_calculation_pin(0)
+    assert text.startswith(RUN_ANALYSIS_INSTRUCTION)
+    assert "THIS CYCLE'S PIN (cycle 0)" in text and pin['group'] in text and pin['defined_on'] in text
+    for layer in pin['registry_layers']:
+        assert layer in text, layer
+    for receipt in pin['source_receipts']:
+        assert receipt['sha256'] in text
+    sidecar = json.loads((adapter.directory / CYCLE_CALCULATION_PIN_SIDECAR).read_bytes())
+    assert sidecar['cycle_index'] == 0 and sidecar['group'] == pin['group'] and sidecar['sha256'] == pin['pins_witness']['sha256']
+    assert adapter._instruction() == text  # idempotent against its own sidecar
+    other = FrankiePrincipalAdapter(receiver_root=adapter.receiver_root, receiver_commit=adapter.receiver_commit,
+        python=adapter.python, directory=tmp_path / 'other', preparation={}, render=dict(adapter.render),
+        protected_files=adapter.protected_files, section_evidence=adapter.section_evidence, feedback_contract={},
+        admission=dict(adapter.admission), cycle_index=1)
+    second = other._instruction()
+    assert "THIS CYCLE'S PIN (cycle 1)" in second and load_cycle_calculation_pin(1)['group'] in second
+    assert other._config_hash() != adapter._config_hash()
+    unpinned = FrankiePrincipalAdapter(receiver_root=adapter.receiver_root, receiver_commit=adapter.receiver_commit,
+        python=adapter.python, directory=tmp_path / 'unpinned', preparation={}, render=dict(adapter.render),
+        protected_files=adapter.protected_files, section_evidence=adapter.section_evidence, feedback_contract={},
+        admission=dict(adapter.admission))
+    with pytest.raises(ValueError, match='cycle calculation pin required'):
+        unpinned._instruction()
+    with pytest.raises(ValueError, match='valid Sunday cycle index'):
+        FrankiePrincipalAdapter(receiver_root=adapter.receiver_root, receiver_commit=adapter.receiver_commit,
+            python=adapter.python, directory=tmp_path / 'bad', preparation={}, render=dict(adapter.render),
+            protected_files=adapter.protected_files, section_evidence=adapter.section_evidence, feedback_contract={},
+            admission=dict(adapter.admission), cycle_index=19)
+    with pytest.raises(ValueError, match='is absent'):
+        load_cycle_calculation_pin(0, tmp_path / 'missing.json')

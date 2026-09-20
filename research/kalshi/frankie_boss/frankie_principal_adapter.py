@@ -76,6 +76,60 @@ FROZEN_LEARNED_STRUCTURE = (
     'historical_timing_lifespan_context', 'learned_structure_proposal_index_material')
 CALCULATION_ACCOUNTING_LEDGER = 'calculation_accounting'
 
+# Greg Davis, 2026-09-20 22:23Z: "we need to pin cycle 0 calcs with the first group of calcs we did. Same
+# with the 2nd and then the rest need to be pinned on when we came up with the rest of the original
+# remaining calcs." Each cycle's required calculation set is a committed PIN naming the original group
+# that cycle repeats, its registry layers and the source receipts (path, bytes, sha256) that evidence the
+# group; the adapter reads the pin for its cycle index and renders it into the request instruction and
+# the prompt. No cycle renders a request without its pin; the pin file's witness is saved beside the
+# prompt and carried in the attachment (`calculation_pin_witness`), like the run-findings ledger.
+CYCLE_CALCULATION_PINS_PATH = Path(__file__).resolve().parent / 'knowledge' / 'CYCLE_CALCULATION_PINS.json'
+CYCLE_CALCULATION_PINS_SCHEMA = 'FRANKIE_CYCLE_CALCULATION_PINS_V1'
+CYCLE_CALCULATION_PIN_SIDECAR = 'calculation-pin-witness.json'
+
+
+def load_cycle_calculation_pin(cycle_index, path=None):
+    """The committed pin for one cycle: the original calculation group it repeats.
+
+    Refuses an absent or malformed file, an index no pin covers, and an index two pins cover.
+    Returns the pin entry with the file witness attached so the caller can pin it.
+    """
+    if type(cycle_index) is not int or not 0 <= cycle_index < 19:
+        raise ValueError('cycle calculation pin required: valid Sunday cycle index required')
+    pins_path = Path(path or CYCLE_CALCULATION_PINS_PATH)
+    if not pins_path.is_file():
+        raise ValueError('cycle calculation pin required: ' + str(pins_path) + ' is absent')
+    document = json.loads(pins_path.read_bytes())
+    if document.get('schema') != CYCLE_CALCULATION_PINS_SCHEMA or type(document.get('pins')) is not list:
+        raise ValueError('cycle calculation pins file is not ' + CYCLE_CALCULATION_PINS_SCHEMA)
+    matches = [pin for pin in document['pins']
+               if type(pin.get('cycles')) is list and cycle_index in pin['cycles']]
+    if len(matches) != 1:
+        raise ValueError('cycle calculation pin required: cycle %d is covered by %d pins, not one'
+                         % (cycle_index, len(matches)))
+    pin = dict(matches[0])
+    for key in ('group', 'defined_on', 'calculations', 'registry_layers', 'source_receipts'):
+        if not pin.get(key):
+            raise ValueError('cycle calculation pin for cycle %d lacks %s' % (cycle_index, key))
+    for receipt in pin['source_receipts']:
+        if type(receipt) is not dict or not {'path', 'sha256', 'bytes'} <= set(receipt):
+            raise ValueError('cycle calculation pin source receipt needs path, bytes and sha256')
+    pin['pins_witness'] = dict(file_witness(pins_path), path=str(pins_path))
+    pin['cycle_index'] = cycle_index
+    return pin
+
+
+def calculation_pin_instruction(pin):
+    """The per-cycle required set, rendered into the instruction after the standing rule."""
+    receipts = '; '.join(r['path'] + ' sha256 ' + r['sha256'] for r in pin['source_receipts'])
+    return ('THIS CYCLE\'S PIN (cycle %d): you repeat the %s calculations, the group first done on %s '
+            '(source receipts: %s). THE REQUIRED SET FOR THIS CYCLE IS THIS PIN: derive yourself, on this '
+            'cycle\'s delivered rows, %s; the registry layers you must account for are %s. The accounting '
+            'entry lists every pinned layer; layers of other cycles\' pins are not required now and are '
+            'named in their own cycles. '
+            % (pin['cycle_index'], pin['group'], pin['defined_on'], receipts,
+               '; '.join(pin['calculations']), ', '.join(pin['registry_layers'])))
+
 RUN_ANALYSIS_INSTRUCTION = (
     'Print your own run analysis in the session output and retain the same Markdown text '
     'as a separate entry in lessons. Cover how this run has gone so far, your assessment '
@@ -91,14 +145,16 @@ RUN_ANALYSIS_INSTRUCTION = (
     'reappearances and ancestry, the D structures and families, the dipoles and geometry, the pair and '
     'triplet recurrences, and the pre-birth opportunities; compare what you derive with the retained '
     'sections and the frozen learned structure, and learn from every difference; the retained sections '
-    'are provenance, never a substitute for your own derivation. THE REQUIRED SET IS THE REGISTRY, not a '
-    'summary of it: the calculation layers of the native ingestion registry that the August 28 '
-    'recalculation (run 33746436209, A_MEMORY arm) carried, each derived by you on this cycle\'s rows, '
-    'group by group and layer by layer: '
+    'are provenance, never a substitute for your own derivation. THE REQUIRED SET FOR EACH CYCLE IS ITS '
+    'PIN (Greg Davis, 2026-09-20): cycle 0 repeats the first group of calculations we did, cycle 1 the '
+    'second, and later cycles the remaining original calculations as of the date we came up with them; '
+    'the pin follows this instruction. The pins are drawn from THE REGISTRY, not a summary of it: the '
+    'calculation layers of the native ingestion registry that the August 28 recalculation (run '
+    '33746436209, A_MEMORY arm) carried are, group by group and layer by layer: '
     + '; '.join(group + ' (' + ', '.join(layers) + ')' for group, layers in REGISTRY_CALCULATION_SET)
     + '. Compare every derivation with the frozen learned structure layers (' + ', '.join(FROZEN_LEARNED_STRUCTURE)
     + ') and with the retained sections. File ONE accounting entry in lessons, a JSON object whose "ledger" '
-    'field is "' + CALCULATION_ACCOUNTING_LEDGER + '", listing every layer above with its status: derived '
+    'field is "' + CALCULATION_ACCOUNTING_LEDGER + '", listing every layer of this cycle\'s pin with its status: derived '
     '(with where the derivation is written), compared (with what differed), or could_not (with the reason); '
     'no layer is omitted and no layer is delegated to a runner. File the ten append-only output '
     'ledgers of the native ingestion registry as separate entries in lessons, each a JSON object whose '
@@ -300,7 +356,10 @@ class FrankiePrincipalAdapter:
     """
     def __init__(self, *, receiver_root, receiver_commit, python, directory,
                  preparation, render, protected_files, section_evidence,
-                 feedback_contract, session_executor=None, admission=None):
+                 feedback_contract, session_executor=None, admission=None, cycle_index=None):
+        if cycle_index is not None and (type(cycle_index) is not int or not 0 <= cycle_index < 19):
+            raise ValueError('valid Sunday cycle index required for the calculation pin')
+        self.cycle_index = cycle_index
         self.receiver_root = Path(receiver_root).resolve()
         self.receiver_commit = receiver_commit
         self.python = str(python)
@@ -349,7 +408,8 @@ class FrankiePrincipalAdapter:
             'python': self.python, 'preparation': {k: str(v) for k, v in self.preparation.items()},
             'render': {k: str(v) for k, v in self.render.items()},
             'protected_files': self.protected_files, 'section_evidence': self.section_evidence,
-            'feedback_contract': self.feedback_contract, 'admission': self.admission, 'mechanism': 'AGENT_SESSION'})
+            'feedback_contract': self.feedback_contract, 'admission': self.admission, 'mechanism': 'AGENT_SESSION',
+            'cycle_index': self.cycle_index})
 
     def _code(self):
         try:
@@ -499,6 +559,9 @@ class FrankiePrincipalAdapter:
         sidecar = self.directory / RUN_FINDINGS_SIDECAR
         if sidecar.exists():
             attachment['run_findings_witness'] = json.loads(sidecar.read_bytes())
+        pin_sidecar = self.directory / CYCLE_CALCULATION_PIN_SIDECAR
+        if pin_sidecar.exists():
+            attachment['calculation_pin_witness'] = json.loads(pin_sidecar.read_bytes())
         attachment['attachment_hash'] = digest(attachment)
         return attachment
 
@@ -544,12 +607,29 @@ class FrankiePrincipalAdapter:
             "multi-day sequencing is overridden by this current single-day instruction.\n"
             "Actual local delivery: " + str(self.preparation['delivery_receipt']) + "\n"
             "Feedback contract: " + canonical(self.feedback_contract).decode() + "\n\n"
-            + RUN_ANALYSIS_INSTRUCTION + "\n\n").encode()
+            + self._instruction() + "\n\n").encode()
         heading = b"# Preserved historical principal prompt (exact bytes follow)\n"
         with Path(prompt).open('xb') as handle:
             handle.write(prefix + findings + heading + original + block)
             handle.flush()
             os.fsync(handle.fileno())
+
+    def _calculation_pin(self):
+        if self.cycle_index is None:
+            raise ValueError('cycle calculation pin required: the adapter was built without a cycle index')
+        return load_cycle_calculation_pin(self.cycle_index, self.render.get('calculation-pins'))
+
+    def _instruction(self):
+        """The standing run-analysis instruction followed by this cycle's committed calculation pin."""
+        pin = self._calculation_pin()
+        witness = dict(pin['pins_witness'], cycle_index=pin['cycle_index'], group=pin['group'])
+        sidecar = Path(self.directory) / CYCLE_CALCULATION_PIN_SIDECAR
+        if sidecar.exists():
+            if json.loads(sidecar.read_bytes()) != witness:
+                raise ValueError('retained calculation pin witness differs from the committed pins file')
+        else:
+            _write(sidecar, witness)
+        return RUN_ANALYSIS_INSTRUCTION + calculation_pin_instruction(pin)
 
     def _run_findings_block(self):
         """Never hidden (Greg, 2026-09-20): the run-findings ledger, exact bytes, and Frankie's own prior
@@ -637,7 +717,7 @@ class FrankiePrincipalAdapter:
                 'Cite every retained section hash. Supply feedback without principal_receipt_hash, '
                 'lessons, sections (section ID to retained SHA256), session_id and '
                 'model_identity_as_reported_by_session. The host attests actual session identity. '
-                + RUN_ANALYSIS_INSTRUCTION)}
+                + self._instruction())}
 
     def execute(self, request_id, attachment):
         request = self._request(request_id, attachment)
