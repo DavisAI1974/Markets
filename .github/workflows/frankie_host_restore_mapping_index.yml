@@ -1,0 +1,129 @@
+name: Frankie restore the source mapping index on the native host
+# Pipeline run 35520104563 stopped in cycle 0 because mapping/index.jsonl was never delivered to the
+# host (the 20260915 package carried mapping.json and a bound mapping, not the index). This takes the
+# index that frankie_boss_ledger_mapping.yml rebuilt (its artifact), verifies it byte for byte against
+# the committed mapping.json pin, stages it on the granite bucket, starts the host if it is stopped
+# (Greg's go covers the run's compute) and places it beside the host's mapping.json through
+# deploy/aws/host/frankie_host_restore_mapping_index.ps1, which re-verifies the pin off the host's own
+# mapping.json before the rename. Nothing is deleted anywhere. Dispatch only.
+on:
+  workflow_dispatch:
+    inputs:
+      mapping_run_id:
+        description: 'Run id of frankie_boss_ledger_mapping.yml whose artifact holds mapping/index.jsonl'
+        required: true
+      instance:
+        description: 'Native host instance id'
+        required: false
+        default: 'i-0e90ee6110ef609aa'
+      day:
+        description: 'Day whose run configuration names the mapping'
+        required: false
+        default: '20211003'
+      run_root:
+        description: 'Day pipeline RunRoot on the host'
+        required: false
+        default: 'C:/Codex/Frankie-BOSS-20260919/days'
+      host_python:
+        description: 'Host python (boto3 present) that performs the S3 download'
+        required: false
+        default: 'C:/Codex/Frankie-BOSS-20260919/actual-host-python/Scripts/python.exe'
+      bucket:
+        description: 'Staging bucket the host role can read'
+        required: false
+        default: 'frankie-granite42-568968024170-us-east-1'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  restore:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_EC2_METADATA_DISABLED: 'true'
+      PINNED_MAPPING: research/kalshi/frankie_boss/sunday_20260915_package/FB/source-execution-20260915/mapping/mapping.json
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Fetch the rebuilt mapping artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frankie-sunday-byte-mapping-${{ inputs.mapping_run_id }}
+          run-id: ${{ inputs.mapping_run_id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/rebuilt
+      - name: Verify the rebuilt index against the committed mapping.json pin, then stage it on S3
+        id: stage
+        env:
+          DAY: ${{ inputs.day }}
+          BUCKET: ${{ inputs.bucket }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          pinned = Path(os.environ['PINNED_MAPPING']).read_bytes()
+          pin = json.loads(pinned)['index']
+          rebuilt = Path(os.environ['RUNNER_TEMP'])/'rebuilt'
+          mapping = (rebuilt/'mapping'/'mapping.json').read_bytes()
+          if hashlib.sha256(mapping).hexdigest() != hashlib.sha256(pinned).hexdigest():
+              raise SystemExit('rebuilt mapping.json differs from the committed one; the index cannot be trusted')
+          index = (rebuilt/'mapping'/pin['path']).read_bytes()
+          digest = hashlib.sha256(index).hexdigest()
+          if len(index) != pin['bytes'] or digest != pin['sha256']:
+              raise SystemExit(f"rebuilt index differs from the pin: {len(index)} bytes sha256 {digest} vs {pin['bytes']} {pin['sha256']}")
+          print(f"rebuilt index matches the pin: {pin['bytes']} bytes sha256 {digest}")
+          key = f"host-deliveries/{os.environ['DAY']}/mapping/{pin['path']}"
+          import boto3
+          boto3.client('s3', region_name='us-east-1').put_object(Bucket=os.environ['BUCKET'], Key=key, Body=index,
+              Metadata={'sha256': digest, 'mapping_sha256': hashlib.sha256(mapping).hexdigest()})
+          print('staged s3://' + os.environ['BUCKET'] + '/' + key)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f"key={key}\nsha256={digest}\nbytes={pin['bytes']}\n")
+          PY
+      - name: Start the native host if it is stopped (waits for SSM Online)
+        env:
+          INSTANCE: ${{ inputs.instance }}
+        run: python deploy/aws/ec2_host.py --instance "$INSTANCE" --region us-east-2 start
+      - name: Tag KeepRunning=true for the run's duration (the idle guard stopped the host at 16:07Z)
+        env:
+          INSTANCE: ${{ inputs.instance }}
+        run: |
+          python - <<'PY'
+          import boto3, os
+          iid = os.environ['INSTANCE']
+          ec2 = boto3.client('ec2', region_name='us-east-2')
+          ec2.create_tags(Resources=[iid], Tags=[{'Key': 'KeepRunning', 'Value': 'true'}])
+          tags = {t['Key']: t['Value'] for t in ec2.describe_instances(InstanceIds=[iid])['Reservations'][0]['Instances'][0].get('Tags', [])}
+          print('KeepRunning =', tags.get('KeepRunning'), '(revert to false once the two-cycle run is done)')
+          PY
+      - name: Place the index beside the host's mapping.json over SSM
+        env:
+          INSTANCE: ${{ inputs.instance }}
+          DAY: ${{ inputs.day }}
+          RUN_ROOT: ${{ inputs.run_root }}
+          HOST_PYTHON: ${{ inputs.host_python }}
+          BUCKET: ${{ inputs.bucket }}
+          KEY: ${{ steps.stage.outputs.key }}
+          SHA256: ${{ steps.stage.outputs.sha256 }}
+          BYTES: ${{ steps.stage.outputs.bytes }}
+        run: |
+          python deploy/aws/ssm_run_ps1.py \
+            --instance "$INSTANCE" --region us-east-2 \
+            --script deploy/aws/host/frankie_host_restore_mapping_index.ps1 \
+            --set "Day=$DAY" \
+            --set "RunRoot=$RUN_ROOT" \
+            --set "Python=$HOST_PYTHON" \
+            --set "Bucket=$BUCKET" \
+            --set "Key=$KEY" \
+            --set "ExpectedSha256=$SHA256" \
+            --set "ExpectedBytes=$BYTES" \
+            --timeout 900 --comment "restore mapping index.jsonl for day $DAY"
