@@ -2,6 +2,14 @@
 
 ## 2026-09-20 — Frankie/BOSS launch day: the Pod that could not start, the replacement, the operator workflows
 
+- **`deploy/aws/host/frankie_host_normalize_eol.ps1`** + `.github/workflows/frankie_host_normalize_eol.yml` + the `.gitattributes`
+  `-text` rules for `research/kalshi/frankie_boss/**/*.py` and `research/refrag/**/*.py` — the line-843 fix (2026-09-20). Every
+  `*_parser_code_hash` is a sha256 over SOURCE BYTES and `run_actual_sunday.py` hashes every .py into the host identity; the
+  observer runs on Linux (LF) while the native host was a Windows checkout with `core.autocrlf=true` (CRLF), so the host's
+  `identity_hash` (6993d307...) never matched the observer's pins (1bd1027a...) — reproduced byte for byte off the host. The
+  script sets `core.autocrlf=false` + `core.eol=lf` on the checkout, re-checks out the two roots from the index, refuses on
+  a dirty tree before/after, counts CR-carrying .py files before/after, proves the stacked-route worktree blob equals the
+  committed blob, and writes `FRANKIE_HOST_EOL_NORMALIZED_V1` into the day directory. Deletes nothing.
 - **`deploy/aws/host/frankie_host_supersede_code_bound_state.ps1`** + `.github/workflows/frankie_host_supersede_code_bound_state.yml`
   — Greg's launch-day override (2026-09-20). MOVES (never deletes) the code-bound retained state of a run directory into a
   dated sibling folder so the runner can re-enter it at the advanced host commit: host-identity, initialization,
