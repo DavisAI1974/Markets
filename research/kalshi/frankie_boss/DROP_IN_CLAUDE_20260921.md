@@ -13,7 +13,15 @@ marker), so a runner is re-preparing cycle 0 PIECEWISE right now; it stops at th
 own. Never kill it. Its output is superseded by the whole-cycle round; record nothing against it. First
 action: `frankie_host_cycle_status.yml` (read-only; one was dispatched at 22:20Z) until no runner is
 alive, then the round in `CLAUDE_HANDOFF_20260920.md` "22:20Z: HANDOFF TO THE NEXT CHAT" (steps 1-6).
-Greg's concern, answered there with the evidence: the exhaustion and D calculations are NOT dropped; the
+BEFORE ANY DISPATCH, Greg's two opening tasks (handoff "22:25Z", full text there): (A) PIN each cycle's
+calculation set to the original group it repeats: cycle 0 = the FIRST group of calculations we did, cycle
+1 = the SECOND, later cycles = the remaining original calculations as of the date we came up with them;
+committed pins with source receipts and sha256, rendered into each cycle's request instruction, tested
+against the receipts; no cycle dispatches without its pin. (B) RESEARCH Frankie and the code to verify the
+exhaustion research is still the objective and still in his manifest (mission document, knowledge manifest,
+calculation contract, the eighteen sections, Memory A, learned structure, the instruction, the classroom):
+present / weakened / absent per document, restore anything missing, ledger entry.
+Greg's concern, answered there with the evidence so far (partial, not the audit): the exhaustion and D calculations are NOT dropped; the
 eighteen sections, the mission document and the frozen learned structure are delivered, and since tonight
 the request ORDERS the derivations by registry layer name. Host at f0910e6c, family green (35541080824).
 

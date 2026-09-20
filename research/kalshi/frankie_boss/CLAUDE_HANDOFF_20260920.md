@@ -1801,3 +1801,40 @@ THE NEXT CHAT DOES THIS, IN ORDER (no package code changes):
    response.yml` -> ONE pipeline dispatch -> verify, native learning, readback, completion -> cycle 1.
 Rules that stand: nothing deleted, every move receipted; no Pod stop/terminate without Greg; no package
 code changes; the drop-in `DROP_IN_CLAUDE_20260921.md` "State at 22:35Z" carries the same list.
+
+### 22:25Z: Greg's two opening tasks for the next chat (before any dispatch)
+
+Greg, 22:23Z: "we need to pin cycle 0 calcs with the first group of calcs we did. Same with the 2nd and
+then the rest need to be pinned on when we came up with the rest of the original remaining calcs. And we
+need to research frankie and the code to make sure that exhaustion research hasn't been dropped as our
+objective and dropped from his manifest."
+
+TASK A: PIN EACH CYCLE'S CALCULATION SET TO THE ORIGINAL GROUP IT REPEATS. Cycle 0's required set is the
+FIRST group of calculations we did; cycle 1's is the SECOND group; every later cycle is pinned to the
+remaining original calculations as of the date we came up with them. Do it by evidence, not memory: find
+each group's original receipts and hashes (the exhaustion research trail is on git: the 2026-08-17 phase 1
+and phase 2 workflows `ng_exhaustion_chain_phase1_*_20260817.yml`, `ng_exhaustion_chain_canonical_20260817.yml`,
+the aftermath and chain-birth workflows of 08-17..08-19, the 2026-08-23 step-1 receipts
+(`ng_exhaustion_step1_*`, the `chatgpt/ng-exhaustion-step1-3mo-*-20260823` branches), the 2026-08-28
+A_MEMORY recalculation (run 33746436209; registry sha256 239a1480..., 99 layers; producer paths in
+`audits/CROSSWALK_SUNDAY_CYCLE0_FEED_33746436209_20260916.json`), the 2026-09-15 first Sunday run
+(`sunday_20260915_package/`)), write the per-cycle pin as a committed file
+(`knowledge/CYCLE_CALCULATION_PINS.md` + a JSON the adapter reads: cycle index -> group name, the
+layers, the source receipts with sha256), and render the pinned group into that cycle's request instruction
+(today's `REGISTRY_CALCULATION_SET` in `frankie_principal_adapter.py` is the whole 49-layer registry for
+every cycle; it becomes the per-cycle pin, tested against the source receipts the way the registry test
+reads the crosswalk JSON). No cycle dispatches until its pin exists.
+
+TASK B: VERIFY THE EXHAUSTION RESEARCH IS STILL THE OBJECTIVE, IN FRANKIE AND IN THE CODE. Read, do not
+assume: the mission document (`research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md`,
+registry layer `controlling_rt_mission`, delivered by `native_a_arm_launch.py`), Frankie's manifest /
+knowledge bundle as served (`anchored_knowledge_manifest`, `native_calculation_contract`), the eighteen
+sections in the historical prompt (4.0, 4.0b, 4.1-4.16), Memory A (`seed_a_memory_20260902`), the frozen
+learned-structure layers, the request instruction (`RUN_ANALYSIS_INSTRUCTION`), and the classroom package.
+For each: does it state exhaustion research (chains, extensions, reappearances, ancestry, D structures and
+families, pre-birth, the clocks, horizon times) as the objective, and is it delivered in the cycle 0 request
+bytes (grep the exported prompt.md and session-request.json once exported)? Report per document: present /
+weakened / absent, with the line. Anything absent or weakened is restored before cycle 0 dispatches, with a
+ledger entry in `knowledge/RUN_FINDINGS.md`. Today's evidence so far (partial, not the audit): the
+instruction names the derivations and the 49 layers; the mission document and learned-structure layers were
+DELIVERED in the 2026-09-16 crosswalk; the eighteen sections are in the historical prompt bytes.
