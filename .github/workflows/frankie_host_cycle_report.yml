@@ -67,8 +67,11 @@ jobs:
           import os
           from pathlib import Path
           import boto3
+          from botocore.config import Config
           key = f"host-reports/{os.environ['DAY']}/cycle-{os.environ['CYCLE_INDEX']}-report-{os.environ['GITHUB_RUN_ID']}.txt"
-          url = boto3.client('s3', region_name='us-east-1').generate_presigned_url(
+          # SigV4 explicitly: botocore downgrades a us-east-1 presign to SigV2, where the client's unsigned
+          # Content-Type header breaks the signature (runs 35536268659 and 35536392114 refused with 403).
+          url = boto3.client('s3', region_name='us-east-1', config=Config(signature_version='s3v4')).generate_presigned_url(
               'put_object', Params={'Bucket': os.environ['BUCKET'], 'Key': key}, ExpiresIn=3600, HttpMethod='PUT')
           if "'" in url or '\n' in url:
               raise SystemExit('presigned URL carries a character ssm_run_ps1.py --set refuses')
