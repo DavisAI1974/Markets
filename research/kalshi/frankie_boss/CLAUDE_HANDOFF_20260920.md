@@ -872,3 +872,56 @@ their blobs); `a00ef8a8` `frankie_host_normalize_eol.ps1` + workflow (core.autoc
 blob, receipt into the day directory). Sequence: normalize -> advance the host to a commit carrying the
 attribute -> supersede (the code hashes change with the bytes, so host-identity and the training chain
 re-mint once more; stale by commit) -> re-dispatch. Receipts below as they land.
+
+### CRLF fix chain landed; pipeline runs 35514761496 and 35516396264 got PAST line 843 and stop one gate later
+
+Receipts, in order: normalize run 35514620722 (13:49Z; `checkout-index` rewrote nothing on the first
+attempt, run 35514364576, so v2 does `git rm --cached -r` + `reset --hard` with core.autocrlf=false and
+core.eol=lf; CR-carrying .py files 391 -> the committed-CRLF set only), advance run 35514673606
+(6b0b37fe -> cb68aecb, receipt now kept on the host as `host-advance-<stamp>.json`), supersede run
+35514717490 (10 items moved, stale by commit), pipeline **35514761496** dispatched 13:52:08Z.
+
+Host job 13:55:07Z-14:01:51Z: __init__ passed, initialization 13:55:30Z, training re-minted, context cache
+14:01:19Z (phase `boss_reasoning` 26.8 s, i.e. the retained preparation path, not a 10-minute
+re-preparation), then `ValueError` **1.0 s later, still in `boss_reasoning`** -- so line 843 is BEHIND
+us: the run never reached `granite_request`. Probe run 35515936822 (read-only): cycle-00 holds the fresh
+`host-context-cache.c15.json` and NOTHING else new -- no host-preparation, no actual-critic-request, no
+host-ready, no host-capacity-rejected. The stop record carried only `error_type`, by design (the runner
+never interpolates exception text), and that is exactly what made this refusal undiagnosable from the log.
+
+Fix, minimal and durable: `57366d61` `stop_frames()` in `run_actual_sunday.py` -- the stop record gains
+`frames`: repo-relative file, line and function of the exception and its cause chain, innermost last; no
+message, argument, local, stdin or path root (a file outside the repository appears by bare name). Advance
+run 35516282143 (cb68aecb -> 57366d61), supersede run 35516316369, pipeline **35516396264** (14:24Z).
+Host job 14:27:30Z-14:33:25Z: same shape (cache 14:32:53Z, `ValueError` 1.0 s later) and STILL a type-only
+stop record -- because `run_actual_sunday_ec2.py` runs **`run_actual_sunday_classroom.main`**, whose own
+`except Exception` prints the type-only record; base.main never executes on the host. `34a4feac` gives the
+classroom main the same frames. Advance run 35517016843, supersede run 35517069545, pipeline re-dispatched
+~14:39Z.
+
+Leading suspect for the ValueError (code read, not yet confirmed by frames): `ClassroomActualHost.prime_cache`
+runs AFTER `super().prime_cache` emitted the 1/1 progress and, before any further progress line, builds the
+Dipole classroom package and `_save`s `host-dipole-classroom-{source,teacher-key,pre-message,binding}.c15.json`
+into cycle-00 -- where the 09-17 originals (11.9 MB / 21.2 MB / 21.2 MB / 1 KB) still sit, deliberately KEPT
+by the supersede as "data-derived". If the teacher key or binding carries anything from the re-minted
+training identities, `_save` refuses on differing bytes. The frames settle it; then the supersede's
+candidate set is extended (move, never delete, receipted) and the run re-dispatched.
+
+**Cycle 1 will refuse even after cycle 0 runs (established, not yet fixed; task #6).** The two-cycle prefix
+batch on the host (`remaining-prefix-binding.json`, `prefix-01-packet-seed.json`, `prefix-batch-02.json`)
+was built 09-19 on the CRLF checkout and pins sha256 of `build_remaining_sunday_prefixes.py`,
+`journal_prefix_snapshot.py`, `sunday_native_runtime.py`, `context_session.py` (all committed LF; verified
+with `git grep -P '\r' HEAD`: the committed-CRLF set is `day_pipeline.py`, `package_final_committed.py`,
+`run_actual_sunday_ec2.py`, `seal_final_prelaunch_candidate.py`, one test and the Sunday package copies).
+`encoding_options` (run_actual_sunday.py ~588-611) compares the batch's `context_selection` hashes to the
+checkout for index >= 1, and the builder refuses to reuse the old seed sidecar (305-316) and binding.
+Built and pushed, not yet run: `d00e3efa` `frankie_host_rebuild_prefix_batch.ps1` + workflow (registered on
+the trunk, 82dab566): stops when nothing is stale; otherwise moves the code-pinned batch files aside with
+sha256 (prefix-00 never touched), re-runs the gold-standard builder exactly as `day_schedule_prefixes.ps1`
+does, rewrites only the `prefix_manifest` witness (sha256, bytes) in the day configuration with a dated
+backup, one receipt. After it: supersede (host-identity pins the configuration), move the git receipt
+`runs/20211003/03-schedule-prefixes.json` aside on the launch branch so the stage re-receipts with the new
+`prefixes_sha256`, dispatch.
+
+Other: CI workflow `frankie_host_scripts_ci.yml` is live (first run 35514824147 green). Pipeline dispatch
+inputs unchanged (day 20211003, cycles 2, keep_compute true, checks_only false, Greg's go hash).
