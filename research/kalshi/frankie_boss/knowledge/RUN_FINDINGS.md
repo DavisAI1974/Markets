@@ -65,3 +65,16 @@ causal_clocks 7), compared against the nine frozen learned-structure layers. Fro
 instruction names every layer verbatim and requires one `calculation_accounting` lesson entry giving each
 layer's status (derived, compared, could_not with reason); the constant is tested against the crosswalk
 file so it cannot drift from the registry. Cycle 0's request is re-rendered under this instruction.
+
+## 2026-09-20, cycle 0 is re-run WHOLE, from the beginning, not in steps (Greg Davis)
+
+"It feels like we are skipping steps doing things this way which is why i wanted a full rerun from the
+beginning and not steps." The re-issue built earlier today kept the machine half of cycle 0 (the native BOSS
+ABSTAIN, the empty Granite critique, the export) and re-rendered only Frankie's request; that was piecewise
+and it was stopped before it produced a request. Recorded for the record: the cycle's order is fixed and
+sequential (native BOSS and Granite critic, then the export into Frankie's package, then Frankie's session
+with the same-session classroom teach-back and correction, then native learning, readback, completion);
+nothing on the machine computes exhaustion chains, D structures or families; those derivations, and the
+classroom, are Frankie's step, and he correlates the machine's result after it is delivered to him, never
+concurrently. The whole cycle is superseded with receipts (nothing deleted) and runs again under the current
+code so his request carries a fresh machine result and the classroom runs anew.

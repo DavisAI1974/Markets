@@ -11,7 +11,7 @@
 # writes a receipt into the day directory). Refuses while a runner process is alive. Writes only
 # the declaration and the receipt; never touches the cycle store or the credential.
 #
-# $Day, $RunRoot, $ToolsRoot, $Python, $CycleIndex, $Reason arrive from ssm_run_ps1.py --set; no path literal here.
+# $Day, $RunRoot, $ToolsRoot, $Python, $CycleIndex, $Reason, $SupersedePrincipal, $SupersedeCycle arrive from ssm_run_ps1.py --set; no path literal here.
 $ErrorActionPreference = 'Stop'
 foreach ($required in 'Day', 'RunRoot', 'ToolsRoot', 'Python', 'Reason') {
     $value = Get-Variable -Name $required -ValueOnly -ErrorAction SilentlyContinue
@@ -24,6 +24,11 @@ if ($CycleIndex -notmatch '^\d{2}$') { throw "CycleIndex must be two digits (val
 if (-not (Get-Variable SupersedePrincipal -ErrorAction SilentlyContinue)) { $SupersedePrincipal = 'false' }
 if ($SupersedePrincipal -notin @('true', 'false')) { throw "SupersedePrincipal must be true or false (value: '$SupersedePrincipal')" }
 $principalArgs = @(); if ($SupersedePrincipal -eq 'true') { $principalArgs = @('--supersede-principal') }
+# Greg, 2026-09-20 ("a full rerun from the beginning and not steps"): 'true' also declares that EVERY live
+# stage of the open cycle may be superseded so it runs again from the beginning under the current code.
+if (-not (Get-Variable SupersedeCycle -ErrorAction SilentlyContinue)) { $SupersedeCycle = 'false' }
+if ($SupersedeCycle -notin @('true', 'false')) { throw "SupersedeCycle must be true or false (value: '$SupersedeCycle')" }
+if ($SupersedeCycle -eq 'true') { $principalArgs += @('--supersede-cycle') }
 $dayDirectory = Join-Path $RunRoot $Day
 $cfgPath = Join-Path $dayDirectory 'actual-host-configuration.json'
 if (-not (Test-Path $cfgPath)) { throw "no run configuration for $Day at $cfgPath" }

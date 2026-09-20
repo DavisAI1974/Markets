@@ -301,3 +301,36 @@ def test_principal_supersede_needs_a_declaration_and_no_retained_output(tmp_path
     store._save('sun', 'principal_output', dict(feedback={}, lessons=[]))
     assert store._principal_supersede('sun') is False
     assert store._load('sun', 'attachment') == attachment
+
+
+def test_cycle_supersede_archives_every_live_stage_only_on_a_declaration_and_never_past_a_retained_output(tmp_path, monkeypatch):
+    # Greg, 2026-09-20: "I wanted a full rerun from the beginning and not steps". A declared whole-cycle
+    # supersede archives binding, controller, export, attachment and intent and clears them, so the cycle
+    # runs again from the native BOSS onward; a wrong old binding hash or any retained Frankie output refuses.
+    import json
+    store, checkpoint, args, calls = fixture(tmp_path, monkeypatch)
+    binding = dict(request_id='sun', controller={'a': 1}, learning={}, training_identities={'code_hash': 'x'*64}, frozen_memory_sha256='m'*64)
+    stages = dict(binding=binding, controller=dict(request_id='sun', status='incomplete'), export=dict(boss_commit='b'*40),
+                  attachment=dict(prompt='p', attachment_hash='h'*64), principal_intent=dict(request_id='sun', attachment_hash='h'*64))
+    for stage, value in stages.items():
+        store._save('sun', stage, value)
+    old_hash = evidence_hash(binding)
+    assert store._cycle_supersede('sun', binding) is False  # no declaration
+    declaration = Path(str(store.path)+store.IDENTITY_SUPERSEDE_SUFFIX)
+    declaration.write_text(json.dumps([dict(request_id='sun', supersede_cycle=True, old_binding_hash='z'*64)]))
+    assert store._cycle_supersede('sun', binding) is False  # wrong old hash
+    assert all(store._load('sun', stage) == value for stage, value in stages.items())
+    declaration.write_text(json.dumps([dict(request_id='sun', supersede_cycle=True, old_binding_hash=old_hash)]))
+    assert store._cycle_supersede('sun', binding) is True
+    for stage, value in stages.items():
+        assert store._load('sun', stage) is None, stage
+        assert store._load('sun', stage + '-cycle-superseded-' + old_hash[:12]) == value, stage
+    accepted = json.loads(Path(str(store.path)+store.IDENTITY_ACCEPTED_SUFFIX).read_bytes())
+    assert accepted[-1]['schema'] == 'FRANKIE_CYCLE_SUPERSEDE_ACCEPTED_V1' and accepted[-1]['old_binding_hash'] == old_hash
+    assert set(accepted[-1]['archived_stages']) == set(stages)
+    assert store._cycle_supersede('sun', None) is False  # nothing live: idempotent
+    # a retained principal output (or feedback, training, completion) is never superseded
+    store._save('sun', 'binding', binding)
+    store._save('sun', 'principal_output', dict(feedback={}, lessons=[]))
+    assert store._cycle_supersede('sun', binding) is False
+    assert store._load('sun', 'binding') == binding

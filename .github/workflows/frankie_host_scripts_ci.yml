@@ -34,6 +34,7 @@ on:
       - 'research/kalshi/frankie_boss/tests/test_host_record_principal_response.py'
       - 'research/kalshi/frankie_boss/tests/test_host_export_principal_request.py'
       - 'research/kalshi/frankie_boss/tests/test_host_supersede_principal_request.py'
+      - 'research/kalshi/frankie_boss/tests/test_host_supersede_cycle.py'
       - 'research/kalshi/frankie_boss/c15_journal.py'
       - 'research/kalshi/frankie_boss/causal_packet.py'
   pull_request:
@@ -62,6 +63,7 @@ on:
       - 'research/kalshi/frankie_boss/tests/test_host_cycle_report.py'
       - 'research/kalshi/frankie_boss/tests/test_host_record_principal_response.py'
       - 'research/kalshi/frankie_boss/tests/test_host_export_principal_request.py'
+      - 'research/kalshi/frankie_boss/tests/test_host_supersede_cycle.py'
       - 'research/kalshi/frankie_boss/tests/test_host_supersede_principal_request.py'
   workflow_dispatch:
 permissions:
@@ -82,4 +84,4 @@ jobs:
       - name: Probe, supersede, declaration, binding-diff, cycle-report and record-response script contracts
         if: hashFiles('research/kalshi/frankie_boss/tests/test_host_cycle_report.py') != ''
         working-directory: research/kalshi/frankie_boss/tests
-        run: python -m pytest test_host_cycle_binding_probe.py test_host_supersede_code_bound_state.py test_host_declare_identity_supersede.py test_host_binding_diff.py test_host_cycle_report.py test_host_record_principal_response.py test_host_export_principal_request.py test_host_supersede_principal_request.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider
+        run: python -m pytest test_host_cycle_binding_probe.py test_host_supersede_code_bound_state.py test_host_declare_identity_supersede.py test_host_binding_diff.py test_host_cycle_report.py test_host_record_principal_response.py test_host_export_principal_request.py test_host_supersede_principal_request.py test_host_supersede_cycle.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider

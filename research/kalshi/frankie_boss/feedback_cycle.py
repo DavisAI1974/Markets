@@ -296,6 +296,54 @@ class CycleCoordinator:
             accepted.write_bytes(json.dumps(existing, sort_keys=True, indent=1).encode())
         return True
 
+    CYCLE_STAGES = ('binding', 'controller', 'export', 'attachment', 'principal_intent')
+
+    def _cycle_supersede(self, request_id, saved):
+        """Archive every live stage of an open cycle so it runs again FROM THE BEGINNING, on a declaration.
+
+        Greg, 2026-09-20 ("I wanted a full rerun from the beginning and not steps"): a cycle whose
+        Frankie half never ran is re-run whole, not piecewise: the native BOSS and the Granite critic
+        (controller), the export, the attachment and the intent all run again under the current code,
+        in the designed order, so Frankie's request carries the fresh machine result. Nothing is
+        accepted silently: the declaration next to the cycle store must name this request with
+        `supersede_cycle` true and the OLD binding hash, and no principal output, feedback, training or
+        completion may be retained (a recorded Frankie response is never superseded here). Every live
+        row is archived under its own name before the live rows are cleared, and the acceptance is
+        appended to <cycles.sqlite>.identity-supersede-accepted.json. Returns True when it superseded.
+        """
+        if saved is None: return False
+        for retained in ('principal_output', 'feedback', 'training', 'complete'):
+            if self._load(request_id, retained) is not None: return False
+        declared = Path(str(self.path) + self.IDENTITY_SUPERSEDE_SUFFIX)
+        if not declared.exists(): return False
+        try:
+            entries = json.loads(declared.read_bytes())
+        except ValueError:
+            return False
+        old_hash = evidence_hash(saved)
+        if not any(type(e) is dict and e.get('request_id') == request_id and e.get('supersede_cycle') is True
+                   and e.get('old_binding_hash') == old_hash
+                   for e in (entries if type(entries) is list else [])):
+            return False
+        archived = {}
+        for stage in self.CYCLE_STAGES:
+            value = self._load(request_id, stage)
+            if value is None: continue
+            archive = stage + '-cycle-superseded-' + old_hash[:12]
+            self._save(request_id, archive, value)
+            archived[stage] = archive
+        with self.db:
+            self.db.execute('DELETE FROM stages WHERE request=? AND stage IN (%s)'
+                            % ','.join('?' * len(self.CYCLE_STAGES)), (request_id, *self.CYCLE_STAGES))
+        accepted = Path(str(self.path) + self.IDENTITY_ACCEPTED_SUFFIX)
+        record = dict(schema='FRANKIE_CYCLE_SUPERSEDE_ACCEPTED_V1', request_id=request_id,
+                      old_binding_hash=old_hash, archived_stages=archived)
+        existing = json.loads(accepted.read_bytes()) if accepted.exists() else []
+        if record not in existing:
+            existing.append(record)
+            accepted.write_bytes(json.dumps(existing, sort_keys=True, indent=1).encode())
+        return True
+
     EXPORT_PINS = ('boss_commit', 'agent_commit')
 
     def _export_pin_supersede(self, request_id):
@@ -385,6 +433,8 @@ class CycleCoordinator:
         async with self._lock:
             with _exclusive(str(self.path)+'.lock'):
                 saved = self._load(request_id, 'binding')
+                if self._cycle_supersede(request_id, saved):
+                    saved = None   # declared whole-cycle rerun: every stage archived, the cycle starts over
                 if (saved is not None and evidence_hash(saved) != evidence_hash(binding)
                         and not self._binding_supersede(request_id, saved, binding)):
                     raise ValueError('cycle request identity changed')

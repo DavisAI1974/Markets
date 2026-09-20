@@ -83,6 +83,11 @@ def main(argv=None):
                         help='also declare that the saved principal attachment (and intent) may be superseded so the '
                              'principal request is rendered again (Greg, 2026-09-20: the run-findings ledger enters '
                              "cycle 0's prompt); records the OLD attachment hash the coordinator must match")
+    parser.add_argument('--supersede-cycle', action='store_true',
+                        help='declare that EVERY live stage of this open cycle (binding, controller, export, attachment, '
+                             'intent) may be superseded so the cycle runs again from the beginning under the current code '
+                             '(Greg, 2026-09-20: a full rerun, not steps); records the OLD binding hash the coordinator must '
+                             'match; refused once a principal output is retained')
     args = parser.parse_args(argv)
     run = Path(args.run_directory)
     cycles = run / 'cycles.sqlite'
@@ -107,6 +112,10 @@ def main(argv=None):
         if saved_stage(cycles, args.request_id, 'principal_output') is not None:
             raise SystemExit('a principal output is retained for ' + args.request_id + '; its request is never superseded')
         principal = dict(supersede_principal=True, old_attachment_hash=evidence_hash(attachment))
+    if args.supersede_cycle:
+        if saved_stage(cycles, args.request_id, 'principal_output') is not None:
+            raise SystemExit('a principal output is retained for ' + args.request_id + '; the cycle is never superseded')
+        principal = dict(principal, supersede_cycle=True, old_binding_hash=evidence_hash(saved))
     entry = dict(schema=SCHEMA, request_id=args.request_id, old_code_hash=old, new_code_hash=new,
                  old_arm_hash=old_arm, reason=args.reason, declared_at=stamp, **old_pins, **principal)
     same = lambda e: (e.get('request_id') == args.request_id and e.get('old_code_hash') == old

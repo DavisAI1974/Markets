@@ -89,3 +89,24 @@ def test_supersede_principal_declares_the_old_attachment_hash_even_when_not_stal
     db.commit(); db.close()
     with pytest.raises(SystemExit, match='never superseded'):
         declare.main(argv)
+
+
+def test_supersede_cycle_declares_the_old_binding_hash_and_refuses_past_a_retained_output(tmp_path, capsys):
+    _tree(tmp_path)
+    _, live = declare.code_identity(tmp_path)
+    run = tmp_path / 'run'
+    _store(run, live)
+    receipts = tmp_path / 'receipts'; receipts.mkdir()
+    argv = ['--run-directory', str(run), '--tools-root', str(tmp_path), '--request-id', 'r-cycle-00',
+            '--reason', 'full rerun', '--receipt-directory', str(receipts), '--supersede-cycle']
+    assert declare.main(argv) == 0
+    entries = json.loads((run / 'cycles.sqlite.identity-supersede.json').read_bytes())
+    assert len(entries) == 1 and entries[0]['supersede_cycle'] is True
+    assert entries[0]['old_binding_hash'] == evidence_hash(declare.saved_binding(run / 'cycles.sqlite', 'r-cycle-00'))
+    assert declare.main(argv) == 0 and 'already_declared' in capsys.readouterr().out
+    db = sqlite3.connect(run / 'cycles.sqlite')
+    output = dict(feedback={}, lessons=[])
+    db.execute('INSERT INTO stages VALUES (?,?,?,?)', ('r-cycle-00', 'principal_output', canonical_bytes(pack(output)), evidence_hash(output)))
+    db.commit(); db.close()
+    with pytest.raises(SystemExit, match='never superseded'):
+        declare.main(argv)
