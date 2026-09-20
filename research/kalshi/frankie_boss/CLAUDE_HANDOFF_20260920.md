@@ -487,3 +487,33 @@ leftovers on dead paths: `TOTAL_SECONDS = 1800`, `BASE`, `BUNDLE_SHA` in `granit
 `granite_retained_lifecycle.py`. Removing them is a `chore:` commit after the run, because any edit
 to a roster file re-pins the bundle. The new ops scripts' hardcoded host paths and ids are a
 `refactor:` commit after the run for the same reason.
+
+### Pod start run 35502980177: REFUSED by the provider (HTTP 400), no start submitted
+
+Dispatched `frankie_retained_granite.yml` on `claude/frankie-launch-verification-lqmv0m` (head
+`6dded39d`) with the three verified inputs (request `6cd46f98...`, the local_ready witness, the
+reviewed runtime configuration). `retained-prepare` (job 106057932394) passed every gate in order:
+staged request digest, tokenizer admission, initial roster bytes, Pod env pins (lifetime `none`,
+bundle sha, supervisor command sha, `GRANITE_MAX_MODEL_LEN` 131072, `jobs_v1`), retained-startup
+written once (start 1789895705.264564), fresh watchdog arm, resume validation (Pod EXITED),
+`validate_url_freshness` (the refreshed URLs), the S3 active-run claim, and the start intent written
+once. Then `POST /v2/pods/ycf4v6lmave6xw/action {"action":"start"}` returned HTTP 400 and the
+role raised `ProviderError`. The journal holds `retained-start-failure.json` with
+`status: start_outcome_unknown`. The endpoint is the correct v2 call (RunPod migration skill,
+`rest-v1-to-v2.md:38`), so the 400 is the provider refusing the resume; the client discards the
+response body, so the reason is NOT on record. The cleanup step ran and did nothing (no
+`confirmed-fatal.json`; elapsed time and observer exhaustion are never stop reasons). The
+`retained-watchdog` job (106057932547) keeps observing until its 360-minute deadline; it never
+stops the Pod. Prepare artifact `retained-granite-prepare-35502980177` = `pod-info.json`,
+`startup-bootstrap-pin.json`, `startup-intent.json`.
+
+Consequence, by design (`SPEC-sunday-runtime.md:60`, `test_granite_retained_start_guards.py:47-48`):
+any observer re-run on this request journal returns `observe_existing_start` and never submits
+another start. It DOES then continue to observe container logs since the recorded startup,
+validate the runtime, health-check and publish readiness, so the observer adopts the Pod once it is
+RUNNING by another route. Recovery = an explicit, receipted operator start (the manual Pod step Greg
+accepted for this run) followed by an observer re-dispatch. Built `frankie_pod_control.yml` +
+`operations/pod_control.py` (`5f207c79`): inspect prints the Pod state with env and credential
+fields removed; start requires EXITED, submits the same v2 action once, prints the provider's
+refusal body verbatim or the status transition, and prints `FRANKIE_POD_START_RECEIPT_V1`. No
+reason for the 400 is claimed until that body is on record.
