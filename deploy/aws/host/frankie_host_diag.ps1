@@ -20,6 +20,21 @@ if (Test-Path $log) {
     Write-Output ("  kind=$k phase=$p elapsed=$e code=$c") }
 } else { Write-Output "NO_LOG" }
 
+Write-Output "### 1b which code actually ran: TOOLS_HEAD from the log, and the host checkout"
+if (Test-Path $log) { Select-String -Path $log -SimpleMatch 'TOOLS_HEAD=' | ForEach-Object { $_.Line } }
+$tools = 'C:/tools/Frankie-20260919/Markets'
+$gitExe = Get-Command git -ErrorAction SilentlyContinue
+if ($gitExe -and (Test-Path $tools)) {
+  Write-Output ("host checkout HEAD: " + (& $gitExe.Source -C $tools log -1 --format='%H %ad %s' --date=short))
+  Write-Output ("host checkout branch: " + (& $gitExe.Source -C $tools rev-parse --abbrev-ref HEAD))
+  $ras = Join-Path $tools 'research/kalshi/frankie_boss/operations/run_actual_sunday.py'
+  if (Test-Path $ras) {
+    $n = (Select-String -Path $ras -SimpleMatch 'read_execution_trigger' | Measure-Object).Count
+    $m = (Select-String -Path $ras -SimpleMatch 'pod_credential_ssm' | Measure-Object).Count
+    Write-Output ("host run_actual_sunday.py: read_execution_trigger=" + $n + " pod_credential_ssm=" + $m)
+  } else { Write-Output "host run_actual_sunday.py: MISSING" }
+} else { Write-Output "host checkout or git not found" }
+
 Write-Output "### 2 actual-host-configuration.json -> pod_credential_ssm, run_id"
 $src = $null
 if (Test-Path $cfg) {
