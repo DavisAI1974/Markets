@@ -517,3 +517,24 @@ accepted for this run) followed by an observer re-dispatch. Built `frankie_pod_c
 fields removed; start requires EXITED, submits the same v2 action once, prints the provider's
 refusal body verbatim or the status transition, and prints `FRANKIE_POD_START_RECEIPT_V1`. No
 reason for the 400 is claimed until that body is on record.
+
+### The 400 reason is on record: the Pod's host has no free GPU (run 35503440103)
+
+`frankie_pod_control.yml` action=start (run 35503440103, `82e61900`) read the Pod (EXITED,
+US-MO-1, 1x NVIDIA L40S, pod volume `/opt/ml` 50 GB, `actions: [start, terminate]`, `locked: false`)
+and re-submitted the identical v2 start action. Provider response, verbatim:
+`HTTP 400 {"detail":"There are not enough free GPUs on the host machine to start this pod.","status":400,"title":"Bad Request"}`
+(receipt `FRANKIE_POD_START_RECEIPT_V1`, outcome `refused`, submitted_at 1789897878.44). The Pod is
+pinned to that host by its pod volume, which holds the 17.6 GB verified model; RunPod cannot move
+it, so the resume can only succeed once a GPU frees on that host. Nothing on our side refused.
+
+Stale `retained-watchdog` job of run 35502980177 cancelled (it never stops the Pod; its `always()`
+cleanup step acts only on a `confirmed-fatal.json`, which does not exist). The S3 active-run claim
+for this startup digest stays `active`; a re-run with the same inputs re-uses it (`claim` returns
+when digest and phase match), so no ownership reset is needed.
+
+Retry loop added to the control script (`--retry-seconds`, re-submit every 60 s only while the
+refusal is exactly the host-busy message; foreign refusals abort at once; attempts counted in the
+receipt). Dispatched with a 5.5 h horizon. The alternative, a fresh Pod on another host, means a new
+`POD_ID`, a new `JOURNAL_GENERATION`, a re-bootstrap of the model from `models/bootstrap/` and a
+re-review of the pinned identities: Greg's call, not taken here.
