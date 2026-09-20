@@ -583,3 +583,17 @@ unreserved for the ~2-3 minutes between stop and start); or (b) RUNNING path = t
 `observe_migrated_start` branch, which needs startup frames stamped after the observer's own
 `retained-startup.json`, so the Pod would have to be restarted after the observer starts. (a) is
 the default recommendation.
+
+### Prepare run 35504624757: Pod hhxs2fk7511cz5 created in EUR-IS-2, no bootstrap line in 30 min, stop-retained
+
+`GET /v2/catalog/gpus` reported L40S stock LOW in every data center that had any (EU-NL-1, EUR-IS-2,
+OC-AU-1, US-IL-1, US-MO-1, US-TX-4) and the create landed in EUR-IS-2 at 10:18:02Z (cost 1.09,
+same name/image/mount, status RUNNING). For the full 30-minute horizon the watcher saw zero
+`GRANITE_*` lines (`startup-progress.json`: `telemetry_lines 0`, `milestones []`, status RUNNING),
+so at 10:48:05Z the script stop-retained it: receipt `FRANKIE_POD_PREPARE_RECEIPT_V1` outcome
+`startup_incomplete`, stop `confirmed_stopped`, `data_retained true`, final status EXITED. Not yet
+distinguishable: a slow image pull / model download on an Iceland host versus a log reader that
+returned nothing. `133c42c3` adds `--resume-pod` (restart the EXITED Pod on its now-cached host
+instead of paying for another create) and five-minute diagnostics (scrubbed Pod state incl.
+`runtime`, plus a three-line raw tail of the system and container logs). Dispatched a resume of
+hhxs2fk7511cz5 with a 60-minute watch. The old-Pod retry loop (run 35503582348) is still cycling.
