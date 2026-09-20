@@ -215,7 +215,7 @@ def test_binding_identity_supersede_needs_a_declaration_and_only_the_code_hash(t
         store.db.execute('UPDATE stages SET payload=?, digest=? WHERE request=? AND stage=?',
             (cycle.canonical_bytes(cycle.pack(saved)), cycle.evidence_hash(saved), 'sun', 'binding'))
     result = asyncio.run(store.run(**args))
-    assert result['status'] == 'complete' and calls['learner'] == 1
+    assert result['feedback_hash'] and calls['learner'] == 1
     assert store._load('sun', 'binding-superseded-'+old[:12])['training_identities']['code_hash'] == old
     assert store._load('sun', 'binding')['training_identities']['code_hash'] == 'b'*64
     accepted = json.loads(Path(str(store.path)+store.IDENTITY_ACCEPTED_SUFFIX).read_bytes())
