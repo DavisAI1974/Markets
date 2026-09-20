@@ -1050,3 +1050,18 @@ the probe read it. Two runner processes (pids 5928, 5992) alive since 15:39:13Z.
 run 35520104563 still in progress. What comes next in the cycle: causal handoff, Frankie calculation,
 native learning, checkpoint readback, output persistence, then cycle 1 (prefix-01, rebuilt on the LF
 checkout this afternoon). Recorded below only as it lands.
+
+### Cycle 0's completion publication refused on the launch branch (old Pod generation); re-published from lqmv0m
+
+The runner's `publish_completion` dispatched `frankie_retained_completion.yml` at 15:52:47Z with
+`--ref host['completion_workflow_ref']` = `codex/frankie-launch-two-cycle-20260919` (19d3ef4c). Run
+35520949738 refused `completion differs from retained startup`: that branch's workflow and script still pin
+`JOURNAL_GENERATION migration-ycf4v6lmave6xw-a004983e93b9` (it predates `granite_retained_identity.py`), so
+it looked for the startup under the OLD Pod's generation while the startup (`09a4b695...`) lives under
+`migration-8vqdacl5t61rjx-a004983e93b9`. The runner does not wait on the publication (dispatch-accepted is
+enough; `JobAttention` fires only when the dispatch itself fails), so the cycle continued: controller append
+00000003 at 15:54:56Z, `controller.sqlite` 1,110,016 bytes at 15:55:55Z. Re-published with the same five
+pins on `claude/frankie-launch-verification-lqmv0m` (run 35521110718, 15:56:30Z, success): the durable
+completion record for job `4c58e8c6...`, outcome `8f9d6d48...`, code `34a4feac`. **Repeat for cycle 1's
+outcome** (task #7); the proper fix (rewrite `completion_workflow_ref` in the day configuration, which
+re-mints host-identity, or carry the current identity on the launch branch) waits for the run to finish.
