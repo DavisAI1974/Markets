@@ -6,6 +6,7 @@
 - **PRIORITY RULE (Greg, 2026-09-20): launch-critical = anything that changes how Frankie runs or the science. Everything
   else goes on the deferred list and waits; no fixing, no relitigating, until the run is launched.** The identity/evidence
   guards and the tests are provenance, not science: when one blocks the launch, override it with a receipt and move on.
+- **2026-09-20 16:28Z: cycle 0 STOPPED at 16:00Z on a missing file, fixed, RE-DISPATCHED.** `bind_prefix` needs `mapping/index.jsonl` (16,121,079 bytes, pinned by mapping.json) and the 20260915 package never carried it (earlier host runs rode the retained cycle-00 `bound-mapping.json`; cycle 1 must bind afresh). Rebuilt on GitHub from the preserved S3 source (`frankie_boss_ledger_mapping.yml` run 35521986689, byte-identical to the pin), delivered by `frankie_host_restore_mapping_index.yml` (receipt `mapping-index-restored-20260920T162757Z.json`). The trunk's scheduled `AWS idle instance guard` had STOPPED the host at 16:07Z (CPU under 5 percent for six hours); the host now carries `KeepRunning=true` for the run (revert after). Record: `CLAUDE_HANDOFF_20260920.md`.
 - **2026-09-20 15:53Z: FRANKIE IS RUNNING.** Pipeline run 35520104563 (`codex/frankie-launch-two-cycle-20260919`,
   day 20211003, cycles 2) has cycle 0's Granite critic request (`a7b72cf9...`) dispatched to Pod
   `8vqdacl5t61rjx`, accepted, and its outcome persisted at 15:52:45Z; the completion publication was accepted at

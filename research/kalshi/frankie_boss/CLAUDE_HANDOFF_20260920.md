@@ -1119,3 +1119,20 @@ run's duration) is now applied by the restore workflow; task #9 reverts it after
 both hit `InvalidInstanceId: Instances not in a valid state` for that reason (EC2 state `stopped`, SSM not
 registered); nothing in the day pipeline stopped it (cleanup job skipped under keep_compute true, no
 host-side stop path exists).
+
+**Delivered 16:27:57Z (run 35522768318, receipt `days/20211003/mapping-index-restored-20260920T162757Z.json`,
+`FRANKIE_MAPPING_INDEX_RESTORED_V1`, status `placed`).** The host's mapping lives on the E: data volume:
+`E:\Codex\Frankie-BOSS-20260915\source-execution-20260915\mapping\` (mapping.json sha `55cccc23...` = the
+configuration pin; `index.jsonl` now 16,121,079 bytes sha `f62c522d...` = mapping.json's pin). Two attempts
+before it, each refused before writing anything: 35522551415 (Windows PowerShell strips inner double quotes
+from a native command's arguments, so the boto3 one-liner saw `boto3.client(s3, ...)`, NameError) and
+35522665856 (`HeadObject` 403: the host role cannot read `host-deliveries/`), after which the workflow signs a
+one-hour presigned GET with its own credentials, masks it, passes it through `--set` from a file (never an env
+value in the log) and the host fetches it with Invoke-WebRequest before the same pin checks (a61fee3e). The
+host was started by the workflow at 16:27:55Z and now carries `KeepRunning=true`. **Pipeline re-dispatched at
+~16:28:30Z on `codex/frankie-launch-two-cycle-20260919`, same inputs** (day 20211003, Greg's go, cycles 2,
+keep_compute true, checks_only false): expected path is resume into cycle 0 at the causal handoff (controller
+result and export retained), bind_prefix on the delivered index, the Frankie calculation, native learning,
+readback, output persistence, then cycle 1's preparation. Cycle 1 will need its own readiness (observer bound
+to cycle 1's request sha + `frankie_deliver_readiness.yml` with request_id `...-cycle-01`); the Pod's S3
+active-run claim reads `phase closed` (startup `09a4b695...`, inspected 16:24Z), so a new observer can claim.
