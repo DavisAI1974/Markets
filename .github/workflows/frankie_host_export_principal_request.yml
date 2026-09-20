@@ -1,0 +1,112 @@
+name: Frankie export the principal request from the native host (for Root)
+# Root's Frankie session runs off the host and needs cycle N's durable request: the host uploads
+# principal/session-request.json, prompt.md and historical-prompt.md UNCHANGED through presigned PUTs
+# signed here (SigV4, masked, never printed) into a private prefix of the granite bucket; this job then
+# verifies each upload by sha256 against what the host printed and prints the S3 keys for Root, who
+# downloads them with the AWS pair on Greg's box. Nothing goes into the repository or the log except
+# keys, sizes and hashes. Reads only on the host (plus one receipt). Dispatch only.
+on:
+  workflow_dispatch:
+    inputs:
+      cycle_index:
+        description: 'Zero-padded cycle index'
+        required: false
+        default: '00'
+      instance:
+        description: 'Native host instance id'
+        required: false
+        default: 'i-0e90ee6110ef609aa'
+      day:
+        description: 'Day whose run directory holds the cycle'
+        required: false
+        default: '20211003'
+      run_root:
+        description: 'Day pipeline RunRoot on the host'
+        required: false
+        default: 'C:/Codex/Frankie-BOSS-20260919/days'
+      bucket:
+        description: 'Private staging bucket (host-deliveries/<day>/principal-request/), presigned PUTs'
+        required: false
+        default: 'frankie-granite42-568968024170-us-east-1'
+permissions:
+  contents: read
+jobs:
+  export:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_EC2_METADATA_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Sign three presigned PUTs (masked, never printed)
+        id: sign
+        env:
+          DAY: ${{ inputs.day }}
+          CYCLE_INDEX: ${{ inputs.cycle_index }}
+          BUCKET: ${{ inputs.bucket }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import boto3
+          from botocore.config import Config
+          s3 = boto3.client('s3', region_name='us-east-1', config=Config(signature_version='s3v4'))
+          prefix = f"host-deliveries/{os.environ['DAY']}/principal-request/cycle-{os.environ['CYCLE_INDEX']}/{os.environ['GITHUB_RUN_ID']}"
+          for name in ('session-request.json', 'prompt.md', 'historical-prompt.md'):
+              url = s3.generate_presigned_url('put_object', Params={'Bucket': os.environ['BUCKET'], 'Key': f'{prefix}/{name}'}, ExpiresIn=3600, HttpMethod='PUT')
+              if "'" in url or '\n' in url:
+                  raise SystemExit('presigned URL carries a character ssm_run_ps1.py --set refuses')
+              print('::add-mask::' + url)
+              Path(os.environ['RUNNER_TEMP'], name + '.url').write_text(url)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f'prefix={prefix}\n')
+          print('export prefix s3://' + os.environ['BUCKET'] + '/' + prefix)
+          PY
+      - name: Export over SSM (read-only on the host, plus one receipt)
+        env:
+          INSTANCE: ${{ inputs.instance }}
+          DAY: ${{ inputs.day }}
+          RUN_ROOT: ${{ inputs.run_root }}
+          CYCLE_INDEX: ${{ inputs.cycle_index }}
+        run: |
+          python deploy/aws/ssm_run_ps1.py \
+            --instance "$INSTANCE" --region us-east-2 \
+            --script deploy/aws/host/frankie_host_export_principal_request.ps1 \
+            --set "Day=$DAY" \
+            --set "RunRoot=$RUN_ROOT" \
+            --set "CycleIndex=$CYCLE_INDEX" \
+            --set "RequestUrl=$(cat "$RUNNER_TEMP/session-request.json.url")" \
+            --set "PromptUrl=$(cat "$RUNNER_TEMP/prompt.md.url")" \
+            --set "HistoricalUrl=$(cat "$RUNNER_TEMP/historical-prompt.md.url")" \
+            --timeout 900 --tail 0 --comment "export the cycle $CYCLE_INDEX principal request for day $DAY" | tee "$RUNNER_TEMP/export.log"
+      - name: Verify the uploads against the host's hashes and print the keys for Root
+        env:
+          BUCKET: ${{ inputs.bucket }}
+          PREFIX: ${{ steps.sign.outputs.prefix }}
+        run: |
+          python - <<'PY'
+          import hashlib, os, re
+          from pathlib import Path
+          import boto3
+          log = Path(os.environ['RUNNER_TEMP'], 'export.log').read_text()
+          printed = {m.group(1): (int(m.group(2)), m.group(3)) for m in re.finditer(r'EXPORTED (\S+) bytes=(\d+) sha256=([0-9a-f]{64})', log)}
+          if set(printed) != {'session-request.json', 'prompt.md', 'historical-prompt.md'}:
+              raise SystemExit(f'host printed hashes for {sorted(printed)}, not all three files')
+          s3 = boto3.client('s3', region_name='us-east-1')
+          for name, (bytes_, sha) in printed.items():
+              body = s3.get_object(Bucket=os.environ['BUCKET'], Key=f"{os.environ['PREFIX']}/{name}")['Body'].read()
+              got = hashlib.sha256(body).hexdigest()
+              if len(body) != bytes_ or got != sha:
+                  raise SystemExit(f'{name}: uploaded object is {len(body)} bytes {got}, host printed {bytes_} {sha}')
+              print(f"VERIFIED s3://{os.environ['BUCKET']}/{os.environ['PREFIX']}/{name}  bytes={bytes_}  sha256={sha}")
+          print('Root downloads these three with the AWS pair on the box and verifies the sha256 of each before reading.')
+          PY
