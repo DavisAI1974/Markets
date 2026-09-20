@@ -1888,3 +1888,21 @@ Round from here (no further code changes): family green -> `frankie_host_advance
 -> ONE `frankie_journal_stack.yml` dispatch on `codex/frankie-launch-two-cycle-20260919` (standard inputs) ->
 readiness for the NEW critic request (`frankie_retained_granite.yml` + `frankie_deliver_readiness.yml`) ->
 re-dispatch -> HOLD -> export to Root.
+
+### 23:01Z: family green on the pins; cycle 0 state SUPERSEDED on the host (receipt); declaration dispatched
+
+Family run 35543136311 (checks_only, branch `claude/cycle-0-full-rerun-lr6e14`, d7de4e2a): green. Root probe added
+to the read-only status script (43d8173f, Greg: "make a roots probe so we can follow it as it works and it pushes"):
+`frankie_host_cycle_status.yml` now prints whether `principal/session-response.json` is recorded, origin's `root/*`
+branches, and the head plus file list of `root/cycle-00-response` when it exists.
+
+`frankie_host_supersede_cycle.yml` run 35543304607 (cycle 00, 23:00:19Z): MOVED `execution/cycle-00` (53 files,
+including the 22:09Z runner's prompt.md f76e5bc8 and request-plan c0283d99, the 15:52Z critic request a7b72cf9,
+controller.sqlite, native.sqlite, the classroom artifacts and audit) and `handoff-6fe903fe...` (8 files) to
+`C:/Codex/Frankie-BOSS-20260919/superseded/actual-feedback-run-20260920T230019Z-cycle-00/`; receipt
+`days/20211003/cycle-state-superseded-20260920T230019Z.json` (FRANKIE_CYCLE_STATE_SUPERSEDED_V1, sha256 per file).
+Kept: cycles.sqlite (its stages are archived by the declared cycle supersede on the next run), lessons.sqlite,
+host-instance, native-host-runtime.json, verified-*, host-prefix. Nothing deleted.
+
+`frankie_host_declare_identity_supersede.yml` dispatched 23:01Z with `supersede_cycle=true`. Then, on the `/ship`
+verdict for d7de4e2a: `frankie_host_advance.yml` target 43d8173f -> ONE pipeline dispatch.
