@@ -15,8 +15,8 @@
 # prefix-00 (retained from the first run) is never touched; (3) runs the gold-standard builder,
 # unchanged, exactly as day_schedule_prefixes.ps1 runs it; (4) rewrites ONLY the sha256 (and bytes,
 # when present) of host_runtime.prefix_manifest in the day's configuration, keeping a dated backup,
-# because the runner verifies the manifest by that witness; (5) writes one receipt into the day
-# directory. Starts, stops and dispatches nothing. Re-runnable: a second run finds nothing stale.
+# because the runner verifies the manifest by that witness; (5) moves host-identity.c15.json aside,
+# the one retained record that pins the configuration; (6) writes one receipt into the day directory. Starts, stops and dispatches nothing. Re-runnable: a second run finds nothing stale.
 #
 # $Day, $RunRoot, $ToolsRoot and $Python arrive from ssm_run_ps1.py --set; no path literal here.
 $ErrorActionPreference = 'Stop'
@@ -144,6 +144,23 @@ if ($stale.Count -eq 0) {
     $check = (Get-Content $cfgPath -Raw | ConvertFrom-Json).host_runtime.prefix_manifest
     if ($check.sha256 -ne $newManifestSha -or $check.path -ne $manifestPath) { throw 'prefix_manifest witness did not update' }
     if ($null -ne $cfg.host_runtime.prefix_manifest.bytes -and [int64]$check.bytes -ne $newBytes) { throw 'prefix_manifest bytes did not update' }
+    # 5. host-identity.c15.json pins the WHOLE configuration (run_actual_sunday.py __init__ saves it and
+    # _save refuses differing bytes). It is the only retained record bound to the configuration: the
+    # initialization, training and execution identities pin code and model, not the manifest witness.
+    # Move it aside with the same receipt so the runner re-saves it at the rewritten configuration.
+    $identity = Join-Path $cfg.run_directory 'host-identity.c15.json'
+    if (Test-Path $identity) {
+        $item = Get-Item $identity
+        $digest = Sha $identity
+        $identityTarget = Join-Path (Join-Path (Split-Path $cfg.run_directory -Parent) 'superseded') ((Split-Path $cfg.run_directory -Leaf) + '-' + $stamp + '-prefix-batch-config')
+        New-Item -ItemType Directory -Force -Path $identityTarget | Out-Null
+        $destination = Join-Path $identityTarget 'host-identity.c15.json'
+        Move-Item -LiteralPath $identity -Destination $destination
+        if (Test-Path $identity) { throw 'move left host-identity.c15.json in place' }
+        if (-not (Test-Path $destination)) { throw 'move lost host-identity.c15.json' }
+        $moved += [ordered]@{ name = 'run_directory/host-identity.c15.json'; destination = $destination; sha256 = $digest; bytes = $item.Length; mtime_utc = $item.LastWriteTimeUtc.ToString('s') + 'Z' }
+        Write-Output ("  moved: host-identity.c15.json (configuration-bound)  sha256=" + $digest)
+    }
 }
 $receipt = [ordered]@{
     schema               = 'FRANKIE_PREFIX_BATCH_REBUILT_V1'
