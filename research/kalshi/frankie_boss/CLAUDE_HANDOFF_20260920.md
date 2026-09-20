@@ -1943,3 +1943,13 @@ the next actions are the observer (`frankie_retained_granite.yml`) and `frankie_
 request sha, then re-dispatch (the 15:53Z worked example). If the host runner refuses at `save('host-identity')`
 (code-bound state written at f0910e6c by the 22:09Z runner), run `frankie_host_supersede_code_bound_state.yml`
 (cycle 00) and re-dispatch. Follow with `frankie_host_cycle_status.yml` (read-only; now prints the root probe).
+
+### 23:20Z: run 35543965880 refused at host-identity (code-bound to f0910e6c by the 22:09Z runner); superseded with a receipt; re-dispatched
+
+Pipeline run 35543965880: checks green (family on the launch branch), sources green (host restarted, host-start),
+host job REFUSED at 23:15:36Z, `cycles exited 1`, frames `run_actual_sunday_classroom.main:307 -> __init__:106 ->
+run_actual_sunday.__init__:261 -> save:263 -> sunday_execution._save:48`: the retained run directory's
+`host-identity.c15.json` (and its code-bound siblings) were written at f0910e6c by the 22:09Z runner and refuse
+re-entry by the advanced checkout, exactly the launch-day chain item 1. Remedy as documented, nothing new:
+`frankie_host_supersede_code_bound_state.yml` run 35544275063 (cycle 00, 23:19Z) succeeded; pipeline re-dispatched
+at 23:20Z on `codex/frankie-launch-two-cycle-20260919` (standard inputs).
