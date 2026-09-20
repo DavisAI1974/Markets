@@ -329,6 +329,11 @@ try:
         for k in keys:
             if a.get(k) != b.get(k):
                 say('  DIFFERS', k, '| old =', repr(a.get(k))[:90], '| new =', repr(b.get(k))[:90])
+    ready_files = sorted(cycle.glob('host-ready-*.c15.json'))
+    for ready_file in ready_files:
+        ready = unpack(json.loads(ready_file.read_bytes()))
+        say('READY', ready_file.name, when(ready_file), '| status =', ready.get('status'), '| request_sha256 =', ready.get('request_sha256'), '| host_instance_id =', ready.get('host_instance_id'), '| admitted_at =', repr(ready.get('admitted_at')))
+    say('host-service.c15.json exists =', (cycle / 'host-service.c15.json').exists())
     source = cfg['host_runtime'].get('pod_credential_ssm') or {}
     trigger_path = Path(source.get('trigger_directory', '')) / request_id / 'FRANKIE_ACTUAL_EXECUTE_V1.json'
     say('trigger exists =', trigger_path.exists(), '|', str(trigger_path))
