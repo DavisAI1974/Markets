@@ -1953,3 +1953,14 @@ run_actual_sunday.__init__:261 -> save:263 -> sunday_execution._save:48`: the re
 re-entry by the advanced checkout, exactly the launch-day chain item 1. Remedy as documented, nothing new:
 `frankie_host_supersede_code_bound_state.yml` run 35544275063 (cycle 00, 23:19Z) succeeded; pipeline re-dispatched
 at 23:20Z on `codex/frankie-launch-two-cycle-20260919` (standard inputs).
+
+### 23:25Z: CYCLE 0 IS RUNNING FROM THE BEGINNING (run 35544336615)
+
+Pipeline run 35544336615: checks green, sources green (host restarted 23:20:31Z), host job running since 23:23:00Z
+past every earlier refusal point. Read-only probe 35544566125 at 23:25Z: runner pids 2312/3980 since 23:23:02Z,
+phase `boss_reasoning` (owner boss, the native BOSS calculation), `execution/cycle-00` fresh with only
+`host-dipole-classroom-adapter.c15.json` and `host-prefix.c15.json` (23:23Z), day-cycles.log restarted (11 KB).
+Root probe: no session-response.json, no root/* branch, `root/cycle-00-response` not pushed (correct: nothing
+for Root yet). Expected next: the native BOSS mints a NEW Granite critic request (`actual-critic-request.json`,
+`actual_input_admitted` with its sha256); the retained readiness is bound to a7b72cf9 so the runner will stop or wait
+at the request-bound trigger; then the observer + readiness delivery for the new sha and one re-dispatch.
