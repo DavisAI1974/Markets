@@ -202,4 +202,77 @@ $env:PYTHONPATH = $ToolsRoot
 & $Python $tmp 2>&1 | ForEach-Object { "$_" }
 if (Test-Path $out) { Write-Output '--- probe file capture ---'; Get-Content $out }
 Remove-Item $tmp, $out -ErrorAction SilentlyContinue
+
+Write-Output "### 6 the LAST gate, replayed for real: lines 818-843 with verified_service_inputs and the actual exception"
+# Pipeline 35512638774 wrote host-service.c15.json (line 817) and then refused 0.5 s into granite_request:
+# the remaining candidates are the service-file re-hash (823), 836, 837, verified_service_inputs itself and
+# line 843. Every step below is pure verification (hashing, object construction, tokenizer load); nothing
+# is written, no credential is read, and the exception text is printed here because the runner scrubs it.
+$out6 = Join-Path $env:TEMP 'frankie_gate_probe.out'
+Remove-Item $out6 -ErrorAction SilentlyContinue
+$gate = @"
+import json, sys, traceback
+from pathlib import Path
+TOOLS = r'$ToolsRoot'
+sys.path.insert(0, TOOLS)
+log = open(r'$out6', 'a', encoding='ascii', errors='replace')
+def say(*a):
+    line = ' '.join(str(x) for x in a)
+    print(line, flush=True); log.write(line + '\n'); log.flush()
+try:
+    from research.kalshi.frankie_boss.operations import run_actual_sunday as actual
+    api = actual.imports(Path(TOOLS))
+    cfg = json.loads(Path(r'$cfgPath').read_bytes()); host = cfg['host_runtime']
+    run_directory = Path(cfg['run_directory']); cycle = run_directory / 'execution' / 'cycle-$CycleIndex'
+    prepared = api.driver._load(cycle / 'host-preparation.c15.json')
+    service = api.driver._load(cycle / 'host-service.c15.json')
+    ready = Path(service['directory'])
+    say('REPR ready =', repr(str(ready)), '| pins_sha256 =', service['pins_sha256'])
+    pins = actual.verified_json(dict(path=str(ready / 'service-pins.json'), sha256=service['pins_sha256']))
+    for k in ('config_hash', 'identity_hash', 'runtime_sha256', 'request_sha256'):
+        say('REPR pins.' + k, '=', repr(pins.get(k)))
+    for name, digest in service['files'].items():
+        actual.verified(dict(path=str(ready / name), sha256=digest))
+    say('line 823 service files re-hash OK')
+    say('line 836 equal =', pins['request_sha256'] == prepared['admission']['request_sha256'] and pins['admission'] == prepared['admission'])
+    info = json.loads((ready / 'pod-info.json').read_bytes())
+    open_run = 'run.json' in service['files']
+    run = json.loads((ready / ('run.json' if open_run else 'lease.json')).read_bytes())
+    startup = json.loads((ready / 'startup-intent.json').read_bytes()) if open_run else None
+    instance = api.driver._load(run_directory / 'host-instance.c15.json')['instance_id']
+    say('open_run =', open_run, '| line 837 equal =', bool(startup) and startup['local_ready']['host_instance_id'] == instance)
+    runtime = json.loads((ready / 'service-ready.json').read_bytes())
+    manifest = json.loads(api.artifacts.DEFAULT_MANIFEST.read_bytes())
+    say('pod-info keys =', repr(sorted(info)), '| pod-info id =', repr(info.get('id')), '| service-ready pod_id =', repr(runtime.get('pod_id')))
+    from research.kalshi.frankie_boss import granite_retained_identity as rid
+    say('REPR POD_ID at host checkout =', repr(getattr(rid, 'POD_ID', None)))
+    say('building LocalTokenizerAdmission ...')
+    admit = api.LocalTokenizerAdmission(host['tokenizer_directory'], served_model_name='granite42-smoke', context=host['service_context'])
+    say('tokenizer_sha256 equals expected =', admit.tokenizer_sha256 == host['expected_tokenizer_sha256'], '| context =', admit.context)
+    try:
+        si = api.verified_service_inputs(info, manifest, run, runtime_receipt=runtime,
+            expected_runtime_sha256=pins['runtime_sha256'], tokenizer_admission=admit,
+            output_tokens=prepared['admission']['output_tokens'], startup_intent=startup,
+            request_timeout=None if open_run else 80, context_encoding=host['context_encoding'],
+            service_context=host['service_context'], transport_protocol=host['transport_protocol'])
+        say('verified_service_inputs RETURNED')
+        say('REPR host config_hash   =', repr(si['config'].config_hash))
+        say('REPR pins config_hash   =', repr(pins['config_hash']))
+        say('REPR host identity_hash =', repr(si['identity'].identity_hash))
+        say('REPR pins identity_hash =', repr(pins['identity_hash']))
+        say('line 843 REFUSES =', si['config'].config_hash != pins['config_hash'] or si['identity'].identity_hash != pins['identity_hash'])
+        say('REPR config   =', repr(si['config']))
+        say('REPR identity =', repr(si['identity']))
+    except Exception as e:
+        say('verified_service_inputs RAISED', type(e).__name__ + ':', e)
+        say(traceback.format_exc())
+except BaseException as e:
+    say('gate probe failed:', type(e).__name__, e); say(traceback.format_exc())
+log.close(); sys.stdout.flush()
+"@
+$tmp6 = Join-Path $env:TEMP 'frankie_gate_probe.py'
+Set-Content -Path $tmp6 -Value $gate -Encoding ASCII
+& $Python $tmp6 2>&1 | Select-String -NotMatch 'DeprecationWarning|utcfromtimestamp' | ForEach-Object { "$_" }
+if (Test-Path $out6) { Write-Output '--- gate probe file capture ---'; Get-Content $out6 }
+Remove-Item $tmp6, $out6 -ErrorAction SilentlyContinue
 Write-Output '### done (nothing was written, started, stopped or dispatched)'
