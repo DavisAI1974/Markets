@@ -1,0 +1,157 @@
+name: Frankie stage a cycle's minted Granite critic request into its authenticated Git archive (for the observer)
+# Why (MASTER_WEAVE_20260920.md, fact 2): granite_retained_host.prepare admits a request only from
+# runs/request-archives/<sha>/ (git_request_archive.read_request_archive) or the retained S3 request
+# prefix, and the repository had no writer for either; the two archives on the launch branch were
+# written out of band on 2026-09-17. A whole-cycle rerun mints a NEW critic request, so before any
+# observer can prepare readiness for it the request must be archived. The host uploads
+# execution/cycle-NN/actual-critic-request.json UNCHANGED through a presigned PUT signed here (SigV4,
+# masked, never printed) into a private prefix of the granite bucket; this job verifies the bytes and
+# sha256 against what the host printed and against the expected request sha256, encrypts them exactly
+# as read_request_archive decrypts (AES-256-GCM, key from the SSM SecureString the existing archives
+# name, aad = the request sha256), writes envelope.json + request.enc under runs/request-archives/<sha>/,
+# round-trips them through read_request_archive, and commits them to the branch this ran on. Plaintext
+# never enters the repository or the log. Reads only on the host (plus one receipt). Dispatch only.
+on:
+  workflow_dispatch:
+    inputs:
+      request_sha256:
+        description: 'The minted request sha256 the host printed (actual_input_admitted); refused otherwise'
+        required: true
+      cycle_index:
+        description: 'Zero-padded cycle index'
+        required: false
+        default: '00'
+      instance:
+        description: 'Native host instance id'
+        required: false
+        default: 'i-0e90ee6110ef609aa'
+      day:
+        description: 'Day whose run directory holds the cycle'
+        required: false
+        default: '20211003'
+      run_root:
+        description: 'Day pipeline RunRoot on the host'
+        required: false
+        default: 'C:/Codex/Frankie-BOSS-20260919/days'
+      bucket:
+        description: 'Private staging bucket (host-deliveries/<day>/critic-request/), presigned PUT'
+        required: false
+        default: 'frankie-granite42-568968024170-us-east-1'
+      key_parameter:
+        description: 'SSM SecureString (us-east-2) holding the 32-byte transport key, as the existing archives name it'
+        required: false
+        default: '/markets/frankie/request-transport/pilot-20260919'
+permissions:
+  contents: write
+jobs:
+  stage:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_EC2_METADATA_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97 cryptography==46.0.3
+      - name: Sign one presigned PUT (masked, never printed)
+        id: sign
+        env:
+          DAY: ${{ inputs.day }}
+          CYCLE_INDEX: ${{ inputs.cycle_index }}
+          BUCKET: ${{ inputs.bucket }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import boto3
+          from botocore.config import Config
+          s3 = boto3.client('s3', region_name='us-east-1', config=Config(signature_version='s3v4'))
+          prefix = f"host-deliveries/{os.environ['DAY']}/critic-request/cycle-{os.environ['CYCLE_INDEX']}/{os.environ['GITHUB_RUN_ID']}"
+          url = s3.generate_presigned_url('put_object', Params={'Bucket': os.environ['BUCKET'], 'Key': f'{prefix}/actual-critic-request.json'}, ExpiresIn=3600, HttpMethod='PUT')
+          if "'" in url or '\n' in url:
+              raise SystemExit('presigned URL carries a character ssm_run_ps1.py --set refuses')
+          print('::add-mask::' + url)
+          Path(os.environ['RUNNER_TEMP'], 'request.url').write_text(url)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f'prefix={prefix}\n')
+          print('staging prefix s3://' + os.environ['BUCKET'] + '/' + prefix)
+          PY
+      - name: Stage over SSM (read-only on the host, plus one receipt)
+        env:
+          INSTANCE: ${{ inputs.instance }}
+          DAY: ${{ inputs.day }}
+          RUN_ROOT: ${{ inputs.run_root }}
+          CYCLE_INDEX: ${{ inputs.cycle_index }}
+        run: |
+          python deploy/aws/ssm_run_ps1.py \
+            --instance "$INSTANCE" --region us-east-2 \
+            --script deploy/aws/host/frankie_host_stage_critic_request.ps1 \
+            --set "Day=$DAY" \
+            --set "RunRoot=$RUN_ROOT" \
+            --set "CycleIndex=$CYCLE_INDEX" \
+            --set "RequestUrl=$(cat "$RUNNER_TEMP/request.url")" \
+            --timeout 600 --tail 0 --comment "stage the cycle $CYCLE_INDEX critic request for day $DAY" | tee "$RUNNER_TEMP/stage.log"
+      - name: Verify, archive (encrypted exactly as the observer decrypts), round-trip, commit
+        env:
+          BUCKET: ${{ inputs.bucket }}
+          PREFIX: ${{ steps.sign.outputs.prefix }}
+          EXPECTED_SHA256: ${{ inputs.request_sha256 }}
+          KEY_PARAMETER: ${{ inputs.key_parameter }}
+          BRANCH: ${{ github.ref_name }}
+          CYCLE_INDEX: ${{ inputs.cycle_index }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, re, sys
+          from pathlib import Path
+          import boto3
+          from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+          sys.path.insert(0, 'research/kalshi/frankie_boss')
+          from git_request_archive import read_request_archive, SCHEMA
+          expected = os.environ['EXPECTED_SHA256']
+          if not re.fullmatch(r'[0-9a-f]{64}', expected):
+              raise SystemExit('request_sha256 must be 64 hex')
+          log = Path(os.environ['RUNNER_TEMP'], 'stage.log').read_text()
+          m = re.search(r'EXPORTED actual-critic-request\.json bytes=(\d+) sha256=([0-9a-f]{64})', log)
+          if not m:
+              raise SystemExit('the host printed no EXPORTED line')
+          bytes_, printed = int(m.group(1)), m.group(2)
+          if printed != expected:
+              raise SystemExit(f'the host holds request {printed}, not the expected {expected}; nothing archived')
+          body = boto3.client('s3', region_name='us-east-1').get_object(Bucket=os.environ['BUCKET'], Key=f"{os.environ['PREFIX']}/actual-critic-request.json")['Body'].read()
+          if len(body) != bytes_ or hashlib.sha256(body).hexdigest() != expected:
+              raise SystemExit('uploaded object differs from what the host printed')
+          ssm = boto3.client('ssm', region_name='us-east-2')
+          parameter = ssm.get_parameter(Name=os.environ['KEY_PARAMETER'], WithDecryption=True)['Parameter']
+          if parameter['Type'] != 'SecureString':
+              raise SystemExit('transport key parameter is not a SecureString')
+          key = bytes.fromhex(parameter['Value'])
+          if len(key) != 32:
+              raise SystemExit('transport key is not 32 bytes')
+          nonce = os.urandom(12)
+          ciphertext = AESGCM(key).encrypt(nonce, body, expected.encode('ascii'))
+          directory = Path('research/kalshi/frankie_boss/runs/request-archives') / expected
+          if directory.exists():
+              raise SystemExit(f'archive for {expected} already exists; never overwritten')
+          directory.mkdir(parents=True)
+          (directory / 'request.enc').write_bytes(ciphertext)
+          envelope = {'schema': SCHEMA, 'request_sha256': expected,
+                      'ciphertext_sha256': hashlib.sha256(ciphertext).hexdigest(), 'nonce_hex': nonce.hex(),
+                      'key_parameter': os.environ['KEY_PARAMETER'], 'key_region': 'us-east-2'}
+          (directory / 'envelope.json').write_text(json.dumps(envelope, indent=2, sort_keys=True) + '\n')
+          back = read_request_archive(directory, expected, ssm)
+          if back != body:
+              raise SystemExit('round trip through read_request_archive differs')
+          print(f'ARCHIVED runs/request-archives/{expected}/ bytes={bytes_} ciphertext_sha256={envelope["ciphertext_sha256"]} (round trip verified)')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/kalshi/frankie_boss/runs/request-archives
+          git commit -m "archive(frankie): retain the authenticated cycle $CYCLE_INDEX critic request $EXPECTED_SHA256 in Git (run $GITHUB_RUN_ID) [skip ci]"
+          git fetch --no-tags origin "$BRANCH" && git rebase FETCH_HEAD && git push origin "HEAD:$BRANCH"
