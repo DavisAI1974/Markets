@@ -1838,3 +1838,53 @@ weakened / absent, with the line. Anything absent or weakened is restored before
 ledger entry in `knowledge/RUN_FINDINGS.md`. Today's evidence so far (partial, not the audit): the
 instruction names the derivations and the 49 layers; the mission document and learned-structure layers were
 DELIVERED in the 2026-09-16 crosswalk; the eighteen sections are in the historical prompt bytes.
+
+### 22:55Z (next chat): the runner ended on its own; Greg's two opening tasks are done and committed; family dispatched
+
+Read in order: `DROP_IN_CLAUDE_20260921.md` READ FIRST, then 22:20Z and 22:25Z above. Branch for this chat:
+`claude/cycle-0-full-rerun-lr6e14`, reset onto the launch-verification tip d1a709ae (the harness had cut it from
+the trunk, the older `frankie_boss` lineage; never run launch code from there).
+
+The runner (pids 692, 4988 since 22:09:18Z) was probed read-only only (`frankie_host_cycle_status.yml` runs
+35541244209 at 22:18Z and 35541953094 at 22:31Z; `frankie_host_diag.yml` 35542176773). It was the cancelled
+22:06Z dispatch's host restart resuming `run_actual_sunday` through the `--ec2-resume` marker
+(`native-host-runtime.json` present=True), as the 22:20Z section predicted: it re-prepared cycle 0 piecewise
+(request-plan 22:21:44Z, a new `principal/prompt.md` 28,305,379 bytes at 22:22:21Z) and STOPPED on its own with
+`ValueError` in `causal_delivery` (frames: `run_actual_sunday_classroom.run:261` -> `sunday_execution.run_cycle:318`
+-> `feedback_cycle.run:422` -> ...; the 22:30Z section already names the cause class: the classroom adapter refuses
+a retained classroom artifact that differs, which the piecewise path kept). At 22:31Z no runner process was alive.
+Nothing was killed; nothing is recorded against its output; the whole-cycle supersede moves all of it aside. Host
+checkout f0910e6c, Pod RUNNING, KeepRunning=true.
+
+TASK A done (commit bb7ec517): `knowledge/CYCLE_CALCULATION_PINS.json` + `.md`; the adapter takes the cycle
+index (in its configuration hash), reads the pin, renders it into the prompt and the session request, saves the
+witness beside the prompt and carries it in the attachment; the factory passes the binding's cycle index; tests
+re-hash every source receipt and check the registry crosswalk. Pins applied: cycle 0 `legacy_observable_crosswalk`
+(first done 2026-08-16), cycle 1 `derived_geometry` (08-17), cycle 2 `prebirth_opportunity` (08-19), cycle 3
+`causal_clocks` (08-19), cycles 4-6 `order_lifecycle`, `full_book_fifo_queue`, `microstructure_mechanics` (08-20),
+cycles 7-18 the complete registry (08-28). FOR GREG: "group" was read as a registry calculation group ordered by the
+date first done, because every pin must name registry layers for the per-layer accounting; the alternative
+(the dated campaigns as run: 08-16 families + blind test first, 08-16/17 runway clock second, then aftermath,
+phase 1, phase 2, exact D1, D0-D5/birth, V4, the recalculation) is written in the `.md` with hashed receipts and is
+one JSON edit away. The 2026-08-23 `step1_*` receipts are the five-year MBO ingestion census, not a calculation
+group (sealed in the registry).
+
+TASK B done (commits 5d8b8074, d7de4e2a; the full per-document table is the ledger entry in
+`knowledge/RUN_FINDINGS.md`): PRESENT in the mission document (receiver commit 7b98617b, "Exhaustion is a central
+research axis ... how it forms, behaves, becomes detectable, persists, chains and ends"), the calculation contract
+(4.10-4.14, 4.16), the eighteen sections in the historical prompt bytes, all six frozen learned-structure layers
+(DELIVERED, carriers on disk), the request instruction. WEAKENED: the knowledge manifest (an index; carries the
+objective by reference; hash-bound, untouched), the Memory A seed header (frozen 4a47b09d, untouched; the ledger
+states the objective), the instruction's derivation list (now also names the causal clocks and the H+N horizon
+responses). ABSENT, restored: the dipole classroom now states that its 19 C15 dimensions are the opposing-pressure
+surface of the exhaustion research (docstring + model-visible `research_objective`); README and FRANKIE_CLAUDE
+carry an Objective section. Pre-existing, out of scope: `test_dipole_classroom_integration.py::
+test_classroom_run_and_main_are_the_lawful_bodies_modulo_the_named_seam` fails at HEAD d1a709ae already (the
+classroom host's run() copy lacks the lawful `cycles=getattr(self,'cycle_limit',19)`); not in the CI family.
+
+Local family: 1108 passed, 1 skipped (the exact CI list). Family dispatched on the branch (checks_only) at 22:56Z.
+Round from here (no further code changes): family green -> `frankie_host_advance.yml` target d7de4e2a ->
+`frankie_host_supersede_cycle.yml` (00) -> `frankie_host_declare_identity_supersede.yml` (`supersede_cycle=true`)
+-> ONE `frankie_journal_stack.yml` dispatch on `codex/frankie-launch-two-cycle-20260919` (standard inputs) ->
+readiness for the NEW critic request (`frankie_retained_granite.yml` + `frankie_deliver_readiness.yml`) ->
+re-dispatch -> HOLD -> export to Root.
