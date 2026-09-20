@@ -620,3 +620,24 @@ Pod by id, requires EXITED and the migration name, 404 readback) deleted the str
 replacement at 11:00:42Z: receipt `FRANKIE_POD_TERMINATE_RECEIPT_V1`, DELETE HTTP 204, readback
 HTTP 404, `confirmed_absent true`. Nothing verified had been on its volume. The retained Pod
 `ycf4v6lmave6xw` is untouched and its start retry loop (run 35503582348) is still cycling.
+
+### THE FRESH POD IS READY: 8vqdacl5t61rjx (US-MO-1), re-minted as the retained Pod
+
+Third create (run 35506464896, 10:58Z, data centers US-TX-4/US-IL-1/US-MO-1 offered, landed US-MO-1):
+bootstrap completed end to end (roster from S3, 17.59 GB model from Hugging Face at ~47 MB/s, 13
+files verified, vLLM up); the watcher then crashed on my own variable shadowing one line before
+the health probe (fixed `5094d47b`), with the Pod left RUNNING. Watch-only run 35507136416:
+startup + disk evidence accepted by `cloud.validate_runtime` and the open-bootstrap pins
+(`lifetime_seconds null`, bundle `a004983e...`, command `2d46c105...`, `jobs_v1`), `/health` 200 at
+11:12:15Z, receipt `FRANKIE_POD_PREPARE_RECEIPT_V1` outcome `service_ready`. Artifact
+`pod-prepare-35507136416`: pod-facts, migration-receipt-candidate, info-sha256, health,
+startup-records. Re-mint committed: `granite_retained_identity.POD_ID = 8vqdacl5t61rjx`,
+`JOURNAL_GENERATION = migration-8vqdacl5t61rjx-a004983e93b9`, receipt chained from the accepted
+retained info (source jvs75m56w8f73q), `INFO_SHA256 6f8efdf927b470ba...` (reproduced locally by
+rewriting the previous migrated info, whose hash matched the old pin), workflow defaults and
+tests updated; 20 retained tests pass. The old Pod's start-retry run 35503582348 was cancelled
+(no unadopted start may succeed later); ycf4v6lmave6xw itself is untouched, EXITED.
+
+Adoption next: the Pod is RUNNING, so the observer takes `observe_migrated_start` and needs boot
+frames stamped after its own `retained-startup.json`; a `restart` action issued once that journal
+record exists gives it fresh `GRANITE_RUNPOD_STARTUP`/`GRANITE_DISK` frames on the same host.
