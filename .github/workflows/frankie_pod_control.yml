@@ -19,13 +19,17 @@ on:
         description: 'After an accepted start, poll the status transition for at most this long'
         required: false
         default: '300'
+      retry_seconds:
+        description: 'Keep re-submitting every 60 s for at most this long while the host reports no free GPU (0 = one attempt)'
+        required: false
+        default: '0'
 permissions:
   contents: read
 jobs:
   control:
     if: github.repository == 'DavisAI1974/Markets'
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 355
     env:
       RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
     steps:
@@ -34,4 +38,4 @@ jobs:
         with:
           python-version: '3.12'
       - name: Inspect or start the retained Pod
-        run: python research/kalshi/frankie_boss/operations/pod_control.py --pod "${{ inputs.pod }}" --action "${{ inputs.action }}" --wait-seconds "${{ inputs.wait_seconds }}"
+        run: python research/kalshi/frankie_boss/operations/pod_control.py --pod "${{ inputs.pod }}" --action "${{ inputs.action }}" --wait-seconds "${{ inputs.wait_seconds }}" --retry-seconds "${{ inputs.retry_seconds }}"
