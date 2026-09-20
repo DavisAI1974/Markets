@@ -1437,3 +1437,25 @@ Notes for after the run, all on this branch: `NOTES_FOR_CLAUDE_CHAT_20260920.md`
 `SIMPLIFICATION_NOTES_20260920.md` (reviewer persona, code-simplification skill),
 `MASTER_WEAVE_20260920.md` (architect persona: inventory, the run as it ran with 33 hand-offs, the
 one-workflow state machine, 15 open questions).
+
+### 20:20Z: what the cycle 0 critic found (read back by `frankie_host_cycle_report.yml`, run 35535173753)
+
+The Granite critic's outcome for cycle 0 (job `c624856b...`, HTTP 200, `finish_reason: stop`, prompt 92,439
+tokens, completion 124 tokens, body sha256 `8f9d6d48...`) decodes to:
+
+```
+{"schema_version": "BOSS_GRANITE_OUTPUT_SCHEMA_V1", "snapshot_hash": "0b895d45...", "evidence_refs": [],
+ "contradictions": [], "missing_evidence": [], "hypotheses": [], "evidence_verdict": "CONSISTENT"}
+```
+
+That is a well-formed, EMPTY critique: no hypotheses, no evidence references, no contradictions, no missing
+evidence, verdict CONSISTENT, in 124 output tokens against a 92k-token packet. An observation for Greg's
+reading of cycle 0, not a defect claim: the controller result it fed is retained (stage `controller`
+51698a32) and the handoff export verified; whether an empty critique is the expected behaviour of the
+131,072-context Granite on the stacked_v1 packet, or a prompt/packet issue, is a science question and waits
+for the run to finish. Frankie's own analysis (the principal response) is still absent at 20:20Z; the
+classroom correction turn is not requested yet. The new read-only `frankie_host_cycle_report.yml`
+(`deploy/aws/host/frankie_host_cycle_report.ps1`) prints, per cycle: runner status lines, coordinator
+stages, verified feedback and training update, lessons, the recorded response with Frankie's Markdown
+analysis whole, the decoded critic body, the classroom status (package, audit, correction turn) and the
+cycle records.
