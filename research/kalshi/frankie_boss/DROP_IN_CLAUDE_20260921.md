@@ -5,6 +5,18 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
+## READ FIRST (22:20Z handoff): a runner is ALIVE on the host; the full rerun round starts after it stops
+
+`frankie_host_supersede_cycle.yml` run 35541184794 refused: "a runner process is alive (pid 692 4988)".
+Most likely the cancelled 22:06Z dispatch's host restart resumed `run_actual_sunday` (the `--ec2-resume`
+marker), so a runner is re-preparing cycle 0 PIECEWISE right now; it stops at the HOLD or refuses on its
+own. Never kill it. Its output is superseded by the whole-cycle round; record nothing against it. First
+action: `frankie_host_cycle_status.yml` (read-only; one was dispatched at 22:20Z) until no runner is
+alive, then the round in `CLAUDE_HANDOFF_20260920.md` "22:20Z: HANDOFF TO THE NEXT CHAT" (steps 1-6).
+Greg's concern, answered there with the evidence: the exhaustion and D calculations are NOT dropped; the
+eighteen sections, the mission document and the frozen learned structure are delivered, and since tonight
+the request ORDERS the derivations by registry layer name. Host at f0910e6c, family green (35541080824).
+
 ## State at 22:35Z: cycle 0 is re-run WHOLE from the beginning (Greg), not in steps
 
 **Read first.** Cycle 0's Frankie half never ran (Root's reports were not real). Greg, 22:12Z: "I wanted a

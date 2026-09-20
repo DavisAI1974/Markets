@@ -1732,3 +1732,72 @@ Round from here: cycle-state supersede -> declare (`supersede_cycle=true`) -> ON
 runs the native BOSS and mints a NEW Granite critic request -> readiness re-delivered for that request's sha
 (`frankie_retained_granite.yml` observer + `frankie_deliver_readiness.yml`, the 15:53Z round) -> re-dispatch
 -> critic -> export -> HOLD with the new Frankie request -> export to Root -> Root's task.
+
+### 22:20Z: HANDOFF TO THE NEXT CHAT. Full rerun of cycle 0 from the beginning; a runner is ALIVE on the host
+
+Greg, 22:18Z: "Are we running things out of order or incomplete as opposed to how a full rerun would?"
+"Part of the Frankie calcs is the exhaustion and the d's!! The entire basis of the 18 calcs is exhaustion
+research! Did that get dropped somehow? It's in his manifest doc." "We need to start new chat immediately."
+
+Answers, measured:
+- Nothing runs out of order in the design; the order is fixed (native BOSS -> Granite critic -> export ->
+  Frankie's session with the classroom -> learning -> readback -> completion). What was INCOMPLETE was my
+  re-issue earlier tonight, which kept the machine half and re-rendered only Frankie's request; it is
+  stopped (run 35540633095 cancelled at 22:13Z) and replaced by the whole-cycle supersede (f0910e6c,
+  family green 35541080824).
+- The exhaustion research is NOT dropped. It is in three places of the request: (1) the eighteen retained
+  sections (4.0, 4.0b, 4.1-4.16) ride unchanged inside the historical prompt bytes (sha 4a47b09d... Memory A
+  seed, the sections with their original hashes); (2) the mission document
+  (`research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md`, registry layer
+  `controlling_rt_mission`) and the frozen learned structure (`learned_chains_extensions_reappearances_
+  ancestry`, `learned_d_structures_and_families`, `learned_dipoles_and_geometry`, `learned_pair_triplet_
+  recurrence`, `predecessor_ancestry_unresolved_chain_state`, `historical_timing_lifespan_context`, ...)
+  are delivered inputs; (3) since tonight the instruction ORDERS the derivations: "derive yourself the
+  exhaustion chains with their extensions, reappearances and ancestry, the D structures and families, the
+  dipoles and geometry, the pair and triplet recurrences, and the pre-birth opportunities", the 49 registry
+  calculation layers by name (derived_geometry: `derived_d_family_geometry`, `derived_unresolved_age_chain_
+  trajectory`, `derived_ancestry_gaps`, `derived_roll20_and_dipole_state`...; prebirth_opportunity; the
+  seven causal clocks including `clock_prospective_discovery_confirmation` and `clock_lock_time`), one
+  `calculation_accounting` lesson entry per layer, and the ten output ledgers. What HAD been dropped before
+  tonight: the request told him "do not rerun completed calculations" and never asked for a derivation, and
+  the ten output ledgers were never filed (Sept 15 and today). That is fixed in code and tested against the
+  crosswalk JSON (`tests/test_frankie_principal_adapter.py`).
+
+STATE AT HANDOFF (read before acting):
+- Host tools checkout f0910e6c (advance run 35541114772 green). Family green on f0910e6c (35541080824).
+  Trunk carries both workflow registrations (820ad9d8). Pod 8vqdacl5t61rjx RUNNING, KeepRunning=true.
+- `frankie_host_supersede_cycle.yml` run 35541184794 REFUSED at 22:17:27Z: "a runner process is alive
+  (pid 692 4988)". Root cause, most likely: the cancelled dispatch's `sources` job had already run
+  "Restart the native host on every dispatch" + "host-start", and the host's `--ec2-resume` marker
+  (`native-host-runtime.json`) resumes `run_actual_sunday` on boot, so a runner is re-preparing cycle 0
+  PIECEWISE on the host right now (it will re-render Frankie's request around the retained machine half
+  and stop at the HOLD, `actual_frankie_session_pending`, or refuse). Its output is superseded by the
+  whole-cycle supersede below; do NOT record anything against it. Read-only status probe dispatched at
+  22:20Z (`frankie_host_cycle_status.yml`); read its output first.
+- cycles.sqlite still holds cycle 0's binding, controller (ABSTAIN + empty critique), export; the
+  declaration file holds today's entries including a `supersede_principal` one (harmless once the whole
+  cycle is superseded).
+
+THE NEXT CHAT DOES THIS, IN ORDER (no package code changes):
+1. `frankie_host_cycle_status.yml` (read-only) until no runner is alive and the status is a HOLD or a
+   refusal. Never kill the runner; it ends on its own.
+2. `frankie_host_supersede_cycle.yml` (cycle_index 00, reason: Greg's full rerun). Expect MOVED
+   `execution/cycle-00` and `handoff-<sha>` with the receipt `cycle-state-superseded-<stamp>.json` in the
+   day directory.
+3. `frankie_host_declare_identity_supersede.yml` with `supersede_cycle=true` (reason: Greg's full rerun).
+   Expect `status: declared` with `supersede_cycle: true` and `old_binding_hash`.
+4. ONE dispatch of `frankie_journal_stack.yml` on `codex/frankie-launch-two-cycle-20260919` (day 20211003,
+   go 0eb2c2acdccc17f8ad2d64d00b74a0c93b477c0418651a7f290d53f19d5710b0, cycles 2, keep_compute true,
+   checks_only false). The coordinator accepts the declared cycle supersede, archives the stages, and the
+   cycle starts over: native BOSS calculation (about 15 min) then a NEW Granite critic request.
+5. The retained readiness is pinned to the OLD critic request (a7b72cf9); the new one will not match.
+   Re-deliver: `frankie_retained_granite.yml` (the observer; keep the Pod RUNNING, never through EXITED)
+   then `frankie_deliver_readiness.yml` (request id `frankie-boss-sunday-two-cycle-20260919-cycle-00`,
+   the new request sha) and re-dispatch step 4. The 15:53Z section of this file is the worked example.
+6. Critic on the Pod -> export -> HOLD (`actual_frankie_session_pending`) with the NEW Frankie request.
+   `frankie_host_export_principal_request.yml` (cycle 00) -> update `operations/ROOT_CYCLE_00_TASK_
+   20260920.md` with the new keys, bytes and sha256 -> Root performs the session (request + classroom
+   teach-back + correction) and pushes to `root/cycle-00-response` -> `frankie_host_record_principal_
+   response.yml` -> ONE pipeline dispatch -> verify, native learning, readback, completion -> cycle 1.
+Rules that stand: nothing deleted, every move receipted; no Pod stop/terminate without Greg; no package
+code changes; the drop-in `DROP_IN_CLAUDE_20260921.md` "State at 22:35Z" carries the same list.
