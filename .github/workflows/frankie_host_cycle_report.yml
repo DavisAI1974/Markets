@@ -34,9 +34,9 @@ on:
         required: false
         default: '00'
       bucket:
-        description: 'Bucket the report file is uploaded to (host-reports/<day>/), by presigned PUT'
+        description: 'Staging bucket the report file is uploaded to (host-reports/<day>/, presigned PUT); the granite bucket is the one the workflow credentials are proven to write (mapping-index restore)'
         required: false
-        default: 'bento-568968024170-us-east-2-an'
+        default: 'frankie-granite42-568968024170-us-east-1'
 permissions:
   contents: read
 jobs:
@@ -68,7 +68,7 @@ jobs:
           from pathlib import Path
           import boto3
           key = f"host-reports/{os.environ['DAY']}/cycle-{os.environ['CYCLE_INDEX']}-report-{os.environ['GITHUB_RUN_ID']}.txt"
-          url = boto3.client('s3', region_name='us-east-2').generate_presigned_url(
+          url = boto3.client('s3', region_name='us-east-1').generate_presigned_url(
               'put_object', Params={'Bucket': os.environ['BUCKET'], 'Key': key}, ExpiresIn=3600, HttpMethod='PUT')
           if "'" in url or '\n' in url:
               raise SystemExit('presigned URL carries a character ssm_run_ps1.py --set refuses')
@@ -106,7 +106,7 @@ jobs:
           import hashlib, os
           from pathlib import Path
           import boto3
-          body = boto3.client('s3', region_name='us-east-2').get_object(Bucket=os.environ['BUCKET'], Key=os.environ['KEY'])['Body'].read()
+          body = boto3.client('s3', region_name='us-east-1').get_object(Bucket=os.environ['BUCKET'], Key=os.environ['KEY'])['Body'].read()
           out = Path(os.environ['RUNNER_TEMP'], 'cycle-report.txt'); out.write_bytes(body)
           print(f'REPORT bytes={len(body)} sha256={hashlib.sha256(body).hexdigest()} (compare with the REPORT_FILE line above)')
           print('=' * 100)

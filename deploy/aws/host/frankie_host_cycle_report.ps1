@@ -186,6 +186,17 @@ if ($Url) {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $previous = $ProgressPreference; $ProgressPreference = 'SilentlyContinue'
     try { Invoke-WebRequest -Uri $Url -Method Put -InFile $report -ContentType 'text/plain; charset=utf-8' -UseBasicParsing | Out-Null }
+    catch {
+        # name the refusal (the S3 error code and message), never the URL
+        $detail = ''
+        try {
+            $stream = $_.Exception.Response.GetResponseStream()
+            $detail = (New-Object System.IO.StreamReader($stream)).ReadToEnd()
+            $detail = ($detail -replace '<RequestId>.*?</RequestId>', '') -replace '<HostId>.*?</HostId>', ''
+        } catch { $detail = $_.Exception.Message }
+        Write-Output ("REPORT_UPLOAD_REFUSED " + $_.Exception.Message + " " + $detail)
+        throw 'the report upload was refused (the file is on the host; see REPORT_FILE)'
+    }
     finally { $ProgressPreference = $previous }
     Write-Output ("REPORT_UPLOADED bytes=" + $reportBytes + " sha256=" + $reportSha)
 } else { Write-Output 'REPORT_NOT_UPLOADED (no Url supplied; the console copy above may be cut by the SSM API)' }
