@@ -36,7 +36,9 @@ $requestId = $cfg.run_id + '-cycle-' + $CycleIndex
 $triggerRoot = $cfg.host_runtime.pod_credential_ssm.trigger_directory
 if (-not $triggerRoot) { throw 'host configuration declares no trigger_directory' }
 $cycle = Join-Path $runDirectory ('execution\cycle-' + $CycleIndex)
-if (-not (Test-Path $cycle)) { throw ("cycle directory absent: " + $cycle) }
+# 2026-09-20 23:45Z: after a whole-cycle supersede the cycle directory is already aside (with its spool, its
+# evidence); the trigger and readiness of the request still block a re-pinned delivery and are moved here.
+if (-not (Test-Path $cycle)) { Write-Output ("cycle directory absent (superseded whole; nothing of it to protect here): " + $cycle) }
 $spool = Join-Path $cycle 'critic-spool'
 if ((Test-Path $spool) -and @(Get-ChildItem $spool -Recurse -Filter 'dispatch.json' -ErrorAction SilentlyContinue).Count -gt 0) {
     throw ("refusing: cycle " + $CycleIndex + " holds a critic dispatch; its readiness was used and is evidence")
