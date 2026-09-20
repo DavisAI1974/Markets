@@ -73,11 +73,16 @@ if response.exists():
     print(f"  request_sha256={str(r.get('request_sha256'))[:16]} sections cited={len(r.get('sections') or {})} host_attestation keys={sorted((retained.get('host_attestation') or {}).keys())[:8]}")
     fb = r.get('feedback') or {}
     print(f"  feedback: request_id={fb.get('request_id')} available_ns={fb.get('available_ns')} sessions={len(fb.get('sessions') or [])}")
-    budget = 5000
-    for i, lesson in enumerate(r.get('lessons') or []):
-        text = short(json.dumps(lesson, sort_keys=True, default=str) if not isinstance(lesson, str) else lesson)
-        if budget <= 0: print('  ... (output budget reached)'); break
-        budget -= len(text); print(f'  lesson[{i}] {text}')
+    # Frankie's Markdown analysis is retained as its own lessons entry (ACTUAL_PRINCIPAL_RESPONSE_HANDOFF.md);
+    # print the longest entry whole (up to the SSM cap) and the others briefly.
+    entries = [json.dumps(l, sort_keys=True, default=str) if not isinstance(l, str) else l for l in (r.get('lessons') or [])]
+    longest = max(range(len(entries)), key=lambda i: len(entries[i])) if entries else None
+    for i, text in enumerate(entries):
+        if i == longest:
+            print(f'  lesson[{i}] (the analysis, {len(text)} chars):'); print(text[:12000])
+            if len(text) > 12000: print(f'  ... [{len(text) - 12000} more chars]')
+        else:
+            print(f'  lesson[{i}] {short(text, 300)}')
 spool = cycle/'critic-spool'
 print('### critic outcome')
 if spool.exists():
