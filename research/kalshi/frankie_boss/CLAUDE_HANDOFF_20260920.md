@@ -1065,3 +1065,57 @@ pins on `claude/frankie-launch-verification-lqmv0m` (run 35521110718, 15:56:30Z,
 completion record for job `4c58e8c6...`, outcome `8f9d6d48...`, code `34a4feac`. **Repeat for cycle 1's
 outcome** (task #7); the proper fix (rewrite `completion_workflow_ref` in the day configuration, which
 re-mints host-identity, or carry the current identity on the launch branch) waits for the run to finish.
+
+### Cycle 0 STOPPED at 16:00:13Z in the causal handoff: the source mapping INDEX was never on the host
+
+Host job 106102931387 (run 35520104563) ended `stage_refused`: `cycles exited 1`, stop record
+`FileNotFoundError` with frames `sunday_execution.run_remaining:336 -> run_cycle:318 ->
+feedback_cycle.run:271 -> to_thread -> sunday_execution._LazyPrincipal.prepare:186 -> _get:173 ->
+source_contract_runtime.make_principal_adapter:108 -> frankie_source_mapping.bind_prefix:242 -> _plain:49
+-> lstat`. Line 242 is `_plain(directory/'index.jsonl')` (line 225, `mapping.json`, had passed). So the
+controller result and the export manifest were saved (`self._save(request_id,'controller',...)` and
+`'export'` at feedback_cycle 258-268), and the FIRST bind of the source mapping to cycle 0's prefix on
+this host failed for want of the index. No receipt was committed (the always() step found nothing staged).
+
+**Root cause, verified in git.** The 20260915 restoration package carries
+`FB/source-execution-20260915/mapping/mapping.json` (1,063 bytes, sha `55cccc23...`, the configuration's
+`mapping` pin) and `FB/actual-feedback-run/execution/cycle-00/principal/bound-mapping.json` (1,243 bytes,
+`FRANKIE_BOSS_BYTE_PREFIX_MAPPING_V1`: mapping sha, cycle-0 `boss_source` prefix `e9472604...`, journal
+checkpoint 6524 / `96f2d581...`, 3,262 matched records in 2,282 groups) but NOT `mapping/index.jsonl`
+(16,121,079 bytes, sha `f62c522d...`, pinned inside mapping.json). `make_principal_adapter` skips
+`bind_prefix` when `principal/bound-mapping.json` exists with equal pins, so every earlier host run rode
+the retained binding and never opened the index. On the 20260919 host the cycle-00 `principal/` binding
+is absent (neither supersede moved it: receipts 12:53Z and 13:08Z list host-identity, initialization,
+training.sqlite, training-witnesses, execution-identity, host-preparation, host-context-cache,
+actual-critic-request, host-ready; the second run found the cycle-00 items already absent), so the bind
+ran and the index was missing. Cycle 1 (prefix-01, a different `through_cursor`) MUST bind afresh, so
+restoring the retained cycle-0 binding alone would not have carried the run; the index is required.
+
+**The index is a derived artifact with a pin, so it was rebuilt and verified, not overridden.**
+`frankie_boss_ledger_mapping.yml` run 35521986689 (16:12-16:17Z, GitHub runner, S3 inputs only: the
+preserved `glbx-mdp3-20211003.mbo.dbn.zst` member and the 1.7 GB gzip member ledger; no Databento, no
+Pod, no host) rebuilt `mapping/index.jsonl` at 16,121,079 bytes sha `f62c522d...` = the pin, byte for
+byte. Its `mapping.json` differs from the committed one ONLY in provenance: `extraction_pin.runtime_hash`
+(`dd9d50e0...` vs `166f6360...`), hence `extraction_hash`, and `member_ledger.encoding` gzip vs plain
+(the plain digest `f73e9537...` and 10,756,276,521 bytes are equal); schema, source member, record and
+group counts and the index pin are identical. Delivery: `frankie_host_restore_mapping_index.yml` +
+`deploy/aws/host/frankie_host_restore_mapping_index.ps1` (e5e9198d, bc8ed6b0; registered on the trunk
+90090db8): verifies the artifact against the committed pin, stages it at
+`s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/mapping/index.jsonl`, starts the
+host, tags `KeepRunning=true`, and the host script re-verifies `mapping.json` against the configuration
+pin and the download against mapping.json's index pin before a same-directory rename; an index already
+present with the pinned digest is left alone, a differing one is refused, a failed download is moved to
+`superseded/`. Receipt `FRANKIE_MAPPING_INDEX_RESTORED_V1` in the day directory. First attempt
+(35522423445) refused on the whole-bytes mapping.json comparison (the provenance fields above); second
+attempt 35522551415 passed verification at 16:23:39Z and is placing the index (result recorded below).
+
+**The host was STOPPED at 16:07:50Z by the trunk's scheduled `AWS idle instance guard`** (cron
+`17 */6 * * *`: stops any instance whose average CPU sat under 5 percent on every hourly point of the
+last six hours unless tagged `KeepRunning=true`). The host's CPU had been under that bar through the
+morning's re-preparations, and the runner's exit at 16:00 left nothing to keep it above it. The
+documented practice (`DROP_IN_NEXT_CHAT_20260917.md`: the host carries `KeepRunning=true` only for the
+run's duration) is now applied by the restore workflow; task #9 reverts it after the run.
+`frankie_host_cycle_status.yml` run 35521939729 and `frankie_host_diag.yml` run 35522042679 (16:12-16:14Z)
+both hit `InvalidInstanceId: Instances not in a valid state` for that reason (EC2 state `stopped`, SSM not
+registered); nothing in the day pipeline stopped it (cleanup job skipped under keep_compute true, no
+host-side stop path exists).
