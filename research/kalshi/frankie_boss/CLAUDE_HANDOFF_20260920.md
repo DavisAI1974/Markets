@@ -1559,3 +1559,29 @@ cycle runs. The stage is `day_schedule_prefixes.ps1` with `CycleLimit=19` (the g
 `build_remaining_sunday_prefixes.py --configuration`); the day configuration pins the two-cycle manifest, so
 switching the pin is part of that work, and the host's CPU-dedication gate for the native step has to be
 respected (measure before starting it beside a running cycle). Wait until the cycle is running.
+
+### 20:58Z: run 35536713271 returned to the HOLD (no response on the host); Root recorded OFF the host; the on-host recording delivery is built
+
+Run 35536713271's cycles stage ran 205 s, found no `session-response.json` and exited 3 with
+`actual_frankie_session_pending` (the same HOLD; nothing written over). Two read-only probes (20:48:58Z,
+20:50:31Z) had already shown no response file and no `response-check-*` candidate directory in
+`execution/cycle-00/principal/`. Greg, 20:53Z: Root ran the recorder on his own machine, not the host.
+The recorder must run on the host: it takes `actual-host.lock`, reads the retained plan/export/request,
+validates in a candidate directory, and `_attest_host` reads the attestation's `host_record.path` on the
+machine it runs on.
+
+Built (e351a952, trunk-registered): `frankie_host_record_principal_response.yml` +
+`deploy/aws/host/frankie_host_record_principal_response.ps1` + `tests/test_host_record_principal_response.py`
+(76 text tests green). Root pushes THREE files to a git ref; the workflow checks them (response shape,
+18 sections, attestation schema/mechanism/binding, the record's sha256 and bytes against the attestation's
+pin, `host_authority`), stages them to the granite bucket with SigV4 presigned GETs (masked), and the host
+script verifies each by sha256 and bytes, places the session record at
+`<run_directory>/execution/cycle-00/principal/host-session-record.json`, requires the attestation's
+`host_record.path` to name exactly that file, runs the recorder from the tools checkout with the
+configuration's sha256, requires `actual_principal_response_recorded`, and writes
+`principal-response-recorded-<stamp>.json`. An existing `session-response.json` is reported and left
+alone; a different record already present refuses. Then ONE re-dispatch of the pipeline.
+
+What Root must re-issue: the attestation's `host_record.path` must be the HOST path
+`C:/Codex/Frankie-BOSS-20260919/actual-feedback-run/execution/cycle-00/principal/host-session-record.json`
+(the record's bytes and sha256 unchanged), since the recorder reads that path on the host.
