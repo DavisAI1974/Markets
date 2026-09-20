@@ -9,10 +9,11 @@ and leaves host-instance.c15.json / native-host-runtime.json in place, sends eve
 of the run directory (never inside it), refuses unless the tools HEAD is the configuration's
 boss_commit, moves nothing when nothing is stale, and writes one receipt into the DAY directory.
 
-Pinned against revision sha256 d1b4c062... (2026-09-20 13:06 UTC). It grew past the original eight
-items after pipeline run 35511984264 refused on execution/execution-identity.c15.json: the original
-eight are asserted as a subset, the three additions, the stale-only identity moves and the catch-all
-commit-literal scan are pinned by name. The one piece executed for real is the embedded Python that
+Pinned against the hardened revision of 2026-09-20 (after the /ship reviews). It grew past the
+original eight items after pipeline run 35511984264 refused on execution/execution-identity.c15.json:
+the original eight are asserted as a subset, the three additions, the stale-only identity moves, the
+scoped non-recursive commit-literal scan with its kept/journal exclusions and reparse-point filter,
+the run_directory quote check, the OldCommit override and the leftover refusal are pinned by name. The one piece executed for real is the embedded Python that
 reads the two identity records: it runs in a subprocess against records packed by the real
 c15_journal, because a c15 file is a tagged list and that shape broke the probe's first run.
 """
@@ -31,7 +32,7 @@ SCRIPT = ROOT / 'deploy/aws/host/frankie_host_supersede_code_bound_state.ps1'
 WORKFLOW = ROOT / '.github/workflows/frankie_host_supersede_code_bound_state.yml'
 JOURNAL = ROOT / 'research/kalshi/frankie_boss/c15_journal.py'
 REQUIRED_VARIABLES = ('Day', 'RunRoot', 'ToolsRoot', 'Python')
-OPTIONAL_VARIABLES = ('CycleIndex',)
+OPTIONAL_VARIABLES = ('CycleIndex', 'OldCommit')
 SCHEMA = 'FRANKIE_CODE_BOUND_STATE_SUPERSEDED_V1'
 TEXT = SCRIPT.read_text()
 LINES = TEXT.splitlines()
@@ -190,7 +191,17 @@ def test_the_candidate_list_is_grown_only_inside_the_stale_branch():
 
 
 def test_the_catch_all_scan_only_moves_c15_records_that_carry_the_old_commit_literal():
-    assert "Get-ChildItem $runDirectory -Recurse -File -Filter '*.c15.json' | ForEach-Object {" in STALE_BLOCK
+    # Scoped, never recursive: another cycle's completion.c15.json carries boss_commit lawfully.
+    assert '-Recurse' not in CODE
+    assert "foreach ($scanRoot in @($runDirectory, (Join-Path $runDirectory 'execution'), $cycle)) {" in STALE_BLOCK
+    assert ("Get-ChildItem $scanRoot -File -Filter '*.c15.json' | Where-Object { -not ($_.Attributes -band $reparse) } "
+            "| ForEach-Object {") in STALE_BLOCK
+    assert '$reparse = [IO.FileAttributes]::ReparsePoint' in STALE_BLOCK
+    assert 'if (-not $_.FullName.StartsWith($root)) { return }' in STALE_BLOCK
+    # Kept records and chained journals are excluded by name before the literal is even looked for.
+    assert ("if ($name -eq 'host-instance.c15.json' -or $name -like 'verified-*' -or $name -eq 'genesis.c15.json' "
+            "-or $name -like 'append-*') { return }") in STALE_BLOCK
+    assert _index("$name -eq 'host-instance.c15.json'", STALE_BLOCK) < _index('-SimpleMatch $stored', STALE_BLOCK)
     assert 'if (Select-String -Path $_.FullName -SimpleMatch $stored -Quiet) {' in STALE_BLOCK
     assert 'if ($candidates -notcontains $relative) {' in STALE_BLOCK
     assert "$relative = $_.FullName.Substring($root.Length).TrimStart('\\', '/').Replace('\\', '/')" in STALE_BLOCK
@@ -211,7 +222,10 @@ def test_the_cycle_bound_items_live_under_the_requested_cycle_only():
 
 @pytest.mark.parametrize('kept', KEPT_ITEMS)
 def test_the_data_bound_items_are_never_enumerated_and_the_receipt_says_they_were_kept(kept):
-    assert kept not in STALE_BLOCK
+    # A kept name may appear in the stale branch only on the scan's exclusion line, never near $candidates.
+    for line in STALE_BLOCK.splitlines():
+        if kept in line:
+            assert '{ return }' in line and '$candidates' not in line, line
     kept_line = re.search(r"^\s*kept\s*=\s*@\((.*)\)$", RECEIPT, re.M).group(1)
     assert f"'{kept}'" in kept_line
     # The host-ready glob is prefix-anchored, so it cannot match a kept name.
@@ -222,8 +236,10 @@ def test_host_instance_must_be_present_and_is_only_ever_tested_never_moved():
     guard = "if (-not (Test-Path (Join-Path $runDirectory 'host-instance.c15.json'))) { throw 'refusing: host-instance.c15.json absent"
     assert guard in CODE
     mentions = [line for line in CODE.splitlines() if 'host-instance.c15.json' in line]
-    assert len(mentions) == 2, mentions            # the guard + the receipt's kept list, nothing else
+    assert len(mentions) == 3, mentions            # the guard, the scan exclusion, the receipt's kept list
     assert any('kept' in line for line in mentions)
+    assert any('{ return }' in line for line in mentions)
+    assert not any('$candidates' in line or 'Move-Item' in line for line in mentions)
     assert _index(guard) < _index("$candidates = @('initialization")
 
 
@@ -235,9 +251,10 @@ def test_the_destination_is_built_from_the_run_directory_parent_never_inside_the
     assert '$runName = Split-Path $runDirectory -Leaf' in CODE
     assert '$destination = Join-Path $target $relative' in CODE
     assert "Join-Path $runDirectory 'superseded'" not in TEXT
-    # $runDirectory is only ever joined to build a SOURCE (or the guard / cycle lookups), never a destination.
+    # $runDirectory is only ever joined to build a SOURCE (or the guard / cycle / scan / leftover lookups),
+    # never a destination.
     joins = re.findall(r"Join-Path \$runDirectory ('[^']*'|\$\w+)", CODE)
-    assert sorted(joins) == ['$cycleRelative', '$relative', "'host-instance.c15.json'"], joins
+    assert sorted(joins) == ['$_', '$cycleRelative', '$relative', "'execution'", "'host-instance.c15.json'"], joins
 
 
 def test_the_superseded_folder_is_stamped_with_the_stale_commit_so_two_supersedes_never_collide():
@@ -261,17 +278,29 @@ def test_nothing_moves_when_the_stored_commit_equals_head_or_no_identity_is_stor
     # The first revision threw here; this revision is re-runnable: the candidate list stays empty and a
     # receipt with moved = [] is still written, so a second dispatch is a no-op with evidence.
     assert "} elseif ($stored -eq $head) {\n    Write-Output 'stored identity already matches the current commit; nothing is stale'" in CODE
-    assert "} else {\n    Write-Output 'no stored identity found; nothing is stale'" in CODE
-    assert 'throw' not in CODE.split("} elseif ($stored -eq $head) {", 1)[1].split('$stamp =', 1)[0]
+    assert "} else {\n    Write-Output 'no stored identity found'" in CODE
+    # A fresh identity at HEAD means every other record was written by HEAD too: no throw there.
+    assert 'throw' not in CODE.split("} elseif ($stored -eq $head) {", 1)[1].split('} else {', 1)[0]
+    # No identity at all: leftover checkpoint-bound records cannot be judged, so the script refuses
+    # to report success while they remain (code review, Important) unless OldCommit names them stale.
+    absent = CODE.split('} else {\n', 1)[1].split('$stamp =', 1)[0]
+    assert 'throw ("refusing: no identity record to judge by, but checkpoint-bound records are present: "' in absent
+    assert "Write-Output 'nothing is stale'" in absent
     assert "if ($stored -eq 'absent' -and ($hostIdentity -eq $head -or $executionIdentity -eq $head)) { $stored = $head }" in CODE
+    # The operator override is pinned to 40 hex, must differ from HEAD, and may not contradict a stored identity.
+    assert "if ($OldCommit -notmatch '^[0-9a-f]{40}$') { throw 'OldCommit must be a full 40-hex commit' }" in CODE
+    assert "if ($OldCommit -eq $head) { throw" in CODE
+    assert "if ($stored -ne 'absent' -and $stored -ne $OldCommit) { throw" in CODE
 
 
 def test_every_refusal_fires_before_anything_is_moved():
     first_move = _index('Move-Item')
     for guard in ('throw "$required was not supplied', 'throw "CycleIndex must be two digits',
                   'throw "no run configuration for $Day', 'throw "run_directory absent',
+                  "throw 'refusing: run_directory carries a quote or newline'",
                   'throw ("refusing: tools HEAD', "throw 'refusing: host-instance.c15.json absent",
-                  'throw ("could not read the identity records', 'throw ("could not read a stored boss_commit'):
+                  'throw ("could not read the identity records', 'throw ("could not read a stored boss_commit',
+                  "throw 'OldCommit must be a full 40-hex commit'"):
         assert _index(guard) < first_move, guard
     assert _index("$candidates = @('initialization") < first_move
 
@@ -339,7 +368,9 @@ def test_the_receipt_carries_the_schema_and_every_field_a_reader_needs_to_undo_t
     assert re.search(rf"^\s*schema\s*=\s*'{SCHEMA}'$", RECEIPT, re.M)
     declared = re.findall(r'^\s*([a-z_]+)\s*=', RECEIPT, re.M)
     assert declared == ['schema', 'day', 'run_id', 'run_directory', 'stored_boss_commit', 'current_boss_commit',
-                        'superseded_root', 'kept', 'moved', 'at'], declared
+                        'stale', 'superseded_root', 'kept', 'moved', 'at'], declared
+    # superseded_root names a folder only when something was moved into it.
+    assert 'superseded_root     = $(if ($moved.Count -gt 0) { $target } else { $null })' in RECEIPT
     per_item = TEXT.split('$moved += [ordered]@{', 1)[1].split('}', 1)[0]
     assert re.findall(r'([a-z_0-9]+) =', per_item) == ['relative', 'destination', 'sha256', 'bytes', 'mtime_utc']
 
@@ -374,7 +405,12 @@ def test_the_workflow_is_dispatch_only_read_only_and_pinned_to_the_one_repositor
     workflow = yaml.safe_load(WORKFLOW.read_text())
     assert workflow['permissions'] == {'contents': 'read'}
     assert set(workflow[True]) == {'workflow_dispatch'}          # yaml reads the `on:` key as True
-    assert set(workflow[True]['workflow_dispatch']['inputs']) == {'instance', 'day', 'run_root', 'tools_root', 'python', 'cycle_index'}
+    assert set(workflow[True]['workflow_dispatch']['inputs']) == {'instance', 'day', 'run_root', 'tools_root', 'python',
+                                                                  'cycle_index', 'old_commit'}
+    # Inputs reach the shell through env, never by expression interpolation into run: (audit, Medium).
+    step = next(s for s in workflow['jobs']['supersede']['steps'] if 'frankie_host_supersede_code_bound_state.ps1' in s.get('run', ''))
+    assert '${{' not in step['run']
+    assert set(step['env']) == {'INSTANCE', 'DAY', 'RUN_ROOT', 'TOOLS_ROOT', 'HOST_PYTHON', 'CYCLE_INDEX', 'OLD_COMMIT'}
     assert workflow['jobs']['supersede']['if'] == "github.repository == 'DavisAI1974/Markets'"
     assert workflow[True]['workflow_dispatch']['inputs']['cycle_index']['default'] == '00'   # matches the script default
     for step in workflow['jobs']['supersede']['steps']:

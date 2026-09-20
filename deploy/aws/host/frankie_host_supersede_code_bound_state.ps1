@@ -45,6 +45,8 @@ if (-not (Test-Path $cfgPath)) { throw "no run configuration for $Day at $cfgPat
 $cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
 $runDirectory = $cfg.run_directory
 if (-not $runDirectory -or -not (Test-Path $runDirectory)) { throw "run_directory absent: $runDirectory" }
+# run_directory is interpolated into a raw Python literal below; a quote or newline would end it.
+if ($runDirectory -match "[\x27\x22\r\n]") { throw 'refusing: run_directory carries a quote or newline' }
 $git = (Get-Command git -ErrorAction Stop).Source
 $head = (& $git -C $ToolsRoot rev-parse HEAD).Trim()
 if ($head -ne $cfg.host_runtime.boss_commit) { throw ("refusing: tools HEAD " + $head + " is not the configuration's boss_commit " + $cfg.host_runtime.boss_commit) }
@@ -75,6 +77,16 @@ Write-Output ("current (tools HEAD):           " + $head)
 $stored = 'absent'
 foreach ($value in $identities) { if ($value -ne 'absent' -and $value -ne $head) { $stored = $value; break } }
 if ($stored -eq 'absent' -and ($hostIdentity -eq $head -or $executionIdentity -eq $head)) { $stored = $head }
+# Once both identity records are gone (a prior dispatch moved them and then threw on a later item),
+# nothing on disk names the old commit; the operator supplies it, and the leftover check below refuses
+# to report success while checkpoint-bound records remain unjudged.
+if ((Get-Variable OldCommit -ErrorAction SilentlyContinue) -and $OldCommit) {
+    if ($OldCommit -notmatch '^[0-9a-f]{40}$') { throw 'OldCommit must be a full 40-hex commit' }
+    if ($OldCommit -eq $head) { throw 'OldCommit equals the current commit; nothing to supersede' }
+    if ($stored -ne 'absent' -and $stored -ne $OldCommit) { throw ("OldCommit " + $OldCommit + " contradicts the stored identity " + $stored) }
+    $stored = $OldCommit
+    Write-Output ("old commit supplied by the operator: " + $OldCommit)
+}
 
 $moved = @()
 $candidates = @()
@@ -95,21 +107,39 @@ if ($stored -ne 'absent' -and $stored -ne $head) {
     if (Test-Path $cycle) {
         Get-ChildItem $cycle -Filter 'host-ready-*.c15.json' | ForEach-Object { $candidates += ($cycleRelative + '/' + $_.Name) }
     }
-    # Catch-all: any other c15 record under the run directory that carries the OLD commit literal.
+    # Catch-all for an unenumerated record carrying the OLD commit literal, scoped to this run's root,
+    # the execution root and THIS cycle only: another cycle's completion.c15.json carries boss_commit
+    # lawfully and must stay. Kept records and chained journals (genesis/append-*) are never moved;
+    # reparse points are never followed; nothing outside the resolved run root is touched.
     $root = (Resolve-Path $runDirectory).Path
-    Get-ChildItem $runDirectory -Recurse -File -Filter '*.c15.json' | ForEach-Object {
-        $relative = $_.FullName.Substring($root.Length).TrimStart('\', '/').Replace('\', '/')
-        if ($candidates -notcontains $relative) {
-            if (Select-String -Path $_.FullName -SimpleMatch $stored -Quiet) {
-                Write-Output ("  scan hit (old commit literal): " + $relative)
-                $candidates += $relative
+    $reparse = [IO.FileAttributes]::ReparsePoint
+    foreach ($scanRoot in @($runDirectory, (Join-Path $runDirectory 'execution'), $cycle)) {
+        if (-not (Test-Path $scanRoot)) { continue }
+        Get-ChildItem $scanRoot -File -Filter '*.c15.json' | Where-Object { -not ($_.Attributes -band $reparse) } | ForEach-Object {
+            if (-not $_.FullName.StartsWith($root)) { return }
+            $name = $_.Name
+            if ($name -eq 'host-instance.c15.json' -or $name -like 'verified-*' -or $name -eq 'genesis.c15.json' -or $name -like 'append-*') { return }
+            $relative = $_.FullName.Substring($root.Length).TrimStart('\', '/').Replace('\', '/')
+            if ($candidates -notcontains $relative) {
+                if (Select-String -Path $_.FullName -SimpleMatch $stored -Quiet) {
+                    Write-Output ("  scan hit (old commit literal): " + $relative)
+                    $candidates += $relative
+                }
             }
         }
     }
 } elseif ($stored -eq $head) {
     Write-Output 'stored identity already matches the current commit; nothing is stale'
 } else {
-    Write-Output 'no stored identity found; nothing is stale'
+    Write-Output 'no stored identity found'
+    # With no identity to judge by, a leftover checkpoint-bound record cannot be called fresh.
+    $cycleRelative = 'execution/cycle-' + $CycleIndex
+    $leftovers = @('initialization.c15.json', 'training.sqlite', 'training-witnesses',
+        ($cycleRelative + '/host-preparation.c15.json'), ($cycleRelative + '/host-context-cache.c15.json'),
+        ($cycleRelative + '/request-plan.c15.json'), ($cycleRelative + '/actual-critic-request.json')) |
+        Where-Object { Test-Path (Join-Path $runDirectory $_) }
+    if ($leftovers) { throw ("refusing: no identity record to judge by, but checkpoint-bound records are present: " + ($leftovers -join ', ') + ". Supply OldCommit if they are stale.") }
+    Write-Output 'nothing is stale'
 }
 
 $stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
@@ -140,7 +170,8 @@ $receipt = [ordered]@{
     run_directory       = $runDirectory
     stored_boss_commit  = $stored
     current_boss_commit = $head
-    superseded_root     = $target
+    stale               = ($stored -ne 'absent' -and $stored -ne $head)
+    superseded_root     = $(if ($moved.Count -gt 0) { $target } else { $null })
     kept                = @('host-instance.c15.json', 'native-host-runtime.json')
     moved               = $moved
     at                  = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
