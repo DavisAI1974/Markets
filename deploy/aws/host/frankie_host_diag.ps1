@@ -26,8 +26,11 @@ if (Test-Path $cfg) {
   $c = Get-Content $cfg -Raw | ConvertFrom-Json
   $src = $c.host_runtime.pod_credential_ssm
   Write-Output ("run_id=" + $c.run_id)
-  if ($src) { Write-Output ("pod_credential_ssm: name=" + $src.name + " region=" + $src.region + " trigger_directory=" + $src.trigger_directory) }
+  if ($src) { Write-Output ("pod_credential_ssm: name=" + $src.name + " region=" + $src.region + " trigger_directory=" + $src.trigger_directory)
+    Write-Output ("pod_credential_ssm EXACT KEY SET: " + (($src.PSObject.Properties | ForEach-Object { $_.Name }) -join ',')) }
   else { Write-Output "pod_credential_ssm: ABSENT" }
+  Write-Output ("host_runtime keys: " + (($c.host_runtime.PSObject.Properties | ForEach-Object { $_.Name }) -join ','))
+  Write-Output ("top-level keys: " + (($c.PSObject.Properties | ForEach-Object { $_.Name }) -join ','))
   Write-Output ("native-host-runtime.json (resume marker) present=" + (Test-Path (Join-Path $c.run_directory 'native-host-runtime.json')))
 } else { Write-Output "NO_CONFIG" }
 

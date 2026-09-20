@@ -282,3 +282,37 @@ under `MARKETS_AWS_ACCESS_KEY_ID` / `MARKETS_AWS_SECRET_ACCESS_KEY` in the Claud
 configuration. Neither is set in this environment, which is the whole reason this session had no
 AWS route and needed a workflow to reach the host. Setting those two is the documented one-time
 permanent fix.
+
+### Diagnostic run 35500792871: the four answers (read from the native host over SSM)
+
+EC2 `i-0e90ee6110ef609aa` state `running`, SSM `Online`, Windows Server 2022 Datacenter.
+
+1. `day-cycles.log` (36,150 bytes): `waiting_for_request_bound_service_trigger` printed 0 times.
+   `actual_input_admitted` carried `request_id frankie-boss-sunday-two-cycle-20260919-cycle-00`,
+   `request_sha256 6cd46f983845fbd2ed88ec24ebf18f446cc3523a89307b03290351bd39d3b0dd` (archived on
+   the branch under `runs/request-archives/6cd46f98.../`), ready path
+   `...\actual-feedback-run\execution\cycle-00\host-ready-6d02c1fcafbd4c7e8aa09245d3f9e3e7.c15.json`.
+   `boss_reasoning` ran to 379.8 s with two `possible_stall` warnings each followed by
+   `progress_resumed`; `granite_request` began at 382.0996 s and `operation_failed` at 382.1307 s.
+2. `actual-host-configuration.json`: `run_id frankie-boss-sunday-two-cycle-20260919`;
+   `pod_credential_ssm` name `/markets/frankie/granite-service`, region `us-east-2`,
+   trigger_directory `C:/Codex/Frankie-BOSS-20260919/triggers`; `native-host-runtime.json` present.
+3. Trigger `C:\Codex\Frankie-BOSS-20260919\triggers\frankie-boss-sunday-two-cycle-20260919-cycle-00\
+   FRANKIE_ACTUAL_EXECUTE_V1.json`: ABSENT.
+4. `get_parameter` from the host role: OK, SecureString, value length in 32-256. Value never printed.
+
+What that eliminates. Cause 1 (credential unavailable) is out: the host reads the parameter. Cause 2
+(stale trigger) is out: there is no trigger at all. Because the waiting line never printed, the
+ValueError fired before the wait, in the shape check at the top of `read_execution_trigger`. The
+stdin fallback is also out: `run_actual_sunday.py:242` assigns `self.host =
+configuration['host_runtime']` unfiltered, so `pod_credential_ssm` reached the runtime. Of that
+check's conditions, name, region, trigger_directory, schema, `run_id` form and the cycle-00
+`request_id` form are all confirmed to pass; the one condition not yet observed is
+`set(source) == {'name','region','trigger_directory'}`, which the first diagnostic could not see
+because it printed only those three fields by name. An extra key in the sealed `pod_credential_ssm`
+object fails it instantly. The diagnostic is extended to print the exact key set (plus
+`host_runtime` and top-level keys) and re-dispatched.
+
+Independently of that: even with the shape check passing, this run would have waited on a trigger
+nobody wrote (no Pod, no observer readiness), up to the 12-hour ceiling. Both must be fixed for a
+resume to reach inference: the shape (if confirmed) and the four out-of-band prerequisites.
