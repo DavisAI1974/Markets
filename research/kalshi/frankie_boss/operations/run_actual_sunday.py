@@ -114,10 +114,14 @@ class ReleasableHostLock:
 
 def await_recorded_principal(request,directory,host_lock,probe=None):
     """Observe only; this callback never dispatches or fabricates a session."""
+    # The durable file is the request's canonical JSON; the live object holds tuples the c15
+    # loader preserved (run 35522815675, 2026-09-20), so compare the file with that same form.
+    # This is frankie_principal_adapter.json_form, inlined so this module keeps its stdlib-only import.
+    expected=json.loads(json.dumps(request,sort_keys=True,ensure_ascii=True,separators=(',',':'),allow_nan=False))
     matches=[]
     for index in range(19):
         path=Path(directory)/'execution'/f'cycle-{index:02d}'/'principal'/'session-request.json'
-        if path.exists() and json.loads(path.read_bytes())==request:matches.append(path)
+        if path.exists() and json.loads(path.read_bytes())==expected:matches.append(path)
     if len(matches)!=1:raise ValueError('unique retained principal request required')
     request_path=matches[0];response_path=request_path.with_name('session-response.json')
     if probe is not None:probe.advance('frankie_calculation',unit='outputs')
@@ -130,7 +134,7 @@ def await_recorded_principal(request,directory,host_lock,probe=None):
         # Recorder holds this lock through its immutable write. Reacquiring also
         # prevents observing a partially written response or a moving request.
         host_lock.acquire(wait=True)
-    if json.loads(request_path.read_bytes())!=request:raise ValueError('principal request changed while awaiting response')
+    if json.loads(request_path.read_bytes())!=expected:raise ValueError('principal request changed while awaiting response')
     result=json.loads(response_path.read_bytes())
     if type(result) is not dict or set(result)!={'response','host_attestation'}:
         raise ValueError('recorded principal response envelope differs')
