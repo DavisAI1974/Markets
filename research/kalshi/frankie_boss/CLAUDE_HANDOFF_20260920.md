@@ -348,3 +348,15 @@ resume to reach inference: the shape (if confirmed) and the four out-of-band pre
   a 10-second probe calling `read_execution_trigger` on a bare host object with the real
   configuration, which prints the actual exception message (the runtime scrubs it) or proves the call
   waits on the absent trigger.
+
+### Pod start requested: retained Granite observer run 35501720279 (Greg's authorization, 2026-09-20)
+
+Dispatched `frankie_retained_granite.yml` at 2026-09-20T09:13:39Z on
+`claude/frankie-launch-verification-lqmv0m` (b5639381; the 8-file bootstrap roster at that commit
+matches the image-defaults pins byte for byte) with `request_sha256 6cd46f98...`,
+`local_ready_json {request_sha256 6cd46f98..., host_instance_id 6d02c1fcafbd4c7e8aa09245d3f9e3e7,
+admitted_at 1789622908.210481}` and `runtime_configuration_json` equal to
+`runs/20260919/reviewed-bootstrap-image-defaults-runtime.json`. This is the REQUEST receipt; start,
+ready, inference, finish and cleanup receipts follow only as they land. The retained Pod is
+`ycf4v6lmave6xw`; `hold()` never stops it, so GPU spend runs from a successful start until the
+native completion cleanup or a manual stop.
