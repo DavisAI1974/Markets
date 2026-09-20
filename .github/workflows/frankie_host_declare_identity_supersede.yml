@@ -30,6 +30,10 @@ on:
         description: 'Zero-padded cycle index whose binding is superseded'
         required: false
         default: '00'
+      supersede_principal:
+        description: "true: also declare that the cycle's saved principal attachment and intent may be superseded so its request is rendered again (the run-findings ledger enters the prompt; Greg, 2026-09-20)"
+        required: false
+        default: 'false'
       reason:
         description: 'Why (goes into the declaration and the receipt)'
         required: true
@@ -61,6 +65,7 @@ jobs:
           HOST_PYTHON: ${{ inputs.python }}
           CYCLE_INDEX: ${{ inputs.cycle_index }}
           REASON: ${{ inputs.reason }}
+          SUPERSEDE_PRINCIPAL: ${{ inputs.supersede_principal }}
         run: |
           python deploy/aws/ssm_run_ps1.py \
             --instance "$INSTANCE" --region us-east-2 \
@@ -71,4 +76,5 @@ jobs:
             --set "Python=$HOST_PYTHON" \
             --set "CycleIndex=$CYCLE_INDEX" \
             --set "Reason=$REASON" \
+            --set "SupersedePrincipal=$SUPERSEDE_PRINCIPAL" \
             --timeout 600 --comment "declare cycle identity supersede for day $DAY"
