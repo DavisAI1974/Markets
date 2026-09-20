@@ -379,3 +379,22 @@ The next diagnostic prints `repr()` of every input and each sub-condition's bool
 
 The fix, once the condition is named, is in the sealed `actual-host-configuration.json` on the host
 (the first of Greg's two authorized actions), not in the code: the check is the design.
+
+### Pod start outcome: run 35501720279 REFUSED before any start (no GPU spend), then cancelled
+
+`retained-prepare` decrypted the archived request, admitted it through the tokenizer, verified the
+8-file bootstrap roster, verified the Pod's env pins, recorded `retained-startup.json` for request
+`6cd46f98...`, and then `lifecycle.start_once` refused at `granite_startup_pins.validate_url_freshness`:
+
+    ValueError: refresh bootstrap capabilities before start; at least 60 seconds required
+
+The rule: the Pod env `RP_BOOTSTRAP_URLS` must be a JSON map of presigned https URLs for the 8 roster
+files plus `runpod_bundle.json`, each carrying `X-Amz-Date` and `X-Amz-Expires` (span at most 7 days,
+not future-dated), and the earliest expiry must be at least 60 s ahead. The Pod's URLs are stale. No
+`retained-start-intent.json` was written, so a re-dispatch after a refresh starts normally rather
+than falling into observation-only. The `retained-watchdog` job would have idled to its 6-hour
+deadline, so the run was cancelled. The prepare artifact (`startup-bootstrap-pin.json`,
+`pod-info.json`, `startup-intent.json`) is retained as run 35501720279 artifact 10601953959.
+
+Next on the Pod side: refresh `RP_BOOTSTRAP_URLS` with the built mechanism, then re-dispatch
+`frankie_retained_granite.yml` with the same three inputs.
