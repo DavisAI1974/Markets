@@ -8,6 +8,19 @@
 research/kalshi/agents/refine_gold_s105/** -text
 research/kalshi/agents/*.md text eol=lf
 
+# The Frankie/BOSS runner hashes SOURCE BYTES into identities the retained Granite observer pins:
+# every *_parser_code_hash is sha256(Path(__file__).read_bytes() ...) over granite_context*,
+# granite_parser, c15_journal, the stacked route/codec and more, and run_actual_sunday.py hashes
+# every .py under frankie_boss and refrag into host-identity.c15.json and the training identities.
+# The observer runs on Linux (LF); the native host is a Windows checkout with core.autocrlf=true,
+# which rewrote these to CRLF and made the host's identity_hash differ from the observer's pins
+# (line 843 'trusted host service pins differ', pipeline run 35512638774, 2026-09-20, reproduced
+# byte for byte). -text: no conversion in either direction, so the working tree equals the
+# committed bytes on every platform. Three files are committed with CRLF already; -text keeps
+# them exactly as committed rather than renormalising their blobs.
+research/kalshi/frankie_boss/**/*.py -text
+research/refrag/**/*.py -text
+
 # Granite prompt fixtures are byte-frozen (sha256 asserted by tests/test_granite_contract.py);
 # the same autocrlf rewrite would break them on a Windows checkout.
 research/kalshi/frankie_boss/tests/fixtures/granite_prompts/** -text
