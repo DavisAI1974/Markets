@@ -176,6 +176,18 @@ try:
     if instance_id is not None:
         rp = cycle / ('host-ready-' + instance_id + '.c15.json')
         say('  line 331 witness', repr(str(rp.name)), 'exists', rp.exists())
+
+    say('=== WHEN the retained evidence was written (which boss_commit last entered __init__) ===')
+    import datetime
+    def when(path):
+        return datetime.datetime.utcfromtimestamp(path.stat().st_mtime).isoformat() + 'Z'
+    for path in sorted(run_directory.glob('*.c15.json')) + sorted(run_directory.glob('*.json')):
+        if path.is_file():
+            say('  run/ ', path.name, when(path), path.stat().st_size)
+    if cycle.exists():
+        for path in sorted(cycle.iterdir()):
+            say('  cycle-$CycleIndex/', path.name, when(path) if path.is_file() else 'DIR',
+                path.stat().st_size if path.is_file() else '')
 except BaseException as e:
     say('probe failed:', type(e).__name__, e); say(traceback.format_exc())
 log.close(); sys.stdout.flush(); os._exit(0)
