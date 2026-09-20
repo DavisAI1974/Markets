@@ -1,0 +1,171 @@
+name: Frankie record the principal response on the native host
+# Root ran the recorder on his own machine (2026-09-20 20:53Z); the record must be made on the host,
+# where the retained run directory and its lock live. This takes Root's three files from a git ref
+# (the response, the host attestation, the host session record the attestation pins), verifies them
+# here (shape, the attestation's binding to the record, sha256 and bytes), stages them to the granite
+# bucket and hands the host three presigned GETs (signed SigV4, masked, never printed), and the host
+# script runs operations/record_actual_frankie_response.py from the tools checkout and writes one
+# receipt. Nothing deleted or written over on the host. Dispatch only.
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: 'Git ref (branch, tag or sha) holding the three files'
+        required: true
+      response_path:
+        description: 'Repo-relative path of the response JSON on that ref'
+        required: true
+      attestation_path:
+        description: 'Repo-relative path of the host attestation JSON on that ref'
+        required: true
+      record_path:
+        description: 'Repo-relative path of the host session record JSON the attestation pins'
+        required: true
+      cycle_index:
+        description: 'Zero-padded cycle index'
+        required: false
+        default: '00'
+      instance:
+        description: 'Native host instance id'
+        required: false
+        default: 'i-0e90ee6110ef609aa'
+      day:
+        description: 'Day whose run directory holds the cycle'
+        required: false
+        default: '20211003'
+      run_root:
+        description: 'Day pipeline RunRoot on the host'
+        required: false
+        default: 'C:/Codex/Frankie-BOSS-20260919/days'
+      tools_root:
+        description: 'Host tools checkout'
+        required: false
+        default: 'C:/tools/Frankie-20260919/Markets'
+      python:
+        description: 'Host actual-run interpreter'
+        required: false
+        default: 'C:/Codex/Frankie-BOSS-20260919/actual-host-python/Scripts/python.exe'
+      bucket:
+        description: 'Staging bucket (host-deliveries/<day>/principal-response/), presigned GETs'
+        required: false
+        default: 'frankie-granite42-568968024170-us-east-1'
+permissions:
+  contents: read
+jobs:
+  record:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_DEFAULT_REGION: us-east-2
+      AWS_EC2_METADATA_DISABLED: 'true'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Fetch the three files from the source ref and check them
+        id: files
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+          RESPONSE_PATH: ${{ inputs.response_path }}
+          ATTESTATION_PATH: ${{ inputs.attestation_path }}
+          RECORD_PATH: ${{ inputs.record_path }}
+        run: |
+          set -euo pipefail
+          git fetch --depth 1 origin "$SOURCE_REF"
+          mkdir -p "$RUNNER_TEMP/delivery"
+          git show "FETCH_HEAD:$RESPONSE_PATH" > "$RUNNER_TEMP/delivery/response.json"
+          git show "FETCH_HEAD:$ATTESTATION_PATH" > "$RUNNER_TEMP/delivery/host-attestation.json"
+          git show "FETCH_HEAD:$RECORD_PATH" > "$RUNNER_TEMP/delivery/host-session-record.json"
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          d = Path(os.environ['RUNNER_TEMP'], 'delivery')
+          files = {n: (d / f).read_bytes() for n, f in (('response', 'response.json'), ('attestation', 'host-attestation.json'), ('record', 'host-session-record.json'))}
+          parsed = {n: json.loads(b) for n, b in files.items()}
+          r, a, h = parsed['response'], parsed['attestation'], parsed['record']
+          for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session', 'sections', 'feedback', 'lessons'):
+              if k not in r: raise SystemExit(f'response lacks {k}')
+          if len(r['sections']) != 18: raise SystemExit(f"response cites {len(r['sections'])} sections, not 18")
+          if not isinstance(r['lessons'], list) or not r['lessons']: raise SystemExit('response carries no lessons')
+          if a.get('schema') != 'FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1' or a.get('mechanism') != 'AGENT_SESSION':
+              raise SystemExit('attestation schema/mechanism are not the host agent session attestation')
+          for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session'):
+              if a.get(k) != r.get(k): raise SystemExit(f'attestation {k} differs from the response')
+          rec = a.get('host_record') or {}
+          if set(rec) != {'path', 'bytes', 'sha256'}: raise SystemExit('attestation host_record must be {path, bytes, sha256}')
+          rsha, rbytes = hashlib.sha256(files['record']).hexdigest(), len(files['record'])
+          if rec['sha256'] != rsha or int(rec['bytes']) != rbytes:
+              raise SystemExit(f"attestation pins the record as {rec['bytes']} bytes {rec['sha256']}; the delivered record is {rbytes} {rsha}")
+          if not h.get('host_authority'): raise SystemExit('host session record carries no host_authority')
+          for k in ('schema', 'mechanism', 'request_sha256', 'response_sha256', 'session_id', 'model_identity_as_reported_by_session'):
+              if h.get(k) != a.get(k): raise SystemExit(f'host session record {k} differs from the attestation')
+          print('attestation host_record.path =', rec['path'], '(must be the file beside the request on the host)')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              for n, b in files.items():
+                  out.write(f'{n}_sha256={hashlib.sha256(b).hexdigest()}\n{n}_bytes={len(b)}\n')
+          print({n: (len(b), hashlib.sha256(b).hexdigest()) for n, b in files.items()})
+          PY
+      - name: Stage the files and sign three presigned GETs (masked, never printed)
+        env:
+          DAY: ${{ inputs.day }}
+          CYCLE_INDEX: ${{ inputs.cycle_index }}
+          BUCKET: ${{ inputs.bucket }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import boto3
+          from botocore.config import Config
+          s3 = boto3.client('s3', region_name='us-east-1', config=Config(signature_version='s3v4'))
+          d = Path(os.environ['RUNNER_TEMP'], 'delivery')
+          for name in ('response.json', 'host-attestation.json', 'host-session-record.json'):
+              key = f"host-deliveries/{os.environ['DAY']}/principal-response/cycle-{os.environ['CYCLE_INDEX']}/{os.environ['GITHUB_RUN_ID']}/{name}"
+              s3.put_object(Bucket=os.environ['BUCKET'], Key=key, Body=(d / name).read_bytes())
+              url = s3.generate_presigned_url('get_object', Params={'Bucket': os.environ['BUCKET'], 'Key': key}, ExpiresIn=3600)
+              if "'" in url or '\n' in url:
+                  raise SystemExit('presigned URL carries a character ssm_run_ps1.py --set refuses')
+              print('::add-mask::' + url)
+              (d / (name + '.url')).write_text(url)
+              print('staged s3://' + os.environ['BUCKET'] + '/' + key)
+          PY
+      - name: Record on the host over SSM
+        env:
+          INSTANCE: ${{ inputs.instance }}
+          DAY: ${{ inputs.day }}
+          RUN_ROOT: ${{ inputs.run_root }}
+          TOOLS_ROOT: ${{ inputs.tools_root }}
+          HOST_PYTHON: ${{ inputs.python }}
+          CYCLE_INDEX: ${{ inputs.cycle_index }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          RESPONSE_SHA256: ${{ steps.files.outputs.response_sha256 }}
+          RESPONSE_BYTES: ${{ steps.files.outputs.response_bytes }}
+          ATTESTATION_SHA256: ${{ steps.files.outputs.attestation_sha256 }}
+          ATTESTATION_BYTES: ${{ steps.files.outputs.attestation_bytes }}
+          RECORD_SHA256: ${{ steps.files.outputs.record_sha256 }}
+          RECORD_BYTES: ${{ steps.files.outputs.record_bytes }}
+        run: |
+          python deploy/aws/ssm_run_ps1.py \
+            --instance "$INSTANCE" --region us-east-2 \
+            --script deploy/aws/host/frankie_host_record_principal_response.ps1 \
+            --set "Day=$DAY" \
+            --set "RunRoot=$RUN_ROOT" \
+            --set "ToolsRoot=$TOOLS_ROOT" \
+            --set "Python=$HOST_PYTHON" \
+            --set "CycleIndex=$CYCLE_INDEX" \
+            --set "SourceRef=$SOURCE_REF" \
+            --set "ResponseUrl=$(cat "$RUNNER_TEMP/delivery/response.json.url")" \
+            --set "ResponseSha256=$RESPONSE_SHA256" \
+            --set "ResponseBytes=$RESPONSE_BYTES" \
+            --set "AttestationUrl=$(cat "$RUNNER_TEMP/delivery/host-attestation.json.url")" \
+            --set "AttestationSha256=$ATTESTATION_SHA256" \
+            --set "AttestationBytes=$ATTESTATION_BYTES" \
+            --set "RecordUrl=$(cat "$RUNNER_TEMP/delivery/host-session-record.json.url")" \
+            --set "RecordSha256=$RECORD_SHA256" \
+            --set "RecordBytes=$RECORD_BYTES" \
+            --timeout 900 --tail 0 --comment "record the cycle $CYCLE_INDEX principal response for day $DAY"
