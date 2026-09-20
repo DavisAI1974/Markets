@@ -6,6 +6,17 @@
 - **PRIORITY RULE (Greg, 2026-09-20): launch-critical = anything that changes how Frankie runs or the science. Everything
   else goes on the deferred list and waits; no fixing, no relitigating, until the run is launched.** The identity/evidence
   guards and the tests are provenance, not science: when one blocks the launch, override it with a receipt and move on.
+- **2026-09-20 15:53Z: FRANKIE IS RUNNING.** Pipeline run 35520104563 (`codex/frankie-launch-two-cycle-20260919`,
+  day 20211003, cycles 2) has cycle 0's Granite critic request (`a7b72cf9...`) dispatched to Pod
+  `8vqdacl5t61rjx`, accepted, and its outcome persisted at 15:52:45Z; the completion publication was accepted at
+  15:52:47Z. Seven refusals were root-caused and cleared with receipts on the way (the chain is the first
+  section of `DROP_IN_CLAUDE_20260921.md`; every receipt is in `CLAUDE_HANDOFF_20260920.md`): the code-bound
+  retained state, CRLF on the Windows host (line 843), scrubbed stop records (frames added), the 09-17
+  classroom package, the CRLF-era prefix batch (rebuilt on LF, data byte-identical), the CRLF-era readiness
+  pins (line 833; readiness re-pinned to `a7b72cf9` with a restart that kept the Pod RUNNING), and the stale
+  S3 active-run claim. **Nothing was deleted anywhere**; every superseded item sits under the host's
+  `superseded/` folders or an S3 `superseded/` key with sha256 in a receipt. Read-only status:
+  `frankie_host_cycle_status.yml`. The next section of the handoff records the cycle's outcome as it lands.
 - **2026-09-20 LAUNCH STATE (read `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md` first).** Greg's go for the
   20211003 two-cycle run stands. Run 35508198333 refused at cycles; ROOT CAUSE = the retained run directory
   `actual-feedback-run` is code-bound to `c9a86e74` (host-identity, initialization, the training checkpoint digest and

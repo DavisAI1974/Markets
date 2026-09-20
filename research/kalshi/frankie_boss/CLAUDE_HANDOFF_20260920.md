@@ -1032,3 +1032,21 @@ should now do: __init__ (host-identity re-saved at the rewritten configuration),
 cache, classroom package (equal bytes), `prepared_before_restart` accepting the retained a7b72cf9
 preparation, ready signal equal, trigger read, pins equal at lines 833 and 843, then the Granite critic
 request on Pod 8vqdacl5t61rjx. Recorded below only as it lands.
+
+### FRANKIE IS RUNNING (pipeline run 35520104563): cycle 0 critic request on the Pod, outcome persisted 15:52:45Z
+
+Read-only status run 35520959847 at 15:53:29Z (`frankie_host_cycle_status.ps1`, c25c770b), cycle-00 files
+by mtime: `host-service.c15.json` 15:45:07Z (the trigger was read and lines 833 and 843 PASSED on the
+re-pinned readiness), `controller-witnesses/genesis` + `native-witnesses/genesis` 15:45:07Z,
+`request-plan.c15.json` 15:45:10Z, native appends 15:46:45Z / 15:47:36Z (`native.sqlite` 12,001,280 bytes),
+controller appends 15:45:11Z / 15:47:57Z / 15:50:36Z (`controller.sqlite` 802,816 bytes), then
+`critic-spool/c624856b.../request.json` (151,132 bytes = the a7b72cf9 request) and `dispatch.json` at
+15:52:07Z, `remote-accepted.json` 15:52:09Z, five observations, **`outcome.json` 15:52:45Z**, and
+`completion-publication/intent.c15.json` + `dispatch-accepted.c15.json` 15:52:45-47Z. The runner log's last
+`FRANKIE_JOB_PROGRESS` reads `body_sha256 a7b72cf9..., job_id 4c58e8c6..., phase job_result_persisted`.
+The run progress record still showed phase `granite_request` (owner granite, 0/1 requests, a
+`possible_stall` warning at 220 s) as of 15:53:29Z -- the controller had not yet consumed the outcome when
+the probe read it. Two runner processes (pids 5928, 5992) alive since 15:39:13Z. Host job 106102931387 of
+run 35520104563 still in progress. What comes next in the cycle: causal handoff, Frankie calculation,
+native learning, checkpoint readback, output persistence, then cycle 1 (prefix-01, rebuilt on the LF
+checkout this afternoon). Recorded below only as it lands.
