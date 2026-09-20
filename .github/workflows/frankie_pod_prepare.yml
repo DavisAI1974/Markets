@@ -1,0 +1,67 @@
+name: Frankie prepare a replacement retained Pod
+# Greg, 2026-09-20: "Prepare the fresh pod in parallel." Creates ONE replacement Pod with the retained
+# Pod's exact environment on a data center with free L40S stock, watches its bootstrap to an
+# authenticated /health 200, and publishes the migration-receipt candidate + INFO_SHA256 for the
+# re-mint commit. Reads the source Pod only. Sends no inference. Prints no environment value.
+on:
+  workflow_dispatch:
+    inputs:
+      source_pod:
+        description: 'Retained Pod whose environment and identity are copied'
+        required: false
+        default: 'ycf4v6lmave6xw'
+      data_centers:
+        description: 'Comma-separated data center ids; empty = every data center reporting L40S stock'
+        required: false
+        default: ''
+      cost_ceiling:
+        description: 'Refuse (stop-retain) a Pod priced above this per hour'
+        required: false
+        default: '1.25'
+      wait_seconds:
+        description: 'Bootstrap watch horizon'
+        required: false
+        default: '1800'
+      stop_after_ready:
+        description: 'true = stop-retain the Pod once healthy (frees its GPU); false = leave it RUNNING'
+        required: false
+        default: 'false'
+permissions:
+  contents: read
+concurrency:
+  group: pod-prepare
+  cancel-in-progress: false
+jobs:
+  prepare:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_EC2_METADATA_DISABLED: 'true'
+      AWS_DEFAULT_REGION: us-east-1
+      RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+      PYTHONUNBUFFERED: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install accepted host dependencies
+        run: |
+          python -m pip install --no-cache-dir --upgrade pip
+          python -m pip install torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install numpy==2.4.3 boto3==1.42.23 transformers==5.8.0 tokenizers==0.22.2 cryptography==46.0.3
+      - name: Create and watch the replacement Pod
+        run: |
+          STOP=""; if [ "${{ inputs.stop_after_ready }}" = "true" ]; then STOP="--stop-after-ready"; fi
+          python research/kalshi/frankie_boss/operations/pod_prepare.py --source-pod "${{ inputs.source_pod }}" --runtime-configuration research/kalshi/frankie_boss/runs/20260919/reviewed-bootstrap-image-defaults-runtime.json --data-centers "${{ inputs.data_centers }}" --cost-ceiling "${{ inputs.cost_ceiling }}" --wait-seconds "${{ inputs.wait_seconds }}" $STOP
+      - name: Retain prepare evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pod-prepare-${{ github.run_id }}
+          path: work/pod-prepare/
+          retention-days: 30
+          if-no-files-found: warn
