@@ -10,11 +10,11 @@ on:
         required: false
         default: 'ycf4v6lmave6xw'
       action:
-        description: 'inspect (read-only) or start (submits the v2 start action once)'
+        description: 'inspect (read-only), start (submits the v2 start action once), or terminate (DELETE an EXITED replacement Pod; never the retained Pod)'
         required: true
         default: 'inspect'
         type: choice
-        options: ['inspect', 'start']
+        options: ['inspect', 'start', 'terminate']
       wait_seconds:
         description: 'After an accepted start, poll the status transition for at most this long'
         required: false

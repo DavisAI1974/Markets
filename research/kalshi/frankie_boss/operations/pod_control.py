@@ -2,6 +2,7 @@
 
     python research/kalshi/frankie_boss/operations/pod_control.py --pod ycf4v6lmave6xw --action inspect
     python research/kalshi/frankie_boss/operations/pod_control.py --pod ycf4v6lmave6xw --action start [--wait-seconds 300]
+    python research/kalshi/frankie_boss/operations/pod_control.py --pod hhxs2fk7511cz5 --action terminate
         [--retry-seconds 0]
 
 The retained observer (granite_retained_host prepare) submits POST /v2/pods/{id}/action {"action":"start"}
@@ -11,7 +12,9 @@ observer itself. This is the operator-level retry: it prints the Pod's observed 
 credential-looking field removed), and with --action start requires the Pod to be EXITED, submits the
 same v2 action, prints the provider's status AND body verbatim on refusal (the body is provider prose,
 never our secret), polls the status transition, and prints a receipt line. It never stops, patches or
-deletes anything, and it never prints an environment value.
+deletes anything, and it never prints an environment value. The one exception is --action terminate
+(Greg, 2026-09-20, for the stranded replacement hhxs2fk7511cz5): DELETE /v2/pods/{id} of an EXITED
+Pod that is NOT the retained Pod, confirmed by a 404 readback, with a receipt.
 
 Run 35503440103 put the refusal on record: "There are not enough free GPUs on the host machine to
 start this pod." The Pod is pinned to its host by its pod volume, so the only remedy short of
@@ -28,6 +31,7 @@ import time
 CONTROL = 'api.runpod.io'
 SENSITIVE = ('key', 'secret', 'token', 'password', 'env')
 HOST_BUSY = 'not enough free GPUs on the host machine'
+RETAINED_POD = 'ycf4v6lmave6xw'   # never terminated here: it holds the retained model
 RETRY_INTERVAL = 60
 
 
@@ -65,7 +69,7 @@ def get_pod(key, pod_id):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pod', required=True)
-    parser.add_argument('--action', choices=('inspect', 'start'), default='inspect')
+    parser.add_argument('--action', choices=('inspect', 'start', 'terminate'), default='inspect')
     parser.add_argument('--wait-seconds', type=int, default=300)
     parser.add_argument('--retry-seconds', type=int, default=0)
     args = parser.parse_args()
@@ -76,6 +80,24 @@ def main():
     if args.action == 'inspect':
         print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_INSPECT_RECEIPT_V1', pod=args.pod,
                                           status=pod.get('status'), at=int(time.time()))))
+        return
+    if args.action == 'terminate':
+        if args.pod == RETAINED_POD:
+            raise SystemExit('refusing to terminate the retained Pod')
+        if pod.get('status') != 'EXITED' or not str(pod.get('name', '')).endswith('-migration'):
+            raise SystemExit('terminate requires an EXITED replacement Pod; status=%r name=%r' % (pod.get('status'), pod.get('name')))
+        submitted_at = time.time()
+        status, data = control_call(key, 'DELETE', '/v2/pods/' + args.pod)
+        text = data[:2000].decode('utf-8', 'replace')
+        if status not in (200, 202, 204):
+            print('TERMINATE_REFUSED HTTP %d body=%s' % (status, text.strip()))
+            raise SystemExit(2)
+        readback, _ = control_call(key, 'GET', '/v2/pods/' + args.pod)
+        print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_TERMINATE_RECEIPT_V1', pod=args.pod, http_status=status,
+                                          readback_http_status=readback, confirmed_absent=readback == 404,
+                                          submitted_at=submitted_at, data_center=pod.get('dataCenterId'))))
+        if readback != 404:
+            raise SystemExit(2)
         return
 
     retry_until = time.time() + max(0, args.retry_seconds)
