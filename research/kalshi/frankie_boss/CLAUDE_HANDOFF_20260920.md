@@ -1223,3 +1223,15 @@ Root's Frankie response.
 **Note for task #2 (Greg's design call):** every code advance during a run now costs a supersede plus a full
 re-preparation of the open cycle, because `code_hash` spans the whole package. Excluding the operations/adapter
 plumbing from the training identity, or pinning the identity at run start, would end that; not touched today.
+
+**17:37Z: the resume is on the new path.** Family on 842ec2ee = run 35525431919 (green). Host advanced
+34a4feac -> 6fa7ef68 -> 842ec2ee (advance run 35525749655, receipt `host-advance-20260920T172440Z`-class in
+the day directory); the second supersede (run 35525790949) found no stored identity (the two cancelled resumes
+never re-created it) and moved nothing. Pipeline run 35525830210, host job 106117997111 since 17:28:18Z (pid
+5056): status run 35526431868 at 17:37:35Z shows `execution/cycle-00/host-context-cache.c15.json` re-created
+17:34:30Z (53,193 bytes, the same size as the superseded one), phase `boss_reasoning` 1/1 -- i.e. the absent
+host-service record primed the cache exactly as 842ec2ee intends, with the controller's retained result,
+`principal/` (bound mapping, receiver, prompt.md, sealed proof, classroom composition, session-request.json)
+and the critic spool all untouched. Next on the host: `prepare_critic_request` (about 19 min this morning,
+14:46 -> 15:05), host-preparation + actual-critic-request (a7b72cf9) + host-ready, the immutable trigger read,
+host-service, then `recover` -> `actual_frankie_session_pending`.
