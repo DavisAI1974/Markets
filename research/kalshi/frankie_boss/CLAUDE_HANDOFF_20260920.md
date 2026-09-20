@@ -612,3 +612,11 @@ post-date it. Two Pods are now stranded EXITED on GPU-less hosts: `ycf4v6lmave6x
 model, keep) and `hhxs2fk7511cz5` (nothing verified on its volume; terminate is Greg's call, it
 costs the volume while it exists). Third attempt dispatched: create with data centers
 US-TX-4, US-IL-1, US-MO-1 preferred, 15-minute watch, keep on timeout, then watch-only runs.
+
+### hhxs2fk7511cz5 TERMINATED on Greg's word (run 35506617115)
+
+Greg: "Terminate it." `frankie_pod_control.yml` action=terminate (`f720d3af`: refuses the retained
+Pod by id, requires EXITED and the migration name, 404 readback) deleted the stranded EUR-IS-2
+replacement at 11:00:42Z: receipt `FRANKIE_POD_TERMINATE_RECEIPT_V1`, DELETE HTTP 204, readback
+HTTP 404, `confirmed_absent true`. Nothing verified had been on its volume. The retained Pod
+`ycf4v6lmave6xw` is untouched and its start retry loop (run 35503582348) is still cycling.
