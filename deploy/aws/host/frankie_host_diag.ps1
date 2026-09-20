@@ -77,6 +77,22 @@ try:
     say('probe module file:', actual.__file__)
     say('probe host has pod_credential_ssm:', 'pod_credential_ssm' in h.host)
     rid = cfg['run_id'] + '-cycle-00'
+    import re as _re
+    src = h.host.get('pod_credential_ssm')
+    say('REPR source type:', type(src).__name__, 'keys:', repr(sorted(src)) if isinstance(src, dict) else 'n/a')
+    if isinstance(src, dict):
+        for k in ('name', 'region', 'trigger_directory'):
+            say('REPR', k, '=', repr(src.get(k)), 'type', type(src.get(k)).__name__)
+    say('REPR run_id =', repr(cfg.get('run_id')), 'type', type(cfg.get('run_id')).__name__)
+    say('REPR request_id =', repr(rid))
+    if isinstance(src, dict):
+        say('COND keyset_ok:', set(src) == {'name', 'region', 'trigger_directory'})
+        say('COND name_ok:', bool(_re.fullmatch(r'/[A-Za-z0-9_./-]{1,1000}', str(src.get('name')))))
+        say('COND region_ok:', bool(_re.fullmatch(r'[a-z]{2}(?:-[a-z]+)+-\d', str(src.get('region')))))
+        say('COND trigger_dir_ok:', bool(src.get('trigger_directory')))
+    say('COND run_id_ok:', bool(_re.fullmatch(r'[A-Za-z0-9_-]{1,128}', str(cfg.get('run_id', '')))))
+    say('COND request_in_set:', rid in {'%s-cycle-%02d' % (cfg['run_id'], i) for i in range(19)})
+    say('COND self.config is cfg:', h.config is cfg, '| getattr config run_id =', repr(getattr(h, 'config', {}).get('run_id', '')))
     result = {}
     def call():
         try:
