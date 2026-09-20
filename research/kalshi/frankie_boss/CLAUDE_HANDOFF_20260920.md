@@ -1459,3 +1459,29 @@ classroom correction turn is not requested yet. The new read-only `frankie_host_
 stages, verified feedback and training update, lessons, the recorded response with Frankie's Markdown
 analysis whole, the decoded critic body, the classroom status (package, audit, correction turn) and the
 cycle records.
+
+### 20:30Z: the retained controller result of cycle 0 is `incomplete`, and the critic's emptiness is its own
+
+Read back by `frankie_host_cycle_report.yml` run 35535748357 (the SSM sender now takes `--tail`, default
+unchanged, so the whole report fits). Coordinator stage `controller` (51698a32):
+
+- `status: incomplete`, request hash 81d53453. The controller marks a result complete only when the critic's
+  shadow status is `accepted` AND every forecast record is native; the critic was NOT accepted.
+- Why not accepted: the contract (`granite_contract.GraniteLimits`) requires 1..4 hypotheses and the
+  validator (`granite_output_schema.validate_schema`) refuses zero; the returned JSON has all seven keys and
+  a legal verdict but zero hypotheses, so it scores below the accepted level and the controller recorded
+  the critic as rejected by its own independent parse. The coordinator accepts `complete` or `incomplete`
+  controller results and continues to the principal, which is why the run reached the HOLD.
+- The critic was not token-limited: the admission record says context 131,072, input 92,439,
+  **output budget 38,633**; Granite stopped by itself after 124 tokens (`finish_reason: stop`). "No limit"
+  on its length was already the case; what bounds it is the contract's content caps (4 hypotheses, 40-char
+  labels, 200-char notes, 16 evidence refs), and it used none of them.
+- One forecast record: group `A_MEMORY`, disposition `ABSTAIN`, guessed net USD -0.009, overnight gap
+  +0.006, a flat `path_p50_curve` around 18.0001 (level units as served; not interpreted here),
+  confidence null. Native checkpoint count 2, head 3b111695.
+
+Greg's standing at 20:28Z: cycle 1 does not start until Frankie's main objective in cycle 0 is complete
+(Root's response recorded and verified, the classroom correction turn, the learning step, completion).
+Greg at 20:32Z: "Don't have any limit. Let him say as much as he needs to." The display cut in the report
+probe is removed; whether the Granite contract caps are the limit meant is his call (a science change,
+queued for after cycle 0 unless he says now).
