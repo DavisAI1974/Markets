@@ -3,6 +3,7 @@
     python research/kalshi/frankie_boss/operations/pod_prepare.py --source-pod ycf4v6lmave6xw
         --runtime-configuration <reviewed runtime configuration json> [--data-centers US-TX-4,...]
         [--cost-ceiling 1.25] [--wait-seconds 1800] [--stop-after-ready]
+    ... --resume-pod hhxs2fk7511cz5     (start an EXITED replacement created earlier and watch it instead)
 
 The retained Pod ycf4v6lmave6xw is pinned to a host whose L40S is taken ("There are not enough free
 GPUs on the host machine to start this pod", run 35503440103). This prepares a second Pod the
@@ -19,7 +20,10 @@ retained observer can adopt through the existing migration receipt mechanism
 5. writes the sanitized Pod facts, the migration-receipt candidate and the INFO_SHA256 the re-mint
    commit must carry, and prints FRANKIE_POD_PREPARE_RECEIPT_V1.
 
-The source Pod is only ever read. The new Pod is left RUNNING (it holds its GPU) unless
+Run 35504624757 created hhxs2fk7511cz5 (EUR-IS-2, LOW stock everywhere) and saw no bootstrap line
+in 30 minutes; --resume-pod restarts such a Pod on its now-cached host instead of creating another,
+and the watch prints the scrubbed Pod state plus a short raw tail of the container and system logs
+every five minutes so a silent bootstrap is diagnosable. The source Pod is only ever read. The new Pod is left RUNNING (it holds its GPU) unless
 --stop-after-ready is given; a Pod whose bootstrap evidence fails validation or times out is stopped
 (stop-retain), never terminated here. No inference is sent.
 """
@@ -62,6 +66,46 @@ def control_call(key, method, path, body=None):
 def save(name, value):
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / name).write_bytes(artifacts.canonical(value))
+
+
+def scrub(value):
+    if isinstance(value, dict):
+        return {k: scrub(v) for k, v in value.items() if not any(s in k.lower() for s in ('key', 'secret', 'token', 'password', 'env'))}
+    if isinstance(value, list):
+        return [scrub(v) for v in value]
+    return value
+
+
+def log_tail(key, pod_id, source, lines=3):
+    """A few raw provider log lines for diagnosis only; bootstrap and vLLM print no secret, and any
+    line carrying a signed URL or a key assignment is dropped anyway."""
+    connection = http.client.HTTPSConnection(CONTROL, timeout=4)
+    kept = []
+    try:
+        connection.request('GET', '/v2/pods/' + pod_id + '/logs?' + urlencode(dict(source=source, tail=20)),
+                           headers={'Authorization': 'Bearer ' + key, 'Accept': 'text/event-stream'})
+        response = connection.getresponse()
+        if response.status != 200:
+            return ['HTTP %d' % response.status]
+        deadline = time.monotonic() + 4
+        while time.monotonic() < deadline:
+            connection.sock.settimeout(max(.05, deadline - time.monotonic()))
+            raw = response.readline(65537)
+            if not raw:
+                break
+            if raw.startswith(b'data:'):
+                try:
+                    line = str(json.loads(raw[5:]).get('line', ''))
+                except ValueError:
+                    continue
+                if 'X-Amz' in line or 'KEY=' in line or 'URLS' in line:
+                    continue
+                kept.append(line[:200])
+    except (TimeoutError, OSError):
+        kept.append('(log stream unavailable)')
+    finally:
+        connection.close()
+    return kept[-lines:]
 
 
 def facts_of(pod, intent):
@@ -168,6 +212,7 @@ def main():
     parser.add_argument('--cost-ceiling', type=float, default=1.25)
     parser.add_argument('--wait-seconds', type=int, default=1800)
     parser.add_argument('--stop-after-ready', action='store_true')
+    parser.add_argument('--resume-pod', default='')
     args = parser.parse_args()
     key = os.environ['RUNPOD_API_KEY']
     api = control.Runpod(key)
@@ -181,10 +226,29 @@ def main():
     print('SOURCE ' + json.dumps(dict(pod=source['id'], status=source.get('status'), env_keys=len(source['env']),
                                       bootstrap_urls_expire_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(expiry)))))
 
-    data_centers, stock = choose_data_centers(key, [dc.strip() for dc in args.data_centers.split(',') if dc.strip()])
-    created_at = time.time()
-    pod = create(key, source, intent, data_centers)
-    pod_id = pod['id']
+    if args.resume_pod:
+        pod = api.request('GET', '/v2/pods/' + args.resume_pod)
+        if pod.get('id') != args.resume_pod or not control.owned_pod(pod, intent):
+            raise SystemExit('resume Pod identity or ownership differs')
+        if pod.get('status') != 'EXITED':
+            raise SystemExit('resume requires EXITED, Pod is %r' % (pod.get('status'),))
+        data_centers, stock = [pod.get('dataCenterId')], {}
+        created_at = time.time()
+        status, data = control_call(key, 'POST', '/v2/pods/' + args.resume_pod + '/action', {'action': 'start'})
+        text = data[:4000].decode('utf-8', 'replace')
+        if status not in (200, 201, 204):
+            print('RESUME_REFUSED HTTP %d body=%s' % (status, text.strip()))
+            print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_PREPARE_RECEIPT_V1', outcome='resume_refused', pod=args.resume_pod,
+                                              http_status=status, provider_body=text)))
+            raise SystemExit(2)
+        pod_id = args.resume_pod
+        pod = api.request('GET', '/v2/pods/' + pod_id)
+        print('RESUMED ' + json.dumps(facts_of(pod, intent), sort_keys=True))
+    else:
+        data_centers, stock = choose_data_centers(key, [dc.strip() for dc in args.data_centers.split(',') if dc.strip()])
+        created_at = time.time()
+        pod = create(key, source, intent, data_centers)
+        pod_id = pod['id']
     facts = facts_of(pod, intent)
     save('pod-facts.json', facts)
     print('CREATED ' + json.dumps(facts, sort_keys=True))
@@ -199,11 +263,20 @@ def main():
     health = None
     deadline = created_at + args.wait_seconds
     outcome = 'startup_incomplete'
+    next_diagnostic = created_at + 60
     while time.time() < deadline:
         try:
             pod = api.request('GET', '/v2/pods/' + pod_id)
             if not control.owned_pod(pod, intent):
                 raise SystemExit('Pod identity changed during bootstrap')
+            if time.time() >= next_diagnostic:
+                next_diagnostic = time.time() + 300
+                print('POD_STATE ' + json.dumps(dict(elapsed=int(time.time() - created_at), status=pod.get('status'),
+                                                    runtime=scrub(pod.get('runtime')), milestones=sorted(records),
+                                                    telemetry_lines=len(seen)), sort_keys=True), flush=True)
+                for source in ('system', 'container'):
+                    for line in log_tail(key, pod_id, source):
+                        print('LOG_TAIL %s %s' % (source, line), flush=True)
             incoming = cloud.startup_logs(api, pod_id)
             for line in incoming.pop('telemetry', []):
                 if line not in seen:
