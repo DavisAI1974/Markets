@@ -1485,3 +1485,36 @@ Greg's standing at 20:28Z: cycle 1 does not start until Frankie's main objective
 Greg at 20:32Z: "Don't have any limit. Let him say as much as he needs to." The display cut in the report
 probe is removed; whether the Granite contract caps are the limit meant is his call (a science change,
 queued for after cycle 0 unless he says now).
+
+### 20:45Z: no limit, anywhere we put one (Greg, 20:35Z and 20:42Z)
+
+Greg's two clarifications: the limit he meant was the report's 23,000-character tail ("remove it
+altogether"), and Frankie's own report must not be limited either ("we don't want to miss things just
+because we have some limit that we put on there"). Measured against the code, three places could hold a
+limit; here is each:
+
+1. **The cycle report's display (ours; removed, 9f8b0ba7 + 4ceaf541).** `ssm_run_ps1.py --tail` now
+   defaults to 0 and prints everything the SSM API returned. The API itself keeps about 24,000
+   characters of console output, which is not ours to raise, so the host probe tees the whole report to
+   a file under the day's run directory (`reports/cycle-NN-report-<utc>.txt`, created exclusively, never
+   written over) and uploads it through a presigned PUT signed and masked by the workflow, which then
+   downloads it, prints it entire in the job log and attaches it as an artifact. Every section is whole:
+   no slice, no budget, no `short()`; the controller records, completion record, training update, every
+   lesson, Frankie's analysis, the critique body and the classroom package records are printed entire.
+   The first attempt (run 35536268659) wrote the file on the host and hit a 403 on the PUT into the bento
+   bucket; the report now stages in `frankie-granite42-568968024170-us-east-1`, the bucket the mapping-
+   index restore proved the workflow credentials write. Text contract: `tests/test_host_cycle_report.py`
+   (no display cut anywhere, the URL never printed, the only file written is the report), in
+   `frankie_host_scripts_ci.yml`.
+2. **Frankie's own analysis and lessons (Root's session): NO limit exists in the code.** Checked
+   `frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION` (it names what to cover, sets no length),
+   the request instruction, `operations/record_actual_frankie_response.py` (checks shape and hashes,
+   never size), the adapter's response admission, and the lessons store: no maximum length, count or
+   byte size anywhere. The feedback contract bounds the structured timing/path labels, not the prose.
+   Nothing to remove; the only cut that ever touched his text was the report display, above.
+3. **The Granite critic's contract (science, queued).** `granite_contract.GraniteLimits` caps the
+   critique's CONTENT: 1..4 hypotheses, 0..16 evidence refs, 0..8 contradictions with 200-character
+   notes, 0..8 missing-evidence strings of 120 characters, 40-character labels; output tokens are the
+   whole remaining context (38,633 on cycle 0) and the critic used 124. Raising or removing these caps
+   changes what Granite is asked to return, so under Greg's 20:15Z rule it waits until both cycles are
+   done unless he says otherwise.
