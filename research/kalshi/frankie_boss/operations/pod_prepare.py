@@ -51,6 +51,7 @@ from research.kalshi.frankie_boss.granite_startup_pins import validate_configura
 CONTROL = 'api.runpod.io'
 GPU = 'NVIDIA L40S'
 STOCK_RANK = {'HIGH': 0, 'MEDIUM': 1, 'LOW': 2}
+DIAGNOSTIC_DELAY = 60
 PRIOR_RUN = '34928264918'            # the accepted retained receipt every migration receipt chains from
 PRIOR_INFO_SHA256 = 'c6c151ddc5ad252a04c34a533e8bc4d9f46c24778372c9bb84f34e748832020a'
 OUT = Path('work/pod-prepare')
@@ -280,7 +281,7 @@ def main():
     health = None
     deadline = created_at + args.wait_seconds
     outcome = 'startup_incomplete'
-    next_diagnostic = created_at + 60
+    next_diagnostic = created_at + DIAGNOSTIC_DELAY
     while time.time() < deadline:
         try:
             pod = api.request('GET', '/v2/pods/' + pod_id)
@@ -291,9 +292,9 @@ def main():
                 print('POD_STATE ' + json.dumps(dict(elapsed=int(time.time() - created_at), status=pod.get('status'),
                                                     runtime=scrub(pod.get('runtime')), milestones=sorted(records),
                                                     telemetry_lines=len(seen)), sort_keys=True), flush=True)
-                for source in ('system', 'container'):
-                    for line in log_tail(key, pod_id, source):
-                        print('LOG_TAIL %s %s' % (source, line), flush=True)
+                for log_source in ('system', 'container'):   # never shadow `source`, the Pod being copied
+                    for line in log_tail(key, pod_id, log_source):
+                        print('LOG_TAIL %s %s' % (log_source, line), flush=True)
             incoming = cloud.startup_logs(api, pod_id)
             for line in incoming.pop('telemetry', []):
                 if line not in seen:
