@@ -39,4 +39,24 @@ if (Test-Path $cycle) {
 Write-Output "### run-directory progress"
 $progress = Join-Path $cfg.run_directory 'host-progress\progress.json'
 if (Test-Path $progress) { $text = Get-Content $progress -Raw; '  ' + $text.Substring(0, [Math]::Min(600, $text.Length)) }
+Write-Output "### root probe (Greg, 2026-09-20: follow Root as he works and pushes)"
+# Root's session pushes four files to root/cycle-NN-response on origin and the host records the response as
+# principal/session-response.json. ls-remote reads origin; a fetch of that one ref updates FETCH_HEAD only
+# (the working tree stays clean for frankie_host_advance.ps1). Nothing else is written.
+$response = Join-Path (Join-Path $cycle 'principal') 'session-response.json'
+if (Test-Path $response) { $r = Get-Item $response; Write-Output ('  session-response.json  ' + $r.LastWriteTimeUtc.ToString('s') + 'Z  ' + $r.Length) }
+else { Write-Output '  session-response.json absent (no response recorded on the host yet)' }
+$tools = $cfg.host_runtime.repository
+$gitExe = Get-Command git -ErrorAction SilentlyContinue
+if ($gitExe -and $tools -and (Test-Path $tools)) {
+    $rootRef = 'root/cycle-' + $CycleIndex + '-response'
+    $heads = @(& $gitExe.Source -C $tools ls-remote --heads origin 'root/*' 2>&1)
+    if ($heads.Count -gt 0) { $heads | ForEach-Object { Write-Output ('  origin: ' + $_) } } else { Write-Output '  no root/* branch on origin yet' }
+    $head = @(& $gitExe.Source -C $tools ls-remote --heads origin $rootRef 2>$null)
+    if ($head.Count -gt 0) {
+        & $gitExe.Source -C $tools fetch -q origin $rootRef 2>&1 | Out-Null
+        Write-Output ('  ' + $rootRef + ' head: ' + (& $gitExe.Source -C $tools log -1 --format='%H %cI %s' FETCH_HEAD))
+        & $gitExe.Source -C $tools ls-tree -r -l FETCH_HEAD ('research/kalshi/frankie_boss/runs/' + $Day + '/root/') 2>$null | ForEach-Object { Write-Output ('    ' + $_) }
+    } else { Write-Output ('  ' + $rootRef + ' not pushed yet') }
+} else { Write-Output '  git or the tools checkout is unavailable for the root probe' }
 Write-Output '### done (read-only)'
