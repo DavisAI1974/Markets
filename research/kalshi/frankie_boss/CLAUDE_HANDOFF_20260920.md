@@ -1619,3 +1619,25 @@ failed run (895) -- removed from this branch only (2e2addb2; it is not on the tr
 CI on the trunk failed because the trunk carries the registration but not the tests -- its steps now run
 only where the tests exist (2e2addb2 here, 0ce84a8d on the trunk); the NWS hourly collector failure on
 the trunk is unrelated and waits.
+
+### 21:40Z: nothing of Root's ever existed; the request is exported to him; his task is written down
+
+`rootdavis` is not a GitHub account (Greg's collaborator search: "Could not find a GitHub account"), so the
+fork, the push and the PR Root reported were not real, and his "recorded on my machine" cannot have
+happened either: the durable request and the 28 MB prompt exist only on the host, which he cannot see.
+The Sept 15 package in git shows how the first run's Root worked: a Codex session ON the machine holding
+the run directory (E: drive), writing four files beside the request. Today the run directory is on EC2.
+
+Built and run: `frankie_host_export_principal_request.yml` (3db75567; run 35539110298 green): the host
+uploaded `session-request.json` (14,909,376 bytes, e0c461d7...), `prompt.md` (28,294,692 bytes,
+58a96207...) and `historical-prompt.md` (158,950 bytes, 8ff55bb2...) unchanged by masked presigned PUT
+into `s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-request/cycle-00/35539110298/`,
+verified by sha256 on both ends; receipt `principal-request-exported-20260920T213443Z.json` in the day
+directory. Root's complete task, with the keys, hashes, the four files' shapes (from the Sept 15
+package) and the push commands: `operations/ROOT_CYCLE_00_TASK_20260920.md`. Then the recording workflow
+and one pipeline dispatch, unchanged.
+
+Cycle 0 accounting (Greg's question): the machine side ran once and is retained (native calculation,
+controller result `incomplete`, empty Granite critique, hash-verified export, durable request); the
+Frankie side (feedback labels, section citations, lessons, analysis) has never run, and neither has
+anything after it (verify, native learning, readback, completion, the classroom correction turn).
