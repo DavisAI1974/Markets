@@ -83,19 +83,29 @@ def main():
     if environment.get('RUNPOD_BUNDLE_SHA256') != configuration['bundle_sha256']:
         raise SystemExit('pod bundle sha differs from the reviewed runtime configuration')
 
+    # SigV4, virtual-hosted: granite_startup_pins.validate_url_freshness requires X-Amz-Date and
+    # X-Amz-Expires, and the Pod's bootstrap accepts only <bucket>.s3.amazonaws.com or
+    # <bucket>.s3.us-east-1.amazonaws.com as the origin (granite_runpod_cloud.bootstrap_command).
+    from botocore.config import Config
+    signing = Config(signature_version='s3v4', s3={'addressing_style': 'virtual'})
     s3_by_region = {}
     fresh = {}
     earliest = None
     for name, url in current.items():
         bucket, s3key, region = bucket_key(url)
-        s3 = s3_by_region.setdefault(region, boto3.client('s3', region_name=region))
+        s3 = s3_by_region.setdefault(region, boto3.client('s3', region_name=region, config=signing))
         data = s3.get_object(Bucket=bucket, Key=s3key)['Body'].read(65537)
         row = expected[name]
         if len(data) > 65536 or (row['size'] is not None and len(data) != row['size']) or hashlib.sha256(data).hexdigest() != row['sha256']:
             raise SystemExit('staged object for %s differs from the reviewed roster' % name)
         signed = s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': s3key},
                                            ExpiresIn=args.expires_seconds)
-        query = parse_qs(urlsplit(signed).query, strict_parsing=True)
+        parts = urlsplit(signed)
+        if parts.scheme != 'https' or parts.hostname not in (bucket + '.s3.amazonaws.com', bucket + '.s3.us-east-1.amazonaws.com'):
+            raise SystemExit('generated URL origin would be refused by the Pod bootstrap: %s' % (parts.hostname,))
+        query = parse_qs(parts.query, strict_parsing=True)
+        if 'X-Amz-Date' not in query or 'X-Amz-Expires' not in query:
+            raise SystemExit('generated URL is not SigV4 (no X-Amz-Date/X-Amz-Expires); refusing')
         start = datetime.datetime.strptime(query['X-Amz-Date'][0], '%Y%m%dT%H%M%SZ').replace(tzinfo=datetime.timezone.utc).timestamp()
         expiry = start + int(query['X-Amz-Expires'][0])
         earliest = expiry if earliest is None else min(earliest, expiry)
