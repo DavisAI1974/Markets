@@ -1271,3 +1271,18 @@ code-bound state (moves the 842ec2ee identity records) -> declare the supersede 
 re-dispatch. The resume re-primes and re-prepares once more (about four minutes now that the cache is warm),
 the coordinator accepts the binding on the declaration, and `recover` should end at
 `actual_frankie_session_pending` (exit 3) -- the designed HOLD for Root's Frankie session.
+
+### 18:16Z: advanced, superseded, declared, re-dispatched
+
+Family on bad519b7 = run 35528038461 (green, receiver proof verified); the new CI on 46bb7c7c = run 35528104173
+(green; its first run 35528000831 failed only on an assertion reading a `status` key the coordinator's result
+never carries, fixed in 46bb7c7c, code unchanged). Host advanced 842ec2ee -> 46bb7c7c (run 35528188074).
+Code-bound supersede run 35528344656 (receipt `superseded-code-bound-state-20260920T181330Z.json`) moved the
+842ec2ee identity records: initialization, training.sqlite, training-witnesses, host-identity,
+execution-identity, and cycle-00's host-preparation (17:37:49Z), host-service, host-context-cache,
+request-plan, actual-critic-request (a7b72cf9) and host-ready -- kept host-instance and native-host-runtime.
+Declaration run 35528346658 (receipt `identity-supersede-declared-20260920T181332Z.json`, status `declared`):
+request `frankie-boss-sunday-two-cycle-20260919-cycle-00`, old code hash `25a0e087...` (read from the saved
+binding in cycles.sqlite), new `16874665...` (the 46bb7c7c checkout), declaration file
+`actual-feedback-run/cycles.sqlite.identity-supersede.json`. Pipeline re-dispatched: **run 35528504894**
+(`codex/frankie-launch-two-cycle-20260919`, go, cycles 2, keep_compute) at 18:16:05Z.
