@@ -5,45 +5,55 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
-## First decision already made, and the state of the refusal
+## State at 15:40Z on launch day: every refusal so far is root-caused and cleared; the pipeline is running
 
-Greg's go stands for exactly one thing: the 20211003 two-cycle run. **Run 35508198333** of
-`frankie_journal_stack.yml` on `codex/frankie-launch-two-cycle-20260919` (day 20211003,
-`go 0eb2c2acdccc17f8ad2d64d00b74a0c93b477c0418651a7f290d53f19d5710b0`, cycles 2, keep_compute true) ran
-at 11:34Z: sources OK, journal skipped (ingest receipt present), checks OK, **host job REFUSED at the
-cycles stage**.
+Greg's go stands for exactly one thing: the 20211003 two-cycle run (`frankie_journal_stack.yml` on
+`codex/frankie-launch-two-cycle-20260919`, day 20211003, `go 0eb2c2acdccc17f8ad2d64d00b74a0c93b477c0418651a7f290d53f19d5710b0`,
+cycles 2, keep_compute true, checks_only false). Greg's priority rule (12:45Z): launch-critical = anything
+that changes how Frankie runs or the science; the identity/evidence guards and the tests are provenance
+and, when one blocks the launch, it is overridden WITH A RECEIPT (moved, never deleted) and we move on.
+Every override today is receipted in the day directory on the host or in S3, and recorded in
+`CLAUDE_HANDOFF_20260920.md` in order. The chain, each refusal named by evidence, not guessed:
 
-**That refusal is now ROOT-CAUSED** by three read-only probe runs (35510320789, 35510506738,
-35510597019; `frankie_host_cycle_binding_probe.yml`). Full receipts in
-`CLAUDE_HANDOFF_20260920.md`, last section. The short version, and the corrections this file owes:
+1. `__init__` `save('host-identity')` refused: the retained run directory was code-bound to `c9a86e74`
+   (host-identity, initialization, training checkpoint digest, execution-identity). Superseded by
+   `frankie_host_supersede_code_bound_state.ps1` (three runs; the stale execution-identity was the second
+   find). Re-run each time the host advances.
+2. Line 843 `trusted host service pins differ`: the Windows checkout had `core.autocrlf=true`; every
+   `*_parser_code_hash` is sha256 over SOURCE BYTES; the observer is Linux (LF). Fixed by `.gitattributes`
+   `-text` on the two roots and `frankie_host_normalize_eol.ps1` (run 35514620722); probe section 6 now shows
+   the host identity `1bd1027a...` = pins.
+3. A stop with only `error_type`: the runner scrubs exception text by design, and the host runs
+   `run_actual_sunday_classroom.main`, not the base main. Both mains now emit `frames` (repo-relative
+   file/line/function, never a message): `57366d61`, `34a4feac`. Read them first on any stop.
+4. `run_actual_sunday_classroom.py:191 prime_cache -> sunday_execution.py:48 _save`: the 09-17 Dipole
+   classroom package in cycle-00 refused on differing bytes. `frankie_host_supersede_classroom_package.ps1`.
+5. The two-cycle prefix batch pinned CRLF-era code hashes of four LF-committed sources (all six pins were
+   stale): cycle 1 would have refused at `encoding_options`. `frankie_host_rebuild_prefix_batch.ps1`
+   rebuilt prefix-01 on the LF checkout (snapshot witness sha UNCHANGED: the data is identical), rewrote
+   only the configuration's `prefix_manifest` witness and moved host-identity aside. Done BEFORE the cycles
+   dispatch on purpose: a supersede after cycle 0 would move `training.sqlite` and destroy its learning.
+6. Line 833 `startup admission differs from the actual prepared request`: the LF host prepares request
+   **`a7b72cf9...`** (model_hash, teacher_binding, teacher_hash, input_hash are code-bound and changed with the
+   line endings; probe section 7 diffs the receipts); the 11:19Z readiness pinned the CRLF request
+   `6cd46f98...`. `a7b72cf9` is the request the observer world always used (archive on the branch). Re-pin:
+   `frankie_host_supersede_readiness.ps1` (trigger, readiness dir, host-service moved), observer re-run on
+   a7b72cf9 with the host's ready witness (`admitted_at 1789916729.1158657`) and the reviewed runtime
+   configuration, Pod restart after the start intent (Pod RUNNING throughout), delivery run 35520040166.
+7. The observer first refused at the S3 active-run claim (the cancelled 11:19Z observer still owned the
+   Pod; release needs a Pod STOP, which loses the GPU under low stock). `operations/active_run_supersede.py`
+   copied the record aside and wrote `phase closed` (run 35519639227).
 
-- The run-directory hypothesis in the earlier version of this drop-in was WRONG. `run_directory` is
-  the retained `actual-feedback-run`, not the day directory, and `cycle-00` holds the preparation and
-  the witness where the runner looks.
-- `run_actual_sunday.py` 812-843 is RULED OUT. The failing progress line is the initial `RunProbe`
-  state (`full_run_progress.py` 64), so `runtime()` was never entered. All four comparisons there
-  pass anyway, line 837 included.
-- There is NO traceback in `day-cycles.log`; it is 959 bytes and the runner catches the ValueError.
-- **The refusing check is `ActualHost.__init__`'s last statement**,
-  `save('host-identity.c15.json', ...)` -> `sunday_execution._save` line 45 ->
-  `ValueError('retained Sunday execution evidence changed')`. Stored `boss_commit c9a86e74` vs live
-  `6b0b37fe`, 6 code entries added and 8 changed.
-- **Every artifact in the run directory is from 2026-09-17, 05:20-05:28Z.** The last successful
-  `__init__` there was at `c9a86e74`. The witness earlier called the "09-19 admission witness" is a
-  09-17 artifact; the 09-19 run never completed `__init__` either. Yesterday's advance neither caused
-  this nor fixed it.
+**Pipeline run 35520104563 dispatched 15:36Z.** Its outcome is the next section of the handoff; if this
+file still ends here, read the handoff's last section and `list_workflow_runs` on `frankie_journal_stack.yml`
+before anything else. Cycle 0 is the launch; cycle 1 needs no further host action.
 
-**The first job is not another probe: it is Greg's call between two paths**, because the identity
-guard (a retained run continues only under the exact configuration and code that started it) and the
-advance to `6b0b37fe` (so `verified_service_inputs` aims at the re-minted Pod `8vqdacl5t61rjx`) cannot
-both hold in this run directory. Rolling back to `c9a86e74` clears the guard but re-aims inference at
-the Pod that commit pins. A new run directory and `run_id` at `6b0b37fe` proceeds, at the cost of
-redoing the 09-17 preparation and re-delivering readiness (the trigger is bound to request
-`frankie-boss-sunday-two-cycle-20260919-cycle-00`). Before committing to that second path, MEASURE
-whether a re-prepared request is byte-identical: `run_actual_sunday.py` changed between `c9a86e74` and
-`6b0b37fe`, and `service-pins.admission` must still equal the new `prepared['admission']` or the run
-refuses at line 836 instead. Do not assume it. Do not change the guard without Greg's word, and do not
-re-dispatch the pipeline until the path is chosen.
+Still open on the launch path, in order of consequence: (a) the git receipt
+`runs/20211003/03-schedule-prefixes.json` on the launch branch names the superseded manifest sha
+(provenance only, not a gate; moving it means pushing to that branch, Greg's word); (b) the
+host-identity guard cannot survive a lawful advance or configuration rewrite (task #2, Greg's design call);
+(c) the supersede receipts' `bytes`/`mtime` were null in the prefix rebuild's first run (fixed in the script,
+sha256 values were right).
 
 ## Where everything is
 
@@ -56,8 +66,9 @@ re-dispatch the pipeline until the path is chosen.
 - `ycf4v6lmave6xw` is EXITED on a GPU-less host, untouched, still holding the original retained model.
   Its fate (keep as cold spare, or terminate) is Greg's call; `pod_control --action terminate` refuses the
   current retained id only, so re-check `RETAINED_POD` before ever pointing it at anything.
-- Native host `i-0e90ee6110ef609aa`: tools checkout `6b0b37fe`, `boss_commit` recorded, readiness for request
-  `frankie-boss-sunday-two-cycle-20260919-cycle-00` delivered, trigger written.
+- Native host `i-0e90ee6110ef609aa`: tools checkout `34a4feac` (LF, `.gitattributes -text`), `boss_commit` recorded,
+  readiness for request `frankie-boss-sunday-two-cycle-20260919-cycle-00` re-pinned to `a7b72cf9...` and delivered
+  (run 35520040166), trigger written. Everything moved aside lives under `C:/Codex/Frankie-BOSS-20260919/superseded/`.
 - Observer run 35507527320 is in `hold` (observes until the local stop; never stops the Pod).
 
 ## What the day measured (do not relearn)
