@@ -56,7 +56,7 @@ jobs:
       - name: Create and watch the replacement Pod
         run: |
           STOP=""; if [ "${{ inputs.stop_after_ready }}" = "true" ]; then STOP="--stop-after-ready"; fi
-          python research/kalshi/frankie_boss/operations/pod_prepare.py --source-pod "${{ inputs.source_pod }}" --runtime-configuration research/kalshi/frankie_boss/runs/20260919/reviewed-bootstrap-image-defaults-runtime.json --data-centers "${{ inputs.data_centers }}" --cost-ceiling "${{ inputs.cost_ceiling }}" --wait-seconds "${{ inputs.wait_seconds }}" $STOP
+          PYTHONPATH="$GITHUB_WORKSPACE" python research/kalshi/frankie_boss/operations/pod_prepare.py --source-pod "${{ inputs.source_pod }}" --runtime-configuration research/kalshi/frankie_boss/runs/20260919/reviewed-bootstrap-image-defaults-runtime.json --data-centers "${{ inputs.data_centers }}" --cost-ceiling "${{ inputs.cost_ceiling }}" --wait-seconds "${{ inputs.wait_seconds }}" $STOP
       - name: Retain prepare evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
