@@ -5,47 +5,53 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
-## State at 21:30Z: cycle 0 at the designed HOLD, waiting on Root's response reaching the host
+## State at 22:10Z: cycle 0's Frankie half is being re-issued on a new request; the machine half stays
 
-**Read first.** Run 35536713271 returned to the HOLD (`actual_frankie_session_pending`, cycles exited 3,
-205 s; nothing written over). Root's Frankie session recorded its response on HIS machine, then pushed
-the three files (response, host attestation, host session record) to his fork
-`rootdavis/Markets`, branch `root/cycle-00-response`, under
-`research/kalshi/frankie_boss/runs/20211003/root/`. The session cannot reach a fork (credential scoped
-to DavisAI1974/Markets; cross-owner attach refused), so the bridge is a pull request from the fork
-into DavisAI1974/Markets: its head is `refs/pull/N/head`, which the recording workflow fetches.
+**Read first.** Cycle 0's machine half ran once and is retained (native calculation, controller
+`incomplete`, empty Granite critique, hash-verified export). Its Frankie half NEVER ran: Root's reports of
+recording, a fork and a PR were not real (`rootdavis` is not a GitHub account), and the request he was
+sent (e0c461d7...) has now been SUPERSEDED (moved aside, receipted) because Greg ordered cycle 0 re-run
+under two changes to how Frankie runs: (1) the run-findings ledger `knowledge/RUN_FINDINGS.md` plus his own
+prior lessons are rendered into every prompt (47dd6e57); (2) the calculations are his, not the runner's:
+the request names the 49 registry calculation layers of the August 28 recalculation verbatim, requires a
+`calculation_accounting` lesson entry per layer, and the ten append-only output ledgers as lesson entries
+(56111bf1, a60f0b1b). Host advanced to a60f0b1b (run 35540449494); code-bound state superseded
+(receipt `superseded-code-bound-state-20260920T220441Z.json`); principal request superseded (receipt
+`principal-request-superseded-20260920T220438Z.json`); declaration with `supersede_principal=true` (run
+35540574706); then ONE pipeline dispatch re-prepares cycle 0 and returns to the HOLD with a NEW request.
+`CLAUDE_HANDOFF_20260920.md` 22:05Z has the receipts; its next section records the new request's hashes.
 
-**The next three actions, in order, no code changes:**
-1. `frankie_host_record_principal_response.yml` (branch `claude/frankie-launch-verification-lqmv0m`)
-   with `source_ref=refs/pull/N/head`, `response_path/attestation_path/record_path` = the three files'
-   repo-relative paths on that ref, `cycle_index=00`. It checks the files on GitHub, stages them with
-   SigV4 presigned GETs (masked), and the host script verifies sha256/bytes, places the session record at
-   `<run_directory>/execution/cycle-00/principal/host-session-record.json`, rewrites a foreign
-   `host_record.path` to that host path WITH a receipt (Greg's override, 66b0ab27), runs the recorder from
-   the tools checkout, and requires `actual_principal_response_recorded`. Receipt:
-   `principal-response-recorded-<stamp>.json` in the day directory. An existing `session-response.json`
-   is reported and left alone.
-2. ONE dispatch of `frankie_journal_stack.yml` on `codex/frankie-launch-two-cycle-20260919` (day
+**The next actions, in order, no code changes:**
+1. When the pipeline is back at `actual_frankie_session_pending`: `frankie_host_export_principal_request.yml`
+   (cycle 00) exports the NEW `session-request.json`, `prompt.md`, `historical-prompt.md` to
+   `s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-request/cycle-00/<run id>/`;
+   update `operations/ROOT_CYCLE_00_TASK_20260920.md` (keys, bytes, sha256) and hand it to Root.
+2. Root performs the session and pushes four files to `root/cycle-00-response` (DavisAI1974/Markets)
+   under `research/kalshi/frankie_boss/runs/20211003/root/`. Nothing counts until `git ls-remote`
+   shows the branch.
+3. `frankie_host_record_principal_response.yml` (`source_ref=root/cycle-00-response`, the three JSON
+   paths, cycle 00): stages by masked SigV4 presigned GET, the host verifies sha256/bytes, places the
+   session record, rewrites a foreign `host_record.path` with a receipt (66b0ab27), runs the recorder
+   on the host, requires `actual_principal_response_recorded`.
+4. ONE dispatch of `frankie_journal_stack.yml` on `codex/frankie-launch-two-cycle-20260919` (day
    20211003, the standing go, cycles 2, keep_compute true, checks_only false): verify -> native learning
-   -> readback -> completion -> classroom correction turn (a second HOLD if it needs Root) -> cycle 1's
-   readiness (`frankie_deliver_readiness.yml` for `...-cycle-01`, observer bound to cycle 1's request sha).
-3. `frankie_host_cycle_report.yml` (cycle 00): the whole report arrives as a workflow artifact and in the
-   job log. GLANCE ONLY for anything pertinent to the next cycle (Greg, 20:46Z); deep dives after cycle 1
-   is running.
+   -> readback -> completion -> classroom correction turn -> cycle 1's readiness
+   (`frankie_deliver_readiness.yml` for `...-cycle-01`).
+5. `frankie_host_cycle_report.yml` (cycle 00): GLANCE ONLY for the next cycle; deep dives later (Greg).
 
 **Greg's standing rules today (all in `CLAUDE_HANDOFF_20260920.md`):** launch-critical = how Frankie runs
-or the science, everything else waits; no package code changes until both cycles are done; NO LIMIT
-anywhere we put one (the report display is uncut; Frankie's analysis has no cap in the code; the Granite
-contract caps are science, queued); the next cycle is the priority once reports exist; Root's response
-is ESSENTIAL (the native learner trains on its feedback), so it cannot be skipped.
+or the science, everything else waits; NO LIMIT anywhere we put one; the next cycle is the priority once
+reports exist; Root's response is ESSENTIAL (the native learner trains on its feedback); the calculations
+are Frankie's, never a runner's, and the required set is the registry, judged by what was done, not who
+did it; nothing hidden from Frankie (the ledger is append-only and rendered whole).
 
-**Notes queued for after the cycle:** start the remaining (nineteen-cycle) prefixes while the cycle runs
-(`day_schedule_prefixes.ps1` with `CycleLimit=19`, respecting the host's CPU-dedication gate); wire a
-ROOT PROBE (a heartbeat record Root's session writes to git or S3, printed by the status probe) so
-"churning, dead or hung" is answerable; the NWS hourly collector failing on the trunk; the three notes
-files for the architect. Skills: `~/.claude/skills/using-agent-skills` and `git-workflow-and-versioning`
-exist on disk but are not registered in the session; read their SKILL.md and follow them (change
-summaries per commit, assumptions surfaced, typed atomic commits).
+**Notes queued for after the cycle:** the remaining (nineteen-cycle) prefixes (`day_schedule_prefixes.ps1`
+with `CycleLimit=19`, respecting the CPU-dedication gate); a ROOT PROBE (a heartbeat Root's session writes
+to git or S3, printed by the status probe); an outputs-receipt writer so the ten ledgers filed as lessons
+also close the crosswalk's OUTPUT_PENDING rows; the NWS hourly collector failing on the trunk; the three
+notes files for the architect. Skills: `~/.claude/skills/using-agent-skills` and
+`git-workflow-and-versioning` exist on disk but are not registered; read their SKILL.md and follow them
+(change summaries per commit, assumptions surfaced, typed atomic commits).
 
 **Harness note:** the auto-mode classifier refuses guard-changing diffs ("Security Weaken"); on Greg's
 explicit word such commits go through the GitHub API (`push_files`), then the container syncs with
