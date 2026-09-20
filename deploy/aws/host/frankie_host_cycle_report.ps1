@@ -43,6 +43,16 @@ def stage_rows(db_path):
 print('### coordinator stages for', request_id)
 stages = {s: (unpack(json.loads(p)), d) for s, p, d in stage_rows(run/'cycles.sqlite')} if (run/'cycles.sqlite').exists() else {}
 for name, (value, digest) in stages.items(): print(f'  {name}  {digest[:12]}')
+if 'controller' in stages:
+    c = stages['controller'][0]
+    print('### controller result')
+    print(f"  status={c.get('status')} request_hash={str(c.get('request_hash'))[:16]} keys={sorted(c.keys())[:16]}")
+    for k in ('verdict', 'score', 'critique_verdict', 'critique_score', 'critic', 'evaluation', 'admission', 'native_checkpoint', 'controller_checkpoint'):
+        if k in c: print(f'    {k}={short(json.dumps(c[k], sort_keys=True, default=str), 600)}')
+    records = c.get('records') or ()
+    print(f'  records={len(records)}')
+    for rec in list(records)[:4]:
+        print('    ' + short(json.dumps(rec, sort_keys=True, default=str), 700))
 if 'complete' in stages:
     print('### completion record'); print('  ' + json.dumps(stages['complete'][0], sort_keys=True, default=str)[:1500])
 if 'feedback' in stages:
