@@ -58,25 +58,35 @@ from pathlib import Path
 sys.path.insert(0, r'$ToolsRoot')
 from research.kalshi.frankie_boss.c15_journal import unpack
 run = Path(r'$runDirectory')
+# Both identity records, each on its own line: a fresh host-identity written by a refused run
+# must not mask a stale execution-identity (pipeline 35511984264 did exactly that).
 for path, pick in ((run / 'host-identity.c15.json', lambda v: v['configuration']['host_runtime']['boss_commit']),
                    (run / 'execution' / 'execution-identity.c15.json', lambda v: v['boss_commit'])):
-    if path.exists():
-        print(pick(unpack(json.loads(path.read_bytes())))); break
-else:
-    print('absent')
+    print(pick(unpack(json.loads(path.read_bytes()))) if path.exists() else 'absent')
 "@
-$stored = (& $Python -c $code 2>&1 | Select-Object -Last 1).ToString().Trim()
-if ($stored -ne 'absent' -and $stored -notmatch '^[0-9a-f]{40}$') { throw ("could not read the stored boss_commit: " + $stored) }
-Write-Output ("stored boss_commit: " + $stored + "  current: " + $head)
+$identities = @(& $Python -c $code 2>&1 | Select-Object -Last 2 | ForEach-Object { $_.ToString().Trim() })
+if ($identities.Count -ne 2) { throw ("could not read the identity records: " + ($identities -join ' | ')) }
+$hostIdentity = $identities[0]; $executionIdentity = $identities[1]
+foreach ($value in $identities) { if ($value -ne 'absent' -and $value -notmatch '^[0-9a-f]{40}$') { throw ("could not read a stored boss_commit: " + $value) } }
+Write-Output ("host-identity boss_commit:      " + $hostIdentity)
+Write-Output ("execution-identity boss_commit: " + $executionIdentity)
+Write-Output ("current (tools HEAD):           " + $head)
+# The OLD commit is whichever stored identity differs from the current one.
+$stored = 'absent'
+foreach ($value in $identities) { if ($value -ne 'absent' -and $value -ne $head) { $stored = $value; break } }
+if ($stored -eq 'absent' -and ($hostIdentity -eq $head -or $executionIdentity -eq $head)) { $stored = $head }
 
 $moved = @()
 $candidates = @()
 if ($stored -ne 'absent' -and $stored -ne $head) {
     $cycleRelative = 'execution/cycle-' + $CycleIndex
     $cycle = Join-Path $runDirectory $cycleRelative
-    $candidates = @(
-        'host-identity.c15.json', 'initialization.c15.json', 'training.sqlite', 'training-witnesses',
-        'execution/execution-identity.c15.json',
+    # An identity record is moved only when it is the stale one; a fresh record written by a
+    # refused run at the current commit is exactly what the next run re-saves byte for byte.
+    $candidates = @('initialization.c15.json', 'training.sqlite', 'training-witnesses')
+    if ($hostIdentity -ne 'absent' -and $hostIdentity -ne $head) { $candidates += 'host-identity.c15.json' }
+    if ($executionIdentity -ne 'absent' -and $executionIdentity -ne $head) { $candidates += 'execution/execution-identity.c15.json' }
+    $candidates += @(
         ($cycleRelative + '/host-preparation.c15.json'),
         ($cycleRelative + '/host-service.c15.json'),
         ($cycleRelative + '/host-context-cache.c15.json'),
