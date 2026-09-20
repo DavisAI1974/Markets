@@ -4,18 +4,23 @@ This writer never calls a Pod or model API. The authenticated workflow accepts
 only hashes, after the actual host has persisted the complete backend outcome.
 """
 import hashlib
+import importlib.util
 import json
 import os
 import re
 import subprocess
+from pathlib import Path
 
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
 
 
-JOURNAL_GENERATION = 'migration-ycf4v6lmave6xw-a004983e93b9'
-HISTORICAL_GENERATION = 'migration-ycf4v6lmave6xw'
+# This writer runs standalone (python -I -S, boto3 only), so the shared identity module is loaded by path.
+_identity_spec = importlib.util.spec_from_file_location('granite_retained_identity', Path(__file__).with_name('granite_retained_identity.py'))
+_identity = importlib.util.module_from_spec(_identity_spec)
+_identity_spec.loader.exec_module(_identity)
+POD_ID, JOURNAL_GENERATION, HISTORICAL_GENERATION = _identity.POD_ID, _identity.JOURNAL_GENERATION, _identity.HISTORICAL_GENERATION
 
 FIELDS = {'request_sha256', 'startup_sha256', 'outcome_sha256', 'job_id', 'code_commit'}
 
@@ -28,7 +33,7 @@ def publish_completion(journal, fields):
         raise ValueError('exact completion hashes required')
     startup = journal.get('retained-startup.json')
     if (type(startup) is not dict or startup.get('request_sha256') != fields['request_sha256']
-            or startup.get('pod_id') != 'ycf4v6lmave6xw'
+            or startup.get('pod_id') != POD_ID
             or hashlib.sha256(canonical(startup)).hexdigest() != fields['startup_sha256']):
         raise ValueError('completion differs from retained startup')
     for name, value in (

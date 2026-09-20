@@ -13,7 +13,7 @@ from .granite_run_artifacts import canonical
 from .granite_runpod_admission import CONTEXT
 from .granite_runpod_tokenizer import LocalTokenizerAdmission
 
-POD_ID = 'ycf4v6lmave6xw'
+from .granite_retained_identity import POD_ID
 SCHEMA = 'GRANITE_RETAINED_LEASE_V1'
 
 
