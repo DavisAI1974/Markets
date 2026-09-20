@@ -2,6 +2,14 @@
 
 ## 2026-09-20 — Frankie/BOSS launch day: the Pod that could not start, the replacement, the operator workflows
 
+- **`deploy/aws/host/frankie_host_cycle_binding_probe.ps1`** + `.github/workflows/frankie_host_cycle_binding_probe.yml`
+  — read-only probe that root-caused the cycles-stage refusal of pipeline run 35508198333. Dumps `day-cycles.log`, the
+  `run_directory` the stage actually binds to, and each `ActualHost.__init__` refusal with `repr`: `retained_instance_id`,
+  `boss_commit`, and `save('host-identity.c15.json')` (the one that fires — `sunday_execution._save` raises
+  `retained Sunday execution evidence changed`), plus the 812-843 comparisons and the mtime of every retained artifact.
+  Reads `.c15.json` through `c15_journal.unpack`; never calls `retained_instance_id()` or `retained_ready_signal()`,
+  which would mint an instance id or write a witness. No path literal travels in the sent script (`--set` supplies
+  Day/RunRoot/ToolsRoot/Python/CycleIndex). Starts, stops, writes and re-dispatches nothing.
 - **`research/kalshi/frankie_boss/granite_retained_identity.py`** — the retained Pod's declared identities in ONE place
   (`POD_ID`, `BUNDLE_PREFIX`, `JOURNAL_GENERATION`, `HISTORICAL_GENERATION`); lifecycle and host import it, the standalone
   completion writer loads it by path. Re-minted to `8vqdacl5t61rjx` with `granite_retained_migration_receipt.json` and

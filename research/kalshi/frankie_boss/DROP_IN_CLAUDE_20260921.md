@@ -5,33 +5,45 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
-## First decision already made, and the first job
+## First decision already made, and the state of the refusal
 
 Greg's go stands for exactly one thing: the 20211003 two-cycle run. **Run 35508198333** of
 `frankie_journal_stack.yml` on `codex/frankie-launch-two-cycle-20260919` (day 20211003,
 `go 0eb2c2acdccc17f8ad2d64d00b74a0c93b477c0418651a7f290d53f19d5710b0`, cycles 2, keep_compute true) ran
 at 11:34Z: sources OK, journal skipped (ingest receipt present), checks OK, **host job REFUSED at the
-cycles stage** (`stage_refused`, `cycles exited 1`, `FRANKIE_RUN_PROGRESS_V1` phase `data_delivery`, owner
-`transport`, `error_type ValueError` 1.44 s in; the message is scrubbed by design; no new receipt
-committed; the earlier `03-schedule-prefixes.json` from run 35498663360 stands). The refusal sits in
-`run_actual_sunday.py` lines 812-843, after `read_execution_trigger` succeeded (the request-id fix is on
-the host). Candidates, in order of likelihood:
-1. line 833 `actual open run must follow this admitted live host instance`: the delivered
-   `startup-intent.json` carries `local_ready.host_instance_id 6d02c1fcafbd4c7e8aa09245d3f9e3e7` (the 09-19
-   admission witness); the host compares it to its own `host-instance.c15.json` in the run directory.
-2. line 836 `startup admission differs from the actual prepared request`: `service-pins.admission`
-   (observer tokenizer: 92,439 in / 38,633 out / 131,072) must EQUAL the host's `prepared['admission']`.
-3. `retained readiness differs from actual admission` (`retained_ready_signal`, an older host-ready record
-   for this instance with different fields).
-4. line 843 `trusted host service pins differ` (config/identity hash after `verified_service_inputs`).
-Diag run 35508442554 already narrowed this (handoff, last section): candidate 2 is OUT (the observer's
-admission equals the host's, all five keys); the host witness `6d02c1fc...` and `host-preparation.c15.json`
-live under the 09-19 run directory `actual-feedback-run/execution/cycle-00`, while the cycles stage runs
-under `RunRoot=C:/Codex/Frankie-BOSS-20260919/days`, `Day=20211003`. **First job: a read-only host probe**
-(style: `frankie_host_diag.ps1` section 1d) that prints `actual-host-configuration.json run_directory`, the
-`host-instance.c15.json` instance_id in THAT directory, its cycle-00 listing, and the four comparisons
-with `repr` plus the real exception text. Do not re-dispatch the pipeline until the refusing check is
-named and fixed; every re-dispatch restarts the native host.
+cycles stage**.
+
+**That refusal is now ROOT-CAUSED** by three read-only probe runs (35510320789, 35510506738,
+35510597019; `frankie_host_cycle_binding_probe.yml`). Full receipts in
+`CLAUDE_HANDOFF_20260920.md`, last section. The short version, and the corrections this file owes:
+
+- The run-directory hypothesis in the earlier version of this drop-in was WRONG. `run_directory` is
+  the retained `actual-feedback-run`, not the day directory, and `cycle-00` holds the preparation and
+  the witness where the runner looks.
+- `run_actual_sunday.py` 812-843 is RULED OUT. The failing progress line is the initial `RunProbe`
+  state (`full_run_progress.py` 64), so `runtime()` was never entered. All four comparisons there
+  pass anyway, line 837 included.
+- There is NO traceback in `day-cycles.log`; it is 959 bytes and the runner catches the ValueError.
+- **The refusing check is `ActualHost.__init__`'s last statement**,
+  `save('host-identity.c15.json', ...)` -> `sunday_execution._save` line 45 ->
+  `ValueError('retained Sunday execution evidence changed')`. Stored `boss_commit c9a86e74` vs live
+  `6b0b37fe`, 6 code entries added and 8 changed.
+- **Every artifact in the run directory is from 2026-09-17, 05:20-05:28Z.** The last successful
+  `__init__` there was at `c9a86e74`. The witness earlier called the "09-19 admission witness" is a
+  09-17 artifact; the 09-19 run never completed `__init__` either. Yesterday's advance neither caused
+  this nor fixed it.
+
+**The first job is not another probe: it is Greg's call between two paths**, because the identity
+guard (a retained run continues only under the exact configuration and code that started it) and the
+advance to `6b0b37fe` (so `verified_service_inputs` aims at the re-minted Pod `8vqdacl5t61rjx`) cannot
+both hold in this run directory. Rolling back to `c9a86e74` clears the guard but re-aims inference at
+the Pod that commit pins. A new run directory and `run_id` at `6b0b37fe` proceeds, at the cost of
+redoing the 09-17 preparation and re-delivering readiness (the trigger is bound to request
+`frankie-boss-sunday-two-cycle-20260919-cycle-00`). Before committing to that second path, MEASURE
+whether a re-prepared request is byte-identical: `run_actual_sunday.py` changed between `c9a86e74` and
+`6b0b37fe`, and `service-pins.admission` must still equal the new `prepared['admission']` or the run
+refuses at line 836 instead. Do not assume it. Do not change the guard without Greg's word, and do not
+re-dispatch the pipeline until the path is chosen.
 
 ## Where everything is
 

@@ -726,3 +726,65 @@ pipeline workflow, the journal stack, the roster files, `run_actual_sunday*.py`.
 partial cherry-picks (workflow registration only); `ycf4v6lmave6xw` still bills its volume; the old
 generation's journal (`migration-ycf4v6lmave6xw-a004983e93b9`) holds a consumed start intent that will
 never complete.
+
+### Cycles refusal ROOT-CAUSED (probe runs 35510320789 / 35510506738 / 35510597019, read-only)
+
+`frankie_host_cycle_binding_probe.yml` + `deploy/aws/host/frankie_host_cycle_binding_probe.ps1`
+(new, read-only; starts, stops, writes and re-dispatches nothing). Three dispatches, each on record:
+
+1. **35510320789** killed the run-directory hypothesis. `actual-host-configuration.json` declares
+   `run_directory = C:/Codex/Frankie-BOSS-20260919/actual-feedback-run`, NOT the day directory, so the
+   cycles stage re-enters the retained run; its `execution/cycle-00` already holds
+   `host-preparation.c15.json` and `host-ready-6d02c1fcafbd4c7e8aa09245d3f9e3e7.c15.json`. It also
+   showed the refusing progress line is `phase data_delivery, owner transport, completed 0, unit
+   bytes` -- verbatim the initial `_state` of `RunProbe` (`full_run_progress.py` 64). It never
+   advanced, and the first `progress()` call is the first line of `runtime()`, so **`runtime()` was
+   never entered and `run_actual_sunday.py` 812-843 is ruled out entirely.** (Correction to the
+   2026-09-21 drop-in, which named that region and a traceback in `day-cycles.log`: the log is 959
+   bytes and the runner catches the ValueError, printing only its type. There is no traceback.)
+
+2. **35510506738 named the check.** In `ActualHost.__init__`: `retained_instance_id()` REFUSES=False
+   (keys, schema and `run_id` all match); `boss_commit` passes (`6b0b37fe` == checkout HEAD); and the
+   last statement, `save('host-identity.c15.json', dict(configuration, code))`, routes to
+   `sunday_execution._save` (line 45), which raises **`ValueError('retained Sunday execution evidence
+   changed')`** when the file exists with different bytes. It does:
+   stored `boss_commit c9a86e74` vs live `6b0b37fe`; 6 code entries ADDED
+   (`granite_retained_identity.py`, `operations/pod_control.py`, `operations/pod_prepare.py`,
+   `operations/refresh_bootstrap_urls.py`, `git_request_archive.py`,
+   `operations/restore_archived_pilot_ledgers_20260919.py`); 8 CHANGED (incl.
+   `granite_retained_lifecycle.py`, `granite_runpod_cloud.py`, `granite_startup.py`,
+   `run_actual_sunday.py`). `BYTES EQUAL = False`, `REFUSES = True`. All four 812-843 comparisons
+   pass, including line 837 (`startup.local_ready.host_instance_id` == `6d02c1fc...`, equal).
+
+3. **35510597019 dated the retained evidence.** Every artifact in `actual-feedback-run` was written
+   **2026-09-17 between 05:20:17Z and 05:28:28Z** and nothing since: `host-identity.c15.json`
+   05:20:18Z, `host-instance.c15.json` 05:20:17Z, `native-host-runtime.json` 05:20:17Z (the
+   `--ec2-resume` marker), `host-preparation.c15.json` and
+   `host-ready-6d02c1fcafbd4c7e8aa09245d3f9e3e7.c15.json` both 05:28:28Z.
+
+**What that means.** `_save` returns silently when the bytes match, so every re-entry at `c9a86e74`
+passed and every re-entry after it refuses. The last successful `__init__` in this run directory was
+2026-09-17T05:20:18Z at `c9a86e74`. **The witness this handoff earlier called "the 09-19 admission
+witness" is a 09-17 artifact**, and the 09-19 run never completed `__init__` here either -- it would
+have refused at this same check the moment the host left `c9a86e74`. This is NOT damage from
+yesterday's advance: yesterday's advance did not cause it and did not fix it.
+
+**The dilemma, for Greg.** `host-identity.c15.json` is a deliberate immutability guard -- a retained
+run may only be continued by the exact configuration and code that started it. It is not a bug to
+route around, and nothing here touches it. But the advance to `6b0b37fe` exists precisely so
+`verified_service_inputs` builds `RunpodConfig` against the re-minted Pod `8vqdacl5t61rjx` instead of
+the stranded one, and that requirement and this guard cannot both be satisfied in this run directory:
+
+- Roll the host back to `c9a86e74`: the guard passes, and inference aims at the Pod `c9a86e74` pins,
+  not `8vqdacl5t61rjx`. Resolves nothing.
+- New run directory and new `run_id` at `6b0b37fe`: `__init__` writes a fresh identity and proceeds,
+  at the cost of redoing the 09-17 preparation (~54 MB of classroom artifacts, the context cache, the
+  151,132-byte critic request) and re-delivering readiness, because the trigger is bound to request
+  `frankie-boss-sunday-two-cycle-20260919-cycle-00`. UNVERIFIED and load-bearing: `run_actual_sunday.py`
+  changed between `c9a86e74` and `6b0b37fe`, so a re-prepared request may not be byte-identical, and
+  `service-pins.admission` must still equal the new `prepared['admission']` (line 836) or the run
+  refuses there instead. Measure that before committing to this path; do not assume it.
+- Changing the guard is not on the table without Greg's word.
+
+Nothing was started, stopped, written, re-dispatched or claimed beyond these three receipts. The
+pipeline has NOT been re-dispatched.
