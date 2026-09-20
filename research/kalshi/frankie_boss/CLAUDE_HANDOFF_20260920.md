@@ -1641,3 +1641,57 @@ Cycle 0 accounting (Greg's question): the machine side ran once and is retained 
 controller result `incomplete`, empty Granite critique, hash-verified export, durable request); the
 Frankie side (feedback labels, section citations, lessons, analysis) has never run, and neither has
 anything after it (verify, native learning, readback, completion, the classroom correction turn).
+
+### 22:05Z: Frankie's brain gets the ledger and his own lessons; cycle 0's request is being re-rendered under the calculation mandate
+
+Greg, 21:42Z: "we will make this info available to Frankie going forward on the Sunday runs and all
+subsequent calc findings. We will not hide this. Make sure it's showing up in his brain." Measured first:
+the served brain was the frozen Memory A seed plus the eighteen historical sections, and the lessons
+Frankie writes went into `lessons.sqlite` and were read back by nothing (`lessons_available` had no
+caller). Built (47dd6e57, family green 35539587395): `knowledge/RUN_FINDINGS.md`, a committed append-only
+ledger, rendered into every prompt after the continuation prefix and before the preserved historical
+prompt with its exact bytes and sha256, followed by every prior lesson from the run's lessons store at or
+before the cycle's `as_of`, whole, no limit; the ledger witness is saved beside the prompt
+(`run-findings-witness.json`) and `prepare()` pins it into the attachment (`run_findings_witness`).
+
+Greg, 21:50Z: "Stop. His cycle 0 never ran? We have to fix all of that and rerun cycle 0 before we move
+on." and "We are applying this to cycle 0 and re-running cycle 0." Cycle 0's machine half is retained and
+stays (native calculation, controller `incomplete`, empty critique, hash-verified export); its Frankie
+half is re-issued on a NEW request rendered under the new code. Built (9e4f1cbe, family green
+35539926909): `feedback_cycle._principal_supersede` (on a declaration naming the request with
+`supersede_principal` and the OLD attachment hash, and only while no principal output is retained,
+archives `attachment` and `principal_intent` under superseded stage names and appends
+`FRANKIE_CYCLE_PRINCIPAL_SUPERSEDE_ACCEPTED_V1`, so `prepare()` runs again); the declaration helper's
+`--supersede-principal`; `frankie_host_declare_identity_supersede.yml` input `supersede_principal`;
+`frankie_host_supersede_principal_request.yml` (moves prompt.md, session-request.json, the witness and
+response checks aside into `superseded/` with sha256 per file and one receipt; refuses on an existing
+response or a live runner).
+
+Greg, 21:58Z onward: "Check every other calc in cycle 0 and make sure they will run too. There's
+exhaustion, families, d's and probably more. And make sure it's Frankie doing the calcs."; "check against
+the original 2nd step calcs done weeks ago"; "The calcs are not for runners to do. Frankie needs to be
+learning from these."; "frankie (errantly) didn't do the aug calcs but the correct ones were done so don't
+look at who did them but look at the ones that were done." Measured against the 2026-09-16 crosswalk of
+the August 28 A_MEMORY recalculation (run 33746436209, registry sha256 239a1480...): 99 layers, 77
+applicable inputs all DELIVERED to Frankie in cycle 0, the ten append-only OUTPUT ledgers registered for
+him OUTPUT_PENDING with none filed (on Sept 15 as well), and the request instruction told him not to rerun
+completed calculations. Built: 56111bf1 (family green 35540173987) states the rule, tells him to derive
+the chains, D structures and families, dipoles and geometry, pair and triplet recurrences and pre-birth
+opportunities on the cycle's rows and to file the ten ledgers as lesson entries; a60f0b1b (family run
+35540437149) makes the required set THE REGISTRY ITSELF: `REGISTRY_CALCULATION_SET` names the 49
+CAUSAL_STREAM_REQUIRED layers in seven groups (order_lifecycle 9, full_book_fifo_queue 8,
+microstructure_mechanics 7, legacy_observable_crosswalk 5, derived_geometry 8, prebirth_opportunity 5,
+causal_clocks 7) verbatim, `FROZEN_LEARNED_STRUCTURE` the nine comparison layers, and the instruction
+requires one `calculation_accounting` lesson entry with every layer derived / compared / could_not
+(reason), none delegated to a runner; the test reads the crosswalk JSON so the constant cannot drift from
+the registry. Ledger entries for both rules are in `RUN_FINDINGS.md`, so Frankie reads them too.
+
+Host: advanced to 9e4f1cbe (run 35540078921, green) and then to a60f0b1b (run 35540449494). The round
+from here, once that advance and the family are green: `frankie_host_supersede_code_bound_state.yml`
+(cycle 00) -> `frankie_host_supersede_principal_request.yml` (cycle 00, reason) ->
+`frankie_host_declare_identity_supersede.yml` with `supersede_principal=true` -> ONE dispatch of
+`frankie_journal_stack.yml` on the launch branch (standard inputs) -> the HOLD with a NEW cycle 0 request
+-> `frankie_host_export_principal_request.yml` -> Root's task updated with the new keys and hashes.
+Root's branch `root/cycle-00-response` does not exist yet (checked 22:03Z); anything he records against
+the OLD request (e0c461d7...) will be refused by the recorder, which is correct: the request he must
+answer is the re-rendered one.
