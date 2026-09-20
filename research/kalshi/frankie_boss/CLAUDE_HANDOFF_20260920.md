@@ -1308,3 +1308,12 @@ hashes. The declaration helper now reads `old_arm_hash` from the saved binding, 
 the host (after the advance to 963ee275) appends a complete entry; the 18:13Z entry stays in the file as
 the record of the first attempt. Tests: undeclared arm refuses, declared-but-unspent refuses,
 declared-and-spent accepts without constructing a controller.
+
+**18:51Z: advanced, superseded, declared with the arm, re-dispatched.** Family on 963ee275 = run 35530004390
+(green); CI run 35530000404 (green, both new coordinator tests and the helper test). Host advanced
+46bb7c7c -> 8a4ef528 (run 35530269836; a first dispatch with a short sha was refused by the script's own
+40-hex check before it touched anything, run 35530182513). Code-bound supersede run 35530355851 (receipt
+`superseded-code-bound-state-20260920T185054Z.json`) moved the 46bb7c7c identity records and cycle-00's
+re-preparation of 18:28Z. Declaration run 35530358008 (receipt `identity-supersede-declared-20260920T185102Z.json`,
+status `declared`): old code 25a0e087 -> new 61b761c8, **old_arm_hash ee4ec20d**. Pipeline re-dispatched on
+the launch branch at 18:52Z (same go, cycles 2, keep_compute).
