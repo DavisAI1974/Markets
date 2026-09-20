@@ -52,7 +52,7 @@ def find_memory(node):
             r = find_memory(v)
             if r: return r
     return None
-cfg = json.loads(Path(cfg_path).read_text(encoding='utf-8'))
+cfg = json.loads(Path(cfg_path).read_text(encoding='utf-8-sig'))
 memory = find_memory(cfg)
 print('configuration memory sha256:', memory)
 if plan is not None and identities is not None:
