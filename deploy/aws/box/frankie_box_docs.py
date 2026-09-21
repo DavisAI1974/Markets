@@ -23,7 +23,7 @@ SCHEMA = 'FRANKIE_BOX_DOCS_INDEX_V1'
 SHA_RE = re.compile(r'\b[0-9a-f]{64}\b')
 RECEIPTS = ('verify.json', 'labels.json', 'derive.json', 'reading-plan.json', 'reading.json', 'writing.json',
             'engine.json', 'engine-serverless.json')
-MARKDOWN = ('merged-notes.md', 'derivation-digest-full.md')
+MARKDOWN = ('merged-notes.md', 'derivation-digest-full.md', 'comparison.md', 'session-receipts.md')
 
 
 def sha256_bytes(data):
@@ -266,7 +266,9 @@ def build_docs(work, out, cycle):
         p = work / name
         if p.is_file():
             put(name, p.read_bytes(), p, {'merged-notes.md': 'the merged reading notes the analysis is written from',
-                                            'derivation-digest-full.md': "Frankie's derivation digest, every layer of the pin"}[name])
+                                            'derivation-digest-full.md': "Frankie's derivation digest, every layer of the pin",
+                                            'comparison.md': 'the comparison packet: the derived pin layers beside the frozen learned-structure files (session code)',
+                                            'session-receipts.md': "the session receipts packet: the session's provider invocations, what it read, the wall it kept (session code)"}[name])
     for name in RECEIPTS:
         p = work / name
         if p.is_file():

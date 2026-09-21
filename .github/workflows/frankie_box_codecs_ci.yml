@@ -19,6 +19,9 @@ on:
       - 'deploy/aws/box/frankie_box_brain.py'
       - 'deploy/aws/box/frankie_box_classroom.py'
       - 'deploy/aws/box/frankie_box_heartbeat.py'
+      - 'deploy/aws/box/frankie_box_compare.py'
+      - 'deploy/aws/box/frankie_box_receipts.py'
+      - 'tests/test_frankie_box_packets.py'
       - 'tests/test_frankie_box_classroom.py'
       - 'research/kalshi/frankie_boss/dipole_classroom*.py'
       - 'tests/test_frankie_box_brain.py'
@@ -50,4 +53,4 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install --no-cache-dir pytest==9.1.1 pyyaml==6.0.2
-      - run: python -m pytest -q tests/test_frankie_box_digest_render.py tests/test_frankie_box_reading_render.py tests/test_frankie_box_stacked_text.py tests/test_frankie_box_head_render.py tests/test_frankie_serverless_reading_endpoint.py tests/test_frankie_box_docs.py tests/test_frankie_box_boss_session_merge.py tests/test_frankie_box_boss_session_reading.py tests/test_frankie_box_brain.py tests/test_frankie_host_recorder_script.py tests/test_frankie_box_classroom.py tests/test_frankie_box_boss_session_classroom.py tests/test_frankie_correction_turn_plumbing.py
+      - run: python -m pytest -q tests/test_frankie_box_digest_render.py tests/test_frankie_box_reading_render.py tests/test_frankie_box_stacked_text.py tests/test_frankie_box_head_render.py tests/test_frankie_serverless_reading_endpoint.py tests/test_frankie_box_docs.py tests/test_frankie_box_boss_session_merge.py tests/test_frankie_box_boss_session_reading.py tests/test_frankie_box_brain.py tests/test_frankie_host_recorder_script.py tests/test_frankie_box_classroom.py tests/test_frankie_box_boss_session_classroom.py tests/test_frankie_correction_turn_plumbing.py tests/test_frankie_box_packets.py tests/test_frankie_box_boss_session_rerun.py

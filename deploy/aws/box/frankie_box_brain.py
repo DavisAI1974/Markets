@@ -68,6 +68,9 @@ def write_entry(work, out, brain, cycle, include_analysis=True):
             put('derive.md', doc.encode('utf-8'), derive, 'calculation findings: the derivation receipt (layer statuses, producers, digests)')
         except Exception:
             pass
+    comparison = work / 'comparison.md'
+    if comparison.is_file():
+        put('comparison.md', comparison.read_bytes(), comparison, 'calculation findings: the comparison packet (derived layers beside the frozen learned-structure files)')
     classroom = work / 'classroom' / 'classroom.md'
     if classroom.is_file():
         put('classroom.md', classroom.read_bytes(), classroom, "the Dipole classroom: Frankie's own teach-back of the 19-dimension surface for this cycle (case by case: set include false to keep it out)")

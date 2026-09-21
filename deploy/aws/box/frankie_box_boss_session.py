@@ -99,8 +99,30 @@ def classroom_module():
     return module
 
 
+def compare_module():
+    """deploy/aws/box/frankie_box_compare.py, loaded by path (the comparison packet: derived layers beside the frozen files)."""
+    import importlib.util
+    path = Path(__file__).resolve().parent / 'frankie_box_compare.py'
+    spec = importlib.util.spec_from_file_location('frankie_box_compare', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def receipts_module():
+    """deploy/aws/box/frankie_box_receipts.py, loaded by path (the session receipts packet)."""
+    import importlib.util
+    path = Path(__file__).resolve().parent / 'frankie_box_receipts.py'
+    spec = importlib.util.spec_from_file_location('frankie_box_receipts', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+PACKETS = ('comparison.md', 'session-receipts.md')   # written by the session code into the writing base (Frankie's cycle-0 asks)
 HOST_CORRECTION_RECORD_PATH = 'C:/Codex/Frankie-BOSS-20260919/actual-feedback-run/execution/cycle-{cycle}/principal/host-correction-record.json'
 CORRECTION_REQUEST_SCHEMA = 'FRANKIE_DIPOLE_CLASSROOM_CORRECTION_REQUEST_V1'
+RECEIPT_LEDGERS = ('output_provider_invocation_response_receipts', 'output_knowledge_retrieval_receipts', 'output_answer_wall_access_receipts')
 CLASSROOM_KEYS = ('dipole_teachback', 'dipole_observation_review', 'dipole_relationship_scan', 'dipole_novel_findings')
 BRAIN_DIR = ROOT / 'brain'   # Frankie's brain on the box: <brain>/cycle-<NN>/ entries (published to git by the pusher)
 
@@ -1381,6 +1403,49 @@ class Session:
                   f'disagreements' + (' (a remaining disagreement blocks teacher completion by contract)' if parsed['remaining_disagreements'] else ''))
         return reply
 
+    # ---- the packets Frankie asked for (cycle 0 analysis, 2026-09-21) ----------------------------------------
+    def compare(self):
+        """The comparison packet: every derived pin layer beside the frozen learned-structure files the brain carries
+        (Frankie: "the comparison will be performed layer-by-layer in the accounting ledger"; cycle 0 filed every layer
+        as derived because the frozen content was delivered by path only). Rebuilt whenever derive or the brain changed."""
+        from research.kalshi.frankie_boss.frankie_principal_adapter import FROZEN_LEARNED_STRUCTURE
+        report = compare_module().write(self.work, BRAIN_DIR, FROZEN_LEARNED_STRUCTURE)
+        c = report['counts']
+        self.note(f'comparison packet: {c["pin_layers"]} pin layers ({c["derived"]} derived) beside {c["frozen_layers"]} frozen layers, '
+                  f'{c["frozen_files_carried"]} of {c["frozen_files_delivered"]} frozen files carried whole')
+        return report
+
+    def receipts(self):
+        """The session receipts packet: every provider invocation this session made so far, what it read, the wall it
+        kept (Frankie filed three receipt ledgers as could_not for want of these observed facts). Written right before
+        the writing calls; the writing calls themselves are not in it (they follow it)."""
+        report = receipts_module().write(self.work, READING_LEDGER)
+        self.note(f'session receipts packet: {len(report["provider_invocations"])} provider invocations, {len(report["knowledge_retrieval"]["notes"])} notes, '
+                  f'{report["answer_wall"]["labels"]["count"]} timing labels inside the wall')
+        return report
+
+    def _packets_text(self):
+        parts = []
+        for name in PACKETS:
+            path = self.work / name
+            if path.is_file():
+                parts.append(f'----- {name.upper().replace(".MD", "").replace("-", " ")} PACKET -----\n' + path.read_text(encoding='utf-8') + '\n')
+        return ''.join(parts)
+
+    def _writing_inputs(self):
+        """What the response is written from; writing runs again when any of it changed (a durable BOSS job whose prompt
+        is unchanged is reused, so only the calls whose inputs moved cost anything)."""
+        names = ('merged-notes.md', 'derivation-digest-full.md') + PACKETS
+        return {n: sha256_bytes((self.work / n).read_bytes()) for n in names if (self.work / n).is_file()}
+
+    def _corpus_current(self):
+        """True when reading.json records the corpus the session would read now (identity + sha); False = read again."""
+        receipt = self.work / 'reading.json'
+        if not receipt.exists() or not (self.work / 'merged-notes.md').exists():
+            return False
+        corpus = self.reading_corpus()
+        return load_json(receipt).get('corpus_sha256') == sha256_bytes(corpus.read_bytes())
+
     # ---- writing (the four files) ------------------------------------------------------------------------
     def writing(self):
         from research.kalshi.frankie_boss.frankie_principal_adapter import digest, OUTPUT_LEDGERS, CALCULATION_ACCOUNTING_LEDGER
@@ -1390,12 +1455,15 @@ class Session:
         digest_md = (self.work / 'derivation-digest-full.md').read_text(encoding='utf-8')
         notes = (self.work / 'merged-notes.md').read_text(encoding='utf-8')
         instruction = self.request['instruction']
+        packets = self._packets_text()
         head = (f'You are Frankie, the BOSS: the principal session for cycle {self.cycle} of the 20211003 two-cycle run, on your box '
                 f'i-035994afa8bdf66a5 (Greg Davis, 2026-09-21, option A). Request {self.request["request_id"]}, request_sha256 '
                 f'{self.request_sha256}. You have read the whole delivered evidence and your whole derivation in parts; your merged '
-                'notes follow, then the request instruction, then your derivation digest (whole when the context admits it; the '
+                'notes follow, then the request instruction, then the packets the session code wrote for you (the comparison packet: '
+                'your derived layers beside the frozen learned-structure files; the session receipts packet: your own provider '
+                'invocations, what you read, the wall you kept), then your derivation digest (whole when the context admits it; the '
                 'bytes included are recorded in the receipt).\n\n'
-                '----- MERGED NOTES -----\n' + notes + '\n----- REQUEST INSTRUCTION -----\n' + instruction + '\n----- DERIVATION DIGEST -----\n')
+                '----- MERGED NOTES -----\n' + notes + '\n----- REQUEST INSTRUCTION -----\n' + instruction + '\n' + packets + '----- DERIVATION DIGEST -----\n')
         # The only limit is the service context (131,072 tokens): the digest fills what the context leaves after the
         # notes and the instruction, from its start, and the receipt records how much of it that was.
         room = max(0, CHUNK_BYTES - len(head.encode('utf-8')) - 2000)
@@ -1420,7 +1488,12 @@ class Session:
                                f'"{CALCULATION_ACCOUNTING_LEDGER}", with a "layers" list carrying EVERY layer of this cycle\'s pin '
                                f'({", ".join(derive["layers"])}) as {{"layer", "status": derived|compared|could_not, "where" (the derivation '
                                'file), "compared_with" (retained sections or frozen learned-structure layers and what differed), "reason"}}; '
-                               'use the derivation digest statuses, never claim a derivation the digest does not carry. Output JSON only.')
+                               'use the derivation digest statuses, never claim a derivation the digest does not carry. THE COMPARISON STEP: the '
+                               'comparison packet lists, for every frozen learned-structure layer, the files it names and their content shape, and '
+                               'the frozen files themselves are in your merged notes (your brain, frozen learned structure); for each pin layer you '
+                               'compared with them, file status "compared" with what differed (or that nothing differed) and which frozen file you '
+                               'compared with; where no frozen file speaks to a layer, say so in its reason; "derived" alone is for a layer you '
+                               'derived and could not compare. Output JSON only.')
         accounting_entry = self._json_entry(accounting, CALCULATION_ACCOUNTING_LEDGER)
         accounting_entry['harness_derivation'] = {name: dict(status=v['status'], producer=v.get('producer'), reason=v.get('reason'), sha256=v['sha256'])
                                                   for name, v in derive['layers'].items()}
@@ -1436,8 +1509,10 @@ class Session:
             outcome = self.boss(f'write-{name}', base + f'TASK: file the append-only output ledger "{name}" of the native ingestion registry for '
                                 f'this cycle as ONE JSON object whose "ledger" field is "{name}"' +
                                 (f'. The registry describes it as: {json.dumps(description)[:3000]}' if description else '') +
-                                '. Fill it from your notes and the derivation digest only; a ledger you cannot fill is filed with its "reason", '
-                                'never omitted. Output JSON only.')
+                                '. Fill it from your notes, the derivation digest and the packets above only' +
+                                (' (THE SESSION RECEIPTS PACKET above is observed fact for this ledger: your own provider invocations, what you read, the wall you kept; '
+                                 'cite its rows, never say no observed fact exists when the packet carries one)' if name in RECEIPT_LEDGERS else '') +
+                                '; a ledger you cannot fill is filed with its "reason", never omitted. Output JSON only.')
             ledgers.append(self._json_entry(outcome, name))
         contract = self.request['attachment']['feedback_contract']
         session_id = f'boss:frankie-box:i-035994afa8bdf66a5:cycle-{self.cycle}'
@@ -1474,7 +1549,7 @@ class Session:
         write_json(self.work / 'writing.json', dict(schema='FRANKIE_BOX_WRITING_RECEIPT_V1', at=time.time(), response_sha256=response_sha256,
                    files={n: witness(self.out / n) for n in ('response.json', 'analysis.md', 'host-session-record.json', 'host-attestation.json')},
                    lessons=len(response['lessons']), analysis_incomplete=bool(analysis.get('incomplete')), digest_in_writing_calls=digest_included,
-                   classroom=classroom_receipt['report']))
+                   classroom=classroom_receipt['report'], inputs=self._writing_inputs(), packets=[n for n in PACKETS if (self.work / n).is_file()]))
         self.note(f'written: four files, response_sha256 {response_sha256[:16]}, {len(response["lessons"])} lessons, the four classroom ledgers')
         self.docs()
         self.brain_entry()
@@ -1589,8 +1664,9 @@ class Session:
         import frankie_box_digest_render as DG
         if not digest_path.exists() or ('# Derivation digest ' + DG.SCHEMA + ' ') not in digest_path.read_text(encoding='utf-8', errors='replace')[:400]:   # whole and dense at the current schema; an older digest is regenerated
             self.derive()
+        self.compare()                       # cheap, rebuilt every run: the derived layers beside the frozen files the brain carries now
         self.phase('reading')
-        if not (self.work / 'merged-notes.md').exists():
+        if not self._corpus_current():       # a corpus the session would read differently now (the brain, the digest, the render) is read again
             self.serverless_reach()
             self.reading()
         self.phase('classroom')
@@ -1599,9 +1675,12 @@ class Session:
                 self.serverless_reach()
             self.classroom()
         self.phase('writing')
+        self.receipts()
         response_path = self.out / 'response.json'
-        if not (self.work / 'writing.json').exists() or not response_path.exists() or any(k not in load_json(response_path) for k in CLASSROOM_KEYS):
-            self.writing()          # durable BOSS jobs: an analysis and ledgers already written are reused, only the assembly runs again
+        written = load_json(self.work / 'writing.json') if (self.work / 'writing.json').exists() else {}
+        if (not written or not response_path.exists() or any(k not in load_json(response_path) for k in CLASSROOM_KEYS)
+                or written.get('inputs') != self._writing_inputs()):
+            self.writing()          # durable BOSS jobs: a call whose prompt is unchanged is reused; the calls whose inputs moved run again
         self.push()
 
 
