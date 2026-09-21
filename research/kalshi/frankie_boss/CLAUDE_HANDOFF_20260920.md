@@ -2314,3 +2314,25 @@ Greg's "16 + 32 = 48" is exactly right: the native host is 16 and the ingest run
 "Native host RESIZED i-0e90ee6110ef609aa r7i.4xlarge -> r7i.8xlarge" therefore misattributes the 8xlarge to the native
 host; the 8xlarge is the ingest runner. CLAUDE.md's "Native host RESIZED to r7i.8xlarge" line carries the same
 misattribution. Correction of that line is Greg's call; recorded here, not edited.
+
+### 04:40Z: GREG'S DECISION: Frankie's calculations run INSIDE AWS with the CPUs behind him ("he needs all those CPUs back")
+
+Greg: "I always thought that Frankie would be doing his calcs inside AWS with a bunch of CPUs backing him up. I didn't
+realize he did it inside of Root outside of AWS. He needs all those CPUs back." As built, the request instructs Frankie
+to derive the 49 registry layers himself and gives him no engine; Root's session runs on Greg's own machine; the AWS
+compute (native host 16 vCPU, ingest runner 32 vCPU, both r7i) serves only the machine half. The decision changes WHERE
+Frankie's session and its computation run, not WHO owns the calculations: they stay Frankie's (Greg's standing rule),
+the runner still precomputes nothing.
+
+Shape for the new chat (design first, then build; nothing started here):
+1. Frankie's session runs ON an AWS box, with the data plane restored there and code he can run against the rows:
+   the ingest runner i-035994afa8bdf66a5 (r7i.8xlarge, 32 vCPU, Linux, stopped, us-east-1) is the candidate; it
+   already carries the data-plane tooling and sits idle between journal jobs. Starting it is an EC2 action: Greg's go.
+2. The session gets the exported request from S3 (already there), the reviewed source rows for the cycle (the
+   prefix's rows, from the compact journal on S3), and a working directory; it writes heartbeats (contract in Root's
+   task doc, step 1b) and the four response files; it pushes `root/cycle-00-response` from the box.
+3. The agent backend on the box is Greg's choice (Claude Code via Bedrock or API key, or OpenAI; the S93 coach setup
+   in `deploy/aws/COACH_AGENT_SETUP_S93.md` already documents both).
+4. The recorder path (`frankie_host_record_principal_response.yml`) is unchanged: it reads the branch.
+Open questions for Greg before building: whether the box also feeds Frankie a derivation library (code that computes
+the layers, which he runs and inspects) or he writes his own; whether the 32-vCPU runner is the box or a new one.

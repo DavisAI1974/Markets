@@ -29,6 +29,10 @@ takes the full 40-hex sha; workflow files land via the GitHub API on Greg's word
 is receipted; no Pod stop/terminate without Greg's word.
 
 **TO-DO, carried forward (this session + last; nothing dropped):**
+0. GREG, 04:40Z: FRANKIE'S CALCULATIONS RUN INSIDE AWS WITH THE CPUs BEHIND HIM. Build the compute harness for
+   Frankie's session before cycle 1's Root step (handoff 04:40Z: shape, candidate box i-035994afa8bdf66a5 = the 32-vCPU
+   ingest runner, open questions). Starting a box is Greg's go. The calculations stay Frankie's; the runner still
+   precomputes nothing.
 1. Cycle 0 close-out: root probe until Root's heartbeats/branch appear -> `frankie_host_record_principal_response.yml`
    (source_ref `root/cycle-00-response`, cycle 00) -> the runner resumes on its own (verify, native learning, readback,
    completion). Root must be handed the UPDATED task document (heartbeat step 1b). Read-only probes only meanwhile.
