@@ -3850,3 +3850,14 @@ Rollback plan:
 Specialist reports in full: the three subagent hand-backs of this chat (code-reviewer REQUEST CHANGES -> fixed;
 security-auditor: no Critical/High, two Mediums fixed, keys never printed, workflow inputs reach shells through env;
 test-engineer: one Critical, two Highs, all with named tests, all fixed).
+
+### 23:5xZ 09-21: CHAT 6 CLOSING (Greg: "Proceed and update, commit and push all end docs and make handoff and print drop in")
+
+What this chat built, in commit order on `claude/cycle-0-frankie-box-rerun-od5sxk`: the confirmed runner stop (17:5xZ);
+option 1, the classroom exchange, both turns, with the host plumbing and the restart runbook (18:xxZ); the cycle-0 docs
+delivered to Greg (7 files); Frankie's cycle-0 asks built (22:xxZ, 996828f3); `/ship` with three specialists, every
+finding fixed with its test (4416e6ac; decision 0d497e32, 23:xxZ); the bedrock spec for Greg's "All 3" (c7b69310).
+Not built: the bedrock expansion (three modules, specced with tests named) and the critic's zero hypotheses (Greg's
+call, two routes, 22:xxZ). Nothing ran on the host, box, Pod or endpoint in this chat. The next chat starts from the
+23:5xZ block atop `DROP_IN_CLAUDE_20260921.md`; the scratchpad producers worktree (2ebb8ce8) does not survive the
+container and is re-fetched with `git fetch origin ccode/frankie-receiver-feed-20260916` when the build starts.

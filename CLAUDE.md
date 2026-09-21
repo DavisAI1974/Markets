@@ -1,8 +1,16 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-21 16:2xZ, Frankie/BOSS cycle 0: read done, merging on the H100 endpoint, git chain closed; chat 5 closed)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-21 23:5xZ, Frankie/BOSS cycle 0: classroom exchange + rerun changes built and shipped, bedrock spec written; chat 6 closing)
 
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
+- **STATE 2026-09-21 23:5xZ (chat 6 CLOSING on Greg's "make handoff and print drop in"): READ FIRST the 23:5xZ block atop
+  `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`. Built and pushed this chat on branch
+  `claude/cycle-0-frankie-box-rerun-od5sxk` (tip c7b69310 or later): the Dipole classroom exchange in the box session (turn 1
+  ledgers + turn 2 correction, host record/export/supersede plumbing), Frankie's cycle-0 asks (comparison packet, session
+  receipts packet, reading/writing gates), a /ship review with every finding fixed and tested (129 box+host tests), and the
+  SPEC for Greg's "All 3" bedrock expansion (`SPEC_CYCLE0_BEDROCK_20260921.md`, NOT built). Launch HOLD; nothing has run
+  on the host, box, Pod or endpoint since chat 5's write/push. The critic's zero hypotheses and the three bedrock questions
+  are Greg's calls. Family baseline here: 12 pre-existing failures, unchanged by this chat.**
 - **STATE 2026-09-21 16:2xZ (chat 5 CLOSED, Greg: "We have to start new chat"): READ FIRST the 16:2xZ block atop
   `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`. The read is DONE (4 parts on the Pod), the merges run on
   serverless endpoint k1sqt0haffm61y (H100), then writing on the Pod, then the push; the git token (fine-grained, SSM

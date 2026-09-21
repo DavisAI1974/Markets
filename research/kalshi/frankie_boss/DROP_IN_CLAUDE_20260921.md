@@ -1,5 +1,47 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
+## READ FIRST (23:5xZ 09-21, chat 6 CLOSING on Greg's "make handoff and print drop in"): THE CLASSROOM EXCHANGE AND THE RERUN CHANGES ARE BUILT AND SHIPPED; THE BEDROCK EXPANSION IS SPECCED, NOT BUILT
+
+Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip c7b69310 or later; verify `git log --oneline -1` first). Run
+`using-agent-skills` and `git-workflow-and-versioning` first; skills win overlaps; attribution lines on every commit; no
+model identifiers in anything pushed. RULES IN FORCE, verbatim: nothing deleted; every move receipted; no Pod or EC2
+stop/terminate without Greg; never stop the native host runner; keys never printed or pasted into chat; NO output limits
+on the BOSS; the pinned Pod bootstrap bundle untouched; no outside LLMs as engine; 57,027 is the one measurement (114,054
+and 1,189 are derived); records in git or AWS only. Box status probes: one at open, then as Greg says. Launch is HOLD:
+no Frankie, Granite, Pod, EC2 or result-bearing action without Greg's explicit go. KEYS: the key question stays
+DEFERRED (Greg, 16:3xZ); ask him before acting on any key statement.
+
+STATE (nothing has run on the host, box, Pod or endpoint since chat 5's write and push; the box unit finished cycle 0's
+first response, the host runner consumed it and stopped for want of `dipole_teachback`; that is the reason for all of
+chat 6):
+- BUILT + SHIPPED (handoff 17:5xZ, 18:xxZ, 22:xxZ, 23:xxZ): the Dipole classroom exchange in the box session (19
+  component answers on the reading lane + 1 summary on the BOSS -> the four ledgers, validated by the repo's own
+  validators; turn 2 = `--stage correction`, `ACTION=fetch_correction`/`correction`, push TURN=correction, host
+  record/export workflows with `turn`, the supersede-principal-response workflow); Frankie's cycle-0 asks (the
+  comparison packet, the session receipts packet, reading gated by corpus identity, writing gated by its inputs);
+  `/ship` GO after fixes, all fixes landed in 4416e6ac with the test that would have caught each (129 box+host tests,
+  29 classroom tests torch-hidden). RESTART RUNBOOK a-i: handoff 18:xxZ (unchanged by the fixes).
+- SPECCED, NOT BUILT: `SPEC_CYCLE0_BEDROCK_20260921.md` = Greg's "All 3": cycle 0's pin gains `derived_geometry` (8),
+  `prebirth_opportunity` (5) and `causal_clocks` (7) as a BEDROCK set; the box derives the 20 layers through the pinned
+  `NativeReplayDriver` (checkout `ccode/frankie-receiver-feed-20260916` at 2ebb8ce8, already on the box) and projects them
+  by the producers' own `native_layer_crosswalk`; a box-side exhaustion/D teach-back beside the classroom (host grader
+  and response schema unchanged). Build order pin-bedrock -> box-bedrock-derive -> box-teach-exhaustion, TDD, torch-hidden
+  runs. MEASURED CONSTRAINT: cycle 0's rows span ~13 s (3,262 records, 2,282 F_LAST groups), the candidate lane needs
+  900 s warmup + 600 observations, so six episode/candidate-carried layers file `could_not` with that reason on the slice.
+- GREG'S OPEN CALLS (ask before building past the spec): (1) run the bedrock on the 13-second slice now, or hold for the
+  whole-day run (the only way the candidate lane fires); (2) the digest grows with the bedrock tables: accept more
+  reading parts (measure first, criterion 6) or keep the whole ledgers in the bundle only; (3) cycles 1-3 keep their own
+  pins (the spec's assumption) or shift; (4) the critic's zero hypotheses (host side: harden the prompt template and
+  re-mint the critic identity, or a follow-up-turn protocol change) - handoff 22:xxZ.
+- THE RERUN (when Greg says go, after the bedrock is built or explicitly without it): the pin change re-renders the
+  request on the host (new request_sha256): supersede the principal request, export, fetch onto the box, `restart_session`;
+  the session re-derives (25 layers), re-reads (corpus moved), runs the classroom (19+1 calls), teaches back, writes with
+  the packets (twelve Pod calls), pushes; then the host records turn 1 (`turn=initial`), the runner grades and writes the
+  correction request; export `turn=correction`, box `ACTION=fetch_correction` then `ACTION=correction`, push, record
+  `turn=correction`. Every host step on Greg's go. First probe of the next chat: `ACTION=status` (one at open).
+- Family baseline in this container: 12 failed / 2936 passed / 2 skipped, the same 12 on the base commit (listed in the
+  handoff 23:xxZ); torch 2.11 CPU, cffi and databento-dbn 0.62.0 installed here, not on the box.
+
 ## READ FIRST (16:2xZ 09-21, chat 5 CLOSED on Greg's word "We have to start new chat"): THE ROOT READ IS DONE (4 parts), THE MERGES RUN ON THE H100 ENDPOINT, THE GIT CHAIN IS CLOSED
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later). Run `using-agent-skills`
