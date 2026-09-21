@@ -103,3 +103,19 @@ def test_build_docs_keeps_the_current_corpus_notes_apart_from_superseded_ones(wo
     assert 'reading-note-0000.md' in names and 'reading-note-0001.md' in names and 'reading-attempt-0001-retry.md' in names
     assert 'superseded-notes-000000000000-unbounded-note-0000.md' in names and 'superseded-notes-000000000000-unbounded-attempt-0000-first.md' in names
     assert (tmp_path / 'docs' / 'reading-note-0000.md').read_bytes() == (work / 'notes-abcdef123456-unbounded' / 'note-0000.md').read_bytes()
+
+
+def test_tolerant_json_reads_clean_fenced_commented_trailing_comma_and_truncated_answers():
+    ok = {'ledger': 'x', 'rows': [1, 2], 'note': 'a } inside a string'}
+    assert docs.tolerant_json(json.dumps(ok)) == (ok, [])
+    assert docs.tolerant_json('```json\n' + json.dumps(ok) + '\n```') == (ok, ['fences stripped'])
+    obj, rep = docs.tolerant_json('Here is the ledger:\n' + json.dumps(ok) + '\nThat is all.')
+    assert obj == ok and rep == ['first balanced object']
+    messy = '{\n "ledger": "x", // the name\n "rows": [1, 2,], /* two rows */\n "note": "a // not a comment",\n}\n'
+    obj, rep = docs.tolerant_json(messy)
+    assert obj == {'ledger': 'x', 'rows': [1, 2], 'note': 'a // not a comment'} and rep == ['comments and trailing commas removed']
+    truncated = '{"ledger": "x", "rows": [{"cursor": "1", "value": 5.6}, {"cursor": "2", "value": 5.'
+    obj, rep = docs.tolerant_json(truncated)
+    assert obj['ledger'] == 'x' and obj['rows'][0] == {'cursor': '1', 'value': 5.6} and 'truncated object closed' in rep
+    assert docs.tolerant_json('no json here at all') == (None, [])
+    assert docs.tolerant_json('[1, 2, 3]') == (None, [])

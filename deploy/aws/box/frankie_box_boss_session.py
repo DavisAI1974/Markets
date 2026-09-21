@@ -1243,7 +1243,11 @@ class Session:
         analysis = self.boss('write-analysis', base + 'TASK: write your run analysis now as the instruction asks (Markdown, no limit on length; '
                              'cite the retained section hashes from your notes exactly; separate observed results from interpretation; '
                              'name failures, unavailable observations, uncertainties and next lessons; do not claim later cycles or learning '
-                             'steps have completed).')
+                             'steps have completed). WHAT THIS SESSION FILES into the response, and nothing else: this analysis text as the '
+                             f'first lesson, then ONE accounting entry (ledger "{CALCULATION_ACCOUNTING_LEDGER}"), then the ten output ledgers '
+                             f'({", ".join(OUTPUT_LEDGERS)}), each written in its own later call. No other entry is filed (no classroom '
+                             'lesson, no run_analysis entry): never describe any other entry as written or filed; anything else you want '
+                             'recorded goes into this analysis text itself.')
         analysis_md = (analysis.get('text') or f'(the BOSS produced no analysis: {analysis.get("error")})') + \
             ('\n\n[OUTPUT INCOMPLETE: the BOSS reached its output bound; kept as produced]\n' if analysis.get('incomplete') else '\n')
         self.note('writing: the calculation accounting')
@@ -1307,19 +1311,11 @@ class Session:
     @staticmethod
     def _json_entry(outcome, name):
         text = outcome.get('text') or ''
-        stripped = re.sub(r'^\s*```(?:json)?\s*|\s*```\s*$', '', text.strip())
-        entry = None
-        try:
-            entry = json.loads(stripped)
-        except Exception:
-            match = re.search(r'\{.*\}', stripped, re.S)
-            if match:
-                try:
-                    entry = json.loads(match.group(0))
-                except Exception:
-                    entry = None
+        entry, repairs = docs_module().tolerant_json(text)
         if not isinstance(entry, dict):
             entry = dict(status='could_not', reason='the BOSS output was not parseable JSON; raw text retained' if text else f'no output: {outcome.get("error")}', boss_text=text)
+        elif repairs:
+            entry['parse_repairs'] = repairs            # how the answer was read (the raw text is in the job result on the box)
         entry['ledger'] = name
         if outcome.get('incomplete'):
             entry['output_incomplete'] = True

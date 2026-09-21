@@ -112,6 +112,103 @@ def split_range(data, start, end):
     return (start, cut), (cut, end)
 
 
+def _first_balanced_object(text):
+    """The first {...} with balanced braces outside strings, or None."""
+    start = text.find('{')
+    if start < 0:
+        return None
+    depth, in_str, esc = 0, False, False
+    for i in range(start, len(text)):
+        c = text[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == '\\':
+                esc = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                return text[start:i + 1]
+    return None
+
+
+def _close_open(text):
+    """Close the strings and brackets a truncated JSON text left open."""
+    stack, in_str, esc = [], False, False
+    for c in text:
+        if in_str:
+            if esc:
+                esc = False
+            elif c == '\\':
+                esc = True
+            elif c == '"':
+                in_str = False
+            continue
+        if c == '"':
+            in_str = True
+        elif c in '{[':
+            stack.append('}' if c == '{' else ']')
+        elif c in '}]' and stack:
+            stack.pop()
+    out = text + ('"' if in_str else '')
+    out = re.sub(r',\s*$', '', out)
+    return out + ''.join(reversed(stack))
+
+
+def tolerant_json(text):
+    """(object, repairs) for a model's JSON answer, or (None, repairs). Tries, in order: the text as is (fences stripped);
+    the first balanced object; the same with // and /* */ comments and trailing commas removed; the same closed if
+    truncated. Every step applied is named in repairs, so the ledger entry says how it was read. Cycle 0's
+    knowledge_retrieval_receipts failed at one character and was kept as raw text; this is the rescue (Greg, chat 6)."""
+    repairs = []
+    body = re.sub(r'^\s*```(?:json)?\s*|\s*```\s*$', '', (text or '').strip())
+    if body != (text or '').strip():
+        repairs.append('fences stripped')
+    candidates = [body]
+    first = _first_balanced_object(body)
+    if first and first != body:
+        candidates.append(first)
+    for cand, label in ((c, 'first balanced object' if i else '') for i, c in enumerate(candidates)):
+        try:
+            obj = json.loads(cand)
+            if isinstance(obj, dict):
+                return obj, repairs + ([label] if label else [])
+        except Exception:
+            pass
+    base = first or body
+    cleaned = re.sub(r'(?m)^\s*//[^\n]*$', '', base)                      # line comments on their own line
+    cleaned = re.sub(r'/\*.*?\*/', '', cleaned, flags=re.S)                   # block comments
+    cleaned = re.sub(r'("(?:[^"\\]|\\.)*")|//[^\n]*', lambda m: m.group(1) or '', cleaned)   # trailing line comments outside strings
+    cleaned = re.sub(r',(\s*[}\]])', r'\1', cleaned)                          # trailing commas
+    try:
+        obj = json.loads(cleaned)
+        if isinstance(obj, dict):
+            return obj, repairs + ['comments and trailing commas removed']
+    except Exception:
+        pass
+    # truncated: close what is open; a dangling partial value is cut back to the last complete element, a few times
+    cut = cleaned
+    for _ in range(4):
+        try:
+            obj = json.loads(_close_open(cut))
+            if isinstance(obj, dict):
+                return obj, repairs + ['truncated object closed']
+        except Exception:
+            pass
+        last = cut.rfind(',')
+        if last <= 0:
+            break
+        cut = cut[:last]
+    return None, repairs
+
+
 def _content(result):
     """The text of one job result (chat.completion on both lanes)."""
     try:

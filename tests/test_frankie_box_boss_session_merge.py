@@ -33,3 +33,13 @@ def test_merge_keep_replaces_a_lossy_merge_with_the_inputs_and_keeps_the_model_o
     model = (tmp_path / 'merges' / 'merge-1-final.model-output.md').read_text()
     assert 'NOT used' in model and '[OUTPUT INCOMPLETE]' in model
     assert s._notes == ['merge-1-final: the merge output lost 1 of 2 sha256 values; inputs kept verbatim']
+
+
+def test_json_entry_rescues_a_messy_ledger_and_keeps_raw_text_when_hopeless():
+    e = session.Session._json_entry(dict(text='```json\n{"status": "derived", "rows": [1,],}\n```', incomplete=False), 'output_x')
+    assert e['status'] == 'derived' and e['rows'] == [1] and e['ledger'] == 'output_x'
+    assert e['parse_repairs'] == ['fences stripped', 'comments and trailing commas removed']
+    e = session.Session._json_entry(dict(text='{"status": "derived"}', incomplete=False), 'output_y')
+    assert 'parse_repairs' not in e
+    e = session.Session._json_entry(dict(text='nothing usable', incomplete=False), 'output_z')
+    assert e['status'] == 'could_not' and e['boss_text'] == 'nothing usable' and 'raw text retained' in e['reason']
