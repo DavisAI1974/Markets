@@ -34,7 +34,9 @@ echo "### python environment"
 if [ ! -x "$ROOT/venv/bin/python" ]; then "$PY313" -m venv "$ROOT/venv" || exit 2; fi
 "$ROOT/venv/bin/python" -m pip install -q --upgrade pip >"$ROOT/logs/pip.log" 2>&1
 "$ROOT/venv/bin/python" -m pip install -q torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu >>"$ROOT/logs/pip.log" 2>&1 || { echo "torch install failed (see logs/pip.log)"; tail -5 "$ROOT/logs/pip.log"; exit 2; }
-"$ROOT/venv/bin/python" -m pip install -q "numpy>=1.26" "scipy>=1.11" boto3==1.42.23 botocore==1.42.97 zstandard "databento-dbn==0.62.0" cryptography==46.0.3 "pytest>=7.4" >>"$ROOT/logs/pip.log" 2>&1 || { echo "pip install failed (see logs/pip.log)"; tail -5 "$ROOT/logs/pip.log"; exit 2; }
+# the lineage's numeric floor (its requirements.txt: numpy, scipy, scikit-learn) plus the test-only imports its
+# suite makes (pyyaml, databento, matplotlib) and the transfer/archive pins of the journal job
+"$ROOT/venv/bin/python" -m pip install -q "numpy>=1.26" "scipy>=1.11" "scikit-learn>=1.3" pyyaml databento matplotlib boto3==1.42.23 botocore==1.42.97 zstandard "databento-dbn==0.62.0" cryptography==46.0.3 "pytest>=7.4" >>"$ROOT/logs/pip.log" 2>&1 || { echo "pip install failed (see logs/pip.log)"; tail -5 "$ROOT/logs/pip.log"; exit 2; }
 "$ROOT/venv/bin/python" - <<'PY'
 import importlib, platform
 print('python', platform.python_version())
