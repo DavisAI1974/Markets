@@ -113,3 +113,11 @@ serverless when configured. Steps, all on `claude/cycle-0-frankie-box-rerun-od5s
    `ACTION=write ENDPOINT_ID=<id> WORKERS=<workers_max>`.
 6. `Frankie box run`, script `deploy/aws/box/frankie_box_session.sh`, variables `ACTION=restart_session REASON=serverless-reading-lane`.
    The session resumes; the status note reads `reading: N/163 done, M in flight (serverless xW)`.
+
+## The lossless reading render (11:4xZ 09-21)
+
+The session now reads a rendered corpus (~13 or ~35 parts instead of 163; every member rebuilt byte-exact before the
+corpus is written). Greg's choice of tensor mode: `Frankie box run`, script `deploy/aws/box/frankie_box_serverless_config.sh`,
+variables `ACTION=reading TENSOR_MODE=identity` (or `values`). Then `deploy/aws/box/frankie_box_session.sh` with
+`ACTION=restart_session REASON=lossless-render`. The status note then reads `reading: N/<parts> done ...` with the new part
+count; `session/work/reading-corpus.json` carries the render report and the proof.

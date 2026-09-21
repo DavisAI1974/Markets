@@ -76,6 +76,12 @@ serverless reading lane + `frankie_box_serverless_config.sh` + `operations/serve
 `frankie_serverless_reading.yml` (per the RunPod skills, golden path 20). Needs, in order: the workflow registered on
 the trunk; `help`; Greg's word for `create` (GPU tier + workers); `verify`; the RunPod API key in SSM
 `/markets/frankie/runpod-serverless`; the box config; `restart_session`. Full list in the handoff 11:1xZ.
+11:4xZ: THE 22.6 MB READ IS MOSTLY ONE THING REPEATED: the decoder's 42 weight tensors hex-encoded four layers deep, the
+6 MB forecast artifact delivered twice, the critic prompt six times. BUILT `deploy/aws/box/frankie_box_reading_render.py`
+(six reversible layers, byte-exact proof per member, wired into the session; `reading.json` tensor_mode). MEASURED on
+the real members: 10.13M tokens -> 291k (identity) or 2.22M (values); whole corpus ~13 or ~35 parts instead of 163.
+Cross-cycle ledger (L6): later cycles read only what changed. GREG: tensor_mode, then `ACTION=restart_session
+REASON=lossless-render`. Handoff 11:3xZ and 11:4xZ.
 
 ## READ FIRST (08:00Z 09-21 handoff): FRANKIE'S BOX IS UP AND EMPTY; JOB 0 = HIS HARNESS; the run HOLDS for his response
 

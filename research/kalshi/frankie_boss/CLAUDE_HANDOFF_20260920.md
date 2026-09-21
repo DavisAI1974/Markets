@@ -2843,3 +2843,24 @@ No RunPod MCP is connected in this session (ToolSearch: none); connecting it nee
 Bearer $RUNPOD_API_KEY"`), which would let this session create the endpoint directly without a trunk registration.
 H100 chosen (Greg): `frankie_serverless_reading.yml` defaults to the H100 tiers with two full-context sequences per
 worker (71475473).
+
+### 11:4xZ 09-21: the render measured in both tensor modes (run 35595034331, after the dtype fix c0e701a4)
+
+Members only (the head 191 KB and the derivation digest 1,344,422 B read whole on top, ~9 parts):
+- identity: 21,087,386 B / 10,128,476 tokens -> 557,135 B / 291,208 tokens (0.029x); 117 parts -> 4; 60 dictionary
+  entries, 13 references saving 2,671,729 B; 42 tensors as rows with statistics; PROOF all_exact on every member.
+- values (every one of the 335,120 float64 weights as an exact decimal): -> 4,584,856 B / 2,218,673 tokens (0.219x);
+  117 parts -> 26; the forecast artifact alone 4,306,618 B / 2,086,200 tokens; PROOF all_exact on every member.
+Whole corpus, parts of ~87k input tokens: ~13 (identity) or ~35 (values) instead of 163. Per part the BOSS still writes
+to the end of its context (read-0000: 43,054 output tokens, INCOMPLETE at the wall), so on the Pod alone: identity
+~8 h, values ~21 h for the reading; on the H100 serverless lane with 16 sequences: one wave, well under an hour.
+The remaining large values after the render: the 3,262 packet_hashes (218 KB, rendered once; derivable from the
+scope and prefix seed by the stacked codec's packet recipe - a seventh layer worth ~1.3 parts, not built), the critic
+prompt_text and snapshot_text (once each, 148 + 144 KB; the prompt does not embed the snapshot verbatim, so
+containment did not fire), and the context_cursors list.
+GREG DECIDES: tensor_mode (values keeps his "drop nothing" literally: every weight visible, 35 parts; identity keeps
+every byte in the package by digest and shows the BOSS what it can actually use, 13 parts; my recommendation is
+identity, and the default in code stays values until he says), then `frankie_box_session.sh ACTION=restart_session
+REASON=lossless-render` re-renders the corpus and restarts the reading (derive stays; the notes of the old corpus
+stay under their own notes-<sha> directory; part 2/163 of the old corpus is in flight on the Pod and runs out on
+the Pod, as jobs_v1 has no cancel).
