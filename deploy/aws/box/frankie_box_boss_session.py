@@ -841,18 +841,46 @@ class Session:
         import base64
         prompt = ROOT / 'request' / 'prompt.md'
         corpus_path = self.work / 'reading-corpus-full.md'
-        if corpus_path.exists() and (self.work / 'reading-corpus.json').exists():
-            return corpus_path
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_reading_render as R
+        import frankie_box_digest_render as DG
+        import frankie_box_head_render as HR
+        tensor_mode = 'identity'   # Greg, 2026-09-21 12:3xZ ('do your plan for the tensors'): identity = every tensor by dtype, shape, bytes, sha256 and its count/min/max/mean/l2, the bytes kept by digest
+        if READING_CONFIG.exists():
+            tensor_mode = str(load_json(READING_CONFIG).get('tensor_mode', 'identity'))
+        if tensor_mode not in ('values', 'identity'):
+            self.refuse(f'{READING_CONFIG} tensor_mode must be values or identity')
+        digest_path = self.work / 'derivation-digest-full.md'
+        # The corpus identity: a corpus built by other layers, another digest or another tensor mode is not this corpus.
+        # A restart with new session code (restart_session, Greg's word) therefore rebuilds it; the old corpus, its
+        # receipt and plan are moved aside under work/ (nothing deleted; its notes stay under their own notes-<sha> dir).
+        identity = (f'{R.RENDER_VERSION}+{DG.SCHEMA}+{HR.SCHEMA}+tensors:{tensor_mode}'
+                    f'+digest:{(sha256_bytes(digest_path.read_bytes())[:16] if digest_path.exists() else "none")}')
+        receipt_path = self.work / 'reading-corpus.json'
+        if corpus_path.exists() and receipt_path.exists():
+            prior = load_json(receipt_path)
+            if prior.get('identity') == identity:
+                return corpus_path
+            aside = self.work / f'superseded-corpus-{int(time.time())}'
+            aside.mkdir(exist_ok=True)
+            for name in ('reading-corpus-full.md', 'reading-corpus.json', 'reading-plan.json'):
+                if (self.work / name).exists():
+                    (self.work / name).rename(aside / name)
+            write_json(aside / 'superseded.json', dict(schema='FRANKIE_BOX_CORPUS_SUPERSEDED_V1', at=time.time(), prior_identity=prior.get('identity'),
+                                                      identity=identity, prior_corpus=prior.get('corpus'), note='moved aside, nothing deleted; its notes stay under their notes-<sha> directory'))
+            self.note(f'reading corpus superseded: {prior.get("identity") or "(no identity: the pre-render corpus)"} -> {identity}; kept under {aside.name}')
         data = prompt.read_bytes()
         marker = data.find(b'## BOSS/Granite producer evidence')
         head = data if marker < 0 else data[:marker]
         # HEAD_TEXT_V1 (Greg 2026-09-21 12:2xZ, every category): the head's Markdown tables as tab rows with ^ and
         # per-column prefixes, repeated lines through a per-section dictionary; parse(render) == text is checked
         # inside render (a mismatch raises and the corpus is not written); every section carries bytes + sha256.
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import frankie_box_head_render as HR
         head_text = self._head_through_ledger(head.decode('utf-8', errors='replace'))
-        head_rendered, head_report = HR.render(head_text)
+        try:
+            head_rendered, head_report = HR.render(head_text)      # raises when parse(render) != text: then the head is read verbatim
+        except Exception as err:
+            head_rendered, head_report = head_text, dict(schema='HEAD_TEXT_V1', refused=f'{type(err).__name__}: {str(err)[:200]}', verbatim=True)
+            self.note(f'HEAD_TEXT_V1 refused ({type(err).__name__}); the head is read verbatim')
         parts, members = [head_rendered], [dict(name='head', bytes=len(head), rendered_bytes=len(head_rendered.encode('utf-8')),
                                                  treatment='request head: ledgered sections, then HEAD_TEXT_V1 (tables, repeated lines); parse-back checked', report=head_report)]
         payload = None
@@ -870,13 +898,6 @@ class Session:
             # decoder weights as tensor tables (every value in 'values' mode; identity + statistics in 'identity' mode,
             # the bytes staying in the package by digest), and PROVES every member rebuilds byte-exact before the
             # corpus is written. The report (bytes, exact tokens when the tokenizer is present, the proof) is receipted.
-            sys.path.insert(0, str(Path(__file__).resolve().parent))
-            import frankie_box_reading_render as R
-            tensor_mode = 'identity'   # Greg, 2026-09-21 12:3xZ ('do your plan for the tensors'): identity = every tensor by dtype, shape, bytes, sha256 and its count/min/max/mean/l2, the bytes kept by digest
-            if READING_CONFIG.exists():
-                tensor_mode = str(load_json(READING_CONFIG).get('tensor_mode', 'identity'))
-            if tensor_mode not in ('values', 'identity'):
-                self.refuse(f'{READING_CONFIG} tensor_mode must be values or identity')
             raw_members = {'attachment_receipt': json.dumps(payload.get('attachment_receipt'), indent=1, sort_keys=True).encode()}
             for key in ('manifest_base64', 'source_binding_base64', 'mapping_evidence_base64'):
                 if isinstance(payload.get(key), str):
@@ -929,14 +950,13 @@ class Session:
         else:
             parts.append(data[marker:].decode('utf-8', errors='replace') if marker >= 0 else '')
             members.append(dict(name='producer-evidence block', treatment='payload not parseable; rendered raw'))
-        digest_path = self.work / 'derivation-digest-full.md'
         if digest_path.exists():
             digest = digest_path.read_bytes()
             parts.append('\n\n## Frankie\'s own derivation of this cycle (the session code ran the pin producers on the cycle rows; whole)\n\n'
                          + digest.decode('utf-8', errors='replace') + '\n')
             members.append(dict(name='derivation-digest-full.md', bytes=len(digest), sha256=sha256_bytes(digest), treatment='text: rendered whole'))
         corpus_path.write_text(''.join(parts), encoding='utf-8')
-        write_json(self.work / 'reading-corpus.json', dict(schema='FRANKIE_BOX_READING_CORPUS_V3', render=render_report, at=time.time(), limits='none',
+        write_json(self.work / 'reading-corpus.json', dict(schema='FRANKIE_BOX_READING_CORPUS_V4', identity=identity, render=render_report, at=time.time(), limits='none',
                    prompt=dict(witness(prompt), path=str(prompt)), head_bytes=len(head), corpus=dict(witness(corpus_path), path=str(corpus_path)),
                    members=members))
         return corpus_path

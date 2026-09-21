@@ -3079,3 +3079,26 @@ WHOLE CORPUS at the next restart, from the runs above: head 66,301 (cycle 0 read
 members 107,928 + digest 75,551 = 249,780 tokens = 3 parts of 87k (chat 4 close: ~4-5; the original 163). Every layer
 exact and proven before use; every member rebuilt byte-exact (PROOF all_exact=True on every run); the session applies
 all of it at `restart_session` (Greg's call), the digest regenerating through `derive` because its head is not DIGEST_V4.
+
+### 13:4xZ 09-21: STACK 7 measured (run 35606423208): the whole read is 248,111 tokens (< 3 parts); the corpus identity gate; GREG: "get the root read going soon"
+
+Stack 7 (6fd64a67, the `U` tuple cell): the forecast's 101 points are a table block (12,418 JSON B -> 3,722 tokens);
+forecast 16,992 -> 14,581; members 106,248; digest 75,562 (the `U` legend line); head 66,301. WHOLE CORPUS =
+248,111 tokens = 2.85 parts of 87k (163 at launch, 4-5 at chat 4's close). PROOF all_exact=True on every member on
+every run; every block parse-back proven before it is written.
+Greg (13:4xZ): "Yes the aws is valid. You have to use the workflow in git. Any reduction helps. Let's get the root read
+going soon. We still have a lot of work after that." Taken as the go for `frankie_box_session.sh ACTION=restart_session
+REASON=lossless-render` (stops ONLY the session unit with a receipt, then `start`: the box checkout moves to this
+branch's head, preflight, the unit restarts; no Pod, box or host action). Before dispatching it, one gate the restart
+needed: `reading_corpus` returned the existing corpus whenever its file existed, so a restart would have kept reading
+the old 22.6 MB corpus. Now the corpus receipt carries an IDENTITY (`READING_RENDER_L10_V1+DIGEST_V4+HEAD_TEXT_V1+
+tensors:<mode>+digest:<sha16>`); a corpus whose identity differs is moved aside under `work/superseded-corpus-<ts>/`
+(nothing deleted; its notes stay under their `notes-<sha>` directory, with a superseded.json) and rebuilt. The derive
+stage regenerates the digest first (its head is not DIGEST_V4), so the identity carries the new digest. A HEAD_TEXT_V1
+that cannot prove itself falls back to the verbatim head with a note (it proved on the real head in every run).
+What happens on the box after the dispatch: session unit stopped + receipt; checkout -> this branch head; preflight
+(engine /health on the retained Pod); unit started; verify, labels, engine reach (receipts), DERIVE re-runs the pin
+producers on the 3,262 records (minutes of CPU), the corpus is rebuilt through every layer and receipted
+(`reading-corpus.json`, schema V4 with the identity and the render report), the reading starts: part 1 of ~3 goes to
+the Pod's jobs_v1 queue BEHIND the in-flight old-corpus part (FIFO, no cancel; ~36 min), then ~36 min a part; merge;
+writing; push (refuses until the git token exists; files safe in session/out/).

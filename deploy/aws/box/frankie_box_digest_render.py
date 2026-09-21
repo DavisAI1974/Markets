@@ -28,6 +28,7 @@ import math
 import re
 from fractions import Fraction
 
+SCHEMA = 'DIGEST_V4'
 FRACTION_DENOMINATOR = 1_000_000   # DIGEST_V4: a float spelled n/d only when float(n)/float(d) is that float exactly and the spelling is shorter
 SCALE_MIN, SCALE_MAX = 3, 9       # DIGEST_V4: a per-column power of ten every integer literal of the column divides by (declared once, checked)
 RUN_MARKS = ('^', '=')            # DIGEST_V4: k consecutive identical mark cells collapse to `^k` / `=k` (never `-`: `-3` is an integer)

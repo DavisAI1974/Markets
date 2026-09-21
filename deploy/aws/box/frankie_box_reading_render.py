@@ -56,6 +56,7 @@ from dataclasses import dataclass, field
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+RENDER_VERSION = 'READING_RENDER_L10_V1'   # bumps when a layer changes what the corpus says; the session rebuilds a corpus whose identity differs
 DEDUP_BYTES = 4096
 NESTED_MIN = 32
 FILE_MIN = 1024        # L8: a value at least this large may be a known file
