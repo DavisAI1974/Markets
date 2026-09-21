@@ -25,7 +25,7 @@ backend_env() {
   # prints NAME=VALUE lines for the service environment (to a 600 file the service reads; removed when it ends)
   if [ -s /etc/markets/frankie-box.env ]; then cat /etc/markets/frankie-box.env; echo "FRANKIE_BACKEND=env-file"; return; fi
   key=$("$ROOT/venv/bin/python" -c "import boto3;print(boto3.client('ssm',region_name='us-east-2').get_parameter(Name='/markets/frankie/anthropic-api-key',WithDecryption=True)['Parameter']['Value'])" 2>/dev/null) && { echo "ANTHROPIC_API_KEY=$key"; echo "FRANKIE_BACKEND=anthropic-api-ssm"; return; }
-  echo "CLAUDE_CODE_USE_BEDROCK=1"; echo "AWS_REGION=us-east-1"; echo "AWS_DEFAULT_REGION=us-east-1"; echo "ANTHROPIC_MODEL=us.anthropic.claude-opus-4-6-v1:0"; echo "ANTHROPIC_SMALL_FAST_MODEL=us.anthropic.claude-haiku-4-5-20251001-v1:0"; echo "FRANKIE_BACKEND=bedrock-role"
+  echo "CLAUDE_CODE_USE_BEDROCK=1"; echo "AWS_REGION=us-east-1"; echo "AWS_DEFAULT_REGION=us-east-1"; echo "ANTHROPIC_MODEL=us.anthropic.claude-opus-4-5-20251101-v1:0"; echo "ANTHROPIC_SMALL_FAST_MODEL=us.anthropic.claude-haiku-4-5-20251001-v1:0"; echo "FRANKIE_BACKEND=bedrock-role"
 }
 preflight() {
   ENVF="$S/backend.env"; umask 077; backend_env > "$ENVF"; chmod 600 "$ENVF"
