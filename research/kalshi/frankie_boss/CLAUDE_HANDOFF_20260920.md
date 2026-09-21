@@ -3102,3 +3102,39 @@ producers on the 3,262 records (minutes of CPU), the corpus is rebuilt through e
 (`reading-corpus.json`, schema V4 with the identity and the render report), the reading starts: part 1 of ~3 goes to
 the Pod's jobs_v1 queue BEHIND the in-flight old-corpus part (FIFO, no cancel; ~36 min), then ~36 min a part; merge;
 writing; push (refuses until the git token exists; files safe in session/out/).
+
+### 13:5xZ 09-21: /ship on chat 5's diff -> GO after fixes (2970ffc2); the session restarted a second time on the reviewed code
+
+The first restart (35606762128, 5ff0472e) stopped the session unit with a receipt (the old read had reached part 10/163),
+moved the checkout to the branch head, preflight OK, unit restarted 13:37:31Z, phase deriving. Meanwhile the three
+`/ship` personas reported (`SHIP_REVIEW_20260921_CHAT5.md`): code-reviewer REQUEST CHANGES (0 Critical, 6 Required),
+security-auditor 0 Critical / 0 High / 3 Medium / 3 Low, test-engineer 2 Critical + 5 High. Two were real exactness
+defects the proofs could not see: a table whose every column is constant parsed to 0 rows (a one-family cycle would
+abort derive), and -0.0 folded into 0.0 because `_same` used `==`. The rest were failure-contract gaps: a spoofed or
+foreign stacked envelope, or a head cell that becomes `^` after prefix stripping, raised out of the render and would
+have killed the corpus instead of leaving the value verbatim. ALL FIXED in 2970ffc2 (see the review file for the
+list: DIGEST_V5, sign-aware `_same`, parser count checks, unspellable column names refuse, O(n) position map, L9/L10
+fall back with `block_notes` in the receipt, `_is_envelope` checks the pinned grammar hash, HEAD_TEXT_V1 per-section
+proof + marker-collision verbatim + ValueError paths + wrapper counted, `known_files_index` regular files only /
+sorted / packed-refs, ASCII digits, the session refuses with a receipt on any unexpected stage error, profile samples
+gated behind SAMPLES=1). 33 tests (random structural round-trip probes included); `.github/workflows/
+frankie_box_codecs_ci.yml` runs them on push to the codec paths (trunk registration = Greg's word).
+Because the digest schema is now DIGEST_V5 and the corpus identity changed, `restart_session
+REASON=ship-fixes-digest-v5` was dispatched on 2970ffc2: derive re-runs (seconds), the V4 corpus (if built) is moved
+aside under work/superseded-corpus-<ts>/, the corpus is rebuilt, the reading starts in ~3 parts; a V4 part already
+queued on the Pod runs out there (jobs_v1, no cancel). Run id and the status probe in the next entry.
+
+### 13:5xZ 09-21: restart 2 (35607741484, 2970ffc2) showed the render had WORKED end to end and exposed one last guard; restart 3 (ca3b327b)
+
+The session log tail in run 35607741484 (the second restart's status) carried the FIRST restart's crash: on 5ff0472e the
+session had verified, derived (DIGEST_V4), rebuilt the corpus through every layer (identity V4) and submitted part 1,
+and `boss()` refused it: `prompt read-0000 leaves under 1024 tokens of context by the byte estimate (139080 tokens)`.
+The parts are cut by the pinned tokenizer at 87k EXACT tokens, but `boss()` (and the serverless lane) sized the input
+with `BYTES_PER_TOKEN = 1.6`, right for the old JSON evidence and wrong for the dense render (digit strings and tables
+run near one token per byte). The crash went to the unit log only (before 2970ffc2's refuse-with-receipt wrapper);
+the second restart (13:46:51Z) was on the reviewed code and would have hit the same guard after deriving DIGEST_V5.
+FIX ca3b327b: `_input_tokens` counts the input with the pinned tokenizer when it is on the box (the same tokenizer
+that cut the parts; +16), the byte estimate only as the fallback, and the refusal names which was used; same in the
+serverless lane. RESTART 3 dispatched: `restart_session REASON=exact-token-count`. Expected on the box: derive (the
+digest is DIGEST_V5 already from restart 2, so no re-derive unless it had not finished), the V5 corpus reused if its
+identity matches (else rebuilt), part 1 of ~3 submitted to the Pod's queue behind whatever old-corpus part is in flight.
