@@ -31,6 +31,14 @@ on:
         description: 'Short comment recorded on the SSM command'
         required: false
         default: 'frankie box run'
+      presign:
+        description: "Optional space-separated bucket/key items; each gets a short-lived presigned GET, collected in one private JSON the box fetches through MAP_URL (the box's role reads nothing in S3)"
+        required: false
+        default: ''
+      presign_hours:
+        description: 'Presigned GET validity in hours (the URLs live in the private JSON; only MAP_URL travels, masked)'
+        required: false
+        default: '4'
 permissions:
   contents: read
 concurrency:
@@ -52,6 +60,9 @@ jobs:
       VARIABLES: ${{ inputs.variables }}
       RUN_TIMEOUT: ${{ inputs.timeout }}
       COMMENT: ${{ inputs.comment }}
+      PRESIGN: ${{ inputs.presign }}
+      PRESIGN_HOURS: ${{ inputs.presign_hours }}
+      MAP_BUCKET: frankie-granite42-568968024170-us-east-1
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -76,11 +87,47 @@ jobs:
           print('SSM:', [(x['PingStatus'], x.get('PlatformName', ''), x.get('PlatformVersion', '')) for x in s] or 'not registered')
           raise SystemExit(0 if s and s[0]['PingStatus'] == 'Online' else 1)
           PY
+      - name: Presign the requested objects into one private map (URLs masked, never printed)
+        if: inputs.presign != ''
+        run: |
+          python - <<'PY'
+          import json, os, re
+          import boto3
+          from botocore.config import Config
+          items = os.environ['PRESIGN'].split()
+          expires = int(float(os.environ['PRESIGN_HOURS']) * 3600)
+          def client(bucket):
+              region = 'us-east-1' if bucket.endswith('us-east-1') else 'us-east-2'
+              return boto3.client('s3', region_name=region, endpoint_url=f'https://s3.{region}.amazonaws.com',
+                                  config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}))
+          out = {}
+          for item in items:
+              bucket, key = item.split('/', 1)
+              if not re.fullmatch(r'[a-z0-9.-]{3,63}', bucket) or not key or '..' in key:
+                  raise SystemExit('presign item must be bucket/key')
+              s3 = client(bucket)
+              head = s3.head_object(Bucket=bucket, Key=key)
+              url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=expires)
+              print('::add-mask::' + url)
+              out[key] = dict(bucket=bucket, bytes=head['ContentLength'], url=url)
+              print(f'presigned {bucket}/{key} bytes={head["ContentLength"]} expires_in={expires}s')
+          mb = os.environ['MAP_BUCKET']; mk = f"box-runs/{os.environ['GITHUB_RUN_ID']}/presigned-map.json"
+          g = client(mb)
+          g.put_object(Bucket=mb, Key=mk, Body=json.dumps(out, sort_keys=True).encode(), ServerSideEncryption='AES256', ContentType='application/json')
+          murl = g.generate_presigned_url('get_object', Params={'Bucket': mb, 'Key': mk}, ExpiresIn=expires)
+          if "'" in murl or '\n' in murl or ' ' in murl:
+              raise SystemExit('map URL carries a character --set refuses')
+          print('::add-mask::' + murl)
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write(f'MAP_URL={murl}\n')
+          print(f'map: s3://{mb}/{mk} ({len(out)} objects)')
+          PY
       - name: Run the committed script on the box
         run: |
           set -euo pipefail
           sets=()
           for pair in $VARIABLES; do sets+=(--set "$pair"); done
+          [ -z "${MAP_URL:-}" ] || sets+=(--set "MAP_URL=$MAP_URL")
           python deploy/aws/ssm_run_sh.py --instance "$INSTANCE" --region "$REGION" --script "$SCRIPT" \
             --timeout "$RUN_TIMEOUT" --comment "$COMMENT" "${sets[@]}" | tee box-run-output.txt
       - name: Job summary = the box output
