@@ -53,6 +53,14 @@ session runs without it; the pusher refuses at the end with the files safe on th
 grant up on its next beat); (2) optional PutObject on the progress prefix. Build plan workbook R4 committed
 (`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`, `BUILD_PLAN_UPDATE_R4_20260921.md`). Nothing on the native
 host was touched; the runner still holds.
+09:58Z: THE SESSION IS RUNNING (unit `frankie-cycle-00` on the box): verified, 29 labels, engine healthy, derive DONE
+(5/5 pin layers on 3,262 records, 2,282 F_LAST groups; work/derived/), reading the DECODED delivered evidence in 9
+parts (one durable jobs_v1 job each, about three minutes a part; work/reading-corpus.json records every member's
+treatment), then merge, then the analysis, accounting and ten ledgers, then the four files and the push (which
+refuses until the git token exists; files safe in session/out/). Probe: `frankie_box_run.yml` script
+`deploy/aws/box/frankie_box_session.sh` variables `ACTION=status`. To apply a session-code fix:
+`ACTION=restart_session REASON=<why>` (stops ONLY the session unit with a receipt; stages resume from receipts).
+Handoff record: `CLAUDE_HANDOFF_20260920.md` 09:30Z to 09:5xZ.
 
 ## READ FIRST (08:00Z 09-21 handoff): FRANKIE'S BOX IS UP AND EMPTY; JOB 0 = HIS HARNESS; the run HOLDS for his response
 
