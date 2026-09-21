@@ -54,6 +54,10 @@ for mode in modes:
         for b in bs:
             i = text.find(f"\n#### block {b['id']} ("); j = text.find('\n```\n', text.find('```\n', i) + 4)
             print('      block %-22s %-16s %-70s %8d JSON B -> %7d tok' % (b['id'], b['kind'], b['path'][-70:], b['bytes'], tok_n(text[i:j])))
+    # L10 diagnostics: every list of >= 16 dicts in the rendered documents, and whether it became a block
+    for m in re.finditer(r'\n### member (\S+) \(.*?\n#### document 0\n```json\n(.*?)\n```\n', text, re.S):
+        for path, n, keysets, why in R.table_candidates(json.loads(m.group(2)), m.group(1)):
+            print('      L10 candidate %-75s rows %4d key sets %2d %s' % (path[-75:], n, keysets, why))
     if rep.derived_vectors == 0:
         # diagnose: does the delivered critic snapshot decode, and what does its receipt hold?
         try:

@@ -68,18 +68,18 @@ def test_known_files_stacked_text_and_table_blocks_render_and_rebuild(tmp_path):
     assert report.proof['all_exact'] is True
     assert report.file_refs == 2 and report.file_saved_bytes == 2 * len(source)          # the same file in both members: a $file both times
     assert report.stacked_blocks == 1 and report.table_blocks == 1 and report.table_rows == 20
-    assert '"$file": "research/controller.py"' in text and '"commit": "0123456789abcdef0123456789abcdef01234567"' in text
+    assert '"$file":"research/controller.py"' in text and '"commit":"0123456789abcdef0123456789abcdef01234567"' in text
     assert source.decode() not in text                                                     # the file's text is not spelled out
     # the stacked block parses back to the envelope's data, the table block to the points
     block = text.split('#### block stacked-', 1)[1].split('```\n', 1)[1].split('```', 1)[0]
     assert ST.canonical(ST.parse(block)) == ST.canonical(env['data'])
-    assert '"$stacked_text": "STACKED_TEXT_V1"' in text and '"schema": "BOSS_GRANITE_NATIVE_STACKED_CONTEXT_V1"' in text and '"native_hash": "' in text
+    assert '"$stacked_text":"STACKED_TEXT_V1"' in text and '"schema":"BOSS_GRANITE_NATIVE_STACKED_CONTEXT_V1"' in text and '"native_hash":"' in text
     import frankie_box_digest_render as DG
     table = text.split('#### block table-', 1)[1].split('```\n', 1)[1].split('```', 1)[0]
     assert DG._same(DG.parse_table(table)[1], points)
-    assert '"$table": "DIGEST_V4"' in text and '"columns": ["t", "p50", "quantiles", "side"]' in text
+    assert '"$table":"DIGEST_V4"' in text and '"columns":["t","p50","quantiles","side"]' in text
     # the snapshot text is rendered once (in the $decoded node) and the prompt contains it (L5 marker)
-    assert text.count('"$stacked_text": "STACKED_TEXT_V1"') == 1 and '<<contains sha256:' in text   # once in a node (the legend names the key without its value)
+    assert text.count('"$stacked_text":"STACKED_TEXT_V1"') == 1 and '<<contains sha256:' in text   # once in a node (the legend names the key without its value)
     # the node carries the snapshot text's own digest (the proof that the block puts the text back ran before the
     # node was written; the render then sorts JSON keys for reading, so the wrapper is checked by digest here)
     node = json.loads(text.split('#### document 0\n```json\n', 1)[1].split('\n```', 1)[0])['critic_intent']['snapshot_text']
@@ -107,7 +107,7 @@ def test_without_known_files_the_source_is_spelled_and_a_short_list_stays_json(t
     assert report.file_refs == 0 and 'def f59(x):' in text and report.proof['all_exact'] is True
     short = dict(points=[dict(a=i) for i in range(R.TABLE_MIN - 1)])
     text, report = R.render({'files/x.json': canonical_bytes(pack(short))}, tensor_mode='identity')
-    assert report.table_blocks == 0 and '"$table": "DIGEST_V4", "block": "table-' not in text and report.proof['all_exact'] is True
+    assert report.table_blocks == 0 and '"$table":"DIGEST_V4","block":"table-' not in text and report.proof['all_exact'] is True
 
 
 def test_a_table_that_does_not_round_trip_stays_json(monkeypatch):

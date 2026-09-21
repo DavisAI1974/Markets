@@ -19,6 +19,9 @@ Grammar (every node is a tag followed by its parts; whitespace separates atoms; 
   N <L|T> <ints>              an integer sequence
   B <L|T> <count> <n> <ints>*n   byte strings transposed into n integer columns
   ints: I <n> <int>*n | D <seed> <n> <delta>*n | R <n> (<value> <count>)*n | E <seed> <n> (<delta> <count>)*n
+  A recipe tag may carry `*k` (I*6, D*6, R*6, E*6): every value of the recipe (the seed, the values, the deltas; never
+  a run count) is written divided by 10^k, all of them being exact multiples (checked when spelled; the parser
+  multiplies back). Measured with the pinned tokenizer: a delta of 1000000 is three tokens, 1 is one.
 Newlines are whitespace: the spelling starts a new line before every M, C and column so the reading parts (line-based)
 cut between values. The text is a projection of the JSON, not a new encoding: nothing is reduced or summarized.
 """
@@ -56,17 +59,46 @@ def _atom(value):
     raise ValueError('atom must be null, bool, int or str: %r' % type(value).__name__)
 
 
+SCALE_MIN, SCALE_MAX = 3, 12
+
+
+def _scale(values):
+    """The largest k (SCALE_MIN..SCALE_MAX) with every value a multiple of 10^k, else 0."""
+    k, seen = SCALE_MAX, False
+    for v in values:
+        if v == 0:
+            continue
+        seen = True
+        z, a = 0, abs(v)
+        while a % 10 == 0 and z < k:
+            a //= 10; z += 1
+        k = min(k, z)
+        if k < SCALE_MIN:
+            return 0
+    return k if seen else 0
+
+
+def _div(v, k):
+    q = 10 ** k
+    if v % q:
+        raise ValueError('scaled value is not a multiple of its scale')
+    return v // q
+
+
 def _ints(node, out):
     tag = node[0]
     if tag == 'I':
-        values = node[1]
-        out.append('I %d' % len(values)); out.extend(str(v) for v in values)
+        values = node[1]; k = _scale(values); t = tag + ('*%d' % k if k else '')
+        out.append('%s %d' % (t, len(values))); out.extend(str(_div(v, k)) for v in values)
     elif tag == 'D':
-        out.append('D %d %d' % (node[1], len(node[2]))); out.extend(str(v) for v in node[2])
+        k = _scale([node[1]] + list(node[2])); t = tag + ('*%d' % k if k else '')
+        out.append('%s %d %d' % (t, _div(node[1], k), len(node[2]))); out.extend(str(_div(v, k)) for v in node[2])
     elif tag == 'R':
-        out.append('R %d' % len(node[1])); out.extend('%d %d' % (v, c) for v, c in node[1])
+        k = _scale([v for v, c in node[1]]); t = tag + ('*%d' % k if k else '')
+        out.append('%s %d' % (t, len(node[1]))); out.extend('%d %d' % (_div(v, k), c) for v, c in node[1])
     elif tag == 'E':
-        out.append('E %d %d' % (node[1], len(node[2]))); out.extend('%d %d' % (v, c) for v, c in node[2])
+        k = _scale([node[1]] + [v for v, c in node[2]]); t = tag + ('*%d' % k if k else '')
+        out.append('%s %d %d' % (t, _div(node[1], k), len(node[2]))); out.extend('%d %d' % (_div(v, k), c) for v, c in node[2])
     else:
         raise ValueError('unknown integer recipe %r' % tag)
 
@@ -183,18 +215,22 @@ class _Cursor:
 
 def _parse_ints(c):
     tag = c.bare()
+    tag, star, k = tag.partition('*')
+    if star and not re.fullmatch(r'\d{1,2}', k):
+        raise ValueError('integer recipe scale must be *k')
+    q = 10 ** int(k) if star else 1
     if tag == 'I':
         n = c.int()
-        return ['I', [c.int() for _ in range(n)]]
+        return ['I', [c.int() * q for _ in range(n)]]
     if tag == 'D':
-        seed, n = c.int(), c.int()
-        return ['D', seed, [c.int() for _ in range(n)]]
+        seed, n = c.int() * q, c.int()
+        return ['D', seed, [c.int() * q for _ in range(n)]]
     if tag == 'R':
         n = c.int()
-        return ['R', [[c.int(), c.int()] for _ in range(n)]]
+        return ['R', [[c.int() * q, c.int()] for _ in range(n)]]
     if tag == 'E':
-        seed, n = c.int(), c.int()
-        return ['E', seed, [[c.int(), c.int()] for _ in range(n)]]
+        seed, n = c.int() * q, c.int()
+        return ['E', seed, [[c.int() * q, c.int()] for _ in range(n)]]
     raise ValueError('unknown integer recipe %r' % tag)
 
 

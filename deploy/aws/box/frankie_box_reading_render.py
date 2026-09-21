@@ -400,8 +400,27 @@ def _no_tuples(value):
 
 
 def _same_keys(items):
+    """L10 candidates: a list of >= TABLE_MIN non-empty dicts, no key holding a '.', no tuples. Key sets may differ
+    between rows: the DIGEST_V4 grammar writes `?` for a cell the row does not carry, and the parse-back proof
+    decides (run 35604644446: the forecast's 101 points and 58 known marks were left as JSON by a same-keys rule)."""
     return (isinstance(items, list) and len(items) >= TABLE_MIN and all(isinstance(v, dict) and v for v in items)
-            and all(list(v) == list(items[0]) for v in items) and not any('.' in k for k in items[0]) and _no_tuples(items))
+            and not any('.' in k for v in items for k in v) and _no_tuples(items))
+
+
+def table_candidates(doc, path=''):
+    """Diagnostics: every list of >= TABLE_MIN dicts under doc with why it would or would not be a table block."""
+    out = []
+    if isinstance(doc, dict):
+        for k, v in doc.items():
+            out.extend(table_candidates(v, f'{path}.{k}'))
+    elif isinstance(doc, (list, tuple)):
+        if len(doc) >= TABLE_MIN and all(isinstance(v, dict) for v in doc):
+            keysets = {tuple(v) for v in doc}
+            why = 'tuple' if isinstance(doc, tuple) else 'dotted key' if any('.' in k for v in doc for k in v) else 'tuples inside' if not _no_tuples(list(doc)) else 'candidate'
+            out.append((path, len(doc), len(keysets), why))
+        for i, v in enumerate(doc):
+            out.extend(table_candidates(v, f'{path}[{i}]'))
+    return out
 
 
 def _is_envelope(node):
@@ -462,7 +481,7 @@ def _blocks_pass(doc, blocks, path=''):
             rows = [dict(r) for r in doc]
             block = DG.render_table('rows', rows)
             name, parsed = DG.parse_table(block)
-            if DG._same(parsed, rows):
+            if DG._same(parsed, rows):        # every value, type-strict (the render's JSON sorts keys: key order is not carried by either form)
                 spelled = json.dumps(doc, separators=(',', ':'), sort_keys=True, default=_jsonable)
                 if len(block.encode('utf-8')) < len(spelled.encode('utf-8')):
                     digest = sha(spelled.encode('utf-8'))
@@ -494,7 +513,8 @@ def contain(doc, big_strings):
 
 # ---- render ------------------------------------------------------------------------------------------------------
 def _render_json(value, indent=None):
-    return _wrap_json(json.dumps(value, sort_keys=True, indent=indent, ensure_ascii=True, default=_jsonable))
+    # compact separators: 15% fewer tokens than ', ' / ': ' on the same document with the pinned tokenizer (run 35603160044 follow-up)
+    return _wrap_json(json.dumps(value, sort_keys=True, indent=indent, separators=(',', ':'), ensure_ascii=True, default=_jsonable))
 
 
 def _wrap_json(text, max_depth=2):
