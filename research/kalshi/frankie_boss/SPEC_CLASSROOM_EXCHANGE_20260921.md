@@ -1,5 +1,11 @@
 # Spec: the Dipole classroom exchange in the Frankie box session (2026-09-21, chat 6, Greg: "Do option 1. Let's do it before anything else run")
 
+## Status (18:xxZ 09-21)
+
+BUILT, tests green, nothing run: all seven modules of the capability map landed on this branch (commits 14e3ed60,
+15e58ec5, 71aef89b, 6b4a68d9, 1ce0e1d4, the host supersede, the runbook). The restart runbook (a-i) is in
+`CLAUDE_HANDOFF_20260920.md` 18:xxZ; every host step waits on Greg's go.
+
 ## Objective
 
 Cycle 0's response was recorded on the native host (run 35633661236) and the host runner stopped on it:

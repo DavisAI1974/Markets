@@ -51,6 +51,15 @@ STATE OF THE RUN (session unit frankie-cycle-00 on box i-035994afa8bdf66a5, rest
   session (the observation review alone is ~62,000 objects at 3,262 rows, past one turn's 38,633 output tokens) or
   waive the classroom for cycle 0 on the host. Cycle 1 cannot launch until cycle 0 completes on the host.
 
+- CHAT 6 (18:xxZ): OPTION 1 BUILT, NOTHING RUN. Greg: "Do option 1. Let's do it before anything else run." The
+  Dipole classroom exchange is in the box session (spec `SPEC_CLASSROOM_EXCHANGE_20260921.md`; seven commits, tests
+  green): stage `classroom` (TEACH facts transcribed, the BOSS's interpretation, the four ledgers validated by the
+  repo's own validators; the synthetic package passes the real grader with zero corrections), stage `correction`
+  (the same session's turn 2), the recorder's `--turn` with a record-time classroom pre-grade, export/fetch/push
+  with the turn, and `frankie_host_supersede_principal_response` (move the recorded cycle-0 response aside; the
+  request stays). THE RESTART RUNBOOK (a-i, every host step on Greg's go) is in the handoff 18:xxZ. Cycle 1 runs
+  the same code.
+
 CHAT 5 LESSONS, each measured: the Claude Code container has NO AWS identity (proxy placeholders; STS
 InvalidClientTokenId) until a pair is installed at the D48 locations; the agent proxy refuses the GitHub Actions
 secrets API (403) and api.github.com for the runpodctl installer; the repo is PUBLIC, so a secret must never travel

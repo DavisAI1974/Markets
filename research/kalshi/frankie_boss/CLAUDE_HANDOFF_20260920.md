@@ -3688,3 +3688,64 @@ waiver of the classroom for cycle 0 (against that word). Either restart needs th
 module top), the code-bound-state supersede and a pipeline re-dispatch, each receipted. Cycle 1 is not ready to
 launch until cycle 0 completes on the host. Skills: debugging-and-error-recovery (reproduce/localize/reduce done;
 no fix without Greg's call), git-workflow.
+
+### 18:xxZ 09-21: OPTION 1 BUILT (Greg: "Do option 1. Let's do it before anything else run"): THE DIPOLE CLASSROOM EXCHANGE IN THE BOX SESSION
+
+Spec + capability map: `SPEC_CLASSROOM_EXCHANGE_20260921.md` (3e69e289). Seven commits on this branch, every one with
+its tests green (box suite 86 + host text contracts 91; codecs CI and host-scripts CI carry them):
+1. 14e3ed60 `deploy/aws/box/frankie_box_classroom.py`: TEACH facts transcribed from the model-visible pre-message
+   (counts, terminal, direction, every cursor's state/value, every pair's relation), the BOSS's interpretation parsed
+   from its JSON answers (six narratives per component, one explanation per observation state, one interpretation per
+   pair, the summary, the novel findings), the four ledgers assembled and validated by the repo's OWN validators
+   (loaded torch-free: TargetState rebuilt from dipole_target.py's source, the feedback classes placeholders). On a
+   synthetic TEACH package built through the real key/pre-message builders the ledgers pass
+   grade_initial_response with ZERO corrections and mastered; the correction turn finishes the classroom through the
+   host's own validate_correction_response / validate_correction_resolutions / finish (teacher_complete).
+2. 15e58ec5 the session: stage `classroom` after reading (19 component answers on the reading lane, the summary on
+   the BOSS, every answer durable and guarded: unusable = asked once more, then refused with a receipt; a prompt over
+   the 87k part budget refused before any call), `response.json` carries the four keys, the composition is declared
+   in the host session record and the attestation; stage `correction` (`--stage correction`, the same session id and
+   model identity, three files for the pusher, host record path `principal/host-correction-record.json`). Heartbeat
+   phases classroom and correction.
+3. 71aef89b classroom.md in the docs bundle and the brain entry (include true; MANIFEST flag).
+4. 6b4a68d9 the recorder: `--turn initial|correction`. Initial PRE-GRADES the classroom with the runner's own grade
+   in the candidate (a response the runner would stop on is refused with nothing written; the receipt carries
+   mastered/correction ids). Correction records classroom-correction-response.json through the adapter's immutable
+   recorder after the host attestation (bound to the adapter digest of the WHOLE correction request) and the
+   resolution checks. Host script and workflow take the turn.
+5. 1ce0e1d4 export (turn=correction exports classroom-correction-request.json alone), the box (ACTION=fetch_correction
+   through the presigned map; ACTION=correction runs the turn as its own unit), the pusher (TURN=correction, its own
+   checks), the fetch workflow (turn, per-turn checks against the staged request, commit to root/cycle-NN-response).
+6. the host supersede of a RECORDED response (move aside, receipted; refuses on a live runner, a classroom completion,
+   or a coordinator principal_output): `frankie_host_supersede_principal_response.{ps1,yml}`.
+7. this runbook.
+
+RESTART RUNBOOK for cycle 0 (every host step on Greg's go; each receipted; nothing has run):
+ a. `frankie_host_advance.yml` target = this branch's tip (the runner imports at module top; the checkout must carry
+    the recorder's turn, the json_form root fix, the classroom code). Consequence: code-bound retained state refuses
+    re-entry -> b.
+ b. `frankie_host_supersede_code_bound_state.yml` (moves the code-bound records aside; the runner re-mints them).
+ c. `frankie_host_supersede_principal_response.yml` cycle 00, reason = the response carried no classroom teach-back.
+    The request stays (same request_sha256 1b777cf2...; no re-render, no principal supersede).
+ d. Box: `frankie_box_session.sh ACTION=restart_session` on this branch. The session verifies, finds its digest,
+    merged notes and durable BOSS jobs, runs the CLASSROOM stage (19 + 1 calls; spend = the reading lane, then
+    one Pod call), re-assembles response.json with the ledgers (analysis and the ten ledgers reused from the durable
+    jobs, no new analysis), and pushes the four files (token route) or waits for `frankie_box_fetch_response.yml`
+    (turn=initial).
+ e. `frankie_host_record_principal_response.yml` source_ref=root/cycle-00-response turn=initial: the recorder pre-grades
+    the classroom; a refusal here means the box's ledgers would stop the runner and nothing is written.
+ f. Pipeline dispatch (`frankie_journal_stack.yml`, the host stages): the runner recovers the response, grades the
+    classroom, writes principal/classroom-correction-request.json and exits `actual_frankie_session_pending`.
+ g. `frankie_host_export_principal_request.yml` turn=correction -> the key is printed; `frankie_box_run.yml`
+    script=frankie_box_session.sh variables=ACTION=fetch_correction presign=<bucket>/<key>; then
+    `frankie_box_run.yml` variables=ACTION=correction (one BOSS call, three files, pusher TURN=correction) or
+    `frankie_box_fetch_response.yml` turn=correction request_key=<key>.
+ h. `frankie_host_record_principal_response.yml` source_ref=root/cycle-00-response turn=correction
+    response_path=.../correction-response.json attestation_path=.../host-correction-attestation.json
+    record_path=.../host-correction-record.json.
+ i. Pipeline dispatch again: the runner validates the acknowledgement, finishes the classroom (teacher_complete),
+    runs the native learning, readback, completion, cycle-01 readiness. Cycle 1 then runs the same code end to end:
+    its session answers the classroom inside its response and the correction turn follows the same g-h-i.
+OPEN (Greg): the observation explanations are one BOSS sentence per STATE per component expanded to every cursor
+(the spec's assumption 1; one sentence per cursor is a switch in the classroom module, hours on the endpoint);
+response.json grows by the review (about 19 x N observations; several MB) and is committed to root/cycle-NN-response.

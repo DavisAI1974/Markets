@@ -2,6 +2,20 @@
 
 ## 2026-09-20 — Frankie/BOSS launch day: the Pod that could not start, the replacement, the operator workflows
 
+### The Dipole classroom exchange in the box session (2026-09-21, chat 6; Greg: option 1, built before anything runs)
+- `research/kalshi/frankie_boss/SPEC_CLASSROOM_EXCHANGE_20260921.md` - the spec and capability map (the contract the host grades, read from the code; the restart runbook is in the handoff 18:xxZ).
+- `deploy/aws/box/frankie_box_classroom.py` - TEACH facts transcribed from the model-visible pre-message, the BOSS's interpretation parsed, the four ledgers
+  (dipole_teachback, dipole_observation_review, dipole_relationship_scan, dipole_novel_findings) assembled and validated by the repo's own validators
+  (torch-free load), the correction acknowledgement; `tests/test_frankie_box_classroom.py` (the real grader on a synthetic TEACH package).
+- `deploy/aws/box/frankie_box_boss_session.py` stages `classroom` (19 component answers on the reading lane + the summary on the BOSS, durable, guarded)
+  and `correction` (`--stage correction`); `tests/test_frankie_box_boss_session_classroom.py`. `frankie_box_session.sh` ACTION=fetch_correction | correction.
+- `research/kalshi/frankie_boss/operations/record_actual_frankie_response.py` `--turn initial|correction` (record-time classroom pre-grade; the correction
+  turn recorded through the adapter's immutable recorder) + `frankie_host_record_principal_response.{ps1,yml}` turn input.
+- `frankie_host_export_principal_request.{ps1,yml}` turn=correction (the retained correction request), `frankie_box_push_response.sh` TURN=correction,
+  `frankie_box_fetch_response.yml` turn; `tests/test_frankie_correction_turn_plumbing.py`.
+- `deploy/aws/host/frankie_host_supersede_principal_response.ps1` + `.github/workflows/frankie_host_supersede_principal_response.yml` - move a cycle's
+  RECORDED response aside (never deleted, receipted); the request stays. Text contract `research/kalshi/frankie_boss/tests/test_host_supersede_principal_response.py`.
+
 ### Frankie's box (2026-09-21, chat 3): the harness on i-035994afa8bdf66a5
 - `deploy/aws/ssm_run_sh.py` - Linux twin of ssm_run_ps1.py (AWS-RunShellScript; --set literal only).
 - `.github/workflows/frankie_box_run.yml` - runs ONE committed `deploy/aws/box/*.sh` on the box over SSM; optional presigned map (MAP_URL).
