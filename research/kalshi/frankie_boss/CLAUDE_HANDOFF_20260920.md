@@ -3294,3 +3294,13 @@ being empty for this token; the measured push overrides that inference (the head
 is). Greg need not edit the token. What stands: PAT in SSM (version 1), heartbeat live on git, the pusher will push
 the response when the session reaches `pushing`. Session at 15:33:50Z: `merging level 0: 1/2 done, 1 in flight
 (serverless x8)`; endpoint jobs completed 2, in progress 1; balance $39.60 at 15:3xZ.
+
+### 16:2xZ 09-21: Greg: "Just use fine grained" -> SSM /markets/frankie/github-token is now VERSION 2 = the fine-grained PAT
+
+Greg pasted a fine-grained PAT (Markets only) after the classic one. Both showed the same effective rights on the
+repo (`permissions.push: true` on GET /repos/DavisAI1974/Markets). On his word the SSM parameter was rewritten with
+the fine-grained token: version 2, length 93, prefix `github_pat_` (read back). The classic token stays valid on
+GitHub but is no longer referenced anywhere. NOTE: GitHub's `github-authentication-token-expiration` response header
+reported 2026-09-21 20:12:57 UTC for BOTH tokens, against "90 days (Dec 20)" on the classic token's form; Greg was
+asked to read the expiration on the tokens page. If it is today, the box loses its push tonight and the parameter
+needs a longer-lived value (same put_parameter, from any shell with the Claude IAM key).
