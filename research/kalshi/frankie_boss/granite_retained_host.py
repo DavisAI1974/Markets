@@ -28,7 +28,7 @@ from .granite_active_run import ActiveRunStore, completion_cleanup
 from .granite_startup_pins import persist_configuration
 
 OUT = Path('work/retained-granite')
-INFO_SHA256 = '6f8efdf927b470ba794a61f7a92fac18408ff1260d75c30840c4b92d719efdd7'
+INFO_SHA256 = 'bdad2896b08d6b40edf5a7fd36c9938962c9eaea0ba53eb33dc641a2228702ad'
 PRIOR_RUN = '34928264918'
 from .granite_retained_identity import JOURNAL_GENERATION
 MIGRATION_RECEIPT = Path(__file__).with_name('granite_retained_migration_receipt.json')

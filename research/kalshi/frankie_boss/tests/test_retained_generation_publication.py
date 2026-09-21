@@ -13,8 +13,8 @@ def test_completion_keeps_failed_generation_untouched(monkeypatch):
     request = 'a' * 64
     old = 'retained-granite/' + request + '/migration-ycf4v6lmave6xw/'
     current = 'retained-granite/' + request + '/' + JOURNAL_GENERATION + '/'
-    startup = dict(request_sha256=request, pod_id='8vqdacl5t61rjx', local_ready={'host_instance_id': 'new'})
-    old_body = canonical(dict(request_sha256=request, pod_id='8vqdacl5t61rjx', local_ready={'host_instance_id': 'old'}))
+    startup = dict(request_sha256=request, pod_id='g7y3g2w1kor4l3', local_ready={'host_instance_id': 'new'})
+    old_body = canonical(dict(request_sha256=request, pod_id='g7y3g2w1kor4l3', local_ready={'host_instance_id': 'old'}))
     objects = {old + 'retained-startup.json': old_body, current + 'retained-startup.json': canonical(startup)}
     class Missing(Exception):
         response = {'Error': {'Code': 'NoSuchKey'}}
@@ -51,7 +51,7 @@ def test_publication_workflow_keeps_native_checkout_validation():
 
 def test_historical_completion_requires_its_actual_startup(monkeypatch):
     request = 'a'*64
-    startup = dict(request_sha256=request, pod_id='8vqdacl5t61rjx')
+    startup = dict(request_sha256=request, pod_id='g7y3g2w1kor4l3')
     objects = {'retained-granite/'+request+'/'+HISTORICAL_GENERATION+'/retained-startup.json':canonical(startup)}
     class Client:
         def get_object(self, **kwargs):

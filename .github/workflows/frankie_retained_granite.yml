@@ -24,7 +24,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: retained-granite-8vqdacl5t61rjx
+  group: retained-granite-g7y3g2w1kor4l3
   cancel-in-progress: false
 
 jobs:

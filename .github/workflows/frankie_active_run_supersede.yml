@@ -11,7 +11,7 @@ on:
       pod:
         description: 'Retained Pod id'
         required: false
-        default: '8vqdacl5t61rjx'
+        default: 'g7y3g2w1kor4l3'
       action:
         description: 'inspect (read-only) or close (copy aside, then phase closed)'
         required: true

@@ -27,7 +27,7 @@ def test_retained_migration_receipt_pins_current_pod():
     value=json.loads(path.read_bytes())
     assert value['schema']=='GRANITE_POD_MIGRATION_V1'
     assert value['source_pod_id']=='jvs75m56w8f73q'
-    assert value['pod']['id']==lifecycle.POD_ID=='8vqdacl5t61rjx'
+    assert value['pod']['id']==lifecycle.POD_ID=='g7y3g2w1kor4l3'
     assert value['pod']['status']=='RUNNING'
 
 

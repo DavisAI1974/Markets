@@ -3,7 +3,7 @@
     python research/kalshi/frankie_boss/operations/pod_control.py --pod ycf4v6lmave6xw --action inspect
     python research/kalshi/frankie_boss/operations/pod_control.py --pod ycf4v6lmave6xw --action start [--wait-seconds 300]
     python research/kalshi/frankie_boss/operations/pod_control.py --pod hhxs2fk7511cz5 --action terminate
-    python research/kalshi/frankie_boss/operations/pod_control.py --pod 8vqdacl5t61rjx --action restart
+    python research/kalshi/frankie_boss/operations/pod_control.py --pod g7y3g2w1kor4l3 --action restart
         --wait-journal-key retained-granite/<request_sha256>/<generation>/retained-start-intent.json [--wait-seconds 900]
         [--retry-seconds 0]
 
@@ -39,7 +39,7 @@ import time
 CONTROL = 'api.runpod.io'
 SENSITIVE = ('key', 'secret', 'token', 'password', 'env')
 HOST_BUSY = 'not enough free GPUs on the host machine'
-RETAINED_POD = '8vqdacl5t61rjx'   # never terminated here: it holds the retained model
+RETAINED_POD = 'g7y3g2w1kor4l3'   # never terminated here: it holds the retained model
 RETRY_INTERVAL = 60
 
 

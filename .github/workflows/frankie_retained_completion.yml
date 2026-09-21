@@ -21,8 +21,8 @@ on:
       journal_generation:
         required: false
         type: choice
-        default: migration-8vqdacl5t61rjx-a004983e93b9
-        options: [migration-8vqdacl5t61rjx-a004983e93b9, migration-ycf4v6lmave6xw]
+        default: migration-g7y3g2w1kor4l3-a004983e93b9
+        options: [migration-g7y3g2w1kor4l3-a004983e93b9, migration-8vqdacl5t61rjx-a004983e93b9, migration-ycf4v6lmave6xw]
       code_commit:
         required: true
         type: string
@@ -47,7 +47,7 @@ jobs:
       STARTUP_SHA256: ${{ inputs.startup_sha256 }}
       OUTCOME_SHA256: ${{ inputs.outcome_sha256 }}
       JOB_ID: ${{ inputs.job_id }}
-      JOURNAL_GENERATION: ${{ inputs.journal_generation || 'migration-8vqdacl5t61rjx-a004983e93b9' }}
+      JOURNAL_GENERATION: ${{ inputs.journal_generation || 'migration-g7y3g2w1kor4l3-a004983e93b9' }}
       CODE_COMMIT: ${{ inputs.code_commit }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
