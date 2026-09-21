@@ -2798,3 +2798,48 @@ WHAT THE LANE NEEDS, in order (nothing runs until each is there):
    then `frankie_box_session.sh` `ACTION=restart_session REASON=serverless-reading-lane` (the session resumes from its
    receipts; the notes already written stay; the in-flight Pod job is left to finish on the Pod).
 Box at 10:50Z: part 1/163 still queued behind the 10:21 incarnation's orphan on the Pod (FIFO); expected ~11:34.
+
+### 11:3xZ 09-21: THE 22.6 MB READ, EXPLAINED AND SHRUNK WITHOUT DROPPING A BYTE (Greg: "reduce the size of that 22.6 M read
+with as many optimization stacks as we can. We don't want to drop any of the data though" / "don't just stop there")
+
+What the read IS (runs 35593487489, 35593909809, 35594192807; the delivered members re-decoded from request/prompt.md):
+- every member is c15-packed canonical JSON (every value type-tagged, floats as IEEE hex; c15_journal.pack);
+- files/native.c15.jsonl (11,977,861 B, 53%) is TWO journal entries, and its candidate's `forecast_artifact` bytes
+  (5,987,733 B, hex-encoded to 12 MB) are BYTE-IDENTICAL to files/forecast-000000.bin: the same artifact twice;
+- files/forecast-000000.bin (5,987,733 B) is `snapshot.weights` (2,683,720 B: the native decoder's 42 float64 tensors,
+  2,680,960 raw bytes, c15-in-bytes-in-hex, four encodings deep) plus `context_receipt` (288,527 B, c15) plus the
+  session, points, marks and representation (~60 KB of actual market objects);
+- files/state.c15.json (1,408,446 B) carries the critic prompt_text (148,492 B) THREE times and snapshot_text (144,407 B)
+  THREE times, plus source files as hex bytes; files/controller.c15.jsonl (1,410,438 B) carries them again and the
+  3,262 packet_hashes twice; the two critic text members are the 5th and 6th copies.
+So structural codecs did nothing (c15 unpack 1.00x, the stacked codec 0.99x, run 35593909809): the bulk is a few giant
+scalar values, duplicated. The BOSS was reading hex digits of neural weights token by token, six copies of one prompt,
+and writing 43,054 tokens of notes per part about them (read-0000 finished 11:2xZ: prompt 51,335 tokens, completion
+43,054 = the whole remaining context, INCOMPLETE at the context wall, 3,468 s wall of which ~25 min queued behind the
+orphaned job; 12.4 tok/s of output).
+BUILT (f406ed37, e3bbee55, b385d09f, c0e701a4): `deploy/aws/box/frankie_box_reading_render.py`, six layers, each
+reversible, with `reconstruct_proof` rebuilding every member's original bytes and comparing sha256 before the corpus is
+written (a mismatch refuses):
+  L1 c15 unpack; L2 nested decoding (bytes that are c15/JSON/UTF-8 decoded in place, encoding recorded, re-encoded
+  exactly); L3 content-addressed dedup ({"$ref": sha256}, first occurrence rendered once); L4 tensors as tables (name,
+  dtype, shape, bytes, sha256, count, min, max, mean, l2; `values` mode adds every element as a shortest round-trip
+  decimal; `identity` mode keeps the exact bytes in the package by digest); L5 containment (the prompt contains the
+  snapshot text: a marker); L6 the cross-cycle ledger (/opt/frankie-box/reading-ledger.json: a value read in an earlier
+  cycle renders as {"$read": sha256, "cycle"}, the earlier cycle's merged notes travel in the corpus head; the journals
+  are append-only so a later cycle reads only what was appended or changed; per-cycle work dirs).
+MEASURED on the real members with the pinned Granite tokenizer (run 35594797674, identity mode): 21,087,386 B /
+10,128,476 tokens -> 554,299 B / 289,841 tokens (0.029x), 117 parts -> 4 for the members; dictionary 57 entries, 13
+references saving 2,669,249 B; 42 tensors; PROOF all_exact=True on every member. (Values mode re-measured after the
+dtype fix c0e701a4: see the next entry.) The head (191 KB) and Frankie's derivation digest (1,344,422 B) are unchanged
+and still read whole. The session builds its corpus through the render (`reading.json` tensor_mode, default `values`;
+`frankie_box_serverless_config.sh ACTION=reading TENSOR_MODE=...`), receipts bytes, exact tokens and the proof
+(`FRANKIE_BOX_READING_CORPUS_V3`).
+Cross-cycle answer (Greg: "Are we going to have to do a root read for each of the cycles?"): a read per cycle, yes,
+but only of what changed: with L6 the second cycle over the same members read 706 tokens instead of 5,030 in the
+synthetic test; on the real package the appended journal entries, the new forecast artifact and the changed state are
+what cycle 1 reads, everything else is a $read reference and the cycle-0 merged notes come along.
+No RunPod MCP is connected in this session (ToolSearch: none); connecting it needs RUNPOD_API_KEY in the environment
+(runpod-mcp skill: `claude mcp add --transport http runpod -s user https://mcp.getrunpod.io/ --header "Authorization:
+Bearer $RUNPOD_API_KEY"`), which would let this session create the endpoint directly without a trunk registration.
+H100 chosen (Greg): `frankie_serverless_reading.yml` defaults to the H100 tiers with two full-context sequences per
+worker (71475473).
