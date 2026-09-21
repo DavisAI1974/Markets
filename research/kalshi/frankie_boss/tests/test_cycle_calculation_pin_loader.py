@@ -66,3 +66,68 @@ def test_loaded_pin_carries_the_file_witness_and_index(tmp_path):
     copied = write(tmp_path, committed())
     moved = load_cycle_calculation_pin(3, copied)
     assert moved['pins_witness']['path'] == str(copied) and moved['group'] == pin['group']
+
+
+# ---- the bedrock (Greg, 2026-09-21: "All 3"; SPEC_CYCLE0_BEDROCK_20260921.md pin-bedrock) -------------------------
+
+def test_a_pin_without_bedrock_loads_with_an_empty_bedrock_layer_list():
+    for index in (1, 2, 3):
+        assert load_cycle_calculation_pin(index)['bedrock_layers'] == []
+
+
+def test_malformed_bedrock_is_refused(tmp_path):
+    document = committed()
+    document['pins'][0]['bedrock'] = {}
+    with pytest.raises(ValueError, match='bedrock must be a non-empty list'):
+        load_cycle_calculation_pin(0, write(tmp_path, document))
+    document = committed()
+    document['pins'][0]['bedrock'] = []
+    with pytest.raises(ValueError, match='bedrock must be a non-empty list'):
+        load_cycle_calculation_pin(0, write(tmp_path, document))
+    document = committed()
+    document['pins'][0]['bedrock'] = ['derived_geometry']
+    with pytest.raises(ValueError, match='bedrock entry must be a pin-shaped mapping'):
+        load_cycle_calculation_pin(0, write(tmp_path, document))
+    for key in ('group', 'defined_on', 'calculations', 'registry_layers', 'source_receipts'):
+        document = committed()
+        entry = dict(document['pins'][0]['bedrock'][0])
+        entry[key] = [] if isinstance(entry[key], list) else ''
+        document['pins'][0]['bedrock'][0] = entry
+        with pytest.raises(ValueError, match='bedrock entry lacks ' + key):
+            load_cycle_calculation_pin(0, write(tmp_path, document))
+    document = committed()
+    entry = json.loads(json.dumps(document['pins'][0]['bedrock'][0]))
+    entry['source_receipts'][0] = {'path': 'x'}
+    document['pins'][0]['bedrock'][0] = entry
+    with pytest.raises(ValueError, match='needs path, bytes and sha256'):
+        load_cycle_calculation_pin(0, write(tmp_path, document))
+
+
+def test_a_bedrock_group_no_cycle_pins_as_its_own_is_refused(tmp_path):
+    document = committed()
+    document['pins'][0]['bedrock'][0] = dict(document['pins'][0]['bedrock'][0], group='ghost_group')
+    with pytest.raises(ValueError, match='bedrock group ghost_group is pinned to 0 cycles of its own'):
+        load_cycle_calculation_pin(0, write(tmp_path, document))
+    document = committed()
+    document['pins'][0]['bedrock'][0] = dict(document['pins'][0]['bedrock'][0], group=document['pins'][0]['group'])
+    with pytest.raises(ValueError, match='is pinned to 0 cycles of its own'):
+        load_cycle_calculation_pin(0, write(tmp_path, document))
+
+
+def test_a_bedrock_entry_that_differs_from_its_own_pin_is_refused(tmp_path):
+    document = committed()
+    entry = json.loads(json.dumps(document['pins'][0]['bedrock'][0]))
+    entry['registry_layers'] = entry['registry_layers'][:-1]
+    entry['calculations'] = entry['calculations'][:-1]
+    document['pins'][0]['bedrock'][0] = entry
+    with pytest.raises(ValueError, match='bedrock group derived_geometry differs from its own pin'):
+        load_cycle_calculation_pin(0, write(tmp_path, document))
+
+
+def test_a_bedrock_layer_outside_the_registry_is_refused(tmp_path):
+    document = committed()
+    ghost = dict(document['pins'][1], registry_layers=document['pins'][1]['registry_layers'] + ['ghost_layer'])
+    document['pins'][1] = ghost
+    document['pins'][0]['bedrock'][0] = dict(ghost)
+    with pytest.raises(ValueError, match='bedrock layer ghost_layer is not a registry calculation layer'):
+        load_cycle_calculation_pin(0, write(tmp_path, document))

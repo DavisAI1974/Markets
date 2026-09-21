@@ -547,3 +547,48 @@ def test_instruction_carries_this_cycles_pin_and_refuses_without_one(tmp_path):
             admission=dict(adapter.admission), cycle_index=19)
     with pytest.raises(ValueError, match='is absent'):
         load_cycle_calculation_pin(0, tmp_path / 'missing.json')
+
+
+def test_cycle_zero_pin_carries_the_bedrock_verbatim_and_the_instruction_renders_it(tmp_path):
+    """Greg, 2026-09-21: "All 3" - cycle 0's pin gains derived_geometry, prebirth_opportunity and causal_clocks as a
+    BEDROCK set (the base the later calculations build from) in addition to its own group; each bedrock entry is its
+    own pin's entry verbatim; cycles 1-3 keep their pins and carry no bedrock; the instruction carries all 25 layers."""
+    import hashlib
+    from frankie_principal_adapter import FrankiePrincipalAdapter, load_cycle_calculation_pin
+    document = _pins_document()
+    assert document['bedrock_rule'].startswith('Greg Davis, 2026-09-21')
+    by_group = {pin['group']: pin for pin in document['pins']}
+    pin0 = document['pins'][0]
+    assert [entry['group'] for entry in pin0['bedrock']] == ['derived_geometry', 'prebirth_opportunity', 'causal_clocks']
+    root = _repo_root()
+    for entry in pin0['bedrock']:
+        assert entry == by_group[entry['group']], entry['group']    # verbatim, cycles of its own included
+        for receipt in entry['source_receipts']:
+            body = (root / receipt['path']).read_bytes()
+            assert len(body) == receipt['bytes'] and hashlib.sha256(body).hexdigest() == receipt['sha256'], receipt['path']
+    for other in document['pins'][1:]:
+        assert 'bedrock' not in other, other['group']
+    loaded = load_cycle_calculation_pin(0)
+    assert len(loaded['bedrock_layers']) == 20 and len(loaded['registry_layers']) == 5
+    assert len(set(loaded['bedrock_layers']) | set(loaded['registry_layers'])) == 25
+    assert loaded['bedrock_layers'] == [layer for index in (1, 2, 3) for layer in load_cycle_calculation_pin(index)['registry_layers']]
+    adapter, _ = case(tmp_path)
+    text = adapter._instruction()
+    assert "THIS CYCLE'S PIN (cycle 0)" in text and "THIS CYCLE'S BEDROCK (Greg Davis, 2026-09-21)" in text
+    assert text.index("THIS CYCLE'S PIN") < text.index("THIS CYCLE'S BEDROCK")
+    for layer in loaded['registry_layers'] + loaded['bedrock_layers']:
+        assert layer in text, layer
+    for entry in pin0['bedrock']:
+        assert entry['group'] in text and entry['defined_on'] in text
+        for receipt in entry['source_receipts']:
+            assert receipt['sha256'] in text
+        for calculation in entry['calculations']:
+            assert calculation in text
+    assert "layers of other cycles' pins that are not in this cycle's bedrock are not required now" in text
+    assert "beside the pinned layers, each with its own status and reason" in text
+    other = FrankiePrincipalAdapter(receiver_root=adapter.receiver_root, receiver_commit=adapter.receiver_commit,
+        python=adapter.python, directory=tmp_path / 'other', preparation={}, render=dict(adapter.render),
+        protected_files=adapter.protected_files, section_evidence=adapter.section_evidence, feedback_contract={},
+        admission=dict(adapter.admission), cycle_index=1)
+    second = other._instruction()
+    assert 'BEDROCK' not in second and "layers of other cycles' pins are not required now" in second

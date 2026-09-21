@@ -1,6 +1,7 @@
 {
  "schema": "FRANKIE_CYCLE_CALCULATION_PINS_V1",
  "rule": "Greg Davis, 2026-09-20 22:23Z: pin cycle 0's calculations to the first group of calculations we did, cycle 1 to the second, and the rest to the remaining original calculations as of the date we came up with them. Each pin is a registry calculation group ordered by the first git-add date of the earliest committed file carrying that group's calculations; the source receipts are those files with their bytes and sha256; the layers are the registry's own, verbatim; the layer descriptions are the registry's own text. Cycles 7-18 carry the complete registry.",
+ "bedrock_rule": "Greg Davis, 2026-09-21 (chat 6, SPEC_CYCLE0_BEDROCK_20260921.md), verbatim: \"All 3. The things you losted are sort of the bedrock research that the rest of thebcalcs buid from and if we start with a bettwe base, everything after it improves.\" Cycle 0's pin therefore carries, in addition to its own group, the derived_geometry, prebirth_opportunity and causal_clocks groups as a BEDROCK set: each entry is that group's own pin entry verbatim (cycles of its own included), required on cycle 0 beside the pinned layers, each accounted for with its own status and reason. Cycles 1-3 keep their own pins; the exclusivity rule above (every registry layer pinned to exactly one cycle as its own) is untouched.",
  "reading": "The registry-group reading: 'group' = a calculation group of the native ingestion registry (the seven groups the request instruction already renders). The alternative reading, 'group' = the dated research campaigns as run (2026-08-16 families and blind test, 08-16/17 runway clock, 08-17 aftermath, 08-17 chain phase 1, 08-17/18 phase 2, 08-18 exact D1 and entry timing, 08-19 D0-D5 and chain birth, 08-20 V4 and the MBO adapter, 08-28 recalculation), is recorded in knowledge/CYCLE_CALCULATION_PINS.md with its receipts; it maps onto no registry layers for its first three campaigns and is Greg's call to switch to.",
  "registry_sha256": "239a14808850d9cc9ba589165e4263c0e3f11a0c574052f39bfaa133adf296b1",
  "registry_file": {
@@ -67,6 +68,172 @@
     "research/kalshi/frankie_raw_mbo_benchmark/a_memory_member_first_recalculation_20260828.py",
     "research/kalshi/frankie_raw_mbo_benchmark/native_roll20.py",
     "research/ng_exhaustion_mbo_v4_state_adapter_20260820.py"
+   ],
+   "bedrock": [
+    {
+     "cycles": [
+      1
+     ],
+     "group": "derived_geometry",
+     "defined_on": "2026-08-17",
+     "first_done": "the chain study: chain discovery and its freeze (origin, members, depth, reset, predecessor and ancestry state, unresolved-age chain trajectory) on 2026-08-17, its phase-2 characterization (D families and their geometry, roll20 and dipole state, price/flow/book paths) frozen 2026-08-18, and the D0-D5 geometric self-adaptation contract of 2026-08-20",
+     "source_receipts": [
+      {
+       "path": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+       "bytes": 7321,
+       "sha256": "c226eff3f99347dc41f9ec32e04eaeb0d3451ee92fa5408fdf66c097e668ac79"
+      },
+      {
+       "path": "research/NG_EXHAUSTION_CHAIN_DISCOVERY_FREEZE_20260817.json",
+       "bytes": 6223,
+       "sha256": "025f2abc68b22301239300464e3786357274d026175cbd5f481525f9aa1ff618"
+      },
+      {
+       "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+       "bytes": 11140,
+       "sha256": "49133cbcbfcdf589201724ee1dc60fc0c0cb059593736a5ac97caa30c68093a1"
+      },
+      {
+       "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
+       "bytes": 14018,
+       "sha256": "d3e273b934ef31312cf1fc5ddd67345da3efd4809f4da3cc770b8f3f80ef6d7b"
+      },
+      {
+       "path": "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+       "bytes": 9441,
+       "sha256": "e36d82e245a718624bb21a14ae1cd5d172b64630d38580d7fe4e66d9357909db"
+      }
+     ],
+     "registry_layers": [
+      "derived_roll20_and_dipole_state",
+      "derived_d_family_geometry",
+      "derived_open_world_predecessor_state",
+      "derived_ancestry_gaps",
+      "derived_unresolved_age_chain_trajectory",
+      "derived_price_flow_book_paths",
+      "derived_v4_mechanics_fifo_features",
+      "derived_feature_availability_timestamps"
+     ],
+     "calculations": [
+      "derived_roll20_and_dipole_state: roll20 and dipole state",
+      "derived_d_family_geometry: D-family geometry",
+      "derived_open_world_predecessor_state: P O S X seed and open-world predecessor state",
+      "derived_ancestry_gaps: Ancestry gaps",
+      "derived_unresolved_age_chain_trajectory: Unresolved age and chain or extension trajectory",
+      "derived_price_flow_book_paths: Price, signed-flow, and book paths",
+      "derived_v4_mechanics_fifo_features: V4 mechanics and FIFO features",
+      "derived_feature_availability_timestamps: Feature-availability timestamps"
+     ],
+     "crosswalk_producers": [
+      "research/kalshi/frankie_raw_mbo_benchmark/a_memory_member_first_recalculation_20260828.py",
+      "research/kalshi/frankie_raw_mbo_benchmark/native_book_regime.py",
+      "research/kalshi/frankie_raw_mbo_benchmark/native_clocks.py",
+      "research/kalshi/frankie_raw_mbo_benchmark/native_flow_substrate.py",
+      "research/kalshi/frankie_raw_mbo_benchmark/native_full_capture_adapter.py",
+      "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py"
+     ]
+    },
+    {
+     "cycles": [
+      2
+     ],
+     "group": "prebirth_opportunity",
+     "defined_on": "2026-08-19",
+     "first_done": "chain-birth predictability: the predecessor at risk, the unresolved chain extension, the ancestry successor opportunity, stopped-chain false-context controls and the negative opportunity cases (the 2026-08-19 chain-birth protocol, PRIOR availability and the birth v2 finalization)",
+     "source_receipts": [
+      {
+       "path": "research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PREDICTABILITY_PROTOCOL_20260819.md",
+       "bytes": 8235,
+       "sha256": "73674546534336fc6fb20c529e3f69464421605d8b58c0aed1444a7b5c440c1f"
+      },
+      {
+       "path": "research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PRIOR_AVAILABILITY_20260819.md",
+       "bytes": 5086,
+       "sha256": "2a417f39796615c737a493a0f0d32b6333c0d8dcfc61611976dfaf98b19eb0a8"
+      },
+      {
+       "path": "research/NG_EXHAUSTION_CHAIN_BIRTH_V2_FINALIZATION_MANIFEST_20260819.json",
+       "bytes": 3653,
+       "sha256": "a2d4987a03ac79fd2fa7510d970fec5bc86ac058f91b292809dfdeeaf3c2d894"
+      },
+      {
+       "path": "research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+       "bytes": 9289,
+       "sha256": "9251176dbb5657ab22107c8ab3e4c27a260a7ea995f3c745491a778e21066b14"
+      }
+     ],
+     "registry_layers": [
+      "prebirth_predecessor_at_risk_state",
+      "prebirth_unresolved_chain_extension_state",
+      "prebirth_ancestry_successor_opportunity",
+      "prebirth_stopped_chain_false_context_controls",
+      "prebirth_negative_opportunity_cases"
+     ],
+     "calculations": [
+      "prebirth_predecessor_at_risk_state: Predecessor-defined at-risk state",
+      "prebirth_unresolved_chain_extension_state: Unresolved chain and extension state",
+      "prebirth_ancestry_successor_opportunity: Ancestry and successor opportunity",
+      "prebirth_stopped_chain_false_context_controls: Stopped-chain and false-context controls",
+      "prebirth_negative_opportunity_cases: Negative opportunity cases"
+     ],
+     "crosswalk_producers": [
+      "research/kalshi/frankie_raw_mbo_benchmark/native_recognition.py",
+      "research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py"
+     ]
+    },
+    {
+     "cycles": [
+      3
+     ],
+     "group": "causal_clocks",
+     "defined_on": "2026-08-19",
+     "first_done": "the distinct causal clocks: event time, receive time, event known-by, feature availability, prospective discovery confirmation, model evaluation and lock time, fixed by the 2026-08-19 full-causal and continuous-live information corrections and the 2026-08-20 event-mark open boundary and continuous-instance timing corrections",
+     "source_receipts": [
+      {
+       "path": "research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md",
+       "bytes": 4639,
+       "sha256": "fc08cbe26dd25f74f0438d218d201a370aef6448ef6da3df32647e6438c5bb16"
+      },
+      {
+       "path": "research/NG_EXHAUSTION_CONTINUOUS_LIVE_INFORMATION_CORRECTION_20260819.md",
+       "bytes": 2942,
+       "sha256": "b7d75c3f34e468c5a84503d80f2a964ba7a07653e16983050daf1844a9db98ce"
+      },
+      {
+       "path": "research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md",
+       "bytes": 2218,
+       "sha256": "b3c0f05a3d43a384b7445553000234c08dcd8ba31c6ee75bc955c3547da07a2a"
+      },
+      {
+       "path": "research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md",
+       "bytes": 5256,
+       "sha256": "553c119d0809f5f36f98752ec601adef75eb04b1c80515885487c9a6a460ca24"
+      }
+     ],
+     "registry_layers": [
+      "clock_event_time",
+      "clock_receive_time",
+      "clock_event_known_by",
+      "clock_feature_availability",
+      "clock_prospective_discovery_confirmation",
+      "clock_model_evaluation",
+      "clock_lock_time"
+     ],
+     "calculations": [
+      "clock_event_time: Event-time clock",
+      "clock_receive_time: Receive-time clock",
+      "clock_event_known_by: Event-known-by clock",
+      "clock_feature_availability: Feature-availability clock",
+      "clock_prospective_discovery_confirmation: Prospective discovery and confirmation clock",
+      "clock_model_evaluation: Model-evaluation clock",
+      "clock_lock_time: Lock-time clock"
+     ],
+     "crosswalk_producers": [
+      "NO_PRODUCER_FOUND",
+      "research/kalshi/frankie_raw_mbo_benchmark/native_clocks.py",
+      "research/kalshi/frankie_raw_mbo_benchmark/native_recognition.py"
+     ]
+    }
    ]
   },
   {

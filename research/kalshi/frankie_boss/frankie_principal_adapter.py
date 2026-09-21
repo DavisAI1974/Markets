@@ -114,21 +114,72 @@ def load_cycle_calculation_pin(cycle_index, path=None):
     for receipt in pin['source_receipts']:
         if type(receipt) is not dict or not {'path', 'sha256', 'bytes'} <= set(receipt):
             raise ValueError('cycle calculation pin source receipt needs path, bytes and sha256')
+    pin['bedrock_layers'] = _validate_bedrock(matches[0], document['pins'], cycle_index)   # the file's own entry, so identity excludes it
     pin['pins_witness'] = dict(file_witness(pins_path), path=str(pins_path))
     pin['cycle_index'] = cycle_index
     return pin
 
 
+def _validate_bedrock(pin, pins, cycle_index):
+    """The bedrock (Greg, 2026-09-21: "All 3"): a pin may carry `bedrock`, a non-empty list of pin-shaped entries,
+    each the verbatim entry of a group some OTHER cycle pins as its own, whose layers are registry calculation
+    layers. Returns the bedrock layers in order (empty when the pin carries none); malformed = refused."""
+    if 'bedrock' not in pin:
+        return []
+    bedrock = pin['bedrock']
+    if type(bedrock) is not list or not bedrock:
+        raise ValueError('cycle calculation pin for cycle %d: bedrock must be a non-empty list of pin entries' % cycle_index)
+    registry = {layer for _, layers in REGISTRY_CALCULATION_SET for layer in layers}
+    layers = []
+    for entry in bedrock:
+        if type(entry) is not dict:
+            raise ValueError('cycle calculation pin for cycle %d: bedrock entry must be a pin-shaped mapping' % cycle_index)
+        for key in ('group', 'defined_on', 'calculations', 'registry_layers', 'source_receipts'):
+            if not entry.get(key):
+                raise ValueError('cycle calculation pin for cycle %d: bedrock entry lacks %s' % (cycle_index, key))
+        for receipt in entry['source_receipts']:
+            if type(receipt) is not dict or not {'path', 'sha256', 'bytes'} <= set(receipt):
+                raise ValueError('cycle calculation pin bedrock source receipt needs path, bytes and sha256')
+        own = [other for other in pins if other is not pin and other.get('group') == entry['group']
+               and type(other.get('cycles')) is list and other['cycles']]
+        if len(own) != 1:
+            raise ValueError('cycle calculation pin bedrock group %s is pinned to %d cycles of its own, not one'
+                             % (entry['group'], len(own)))
+        if any(entry.get(key) != own[0].get(key) for key in ('defined_on', 'calculations', 'registry_layers', 'source_receipts')):
+            raise ValueError('cycle calculation pin bedrock group %s differs from its own pin' % entry['group'])
+        for layer in entry['registry_layers']:
+            if layer not in registry:
+                raise ValueError('cycle calculation pin bedrock layer %s is not a registry calculation layer' % layer)
+        layers.extend(entry['registry_layers'])
+    return layers
+
+
 def calculation_pin_instruction(pin):
-    """The per-cycle required set, rendered into the instruction after the standing rule."""
+    """The per-cycle required set, rendered into the instruction after the standing rule. A pin that carries a
+    bedrock (cycle 0, Greg 2026-09-21) renders it after the pin sentence and narrows the "not required now" clause
+    to the layers outside the bedrock; a pin without one renders byte-for-byte what it always did."""
     receipts = '; '.join(r['path'] + ' sha256 ' + r['sha256'] for r in pin['source_receipts'])
-    return ('THIS CYCLE\'S PIN (cycle %d): you repeat the %s calculations, the group first done on %s '
+    bedrock = pin.get('bedrock') or []
+    not_required = ('layers of other cycles\' pins that are not in this cycle\'s bedrock are not required now'
+                    if bedrock else 'layers of other cycles\' pins are not required now')
+    text = ('THIS CYCLE\'S PIN (cycle %d): you repeat the %s calculations, the group first done on %s '
             '(source receipts: %s). THE REQUIRED SET FOR THIS CYCLE IS THIS PIN: derive yourself, on this '
             'cycle\'s delivered rows, %s; the registry layers you must account for are %s. The accounting '
-            'entry lists every pinned layer; layers of other cycles\' pins are not required now and are '
+            'entry lists every pinned layer; %s and are '
             'named in their own cycles. '
             % (pin['cycle_index'], pin['group'], pin['defined_on'], receipts,
-               '; '.join(pin['calculations']), ', '.join(pin['registry_layers'])))
+               '; '.join(pin['calculations']), ', '.join(pin['registry_layers']), not_required))
+    if bedrock:
+        groups = '; '.join('%s (first done on %s; source receipts: %s)'
+                           % (e['group'], e['defined_on'], '; '.join(r['path'] + ' sha256 ' + r['sha256'] for r in e['source_receipts']))
+                           for e in bedrock)
+        text += ('THIS CYCLE\'S BEDROCK (Greg Davis, 2026-09-21): in addition, the base the later calculations build '
+                 'from, the groups %s. Derive yourself, on this cycle\'s delivered rows, %s; the registry layers you must '
+                 'account for include %s. The accounting entry lists them beside the pinned layers, each with its own '
+                 'status and reason. '
+                 % (groups, '; '.join(c for e in bedrock for c in e['calculations']),
+                    ', '.join(layer for e in bedrock for layer in e['registry_layers'])))
+    return text
 
 RUN_ANALYSIS_INSTRUCTION = (
     'Print your own run analysis in the session output and retain the same Markdown text '
