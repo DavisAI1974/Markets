@@ -41,6 +41,7 @@ on:
       - '.github/workflows/frankie_box_codecs_ci.yml'
       - 'deploy/aws/box/producers_checkout.sh'
       - 'deploy/aws/box/frankie_box_bedrock.py'
+      - 'deploy/aws/box/frankie_box_teach.py'
       - 'tests/_producers.py'
       - 'tests/test_producers_checkout.py'
   workflow_dispatch:
@@ -61,4 +62,4 @@ jobs:
       - run: python -m pip install --no-cache-dir pytest==9.1.1 pyyaml==6.0.2
       # BR-0: the pinned producers as an in-repo worktree (never a scratchpad); the tests reach it through FRANKIE_BOX_PRODUCERS
       - run: bash deploy/aws/box/producers_checkout.sh
-      - run: python -m pytest -q tests/test_frankie_box_digest_render.py tests/test_frankie_box_reading_render.py tests/test_frankie_box_stacked_text.py tests/test_frankie_box_head_render.py tests/test_frankie_serverless_reading_endpoint.py tests/test_frankie_box_docs.py tests/test_frankie_box_boss_session_merge.py tests/test_frankie_box_boss_session_reading.py tests/test_frankie_box_brain.py tests/test_frankie_host_recorder_script.py tests/test_frankie_box_classroom.py tests/test_frankie_box_boss_session_classroom.py tests/test_frankie_correction_turn_plumbing.py tests/test_frankie_box_packets.py tests/test_frankie_box_boss_session_rerun.py tests/test_producers_checkout.py tests/test_frankie_box_bedrock.py tests/test_frankie_box_boss_session_derive.py
+      - run: python -m pytest -q tests/test_frankie_box_digest_render.py tests/test_frankie_box_reading_render.py tests/test_frankie_box_stacked_text.py tests/test_frankie_box_head_render.py tests/test_frankie_serverless_reading_endpoint.py tests/test_frankie_box_docs.py tests/test_frankie_box_boss_session_merge.py tests/test_frankie_box_boss_session_reading.py tests/test_frankie_box_brain.py tests/test_frankie_host_recorder_script.py tests/test_frankie_box_classroom.py tests/test_frankie_box_boss_session_classroom.py tests/test_frankie_correction_turn_plumbing.py tests/test_frankie_box_packets.py tests/test_frankie_box_boss_session_rerun.py tests/test_producers_checkout.py tests/test_frankie_box_bedrock.py tests/test_frankie_box_boss_session_derive.py tests/test_frankie_box_boss_session_teach.py

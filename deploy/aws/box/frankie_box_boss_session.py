@@ -72,7 +72,7 @@ BYTES_PER_TOKEN = 1.6      # conservative for dense JSON evidence: the proven pa
 CHUNK_BYTES = 140_000      # about 87k tokens at that rate, leaving the rest of the context to the BOSS's answer
 POLL_SECONDS = 10
 HTTP_TIMEOUT = 80
-STAGES = ('verify', 'labels', 'engine', 'derive', 'reading', 'classroom', 'writing', 'push', 'correction')
+STAGES = ('verify', 'labels', 'engine', 'derive', 'reading', 'classroom', 'teach', 'writing', 'push', 'correction')
 
 
 _MODULES = {}
@@ -1552,6 +1552,38 @@ class Session:
                   f'disagreements' + (' (a remaining disagreement blocks teacher completion by contract)' if parsed['remaining_disagreements'] else ''))
         return reply
 
+    # ---- the exhaustion/D teach-back (Greg, 2026-09-21: "All 3"; beside the classroom, never in response.json) -----
+    def teach(self):
+        """One BOSS call: the facts computed by code from this session's own bedrock files and the brain's frozen learned
+        structure (frankie_box_teach.facts), the answer's every number checked against them, filed under work/teach/
+        (durable: a restart makes no model call), rendered as exhaustion-teachback.md for the docs bundle and the brain,
+        and read by the writing stage into a section of analysis.md. Host response schema and classroom grader unchanged."""
+        T = _box_module('frankie_box_teach')
+        C = classroom_module()
+        d = self.work / 'teach'
+        d.mkdir(exist_ok=True)
+        path = d / 'exhaustion-teachback.json'
+        if path.exists():
+            self.note('teach: the exhaustion/D teach-back is already filed; nothing to do')
+            return load_json(path)
+        try:
+            f = T.facts(self.work, BRAIN_DIR)
+        except ValueError as error:
+            self.refuse(f'teach: {error}')
+        text = T.facts_text(f)
+        ask = T.prompt(text, cycle=self.cycle, request_id=self.request['request_id'])
+        (d / 'prompt.txt').write_text(ask, encoding='utf-8')
+        self.note(f'teach: the exhaustion/D teach-back on the BOSS ({len(ask.encode("utf-8"))} bytes of facts and frozen structure)')
+        parsed, call = self._classroom_call('teach-exhaustion', ask, lambda body: T.parse_answer(body, text, C.ClassroomOutput), 'boss')
+        record = dict(schema=T.SCHEMA, at=time.time(), cycle=self.cycle, request_id=self.request['request_id'],
+                      facts={k: v for k, v in f.items() if k != 'frozen'}, facts_text=text, facts_sha256=sha256_bytes(text.encode('utf-8')),
+                      frozen=[dict(layer=x['layer'], name=x['name'], source=x['source'], bytes=x['bytes'], sha256=x['sha256']) for x in f['frozen']],
+                      answer=parsed, call=call)
+        write_json(path, record)
+        (d / 'exhaustion-teachback.md').write_text(T.markdown(record), encoding='utf-8')
+        self.note(f'teach: filed ({len(parsed.get("questions", []))} questions); {d / "exhaustion-teachback.md"}')
+        return load_json(path)
+
     # ---- the packets Frankie asked for (cycle 0 analysis, 2026-09-21) ----------------------------------------
     def compare(self):
         """The comparison packet: every derived pin layer beside the frozen learned-structure files the brain carries
@@ -1840,6 +1872,9 @@ class Session:
             if self.serverless is None:
                 self.serverless_reach()
             self.classroom()
+        self.phase('teach')
+        if not (self.work / 'teach' / 'exhaustion-teachback.json').exists():
+            self.teach()
         self.phase('writing')
         self.receipts()
         response_path = self.out / 'response.json'
