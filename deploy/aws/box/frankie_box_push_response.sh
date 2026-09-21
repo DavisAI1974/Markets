@@ -95,6 +95,7 @@ if [ -n "${MAP_URL:-}" ]; then
   T="$ROOT/tmp"; mkdir -p "$T"
   curl -fsS -m 60 --retry 3 -o "$T/response-upload-map.json" "$MAP_URL" || { echo "upload map download failed"; exit 2; }
   export T
+  trap 'rm -f "$T/response-upload-map.json"' EXIT      # the presigned URLs do not stay on the disk
   "$ROOT/venv/bin/python" - <<'PY' || exit 5
 import hashlib, json, os, subprocess, time
 out, t, root = os.environ['OUT'], os.environ['T'], os.environ['ROOT']
@@ -134,5 +135,6 @@ git -c credential.helper="$HELPER" push -q origin "HEAD:$BR" || { echo "push fai
 unset FRANKIE_GIT_TOKEN
 git log --oneline -1; git ls-remote origin "$BR"
 sha=$(git rev-parse HEAD)
-printf '{"schema":"FRANKIE_BOX_RESPONSE_PUSH_RECEIPT_V1","at":%s,"branch":"%s","commit":"%s","turn":"%s","files":"%s"}\n' "$(date +%s)" "$BR" "$sha" "$TURN" "${FILES:-docs}" > "$ROOT/receipts/response-push-$(date +%s).json"
+files_json=$(printf '%s\n' ${FILES:-docs} | python3 -c 'import json,sys; print(json.dumps([l.strip() for l in sys.stdin if l.strip()]))')
+printf '{"schema":"FRANKIE_BOX_RESPONSE_PUSH_RECEIPT_V1","at":%s,"branch":"%s","commit":"%s","turn":"%s","files":%s}\n' "$(date +%s)" "$BR" "$sha" "$TURN" "$files_json" > "$ROOT/receipts/response-push-$(date +%s).json"
 echo "pushed $BR at $sha; next: frankie_host_record_principal_response.yml source_ref=$BR turn=$TURN"

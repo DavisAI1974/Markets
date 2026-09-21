@@ -41,3 +41,20 @@ def test_export_host_script_exports_the_correction_request_alone_on_the_correcti
     text = (ROOT / 'deploy/aws/host/frankie_host_export_principal_request.ps1').read_text()
     assert "$files['classroom-correction-request.json'] = $RequestUrl" in text
     assert "@('Day', 'RunRoot', 'CycleIndex', 'RequestUrl') }" in text and "turn        = $Turn" in text
+
+
+def test_the_correction_unit_waits_for_a_running_cycle_session():
+    text = (ROOT / 'deploy' / 'aws' / 'box' / 'frankie_box_session.sh').read_text()
+    assert 'if systemctl is-active --quiet "frankie-session-$CYCLE.service"; then echo "frankie-session-$CYCLE is running: the correction waits' in text
+    assert 'trap' in text and "doc.get('original_request_sha256') != answered" in text
+
+
+def test_the_fetch_workflow_hex_validates_the_sha_it_exports():
+    text = (ROOT / '.github' / 'workflows' / 'frankie_box_fetch_response.yml').read_text()
+    assert text.count("re.fullmatch(r'[0-9a-f]{64}', str(r['request_sha256']))") == 2
+    assert text.count("out.write(f\"request_sha256={r['request_sha256']}\\n\")") == 2
+
+
+def test_the_push_receipt_files_are_a_json_array():
+    text = (ROOT / 'deploy' / 'aws' / 'box' / 'frankie_box_push_response.sh').read_text()
+    assert '"files":%s}' in text and 'files_json=$(printf' in text

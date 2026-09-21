@@ -44,7 +44,11 @@ def test_moves_never_deletes_and_refuses_when_a_runner_or_a_completion_exists():
     assert "kept            = @('session-request.json', 'prompt.md', 'historical-prompt.md', 'receiver'" in CODE
     assert "'FRANKIE_PRINCIPAL_RESPONSE_SUPERSEDED_V1'" in CODE and "Write-Output ('RECEIPT '" in CODE
     writes = [line for line in CODE.splitlines() if 'Set-Content' in line]
-    assert len(writes) == 1 and 'principal-response-superseded-' in CODE
+    assert len(writes) == 2 and '$plannedPath' in writes[0] and 'principal-response-supersede-planned-' in CODE and 'principal-response-superseded-' in CODE
+    assert CODE.index('supersede-planned-') < CODE.index('Move-Item -LiteralPath')      # the plan is receipted before anything moves
+    # the principal_output gate reads the coordinator's sqlite read-only through the host python; any error refuses, never passes
+    assert "?mode=ro',uri=True" in CODE and "if ($LASTEXITCODE -ne 0 -or $accepted -notmatch '^\\d+$') { throw" in CODE
+    assert "Where-Object { $_.CommandLine -like '*run_actual_sunday*' }" in CODE
 
 
 def test_workflow_validates_inputs_and_passes_every_variable_by_set():
@@ -56,6 +60,6 @@ def test_workflow_validates_inputs_and_passes_every_variable_by_set():
     assert '^[0-9]{2}$' in validate and 'apostrophes' in validate
     ssm = next(s for s in steps if 'python deploy/aws/ssm_run_ps1.py' in s.get('run', ''))['run']
     assert '--script deploy/aws/host/frankie_host_supersede_principal_response.ps1' in ssm
-    for name, env in (('Day', 'DAY'), ('RunRoot', 'RUN_ROOT'), ('CycleIndex', 'CYCLE_INDEX'), ('Reason', 'REASON')):
+    for name, env in (('Day', 'DAY'), ('RunRoot', 'RUN_ROOT'), ('CycleIndex', 'CYCLE_INDEX'), ('Reason', 'REASON'), ('Python', 'HOST_PYTHON')):
         assert f'--set "{name}=${env}"' in ssm
     assert workflow['permissions'] == {'contents': 'read'}

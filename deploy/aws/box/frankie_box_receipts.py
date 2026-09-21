@@ -33,9 +33,11 @@ def _witness(path):
     return dict(bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
 
 
-def provider_invocations(work):
+def provider_invocations(work, exclude_prefixes=()):
     """Every model call the session made, from the durable job directories: the BOSS (Pod, jobs_v1) and the reading lane
-    (RunPod serverless), each with its request witness, result witness, usage and model as the provider reported them."""
+    (RunPod serverless), each with its request witness, result witness, usage and model as the provider reported them.
+    exclude_prefixes: job names left out by construction (the writing calls, whose prompts carry this packet: listing
+    them would move the packet, and the writing gate with it, on every restart)."""
     work = Path(work)
     out = []
     for lane, folder in (('boss', 'boss-jobs'), ('serverless', 'serverless-jobs')):
@@ -44,7 +46,10 @@ def provider_invocations(work):
             continue
         for d in sorted(p for p in base.iterdir() if p.is_dir()):
             request, outcome = _load(d / 'request.json') or {}, _load(d / 'outcome.json') or {}
-            item = dict(lane=lane, name=request.get('name') or outcome.get('name') or d.name, job_directory=d.name,
+            job_name = request.get('name') or outcome.get('name') or d.name
+            if any(str(job_name).startswith(prefix) for prefix in exclude_prefixes):
+                continue
+            item = dict(lane=lane, name=job_name, job_directory=d.name,
                         request_sha256=request.get('body_sha256'), request_bytes=request.get('body_bytes'),
                         estimated_input_tokens=request.get('estimated_input_tokens'), max_tokens=request.get('max_tokens'),
                         served_model_name=request.get('served_model_name'), pod_id=request.get('pod_id'), endpoint_id=request.get('endpoint_id') or outcome.get('endpoint_id'),
@@ -89,9 +94,9 @@ def answer_wall(work):
                 rule='nothing received after the learning cutoff was read; the labels come from the next authored cycle\'s marks by code, never from a later outcome')
 
 
-def build(work, reading_ledger=None):
-    return dict(schema=SCHEMA, at=time.time(), provider_invocations=provider_invocations(work), knowledge_retrieval=knowledge_retrieval(work, reading_ledger),
-                answer_wall=answer_wall(work))
+def build(work, reading_ledger=None, exclude_prefixes=()):
+    return dict(schema=SCHEMA, at=time.time(), provider_invocations=provider_invocations(work, exclude_prefixes), excluded_prefixes=list(exclude_prefixes),
+                knowledge_retrieval=knowledge_retrieval(work, reading_ledger), answer_wall=answer_wall(work))
 
 
 def render(report):
@@ -100,7 +105,8 @@ def render(report):
              'These are the session\'s own records: every provider invocation it made, what it retrieved and read, and the wall it kept. '
              'Cite them as observed facts in output_provider_invocation_response_receipts, output_knowledge_retrieval_receipts and '
              'output_answer_wall_access_receipts (and anywhere else they bear); nothing here is inferred.', '',
-             f'## Provider invocations ({len(p)}: {sum(1 for i in p if i["lane"] == "boss")} BOSS jobs on the Pod, {sum(1 for i in p if i["lane"] == "serverless")} serverless jobs)', '',
+             f'## Provider invocations ({len(p)}: {sum(1 for i in p if i["lane"] == "boss")} BOSS jobs on the Pod, {sum(1 for i in p if i["lane"] == "serverless")} serverless jobs'
+             + (f'; the calls named {", ".join(report.get("excluded_prefixes", []))}* follow this packet and are not in it by construction)' if report.get('excluded_prefixes') else ')'), '',
              '| lane | name | request sha256 | job id | model | prompt tokens | completion tokens | incomplete | error | seconds |', '|---|---|---|---|---|---:|---:|---|---|---:|']
     for i in p:
         usage = i.get('usage') or {}
@@ -122,9 +128,9 @@ def render(report):
     return '\n'.join(lines) + '\n'
 
 
-def write(work, reading_ledger=None):
+def write(work, reading_ledger=None, exclude_prefixes=()):
     work = Path(work)
-    report = build(work, reading_ledger)
+    report = build(work, reading_ledger, exclude_prefixes)
     (work / 'session-receipts.json').write_text(json.dumps(report, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     (work / 'session-receipts.md').write_text(render(report), encoding='utf-8')
     return report

@@ -83,6 +83,7 @@ fetch_correction() {
   mkdir -p "$ROOT/tmp" "$ROOT/request"
   curl -fsS -m 60 --retry 3 -o "$ROOT/tmp/presigned-map.json" "$MAP_URL" || { echo "presigned map download failed"; return 2; }
   export ROOT
+  trap 'rm -f "$ROOT/tmp/presigned-map.json"' RETURN      # the presigned URLs do not stay on the disk
   "$ROOT/venv/bin/python" - <<'PY' || return 2
 import hashlib, json, os, subprocess
 root = os.environ['ROOT']
@@ -93,8 +94,14 @@ target = os.path.join(root, 'request', 'classroom-correction-request.json'); tmp
 r = subprocess.run(['curl', '-fsS', '-m', '300', '--retry', '3', '-o', tmp, m[keys[0]]['url']], capture_output=True, text=True)
 if r.returncode: raise SystemExit(f'download failed: curl exit {r.returncode}')
 data = open(tmp, 'rb').read()
+if 'bytes' in m[keys[0]] and int(m[keys[0]]['bytes']) != len(data): os.unlink(tmp); raise SystemExit(f'downloaded {len(data)} bytes, the map says {m[keys[0]]["bytes"]}')
 doc = json.loads(data)
-if doc.get('schema') != 'FRANKIE_DIPOLE_CLASSROOM_CORRECTION_REQUEST_V1': raise SystemExit('the downloaded file is not a Dipole classroom correction request')
+if doc.get('schema') != 'FRANKIE_DIPOLE_CLASSROOM_CORRECTION_REQUEST_V1': os.unlink(tmp); raise SystemExit('the downloaded file is not a Dipole classroom correction request')
+response_path = os.path.join(root, 'session', 'out', 'response.json')
+if os.path.exists(response_path):
+    answered = json.load(open(response_path, 'rb')).get('request_sha256')
+    if doc.get('original_request_sha256') != answered:
+        os.unlink(tmp); raise SystemExit(f'the correction request answers principal request {str(doc.get("original_request_sha256"))[:16]}, this box answered {str(answered)[:16]}; not taken')
 if os.path.exists(target) and open(target, 'rb').read() != data:
     os.unlink(tmp); raise SystemExit('a different classroom-correction-request.json is already on the box; not overwritten (move it aside with a receipt first)')
 os.replace(tmp, target)
@@ -107,9 +114,10 @@ correction() {
   # response this session wrote. Never touches the cycle session unit.
   U="frankie-correction-$CYCLE"
   if systemctl is-active --quiet "$U.service"; then echo "$U is already running"; status; return 0; fi
+  if systemctl is-active --quiet "frankie-session-$CYCLE.service"; then echo "frankie-session-$CYCLE is running: the correction waits (its checkout would move the code under the running session)"; return 2; fi
   [ -s "$ROOT/request/classroom-correction-request.json" ] || { echo "no correction request on the box (ACTION=fetch_correction first)"; return 2; }
   [ -s "$S/out/response.json" ] || { echo "no out/response.json: the correction belongs to the session that wrote the response"; return 2; }
-  git -C "$ROOT/markets" fetch -q --depth 1 origin "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
+  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
   systemctl reset-failed "$U.service" 2>/dev/null
   systemd-run --unit "$U" --collect -p WorkingDirectory="$S" -p StandardOutput=append:"$ROOT/logs/correction-$CYCLE.log" -p StandardError=append:"$ROOT/logs/correction-$CYCLE.log" \
     "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage correction >/dev/null 2>&1 \

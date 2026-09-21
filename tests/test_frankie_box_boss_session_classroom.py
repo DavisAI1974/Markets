@@ -45,6 +45,7 @@ def stub(tmp_path, visible, *, reader, boss):
     def bs(name, text):
         calls.append(('boss', name)); return boss(name, text)
     s.reader, s.boss = rd, bs
+    s.docs = lambda: None
     return s
 
 
@@ -187,3 +188,123 @@ def test_correction_refuses_a_request_for_another_session(tmp_path, monkeypatch)
     (tmp_path / 'request' / 'classroom-correction-request.json').write_text(json.dumps(other))
     with pytest.raises(Refused, match='different session_id'):
         session.Session.correction(s)
+
+
+# ---- ship review, 2026-09-21: the findings that were fixed, each with the test that would have caught it -------------
+
+def test_the_box_modules_are_loaded_once_so_the_retry_catches_the_class_parse_raises():
+    assert session.classroom_module() is session.classroom_module()
+    assert session.docs_module() is session.docs_module() and session.receipts_module() is session.receipts_module()
+    assert session.compare_module() is session.compare_module() and session.brain_module() is session.brain_module()
+
+
+def test_a_well_formed_but_wrong_shape_json_answer_is_asked_once_more_then_refused(tmp_path):
+    visible = build_visible()
+    reader = good_reader(visible)
+    def wrong_shape(name, text):
+        if name.startswith(f'classroom-03-{COLUMNS[3]}'):
+            return dict(text=json.dumps(dict(explanation='a valid JSON object that is not the answer asked for')), incomplete=False, job_id='j')
+        return reader(name, text)
+    s = stub(tmp_path, visible, reader=wrong_shape, boss=good_boss)
+    with pytest.raises(Refused, match='unusable twice'):
+        session.Session.classroom(s)
+    names = [n for lane, n in s._calls]
+    assert names[3:5] == [f'classroom-03-{COLUMNS[3]}', f'classroom-03-{COLUMNS[3]}-retry']
+    assert not (s.work / 'classroom' / 'ledgers.json').exists() and sum('asking once more' in n for n in s._notes) == 1
+
+
+def test_a_terse_valid_answer_is_accepted(tmp_path, monkeypatch):
+    visible = build_visible()
+    s = stub(tmp_path, visible, reader=good_reader(visible), boss=good_boss)
+    ledgers = session.Session.classroom(s)
+    response = dict(session_id='boss:frankie-box:test:cycle-00', model_identity_as_reported_by_session='granite42-smoke (test)', request_sha256='9' * 64, **ledgers)
+    (s.out / 'response.json').write_text(json.dumps(response))
+    monkeypatch.setattr(session, 'ROOT', tmp_path)
+    s.docs = lambda: None
+    correction = correction_request(response)
+    (tmp_path / 'request').mkdir(); (tmp_path / 'request' / 'classroom-correction-request.json').write_text(json.dumps(correction))
+    ack = json.dumps(dict(what_i_will_change='x', remaining_disagreements=[],
+                          correction_resolutions=[dict(correction_id=correction['correction_ids'][0], corrected_understanding='opposite')]), separators=(',', ':'))
+    assert len(ack) < session.docs_module().MIN_NOTE_CHARS   # under the reader's minimum: a valid JSON answer is judged by its parse, not its length
+    s.boss = lambda name, text: dict(text=ack, incomplete=False, job_id='job-c')
+    reply = session.Session.correction(s)
+    assert reply['dipole_acknowledgement']['correction_resolutions'][0]['corrected_understanding'] == 'opposite'
+
+
+def test_an_incomplete_answer_whose_json_needed_a_truncation_repair_is_refused(tmp_path):
+    visible = build_visible()
+    reader = good_reader(visible)
+    def cut(name, text):
+        o = reader(name, text)
+        o['text'] = o['text'].rstrip().rstrip('}')          # the closing brace is missing: the tolerant parser closes it
+        o['incomplete'] = True
+        return o
+    s = stub(tmp_path, visible, reader=cut, boss=good_boss)
+    with pytest.raises(Refused, match='unusable twice'):
+        session.Session.classroom(s)
+    assert any('output incomplete and the JSON had to be repaired' in n for n in s._notes)
+
+
+def test_the_correction_answer_cache_is_bound_to_the_request_and_the_post_grade(tmp_path, monkeypatch):
+    visible = build_visible()
+    s = stub(tmp_path, visible, reader=good_reader(visible), boss=good_boss)
+    ledgers = session.Session.classroom(s)
+    response = dict(session_id='boss:frankie-box:test:cycle-00', model_identity_as_reported_by_session='granite42-smoke (test)', request_sha256='9' * 64, **ledgers)
+    (s.out / 'response.json').write_text(json.dumps(response))
+    monkeypatch.setattr(session, 'ROOT', tmp_path)
+    s.docs = lambda: None
+    (tmp_path / 'request').mkdir()
+    correction = correction_request(response)
+    (tmp_path / 'request' / 'classroom-correction-request.json').write_text(json.dumps(correction))
+    calls = []
+    def boss(name, text):
+        calls.append(name)
+        return dict(text=json.dumps(dict(what_i_will_change='x', remaining_disagreements=[],
+                                         correction_resolutions=[dict(correction_id=correction['correction_ids'][0], corrected_understanding='y')])), incomplete=False, job_id='j')
+    s.boss = boss
+    session.Session.correction(s)
+    # the same request_sha256 with a different post-grade: the cached answer is not reused
+    other = dict(correction, post_grade_hash='8' * 64)
+    (tmp_path / 'request' / 'classroom-correction-request.json').write_text(json.dumps(other))
+    with pytest.raises(Refused, match='answers another correction request'):
+        session.Session.correction(s)
+    # a request answering a different principal response is refused before any call
+    wrong = dict(correction, original_request_sha256='1' * 64, request_sha256='6' * 64)
+    (tmp_path / 'request' / 'classroom-correction-request.json').write_text(json.dumps(wrong))
+    with pytest.raises(Refused, match='original_request_sha256'):
+        session.Session.correction(s)
+    assert calls == ['classroom-correction']
+
+
+def test_a_classroom_that_fails_its_own_validation_refuses_instead_of_crashing(tmp_path, monkeypatch):
+    visible = build_visible()
+    s = stub(tmp_path, visible, reader=good_reader(visible), boss=good_boss)
+    C_ = session.classroom_module()
+    real = C_.validate
+    monkeypatch.setattr(C_, 'validate', lambda visible, ledgers: (_ for _ in ()).throw(ValueError('transcription differs: synthetic')))
+    try:
+        with pytest.raises(Refused, match='transcription differs'):
+            session.Session.classroom(s)
+    finally:
+        monkeypatch.setattr(C_, 'validate', real)
+    assert not (s.work / 'classroom' / 'ledgers.json').exists()
+
+
+def test_a_finding_that_claims_a_future_outcome_is_dropped_not_rewritten(tmp_path):
+    visible = build_visible()
+    def boss(name, text):
+        summary = json.loads(boss_summary_answer())
+        summary['novel_findings'] = [dict(finding_id='tomorrow', premise='p', why_novel='w', future_outcome_claimed=True,
+                                          evidence_refs=[dict(kind='OTHER_CAUSAL_EVIDENCE', evidence_pointer='x', description='d', reasoning='r')])]
+        return dict(text=json.dumps(summary), incomplete=False, job_id='j')
+    s = stub(tmp_path, visible, reader=good_reader(visible), boss=boss)
+    ledgers = session.Session.classroom(s)
+    assert ledgers['dipole_novel_findings'] == []
+    receipt = json.loads((s.work / 'classroom' / 'receipt.json').read_text())
+    assert receipt['dropped_findings'][0]['finding_id'] == 'tomorrow' and 'future outcome' in receipt['dropped_findings'][0]['reason']
+    assert 'future_outcome_claimed=true is dropped' in session.classroom_module().COMPOSITION
+
+
+def test_markdown_cells_are_escaped():
+    C_ = session.classroom_module()
+    assert C_._cell('a | b') == 'a \\| b' and '\n' not in C_._cell('a\nb') and '```' not in C_._cell('```python')

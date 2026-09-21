@@ -40,6 +40,7 @@ import subprocess
 import sys
 import threading
 import time
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -69,54 +70,46 @@ HTTP_TIMEOUT = 80
 STAGES = ('verify', 'labels', 'engine', 'derive', 'reading', 'classroom', 'writing', 'push', 'correction')
 
 
+_MODULES = {}
+
+
+def _box_module(stem):
+    """A sibling module of this file, loaded by path ONCE per process (this directory is not a package). One object per
+    module: the classes it defines (frankie_box_classroom.ClassroomOutput) must be the same class wherever the session
+    raises and catches them; a fresh exec per call made the classroom retry dead code (ship review, 2026-09-21)."""
+    if stem not in _MODULES:
+        import importlib.util
+        path = Path(__file__).resolve().parent / f'{stem}.py'
+        spec = importlib.util.spec_from_file_location(stem, path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _MODULES[stem] = module
+    return _MODULES[stem]
+
+
 def docs_module():
-    """deploy/aws/box/frankie_box_docs.py, loaded by path (this directory is not a package)."""
-    import importlib.util
-    path = Path(__file__).resolve().parent / 'frankie_box_docs.py'
-    spec = importlib.util.spec_from_file_location('frankie_box_docs', path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    """deploy/aws/box/frankie_box_docs.py (the session documents; tolerant JSON; the refusal pattern)."""
+    return _box_module('frankie_box_docs')
 
 
 def brain_module():
-    """deploy/aws/box/frankie_box_brain.py, loaded by path (Frankie's brain: prior cycles' calculation findings)."""
-    import importlib.util
-    path = Path(__file__).resolve().parent / 'frankie_box_brain.py'
-    spec = importlib.util.spec_from_file_location('frankie_box_brain', path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    """deploy/aws/box/frankie_box_brain.py (Frankie's brain: prior cycles' calculation findings)."""
+    return _box_module('frankie_box_brain')
 
 
 def classroom_module():
-    """deploy/aws/box/frankie_box_classroom.py, loaded by path (the Dipole classroom exchange, both turns)."""
-    import importlib.util
-    path = Path(__file__).resolve().parent / 'frankie_box_classroom.py'
-    spec = importlib.util.spec_from_file_location('frankie_box_classroom', path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    """deploy/aws/box/frankie_box_classroom.py (the Dipole classroom exchange, both turns)."""
+    return _box_module('frankie_box_classroom')
 
 
 def compare_module():
-    """deploy/aws/box/frankie_box_compare.py, loaded by path (the comparison packet: derived layers beside the frozen files)."""
-    import importlib.util
-    path = Path(__file__).resolve().parent / 'frankie_box_compare.py'
-    spec = importlib.util.spec_from_file_location('frankie_box_compare', path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    """deploy/aws/box/frankie_box_compare.py (the comparison packet: derived layers beside the frozen files)."""
+    return _box_module('frankie_box_compare')
 
 
 def receipts_module():
-    """deploy/aws/box/frankie_box_receipts.py, loaded by path (the session receipts packet)."""
-    import importlib.util
-    path = Path(__file__).resolve().parent / 'frankie_box_receipts.py'
-    spec = importlib.util.spec_from_file_location('frankie_box_receipts', path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    """deploy/aws/box/frankie_box_receipts.py (the session receipts packet)."""
+    return _box_module('frankie_box_receipts')
 
 
 PACKETS = ('comparison.md', 'session-receipts.md')   # written by the session code into the writing base (Frankie's cycle-0 asks)
@@ -167,7 +160,7 @@ class Session:
         self.contract = None
         self.engine = None
         self.serverless = None            # the reading lane (RunPod serverless), when configured; else the Pod
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()     # re-entrant: note() takes it and _progress_note() calls note() while holding it
         self._progress = {}
 
     # ---- phase / note (the heartbeat reads these) -------------------------------------------------------
@@ -177,12 +170,13 @@ class Session:
             self.note(note)
 
     def note(self, text):
-        (self.dir / 'note').write_text(text.replace('\n', ' ')[:400] + '\n', encoding='utf-8')
-        print(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), text, flush=True)
+        with self._lock:                        # worker threads note too (the classroom fan-out); one writer at a time
+            (self.dir / 'note').write_text(text.replace('\n', ' ')[:400] + '\n', encoding='utf-8')
+            print(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), text, flush=True)
 
     def refuse(self, why):
         self.note('REFUSED: ' + why)
-        write_json(ROOT / 'receipts' / f'boss-session-refusal-{int(time.time())}.json',
+        write_json(ROOT / 'receipts' / f'boss-session-refusal-{int(time.time())}-{uuid.uuid4().hex[:8]}.json',
                    dict(schema='FRANKIE_BOX_BOSS_SESSION_REFUSAL_V1', at=time.time(), cycle=self.cycle, reason=why))
         sys.exit(3)
 
@@ -415,6 +409,16 @@ class Session:
         finally:
             connection.close()
 
+    def _supersede_job(self, directory, name, text):
+        """Move a durable job directory whose prompt is not the one asked now aside (never deleted), with a receipt."""
+        stamp = f'{int(time.time())}-{uuid.uuid4().hex[:8]}'
+        aside = directory.parent / f'{directory.name}.superseded-{stamp}'
+        os.replace(directory, aside)
+        write_json(aside / 'superseded.json', dict(schema='FRANKIE_BOX_JOB_SUPERSEDED_V1', at=time.time(), name=name, moved_to=str(aside),
+                   reason='the prompt asked now differs from the prompt this job answered', prompt_sha256_now=sha256_bytes(text.encode('utf-8'))))
+        directory.mkdir(parents=True, exist_ok=True)
+        self.note(f'{name}: durable outcome answered a different prompt; moved aside to {aside.name} and asked again')
+
     def serverless_job(self, name, text):
         """One reading part (or merge group) as one RunPod serverless job: the same chat body the Pod gets (no output
         limit: max_tokens = the whole remaining context), through the worker's OpenAI route so the result is the
@@ -429,8 +433,16 @@ class Session:
         directory = self.work / 'serverless-jobs' / name
         directory.mkdir(parents=True, exist_ok=True)
         outcome_path = directory / 'outcome.json'
+        prompt_path = directory / 'prompt.txt'
         if outcome_path.exists():
-            return load_json(outcome_path)
+            # Durable by NAME, bound by CONTENT: an outcome is resumed only when it answered this exact prompt. A prompt
+            # that moved (a code fix on restart) moves the old job aside with a receipt and the part is asked again.
+            if not prompt_path.is_file():
+                self.note(f'{name}: durable outcome carries no prompt.txt to bind it to this prompt; resumed unverified')
+                return load_json(outcome_path)
+            if prompt_path.read_text(encoding='utf-8') == text:
+                return load_json(outcome_path)
+            self._supersede_job(directory, name, text)
         estimate = self._input_tokens(text)
         max_tokens = CONTEXT - estimate - 256
         if max_tokens < 1024:
@@ -1272,15 +1284,22 @@ class Session:
         for attempt in (name, name + '-retry'):
             outcome = (self.reader if lane == 'reader' else self.boss)(attempt, text)
             body = outcome.get('text') or ''
-            verdict = docs.note_verdict(body, outcome)
             try:
-                if verdict in ('error', 'refusal', 'empty'):
-                    raise C.ClassroomOutput(f'answer unusable: {verdict}' + (f' ({outcome.get("error")})' if outcome.get('error') else ''))
-                parsed = parse(body)
+                if outcome.get('error') and not body.strip():
+                    raise C.ClassroomOutput(f'answer unusable: no output ({outcome.get("error")})')
+                if body and docs.REFUSAL_RE.match(body.strip()[:300]):
+                    raise C.ClassroomOutput('answer unusable: the model declined instead of answering')
+                if outcome.get('incomplete') and lane == 'boss':
+                    raise C.ClassroomOutput('answer unusable: output incomplete (the answer was cut off; a cut-off acknowledgement or summary is never kept)')
+                parsed = parse(body)                    # a valid JSON answer is usable whatever its length (a zero-correction acknowledgement is short)
+                repairs = C.parse_repairs(body)
+                if outcome.get('incomplete') and any('truncat' in r or 'balanced' in r for r in repairs):
+                    raise C.ClassroomOutput(f'answer unusable: output incomplete and the JSON had to be repaired ({", ".join(repairs)})')
                 if outcome.get('incomplete'):
                     self.note(f'{attempt}: output incomplete but the JSON parsed whole; kept')
                 return parsed, dict(attempt=attempt, job_id=outcome.get('job_id') or outcome.get('runpod_job_id'), lane=lane,
-                                    incomplete=bool(outcome.get('incomplete')), estimated_input_tokens=estimate, usage=outcome.get('usage'))
+                                    prompt_sha256=sha256_bytes(text.encode('utf-8')), incomplete=bool(outcome.get('incomplete')),
+                                    repairs=repairs, estimated_input_tokens=estimate, usage=outcome.get('usage'))
             except C.ClassroomOutput as error:
                 last = str(error)
                 self.note(f'{attempt}: {last[:200]}' + ('; asking once more' if attempt == name else ''))
@@ -1292,7 +1311,10 @@ class Session:
         and those answers, validated by the repo's own validators, and written to work/classroom/ledgers.json. Resumable:
         every parsed answer and the ledgers are durable; a re-run makes no model call."""
         C = classroom_module()
-        visible = C.visible_of(self.request)
+        try:
+            visible = C.visible_of(self.request)
+        except ValueError as error:
+            self.refuse(f'classroom: {error}')
         d = self._classroom_dir()
         ledgers_path = d / 'ledgers.json'
         if ledgers_path.exists():
@@ -1322,8 +1344,11 @@ class Session:
             parsed, call = self._classroom_call('classroom-summary', text, C.parse_summary, 'boss')
             write_json(summary_path, dict(schema='FRANKIE_BOX_CLASSROOM_SUMMARY_V1', call=call, parsed=parsed))
         summary = load_json(summary_path)
-        built = C.assemble(visible, outputs, summary['parsed'])
-        report = C.validate(visible, built['ledgers'])
+        try:
+            built = C.assemble(visible, outputs, summary['parsed'])
+            report = C.validate(visible, built['ledgers'])
+        except ValueError as error:
+            self.refuse(f'classroom: the assembled ledgers did not validate ({str(error)[:300]}); nothing filed; the parsed answers stay under {d}')
         write_json(ledgers_path, built['ledgers'])
         (d / 'classroom.md').write_text(C.render_markdown(built['ledgers'], built['dropped_findings']), encoding='utf-8')
         write_json(d / 'receipt.json', dict(schema='FRANKIE_BOX_CLASSROOM_RECEIPT_V1', at=time.time(), report=report, composition=C.COMPOSITION,
@@ -1354,8 +1379,9 @@ class Session:
         if not path.exists():
             self.refuse(f'correction: no correction request at {path}; fetch it first (frankie_box_session.sh ACTION=fetch_correction)')
         correction = load_json(path)
-        if correction.get('schema') != CORRECTION_REQUEST_SCHEMA or not isinstance(correction.get('correction_ids'), list):
-            self.refuse(f'correction: {path} is not a Dipole classroom correction request')
+        if (correction.get('schema') != CORRECTION_REQUEST_SCHEMA or not isinstance(correction.get('correction_ids'), list)
+                or any(not isinstance(correction.get(k), str) or len(correction.get(k)) != 64 for k in ('request_sha256', 'post_grade_hash', 'original_request_sha256'))):
+            self.refuse(f'correction: {path} is not a complete Dipole classroom correction request (schema, correction_ids, request_sha256, post_grade_hash, original_request_sha256)')
         response_path = self.out / 'response.json'
         if not response_path.exists():
             self.refuse('correction: no out/response.json; the correction turn belongs to the session that wrote the response')
@@ -1363,11 +1389,17 @@ class Session:
         for key in ('session_id', 'model_identity_as_reported_by_session'):
             if correction.get(key) != response.get(key):
                 self.refuse(f'correction: the correction request names a different {key} than out/response.json')
+        if correction['original_request_sha256'] != response.get('request_sha256'):
+            self.refuse('correction: the correction request answers a different principal request (original_request_sha256) than out/response.json answered')
         if any(key not in response for key in CLASSROOM_KEYS):
             self.refuse('correction: out/response.json carries no classroom ledgers; the correction cannot be answered')
         ledgers = {key: response[key] for key in CLASSROOM_KEYS}
         d = self._classroom_dir()
-        answer_path = d / 'correction.json'
+        answer_path = d / f'correction-{correction["request_sha256"][:16]}.json'      # one answer per correction request, never reused across requests
+        if answer_path.exists():
+            bound = load_json(answer_path).get('correction_request') or {}
+            if bound.get('request_sha256') != correction['request_sha256'] or bound.get('post_grade_hash') != correction['post_grade_hash']:
+                self.refuse(f'correction: {answer_path.name} answers another correction request ({bound.get("request_sha256", "")[:16]} / {bound.get("post_grade_hash", "")[:16]}); move it aside with a receipt')
         if not answer_path.exists():
             text = C.correction_prompt(correction, ledgers, cycle=self.cycle)
             parsed, call = self._classroom_call('classroom-correction', text, lambda body: C.parse_correction(body, correction), 'boss')
@@ -1395,6 +1427,7 @@ class Session:
                            host_record=dict(witness(self.out / 'host-correction-record.json'), path=HOST_CORRECTION_RECORD_PATH.format(cycle=self.cycle)),
                            turn='classroom-correction', classroom_composition=C.COMPOSITION)
         (self.out / 'host-correction-attestation.json').write_bytes(json.dumps(attestation, indent=1, sort_keys=True).encode('utf-8'))
+        self.docs()
         write_json(d / 'correction-receipt.json', dict(schema='FRANKIE_BOX_CORRECTION_RECEIPT_V1', at=time.time(), request_sha256=request_sha256,
                    response_sha256=response_sha256, correction_ids=len(correction['correction_ids']), resolutions=len(parsed['correction_resolutions']),
                    remaining_disagreements=parsed['remaining_disagreements'],
@@ -1419,7 +1452,7 @@ class Session:
         """The session receipts packet: every provider invocation this session made so far, what it read, the wall it
         kept (Frankie filed three receipt ledgers as could_not for want of these observed facts). Written right before
         the writing calls; the writing calls themselves are not in it (they follow it)."""
-        report = receipts_module().write(self.work, READING_LEDGER)
+        report = receipts_module().write(self.work, READING_LEDGER, exclude_prefixes=('write-',))   # the writing calls follow this packet; listing them here would move the writing gate on every restart
         self.note(f'session receipts packet: {len(report["provider_invocations"])} provider invocations, {len(report["knowledge_retrieval"]["notes"])} notes, '
                   f'{report["answer_wall"]["labels"]["count"]} timing labels inside the wall')
         return report
@@ -1436,7 +1469,11 @@ class Session:
         """What the response is written from; writing runs again when any of it changed (a durable BOSS job whose prompt
         is unchanged is reused, so only the calls whose inputs moved cost anything)."""
         names = ('merged-notes.md', 'derivation-digest-full.md') + PACKETS
-        return {n: sha256_bytes((self.work / n).read_bytes()) for n in names if (self.work / n).is_file()}
+        inputs = {n: sha256_bytes((self.work / n).read_bytes()) for n in names if (self.work / n).is_file()}
+        ledgers = self.work / 'classroom' / 'ledgers.json'
+        if ledgers.is_file():
+            inputs['classroom/ledgers.json'] = sha256_bytes(ledgers.read_bytes())
+        return inputs
 
     def _corpus_current(self):
         """True when reading.json records the corpus the session would read now (identity + sha); False = read again."""

@@ -30,7 +30,11 @@ COMPOSITION = ('TEACH mode: state counts, terminal state, first-to-last PRESENT 
                'component narratives, one explanation per observation state (expanded to every cursor of that state, with the '
                "teacher's recorded reason appended for non-PRESENT states), the pair interpretations and developing structures, "
                'the cycle summary, the correlation review, the unresolved questions, the novel findings and the correction '
-               "acknowledgement are the BOSS's own text, parsed from its JSON answers; nothing else is written on its behalf")
+               "acknowledgement are the BOSS's own text, parsed from its JSON answers. Three flags are stamped by the session code: "
+               'the teach-back and every filed finding carry future_outcome_claimed=false because a finding the BOSS marks '
+               'future_outcome_claimed=true is dropped with its reason, never rewritten; the acknowledgement carries acknowledged=true and '
+               'resolved_correction_ids=every correction id because an answer lacking a corrected_understanding for any id is refused, '
+               'so the ids are exactly the ones the BOSS resolved. Nothing else is written on its behalf')
 
 
 class ClassroomOutput(ValueError):
@@ -112,13 +116,28 @@ def adapter_digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
 
+_DOCS = []
+
+
+def _docs():
+    if not _DOCS:
+        path = Path(__file__).resolve().parent / 'frankie_box_docs.py'
+        spec = importlib.util.spec_from_file_location('frankie_box_docs_for_classroom', path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _DOCS.append(module)
+    return _DOCS[0]
+
+
 def tolerant_json(text):
     """frankie_box_docs.tolerant_json (fences, first balanced object, comments, trailing commas, truncated close)."""
-    path = Path(__file__).resolve().parent / 'frankie_box_docs.py'
-    spec = importlib.util.spec_from_file_location('frankie_box_docs_for_classroom', path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module.tolerant_json(text)
+    return _docs().tolerant_json(text)
+
+
+def parse_repairs(text):
+    """The repairs the tolerant parser applied to this text (empty when it parsed as written)."""
+    _, repairs = tolerant_json(text or '')
+    return list(repairs or [])
 
 
 # ---- the model-visible classroom -----------------------------------------------------------------------------------
@@ -295,12 +314,12 @@ def summary_prompt(visible, outputs, *, cycle, request_id):
     lines.append('Answer with ONE JSON object and nothing else: {"cycle_summary": "the whole cycle across the 19 components, in your words", '
                  '"correlation_review": "what the relationship surface does and does not support, in your words", '
                  '"unresolved_questions": ["each question you cannot answer from this window", ...], '
-                 '"novel_findings": [{"finding_id": "short-id", "premise": "...", "why_novel": "...", "evidence_refs": [ '
+                 '"novel_findings": [{"finding_id": "short-id", "premise": "...", "why_novel": "...", "future_outcome_claimed": false, "evidence_refs": [ '
                  '{"kind": "DIPOLE_OBSERVATION", "component": "<name>", "cursor": <int>, "claimed_state": "PRESENT|MISSING|INVALID|ABLATED", "claimed_value": <number or null>, "reasoning": "..."} or '
                  '{"kind": "DIPOLE_RELATIONSHIP", "left": "<name>", "right": "<name>", "claimed_relation": "SAME_DIRECTION|OPPOSITE_DIRECTION|UNRESOLVED|HYPOTHESIS", "reasoning": "..."} or '
                  '{"kind": "OTHER_CAUSAL_EVIDENCE", "evidence_pointer": "...", "description": "...", "reasoning": "..."} ]}, ...]}. '
                  'Rules: novel_findings may be an empty list; each finding cites at least one causal evidence reference; a hypothesis is labeled as one; '
-                 'no finding claims an outcome after the causal cutoff; cycle_summary and correlation_review nonempty.')
+                 'no finding claims an outcome after the causal cutoff (a finding marked future_outcome_claimed true is dropped, not filed); cycle_summary and correlation_review nonempty.')
     return '\n'.join(lines) + '\n'
 
 
@@ -357,6 +376,9 @@ def assemble(visible, outputs, summary):
     for raw in summary['novel_findings']:
         if not isinstance(raw, dict):
             dropped.append(dict(finding_id=None, reason='not an object', raw=raw))
+            continue
+        if raw.get('future_outcome_claimed'):
+            dropped.append(dict(finding_id=raw.get('finding_id'), reason='the finding claims a future outcome (future_outcome_claimed true); not filed', raw=raw))
             continue
         candidate = {'schema': v.final.NOVEL_FINDING_SCHEMA, 'finding_id': raw.get('finding_id'), 'premise': raw.get('premise'), 'why_novel': raw.get('why_novel'),
                      'evidence_refs': raw.get('evidence_refs'), 'future_outcome_claimed': False}
@@ -441,6 +463,8 @@ def parse_correction(text, correction):
             raise ClassroomOutput('correction_resolutions entries must carry a correction_id')
         if item['correction_id'] not in ids:
             raise ClassroomOutput(f'unknown correction_id {item["correction_id"]!r}')
+        if item['correction_id'] in by_id:
+            raise ClassroomOutput(f'duplicate correction_id {item["correction_id"]!r}')
         by_id[item['correction_id']] = _text(item.get('corrected_understanding'), f'corrected_understanding for {item["correction_id"]}')
     missing = [i for i in ids if i not in by_id]
     if missing:
@@ -470,6 +494,11 @@ def attestation_request_sha256(correction):
 
 
 # ---- the human-readable record ----------------------------------------------------------------------------------------
+def _cell(text):
+    """Model text inside a Markdown table cell or heading: one line, pipes escaped, no fence can open."""
+    return str(text).replace('\r', ' ').replace('\n', ' ').replace('|', '\\|').replace('```', "'''")
+
+
 def render_markdown(ledgers, dropped_findings=()):
     t = ledgers['dipole_teachback']
     observations = sum(len(c['observations']) for c in ledgers['dipole_observation_review'])
@@ -483,14 +512,14 @@ def render_markdown(ledgers, dropped_findings=()):
     for c in t['components']:
         lines += [f'### {c["name"]}', '', f'state_counts {json.dumps(c["state_counts"], sort_keys=True)}; terminal {c["terminal_state"]}; direction {c["direction"]}', '']
         for field in NARRATIVE:
-            lines.append(f'- {field}: {c[field]}')
+            lines.append(f'- {field}: {_cell(c[field])}')
         lines.append('')
     lines += ['## Relationship scan (171 pairs)', '', '| left | right | relation | developing structure | interpretation |', '|---|---|---|---|---|']
     for p in ledgers['dipole_relationship_scan']:
-        lines.append(f'| {p["left"]} | {p["right"]} | {p["direction_relation"]} | {p["developing_structure"] or ""} | {p["correlation_interpretation"]} |')
+        lines.append(f'| {p["left"]} | {p["right"]} | {p["direction_relation"]} | {_cell(p["developing_structure"] or "")} | {_cell(p["correlation_interpretation"])} |')
     lines += ['', '## Novel findings', '']
     for f in ledgers['dipole_novel_findings']:
-        lines += [f'### {f["finding_id"]}', '', f'Premise: {f["premise"]}', '', f'Why novel: {f["why_novel"]}', '', 'Evidence references:']
+        lines += [f'### {_cell(f["finding_id"])}', '', f'Premise: {_cell(f["premise"])}', '', f'Why novel: {_cell(f["why_novel"])}', '', 'Evidence references:']
         lines += [f'- `{json.dumps(ref, sort_keys=True)}`' for ref in f['evidence_refs']]
         lines.append('')
     if not ledgers['dipole_novel_findings']:
@@ -498,6 +527,6 @@ def render_markdown(ledgers, dropped_findings=()):
     if dropped_findings:
         lines += ['## Novel findings NOT filed (invalid by the classroom contract; kept here verbatim)', '']
         for d in dropped_findings:
-            lines += [f'- {d.get("finding_id")}: {d["reason"]}', f'  `{json.dumps(d.get("raw"), sort_keys=True)[:2000]}`']
+            lines += [f'- {_cell(d.get("finding_id"))}: {_cell(d["reason"])}', f'  `{json.dumps(d.get("raw"), sort_keys=True)[:2000].replace(chr(96), chr(39))}`']
         lines.append('')
     return '\n'.join(lines)

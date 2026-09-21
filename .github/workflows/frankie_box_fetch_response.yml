@@ -95,7 +95,7 @@ jobs:
       - name: Sign one presigned PUT per file into a private map (URLs masked, never printed)
         run: |
           python - <<'PY'
-          import json, os
+          import json, os, re
           import boto3
           from botocore.config import Config
           bucket = os.environ['BUCKET']; run = os.environ['GITHUB_RUN_ID']
@@ -175,6 +175,8 @@ jobs:
                   raise SystemExit('the correction response does not answer the staged correction request (request_sha256 / adapter digest differ)')
               print('correction checks: OK; resolutions', len(r['dipole_acknowledgement'].get('correction_resolutions', [])), 'session_id', r['session_id'])
               print({n: (len(b), hashlib.sha256(b).hexdigest()) for n, b in raw.items()})
+              if not re.fullmatch(r'[0-9a-f]{64}', str(r['request_sha256'])):
+                  raise SystemExit('request_sha256 is not 64 hex characters; not exported')
               with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
                   out.write(f"request_sha256={r['request_sha256']}\n")
               raise SystemExit(0)
@@ -204,6 +206,8 @@ jobs:
               raise SystemExit(f"response.request_sha256 {r['request_sha256']} is not the digest of s3://{bucket}/{os.environ['REQUEST_KEY']} ({digest(req)})")
           print('checks: OK; request_sha256', r['request_sha256'], 'session_id', r['session_id'], 'lessons', len(r['lessons']))
           print({n: (len(b), hashlib.sha256(b).hexdigest()) for n, b in raw.items()})
+          if not re.fullmatch(r'[0-9a-f]{64}', str(r['request_sha256'])):
+              raise SystemExit('request_sha256 is not 64 hex characters; not exported')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
               out.write(f"request_sha256={r['request_sha256']}\n")
           PY

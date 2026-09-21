@@ -3,6 +3,7 @@ rerun"): the comparison and session-receipts packets enter the writing base, the
 point at them, reading runs again when the corpus the session would read now differs from the one it read, and writing
 runs again when any of its inputs moved. Stub session, real packet modules."""
 import importlib.util
+import pytest
 import json
 import types
 from pathlib import Path
@@ -63,3 +64,55 @@ def test_writing_prompts_name_the_comparison_step_and_the_receipt_ledgers():
     assert 'THE SESSION RECEIPTS PACKET above is observed fact for this ledger' in text
     assert "written.get('inputs') != self._writing_inputs()" in text and 'if not self._corpus_current():' in text
     assert 'self.compare()' in text and 'self.receipts()' in text
+
+
+def test_the_writing_gate_is_stable_once_writing_has_run(tmp_path, monkeypatch):
+    """Ship review (Critical): the receipts packet listed the write-* jobs the previous writing pass left behind, so the
+    packet, and the gate keyed on it, moved on every restart and all twelve writing calls ran again."""
+    s = stub(tmp_path, monkeypatch)
+    (s.work / 'derived').mkdir()
+    (s.work / 'derive.json').write_text(json.dumps(dict(pin_group='legacy_observable_crosswalk', rows=dict(count=1), input_records=1, f_last_groups=0, failure_count=0, layers={})))
+    (s.work / 'verify.json').write_text(json.dumps(dict(as_of=1, learning_cutoff_ns=2)))
+    (s.work / 'boss-jobs' / 'abc').mkdir(parents=True)
+    (s.work / 'boss-jobs' / 'abc' / 'request.json').write_text(json.dumps(dict(name='read-merge-0', body_sha256='a' * 64)))
+    session.Session.compare(s); session.Session.receipts(s)
+    before = s._writing_inputs()
+    (s.work / 'boss-jobs' / 'def').mkdir()
+    (s.work / 'boss-jobs' / 'def' / 'request.json').write_text(json.dumps(dict(name='write-00-accounting', body_sha256='b' * 64)))
+    session.Session.receipts(s)
+    assert s._writing_inputs() == before
+    report = json.loads((s.work / 'session-receipts.json').read_text())
+    assert report['excluded_prefixes'] == ['write-'] and [i['name'] for i in report['provider_invocations']] == ['read-merge-0']
+    (s.work / 'classroom').mkdir(); (s.work / 'classroom' / 'ledgers.json').write_text('{"a": 1}')
+    assert 'classroom/ledgers.json' in s._writing_inputs()      # a re-assembled classroom re-writes the response
+
+
+def test_refusal_receipts_never_overwrite_each_other(tmp_path, monkeypatch):
+    monkeypatch.setattr(session, 'ROOT', tmp_path)
+    (tmp_path / 'receipts').mkdir()
+    s = types.SimpleNamespace(cycle='00', note=lambda text: None)
+    for _ in range(3):
+        try:
+            session.Session.refuse(s, 'synthetic')
+        except SystemExit as stop:
+            assert stop.code == 3
+    assert len(list((tmp_path / 'receipts').glob('boss-session-refusal-*.json'))) == 3
+
+
+def test_a_serverless_outcome_is_resumed_only_for_the_prompt_it_answered(tmp_path, monkeypatch):
+    s = stub(tmp_path, monkeypatch)
+    s.serverless = dict(endpoint_id='e', key='k', execution_timeout_ms=1000, config_hash='c')
+    s.served_model = 'm'
+    s._input_tokens = lambda text: 10
+    d = s.work / 'serverless-jobs' / 'read-part-0001'
+    d.mkdir(parents=True)
+    (d / 'outcome.json').write_text(json.dumps(dict(text='the old answer')))
+    (d / 'prompt.txt').write_text('the old prompt', encoding='utf-8')
+    s._supersede_job = lambda directory, name, text: session.Session._supersede_job(s, directory, name, text)
+    assert session.Session.serverless_job(s, 'read-part-0001', 'the old prompt') == dict(text='the old answer')
+    s._serverless_exchange = lambda *a, **k: (_ for _ in ()).throw(RuntimeError('stop before any network call'))
+    with pytest.raises(RuntimeError, match='stop before any network call'):
+        session.Session.serverless_job(s, 'read-part-0001', 'a new prompt')
+    aside = [p for p in (s.work / 'serverless-jobs').iterdir() if p.name.startswith('read-part-0001.superseded-')]
+    assert len(aside) == 1 and (aside[0] / 'outcome.json').exists() and json.loads((aside[0] / 'superseded.json').read_text())['name'] == 'read-part-0001'
+    assert not (d / 'outcome.json').exists() and any('moved aside' in n for n in s._notes)
