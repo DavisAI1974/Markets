@@ -2041,3 +2041,25 @@ L40S), wait_seconds=300; dispatched 23:59Z under Greg's "don't skip the observer
 Then: the observer sees the boot, publishes `retained-granite-ready-35545909225`, `frankie_deliver_readiness.yml`
 (ready_run_id 35545909225, request a7b72cf9), ONE pipeline dispatch. If the provider refuses the start for want of a
 GPU, the replacement-Pod path (`frankie_pod_prepare.yml`) is Greg's call, as in the morning.
+
+### 00:20Z: the Pod START was REFUSED 15 times (host has no free L40S); long retry re-armed; replacement Pod is Greg's call
+
+`frankie_pod_control.yml` action=start run 35546214604 (23:59:39Z to 00:13:56Z): the Pod read EXITED (US-MO-1, 1x L40S,
+`actions [start, terminate]`), then 15 start submissions, every one `HTTP 400 "There are not enough free GPUs on the
+host machine to start this pod."` (`host_busy=True`, receipt `FRANKIE_POD_START_RECEIPT_V1` outcome `refused`,
+attempts 15, first 1789948780.28, last 1789949635.98, retry_seconds 900). The morning's finding holds: the Pod is
+pinned to its host by the pod volume that carries the 17.6 GB verified model; RunPod cannot move it, so the start
+succeeds only when a GPU frees on that host. Nothing on our side refused; the observer run 35545909225 is still
+observing (admitted, `observe_existing_start`, waiting for boot frames; the job's own horizon is the GitHub 6 h cap).
+
+Re-armed the same non-destructive action with the morning's horizon: `frankie_pod_control.yml` action=start,
+retry_seconds 19800 (5.5 h, re-submits every 60 s only while the refusal is exactly the host-busy message; a foreign
+refusal aborts at once), wait_seconds 300, dispatched 00:19Z. When it is accepted the observer sees the boot and
+publishes `retained-granite-ready-35545909225`; then `frankie_deliver_readiness.yml` (ready_run_id 35545909225, request
+a7b72cf9) and ONE pipeline dispatch, as recorded at 00:00Z.
+
+The alternative is the replacement-Pod path (`frankie_pod_prepare.yml`: a fresh L40S Pod on another host, model
+re-bootstrapped from Hugging Face and verified, then a re-mint of `granite_retained_identity` POD_ID /
+JOURNAL_GENERATION / INFO_SHA256 in one `feat:` commit and the observer adopting it RUNNING through
+`observe_migrated_start`). It costs a create plus a code re-mint and is Greg's call, as it was at 10:15Z this morning
+("Prepare the fresh pod in parallel"); not taken here without his word. Until then the retry loop is the run.
