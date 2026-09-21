@@ -2352,3 +2352,21 @@ request and the cycle's rows beside his session, the agent backend per `deploy/a
 heartbeats per Root's task step 1b, the four response files pushed to `root/cycle-00-response` from the box; then
 `frankie_host_record_principal_response.yml` unchanged). Greg's open call: a derivation library he runs, or his own
 code against the rows. The native host keeps holding for the response meanwhile.
+
+### 07:5xZ: GREG'S CALL: OPTION A. Frankie runs the registry's own producers on his box; the box's idle CPUs do the arithmetic
+
+Greg chose A: on the box, Frankie runs the producers the calculation pins name (`research/kalshi/frankie_raw_mbo_benchmark/`:
+native_clocks, native_flow_substrate, native_book_regime, native_recognition, native_roll20, native_replay_driver,
+native_full_capture_adapter, a_memory_member_first_recalculation_20260828; plus
+`research/ng_exhaustion_mbo_v4_state_adapter_20260820.py`) against the cycle's rows with all 32 vCPU, inspects and may
+modify them, and writes the derivation, the per-layer `calculation_accounting` (derived / compared / could_not) and the
+ten output ledgers himself. The layer with NO_PRODUCER_FOUND he derives himself. The runner still precomputes nothing;
+the calculations stay Frankie's. Idle capacity is to be used (Greg): the ingest runner first; the native host (16 vCPU,
+idle at the HOLD, holding the rows and the request) may be reached over SSM if a cycle needs more.
+
+Job 0 for the new chat, concrete: (1) restore the data plane on i-035994afa8bdf66a5 (S3 restore, the compact journal and
+the cycle-0 prefix rows); (2) stage the exported request (run 35557744815) and the ten producers beside Frankie's
+session; (3) wire the agent backend (COACH_AGENT_SETUP_S93: Bedrock or API key, or OpenAI) and the heartbeat writer
+(Root task step 1b) on the box; (4) Frankie performs cycle 0 there and pushes the four files to
+`root/cycle-00-response` from the box; (5) `frankie_host_record_principal_response.yml`, unchanged, then the runner
+resumes. Root's task document is rewritten for the box in that chat.

@@ -34,7 +34,11 @@ is receipted; no Pod stop/terminate without Greg's word.
    KeepRunning=true, ~2.02/h (`frankie_box_control.yml` status/start; stop only on Greg's word). BUILD THE HARNESS
    FIRST (handoff 07:43Z): data plane on the box, exported request + cycle rows beside Frankie's session, agent
    backend per COACH_AGENT_SETUP_S93, heartbeats (Root task step 1b), response pushed to root/cycle-00-response from
-   the box; recorder unchanged. Greg's open call: derivation library vs his own code. Calculations stay Frankie's.
+   the box; recorder unchanged. GREG'S CALL = A: Frankie RUNS THE REGISTRY'S OWN PRODUCERS (the ten modules the pins
+   name under research/kalshi/frankie_raw_mbo_benchmark/ + the 08-20 exhaustion state adapter) on the box's 32 CPUs,
+   inspects and may modify them, derives the NO_PRODUCER_FOUND layer himself, writes the accounting and ledgers.
+   Use idle capacity (the native host too, over SSM, if needed). Calculations stay Frankie's; the runner precomputes
+   nothing. Concrete steps: handoff 07:5xZ.
 1. Cycle 0 close-out: root probe until Root's heartbeats/branch appear -> `frankie_host_record_principal_response.yml`
    (source_ref `root/cycle-00-response`, cycle 00) -> the runner resumes on its own (verify, native learning, readback,
    completion). Root must be handed the UPDATED task document (heartbeat step 1b). Read-only probes only meanwhile.
