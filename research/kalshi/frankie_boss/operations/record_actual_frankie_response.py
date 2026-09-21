@@ -7,7 +7,6 @@ import argparse
 import copy
 import hashlib
 import json
-import os
 from pathlib import Path
 import shutil
 import sys
@@ -21,33 +20,16 @@ def verified_json(path,digest):
     return json.loads(raw)
 
 
-LINKED_ADMISSION_INPUTS=('prompt.md','sealed-proof.json')   # linked: sealed_absence() records the proof's RESOLVED path
-COPIED_ADMISSION_INPUTS=('memory-a-witness.json',)          # copied: compared by content only
-
-
-def stage_admission_inputs(source,candidate):
-    """The admission record is re-derived inside the candidate directory (recover -> _request -> _admission_record
-    reads prompt.md, verifies sealed-proof.json, compares memory-a-witness.json there). A candidate without them
-    refused every recording ('actual composed principal prompt required before sealed proof', runs 35630974458,
-    35631841089, 2026-09-21); a candidate with COPIES refused too, because sealed_absence() puts the proof's resolved
-    path into the admission record, which the attachment carries from the principal directory ('principal admission
-    ... changed since preparation', run 35632243715). So the prompt and the proof are SYMBOLIC LINKS to the principal's
-    files (they resolve to the original paths; the 28 MB prompt is not copied), the witness a copy. Returns
-    {name: 'linked' | 'copied' | 'copied (link refused: ...)'} for each input present."""
-    staged={}
-    for name in LINKED_ADMISSION_INPUTS:
-        path=Path(source)/name
-        if path.is_file():
-            target=Path(candidate)/name
-            try:
-                os.symlink(str(path.resolve()),str(target));staged[name]='linked'
-            except OSError as error:
-                shutil.copyfile(path,target);staged[name]='copied (link refused: %s)'%type(error).__name__
-    for name in COPIED_ADMISSION_INPUTS:
-        path=Path(source)/name
-        if path.is_file():
-            shutil.copyfile(path,Path(candidate)/name);staged[name]='copied'
-    return staged
+def candidate_of(adapter,directory):
+    """The candidate adapter that validates in `directory` before the immutable final write. The admission record is
+    provenance of the PRINCIPAL directory: sealed_absence() records the proof's resolved path, file_witness() refuses a
+    link, and the attachment carries the record prepared there; so a candidate can neither copy nor link the proof
+    (runs 35630974458, 35632243715, 35632610025, 2026-09-21). The candidate answers _admission_record with the real
+    adapter's own bound method (an instance attribute shadows the class method), everything else in its own directory."""
+    candidate=copy.copy(adapter)
+    candidate.directory=Path(directory)
+    candidate._admission_record=adapter._admission_record
+    return candidate
 
 
 def record_checked(adapter,request,response,attestation,binding,input_hash,canonical):
@@ -55,8 +37,7 @@ def record_checked(adapter,request,response,attestation,binding,input_hash,canon
     from research.kalshi.frankie_boss.frankie_principal_adapter import FrankiePrincipalAdapter
     final=adapter.directory/'session-response.json'
     expected=dict(response=response,host_attestation=attestation)
-    candidate=copy.copy(adapter)
-    candidate.directory=adapter.directory/('response-check-'+uuid.uuid4().hex)
+    candidate=candidate_of(adapter,adapter.directory/('response-check-'+uuid.uuid4().hex))
     candidate.directory.mkdir()
     (candidate.directory/'receiver').mkdir()
     (candidate.directory/'session-request.json').write_bytes(canonical(request))
@@ -64,7 +45,6 @@ def record_checked(adapter,request,response,attestation,binding,input_hash,canon
     for name in request['attachment']['preparation_receipt']['outputs']:
         if Path(name).name!=name:raise ValueError('receiver output must be a direct member')
         shutil.copyfile(adapter.directory/'receiver'/name,candidate.directory/'receiver'/name)
-    print('candidate admission inputs staged: '+', '.join(k+'='+v for k,v in stage_admission_inputs(adapter.directory,candidate.directory).items()))
     # Validate the initial durable response without pretending that the mandatory
     # second classroom turn has already completed. The live host owns grading.
     initial_recover=lambda request_id,attachment: FrankiePrincipalAdapter.recover(candidate,request_id,attachment)

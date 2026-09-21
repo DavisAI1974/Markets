@@ -15,21 +15,25 @@ def load_recorder():
     return m
 
 
-def test_stage_admission_inputs_copies_prompt_proof_and_witness_when_present(tmp_path):
+def test_candidate_answers_the_admission_record_with_the_principal_directory_and_everything_else_with_its_own(tmp_path):
     m = load_recorder()
-    src, cand = tmp_path / 'principal', tmp_path / 'candidate'
-    src.mkdir(); cand.mkdir()
-    (src / 'prompt.md').write_bytes(b'# composed prompt\n')
-    (src / 'sealed-proof.json').write_bytes(b'{"schema": "FRANKIE_SEALED_ABSENCE_PROOF_V1"}')
-    (src / 'session-request.json').write_bytes(b'{}')
-    (src / 'memory-a-witness.json').write_bytes(b'{"schema": "FRANKIE_BOSS_MEMORY_A_WITNESS_V1"}')
-    staged = m.stage_admission_inputs(src, cand)
-    assert staged == {'prompt.md': 'linked', 'sealed-proof.json': 'linked', 'memory-a-witness.json': 'copied'}
-    assert (cand / 'prompt.md').is_symlink() and (cand / 'prompt.md').resolve() == (src / 'prompt.md').resolve()
-    assert (cand / 'sealed-proof.json').resolve() == (src / 'sealed-proof.json').resolve()     # the admission record's path is the principal's
-    assert (cand / 'prompt.md').read_bytes() == b'# composed prompt\n' and not (cand / 'memory-a-witness.json').is_symlink()
-    assert not (cand / 'session-request.json').exists()
-    assert m.stage_admission_inputs(tmp_path / 'empty', cand / 'other') == {} if (cand / 'other').mkdir() is None else False
+
+    class Adapter:
+        def __init__(self, directory):
+            self.directory = Path(directory)
+
+        def _admission_record(self):
+            return dict(sealed_absence=dict(path=str((self.directory / 'sealed-proof.json').resolve())))
+
+        def where(self):
+            return str(self.directory)
+    principal = tmp_path / 'principal'
+    principal.mkdir()
+    real = Adapter(principal)
+    cand = m.candidate_of(real, principal / 'response-check-x')
+    assert cand.directory == principal / 'response-check-x' and cand.where() == str(principal / 'response-check-x')
+    assert cand._admission_record() == real._admission_record()               # the principal's record, its own path
+    assert real.directory == principal and not hasattr(Adapter, 'x')          # the real adapter untouched
 
 
 def test_the_host_script_carries_the_recorder_source_verbatim():
