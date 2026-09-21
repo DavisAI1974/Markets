@@ -1,0 +1,80 @@
+name: Frankie serverless reading endpoint (help | inspect | create | verify)
+# Greg, 2026-09-21: "park the reading part" on RunPod serverless. Runs operations/serverless_reading_endpoint.py with
+# the RUNPOD_API_KEY secret through runpodctl (installed here from cli.runpod.net; the RunPod skills' lane for a
+# shell-only agent): `help` prints the binary's own create flags, the Hub vLLM worker and GPU prices (read-only, run
+# it FIRST); `inspect` an endpoint; `create` deploys the Hub vLLM worker with the pinned Granite checkpoint host-cached
+# (--model-reference) under the retained served model name (Greg's word: billable); `verify` sends one real request
+# in the exact shape the box sends and prints the answer. Nothing here deletes anything or touches the retained Pod.
+# Registered on the trunk on Greg's word; dispatch on the working branch.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'help (read-only, first), inspect (read-only), create (Greg''s word: billable), verify (one real request)'
+        required: true
+        default: 'help'
+        type: choice
+        options: ['help', 'inspect', 'create', 'verify']
+      endpoint:
+        description: 'inspect / verify: the endpoint id'
+        required: false
+        default: ''
+      gpu:
+        description: 'create: GPU type id(s), comma-separated in priority order, from help''s gpu list (e.g. NVIDIA L40S or NVIDIA H100 80GB HBM3)'
+        required: false
+        default: 'NVIDIA L40S'
+      workers_max:
+        description: 'create: maximum concurrent workers (one reading part per worker)'
+        required: false
+        default: '16'
+      network_volume:
+        description: 'create: optional network volume id holding the HF cache (BASE_PATH /runpod-volume)'
+        required: false
+        default: ''
+      data_centers:
+        description: 'create: optional comma-separated data center ids (only when a network volume forces it)'
+        required: false
+        default: ''
+permissions:
+  contents: read
+jobs:
+  endpoint:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install runpodctl (the RunPod skills' shell lane; the binary is authoritative for flags)
+        run: |
+          set -euo pipefail
+          curl -sSL https://cli.runpod.net | bash
+          runpodctl version
+      - name: Run the endpoint action
+        run: |
+          set -euo pipefail
+          case "${{ inputs.action }}" in
+            help)     python research/kalshi/frankie_boss/operations/serverless_reading_endpoint.py --action help 2>&1 | tee out.txt ;;
+            inspect)  python research/kalshi/frankie_boss/operations/serverless_reading_endpoint.py --action inspect --endpoint "${{ inputs.endpoint }}" 2>&1 | tee out.txt ;;
+            verify)   python research/kalshi/frankie_boss/operations/serverless_reading_endpoint.py --action verify --endpoint "${{ inputs.endpoint }}" 2>&1 | tee out.txt ;;
+            create)   python research/kalshi/frankie_boss/operations/serverless_reading_endpoint.py --action create --gpu "${{ inputs.gpu }}" \
+                        --workers-max "${{ inputs.workers_max }}" --network-volume "${{ inputs.network_volume }}" --data-centers "${{ inputs.data_centers }}" \
+                        --work-dir work/serverless-reading 2>&1 | tee out.txt ;;
+          esac
+      - name: Job summary
+        if: always()
+        run: |
+          { echo "### serverless reading endpoint: ${{ inputs.action }}"; echo '```'; tail -c 30000 out.txt 2>/dev/null || echo "(no output)"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: serverless-reading-${{ github.run_id }}
+          path: |
+            out.txt
+            work/serverless-reading/
+          if-no-files-found: warn
+          retention-days: 90
