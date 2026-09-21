@@ -8,9 +8,8 @@ What this session does, in order (each stage leaves a receipt under <session>/wo
   labels   the timing labels BY CODE from the source contract's marks with the contract's own causal detector
            (one-tick reversal confirmation, teacher forcing from event_cutoff-open); proven on the first run
            (29/29 labels reproduced bit for bit from the contract; scratch check 2026-09-21);
-  engine   the BOSS reach: the RunPod account key from the SecureString /markets/frankie/granite-service (us-east-2,
-           in memory only), the Pod record, its RUNPOD_GRANITE_API_KEY and GRANITE_SERVED_MODEL (never printed),
-           GET /health; every later call is one durable job (POST /v1/jobs/<id>, GET, GET /result), receipted;
+  engine   the BOSS reach: the Pod's service credential from the SecureString /markets/frankie/granite-service
+           (us-east-2, in memory only, never printed), the retained served model name, GET /health; every later call is one durable job (POST /v1/jobs/<id>, GET, GET /result), receipted;
   derive   THE CALCULATIONS ARE FRANKIE'S, NOT A RUNNER'S: the cycle's pin producers run on this cycle's rows
            (prefix-<NN>.sqlite through the V4 adapter -> legacy control rows -> SecondBinner on ts_recv -> roll20;
            price; native signed flow; the F_LAST book; describe_structure per F_LAST group); every layer written
@@ -46,6 +45,7 @@ CONTEXT = 131072
 SSM_REGION = 'us-east-2'
 RUNPOD_KEY_PARAMETER = '/markets/frankie/granite-service'
 POD_ID_DEFAULT = 'g7y3g2w1kor4l3'
+SERVED_MODEL_DEFAULT = 'granite42-smoke'   # the retained identity's served model name (granite_retained_lifecycle)
 CONTRACT_PATH = 'research/kalshi/frankie_boss/sunday_20260915_package/FB/principal-source-contract/source-contract.json'
 REGISTRY_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json'
 HOST_RECORD_PATH = 'C:/Codex/Frankie-BOSS-20260919/actual-feedback-run/execution/cycle-{cycle}/principal/host-session-record.json'
@@ -76,9 +76,9 @@ def load_json(path):
 
 
 class Session:
-    def __init__(self, session, day, cycle, pod_id):
+    def __init__(self, session, day, cycle, pod_id, served_model=SERVED_MODEL_DEFAULT):
         self.dir = Path(session)
-        self.day, self.cycle, self.pod_id = day, cycle, pod_id
+        self.day, self.cycle, self.pod_id, self.served_model = day, cycle, pod_id, served_model
         self.work = self.dir / 'work'
         self.out = self.dir / 'out'
         self.jobs = self.work / 'boss-jobs'
@@ -239,40 +239,33 @@ class Session:
 
     # ---- engine (the BOSS) ------------------------------------------------------------------------------
     def engine_reach(self):
+        """The SecureString /markets/frankie/granite-service is the Pod's own service credential (the host's
+        pod_credential_ssm: the bearer the retained service checks), read into memory only. The served model name is
+        the retained identity's (granite42-smoke). /health decides whether the service is up; no account API is used."""
         import boto3
-        from research.kalshi.frankie_boss.granite_runpod_cloud_control import Runpod
         from research.kalshi.frankie_boss.granite_runpod_probe import https_exchange
         try:
-            account_key = boto3.client('ssm', region_name=SSM_REGION).get_parameter(
-                Name=RUNPOD_KEY_PARAMETER, WithDecryption=True)['Parameter']['Value']
+            key = boto3.client('ssm', region_name=SSM_REGION).get_parameter(
+                Name=RUNPOD_KEY_PARAMETER, WithDecryption=True)['Parameter']['Value'].strip()
         except Exception as error:
             code = getattr(error, 'response', {}).get('Error', {}).get('Code') or type(error).__name__
             self.refuse(f'{RUNPOD_KEY_PARAMETER} not readable from the box role: {code}')
-        try:
-            pod = Runpod(account_key).request('GET', '/v2/pods/' + self.pod_id)
-        except Exception as error:
-            self.refuse(f'Pod {self.pod_id} record not readable: {type(error).__name__}')
-        finally:
-            del account_key
-        status = pod.get('desiredStatus') or pod.get('status')
-        env = pod.get('env') or {}
-        key, served = env.get('RUNPOD_GRANITE_API_KEY'), env.get('GRANITE_SERVED_MODEL')
-        if not key or not served:
-            self.refuse('the Pod record carries no service key or served model name')
-        if status != 'RUNNING':
-            self.refuse(f'Pod {self.pod_id} is {status}, not RUNNING; a Pod start is Greg\'s word (never from here)')
+        if not re.fullmatch('[A-Za-z0-9_-]{32,256}', key):
+            self.refuse(f'{RUNPOD_KEY_PARAMETER} is not a service credential shape ({len(key)} chars); not printed')
+        served = self.served_model
         try:
             code, body = https_exchange(self.pod_id, 'GET', '/health', b'', key, 10)
         except Exception as error:
-            self.refuse(f'Pod {self.pod_id} health not reachable: {type(error).__name__}')
+            self.refuse(f'Pod {self.pod_id} health not reachable: {type(error).__name__} (the Pod must be RUNNING and the '
+                        'service booted; a Pod start is Greg\'s word)')
         if code != 200 or body != b'{"status":"ok"}':
-            self.refuse(f'Pod {self.pod_id} health {code}: {body[:80]!r}')
+            self.refuse(f'Pod {self.pod_id} health HTTP {code}: {body[:80]!r} (booting, or not the retained service)')
         self.engine = dict(pod_id=self.pod_id, served_model_name=served, key=key,
                            config_hash=sha256_bytes(json.dumps(dict(pod_id=self.pod_id, served_model_name=served,
                                context=CONTEXT, transport_protocol='jobs_v1'), sort_keys=True).encode()))
         write_json(self.work / 'engine.json', dict(schema='FRANKIE_BOX_BOSS_ENGINE_V1', at=time.time(), pod_id=self.pod_id,
-                   status=status, served_model_name=served, context=CONTEXT, transport_protocol='jobs_v1',
-                   config_hash=self.engine['config_hash'], health='ok', key='in memory only, never written'))
+                   served_model_name=served, context=CONTEXT, transport_protocol='jobs_v1',
+                   config_hash=self.engine['config_hash'], health='ok', credential=RUNPOD_KEY_PARAMETER + ' (in memory only, never written)'))
         self.note(f'engine: BOSS {served} on Pod {self.pod_id} healthy (jobs_v1)')
         return self.engine
 
@@ -811,9 +804,10 @@ def main():
     parser.add_argument('--day', default='20211003')
     parser.add_argument('--cycle', default='00')
     parser.add_argument('--pod', default=POD_ID_DEFAULT)
+    parser.add_argument('--served-model', default=SERVED_MODEL_DEFAULT)
     parser.add_argument('--stage', default='run', choices=('run', 'preflight'))
     args = parser.parse_args()
-    Session(args.session, args.day, args.cycle, args.pod).run(args.stage)
+    Session(args.session, args.day, args.cycle, args.pod, args.served_model).run(args.stage)
 
 
 if __name__ == '__main__':
