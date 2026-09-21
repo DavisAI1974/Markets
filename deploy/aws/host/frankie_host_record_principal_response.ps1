@@ -126,17 +126,20 @@ try:
 except SystemExit:
     raise
 except Exception as error:
-    traceback.print_exc()
+    traceback.print_exc(file=sys.stdout)      # stdout: under Stop, the first stderr line would end the host script early (run 35631652890)
     print(json.dumps(dict(status='refused', error_type=type(error).__name__, error=str(error)[:800])))
+    sys.stdout.flush()
     raise SystemExit(1)
 '@
 Push-Location $ToolsRoot
+$previousPreference = $ErrorActionPreference
+$ErrorActionPreference = 'Continue'   # a line on stderr from the recorder is output to keep, not a terminating error
 try {
     & $Python -c $wrapper $tool --configuration $cfgPath --configuration-sha256 $cfgSha --cycle-index ([int]$CycleIndex) `
         --response $responseFile --response-sha256 $ResponseSha256 `
-        --host-attestation $attestationFile --host-attestation-sha256 $AttestationSha256 2>&1 | Tee-Object -FilePath $log
+        --host-attestation $attestationFile --host-attestation-sha256 $AttestationSha256 2>&1 | ForEach-Object { $_.ToString() } | Tee-Object -FilePath $log
     $recorderExit = $LASTEXITCODE
-} finally { Pop-Location }
+} finally { Pop-Location; $ErrorActionPreference = $previousPreference }
 $output = if (Test-Path $log) { Get-Content $log -Raw } else { '' }
 if ($recorderExit -ne 0 -or $output -notmatch 'actual_principal_response_recorded') {
     throw ("the recorder did not record (exit " + $recorderExit + "); its output is above and in " + $log)
