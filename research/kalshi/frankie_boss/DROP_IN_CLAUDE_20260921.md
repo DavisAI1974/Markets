@@ -61,6 +61,14 @@ refuses until the git token exists; files safe in session/out/). Probe: `frankie
 `deploy/aws/box/frankie_box_session.sh` variables `ACTION=status`. To apply a session-code fix:
 `ACTION=restart_session REASON=<why>` (stops ONLY the session unit with a receipt; stages resume from receipts).
 Handoff record: `CLAUDE_HANDOFF_20260920.md` 09:30Z to 09:5xZ.
+10:4xZ: NO OUTPUT LIMITS anywhere (d3c54838, code-wide; the box session 6cb5b346/0f780503): the BOSS is reading the
+whole decoded evidence in 163 uncapped parts (part 1 from 10:23:59Z; hours to days). TOKEN-FREE DELIVERY BUILT
+(c0a829ee): the pusher uploads through presigned PUTs when MAP_URL is set, and `frankie_box_fetch_response.yml`
+signs them, runs the pusher, re-checks what landed (shape, binding, request digest against the S3 request) and
+commits `root/cycle-00-response` with the workflow token. It is NOT dispatchable yet: GitHub answers 404 until the
+workflow file exists on the trunk `claude/kalshi-s79-kickoff-ij8t9o` (Greg's word, one file, no credential). So
+Greg's item (1) is now EITHER the git token OR that one registration; either completes the chain. Files wait in
+`session/out/` meanwhile. Handoff record: `CLAUDE_HANDOFF_20260920.md` 10:2xZ to 10:4xZ.
 
 ## READ FIRST (08:00Z 09-21 handoff): FRANKIE'S BOX IS UP AND EMPTY; JOB 0 = HIS HARNESS; the run HOLDS for his response
 

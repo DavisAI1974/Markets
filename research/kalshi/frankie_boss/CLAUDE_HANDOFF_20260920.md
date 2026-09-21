@@ -2707,3 +2707,29 @@ prompt and live-controller files pass (231 tests, exit 0); `test_granite_context
 tree here (DBN SDK 0.62.0 absent in this container), not this change.
 Box: after the 0f780503 restart derive regenerated the whole digest (5/5 layers, 2,282 groups) and the BOSS is
 reading the whole decoded evidence: part 1/163 from 10:23:59Z, no output cap.
+
+### 10:4xZ 09-21: the token-free delivery route is BUILT (c0a829ee); it needs ONE registration on the trunk, or the token
+
+`/markets/frankie/github-token` is still absent (the heartbeat prints `ParameterNotFound` every beat), so the box
+cannot push `root/cycle-00-response` when the writing finishes. Built so that nothing of Greg's is needed for the
+FILES to move:
+1. `deploy/aws/box/frankie_box_push_response.sh`: given `MAP_URL`, after the same shape and binding checks, it uploads
+   the four files through presigned PUTs from a private map (no URL printed; receipt
+   `FRANKIE_BOX_RESPONSE_UPLOAD_RECEIPT_V1` with every size and sha256, and one `UPLOAD_RECEIPT` line). Without
+   `MAP_URL` the git route is unchanged. The upload branch was exercised here against a local PUT server: four files
+   identical after upload, receipt written, an incomplete map refused (exit 5).
+2. `.github/workflows/frankie_box_fetch_response.yml`: signs one PUT per file into
+   `host-deliveries/<day>/principal-response/cycle-<NN>/box-upload/<run>/`, runs the pusher on the box with the map,
+   downloads what landed, checks it against the sizes and digests the box printed, re-runs the recorder's shape and
+   binding checks plus `response.request_sha256 == digest(request staged in S3 by run 35557744815)`, and commits the
+   four files under `research/kalshi/frankie_boss/runs/<day>/root/` on `root/cycle-<NN>-response` with the workflow
+   token (`contents: write`, same pattern as the journal workflow). The recorder workflow is unchanged after that.
+BUT: dispatching it returned 404 twice. GitHub dispatches only workflows registered on the default branch
+(`claude/kalshi-s79-kickoff-ij8t9o`); `frankie_box_run.yml` and `frankie_box_control.yml` are there, this one is not.
+Registering a workflow file on the trunk is Greg's word (standing rule), so the cycle-0 delivery now needs exactly
+ONE of: (a) `.github/workflows/frankie_box_fetch_response.yml` copied to the trunk (one file, no credential; the
+dispatch then uses this branch's version), or (b) the `/markets/frankie/github-token` SecureString. Either one
+completes the chain; the files wait safely in `/opt/frankie-box/session/out/` until then.
+Box at 10:43Z (run 35590204122): unit active, phase `reading`, part 1/163 since 10:23:59Z under no cap (the capped
+parts took 3-4 minutes; an uncapped part takes as long as the BOSS writes), Pod healthy, heartbeat S3 leg
+AccessDenied, git leg waiting for the token.

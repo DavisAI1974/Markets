@@ -74,6 +74,12 @@ native learning, readback, completion). Probe with `frankie_host_cycle_status.ym
 If the pusher said the token was not readable, the four files are safe in `/opt/frankie-box/session/out/`; fix
 step 1 item 1 and dispatch `Frankie box run` with script `deploy/aws/box/frankie_box_push_response.sh`.
 
+TOKEN-FREE ALTERNATIVE (built 10:4xZ 09-21, c0a829ee): `Frankie box fetch response` (frankie_box_fetch_response.yml),
+ref `claude/cycle-0-frankie-box-rerun-od5sxk`, inputs day `20211003`, cycle `00`. It signs presigned uploads, runs
+the pusher on the box, re-checks the four files and commits `root/cycle-00-response` with the workflow's own token.
+It is dispatchable only once the file exists on the trunk `claude/kalshi-s79-kickoff-ij8t9o` (Greg's word, one file,
+no credential); until then the API answers 404. Either that registration or step 1's token completes the chain.
+
 ## What the four files are (so nobody is surprised by the shapes)
 
 The recorder workflow checks these before anything reaches the native host; the shapes are the first run's.

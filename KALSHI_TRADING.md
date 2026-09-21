@@ -9,7 +9,9 @@
   (compact journal, prefix-00/01, the exported request, pinned by sha256); `frankie_box_stage_producers.sh` (receiver lineage 2ebb8ce8,
   this branch, Python 3.13 venv); `frankie_box_producer_tests.sh`; `frankie_box_install_agent_backend.sh` (Node 20 + Claude Code + a
   credential-reach probe); `frankie_box_session.sh` (verify | preflight | start | status); `frankie_box_boss_session.py` (THE SESSION: the BOSS vLLM over jobs_v1; verify, labels by code, engine, derive, reading, writing, push); `frankie_box_heartbeat.py`;
-  `frankie_box_push_response.sh`; `frankie_box_read_log.sh`.
+  `frankie_box_push_response.sh` (git route with the SSM token, or presigned-PUT uploads when MAP_URL is set); `frankie_box_read_log.sh`.
+- `.github/workflows/frankie_box_fetch_response.yml` - token-free delivery: signs the uploads, runs the pusher on the box, re-checks what landed
+  (shape, binding, request digest) and commits root/cycle-NN-response with the workflow token. Needs registering on the trunk (Greg's word).
 - `research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md` - the cycle-0 task document, box edition (= the session prompt).
 - `research/kalshi/frankie_boss/SHIP_REVIEW_20260921.md` - the /ship record on the launch path since the re-mint.
 - `research/kalshi/frankie_boss/tests/test_no_runtime_pod_stops.py`, `test_cycle_calculation_pin_loader.py` - new pins.
