@@ -22,11 +22,15 @@ on:
       gpu:
         description: 'create: GPU type id(s), comma-separated in priority order, from help''s gpu list (e.g. NVIDIA L40S or NVIDIA H100 80GB HBM3)'
         required: false
-        default: 'NVIDIA L40S'
+        default: 'NVIDIA H100 80GB HBM3,NVIDIA H100 NVL,NVIDIA H100 PCIe'
       workers_max:
-        description: 'create: maximum concurrent workers (one reading part per worker)'
+        description: 'create: maximum concurrent workers (two reading parts per H100 worker, one per 48 GB worker)'
         required: false
-        default: '16'
+        default: '8'
+      seqs_per_worker:
+        description: 'create: full-context sequences per worker (2 on 80 GB tiers, 1 on 48 GB)'
+        required: false
+        default: '2'
       network_volume:
         description: 'create: optional network volume id holding the HF cache (BASE_PATH /runpod-volume)'
         required: false
@@ -62,7 +66,7 @@ jobs:
             inspect)  python research/kalshi/frankie_boss/operations/serverless_reading_endpoint.py --action inspect --endpoint "${{ inputs.endpoint }}" 2>&1 | tee out.txt ;;
             verify)   python research/kalshi/frankie_boss/operations/serverless_reading_endpoint.py --action verify --endpoint "${{ inputs.endpoint }}" 2>&1 | tee out.txt ;;
             create)   python research/kalshi/frankie_boss/operations/serverless_reading_endpoint.py --action create --gpu "${{ inputs.gpu }}" \
-                        --workers-max "${{ inputs.workers_max }}" --network-volume "${{ inputs.network_volume }}" --data-centers "${{ inputs.data_centers }}" \
+                        --workers-max "${{ inputs.workers_max }}" --seqs-per-worker "${{ inputs.seqs_per_worker }}" --network-volume "${{ inputs.network_volume }}" --data-centers "${{ inputs.data_centers }}" \
                         --work-dir work/serverless-reading 2>&1 | tee out.txt ;;
           esac
       - name: Job summary

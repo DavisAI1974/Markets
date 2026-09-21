@@ -12,7 +12,7 @@ Actions (RUNPOD_API_KEY in the environment; runpodctl on PATH; the key is never 
   help       read-only: runpodctl version, `serverless create --help`, the Hub vLLM worker listing, GPU list with
              prices and availability. The binary is authoritative for flags; read this BEFORE a create.
   inspect    read-only: `serverless get <id>` (workers stripped of env) and `/health`.
-  create     Greg's word (billable): `runpodctl serverless create --hub-id runpod-workers/worker-vllm --model-reference
+  create     Greg's word (billable; H100 tiers by default, two full-context sequences per worker): `runpodctl serverless create --hub-id runpod-workers/worker-vllm --model-reference
              https://huggingface.co/<repo>:<revision> --gpu-id ... --env ... --workers-min 0 --workers-max N
              --scale-by requests --scale-threshold 1 --idle-timeout ... --execution-timeout ...`; prints the endpoint id
              and the box configuration; receipt under --work-dir.
@@ -46,13 +46,18 @@ def pins():
     return manifest['repository'], manifest['revision']
 
 
-def pinned_env():
+H100_TIERS = 'NVIDIA H100 80GB HBM3,NVIDIA H100 NVL,NVIDIA H100 PCIe'   # Greg, 2026-09-21: the H100 is the right choice; priority order
+
+
+def pinned_env(seqs_per_worker=1):
+    """One full-context sequence needs 20 GiB of KV cache (Granite 4.2-8b, 131k): an L40S holds one, an 80 GB H100
+    holds two (2.7 by arithmetic), so --seqs-per-worker 2 on H100 batches two parts per worker at near double throughput."""
     repo, rev = pins()
     return {
         'MODEL_NAME': repo, 'MODEL_REVISION': rev, 'TOKENIZER_NAME': repo, 'TOKENIZER_REVISION': rev,
         'DTYPE': 'bfloat16', 'MAX_MODEL_LEN': str(CONTEXT), 'GPU_MEMORY_UTILIZATION': '0.9',
-        'MAX_NUM_SEQS': '1', 'ENABLE_CHUNKED_PREFILL': 'True', 'MAX_NUM_BATCHED_TOKENS': '2048',
-        'MAX_CONCURRENCY': '1', 'OPENAI_SERVED_MODEL_NAME_OVERRIDE': SERVED_MODEL_NAME,
+        'MAX_NUM_SEQS': str(int(seqs_per_worker)), 'ENABLE_CHUNKED_PREFILL': 'True', 'MAX_NUM_BATCHED_TOKENS': '2048',
+        'MAX_CONCURRENCY': str(int(seqs_per_worker)), 'OPENAI_SERVED_MODEL_NAME_OVERRIDE': SERVED_MODEL_NAME,
         'ENABLE_PREFIX_CACHING': 'False', 'TRUST_REMOTE_CODE': 'False',
     }
 
@@ -145,7 +150,7 @@ def create(args):
            '--idle-timeout', str(args.idle_timeout), '--execution-timeout', str(args.execution_timeout)]
     for g in gpus:
         cmd += ['--gpu-id', g]
-    env = pinned_env()
+    env = pinned_env(args.seqs_per_worker)
     if args.hf_token_env and os.environ.get(args.hf_token_env):
         env['HF_TOKEN'] = os.environ[args.hf_token_env]          # only if the operator says the repo needs it; never printed
     for k, v in env.items():
@@ -162,9 +167,9 @@ def create(args):
     endpoint_id = created.get('id')
     if not endpoint_id:
         raise SystemExit(f'create returned no id: {json.dumps(scrub(created))[:800]}')
-    box = dict(schema='FRANKIE_BOX_SERVERLESS_READING_V1', endpoint_id=endpoint_id, workers=int(args.workers_max),
+    box = dict(schema='FRANKIE_BOX_SERVERLESS_READING_V1', endpoint_id=endpoint_id, workers=int(args.workers_max) * int(args.seqs_per_worker),
                gpu_type_ids=gpus, model_repository=repo, model_revision=rev, served_model_name=SERVED_MODEL_NAME,
-               context=CONTEXT, execution_timeout_ms=int(args.execution_timeout) * 1000)
+               context=CONTEXT, execution_timeout_ms=int(args.execution_timeout) * 1000, seqs_per_worker=int(args.seqs_per_worker))
     receipt = dict(schema='FRANKIE_SERVERLESS_READING_ENDPOINT_RECEIPT_V1', at=time.time(), hub_worker=HUB_WORKER,
                    model_reference=f'https://huggingface.co/{repo}:{rev}', endpoint=scrub(created),
                    env={k: v for k, v in env.items() if k != 'HF_TOKEN'}, box_config=box)
@@ -213,7 +218,8 @@ def main():
     p.add_argument('--action', choices=('help', 'inspect', 'create', 'verify'), required=True)
     p.add_argument('--endpoint', default='')
     p.add_argument('--name', default='frankie-reading-granite42')
-    p.add_argument('--gpu', default='NVIDIA L40S')
+    p.add_argument('--gpu', default=H100_TIERS)
+    p.add_argument('--seqs-per-worker', type=int, default=2, help='2 on 80 GB tiers, 1 on 48 GB tiers')
     p.add_argument('--workers-max', type=int, default=16)
     p.add_argument('--idle-timeout', type=int, default=120)
     p.add_argument('--execution-timeout', type=int, default=EXECUTION_TIMEOUT_S_DEFAULT, help='seconds')
