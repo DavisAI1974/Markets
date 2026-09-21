@@ -72,3 +72,63 @@ def test_identity_changes_with_the_included_set(cycle0, tmp_path):
     m = json.loads((b / 'cycle-00' / 'MANIFEST.json').read_text()); m['entries'][0]['include'] = False
     (b / 'cycle-00' / 'MANIFEST.json').write_text(json.dumps(m), encoding='utf-8')
     assert brain.identity(b, '01') != one
+
+
+def test_check_names_the_earlier_cycles_without_a_usable_entry(cycle0, tmp_path):
+    work, out = cycle0
+    b = tmp_path / 'brain'
+    assert brain.check(b, '00') == [] and brain.check(b, '02') == ['00', '01']
+    brain.write_entry(work, out, b, '00')
+    assert brain.check(b, '02') == ['01']
+    (b / 'cycle-00' / 'derivation-digest-full.md').write_bytes(b'changed\n')
+    assert brain.check(b, '01') == ['00']
+
+
+def test_write_entry_adds_the_derive_receipt_and_the_derived_files_witness(cycle0, tmp_path):
+    work, out = cycle0
+    (work / 'derive.json').write_text(json.dumps(dict(layers=dict(legacy_price=dict(status='derived', sha256='x')))), encoding='utf-8')
+    (work / 'derived').mkdir()
+    (work / 'derived' / 'legacy_price.json').write_bytes(b'[1,2,3]')
+    m = brain.write_entry(work, out, tmp_path / 'brain', '00')
+    by = {e['name']: e for e in m['entries']}
+    assert by['derive.md']['include'] is True and by['derived-files.md']['include'] is False
+    assert '| legacy_price.json | 7 |' in (tmp_path / 'brain' / 'cycle-00' / 'derived-files.md').read_text()
+    text, members = brain.load(tmp_path / 'brain', '01')
+    assert 'derive.md' in text and 'derived-files.md' not in text
+
+
+def test_restore_from_git_brings_a_published_entry_back_and_refuses_a_tampered_one(cycle0, tmp_path):
+    import subprocess
+    work, out = cycle0
+    src = tmp_path / 'src-brain'
+    brain.write_entry(work, out, src, '00')
+    # a bare "origin" whose root/cycle-00-response carries the entry at the published path
+    origin = tmp_path / 'origin.git'
+    subprocess.run(['git', 'init', '-q', '--bare', str(origin)], check=True)
+    wt = tmp_path / 'wt'
+    subprocess.run(['git', 'init', '-q', str(wt)], check=True)
+    env = dict(GIT_AUTHOR_NAME='t', GIT_AUTHOR_EMAIL='t@x', GIT_COMMITTER_NAME='t', GIT_COMMITTER_EMAIL='t@x')
+    dest = wt / 'research' / 'kalshi' / 'frankie_boss' / 'runs' / '20211003' / 'root' / 'brain' / 'cycle-00'
+    dest.mkdir(parents=True)
+    for f in (src / 'cycle-00').iterdir():
+        (dest / f.name).write_bytes(f.read_bytes())
+    subprocess.run(['git', '-C', str(wt), 'add', '.'], check=True)
+    subprocess.run(['git', '-C', str(wt), '-c', 'user.name=t', '-c', 'user.email=t@x', 'commit', '-q', '-m', 'entry'], check=True, env={**env, 'PATH': '/usr/bin:/bin'})
+    subprocess.run(['git', '-C', str(wt), 'push', '-q', str(origin), 'HEAD:refs/heads/root/cycle-00-response'], check=True)
+    # the "box checkout": a clone whose origin is the bare repo; the brain is empty; cycle 01 needs cycle 00
+    repo = tmp_path / 'markets'
+    subprocess.run(['git', 'clone', '-q', str(origin), str(repo)], check=True)
+    b = tmp_path / 'brain'
+    assert brain.check(b, '01') == ['00']
+    r = brain.restore_from_git(b, ['00'], repo, '20211003')
+    assert r == {'00': 'restored'} and brain.check(b, '01') == []
+    assert (b / 'cycle-00' / 'derivation-digest-full.md').read_bytes() == (src / 'cycle-00' / 'derivation-digest-full.md').read_bytes()
+    # a branch that does not exist, and a tampered published file, both refuse
+    assert 'not fetchable' in brain.restore_from_git(b, ['07'], repo, '20211003')['07']
+    (dest / 'analysis.md').write_bytes(b'tampered\n')
+    subprocess.run(['git', '-C', str(wt), 'add', '.'], check=True)
+    subprocess.run(['git', '-C', str(wt), '-c', 'user.name=t', '-c', 'user.email=t@x', 'commit', '-q', '-m', 'tamper'], check=True, env={**env, 'PATH': '/usr/bin:/bin'})
+    subprocess.run(['git', '-C', str(wt), 'push', '-q', str(origin), 'HEAD:refs/heads/root/cycle-00-response'], check=True)
+    import shutil
+    shutil.rmtree(b / 'cycle-00')
+    assert 'analysis.md missing or not matching' in brain.restore_from_git(b, ['00'], repo, '20211003')['00'] and brain.check(b, '01') == ['00']

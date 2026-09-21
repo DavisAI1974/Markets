@@ -1372,8 +1372,25 @@ class Session:
             traceback.print_exc()
             self.refuse(f'{stage}: {type(err).__name__}: {str(err)[:300]}')
 
+    def brain_ready(self):
+        """Every earlier cycle's calculation findings must be in Frankie's brain before this cycle reads (Greg, 2026-09-21:
+        the brain docs must be available for the rest of the cycles). A missing entry is restored from its published
+        branch (root/cycle-NN-response, a fetch only); still missing = refuse with a receipt."""
+        brain = brain_module()
+        missing = brain.check(BRAIN_DIR, self.cycle)
+        if missing:
+            restored = brain.restore_from_git(BRAIN_DIR, missing, MARKETS, self.day)
+            self.note('brain: restore from git: ' + ', '.join(f'cycle {c}: {r}' for c, r in restored.items()))
+            missing = brain.check(BRAIN_DIR, self.cycle)
+        present = [f'cycle-{n:02d}' for n in range(int(self.cycle)) if f'{n:02d}' not in missing]
+        self.note(f'brain: earlier cycles present {present or "none needed" if int(self.cycle) == 0 else present}; missing {missing or "none"}')
+        if missing:
+            self.refuse(f'brain: no calculation findings entry for cycle(s) {", ".join(missing)}; cycle {self.cycle} must read them first '
+                        f'(Greg, 2026-09-21). Publish them: frankie_box_push_response.sh BRAIN_ONLY=1 CYCLE=<NN>, or restore {BRAIN_DIR}')
+
     def _run(self, stage):
         self.verify()
+        self.brain_ready()
         if stage == 'preflight':
             self.labels()
             self.engine_reach()

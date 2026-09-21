@@ -59,11 +59,90 @@ def write_entry(work, out, brain, cycle, include_analysis=True):
     analysis = out / 'analysis.md'
     if analysis.is_file():
         put('analysis.md', analysis.read_bytes(), analysis, 'the run analysis', include_analysis)
+    derive = work / 'derive.json'
+    if derive.is_file():
+        try:
+            doc = '# Derivation receipt (derive.json: every layer of the pin with its status, producer and sha256)\n\n```json\n' + \
+                json.dumps(json.loads(derive.read_bytes()), indent=1, sort_keys=True, ensure_ascii=False) + '\n```\n'
+            put('derive.md', doc.encode('utf-8'), derive, 'calculation findings: the derivation receipt (layer statuses, producers, digests)')
+        except Exception:
+            pass
+    derived = work / 'derived'
+    if derived.is_dir():
+        files = [dict(name=f.name, bytes=f.stat().st_size, sha256=sha256_bytes(f.read_bytes())) for f in sorted(derived.iterdir()) if f.is_file()]
+        doc = ('# Derived files of this cycle (witnessed by name, bytes, sha256; the derivation digest renders their content losslessly)\n\n'
+               '| file | bytes | sha256 |\n|---|---:|---|\n' + '\n'.join(f"| {f['name']} | {f['bytes']} | {f['sha256']} |" for f in files) + '\n')
+        put('derived-files.md', doc.encode('utf-8'), derived, 'witness of the derived files (their content is in the digest)', False)
     manifest = dict(schema=SCHEMA, cycle=cycle, at=time.time(), entries=entries,
                     note='Greg, 2026-09-21: the calculation findings of cycles 0 and 1 are in the brain without a doubt; other documents '
                          'case by case: set include to false to keep an entry out of the next corpus, add a file with include true to bring one in.')
     (entry_dir / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     return manifest
+
+
+def check(brain, cycle):
+    """The earlier cycles WITHOUT a usable brain entry (no manifest, or the digest missing or not matching). Empty = ready."""
+    brain = Path(brain)
+    missing = []
+    for n in range(int(cycle)):
+        cyc = f'{n:02d}'
+        d = brain / f'cycle-{cyc}'
+        m = d / 'MANIFEST.json'
+        ok = False
+        if m.is_file():
+            try:
+                manifest = json.loads(m.read_bytes())
+                digest = next((e for e in manifest.get('entries', []) if e.get('name') == 'derivation-digest-full.md'), None)
+                ok = bool(digest) and (d / 'derivation-digest-full.md').is_file() and \
+                    sha256_bytes((d / 'derivation-digest-full.md').read_bytes()) == digest.get('sha256')
+            except Exception:
+                ok = False
+        if not ok:
+            missing.append(cyc)
+    return missing
+
+
+def restore_from_git(brain, cycles, repo, day, remote='origin', branch_format='root/cycle-{cycle}-response'):
+    """Restore the named cycles' entries from their published branches (a fetch into FETCH_HEAD; the checkout is never
+    moved). Returns {cycle: 'restored' | reason}. Files land under <brain>/cycle-<NN>/ only when the manifest and every
+    listed file arrive and match their sha256."""
+    import subprocess
+    brain, repo = Path(brain), Path(repo)
+    result = {}
+    for cyc in cycles:
+        branch = branch_format.format(cycle=cyc)
+        prefix = f'research/kalshi/frankie_boss/runs/{day}/root/brain/cycle-{cyc}'
+        fetch = subprocess.run(['git', '-C', str(repo), 'fetch', '-q', '--depth', '1', remote, branch], capture_output=True, text=True)
+        if fetch.returncode:
+            result[cyc] = f'branch {branch} not fetchable: {fetch.stderr.strip()[:200]}'
+            continue
+        show = subprocess.run(['git', '-C', str(repo), 'show', f'FETCH_HEAD:{prefix}/MANIFEST.json'], capture_output=True)
+        if show.returncode:
+            result[cyc] = f'no brain entry on {branch} ({prefix}/MANIFEST.json)'
+            continue
+        try:
+            manifest = json.loads(show.stdout)
+        except Exception:
+            result[cyc] = f'unreadable manifest on {branch}'
+            continue
+        staged = {}
+        bad = None
+        for e in manifest.get('entries', []):
+            got = subprocess.run(['git', '-C', str(repo), 'show', f'FETCH_HEAD:{prefix}/{e["name"]}'], capture_output=True)
+            if got.returncode or sha256_bytes(got.stdout) != e.get('sha256'):
+                bad = e['name']
+                break
+            staged[e['name']] = got.stdout
+        if bad:
+            result[cyc] = f'{bad} missing or not matching its sha256 on {branch}'
+            continue
+        d = brain / f'cycle-{cyc}'
+        d.mkdir(parents=True, exist_ok=True)
+        for name, data in staged.items():
+            (d / name).write_bytes(data)
+        (d / 'MANIFEST.json').write_bytes(show.stdout)
+        result[cyc] = 'restored'
+    return result
 
 
 def entries_before(brain, cycle):
