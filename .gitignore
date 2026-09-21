@@ -125,3 +125,5 @@ research/kalshi/renders/ng_refine_s95/*_b.json
 
 # Generated presigned restore runner: bearer links, never committed
 deploy/aws/_frankie_host_restore_presigned.ps1
+# BR-0: the pinned producers worktree (deploy/aws/box/producers_checkout.sh); never a scratchpad
+.producers-*/
