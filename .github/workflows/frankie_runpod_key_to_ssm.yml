@@ -37,17 +37,21 @@ jobs:
       - name: Copy the secret into the SecureString and verify (no value printed)
         run: |
           python - <<'PY'
-          import json, os, time, urllib.request
+          import json, os, time
           key = os.environ.get('RUNPOD_API_KEY', '').strip()
           assert key and key.startswith('rpa_') and 20 <= len(key) <= 200, 'RUNPOD_API_KEY secret absent or not an API key shape (not printed)'
           # the same read-only call the working Pod control makes (operations/pod_control.py: api.runpod.io /v2/pods/<id>);
           # the public control REST rest.runpod.io/v1 answered 403 to this key on run 35601030834 and is not the test
-          req = urllib.request.Request('https://api.runpod.io/v2/pods/g7y3g2w1kor4l3', headers={'Authorization': 'Bearer ' + key, 'Accept': 'application/json'})
+          # http.client, no User-Agent, exactly as pod_control.control_call sends it: urllib's default User-Agent drew a 403
+          # from the edge on run 35601186816 (the same Cloudflare shape recorded for the COT fetch in CLAUDE.md)
+          import http.client
+          c = http.client.HTTPSConnection('api.runpod.io', timeout=30)
+          c.request('GET', '/v2/pods/g7y3g2w1kor4l3', None, {'Authorization': 'Bearer ' + key, 'Accept': 'application/json', 'Content-Type': 'application/json'})
+          r = c.getresponse(); raw = r.read(1048577); code = r.status; c.close()
           try:
-              with urllib.request.urlopen(req, timeout=30) as r:
-                  body = json.loads(r.read().decode('utf-8')); code, seen = r.status, body.get('desiredStatus') or body.get('status') or list(body)[:5]
-          except urllib.error.HTTPError as e:
-              code, seen = e.code, None
+              body = json.loads(raw.decode('utf-8')); seen = body.get('desiredStatus') or body.get('status') or (list(body)[:5] if isinstance(body, dict) else type(body).__name__)
+          except Exception:
+              seen = raw[:120].decode('utf-8', 'replace')
           print(f'runpod: GET api.runpod.io/v2/pods/g7y3g2w1kor4l3 -> HTTP {code}; seen: {seen}; key length {len(key)}, prefix {key[:4]}')
           assert code == 200, 'the secret is not accepted by RunPod on the Pod control route; nothing written'
           import boto3
