@@ -5,6 +5,29 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
+## STATUS OF THE TO-DO LIST at 08:55Z 09-21 (chat 3; the items below are the 08:00Z list, unchanged in text)
+
+0. JOB 0: BUILT. Data plane + request restored and pinned (run 35577570848); ten producers pinned at 2ebb8ce8, tools,
+   venv (run 35577710695); the producers' own tests 2202 passed on the box (run 35579370064); Node 20 + Claude Code
+   2.1.197 installed (runs 35577803017, 35578041886); task document rewritten for the box; session runner, heartbeat,
+   pusher committed and verified short of the LLM (run 35578511645: request_sha256 1b777cf2..., instruction 8,685
+   chars). WAITING ON GREG'S THREE GRANTS (handoff 08:35Z), then `frankie_box_session.sh ACTION=start`.
+1. Cycle 0 close-out: waits on 0 (the response). Read-only probes only; the host runner still holds.
+2. Cycle 1: waits on 1. NOTE: advance the native host's tools checkout past 565b9f58 before the observer round, so
+   the no-stop lifecycle is what runs; the Pod is EXITED today, so the round still starts with a Pod start.
+3. DONE (565b9f58, 5248c370; trunk 27b3fbae): no runtime stops anywhere on the Pod path.
+4. NOT DONE: pushing the current identity to `codex/frankie-launch-two-cycle-20260919` or changing the day
+   configuration on the host is Greg's word (handoff 08:50Z).
+5. PARTLY DONE (6b5489f2, 30477432): receipt loop, sidecar compare, loader tests, cycle_limit seam. Deferred:
+   `registry_file` commit sha (after cycle 0), classroom objective test + drift guard (finding text lost).
+6. The two skills are in the library and were run from it (the plugin registers them; nothing to vendor). The rest
+   (nineteen-cycle prefixes = a host write mid-HOLD, outputs-receipt writer, NWS hourly collector, architect notes)
+   untouched.
+7. Untouched (Greg's word).
+Queued from `/ship` (SHIP_REVIEW_20260921.md), all Greg's word because they change guards or workflows: the
+box-control tag step gated on the start outcome; `${{ inputs.* }}` moved to env in six workflows; the drop-in's old
+"Where everything is" block (below) still names 8vqdacl5t61rjx.
+
 ## READ FIRST (08:35Z 09-21, chat 3): JOB 0 IS BUILT ON FRANKIE'S BOX; the session waits on Greg's three grants
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (from b73c4d06; every receipt in `CLAUDE_HANDOFF_20260920.md`

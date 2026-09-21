@@ -2,6 +2,19 @@
 
 ## 2026-09-20 — Frankie/BOSS launch day: the Pod that could not start, the replacement, the operator workflows
 
+### Frankie's box (2026-09-21, chat 3): the harness on i-035994afa8bdf66a5
+- `deploy/aws/ssm_run_sh.py` - Linux twin of ssm_run_ps1.py (AWS-RunShellScript; --set literal only).
+- `.github/workflows/frankie_box_run.yml` - runs ONE committed `deploy/aws/box/*.sh` on the box over SSM; optional presigned map (MAP_URL).
+- `deploy/aws/box/` - `frankie_box_inventory.sh`, `frankie_box_probe_checkouts_and_role.sh` (read-only probes); `frankie_box_restore_data_plane.sh`
+  (compact journal, prefix-00/01, the exported request, pinned by sha256); `frankie_box_stage_producers.sh` (receiver lineage 2ebb8ce8,
+  this branch, Python 3.13 venv); `frankie_box_producer_tests.sh`; `frankie_box_install_agent_backend.sh` (Node 20 + Claude Code + a
+  credential-reach probe); `frankie_box_session.sh` (verify | preflight | start | status); `frankie_box_heartbeat.py`;
+  `frankie_box_push_response.sh`; `frankie_box_read_log.sh`.
+- `research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md` - the cycle-0 task document, box edition (= the session prompt).
+- `research/kalshi/frankie_boss/SHIP_REVIEW_20260921.md` - the /ship record on the launch path since the re-mint.
+- `research/kalshi/frankie_boss/tests/test_no_runtime_pod_stops.py`, `test_cycle_calculation_pin_loader.py` - new pins.
+
+
 - **`deploy/aws/host/frankie_host_normalize_eol.ps1`** + `.github/workflows/frankie_host_normalize_eol.yml` + the `.gitattributes`
   `-text` rules for `research/kalshi/frankie_boss/**/*.py` and `research/refrag/**/*.py` — the line-843 fix (2026-09-20). Every
   `*_parser_code_hash` is a sha256 over SOURCE BYTES and `run_actual_sunday.py` hashes every .py into the host identity; the
