@@ -3372,3 +3372,13 @@ work beyond what the run needs; the cycle-1 dispatches are the cycle-0 dispatche
 cycle-parameterized: unit frankie-cycle-01, work-01, data/prefix-01.sqlite already on the box, the request's
 cycle_index must read 1). The /ship fixes to frankie_serverless_reading.yml (this chat) stand as committed; no further
 workflow adjustments. Codecs CI on the push: run 35623661122.
+
+### 16:1xZ 09-21: THE THREE TRUNK REGISTRATIONS ARE DONE (Greg: "You can do the 3 files on the trunk if you want")
+
+Trunk `claude/kalshi-s79-kickoff-ij8t9o` moved 1d7e5de1 -> f4fb6e5b: `frankie_box_fetch_response.yml`,
+`frankie_serverless_reading.yml`, `frankie_box_codecs_ci.yml` added, byte-identical to this branch at c12fb02e (after
+the /ship fixes), nothing else touched on the trunk. Codecs CI on this branch's push: run 35623661122 success (41
+tests, Python 3.13, pytest only). First dispatch through the registration: `frankie_serverless_reading.yml`
+action=inspect endpoint=k1sqt0haffm61y, ref = this branch (read-only; proves the file resolves on the trunk, the
+checksum-pinned runpodctl install and the step-scoped key on the runner, and reads the endpoint's health after the
+merges). Its run id and outcome follow.

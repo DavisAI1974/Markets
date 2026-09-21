@@ -46,8 +46,8 @@ GREG'S OPEN CALLS: the three trunk registrations (`frankie_box_fetch_response.ym
 `frankie_box_codecs_ci.yml`: workflow_dispatch resolves the file on the DEFAULT branch, which is the trunk
 `claude/kalshi-s79-kickoff-ij8t9o`). CHAT 6: `/ship` on them = GO after fixes, all applied on this branch
 (`SHIP_REVIEW_20260921_CHAT6.md`): the serverless workflow's inputs go through env + validation, runpodctl 2.14.0 is
-pinned by checksum, the key is step-scoped, create refuses a same-named endpoint, 41 tests green. Registration =
-copy the three files onto the trunk on Greg's word. THE KEY QUESTION: answered for RunPod (use it for anything;
+pinned by checksum, the key is step-scoped, create refuses a same-named endpoint, 41 tests green. REGISTERED on
+the trunk 16:1xZ on Greg's word (trunk f4fb6e5b); no open call remains there. THE KEY QUESTION: answered for RunPod (use it for anything;
 `KEY_REGISTRY.md`); the environment-configuration variables remain Greg's one-time step.
 
 ## READ FIRST (13:5xZ 09-21, chat 5): THE READ IS RUNNING ON THE RENDER, 4 PARTS (restart 3 = run 35608016668, status 35608448008); the serverless reading endpoint k1sqt0haffm61y is LIVE (15:5xZ); the Pod read all 4 parts and is merging
