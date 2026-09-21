@@ -54,6 +54,21 @@ for mode in modes:
         for b in bs:
             i = text.find(f"\n#### block {b['id']} ("); j = text.find('\n```\n', text.find('```\n', i) + 4)
             print('      block %-22s %-16s %-70s %8d JSON B -> %7d tok' % (b['id'], b['kind'], b['path'][-70:], b['bytes'], tok_n(text[i:j])))
+    # L9 diagnostics: the stacked record table column by column (field, recipe, tokens of its spelling)
+    try:
+        import frankie_box_stacked_text as ST
+        env = json.loads(members['files/critic-snapshot.txt'].decode('utf-8'))['codec']
+        def ctables(node, acc):
+            if isinstance(node, list) and node and node[0] == 'C' and isinstance(node[2], list) and len(node[2]) >= 4:
+                acc.append(node)
+            if isinstance(node, list):
+                for v in node: ctables(v, acc)
+            return acc
+        for table in ctables(env['data'], []):
+            cols = [(f, tok_n(ST.spell(c)), ST.spell(c).split()[0] + ' ' + ' '.join(ST.spell(c).split()[1:4])) for f, c in zip(table[2], table[3])]
+            print('      stacked C table %d fields, %d tok: ' % (len(cols), sum(t for _, t, _ in cols)) + '; '.join('%s=%d (%s)' % (f, t, r[:24]) for f, t, r in sorted(cols, key=lambda x: -x[1])))
+    except Exception as err:
+        print('      stacked column diagnostics failed:', type(err).__name__, str(err)[:120])
     # L10 diagnostics: every list of >= 16 dicts in the rendered documents, and whether it became a block
     for m in re.finditer(r'\n### member (\S+) \(.*?\n#### document 0\n```json\n(.*?)\n```\n', text, re.S):
         for path, n, keysets, why in R.table_candidates(json.loads(m.group(2)), m.group(1)):
