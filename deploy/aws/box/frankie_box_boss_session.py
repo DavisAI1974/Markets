@@ -846,7 +846,15 @@ class Session:
         data = prompt.read_bytes()
         marker = data.find(b'## BOSS/Granite producer evidence')
         head = data if marker < 0 else data[:marker]
-        parts, members = [self._head_through_ledger(head.decode('utf-8', errors='replace'))], []
+        # HEAD_TEXT_V1 (Greg 2026-09-21 12:2xZ, every category): the head's Markdown tables as tab rows with ^ and
+        # per-column prefixes, repeated lines through a per-section dictionary; parse(render) == text is checked
+        # inside render (a mismatch raises and the corpus is not written); every section carries bytes + sha256.
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_head_render as HR
+        head_text = self._head_through_ledger(head.decode('utf-8', errors='replace'))
+        head_rendered, head_report = HR.render(head_text)
+        parts, members = [head_rendered], [dict(name='head', bytes=len(head), rendered_bytes=len(head_rendered.encode('utf-8')),
+                                                 treatment='request head: ledgered sections, then HEAD_TEXT_V1 (tables, repeated lines); parse-back checked', report=head_report)]
         payload = None
         if marker >= 0:
             block = data[marker:]

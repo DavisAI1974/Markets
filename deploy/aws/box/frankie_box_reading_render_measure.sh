@@ -69,6 +69,16 @@ for mode in modes:
             import traceback; print('   diagnose failed:', type(err).__name__, str(err)[:300])
     if mode == 'identity':
         i = text.find('{"$tensors"'); print('--- tensor table head:', text[i:i + 900].replace('\n', ' ')[:900])
+# the head (the text before the producer-evidence block) through HEAD_TEXT_V1 (read-only; the session applies the $read ledger first)
+import frankie_box_head_render as HR
+head = data[:marker].decode('utf-8', 'replace')
+t0 = time.time(); head_r, head_rep = HR.render(head)
+print(f'\n=== head: {len(head.encode())} B / {tok_n(head)} tok -> HEAD_TEXT_V1 {len(head_r.encode())} B / {tok_n(head_r)} tok; {head_rep}; parse-back == head: {HR.parse(head_r) == head}; {time.time() - t0:.0f}s')
+for s_, e_ in HR.sections(head):
+    sect = head[s_:e_]
+    if len(sect.encode()) < 2048: continue
+    r_, ch = HR._render_section(sect)
+    print('   %7d -> %7d tok  %s' % (tok_n(sect), tok_n(r_) if ch else tok_n(sect), sect.split(chr(10), 1)[0][:80]))
 # the dense digest, from the derived layers on this box (read-only: written under tmp/, never under session/)
 import frankie_box_digest_render as DG, math
 work = os.path.join(os.environ['ROOT'], 'session', 'work')
