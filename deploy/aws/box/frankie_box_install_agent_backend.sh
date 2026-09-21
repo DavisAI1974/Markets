@@ -5,7 +5,9 @@
 set -u
 ROOT=/opt/frankie-box
 mkdir -p "$ROOT/receipts" "$ROOT/logs"
-export DEBIAN_FRONTEND=noninteractive
+export DEBIAN_FRONTEND=noninteractive HOME=/root
+# The system boto3 (1.34.46) predates bedrock-runtime converse; use the staged venv's boto3 1.42 when present.
+PY=/usr/bin/python3; [ -x "$ROOT/venv/bin/python" ] && PY="$ROOT/venv/bin/python"
 echo "### node + claude code"
 if ! command -v node >/dev/null 2>&1; then
   curl -fsSL https://deb.nodesource.com/setup_20.x -o /tmp/nodesource_setup.sh && bash /tmp/nodesource_setup.sh >"$ROOT/logs/nodesource.log" 2>&1 && apt-get install -y nodejs >>"$ROOT/logs/nodesource.log" 2>&1 || { echo "node install failed"; tail -5 "$ROOT/logs/nodesource.log"; }
@@ -16,10 +18,16 @@ claude --version 2>&1 || echo "(claude absent)"
 echo "### aws cli (for Frankie's own heartbeat/downloads once the role has rights)"
 if ! command -v aws >/dev/null 2>&1; then apt-get install -y awscli >"$ROOT/logs/awscli.log" 2>&1 || echo "awscli apt install failed (fine: boto3 is present)"; fi
 aws --version 2>&1 | head -1
-echo "### credential reach (read-only, names only)"
-python3 - <<'PY'
+echo "### credential reach (read-only, names only; boto3 $("$PY" -c 'import boto3;print(boto3.__version__)'))"
+"$PY" - <<'PY'
 import boto3, json, time
 def code(e): return getattr(e, 'response', {}).get('Error', {}).get('Code') or type(e).__name__
+# Can the role DECRYPT a SecureString? Tested on the one parameter known to exist; the value is never printed or kept.
+try:
+    v = boto3.client('ssm', region_name='us-east-2').get_parameter(Name='/markets/frankie/granite-service', WithDecryption=True)['Parameter']['Value']
+    print('ssm us-east-2 decrypt /markets/frankie/granite-service: OK (role may read SecureStrings; %d chars, not printed)' % len(v)); del v
+except Exception as e:
+    print('ssm us-east-2 decrypt /markets/frankie/granite-service:', code(e))
 for region in ('us-east-1', 'us-east-2'):
     ssm = boto3.client('ssm', region_name=region)
     try:
