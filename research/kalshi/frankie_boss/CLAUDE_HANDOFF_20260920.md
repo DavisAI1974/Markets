@@ -2370,3 +2370,15 @@ session; (3) wire the agent backend (COACH_AGENT_SETUP_S93: Bedrock or API key, 
 (Root task step 1b) on the box; (4) Frankie performs cycle 0 there and pushes the four files to
 `root/cycle-00-response` from the box; (5) `frankie_host_record_principal_response.yml`, unchanged, then the runner
 resumes. Root's task document is rewritten for the box in that chat.
+
+### 08:00Z: CLOSE OF THIS CHAT
+
+State: cycle 0's machine half done on g7y3g2w1kor4l3 and exported (35557744815); the native host holds for the response;
+no response, heartbeat or root/* branch yet. Frankie's box i-035994afa8bdf66a5 is UP and EMPTY (07:42:50Z,
+KeepRunning=true, ~2.02/h); Greg's calls recorded: calculations inside AWS (04:40Z), the ingest runner is his box
+(07:4xZ), option A (07:5xZ). Pod g7y3g2w1kor4l3 EXITED; 8vqdacl5t61rjx, ycf4v6lmave6xw EXITED untouched; r2570o3g566187,
+z71ka5v0zzcmou terminated. Host tools at 35f857f0. Branch `claude/cycle-0-full-rerun-lr6e14`, tree clean. New
+workflows this chat: `frankie_host_stage_critic_request.yml`, `frankie_box_control.yml` (both trunk-registered);
+probe additions: Root heartbeats + host CPU in `frankie_host_cycle_status.yml`, instance type + region in
+`frankie_host_diag.yml`; `frankie_pod_prepare.yml` concurrency keyed by region. The to-do list (items 0-7) is in the
+drop-in READ FIRST; item 0 is Frankie's harness on his box.

@@ -5,62 +5,69 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
-## READ FIRST (04:10Z 09-21 handoff): CYCLE 0's MACHINE HALF IS DONE; the run HOLDS for ROOT; cycle 1 is THIS chat's job
+## READ FIRST (08:00Z 09-21 handoff): FRANKIE'S BOX IS UP AND EMPTY; JOB 0 = HIS HARNESS; the run HOLDS for his response
 
-Branch `claude/cycle-0-full-rerun-lr6e14` (tip 69c1fae0 or later). Every receipt is in `CLAUDE_HANDOFF_20260920.md`
-22:55Z to 04:10Z; read from 02:15Z if short on time. Run `using-agent-skills` and `git-workflow-and-versioning`
+Branch `claude/cycle-0-full-rerun-lr6e14` (tip e2be464f or later). Every receipt is in `CLAUDE_HANDOFF_20260920.md`
+22:55Z to 08:00Z; read from 02:15Z if short on time. Run `using-agent-skills` and `git-workflow-and-versioning`
 first; do not stop and restart shells (keep the same shells going); read `~/.claude/skills/runpod-usage/reference/`
 (storage, gpu-selection, gotchas) before any Pod action; NO runtime stops on Pod startup or lifecycle (Greg).
 
 State: Tasks A and B DONE. Cycle 0 re-run WHOLE under the current code on the NEW retained Pod **g7y3g2w1kor4l3**
 (US-MO-1; re-mint 35f857f0 after 8vqdacl5t61rjx's host never freed a GPU; Greg's parallel-region attempts, losers
-terminated): native BOSS -> request a7b72cf9 (same bytes, pin included) -> critic (remote-accepted 03:12:06Z,
-outcome 03:12:37Z, job 7352745e..., outcome 3cf54434...) -> completion published from this branch (35557167702; the
-launch branch refuses, as at 15:52Z) -> observer closed and the lifecycle STOP-RETAINED the Pod (EXITED; the runtime
-stop Greg wants removed) -> export 03:22Z -> HOLD -> EXPORTED TO S3 for Root (run 35557744815; keys, bytes, sha256 in
-`operations/ROOT_CYCLE_00_TASK_20260920.md`, which also carries Root's HEARTBEAT contract, step 1b). The host runner
-waits for `session-response.json` (pipeline host job 106199139034 stays in progress on purpose). Probe:
-`frankie_host_cycle_status.yml` (read-only) prints the runner, cycle files, Root's S3 heartbeats with age and STALE
-past 15 min, and `root/*` heads. At 04:09Z: no heartbeat, no branch, no response.
+terminated): native BOSS -> request a7b72cf9 (same bytes, pin included) -> critic (remote-accepted 03:12:06Z, outcome
+03:12:37Z, job 7352745e..., outcome 3cf54434...) -> completion published from this branch (35557167702; the launch
+branch refuses, as at 15:52Z) -> observer closed and the lifecycle STOP-RETAINED the Pod (EXITED; the runtime stop Greg
+wants removed) -> export 03:22Z -> HOLD -> EXPORTED TO S3 (run 35557744815; keys, bytes, sha256 and the HEARTBEAT
+contract in `operations/ROOT_CYCLE_00_TASK_20260920.md`). The native host runner waits for `session-response.json`
+(pipeline host job 106199139034 stays in progress on purpose). No response, no heartbeat, no root/* branch as of 08:00Z.
+
+GREG'S DECISIONS THIS MORNING: Frankie's calculations run INSIDE AWS with CPUs behind him (04:40Z); his box is the
+ingest runner, started 07:42Z (`frankie_box_control.yml`); OPTION A: he runs the registry's own producers on the box
+(07:5xZ). The boxes as EC2 reports them: native host i-0e90ee6110ef609aa us-east-2 r7i.4xlarge 16 vCPU Windows
+running (holding); Frankie's box i-035994afa8bdf66a5 us-east-1 r7i.8xlarge 32 vCPU Ubuntu running KeepRunning=true;
+coach box i-08cee7171c0a76a04 r6i.2xlarge stopped. Probes: `frankie_host_cycle_status.yml` (runner, cycle files, host
+CPU, Root heartbeats with STALE past 15 min, root/* heads); `frankie_host_diag.yml` (instance + region inputs).
 
 Rules tonight: every critic call needs the FULL observer round; the completion is re-published from this branch
 (request, startup, outcome, job, generation `migration-g7y3g2w1kor4l3-a004983e93b9`, code commit); a host advance
-takes the full 40-hex sha; workflow files land via the GitHub API on Greg's word; nothing is deleted, every move
-is receipted; no Pod stop/terminate without Greg's word.
+takes the full 40-hex sha; workflow files land via the GitHub API on Greg's word and are registered on the trunk;
+nothing is deleted, every move is receipted; no Pod or EC2 stop/terminate without Greg's word.
 
 **TO-DO, carried forward (this session + last; nothing dropped):**
-0. GREG, 04:40Z: FRANKIE'S CALCULATIONS RUN INSIDE AWS WITH THE CPUs BEHIND HIM. HIS BOX IS UP (07:43Z): the ingest
-   runner i-035994afa8bdf66a5, us-east-1, r7i.8xlarge 32 vCPU, Ubuntu, SSM Online (profile Ssm), private 172.31.39.59,
-   KeepRunning=true, ~2.02/h (`frankie_box_control.yml` status/start; stop only on Greg's word). BUILD THE HARNESS
-   FIRST (handoff 07:43Z): data plane on the box, exported request + cycle rows beside Frankie's session, agent
-   backend per COACH_AGENT_SETUP_S93, heartbeats (Root task step 1b), response pushed to root/cycle-00-response from
-   the box; recorder unchanged. GREG'S CALL = A: Frankie RUNS THE REGISTRY'S OWN PRODUCERS (the ten modules the pins
-   name under research/kalshi/frankie_raw_mbo_benchmark/ + the 08-20 exhaustion state adapter) on the box's 32 CPUs,
-   inspects and may modify them, derives the NO_PRODUCER_FOUND layer himself, writes the accounting and ledgers.
-   Use idle capacity (the native host too, over SSM, if needed). Calculations stay Frankie's; the runner precomputes
-   nothing. Concrete steps: handoff 07:5xZ.
-1. Cycle 0 close-out: root probe until Root's heartbeats/branch appear -> `frankie_host_record_principal_response.yml`
-   (source_ref `root/cycle-00-response`, cycle 00) -> the runner resumes on its own (verify, native learning, readback,
-   completion). Root must be handed the UPDATED task document (heartbeat step 1b). Read-only probes only meanwhile.
-2. Cycle 1 (NEW chat): `frankie_host_stage_critic_request.yml` for the new request sha -> FULL observer round (never
-   skipped) -> Pod start (`g7y3g2w1kor4l3` is EXITED; if the host refuses, the parallel-region prepare + re-mint, as
-   tonight) -> readiness -> ONE pipeline dispatch -> completion re-publication from this branch if the launch branch
-   refuses again -> export to Root -> Root -> record.
-3. Greg's directive, before cycle 1 if possible: NO runtime stops on Pod startup or lifecycle. Remove `--on-timeout stop`
-   and the bounded `stop_retain` intent from `pod_prepare.py`, and the retained lifecycle's stop-retain after the critic
-   call (it stopped `g7y3g2w1kor4l3` at 03:20Z, which starts the GPU queue battle again for cycle 1).
+0. JOB 0, FIRST: FRANKIE'S HARNESS ON HIS BOX (Greg: his calculations run inside AWS; option A). Box i-035994afa8bdf66a5
+   (us-east-1, r7i.8xlarge 32 vCPU, Ubuntu, SSM Online, profile Ssm, private 172.31.39.59, KeepRunning=true, ~2.02/h;
+   `frankie_box_control.yml` status/start; stop only on Greg's word) is UP and EMPTY. Build, in order: (1) restore the
+   data plane on it (compact journal + cycle-0 prefix rows from S3); (2) stage the exported request (S3 run 35557744815)
+   and the ten producers the pins name (research/kalshi/frankie_raw_mbo_benchmark/ + the 08-20 exhaustion state adapter)
+   beside Frankie's session; (3) agent backend per deploy/aws/COACH_AGENT_SETUP_S93.md + heartbeat writer (Root task
+   step 1b); (4) Frankie performs cycle 0 there: runs the producers on the 32 CPUs, inspects/modifies, derives the
+   NO_PRODUCER_FOUND layer himself, writes the per-layer accounting + ten ledgers, pushes the four files to
+   root/cycle-00-response FROM THE BOX; (5) frankie_host_record_principal_response.yml unchanged -> runner resumes.
+   Rewrite operations/ROOT_CYCLE_00_TASK_20260920.md for the box. The runner precomputes nothing; the calculations stay
+   Frankie's. Idle capacity is to be used: the native host (16 vCPU, idle at the HOLD) over SSM if a cycle needs more.
+1. Cycle 0 close-out after (4): root probe (`frankie_host_cycle_status.yml`: heartbeats, root/* heads, runner state)
+   -> record -> the runner resumes on its own (verify, native learning, readback, completion). Read-only probes only
+   meanwhile; never stop the host runner.
+2. Cycle 1: `frankie_host_stage_critic_request.yml` for the new request sha -> FULL observer round (never skipped) ->
+   Pod start (`g7y3g2w1kor4l3` is EXITED; if the host refuses, the parallel-region prepare + re-mint, as on 09-21) ->
+   readiness -> ONE pipeline dispatch -> completion re-publication from this branch if the launch branch refuses again
+   -> export to Frankie's box -> Frankie -> record.
+3. Greg's directive, before cycle 1 if possible: NO runtime stops on Pod startup or lifecycle. Remove `--on-timeout
+   stop` and the bounded `stop_retain` intent from `pod_prepare.py`, and the retained lifecycle's stop-retain after the
+   critic call (it stopped `g7y3g2w1kor4l3` at 03:20Z, which starts the GPU queue battle again for cycle 1).
 4. `completion_workflow_ref` in the day configuration (or carry the current identity on the launch branch) so the host's
    own completion publication stops refusing; a network volume in US-MO-1 for the Granite model (host-pinned volume
    disk is the root of every "no free GPU" stall).
-5. Ship findings on the pins commit (task #5 from last session): the pins test receipt loop for the complete pin, the
-   recorder witness compare without the absolute path, `registry_file` commit sha, loader error tests, classroom
-   objective test, the pre-existing classroom-host drift guard; the pre-existing `cycle_limit` seam test.
+5. Ship findings on the pins commit: the pins test receipt loop for the complete pin, the recorder witness compare
+   without the absolute path, `registry_file` commit sha, loader error tests, classroom objective test, the
+   pre-existing classroom-host drift guard; the pre-existing `cycle_limit` seam test.
 6. Queued from the 22:20Z box: the remaining nineteen-cycle prefixes (`day_schedule_prefixes.ps1` with `CycleLimit=19`,
    CPU-dedication gate); an outputs-receipt writer so the ten ledgers filed as lessons close the crosswalk's
    OUTPUT_PENDING rows; the NWS hourly collector failing on the trunk; the three notes files for the architect;
-   register `using-agent-skills` and `git-workflow-and-versioning` as skills. The ROOT PROBE item is DONE (04:08Z).
-7. Rotate the AWS and Databento keys after the runs (standing; never mid-run). Terminate `ycf4v6lmave6xw` and
-   `8vqdacl5t61rjx` only on Greg's word (they bill their volumes).
+   register `using-agent-skills` and `git-workflow-and-versioning` as skills. ROOT PROBE: DONE (04:08Z).
+7. Records to correct on Greg's word: CLAUDE.md and the 09-17 handoff say the native host was resized to r7i.8xlarge;
+   EC2 says the native host is r7i.4xlarge (16) and the 8xlarge (32) is the ingest runner. Rotate the AWS and Databento
+   keys after the runs (standing; never mid-run). Terminate `ycf4v6lmave6xw` and `8vqdacl5t61rjx` only on Greg's word.
 
 ## Superseded 22:20Z handoff (kept for the record): a runner was ALIVE on the host; the full rerun round started after it stopped
 
