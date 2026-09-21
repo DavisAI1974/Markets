@@ -3500,3 +3500,13 @@ the included set. The pusher publishes `runs/<day>/root/brain/cycle-<NN>/` with 
 CYCLE=00` builds and publishes cycle 0's entry once its response.json exists (the running cycle-0 session is old
 code and does not write the entry itself). Case by case = the manifest's include flags (Greg's call per document).
 Cycle 1's corpus grows by cycle 0's digest (145 KB) + accounting/ledgers + analysis, about one more reading part.
+
+### 17:0xZ 09-21: GREG: "make sure the brain docs are available for Frankie for the rest of the cycles" -- GUARANTEED
+
+`brain.check()` + `brain.restore_from_git()` + `Session.brain_ready()` (commit above): every session, preflight and
+run alike, after verify: the earlier cycles without a usable entry on the box are restored from their published
+branches (`root/cycle-NN-response`, path `runs/<day>/root/brain/cycle-NN/`, fetch only, sha-verified file by file);
+any still missing = REFUSAL with a receipt naming the cycles and the publish command. So no cycle can read without
+the calculation findings of every cycle before it, on the box or from git. The entry also carries the derivation
+receipt (included) and the derived files' witnesses. For cycle 1 this means: cycle 0's entry must be published
+(`BRAIN_ONLY=1 CYCLE=00`, after the response lands) or the cycle-1 preflight refuses, by design.
