@@ -49,7 +49,7 @@ for mode in modes:
     for n, m in rep.members.items():
         print('%-30s %10d %9d -> %10d %9d   exact=%s' % (n[:30], m['delivered_bytes'], m['delivered_tokens'], m.get('rendered_bytes', 0), m['rendered_tokens'], rep.proof[n]['exact']))
     print('   L7: derivable vectors', rep.derived_vectors, 'ranges', rep.ranges, 'notes', rep.l7_notes)
-    print('   L8: file refs', rep.file_refs, 'saving', rep.file_saved_bytes, 'B; L9: stacked blocks', rep.stacked_blocks, '; L10: table blocks', rep.table_blocks, 'rows', rep.table_rows)
+    print('   L8: file refs', rep.file_refs, 'saving', rep.file_saved_bytes, 'B; L9: stacked blocks', rep.stacked_blocks, '; L10: table blocks', rep.table_blocks, 'rows', rep.table_rows, '; block notes', rep.block_notes[:6])
     for n, bs in rep.blocks.items():
         for b in bs:
             i = text.find(f"\n#### block {b['id']} ("); j = text.find('\n```\n', text.find('```\n', i) + 4)
@@ -74,7 +74,7 @@ for mode in modes:
         doc = json.loads(m.group(2))
         for path, n, keysets, why in R.table_candidates(doc, m.group(1)):
             detail = ''
-            if why == 'candidate' and '"$table"' not in m.group(2)[:0]:
+            if why == 'candidate':
                 node = doc
                 for step in re.findall(r'\.([^.\[\]]+)|\[(\d+)\]', path[len(m.group(1)):]):
                     node = node[step[0]] if step[0] else node[int(step[1])]

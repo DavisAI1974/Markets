@@ -76,3 +76,40 @@ def test_malformed_text_refuses():
         except ValueError:
             continue
         raise AssertionError('accepted %r' % bad)
+
+
+def test_reader_rejects_non_ascii_digits_and_depth():
+    for bad in ('V \u0661', 'N L I#1 2 \u0661\u0662', 'N L I 1 \u0661', 'L 1 ' * 300 + 'V 1', 'V 1 V 2', 'M 1 null V 1'):
+        try:
+            ST.parse(bad)
+        except ValueError:
+            continue
+        raise AssertionError('accepted %r' % bad[:20])
+
+
+def test_random_structural_trees_round_trip():
+    import random
+    rnd = random.Random(20260921)
+    atoms = [None, True, False, 0, -7, 10 ** 15, '', 'a b', 'null', 'x.y', '"', 'I#1', '\u00e9', 'a\\b', 'tab\there']
+    def ints():
+        vals = [rnd.randint(-3, 9) * rnd.choice([1, 1000]) for _ in range(rnd.randint(0, 6))]
+        k = rnd.random()
+        if k < 0.3: return ['I', vals]
+        if k < 0.6: return ['D', rnd.randint(-5, 5) * 1000, vals]
+        if k < 0.8: return ['R', [[v, rnd.randint(1, 3)] for v in vals]]
+        return ['E', rnd.randint(0, 9), [[v, rnd.randint(1, 3)] for v in vals]]
+    def tree(depth=0):
+        k = rnd.random() if depth < 4 else 0.0
+        if k < 0.4: return ['V', rnd.choice(atoms)]
+        if k < 0.5: return ['F', repr(rnd.choice([1.5, -0.0, 1e-7, 5.412]))]
+        if k < 0.55: return ['X', rnd.choice(['', '00ff'])]
+        if k < 0.62:
+            n = rnd.randint(0, 3)
+            return ['M', [rnd.choice(['a', 'b c', 'null', '1', 'k.k']) + str(i) for i in range(n)], [tree(depth + 1) for _ in range(n)]]
+        if k < 0.7: return [rnd.choice(['L', 'T']), [tree(depth + 1) for _ in range(rnd.randint(0, 3))]]
+        if k < 0.8: return ['N', rnd.choice(['L', 'T']), ints()]
+        if k < 0.9: return ['S', 'L', rnd.randint(0, 3), tree(depth + 1)]
+        return ['Q', 'L', [tree(depth + 1) for _ in range(rnd.randint(0, 3))], ints()]
+    for _ in range(600):
+        t = tree()
+        assert ST.canonical(ST.parse(ST.spell(t))) == ST.canonical(t), t

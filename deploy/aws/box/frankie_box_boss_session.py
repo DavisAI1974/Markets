@@ -683,7 +683,7 @@ class Session:
         write_json(self.work / 'derive.json', receipt)
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import frankie_box_digest_render as DG
-        digest = DG.digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells)   # dense, exact, self-checked (DIGEST_V4)
+        digest = DG.digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells)   # dense, exact, self-checked (DG.SCHEMA)
         (self.work / 'derivation-digest-full.md').write_text(digest, encoding='utf-8')
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
         return receipt
@@ -944,7 +944,7 @@ class Session:
                                  read_refs=report.read_refs, read_saved_bytes=report.read_saved_bytes, ledger=str(READING_LEDGER),
                                  derived_vectors=report.derived_vectors, ranges=report.ranges, l7_notes=list(report.l7_notes),
                                  file_refs=report.file_refs, file_saved_bytes=report.file_saved_bytes, known_files=len(known),
-                                 stacked_blocks=report.stacked_blocks, table_blocks=report.table_blocks, table_rows=report.table_rows, blocks=report.blocks,
+                                 stacked_blocks=report.stacked_blocks, table_blocks=report.table_blocks, table_rows=report.table_rows, blocks=report.blocks, block_notes=list(report.block_notes),
                                  tokens=dict(delivered=sum(m.get('delivered_tokens') or 0 for m in report.members.values()),
                                              rendered=sum(m.get('rendered_tokens') or 0 for m in report.members.values())) if tokenizer else 'tokenizer absent')
         else:
@@ -1230,6 +1230,16 @@ class Session:
 
     # ---- run ----------------------------------------------------------------------------------------------
     def run(self, stage):
+        try:
+            self._run(stage)
+        except SystemExit:
+            raise
+        except Exception as err:                       # an unexpected error is a refusal with a receipt, never a silent stuck phase
+            import traceback
+            traceback.print_exc()
+            self.refuse(f'{stage}: {type(err).__name__}: {str(err)[:300]}')
+
+    def _run(self, stage):
         self.verify()
         if stage == 'preflight':
             self.labels()
@@ -1242,7 +1252,9 @@ class Session:
         self.engine_reach()
         self.phase('deriving')
         digest_path = self.work / 'derivation-digest-full.md'
-        if not digest_path.exists() or 'DIGEST_V4' not in digest_path.read_text(encoding='utf-8', errors='replace')[:400]:   # whole and dense (DIGEST_V4); an older digest is regenerated
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_digest_render as DG
+        if not digest_path.exists() or ('# Derivation digest ' + DG.SCHEMA + ' ') not in digest_path.read_text(encoding='utf-8', errors='replace')[:400]:   # whole and dense at the current schema; an older digest is regenerated
             self.derive()
         self.phase('reading')
         if not (self.work / 'merged-notes.md').exists():

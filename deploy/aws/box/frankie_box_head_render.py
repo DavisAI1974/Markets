@@ -89,7 +89,9 @@ def _render_table(rows):
     prefixes = []
     for c in range(width):
         p = _common_prefix([r[c] for r in rows])
-        prefixes.append(p if len(p) >= PREFIX_MIN else '')
+        if len(p) < PREFIX_MIN or any(r[c][len(p):] == '^' for r in rows):   # a stripped cell that reads as a repeat: no prefix for that column
+            p = ''
+        prefixes.append(p)
     body, prev = [], None
     for r in rows:
         cells = []
@@ -179,16 +181,29 @@ def render(text):
     `<<HEAD_TEXT_V1 section bytes=N sha256=...>>` ... `<<HEAD_TEXT_V1 section end>>`; parse(render(text)) == text is
     checked here and a mismatch raises. Returns (rendered, report)."""
     out, report = [], dict(schema=SCHEMA, sections=0, transformed=0, tables=0, table_rows=0, line_dictionaries=0, bytes_before=len(text.encode('utf-8')))
+    if f'<<{SCHEMA}' in text:          # the head already carries this grammar's markers (a prior lesson could): nothing is transformed
+        report.update(bytes_after=report['bytes_before'], reason='marker collision: the head is read verbatim')
+        return text, report
     for s, e in sections(text):
         section = text[s:e]
         report['sections'] += 1
-        rendered, changed = _render_section(section)
-        if changed and len(rendered) < len(section):
+        try:
+            rendered, changed = _render_section(section)
+        except Exception:
+            rendered, changed = section, False
+        wrapped = f'<<{SCHEMA} section bytes={len(section.encode("utf-8"))} sha256={_sha(section)}>>\n{rendered}\n<<{SCHEMA} section end>>\n'
+        proven = False
+        if changed and len(wrapped) < len(section):
+            try:
+                proven = _parse_section(rendered, len(section.encode('utf-8')), _sha(section)) == section   # per section: an unprovable one stays verbatim
+            except Exception:
+                proven = False
+        if proven:
             report['transformed'] += 1
             report['tables'] += rendered.count(f'<<{SCHEMA} table rows=')
             report['table_rows'] += sum(int(m) for m in re.findall(rf'<<{SCHEMA} table rows=(\d+)', rendered))
             report['line_dictionaries'] += rendered.count(f'<<{SCHEMA} lines ')
-            out.append(f'<<{SCHEMA} section bytes={len(section.encode("utf-8"))} sha256={_sha(section)}>>\n{rendered}\n<<{SCHEMA} section end>>\n')
+            out.append(wrapped)
         else:
             out.append(section)
     rendered = ''.join(out)
@@ -199,20 +214,23 @@ def render(text):
 
 
 def _parse_section(body, expected_bytes, expected_sha):
-    lines = body.split('\n')
-    if lines and lines[0].startswith(f'<<{SCHEMA} lines '):
-        lines = _parse_lines(lines)
-    out, i = [], 0
-    while i < len(lines):
-        if lines[i].startswith(f'<<{SCHEMA} table rows='):
-            j = i
-            while lines[j] != f'<<{SCHEMA} end>>':
-                j += 1
-            out.extend(_parse_table(lines[i:j + 1]))
-            i = j + 1
-        else:
-            out.append(lines[i])
-            i += 1
+    try:
+        lines = body.split('\n')
+        if lines and lines[0].startswith(f'<<{SCHEMA} lines '):
+            lines = _parse_lines(lines)
+        out, i = [], 0
+        while i < len(lines):
+            if lines[i].startswith(f'<<{SCHEMA} table rows='):
+                j = i
+                while lines[j] != f'<<{SCHEMA} end>>':
+                    j += 1
+                out.extend(_parse_table(lines[i:j + 1]))
+                i = j + 1
+            else:
+                out.append(lines[i])
+                i += 1
+    except (IndexError, AttributeError, ValueError) as err:
+        raise ValueError(f'a HEAD_TEXT_V1 section is malformed: {type(err).__name__}: {err}') from err
     text = '\n'.join(out)
     if len(text.encode('utf-8')) != expected_bytes or _sha(text) != expected_sha:
         raise ValueError('a HEAD_TEXT_V1 section does not rebuild to its recorded bytes')
@@ -222,10 +240,13 @@ def _parse_section(body, expected_bytes, expected_sha):
 def parse(rendered):
     """The head text the render was made from."""
     pattern = re.compile(rf'<<{SCHEMA} section bytes=(\d+) sha256=([0-9a-f]{{64}})>>\n(.*?)\n<<{SCHEMA} section end>>\n', re.S)
-    out, pos = [], 0
+    out, pos, matched = [], 0, 0
     for m in pattern.finditer(rendered):
         out.append(rendered[pos:m.start()])
         out.append(_parse_section(m.group(3), int(m.group(1)), m.group(2)))
         pos = m.end()
+        matched += 1
+    if matched != rendered.count(f'<<{SCHEMA} section bytes='):
+        raise ValueError('a HEAD_TEXT_V1 section marker has no matching end marker')
     out.append(rendered[pos:])
     return ''.join(out)

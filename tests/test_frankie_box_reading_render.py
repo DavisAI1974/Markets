@@ -77,7 +77,7 @@ def test_known_files_stacked_text_and_table_blocks_render_and_rebuild(tmp_path):
     import frankie_box_digest_render as DG
     table = text.split('#### block table-', 1)[1].split('```\n', 1)[1].split('```', 1)[0]
     assert DG._same(DG.parse_table(table)[1], points)
-    assert '"$table":"DIGEST_V4"' in text and '"columns":["t","p50","quantiles","side"]' in text
+    assert '"$table":"DIGEST_V5"' in text and '"columns":["t","p50","quantiles","side"]' in text
     # the snapshot text is rendered once (in the $decoded node) and the prompt contains it (L5 marker)
     assert text.count('"$stacked_text":"STACKED_TEXT_V1"') == 1 and '<<contains sha256:' in text   # once in a node (the legend names the key without its value)
     # the node carries the snapshot text's own digest (the proof that the block puts the text back ran before the
@@ -86,6 +86,21 @@ def test_known_files_stacked_text_and_table_blocks_render_and_rebuild(tmp_path):
     assert node['$decoded'] == 'utf8' and node['value']['bytes'] == len(snapshot)
     assert node['value']['sha256'] == node['sha256'] == hashlib.sha256(snapshot).hexdigest()
     assert node['value']['json']['codec']['data'] == {'$stacked': 'STACKED_TEXT_V1', 'block': node['value']['block']}
+
+
+def test_a_spoofed_or_foreign_envelope_leaves_the_value_as_it_was_with_a_note():
+    from research.kalshi.frankie_boss import granite_context_stacked as stacked
+    spoofed = dict(schema='BOSS_GRANITE_NATIVE_STACKED_CONTEXT_V1', prompt_version='x', grammar_sha256=stacked.grammar_hash(), data=['F', 7])
+    foreign = dict(schema='BOSS_GRANITE_NATIVE_STACKED_CONTEXT_V1', prompt_version='x', grammar_sha256='0' * 64, data=['V', 1])
+    notes, blocks = [], []
+    out = R._blocks_pass(dict(a=spoofed, b=foreign, c=['M', ['a', 'b'], [['V', 1]]]), blocks, 'doc', notes)
+    assert blocks == [] and out['a'] == spoofed and out['b'] == foreign and any('L9 left as JSON' in n for n in notes)
+    text = json.dumps(dict(codec=dict(spoofed, data=['V', 1.5])), separators=(',', ':')) + ' ' * 600
+    out = R._blocks_pass(dict(s=text), blocks, 'doc', notes)
+    assert out['s'] == text and blocks == []
+    deep = json.dumps({'a': {}} if False else None) or ''
+    nested = '{"a":' * 3000 + '1' + '}' * 3000
+    assert R._stacked_text_block(nested, 'p') is None and R._blocks_pass(dict(s=nested), blocks, 'doc', notes)['s'] == nested
 
 
 def test_a_stacked_text_block_that_cannot_put_the_text_back_refuses(monkeypatch):
@@ -114,7 +129,7 @@ def test_a_tuple_of_dicts_becomes_a_table_block_and_says_so():
     rows = tuple(dict(time_ns=1633298400000000000 + i * 1000, observed=i % 2 == 0, quantiles=[5.4, 5.41, 5.42]) for i in range(20))
     blocks = []
     out = R._blocks_pass(dict(points=rows), blocks)
-    assert len(blocks) == 1 and blocks[0]['rows'] == 20 and out['points']['container'] == 'tuple' and out['points']['$table'] == 'DIGEST_V4'
+    assert len(blocks) == 1 and blocks[0]['rows'] == 20 and out['points']['container'] == 'tuple' and out['points']['$table'] == 'DIGEST_V5'
     import frankie_box_digest_render as DG
     assert DG._same(DG.parse_table(blocks[0]['text'])[1], [dict(r) for r in rows])
 

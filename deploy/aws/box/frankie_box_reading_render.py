@@ -62,6 +62,7 @@ NESTED_MIN = 32
 FILE_MIN = 1024        # L8: a value at least this large may be a known file
 TABLE_MIN = 16         # L10: a list of at least this many same-keyed dicts may be a table block
 STACKED_MIN = 512      # L9: a text value at least this large may be the JSON of a stacked envelope
+TABLE_MAX_BYTES = 16_000_000   # L10: a list larger than this is left as JSON (a table attempt is O(rows x cells); a budget, not a proof)
 HEX = re.compile(r'^[0-9a-f]+$')
 
 
@@ -364,30 +365,49 @@ def _known_file(doc, dictionary):
 def known_files_index(checkouts, max_bytes=2_000_000):
     """{sha256: {path, checkout, commit}} over every file (<= max_bytes) of the given checkouts {label: directory};
     the commit is the checkout's HEAD when it is a git checkout. Exact bytes only."""
+    import stat
     index = {}
     for label, directory in checkouts.items():
-        commit = None
-        head = os.path.join(directory, '.git', 'HEAD')
-        try:
-            ref = open(head).read().strip()
-            if ref.startswith('ref: '):
-                commit = open(os.path.join(directory, '.git', ref[5:])).read().strip()
-            else:
-                commit = ref
-        except OSError:
-            commit = None
+        commit = _checkout_commit(directory)
+        root = os.path.realpath(directory)
         for dirpath, dirnames, filenames in os.walk(directory):
-            dirnames[:] = [d for d in dirnames if d not in ('.git', 'venv', 'node_modules', '__pycache__')]
-            for name in filenames:
+            dirnames[:] = sorted(d for d in dirnames if d not in ('.git', 'venv', 'node_modules', '__pycache__'))
+            for name in sorted(filenames):
                 path = os.path.join(dirpath, name)
                 try:
-                    if os.path.getsize(path) > max_bytes:
+                    st = os.lstat(path)
+                    if not stat.S_ISREG(st.st_mode) or st.st_size > max_bytes:      # regular files only: no symlink is followed
+                        continue
+                    if not os.path.realpath(path).startswith(root + os.sep):
                         continue
                     raw = open(path, 'rb').read()
                 except OSError:
                     continue
                 index.setdefault(sha(raw), dict(path=os.path.relpath(path, directory), checkout=label, commit=commit))
     return index
+
+
+def _checkout_commit(directory):
+    """The checkout's HEAD commit: a detached sha, a loose ref, or the ref's line in packed-refs; None otherwise."""
+    try:
+        ref = open(os.path.join(directory, '.git', 'HEAD')).read().strip()
+    except OSError:
+        return None
+    if not ref.startswith('ref: '):
+        return ref
+    name = ref[5:]
+    try:
+        return open(os.path.join(directory, '.git', name)).read().strip()
+    except OSError:
+        pass
+    try:
+        for line in open(os.path.join(directory, '.git', 'packed-refs')):
+            parts = line.split()
+            if len(parts) == 2 and parts[1] == name:
+                return parts[0]
+    except OSError:
+        pass
+    return None
 
 
 def _no_tuples(value):
@@ -424,9 +444,20 @@ def table_candidates(doc, path=''):
     return out
 
 
+def _grammar_hash():
+    try:
+        from research.kalshi.frankie_boss import granite_context_stacked as stacked
+        return stacked.grammar_hash()
+    except Exception:
+        return None
+
+
 def _is_envelope(node):
+    """A stacked envelope as the pinned codec builds it: the four keys, its schema and ITS grammar hash (a dict that
+    merely wears the keys is not spelled)."""
     return (isinstance(node, dict) and set(node) == {'schema', 'prompt_version', 'grammar_sha256', 'data'}
-            and node.get('schema') == 'BOSS_GRANITE_NATIVE_STACKED_CONTEXT_V1' and isinstance(node.get('data'), list))
+            and node.get('schema') == 'BOSS_GRANITE_NATIVE_STACKED_CONTEXT_V1' and isinstance(node.get('data'), list)
+            and node.get('grammar_sha256') == _grammar_hash())
 
 
 def _stacked_text_block(text, path):
@@ -438,7 +469,7 @@ def _stacked_text_block(text, path):
         return None
     try:
         obj = json.loads(text)
-    except ValueError:
+    except (ValueError, RecursionError):
         return None
     if not isinstance(obj, dict):
         return None
@@ -457,26 +488,34 @@ def _stacked_text_block(text, path):
     return {'$stacked_text': 'STACKED_TEXT_V1', 'block': ident, 'sha256': digest, 'bytes': len(text.encode('utf-8')), 'json': obj}, block
 
 
-def _blocks_pass(doc, blocks, path=''):
+def _blocks_pass(doc, blocks, path='', notes=None):
     """L9/L10 in place: a stacked envelope's data becomes a STACKED_TEXT_V1 block; a list of same-keyed dicts becomes
-    a DIGEST_V4 table block when the table parses back to the same rows and is smaller. Each block is proven before
-    the node is replaced; a failure leaves the value as it was."""
+    a DIGEST table block when the table parses back to the same rows and is smaller. Each block is proven before
+    the node is replaced; ANY failure leaves the value as it was and is written to `notes` (the receipt says why)."""
+    notes = notes if notes is not None else []
     if isinstance(doc, str):
-        found = _stacked_text_block(doc, path)
+        try:
+            found = _stacked_text_block(doc, path)
+        except Exception as err:                      # a spoofed or foreign envelope: the text stays as it was
+            notes.append(f'{path}: L9 left as text: {type(err).__name__}: {str(err)[:120]}')
+            return doc
         if found is not None:
             blocks.append(found[1])
             return found[0]
         return doc
     if isinstance(doc, dict):
         if _is_envelope(doc):
-            import frankie_box_stacked_text as ST
-            text = ST.prove(doc['data'])
-            digest = sha(ST.canonical(doc['data']).encode())
-            ident = 'stacked-' + digest[:12]
-            blocks.append(dict(id=ident, kind='STACKED_TEXT_V1', text=text, sha256=digest, path=path, bytes=len(ST.canonical(doc['data']).encode())))
-            return {k: (v if k != 'data' else {'$stacked': 'STACKED_TEXT_V1', 'block': ident, 'sha256': digest, 'bytes': len(ST.canonical(doc['data']).encode())}) for k, v in doc.items()}
-        return {k: _blocks_pass(v, blocks, f'{path}.{k}') for k, v in doc.items()}
-    if _same_keys(doc):
+            try:
+                import frankie_box_stacked_text as ST
+                text = ST.prove(doc['data'])
+                digest = sha(ST.canonical(doc['data']).encode())
+                ident = 'stacked-' + digest[:12]
+                blocks.append(dict(id=ident, kind='STACKED_TEXT_V1', text=text, sha256=digest, path=path, bytes=len(ST.canonical(doc['data']).encode())))
+                return {k: (v if k != 'data' else {'$stacked': 'STACKED_TEXT_V1', 'block': ident, 'sha256': digest, 'bytes': len(ST.canonical(doc['data']).encode())}) for k, v in doc.items()}
+            except Exception as err:
+                notes.append(f'{path}: L9 left as JSON: {type(err).__name__}: {str(err)[:120]}')
+        return {k: _blocks_pass(v, blocks, f'{path}.{k}', notes) for k, v in doc.items()}
+    if _same_keys(doc) and _size(doc) <= TABLE_MAX_BYTES:
         try:
             import frankie_box_digest_render as DG
             rows = [dict(r) for r in doc]
@@ -487,15 +526,23 @@ def _blocks_pass(doc, blocks, path=''):
                 if len(block.encode('utf-8')) < len(spelled.encode('utf-8')):
                     digest = sha(spelled.encode('utf-8'))
                     ident = 'table-' + digest[:12]
-                    blocks.append(dict(id=ident, kind='DIGEST_V4', text=block, sha256=digest, path=path, rows=len(rows), bytes=len(spelled.encode('utf-8'))))
-                    node = {'$table': 'DIGEST_V4', 'block': ident, 'rows': len(rows), 'columns': list(doc[0]), 'sha256': digest}
+                    blocks.append(dict(id=ident, kind=DG.SCHEMA, text=block, sha256=digest, path=path, rows=len(rows), bytes=len(spelled.encode('utf-8'))))
+                    columns = []
+                    for r in rows:
+                        for k in r:
+                            if k not in columns:
+                                columns.append(k)
+                    node = {'$table': DG.SCHEMA, 'block': ident, 'rows': len(rows), 'columns': columns, 'sha256': digest}
                     if isinstance(doc, tuple):
                         node['container'] = 'tuple'
                     return node
-        except Exception:
-            pass
+                notes.append(f'{path}: L10 left as JSON: the table is not smaller')
+            else:
+                notes.append(f'{path}: L10 left as JSON: the table does not parse back to the same rows')
+        except Exception as err:
+            notes.append(f'{path}: L10 left as JSON: {type(err).__name__}: {str(err)[:120]}')
     if isinstance(doc, (list, tuple)):
-        out = [_blocks_pass(v, blocks, f'{path}[{i}]') for i, v in enumerate(doc)]
+        out = [_blocks_pass(v, blocks, f'{path}[{i}]', notes) for i, v in enumerate(doc)]
         return tuple(out) if isinstance(doc, tuple) else out
     return doc
 
@@ -584,6 +631,7 @@ class RenderReport:
     table_blocks: int = 0                          # L10
     table_rows: int = 0
     blocks: dict = field(default_factory=dict)     # member -> [{id, kind, sha256, path, rows, bytes}]
+    block_notes: list = field(default_factory=list)   # why an L9/L10 candidate was left as it was (empty when none was)
 
 
 def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None, known_files=None):
@@ -626,10 +674,10 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
             collect(d)
     for name in order:
         plan[name] = [contain(d, big_strings) for d in plan[name]]
-    blocks = {}
+    blocks, block_notes = {}, []
     for name in order:
         blocks[name] = []
-        plan[name] = [_blocks_pass(d, blocks[name], name) if not isinstance(d, DecodedText) else d for d in plan[name]]
+        plan[name] = [_blocks_pass(d, blocks[name], name, block_notes) if not isinstance(d, DecodedText) else d for d in plan[name]]
     out.append('## Delivered producer evidence, lossless render (every member whole; encodings decoded in place; '
                'repeated values rendered once and referenced by sha256; tensors as tables; nothing sampled or omitted)\n')
     out.append('Legend: {"$decoded": enc, "sha256", "bytes", "value"} = a bytes value decoded from enc (c15 | json | utf8), exact bytes '
@@ -642,8 +690,10 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
                'the value is byte-identical (by sha256) to that file of that checkout on this box, open it there; {"$stacked": "STACKED_TEXT_V1", "block"} (or {"$stacked_text", "block", "sha256", "bytes", "json"} for a text value that is the JSON of one) = '
                'the stacked envelope\'s data spelled as the named block below its document (prefix notation: tag then parts; V atom, F/H/X/G as the codec, '
                'M n keys.. values.., L/T n items.., C L|T n fields.. columns.., S L|T count node, Q L|T n items.. ints, N L|T ints, B L|T count n ints..; ints = '
-               'I n v.. | D seed n deltas.. | R n (value count).. | E seed n (delta count)..), parsed back and checked equal to the envelope; '
-               '{"$table": "DIGEST_V4", "block", "rows", "columns"} = that list of rows as the named DIGEST_V4 table block below its document '
+               'I n v.. | D seed n deltas.. | R n (value count).. | E seed n (delta count)..; a recipe tag with *k (I*6, D*6, R*6, E*6) has every value written '
+               'divided by 10^k, multiply back; I#w / D#w write the values as ONE string of n x w decimal digits, each value zero-padded to w digits (the D seed '
+               'stays a separate number); X . = empty bytes), parsed back and checked equal to the envelope; '
+               '{"$table": "DIGEST_V5", "block", "rows", "columns"} = that list of rows as the named DIGEST_V5 table block below its document '
                '(same grammar as the derivation digest: header once, ^ = the cell above, ^k = k such cells, deltas, @n dictionary, n/d exact fractions, scales), parsed back and checked equal.\n')
     for name in order:
         raw = members[name]
@@ -674,9 +724,9 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
                           read_refs=dictionary.read_refs, read_saved_bytes=dictionary.read_saved, derived_vectors=dictionary.derived, ranges=dictionary.ranges,
                           l7_notes=l7_notes, file_refs=dictionary.file_refs, file_saved_bytes=dictionary.file_saved,
                           stacked_blocks=sum(1 for bs in blocks.values() for b in bs if b['kind'] == 'STACKED_TEXT_V1'),
-                          table_blocks=sum(1 for bs in blocks.values() for b in bs if b['kind'] == 'DIGEST_V4'),
+                          table_blocks=sum(1 for bs in blocks.values() for b in bs if b['kind'].startswith('DIGEST_')),
                           table_rows=sum(b.get('rows', 0) for bs in blocks.values() for b in bs),
-                          blocks={n: [{k: v for k, v in b.items() if k != 'text'} for b in bs] for n, bs in blocks.items() if bs})
+                          blocks={n: [{k: v for k, v in b.items() if k != 'text'} for b in bs] for n, bs in blocks.items() if bs}, block_notes=block_notes)
     return text, report
 
 

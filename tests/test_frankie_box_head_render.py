@@ -60,3 +60,33 @@ def test_a_tampered_section_is_refused_on_parse():
         assert 'does not rebuild' in str(err)
     else:
         raise AssertionError('a section that does not rebuild to its recorded bytes must refuse')
+
+
+def test_a_table_with_a_caret_suffix_cell_stays_exact_or_verbatim():
+    text = '## T\n\n| a | b |\n|---|---|\n' + ''.join(f'| keep/research/{"^" if i == 3 else i} | v |\n' for i in range(8))
+    rendered, report = HR.render(text)
+    assert HR.parse(rendered) == text                                # no prefix on that column, or the section verbatim: never a wrong table
+    text = '## T\n<<HEAD_TEXT_V1 table rows=1 cols=1>>\n\n| a | b |\n|---|---|\n' + ''.join(f'| r{i} | v |\n' for i in range(10))
+    rendered, report = HR.render(text)
+    assert rendered == text and report.get('reason', '').startswith('marker collision')
+    text = '## T\n\n| a | b |\n|---|---|\n' + ''.join(f'| r{i} | v |\n' for i in range(10)) + '<<HEAD_TEXT_V1 section end>>\n'
+    assert HR.render(text)[0] == text
+
+
+def test_parse_refuses_a_render_missing_its_markers_with_a_value_error():
+    rendered, report = HR.render(_head())
+    for bad in (rendered.replace('<<HEAD_TEXT_V1 end>>\n', '', 1), rendered.replace('<<@0>>', '<<@9>>', 1), rendered.replace('<<HEAD_TEXT_V1 section end>>\n', '', 1)):
+        try:
+            HR.parse(bad)
+        except ValueError:
+            continue
+        raise AssertionError('a broken render parsed without a ValueError')
+
+
+def test_a_transform_is_kept_only_when_the_wrapped_section_is_smaller():
+    text = '## T\n\n| a | b |\n|---|---|\n' + ''.join(f'| keepprefix_{i} | v |\n' for i in range(8))
+    rendered, report = HR.render(text)
+    assert report['bytes_after'] <= report['bytes_before'] and HR.parse(rendered) == text
+    text = '## T\n' + 'a line of twenty-four c\n' * 5
+    rendered, report = HR.render(text)
+    assert report['bytes_after'] <= report['bytes_before'] and HR.parse(rendered) == text

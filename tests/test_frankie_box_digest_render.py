@@ -181,3 +181,82 @@ def test_v4_tuple_cells_parse_back_as_tuples_and_nested_tuples_refuse():
         assert 'nested in a tuple' in str(err)
     else:
         raise AssertionError('a tuple nested in a tuple has no exact cell and must refuse')
+
+
+def test_a_table_whose_every_column_is_constant_round_trips():
+    for rows in ([dict(a=1, b='x')], [dict(a=1)] * 3, [dict(action_string='FCT', count=5)]):
+        assert DG._same(DG.parse_table(DG.render_table('structure_families', rows))[1], rows)
+        DG.render_layers({'structure_families': rows})                  # a one-family cycle must not crash the digest
+    assert DG.parse_table(DG.render_table('t', []))[1] == []
+
+
+def test_negative_zero_is_never_folded_into_positive_zero():
+    assert not DG._same(0.0, -0.0) and DG._same(-0.0, -0.0)
+    rows = [dict(x=0.0, y=1), dict(x=-0.0, y=2), dict(x=1.0, y=3)]
+    parsed = DG.parse_table(DG.render_table('t', rows))[1]
+    assert math.copysign(1.0, parsed[1]['x']) == -1.0 and DG._same(parsed, rows)
+    parsed = DG.parse_table(DG.render_table('t', [dict(x=-0.0), dict(x=0.0), dict(x=-0.0)]))[1]
+    assert [math.copysign(1.0, r['x']) for r in parsed] == [-1.0, 1.0, -1.0]
+    rows = [dict(best_bid=-1.0, best_ask=1.0, mid=-0.0, y=1), dict(best_bid=-1.0, best_ask=1.0, mid=0.0, y=2)]
+    parsed = DG.parse_table(DG.render_table('t', rows))[1]
+    assert repr(parsed[0]['mid']) == '-0.0' and repr(parsed[1]['mid']) == '0.0'
+
+
+def test_parse_table_refuses_a_truncated_or_tampered_block():
+    block = DG.render_table('t', [dict(a=1, b=2), dict(a=1, b=3), dict(a=4, b=3)])
+    lines = block.split('\n')
+    for bad in ('\n'.join(lines[:-2]) + '\n', block.replace('4 ^', '4'), block.replace('4 ^', '4 ^ 9'), block.replace('^ 3', '^3')):
+        try:
+            DG.parse_table(bad)
+        except ValueError:
+            continue
+        raise AssertionError('accepted a tampered block: %r' % bad[-30:])
+
+
+def test_float_edge_literals_and_mark_looking_strings():
+    rows = [dict(x=float('inf')), dict(x=float('-inf')), dict(x=float('nan')), dict(x=1e22), dict(x=5e-324), dict(x=1.7976931348623157e308)]
+    block = DG.render_table('t', rows)
+    assert block.split('\n')[1:7] == ['inf', '-inf', 'nan', '1e+22', '5e-324', '1.7976931348623157e+308']
+    assert DG._same(DG.parse_table(block)[1], rows)
+    assert DG._float_text(2.5) == '2.5' and DG._float_text(0.1) == '0.1'
+    rows = [dict(s=v) for v in ('-3', '12/34', '^', '=', 'nan', 'T', '@0', '+5', '?', 'K0', 'I1', '~1', 'U[', 'J[', 'a\rb', '', '  lead', 'trail ', 'caf\u00e9')]
+    parsed = DG.parse_table(DG.render_table('t', rows))[1]
+    assert all(isinstance(r['s'], str) for r in parsed) and DG._same(parsed, rows)
+
+
+def test_column_names_that_cannot_be_spelled_refuse_with_a_value_error():
+    for rows in ([{'^a': 1}, {'^a': 2}], [{'=b': 1}, {'=b': 2}], [{'a=b': 1}, {'a=b': 1}], [{'a\tb': 1}, {'a\tb': 2}], [{'a.b': 1}, {'a.b': 2}]):
+        try:
+            DG.render_layers({'t': rows})
+        except ValueError:
+            continue
+        raise AssertionError('accepted an unspellable column: %r' % list(rows[0]))
+
+
+def test_random_structural_rows_round_trip():
+    import random
+    rnd = random.Random(20260921)
+    names = ['a', 'ts_recv_ns', 'ts_event_ns', 'price_raw_min', 'n', 'f', 's', 'l', 'd', 'best_bid', 'best_ask', 'mid', 'spread']
+    def value(c):
+        k = rnd.random()
+        if k < 0.1: return None
+        if k < 0.2: return rnd.random() < 0.5
+        if k < 0.4: return rnd.randint(-5, 5) * (1000 if rnd.random() < 0.5 else 1)
+        if k < 0.6: return rnd.choice([rnd.random(), float(rnd.randint(-9, 9)) / float(rnd.randint(1, 9)), float('nan'), -0.0, 1e-9, 2.5])
+        if k < 0.75: return rnd.choice(['x', '-3', '^', '12/34', 'a b', 'S', ''])
+        if k < 0.85: return [rnd.randint(0, 9) for _ in range(rnd.randint(0, 4))]
+        if k < 0.95: return dict(u=rnd.randint(0, 3), v='q')
+        return (rnd.randint(0, 3), 'x')
+    for _ in range(400):
+        cols = rnd.sample(names, rnd.randint(1, 6))
+        rows = []
+        for i in range(rnd.randint(1, 8)):
+            row = {c: value(c) for c in cols if rnd.random() < 0.9}
+            if rows and rnd.random() < 0.3:
+                row = dict(rows[-1])
+            if row:
+                rows.append(row)
+        if not rows:
+            continue
+        block = DG.render_table('t', rows)
+        assert DG._same(DG.parse_table(block)[1], rows), block

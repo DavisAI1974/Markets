@@ -28,7 +28,7 @@ import math
 import re
 from fractions import Fraction
 
-SCHEMA = 'DIGEST_V4'
+SCHEMA = 'DIGEST_V5'   # V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
 FRACTION_DENOMINATOR = 1_000_000   # DIGEST_V4: a float spelled n/d only when float(n)/float(d) is that float exactly and the spelling is shorter
 SCALE_MIN, SCALE_MAX = 3, 9       # DIGEST_V4: a per-column power of ten every integer literal of the column divides by (declared once, checked)
 RUN_MARKS = ('^', '=')            # DIGEST_V4: k consecutive identical mark cells collapse to `^k` / `=k` (never `-`: `-3` is an integer)
@@ -153,7 +153,7 @@ def _equal_typed(value, stored):
     if isinstance(value, bool) or isinstance(stored, bool):
         return type(value) is type(stored) and value == stored
     if isinstance(value, float) and isinstance(stored, (int, float)):
-        return value == float(stored)
+        return _same(value, float(stored))
     return type(value) is type(stored) and _same(value, stored)
 
 
@@ -248,11 +248,14 @@ def _literal(v, column, r, prev_lists):
         return 'lit', 'U' + json.dumps(list(v), separators=(',', ':'), sort_keys=True)   # DIGEST_V4: a tuple cell, parsed back as a tuple
     if _int_list(v):
         if column in _DISPOSITION_LISTS and _int_list(r.get('order_ids')):
-            ids = r['order_ids']; pos = []
+            index, pos = {}, []
+            for i, x in enumerate(r['order_ids']):
+                index.setdefault(x, i)                                    # first occurrence, one pass (O(n), not ids.index per element)
             for x in v:
-                if x not in ids or (pos and ids.index(x) <= pos[-1]):
+                i = index.get(x)
+                if i is None or (pos and i <= pos[-1]):
                     break
-                pos.append(ids.index(x))
+                pos.append(i)
             else:
                 return 'lit', 'K' + ','.join(str(i) for i in pos)      # positions in this row's order_ids
         first = ('%+d' % (v[0] - prev_lists[column])) if isinstance(prev_lists.get(column), int) else str(v[0])
@@ -310,6 +313,9 @@ def render_table(name, rows, context=None):
         for k in r:
             if k not in columns:
                 columns.append(k)
+    for k in columns:
+        if not k or k[0] in '=^' or '\t' in k or '\n' in k or '=' in k or ' ' in k:
+            raise ValueError(f'column name {k!r} cannot be spelled in a table header')
     prev_row, prev_values, prev_ints, prev_lists, planned = None, {}, {}, {}, []
     for r in flat:
         planned.append(_plan_row(r, columns, prev_row, prev_values, prev_ints, prev_lists))
@@ -321,7 +327,7 @@ def render_table(name, rows, context=None):
             whole[c] = '='
         elif flat and all(cells[j][1] == '=' for cells in planned):
             whole[c] = '='
-        elif flat and all(c in r for r in flat) and all(_same(r[c], flat[0][c]) for r in flat) and not (flat and _int_list(flat[0][c]) and False):
+        elif flat and all(c in r for r in flat) and all(_same(r[c], flat[0][c]) for r in flat):
             whole[c] = '^'
     kept = [j for j, c in enumerate(columns) if c not in whole]
     counts = {}
@@ -434,8 +440,12 @@ def _derived_order(columns):
 
 def parse_table(block, context=None):
     import copy
-    lines = block.rstrip('\n').split('\n')
+    lines = block.split('\n')
+    if lines and lines[-1] == '':
+        lines.pop()                        # the block's final newline only; an empty row line (every column constant or derived) stays
     m = re.match(r'### table (\S+): (\d+) rows, (?:sep=(space|tab), )?columns: (.*)$', lines[0])
+    if m is None:
+        raise ValueError('table header expected')
     name, n = m.group(1), int(m.group(2))
     sep = ' ' if m.group(3) == 'space' else '\t'
     declared = m.group(4).split('\t') if m.group(4) else []
@@ -460,8 +470,12 @@ def parse_table(block, context=None):
         idx += 1
     rows, prev_row, prev_values, prev_ints, prev_lists = [], None, {}, {}, {}
     cross = {c: CROSS_DERIVED[(name, c)] for c, mark in whole.items() if mark == '=' and (name, c) in CROSS_DERIVED and (context or {}).get(CROSS_DERIVED[(name, c)][0]) is not None}
+    if len(lines) < idx + n:
+        raise ValueError(f'table {name}: {n} rows declared, {len(lines) - idx} present')
     for i, line in enumerate(lines[idx:idx + n]):
         cells = _expand(line.split(sep)) if kept else []
+        if len(cells) != len(kept):
+            raise ValueError(f'table {name} row {i}: {len(cells)} cells for {len(kept)} columns')
         row, derived_cols, positional, paired = {}, set(c for c, mark in whole.items() if mark == '=' and c not in cross), {}, {}
         for c in constants:
             row[c] = copy.deepcopy(constants[c])
@@ -545,8 +559,10 @@ def _unflatten(flat):
 
 
 def _same(a, b):
-    if isinstance(a, float) and isinstance(b, float) and math.isnan(a) and math.isnan(b):
-        return True
+    if isinstance(a, float) and isinstance(b, float):
+        if math.isnan(a) and math.isnan(b):
+            return True
+        return a == b and math.copysign(1.0, a) == math.copysign(1.0, b)   # -0.0 is not 0.0: the sign of zero is a value
     if isinstance(a, dict) and isinstance(b, dict):
         return a.keys() == b.keys() and all(_same(a[k], b[k]) for k in a)
     if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
@@ -606,7 +622,7 @@ def per_second_rows(first, buys, sells, roll, window=20):
 
 def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells):
     """The whole digest: layer status, then every derived layer as a dense exact table (all fields)."""
-    lines = ['# Derivation digest DIGEST_V4 (Frankie\'s own calculations on this cycle\'s rows; written by the session code; whole, no '
+    lines = ['# Derivation digest ' + SCHEMA + ' (Frankie\'s own calculations on this cycle\'s rows; written by the session code; whole, no '
              'limits; every derived field, exact; `=` = the column the adapter computes from this row (spread = best_ask - best_bid, '
              'mid = 0.5*(best_bid + best_ask), depth_imbalance_full = (bid_depth_full - ask_depth_full)/(bid_depth_full + ask_depth_full)), '
              'checked equal before it is written that way, and likewise every structure column the pinned producer computes from the '

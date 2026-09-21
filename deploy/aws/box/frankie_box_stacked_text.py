@@ -128,7 +128,9 @@ def _ints(node, out):
         raise ValueError('unknown integer recipe %r' % tag)
 
 
-def _spell(node, out):
+def _spell(node, out, depth=0):
+    if depth > 256:
+        raise ValueError('stacked tree nests too deep')
     tag = node[0]
     if tag == 'V':
         out.append('V ' + _atom(node[1]))
@@ -140,24 +142,24 @@ def _spell(node, out):
         keys, values = node[1], node[2]
         out.append('\nM %d %s' % (len(keys), ' '.join(_atom(k) for k in keys)))
         for v in values:
-            _spell(v, out)
+            _spell(v, out, depth + 1)
     elif tag in ('L', 'T'):
         out.append('%s %d' % (tag, len(node[1])))
         for v in node[1]:
-            _spell(v, out)
+            _spell(v, out, depth + 1)
     elif tag == 'C':
         keys, columns = node[2], node[3]
         out.append('\nC %s %d %s' % (node[1], len(keys), ' '.join(_atom(k) for k in keys)))
         for column in columns:
             out.append('\n')
-            _spell(column, out)
+            _spell(column, out, depth + 1)
     elif tag == 'S':
         out.append('S %s %d' % (node[1], node[2]))
-        _spell(node[3], out)
+        _spell(node[3], out, depth + 1)
     elif tag == 'Q':
         out.append('Q %s %d' % (node[1], len(node[2])))
         for v in node[2]:
-            _spell(v, out)
+            _spell(v, out, depth + 1)
         _ints(node[3], out)
     elif tag == 'N':
         out.append('N %s' % node[1])
@@ -174,6 +176,7 @@ def spell(tree):
     """The STACKED_TEXT_V1 text of a stacked tree (the envelope's `data`, or any node)."""
     out = []
     _spell(tree, out)
+    # the whitespace collapse is safe because every atom is bare (no whitespace) or json.dumps(ensure_ascii=True), which escapes every control character
     text = ' '.join(out).replace(' \n ', '\n').replace(' \n', '\n').replace('\n ', '\n')
     return text.strip('\n') + '\n'
 
@@ -208,7 +211,7 @@ class _Cursor:
             return True
         if value == 'false':
             return False
-        if re.fullmatch(r'-?\d+', value):
+        if re.fullmatch(r'-?[0-9]+', value):
             return int(value)
         if BARE.fullmatch(value):
             return value
@@ -230,7 +233,7 @@ class _Cursor:
 
     def int(self):
         value = self.bare()
-        if not re.fullmatch(r'-?\d+', value):
+        if not re.fullmatch(r'-?[0-9]+', value):
             raise ValueError('integer expected, got %r' % value[:40])
         return int(value)
 
@@ -240,7 +243,7 @@ class _Cursor:
 
 def _digits(c, n, w):
     token = c.bare()
-    if len(token) != n * w or not token.isdigit():
+    if len(token) != n * w or not re.fullmatch(r'[0-9]+', token):
         raise ValueError('fixed-width digit string of %d x %d digits expected' % (n, w))
     return [int(token[i * w:(i + 1) * w]) for i in range(n)]
 
@@ -249,7 +252,7 @@ def _parse_ints(c):
     tag = c.bare()
     if '#' in tag:
         tag, _, w = tag.partition('#')
-        if tag not in ('I', 'D') or not re.fullmatch(r'[1-3]', w):
+        if tag not in ('I', 'D') or w not in ('1', '2', '3'):
             raise ValueError('fixed-width digits are I#w or D#w with w in 1..3')
         w = int(w)
         if tag == 'I':
@@ -258,7 +261,7 @@ def _parse_ints(c):
         seed, n = c.int(), c.int()
         return ['D', seed, _digits(c, n, w)]
     tag, star, k = tag.partition('*')
-    if star and not re.fullmatch(r'\d{1,2}', k):
+    if star and not re.fullmatch(r'[0-9]{1,2}', k):
         raise ValueError('integer recipe scale must be *k')
     q = 10 ** int(k) if star else 1
     if tag == 'I':

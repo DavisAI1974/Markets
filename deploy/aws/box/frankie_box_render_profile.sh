@@ -8,14 +8,14 @@
 # tokens, cell marks, the separator's cost, run-length and fraction candidates, integer scale. Changes nothing;
 # writes only under /opt/frankie-box/tmp/.
 set -u
-ROOT=/opt/frankie-box; T="$ROOT/tmp"; mkdir -p "$T"
+ROOT=/opt/frankie-box; T="$ROOT/tmp"; SAMPLES="${SAMPLES:-0}"; mkdir -p "$T"
 "$ROOT/venv/bin/python" -c "import tokenizers" 2>/dev/null || "$ROOT/venv/bin/pip" install -q tokenizers >/dev/null 2>&1
 TOK="$T/granite_tokenizer.json"
 [ -s "$TOK" ] || curl -fsS -m 120 -L -o "$TOK" "https://huggingface.co/ibm-granite/granite-4.2-8b/resolve/f8de16cdcdbc6c779ca517604e050d82cc119e44/tokenizer.json"
 M="$ROOT/tmp/markets-measure"; REF="${MARKETS_REF:-claude/cycle-0-frankie-box-rerun-od5sxk}"
 if [ -d "$M/.git" ]; then git -C "$M" fetch -q --depth 1 origin "$REF" && git -C "$M" checkout -q FETCH_HEAD; else git clone -q --depth 1 --branch "$REF" https://github.com/DavisAI1974/Markets.git "$M"; fi
 echo "profile checkout $(git -C "$M" rev-parse --short HEAD)"
-export ROOT TOK M
+export ROOT TOK M SAMPLES
 "$ROOT/venv/bin/python" - <<'PY'
 import base64, collections, hashlib, json, math, os, re, sys
 from fractions import Fraction
@@ -145,7 +145,8 @@ for (s, e), title in zip(bounds, titles):
     print('  -- %7d B %6d tok %5d lines  %s' % (len(sect.encode()), tk(sect), len(lines), title[:90]))
     print('     json lines %d (key sets %d: %s); md table rows %d; 64-hex %d (distinct %d)' % (jl, len(keysets), [','.join(k)[:80] for k, _ in keysets.most_common(2)], mdrows, len(hexes), len(set(hexes))))
     print('     repeated line prefixes:', [(p[:24], n) for p, n in prefixes.most_common(4) if n >= 3])
-    for l in lines[1:4]: print('     |', l[:150])
+    if os.environ.get('SAMPLES') == '1':          # raw head lines only on request: the workflow log is public
+        for l in lines[1:4]: print('     |', l[:150])
 
 print('\n== (6) DIGEST_V3 tables, column by column')
 dense_path = os.path.join(ROOTD, 'tmp', 'derivation-digest-dense.md')
@@ -199,5 +200,6 @@ else:
             d = cols[c]
             print('     %-46s %6d tok  ^%-4d =%-4d -%-4d lit %-4d (lit tok %5d) int-scale 10^%s  floats %d exact-fraction %d (delta %+d tok)' % (
                 c[-46:], d['tok'], d['same'], d['derived'], d['none'], d['lit'], d['lit_tok'], d['scale'], d['floats'], d['frac_ok'], d['frac_tok']))
-        for r in rows[1:3]: print('     |', '\t'.join(r)[:200].replace('\t', ' <t> '))
+        if os.environ.get('SAMPLES') == '1':
+            for r in rows[1:3]: print('     |', '\t'.join(r)[:200].replace('\t', ' <t> '))
 PY
