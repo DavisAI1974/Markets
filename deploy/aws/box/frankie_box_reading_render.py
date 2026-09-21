@@ -170,7 +170,8 @@ def encode_member(name, docs, kinds):
 
 
 # ---- L4: tensors ------------------------------------------------------------------------------------------------
-DTYPES = {'float64': ('d', 8), 'float32': ('f', 4), 'int64': ('q', 8), 'int32': ('i', 4)}
+DTYPES = {'float64': ('d', 8), 'float32': ('f', 4), 'int64': ('q', 8), 'int32': ('i', 4),
+          'torch.float64': ('d', 8), 'torch.float32': ('f', 4), 'torch.int64': ('q', 8), 'torch.int32': ('i', 4)}   # native byte order ('=d', the snapshot contract)
 
 
 def _tensor_map(node):
@@ -185,7 +186,7 @@ def tensor_rows(weights, mode):
         fmt, width = DTYPES.get(t['dtype'], (None, None))
         row = dict(name=name, dtype=t['dtype'], shape=list(t['shape']), bytes=len(raw), sha256=sha(raw))
         if fmt and len(raw) % width == 0:
-            values = struct.unpack('<%d%s' % (len(raw) // width, fmt), raw)
+            values = struct.unpack('=%d%s' % (len(raw) // width, fmt), raw)
             finite = [v for v in values if not (isinstance(v, float) and not math.isfinite(v))]
             row.update(count=len(values), min=min(finite) if finite else None, max=max(finite) if finite else None,
                        mean=(sum(finite) / len(finite)) if finite else None, l2=math.sqrt(sum(v * v for v in finite)) if finite else None)

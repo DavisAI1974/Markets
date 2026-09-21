@@ -40,5 +40,5 @@ for mode in modes:
     for n, m in rep.members.items():
         print('%-30s %10d %9d -> %10d %9d   exact=%s' % (n[:30], m['delivered_bytes'], m['delivered_tokens'], m.get('rendered_bytes', 0), m['rendered_tokens'], rep.proof[n]['exact']))
     if mode == 'identity':
-        i = text.find('$tensors'); print('--- tensor table head:', text[i:i + 700].replace('\n', ' ')[:700])
+        i = text.find('{"$tensors"'); print('--- tensor table head:', text[i:i + 900].replace('\n', ' ')[:900])
 PY
