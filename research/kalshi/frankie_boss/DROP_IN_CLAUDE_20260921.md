@@ -24,6 +24,9 @@ STATE OF THE RUN (session unit frankie-cycle-00 on box i-035994afa8bdf66a5, rest
   until its next start, and 97473b99 makes it re-read SSM after any failed push). EXPIRY TO CONFIRM: GitHub's
   expiration header said 2026-09-21 20:12:57 UTC for BOTH tokens; Greg's form said Dec 20 for the classic. If the
   fine-grained one expires tonight, a new value goes in with the same put_parameter (any shell with the Claude IAM key).
+- REPOSITORY SECRETS (names-only report on every box run since eab049c1, measured 15:47Z): RUNPOD_API_KEY=true,
+  AWS pair=true, FRANKIE_GITHUB_TOKEN=false, DATABENTO_API_KEY=false. Last session line 15:46:37Z: `merging level 0:
+  2/2 done` (the final merge, then writing, then pushing follow).
 - FIRST PROBE of the next chat: `frankie_box_run.yml` script `frankie_box_session.sh` variables `ACTION=status`
   (the run also prints which repository secrets are set, names only). Expect phase writing or pushing, or done.
 

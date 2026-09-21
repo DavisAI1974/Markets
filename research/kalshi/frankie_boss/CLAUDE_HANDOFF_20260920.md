@@ -3313,3 +3313,9 @@ of every reachable commit (2,733) and every tracked file: no full-length RunPod 
 the S100 note's key id and six-char prefix, recorded on purpose). Greg: "I believe secrets has it [RUNPOD_API_KEY]
 and also use your mcp if it doesn't": the names-only secrets report (eab049c1, printed by every box run) answers the
 first half on run 35621233900; the outcome line follows if it landed before close.
+Run 35621233900 (15:47Z): repository secrets set: RUNPOD_API_KEY=true (Greg was right: the trunk-registered
+`frankie_serverless_reading.yml` route needs only the registration now), AWS pair=true, FRANKIE_GITHUB_TOKEN=false
+(the SSM value was written directly, so that secret was never needed), DATABENTO_API_KEY=false at repository level
+(the historical pull workflow holds it elsewhere or not at all; not this chat's question). Session at 15:46:37Z:
+`merging level 0: 2/2 done, 0 in flight (serverless x8)`; heartbeat beats 1790005258 and 1790005560 pushed (`git`).
+Next on the box: the final merge, then writing on the Pod, then pushing. CHAT 5 ENDS HERE.
