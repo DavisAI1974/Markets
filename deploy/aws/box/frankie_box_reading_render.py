@@ -526,13 +526,13 @@ def _blocks_pass(doc, blocks, path='', notes=None):
                 if len(block.encode('utf-8')) < len(spelled.encode('utf-8')):
                     digest = sha(spelled.encode('utf-8'))
                     ident = 'table-' + digest[:12]
-                    blocks.append(dict(id=ident, kind=DG.SCHEMA, text=block, sha256=digest, path=path, rows=len(rows), bytes=len(spelled.encode('utf-8'))))
+                    blocks.append(dict(id=ident, kind=DG.TABLE_GRAMMAR, text=block, sha256=digest, path=path, rows=len(rows), bytes=len(spelled.encode('utf-8'))))
                     columns = []
                     for r in rows:
                         for k in r:
                             if k not in columns:
                                 columns.append(k)
-                    node = {'$table': DG.SCHEMA, 'block': ident, 'rows': len(rows), 'columns': columns, 'sha256': digest}
+                    node = {'$table': DG.TABLE_GRAMMAR, 'block': ident, 'rows': len(rows), 'columns': columns, 'sha256': digest}
                     if isinstance(doc, tuple):
                         node['container'] = 'tuple'
                     return node

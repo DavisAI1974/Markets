@@ -29,6 +29,7 @@ import re
 from fractions import Fraction
 
 SCHEMA = 'DIGEST_V6'   # V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
+TABLE_GRAMMAR = 'DIGEST_V5'   # the table block grammar (cells, marks, dictionary, scales): unchanged by V6, which adds tables, not marks
 BEDROCK_GROUP_KEY = ('group_index', 'ts_recv_ns', 'f_last_ts_recv_ns')
 FRACTION_DENOMINATOR = 1_000_000   # DIGEST_V4: a float spelled n/d only when float(n)/float(d) is that float exactly and the spelling is shorter
 SCALE_MIN, SCALE_MAX = 3, 9       # DIGEST_V4: a per-column power of ten every integer literal of the column divides by (declared once, checked)
