@@ -84,6 +84,10 @@ def main():
     s3 = boto3.client('s3', region_name='us-east-1')
     last_phase = None
     while True:
+        if not have_git:
+            # the token may be granted while the session runs (Greg's SecureString): re-read it every beat until it is there
+            tok = token()
+            have_git = bool(tok) and ensure_clone(work, branch, a.base)
         phase = read(session / 'phase', 'reading')
         if phase not in PHASES:
             phase = 'reading'

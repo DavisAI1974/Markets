@@ -46,10 +46,13 @@ retained Granite vLLM on Pod g7y3g2w1kor4l3 over jobs_v1 (the host critic's tran
 verify, labels by code (the source contract's one-tick detector; 29/29 of the first run's labels reproduced),
 engine reach, derive (the cycle-0 pin producers on prefix-00 rows), reading (all of prompt.md in bounded parts,
 notes merged), writing (analysis, accounting, ten ledgers; the four files), push. `frankie_box_session.sh`
-preflight/start run it. Still needed from Greg: (1) `/markets/frankie/github-token` SecureString in us-east-2;
-(2) the Pod g7y3g2w1kor4l3 RUNNING (EXITED at 09:00Z; a Pod start is his word; read
-`~/.claude/skills/runpod-usage/reference/` first); (3) optional PutObject on the progress prefix. Nothing on the
-native host was touched; the runner still holds.
+preflight/start run it. GREG 09:3xZ: "Can you update while root is running? That should be our first priority" /
+"Proceed" -> the Pod g7y3g2w1kor4l3 was STARTED (run 35583672111, accepted first attempt, RUNNING 09:30:46Z; no
+stop without his word). Still needed from Greg: (1) `/markets/frankie/github-token` SecureString in us-east-2 (the
+session runs without it; the pusher refuses at the end with the files safe on the box; the heartbeat picks a later
+grant up on its next beat); (2) optional PutObject on the progress prefix. Build plan workbook R4 committed
+(`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`, `BUILD_PLAN_UPDATE_R4_20260921.md`). Nothing on the native
+host was touched; the runner still holds.
 
 ## READ FIRST (08:00Z 09-21 handoff): FRANKIE'S BOX IS UP AND EMPTY; JOB 0 = HIS HARNESS; the run HOLDS for his response
 

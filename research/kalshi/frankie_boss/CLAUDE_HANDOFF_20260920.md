@@ -2592,3 +2592,29 @@ the unit beside the heartbeat. No tokenizer on the box (the proxy exposes only /
 by the byte estimate; a part the service refuses for context shows up as a job with result_status != 200 in its
 outcome.json (the note names it; halving CHUNK_BYTES is the fix). Not started: the Pod is EXITED and the git token is
 not granted. Nothing deleted; nothing on the native host touched.
+
+### 09:30Z 09-21: GREG: "Can you update while root is running? That should be our first priority" / "Proceed". THE POD IS STARTED
+
+Order taken: getting Frankie's session running is first; the workbook update runs beside it. Read
+`~/.claude/skills/runpod-usage/reference/pod-workflows.md` and `gotchas.md` first (the directive), then
+`frankie_pod_control.yml` action=start on the retained Pod g7y3g2w1kor4l3 (retry_seconds 3600, wait 300; the only
+Pod action, never a stop): run 35583672111, START_ACCEPTED attempt 1, HTTP 200, status RUNNING at 09:30:46Z, receipt
+FRANKIE_POD_START_RECEIPT_V1 outcome accepted (the host had a free L40S this time). The Pod stays RUNNING until Greg
+says otherwise (no runtime stops). The service boots the 17.6 GB model from the pod volume; the box preflight probes
+/health and refuses until it answers ok.
+
+Two preflight defects found on the box and fixed before this: (1) `frankie_box_session.sh` preflight did not fetch
+this branch first, so the new script was not on the box (run 35583007086; fixed aefdcd48); (2) with the producers
+checkout first on sys.path its older `research.refrag` shadowed the markets one (run 35583181164,
+`MarketChunkEncoder` without `feature_registry`); markets is first now and the pinned V4 adapter is loaded from the
+producers checkout by file path (8a9046a8). Preflight re-dispatched on 8a9046a8.
+
+Build plan workbook R4 (Greg: "update the excel sheet build plan to reflect what we have built presently"):
+`artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx` beside the untouched R3 closeout, every sheet brought to what is
+built and what has run, a Change Log R4 sheet with 129 entries, five new component rows C32-C36; record
+`BUILD_PLAN_UPDATE_R4_20260921.md` (commit 8a9046a8).
+
+Still Greg's: the SecureString `/markets/frankie/github-token` (us-east-2). Without it the session runs to the end and
+the pusher refuses at the last step with the four files safe on the box; the heartbeat's git leg is disabled and the
+box `status` action is the progress probe. A grant while the session runs is picked up on the next heartbeat push
+and by re-dispatching the pusher.
