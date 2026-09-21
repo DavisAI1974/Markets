@@ -3781,3 +3781,72 @@ docs-cycle-00/, brain/cycle-00/). Built on this branch, commit 996828f3, box sui
 THE RERUN = the runbook a-i unchanged. The session re-reads (4 parts + merges on the reading lane, about an hour), runs
 the classroom (19 + 1 calls), and writes again with the packets in the base (twelve Pod calls, hours). Every host step on
 Greg's go; nothing has run.
+
+### 23:xxZ 09-21: /SHIP ON THE CLASSROOM EXCHANGE + THE RERUN CHANGES (c32bdb03..a4be03fd): GO AFTER FIXES, ALL FIXES LANDED (4416e6ac)
+
+Three specialists ran in parallel on the change (code-reviewer, security-auditor, test-engineer); merged here. Every
+Critical/High/Required finding is FIXED on this branch with the test that would have caught it; 129 box and host tests
+green with torch present, 29 classroom tests green with torch hidden (the shim branch CI runs).
+
+**Ship Decision: GO** (for the rerun on Greg's go; nothing has run).
+
+Blockers, all fixed in 4416e6ac:
+- [code-reviewer, Critical] `frankie_box_boss_session.py` re-executed `frankie_box_classroom.py` on every call, so the
+  `except C.ClassroomOutput` in `_classroom_call` tested a different class than the parse raised: a well-formed but
+  wrong-shape JSON component answer crashed the session through `run()`'s catch-all instead of being asked once more,
+  and every restart repeated the crash with no model call. Fix: one module object per process (`_box_module`); test
+  `test_a_well_formed_but_wrong_shape_json_answer_is_asked_once_more_then_refused`.
+- [test-engineer, Critical; code-reviewer, Required] the writing gate self-invalidated on every restart after writing
+  completed: the receipts packet listed the `write-*` jobs, the packet sha moved, `written['inputs']` differed, all
+  twelve writing calls ran again (hours on the Pod). Fix: `exclude_prefixes=('write-',)` by construction, noted in the
+  packet; the gate is keyed on `classroom/ledgers.json` too; test `test_the_writing_gate_is_stable_once_writing_has_run`.
+- [test-engineer, High] `note_verdict`'s 200-character minimum judged a terse valid JSON acknowledgement `empty` (a
+  zero-correction acknowledgement is short). Fix: a classroom answer is judged by its parse; refusal/error/empty and
+  incomplete-on-the-boss still refuse; an incomplete answer whose JSON needed a truncation repair refuses; tests
+  `test_a_terse_valid_answer_is_accepted`, `test_an_incomplete_answer_whose_json_needed_a_truncation_repair_is_refused`.
+- [test-engineer, High] fan-out refusals in the same second overwrote one receipt; `note()` was unlocked across 8
+  threads. Fix: uuid suffix, RLock, note under the lock; test `test_refusal_receipts_never_overwrite_each_other`.
+- [security-auditor, Medium; code-reviewer, Required] the host supersede script's principal_output gate passed silently
+  on any sqlite error (`2>$null`) and used the CLI. Fix: the host python's sqlite3 in uri `mode=ro`; a gate that cannot
+  be evaluated throws; the plan is receipted before anything moves; the runner-alive check matches the command line only.
+- [security-auditor, Medium] the correction answer cache (`correction.json`) was reused across requests. Fix: one file
+  per request sha, bound to request and post-grade hashes, refused on mismatch; `original_request_sha256` must equal the
+  response's `request_sha256`; test `test_the_correction_answer_cache_is_bound_to_the_request_and_the_post_grade`.
+- [code-reviewer, Required] the reading lane resumed by job NAME only. Fix: an outcome is resumed only when its
+  `prompt.txt` equals the prompt asked now; otherwise the job directory is moved aside with a receipt
+  (`FRANKIE_BOX_JOB_SUPERSEDED_V1`) and asked again; every component call records `prompt_sha256`; test
+  `test_a_serverless_outcome_is_resumed_only_for_the_prompt_it_answered`. Every serverless job on the box has carried
+  prompt.txt since 175bfb3e, so nothing on the box is re-spent by this; a directory without one resumes with a note.
+- [code-reviewer, Required] `future_outcome_claimed` was stamped False over the BOSS's own value. Fix: a finding the
+  BOSS marks true is dropped with its reason (never rewritten); the summary prompt asks for the field; COMPOSITION now
+  names the three stamped flags; test `test_a_finding_that_claims_a_future_outcome_is_dropped_not_rewritten`.
+- [code-reviewer, Required] `ACTION=correction` moved the markets checkout under a running cycle session. Fix: the
+  correction unit waits while `frankie-session-$CYCLE` is active.
+- Lows landed too: `validate()`/`visible_of` failures refuse with a receipt instead of crashing; Markdown cells escaped;
+  presigned maps removed on exit (trap) in the fetch and push scripts; the fetch workflow hex-validates the sha it
+  exports on both turns; the push receipt's `files` is a JSON array; the correction stage renders its docs.
+
+Acknowledged risks (shipping anyway):
+- A refused classroom answer is sticky: `name` and `name-retry` are both durable, so a restart refuses again without
+  asking. The way out is a receipted move-aside of the two job directories (named in the refusal). Not automated.
+- The 19 component prompt sizes are checked at the classroom stage, after the read; a series over the 87k part budget
+  refuses there ("split the series", Greg's call). Preflight validates the package shape only.
+- `HOST_CORRECTION_RECORD_PATH` hardcodes the host's C: path as `HOST_RECORD_PATH` always did; the recorder rewrites it.
+- PowerShell scripts are text-contract tested only (no PowerShell here, by design).
+- The family baseline in this container: 12 failed / 2936 passed / 2 skipped, and the SAME 12 fail on the base commit
+  5fd41ce3 (pre-existing, none touched by this change): test_authority_map x3, test_benchmark_checkpoint (torch),
+  test_boss_precision_and_output caps, test_dipole_classroom_integration lawful-bodies seam, test_feedback_cycle x2
+  (supersede), test_forecast_bridge, test_journal_prefix_snapshot, test_source_recovery, test_teacher_streaming. Run from
+  the repo root with `-p no:cacheprovider` (no timeout plugin here).
+
+Rollback plan:
+- Trigger: the rerun's session refuses at classroom/compare/receipts with a reason that is a code defect (not a model
+  answer), or the host runner's post-grade rejects the ledgers the box validated (a validator drift between box and host).
+- Procedure: `restart_session REASON=<why>` on a commit before 15e58ec5 restores the pre-classroom session (the read and
+  merges are durable and resume; the classroom directory stays under work/ untouched); the host side needs nothing
+  reverted until a response is recorded; a recorded correction turn is moved aside by the supersede workflow (receipted).
+- Recovery time: one restart_session dispatch (about 1 min of box time); no paid work is lost (durable jobs by prompt).
+
+Specialist reports in full: the three subagent hand-backs of this chat (code-reviewer REQUEST CHANGES -> fixed;
+security-auditor: no Critical/High, two Mediums fixed, keys never printed, workflow inputs reach shells through env;
+test-engineer: one Critical, two Highs, all with named tests, all fixed).
