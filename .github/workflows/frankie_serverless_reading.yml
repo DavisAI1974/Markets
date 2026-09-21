@@ -1,0 +1,121 @@
+name: Frankie serverless reading endpoint (help | inspect | create | verify)
+# Greg, 2026-09-21: "park the reading part" on RunPod serverless. Runs operations/serverless_reading_endpoint.py with
+# the RUNPOD_API_KEY secret through runpodctl (the tagged 2.14.0 release, checksum-verified; the RunPod skills' lane for a
+# shell-only agent): `help` prints the binary's own create flags, the Hub vLLM worker and GPU prices (read-only, run
+# it FIRST); `inspect` an endpoint; `create` deploys the Hub vLLM worker with the pinned Granite checkpoint host-cached
+# (--model-reference) under the retained served model name (Greg's word: billable); `verify` sends one real request
+# in the exact shape the box sends and prints the answer. Nothing here deletes anything or touches the retained Pod.
+# Registered on the trunk on Greg's word; dispatch on the working branch.
+# /ship 2026-09-21 chat 6 (code-reviewer, security-auditor, test-engineer converged): inputs reach the shell only through
+# env with a validate step (as frankie_box_run.yml), runpodctl is the tagged 2.14.0 release verified against a checksum
+# recorded here (no piped installer), the key is in the action step's environment only, create refuses a same-named
+# endpoint unless confirm=create-another (k1sqt0haffm61y is live and billable), and one concurrency group serializes runs.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'help (read-only, first), inspect (read-only), create (Greg''s word: billable), verify (one real request)'
+        required: true
+        default: 'help'
+        type: choice
+        options: ['help', 'inspect', 'create', 'verify']
+      endpoint:
+        description: 'inspect / verify: the endpoint id'
+        required: false
+        default: ''
+      gpu:
+        description: 'create: GPU type id(s), comma-separated in priority order, from help''s gpu list (e.g. NVIDIA L40S or NVIDIA H100 80GB HBM3)'
+        required: false
+        default: 'NVIDIA H100 80GB HBM3,NVIDIA H100 NVL,NVIDIA H100 PCIe'
+      workers_max:
+        description: 'create: maximum concurrent workers (two reading parts per H100 worker, one per 48 GB worker)'
+        required: false
+        default: '8'
+      seqs_per_worker:
+        description: 'create: full-context sequences per worker (2 on 80 GB tiers, 1 on 48 GB)'
+        required: false
+        default: '2'
+      network_volume:
+        description: 'create: optional network volume id holding the HF cache (BASE_PATH /runpod-volume)'
+        required: false
+        default: ''
+      data_centers:
+        description: 'create: optional comma-separated data center ids (only when a network volume forces it)'
+        required: false
+        default: ''
+      confirm:
+        description: "create: 'create-another' to create although an endpoint of the same name already exists (a second billable endpoint); otherwise create refuses"
+        required: false
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: serverless-reading
+  cancel-in-progress: false
+jobs:
+  endpoint:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      ACTION: ${{ inputs.action }}
+      ENDPOINT: ${{ inputs.endpoint }}
+      GPU: ${{ inputs.gpu }}
+      WORKERS_MAX: ${{ inputs.workers_max }}
+      SEQS_PER_WORKER: ${{ inputs.seqs_per_worker }}
+      NETWORK_VOLUME: ${{ inputs.network_volume }}
+      DATA_CENTERS: ${{ inputs.data_centers }}
+      CONFIRM: ${{ inputs.confirm }}
+      RUNPODCTL_VERSION: '2.14.0'
+      RUNPODCTL_SHA256: '2e0fd370a52a0fc7e43a6434a209348a4f6836fcdf1ad2b093b609e938138be9'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Validate the inputs (shapes only; the script re-checks them)
+        run: |
+          set -euo pipefail
+          [[ "$ACTION" =~ ^(help|inspect|create|verify)$ ]] || { echo "action must be help, inspect, create or verify"; exit 1; }
+          [[ "$ENDPOINT" =~ ^[a-z0-9]{0,40}$ ]] || { echo "endpoint must be a RunPod endpoint id"; exit 1; }
+          [[ "$GPU" =~ ^[A-Za-z0-9\ ,._-]+$ ]] || { echo "gpu carries a character outside [A-Za-z0-9 ,._-]"; exit 1; }
+          [[ "$WORKERS_MAX" =~ ^[0-9]{1,2}$ ]] || { echo "workers_max must be a small integer"; exit 1; }
+          [[ "$SEQS_PER_WORKER" =~ ^[12]$ ]] || { echo "seqs_per_worker must be 1 or 2"; exit 1; }
+          [[ "$NETWORK_VOLUME" =~ ^[a-z0-9]{0,40}$ ]] || { echo "network_volume must be a volume id or empty"; exit 1; }
+          [[ "$DATA_CENTERS" =~ ^[A-Z0-9,-]{0,200}$ ]] || { echo "data_centers must be comma-separated ids or empty"; exit 1; }
+          [[ "$CONFIRM" =~ ^(|create-another)$ ]] || { echo "confirm must be empty or create-another"; exit 1; }
+      - name: Install runpodctl (the tagged release, verified against the checksum recorded in this file; no key in this step)
+        run: |
+          set -euo pipefail
+          curl -sSLo runpodctl "https://github.com/runpod/runpodctl/releases/download/v${RUNPODCTL_VERSION}/runpodctl-linux-amd64"
+          echo "${RUNPODCTL_SHA256}  runpodctl" | sha256sum -c -
+          sudo install -m 0755 runpodctl /usr/local/bin/runpodctl && rm -f runpodctl
+          runpodctl version | grep -F "runpodctl ${RUNPODCTL_VERSION}" || { echo "runpodctl is not ${RUNPODCTL_VERSION}"; exit 1; }
+      - name: Run the endpoint action (the only step that holds the key)
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: |
+          set -euo pipefail
+          S=research/kalshi/frankie_boss/operations/serverless_reading_endpoint.py
+          case "$ACTION" in
+            help)     python "$S" --action help 2>&1 | tee out.txt ;;
+            inspect)  python "$S" --action inspect --endpoint "$ENDPOINT" 2>&1 | tee out.txt ;;
+            verify)   python "$S" --action verify --endpoint "$ENDPOINT" 2>&1 | tee out.txt ;;
+            create)   python "$S" --action create --gpu "$GPU" --workers-max "$WORKERS_MAX" --seqs-per-worker "$SEQS_PER_WORKER" \
+                        --network-volume "$NETWORK_VOLUME" --data-centers "$DATA_CENTERS" --confirm "$CONFIRM" \
+                        --work-dir work/serverless-reading 2>&1 | tee out.txt ;;
+            *)        echo "unknown action $ACTION"; exit 1 ;;
+          esac
+      - name: Job summary
+        if: always()
+        run: |
+          { echo "### serverless reading endpoint: $ACTION"; echo '```'; tail -c 30000 out.txt 2>/dev/null || echo "(no output)"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: serverless-reading-${{ github.run_id }}
+          path: |
+            out.txt
+            work/serverless-reading/
+          if-no-files-found: warn
+          retention-days: 90
