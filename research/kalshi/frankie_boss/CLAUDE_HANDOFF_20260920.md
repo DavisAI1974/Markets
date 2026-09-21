@@ -3391,3 +3391,21 @@ unhealthy 0. So the endpoint's work this cycle = the verify job + 2 level-0 merg
 merge = 6 jobs, all completed, none failed, nothing running since. Whether "idle 3" still bills 17 min after the
 last job is not readable from the health shape (the idle timeout is 120 s); the account balance is the measurement
 for that and was not read. All three registered workflows now resolve on the trunk; the codecs CI passed on the push.
+
+### 16:2xZ 09-21: Greg: "Are we waiting on him to start cycle 1? Is cycle 1 completely ready?" -- measured
+
+Host probe `frankie_host_cycle_status.yml` run 35624797057 (read-only, 16:19:23Z; the pipeline workflow
+`frankie_journal_stack.yml` is registered with GitHub as active through its push trigger on the launch branch, so
+the cycle-1 dispatches are cycle 0's): native host i-0e90ee6110ef609aa runner ALIVE, pid 3828 (49 threads, 1,596 MB,
+`--cycles 2 --ec2-resume`) since 02:56:58Z, log written 16:19:12Z, last status `actual_frankie_session_pending` for
+request frankie-boss-sunday-two-cycle-20260919-cycle-00 (host sha a7b72cf9; the exported session-request.json is
+14,915,624 bytes = the box's copy, adapter digest 1b777cf2), phase `frankie_calculation` waiting 46,583 s with
+periodic `possible_stall` warnings (by design: the host waits for the actual response; observation-only callback),
+host CPU 1%. `session-response.json` absent on the host; `root/cycle-00-response` not pushed yet; no S3 progress
+heartbeats (the box heartbeat goes to git, not S3). Endpoint k1sqt0haffm61y idle after 6/6 jobs (run 35623944324).
+ANSWER: yes, cycle 1 waits on Frankie: writing -> pushing -> record (frankie_host_record_principal_response.yml,
+source_ref root/cycle-00-response) -> the host runner resumes on its own (verify, native learning, readback,
+completion) -> readiness for cycle-01 -> the cycle-01 session request exported -> staged on the box -> session with
+CYCLE=01. Everything on that chain is registered and alive; the one input that does not exist yet is the cycle-01
+request, which the host produces after the record. Open, non-blocking: `completion_workflow_ref` on the launch branch
+(fallback: completion re-publication from this branch).
