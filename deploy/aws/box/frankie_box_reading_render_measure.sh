@@ -71,8 +71,22 @@ for mode in modes:
         print('      stacked column diagnostics failed:', type(err).__name__, str(err)[:120])
     # L10 diagnostics: every list of >= 16 dicts in the rendered documents, and whether it became a block
     for m in re.finditer(r'\n### member (\S+) \(.*?\n#### document 0\n```json\n(.*?)\n```\n', text, re.S):
-        for path, n, keysets, why in R.table_candidates(json.loads(m.group(2)), m.group(1)):
-            print('      L10 candidate %-75s rows %4d key sets %2d %s' % (path[-75:], n, keysets, why))
+        doc = json.loads(m.group(2))
+        for path, n, keysets, why in R.table_candidates(doc, m.group(1)):
+            detail = ''
+            if why == 'candidate' and '"$table"' not in m.group(2)[:0]:
+                node = doc
+                for step in re.findall(r'\.([^.\[\]]+)|\[(\d+)\]', path[len(m.group(1)):]):
+                    node = node[step[0]] if step[0] else node[int(step[1])]
+                try:
+                    import frankie_box_digest_render as DG
+                    rows = [dict(r) for r in node]; block = DG.render_table('rows', rows); parsed = DG.parse_table(block)[1]
+                    same = DG._same(parsed, rows)
+                    bad = next(((i, k, type(a.get(k)).__name__, repr(a.get(k))[:40], type(b.get(k)).__name__, repr(b.get(k))[:40]) for i, (a, b) in enumerate(zip(parsed, rows)) for k in b if not DG._same(a.get(k), b.get(k))), None)
+                    detail = 'same=%s block %d B vs json %d B; first difference %s; keys %s' % (same, len(block.encode()), len(json.dumps(node, separators=(',', ':'), sort_keys=True).encode()), bad, list(rows[0])[:12])
+                except Exception as err:
+                    detail = 'render/parse failed: %s: %s' % (type(err).__name__, str(err)[:160])
+            print('      L10 candidate %-75s rows %4d key sets %2d %s %s' % (path[-75:], n, keysets, why, detail))
     if rep.derived_vectors == 0:
         # diagnose: does the delivered critic snapshot decode, and what does its receipt hold?
         try:

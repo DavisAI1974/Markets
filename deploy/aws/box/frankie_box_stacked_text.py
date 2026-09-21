@@ -22,6 +22,10 @@ Grammar (every node is a tag followed by its parts; whitespace separates atoms; 
   A recipe tag may carry `*k` (I*6, D*6, R*6, E*6): every value of the recipe (the seed, the values, the deltas; never
   a run count) is written divided by 10^k, all of them being exact multiples (checked when spelled; the parser
   multiplies back). Measured with the pinned tokenizer: a delta of 1000000 is three tokens, 1 is one.
+  An I or D recipe may instead carry `#w` (w = 1..3): its values (the D seed stays a separate atom) are one token of
+  n*w decimal digits, each value zero-padded to width w, all of them non-negative and below 10^w (checked when
+  spelled). Measured (run 35605419072): the action, side, flags, sequence and size columns of the record table are
+  3,262 single digits each, 6.5k tokens spaced, about 1.1k as one digit string (the tokenizer packs three digits).
 Newlines are whitespace: the spelling starts a new line before every M, C and column so the reading parts (line-based)
 cut between values. The text is a projection of the JSON, not a new encoding: nothing is reduced or summarized.
 """
@@ -85,12 +89,34 @@ def _div(v, k):
     return v // q
 
 
+WIDTH_MAX = 3
+
+
+def _width(values):
+    """The fixed digit width w (1..WIDTH_MAX) for a non-empty list of non-negative ints all below 10^w, when the digit
+    string is shorter than the spaced spelling; else 0."""
+    if not values or any(v < 0 for v in values):
+        return 0
+    w = max(len(str(v)) for v in values)
+    if w > WIDTH_MAX or len(values) * w >= sum(len(str(v)) + 1 for v in values):
+        return 0
+    return w
+
+
 def _ints(node, out):
     tag = node[0]
     if tag == 'I':
-        values = node[1]; k = _scale(values); t = tag + ('*%d' % k if k else '')
+        values = node[1]; w = _width(values)
+        if w:
+            out.append('%s#%d %d %s' % (tag, w, len(values), ''.join('%0*d' % (w, v) for v in values)))
+            return
+        k = _scale(values); t = tag + ('*%d' % k if k else '')
         out.append('%s %d' % (t, len(values))); out.extend(str(_div(v, k)) for v in values)
     elif tag == 'D':
+        w = _width(node[2])
+        if w:
+            out.append('%s#%d %d %d %s' % (tag, w, node[1], len(node[2]), ''.join('%0*d' % (w, v) for v in node[2])))
+            return
         k = _scale([node[1]] + list(node[2])); t = tag + ('*%d' % k if k else '')
         out.append('%s %d %d' % (t, _div(node[1], k), len(node[2]))); out.extend(str(_div(v, k)) for v in node[2])
     elif tag == 'R':
@@ -213,8 +239,25 @@ class _Cursor:
         return not self.text[self.pos:].strip()
 
 
+def _digits(c, n, w):
+    token = c.bare()
+    if len(token) != n * w or not token.isdigit():
+        raise ValueError('fixed-width digit string of %d x %d digits expected' % (n, w))
+    return [int(token[i * w:(i + 1) * w]) for i in range(n)]
+
+
 def _parse_ints(c):
     tag = c.bare()
+    if '#' in tag:
+        tag, _, w = tag.partition('#')
+        if tag not in ('I', 'D') or not re.fullmatch(r'[1-3]', w):
+            raise ValueError('fixed-width digits are I#w or D#w with w in 1..3')
+        w = int(w)
+        if tag == 'I':
+            n = c.int()
+            return ['I', _digits(c, n, w)]
+        seed, n = c.int(), c.int()
+        return ['D', seed, _digits(c, n, w)]
     tag, star, k = tag.partition('*')
     if star and not re.fullmatch(r'\d{1,2}', k):
         raise ValueError('integer recipe scale must be *k')
