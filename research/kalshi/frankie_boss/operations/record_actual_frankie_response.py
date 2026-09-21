@@ -20,6 +20,22 @@ def verified_json(path,digest):
     return json.loads(raw)
 
 
+ADMISSION_INPUTS=('prompt.md','sealed-proof.json','memory-a-witness.json')
+
+
+def stage_admission_inputs(source,candidate):
+    """The admission record is re-derived inside the candidate directory (recover -> _request -> _admission_record
+    reads prompt.md, verifies sealed-proof.json, compares memory-a-witness.json there). A candidate without them
+    refused every recording: 'actual composed principal prompt required before sealed proof' (runs 35630974458,
+    35631841089, 2026-09-21). Copies each that exists; returns the names copied."""
+    copied=[]
+    for name in ADMISSION_INPUTS:
+        path=Path(source)/name
+        if path.is_file():
+            shutil.copyfile(path,Path(candidate)/name);copied.append(name)
+    return copied
+
+
 def record_checked(adapter,request,response,attestation,binding,input_hash,canonical):
     """Validate in a retained candidate directory before the immutable final write."""
     from research.kalshi.frankie_boss.frankie_principal_adapter import FrankiePrincipalAdapter
@@ -34,6 +50,7 @@ def record_checked(adapter,request,response,attestation,binding,input_hash,canon
     for name in request['attachment']['preparation_receipt']['outputs']:
         if Path(name).name!=name:raise ValueError('receiver output must be a direct member')
         shutil.copyfile(adapter.directory/'receiver'/name,candidate.directory/'receiver'/name)
+    print('candidate admission inputs staged: '+', '.join(stage_admission_inputs(adapter.directory,candidate.directory)))
     # Validate the initial durable response without pretending that the mandatory
     # second classroom turn has already completed. The live host owns grading.
     initial_recover=lambda request_id,attachment: FrankiePrincipalAdapter.recover(candidate,request_id,attachment)
@@ -109,5 +126,5 @@ def main():
 if __name__=='__main__':
     try:main()
     except Exception as error:
-        print(json.dumps(dict(status='refused',error_type=type(error).__name__)))
+        print(json.dumps(dict(status='refused',error_type=type(error).__name__,error=str(error)[:800])))
         raise SystemExit(1)

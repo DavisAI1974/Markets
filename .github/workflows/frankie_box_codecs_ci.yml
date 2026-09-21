@@ -18,6 +18,9 @@ on:
       - 'deploy/aws/box/frankie_box_docs.py'
       - 'deploy/aws/box/frankie_box_brain.py'
       - 'tests/test_frankie_box_brain.py'
+      - 'research/kalshi/frankie_boss/operations/record_actual_frankie_response.py'
+      - 'deploy/aws/host/frankie_host_record_principal_response.ps1'
+      - 'tests/test_frankie_host_recorder_script.py'
       - 'deploy/aws/box/frankie_box_boss_session.py'
       - 'tests/test_frankie_box_docs.py'
       - 'tests/test_frankie_box_boss_session_*.py'
@@ -36,4 +39,4 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install --no-cache-dir pytest==9.1.1
-      - run: python -m pytest -q tests/test_frankie_box_digest_render.py tests/test_frankie_box_reading_render.py tests/test_frankie_box_stacked_text.py tests/test_frankie_box_head_render.py tests/test_frankie_serverless_reading_endpoint.py tests/test_frankie_box_docs.py tests/test_frankie_box_boss_session_merge.py tests/test_frankie_box_boss_session_reading.py tests/test_frankie_box_brain.py
+      - run: python -m pytest -q tests/test_frankie_box_digest_render.py tests/test_frankie_box_reading_render.py tests/test_frankie_box_stacked_text.py tests/test_frankie_box_head_render.py tests/test_frankie_serverless_reading_endpoint.py tests/test_frankie_box_docs.py tests/test_frankie_box_boss_session_merge.py tests/test_frankie_box_boss_session_reading.py tests/test_frankie_box_brain.py tests/test_frankie_host_recorder_script.py
