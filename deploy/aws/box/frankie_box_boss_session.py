@@ -489,26 +489,47 @@ class Session:
         return out
 
     def _input_records(self, rows_path):
+        """The cycle's rows: either a compact container (blocks + seal; CompactReader) or the raw prefix snapshot
+        (C15_JOURNAL_PREFIX_SNAPSHOT_V1, an `entries` table; VerifiedJournalReader), as restored to the box.
+        prefix-00.sqlite is the first run's raw `actual-first-cutoff-capacity/prefix.sqlite` (run 35584495493 found
+        no `seal` table). The count and head come from the stored tail and are recorded beside the request's
+        source_hash; every row is verified by the reader as it streams."""
         from research.kalshi.frankie_boss.compact_journal import CompactReader
+        from research.kalshi.frankie_boss.verified_journal_reader import VerifiedJournalReader
         from research.kalshi.frankie_boss.c15_journal import unpack
         db = sqlite3.connect(rows_path.resolve().as_uri() + '?mode=ro', uri=True)
         try:
-            fmt, count, head = db.execute('SELECT format,count,head FROM seal').fetchone()
+            tables = {row[0] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+            if 'seal' in tables:
+                layout = 'compact'
+                fmt, count, head = db.execute('SELECT format,count,head FROM seal').fetchone()
+            elif 'entries' in tables:
+                layout = 'raw'
+                row = db.execute('SELECT ordinal, digest FROM entries ORDER BY ordinal DESC LIMIT 1').fetchone()
+                fmt, count, head = 'C15_JOURNAL_PREFIX_SNAPSHOT_V1', (row[0] + 1 if row else 0), (row[1] if row else None)
+            else:
+                raise ValueError(f'{rows_path} carries neither a compact seal nor a raw entries table: {sorted(tables)}')
         finally:
             db.close()
-        container = dict(path=str(rows_path), format=fmt, count=count, head=head, **witness(rows_path),
+        container = dict(path=str(rows_path), layout=layout, format=fmt, count=count, head=head, **witness(rows_path),
                          head_is_request_source_hash=(head == self.request['attachment']['feedback_contract']['source_hash']))
         records, kinds = [], {}
-        with CompactReader(rows_path, expected_count=count, expected_head_hash=head) as reader:
-            for ordinal, kind, body, digest in reader.rows():
-                kinds[kind] = kinds.get(kind, 0) + 1
-                if kind != 'INPUT':
-                    continue
-                entry = unpack(json.loads(body))
-                payload = entry.get('payload', entry) if isinstance(entry, dict) else entry
-                observation = self._find_observation(payload)
-                if observation is not None:
-                    records.append({k: v for k, v in observation.items() if not isinstance(v, (bytes, bytearray))})
+        def take(kind, payload):
+            kinds[kind] = kinds.get(kind, 0) + 1
+            if kind != 'INPUT':
+                return
+            observation = self._find_observation(payload)
+            if observation is not None:
+                records.append({k: v for k, v in observation.items() if not isinstance(v, (bytes, bytearray))})
+        if layout == 'compact':
+            with CompactReader(rows_path, expected_count=count, expected_head_hash=head) as reader:
+                for ordinal, kind, body, digest in reader.rows():
+                    entry = unpack(json.loads(body))
+                    take(kind, entry.get('payload', entry) if isinstance(entry, dict) else entry)
+        else:
+            reader = VerifiedJournalReader(rows_path, expected_count=count, expected_head_hash=head)
+            for envelope in reader.entries():
+                take(envelope.get('kind'), envelope.get('payload', envelope))
         container['kinds'] = kinds
         return records, container
 
