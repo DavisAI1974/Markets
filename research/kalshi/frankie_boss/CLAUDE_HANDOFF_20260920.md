@@ -3409,3 +3409,38 @@ completion) -> readiness for cycle-01 -> the cycle-01 session request exported -
 CYCLE=01. Everything on that chain is registered and alive; the one input that does not exist yet is the cycle-01
 request, which the host produces after the record. Open, non-blocking: `completion_workflow_ref` on the launch branch
 (fallback: completion re-publication from this branch).
+
+### 16:4xZ 09-21: THE OTHER DOCS, READ (Greg: "we might as well start reading what the other docs have to say")
+
+Greg's two questions. (1) Does Frankie's analysis cover the classroom? NO, by the instruction's text
+(`frankie_principal_adapter.RUN_ANALYSIS_INSTRUCTION` + the request preamble at adapter line 716): the analysis covers
+the run so far, the new BOSS and its attributed output, what the retained calculations measured and found, the pin's
+derivations compared with the retained sections and the frozen learned structure, the accounting entry and the ten
+ledgers; the word classroom is absent, and the box session has no classroom step. The classroom is the host's track:
+package, teacher-key audit, binding (TEACH, 19 coverage, 171 relationship pairs) all present on the host; the
+correction turn "not requested yet" (it follows the record, per the chain). (2) Reading, all read-only:
+- Host cycle report `frankie_host_cycle_report.yml` run 35626600305 (16:36Z): the whole 319,957-byte report, sha256
+  d0a79c62..., committed verbatim as `runs/20211003/host-cycle-report-cycle-00-run-35626600305.md` (records in git).
+  Coordinator: 14 retained stages (5 live, 9 superseded rows, no error). Controller result `status=incomplete`
+  because the critic shadow is `rejected`, verdict L2 (Granite's critic body was CONSISTENT with zero hypotheses
+  against min_hypotheses 1) -- KNOWN since 09-20 (handoff 1469-1473: the coordinator accepts complete or
+  incomplete); one native record, disposition ABSTAIN, group A_MEMORY. Lessons recorded 0; recorded principal
+  response absent (expected: Frankie is writing). Classroom: inputs present, correction turn not requested yet
+  (expected). Hygiene only: the critic packet still carries the retired count caps and t_ctx 4096 (the provisional
+  native row context; CLAUDE.md standing rule). No new cycle-1 blocker in the report.
+- Frankie's merged reading notes on the box (`frankie_box_read_log.sh`, runs 35626548322 head / 35626712379 tail):
+  51,132 bytes, 428 lines. FINDING: the final merge's output opens with the model refusing to merge: it judged the
+  second note group (which opened "I cannot complete this request", carried digest spellings such as `^`, `@`, `ST`
+  lines and `table structure_families: 24 rows`, and an [OUTPUT INCOMPLETE] mark) to be a hallucinated continuation
+  and re-emitted only the notes for parts 1-3. So the merged notes cover three of four parts; part 4 (the digest's
+  tail) has no notes in them. Softened by the writing prompt, which feeds the full derivation digest into the
+  analysis beside the merged notes; nothing deleted (every note and merge output is in the work directory).
+  reading.json (449 bytes) carries no incomplete mark for restart 4 (0 parts read by it).
+- FIX, committed fee2e08b (applies from the next session start, i.e. cycle 1; the running session is untouched):
+  `frankie_box_docs.py` gathers every session document as Markdown (per-part notes, merge outputs, merged notes,
+  digest, receipts as JSON blocks; README + exact index) into out/docs; the session builds it after reading and after
+  writing; the pusher publishes it under `runs/<day>/root/docs-cycle-<NN>/` with the four files, and `DOCS_ONLY=1`
+  publishes it alone (module fetched from BASE, checkout never moved). The merge guard `_merge_keep`: a merge output
+  that loses any sha256 its inputs carried, or is empty, is replaced by the inputs verbatim with a marker, the unused
+  model output kept beside it; every merge output written under work/merges/. 8 new tests; 49 in the codecs CI command.
+  Cycle 0's docs: `DOCS_ONLY=1 CYCLE=00` dispatched (run id below) to publish them on root/cycle-00-response now.
