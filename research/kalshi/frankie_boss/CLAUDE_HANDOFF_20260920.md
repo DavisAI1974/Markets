@@ -2525,3 +2525,10 @@ session (or dispatched) -> `frankie_host_record_principal_response.yml` source_r
   environmental, not this branch's.
 - Item 4 (`completion_workflow_ref` / carrying the current identity on the launch branch) is a push to
   `codex/frankie-launch-two-cycle-20260919`: Greg's word. Not done.
+
+### 08:58Z 09-21: the NWS hourly collector (drop-in item 6) root-caused and fixed on the trunk
+
+Every scheduled run (269, the last 35562573017 at 04:53Z) failed at `nws_temp_feed.py:47 import requests`:
+the workflow's install step pinned boto3 only. Fixed on this branch (10a4261a) and on the trunk the schedule
+runs from (GitHub API; the collector checks out the trunk itself); one manual dispatch to prove it. Not a
+Frankie file; nothing else in the workflow changed.
