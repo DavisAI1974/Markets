@@ -2382,3 +2382,63 @@ workflows this chat: `frankie_host_stage_critic_request.yml`, `frankie_box_contr
 probe additions: Root heartbeats + host CPU in `frankie_host_cycle_status.yml`, instance type + region in
 `frankie_host_diag.yml`; `frankie_pod_prepare.yml` concurrency keyed by region. The to-do list (items 0-7) is in the
 drop-in READ FIRST; item 0 is Frankie's harness on his box.
+
+### 08:00Z-08:25Z 09-21 (chat 3): /ship on the launch path, then JOB 0 on Frankie's box: the SSM route, the data plane and the request are ON THE BOX
+
+Session branch `claude/cycle-0-frankie-box-rerun-od5sxk` (the harness cut it from the trunk lineage 55f98e8; re-based
+onto b73c4d06 and pushed). `using-agent-skills`, `git-workflow-and-versioning`, `ship` and `shipping-and-launch` run
+from the library. `~/.claude/skills/runpod-usage/reference/` is not on this container (the RunPod skills were never
+committed); no Pod action is taken before it is reinstalled and read.
+
+`/ship` (three personas in parallel on 35f857f0..b73c4d06): GO as the base for job 0, no Critical; record + rollback
+plan in `SHIP_REVIEW_20260921.md` (a6e55722). Carried into job 0: the Root task hands out the account pair and the
+DavisAI1974 identity (HIGH; retired by option A when the task is rewritten for the box); `day_pipeline.stop_compute`
+stops the ingest runner = Frankie's box (verified: only in the `always()` job when `keep_compute` is false; the live
+dispatch set it true; every dispatch while the box is Frankie's keeps it so); eight of the ten producers are NOT in
+this tree (receiver lineage `ccode/frankie-receiver-feed-20260916` @ 2ebb8ce8); every frankie_boss test needs torch.
+Queued fixes: the box-control tag step fires on a failed start; six workflows expand `${{ inputs.* }}` inside `run:`;
+the drop-in's "Where everything is" block still names 8vqdacl5t61rjx; zero tests on pod_control/pod_prepare/ec2_host.
+
+This session's AWS pair is rejected by STS (InvalidClientTokenId), no `aws` CLI: the boxes are reached through
+`workflow_dispatch` with the repo secrets, as in the last chat.
+
+JOB 0 receipts, in order:
+- SSM route for the Linux box: `deploy/aws/ssm_run_sh.py` (twin of ssm_run_ps1.py, AWS-RunShellScript, --set literal
+  only, shapes validated) + `.github/workflows/frankie_box_run.yml` (ONE committed `deploy/aws/box/*.sh` from the
+  dispatched ref, path validated against the checkout, box must be SSM Online, output to summary + artifact; never
+  stops/resizes/terminates). 3fdd1db7, a758da5f; registered on the trunk 10676ee6 (presign inputs 7d038d84).
+- Inventory run 35576845240 (read-only, 11 s): Ubuntu 24.04.4, 32 vCPU, 248 GB RAM, 186 GB free of 193, Python 3.12
+  + boto3 1.34 (no torch/numpy/node/aws), Actions runner present but NO service unit and an empty _work/_temp (no
+  compact journal left over), checkouts /opt/frankie-main (7f6f79e), /opt/frankie-receiver (24e013d, carries
+  frankie_raw_mbo_benchmark + the adapter; not on origin now), /opt/frankie-receiver-checks (a venv),
+  /opt/hostedtoolcache/Python/3.13.15, /opt/actions-runner/_work/Markets/Markets (2.7 GB sparse, the journal job's).
+- Role probe run 35577004016 (read-only): the role is `arn:aws:sts::568968024170:assumed-role/Ssm/i-035994afa8bdf66a5`;
+  S3 head/list on BOTH buckets 403/AccessDenied (the 2026-09-16 finding stands); Bedrock list AccessDenied; SSM
+  get-parameter answers ParameterNotFound in us-east-1 (the call is allowed; the parameters live in us-east-2);
+  outbound github/pypi/pytorch reachable. Consequence: the data plane enters through short-lived presigned GETs.
+- RESTORE run 35577570848 (`frankie_box_restore_data_plane.sh`, 21 s on the box): presign step signs each object
+  (SigV4, regional endpoint, 2 h), collects them in `s3://frankie-granite42-568968024170-us-east-1/box-runs/<run>/
+  presigned-map.json`, and hands the box ONE presigned GET (`MAP_URL`, masked). On the box, every file verified against
+  the pin in git (RESTORATION_MANIFEST.json / the Root task) and receipted (`/opt/frankie-box/receipts/restore-1789978986.json`):
+  `data/journal.compact.sqlite` 569,667,584 B 19603159... (the first run's compact journal; the day run's container
+  039c4ae8 exists only in the runner temp and the encrypted git parts; rows identical), `data/prefix-00.sqlite`
+  463,036,416 B 722512df... (the cycle-0 rows, `actual-first-cutoff-capacity`), `data/prefix-01.sqlite` 50,348,032 B
+  6873366e..., `request/session-request.json` 14,915,624 B 1b777cf2..., `request/prompt.md` 28,310,877 B 2403f47f...,
+  `request/historical-prompt.md` 158,950 B 8ff55bb2.... Disk after: 7.9 G used. JOB 0 STEP 1 + the request half of
+  STEP 2: DONE.
+- Staging run 35577710695 (`frankie_box_stage_producers.sh`, in progress at 08:25Z): /opt/frankie-box/producers =
+  clone of the receiver lineage pinned to 2ebb8ce8 (refuses any other head), the ten producer files + the registry
+  verified against sha256 computed in git (a_memory_member_first_recalculation 04194df4, native_book_regime aea1396d,
+  native_clocks f333efc4, native_flow_substrate c904119f, native_full_capture_adapter d45febff, native_recognition
+  0b279fda, native_replay_driver 67996f3e, native_roll20 8e0a8dd6, adapter 4a80e3e4 = this tree's, registry file
+  7ee754f1 = the pins' `registry_file.sha256`); /opt/frankie-box/markets = this branch; /opt/frankie-box/venv =
+  Python 3.13.15 + torch 2.11.0 cpu + numpy/scipy/boto3/zstandard/databento-dbn 0.62.0/cryptography/pytest; the
+  lineage's producer tests run capped at 25 min and receipted.
+- Backend prep run queued after it (`frankie_box_install_agent_backend.sh`): Node 20 + Claude Code, and a read-only
+  probe of SSM names under /markets/ (both regions, never decrypted), one Bedrock converse, one PutObject on the
+  progress prefix (a labelled probe object). Its answers decide which grants Greg must make (below).
+
+Cycle-0 pin read for the box: group `legacy_observable_crosswalk`, 5 layers (legacy_price, legacy_native_signed_flow,
+legacy_per_second_roll20, legacy_book_imbalance, legacy_structure_observables), producers
+a_memory_member_first_recalculation_20260828 + native_roll20 + the 08-20 adapter. NO_PRODUCER_FOUND appears in the
+causal_clocks group (cycle 3) and the complete registry (cycles 7-18), not in cycle 0.
