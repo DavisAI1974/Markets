@@ -2678,3 +2678,32 @@ about 20 MB, on the order of 150 reading parts at a few minutes each, so the rea
 minutes; that is what no limits costs and it is the right cost. Session unit restarted with a receipt
 (REASON=all-limits-out-0f780503); derive re-runs to regenerate the whole digest (seconds); verify, labels, engine
 untouched; Pod and heartbeat untouched.
+
+### 10:4xZ 09-21: GREG: "I'm talking about the output limits on the boss, granite, etc" -> every output limit on the BOSS/Granite in the code, out (d3c54838)
+
+Inventory and disposition, code-wide (not the box script only):
+1. `granite_contract.GraniteLimits` content caps on the critique (16 evidence refs, 8 contradictions, 8 missing-
+   evidence strings, 4 hypotheses, 200/120/40-character notes/strings/labels; queued at 20:45Z 09-20 "unless he says
+   otherwise"): GONE. Only `min_hypotheses` (the requirement to answer) remains. The three system prompts now say no
+   cap applies to any count or length; `tests/fixtures/granite_prompts` re-frozen (serialized_v2 39ee5480...,
+   native_v1 214d76a5..., compact_native_v1 11360d72...): a deliberate prompt change; every later critic request
+   carries a new prompt hash (cycle 1's request is minted on the host after its next advance).
+2. `granite_output_schema.validate_schema`: shape, types and enums only; no count or length check.
+3. `sunday_native_runtime.prepare_critic_request(output_tokens=1200)`: the 1,200 default removed; the default is the
+   whole service context as the placeholder that `LocalTokenizerAdmission.with_remaining_output` replaces with the
+   exact remaining context (the actual run has used this policy since 09-20: 38,633 output tokens on cycle 0); a body
+   dispatched without that admission is refused by the service, never truncated.
+4. `granite_live_controller.measure_fixture(output_tokens=1200)`: default removed; default = the remaining positional
+   context.
+5. `operations/run_actual_sunday.admit_preparation`: the `explicit` fixed-cap policy is gone; `output_budget` must be
+   `remaining_context` and a fixed `output_tokens` in the host configuration is refused.
+6. The box session (6cb5b346, 0f780503): every per-call cap, the member sampling and the digest cuts, out.
+Untouched on purpose: the pinned bootstrap bundle on the Pod (`granite_startup.py`, `granite_runpod_proxy.py`; the
+proxy admits max_tokens up to the service context, no cap there; a bundle byte change would force a rollout) and
+the retired Bedrock transport (`granite_bedrock.py`, not running). Not a limit: the 16-token admission probe
+(`granite_runpod_admission.py`) is a health probe, not an answer.
+Tests: cap-boundary tests rewritten as no-cap tests (the former caps and far beyond are valid); contract, parser,
+prompt and live-controller files pass (231 tests, exit 0); `test_granite_context_stacked` fails identically on the untouched
+tree here (DBN SDK 0.62.0 absent in this container), not this change.
+Box: after the 0f780503 restart derive regenerated the whole digest (5/5 layers, 2,282 groups) and the BOSS is
+reading the whole decoded evidence: part 1/163 from 10:23:59Z, no output cap.
