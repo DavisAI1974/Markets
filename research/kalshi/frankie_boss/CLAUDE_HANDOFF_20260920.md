@@ -2089,3 +2089,48 @@ nothing. Then the re-mint `feat:` commit (POD_ID, JOURNAL_GENERATION, INFO_SHA25
 defaults, tests), cancel the old-Pod observer 35545909225 and start retry 35547296498 (no unadopted start may succeed
 later), host advance + code-bound state supersede, observer on the new Pod (`observe_migrated_start` + the `restart`
 control run waiting on the journal key), readiness, ONE pipeline dispatch. 8vqdacl5t61rjx stays EXITED, untouched.
+
+### 02:34Z: THE REPLACEMENT IS UP: g7y3g2w1kor4l3 (US-MO-1, another host); losers killed; identity re-minted
+
+Greg, 02:3xZ, two directives on record: (1) "Do not put runtime stops on these. We have gone over a few times that we
+were to remove runtime stops on the startup process." The three attempts carried none (`on_timeout keep`,
+`stop_after_ready false`); the 1800 s was only the job's watch horizon and the Pod runs on past it. The horizon-stop
+option itself (`--on-timeout stop`, the bounded `stop_retain` intent in `pod_prepare.verify_source`) is what
+stop-retained the EUR-IS-2 Pod this morning and lost its GPU; removing it from the code is on the after-run list under
+Greg's standing "no bounded controllers" rule, not touched mid-run. (2) "Please read up on the pod literature like I said
+to." Read (`~/.claude/skills/runpod-usage/reference/storage.md`, `gpu-selection.md`, `gotchas.md`): the retained
+model sits on the Pod's volume disk, which lives on the Pod's host, so an EXITED Pod restarts only when THAT host frees
+a GPU; a network volume is data-center-scoped, survives stop/terminate and attaches to a new Pod in the same DC, so a
+model kept on one would move hosts without a 17.6 GB re-download; pinning a data center shrinks the GPU pool; the
+catalog's per-DC `availability` is the read for placement. Consequence for the after-run list: keep the Granite model on
+a US-MO-1 network volume and mount it, so the next host-busy refusal costs a create, not a bootstrap.
+
+Winner: prepare run 35553732076 (US-MO-1, created 02:19:08Z, `created_at 1789957148.33`): roster from S3, 17.59 GB
+model from Hugging Face at 20-65 MB/s, 13 files verified 02:32:07Z, startup + disk evidence accepted, `/health` 200 at
+02:33:47Z (`ready_at 1789958027.34`). Receipt `FRANKIE_POD_PREPARE_RECEIPT_V1` outcome `service_ready`, Pod
+`g7y3g2w1kor4l3`, L40S x1, cost 1.09, `/opt/ml` 50 GB, RUNNING, `stop null`; catalog stock LOW in every DC (EU-NL-1,
+EUR-IS-2, OC-AU-1, US-IL-1, US-MO-1, US-TX-3, US-TX-4). Artifact `pod-prepare-35553732076` (7 files):
+`info-sha256.json` = {INFO_SHA256 bdad2896b08d6b40edf5a7fd36c9938962c9eaea0ba53eb33dc641a2228702ad, POD_ID g7y3g2w1kor4l3,
+JOURNAL_GENERATION migration-g7y3g2w1kor4l3-a004983e93b9}; `migration-receipt-candidate.json` chained from the accepted
+retained info c6c151dd... (source jvs75m56w8f73q).
+
+"When one hit you kill the other 2": the two watchers were cancelled at 02:36Z so their artifacts landed the Pod ids
+(`pod-prepare-35553726887`: r2570o3g566187 US-TX-4; `pod-prepare-35553730428`: z71ka5v0zzcmou US-IL-1; both RUNNING,
+`milestones [disk]`, mid-download). Stop-retained through the existing watch path (`watch_pod`, `wait_seconds 0`,
+`on_timeout stop`; runs 35554877830 / 35554879984, both `stop.status confirmed_stopped`, `data_retained true`, EXITED),
+then `frankie_pod_control.yml terminate` runs 35555019858 (r2570o3g566187) and 35555022167 (z71ka5v0zzcmou), both
+success. Also cancelled at 02:36Z, so no unadopted start of the old Pod can succeed later: observer 35545909225 (its
+`always()` cleanup acts only on a `confirmed-fatal.json`, which does not exist) and the start retry 35547296498.
+8vqdacl5t61rjx and ycf4v6lmave6xw stay EXITED, untouched.
+
+Re-mint committed from the shell, `feat` 35f857f0 (the 67346759 substitution: POD_ID, INFO_SHA256, the receipt byte
+for byte, `pod_control.RETAINED_POD`, five workflow defaults with the previous generations kept selectable, three tests;
+20 retained/migration/publication tests pass). Adoption round dispatched 02:44Z on 35f857f0, the morning's pattern:
+`frankie_retained_granite.yml` (request a7b72cf9, the initial-start witness `admitted_at 1789916729.1158657`, the
+reviewed runtime configuration; a fresh generation, so this is its initial start and the RUNNING Pod takes
+`observe_migrated_start`) + `frankie_pod_control.yml restart` waiting up to 900 s on
+`retained-granite/a7b72cf9.../migration-g7y3g2w1kor4l3-a004983e93b9/retained-start-intent.json` before the one v2
+restart that gives the observer boot frames newer than its own record. Host advance to 35f857f0 dispatched (a first
+dispatch with a short sha was refused by the script's own 40-hex check, run 35555067926, host untouched). Then: the
+code-bound state supersede (host-identity is bound to 0bb96bfa), readiness delivery for the observer run, ONE pipeline
+dispatch.
