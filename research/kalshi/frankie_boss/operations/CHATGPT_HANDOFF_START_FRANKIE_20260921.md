@@ -34,10 +34,11 @@ Workflow `Frankie box run` (frankie_box_run.yml), ref `claude/cycle-0-frankie-bo
 - variables: `ACTION=preflight`
 - timeout: `600`
 Expected in the job summary: `verified: request 1b777cf28c34415c ...`, `labels: 29 timing labels ...`, `engine: BOSS
-granite42-smoke on Pod g7y3g2w1kor4l3 healthy (jobs_v1)`, then `preflight: OK`. A `REFUSED:` line names the one thing
-missing; the two that need Greg: the Pod g7y3g2w1kor4l3 must be RUNNING (it was EXITED at 09:00Z; a Pod start is
-Greg's word, never the session's), and the SecureString `/markets/frankie/granite-service` (already readable by the
-box role, verified). Nothing starts on preflight.
+granite42-smoke on Pod g7y3g2w1kor4l3 healthy (jobs_v1)`, then `preflight: OK` (first seen on run 35584321275,
+09:37Z 09-21, after the Pod start run 35583672111 on Greg's word). A `REFUSED:` line names the one thing missing:
+the Pod must be RUNNING (a Pod start is Greg's word, `frankie_pod_control.yml` action=start), or the SecureString
+`/markets/frankie/granite-service` (the Pod's own service credential; readable by the box role). Nothing starts on
+preflight.
 
 ## Step 3: start the session
 
