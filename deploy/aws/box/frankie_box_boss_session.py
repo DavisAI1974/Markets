@@ -272,7 +272,12 @@ class Session:
         return self.engine
 
     def boss(self, name, text, *, max_tokens=None):
-        """One durable job for one bounded prompt; returns dict(text, incomplete, model, usage, job_id)."""
+        """One durable job for one bounded prompt; returns dict(text, incomplete, model, usage, job_id).
+        THE BOSS HAS NO OUTPUT LIMIT (Greg, 2026-09-21, again): max_tokens is always the whole remaining context
+        (CONTEXT minus the input estimate); a caller cap is refused. The only alert is IncompleteModelOutput when the
+        context itself runs out, kept and receipted."""
+        if max_tokens is not None:
+            raise ValueError('the BOSS has no output limit; a caller cap is refused')
         from research.kalshi.frankie_boss.granite_durable_job_client import https_exchange_jobs, MAX_REQUEST, MAX_RESPONSE
         from research.kalshi.frankie_boss.granite_sagemaker import _json, _final_text
         from research.kalshi.frankie_boss.granite_shadow import IncompleteModelOutput
@@ -660,7 +665,7 @@ class Session:
         data = corpus.read_bytes()
         corpus_sha = sha256_bytes(data)
         chunks = self._chunks(data)
-        notes_dir = self.work / f'notes-{corpus_sha[:12]}'   # keyed by the corpus: notes of another corpus never mix in
+        notes_dir = self.work / f'notes-{corpus_sha[:12]}-unbounded'   # keyed by the corpus and the output policy: capped notes never mix in
         notes_dir.mkdir(exist_ok=True)
         write_json(self.work / 'reading-plan.json', dict(schema='FRANKIE_BOX_READING_PLAN_V1', corpus=dict(witness(corpus), path=str(corpus)),
                    notes_dir=str(notes_dir), chunk_bytes=CHUNK_BYTES, chunks=[dict(index=i, start=s, end=e) for i, (s, e) in enumerate(chunks)]))
@@ -672,7 +677,7 @@ class Session:
                   'part bears on the cycle-{cycle} pin layers legacy_price, legacy_native_signed_flow, legacy_per_second_roll20, '
                   'legacy_book_imbalance, legacy_structure_observables, and on the frozen learned-structure layers; (3) instructions '
                   'the evidence gives the principal; (4) open questions. Distinguish what is observed from what you infer. Never invent '
-                  'a number or a hash. Markdown, at most about 1200 words.\n\n----- PART {i}/{n} BEGINS -----\n')
+                  'a number or a hash. Markdown; no length limit.\n\n----- PART {i}/{n} BEGINS -----\n')
         outcomes = []
         for i, (s, e) in enumerate(chunks):
             note_path = notes_dir / f'note-{i:04d}.md'
@@ -681,7 +686,7 @@ class Session:
             self.note(f'reading: part {i + 1}/{len(chunks)} (bytes {s}-{e})')
             text = header.format(cycle=self.cycle, req=self.request['request_id'], i=i + 1, n=len(chunks), s=s, e=e) + \
                 data[s:e].decode('utf-8', errors='replace') + '\n----- PART ENDS -----\n'
-            outcome = self.boss(f'read-{i:04d}', text, max_tokens=4096)
+            outcome = self.boss(f'read-{i:04d}', text)
             body = outcome.get('text') or f'(no output: {outcome.get("error")})'
             flag = ' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else ''
             note_path.write_text(f'## Notes on part {i + 1}/{len(chunks)} (bytes {s}-{e}){flag}\n\n{body}\n', encoding='utf-8')
@@ -711,7 +716,7 @@ class Session:
             joined = '\n'.join(notes)
             if len(notes) == 1 or level >= 8:
                 return joined
-            outcome = self.boss(f'merge-{level}-final', self._merge_prompt(joined, 'all remaining note groups'), max_tokens=8192)
+            outcome = self.boss(f'merge-{level}-final', self._merge_prompt(joined, 'all remaining note groups'))
             return (outcome.get('text') or joined) + (' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else '')
         groups, current, size = [], [], 0
         for n in notes:
@@ -726,7 +731,7 @@ class Session:
         merged = []
         for g, group in enumerate(groups):
             self.note(f'merging notes: level {level} group {g + 1}/{len(groups)}')
-            outcome = self.boss(f'merge-{level}-{g:04d}', self._merge_prompt('\n'.join(group), f'note group {g + 1} of {len(groups)} at level {level}'), max_tokens=6144)
+            outcome = self.boss(f'merge-{level}-{g:04d}', self._merge_prompt('\n'.join(group), f'note group {g + 1} of {len(groups)} at level {level}'))
             merged.append((outcome.get('text') or '\n'.join(group)) + (' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else ''))
         return self._merge(merged, level + 1)
 
@@ -734,7 +739,7 @@ class Session:
         return (f'You are Frankie, the BOSS, principal for cycle {self.cycle} (request {self.request["request_id"]}). Below are your own notes '
                 f'from reading parts of the delivered evidence ({label}). MERGE them into one set of notes that loses no observed fact, '
                 'number, hash or section id, removes duplicates, keeps the pin-layer material together, and keeps observed facts separate '
-                'from inference. Markdown, at most about 2500 words.\n\n----- NOTES BEGIN -----\n' + joined + '\n----- NOTES END -----\n')
+                'from inference. Markdown; no length limit.\n\n----- NOTES BEGIN -----\n' + joined + '\n----- NOTES END -----\n')
 
     # ---- writing (the four files) ------------------------------------------------------------------------
     def writing(self):
@@ -755,7 +760,7 @@ class Session:
         analysis = self.boss('write-analysis', base + 'TASK: write your run analysis now as the instruction asks (Markdown, no limit on length; '
                              'cite the retained section hashes from your notes exactly; separate observed results from interpretation; '
                              'name failures, unavailable observations, uncertainties and next lessons; do not claim later cycles or learning '
-                             'steps have completed).', max_tokens=16384)
+                             'steps have completed).')
         analysis_md = (analysis.get('text') or f'(the BOSS produced no analysis: {analysis.get("error")})') + \
             ('\n\n[OUTPUT INCOMPLETE: the BOSS reached its output bound; kept as produced]\n' if analysis.get('incomplete') else '\n')
         self.note('writing: the calculation accounting')
@@ -763,7 +768,7 @@ class Session:
                                f'"{CALCULATION_ACCOUNTING_LEDGER}", with a "layers" list carrying EVERY layer of this cycle\'s pin '
                                f'({", ".join(derive["layers"])}) as {{"layer", "status": derived|compared|could_not, "where" (the derivation '
                                'file), "compared_with" (retained sections or frozen learned-structure layers and what differed), "reason"}}; '
-                               'use the derivation digest statuses, never claim a derivation the digest does not carry. Output JSON only.', max_tokens=8192)
+                               'use the derivation digest statuses, never claim a derivation the digest does not carry. Output JSON only.')
         accounting_entry = self._json_entry(accounting, CALCULATION_ACCOUNTING_LEDGER)
         accounting_entry['harness_derivation'] = {name: dict(status=v['status'], producer=v.get('producer'), reason=v.get('reason'), sha256=v['sha256'])
                                                   for name, v in derive['layers'].items()}
@@ -780,7 +785,7 @@ class Session:
                                 f'this cycle as ONE JSON object whose "ledger" field is "{name}"' +
                                 (f'. The registry describes it as: {json.dumps(description)[:3000]}' if description else '') +
                                 '. Fill it from your notes and the derivation digest only; a ledger you cannot fill is filed with its "reason", '
-                                'never omitted. Output JSON only.', max_tokens=8192)
+                                'never omitted. Output JSON only.')
             ledgers.append(self._json_entry(outcome, name))
         contract = self.request['attachment']['feedback_contract']
         session_id = f'boss:frankie-box:i-035994afa8bdf66a5:cycle-{self.cycle}'
