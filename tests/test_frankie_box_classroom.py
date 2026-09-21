@@ -56,8 +56,7 @@ def snapshot():
     return body
 
 
-@pytest.fixture(scope='module')
-def package():
+def build_package():
     snap = snapshot()
     key = hardened._harden_teacher_key_correlations(classroom.build_teacher_key(snap))
     message = classroom.build_pre_message(key, mode='TEACH', prior_grade=None)
@@ -74,10 +73,19 @@ def package():
     return dict(source=snap, teacher_key=key, pre_message=message, binding=binding)
 
 
+def build_visible(package=None):
+    """As the box holds it: the JSON form (lists, never tuples) of the model-visible classroom."""
+    return json.loads(json.dumps(final.final_model_visible_classroom(package or build_package())))
+
+
+@pytest.fixture(scope='module')
+def package():
+    return build_package()
+
+
 @pytest.fixture(scope='module')
 def visible(package):
-    # the box holds the request as JSON: lists, never tuples
-    return json.loads(json.dumps(final.final_model_visible_classroom(package)))
+    return build_visible(package)
 
 
 def boss_component_answer(comp, rights, *, drop_state=None):

@@ -66,7 +66,7 @@ BYTES_PER_TOKEN = 1.6      # conservative for dense JSON evidence: the proven pa
 CHUNK_BYTES = 140_000      # about 87k tokens at that rate, leaving the rest of the context to the BOSS's answer
 POLL_SECONDS = 10
 HTTP_TIMEOUT = 80
-STAGES = ('verify', 'labels', 'engine', 'derive', 'reading', 'writing', 'push')
+STAGES = ('verify', 'labels', 'engine', 'derive', 'reading', 'classroom', 'writing', 'push', 'correction')
 
 
 def docs_module():
@@ -89,6 +89,19 @@ def brain_module():
     return module
 
 
+def classroom_module():
+    """deploy/aws/box/frankie_box_classroom.py, loaded by path (the Dipole classroom exchange, both turns)."""
+    import importlib.util
+    path = Path(__file__).resolve().parent / 'frankie_box_classroom.py'
+    spec = importlib.util.spec_from_file_location('frankie_box_classroom', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+HOST_CORRECTION_RECORD_PATH = 'C:/Codex/Frankie-BOSS-20260919/actual-feedback-run/execution/cycle-{cycle}/principal/host-correction-record.json'
+CORRECTION_REQUEST_SCHEMA = 'FRANKIE_DIPOLE_CLASSROOM_CORRECTION_REQUEST_V1'
+CLASSROOM_KEYS = ('dipole_teachback', 'dipole_observation_review', 'dipole_relationship_scan', 'dipole_novel_findings')
 BRAIN_DIR = ROOT / 'brain'   # Frankie's brain on the box: <brain>/cycle-<NN>/ entries (published to git by the pusher)
 
 
@@ -1216,6 +1229,158 @@ class Session:
                 'never drop or summarise a group, and if a group looks odd keep it verbatim under its own heading. Never write about the '
                 'merge itself; write only the merged notes. Markdown; no length limit.\n\n----- NOTES BEGIN -----\n' + joined + '\n----- NOTES END -----\n')
 
+    # ---- the Dipole classroom (turn 1 inside the response; turn 2 = the correction stage) ------------------
+    def _classroom_dir(self):
+        d = self.work / 'classroom'
+        d.mkdir(exist_ok=True)
+        return d
+
+    def _classroom_call(self, name, text, parse, lane):
+        """One classroom answer, guarded like the reader (chat 6): an answer that is a refusal, an error, empty, or not
+        the JSON asked for is asked once more under a -retry name; still unusable = the stage refuses with the reason and
+        a receipt (the classroom is never filed half-made). An output-incomplete answer whose JSON parses whole is kept
+        and noted. Every attempt's text stays in its job directory. lane = 'reader' (the reading lane) or 'boss'."""
+        C = classroom_module()
+        docs = docs_module()
+        estimate = self._input_tokens(text)
+        if estimate > PART_INPUT_TOKENS:
+            self.refuse(f'{name}: the classroom prompt is {estimate} tokens ({self._estimate_kind}), over the {PART_INPUT_TOKENS}-token part '
+                        'budget; the component series must be split before this classroom can run (Greg\'s call)')
+        last = None
+        for attempt in (name, name + '-retry'):
+            outcome = (self.reader if lane == 'reader' else self.boss)(attempt, text)
+            body = outcome.get('text') or ''
+            verdict = docs.note_verdict(body, outcome)
+            try:
+                if verdict in ('error', 'refusal', 'empty'):
+                    raise C.ClassroomOutput(f'answer unusable: {verdict}' + (f' ({outcome.get("error")})' if outcome.get('error') else ''))
+                parsed = parse(body)
+                if outcome.get('incomplete'):
+                    self.note(f'{attempt}: output incomplete but the JSON parsed whole; kept')
+                return parsed, dict(attempt=attempt, job_id=outcome.get('job_id') or outcome.get('runpod_job_id'), lane=lane,
+                                    incomplete=bool(outcome.get('incomplete')), estimated_input_tokens=estimate, usage=outcome.get('usage'))
+            except C.ClassroomOutput as error:
+                last = str(error)
+                self.note(f'{attempt}: {last[:200]}' + ('; asking once more' if attempt == name else ''))
+        self.refuse(f'{name}: the BOSS\'s classroom answer was unusable twice ({(last or "")[:300]}); nothing filed')
+
+    def classroom(self):
+        """Turn 1 of the Dipole classroom (Greg, 2026-09-21: option 1). The 19 component answers fan out on the reading
+        lane, the summary answer runs on the BOSS, and the four ledgers are assembled from the TEACH pre-message facts
+        and those answers, validated by the repo's own validators, and written to work/classroom/ledgers.json. Resumable:
+        every parsed answer and the ledgers are durable; a re-run makes no model call."""
+        C = classroom_module()
+        visible = C.visible_of(self.request)
+        d = self._classroom_dir()
+        ledgers_path = d / 'ledgers.json'
+        if ledgers_path.exists():
+            self.note('classroom: ledgers already assembled; nothing to do')
+            return load_json(ledgers_path)
+        names = [c['name'] for c in C.components(visible)]
+        rid = self.request['request_id']
+        self.note(f'classroom: {len(names)} component answers on the {"serverless" if self.serverless else "Pod"} lane, then the summary on the BOSS')
+
+        def one(name):
+            index = names.index(name)
+            path = d / f'component-{index:02d}-{name}.json'
+            if path.exists():
+                return load_json(path)
+            comp = C.component(visible, name)
+            rights = [p['right'] for p in C.pairs_of(visible, name)]
+            text = C.component_prompt(visible, name, cycle=self.cycle, request_id=rid)
+            parsed, call = self._classroom_call(f'classroom-{index:02d}-{name}', text, lambda body: C.parse_component(body, comp, rights), 'reader')
+            write_json(path, dict(schema='FRANKIE_BOX_CLASSROOM_COMPONENT_V1', name=name, call=call, parsed=parsed))
+            return load_json(path)
+
+        results = self._fan_out('classroom', names, one)
+        outputs = {r['name']: r['parsed'] for r in results}
+        summary_path = d / 'summary.json'
+        if not summary_path.exists():
+            text = C.summary_prompt(visible, outputs, cycle=self.cycle, request_id=rid)
+            parsed, call = self._classroom_call('classroom-summary', text, C.parse_summary, 'boss')
+            write_json(summary_path, dict(schema='FRANKIE_BOX_CLASSROOM_SUMMARY_V1', call=call, parsed=parsed))
+        summary = load_json(summary_path)
+        built = C.assemble(visible, outputs, summary['parsed'])
+        report = C.validate(visible, built['ledgers'])
+        write_json(ledgers_path, built['ledgers'])
+        (d / 'classroom.md').write_text(C.render_markdown(built['ledgers'], built['dropped_findings']), encoding='utf-8')
+        write_json(d / 'receipt.json', dict(schema='FRANKIE_BOX_CLASSROOM_RECEIPT_V1', at=time.time(), report=report, composition=C.COMPOSITION,
+                   dropped_findings=built['dropped_findings'], calls=[r['call'] for r in results] + [summary['call']],
+                   teacher_message_hash=visible['pre_message']['teacher_message_hash'],
+                   classroom_binding_hash=visible['binding']['classroom_binding_hash'], ledgers=witness(ledgers_path)))
+        self.note(f'classroom done: {report["components"]} components, {report["observations"]} observations, {report["pairs"]} pairs, '
+                  f'{report["novel_findings"]} novel findings filed, {len(built["dropped_findings"])} not filed')
+        return built['ledgers']
+
+    def classroom_ledgers(self):
+        """The four ledgers the response carries; the response is never written without them."""
+        path = self.work / 'classroom' / 'ledgers.json'
+        if not path.exists():
+            self.refuse('writing: the classroom ledgers are absent (work/classroom/ledgers.json); the classroom stage must complete first')
+        ledgers = load_json(path)
+        if set(ledgers) != set(CLASSROOM_KEYS):
+            self.refuse('writing: work/classroom/ledgers.json does not carry the four classroom ledgers')
+        return ledgers
+
+    def correction(self):
+        """Turn 2 of the Dipole classroom: the host's correction request (request/classroom-correction-request.json, exported
+        from the host and fetched onto the box) answered on the BOSS by the SAME session identity that wrote the response;
+        the three correction files are written to out/ for the pusher (TURN=correction). Durable: the parsed answer is
+        kept, a re-run makes no model call."""
+        C = classroom_module()
+        path = ROOT / 'request' / 'classroom-correction-request.json'
+        if not path.exists():
+            self.refuse(f'correction: no correction request at {path}; fetch it first (frankie_box_session.sh ACTION=fetch_correction)')
+        correction = load_json(path)
+        if correction.get('schema') != CORRECTION_REQUEST_SCHEMA or not isinstance(correction.get('correction_ids'), list):
+            self.refuse(f'correction: {path} is not a Dipole classroom correction request')
+        response_path = self.out / 'response.json'
+        if not response_path.exists():
+            self.refuse('correction: no out/response.json; the correction turn belongs to the session that wrote the response')
+        response = load_json(response_path)
+        for key in ('session_id', 'model_identity_as_reported_by_session'):
+            if correction.get(key) != response.get(key):
+                self.refuse(f'correction: the correction request names a different {key} than out/response.json')
+        if any(key not in response for key in CLASSROOM_KEYS):
+            self.refuse('correction: out/response.json carries no classroom ledgers; the correction cannot be answered')
+        ledgers = {key: response[key] for key in CLASSROOM_KEYS}
+        d = self._classroom_dir()
+        answer_path = d / 'correction.json'
+        if not answer_path.exists():
+            text = C.correction_prompt(correction, ledgers, cycle=self.cycle)
+            parsed, call = self._classroom_call('classroom-correction', text, lambda body: C.parse_correction(body, correction), 'boss')
+            write_json(answer_path, dict(schema='FRANKIE_BOX_CLASSROOM_CORRECTION_V1', call=call, parsed=parsed,
+                       correction_request=dict(witness(path), request_sha256=correction['request_sha256'], post_grade_hash=correction['post_grade_hash'],
+                                               correction_ids=correction['correction_ids'])))
+        parsed = load_json(answer_path)['parsed']
+        session_id, model_identity = response['session_id'], response['model_identity_as_reported_by_session']
+        reply = C.correction_response(correction, parsed, session_id=session_id, model_identity=model_identity)
+        (self.out / 'correction-response.json').write_bytes(json.dumps(reply, indent=1, sort_keys=True, ensure_ascii=False).encode('utf-8'))
+        request_sha256, response_sha256 = C.attestation_request_sha256(correction), C.adapter_digest(reply)
+        engine = load_json(self.work / 'engine.json') if (self.work / 'engine.json').exists() else {}
+        record = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=request_sha256,
+                      response_sha256=response_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
+                      host_authority=('Frankie, the BOSS, on Greg Davis\'s box i-035994afa8bdf66a5 (us-east-1), under Greg\'s instruction of '
+                                      '2026-09-21 (option 1: the Dipole classroom correction turn answered by the same session that wrote the '
+                                      f'response; the engine is the BOSS vLLM on Pod {engine.get("pod_id", self.pod_id)}); session code '
+                                      'deploy/aws/box/frankie_box_boss_session.py'),
+                      turn='classroom-correction', correction_request_sha256=correction['request_sha256'], post_grade_hash=correction['post_grade_hash'],
+                      response=dict(witness(self.out / 'correction-response.json'), path=str(self.out / 'correction-response.json')),
+                      classroom_composition=C.COMPOSITION)
+        (self.out / 'host-correction-record.json').write_bytes(json.dumps(record, indent=1, sort_keys=True).encode('utf-8'))
+        attestation = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=request_sha256,
+                           response_sha256=response_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
+                           host_record=dict(witness(self.out / 'host-correction-record.json'), path=HOST_CORRECTION_RECORD_PATH.format(cycle=self.cycle)),
+                           turn='classroom-correction', classroom_composition=C.COMPOSITION)
+        (self.out / 'host-correction-attestation.json').write_bytes(json.dumps(attestation, indent=1, sort_keys=True).encode('utf-8'))
+        write_json(d / 'correction-receipt.json', dict(schema='FRANKIE_BOX_CORRECTION_RECEIPT_V1', at=time.time(), request_sha256=request_sha256,
+                   response_sha256=response_sha256, correction_ids=len(correction['correction_ids']), resolutions=len(parsed['correction_resolutions']),
+                   remaining_disagreements=parsed['remaining_disagreements'],
+                   files={n: witness(self.out / n) for n in ('correction-response.json', 'host-correction-record.json', 'host-correction-attestation.json')}))
+        self.note(f'correction answered: {len(correction["correction_ids"])} correction ids resolved, {len(parsed["remaining_disagreements"])} remaining '
+                  f'disagreements' + (' (a remaining disagreement blocks teacher completion by contract)' if parsed['remaining_disagreements'] else ''))
+        return reply
+
     # ---- writing (the four files) ------------------------------------------------------------------------
     def writing(self):
         from research.kalshi.frankie_boss.frankie_principal_adapter import digest, OUTPUT_LEDGERS, CALCULATION_ACCOUNTING_LEDGER
@@ -1285,6 +1450,9 @@ class Session:
                                       available_ns=labels['available_ns'],
                                       sessions=[dict(session_id=verify['session_id'], timing=labels['labels'], gap=labels['gap'], path=labels['path'])]),
                         lessons=[analysis_md, accounting_entry] + ledgers)
+        classroom = self.classroom_ledgers()
+        response.update(classroom)                # the Dipole classroom, turn 1 (work/classroom/receipt.json has the counts and the composition)
+        classroom_receipt = load_json(self.work / 'classroom' / 'receipt.json')
         (self.out / 'response.json').write_bytes(json.dumps(response, indent=1, sort_keys=True, ensure_ascii=False).encode('utf-8'))
         (self.out / 'analysis.md').write_text(analysis_md, encoding='utf-8')
         response_sha256 = digest(response)
@@ -1294,17 +1462,20 @@ class Session:
                                       '2026-09-21 (option A: the calculations are Frankie\'s, run on the box; the engine is the BOSS vLLM on '
                                       f'Pod {engine["pod_id"]}); session code deploy/aws/box/frankie_box_boss_session.py'),
                       response=dict(witness(self.out / 'response.json'), path=str(self.out / 'response.json')),
-                      analysis=dict(witness(self.out / 'analysis.md'), path=str(self.out / 'analysis.md')))
+                      analysis=dict(witness(self.out / 'analysis.md'), path=str(self.out / 'analysis.md')),
+                      classroom=dict(classroom_receipt['report'], composition=classroom_receipt['composition']))
         (self.out / 'host-session-record.json').write_bytes(json.dumps(record, indent=1, sort_keys=True).encode('utf-8'))
         attestation = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=self.request_sha256,
                            response_sha256=response_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
-                           host_record=dict(witness(self.out / 'host-session-record.json'), path=HOST_RECORD_PATH.format(cycle=self.cycle)))
+                           host_record=dict(witness(self.out / 'host-session-record.json'), path=HOST_RECORD_PATH.format(cycle=self.cycle)),
+                           classroom_composition=classroom_receipt['composition'])
         (self.out / 'host-attestation.json').write_bytes(json.dumps(attestation, indent=1, sort_keys=True).encode('utf-8'))
         print(analysis_md, flush=True)
         write_json(self.work / 'writing.json', dict(schema='FRANKIE_BOX_WRITING_RECEIPT_V1', at=time.time(), response_sha256=response_sha256,
                    files={n: witness(self.out / n) for n in ('response.json', 'analysis.md', 'host-session-record.json', 'host-attestation.json')},
-                   lessons=len(response['lessons']), analysis_incomplete=bool(analysis.get('incomplete')), digest_in_writing_calls=digest_included))
-        self.note(f'written: four files, response_sha256 {response_sha256[:16]}, {len(response["lessons"])} lessons')
+                   lessons=len(response['lessons']), analysis_incomplete=bool(analysis.get('incomplete')), digest_in_writing_calls=digest_included,
+                   classroom=classroom_receipt['report']))
+        self.note(f'written: four files, response_sha256 {response_sha256[:16]}, {len(response["lessons"])} lessons, the four classroom ledgers')
         self.docs()
         self.brain_entry()
 
@@ -1345,15 +1516,16 @@ class Session:
         return found
 
     # ---- push ---------------------------------------------------------------------------------------------
-    def push(self):
-        self.phase('pushing', 'pushing the four files to root/cycle-%s-response' % self.cycle)
+    def push(self, turn='initial'):
+        files = 'the four files' if turn == 'initial' else 'the three correction files'
+        self.phase('pushing', f'pushing {files} to root/cycle-{self.cycle}-response')
         result = subprocess.run(['bash', str(MARKETS / 'deploy' / 'aws' / 'box' / 'frankie_box_push_response.sh')],
-                                env=dict(os.environ, DAY=self.day, CYCLE=self.cycle, HOME='/root'), capture_output=True, text=True)
+                                env=dict(os.environ, DAY=self.day, CYCLE=self.cycle, TURN=turn, HOME='/root'), capture_output=True, text=True)
         print(result.stdout, result.stderr, flush=True)
         if result.returncode:
-            self.note(f'push refused or failed (exit {result.returncode}); the four files are safe in {self.out}')
+            self.note(f'push refused or failed (exit {result.returncode}); {files} are safe in {self.out}')
             return False
-        self.phase('done', 'done: response pushed; the recorder workflow is next (not mine)')
+        self.phase('done', f'done: {"response" if turn == "initial" else "correction response"} pushed; the recorder workflow (turn {turn}) is next (not mine)')
         (self.dir / 'done').write_text('done\n', encoding='utf-8')
         return True
 
@@ -1399,7 +1571,14 @@ class Session:
             self.labels()
             self.engine_reach()
             self.serverless_reach()
+            classroom_module().visible_of(self.request)      # the request must carry the TEACH classroom this session answers
             print('preflight: OK', flush=True)
+            return
+        if stage == 'correction':
+            self.engine_reach()
+            self.phase('correction', 'answering the Dipole classroom correction on the BOSS')
+            self.correction()
+            self.push(turn='correction')
             return
         self.phase('verified', 'request, contract and rows verified on the box; session running')
         self.labels()
@@ -1414,9 +1593,15 @@ class Session:
         if not (self.work / 'merged-notes.md').exists():
             self.serverless_reach()
             self.reading()
+        self.phase('classroom')
+        if not (self.work / 'classroom' / 'ledgers.json').exists():
+            if self.serverless is None:
+                self.serverless_reach()
+            self.classroom()
         self.phase('writing')
-        if not (self.work / 'writing.json').exists():
-            self.writing()
+        response_path = self.out / 'response.json'
+        if not (self.work / 'writing.json').exists() or not response_path.exists() or any(k not in load_json(response_path) for k in CLASSROOM_KEYS):
+            self.writing()          # durable BOSS jobs: an analysis and ledgers already written are reused, only the assembly runs again
         self.push()
 
 
@@ -1427,7 +1612,7 @@ def main():
     parser.add_argument('--cycle', default='00')
     parser.add_argument('--pod', default=POD_ID_DEFAULT)
     parser.add_argument('--served-model', default=SERVED_MODEL_DEFAULT)
-    parser.add_argument('--stage', default='run', choices=('run', 'preflight'))
+    parser.add_argument('--stage', default='run', choices=('run', 'preflight', 'correction'))
     args = parser.parse_args()
     Session(args.session, args.day, args.cycle, args.pod, args.served_model).run(args.stage)
 

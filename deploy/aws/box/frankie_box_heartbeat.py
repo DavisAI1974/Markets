@@ -19,7 +19,7 @@ import sys
 import time
 from pathlib import Path
 
-PHASES = ('downloaded', 'verified', 'reading', 'deriving', 'writing', 'pushing', 'done')
+PHASES = ('downloaded', 'verified', 'reading', 'deriving', 'classroom', 'writing', 'pushing', 'correction', 'done')
 BUCKET = 'frankie-granite42-568968024170-us-east-1'
 REPO = 'https://github.com/DavisAI1974/Markets.git'
 
