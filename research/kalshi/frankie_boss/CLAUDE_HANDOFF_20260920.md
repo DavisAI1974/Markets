@@ -3444,3 +3444,24 @@ correction turn "not requested yet" (it follows the record, per the chain). (2) 
   that loses any sha256 its inputs carried, or is empty, is replaced by the inputs verbatim with a marker, the unused
   model output kept beside it; every merge output written under work/merges/. 8 new tests; 49 in the codecs CI command.
   Cycle 0's docs: `DOCS_ONLY=1 CYCLE=00` dispatched (run id below) to publish them on root/cycle-00-response now.
+
+### 16:5xZ 09-21: GREG: "We definitely need to fix the notes part for Frankie before we start cycle 1" -- FIXED (3011c80a)
+
+Root cause, two layers. (1) The READER: part 4's note came back as a refusal ("I cannot complete this request...")
+carrying digest spellings and an [OUTPUT INCOMPLETE] mark (finish_reason length at the remaining-context bound = a
+runaway, since the output bound is the whole remaining context per the no-limits rule); the session accepted it as
+the part's note. (2) The MERGE: the final merge, seeing that group, declared it hallucinated and re-emitted parts 1-3
+only; the session accepted that as the merged notes. Fix, both layers, all in the session code the cycle-1 session
+checks out at start (MARKETS_REF fetch; the running cycle-0 session is untouched):
+- `_read_part_guarded` (3011c80a): `note_verdict()` judges every note: error, refusal at the start of the text, fewer
+  than 200 characters, or output-incomplete. Unusable -> retried once with the same prompt; still unusable -> the part
+  is split on a line boundary at its middle and each half read in its own call (no further split); a half still
+  unusable is kept as returned and marked in the note. Every attempt kept beside the note (attempt-NNNN-*.md).
+- `_merge_keep` (fee2e08b): every merge output checked by `keep_if_lossy()`; any sha256 the inputs carried that the
+  output lacks, or an empty output, replaces the output with the inputs verbatim plus a marker; the unused model
+  output kept beside it; every merge output written as Markdown under work/merges/.
+- The merge prompt (3011c80a): every group is Frankie's own, never judged foreign or dropped, output = the merged
+  notes only (no commentary about the merge).
+- Docs (fee2e08b): all of the above lands in out/docs as Markdown with an index, published with the four files.
+Tests: 54 in the codecs CI command (reader over a fake lane: usable first time; refusal retried; two unusable answers
+split into halves whose bytes re-join to the part; still-unusable marked; verdict order; split_range).
