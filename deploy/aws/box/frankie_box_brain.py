@@ -74,6 +74,17 @@ def write_entry(work, out, brain, cycle, include_analysis=True):
     classroom = work / 'classroom' / 'classroom.md'
     if classroom.is_file():
         put('classroom.md', classroom.read_bytes(), classroom, "the Dipole classroom: Frankie's own teach-back of the 19-dimension surface for this cycle (case by case: set include false to keep it out)")
+    teach = work / 'teach' / 'exhaustion-teachback.md'
+    if teach.is_file():
+        put('exhaustion-teachback.md', teach.read_bytes(), teach, 'calculation findings: the exhaustion and D teach-back (the BOSS on its own bedrock facts and the frozen learned structure; numbers checked by code; Greg, 2026-09-21: All 3)')
+    bedrock = work / 'bedrock' / 'receipt.json'
+    if bedrock.is_file():
+        try:
+            doc = '# The bedrock traversal receipt (bedrock/receipt.json: the pinned producers\' own driver on this cycle\'s rows; identity, arguments, ledgers, reconciliation, sections fed)\n\n```json\n' + \
+                json.dumps(json.loads(bedrock.read_bytes()), indent=1, sort_keys=True, ensure_ascii=False) + '\n```\n'
+            put('bedrock.md', doc.encode('utf-8'), bedrock, 'calculation findings: the bedrock traversal receipt (the twenty bedrock layers\' provenance)')
+        except Exception:
+            pass
     derived = work / 'derived'
     if derived.is_dir():
         files = [dict(name=f.name, bytes=f.stat().st_size, sha256=sha256_bytes(f.read_bytes())) for f in sorted(derived.iterdir()) if f.is_file()]

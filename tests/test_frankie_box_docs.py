@@ -131,3 +131,38 @@ def test_build_docs_carries_the_classroom_markdown_and_receipts(tmp_path):
     names = [e['name'] for e in index['docs']]
     assert 'classroom.md' in names and 'classroom-receipt.md' in names and 'classroom-correction-receipt.md' in names
     assert (out / 'classroom.md').read_text() == '# Dipole classroom: test\n' and '"components": 19' in (out / 'classroom-receipt.md').read_text()
+
+
+def test_build_docs_carries_the_teachback_the_bedrock_receipts_and_ledgers_and_references_the_layer_files(tmp_path):
+    """BR-7: the docs bundle carries exhaustion-teachback.md and the bedrock receipt/result as JSON docs, copies the three
+    exact ledgers whole under bedrock/ledgers/ (the whole ledgers ride the bundle; the digest carries the carrier columns),
+    and lists every bedrock layer file by name, bytes and sha256 (referenced: their content is in the DIGEST_V6 tables)."""
+    work, out = tmp_path / 'work', tmp_path / 'out'
+    (work / 'teach').mkdir(parents=True)
+    (work / 'teach' / 'exhaustion-teachback.md').write_text('# The exhaustion and D teach-back\n')
+    (work / 'bedrock' / 'ledgers').mkdir(parents=True)
+    (work / 'bedrock' / 'receipt.json').write_text('{"schema": "FRANKIE_BOX_BEDROCK_RUN_RECEIPT_V1", "groups": 3}')
+    (work / 'bedrock' / 'result.json').write_text('{"verdict": "ACCEPTED"}')
+    for name in ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl', 'legacy_observable_rows.jsonl'):
+        (work / 'bedrock' / 'ledgers' / name).write_text('{"row": 1}\n{"row": 2}\n')
+    (work / 'derived').mkdir()
+    (work / 'derived' / 'clock_event_time.json').write_text('{"status": "derived"}')
+    (work / 'derived' / 'legacy_price.json').write_text('{"status": "derived"}')
+    (work / 'derive.json').write_text(json.dumps(dict(layers=dict(clock_event_time=dict(status='derived', bedrock=True, path=str(work / 'derived' / 'clock_event_time.json')),
+                                                                  legacy_price=dict(status='derived', path=str(work / 'derived' / 'legacy_price.json'))),
+                                                      bedrock=dict(layers=['clock_event_time']))))
+    index = docs.build_docs(work, out, '00')
+    names = [e['name'] for e in index['docs']]
+    assert 'exhaustion-teachback.md' in names and 'bedrock-receipt.md' in names and 'bedrock-result.md' in names
+    assert (out / 'exhaustion-teachback.md').read_text() == '# The exhaustion and D teach-back\n'
+    assert '"groups": 3' in (out / 'bedrock-receipt.md').read_text()
+    for name in ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl', 'legacy_observable_rows.jsonl'):
+        assert f'bedrock/ledgers/{name}' in names and (out / 'bedrock' / 'ledgers' / name).read_bytes() == (work / 'bedrock' / 'ledgers' / name).read_bytes()
+        entry = next(e for e in index['docs'] if e['name'] == f'bedrock/ledgers/{name}')
+        assert entry['sha256'] == hashlib.sha256((work / 'bedrock' / 'ledgers' / name).read_bytes()).hexdigest() and 'exact ledger' in entry['what']
+    referenced = {r['name']: r for r in index['referenced']}
+    assert 'derived/clock_event_time.json' in referenced and 'derived/legacy_price.json' not in referenced
+    assert referenced['derived/clock_event_time.json']['sha256'] == hashlib.sha256(b'{"status": "derived"}').hexdigest()
+    assert 'DIGEST_V6' in referenced['derived/clock_event_time.json']['what']
+    readme = (out / 'README.md').read_text()
+    assert 'exhaustion-teachback.md' in readme and 'bedrock/ledgers/exact_member_rows.jsonl' in readme and 'derived/clock_event_time.json' in readme

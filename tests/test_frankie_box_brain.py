@@ -174,3 +174,18 @@ def test_write_entry_carries_the_classroom_teachback_when_present(cycle0, tmp_pa
     m = brain.write_entry(work, out, tmp_path / 'brain', '00')
     entry = [e for e in m['entries'] if e['name'] == 'classroom.md'][0]
     assert entry['include'] is True and 'case by case' in entry['kind'] and (tmp_path / 'brain' / 'cycle-00' / 'classroom.md').is_file()
+
+
+def test_write_entry_carries_the_teachback_and_the_bedrock_receipt_when_present(cycle0, tmp_path):
+    """BR-7: the exhaustion/D teach-back and the bedrock run receipt enter the brain entry (include true) so the next
+    cycle reads them; the bedrock layer files are witnessed with the other derived files."""
+    work, out = cycle0
+    (work / 'teach').mkdir()
+    (work / 'teach' / 'exhaustion-teachback.md').write_bytes(b'# The exhaustion and D teach-back\n')
+    (work / 'bedrock').mkdir()
+    (work / 'bedrock' / 'receipt.json').write_text('{"schema": "FRANKIE_BOX_BEDROCK_RUN_RECEIPT_V1", "groups": 3}')
+    m = brain.write_entry(work, out, tmp_path / 'brain', '00')
+    teach = [e for e in m['entries'] if e['name'] == 'exhaustion-teachback.md'][0]
+    assert teach['include'] is True and 'exhaustion' in teach['kind'] and (tmp_path / 'brain' / 'cycle-00' / 'exhaustion-teachback.md').read_bytes() == b'# The exhaustion and D teach-back\n'
+    receipt = [e for e in m['entries'] if e['name'] == 'bedrock.md'][0]
+    assert receipt['include'] is True and 'bedrock' in receipt['kind'] and '"groups": 3' in (tmp_path / 'brain' / 'cycle-00' / 'bedrock.md').read_text()

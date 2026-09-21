@@ -116,3 +116,32 @@ def test_a_serverless_outcome_is_resumed_only_for_the_prompt_it_answered(tmp_pat
     aside = [p for p in (s.work / 'serverless-jobs').iterdir() if p.name.startswith('read-part-0001.superseded-')]
     assert len(aside) == 1 and (aside[0] / 'outcome.json').exists() and json.loads((aside[0] / 'superseded.json').read_text())['name'] == 'read-part-0001'
     assert not (d / 'outcome.json').exists() and any('moved aside' in n for n in s._notes)
+
+
+def test_writing_prompts_account_for_the_bedrock_and_the_analysis_carries_the_teachback_section(tmp_path, monkeypatch):
+    """BR-7: the accounting prompt says a bedrock layer is accounted for like a pinned one (its own status and reason);
+    the analysis prompt names the teach-back section the session appends; _teach_section renders it from the filed
+    teach-back and is empty when none was filed."""
+    text = SESSION.read_text()
+    accounting = text.split("self.boss('write-accounting'")[1].split('accounting_entry = ')[0]
+    assert 'THE BEDROCK' in accounting and 'a bedrock layer is accounted for like a pinned one, with its own status and reason' in accounting
+    analysis = text.split("self.boss('write-analysis'")[1].split('analysis_md = ')[0]
+    assert 'THE EXHAUSTION AND D TEACH-BACK' in analysis
+    assert "analysis_md = analysis_md.rstrip('\\n') + self._teach_section()" in text or 'analysis_md += self._teach_section()' in text
+    s = stub(tmp_path, monkeypatch)
+    s._teach_section = lambda: session.Session._teach_section(s)
+    assert s._teach_section() == ''
+    (s.work / 'teach').mkdir()
+    (s.work / 'teach' / 'exhaustion-teachback.json').write_text(json.dumps(dict(
+        cycle='00', facts_sha256='f' * 64, call=dict(attempt='teach-exhaustion', lane='boss'), frozen=[dict(layer='learned_dipoles_and_geometry', source='research/X.md')],
+        facts_text='# FACTS\n\n13.0 s\n',
+        answer=dict(exhaustion=dict(what_it_is='a', how_this_cycle_shows_it='b', what_this_cycle_cannot_show='c', relation_to_dipole_state='d'),
+                    d_depth=dict(what_it_is='e', how_this_cycle_shows_it='f', what_this_cycle_cannot_show='g', relation_to_dipole_state='h'),
+                    families=dict(what_it_is='i', how_this_cycle_shows_it='j', what_this_cycle_cannot_show='k', relation_to_dipole_state='l'),
+                    prebirth=dict(what_it_is='m', how_this_cycle_shows_it='n', what_this_cycle_cannot_show='o', relation_to_dipole_state='p'),
+                    clocks=dict(what_it_is='q', how_this_cycle_shows_it='r', what_this_cycle_cannot_show='s', relation_to_dipole_state='t'),
+                    questions=['u?']))))
+    section = s._teach_section()
+    assert section.startswith('\n\n## THE EXHAUSTION AND D TEACH-BACK')
+    assert '**what_it_is**: a' in section and '### clocks' in section and '- u?' in section and 'f' * 64 in section
+    assert 'research/X.md' in section and '# FACTS' not in section       # the answer and its witnesses; the facts stay in the teach-back file

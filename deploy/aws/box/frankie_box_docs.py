@@ -230,6 +230,7 @@ def build_docs(work, out, cycle):
     entries = []
 
     def put(name, data, source, what):
+        (out / name).parent.mkdir(parents=True, exist_ok=True)
         (out / name).write_bytes(data)
         entries.append(dict(name=name, bytes=len(data), sha256=sha256_bytes(data), source=str(source), what=what))
 
@@ -288,11 +289,41 @@ def build_docs(work, out, cycle):
                     put('classroom-' + name[:-5] + '.md', _json_doc('classroom ' + name[:-5], p).encode('utf-8'), p, 'a classroom receipt, rendered as JSON in Markdown')
                 except Exception as error:
                     entries.append(dict(name='classroom-' + name, error=f'{type(error).__name__}: {error}', source=str(p)))
+    # BR-7 (2026-09-21): the exhaustion/D teach-back beside the classroom; the bedrock run receipt and result as JSON docs;
+    # the three exact ledgers copied WHOLE under bedrock/ledgers/ (the digest carries the carrier columns, the bundle the
+    # rows); every bedrock layer file referenced by name, bytes and sha256 (its content is in the DIGEST_V6 tables).
+    teach = work / 'teach' / 'exhaustion-teachback.md'
+    if teach.is_file():
+        put('exhaustion-teachback.md', teach.read_bytes(), teach, "the exhaustion and D teach-back: the BOSS on its own bedrock facts and the frozen learned structure, every number checked against the facts by code (session code)")
+    bedrock = work / 'bedrock'
+    for name in ('receipt.json', 'result.json'):
+        p = bedrock / name
+        if p.is_file():
+            try:
+                put('bedrock-' + name[:-5] + '.md', _json_doc('bedrock ' + name[:-5], p).encode('utf-8'), p, 'the bedrock traversal ' + name[:-5] + ' (the pinned producers\' own driver on this cycle\'s rows), rendered as JSON in Markdown')
+            except Exception as error:
+                entries.append(dict(name='bedrock-' + name, error=f'{type(error).__name__}: {error}', source=str(p)))
+    ledgers = bedrock / 'ledgers'
+    if ledgers.is_dir():
+        for p in sorted(ledgers.glob('*.jsonl')):
+            put(f'bedrock/ledgers/{p.name}', p.read_bytes(), p, 'one exact ledger of the bedrock traversal, whole, in emission order (JSONL, sorted keys); reconciled against its counter on the box')
+    referenced = []
     corpus = work / 'reading-corpus-full.md'
-    referenced = dict(name='reading-corpus-full.md', bytes=corpus.stat().st_size, sha256=sha256_bytes(corpus.read_bytes()),
-                      source=str(corpus), what='the rendered reading corpus; referenced by digest, not copied (size; derivable from the request on the box)') \
-        if corpus.is_file() else None
-    index = dict(schema=SCHEMA, at=time.time(), cycle=cycle, work=str(work), docs=entries, referenced=[referenced] if referenced else [])
+    if corpus.is_file():
+        referenced.append(dict(name='reading-corpus-full.md', bytes=corpus.stat().st_size, sha256=sha256_bytes(corpus.read_bytes()),
+                               source=str(corpus), what='the rendered reading corpus; referenced by digest, not copied (size; derivable from the request on the box)'))
+    derive = work / 'derive.json'
+    if derive.is_file():
+        try:
+            layers = json.loads(derive.read_bytes()).get('layers') or {}
+        except Exception:
+            layers = {}
+        for name, entry in sorted(layers.items()):
+            path = Path(entry.get('path') or '')
+            if entry.get('bedrock') and path.is_file():
+                referenced.append(dict(name=f'derived/{path.name}', bytes=path.stat().st_size, sha256=sha256_bytes(path.read_bytes()), source=str(path),
+                                       what=f'the bedrock layer file for {name} ({entry.get("status")}); referenced by digest, not copied: its rows are in the DIGEST_V6 bedrock tables of derivation-digest-full.md and in bedrock/ledgers/'))
+    index = dict(schema=SCHEMA, at=time.time(), cycle=cycle, work=str(work), docs=entries, referenced=referenced)
     (out / 'docs-index.json').write_text(json.dumps(index, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     lines = [f'# Frankie cycle {cycle}: the session documents', '',
              'Every document the box session produced, as Markdown, gathered by `deploy/aws/box/frankie_box_docs.py` from the',
@@ -304,8 +335,8 @@ def build_docs(work, out, cycle):
             lines.append(f"| {e['name']} | | | NOT RENDERED: {e['error']} |")
         else:
             lines.append(f"| {e['name']} | {e['bytes']} | {e['sha256'][:16]} | {e['what']} |")
-    if referenced:
-        lines += ['', f"Referenced, not copied: `{referenced['name']}` {referenced['bytes']} bytes, sha256 {referenced['sha256']}."]
+    for r in referenced:
+        lines += ['', f"Referenced, not copied: `{r['name']}` {r['bytes']} bytes, sha256 {r['sha256']}: {r['what']}"]
     (out / 'README.md').write_text('\n'.join(lines) + '\n', encoding='utf-8')
     return index
 

@@ -1584,6 +1584,28 @@ class Session:
         self.note(f'teach: filed ({len(parsed.get("questions", []))} questions); {d / "exhaustion-teachback.md"}')
         return load_json(path)
 
+    def _teach_section(self):
+        """The analysis section written by the writing stage from the filed teach-back (the answer and its witnesses; the
+        facts stay in the teach-back file); empty when no teach-back was filed."""
+        path = self.work / 'teach' / 'exhaustion-teachback.json'
+        if not path.exists():
+            return ''
+        T = _box_module('frankie_box_teach')
+        record = load_json(path)
+        answer = record.get('answer') or {}
+        lines = ['', '', '## THE EXHAUSTION AND D TEACH-BACK', '',
+                 f'Given by this session beside the Dipole classroom (call {record.get("call", {}).get("attempt")} on the {record.get("call", {}).get("lane")} lane; '
+                 f'facts sha256 {record.get("facts_sha256")}; every number checked against the facts by code; the facts and the frozen files are in '
+                 'work/teach/exhaustion-teachback.md). Frozen learned structure read: '
+                 + ', '.join(f'{f.get("source")} ({f.get("layer")})' for f in record.get('frozen', [])) + '.', '']
+        for topic in T.TOPICS:
+            lines += [f'### {topic}', '']
+            for field in T.FIELDS:
+                lines += [f'**{field}**: {(answer.get(topic) or {}).get(field, "")}', '']
+        questions = answer.get('questions') or []
+        lines += ['### questions', ''] + ([f'- {q}' for q in questions] or ['- none'])
+        return '\n'.join(lines)
+
     # ---- the packets Frankie asked for (cycle 0 analysis, 2026-09-21) ----------------------------------------
     def compare(self):
         """The comparison packet: every derived pin layer beside the frozen learned-structure files the brain carries
@@ -1665,9 +1687,12 @@ class Session:
                              f'first lesson, then ONE accounting entry (ledger "{CALCULATION_ACCOUNTING_LEDGER}"), then the ten output ledgers '
                              f'({", ".join(OUTPUT_LEDGERS)}), each written in its own later call. No other entry is filed (no classroom '
                              'lesson, no run_analysis entry): never describe any other entry as written or filed; anything else you want '
-                             'recorded goes into this analysis text itself.')
+                             'recorded goes into this analysis text itself. THE EXHAUSTION AND D TEACH-BACK you gave beside the classroom '
+                             'is appended by the session to this analysis as its own section from the filed teach-back (work/teach/); do '
+                             'not restate it, refer to it.')
         analysis_md = (analysis.get('text') or f'(the BOSS produced no analysis: {analysis.get("error")})') + \
             ('\n\n[OUTPUT INCOMPLETE: the BOSS reached its output bound; kept as produced]\n' if analysis.get('incomplete') else '\n')
+        analysis_md = analysis_md.rstrip('\n') + self._teach_section() + '\n'     # a section of the analysis text; response.json gains no key
         self.note('writing: the calculation accounting')
         accounting = self.boss('write-accounting', base + f'TASK: write the ONE accounting entry: a JSON object whose "ledger" field is '
                                f'"{CALCULATION_ACCOUNTING_LEDGER}", with a "layers" list carrying EVERY layer of this cycle\'s pin '
@@ -1678,7 +1703,10 @@ class Session:
                                'the frozen files themselves are in your merged notes (your brain, frozen learned structure); for each pin layer you '
                                'compared with them, file status "compared" with what differed (or that nothing differed) and which frozen file you '
                                'compared with; where no frozen file speaks to a layer, say so in its reason; "derived" alone is for a layer you '
-                               'derived and could not compare. Output JSON only.')
+                               'derived and could not compare. THE BEDROCK (Greg, 2026-09-21): '
+                               'a bedrock layer is accounted for like a pinned one, with its own status and reason, '
+                               'exactly as the derivation digest files it (a could_not layer carries the measured reason, never an empty '
+                               'derived). Output JSON only.')
         accounting_entry = self._json_entry(accounting, CALCULATION_ACCOUNTING_LEDGER)
         accounting_entry['harness_derivation'] = {name: dict(status=v['status'], producer=v.get('producer'), reason=v.get('reason'), sha256=v['sha256'])
                                                   for name, v in derive['layers'].items()}
