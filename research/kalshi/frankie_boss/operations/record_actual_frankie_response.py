@@ -32,6 +32,22 @@ def candidate_of(adapter,directory):
     return candidate
 
 
+def live_classroom(request,classroom_package,derive,json_form):
+    """The attachment's Dipole classroom block in its LIVE form. The classroom adapter compares
+    attachment['dipole_classroom'] with final_model_visible_classroom(package) by Python equality; the package comes
+    from the c15 loader (tuples), the attachment from session-request.json (lists), so the retained request could never
+    pass ('principal attachment Dipole classroom differs from final model-visible contract', run 35632927377,
+    2026-09-21). Every comparison of a retained file against a live object goes through json_form (the adapter's own
+    rule): when the two agree in JSON form, the live object is put into the attachment; otherwise the attachment is
+    left as read and the adapter refuses as before. Returns 'live' or 'unchanged'."""
+    attachment=request.get('attachment') or {}
+    if 'dipole_classroom' not in attachment:return 'unchanged'
+    live=derive(classroom_package)
+    if json_form(live)!=attachment['dipole_classroom']:return 'unchanged'
+    attachment['dipole_classroom']=live
+    return 'live'
+
+
 def record_checked(adapter,request,response,attestation,binding,input_hash,canonical):
     """Validate in a retained candidate directory before the immutable final write."""
     from research.kalshi.frankie_boss.frankie_principal_adapter import FrankiePrincipalAdapter
@@ -100,6 +116,9 @@ def main():
         classroom_package={
             name.replace('-','_'): _load(directory/('host-dipole-classroom-'+name+'.c15.json'))
             for name in ('source','teacher-key','pre-message','binding')}
+        from research.kalshi.frankie_boss.dipole_classroom_final_review import final_model_visible_classroom
+        from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
+        print('attachment dipole_classroom: '+live_classroom(request,classroom_package,final_model_visible_classroom,json_form))
         adapter=make_principal_adapter(binding=binding,handoff_directory=export['directory'],
             expected_manifest_sha256=export['manifest_sha256'],boss_journal_path=plan['source_journal_path'],
             source_journal_checkpoint=plan['source_journal_checkpoint'],mapping_directory=str(Path(config['mapping']['path']).parent),

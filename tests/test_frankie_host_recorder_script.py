@@ -36,6 +36,19 @@ def test_candidate_answers_the_admission_record_with_the_principal_directory_and
     assert real.directory == principal and not hasattr(Adapter, 'x')          # the real adapter untouched
 
 
+def test_live_classroom_puts_the_live_block_in_the_attachment_only_when_json_equal():
+    import json
+    m = load_recorder()
+    json_form = lambda v: json.loads(json.dumps(v))
+    live = {'binding': {'mode': 'TEACH', 'pairs': ('a', 'b')}, 'model_visible_hash': 'h' * 64}
+    request = {'attachment': {'dipole_classroom': json_form(live)}}
+    assert m.live_classroom(request, {'pkg': 1}, lambda pkg: live, json_form) == 'live'
+    assert request['attachment']['dipole_classroom'] is live                       # the live object, tuples and all
+    other = {'attachment': {'dipole_classroom': {'binding': {'mode': 'OTHER'}}}}
+    assert m.live_classroom(other, {}, lambda pkg: live, json_form) == 'unchanged' and other['attachment']['dipole_classroom'] == {'binding': {'mode': 'OTHER'}}
+    assert m.live_classroom({'attachment': {}}, {}, lambda pkg: live, json_form) == 'unchanged'
+
+
 def test_the_host_script_carries_the_recorder_source_verbatim():
     text = SCRIPT.read_text(encoding='utf-8')
     start = text.index("$recorderSource = @'\n") + len("$recorderSource = @'\n")
