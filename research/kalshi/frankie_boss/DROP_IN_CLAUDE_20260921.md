@@ -29,10 +29,12 @@ takes the full 40-hex sha; workflow files land via the GitHub API on Greg's word
 is receipted; no Pod stop/terminate without Greg's word.
 
 **TO-DO, carried forward (this session + last; nothing dropped):**
-0. GREG, 04:40Z: FRANKIE'S CALCULATIONS RUN INSIDE AWS WITH THE CPUs BEHIND HIM. Build the compute harness for
-   Frankie's session before cycle 1's Root step (handoff 04:40Z: shape, candidate box i-035994afa8bdf66a5 = the 32-vCPU
-   ingest runner, open questions). Starting a box is Greg's go. The calculations stay Frankie's; the runner still
-   precomputes nothing.
+0. GREG, 04:40Z: FRANKIE'S CALCULATIONS RUN INSIDE AWS WITH THE CPUs BEHIND HIM. HIS BOX IS UP (07:43Z): the ingest
+   runner i-035994afa8bdf66a5, us-east-1, r7i.8xlarge 32 vCPU, Ubuntu, SSM Online (profile Ssm), private 172.31.39.59,
+   KeepRunning=true, ~2.02/h (`frankie_box_control.yml` status/start; stop only on Greg's word). BUILD THE HARNESS
+   FIRST (handoff 07:43Z): data plane on the box, exported request + cycle rows beside Frankie's session, agent
+   backend per COACH_AGENT_SETUP_S93, heartbeats (Root task step 1b), response pushed to root/cycle-00-response from
+   the box; recorder unchanged. Greg's open call: derivation library vs his own code. Calculations stay Frankie's.
 1. Cycle 0 close-out: root probe until Root's heartbeats/branch appear -> `frankie_host_record_principal_response.yml`
    (source_ref `root/cycle-00-response`, cycle 00) -> the runner resumes on its own (verify, native learning, readback,
    completion). Root must be handed the UPDATED task document (heartbeat step 1b). Read-only probes only meanwhile.

@@ -3,11 +3,11 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
-- **STATE 2026-09-21 04:10Z: cycle 0's MACHINE HALF DONE on retained Pod g7y3g2w1kor4l3 (re-mint 35f857f0); the run
-  HOLDS for ROOT's Frankie session; Root heartbeat probe built** (branch `claude/cycle-0-full-rerun-lr6e14`). Request
-  exported to S3 run 35557744815; Root's task + heartbeat contract in `operations/ROOT_CYCLE_00_TASK_20260920.md`.
-  Tasks A/B DONE. Read `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md` READ FIRST (carries the to-do list),
-  then `CLAUDE_HANDOFF_20260920.md` 22:55Z onward. Observer round never skipped. No runtime stops on Pods (Greg).
+- **STATE 2026-09-21 07:43Z: cycle 0's MACHINE HALF DONE on retained Pod g7y3g2w1kor4l3; the run HOLDS for Frankie's
+  session; GREG: Frankie's calculations run INSIDE AWS. His box is UP: ingest runner i-035994afa8bdf66a5 (us-east-1,
+  r7i.8xlarge 32 vCPU, Ubuntu, SSM Online, KeepRunning=true); the harness on it is the next chat's job 0.** Branch
+  `claude/cycle-0-full-rerun-lr6e14`. Read `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md` READ FIRST (to-do
+  list), then `CLAUDE_HANDOFF_20260920.md` 22:55Z onward. Native host is r7i.4xlarge (16 vCPU), not 8xlarge.
 - **The Granite 4,096-token context is RETIRED. Remove `4096` from ALL Granite-related code**: the `service_context` /
   `CONTEXT` / `max_model_len` defaults, every `(4096, 131072)` allowlist, the 1,200-output ceiling tied to it, and the
   retained-lifecycle resume gate. The only Granite context is 131,072 with output = remaining context and the

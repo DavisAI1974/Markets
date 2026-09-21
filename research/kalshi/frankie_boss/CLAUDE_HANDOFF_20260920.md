@@ -2336,3 +2336,19 @@ Shape for the new chat (design first, then build; nothing started here):
 4. The recorder path (`frankie_host_record_principal_response.yml`) is unchanged: it reads the branch.
 Open questions for Greg before building: whether the box also feeds Frankie a derivation library (code that computes
 the layers, which he runs and inspects) or he writes his own; whether the 32-vCPU runner is the box or a new one.
+
+### 07:43Z: FRANKIE'S BOX IS UP: the ingest runner i-035994afa8bdf66a5 started on Greg's word
+
+Greg: "Use the ingest runner as Frankie's box, start it." Built `frankie_box_control.yml` (c91acc18 on this branch,
+registered on the trunk 55f98e88): status or start one EC2 box through `deploy/aws/ec2_host.py`, tag
+KeepRunning=true, print state/type/SSM/address; never stops, resizes or terminates. Run 35574230846 (07:42:28Z):
+start accepted, running at 07:42:50Z, SSM Online in 21 s. As EC2 reports it now: **i-035994afa8bdf66a5, us-east-1,
+r7i.8xlarge, 16 cores x 2 threads = 32 vCPU, Ubuntu, instance profile `Ssm`, private 172.31.39.59, public DNS
+ec2-3-81-90-2.compute-1.amazonaws.com, no key pair (drive it over SSM), KeepRunning=true** (the idle guard leaves it
+alone; it bills ~2.02/h while up; revert the tag or stop it on Greg's word when Frankie is done).
+
+Nothing is on it yet for Frankie: the new chat's job 0 is the harness (data plane restored on the box, the exported
+request and the cycle's rows beside his session, the agent backend per `deploy/aws/COACH_AGENT_SETUP_S93.md`,
+heartbeats per Root's task step 1b, the four response files pushed to `root/cycle-00-response` from the box; then
+`frankie_host_record_principal_response.yml` unchanged). Greg's open call: a derivation library he runs, or his own
+code against the rows. The native host keeps holding for the response meanwhile.
