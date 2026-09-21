@@ -2239,3 +2239,37 @@ read-only step that lists that prefix, prints the last six heartbeats with age, 
 STALE past 15 minutes, and lists `root/*` heads on origin; new optional input `bucket`. Landed via the GitHub API on
 Greg's word (workflow file). Root must be told the contract (his task document carries it); until he writes the
 first heartbeat the probe says so explicitly.
+
+### 04:10Z: CLOSE OF THIS CHAT. State, and the to-do list carried forward
+
+State: cycle 0's machine half is done on Pod g7y3g2w1kor4l3 and exported to Root (run 35557744815); the host runner
+holds for `session-response.json` (pipeline host job 106199139034 stays in progress by design); Root has not started
+under the heartbeat contract (probe run 35559883108: no heartbeat, no `root/*` branch, no response). Pod
+g7y3g2w1kor4l3 EXITED (stop-retained by the lifecycle at 03:20Z); 8vqdacl5t61rjx and ycf4v6lmave6xw EXITED, untouched;
+r2570o3g566187 and z71ka5v0zzcmou terminated. Host tools at 35f857f0. Branch `claude/cycle-0-full-rerun-lr6e14`, tree
+clean. Greg's ruling request answered in chat: stopping/restarting Root loses nothing on our side; never stop the host
+runner; the Pod is already EXITED. Cycle 1 goes to a new chat.
+
+**TO-DO, carried forward (this session + last; nothing dropped):**
+1. Cycle 0 close-out: root probe until Root's heartbeats/branch appear -> `frankie_host_record_principal_response.yml`
+   (source_ref `root/cycle-00-response`, cycle 00) -> the runner resumes on its own (verify, native learning, readback,
+   completion). Root must be handed the UPDATED task document (heartbeat step 1b). Read-only probes only meanwhile.
+2. Cycle 1 (NEW chat): `frankie_host_stage_critic_request.yml` for the new request sha -> FULL observer round (never
+   skipped) -> Pod start (`g7y3g2w1kor4l3` is EXITED; if the host refuses, the parallel-region prepare + re-mint, as
+   tonight) -> readiness -> ONE pipeline dispatch -> completion re-publication from this branch if the launch branch
+   refuses again -> export to Root -> Root -> record.
+3. Greg's directive, before cycle 1 if possible: NO runtime stops on Pod startup or lifecycle. Remove `--on-timeout stop`
+   and the bounded `stop_retain` intent from `pod_prepare.py`, and the retained lifecycle's stop-retain after the critic
+   call (it stopped `g7y3g2w1kor4l3` at 03:20Z, which starts the GPU queue battle again for cycle 1).
+4. `completion_workflow_ref` in the day configuration (or carry the current identity on the launch branch) so the host's
+   own completion publication stops refusing; a network volume in US-MO-1 for the Granite model (host-pinned volume
+   disk is the root of every "no free GPU" stall).
+5. Ship findings on the pins commit (task #5 from last session): the pins test receipt loop for the complete pin, the
+   recorder witness compare without the absolute path, `registry_file` commit sha, loader error tests, classroom
+   objective test, the pre-existing classroom-host drift guard; the pre-existing `cycle_limit` seam test.
+6. Queued from the 22:20Z box: the remaining nineteen-cycle prefixes (`day_schedule_prefixes.ps1` with `CycleLimit=19`,
+   CPU-dedication gate); an outputs-receipt writer so the ten ledgers filed as lessons close the crosswalk's
+   OUTPUT_PENDING rows; the NWS hourly collector failing on the trunk; the three notes files for the architect;
+   register `using-agent-skills` and `git-workflow-and-versioning` as skills. The ROOT PROBE item is DONE (04:08Z).
+7. Rotate the AWS and Databento keys after the runs (standing; never mid-run). Terminate `ycf4v6lmave6xw` and
+   `8vqdacl5t61rjx` only on Greg's word (they bill their volumes).

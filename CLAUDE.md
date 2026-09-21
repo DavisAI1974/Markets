@@ -3,11 +3,11 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
-- **STATE 2026-09-21 03:40Z: cycle 0's MACHINE HALF DONE; the run HOLDS for ROOT's Frankie session** (branch
-  `claude/cycle-0-full-rerun-lr6e14`). Critic ran on the new retained Pod **g7y3g2w1kor4l3** (re-mint 35f857f0), request
-  exported to S3 (run 35557744815; `operations/ROOT_CYCLE_00_TASK_20260920.md`). Tasks A (calculation pins) and B
-  (exhaustion-objective audit) DONE. Read `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md` READ FIRST, then
-  `CLAUDE_HANDOFF_20260920.md` 22:55Z onward. Observer round never skipped. No runtime stops on Pod startup (Greg).
+- **STATE 2026-09-21 04:10Z: cycle 0's MACHINE HALF DONE on retained Pod g7y3g2w1kor4l3 (re-mint 35f857f0); the run
+  HOLDS for ROOT's Frankie session; Root heartbeat probe built** (branch `claude/cycle-0-full-rerun-lr6e14`). Request
+  exported to S3 run 35557744815; Root's task + heartbeat contract in `operations/ROOT_CYCLE_00_TASK_20260920.md`.
+  Tasks A/B DONE. Read `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md` READ FIRST (carries the to-do list),
+  then `CLAUDE_HANDOFF_20260920.md` 22:55Z onward. Observer round never skipped. No runtime stops on Pods (Greg).
 - **The Granite 4,096-token context is RETIRED. Remove `4096` from ALL Granite-related code**: the `service_context` /
   `CONTEXT` / `max_model_len` defaults, every `(4096, 131072)` allowlist, the 1,200-output ceiling tied to it, and the
   retained-lifecycle resume gate. The only Granite context is 131,072 with output = remaining context and the
