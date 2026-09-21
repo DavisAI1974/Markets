@@ -2063,3 +2063,29 @@ re-bootstrapped from Hugging Face and verified, then a re-mint of `granite_retai
 JOURNAL_GENERATION / INFO_SHA256 in one `feat:` commit and the observer adopting it RUNNING through
 `observe_migrated_start`). It costs a create plus a code re-mint and is Greg's call, as it was at 10:15Z this morning
 ("Prepare the fresh pod in parallel"); not taken here without his word. Until then the retry loop is the run.
+
+### 02:15Z: Greg: parallel replacement-Pod attempts in different regions; "when one hit you kill the other 2"
+
+The start retry loop (run 35547296498) was still refused at 02:15Z (two hours, the same host-busy message on every
+submission). Greg: "We had to have multiple parallel attempts going using servers in different regions to get it
+going yesterday. Try that. We had like 3 going at once. When one hit you kill the other 2." That is the word for the
+replacement-Pod path recorded at 00:20Z.
+
+`frankie_pod_prepare.yml` carried a single concurrency group (`pod-prepare`), which serialized every dispatch, so
+"3 at once" was impossible as written. Landed on Greg's word via the GitHub API (20537edb): the group is keyed by the
+`data_centers` input (and the resume/watch Pod), so attempts against different regions run concurrently while identical
+attempts still queue; inputs, steps and `pod_prepare.py` unchanged. Then THREE dispatches at 02:18Z, source Pod
+8vqdacl5t61rjx (the current retained identity; its environment is verified against the reviewed runtime configuration
+before anything is created), cost ceiling 1.25, watch 1800 s, `on_timeout keep`, `stop_after_ready false`:
+run 35553726887 US-TX-4, run 35553730428 US-IL-1, run 35553732076 US-MO-1 (the morning's third attempt landed in
+US-MO-1 on another host). All three entered `in_progress` together.
+
+The finish, as in the morning: the first `service_ready` (health 200, startup + disk evidence accepted, artifact
+`pod-prepare-<run>` with `migration-receipt-candidate.json` and `info-sha256.json`) is the new retained Pod. The other
+two: a still-bootstrapping one is stop-retained through `frankie_pod_prepare.yml watch_pod=<id> wait_seconds=0
+on_timeout=stop` (existing tool; watch admits only an owned RUNNING replacement), then `frankie_pod_control.yml
+terminate` (EXITED + migration name only; refuses the retained Pod by id); a create that the provider refused needs
+nothing. Then the re-mint `feat:` commit (POD_ID, JOURNAL_GENERATION, INFO_SHA256, the migration receipt, workflow
+defaults, tests), cancel the old-Pod observer 35545909225 and start retry 35547296498 (no unadopted start may succeed
+later), host advance + code-bound state supersede, observer on the new Pod (`observe_migrated_start` + the `restart`
+control run waiting on the journal key), readiness, ONE pipeline dispatch. 8vqdacl5t61rjx stays EXITED, untouched.
