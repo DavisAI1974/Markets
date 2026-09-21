@@ -220,3 +220,141 @@ def run(records, container, out_dir, producers, cycle, code_commit, day):
                    ledgers=ledgers, result=result_witness, superseded=superseded)
     write_json(out_dir / 'receipt.json', receipt)
     return receipt
+
+
+# ---- BR-3: the projection by the producers' own crosswalk ------------------------------------------------------------
+
+GROUP_KEY = ('group_index', 'ts_recv_ns', 'f_last_ts_recv_ns')
+
+
+def status_of(count, section_dependent, span_seconds, warmup_seconds, min_observations):
+    """`derived` when rows exist; otherwise `could_not` with the measured reason, never an empty `derived`."""
+    if count:
+        return 'derived', None
+    if section_dependent:
+        return 'could_not', (f'the candidate lane needs {warmup_seconds} s of warmup and {min_observations} observations '
+                             f'before any candidate can be detected; this cycle\'s rows span {span_seconds:.1f} s')
+    return 'could_not', 'the traversal emitted no rows for this carrier on this cycle\'s rows'
+
+
+def select_path(value, path):
+    """Walk a crosswalk member path: dotted keys, `*` = every key of a mapping (a mapping of the selections), `name[]` =
+    every element of a list (a list of the selections). Returns (found, selection); absent anywhere = (False, None)."""
+    segments = [s for s in path.split('.') if s]
+    return _select(value, segments)
+
+
+def _select(value, segments):
+    if not segments:
+        return True, value
+    head, rest = segments[0], segments[1:]
+    if head.endswith('[]'):
+        found, items = _select(value, [head[:-2]] + []) if head[:-2] else (True, value)
+        if not found or not isinstance(items, list):
+            return False, None
+        out = []
+        for item in items:
+            ok, picked = _select(item, rest)
+            if not ok:
+                return False, None
+            out.append(picked)
+        return True, out
+    if head == '*':
+        if not isinstance(value, dict):
+            return False, None
+        out = {}
+        for key, item in value.items():
+            ok, picked = _select(item, rest)
+            if ok:
+                out[key] = picked
+        return (True, out) if out or not value else (False, None)
+    if not isinstance(value, dict) or head not in value:
+        return False, None
+    return _select(value[head], rest)
+
+
+def crosswalk_records(producers, layers):
+    """The pinned crosswalk's record for each layer (native_layer_crosswalk.LAYER_PRODUCERS at the checkout): module,
+    symbol, file, line, kind, carrier, member_paths, lifecycle_sections, fixture_dependent_sections, notes. Never
+    restated here; a layer the crosswalk does not name is refused."""
+    load_producers(producers)
+    from research.kalshi.frankie_raw_mbo_benchmark import native_layer_crosswalk as X
+    out = {}
+    for layer in layers:
+        record = X.LAYER_PRODUCERS.get(layer)
+        if record is None:
+            raise ValueError(f'{layer} is not in the pinned crosswalk (native_layer_crosswalk.LAYER_PRODUCERS)')
+        out[layer] = json.loads(json.dumps(record, default=list))
+    return out
+
+
+def _rows(path):
+    with open(path, 'r', encoding='utf-8') as handle:
+        for line in handle:
+            if line.strip():
+                yield json.loads(line)
+
+
+def project(receipt, ledgers_dir, layers, crosswalk, out_dir):
+    """One file per layer from the exact ledgers, by the crosswalk record: member rows projected to the named
+    member_paths beside the group key; lifecycle rows of the named sections, whole. One pass over each ledger.
+    Status by status_of on the count; a mixed layer whose candidate-carried sections stayed empty is `derived` with
+    `partial` naming those sections and the measured reason. Returns {layer: status, producer, reason, count, witness}."""
+    ledgers_dir, out_dir = Path(ledgers_dir), Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    span = float(receipt.get('span_seconds') or 0.0)
+    warmup = receipt.get('candidate_warmup_seconds')
+    minimum = receipt.get('candidate_min_observations')
+    files = {}
+    for layer in layers:
+        record = crosswalk[layer]
+        files[layer] = dict(layer=layer, kind=record.get('kind'), producer=(f"{record['module']}.{record['symbol']}" if record.get('module') else None),
+                            file=record.get('file'), line=record.get('line'), carrier=record.get('carrier'),
+                            member_paths=list(record.get('member_paths') or []), lifecycle_sections=list(record.get('lifecycle_sections') or []),
+                            fixture_dependent_sections=list(record.get('fixture_dependent_sections') or []), ledgers=list(record.get('ledgers') or []),
+                            notes=record.get('notes'), crosswalk_commit=PIN_COMMIT, member_rows=[], lifecycle_rows=[],
+                            section_counts={s: 0 for s in (record.get('lifecycle_sections') or [])}, absent_paths={})
+    member_layers = [l for l in layers if files[l]['member_paths']]
+    if member_layers:
+        for row in _rows(ledgers_dir / 'exact_member_rows.jsonl'):
+            key = dict(group_index=row.get('group_index'), ts_recv_ns=row.get('ts_recv_ns'),
+                       f_last_ts_recv_ns=(row.get('clocks') or {}).get('f_last_ts_recv_ns'))
+            for layer in member_layers:
+                projected = dict(key)
+                for path in files[layer]['member_paths']:
+                    found, value = select_path(row, path)
+                    if found:
+                        projected[path] = value
+                    else:
+                        files[layer]['absent_paths'][path] = files[layer]['absent_paths'].get(path, 0) + 1
+                files[layer]['member_rows'].append(projected)
+    section_layers = {}
+    for layer in layers:
+        for section in files[layer]['lifecycle_sections']:
+            section_layers.setdefault(section, []).append(layer)
+    if section_layers:
+        for row in _rows(ledgers_dir / 'exact_lifecycle_rows.jsonl'):
+            section = row.get('emitting_section')
+            for layer in section_layers.get(section, ()):
+                files[layer]['lifecycle_rows'].append(row)
+                files[layer]['section_counts'][section] += 1
+    result = {}
+    for layer in layers:
+        entry = files[layer]
+        entry['member_count'] = len(entry['member_rows'])
+        entry['lifecycle_count'] = len(entry['lifecycle_rows'])
+        entry['count'] = entry['member_count'] + entry['lifecycle_count']
+        if entry['kind'] == 'NO_PRODUCER_FOUND':
+            entry['status'], entry['reason'] = 'could_not', 'NO_PRODUCER_FOUND: ' + str(entry.get('notes') or 'the crosswalk found no producer')
+        else:
+            dependent = bool(entry['fixture_dependent_sections'])
+            entry['status'], entry['reason'] = status_of(entry['count'], dependent, span, warmup, minimum)
+        entry['partial'] = [dict(section=section, rows=0, reason=status_of(0, True, span, warmup, minimum)[1])
+                            for section in entry['fixture_dependent_sections']
+                            if entry['status'] == 'derived' and entry['section_counts'].get(section, 0) == 0]
+        path = out_dir / f'{layer}.json'
+        w = write_json(path, entry)
+        result[layer] = dict(status=entry['status'], producer=entry['producer'], reason=entry['reason'], count=entry['count'],
+                             member_count=entry['member_count'], lifecycle_count=entry['lifecycle_count'], partial=entry['partial'],
+                             carrier=entry['carrier'], **w)
+    return result
