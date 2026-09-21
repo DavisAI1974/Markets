@@ -2285,3 +2285,19 @@ line carries the same. Probe run 35560147701 (04:14Z): `logical_cpus=16 load_per
 1,786.8 CPU-s, 1,592 MB working set) waiting in `frankie_calculation`, parent pid 5080 idle; no Root heartbeat, no
 `root/*` branch, no response. FLAG for Greg: CLAUDE.md records the native host resized to r7i.8xlarge (32 vCPU); the
 instance reports 16 logical processors. Not changed here.
+
+### 04:24Z: what EC2 actually says about the two boxes, and where Root is not
+
+`frankie_host_diag.yml` now prints the EC2 instance type, CpuOptions, platform and launch time (b9468849). Read-only
+runs 35560750539 / 35560752032 (04:23Z):
+- Native host `i-0e90ee6110ef609aa`: **r7i.4xlarge**, CoreCount 8 x ThreadsPerCore 2 = 16 vCPU, Windows, LaunchTime
+  2026-09-20T16:23:41Z, running, SSM Online. That matches the host's own `logical_cpus=16`. The 2026-09-17 record
+  (handoff 20260918: "RESIZED r7i.4xlarge -> r7i.8xlarge (32 vCPU), readback-verified") is NOT what EC2 reports
+  today; CLAUDE.md's "RESIZED to r7i.8xlarge" line is therefore stale. Not changed here; Greg's call whether to
+  resize again (stopped-only, `ec2_host.py resize --type`) or to correct the record. Greg's "16 + 32 = 48" reads as
+  this host (16) plus the ingest runner `frankie-ingest32-20260917` (32).
+- Coach box `i-08cee7171c0a76a04`: **stopped**, r6i.2xlarge (4 x 2 = 8 vCPU), Linux, not registered in SSM. Root is
+  not running there. Root's session runs on Greg's own machine (21:40Z section); its compute is that machine's, with
+  no AWS helpers, and the derivations are the model's own work in-session. Whether Frankie should get a compute
+  harness (a box with workers, code he can run against the rows) is a design call for Greg; today the request
+  instructs him to derive and gives him no engine.
