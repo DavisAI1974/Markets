@@ -45,7 +45,7 @@ def test_integer_recipes_carry_a_scale_only_when_every_value_is_a_multiple():
     assert ST.spell(['N', 'L', ['I', [3000, 6001, 9000]]]).strip() == 'N L I 3 3000 6001 9000'
     assert ST.spell(['N', 'L', ['R', [[1000000, 5], [0, 7]]]]).strip() == 'N L R*6 2 1 5 0 7'          # counts are never scaled
     assert ST.spell(['N', 'L', ['E', 2000, [[1000, 3]]]]).strip() == 'N L E*3 2 1 1 3'
-    assert ST.spell(['N', 'L', ['I', [0, 0]]]).strip() == 'N L I#1 2 00'                            # all zeros: no scale, a width
+    assert ST.spell(['N', 'L', ['I', [0, 0]]]).strip() == 'N L I 2 0 0'                              # all zeros: no scale; a width would not be shorter
     for node in (['D', 5412000000000, [0, 1000000, -2000000]], ['I', [3000, 6000, 9000]], ['R', [[1000000, 5], [0, 7]]], ['E', 2000, [[1000, 3]]], ['I', [10 ** 14, 0]]):
         assert ST.parse(ST.spell(['N', 'L', node])) == ['N', 'L', node]
 

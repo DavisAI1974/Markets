@@ -98,7 +98,7 @@ def _width(values):
     if not values or any(v < 0 for v in values):
         return 0
     w = max(len(str(v)) for v in values)
-    if w > WIDTH_MAX or len(values) * w >= sum(len(str(v)) + 1 for v in values):
+    if w > WIDTH_MAX or len(values) * w + 2 >= sum(len(str(v)) + 1 for v in values):   # + 2 for the `#w` suffix
         return 0
     return w
 
