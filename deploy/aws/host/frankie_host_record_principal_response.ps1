@@ -111,9 +111,28 @@ $log = Join-Path $dayDirectory ('principal-response-recorder-' + $stamp + '.log'
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTHONPATH = $ToolsRoot
 $env:PYTHONIOENCODING = 'utf-8'
+# The recorder's own __main__ prints only {"status": "refused", "error_type": ...} and swallows the message (run
+# 35630974458, 2026-09-21: a ValueError with no text). This wrapper, sent with the script from the dispatched ref,
+# runs the same main() from the host tools checkout and, on a refusal, prints the traceback and the message too.
+$wrapper = @'
+import importlib.util, json, sys, traceback
+tool = sys.argv[1]
+sys.argv = [tool] + sys.argv[2:]
+spec = importlib.util.spec_from_file_location('record_actual_frankie_response', tool)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+try:
+    module.main()
+except SystemExit:
+    raise
+except Exception as error:
+    traceback.print_exc()
+    print(json.dumps(dict(status='refused', error_type=type(error).__name__, error=str(error)[:800])))
+    raise SystemExit(1)
+'@
 Push-Location $ToolsRoot
 try {
-    & $Python $tool --configuration $cfgPath --configuration-sha256 $cfgSha --cycle-index ([int]$CycleIndex) `
+    & $Python -c $wrapper $tool --configuration $cfgPath --configuration-sha256 $cfgSha --cycle-index ([int]$CycleIndex) `
         --response $responseFile --response-sha256 $ResponseSha256 `
         --host-attestation $attestationFile --host-attestation-sha256 $AttestationSha256 2>&1 | Tee-Object -FilePath $log
     $recorderExit = $LASTEXITCODE
