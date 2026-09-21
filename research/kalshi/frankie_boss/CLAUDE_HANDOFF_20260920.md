@@ -2952,3 +2952,15 @@ is the web console; the MCP server this session holds (`plugin:runpod:runpod`, h
 a RunPod authorization page in the browser -- one click now that the console session exists. Until then the MCP tools are
 not in this session's tool list (checked), and the endpoint route stays runpodctl/workflow.
 
+### 12:4xZ 09-21: the MCP OAuth menu does not exist in the web/mobile Claude Code UI; the key route is the way
+
+Greg (screenshots 12:3xZ): in the claude.ai/code app, typing `/` only lists the skills (`/runpod`, `/runpodctl`,
+`/runpod-mcp`, ...); there is no `/mcp` server menu and so no "Sign in with Runpod" button -- that menu is the terminal
+CLI's. The RunPod router skill's own rule applies: get a KEY first, OAuth is the last resort. Route for the next session:
+Greg adds `RUNPOD_API_KEY` to the Claude Code ENVIRONMENT configuration (the same place the session-start hook asks for
+`MARKETS_AWS_*`; it is injected as an env var, never written to the repo or chat); the session then runs
+`claude mcp add --transport http runpod -s user https://mcp.getrunpod.io/ --header "Authorization: Bearer $RUNPOD_API_KEY"`
+(user-scope config on the container, outside the repo) and installs runpodctl -- one key unlocks the MCP tools AND the
+CLI. Until then the endpoint route is the trunk-registered `frankie_serverless_reading.yml` with a `RUNPOD_API_KEY`
+repository secret. The box's own copy of the key stays the SSM SecureString `/markets/frankie/runpod-serverless`.
+

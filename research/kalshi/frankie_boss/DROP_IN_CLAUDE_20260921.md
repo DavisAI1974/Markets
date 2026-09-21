@@ -41,6 +41,10 @@ does not parse back; `reconstruct_proof` must stay `all_exact` on every member; 
 not a layer.
 
 12:3xZ: tensor_mode = IDENTITY is Greg's call, in code (4be7f4cb) and on the box (reading.json, run 35599036676).
+12:4xZ: the web/mobile Claude Code UI has no `/mcp` OAuth menu -> RunPod auth is the KEY route: Greg puts
+`RUNPOD_API_KEY` in the Claude Code environment configuration; the new session runs `claude mcp add --transport http
+runpod -s user https://mcp.getrunpod.io/ --header "Authorization: Bearer $RUNPOD_API_KEY"`, then verifies with
+`list-endpoints` and records `serverInfo.version`. Handoff 12:4xZ.
 STILL GREG'S (unchanged): `frankie_box_session.sh ACTION=restart_session
 REASON=lossless-render` to apply everything; the GitHub PAT into SSM `/markets/frankie/github-token`
 (`aws ssm put-parameter --region us-east-2 --name /markets/frankie/github-token --type SecureString --value '<PAT>'`);
