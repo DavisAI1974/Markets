@@ -40,14 +40,16 @@ jobs:
           import json, os, time, urllib.request
           key = os.environ.get('RUNPOD_API_KEY', '').strip()
           assert key and key.startswith('rpa_') and 20 <= len(key) <= 200, 'RUNPOD_API_KEY secret absent or not an API key shape (not printed)'
-          req = urllib.request.Request('https://rest.runpod.io/v1/endpoints', headers={'Authorization': 'Bearer ' + key})
+          # the same read-only call the working Pod control makes (operations/pod_control.py: api.runpod.io /v2/pods/<id>);
+          # the public control REST rest.runpod.io/v1 answered 403 to this key on run 35601030834 and is not the test
+          req = urllib.request.Request('https://api.runpod.io/v2/pods/g7y3g2w1kor4l3', headers={'Authorization': 'Bearer ' + key, 'Accept': 'application/json'})
           try:
               with urllib.request.urlopen(req, timeout=30) as r:
-                  code, n = r.status, len(json.loads(r.read().decode('utf-8')) or [])
+                  body = json.loads(r.read().decode('utf-8')); code, seen = r.status, body.get('desiredStatus') or body.get('status') or list(body)[:5]
           except urllib.error.HTTPError as e:
-              code, n = e.code, None
-          print(f'runpod: GET /v1/endpoints -> HTTP {code}; endpoints listed: {n}; key length {len(key)}, prefix {key[:4]}')
-          assert code == 200, 'the secret is not accepted by RunPod; nothing written'
+              code, seen = e.code, None
+          print(f'runpod: GET api.runpod.io/v2/pods/g7y3g2w1kor4l3 -> HTTP {code}; seen: {seen}; key length {len(key)}, prefix {key[:4]}')
+          assert code == 200, 'the secret is not accepted by RunPod on the Pod control route; nothing written'
           import boto3
           ssm = boto3.client('ssm', region_name=os.environ['REGION'])
           ssm.put_parameter(Name=os.environ['PARAMETER'], Type='SecureString', Value=key, Overwrite=True,
