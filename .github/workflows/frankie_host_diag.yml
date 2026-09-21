@@ -9,6 +9,10 @@ on:
         description: 'Native host instance id'
         required: false
         default: 'i-0e90ee6110ef609aa'
+      region:
+        description: 'AWS region of the instance (native host us-east-2; ingest runner us-east-1)'
+        required: false
+        default: 'us-east-2'
 permissions:
   contents: read
 jobs:
@@ -31,16 +35,18 @@ jobs:
       - name: Native host state (read-only)
         env:
           INSTANCE: ${{ inputs.instance }}
+          REGION: ${{ inputs.region || 'us-east-2' }}
         run: |
           python - <<'PY'
           import boto3, os
           iid = os.environ['INSTANCE']
-          r = boto3.client('ec2', region_name='us-east-2').describe_instances(InstanceIds=[iid])
+          region = os.environ['REGION']
+          r = boto3.client('ec2', region_name=region).describe_instances(InstanceIds=[iid])
           print('EC2 state:', [i['State']['Name'] for res in r['Reservations'] for i in res['Instances']])
           # Greg, 2026-09-21: the host reports 16 logical CPUs against a recorded r7i.8xlarge resize; print what EC2 says.
           print('EC2 type/cpu:', [(i['InstanceType'], i.get('CpuOptions'), i.get('Platform', 'linux'), i.get('LaunchTime').isoformat()) for res in r['Reservations'] for i in res['Instances']])
-          s = boto3.client('ssm', region_name='us-east-2').describe_instance_information(Filters=[{'Key':'InstanceIds','Values':[iid]}])
+          s = boto3.client('ssm', region_name=region).describe_instance_information(Filters=[{'Key':'InstanceIds','Values':[iid]}])
           print('SSM ping:', [(i['PingStatus'], i.get('PlatformName','')) for i in s.get('InstanceInformationList',[])] or 'not registered')
           PY
       - name: Read-only host diagnostic over SSM
-        run: python deploy/aws/ssm_run_ps1.py --instance "${{ inputs.instance }}" --region us-east-2 --script deploy/aws/host/frankie_host_diag.ps1 --timeout 300 --comment "read-only diagnostic run 35498663360"
+        run: python deploy/aws/ssm_run_ps1.py --instance "${{ inputs.instance }}" --region "${{ inputs.region || 'us-east-2' }}" --script deploy/aws/host/frankie_host_diag.ps1 --timeout 300 --comment "read-only diagnostic run 35498663360"
