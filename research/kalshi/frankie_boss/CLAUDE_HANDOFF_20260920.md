@@ -2273,3 +2273,15 @@ runner; the Pod is already EXITED. Cycle 1 goes to a new chat.
    register `using-agent-skills` and `git-workflow-and-versioning` as skills. The ROOT PROBE item is DONE (04:08Z).
 7. Rotate the AWS and Databento keys after the runs (standing; never mid-run). Terminate `ycf4v6lmave6xw` and
    `8vqdacl5t61rjx` only on Greg's word (they bill their volumes).
+
+### 04:14Z: Root has no AWS helpers (his session is off our infrastructure); host CPU section added to the probe; the host reports 16 logical CPUs
+
+Greg: "Does Root have the helpers we have in AWS helping with the workload? Check CPU usage to make sure there isn't
+only 1 running." Root's session runs on his own machine (21:40Z section; the Sept 15 Root was a Codex session beside
+the run directory); the AWS compute (native host, ingest runner) serves the machine half only, which is finished and
+idle at the HOLD. `frankie_host_cycle_status.ps1` now prints a read-only `### host cpu` section (7fd53658): whole-host
+load, logical CPUs, every python process with threads, cumulative CPU seconds and working set; the runner-process
+line carries the same. Probe run 35560147701 (04:14Z): `logical_cpus=16 load_percent=1`; runner pid 3828 (49 threads,
+1,786.8 CPU-s, 1,592 MB working set) waiting in `frankie_calculation`, parent pid 5080 idle; no Root heartbeat, no
+`root/*` branch, no response. FLAG for Greg: CLAUDE.md records the native host resized to r7i.8xlarge (32 vCPU); the
+instance reports 16 logical processors. Not changed here.
