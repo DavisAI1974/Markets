@@ -1,69 +1,69 @@
 {
- "at": 1790009228.737668,
+ "at": 1790010350.3874643,
  "cycle": "00",
  "docs": [
   {
    "bytes": 77787,
-   "name": "reading-note-0000.md",
+   "name": "superseded-notes-6a23e0a09ffe-unbounded-note-0000.md",
    "sha256": "51759ebe98fceb234f08b2ef9d3a87d7985acc11555ce0858c4f3896c67ecad9",
    "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0000.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 97873,
-   "name": "reading-note-0001.md",
+   "name": "superseded-notes-6a23e0a09ffe-unbounded-note-0001.md",
    "sha256": "a948bc7f2e5e780678b8b464c17c298d388fe4daf76b0406da50f46cb457a30b",
    "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0001.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 115097,
-   "name": "reading-note-0002.md",
+   "name": "superseded-notes-6a23e0a09ffe-unbounded-note-0002.md",
    "sha256": "e6d830d42fe8c4e52991194bef6a5f73556e3286fa15db111fdcb09c8e7b5240",
    "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0002.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 76,
-   "name": "reading-note-0003.md",
+   "name": "superseded-notes-6a23e0a09ffe-unbounded-note-0003.md",
    "sha256": "ffa483a5cbc3ae2565af670c953b2989c7ff64aa91157dcca54d13d1092302c4",
    "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0003.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 43255,
-   "name": "reading-note-0004.md",
+   "name": "superseded-notes-6a23e0a09ffe-unbounded-note-0004.md",
    "sha256": "442d521ce107d85d36001e22280915d55df61ffbe14eb1beef0c184596fad3bd",
    "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0004.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 13548,
-   "name": "reading-note-0005.md",
+   "name": "superseded-notes-6a23e0a09ffe-unbounded-note-0005.md",
    "sha256": "a66121510566526bf2fa0721ac71c136af6d0081d5168f622b35e4b9f2945888",
    "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0005.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 6473,
-   "name": "reading-note-0006.md",
+   "name": "superseded-notes-6a23e0a09ffe-unbounded-note-0006.md",
    "sha256": "3ba8e83d5bb7ee2b472bdadb613875600b6aae32ba9efd743418ba9b2e238323",
    "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0006.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 12784,
-   "name": "reading-note-0007.md",
+   "name": "superseded-notes-6a23e0a09ffe-unbounded-note-0007.md",
    "sha256": "3674b59e4ca43df3491516ffbbe53f58d87ca8cc86577f5c0e53540bbb7c5089",
    "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0007.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 17669,
-   "name": "reading-note-0008.md",
+   "name": "superseded-notes-6a23e0a09ffe-unbounded-note-0008.md",
    "sha256": "e3a78f5befa6197580cce5eb1bd9ce8d0db442ed79fb37e0afec60bb801b1c37",
    "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0008.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 41009,
@@ -95,45 +95,45 @@
   },
   {
    "bytes": 9514,
-   "name": "reading-note-0000.md",
+   "name": "superseded-notes-acb839fc43be-note-0000.md",
    "sha256": "6043314fa6875b47454a447270abff2456521d1bf996af8837c7d988f520e6d6",
    "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0000.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 9696,
-   "name": "reading-note-0001.md",
+   "name": "superseded-notes-acb839fc43be-note-0001.md",
    "sha256": "8782a8cd1953387588ed83b93b2ae8746f77940ca89ccde7ef1d4080e4262f74",
    "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0001.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 13326,
-   "name": "reading-note-0002.md",
+   "name": "superseded-notes-acb839fc43be-note-0002.md",
    "sha256": "ac3ab0e00ae5734f9faa67491ec623f76052e13512a35008897c41fc7bc13748",
    "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0002.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 9166,
-   "name": "reading-note-0003.md",
+   "name": "superseded-notes-acb839fc43be-note-0003.md",
    "sha256": "f40603aea7435ac7964025b7dd226209317b7fc80eb3d0cf062cf159ed4db26b",
    "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0003.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 6480,
-   "name": "reading-note-0004.md",
+   "name": "superseded-notes-acb839fc43be-note-0004.md",
    "sha256": "42f7f8c4c63a2804fdfacaccd74eb9b4df8efcb9eb3fc5974f14c70b54987da5",
    "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0004.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 6581,
-   "name": "reading-note-0005.md",
+   "name": "superseded-notes-acb839fc43be-note-0005.md",
    "sha256": "a9c7b9ad55b4c402f4935a26d13da2505bb9ba3324262729facc697bafc2fc4a",
    "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0005.md",
-   "what": "reading notes for one part of the corpus, verbatim"
+   "what": "notes of a SUPERSEDED corpus (an earlier restart), verbatim"
   },
   {
    "bytes": 80356,
@@ -217,6 +217,13 @@
    "name": "reading.md",
    "sha256": "cd5ef0fb2071f7e20061c441a508333d4efd356e56b2ffa422c6b56a67679f44",
    "source": "/opt/frankie-box/session/work/reading.json",
+   "what": "a session receipt, rendered as JSON in Markdown"
+  },
+  {
+   "bytes": 930,
+   "name": "writing.md",
+   "sha256": "22be19a1d0b1afcd38f4cbb6ce25dae95e05d3e652952bb45d42f4319aa3c3cb",
+   "source": "/opt/frankie-box/session/work/writing.json",
    "what": "a session receipt, rendered as JSON in Markdown"
   },
   {

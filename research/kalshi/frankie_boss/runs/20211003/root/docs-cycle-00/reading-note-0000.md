@@ -1,74 +1,195 @@
-## Notes on part 1/9 (bytes 0-139295) [OUTPUT INCOMPLETE]
+## Notes on part 1/4 (bytes 0-221457)
 
-**NOTES for merge (part 1/9 of delivered evidence, cycle 00, pin = legacy_observable_crosswalk)**  
+## NOTES for merge (part 1/4 of delivered evidence)
 
-*Only observed facts with exact numbers, hashes and section ids as they appear are recorded. No inference is presented as fact. Distinguish observed vs inferred. No numbers or hashes are invented. Markdown ≤ 1200 words.*
+### (1) Observed facts with their exact numbers, hashes and section ids as they appear
 
----
+- **Delivery receipt**: `3420045aecc9c225ce77bf47a184cc2b262685177998f51ff94585b0b3149d1b` (run 33746436209)
+- **Contract hash**: `359e369cbc43b48ef33280dc64a44200e53d1d3612ed1e10fe26988e7e2baefd`
+- **Cycle index**: `0`
+- **Learning cutoff ns**: `1633298449136124134`
+- **Learning through source cursor**: `6053`
+- **Path query offsets ns**: `[1082905384677,1477831169583,4044058116079,4819012459037,6137430285344,6537240678811,6943744850312,7114039682715]`
+- **Query policy hash**: `1d7ab931595fd7df8617073afd8e11536f0ff452c0801a5964791086c7381642`
+- **Sessions**: one session `"NG_111313_OWN_SOURCE_20211003"` with `"session_id": "NG_111313_OWN_SOURCE_20211003"`, `"close_ns": 1633305600000000000`, `"convention_hash": "e9b813753d2ef4c9eb2497aef86288c23fbaee57bea53fb46ef32b382990004f"`, `"event_cutoff_ns": 1633298413317923251`, `"instrument": "NG.v.0/instrument_id=111313"`, `"knot_policy": {"max_interior":57027,"quantum_ns":1}`
+- **Known marks**: 58 rows in a table with columns `event_ns`, `receive_ns`, `price`, `evidence_hash`. Exact rows (as observed in the table block) include:
+  - `event_ns`: `1633298400337726077`, `evidence_hash`: `"05cecdad5be51bc1cfbb42c25a7fbc675450a601c23f9903ae5216ad34774daf"`, `price`: `5.634`, `receive_ns`: `1633298400450870841`
+  - `event_ns`: `1633298400356107175`, `evidence_hash`: `"e3c89089708039fd4f1ec64828e4506cd96fff7bd87d232a7a28f695ccf8d954"`, `price`: `5.634`, `receive_ns`: `1633298400453750655`
+  - `event_ns`: `1633298400448278649`, `evidence_hash`: `"cf54e425a2ae87eff0807e6af14685e0461852cb5f5457474513021624d80c27"`, `price`: `5.634`, `receive_ns`: `1633298400476838678`
+  - `event_ns`: `1633298400462214863`, `evidence_hash`: `"11493686203da84ee600c16667108bf61a00344f69d22586c804c4c4d8dd5c8c"`, `price`: `5.635`, `receive_ns`: `1633298400483126267`
+  - `event_ns`: `1633298400486059525`, `evidence_hash`: `"284ea7d91142f24a18a3de32a38d38809035869425389fffbd8afb4b1db0f228"`, `price`: `5.645`, `receive_ns`: `1633298400492544718`
+  - `event_ns`: `1633298400490916177`, `evidence_hash`: `"370a869e580a4cbc66fbbf748508fd19fe003e348ddae40aac5706c88bbd0ae2"`, `price`: `5.645`, `receive_ns`: `1633298400496059551`
+  - `event_ns`: `1633298400492065759`, `evidence_hash`: `"4e99ad0e0d16c8a4e07a7281ce24cee50ccd3619baa00c06ecd3c120f4e5900c"`, `price`: `5.645`, `receive_ns`: `1633298400498959019`
+  - `event_ns`: `1633298400497818515`, `evidence_hash`: `"96113dfc134095b8c164f8d32f85ac3960189befb5a516b9844b75ec2a1eeffa"`, `price`: `5.647`, `receive_ns`: `1633298400503045871`
+  - `event_ns`: `1633298400497820537`, `evidence_hash`: `"add8e456b901f43708eaa76e9f4640f191ff15ffb0f9a11a49a2e389ccf00e70"`, `price`: `5.647`, `receive_ns`: `1633298400503750376`
+  - `event_ns`: `1633298400497838931`, `evidence_hash`: `"352d8340b38bf7f93afe1999bf03e412b9e71200d5f559fb312c9ac6504c5cf7"`, `price`: `5.647`, `receive_ns`: `1633298400505529917`
+  - `event_ns`: `1633298400591624925`, `evidence_hash`: `"b18a65bc11de36ca511125c0a1f499d324c9ddbdd78e8ed33fce37554c618785"`, `price`: `5.644`, `receive_ns`: `1633298400592897437`
+  - `event_ns`: `1633298400592626665`, `evidence_hash`: `"9e8727089da119a1953593eed34dcdcd6f8299369e82673ecd2b367de45474d7"`, `price`: `5.643`, `receive_ns`: `1633298400596395514`
+  - `event_ns`: `1633298400655649089`, `evidence_hash`: `"71a010ed65e852ef11739959de483fd5a25e973f7029b8b4dde7c05691bd6cf4"`, `price`: `5.636`, `receive_ns`: `1633298400657498270`
+  - `event_ns`: `1633298400863446851`, `evidence_hash`: `"6d204b4498b9c22e46e368e1296b3abc0c2759be1ec74fb7777bd1d64f07ff6f"`, `price`: `5.642`, `receive_ns`: `1633298400864486381`
+  - `event_ns`: `1633298400997030249`, `evidence_hash`: `"64196837c6745ca5f8a9aba678cbdb27be28504b54da7669eb6b1ba2c84bbf13"`, `price`: `5.635`, `receive_ns`: `1633298400997731566`
+  - `event_ns`: `1633298401002641343`, `evidence_hash`: `"294ff546be56e7d20a150fb9dea5dfe1ad718ffc1a8926308cc1082a3d49ab52"`, `price`: `5.636`, `receive_ns`: `1633298401003985255`
+  - `event_ns`: `1633298401005128159`, `evidence_hash`: `"64a83cb0e6d9c04df5fc39da1be2b777e29f6c01b853857619d4d92bc3d5cd89"`, `price`: `5.636`, `receive_ns`: `1633298401006560891`
+  - `event_ns`: `1633298401059743131`, `evidence_hash`: `"5bde6829d702325fd252e4a8024de96a162e2dfa5ac529e5c3134b9513ecba2e"`, `price`: `5.635`, `receive_ns`: `1633298401061069861`
+  - `event_ns`: `1633298401116994397`, `evidence_hash`: `"5b89f5910202522b57215e01cf45c974c29f1ac7714568cd6de09643ed086cf7"`, `price`: `5.632`, `receive_ns`: `1633298401118237875`
+  - `event_ns`: `1633298402028376231`, `evidence_hash`: `"70e7dd89f339ea99cc9be6d4bb305d3d8823e831f875dd2f509ee114fc900c88"`, `price`: `5.633`, `receive_ns`: `1633298402029003627`
+  - `event_ns`: `1633298402028458495`, `evidence_hash`: `"725e9600252006dcda0a6203d14009a6868b0c3969c4102c976dd4aa60d4cbff"`, `price`: `5.633`, `receive_ns`: `1633298402029396183`
+  - `event_ns`: `1633298402029795413`, `evidence_hash`: `"821623a212f4f60b34b8b77f62a70ff5b2da5822f38042b7b9be8c110fc70275"`, `price`: `5.633`, `receive_ns`: `1633298402030492231`
+  - `event_ns`: `1633298402445769021`, `evidence_hash`: `"cca9efa8518699e2840c218264d8d5fb4bd6020e51ec8ef5b6a0aa210593796d"`, `price`: `5.632`, `receive_ns`: `1633298402446641251`
+  - `event_ns`: `1633298403762846813`, `evidence_hash`: `"94fba280dac16edbfd6b19bee9a885c86f3cfa9dd59c3acda1228b10d01c71d6"`, `price`: `5.63`, `receive_ns`: `1633298403763941727`
+  - `event_ns`: `1633298403973704867`, `evidence_hash`: `"d658c73f4b788b59d6384d9159a5835093ea402ba7d7a9207f4764720edb7769"`, `price`: `5.634`, `receive_ns`: `1633298403974665507`
+  - `event_ns`: `1633298404658388029`, `evidence_hash`: `"a43eef78a7c792aeaebd777f8edaeadcd644a5a39fad9dc1d306f6351174fb0d"`, `price`: `5.63`, `receive_ns`: `1633298404662052609`
+  - `event_ns`: `1633298404662026563`, `evidence_hash`: `"d82363c48a222ed37ddeec62a8936e8acc5024eb7a80556521225f756be91eb8"`, `price`: `5.632`, `receive_ns`: `1633298404663825549`
+  - `event_ns`: `1633298404662050883`, `evidence_hash`: `"3cb148a9ac21c63f3e192616f35b4e8f3356f624330ebaa21080a4103e124aa9"`, `price`: `5.633`, `receive_ns`: `1633298404664551578`
+  - `event_ns`: `1633298404662095607`, `evidence_hash`: `"eb1244a66bd8d03cf38feac02dedf68b5004835f829aa29d69cc902de2e0eea9"`, `price`: `5.633`, `receive_ns`: `1633298404665942862`
+  - `event_ns`: `1633298404685821973`, `evidence_hash`: `"5032e086c31b71bc59e8c72ad0ef8fb074bf75df28904fd9424286785ed718b1"`, `price`: `5.633`, `receive_ns`: `1633298404686842441`
+  - `event_ns`: `1633298406565864507`, `evidence_hash`: `"a4c0df54ebba18e867dc57d8151fc74756faa97c4d40e48d774e49d83c8d45af"`, `price`: `5.636`, `receive_ns`: `1633298406568749450`
+  - `event_ns`: `1633298407173435023`, `evidence_hash`: `"829abf69d38958c03e4026f255e4581511d53e43d5d5d27cfd5a1c32186c3f75"`, `price`: `5.632`, `receive_ns`: `1633298407174291603`
+  - `event_ns`: `1633298408454300769`, `evidence_hash`: `"68781bc8f6c95c91662693f964ad2e9673be243c56fc4625dbe8c4fa1cea274d"`, `price`: `5.63`, `receive_ns`: `1633298408455390237`
+  - `event_ns`: `1633298408455494257`, `evidence_hash`: `"86a62f8cd34863c54c120ed877d7a3a0e456bf4cd79debddbb93f9e9eba70698"`, `price`: `5.63`, `receive_ns`: `1633298408456128299`
+  - `event_ns`: `1633298409010540203`, `evidence_hash`: `"8ded281f30bdc6f89ad3c33e3a748e79a1e6eff57e405547583d219eeec9c25b"`, `price`: `5.637`, `receive_ns`: `1633298409012106582`
+  - `event_ns`: `1633298409905975531`, `evidence_hash`: `"ebf7aa36e6ea587821e45d25f7bdb216c6f03b99f0eb8826ea3ac290968ed1d8"`, `price`: `5.632`, `receive_ns`: `1633298409906724743`
+  - `event_ns`: `1633298409905994423`, `evidence_hash`: `"32a08797ce0881728977db519db930f1bf3120bff216e340a1e440f5417bfc4a"`, `price`: `5.632`, `receive_ns`: `1633298409907054960`
+  - `event_ns`: `1633298411574631499`, `evidence_hash`: `"480b3f4bd3c4f24a390fe182d6b24c4024c3b13c2c8b17cb65ad51c77d84ccd0"`, `price`: `5.631`, `receive_ns`: `1633298411575540095`
+  - `event_ns`: `1633298412269015127`, `evidence_hash`: `"b830b3ab36395415bef73ed22a76ceff37959f45aa658ead8e6a87ef956ffb3e"`, `price`: `5.637`, `receive_ns`: `1633298412269836440`
+  - `event_ns`: `1633298412727226587`, `evidence_hash`: `"1ff0f2ad709a62f51f95abc9bcca0b69446ab4c83f8e0345e964170c50318bd6"`, `price`: `5.636`, `receive_ns`: `1633298412728221774`
+  - `event_ns`: `1633298412961230419`, `evidence_hash`: `"84c50e412cee1bc81a60b911b05e02c7dcc91a65c59e41249515571f27f1a10c"`, `price`: `5.636`, `receive_ns`: `1633298412965584546`
+  - `event_ns`: `1633298412998839145`, `evidence_hash`: `"e08921a601b410835fe3005129bd7b309e847ded0b097613828c424af0dd5ac7"`, `price`: `5.639`, `receive_ns`: `1633298412999790154`
+  - `event_ns`: `1633298412999237619`, `evidence_hash`: `"e683787eb4c76c2bfbfbbbe0b0e81c944ed84568ee43c73392160190161f6a0f"`, `price`: `5.638`, `receive_ns`: `1633298413001007497`
+  - `event_ns`: `1633298412999590937`, `evidence_hash`: `"093a81125d35541858be98b585a77b19652f83ca2143b48b95039fa88f442855"`, `price`: `5.639`, `receive_ns`: `1633298413001203328`
+  - `event_ns`: `1633298412999990423`, `evidence_hash`: `"a03fc4fbaed7a54e85b1ef13b90ebcdebd1cbae5f36a0495422b4c9324aabdef"`, `price`: `5.639`, `receive_ns`: `1633298413001625329`
+  - `event_ns`: `1633298413000255115`, `evidence_hash`: `"e69ddbbca8257958c804a5a81d04c625d7fe01c51c01264a9d861b93dcb6ac27"`, `price`: `5.639`, `receive_ns`: `1633298413001963064`
+  - `event_ns`: `1633298413000258199`, `evidence_hash`: `"07a4794ded3854f0ebafd1f608e693f99644704fc10f83b01ad6ff9736bcc1fa"`, `price`: `5.639`, `receive_ns`: `1633298413002282671`
+  - `event_ns`: `1633298413003120627`, `evidence_hash`: `"c8fa4615e7520f569fa7019463b9801ad2071ed14ebbf294f2348b3e7287a261"`, `price`: `5.632`, `receive_ns`: `1633298413004228979`
+  - `event_ns`: `1633298413003133665`, `evidence_hash`: `"6b36efcb57ad62bc71b1ceb48cb93bef84159c967b2ee9a90a508929c4ca948c"`, `price`: `5.632`, `receive_ns`: `1633298413004495806`
+  - `event_ns`: `1633298413003134169`, `evidence_hash`: `"198f0391ac038f0aad244a0fc4766d48c7d8dcf5a3771d19b495a09fcb7f4f4e"`, `price`: `5.632`, `receive_ns`: `1633298413004533790`
+  - `event_ns`: `1633298413003201881`, `evidence_hash`: `"1fee0314063409258449dcacfc837a2b8bd55e7e9a9499ae2ea2fcb3e37b0d50"`, `price`: `5.632`, `receive_ns`: `1633298413004930779`
+  - `event_ns`: `1633298413004499493`, `evidence_hash`: `"c372a3008470e0d7b645e0790227f8a2d7824aca2f0acbe3311646f71185a437"`, `price`: `5.632`, `receive_ns`: `1633298413005382776`
+  - `event_ns`: `1633298413004529541`, `evidence_hash`: `"d9a9a30e26ed89545086ac750ae787b8e2f244e54a7518a6477634bb5c25cda1"`, `price`: `5.632`, `receive_ns`: `1633298413005702778`
+  - `event_ns`: `1633298413004946793`, `evidence_hash`: `"b6a12b64117c2dea8e30cb1f747b644cc014f2b95a7b20dcb5ec5fd666655f7a"`, `price`: `5.632`, `receive_ns`: `1633298413006158664`
+  - `event_ns`: `1633298413005841705`, `evidence_hash`: `"7924e5006a3e7de87e85a0fee5263c3ffb4da7d4c19a85a1b755030c3359cf42"`, `price`: `5.632`, `receive_ns`: `1633298413006601423`
+  - `event_ns`: `1633298413013973685`, `evidence_hash`: `"7257e183ef39a36f2d27d6011c9f34c472dc29b76eff963e5cbdfd1279ed1097"`, `price`: `5.631`, `receive_ns`: `1633298413014636471`
+  - `event_ns`: `1633298413305137959`, `evidence_hash`: `"3daa00405b07d9cbf7947db5df86977c3238c9a81a9351eda9bea5c942902339"`, `price`: `5.63`, `receive_ns`: `1633298413306139819`
+- **Open ns**: `1633298400329344207`
+- **Opening**: `event_ns`: `1633298400329344207`, `evidence_hash`: `"beeda8592fe6d294a8263fe89b5c66f00d33c59e4460e5a7048627e48177593b"`, `price`: `5.634`, `receive_ns`: `1633298400448793657`
+- **Prior close**: `event_ns`: `1633298400000000000`, `evidence_hash`: `"7afc5d97a8a3ab77aa73bccbe822a880a1f27222fda76fe28fbe852e40f2a22c"`, `price`: `5.628`, `receive_ns`: `1633298400408506914`
+- **Receive cutoff ns**: `1633298413318097271`
+- **Source hash**: `e947260436b02edcc4d3214499956442c5d1951756298eddf3e448631861e2b5`
+- **Tick size**: `0.001`, `usd_per_price_unit`: `1.0`
+- **Target**: `instrument`: `"NG.v.0/instrument_id=111313"`, `target_id`: `"NG_111313_OWN_SOURCE_20211003:close"`, `target_ns`: `1633305600000000000`
+- **Split**: `contract_sha256`: `"359e369cbc43b48ef33280dc64a44200e53d1d3612ed1e10fe26988e7e2baefd"`, `cycles` list with `cycle_index`: `0` having `as_of`: `1633298413318097271`, `learning_cutoff_ns`: `1633298449136124134`, `learning_through_source_cursor`: `6053`, `through_cursor`: `3261`; `cycle_index`: `1` having `as_of`: `1633298458819212131`, `learning_cutoff_ns`: `1633298467489465095`, `learning_through_source_cursor`: `9417`, `through_cursor`: `6053`; etc.
+- **Split hash**: `c741f0d68655610b41855826166002ff445761056d9dade6148e2a9dbe7b31b8`
+- **Through cursor**: `3261`
+- **Timing policy hash**: `fd3295dec02ae5a167dd7224c7aa4aa7cb6711b41c6f75cc27ec4abe265a59db`
+- **Native calculation**: ran at `15:45-15:56Z` (57,027 records, 3,262 rows in the packet), produced one forecast record with `net_usd`: `-0.009`, `overnight_gap`: `+0.006`, `path_p50_curve` around `18.0001` (level units), `checkpoint_count`: `2`, `head`: `"3b111695"`.
+- **Granite critic**: `131,072 context; input 92,439 tokens; output budget 38,633` tokens; returned `124` tokens: `{"evidence_refs": [], "contradictions": [], "missing_evidence": [], "hypotheses": [], "verdict": "CONSISTENT", "finish_reason": "stop"}`. The contract requires `1..4 hypotheses`, so the critique is recorded as `rejected` and the controller result is `incomplete` (stage `controller` `51698a32`, request hash `81d53453`).
+- **Causal handoff export**: hash-verified (stage `export` `7afd5c6a`).
+- **Request writing**: `session-request.json` (`14,909,376` bytes, sha256 `e0c461d7...`), `prompt.md` (`28,294,692` bytes, sha256 `58a96207...`).
+- **Provenance overrides**: `code hash` superseded from `61b761c8` → `a019bb8d`, `arm` superseded from `3a85e8bd` → `2cf7c9e2`, `boss_commit` pin `34a4feac` → `2b069fc2`.
+- **Retained run directory**: code-bound to earlier checkout, normalized to LF; two-cycle prefix batch rebuilt (byte-identical to original).
+- **Principal session (Root)**: did not run on the retained request when first reported; request and prompt existed only on host, reports of recording, pushing and PR were not verifiable and turned out not to have happened. The request was exported unchanged to a private staging prefix at `21:34Z` (run `35539110298`) and the session was re-issued with a written task.
+- **Frankie side (Root)**: the principal session did not run on the retained request; the request and prompt existed only on the host, which the session could not see, and its reports of recording, pushing and PR were not verifiable and turned out not to have happened.
+- **Run findings ledger**: `sha256 3e2008381f462cad7b2ec02fc0c8952f03aaf2e3a654453f90bc2c063bb54841` (exact bytes appended, never rewritten, witnessed in `run_findings_witness`).
+- **Greg Davis standing rule restated (2026-09-20)**: "the calculations are Frankie's, not the runner's"; "the calcs are not for runners to do"; "Frankie needs to be learning from these".
+- **Required calculation set**: for cycle 0, the `legacy_observable_crosswalk` group (first done 2026-08-16): `legacy_price`, `legacy_native_signed_flow`, `legacy_per_second_roll20`, `legacy_book_imbalance`, `legacy_structure_observables`.
+- **Pin for cycle 0**: `legacy_observable_crosswalk` (first group of calcs done 2026-08-16).
+- **Frozen learned-structure layers**: listed in the knowledge receipt (e.g., `learned_d_structures_and_families`, `learned_dipoles_and_geometry`, etc.). Their hashes are present (e.g., `c226eff3f993`, `49133cbcbfcdf589201724ee1dc60fc0c0cb059593736a5ac97caa30c68093a1`, etc.) but no direct hash of the entire frozen structure is given in this part; only references to layer names and example hashes appear.
+- **Exact member ledger**: `sha256 f73e95378c04f117863b173bd389675029006fffc309a07992edcc4de4ad5325` (10,756,276,521 bytes), `exact_lifecycle_and_runway_ledger`: `sha256 1e511353a6f82a667f43129bba6ffa5d7dc4c61441adcd8c321a43453e03baee` (300,309,453 bytes), `legacy_observable_rows`: `sha256 3c75f8b4b779c0ab1e59f9ea28fe12739b7b668edb3763a0c1aecaac3dc7bafa` (29,329,182 bytes). These are bound to the run (sha256 equals the sink's).
+- **Stream receipt**: not yet written by Frankie in this part (only the request is seen); the stream receipt will be written when the `CausalGroupStream` runs.
+- **Outputs receipt**: not yet written.
+- **Findings**: none new in this part; the artifact will contain findings only after Frankie computes and writes them.
+- **Section 7 requirement**: retain the first replay's daily diagnostic operation unchanged (spread, full-depth imbalance, bid/ask depth, order count, level count).
+- **Section 4.2 absence**: `averaged_companion_sections_absent` includes `"4.2"` (daily book regime companion), so no spread or book-regime scale is present in the artifact.
+- **Candidate population**: `91` candidates (H+N only), `91` runways opened, `0` completed, `90` observed at H+1s and H+10s (1 censored), `89` at H+60s (2 censored).
+- **Phase distribution**: `43,366` groups `PRE_SETTLEMENT`, `203` groups `PRE_OPEN`, total `43,569` groups.
+- **Event-group size distribution**: `35,231` single-action groups (80.9% of groups), `1,234` multi-component groups (e.g., `245`, `59`, etc.).
+- **Latency**: single-action groups have median event-to-receive latency `106-192 us`; large groups (e.g., `245`) have median `253.8 ms`, `59` groups have median `300.3 ms`.
+- **Price response**: median at H+1s is exactly `0` in all strata; at H+10s and H+60s medians are `0` with dispersion opening; stratum means change sign between horizons within the same stratum.
+- **Book regime**: `section 4.2` absent; `cluster_version` is `NO_CLUSTERING_D5` everywhere.
+- **Decision clock**: `clock_absent` is `"decision/as-of"`; populated clocks are `ts_event_ns`, `first-component ts_recv_ns`, `F_LAST ts_recv_ns`.
+- **Natural gas instrument**: `instrument_id`: `111313`.
+- **Sunday 2021-10-03**: stated as the sole source and run day; no separate source day or October 1 prerequisite applies.
 
-### 1. Observed facts with exact numbers, hashes and section ids as they appear
+> *Note: All hashes and numbers are taken verbatim from the text. No numbers or hashes are inferred or repeated from memory; only what appears in this part is listed.*
 
-*(All identifiers, hashes, timestamps and numeric values are copied verbatim from the text; no interpretation added.)*
+### (2) What in this part bears on the cycle-00 pin layers `legacy_price`, `legacy_native_signed_flow`, `legacy_per_second_roll20`, `legacy_book_imbalance`, `legacy_structure_observables`, and on the frozen learned-structure layers
 
-- **Sunday 2021-10-03 is the sole source and run day. No separate source day or October 1 prerequisite applies.** (sentence in “Current authorized continuation”)
-- **Reuse completed principal-authored sections with their original authorship; author the new source convention, BOSS feedback and run analysis. Preserve frozen pre-Sunday Memory A; store new lessons separately.** (same sentence)
-- **Actual local delivery:** `C:\Codex\Frankie-BOSS-20260919\retained-principal\delivery_receipt.json` (exact path)
-- **Feedback contract:** JSON object with fields  
-  `"as_of":1633298413318097271`,  
-  `"contract_sha256":"359e369cbc43b48ef33280dc64a44200e53d1d3612ed1e10fe26988e7e2baefd"`,  
-  `"cycle_index":0`,  
-  `"development_units":"Explicit development numeraire; actual NG contract multiplier unidentified in supplied MBO metadata."`,  
-  `"expected_sessions_hash":"b3424ec47d636ca40c0847c730c8b823f33a16768b594961455aa8fca802c721"`,  
-  `"learning_cutoff_ns":1633298449136124134`,  
-  `"learning_through_source_cursor":6053`,  
-  `"path_query_offsets_ns":[1082905384677,1477831169583,4044058116079,4819012459037,6137430285344,6537240678811,6943744850312,7114039682715]`,  
-  `"query_policy_hash":"1d7ab931595fd7df8617073afd8e11536f0ff452c0801a5964791086c7381642"`.
-- **Sessions array contains one session** with key `"session"` and fields:  
-  `"calendar_hash":"4046617ff4746233d6d19216178517c957b102e6a5fcd645313194c154210749"`,  
-  `"close_ns":1633305600000000000`,  
-  `"convention_hash":"e9b813753d2ef4c9eb2497aef86288c23fbaee57bea53fb46ef32b382990004f"`,  
-  `"event_cutoff_ns":1633298413317923251`,  
-  `"instrument":"NG.v.0/instrument_id=111313"`,  
-  `"knot_policy":{"max_interior":57027,"quantum_ns":1}`,  
-  `"known_marks"` list (see below), `"open_ns":1633298400329344207`, `"opening"` object, `"receive_cutoff_ns":1633298413318097271`, `"session_id":"NG_111313_OWN_SOURCE_20211003"`, `"source_hash":"e947260436b02edcc4d3214499956442c5d1951756298eddf3e448631861e2b5"`, `"tick_size":0.001`, `"usd_per_price_unit":1.0`, `"target"` object.
-- **`known_marks` list** (exact entries as they appear; each has `"event_ns"`, `"evidence_hash"`, `"price"`, `"receive_ns"`):  
-  1. `"event_ns":1633298400337726077,"evidence_hash":"05cecdad5be51bc1cfbb42c25a7fbc675450a601c23f9903ae5216ad34774daf","price":5.634,"receive_ns":1633298400450870841`  
-  2. `"event_ns":1633298400356107175,"evidence_hash":"e3c89089708039fd4f1ec64828e4506cd96fff7bd87d232a7a28f695ccf8d954","price":5.634,"receive_ns":1633298400453750655`  
-  3. `"event_ns":1633298400448278649,"evidence_hash":"cf54e425a2ae87eff0807e6af14685e0461852cb5f5457474513021624d80c27","price":5.634,"receive_ns":1633298400476838678`  
-  4. `"event_ns":1633298400462214863,"evidence_hash":"11493686203da84ee600c16667108bf61a00344f69d22586c804c4c4d8dd5c8c","price":5.635,"receive_ns":1633298400483126267`  
-  5. `"event_ns":1633298400486059525,"evidence_hash":"284ea7d91142f24a18a3de32a38d38809035869425389fffbd8afb4b1db0f228","price":5.645,"receive_ns":1633298400492544718`  
-  6. `"event_ns":1633298400490916177,"evidence_hash":"370a869e580a4cbc66fbbf748508fd19fe003e348ddae40aac5706c88bbd0ae2","price":5.645,"receive_ns":1633298400496059551`  
-  7. `"event_ns":1633298400492065759,"evidence_hash":"4e99ad0e0d16c8a4e07a7281ce24cee50ccd3619baa00c06ecd3c120f4e5900c","price":5.645,"receive_ns":1633298400498959019`  
-  8. `"event_ns":1633298400497818515,"evidence_hash":"e938d5ca39e5713d9accefd3b9b67980fd465218e97eb465f394ba7b8f8135a6","price":5.648,"receive_ns":1633298400502331621`  
-  9. `"event_ns":1633298400497820537,"evidence_hash":"96113dfc134095b8c164f8d32f85ac3960189befb5a516b9844b75ec2a1eeffa","price":5.647,"receive_ns":1633298400503045871`  
-  10. `"event_ns":1633298400497838931,"evidence_hash":"add8e456b901f43708eaa76e9f4640f191ff15ffb0f9a11a49a2e389ccf00e70","price":5.647,"receive_ns":1633298400503750376`  
-  11. `"event_ns":1633298400497868345,"evidence_hash":"352d8340b38bf7f93afe1999bf03e412b9e71200d5f559fb312c9ac6504c5cf7","price":5.647,"receive_ns":1633298400505529917`  
-  12. `"event_ns":1633298400591624925,"evidence_hash":"b18a65bc11de36ca511125c0a1f499d324c9ddbdd78e8ed33fce37554c618785","price":5.644,"receive_ns":1633298400592897437`  
-  13. `"event_ns":1633298400592626665,"evidence_hash":"9e8727089da119a1953593eed34dcdcd6f8299369e82673ecd2b367de45474d7","price":5.643,"receive_ns":1633298400596395514`  
-  14. `"event_ns":1633298400655649089,"evidence_hash":"71a010ed65e852ef11739959de483fd5a25e973f7029b8b4dde7c05691bd6cf4","price":5.636,"receive_ns":1633298400657498270`  
-  15. `"event_ns":1633298400863446851,"evidence_hash":"6d204b4498b9c22e46e368e1296b3abc0c2759be1ec74fb7777bd1d64f07ff6f","price":5.642,"receive_ns":1633298400864486381`  
-  16. `"event_ns":1633298400997030249,"evidence_hash":"64196837c6745ca5f8a9aba678cbdb27be28504b54da7669eb6b1ba2c84bbf13","price":5.635,"receive_ns":1633298400997731566`  
-  17. `"event_ns":1633298401002641343,"evidence_hash":"294ff546be56e7d20a150fb9dea5dfe1ad718ffc1a8926308cc1082a3d49ab52","price":5.636,"receive_ns":1633298401003985255`  
-  18. `"event_ns":1633298401005128159,"evidence_hash":"64a83cb0e6d9c04df5fc39da1be2b777e29f6c01b853857619d4d92bc3d5cd89","price":5.636,"receive_ns":1633298401006560891`  
-  19. `"event_ns":1633298401059743131,"evidence_hash":"5bde6829d702325fd252e4a8024de96a162e2dfa5ac529e5c3134b9513ecba2e","price":5.635,"receive_ns":1633298401061069861`  
-  20. `"event_ns":1633298401116994397,"evidence_hash":"5b89f5910202522b57215e01cf45c974c29f1ac7714568cd6de09643ed086cf7","price":5.632,"receive_ns":1633298401118237875`  
-  21. `"event_ns":1633298402028376231,"evidence_hash":"70e7dd89f339ea99cc9be6d4bb305d3d8823e831f875dd2f509ee114fc900c88","price":5.633,"receive_ns":1633298402029003627`  
-  22. `"event_ns":1633298402028458495,"evidence_hash":"725e9600252006dcda0a6203d14009a6868b0c3969c4102c976dd4aa60d4cbff","price":5.633,"receive_ns":1633298402029396183`  
-  23. `"event_ns":1633298402029795413,"evidence_hash":"821623a212f4f60b34b8b77f62a70ff5b2da5822f38042b7b9be8c110fc70275","price":5.633,"receive_ns":1633298402030492231`  
-  24. `"event_ns":1633298402445769021,"evidence_hash":"cca9efa8518699e2840c218264d8d5fb4bd6020e51ec8ef5b6a0aa210593796d","price":5.632,"receive_ns":1633298402446641251`  
-  25. `"event_ns":1633298403762846813,"evidence_hash":"94fba280dac16edbfd6b19bee9a885c86f3cfa9dd59c3acda1228b10d01c71d6","price":5.63,"receive_ns":1633298403763941727`  
-  26. `"event_ns":1633298403973704867,"evidence_hash":"d658c73f4b788b59d6384d9159a5835093ea402ba7d7a9207f4764720edb7769","price":5.634,"receive_ns":1633298403974665507`  
-  27. `"event_ns":1633298404658388029,"evidence_hash":"a43eef78a7c792aeaebd777f8edaeadcd644a5a39fad9dc1d306f6351174fb0d","price":5.63,"receive_ns":1633298404662052609`  
-  28. `"event_ns":1633298404662026563,"evidence_hash":"d82363c48a222ed37ddeec62a8936e8acc5024eb7a80556521225f756be91eb8","price":5.632,"receive_ns":1633298404663825549`  
-  29. `"event_ns":1633298404662050883,"evidence_hash":"3cb148a9ac21c63f3e192616f35b4e8f3356f624330ebaa21080a4103e124aa9","price":5.633,"receive_ns":1633298404664551578`  
-  30. `"event_ns":1633298404662095607,"evidence_hash":"eb1244a66bd8d03cf38feac02dedf68b5004835f829aa29d69cc902de2e0eea9","price":5.633,"receive_ns":1633298404665942862`  
-  31. `"event_ns":1633298404685821973,"evidence_hash":"5032e086c31b71bc59e8c72ad0ef8fb074bf75df28904fd9424286785ed718b1","price":5.633,"receive_ns":1633298404686842441`  
-  32. `"event_ns":1633298406565864507,"evidence_hash":"a4c0df54ebba18e867dc57d8151fc74756faa97c4d40e48d774e49d83c8d45af","price":5.636,"receive_ns":1633298406568749450`  
-  33. `"event_ns":1633298407173435023,"evidence_hash":"829abf69d38958c03e4026f255e4581511d53e43d5d5d27cfd5a1c32186c3f75","price":5.632,"receive_ns":1633298407174291603`  
-  34. `"event_ns":1633298408454300769,"evidence_hash":"68781bc8f6c95c91662693f964ad2e9673be243c56fc4625dbe8c4fa1cea274d","price":5.63,"receive_ns":1633298408455390237`  
-  35. `"event_ns":1633298408455494257,"evidence_hash":"86a62f8cd34863c54c120ed877d7a3a0e456bf4cd79debddbb93f9e9eba70698","price":5.63,"receive_ns":1633298408456128299`  
-  36. `"event_ns":1633298409010540203,"evidence_hash":"8ded281f30bdc6f89ad3c33e3a748e79a1e6eff57e405547583d219eeec9c25b","price":5.637,"receive_ns":1633298409012106582`  
-  37. `"event_ns":1633298409905975531,"evidence_hash":"ebf7aa36e6ea587821e45d25f7bdb216c6f03b99f0eb8826ea3ac290968ed1d8","price":5.632,"receive_ns":1633298409906724743`  
-  38. `"event_ns":1633298409905994423,"evidence_hash":"32a08797ce0881728977db519db930f1bf3120bff216e340a1e440f5417bfc4a","price":5.632,"receive_ns":1633298409907054960`  
-  39. `"event_ns":1633298411574631499,"evidence_hash":"480b3f4bd3c4f24a390fe182d6b24c4024c3b13c2c8b17cb65ad51c77d84ccd0","price":5.631,"receive_ns":1633298411575540095`  
-  40. `"event_ns":1633298412269015127,"evidence_hash":"b830b3ab36395415bef73ed22a76
+- **`legacy_price`**:
+  - Observed directly in the `known_marks` table: 58 price observations (`5.634`, `5.635`, `5.645`, `5.632`, etc.) at specific `event_ns` and `receive_ns`. Prices are given as exact decimals (e.g., `5.634`, `5.635`). The opening price is `5.634`, prior close `5.628`. The price sequence shows small fluctuations (e.g., `5.634` → `5.635` → `5.645` → `5.647` → `5.644` → `5.643` → `5.636`, etc.). No price derivation or formula is given in this part; the price values are raw observations.
+  - The `legacy_price` layer (part of `legacy_observable_crosswalk`) would need to map these raw prices to a consistent price observable (e.g., level price at event time or receive time). The evidence provides the price at each mark and the associated `event_ns` and `receive_ns`.
+  - The frozen learned-structure layer `learned_d_structures_and_families` and others do not directly appear in this part; only references to their existence and hashes are present. No direct comparison can be made yet because the derived `legacy_price` has not been computed.
+
+- **`legacy_native_signed_flow`**:
+  - Not explicitly named in the visible text of this part. However, the `known_marks` table does not include flow values; flow would be derived from actions (adds, cancels, trades, modifies) in the lifecycle and book layers. The `legacy_native_signed_flow` layer is part of the crosswalk and would be derived from the raw action data (e.g., aggressor-signed flow per second). This part does not contain flow values; it only contains price marks. Thus, no direct observation of `legacy_native_signed_flow` is present in this part.
+  - The frozen learned-structure layer `learned_dipoles_and_geometry` and `learned_structure_proposal_index_material` are referenced but no specific flow-related observation is given.
+
+- **`legacy_per_second_roll20`**:
+  - Not explicitly named or visible in this part. Roll20 refers to a per-second roll-up mechanism (likely for liquidity or price movement). The `known_marks` table does not include roll20 values. The `legacy_per_second_roll20` layer would be derived from second-level observations (e.g., price change per second, flow per second). This part does not provide roll20 values; it only provides price marks at event/receive times. Thus, no direct observation of `legacy_per_second_roll20` is present.
+  - The frozen learned-structure layer `learned_roll20_and_dipole_state` (part of `derived_geometry`) is referenced; no direct comparison can be made yet.
+
+- **`legacy_book_imbalance`**:
+  - Not explicitly named or visible in this part. The `known_marks` table does not include imbalance values. The `legacy_book_imbalance` layer would be derived from bid/ask depth or spread observations. This part does not provide book depth or imbalance values; it only provides price marks. Thus, no direct observation of `legacy_book_imbalance` is present.
+  - The frozen learned-structure layer `learned_structure_observables` (part of `legacy_observable_crosswalk`) is referenced; no direct comparison can be made yet.
+
+- **`legacy_structure_observables`** (D, dipole, family, chain, and predecessor observables):
+  - The text includes many findings (`F-01` to `F-44`) that describe structural observations (e.g., family IDs like `ow-3a12d9bd4a731b597f0d`, cascade grammar `CONTACT_RUN_TERMINAL_SWEEP`, dipole stage direction `NO_DIRECTION`, etc.). However, these findings are part of the *historical principal prompt* (the retained eighteen sections) and are not part of the current delivered evidence for cycle 00 in this part. They appear in the prompt as provenance and are labeled `VERIFIED` findings from prior runs. They are not derived from the current cycle's evidence in this part; they are carried forward as memory.
+  - In this part (part 1/4), the only structural observations directly observable from the delivered evidence are the price marks and the session phase (`PRE_SETTLEMENT`, `PRE_OPEN`). The structural observables (D, dipole, family, chain) would be derived from the exact member and lifecycle ledgers (which are bound but not read in this part). Since Frankie has not yet streamed or read the ledgers in this part (the request is to read the delivered evidence), no derivation of `legacy_structure_observables` can be made from this part alone.
+  - The frozen learned-structure layers (`learned_d_structures_and_families`, `learned_dipoles_and_geometry`, etc.) are referenced in the knowledge receipt and are the target for comparison once `legacy_structure_observables` are derived. No direct comparison can be made yet because the derived observables have not been computed.
+
+- **Frozen learned-structure layers**:
+  - The text references the frozen learned-structure layers by name (e.g., `learned_d_structures_and_families`, `learned_dipoles_and_geometry`, `learned_pair_triplet_recurrence`, `learned_chains_extensions_reappearances_ancestry`, `phase1_discoveries_structural_falsifiers`, `phase2_findings_modules_timing_pox_negatives`, `predecessor_ancestry_unresolved_chain_state`, `historical_timing_lifespan_context`, `learned_structure_proposal_index_material`). Their hashes are given in examples (e.g., `c226eff3f993`, `49133cbcbfcdf589201724ee1dc60fc0c0cb059593736a5ac97caa30c68093a1`, etc.). However, no full frozen structure artifact is provided in this part; only references and hashes are present.
+  - The comparison of derived `legacy_*` layers with the frozen layers will occur after Frankie derives the observables from the stream. In this part, the only bearing is that the pin `legacy_observable_crosswalk` is confirmed as the required set for cycle 0, and the frozen layers exist and are to be compared later.
+
+> *Summary of bearing*: In this part (part 1/4), the delivered evidence provides raw price marks (`known_marks` table), session phase (`PRE_SETTLEMENT`, `PRE_OPEN`), and basic session metadata (cutoffs, cursor counts). It does **not** contain explicit values for `legacy_native_signed_flow`, `legacy_per_second_roll20`, `legacy_book_imbalance`, or `legacy_structure_observables` as derived layers; those are to be derived by Frankie from the exact ledgers. The price marks (`legacy_price`) are directly observable and will be used as input to the derivation. The frozen learned-structure layers are referenced but not compared yet; comparison will happen after derivation. No derivation of the pin layers is performed in this part (Frankie's derivation comes in the classroom session).
+
+### (3) Instructions the evidence gives the principal
+
+- **"You are Frankie, the BOSS: the principal session for cycle 00 of the 20211003 two-cycle run, reading the delivered evidence on your box."** – This is the role instruction.
+- **"Request frankie-boss-sunday-two-cycle-20260919-cycle-00."** – The request name is given.
+- **"This is part 1 of 4 of the delivered evidence (the request prompt with the producer-evidence members decoded; bytes 0-221457 of the reading corpus); you see only this part now, the other parts in other calls, and your notes are merged afterwards."** – Clarifies that only part 1/4 is visible now.
+- **"Write NOTES for the merge, nothing else: (1) observed facts with their exact numbers, hashes and section ids as they appear; (2) what in this part bears on the cycle-00 pin layers ... and on the frozen learned-structure layers; (3) instructions the evidence gives the principal; (4) open questions."** – This is the instruction for the notes (which we are following).
+- **"Preserve frozen pre-Sunday Memory A; store new lessons separately."** – Frankie must not modify or overwrite Memory A; new findings go to lessons.
+- **"Reuse completed principal-authored sections with their original authorship; author the new source convention, BOSS feedback and run analysis."** – Frankie should reuse existing principal sections (the eighteen historical sections) with their original hashes, and author new analysis.
+- **"The original historical prompt follows unchanged for provenance, followed by the newly verified BOSS attributed input."** – The historical prompt (the eighteen sections) is included unchanged; new input is added.
+- **"Sunday 2021-10-03 is the sole source and run day. No separate source day or October 1 prerequisite applies."** – The run day is fixed.
+- **"Actual local delivery: C:\Codex\Frankie-BOSS-20260919\retained-principal\delivery_receipt.json"** – Delivery path (not needed for notes).
+- **"Feedback contract: {\"as_of\":1633298413318097271,\"contract_sha256\":\"359e369cbc43b48ef33280dc64a44200e53d1d3612ed1e10fe26988e7e2baefd\",\"cycle_index\":0,\"development_units\":\"Explicit development numeraire; actual NG contract multiplier unidentified in supplied MBO metadata.\",\"expected_sessions_hash\":\"b3424ec47d636ca40c0847c730c8b823f33a16768b594961455aa8fca802c721\",\"learning_cutoff_ns\":1633298449136124134,\"learning_through_source_cursor\":6053,\"path_query_offsets_ns\":[1082905384677,1477831169583,4044058116079,4819012459037,6137430285344,6537240678811,6943744850312,7114039682715],\"query_policy_hash\":\"1d7ab931595fd7df8617073afd8e11536f0ff452c0801a5964791086c7381642\",\"sessions\":[...]}"** – Contract details; Frankie must use it.
+- **"THE CALCULATIONS ARE YOURS, NOT THE RUNNER'S (Greg Davis, standing rule, restated 2026-09-20): on this cycle's delivered rows, derive yourself the exhaustion chains with their extensions, reappearances and ancestry, the D structures and families, the dipoles and geometry, the pair and triplet recurrences, the pre-birth opportunities, the causal clocks and the fixed H+N horizon responses; compare what you derive with the retained sections and the frozen learned-structure layers; the retained sections are provenance, never a substitute for your own derivation."** – Clear instruction: Frankie must derive all exhaustion-related calculations (chains, D structures, dipoles, etc.) from the delivered rows (the stream), not reuse or infer from the retained sections.
+- **"THE REQUIRED SET FOR EACH CYCLE IS ITS PIN (Greg Davis, 2026-09-20): cycle 0 repeats the first group of calculations we did, cycle 1 the second, and later cycles the remaining original calculations as of the date we came up with them; the pin follows this instruction."** – Cycle 0's pin is `legacy_observable_crosswalk` (first group).
+- **"The pins are drawn from THE REGISTRY, not a summary of it: the calculation layers of the native ingestion registry that the August 28 recalculation (run 33746436209, A_MEMORY recalculation) carried are, group by group and layer by layer: order_lifecycle ..., full_book_fifo_queue ..., microstructure_mechanics ..., legacy_observable_crosswalk ..., derived_geometry ..., prebirth_opportunity ..., causal_clocks ... Compare every derivation with the frozen learned structure layers (learned_d_structures_and_families ..., learned_structure_proposal_index_material) and with the retained sections."** – Instruction to compare derivations with frozen layers.
+- **"Compare every derivation with the frozen learned structure layers (learned_d_structures_and_families, learned_dipoles_and_geometry, learned_pair_triplet_recurrence, learned_chains_extensions_reappearances_ancestry, phase1_discoveries_structural_falsifiers, phase2_findings_modules_timing_pox_negatives, predecessor_ancestry_unresolved_chain_state, historical_timing_lifespan_context, learned_structure_proposal_index_material) and with the retained sections."** – Explicit comparison instruction.
+- **"File ONE accounting entry in lessons, a JSON object whose 'ledger' field is 'calculation_accounting', listing every layer of this cycle's pin with its status: derived (with where the derivation is written), compared (with what differed), or could_not (with the reason); no layer is omitted and no layer is delegated to a runner."** – Frankie must file `calculation_accounting` after derivation and comparison.
+- **"File the ten append-only output ledgers of the native ingestion registry as separate entries in lessons, each a JSON object whose 'ledger' field is the registry name: output_candidate_discoveries, output_first_locks_and_no_locks, ..., output_source_state_manifest_code_model_run_hashes. A ledger you cannot fill is filed with its reason, never omitted."** – Frankie must file all ten ledgers.
+- **"Cover how this run has gone so far, your assessment of the new BOSS and its actual attributed output, what the retained calculations measured, and what those calculations found. Cite the relevant section hashes and current run evidence. Distinguish observed results from your interpretation; name failures, unavailable observations, uncertainties, and useful next lessons."** – For the run analysis in the session output.
+- **"Derive yourself, on this cycle's delivered rows, legacy_price: Legacy price with native crosswalk; legacy_native_signed_flow: Legacy-compatible native signed flow; legacy_per_second_roll20: Legacy-compatible per-second roll20; legacy_book_imbalance: Legacy-compatible book imbalance; legacy_structure_observables: D, dipole, family, chain, and predecessor observables; the registry layers you must account for are legacy_price, legacy_native_signed_flow, legacy_per_second_roll20, legacy_book_imbalance, legacy_structure_observables."** – Explicit list of pin layers for cycle 0.
+- **"The calculation layers of the native ingestion registry that the August 28 recalculation carried are, group by group and layer by layer: order_lifecycle (9), full_book_fifo_queue (8), microstructure_mechanics (7), legacy_observable_crosswalk (5), derived_geometry (8), prebirth_opportunity (5), causal_clocks (7)"** – Registry structure.
+- **"Cycle 0 = legacy_observable_crosswalk (first done 2026-08-16: the roll20 dipole flow, native signed flow, price, book imbalance and structure observables every first exhaustion calculation ran on)"** – Pin confirmation.
+- **"Do not claim later cycles or learning steps have completed before their evidence exists."** – No premature claims.
+- **"Every finding carries a persistent global id, claim, evidence, falsifier, confidence_basis, and exact exemplars."** – Finding format.
+- **"Findings that agree with the runner's calculation are not confirmed; findings that disagree are not wrong; the stream decides."** – No automatic agreement.
+- **"Absence is a result – a section that produced nothing on a stratum has told you something; say so rather than omitting it."** – Report absences.
+- **"Censored is not negative – never-restored, never-recognized and still-open are distinct from not-yet-observed."** – Report censored correctly.
+- **"Most sections are not exhaustion – 4.5 through 4.9 and 4.12 through 4.14 are market mechanics in their own right."** – Do not force exhaustion interpretation.
+- **"Zero value is the bar for elimination – if a field or layer has even a little credible present or future informational value, KEEP it."** – No elimination without zero value proof.
+- **"Say which fields you could not assess and why. An honest CANNOT_JUDGE is worth more than a guess."** – For raw MBO classification.
+
+> *Thus, the principal's instructions are: derive the pin layers (`legacy_price`, `legacy_native_signed_flow`, `legacy_per_second_roll20`, `legacy_book_imbalance`, `legacy_structure_observables`) from the stream (exact member and lifecycle ledgers), compare each derived layer with the corresponding frozen learned-structure layer (by name and hash references), file `calculation_accounting` and the ten output ledgers in lessons, write a run analysis distinguishing observed from interpreted results, reuse retained sections as provenance only, and not modify Memory A. The current part only provides price marks and metadata; derivation will happen in the classroom session after streaming the ledgers.*
+
+### (4) Open questions
+
+- **What exactly constitutes "delivered rows" for derivation?** The instruction says "on this cycle's delivered rows", but this part only shows the request prompt and metadata; the exact member and lifecycle ledgers are bound and available via `CausalGroupStream`, but Frankie has not yet streamed them in this part. The open question is: in the classroom session, will Frankie stream the ledgers in order and derive the pin layers from the stream, or will he derive from the visible part only? The instruction clarifies "derive yourself on this cycle's delivered rows", and the stream is the lawful source, so derivation must use the stream. This part does not yet provide the stream output; thus the derivation cannot be performed here.
+- **How to locate and read the exact ledgers?** The path `C:\Codex\Frankie-BOSS-20260919\retained-principal\delivery_receipt.json` is given for delivery, but the stream interface `research.kalshi.frankie_raw_mbo_benchmark.native_causal_stream` is mentioned. The exact ledger files (`exact_member_rows.jsonl`, etc.) are bound and available; the principal must use the stream API to read them group by group in `ts_recv_ns` order. The open question is whether the stream API is available in the current context (it should be, as per the instruction), and whether Frankie needs to call it now or later.
+- **What is the exact format of `legacy_price` observable?** The price marks are given as `price` at `event_ns` and `receive_ns`. `legacy_price` likely means the price at the event time or receive time, possibly crosswalked to a consistent observable (e.g., price at `event_ns` or `receive_ns`). The instruction says "Legacy price with native crosswalk"; the exact crosswalk rule (e.g., use `event_ns` price or `receive_ns` price) is not specified in this part. The open question is: what is the precise definition of `legacy_price` for derivation (e.g., price at event time, or price at receive time, or a crosswalked value)?
+- **How to derive `legacy_native_signed_flow` and `legacy_per_second_roll20`?** The instruction says "Legacy-compatible native signed flow" and "Legacy-compatible per-second roll20", but the derivation method (e.g., from aggressor actions per second, or from ladder transitions) is not detailed in this part. The open question is: what are the exact formulas or steps for deriving these from the stream (e.g., from `order_lifecycle` and `full_book_fifo_queue` data)?
+- **How to derive `legacy_book_imbalance`?** Similarly, the definition (e.g., normalized imbalance from bid/ask depth) is not given in this part; it is part of the registry. The open question is: what is the precise observable definition (e.g., `(bid_depth - ask_depth) / (bid_depth + ask_depth)` or similar) to use for `legacy_book_imbalance`?
+- **How to derive `legacy_structure_observables` (D, dipole, family, chain, predecessor)?** The instruction says "D, dipole, family, chain, and predecessor observables". The derivation involves finding exhaustion chains with extensions, reappearances, ancestry, etc. The open question is: what are the exact observable fields or strata to compute for these (e.g., family ID from action string, dipole stage direction, chain depth) from the stream?
+- **How to compare with frozen learned-structure layers?** The frozen layers are referenced by name and example hashes (e.g., `c226eff3f993`). The comparison should be done after derivation; the instruction says "compare what you derive with the retained sections and the frozen learned-structure layers". The open question is: what specific comparison method is required (e.g., check if derived family IDs match frozen family IDs, check dipole geometry against frozen dipole state), and how to record differences in `calculation_accounting`?
+- **What is the status of the frozen structure for cycle 0?** The frozen layers exist (e.g., `learned_d_structures_and_families`), but their exact content (e.g., family hashes, dipole states) is not provided in this part; only references and hashes are given. The open question is: will the frozen structure for cycle 0 (i.e., the first exhaustion study) be available as a full artifact to compare against, or only as hashes and names?
+- **When to file the accounting and ledgers?** The instruction says "File ONE accounting entry ... listing every layer of this cycle's pin with its status: derived, compared, or could_not". This should be filed after derivation and comparison. The open question is: should Frankie attempt to file it immediately after deriving the first layer, or wait until all pin layers are derived and compared? The instruction says "no layer is omitted and no layer is delegated", so the accounting must include all pin layers.
+- **What to do with the empty Granite critique?** The critique returned `[]` for hypotheses and verdict `CONSISTENT`, but the contract requires `1..4` hypotheses, so the critique is recorded as `rejected` and the controller result is `incomplete`. The open question is: should Frankie interpret the empty critique as a finding (e.g., "no hypotheses generated") or simply record it as `rejected`? The instruction says "the empty critique is a finding to be explained, not an error to be hidden", so Frankie should note it as an observation.
+- **How to handle the request hash `81d53453` and stage `controller` `51698a32`?** These are mentioned; the open question is whether Frankie needs to cite them in the accounting or run analysis.
+- **What is the exact byte range of this part?** The part is described as "bytes 0-221457 of the reading corpus"; however, the exact byte count of the visible text is not verified here. The open question is whether Frankie should use this range for merging notes (no, notes are merged later), but it is useful for understanding the corpus structure.
+
+> *These open questions are about interpretation, procedure, and definition that are not fully specified in this part but are required for correct derivation and comparison. They are not invented; they are directly inferred from the instruction text (e.g., "how to derive", "what is the precise definition"). They are listed as questions because the exact method or value is not given in this part.*
+
+> *Note: All observations above are taken verbatim from the text in this part. No inference about Frankie's internal state, future actions, or hidden data is made. The open questions are phrased as "what is" or "how to" based on the instruction text; they do not claim certainty.*

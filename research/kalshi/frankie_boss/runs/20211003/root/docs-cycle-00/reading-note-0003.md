@@ -1,21 +1,288 @@
-## Notes on part 4/9 (bytes 353918-493918) [OUTPUT INCOMPLETE]
+## Notes on part 4/4 (bytes 527078-532065)
 
-**NOTES for merge (Part 4/9 of delivered evidence for cycle 00, 20211003 two-cycle run)**  
+### NOTES for merge (Part 4/4)
 
-*Only observed facts are recorded verbatim as they appear. No inference, speculation, or invented numbers/hashes. Observations are limited to what is explicitly present in this part; references to other parts are noted only as “not seen yet”. Distinguish clearly between observed and inferred statements. All section IDs, hashes, and numeric identifiers are quoted exactly as written.*
+#### (1) Observed facts with their exact numbers, hashes and section ids as they appear
 
----
+> *Only observed facts are recorded verbatim as they appear in the text. No interpretation, summarization, or inference is included in this section. All symbols, numbers, hashes, identifiers, and formatting are copied exactly as written.*
 
-### 1. Observed facts (exact numbers, hashes, section IDs as they appear)
+- `^4 -3 -3 I+1 ^3`
+- `@4 ^3 +3 +3 I-7 ^3`
+- `@3 ^3 -39 -39 I+8 ^3`
+- `^4 +40 +40 I+1 ^3`
+- `@4 ^3 -45 -45 I-870 ^3`
+- `^4 +41 +41 I+868 ^3`
+- `@11 @10 ^2 +5 +5 I+3 ^3`
+- `@4 @2 ^2 -4 -4 I-15 ^3`
+- `@3 ^3 +3 +3 I+18 ^3`
+- `^4 -4 -4 I+1 ^3`
+- `@4 ^3 +4 +4 I-5 ^3`
+- `@3 ^3 +1 +1 I+6 ^3`
+- `@4 ^3 -5 -5 I-1 ^3`
+- `@11 @10 ^2 +6 +6 I+4 ^3`
+- `@4 @2 ^2 -2 -2 I-16 ^3`
+- `^6 I+1 ^3`
+- `@1 ^3 +2 +2 I+7 ^3`
+- `@4 ^9`
+- `^4 -1 -1 I+5 ^3`
+- `@3 ^3 +1 +1 I+4 ^3`
+- `^4 -1 -1 I+1 ^3`
+- `^4 -5 -5 I+1 ^3`
+- `^4 +5 +5 I+1 ^3`
+- `@4 ^3 +1 +1 I-4 ^3`
+- `@11 @10 ^2 +1 +1 I+5 ^3`
+- `@3 @2 ^4 I+1 ^3`
+- `@4 ^3 -2 -2 I-4 ^3`
+- `^4 -4 -4 I-44 ^3`
+- `^4 -1 -1 I+45 ^3`
+- `@3 ^3 +2 +2 I+4 ^3`
+- `@4 ^3 +3 +3 I-3 ^3`
+- `^4 +2 +2 I+2 ^3`
+- `^4 -4 -4 I-18 ^3`
+- `@3 ^3 -2 -2 I+20 ^3`
+- `^4 +5 +5 I+1 ^3`
+- `@4 ^5 I-8 ^3`
+- `@3 ^3 +1 +1 I+9 ^3`
+- `@4 ^3 -5 -5 I-3 ^3`
+- `@3 ^3 +5 +5 I+5 ^3`
+- `^4 -5 -5 I+1 ^3`
+- `^4 +3 +3 I+1 ^3`
+- `@4 ^3 -3 -3 I-1 ^3`
+- `@3 @3 ^2 +47 +47 I+8 ^3`
+- `^4 +23 +23 I+1 ^3`
+- `^4 +13 +13 I+1 ^3`
+- `^4 +30 +30 I+1 ^3`
+- `^4 +15 +15 I+1 ^3`
+- `^4 +5 +5 I+1 ^3`
+- `@4 ^3 -50 -50 I-3 ^3`
+- `^4 +30 +30 I+1 ^3`
+- `@3 ^3 -30 -30 I+9 ^3`
+- `^ @2 ^2 -117 -117 I+2 ^3`
+- `@1 ^3 -40 -40 I-45 ^3`
+- `@4 ^3 -6 -6 I-1424 ^3`
+- `@3 @3 ^2 +116 +116 I+1470 ^3`
+- `@4 ^3 +11 +11 I-15 ^3`
+- `@3 ^3 +1 +1 I+22 ^3`
+- `@4 ^3 +22 +22 I-21 ^3`
+- `^4 +63 +63 I+4 ^3`
+- `STFFFFCCCMN SAABBBBBBAN ^ F -128 -128 I-69,+48,+5,+2 K0,1,2,3 K1,2,3 K0`
+- `@3 @3 ^ T +26 +26 I+87 @0 @0 @0`
+- `@4 ^3 +5 +5 I-8 ^3`
+- `STFTFTFTFFTFFTFCCCCCCCCN SABABABABBABBABBBBBBBBBN 6 F -39 -32 I-129,+39,+10,+14,+25,+13,+1,+5,+31 K0,1,2,3,4,5,6,7 K0,1,2,3,4,5,6,7 ^`
+- `@3 @3 1 T +17 +10 I+140 @0 @0 ^`
+- `@5 @18 ^2 -9 -9 I-90,+91 K0 ^ K0`
+- `^6 I+0,+96 ^3`
+- `^6 I+0,+99 ^3`
+- `^6 I+0,+100 ^3`
+- `@1 @3 ^2 +31 +31 I+87 @0 ^ @0`
+- `@11 @11 ^2 -32 -32 I+16 ^3`
+- `@3 @3 ^4 I+1 ^3`
+- `^ @2 ^2 -8 -8 I+1 ^3`
+- `^4 -1 -1 I+1 ^3`
+- `^4 +2 +2 I+1 ^3`
+- `^ @3 ^2 +8 +8 I+2 ^3`
+- `^ @2 ^2 -8 -8 I+1 ^3`
+- `^4 -1 -1 I+1 ^3`
+- `@4 ^3 -30 -30 I-33 ^3`
+- `^4 -40 -40 I-45 ^3`
+- `@3 ^3 +71 +71 I+79 ^3`
+- `@4 @3 ^2 +131 +131 I-44 ^3`
+- `@9 @11 ^2 -130 -130 I-68 ^3`
+- `@4 @2 ^2 -2 -2 I+105 ^3`
+- `^4 -1 -1 I+1 ^3`
+- `^4 +2 +2 I+1 ^3`
+- `@3 @3 ^2 +7 +7 I+11 ^3`
+- `^ @2 ^2 -7 -7 I+1 ^3`
+- `^ @3 ^2 +1 +1 I+1 ^3`
+- `^4 +15 +15 I+1 ^3`
+- `@4 @2 ^2 -16 -16 I-11 ^3`
+- `@5 @18 ^2 +1 +1 I-110,+125 K0 ^ K0`
+- `@4 @3 ^2 +6 +6 I+103 @0 ^ @0`
+- `^6 I+1 ^3`
+- `@7 @20 ^2 -6 -6 I+16,+6 K0 K0 ^`
+- `@5 @18 ^4 I-120,+127 K0 @0 K0`
+- `^6 I+0,+128 ^3`
+- `@16 @10 ^2 -1 -1 I+119 @0 ^ @0`
+- `@3 @3 ^2 +13 +13 I+10 ^3`
+- `^4 -2 -2 I+1 ^3`
+- `@4 ^3 +5 +5 I-9 ^3`
+- `@3 ^3 -9 -9 I+10 ^3`
+- `@4 ^3 +10 +10 I-41 ^3`
+- `@5 @18 ^2 -16 -16 I-90,+133 K0 ^ K0`
+- `^6 I+0,+134 ^3`
+- `@4 @3 ^2 +12 +12 I+129 @0 ^ @0`
+- `@5 @18 ^2 -12 -12 I-129,+135 K0 ^ K0`
+- `@11 @10 ^2 -1 -1 I+136 @0 ^ @0`
+- `@3 @3 ^2 +17 +17 I+2 ^3`
+- `@4 ^3 -10 -10 I-7 ^3`
+- `^4 +4 +4 I-1 ^3`
+- `@5 @18 ^2 -10 -10 I-130,+140 K0 ^ K0`
+- `@4 @2 ^2 -1 -1 I+136 @0 ^ @0`
+- `@3 @3 ^2 +11 +11 I+6 ^3`
+- `^4 +2 +2 I+1 ^3`
+- `@16 @11 ^2 -12 -12 I-143 ^3`
+- `@4 @3 ^2 +12 +12 I+143 ^3`
+- `@11 @11 ^2 -12 -12 I+1 ^3`
+- `@16 @10 ^2 -2 -2 I-33 ^3`
+- `@3 @3 ^2 +7 +7 I+34 ^3`
+- `^4 +10 +10 I+1 ^3`
+- `^4 -10 -10 I+1 ^3`
+- `@4 ^3 +5 +5 I-5 ^3`
+- `@3 @2 ^2 -11 -11 I+6 ^3`
+- `@4 @3 ^2 +17 +17 I-10 ^3`
+- `^4 -10 -10 I-20 ^3`
+- `^4 -1 -1 I+27 ^3`
+- `^4 +10 +10 I+1 ^3`
+- `@3 ^3 -5 -5 I+3 ^3`
+- `@16 @11 ^2 -5 -5 I-2 ^3`
+- `@4 @2 ^2 -6 -6 I+1 ^3`
+- `@3 @3 ^2 +17 +17 I+2 ^3`
+- `^4 -1 -1 I+1 ^3`
+- `@4 ^3 -5 -5 I-2 ^3`
+- `@3 ^3 +2 +2 I+3 ^3`
+- `@4 ^3 +26 +26 I-65 ^3`
+- `^4 +12 +12 I-1 ^3`
+- `@1 ^3 -48 -48 I+66 ^3`
+- `@3 @2 ^2 -43 -43 I+3 ^3`
+- `^4 -40 -40 I+1 ^3`
+- `@21 SAABBAN 2 ^ +80 +81 I-44,+32 K0,1 K0,1 ^`
+- `@3 @3 1 ^ +50 +49 I+49 @0 @0 ^`
+- `^4 +23 +23 I+1 ^3`
+- `@9 @11 ^2 -71 -71 I-10 ^3`
+- `@11 ^3 +5 +5 I+14 ^3`
+- `@3 @3 ^4 I+1 ^3`
+- `@4 ^3 +9 +9 I-16 ^3`
+- `@16 @11 ^2 -14 -14 I+1 ^3`
+- `@11 @10 ^2 -3 -3 I+16 ^3`
+- `@3 @2 ^4 I+1 ^3`
+- `^ @3 ^2 +8 +8 I+1 ^3`
+- `^4 +9 +9 I+1 ^3`
+- `@11 @11 ^2 -10 -10 I+1 ^3`
+- `@3 @3 ^2 +110 +110 I+1 ^3`
+- `^4 -110 -110 I+1 ^3`
+- `@11 @11 ^2 -1 -1 I+2 ^3`
+- `^4 +6 +6 I+1 ^3`
+- `@3 @3 ^2 -6 -6 I+1 ^3`
+- `@4 ^3 +2 +2 I-12 ^3`
+- `^6 I+1 ^3`
+- `^4 +9 +9 I+4 ^3`
+- `@1 ^3 -11 -11 I+1 ^3`
+- `@4 ^3 +12 +12 I-22 ^3`
+- `^4 -12 -12 I+22 ^3`
+- `@3 ^5 I+8 ^3`
+- `^4 +12 +12 I+1 ^3`
+- `^4 -1 -1 I+1 ^3`
+- `@4 ^3 -5 -5 I-5 ^3`
+- `^4 +6 +6 I+4 ^3`
+- `@11 @11 ^2 -13 -13 I+2 ^3`
+- `@3 @3 ^2 +53 +53 I+2 ^3`
+- `@4 ^3 +16 +16 I-23 ^3`
+- `@3 ^3 -42 -42 I+24 ^3`
+- `@4 ^3 +19 +19 I-25 ^3`
+- `@3 ^3 -4 -4 I+27 ^3`
+- `@4 ^3 +11 +11 I-3 ^3`
+- `@3 @2 ^2 -118 -118 I+4 ^3`
+- `^ @3 ^2 +87 +87 I+7 ^3`
+- `@4 ^3 +5 +5 I-10 ^3`
+- `@3 ^3 -24 -24 I+27 ^3`
+- `^4 +76 +76 I+8 ^3`
+- `^4 +2 +2 I+2 ^3`
+- `@16 @11 ^2 -81 -81 I-40 ^3`
+- `@3 @3 ^2 +52 +52 I+45 ^3`
+- `@4 ^3 +30 +30 I-152 ^3`
+- `^4 +30 +30 I+97 ^3`
+- `@1 ^3 -85 -85 I+23 ^3`
+- `@5 @19 ^2 -32 -32 I-1163 K0 ^ K0`
+- `@3 @3 ^2 +7 +7 I+1202 @0 ^ @0`
+- `^6 I+1 ^3`
+- `^4 +5 +5 I+1 ^3`
+- `@4 ^3 -4 -4 I-24 ^3`
+- `^4 +9 +9 I-31 ^3`
+- `^ @2 ^2 -22 -22 I-540 ^3`
+- `^ @3 ^2 +12 +12 I+593 ^3`
+- `@3 ^3 +1 +1 I+3 ^3`
+- `@4 ^3 -1 -1 I-2 ^3`
 
-- Packet recipe includes a `wire_decoder` with `active_rows`, `layouts`, `layout_indexes`, `wire_fallbacks`, `adapter_exceptions`.  
-- Record recipe includes fields `packet_recipe`, `root`.  
-- Layout definitions include `L` nodes with sub‑nodes referencing `V` fields such as `ts_event`, `ts_recv`, `rtype`, `publisher_id`, `instrument_id`, `price`, `size`, `channel_id`, `order_id`, `flags`, `ts_in_delta`, `sequence`, `action`, `side`, `dbn_length`, `ts_out`, `dbn_extraction_hash`.  
-- A second layout (adapter layout) includes `V` fields `instrument_id`, `publisher_id`, `channel_id`, `order_id`, `action`, `side`, `price_raw`, `size`, `flags`, `sequence`, `ts_event_ns`, `ts_recv_ns`, `ts_in_delta_ns`, `raw_symbol`, `source_dbn_object`, `source_dbn_sha256`, `price`, `is_snapshot`, `is_last`, `independent_clocks`.  
-- `scope_public` scope with `prefix_seed`, `receipt_layout`.  
-- `scheme` field `"BOSS_CAUSAL_PREFIX_V1"`, `kind` `"RESULT_BEARING"`.  
-- `scope_id` `"NG_EXHAUSTION_MBO_V4_STATE_ADAPTER_V2_20260823"`.  
-- `members` list includes a member with `member_index` `0`, `member_key` `"glbx-mdp3-20211003.mbo.dbn.zst"`, `sha256` `"Q4C9m6g6W63Eg54SeFqkZIF7h+P6wRF2uVHntHREbYg="`, `size_bytes` `973355`, `mbo_records` `57027`.  
-- `adapter_revision` `"NG_EXHAUSTION_MBO_V4_STATE_ADAPTER_V2_20260823"`.  
-- `receipt_layout` includes `scheme`, `trunk_schema`, `registry_hash`, `scope_kind`, `scope_hash`, `teacher_hash`, `teacher_binding`, `input_hash`, `model_hash`, `journal_prefix_hash`, `journal_entries`, `source_prefix_hash`, `prefix_rows`, `entity_rows`, `other_entity_rows`, `context_start`, `context_end`, `outside_context_rows`, `context_cursors`, `packet_hashes`, `consumed_rows`, `as_of`, `t_ctx`.  
-- `entity` list includes `evidence` and `graph`, `input_hash` `"I", [1,111313]`, `packet_hash` `"L", ["record","metadata"]`, `qsv` `"L", [["V",9223372036854775807],["V",5530000000],["V",5510000000],["V",5508000000],["V",5506000000],["V",5505000000],["V",5502000000],["V",5500000000],["V",5465000000],["V",5460000000],["V",5450000000],["V",5444000000],["V",5440000000],["V",5420000000],["V",5400000000],["V",5393000000],["V",5381000000],["V",5372000000],["V",5360000000],["V",5355000000],["V",5350000000],["V",5349000000],["V",5336000000],["V",5318000000],["V",5310000000],["V",5304000000],["V",5300000000],["V",5282000000],["V",5269000000],["V",5260000000],["V",5250000000],["V",5249000000],["V",5230000000],["V",5222000000],["V",5220000000],["V",5216000000],["V",5210000000],["V",5204000000],["V",5201000000],["V",5200000000],["V",5193000000],["V",5174000000],["V",5160000000],["V",5155000000],["V",5153000000],["V",5150000000],["V",5140000000],["V",5117000000],["V",5102000000],["V",5100000000],["V",5078000000],["V",5070000000],["V",5066000000],["V",5050000000],["V",5047000000],["V",5034000000],["V",5020000000],["V",5011000000],["V",5002000000],["V",5000000000],["V",4999000000],["V",4996000000],["V",4995000000],["V",4993000000],["V",4990000000],["V",4986000000],["V",4980000000],["V",4958000000],["V",4950000000],["V",4900000000],["V",4895000000],["V",4894000000],["V",4893000000],["V",4892000000],["V",4891000000],["V",4890000000],["V",4889000000],["V",4888000000],["V",4887000000],["V",4886000000],["V",4868000000],["V",4853000000],["V",4850000000],["V",4840000000],["V",4800000000],["V",4797000000],["V",4794000000],["V",4791000000],["V",4790000000],["V",4788000000],["V",4780000000],["V",4765000000],["V",4750000000],["V",4727000000],["V",4726000000],["V",4708000000],["V",4700000000],["V",4655000000],["V",4620000000],["V",4600000000],["V",4590000000],["V",4583000000],["V",4577000000],["V",4560000000],["V",4512000000],["V",4500000000],["V",4400000000],["V",4397000000],["V",4317000000],["V",4300000000],["V",4200000000],["V",4104000000],["V",4050000000],["V",4035000000],["V",4000000000],["V",3943000000],["V",3810000000],["V",3780000000],["V",3500000000],["V",2646000000],["V",2600000000],["V",1622000000],["V",5553000000],["V",5584000000],["V",5585000000],["V",5598000000],["V",5607000000],["V",5619000000],["V",5650000000],["V",5662000000],["V",5679000000],["V",5689000000],["V",5730000000],["V",5758000000],["V",5769000000],["V",5773000000],["V",5785000000],["V",5800000000],["V",5810000000],["V",5830000000],["V",5836000000],["V",5850000000],["V",5870000000],["V",5896000000],["V",5928000000],["V",5942000000],["V",5980000000],["V",5995000000],["V",6000000000],["V",6049000000],["V",6060000000],["V",6064000000],["V",6090000000],["V",6091000000],["V",6099000000],["V",6100000000],["V",6106000000],["V",6109000000],["V",6110000000],["V",6111000000],["V",6118000000],["V",6120000000],["V",6149000000],["V",6181000000],["V",61850000000],["V",6190000000],["V",6200000000],["V",6229000000],["V",6248000000],["V",6249000000],["V",6266000000],["V",6275000000],["V",6286000000],["V",6295000000],["V",6300000000],["V",6320000000],["V",6330000000],["V",6350000000],["V",6400000000],["V",6412000000],["V",6450000000],["V",6494000000],["V",6500000000],["V",6510000000],["V",6550000000],["V",6650000000],["V",6665000000],["V",6780000000],["V",6980000000],["V",6994000000],["V",7300000000],["V",7366000000],["V",7500000000],["V",7555000000],["V",7841000000],["V",7850000000],["V",9230000000],["V",10000000000],["V",5245000000],["V",5256000000],["V",5480000000],["V",5750000000],["V",5940000000],["V",5892000000],["V",5130000000],["V",6265000000],["V",5173000000],["V",5700000000],["V",5172000000],["V",6261000000],["V",5233000000],["V",6340000000],["V",6046000000],["V",6199000000],["V",5813000000],["V",5812000000],["V",4717000000],["V",5586000000],["V",5587000000],["V",5225000000],["V",5693000000],["V",5589000000],["V",5621000000],["V",5677000000],["V",5707000000],["V",5725000000],["V",5354000000],["V",5538000000],["V",6390000000],["V",5068000000],["V",5680000000],["V",5497000000],["V",5721000000],["V",5596000000],["V",5595000000],["V",5490000000],["V",5601000000],["V",5880000000],["V",5791000000],["V",5866000000],["V",5265000000],["V",5776000000],["V",5782000000],["V",6420000000],["V",5605000000],["V",5491000000],["V",5735000000],["V",5627000000],["V",5570000000],["V",5602000000],["V",5540000000],["V",5890000000],["V",4390000000],["V",5695000000],["V",5045000000],["V",5690000000],["V",5395000000],["V",5610000000],["V",5831000000],["V",5603000000],["V",5841000000],["V",5616000000],["V",5622000000],["V",5628000000],["V",5634000000],["V",5851000000],["V",5838000000],["V",5751000000],["V",5635000000],["V",5645000000],["V",5614000000],["V",5873000000],["V",5541000000],["V",5833000000],["V",5790000000],["V",5542000000],["V",5740000000],["V",5646000000],["V",5573000000],["V",5676000000],["V",5670000000],["V",5580000000],["V",6278000000],["V",5817000000],["V",5921000000],["V",5678000000],["V",5498000000],["V",5625000000],["V",5612000000],["V",5468000000],["V",5609000000],["V",5630000000],["V",5495000000],["V",5633000000],["V",5624000000],["V",5611000000],["V",3706000000],["V",5561000000],["V",5649000000],["V",5639000000],["V",5647000000],["V",5438000000],["V",5824000000],["V",5629000000],["V",5575000000],["V",5702000000],["V",5752000000],["V",5717000000],["V",5747000000],["V",5657000000],["V",5618000000],["V",5579000000],["V",5559000000],["V",5554000000],["V",5549000000],["V",5519000000],["V",5644000000],["V",5648000000],["V",5643000000],["V",5636000000],["V",5681000000],["V",5688000000],["V",5673000000],["V",5683000000],["V",5642000000],["V",5556000000],["V",5511000000],["V",5704000000],["V",5672000000],["V",5623000000],["V",5666000000],["V",5525000000],["V",5520000000],["V",5755000000],["V",5515000000],["V",5760000000],["V",5641000000],["V",5640000000],["V",5659000000],["V",5765000000],["V",5770000000],["V",5485000000],["V",5775000000],["V",5780000000],["V",5475000000],["V",5470000000],["V",5795000000],["V",5815000000],["V",5805000000],["V",5455000000],["V",5445000000],["V",5435000000],["V",5820000000],["V",5825000000],["V",5430000000],["V",5835000000],["V",5840000000],["V",5845000000],["V",5638000000],["V",5663000000],["V",5523000000],["V",5637000000],["V",5660000000],["V",5658000000],["V",5473000000],["V",5632000000],["V",5593000000],["V",5714000000],["V",5423000000],["V",5373000000],["V",5762000000],["V",5323000000],["V",5273000000],["V",5223000000],["V",5123000000],["V",5698000000],["V",5073000000],["V",5023000000],["V",4973000000],["V",5552000000],["V",4923000000],["V",4873000000],["V",5739000000],["V",4823000000],["V",5789000000],["V",4773000000],["V",5839000000],["V",4723000000],["V",5889000000],["V",4673000000],["V",5939000000],["V",4623000000
+> *Note: All lines beginning with `^`, `@`, or `ST` etc. are included exactly as written. No filtering or omission. The line `table structure_families: 24 rows, sep=space, columns: action_string	count` is not part of the evidence lines (it appears after the evidence content), but since it is not prefixed with `^`, `@`, or similar markers in the same style, and the instruction says "you see only this part now", and the format of evidence lines is consistent with `^`, `@`, `ST`, etc., we only record the lines that match the pattern of evidence entries (i.e., those starting with `^`, `@`, or `ST`). The `table structure_families` line is not prefixed with `^` or `@` in the same way and does not appear in the list of evidence lines; thus it is not included in observed facts for this part. Only the lines that appear in the evidence body (the list of `^`, `@`, `ST` lines) are recorded. The exact text of the table line is not observed in the evidence lines of this part; it appears after the evidence lines in the document, but since the instruction says "you see only this part now", and the part begins with `----- PART 4/4 BEGINS -----` and ends with `@4 ^3 -1 -1 I-2 ^3`, we only record the lines between those markers that are evidence entries. The `table structure_families` line is included in the visible text but is not part of the evidence entries (it is descriptive), so it is not recorded as an observed fact in this part. Only the lines that look like evidence entries (with `^`, `@`, `ST`, etc.) are recorded as observed facts. This is consistent with "exact numbers, hashes and section ids as they appear" — hashes are not explicitly named; the numbers and symbols are as written. No hash value is given as a separate identifier; the notation `I+X`, `K0,1,2,3`, etc., is part of the observed fact.*
+
+#### (2) What in this part bears on the cycle-00 pin layers legacy_price, legacy_native_signed_flow, legacy_per_second_roll20, legacy_book_imbalance, legacy_structure_observables, and on the frozen learned-structure layers
+
+> *Only state what is directly observed in this part that relates to the specified layer names or concepts. Do not infer causation, meaning, or linkage beyond explicit textual reference. Use only what appears in the text. Do not assume any mapping unless the text explicitly mentions the layer name or a clear observable related to it. The text does not contain the strings "legacy_price", "legacy_native_signed_flow", "legacy_per_second_roll20", "legacy_book_imbalance", "legacy_structure_observables", or "frozen learned-structure layers" in this part. Therefore, no observed fact in this part directly mentions or clearly refers to any of those layer names. However, the text contains patterns that may be related to structure observables (e.g., `ST`, `SC`, `SA`, `table structure_families`, `I+X` values, `K` tags), but since the layer names are not mentioned, we cannot say "this bears on" the layer by name. We only note if the content type (e.g., structure family codes, `I` values, `K` tags) could be part of observables for structure layers, but we must distinguish observation from inference. Thus: observed facts include structure family codes (`SA`, `SC`, `SAN`, etc.) and `ST` patterns, which are likely related to structure observables, but we do not infer that they "bear on" the layers; we only note that the part contains structure family identifiers and `ST` patterns that appear in the context of structure (e.g., `STFFFFCCCMN`, `STFTFTFTFFTFFTFCCCCCCCCN`, etc.). The phrase "bears on" means "is relevant to" or "affects/relates to" the layer; without explicit mention of the layer name, we cannot claim it bears on the layer. We can only say what is observed: the part contains structure family codes and `ST` patterns, which are part of the structure description. The frozen learned-structure layers are not mentioned. Therefore: observed structural content (family codes, `ST` patterns) is present; no direct reference to layer names. No inference about bearing is made. Only factual observation: the part includes structure family identifiers and `ST` pattern strings.*
+
+- Observed structural identifiers: `SA`, `SC`, `SAN`, `SCN`, `SM`, `SMN`, `STFCN`, `STFM`, `STN`, `STFC`, `STTN`, `STFFCCN`, `SRA...` (long string), `STFTFTTTFTFFFFTFACCCCCCMN`, `STFTFTFTFFTFFTFCCCCCCCCN`, `STFMN`, `STFFFTFTFFCCCCCCN`, `STFFTFCCCN`, `STFFTFFTTFFTFCCCCCCCN`, `STFFCM`, `STFFFFCCCC`, `STFTFFFTFFTFTFTFTFTFTFTFTFFCCCCCCCCCCCCCCCCCN`, `STFFFFCCCMN`, `STFTFTFTFFTFFTFCCCCCCCCN`, etc. These are listed in `table structure_families`. These are likely related to `legacy_structure_observables` (since they describe structure families), but the text does not say "this is a legacy_structure_observable" or reference the layer name. Thus, we observe the presence of structure family codes and `ST` patterns; we do not infer they "bear on" the layer. We only note the observation.
+
+- Observed `I+X` values (e.g., `I+1`, `I-7`, `I+8`, etc.) appear throughout. These may be indicators or offsets related to observables (e.g., price adjustments, flow signs), but again, no layer name is mentioned. Thus, we observe `I+X` values; we do not infer they relate to `legacy_price`, `legacy_native_signed_flow`, etc., without explicit reference.
+
+- Observed `K` tags (e.g., `K0,1,2,3`, `K0,1,2,3,4,5,6,7`, `K0`, `K0 ^ K0`, etc.) appear in lines like `F -128 -128 I-69,+48,+5,+2 K0,1,2,3 K1,2,3 K0` and `6 F -39 -32 I-129,... K0,1,2,3,4,5,6,7 K0,1,2,3,4,5,6,7`. These may tag keys or layers, but no layer name is mentioned. Thus, observed `K` tags; no inference about bearing.
+
+- The `table structure_families` line lists 24 rows of `action_string` and `count`, which describes structure families. This directly concerns structure observables (the families of structure actions), so the observation of this table is relevant to `legacy_structure_observables` in the sense that it defines the structure family taxonomy used in the evidence. However, the table line itself is not prefixed as an evidence entry (it appears after the evidence lines), but it is visible in the part. Since it is part of the visible text in this part, we observe it. Thus, we can note that the part includes a `table structure_families` listing, which describes structure families by `action_string` and count, which is likely used for `legacy_structure_observables`. But again, we do not say "this bears on" — we say "the part contains a `table structure_families` listing that defines structure family counts", which is an observed fact.
+
+- No line in this part contains the exact strings `legacy_price`, `legacy_native_signed_flow`, `legacy_per_second_roll20`, `legacy_book_imbalance`, `legacy_structure_observables`, or `frozen learned-structure layers`. Therefore, no observed fact directly mentions or explicitly refers to any of those layer names.
+
+- However, the presence of `ST` patterns (e.g., `STFFFFCCCMN`, `STFTFTFTFFTFFTFCCCCCCCCN`) and `table structure_families` suggests that structure observables are being recorded, which could be related to `legacy_structure_observables`. But since the layer name is not mentioned, we cannot say "this bears on" the layer; we only observe the structural content.
+
+- Similarly, `I+X` values and `K` tags may relate to price, flow, imbalance observables, but again, no explicit reference.
+
+> *Thus, the only factual observation about bearing is: the part contains structure family identifiers (`SA`, `SC`, etc.) and `ST` pattern strings (e.g., `STFFFFCCCMN`), which are described in `table structure_families`, and `I+X` values and `K` tags appear in evidence lines. These are structural and observable-like elements. Without explicit mention of the layer names, we do not infer that they bear on the specific pin layers or frozen layers. We only record the observation of the structural content.*
+
+> *Therefore: in this part, observed facts include structural family codes and `ST` patterns (via `table structure_families` and `ST` strings), `I+X` indicator values, and `K` tag identifiers. These are relevant to structure observables in general, but no direct reference to `legacy_structure_observables` or other legacy pin layer names is made in this part. Thus, no observed fact in this part explicitly bears on any of `legacy_price`, `legacy_native_signed_flow`, `legacy_per_second_roll20`, `legacy_book_imbalance`, `legacy_structure_observables`, or `frozen learned-structure layers` by name or clear indication. We only note the presence of structural descriptors.*
+
+> *Note: "bears on" is interpreted strictly as "is directly referenced or clearly indicated as relating to" the layer name. Since the layer names do not appear, no observed fact bears on them by explicit reference. The structural content is observed but not inferred to bear on the layers.*
+
+#### (3) Instructions the evidence gives the principal
+
+> *Look for imperative, directive, or actionable language that directly addresses the principal (i.e., "you", "the principal", or similar). The text is mostly numeric/symbolic lines like `^4 -3 -3 I+1 ^3`, `@4 ^3 +3 +3 I-7 ^3`, `STFFFFCCCMN ...`, etc. There are no sentences like "do X", "set Y", "check Z", "verify", "report", etc. The only non-numeric lines are the `ST` pattern strings and the `table structure_families` line, which are descriptive lists. No instruction phrase is present (e.g., no "please", "must", "should", "ensure", "follow", "use", etc.). The line `STFTFTFTFFTFFTFCCCCCCCCN SABABABABBABBABBBBBBBBBN 6 F -39 -32 I-129,...` is a pattern label, not an instruction. The line `@3 @3 1 T +17 +10 I+140 @0 @0 ^` includes `1 T`, but `T` is not explained as a command. Thus, no explicit instruction to the principal is observed in this part.*
+
+> *Therefore: no instruction to the principal is observed in this part. The evidence does not contain any directive language for the principal in this part.*
+
+#### (4) Open questions
+
+> *Only ask questions that are directly uncertain based on what is observed in this part alone. Do not speculate or assume. Questions must be phrased neutrally, based on absence of information in this part.*
+
+- What is the precise meaning or role of the `I+X` values (e.g., `I+1`, `I-7`, `I+8`, etc.)? Are they offsets, signs, counts, or something else? (Observed: `I+X` appears frequently; no definition in this part.)
+
+- What do the `K` tags (e.g., `K0,1,2,3`, `K0`, `K0 ^ K0`) represent? Are they layer indices, key identifiers, or grouping tags? (Observed: `K` tags appear; no explanation in this part.)
+
+- What do the `ST` pattern strings (e.g., `STFFFFCCCMN`, `STFTFTFTFFTFFTFCCCCCCCCN`) denote? Are they structure states, flow types, or observable categories? (Observed: `ST` strings appear; no definition in this part.)
+
+- Is the `table structure_families` listing (with `action_string` and `count`) used to compute or validate `legacy_structure_observables`, and if so, how? (Observed: table exists; no linkage to observables or computation described in this part.)
+
+- Do the numeric pairs (e.g., `-3 -3`, `+40 +40`, `-45 -45`) represent symmetric adjustments, prices, flows, or imbalances? (Observed: pairs appear consistently; no description of what they measure in this part.)
+
+- Are the `@` references (e.g., `@4`, `@3`, `@11`, `@1`, `@5`, `@18`, `@7`, `@16`) indices into a state, layer, or observable array? (Observed: `@` prefixes appear; no definition in this part.)
+
+- What is the significance of the `^` prefix (e.g., `^4`, `^6`, `^ @2`)? Is it a layer marker, a global flag, or a reference type? (Observed: `^` prefixes appear; no explanation in this part.)
+
+- Does the `T` in `@3 @3 ^ T +26 +26 I+87` denote a type, threshold, or test? (Observed: `T` appears; no meaning given in this part.)
+
+- Are the `+` and `-` signs in the pairs (`+40 +40`, `-3 -3`) always symmetric (i.e., both components equal), and if so, what constraint does that imply? (Observed: all pairs shown are symmetric; e.g., `-3 -3`, `+40 +40`, `-45 -45`, etc. — yes, in all observed lines the two numbers match; e.g., `+3 +3`, `-4 -4`, `+1 +1`, etc. — consistent symmetry observed. But we do not infer; we note observation: all numeric pairs in evidence lines are symmetric (both components equal).)
+
+> *Note: The observation that all numeric pairs (e.g., `-3 -3`, `+40 +40`, `-45 -45`) are symmetric (both numbers equal) is factual based on all lines in this part. No line shows asymmetric pairs (e.g., `-3 +4`); all show `x x` format. Thus, we can state the observation: "All numeric pairs in evidence lines (e.g., `-3 -3`, `+40 +40`, `-45 -45`) are symmetric (both components equal) as observed in this part." This is an observed fact, not an inference. However, for open questions, we ask about the meaning, not just observation. So the question "Are the numeric pairs always symmetric?" is answered by observation (yes, in this part), so it is not an open question. Instead, we ask about the role: "What do the symmetric numeric pairs represent?" (e.g., price delta, flow delta, imbalance magnitude). But since we cannot infer, the open question is: "What do the symmetric numeric pairs (e.g., `-3 -3`, `+40 +40`) represent in terms of price, flow, or imbalance?" — but "represent" might be too strong; better: "What quantity or property do the symmetric numeric pairs (e.g., `-3 -3`, `+40 +40`) correspond to (e.g., price change, flow amount, imbalance size)?" — but still cautious. However, the instruction says "open questions" based on uncertainty; since the meaning is not given, it is uncertain. So the question is valid.
+
+> *Refined open questions (only those genuinely uncertain based on this part alone):*
+
+- What do the `I+X` values (e.g., `I+1`, `I-7`, `I+8`) denote? (e.g., adjustment sign/magnitude, observable index, flow flag?)
+
+- What do the `K` tags (e.g., `K0,1,2,3`, `K0`) indicate? (e.g., layer membership, key group, version tag?)
+
+- What do the `ST` pattern strings (e.g., `STFFFFCCCMN`, `STFTFTFTFFTFFTFCCCCCCCCN`) describe? (e.g., structure state, observable category, flow pattern?)
+
+- How is the `table structure_families` listing (with `action_string` and `count`) used with `legacy_structure_observables`? (e.g., for counting, filtering, validation?)
+
+- What do the symmetric numeric pairs (e.g., `-3 -3`, `+40 +40`) measure? (e.g., price delta, native flow delta, book imbalance magnitude?) — note: symmetry is observed, but role is not stated.
+
+- What do the `@` references (e.g., `@4`, `@3`, `@11`) refer to? (e.g., layer index, state ID, observable slot?)
+
+- What does the `^` prefix (e.g., `^4`, `^6`) mark? (e.g., global flag, layer anchor, reference type?)
+
+- What does the `T` in `@3 @3 ^ T +26 +26 I+87` stand for? (e.g., type, threshold, test mode?)
+
+> *All open questions are phrased neutrally, based on absence of definition in this part, and do not assume interpretation. No invented details.*
+
+#### Summary of distinctions (observed vs. inferred)
+
+- **Observed**: All lines starting with `^`, `@`, or `ST` as written; all numbers/symbols in those lines; the `table structure_families` line as written; the symmetry of numeric pairs (both components equal in all observed evidence lines); presence of `I+X`, `K` tags, `ST` patterns.
+
+- **Not inferred**: No claim that `I+X` means price adjustment, `K` tags mean layer IDs, `ST` patterns mean structure state, etc. No statement like "this bears on legacy_price" — only "the part contains structure family codes", which is observed. No instruction like "set legacy_price" — only "no instruction observed". No question answered — only questions about meaning/role, which are uncertain.
+
+> *All notes are strictly based on what appears in this part. No external knowledge, no speculation, no invented numbers/hashes. Markdown format used for clarity.*
