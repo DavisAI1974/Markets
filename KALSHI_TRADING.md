@@ -10,6 +10,11 @@
   this branch, Python 3.13 venv); `frankie_box_producer_tests.sh`; `frankie_box_install_agent_backend.sh` (Node 20 + Claude Code + a
   credential-reach probe); `frankie_box_session.sh` (verify | preflight | start | status); `frankie_box_boss_session.py` (THE SESSION: the BOSS vLLM over jobs_v1; verify, labels by code, engine, derive, reading, writing, push); `frankie_box_heartbeat.py`;
   `frankie_box_push_response.sh` (git route with the SSM token, or presigned-PUT uploads when MAP_URL is set); `frankie_box_read_log.sh`.
+- `deploy/aws/box/frankie_box_reading_render.py` (the LOSSLESS render of the delivered members the BOSS reads: seven reversible
+  layers, byte-exact proof per member, cross-cycle ledger; L7 needs the codec's exact DBN pin) + `frankie_box_digest_render.py`
+  (DIGEST_V3: the derivation digest as dense exact tables, parse-back proven; tests `tests/test_frankie_box_digest_render.py`)
+  + `frankie_box_reading_render_measure.sh` (measures both on the box with the pinned tokenizer) + `frankie_box_venv_pins.sh`
+  (holds the box venv to databento-dbn 0.62.0 / client 0.81.0, receipted) + the read-only corpus probes `frankie_box_corpus_*.sh`.
 - `deploy/aws/box/frankie_box_serverless_config.sh` + `research/kalshi/frankie_boss/operations/serverless_reading_endpoint.py` +
   `.github/workflows/frankie_serverless_reading.yml` - the serverless READING lane (RunPod serverless vLLM workers serving the pinned Granite
   checkpoint; help | inspect | create | verify per the RunPod skills). The session fans parts and merge groups out when /opt/frankie-box/serverless.json exists.

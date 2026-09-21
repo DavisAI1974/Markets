@@ -2933,3 +2933,11 @@ parts of 87k, against 163 before the render and 13 after its first version. What
 the literal columns, ~2 tokens a cell) and `files/state.c15.json` 127,003 tokens (42 tensors as identity rows; values
 mode would be ~2.2M). The session regenerates any digest whose head is not DIGEST_V3 at `restart_session`.
 
+### 12:2xZ 09-21: chat 4 closed on Greg's word; the next chat stacks more layers on every category
+
+Greg (12:2xZ): stop here and start a new session; update all end docs; "Are there any other categories on root that we
+should try. And remember to stack the stacks if possible. It doesn't just have to be one"; "we want to do more than 2
+tables". Answered: his RunPod sign-in is not needed for anything in flight (the render work is complete and measured); it
+is needed only to create the serverless endpoint through the MCP. The drop-in's top block (12:2xZ) carries the state, the
+numbers, the remaining weights by category and the directives; CLAUDE.md's STATE line and KALSHI_TRADING.md updated.
+

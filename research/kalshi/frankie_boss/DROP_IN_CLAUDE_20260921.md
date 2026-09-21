@@ -1,5 +1,52 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
+## READ FIRST (12:2xZ 09-21, chat 4 closed on Greg's word): THE READ IS ~4-5 PARTS, NOT 163; next chat = MORE STACKS ON MORE CATEGORIES
+
+Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later). Run `using-agent-skills`,
+`git-workflow-and-versioning` and the RunPod skills first (`~/.claude/skills/runpod*`, `runpod-usage/reference/`); do not
+stop and restart shells. Read `CLAUDE_HANDOFF_20260920.md` from 10:4xZ to 12:1xZ (the render, the serverless lane, the
+RunPod setup, the DBN pin drift, DIGEST_V3), then this list. Cycle 0's reading is still in flight on the RETAINED Pod
+(jobs_v1, no cancel; part 1-2 of the OLD 163-part corpus); the session on the box runs `frankie_box_boss_session.py`
+and will re-render at `restart_session`. Box status probes are PAUSED (Greg 11:4xZ); a box script run costs ~1 min of the
+box and none of the Pod and is fine for measurement.
+
+WHAT STANDS (all committed, all exact, every layer parse-back or byte-exact proven; nothing dropped):
+- Delivered members: 21,087,386 B / 10,128,476 tokens -> 317,839 B / 151,705 tokens (0.015x), 2 parts. L7 (the 3,262-hash
+  packet vector as `$derivable`) fires since the venv pin repair: `frankie_box_venv_pins.sh` holds databento-dbn 0.62.0
+  (the stacked codec's exact pin) with client 0.81.0; run 35596911151 `held=true`; the stage script asserts the pin.
+- Derivation digest DIGEST_V3 (`frankie_box_digest_render.py`, tests in `tests/test_frankie_box_digest_render.py`):
+  1,344,422 B / 559,796 tokens -> 202,893 B / 146,765 tokens (run 35598479176). Tables: legacy_book_imbalance 75,921,
+  legacy_structure_observables 69,340, per_second_flow_and_roll20 239, structure_families 234, legacy_price 12 (0 rows).
+- Whole corpus at the next restart ~= head 191 KB (ledgered from cycle 1 on) + 151,705 + 146,765 ~= 4-5 parts of 87k.
+- RunPod agent setup done per the official page (saved: `operations/runpod/AGENT_SETUP_runpod_docs_20260921.md`): plugin
+  runpod@runpod 1.2.0 enabled; the MCP (`https://mcp.getrunpod.io/`) needs GREG's OAuth sign-in (`/reload-plugins`, `/mcp`
+  -> runpod -> Sign in). The sign-in is NOT needed for the render work; it is needed only to create/verify the H100
+  serverless reading endpoint from a session (else the trunk-registered `frankie_serverless_reading.yml` + runpodctl).
+
+GREG'S DIRECTIVES FOR THE NEXT CHAT (12:2xZ, verbatim intent): "Are there any other categories on root that we should try.
+And remember to stack the stacks if possible. It doesn't just have to be one." and "we want to do more than 2 tables."
+So: (1) shrink EVERY category the BOSS reads, not the two big tables only -- the remaining weights are
+`files/state.c15.json` 127,003 tokens (the decoder snapshot's 42 tensors as identity rows: dtype, shape, bytes, sha256,
+count, min, max, mean, l2 -- Greg's tensor_mode call still open: values ~2.2M vs identity 127k), the head 191 KB
+(prompt.md sections: `### A_MEMORY findings served now` 94,788 B, `### Delivered artifacts` 17,171 B, `### Knowledge
+layers` 13,605 B, `# Current authorized continuation` 21,721 B -- ledgered from cycle 1, but cycle 0 reads it whole),
+the per-cell floor of the two 2,282-row tables (~2 tokens a cell x literal columns: depth_imbalance_n 24k, the
+timestamp deltas 13k, best_bid/ask, depth counts, order_ids 15k, price_raw 17k), the forecast member's remaining 19,086
+and the manifest/mapping/binding trio (~2.5k). (2) STACK the stacks: apply several transforms on top of each other where
+each stays exact and proven (e.g. column-wise run-length on top of `^`, a per-table integer base for order_ids/price_raw,
+the head's sections through the same dictionary + `$read` ledger as the members, shared dictionaries across tables,
+tokenizer-aware spellings measured with the pinned tokenizer), always measuring with `frankie_box_reading_render_measure.sh
+MODE=identity` on the box (one run per stack, ~1 min). (3) Keep the proof gates: `render_layers` raises on any table that
+does not parse back; `reconstruct_proof` must stay `all_exact` on every member; a change that cannot be proven exact is
+not a layer.
+
+STILL GREG'S (unchanged): tensor_mode (identity recommended); `frankie_box_session.sh ACTION=restart_session
+REASON=lossless-render` to apply everything; the GitHub PAT into SSM `/markets/frankie/github-token`
+(`aws ssm put-parameter --region us-east-2 --name /markets/frankie/github-token --type SecureString --value '<PAT>'`);
+trunk registration of `frankie_box_fetch_response.yml` and `frankie_serverless_reading.yml` (or the MCP route after
+sign-in); the RunPod API key into SSM `/markets/frankie/runpod-serverless` + `frankie_box_serverless_config.sh write`
+for the serverless lane; Greg's word before any endpoint is created (billable).
+
 Read in this order, then act: this file; `CLAUDE.md` (the FRANKIE/BOSS standing rules, first bullet is today's
 state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt of the day, in order). Run
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
