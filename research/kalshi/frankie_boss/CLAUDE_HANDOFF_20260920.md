@@ -3138,3 +3138,18 @@ that cut the parts; +16), the byte estimate only as the fallback, and the refusa
 serverless lane. RESTART 3 dispatched: `restart_session REASON=exact-token-count`. Expected on the box: derive (the
 digest is DIGEST_V5 already from restart 2, so no re-derive unless it had not finished), the V5 corpus reused if its
 identity matches (else rebuilt), part 1 of ~3 submitted to the Pod's queue behind whatever old-corpus part is in flight.
+
+### 13:5xZ 09-21: THE READ IS RUNNING ON THE RENDER: 4 PARTS (status probe 35608448008)
+
+Restart 2 (2970ffc2) refused WITH A RECEIPT at 13:47:29Z (`REFUSED: run: ValueError: prompt read-0000 leaves under
+1024 tokens of context by the byte estimate (139110 tokens)`: the refuse-with-receipt wrapper from /ship worked; the
+DIGEST_V5 corpus was built). Restart 3 (run 35608016668, ca3b327b): unit restarted 13:49:23Z, verified, 29 labels,
+engine healthy, the V5 corpus reused (its identity matched), `reading: 4 parts, 4 to read (Pod x1)` at 13:49:24Z; the
+status probe at 13:53:31Z: unit active, phase reading, no refusal: part 1 passed the exact-count guard and is queued
+on the Pod (jobs_v1, FIFO, behind whatever old-corpus part is in flight; ~36 min a part at the Pod's ~20 tok/s when
+the BOSS writes to the end of its context). 4 parts of 87k on line boundaries (248k tokens whole), against 163 at
+launch and 10 of 163 read when the old session was stopped. Then merge, writing, push (refuses until the git token
+exists; files safe in session/out/). No more box probes from this chat (PAUSED stands); the next chat's first probe:
+`frankie_box_run.yml` script `frankie_box_session.sh` variables `ACTION=status`.
+Runs of this chat, in order: profile 35603160044; stacks 35604003983, 35604644446, 35604904715, 35605419072,
+35605902090, 35606132790, 35606423208; restarts 35606762128, 35607741484, 35608016668; status 35608448008.

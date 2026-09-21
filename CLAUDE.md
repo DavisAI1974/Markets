@@ -1,12 +1,13 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-21 13:4xZ, Frankie/BOSS cycle 0: the read shrunk 163 -> ~3 parts)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-21 13:5xZ, Frankie/BOSS cycle 0: the read runs on the render, 163 -> 4 parts)
 
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
-- **STATE 2026-09-21 13:5xZ (chat 5): Frankie's cycle-0 session was RESTARTED on the render (Greg: "get the root read
-  going"; run 35606762128): the READ was 163 parts of 87k tokens, then 4-5, and is now ~3 (248,111 tokens: digest
-  146,765 -> 75,562; members 151,705 -> 106,248; head 68,506 -> 66,301) after seven measured stacks, every transform
-  exact and parse-back/byte-exact proven, nothing dropped. Branch `claude/cycle-0-frankie-box-rerun-od5sxk`. READ FIRST:
+- **STATE 2026-09-21 13:5xZ (chat 5): THE ROOT READ IS RUNNING ON THE RENDER (Greg: "get the root read going";
+  restart 3 = run 35608016668, `reading: 4 parts`): the READ was 163 parts of 87k tokens, then 4-5, and is 4 (248,111
+  tokens: digest 146,765 -> 75,562; members 151,705 -> 106,248; head 68,506 -> 66,301) after seven measured stacks and
+  a /ship review (GO after fixes, `SHIP_REVIEW_20260921_CHAT5.md`), every transform exact and parse-back/byte-exact
+  proven, nothing dropped. Branch `claude/cycle-0-frankie-box-rerun-od5sxk`. READ FIRST:
   the 13:5xZ block atop `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`, then `CLAUDE_HANDOFF_20260920.md`
   from 13:0xZ. The RunPod key was ABSENT from chat 5's environment (mcp_connect.sh refused; no MCP). Greg's open calls:
   the git PAT, the endpoint word, the two trunk registrations, RUNPOD_API_KEY in the environment. Box probes PAUSED.**

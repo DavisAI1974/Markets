@@ -1,6 +1,6 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
-## READ FIRST (13:5xZ 09-21, chat 5): THE READ IS RESTARTED ON THE RENDER (~3 PARTS, run 35606762128); the RunPod key was ABSENT here
+## READ FIRST (13:5xZ 09-21, chat 5): THE READ IS RUNNING ON THE RENDER, 4 PARTS (restart 3 = run 35608016668, status 35608448008); the RunPod key was ABSENT here
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later). Run `using-agent-skills`
 and `git-workflow-and-versioning` first; do not stop and restart shells. The RunPod skills (`~/.claude/skills/runpod*`)
@@ -33,9 +33,16 @@ WHAT STANDS (all committed, every transform exact and proven before use, nothing
   going soon." -> `restart_session REASON=lossless-render` DISPATCHED (run 35606762128, 5ff0472e): the session unit
   stopped with a receipt (the old read had reached part 10/163), the box checkout moved to this branch's head, preflight
   OK (engine healthy on the Pod), unit restarted 13:37:31Z, phase deriving. The corpus receipt now carries an IDENTITY
-  (render + DIGEST_V4 + HEAD_TEXT_V1 + tensor mode + digest sha): the old corpus is moved aside under
-  `work/superseded-corpus-<ts>/` (nothing deleted) and the corpus is rebuilt through every layer, then the reading
-  runs in ~3 parts on the Pod (part 1 queues behind the in-flight old part, FIFO, no cancel).
+  (render + DIGEST + HEAD_TEXT_V1 + tensor mode + digest sha): the old corpus is moved aside under
+  `work/superseded-corpus-<ts>/` (nothing deleted) and the corpus is rebuilt through every layer.
+- `/ship` on the diff (`SHIP_REVIEW_20260921_CHAT5.md`): GO after fixes, all applied in 2970ffc2 (DIGEST_V5: the sign
+  of zero is a value, empty-row tables, parser count checks; L9/L10 fall back with `block_notes`; head marker guards
+  and per-section proof; O(n) position map; regular-file index; ASCII digits; the session refuses with a receipt on
+  any unexpected error; 33 tests; `frankie_box_codecs_ci.yml` on this branch, trunk registration = Greg's word).
+- Restart 2 (35607741484) refused with a receipt: `boss()` sized the dense part by a byte estimate (139k for an 87k
+  part). FIXED ca3b327b (exact count with the pinned tokenizer). RESTART 3 (35608016668, 13:49:23Z): the V5 corpus
+  reused, `reading: 4 parts, 4 to read (Pod x1)`; status 35608448008: active, phase reading, part 1 queued on the
+  Pod (FIFO behind the in-flight old part, ~36 min a part). THE ROOT READ IS GOING: 4 parts, not 163.
   What remains is the data itself: the record table's order_id / timestamp / ts_in_delta / sequence deltas and price
   indexes (66k), the A_MEMORY findings prose (31.5k), the book/structure rows (74k). The codec cannot re-encode its own
   decoded root to the delivered envelope, so no `$derivable` snapshot.
