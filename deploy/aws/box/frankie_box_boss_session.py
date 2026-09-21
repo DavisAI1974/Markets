@@ -84,8 +84,13 @@ class Session:
         self.jobs = self.work / 'boss-jobs'
         for d in (self.work, self.out, self.jobs, ROOT / 'receipts'):
             d.mkdir(parents=True, exist_ok=True)
+        # markets first: its research.refrag and research.kalshi.frankie_boss are the runtime; the pinned producers
+        # checkout carries research.kalshi.frankie_raw_mbo_benchmark (absent from markets) and is reached second.
+        # The V4 adapter module is loaded from the producers checkout explicitly (see _producer_module), never by
+        # sys.path order, so the pinned bytes are the ones that run (run 35583181164 found the producers' older
+        # research.refrag shadowing the markets one when producers came first).
+        sys.path.insert(0, str(PRODUCERS))
         sys.path.insert(0, str(MARKETS))
-        sys.path.insert(0, str(PRODUCERS))  # producers first: the pin's producer files are the pinned lineage's
         self.request = None
         self.request_sha256 = None
         self.contract = None
@@ -369,7 +374,8 @@ class Session:
         records, container = self._input_records(rows_path)
         status['rows'] = container
         self.note(f'deriving: {len(records)} INPUT records from prefix-{self.cycle} ({container.get("count")} entries)')
-        from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import V4MboAdapter
+        V4MboAdapter = self._producer_module('research/ng_exhaustion_mbo_v4_state_adapter_20260820.py',
+                                             'research.ng_exhaustion_mbo_v4_state_adapter_20260820').V4MboAdapter
         from research.kalshi.frankie_raw_mbo_benchmark import native_roll20
         from research.kalshi.frankie_raw_mbo_benchmark.a_memory_member_first_recalculation_20260828 import (
             describe_structure, book_values, book_transition, BOOK_FIELDS)
@@ -434,6 +440,18 @@ class Session:
         (self.work / 'derivation-digest.md').write_text(digest, encoding='utf-8')
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
         return receipt
+
+    @staticmethod
+    def _producer_module(relative, name):
+        """Load a pinned producer module from the producers checkout by file path and register it under its package
+        name, so the pinned bytes run and every later `import <name>` (the a_memory producer's included) sees them."""
+        import importlib.util
+        path = PRODUCERS / relative
+        spec = importlib.util.spec_from_file_location(name, path)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+        return module
 
     def _pin(self):
         from research.kalshi.frankie_boss.frankie_principal_adapter import load_cycle_calculation_pin
