@@ -37,6 +37,8 @@ jobs:
           iid = os.environ['INSTANCE']
           r = boto3.client('ec2', region_name='us-east-2').describe_instances(InstanceIds=[iid])
           print('EC2 state:', [i['State']['Name'] for res in r['Reservations'] for i in res['Instances']])
+          # Greg, 2026-09-21: the host reports 16 logical CPUs against a recorded r7i.8xlarge resize; print what EC2 says.
+          print('EC2 type/cpu:', [(i['InstanceType'], i.get('CpuOptions'), i.get('Platform', 'linux'), i.get('LaunchTime').isoformat()) for res in r['Reservations'] for i in res['Instances']])
           s = boto3.client('ssm', region_name='us-east-2').describe_instance_information(Filters=[{'Key':'InstanceIds','Values':[iid]}])
           print('SSM ping:', [(i['PingStatus'], i.get('PlatformName','')) for i in s.get('InstanceInformationList',[])] or 'not registered')
           PY
