@@ -3304,3 +3304,12 @@ GitHub but is no longer referenced anywhere. NOTE: GitHub's `github-authenticati
 reported 2026-09-21 20:12:57 UTC for BOTH tokens, against "90 days (Dec 20)" on the classic token's form; Greg was
 asked to read the expiration on the tokens page. If it is today, the box loses its push tonight and the parameter
 needs a longer-lived value (same put_parameter, from any shell with the Claude IAM key).
+
+### 16:2xZ 09-21: CHAT 5 CLOSED (Greg: "We have to start new chat"); the drop-in's top block is the state
+
+Last measurements: progress branch `root/cycle-00-progress` tip ef16c1f9 (heartbeat pushing); endpoint jobs
+completed 3 / in progress 2 (the level-0 merges), workers ready 3, balance $37.79, spend $10.73/h; git history scan
+of every reachable commit (2,733) and every tracked file: no full-length RunPod key, GitHub token or AWS secret (only
+the S100 note's key id and six-char prefix, recorded on purpose). Greg: "I believe secrets has it [RUNPOD_API_KEY]
+and also use your mcp if it doesn't": the names-only secrets report (eab049c1, printed by every box run) answers the
+first half on run 35621233900; the outcome line follows if it landed before close.

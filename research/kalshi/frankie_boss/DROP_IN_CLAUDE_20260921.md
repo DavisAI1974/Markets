@@ -1,5 +1,44 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
+## READ FIRST (16:2xZ 09-21, chat 5 CLOSED on Greg's word "We have to start new chat"): THE ROOT READ IS DONE (4 parts), THE MERGES RUN ON THE H100 ENDPOINT, THE GIT CHAIN IS CLOSED
+
+Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later). Run `using-agent-skills`
+and `git-workflow-and-versioning` first; do not stop and restart shells. FIRST COMMAND after the checkout:
+`bash deploy/runpod/mcp_connect.sh` (it now also installs runpodctl from the GitHub release when cli.runpod.net's
+installer fails); the key comes from the environment (`RUNPOD_API_KEY`) or, failing that, ask Greg. Nothing survives
+this container: the RunPod key, the `Claude` IAM pair and the two GitHub PATs all lived in `~/.config/markets/*.env`
+(chmod 600) and are gone; Greg re-supplies what the chat needs (he pasted all of them into chat 5 by his own choice and
+holds rotation for now). Read this block, then `CLAUDE_HANDOFF_20260920.md` from 15:0xZ (every run id), then the 13:5xZ
+block below for the render work that made the read 4 parts.
+
+STATE OF THE RUN (session unit frankie-cycle-00 on box i-035994afa8bdf66a5, restart 4 at 15:18:00Z):
+- READ DONE: 4 parts on the retained Pod g7y3g2w1kor4l3 (14:06, 14:41, 14:49, 14:53Z; 17/36/8/4 min).
+- MERGING on the serverless reading endpoint **k1sqt0haffm61y** (H100 pool ADA_80_PRO, worker-vllm v2.27.0, pinned
+  Granite host-cached, workers 0-8 x 2 seqs, served name granite42-smoke, 4 h execution timeout): level 0 = 2 groups
+  then a final merge; at 15:47Z the endpoint showed 3 jobs completed (the verify + 2 merges) and 2 in progress. Then
+  WRITING on the Pod (`boss()`, no output limit), then `pushing` (the pusher reads the git token from SSM at push time).
+  Spend $10.73/h while two H100 workers run (Pod $1.15 + 2 x $4.79); balance $37.79 at 15:47Z; the endpoint scales
+  to zero 120 s after its last job. Receipt: `research/kalshi/frankie_boss/receipts/serverless_reading_endpoint_20260921.json`.
+- GIT CHAIN CLOSED: SSM `/markets/frankie/github-token` (us-east-2) = version 2, the FINE-GRAINED PAT (Markets only);
+  the heartbeat pushes `root/cycle-00-progress` (tip ef16c1f9 at 15:4xZ; it still holds the classic token in memory
+  until its next start, and 97473b99 makes it re-read SSM after any failed push). EXPIRY TO CONFIRM: GitHub's
+  expiration header said 2026-09-21 20:12:57 UTC for BOTH tokens; Greg's form said Dec 20 for the classic. If the
+  fine-grained one expires tonight, a new value goes in with the same put_parameter (any shell with the Claude IAM key).
+- FIRST PROBE of the next chat: `frankie_box_run.yml` script `frankie_box_session.sh` variables `ACTION=status`
+  (the run also prints which repository secrets are set, names only). Expect phase writing or pushing, or done.
+
+CHAT 5 LESSONS, each measured: the Claude Code container has NO AWS identity (proxy placeholders; STS
+InvalidClientTokenId) until a pair is installed at the D48 locations; the agent proxy refuses the GitHub Actions
+secrets API (403) and api.github.com for the runpodctl installer; the repo is PUBLIC, so a secret must never travel
+through a workflow input; runpodctl 2.14 takes the Hub LISTING id for `--hub-id` and ONE `--gpu-id`; SSM runs box
+scripts under dash (no `[[`); the workflow's `variables` take no spaces; GitHub's `x-oauth-scopes` header is not the
+authority on a token's rights (empty, yet the push worked; `GET /repos/.../Markets` `permissions.push` is).
+
+GREG'S OPEN CALLS: the three trunk registrations (`frankie_box_fetch_response.yml`, `frankie_serverless_reading.yml`,
+`frankie_box_codecs_ci.yml`: workflow_dispatch resolves the file on the DEFAULT branch, which is the trunk
+`claude/kalshi-s79-kickoff-ij8t9o`); `RUNPOD_API_KEY` in the Claude Code environment configuration; the token
+expiry above; rotation of everything pasted into chat 5 (held by Greg).
+
 ## READ FIRST (13:5xZ 09-21, chat 5): THE READ IS RUNNING ON THE RENDER, 4 PARTS (restart 3 = run 35608016668, status 35608448008); the serverless reading endpoint k1sqt0haffm61y is LIVE (15:5xZ); the Pod read all 4 parts and is merging
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later). Run `using-agent-skills`
