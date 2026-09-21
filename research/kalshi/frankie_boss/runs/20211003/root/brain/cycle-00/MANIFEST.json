@@ -1,0 +1,48 @@
+{
+ "at": 1790010308.3083854,
+ "cycle": "00",
+ "entries": [
+  {
+   "bytes": 145236,
+   "include": true,
+   "kind": "calculation findings: the derivation digest, every layer of the pin",
+   "name": "derivation-digest-full.md",
+   "sha256": "1dbb75a08c3dd1740ff430842c813298454067ba633266dd49637eb0bd783004",
+   "source": "/opt/frankie-box/session/work/derivation-digest-full.md"
+  },
+  {
+   "bytes": 103515,
+   "include": true,
+   "kind": "calculation findings: the accounting entry and the output ledgers",
+   "name": "accounting-and-ledgers.md",
+   "sha256": "1c50dfde02e75ab3f519ba22e9c16fc9c3326ab7be4ee355273f1c830d787121",
+   "source": "/opt/frankie-box/session/out/response.json"
+  },
+  {
+   "bytes": 27568,
+   "include": true,
+   "kind": "the run analysis",
+   "name": "analysis.md",
+   "sha256": "82c562feb4c4b76c677427e7e816a177bcd7becc469d1a0380091721ba0fea74",
+   "source": "/opt/frankie-box/session/out/analysis.md"
+  },
+  {
+   "bytes": 3613,
+   "include": true,
+   "kind": "calculation findings: the derivation receipt (layer statuses, producers, digests)",
+   "name": "derive.md",
+   "sha256": "864ba0b039d57294f0531db25133fa584cb1093d3fe523bb8029b85eb9e059b3",
+   "source": "/opt/frankie-box/session/work/derive.json"
+  },
+  {
+   "bytes": 698,
+   "include": false,
+   "kind": "witness of the derived files (their content is in the digest)",
+   "name": "derived-files.md",
+   "sha256": "5fc9ad9e8659a512520ae8e3636c269f7ad2e1cc3a020ff99d582419ff64c9dc",
+   "source": "/opt/frankie-box/session/work/derived"
+  }
+ ],
+ "note": "Greg, 2026-09-21: the calculation findings of cycles 0 and 1 are in the brain without a doubt; other documents case by case: set include to false to keep an entry out of the next corpus, add a file with include true to bring one in.",
+ "schema": "FRANKIE_BOX_BRAIN_ENTRY_V1"
+}
