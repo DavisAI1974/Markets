@@ -37,7 +37,9 @@ API = 'api.runpod.ai'
 MANIFEST = Path(__file__).resolve().parents[1] / 'granite_artifacts_manifest.json'
 SERVED_MODEL_NAME = 'granite42-smoke'          # the retained identity's served name (granite_retained_lifecycle)
 CONTEXT = 131072
-HUB_WORKER = 'runpod-workers/worker-vllm'
+HUB_WORKER = 'cm8h09d9n000008jvh2rqdsmb'      # the Hub LISTING id of runpod-workers/worker-vllm (`runpodctl hub get runpod-workers/worker-vllm` .id):
+HUB_WORKER_REPO = 'runpod-workers/worker-vllm'  # 2026-09-21 15:3xZ, runpodctl 2.14.0: --hub-id with the owner/name form answered "failed to get hub listing:
+                                                # graphql error"; the id created endpoint k1sqt0haffm61y. The golden path's owner/name form is not what 2.14 takes.
 EXECUTION_TIMEOUT_S_DEFAULT = 4 * 3600         # one uncapped part is ~36 min on an L40S; a ceiling on wall time, never a cap on output
 
 
@@ -174,7 +176,7 @@ def create(args):
     box = dict(schema='FRANKIE_BOX_SERVERLESS_READING_V1', endpoint_id=endpoint_id, workers=int(args.workers_max) * int(args.seqs_per_worker),
                gpu_type_ids=gpus, model_repository=repo, model_revision=rev, served_model_name=SERVED_MODEL_NAME,
                context=CONTEXT, execution_timeout_ms=int(args.execution_timeout) * 1000, seqs_per_worker=int(args.seqs_per_worker))
-    receipt = dict(schema='FRANKIE_SERVERLESS_READING_ENDPOINT_RECEIPT_V1', at=time.time(), hub_worker=HUB_WORKER,
+    receipt = dict(schema='FRANKIE_SERVERLESS_READING_ENDPOINT_RECEIPT_V1', at=time.time(), hub_worker=HUB_WORKER, hub_repo=HUB_WORKER_REPO,
                    model_reference=f'https://huggingface.co/{repo}:{rev}', endpoint=scrub(created),
                    env={k: v for k, v in env.items() if k != 'HF_TOKEN'}, box_config=box)
     work = Path(args.work_dir); work.mkdir(parents=True, exist_ok=True)
