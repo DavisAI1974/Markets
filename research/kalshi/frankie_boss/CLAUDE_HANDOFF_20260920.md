@@ -2134,3 +2134,27 @@ restart that gives the observer boot frames newer than its own record. Host adva
 dispatch with a short sha was refused by the script's own 40-hex check, run 35555067926, host untouched). Then: the
 code-bound state supersede (host-identity is bound to 0bb96bfa), readiness delivery for the observer run, ONE pipeline
 dispatch.
+
+### 02:47Z: ADOPTED. Readiness published for g7y3g2w1kor4l3 (observer run 35555116474); host at 35f857f0; code-bound state superseded; readiness delivery dispatched
+
+Observer run 35555116474 (`retained-prepare`, on 35f857f0): admitted, wrote the new generation's
+`retained-start-intent.json` (S3 last_modified 02:44:55Z; `start.json` `observe_migrated_start`, startup_sha256
+93b5bc6f...). Restart control run 35555118454 saw the key at 02:44:56Z (`key_seen_at 1789958696.80`) and the v2 restart
+was accepted (HTTP 200, `submitted_at 1789958697.20`, Pod stayed RUNNING; receipt `FRANKIE_POD_RESTART_RECEIPT_V1`).
+Fresh boot frames followed: disk event 02:45:04Z, `/health` 200 at 02:46:56Z (`observed_at 1789958816.61`), artifact
+`retained-granite-ready-35555116474` uploaded 02:47:00Z (9 files). Verified from the artifact: `pod-info.json` sha256
+bdad2896... = INFO_SHA256 of the re-mint; `service-ready.json` outcome `service_ready`, `inference_sent false`, runtime
+sha 0485f640...; `service-pins.json` request a7b72cf9, admission 92,439 input / 38,633 output in 131,072, tokenizer
+51e3c309... (identical to every earlier admission of this request); `run.json` deadline null, pod g7y3g2w1kor4l3;
+`startup-intent.json` carries the initial-start witness (`admitted_at 1789916729.1158657`, host instance 6d02c1fc...).
+The prepare job now holds (observes until the local stop; never stops the Pod).
+
+Host advance run 35555130595 (02:43:52Z): tools checkout 0bb96bfa -> 35f857f0 (descendant check passed).
+`frankie_host_supersede_code_bound_state.yml` run 35555381278 (02:49:19Z): host-identity and execution-identity bound to
+0bb96bfa, tools HEAD 35f857f0, `stale true`; moved to `superseded/actual-feedback-run-20260921T024919Z-code-0bb96bfa.../`:
+initialization.c15.json (e97bf680..., 7,416 B), training.sqlite (2c48cf50..., 107,556,864 B), training-witnesses/,
+host-identity.c15.json (f2538006..., 36,455 B), execution/execution-identity.c15.json (809354fb..., 426 B); kept
+host-instance.c15.json and native-host-runtime.json; the five cycle-00 records were already absent (superseded whole);
+receipt `superseded-code-bound-state-20260921T024919Z.json` (`FRANKIE_CODE_BOUND_STATE_SUPERSEDED_V1`).
+`frankie_deliver_readiness.yml` dispatched 02:51Z (ready_run_id 35555116474, request
+`frankie-boss-sunday-two-cycle-20260919-cycle-00`, sha a7b72cf9). Then ONE `frankie_journal_stack.yml` dispatch.
