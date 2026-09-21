@@ -225,3 +225,21 @@ def test_the_host_ingest_path_is_reconciled_on_the_same_count(tmp_path):
     with pytest.raises(dp.StageRefused, match='reduced 1994358 records; 20211004 staged 57027'):
         pipeline.resume()
     assert pipeline.receipt('ingest') is None
+
+
+def test_cycle_limit_seam_gates_the_prefix_count_and_refuses_out_of_range_limits(tmp_path):
+    # The pre-existing seam (ship finding, 2026-09-20): a batch smaller than the day needs only as many prefixes as
+    # cycles it runs, never fewer; the limit itself is 1..19.
+    for bad in (0, 20, '2', None):
+        with pytest.raises(ValueError, match='cycle_limit must be from 1 through 19'):
+            dp.DayPipeline(dict(CONFIG, ingest_on='host'), '20211003', runner=runner([]), runs_root=tmp_path, cycle_limit=bad)
+    pipeline = dp.DayPipeline(dict(CONFIG, ingest_on='host', minimum_prefixes=19), '20211003', runner=runner([]),
+                             runs_root=tmp_path, cycle_limit=2)
+    assert pipeline.cycle_limit == 2
+    with pytest.raises(dp.StageRefused, match='prefix'):
+        pipeline.gate_of('schedule-prefixes', 'PIPELINE_RECEIPT ' + json.dumps(dict(prefix_count=1, prefixes_sha256='a' * 64)))
+    gate = pipeline.gate_of('schedule-prefixes', 'PIPELINE_RECEIPT ' + json.dumps(dict(prefix_count=2, prefixes_sha256='a' * 64)))
+    assert gate['prefix_count'] == 2
+    full = dp.DayPipeline(dict(CONFIG, ingest_on='host', minimum_prefixes=19), '20211003', runner=runner([]), runs_root=tmp_path)
+    with pytest.raises(dp.StageRefused, match='prefix'):
+        full.gate_of('schedule-prefixes', 'PIPELINE_RECEIPT ' + json.dumps(dict(prefix_count=2, prefixes_sha256='a' * 64)))
