@@ -40,7 +40,8 @@ MODE=identity` on the box (one run per stack, ~1 min). (3) Keep the proof gates:
 does not parse back; `reconstruct_proof` must stay `all_exact` on every member; a change that cannot be proven exact is
 not a layer.
 
-STILL GREG'S (unchanged): tensor_mode (identity recommended); `frankie_box_session.sh ACTION=restart_session
+12:3xZ: tensor_mode = IDENTITY is Greg's call, in code (4be7f4cb) and on the box (reading.json, run 35599036676).
+STILL GREG'S (unchanged): `frankie_box_session.sh ACTION=restart_session
 REASON=lossless-render` to apply everything; the GitHub PAT into SSM `/markets/frankie/github-token`
 (`aws ssm put-parameter --region us-east-2 --name /markets/frankie/github-token --type SecureString --value '<PAT>'`);
 trunk registration of `frankie_box_fetch_response.yml` and `frankie_serverless_reading.yml` (or the MCP route after

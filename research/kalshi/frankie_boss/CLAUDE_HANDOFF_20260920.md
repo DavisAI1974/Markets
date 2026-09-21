@@ -2941,3 +2941,14 @@ tables". Answered: his RunPod sign-in is not needed for anything in flight (the 
 is needed only to create the serverless endpoint through the MCP. The drop-in's top block (12:2xZ) carries the state, the
 numbers, the remaining weights by category and the directives; CLAUDE.md's STATE line and KALSHI_TRADING.md updated.
 
+### 12:3xZ 09-21: tensor_mode = identity (Greg: "Do your plan for the tensors"); the RunPod console login is not the MCP sign-in
+
+tensor_mode identity is now the default in code (4be7f4cb: `frankie_box_boss_session.py`, `frankie_box_serverless_config.sh`)
+and written on the box: run 35599036676, `/opt/frankie-box/reading.json` = `{"schema":"FRANKIE_BOX_READING_CONFIG_V1",
+"tensor_mode":"identity",...}`. The running session reads it at its next corpus render (`restart_session`, Greg's word).
+Greg signed in to console.runpod.io (screenshot 12:3xZ: the retained granite-smoke Pod, L40S x1, US-MO-1, $1.11/hr). That
+is the web console; the MCP server this session holds (`plugin:runpod:runpod`, https://mcp.getrunpod.io/) still reports
+"Needs authentication": its OAuth grant is made INSIDE Claude Code (`/mcp` -> runpod -> Sign in with Runpod), which opens
+a RunPod authorization page in the browser -- one click now that the console session exists. Until then the MCP tools are
+not in this session's tool list (checked), and the endpoint route stays runpodctl/workflow.
+
