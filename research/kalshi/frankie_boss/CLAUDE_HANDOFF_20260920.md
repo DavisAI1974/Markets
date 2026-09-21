@@ -2663,3 +2663,18 @@ rule. Fix (this commit): every cap removed; `boss()` computes max_tokens as CONT
 REFUSES any caller cap; the note/merge prompts say "no length limit"; notes are keyed by corpus AND output policy
 (`notes-<sha>-unbounded/`) so the four capped notes are never reused. Session unit restarted with a receipt; the
 Pod, the heartbeat and every earlier receipt (verify, labels, engine, derive) untouched.
+
+### 10:3xZ 09-21: GREG: "Take all of those limits out!!!" ALL of them out of the box session (0f780503)
+
+Beyond the six output caps (6cb5b346): the sampling of decoded machine-data members (every member is now read WHOLE;
+a binary member is witnessed because it has no text), the row cuts and the 90 KB truncation of Frankie's own
+derivation digest (whole, all 2,282 frames and groups, every trade row and second; and it is a member of the reading
+corpus, so the BOSS reads his own derivation as evidence), the failure list cap in the derivation receipt, and the
+word-count phrasing in the note and merge prompts. What remains is the physical service context (131,072 tokens):
+it sets the size of one reading part, and the writing calls carry the instruction, ALL of the merged notes and the
+digest from its start as far as that context admits; `writing.json` records `digest_in_writing_calls`
+(bytes_total, bytes_in_writing_calls). The consequence, stated plainly: the corpus is the whole decoded payload,
+about 20 MB, on the order of 150 reading parts at a few minutes each, so the reading stage is hours, not thirty
+minutes; that is what no limits costs and it is the right cost. Session unit restarted with a receipt
+(REASON=all-limits-out-0f780503); derive re-runs to regenerate the whole digest (seconds); verify, labels, engine
+untouched; Pod and heartbeat untouched.
