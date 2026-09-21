@@ -39,10 +39,17 @@ only): the cycle-0 data plane and the request restored and pinned (`/opt/frankie
 (runs 35577803017, 35578041886). Task document rewritten for the box (`operations/ROOT_CYCLE_00_TASK_20260920.md`,
 no AWS pair, no shared identity); session runner, heartbeat and pusher under `deploy/aws/box/`.
 GREG, 09:0xZ: NO API KEYS, NO EXTERNAL MODEL. THE ENGINE IS THE BOSS. Every API/model mention was taken out of the
-box harness (the session runner refuses to start until the BOSS engine call is wired; Greg's call which BOSS
-surface answers: the retained Granite service on the Pod, or the native BOSS). Still needed: (1)
-`/markets/frankie/github-token` SecureString in us-east-2 (the role reads SecureStrings there already); (2)
-optional PutObject on the progress prefix. Nothing on the native host was touched; the runner still holds.
+box harness. GREG, 09:2xZ: "The boss takes claudes and sols place. There should be no outside llms running this.
+The boss is intended to be a specialized vllm" / "That's what this training that we're doing is for". WIRED
+(this branch, 09:4xZ): `deploy/aws/box/frankie_box_boss_session.py`, the session with the BOSS as the engine: the
+retained Granite vLLM on Pod g7y3g2w1kor4l3 over jobs_v1 (the host critic's transport, same helpers imported);
+verify, labels by code (the source contract's one-tick detector; 29/29 of the first run's labels reproduced),
+engine reach, derive (the cycle-0 pin producers on prefix-00 rows), reading (all of prompt.md in bounded parts,
+notes merged), writing (analysis, accounting, ten ledgers; the four files), push. `frankie_box_session.sh`
+preflight/start run it. Still needed from Greg: (1) `/markets/frankie/github-token` SecureString in us-east-2;
+(2) the Pod g7y3g2w1kor4l3 RUNNING (EXITED at 09:00Z; a Pod start is his word; read
+`~/.claude/skills/runpod-usage/reference/` first); (3) optional PutObject on the progress prefix. Nothing on the
+native host was touched; the runner still holds.
 
 ## READ FIRST (08:00Z 09-21 handoff): FRANKIE'S BOX IS UP AND EMPTY; JOB 0 = HIS HARNESS; the run HOLDS for his response
 

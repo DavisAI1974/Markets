@@ -1,9 +1,10 @@
 # Handoff for ChatGPT: start Frankie's cycle-0 session on his box (2026-09-21)
 
 Everything is built and verified on the box i-035994afa8bdf66a5 (us-east-1, Ubuntu, 32 vCPU). The engine is the
-BOSS (no external model, no API key). The session needs one git credential and the BOSS engine call wired on the
-box. Your job: get Greg through the grant below, then preflight, start, watch, record. Essentials only; no tests,
-no gates.
+BOSS: the retained Granite vLLM on RunPod Pod g7y3g2w1kor4l3, reached over the durable jobs_v1 transport by
+`deploy/aws/box/frankie_box_boss_session.py` (no external model, no API key). The session needs the git credential
+below and the Pod RUNNING (Greg's word). Your job: get Greg through the grant below and the Pod start, then preflight,
+start, watch, record. Essentials only; no tests, no gates.
 
 Branch for every dispatch: `claude/cycle-0-frankie-box-rerun-od5sxk`. All actions are GitHub `workflow_dispatch`
 on DavisAI1974/Markets (Actions tab). Never stop, resize or terminate any box or Pod. Never touch the native host
@@ -32,8 +33,11 @@ Workflow `Frankie box run` (frankie_box_run.yml), ref `claude/cycle-0-frankie-bo
 - script: `deploy/aws/box/frankie_box_session.sh`
 - variables: `ACTION=preflight`
 - timeout: `600`
-Expected in the job summary once the BOSS engine call is wired on the box: `preflight: OK`. Until then it prints
-`engine: BOSS (not wired on the box yet)` and refuses; nothing starts.
+Expected in the job summary: `verified: request 1b777cf28c34415c ...`, `labels: 29 timing labels ...`, `engine: BOSS
+granite42-smoke on Pod g7y3g2w1kor4l3 healthy (jobs_v1)`, then `preflight: OK`. A `REFUSED:` line names the one thing
+missing; the two that need Greg: the Pod g7y3g2w1kor4l3 must be RUNNING (it was EXITED at 09:00Z; a Pod start is
+Greg's word, never the session's), and the SecureString `/markets/frankie/granite-service` (already readable by the
+box role, verified). Nothing starts on preflight.
 
 ## Step 3: start the session
 

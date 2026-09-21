@@ -2,8 +2,8 @@
 # heartbeat beside it. THE ENGINE IS THE BOSS (Greg, 2026-09-21: no keys, no external model, that is why the
 # BOSS exists). The session reads the task document (research/kalshi/frankie_boss/operations/
 # ROOT_CYCLE_00_TASK_20260920.md, box edition) from this branch's checkout on the box; the calculations are
-# Frankie's, run against the restored rows with the staged producers. The BOSS engine call is wired next (Greg's
-# call which BOSS surface answers: the retained Granite service or the native BOSS); until then `start` refuses.
+# Frankie's, run against the restored rows with the staged producers. The engine is the BOSS: frankie_box_boss_session.py
+# (the retained Granite vLLM on the RunPod Pod over jobs_v1); `preflight` proves the reach and starts nothing.
 # Inputs: DAY (20211003), CYCLE (00), MARKETS_REF (this branch), ACTION (start | status | preflight | verify;
 # default status). Never stops a running session (that is Greg's word).
 set -u
@@ -21,8 +21,11 @@ status() {
   systemctl is-active "frankie-heartbeat-$CYCLE.service" 2>/dev/null || echo "(no heartbeat service)"
 }
 preflight() {
-  # The BOSS engine call is not wired yet (Greg's call which BOSS surface answers); the preflight says so and refuses.
-  echo "engine: BOSS (not wired on the box yet)"; echo "preflight: REFUSED (the BOSS engine call is wired next)"; return 1
+  # The engine is the BOSS: the retained Granite vLLM on Pod g7y3g2w1kor4l3 over jobs_v1 (frankie_box_boss_session.py).
+  # Verifies the request against the authored source contract, computes the timing labels by code, reads the Pod
+  # record through the SecureString /markets/frankie/granite-service (never printed) and probes /health. Starts nothing.
+  echo "engine: BOSS (retained Granite vLLM, jobs_v1; frankie_box_boss_session.py --stage preflight)"
+  "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage preflight
 }
 verify() {
   echo "### verify (no session started): request digest through the adapter, the task document, the pusher's token reach"
@@ -56,7 +59,6 @@ case "$ACTION" in
     git -C "$ROOT/markets" fetch -q --depth 1 origin "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD
     TASK="$ROOT/markets/research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md"; [ -s "$TASK" ] || { echo "task document missing at $TASK"; exit 2; }
     preflight || exit 3
-    # unreachable until the BOSS engine is wired; kept so the rest of the start (digest, phase, heartbeat) is in place
     "$ROOT/venv/bin/python" -c "
 import json,sys; sys.path.insert(0,'$ROOT/markets')
 from research.kalshi.frankie_boss.frankie_principal_adapter import digest
@@ -66,7 +68,11 @@ print(digest(json.loads(open('$ROOT/request/session-request.json','rb').read()))
     systemctl reset-failed "frankie-heartbeat-$CYCLE.service" 2>/dev/null
     systemd-run --unit "frankie-heartbeat-$CYCLE" --collect -p WorkingDirectory="$S" -p StandardOutput=append:"$ROOT/logs/heartbeat-$CYCLE.log" -p StandardError=append:"$ROOT/logs/heartbeat-$CYCLE.log" \
       "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_heartbeat.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --base "$MARKETS_REF" >/dev/null 2>&1 || echo "heartbeat service start failed"
-    echo "the BOSS engine unit is wired next; nothing started"; exit 3
+    systemctl reset-failed "$UNIT.service" 2>/dev/null
+    systemd-run --unit "$UNIT" --collect -p WorkingDirectory="$S" -p StandardOutput=append:"$ROOT/logs/session-$CYCLE.log" -p StandardError=append:"$ROOT/logs/session-$CYCLE.log" \
+      "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage run >/dev/null 2>&1 \
+      && echo "$UNIT started (the BOSS session; hours; watch the heartbeat and the session log)" || { echo "$UNIT start failed"; exit 3; }
+    sleep 5
     status ;;
   *) echo "ACTION must be start, status, preflight or verify"; exit 2 ;;
 esac

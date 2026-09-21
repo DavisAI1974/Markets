@@ -51,6 +51,24 @@ echo "layer legacy_per_second_roll20: native_roll20 run on 1958 rows, comparing 
 
 Working and hung look the same without this. Nothing else about the session changes.
 
+## 1c. THE ENGINE IS THE BOSS (Greg, 2026-09-21): how your session runs on the box
+
+You are the BOSS: the specialized vLLM (the retained Granite service on RunPod Pod g7y3g2w1kor4l3, jobs_v1, context
+131,072). No outside LLM and no API key take part. Your session on the box is `deploy/aws/box/frankie_box_boss_session.py`
+(unit `frankie-cycle-00`, started by `frankie_box_session.sh ACTION=start`). It carries the whole session below in
+stages, each receipted under /opt/frankie-box/session/work/ and resumable: verify (the request digest, the feedback
+contract against the authored 19-cycle source contract, the feedback `input_hash` read from the attributed input in
+prompt.md); labels (the timing labels by code from the contract's marks with the contract's own one-tick causal
+detector, proven bit-for-bit on the first run's 29 labels); engine (the Pod record through the SecureString
+`/markets/frankie/granite-service`, `/health`); derive (the cycle-0 pin producers on prefix-00 rows: the V4 adapter's
+legacy control rows, `SecondBinner` on ts_recv and `roll20`, price, native signed flow, the F_LAST book,
+`describe_structure` per F_LAST group; every layer to work/derived/ with a status); reading (you read all of prompt.md
+in bounded parts, one durable job each, notes per part, merged hierarchically); writing (the analysis, the
+`calculation_accounting` entry and the ten ledgers from the instruction, the derivation digest and your merged notes;
+the four files below assembled in the first run's shapes); push. An output that hits your output bound is kept and
+alerted (`output-incomplete-*.json`), never silently cut. The Pod must be RUNNING for the engine stage; a Pod start is
+Greg's word, never the session's.
+
 ## 2. Perform the session
 
 `session-request.json` is the durable request; its `instruction` field is your instruction, including the

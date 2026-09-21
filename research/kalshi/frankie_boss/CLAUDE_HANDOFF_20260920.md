@@ -2547,3 +2547,48 @@ service on Pod g7y3g2w1kor4l3 (EXITED; a Pod start on his word; the request is a
 131,072), or the native BOSS on the host (whose runner holds for this very response). Under either, the producers
 run on the box as a scripted step against prefix-00 and their outputs are attached as evidence; the BOSS derives and
 writes. The one remaining grant: `/markets/frankie/github-token` SecureString in us-east-2.
+
+### 09:4xZ 09-21: THE BOSS IS THE ENGINE, WIRED ON THE BOX: frankie_box_boss_session.py
+
+Greg: "Sol was just temporary until we got the boss installed. The boss takes claudes and sols place. There should be
+no outside llms running this. The boss is intended to be a specialized vllm" and, on wiring it as the principal
+engine, "That's what this training that we're doing is for". The open question of 09:0xZ is closed: the BOSS surface
+is the retained Granite vLLM on Pod g7y3g2w1kor4l3, reached the way the host's critic reaches it (jobs_v1: one durable
+job per call, `https_exchange_jobs` and `_final_text` imported from the frankie_boss modules, the account key from the
+SecureString `/markets/frankie/granite-service`, the Pod's own service key and served model from its record, never
+printed). What the session (`deploy/aws/box/frankie_box_boss_session.py`, unit `frankie-cycle-00`) does, receipted per
+stage under `/opt/frankie-box/session/work/` and resumable:
+- verify: the request digest; the request's feedback contract against the authored 19-cycle source contract in the
+  package (`contract_sha256` must match the file, the delivered session must equal the authored `forecast_session`);
+  the feedback `input_hash` read from the attributed-input block of prompt.md (exactly one value or refuse: the
+  recorder would reject a guess).
+- labels BY CODE: the contract's `timing_policy.causal_detector` and `teacher_forcing` implemented on the next cycle's
+  authored marks (the opening plus known_marks through cycle 1's cutoff, which is cycle 0's learning cutoff): one-tick
+  direction, running extreme, a one-tick reversal emits the confirmation mark; labels are the confirmations strictly
+  after event_cutoff-open whose receive is at or before the learning cutoff; `available_ns` = the learning cutoff.
+  Proven: the first run's 29 labels reproduced bit for bit from the contract (scratch check, and the script's own
+  verify+labels stages run locally against the package request: `labels equal first run: True True`). gap null, path
+  [] (the query policy trains neither during the timing stage).
+- engine: refuses while the Pod is not RUNNING (a Pod start is Greg's word) or `/health` is not ok.
+- derive (option A, the calculations are Frankie's): prefix-00.sqlite read with CompactReader (seal count/head; head
+  compared with the request's source_hash and recorded), INPUT observations through the pinned `V4MboAdapter` ->
+  legacy control rows -> `native_roll20.SecondBinner(clock=ts_recv)` and `roll20` (legacy_per_second_roll20 with its
+  crosswalk state hash), trade rows (legacy_price), per-second buy/sell (legacy_native_signed_flow), the F_LAST book
+  through `book_values`/`book_transition` (legacy_book_imbalance), `describe_structure` per F_LAST group
+  (legacy_structure_observables). Every layer to work/derived/<layer>.json with derived/could_not and the producer;
+  a derivation digest (<= 90 KB) for the BOSS's reading.
+- reading: prompt.md (28.3 MB) in parts of <= 140,000 bytes cut at newlines (about 87k tokens at the conservative
+  1.6 bytes/token of the proven packet), one durable job per part with a fixed notes instruction (max_tokens 4096),
+  notes merged hierarchically within the same bound. Resumable per part.
+- writing: analysis (max_tokens 16384), the `calculation_accounting` entry (JSON; the harness adds the derivation
+  statuses and any layer the BOSS omitted, so no layer is missing), the ten ledgers (one job each, JSON; an
+  unparseable output is filed with its reason and raw text, never omitted). response.json / analysis.md /
+  host-session-record.json / host-attestation.json in the first run's shapes; `model_identity_as_reported_by_session`
+  = the completion's `model` field plus the Pod and transport; `session_id boss:frankie-box:i-035994afa8bdf66a5:cycle-00`.
+- push: `frankie_box_push_response.sh` (unchanged); phase `done`.
+Output-incomplete completions are kept and alerted (`output-incomplete-*.json`), per the standing Granite rule.
+`frankie_box_session.sh` preflight runs the script's verify+labels+engine stages and starts nothing; start launches
+the unit beside the heartbeat. No tokenizer on the box (the proxy exposes only /health and /v1/jobs), so admission is
+by the byte estimate; a part the service refuses for context shows up as a job with result_status != 200 in its
+outcome.json (the note names it; halving CHUNK_BYTES is the fix). Not started: the Pod is EXITED and the git token is
+not granted. Nothing deleted; nothing on the native host touched.
