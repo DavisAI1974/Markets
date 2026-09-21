@@ -3319,3 +3319,11 @@ Run 35621233900 (15:47Z): repository secrets set: RUNPOD_API_KEY=true (Greg was 
 (the historical pull workflow holds it elsewhere or not at all; not this chat's question). Session at 15:46:37Z:
 `merging level 0: 2/2 done, 0 in flight (serverless x8)`; heartbeat beats 1790005258 and 1790005560 pushed (`git`).
 Next on the box: the final merge, then writing on the Pod, then pushing. CHAT 5 ENDS HERE.
+
+### 16:3xZ 09-21: CORRECTION AT CLOSE (Greg): "That's absolutely not accurate about the keys"
+
+Greg rejects chat 5's account of the keys (the close-out's claims about what survives, what the next chat needs
+from him, and the token expiry read off GitHub's header). The key question is DEFERRED TO THE NEXT SESSION on his
+word; nothing key-related is to be acted on from chat 5's records without asking him. The measured facts that stand
+are the SSM parameters as read back, the heartbeat's pushes, and the names-only repository-secrets report. The
+drop-in's top block and the CLAUDE.md state line are corrected to say exactly that.

@@ -6,7 +6,8 @@
 - **STATE 2026-09-21 16:2xZ (chat 5 CLOSED, Greg: "We have to start new chat"): READ FIRST the 16:2xZ block atop
   `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`. The read is DONE (4 parts on the Pod), the merges run on
   serverless endpoint k1sqt0haffm61y (H100), then writing on the Pod, then the push; the git token (fine-grained, SSM
-  version 2) works, expiry to confirm; the container holds no key after this chat. First probe: `ACTION=status`.**
+  version 2) pushes. Greg at close: chat 5's account of the KEYS is not accurate; the key question is deferred to the
+  next session; ask him before acting on any key statement. First probe: `ACTION=status`.**
 - **STATE 2026-09-21 13:5xZ (chat 5): THE ROOT READ IS RUNNING ON THE RENDER (Greg: "get the root read going";
   restart 3 = run 35608016668, `reading: 4 parts`): the READ was 163 parts of 87k tokens, then 4-5, and is 4 (248,111
   tokens: digest 146,765 -> 75,562; members 151,705 -> 106,248; head 68,506 -> 66,301) after seven measured stacks and

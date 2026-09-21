@@ -5,10 +5,10 @@
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later). Run `using-agent-skills`
 and `git-workflow-and-versioning` first; do not stop and restart shells. FIRST COMMAND after the checkout:
 `bash deploy/runpod/mcp_connect.sh` (it now also installs runpodctl from the GitHub release when cli.runpod.net's
-installer fails); the key comes from the environment (`RUNPOD_API_KEY`) or, failing that, ask Greg. Nothing survives
-this container: the RunPod key, the `Claude` IAM pair and the two GitHub PATs all lived in `~/.config/markets/*.env`
-(chmod 600) and are gone; Greg re-supplies what the chat needs (he pasted all of them into chat 5 by his own choice and
-holds rotation for now). Read this block, then `CLAUDE_HANDOFF_20260920.md` from 15:0xZ (every run id), then the 13:5xZ
+installer fails). KEYS: Greg at close (16:3xZ): chat 5's account of the keys is NOT accurate and the key question is
+DEFERRED TO THE NEXT SESSION. Do not act on any key statement in chat 5's records; ask Greg first. What is measured and
+stands: SSM `/markets/frankie/runpod-serverless` readable by the box role; SSM `/markets/frankie/github-token` version 2
+(fine-grained PAT) and the heartbeat pushing; repository secrets RUNPOD_API_KEY and the AWS pair present. Read this block, then `CLAUDE_HANDOFF_20260920.md` from 15:0xZ (every run id), then the 13:5xZ
 block below for the render work that made the read 4 parts.
 
 STATE OF THE RUN (session unit frankie-cycle-00 on box i-035994afa8bdf66a5, restart 4 at 15:18:00Z):
@@ -21,9 +21,8 @@ STATE OF THE RUN (session unit frankie-cycle-00 on box i-035994afa8bdf66a5, rest
   to zero 120 s after its last job. Receipt: `research/kalshi/frankie_boss/receipts/serverless_reading_endpoint_20260921.json`.
 - GIT CHAIN CLOSED: SSM `/markets/frankie/github-token` (us-east-2) = version 2, the FINE-GRAINED PAT (Markets only);
   the heartbeat pushes `root/cycle-00-progress` (tip ef16c1f9 at 15:4xZ; it still holds the classic token in memory
-  until its next start, and 97473b99 makes it re-read SSM after any failed push). EXPIRY TO CONFIRM: GitHub's
-  expiration header said 2026-09-21 20:12:57 UTC for BOTH tokens; Greg's form said Dec 20 for the classic. If the
-  fine-grained one expires tonight, a new value goes in with the same put_parameter (any shell with the Claude IAM key).
+  until its next start, and 97473b99 makes it re-read SSM after any failed push). Token expiry: deferred with the rest
+  of the key question (Greg's word); GitHub's expiration header is recorded in the handoff 16:2xZ as an observation only.
 - REPOSITORY SECRETS (names-only report on every box run since eab049c1, measured 15:47Z): RUNPOD_API_KEY=true,
   AWS pair=true, FRANKIE_GITHUB_TOKEN=false, DATABENTO_API_KEY=false. Last session line 15:46:37Z: `merging level 0:
   2/2 done` (the final merge, then writing, then pushing follow).
@@ -39,8 +38,7 @@ authority on a token's rights (empty, yet the push worked; `GET /repos/.../Marke
 
 GREG'S OPEN CALLS: the three trunk registrations (`frankie_box_fetch_response.yml`, `frankie_serverless_reading.yml`,
 `frankie_box_codecs_ci.yml`: workflow_dispatch resolves the file on the DEFAULT branch, which is the trunk
-`claude/kalshi-s79-kickoff-ij8t9o`); `RUNPOD_API_KEY` in the Claude Code environment configuration; the token
-expiry above; rotation of everything pasted into chat 5 (held by Greg).
+`claude/kalshi-s79-kickoff-ij8t9o`); THE KEY QUESTION as a whole (deferred to the next session on Greg's word).
 
 ## READ FIRST (13:5xZ 09-21, chat 5): THE READ IS RUNNING ON THE RENDER, 4 PARTS (restart 3 = run 35608016668, status 35608448008); the serverless reading endpoint k1sqt0haffm61y is LIVE (15:5xZ); the Pod read all 4 parts and is merging
 
