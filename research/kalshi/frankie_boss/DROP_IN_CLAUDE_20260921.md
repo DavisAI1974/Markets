@@ -34,6 +34,14 @@ STATE OF THE RUN (session unit frankie-cycle-00 on box i-035994afa8bdf66a5, rest
   `research/kalshi/frankie_boss/KEY_REGISTRY.md` (never values; the repo is public). The chat container holds no key
   until Greg sets RUNPOD_API_KEY + MARKETS_AWS_* in the Claude Code environment configuration; until then use the
   trunk-registered workflows (five carry the RunPod secret) and box scripts (the box reads SSM).
+- CHAT 6 CODE FOR CYCLE 1 (all on this branch; the session checks it out at start): the NOTES FIX (reader guard:
+  refusal/empty/runaway/incomplete notes retried once then read in halves, runaway tails de-looped; merge guard: no
+  merge output that loses a hash is used; merge prompt never drops a group), the DOCS bundle (every session document
+  as Markdown, published with the four files; DOCS_ONLY=1 for a cycle already run) and FRANKIE'S BRAIN
+  (`frankie_box_brain.py`: each cycle's digest + accounting/ledgers + analysis carried into the next corpus;
+  include flags per document in MANIFEST.json). AFTER cycle 0's response lands: `BRAIN_ONLY=1 CYCLE=00` and
+  `DOCS_ONLY=1 CYCLE=00` on frankie_box_push_response.sh (box run) so cycle 1 reads cycle 0's findings.
+  Cycle 0's docs: root/cycle-00-response docs-cycle-00/ (acb0cd73); handoff 16:4xZ-17:0xZ has the loss chain.
 
 CHAT 5 LESSONS, each measured: the Claude Code container has NO AWS identity (proxy placeholders; STS
 InvalidClientTokenId) until a pair is installed at the D48 locations; the agent proxy refuses the GitHub Actions

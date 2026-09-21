@@ -3486,3 +3486,17 @@ incomplete answer kept as returned is DE-LOOPED for the merge (the repeating tai
 stays in the attempt file, nothing deleted); the merge guard keeps inputs on any lost hash; the merge prompt never
 drops a group. Docs builder: the current corpus's notes (from reading-plan.json) are `reading-*`; other notes dirs
 are `superseded-<dir>-*` (the first bundle mixed three corpora's notes under one name; corrected at the next publish).
+
+### 17:0xZ 09-21: GREG: "cycle 0 and 1 calc findings should be in the brain without a doubt; other docs case by case" -- BUILT
+
+Before this, nothing carried the derivation digest forward: the response's lessons hold the analysis, the accounting
+entry and the ten ledgers; the digest stayed on the box; the next request's "prior lessons" come from the host's
+record. Now `frankie_box_brain.py` (commit above): one entry per cycle under `/opt/frankie-box/brain/cycle-<NN>/`
+(derivation digest, accounting + ledgers rendered from response.json, analysis; MANIFEST.json with bytes, sha256 and
+an `include` flag per document). The session writes its entry at the end of writing; at the next cycle it loads
+every earlier cycle's included, sha-verified entries into the reading corpus as members (after the prior cycles'
+merged notes, which the reading ledger already carried), headed as Frankie's own memory; the corpus identity covers
+the included set. The pusher publishes `runs/<day>/root/brain/cycle-<NN>/` with the four files; `BRAIN_ONLY=1
+CYCLE=00` builds and publishes cycle 0's entry once its response.json exists (the running cycle-0 session is old
+code and does not write the entry itself). Case by case = the manifest's include flags (Greg's call per document).
+Cycle 1's corpus grows by cycle 0's digest (145 KB) + accounting/ledgers + analysis, about one more reading part.
