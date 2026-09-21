@@ -3,7 +3,8 @@
 # runs the same shape and binding checks the recorder workflow runs (so a refusal happens here, not there), and pushes
 # them under research/kalshi/frankie_boss/runs/<day>/root/ on a branch cut from BASE. The token comes from SSM
 # SecureString /markets/frankie/github-token (us-east-2) into this process only. Idempotent; never force-pushes.
-# Inputs: DAY (20211003), CYCLE (00), BASE (this branch).
+# Inputs: DAY (20211003), CYCLE (00), BASE (this branch); MAP_URL (optional, set by frankie_box_fetch_response.yml) selects
+# the token-free route: the files are uploaded through presigned PUTs and that workflow commits them.
 set -u
 ROOT=/opt/frankie-box; OUT="$ROOT/session/out"
 DAY="${DAY:-20211003}"; CYCLE="${CYCLE:-00}"; BASE="${BASE:-claude/cycle-0-frankie-box-rerun-od5sxk}"
@@ -36,6 +37,36 @@ hr = a.get('host_record') or {}
 if set(hr) != {'path', 'bytes', 'sha256'} or hr['sha256'] != hashlib.sha256(raw['host-session-record.json']).hexdigest() or int(hr['bytes']) != len(raw['host-session-record.json']): sys.exit('attestation.host_record must pin the record file {path, bytes, sha256}')
 print('shape and binding checks: OK'); print({n: (len(b), hashlib.sha256(b).hexdigest()) for n, b in raw.items()})
 PY
+if [ -n "${MAP_URL:-}" ]; then
+  # Token-free route (2026-09-21; Greg's git token is not on the box yet): frankie_box_fetch_response.yml signed one
+  # short-lived presigned PUT per file into a private map reachable only through MAP_URL. The four files, already
+  # checked above, are uploaded there and THAT WORKFLOW commits them to root/cycle-<NN>-response with its own
+  # credentials after re-running the same checks on what it downloaded. The box's role touches nothing in S3 and no
+  # URL is printed; a receipt with every file's size and sha256 is written beside the push receipts.
+  T="$ROOT/tmp"; mkdir -p "$T"
+  curl -fsS -m 60 --retry 3 -o "$T/response-upload-map.json" "$MAP_URL" || { echo "upload map download failed"; exit 2; }
+  export T
+  "$ROOT/venv/bin/python" - <<'PY' || exit 5
+import hashlib, json, os, subprocess, time
+out, t, root = os.environ['OUT'], os.environ['T'], os.environ['ROOT']
+m = json.load(open(os.path.join(t, 'response-upload-map.json')))
+files = ('response.json', 'analysis.md', 'host-session-record.json', 'host-attestation.json')
+missing = [n for n in files if n not in m or not m[n].get('url')]
+if missing: raise SystemExit(f'upload map lacks {missing}')
+receipt = {}
+for n in files:
+    path = os.path.join(out, n); data = open(path, 'rb').read(); url = m[n]['url']
+    r = subprocess.run(['curl', '-fsS', '-m', '600', '--retry', '3', '-T', path, url], capture_output=True, text=True)
+    if r.returncode: raise SystemExit(f'upload of {n} failed: curl exit {r.returncode}: {r.stderr[-300:].replace(url, "<url>")}')
+    receipt[n] = dict(bytes=len(data), sha256=hashlib.sha256(data).hexdigest(), bucket=m[n].get('bucket'), key=m[n].get('key'))
+    print(f'uploaded {n}: {len(data)} bytes, sha256 {receipt[n]["sha256"]}')
+rec = dict(schema='FRANKIE_BOX_RESPONSE_UPLOAD_RECEIPT_V1', at=int(time.time()), route='presigned-put', files=receipt)
+open(os.path.join(root, 'receipts', f'response-upload-{rec["at"]}.json'), 'w').write(json.dumps(rec, sort_keys=True) + '\n')
+print('UPLOAD_RECEIPT ' + json.dumps(rec, sort_keys=True))
+PY
+  echo "uploaded through the presigned map; frankie_box_fetch_response.yml now re-checks and commits root/cycle-$CYCLE-response"
+  exit 0
+fi
 TOKEN=$("$ROOT/venv/bin/python" -c "import boto3;print(boto3.client('ssm',region_name='us-east-2').get_parameter(Name='/markets/frankie/github-token',WithDecryption=True)['Parameter']['Value'])" 2>/dev/null) || { echo "no push token readable at /markets/frankie/github-token (us-east-2); files are ready in $OUT, push refused"; exit 3; }
 export FRANKIE_GIT_TOKEN="$TOKEN"; unset TOKEN
 HELPER='!f() { echo username=x-access-token; echo "password=$FRANKIE_GIT_TOKEN"; }; f'

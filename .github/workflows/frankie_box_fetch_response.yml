@@ -1,0 +1,201 @@
+name: Frankie box fetch response (token-free delivery of the four cycle files to root/cycle-NN-response)
+# Job 0 step 4, delivery without a git token on the box (2026-09-21). Frankie's pusher on his box
+# (deploy/aws/box/frankie_box_push_response.sh) runs its shape and binding checks and, given MAP_URL, uploads the
+# four files through short-lived presigned PUTs this workflow signs into one private map. This workflow then
+# downloads them with its own AWS credentials, re-runs the recorder's checks INDEPENDENTLY (shape, attestation
+# binding, and response.request_sha256 against the request staged in S3 by run 35557744815), verifies each file
+# against the sizes and digests the box printed, and commits them under research/kalshi/frankie_boss/runs/<day>/root/
+# on root/cycle-<NN>-response with the workflow token. No token reaches the box; no URL is printed. Never
+# force-pushes; never stops, resizes or terminates anything. Next step after a green run is unchanged:
+# frankie_host_record_principal_response.yml with source_ref=root/cycle-<NN>-response.
+on:
+  workflow_dispatch:
+    inputs:
+      day:
+        description: 'Trading day of the cycle'
+        required: false
+        default: '20211003'
+      cycle:
+        description: 'Zero-padded cycle index'
+        required: false
+        default: '00'
+      instance:
+        description: "Frankie's box (the ingest runner)"
+        required: false
+        default: 'i-035994afa8bdf66a5'
+      region:
+        description: 'AWS region of the box'
+        required: false
+        default: 'us-east-1'
+      bucket:
+        description: 'Staging bucket for the uploads (host-deliveries/<day>/principal-response/cycle-<NN>/box-upload/<run id>/)'
+        required: false
+        default: 'frankie-granite42-568968024170-us-east-1'
+      request_key:
+        description: 'Key of the session request the box answered (its adapter digest must equal response.request_sha256)'
+        required: false
+        default: 'host-deliveries/20211003/principal-request/cycle-00/35557744815/session-request.json'
+permissions:
+  contents: write
+concurrency:
+  group: box-run-${{ inputs.instance }}
+  cancel-in-progress: false
+jobs:
+  deliver:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_EC2_METADATA_DISABLED: 'true'
+      DAY: ${{ inputs.day }}
+      CYCLE: ${{ inputs.cycle }}
+      INSTANCE: ${{ inputs.instance }}
+      REGION: ${{ inputs.region }}
+      BUCKET: ${{ inputs.bucket }}
+      REQUEST_KEY: ${{ inputs.request_key }}
+      SCRIPT: deploy/aws/box/frankie_box_push_response.sh
+      FILES: response.json analysis.md host-session-record.json host-attestation.json
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Validate inputs and the pusher script against the checkout
+        run: |
+          set -euo pipefail
+          [[ "$DAY" =~ ^[0-9]{8}$ ]] || { echo "day must be YYYYMMDD"; exit 1; }
+          [[ "$CYCLE" =~ ^[0-9]{2}$ ]] || { echo "cycle must be two digits"; exit 1; }
+          [[ "$BUCKET" =~ ^[a-z0-9.-]{3,63}$ ]] || { echo "bucket name"; exit 1; }
+          [[ "$REQUEST_KEY" != *..* && -n "$REQUEST_KEY" ]] || { echo "request_key"; exit 1; }
+          test -f "$SCRIPT"; bash -n "$SCRIPT"
+          grep -q 'MAP_URL' "$SCRIPT" || { echo "the pusher on this ref has no MAP_URL route"; exit 1; }
+          echo "pusher sha256: $(sha256sum "$SCRIPT" | cut -c1-64)  ref: $GITHUB_SHA"
+      - name: Require the box Online in SSM (read-only)
+        run: |
+          python - <<'PY'
+          import boto3, os
+          iid, region = os.environ['INSTANCE'], os.environ['REGION']
+          s = boto3.client('ssm', region_name=region).describe_instance_information(Filters=[{'Key': 'InstanceIds', 'Values': [iid]}])['InstanceInformationList']
+          print('SSM:', [(x['PingStatus'], x.get('PlatformName', ''), x.get('PlatformVersion', '')) for x in s] or 'not registered')
+          raise SystemExit(0 if s and s[0]['PingStatus'] == 'Online' else 1)
+          PY
+      - name: Sign one presigned PUT per file into a private map (URLs masked, never printed)
+        run: |
+          python - <<'PY'
+          import json, os
+          import boto3
+          from botocore.config import Config
+          bucket = os.environ['BUCKET']; run = os.environ['GITHUB_RUN_ID']
+          region = 'us-east-1' if bucket.endswith('us-east-1') else 'us-east-2'
+          s3 = boto3.client('s3', region_name=region, endpoint_url=f'https://s3.{region}.amazonaws.com',
+                            config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}))
+          prefix = f"host-deliveries/{os.environ['DAY']}/principal-response/cycle-{os.environ['CYCLE']}/box-upload/{run}"
+          out = {}
+          for name in os.environ['FILES'].split():
+              key = f'{prefix}/{name}'
+              url = s3.generate_presigned_url('put_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=3600)
+              print('::add-mask::' + url)
+              out[name] = dict(bucket=bucket, key=key, url=url)
+              print(f'presigned PUT for {name} -> s3://{bucket}/{key} (expires_in=3600s)')
+          mk = f'box-runs/{run}/response-upload-map.json'
+          s3.put_object(Bucket=bucket, Key=mk, Body=json.dumps(out, sort_keys=True).encode(), ServerSideEncryption='AES256', ContentType='application/json')
+          murl = s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': mk}, ExpiresIn=3600)
+          if "'" in murl or '\n' in murl or ' ' in murl:
+              raise SystemExit('map URL carries a character --set refuses')
+          print('::add-mask::' + murl)
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write(f'MAP_URL={murl}\nUPLOAD_PREFIX={prefix}\n')
+          print(f'map: s3://{bucket}/{mk} ({len(out)} uploads)')
+          PY
+      - name: Run the pusher on the box (checks there, then uploads through the map)
+        run: |
+          set -euo pipefail
+          python deploy/aws/ssm_run_sh.py --instance "$INSTANCE" --region "$REGION" --script "$SCRIPT" \
+            --timeout 900 --comment "frankie box: upload the cycle $CYCLE response through presigned PUTs (run $GITHUB_RUN_ID)" \
+            --set "DAY=$DAY" --set "CYCLE=$CYCLE" --set "BASE=$GITHUB_REF_NAME" --set "MAP_URL=$MAP_URL" | tee box-run-output.txt
+          grep -q '^UPLOAD_RECEIPT ' box-run-output.txt || { echo "the box printed no UPLOAD_RECEIPT; nothing is committed"; exit 1; }
+      - name: Download the uploads and re-run the recorder's checks independently
+        id: files
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/delivery"
+          python - <<'PY'
+          import hashlib, json, os, re
+          from pathlib import Path
+          import boto3
+          bucket, prefix = os.environ['BUCKET'], os.environ['UPLOAD_PREFIX']
+          region = 'us-east-1' if bucket.endswith('us-east-1') else 'us-east-2'
+          s3 = boto3.client('s3', region_name=region)
+          d = Path(os.environ['RUNNER_TEMP'], 'delivery')
+          names = os.environ['FILES'].split()
+          raw = {}
+          for name in names:
+              raw[name] = s3.get_object(Bucket=bucket, Key=f'{prefix}/{name}')['Body'].read()
+              (d / name).write_bytes(raw[name])
+          # 1. what the box said it uploaded must be what landed
+          line = [l for l in open('box-run-output.txt', encoding='utf-8', errors='replace') if l.startswith('UPLOAD_RECEIPT ')][-1]
+          said = json.loads(line[len('UPLOAD_RECEIPT '):])['files']
+          for name in names:
+              got = (len(raw[name]), hashlib.sha256(raw[name]).hexdigest())
+              if (int(said[name]['bytes']), said[name]['sha256']) != got:
+                  raise SystemExit(f'{name}: the box uploaded {said[name]} but S3 holds {got}')
+          # 2. the recorder's shape and binding checks, plus the analysis witness
+          r = json.loads(raw['response.json']); rec = json.loads(raw['host-session-record.json']); a = json.loads(raw['host-attestation.json'])
+          for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session', 'sections', 'feedback', 'lessons'):
+              if k not in r: raise SystemExit(f'response lacks {k}')
+          if len(r['sections']) != 18: raise SystemExit(f"response cites {len(r['sections'])} sections, not 18")
+          if 'principal_receipt_hash' in json.dumps(r['feedback']): raise SystemExit('feedback must carry NO principal_receipt_hash')
+          if not isinstance(r['lessons'], list) or not r['lessons']: raise SystemExit('response carries no lessons')
+          if rec.get('schema') != 'FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1' or rec.get('mechanism') != 'AGENT_SESSION': raise SystemExit('record schema/mechanism')
+          if not rec.get('host_authority'): raise SystemExit('host session record carries no host_authority')
+          def digest(value):
+              return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+          if rec.get('response_sha256') != digest(r): raise SystemExit('record.response_sha256 is not the adapter digest of response.json')
+          for wname, fname in (('response', 'response.json'), ('analysis', 'analysis.md')):
+              w = rec.get(wname) or {}
+              if w.get('sha256') != hashlib.sha256(raw[fname]).hexdigest() or int(w.get('bytes', -1)) != len(raw[fname]):
+                  raise SystemExit(f'record.{wname} witness differs from the file')
+          for k in ('schema', 'mechanism', 'request_sha256', 'response_sha256', 'session_id', 'model_identity_as_reported_by_session'):
+              if a.get(k) != rec.get(k): raise SystemExit(f'attestation {k} differs from the record')
+          hr = a.get('host_record') or {}
+          if set(hr) != {'path', 'bytes', 'sha256'} or hr['sha256'] != hashlib.sha256(raw['host-session-record.json']).hexdigest() or int(hr['bytes']) != len(raw['host-session-record.json']):
+              raise SystemExit('attestation.host_record must pin the record file {path, bytes, sha256}')
+          # 3. the response answers THE request: its request_sha256 is the adapter digest of the staged request
+          req = json.loads(s3.get_object(Bucket=bucket, Key=os.environ['REQUEST_KEY'])['Body'].read())
+          if r['request_sha256'] != digest(req):
+              raise SystemExit(f"response.request_sha256 {r['request_sha256']} is not the digest of s3://{bucket}/{os.environ['REQUEST_KEY']} ({digest(req)})")
+          print('checks: OK; request_sha256', r['request_sha256'], 'session_id', r['session_id'], 'lessons', len(r['lessons']))
+          print({n: (len(b), hashlib.sha256(b).hexdigest()) for n, b in raw.items()})
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f"request_sha256={r['request_sha256']}\n")
+          PY
+      - name: Commit the four files to root/cycle-NN-response with the workflow token
+        run: |
+          set -euo pipefail
+          BR="root/cycle-$CYCLE-response"; DEST="research/kalshi/frankie_boss/runs/$DAY/root"
+          git config user.name "frankie-box-delivery[bot]"
+          git config user.email "frankie-box-delivery@markets.local"
+          if git fetch --depth 1 origin "$BR" 2>/dev/null; then git checkout -q -B "$BR" FETCH_HEAD; else git checkout -q -B "$BR"; fi
+          mkdir -p "$DEST"
+          for f in $FILES; do cp "$RUNNER_TEMP/delivery/$f" "$DEST/$f"; done
+          git add "$DEST"
+          git diff --staged --quiet && echo "(nothing new: $BR already holds these exact files)" || \
+            git commit -q -m "root: cycle $CYCLE Frankie response, attestation, host session record, analysis (uploaded from Frankie's box $INSTANCE, committed by frankie_box_fetch_response.yml run $GITHUB_RUN_ID; request_sha256 ${{ steps.files.outputs.request_sha256 }})"
+          git push origin "HEAD:refs/heads/$BR"
+          git log --oneline -1; git ls-remote origin "refs/heads/$BR"
+          echo "delivered $BR; next: frankie_host_record_principal_response.yml source_ref=$BR cycle_index=$CYCLE"
+      - name: Job summary
+        if: always()
+        run: |
+          { echo "### token-free delivery of cycle $CYCLE (day $DAY) from $INSTANCE, ref $GITHUB_SHA"; echo '```'; tail -c 30000 box-run-output.txt 2>/dev/null || echo "(no box output)"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: box-fetch-response-${{ github.run_id }}
+          path: box-run-output.txt
+          if-no-files-found: warn
+          retention-days: 30
