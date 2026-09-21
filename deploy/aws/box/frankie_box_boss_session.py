@@ -373,7 +373,7 @@ class Session:
         outcome_path = directory / 'outcome.json'
         if outcome_path.exists():
             return load_json(outcome_path)
-        estimate = int(len(text.encode('utf-8')) / BYTES_PER_TOKEN) + 64
+        estimate = self._input_tokens(text)
         max_tokens = CONTEXT - estimate - 256
         if max_tokens < 1024:
             raise ValueError(f'prompt {name} leaves under 1024 tokens of context by the byte estimate ({estimate} tokens)')
@@ -494,11 +494,11 @@ class Session:
         from research.kalshi.frankie_boss.granite_shadow import IncompleteModelOutput
         if self.engine is None:
             self.engine_reach()
-        estimate = int(len(text.encode('utf-8')) / BYTES_PER_TOKEN) + 64
+        estimate = self._input_tokens(text)
         if max_tokens is None:
             max_tokens = CONTEXT - estimate - 256
         if max_tokens < 1024:
-            raise ValueError(f'prompt {name} leaves under 1024 tokens of context by the byte estimate ({estimate} tokens)')
+            raise ValueError(f'prompt {name} leaves under 1024 tokens of context ({estimate} input tokens, {self._estimate_kind})')
         body = _json(dict(model=self.engine['served_model_name'], messages=[dict(role='user', content=text)],
                           temperature=0, max_tokens=int(max_tokens), stream=False,
                           chat_template_kwargs=dict(enable_thinking=False))).encode()
@@ -1005,6 +1005,17 @@ class Session:
         ledger.setdefault('cycles', {})[self.cycle] = dict(merged_notes_path=str(self.work / 'merged-notes.md'),
                                                           merged_notes_sha256=sha256_bytes((self.work / 'merged-notes.md').read_bytes()), at=time.time())
         write_json(READING_LEDGER, ledger)
+
+    def _input_tokens(self, text):
+        """The input token count of one prompt: EXACT with the pinned Granite tokenizer when it is on the box (the same
+        tokenizer that sized the reading parts; the rendered corpus is far denser than prose, so a byte estimate
+        over-counts it: run 35607741484 refused an 87k-token part as 139,080), else the byte estimate."""
+        tokenizer = self._tokenizer()
+        if tokenizer is not None:
+            self._estimate_kind = 'exact tokens (pinned tokenizer)'
+            return sum(len(tokenizer.encode(text[i:i + (1 << 20)], add_special_tokens=False).ids) for i in range(0, len(text), 1 << 20)) + 16
+        self._estimate_kind = 'byte estimate'
+        return int(len(text.encode('utf-8')) / BYTES_PER_TOKEN) + 64
 
     def _tokenizer(self):
         """The pinned Granite tokenizer when it is on the box (tmp/granite_tokenizer.json, sha 883975314d587437...)."""
