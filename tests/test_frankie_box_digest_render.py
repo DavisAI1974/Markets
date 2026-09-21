@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import pytest
 import importlib.util
 import json
 import math
@@ -312,16 +313,16 @@ def test_v6_schema_and_header_name_the_bedrock_tables():
     receipt = dict(rows=dict(path='p', count=2, kinds={}, head='h' * 64, head_is_request_source_hash=True), input_records=1, legacy_rows=1, f_last_groups=1,
                    failure_count=0, pin_group='legacy_observable_crosswalk', layers={})
     text = DG.digest_text(receipt, {}, [], [], [], [], 0, [], [], bedrock=_bedrock_files())
-    head = text[:3000]
+    head = text.split('## Layer status')[0]
     assert head.startswith('# Derivation digest DIGEST_V6 ')
-    assert 'bedrock.members' in head and 'bedrock.lifecycle.<section>' in head and 'bedrock.layers' in head
+    assert 'bedrock.members' in head and 'bedrock.lifecycle.<section>' in head and 'bedrock.layers' in head and 'bedrock.run' in head and '#count' in head
     without = DG.digest_text(receipt, {}, [], [], [], [], 0, [], [])
     assert '## Bedrock' not in without and '### table bedrock.' not in without
 
 
 def test_v6_bedrock_tables_are_one_members_table_one_table_per_section_and_an_index_all_parsing_back():
     tables = DG.bedrock_tables(_bedrock_files())
-    assert list(tables) == ['bedrock.layers', 'bedrock.members', 'bedrock.lifecycle.flow_substrate', 'bedrock.lifecycle.lineage']
+    assert list(tables) == ['bedrock.layers', 'bedrock.members', 'bedrock.lifecycle.flow_substrate', 'bedrock.lifecycle.lineage']   # no traversal in this fixture: no bedrock.run
     index = tables['bedrock.layers']
     assert [r['layer'] for r in index] == ['derived_d_family_geometry', 'derived_v4_mechanics_fifo_features', 'derived_roll20_and_dipole_state',
                                             'clock_model_evaluation', 'prebirth_predecessor_at_risk_state', 'clock_lock_time']
@@ -331,7 +332,7 @@ def test_v6_bedrock_tables_are_one_members_table_one_table_per_section_and_an_in
     assert len(members) == 3 and [r['group_index'] for r in members] == [0, 1, 2]
     columns = set(DG._flatten(members[0]))                  # the codec's columns: every derived layer's carrier path, each once
     assert {'group_index', 'ts_recv_ns', 'f_last_ts_recv_ns', 'clocks.first_lawful_availability_ns', 'structure.candidate_family_id',
-            'structure.mirror.orientation', 'book_full.bid_levels_full[].fifo_queue[]', 'capture_observations', 'clocks.decision_ts_recv_ns',
+            'structure.mirror.orientation', 'book_full.bid_levels_full[].fifo_queue[]#count', 'capture_observations', 'clocks.decision_ts_recv_ns',
             'decision_basis', 'f_last_to_decision_delay_ns', 'activity_since.*.top_level_qty_by_action.session_open.A'} <= columns
     assert members[1]['activity_since']['*']['top_level_qty_by_action'] == {'session_open': {'A': 6, 'C': 0}, 'last_trade': {'A': 1}}
     assert members[0]['capture_observations'] == '{}'       # an empty mapping is one JSON string cell (it cannot flatten to a column)
@@ -339,7 +340,8 @@ def test_v6_bedrock_tables_are_one_members_table_one_table_per_section_and_an_in
     text = DG.render_layers(tables)                          # rendered, parsed back and compared by the codec itself
     parsed = DG.parse_digest(text)
     assert set(parsed) == set(tables)
-    assert parsed['bedrock.members'][2]['book_full']['bid_levels_full[]']['fifo_queue[]'] == [[{'order_id': 701, 'size': 5}], [{'order_id': 702, 'size': 1}]]
+    assert parsed['bedrock.members'][2]['book_full']['bid_levels_full[]']['fifo_queue[]#count'] == 2     # a list-valued path rides as its leaf count
+    assert 'fifo_queue[]' not in parsed['bedrock.members'][2]['book_full']['bid_levels_full[]']
     assert parsed['bedrock.members'] == members
     assert parsed['bedrock.lifecycle.flow_substrate'][0]['roll20_value'] is None and parsed['bedrock.lifecycle.flow_substrate'][3]['roll20_value'] == 0.5
     assert parsed['bedrock.lifecycle.flow_substrate'][1]['last_quote']['bid'] == 3_500_000_000   # nested dicts flatten to dotted columns and back
@@ -367,3 +369,42 @@ def test_v6_a_conflicting_member_projection_between_layers_refuses():
         assert 'group 1' in str(err) and 'ts_recv_ns' in str(err)
     else:
         raise AssertionError('two layers disagreeing on a group key must refuse')
+
+
+def test_v6_a_nested_key_containing_a_dot_becomes_one_json_string_cell():
+    files = _bedrock_files()
+    for row in files['derived_roll20_and_dipole_state']['lifecycle_rows']:
+        row['section_totals'] = {'a.b': 1, 'c': 2}
+    files['derived_d_family_geometry']['member_rows'][0]['activity_since.*.top_level_qty_by_action'] = {'session_open': {'A.C': 5}}
+    tables = DG.bedrock_tables(files)
+    assert json.loads(tables['bedrock.lifecycle.flow_substrate'][0]['section_totals']) == {'a.b': 1, 'c': 2}
+    assert json.loads(tables['bedrock.members'][0]['activity_since']['*']['top_level_qty_by_action']['session_open']) == {'A.C': 5}
+    parsed = DG.parse_digest(DG.render_layers(tables))
+    assert json.loads(parsed['bedrock.lifecycle.flow_substrate'][0]['section_totals']) == {'a.b': 1, 'c': 2}
+
+
+def test_v6_the_run_table_carries_the_traversal_verdict_and_rows_without_a_group_key_refuse():
+    files = _bedrock_files()
+    for f in files.values():
+        f['traversal'] = dict(verdict='REJECTED', failed_gates=['coverage', 'denominators'], groups=3, records=11, span_seconds=10.0,
+                              candidate_warmup_seconds=900, candidate_min_observations=600)
+    tables = DG.bedrock_tables(files)
+    assert tables['bedrock.run'] == [dict(verdict='REJECTED', failed_gates='coverage denominators', groups=3, records=11, span_seconds=10.0,
+                                          candidate_warmup_seconds=900, candidate_min_observations=600)]
+    text = DG.render_layers(tables)
+    assert DG.parse_digest(text)['bedrock.run'] == tables['bedrock.run']
+    receipt = dict(rows=dict(path='p', count=2, kinds={}, head='h' * 64, head_is_request_source_hash=True), input_records=1, legacy_rows=1, f_last_groups=1,
+                   failure_count=0, pin_group='legacy_observable_crosswalk', layers={})
+    assert 'verdict over this slice: REJECTED, failed gates coverage, denominators' in DG.digest_text(receipt, {}, [], [], [], [], 0, [], [], bedrock=files)
+    del files['clock_model_evaluation']['member_rows'][1]['group_index']
+    with pytest.raises(ValueError, match='row without the group key group_index'):
+        DG.bedrock_tables(files)
+
+
+def test_v6_a_none_group_index_sorts_last_and_round_trips():
+    files = _bedrock_files()
+    files['clock_model_evaluation']['member_rows'].append({'group_index': None, 'ts_recv_ns': 5, 'f_last_ts_recv_ns': 5, 'clocks.decision_ts_recv_ns': 5,
+                                                          'decision_basis': 'REPLAY_EARLIEST_LAWFUL_AVAILABILITY', 'f_last_to_decision_delay_ns': 0})
+    tables = DG.bedrock_tables(files)
+    assert [r['group_index'] for r in tables['bedrock.members']] == [0, 1, 2, None]
+    assert DG.parse_digest(DG.render_layers(tables))['bedrock.members'] == tables['bedrock.members']

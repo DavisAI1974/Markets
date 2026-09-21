@@ -813,8 +813,11 @@ class Session:
         elif carried.get('sha256') != checkout:
             problem = ('the request was rendered under a different calculation pin (request %s, this checkout %s); re-render the '
                        'request on the host (supersede the principal request, export, fetch) before deriving' % (carried.get('sha256'), checkout))
+        elif carried.get('cycle_index') != pin['cycle_index'] or carried.get('group') != pin['group']:
+            problem = ('the request\'s calculation pin witness names cycle %s group %s; this checkout derives cycle %s group %s'
+                       % (carried.get('cycle_index'), carried.get('group'), pin['cycle_index'], pin['group']))
         if problem:
-            write_json(self.work / f'derive-refusal-{int(time.time())}.json',
+            write_json(self.work / f'derive-refusal-{int(time.time())}-{uuid.uuid4().hex[:8]}.json',
                        dict(schema='FRANKIE_BOX_DERIVE_REFUSAL_RECEIPT_V1', at=time.time(), cycle=self.cycle, reason=problem,
                             request_pin_sha256=carried.get('sha256'), request_pin_cycle_index=carried.get('cycle_index'), request_pin_group=carried.get('group'),
                             checkout_pin_sha256=checkout, checkout_pin_group=pin['group'], checkout_bedrock_layers=list(pin.get('bedrock_layers') or [])))
@@ -877,7 +880,10 @@ class Session:
 
     def _derive_needed(self):
         """Whether derive() must run: no digest, a digest of another schema, no derive.json, a derive.json without the pin
-        identity, a pin that moved since, or a pin whose bedrock the derivation does not carry. Returns (needed, why)."""
+        identity, a pin that moved since, or a pin whose bedrock the derivation does not carry. Returns (needed, why).
+        The request's pin is checked first (refused, receipted, on mismatch), so a current derivation is never reused
+        under a request that was rendered for another pin."""
+        pin = self._pin_matches_request()      # FIRST, whatever the derivation's state: a current derivation under a pin the request does not carry is refused, never reused
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import frankie_box_digest_render as DG
         digest_path = self.work / 'derivation-digest-full.md'
@@ -891,7 +897,6 @@ class Session:
         identity = recorded.get('pin_identity')
         if not identity:
             return True, 'derive.json carries no pin identity'
-        pin = self._pin()
         if identity.get('sha256') != pin['pins_witness']['sha256']:
             return True, 'the calculation pin moved since the derivation'
         wanted = list(pin.get('bedrock_layers') or [])
@@ -1567,9 +1572,9 @@ class Session:
             self.note('teach: the exhaustion/D teach-back is already filed; nothing to do')
             return load_json(path)
         try:
-            f = T.facts(self.work, BRAIN_DIR)
-        except ValueError as error:
-            self.refuse(f'teach: {error}')
+            f = T.facts(self.work, BRAIN_DIR, PRODUCERS)
+        except (ValueError, TypeError, KeyError) as error:
+            self.refuse(f'teach: the facts could not be computed from this session\'s files ({type(error).__name__}: {error})')
         text = T.facts_text(f)
         ask = T.prompt(text, cycle=self.cycle, request_id=self.request['request_id'])
         (d / 'prompt.txt').write_text(ask, encoding='utf-8')
@@ -1601,9 +1606,9 @@ class Session:
         for topic in T.TOPICS:
             lines += [f'### {topic}', '']
             for field in T.FIELDS:
-                lines += [f'**{field}**: {(answer.get(topic) or {}).get(field, "")}', '']
+                lines += [f'**{field}**: {T._line((answer.get(topic) or {}).get(field, ""))}', '']
         questions = answer.get('questions') or []
-        lines += ['### questions', ''] + ([f'- {q}' for q in questions] or ['- none'])
+        lines += ['### questions', ''] + ([f'- {T._line(q)}' for q in questions] or ['- none'])
         return '\n'.join(lines)
 
     # ---- the packets Frankie asked for (cycle 0 analysis, 2026-09-21) ----------------------------------------
@@ -1687,9 +1692,9 @@ class Session:
                              f'first lesson, then ONE accounting entry (ledger "{CALCULATION_ACCOUNTING_LEDGER}"), then the ten output ledgers '
                              f'({", ".join(OUTPUT_LEDGERS)}), each written in its own later call. No other entry is filed (no classroom '
                              'lesson, no run_analysis entry): never describe any other entry as written or filed; anything else you want '
-                             'recorded goes into this analysis text itself. THE EXHAUSTION AND D TEACH-BACK you gave beside the classroom '
-                             'is appended by the session to this analysis as its own section from the filed teach-back (work/teach/); do '
-                             'not restate it, refer to it.')
+                             'recorded goes into this analysis text itself. THE EXHAUSTION AND D TEACH-BACK filed earlier in this session (work/teach/, '
+                             'not in this call\'s context) is appended by the session to this analysis as its own section; do not restate '
+                             'it, refer to it.')
         analysis_md = (analysis.get('text') or f'(the BOSS produced no analysis: {analysis.get("error")})') + \
             ('\n\n[OUTPUT INCOMPLETE: the BOSS reached its output bound; kept as produced]\n' if analysis.get('incomplete') else '\n')
         analysis_md = analysis_md.rstrip('\n') + self._teach_section() + '\n'     # a section of the analysis text; response.json gains no key
@@ -1854,6 +1859,7 @@ class Session:
 
     def _run(self, stage):
         self.verify()
+        self._pin_matches_request()       # before any engine reach: a request rendered under another calculation pin is refused here, receipted
         self.brain_ready()
         if stage == 'preflight':
             self.labels()

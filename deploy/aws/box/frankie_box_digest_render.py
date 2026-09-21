@@ -623,7 +623,7 @@ def per_second_rows(first, buys, sells, roll, window=20):
 
 
 def _spellable(key):
-    return bool(key) and isinstance(key, str) and key[0] not in '=^' and not any(ch in key for ch in '\t\n= ')
+    return bool(key) and isinstance(key, str) and key[0] not in '=^' and not any(ch in key for ch in '\t\n= .')   # a dot would re-nest differently on parse-back
 
 
 def _spell(value):
@@ -635,6 +635,12 @@ def _spell(value):
             return {k: _spell(v) for k, v in value.items()}
         return json.dumps(value, separators=(',', ':'), sort_keys=True)
     return value
+
+
+def _leaf_count(value):
+    if isinstance(value, list):
+        return sum(_leaf_count(v) for v in value) if any(isinstance(v, list) for v in value) else len(value)
+    return 1 if value is not None else 0
 
 
 def _nest(flat):
@@ -657,6 +663,12 @@ def bedrock_tables(files):
     its rows whole, in ledger order, taken once). The whole ledgers stay in work/bedrock/ledgers/ and ride the bundle."""
     tables = {}
     index = []
+    verdicts = [f.get('traversal') for f in files.values() if isinstance(f.get('traversal'), dict)]
+    if verdicts:
+        v = verdicts[0]
+        tables['bedrock.run'] = [dict(verdict=v.get('verdict'), failed_gates=' '.join(v.get('failed_gates') or []), groups=v.get('groups'),
+                                      records=v.get('records'), span_seconds=v.get('span_seconds'),
+                                      candidate_warmup_seconds=v.get('candidate_warmup_seconds'), candidate_min_observations=v.get('candidate_min_observations'))]
     for name, f in files.items():
         index.append(dict(layer=name, status=f.get('status'), reason=f.get('reason'), producer=f.get('producer'),
                           member_paths=' '.join(f.get('member_paths') or []), lifecycle_sections=' '.join(f.get('lifecycle_sections') or []),
@@ -669,9 +681,15 @@ def bedrock_tables(files):
         if f.get('status') != 'derived':
             continue
         for row in f.get('member_rows') or []:
+            if 'group_index' not in row:
+                raise ValueError(f'bedrock member projection of {name} carries a row without the group key group_index')
             key = row.get('group_index')
             merged = members.setdefault(key, {})
             for column, value in row.items():
+                if '[]' in column and not column.endswith('#count'):
+                    # a LIST-valued carrier path (`name[]`) is carried by its leaf COUNT (`<path>#count`); the values stay whole
+                    # in the layer file and the ledger (the reading cost: the FIFO queue of every level per group is the bulk)
+                    column, value = column + '#count', _leaf_count(value)
                 if column in merged:
                     if not _same(merged[column], value):
                         raise ValueError(f'bedrock member projection conflict: group {key} column {column} differs between layers ({name})')
@@ -720,9 +738,11 @@ def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, 
              'tables, when this cycle\'s pin carries a bedrock (Greg, 2026-09-21): `bedrock.layers` = one row per bedrock layer (status, '
              'reason, producer, its carrier member paths, its lifecycle sections, counts, the sections left empty by the candidate lane), '
              '`bedrock.members` = one row per F_LAST group with the group key (group_index, ts_recv_ns, f_last_ts_recv_ns) and the union '
-             'of every derived bedrock layer\'s member paths as columns (each once), `bedrock.lifecycle.<section>` = every exact lifecycle '
-             'row of that section, whole, in ledger order, once; a mapping cell whose keys the header cannot spell, or an empty mapping, '
-             'is one JSON string cell; the three whole ledgers are in the bundle under bedrock/ledgers/)', '',
+             'of every derived bedrock layer\'s member paths as columns (each once; a LIST-valued path `name[]` is carried as its leaf '
+             'count in `<path>#count`, its values staying whole in the layer file and the ledger), `bedrock.lifecycle.<section>` = every exact '
+             'lifecycle row of that section, whole, in ledger order, once, `bedrock.run` = the traversal\'s own verdict and failed gates over '
+             'this slice; a mapping cell whose keys the header cannot spell (a dot, a space, `=`), or an empty mapping, is one JSON string '
+             'cell; the three whole ledgers stay on the box under work/bedrock/ledgers/, witnessed by name, bytes and sha256 in the bundle index)', '',
              f'Rows: {receipt["rows"]["path"]} ({receipt["rows"]["count"]} entries, kinds {receipt["rows"]["kinds"]}, head {receipt["rows"]["head"][:16]}...; '
              f'head equals the request source_hash: {receipt["rows"]["head_is_request_source_hash"]}).',
              f'INPUT records fed to the V4 adapter: {receipt["input_records"]}; legacy control rows projected: {receipt["legacy_rows"]}; '
@@ -743,7 +763,9 @@ def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, 
     text = '\n'.join(lines) + '\n\n' + render_layers(tables)
     if bedrock:
         derived = sum(1 for f in bedrock.values() if f.get('status') == 'derived')
+        verdict = next((f.get('traversal') for f in bedrock.values() if isinstance(f.get('traversal'), dict)), None) or {}
         head = ['', '## Bedrock (the pinned producers\' own traversal on this cycle\'s rows, projected by their crosswalk; '
-                f'{derived} of {len(bedrock)} layers derived; every derived fact once, whole)', '']
+                f'{derived} of {len(bedrock)} layers derived; every derived fact once, whole; the traversal\'s own verdict over this slice: '
+                f'{verdict.get("verdict")}' + (f', failed gates {", ".join(verdict["failed_gates"])}' if verdict.get('failed_gates') else ', no failed gate') + ')', '']
         text += '\n'.join(head) + '\n' + render_layers(bedrock_tables(bedrock))
     return text

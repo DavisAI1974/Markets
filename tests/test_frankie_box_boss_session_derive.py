@@ -32,7 +32,8 @@ spec.loader.exec_module(session)
 PINS = TESTS.parent / 'research' / 'kalshi' / 'frankie_boss' / 'knowledge' / 'CYCLE_CALCULATION_PINS.json'
 LEGACY = ('legacy_price', 'legacy_native_signed_flow', 'legacy_per_second_roll20', 'legacy_book_imbalance', 'legacy_structure_observables')
 # The legacy five on the fixture stream, sha256 of each layer file as the session wrote them BEFORE the bedrock wiring
-# (recorded 2026-09-21 from commit 2617d732); the bedrock rides beside them and must not move a byte of them.
+# (recorded 2026-09-21 at commit 2617d732, whose derive() is the base 082e2ec9's unchanged); the bedrock rides beside them
+# and must not move a byte of them. The paired-run test below pins the same invariant without a recorded constant.
 LEGACY_WITNESS = {
     'legacy_price': 'b5a67254b6848dca08be8e28dea01556f9516d6e8bc7b9fd1bdf9768d94a0113',
     'legacy_native_signed_flow': 'e5bb17c1041ac0b7e15d299fa075784799b936c96990a4ab1c6a6b5604e0e213',
@@ -56,11 +57,11 @@ def stub(tmp_path, monkeypatch, pin=None, request_pin_sha=None):
     producers = P.require_producers()
     monkeypatch.setattr(session, 'PRODUCERS', producers)
     monkeypatch.setattr(session, 'ROOT', tmp_path / 'root')
-    load('frankie_box_bedrock').load_producers(producers)      # the Session's own __init__ does this in a fresh process on the box
+    load('frankie_box_bedrock').load_producers(producers)      # on the box, run()/crosswalk_records do this inside the fresh session process
     pin = pin or pin_zero()
     notes = []
     s = types.SimpleNamespace(work=tmp_path / 'work', out=tmp_path / 'out', cycle='00', day=FX.DAY, _notes=notes)
-    s.work.mkdir(); s.out.mkdir()
+    s.work.mkdir(parents=True); s.out.mkdir(parents=True)
     s.note = notes.append
     container = dict(FX.container(tmp_path), kinds=dict(INPUT=len(FX.stream()), APPLIED=len(FX.stream())), head='h' * 64, count=2 * len(FX.stream()),
                      format='C15_JOURNAL_PREFIX_SNAPSHOT_V1', head_is_request_source_hash=True, bytes=1)
@@ -181,7 +182,8 @@ def test_derive_writes_a_v6_digest_with_the_bedrock_tables(tmp_path, monkeypatch
     import frankie_box_digest_render as DG
     text = (s.work / 'derivation-digest-full.md').read_text(encoding='utf-8')
     assert text.startswith('# Derivation digest DIGEST_V6 ')
-    assert '## Bedrock' in text and '### table bedrock.layers' in text and '### table bedrock.members' in text
+    assert '## Bedrock' in text and '### table bedrock.layers' in text and '### table bedrock.members' in text and '### table bedrock.run' in text
+    assert 'verdict over this slice: ACCEPTED, no failed gate' in text
     assert '### table bedrock.lifecycle.lineage' in text and '### table bedrock.lifecycle.flow_substrate' in text
     parsed = DG.parse_digest(text)
     assert [r['group_index'] for r in parsed['bedrock.members']] == [0, 1, 2]
@@ -211,3 +213,39 @@ def test_derive_only_is_a_stage_that_derives_and_measures_without_the_engine():
     sh = (BOX / 'frankie_box_session.sh').read_text()
     assert 'derive_only) derive_only ;;' in sh and '--stage derive_only' in sh and 'derive_only()' in sh
     assert 'ACTION must be start, status, preflight, verify, restart_session, fetch_correction, correction or derive_only' in sh
+
+
+def test_the_legacy_five_are_byte_identical_with_and_without_the_bedrock(tmp_path, monkeypatch):
+    """The bedrock rides BESIDE the legacy five, never through them: the same stream derived with the bedrock and without
+    it writes the same five files, byte for byte (no recorded constant needed)."""
+    with_bedrock = stub(tmp_path / 'a', monkeypatch)
+    session.Session.derive(with_bedrock)
+    pin = pin_zero(); pin.pop('bedrock'); pin['bedrock_layers'] = []
+    without = stub(tmp_path / 'b', monkeypatch, pin=pin)
+    session.Session.derive(without)
+    for name in LEGACY:
+        assert (with_bedrock.work / 'derived' / f'{name}.json').read_bytes() == (without.work / 'derived' / f'{name}.json').read_bytes(), name
+
+
+def test_a_current_derivation_under_a_pin_the_request_does_not_carry_is_refused_not_reused(tmp_path, monkeypatch):
+    """Review finding: the gate compared derive.json with the CHECKOUT pin only; a current derivation could be reused under a
+    request rendered for another pin. The request's pin is checked first, whatever the derivation's state."""
+    s = stub(tmp_path, monkeypatch)
+    session.Session.derive(s)
+    assert s._derive_needed() == (False, 'current')
+    s.request['attachment']['calculation_pin_witness']['sha256'] = '0' * 64
+    with pytest.raises(ValueError, match='the request was rendered under a different calculation pin'):
+        s._derive_needed()
+    assert len(list(s.work.glob('derive-refusal-*.json'))) == 1
+    s.request['attachment']['calculation_pin_witness']['sha256'] = pin_zero()['pins_witness']['sha256']
+    s.request['attachment']['calculation_pin_witness']['group'] = 'derived_geometry'
+    with pytest.raises(ValueError, match='names cycle 0 group derived_geometry; this checkout derives cycle 0 group legacy_observable_crosswalk'):
+        s._derive_needed()
+    refusals = list(s.work.glob('derive-refusal-*.json'))
+    assert len(refusals) == 2 and len({p.name for p in refusals}) == 2
+
+
+def test_the_run_loop_checks_the_request_pin_right_after_verify_before_any_engine_reach():
+    text = (BOX / 'frankie_box_boss_session.py').read_text()
+    run = text.split('    def _run(self, stage):')[1]
+    assert run.index('self.verify()') < run.index('self._pin_matches_request()') < run.index('self.brain_ready()') < run.index('self.engine_reach()')

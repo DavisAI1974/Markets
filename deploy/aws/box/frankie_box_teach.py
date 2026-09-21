@@ -15,6 +15,8 @@ import re
 from collections import Counter
 from pathlib import Path
 
+import sys
+
 SCHEMA = 'FRANKIE_BOX_TEACHBACK_V1'
 FACTS_SCHEMA = 'FRANKIE_BOX_TEACH_FACTS_V1'
 TOPICS = ('exhaustion', 'd_depth', 'families', 'prebirth', 'clocks')
@@ -24,8 +26,11 @@ FROZEN_LAYERS = ('learned_d_structures_and_families', 'learned_dipoles_and_geome
 FROZEN_DIR = 'frozen-learned-structure'
 CLOCK_RULE = 'event_known_by <= feature_availability <= model_evaluation'
 LARGEST_GAPS = 20
-_NUMBER = re.compile(r'\d+(?:\.\d+)?')
+PRINTED_VIOLATIONS = 20
+MAX_QUESTIONS, MAX_QUESTION_CHARS = 20, 500
+_NUMBER = re.compile(r'-?\d+(?:\.\d+)?')
 _THOUSANDS = re.compile(r'(?<=\d),(?=\d{3}(?!\d))')
+_HEX = re.compile(r'\b[0-9a-f]{16,}\b')          # sha256 values and their prefixes never license a number
 
 
 def sha256_bytes(data):
@@ -36,11 +41,31 @@ def _load(path):
     return json.loads(Path(path).read_bytes())
 
 
+_FILES = {}
+
+
 def _layer_file(derive, name):
     entry = (derive.get('layers') or {}).get(name)
     if not entry or not entry.get('path') or not Path(entry['path']).is_file():
         return None
-    return _load(entry['path'])
+    stat = Path(entry['path']).stat()
+    key = (entry['path'], stat.st_mtime_ns, stat.st_size)
+    if key not in _FILES:
+        if len(_FILES) > 64:
+            _FILES.clear()
+        _FILES[key] = _load(entry['path'])
+    return _FILES[key]
+
+
+def lineage_vocabulary(producers):
+    """The pinned producers' own lineage status names (native_lineage), never restated here."""
+    producers = Path(producers).resolve()
+    if str(producers) not in sys.path:
+        sys.path.append(str(producers))
+    from research.kalshi.frankie_raw_mbo_benchmark import native_lineage as L
+    if not Path(L.__file__).resolve().is_relative_to(producers):
+        raise ValueError(f'native_lineage loaded from {L.__file__}, not the pinned checkout {producers}')
+    return dict(terminated=L.TERMINATED, censored=sorted(L.CENSORED_STATUSES), open=L.OPEN, statuses=sorted(L.LINEAGE_STATUSES))
 
 
 def _section_rows(derive, bedrock_layers, section):
@@ -59,15 +84,18 @@ def _members(derive, name):
     return list((f or {}).get('member_rows') or [])
 
 
-def facts(work, brain):
-    """The pre-message facts, exact and small, from work/derive.json, the bedrock layer files, the legacy structure
-    observables and the brain's frozen entry. Refuses without a bedrock or without an included frozen file for each of
-    the four layers that define D and exhaustion."""
+def facts(work, brain, producers):
+    """The pre-message facts, exact and small, from work/derive.json, the bedrock layer files (the pinned producers' own
+    row shapes: recurrence gaps are mappings with gap_ns/from_node/to_node/recv_ns; lineage statuses are
+    native_lineage's TERMINATED / CENSORED_* / OPEN), the legacy structure observables and the brain's frozen entry.
+    Refuses without a bedrock or without an included frozen file for each of the four layers that define D and
+    exhaustion. A clock layer that was not derived is reported as unknown, never as an order violation."""
     work, brain = Path(work), Path(brain)
     derive = _load(work / 'derive.json')
     bedrock = derive.get('bedrock')
     if not bedrock:
         raise ValueError('derive.json carries no bedrock; the teach-back needs the bedrock derivation')
+    vocabulary = lineage_vocabulary(producers)
     names = list(bedrock.get('layers') or [])
     layers = {}
     for name in names:
@@ -76,31 +104,45 @@ def facts(work, brain):
     lineage_rows = _section_rows(derive, names, 'lineage')
     depth = Counter(int(r.get('depth')) for r in lineage_rows if r.get('depth') is not None)
     status = Counter(str(r.get('status')) for r in lineage_rows)
+    unknown_status = sorted(k for k in status if k not in vocabulary['statuses'])
+    if unknown_status:
+        raise ValueError(f'lineage rows carry a status outside the pinned vocabulary {vocabulary["statuses"]}: {unknown_status}')
     lineage = dict(nodes=len(lineage_rows), depth_histogram={str(k): depth[k] for k in sorted(depth)}, status_counts=dict(sorted(status.items())),
-                   closed=status.get('CLOSED', 0), open=sum(v for k, v in status.items() if k != 'CLOSED'))
+                   terminated=status.get(vocabulary['terminated'], 0), censored=sum(status.get(s, 0) for s in vocabulary['censored']),
+                   open=status.get(vocabulary['open'], 0), vocabulary=vocabulary)
     recurrence_rows = _section_rows(derive, names, 'recurrence')
     per_event, every = [], []
     for i, row in enumerate(recurrence_rows):
-        gaps = [int(g) for g in (row.get('gaps') or [])]
-        per_event.append(dict(event=i, gap_count=row.get('gap_count', len(gaps)), gaps_ns=gaps))
-        every.extend(dict(gap_ns=g, event=i) for g in gaps)
-    largest = sorted(every, key=lambda g: (-g['gap_ns'], g['event']))[:LARGEST_GAPS]
+        gaps = []
+        for g in (row.get('gaps') or []):
+            if not isinstance(g, dict) or 'gap_ns' not in g:
+                raise ValueError('a recurrence gap is not the producers\' mapping (gap_ns, from_node, to_node, recv_ns)')
+            gaps.append(dict(gap_ns=int(g['gap_ns']), from_node=g.get('from_node'), to_node=g.get('to_node'), recv_ns=g.get('recv_ns'),
+                             continuity_segment=g.get('continuity_segment')))
+        per_event.append(dict(event=i, gap_count=row.get('gap_count', len(gaps)), gaps=gaps))
+        every.extend(dict(event=i, **g) for g in gaps)
+    largest = sorted(every, key=lambda g: (-g['gap_ns'], g['event'], g['recv_ns'] or 0))[:LARGEST_GAPS]
     ancestry = dict(events=len(recurrence_rows), count=len(every), per_event=per_event, largest=largest,
                     smallest_ns=min((g['gap_ns'] for g in every), default=None), largest_ns=max((g['gap_ns'] for g in every), default=None))
+    derived_clocks = {name: layers.get(name, {}).get('status') == 'derived'
+                      for name in ('clock_event_known_by', 'clock_feature_availability', 'clock_model_evaluation')}
     known = {r.get('group_index'): r.get('clocks.first_lawful_availability_ns') for r in _members(derive, 'clock_event_known_by')}
     avail = {r.get('group_index'): r.get('clocks.first_lawful_availability_ns') for r in _members(derive, 'clock_feature_availability')}
     evaluation = _members(derive, 'clock_model_evaluation')
     decided = {r.get('group_index'): r.get('clocks.decision_ts_recv_ns') for r in evaluation}
     basis = Counter(str(r.get('decision_basis')) for r in evaluation)
-    ordered, violations = 0, []
+    ordered, unknown, violations = 0, 0, []
     groups = sorted(set(known) | set(avail) | set(decided), key=lambda g: (g is None, g))
     for g in groups:
         k, a, e = known.get(g), avail.get(g), decided.get(g)
-        if None not in (k, a, e) and k <= a <= e:
+        if None in (k, a, e):
+            unknown += 1                      # a clock not derived for this group is unknown, not a violation
+        elif k <= a <= e:
             ordered += 1
         else:
             violations.append(dict(group_index=g, known_by_ns=k, availability_ns=a, evaluation_ns=e))
-    clocks = dict(groups=len(groups), ordered=ordered, violations=violations, rule=CLOCK_RULE, decision_basis=dict(sorted(basis.items())))
+    clocks = dict(groups=len(groups), ordered=ordered, unknown=unknown, violations=violations, derived_clocks=derived_clocks,
+                  rule=CLOCK_RULE, decision_basis=dict(sorted(basis.items())))
     geometry = _members(derive, 'derived_d_family_geometry')
     family_ids = Counter(str(r.get('structure.candidate_family_id')) for r in geometry if r.get('structure.candidate_family_id') is not None)
     sides = Counter(str(r.get('structure.side_string')) for r in geometry if r.get('structure.side_string') is not None)
@@ -117,6 +159,8 @@ def facts(work, brain):
         verdict = (f'the candidate lane cannot open on this cycle\'s rows: {span:.1f} s of rows against a {warmup} s warmup and {minimum} observations; '
                    'the dipole state and the pre-birth cases have no rows here')
     lane = dict(span_seconds=span, warmup_seconds=warmup, min_observations=minimum, candidate_unit_events=candidates, episode_rows=episodes, verdict=verdict)
+    traversal = dict(verdict=bedrock.get('verdict'), failed_gates=list(bedrock.get('failed_gates') or []),
+                     note='the pinned run\'s own acceptance verdict over this slice (gates in native_calculation_runner); the layers are filed by their rows either way')
     frozen = []
     manifest_path = brain / FROZEN_DIR / 'MANIFEST.json'
     entries = _load(manifest_path).get('entries', []) if manifest_path.is_file() else []
@@ -133,7 +177,7 @@ def facts(work, brain):
                                text=data.decode('utf-8', errors='replace')))
     return dict(schema=FACTS_SCHEMA, layers=layers, bedrock=dict(layers=names, derived=bedrock.get('derived'), could_not=bedrock.get('could_not'),
                                                                    groups=bedrock.get('groups'), records=bedrock.get('records')),
-                lineage=lineage, ancestry_gaps=ancestry, clocks=clocks, families=families, candidate_lane=lane, frozen=frozen)
+                traversal=traversal, lineage=lineage, ancestry_gaps=ancestry, clocks=clocks, families=families, candidate_lane=lane, frozen=frozen)
 
 
 def facts_text(f):
@@ -142,20 +186,27 @@ def facts_text(f):
              f'## The bedrock layers ({f["bedrock"]["derived"]} derived, {f["bedrock"]["could_not"]} could_not; {f["bedrock"]["groups"]} F_LAST groups on {f["bedrock"]["records"]} INPUT records)']
     for name, v in f['layers'].items():
         lines.append(f'- {name}: {v["status"]}, {v["count"]} rows' + (f' ({v["reason"]})' if v.get('reason') else ''))
+    V = f.get('traversal') or {}
+    lines += ['', f'## The traversal\'s own verdict over this slice: {V.get("verdict")}' + (f'; failed gates: {", ".join(V["failed_gates"])}' if V.get('failed_gates') else '; no failed gate')]
     L = f['lineage']
-    lines += ['', f'## D-depth from the lineage rows (4.13): {L["nodes"]} nodes; {L["closed"]} closed, {L["open"]} open or censored',
+    lines += ['', f'## D-depth from the lineage rows (4.13): {L["nodes"]} nodes; {L["terminated"]} terminated, {L["censored"]} censored, {L["open"]} open '
+              f'(the producers\' own statuses: {", ".join(L["vocabulary"]["statuses"])})',
               '- depth histogram (depth: nodes): ' + ', '.join(f'D{k}: {v}' for k, v in L['depth_histogram'].items()),
               '- status counts: ' + ', '.join(f'{k}: {v}' for k, v in L['status_counts'].items())]
     A = f['ancestry_gaps']
     lines += ['', f'## Ancestry gaps from the recurrence rows (4.14): {A["count"]} gaps over {A["events"]} events (listed per event; the largest named; no average)']
     for e in A['per_event']:
-        lines.append(f'- event {e["event"]}: {e["gap_count"]} gaps: ' + ', '.join(str(g) for g in e['gaps_ns']) + ' ns')
-    lines.append('- the largest gaps: ' + ', '.join(f'{g["gap_ns"]} ns (event {g["event"]})' for g in A['largest']) if A['largest'] else '- no gaps')
+        lines.append(f'- event {e["event"]}: {e["gap_count"]} gaps: ' + ', '.join(f'{g["gap_ns"]} ns ({g["from_node"]} -> {g["to_node"]} at {g["recv_ns"]})' for g in e['gaps']))
+    lines.append('- the largest gaps: ' + ', '.join(f'{g["gap_ns"]} ns (event {g["event"]}, {g["from_node"]} -> {g["to_node"]})' for g in A['largest']) if A['largest'] else '- no gaps')
     C = f['clocks']
-    lines += ['', f'## The causal clocks per group: rule {C["rule"]}; {C["ordered"]} of {C["groups"]} groups ordered; decision basis: '
+    lines += ['', f'## The causal clocks per group: rule {C["rule"]}; {C["ordered"]} of {C["groups"]} groups ordered, {C["unknown"]} unknown (a clock layer '
+              'not derived), ' + f'{len(C["violations"])} violations; derived clock layers: '
+              + ', '.join(f'{k}: {"yes" if v else "no"}' for k, v in C['derived_clocks'].items()) + '; decision basis: '
               + ', '.join(f'{k}: {v}' for k, v in C['decision_basis'].items())]
-    for v in C['violations']:
+    for v in C['violations'][:PRINTED_VIOLATIONS]:
         lines.append(f'- violation at group {v["group_index"]}: known_by {v["known_by_ns"]}, availability {v["availability_ns"]}, evaluation {v["evaluation_ns"]}')
+    if len(C['violations']) > PRINTED_VIOLATIONS:
+        lines.append(f'- ... {len(C["violations"]) - PRINTED_VIOLATIONS} more violations in the teach-back file')
     F = f['families']
     lines += ['', f'## Families: {F["distinct_family_ids"]} distinct candidate_family_id values; counts: '
               + ', '.join(f'{k}: {v}' for k, v in F['family_id_counts'].items()) + '; side strings: ' + ', '.join(f'{k}: {v}' for k, v in F['side_strings'].items()),
@@ -180,16 +231,30 @@ def prompt(text, *, cycle, request_id):
             + text)
 
 
+def _number_tokens(text):
+    """The number literals of a text, thousands separators removed and hex digests (16+ hex chars) removed first: a
+    digit run inside a sha256 never licenses a number. A leading minus stays with its number."""
+    cleaned = _HEX.sub(' ', _THOUSANDS.sub('', text or ''))
+    return _NUMBER.findall(cleaned)
+
+
+def _value(token):
+    from decimal import Decimal
+    return Decimal(token)
+
+
 def numbers_in(text):
-    return set(_NUMBER.findall(_THOUSANDS.sub('', text or '')))
+    return {_value(n) for n in _number_tokens(text)}
 
 
 def missing_numbers(answer_text, facts_text_):
+    """The answer's numbers that are not in the facts, compared as VALUES (13 and 13.0 agree; -5 and 5 do not), once each."""
     allowed = numbers_in(facts_text_)
     seen, out = set(), []
-    for n in _NUMBER.findall(_THOUSANDS.sub('', answer_text or '')):
-        if n not in allowed and n not in seen:
-            seen.add(n)
+    for n in _number_tokens(answer_text):
+        v = _value(n)
+        if v not in allowed and v not in seen:
+            seen.add(v)
             out.append(n)
     return out
 
@@ -197,6 +262,8 @@ def missing_numbers(answer_text, facts_text_):
 def _object(text):
     try:
         value = json.loads(text)
+    except RecursionError:
+        raise ValueError('the answer nests too deeply')
     except Exception:
         start, end = text.find('{'), text.rfind('}')
         if start < 0 or end <= start:
@@ -229,12 +296,19 @@ def parse_answer(body, facts_text_, error=ValueError):
     questions = answer.get('questions', [])
     if not isinstance(questions, list) or not all(isinstance(q, str) for q in questions):
         raise error('answer unusable: questions must be a list of strings')
+    if len(questions) > MAX_QUESTIONS or any(len(q) > MAX_QUESTION_CHARS for q in questions):
+        raise error(f'answer unusable: at most {MAX_QUESTIONS} questions of {MAX_QUESTION_CHARS} characters')
     out['questions'] = questions
     cited.extend(questions)
     foreign = missing_numbers('\n'.join(cited), facts_text_)
     if foreign:
         raise error('answer unusable: numbers not in the facts: ' + ', '.join(foreign))
     return out
+
+
+def _line(value):
+    """Model text as ONE Markdown line: no line breaks (a heading or list marker inside a value cannot forge structure)."""
+    return ' '.join(str(value).split())
 
 
 def markdown(record):
@@ -245,6 +319,6 @@ def markdown(record):
     for topic in TOPICS:
         lines += [f'## {topic}', '']
         for field in FIELDS:
-            lines += [f'**{field}**: {a[topic][field]}', '']
-    lines += ['## questions', ''] + [f'- {q}' for q in a.get('questions', [])] + ['', '## The facts the answer was checked against', '', record['facts_text'].rstrip('\n'), '']
+            lines += [f'**{field}**: {_line(a[topic][field])}', '']
+    lines += ['## questions', ''] + [f'- {_line(q)}' for q in a.get('questions', [])] + ['', '## The facts the answer was checked against', '', record['facts_text'].rstrip('\n'), '']
     return '\n'.join(lines)

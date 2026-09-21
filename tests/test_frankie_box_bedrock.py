@@ -317,3 +317,45 @@ def test_producers_commit_is_measured_and_must_be_the_pin(tmp_path):
     assert B.producers_commit(P.require_producers()) == P.PIN
     with pytest.raises(ValueError, match='no readable git HEAD'):
         B.producers_commit(tmp_path)
+
+
+def test_the_result_hashes_to_itself_as_written_and_the_modules_that_ran_are_witnessed(tmp_path):
+    """Review findings: finalize() hashed the result before ledger_retention was added (the launcher's F-feed-6), so the
+    declared result_hash is recomputed last and the runner's kept under its own name; the receipt witnesses the modules
+    that actually loaded, by their own __file__, all under the pinned checkout."""
+    producers = P.require_producers()
+    receipt = B.run(stream(), container(tmp_path), tmp_path / 'bedrock', producers, cycle='00', code_commit=P.PIN, day=DAY)
+    result = json.loads((tmp_path / 'bedrock' / 'result.json').read_bytes())
+    from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import canonical_hash
+    declared = result.pop('result_hash')
+    assert canonical_hash(result) == declared and len(result['runner_result_hash']) == 64 and result['runner_result_hash'] != declared
+    for name in ('native_replay_driver', 'native_calculation_runner', 'native_row_sink', 'native_response'):
+        assert Path(receipt['modules'][name]['path']).is_relative_to(producers.resolve()) and len(receipt['modules'][name]['sha256']) == 64
+    assert receipt['driver'] == receipt['modules']['native_replay_driver'] and receipt['driver']['sha256'] == P.DRIVER_SHA256
+    assert any('pre-traversal gates' in d for d in receipt['launcher_differences'])
+
+
+def test_a_producer_module_loaded_from_another_tree_is_refused(tmp_path):
+    producers = P.require_producers()
+    import types
+    foreign = types.ModuleType('research.kalshi.frankie_raw_mbo_benchmark.native_replay_driver')
+    foreign.__file__ = str(tmp_path / 'elsewhere' / 'native_replay_driver.py')
+    with pytest.raises(ValueError, match='loaded from .*elsewhere.*not the pinned checkout'):
+        B.loaded_modules(producers, foreign)
+    with pytest.raises(ValueError, match='not the pinned'):
+        B.producers_commit(P.REPO)
+
+
+def test_project_files_could_not_emitted_no_rows_for_a_non_candidate_layer_whose_section_is_empty(tmp_path):
+    producers = P.require_producers()
+    ledgers = tmp_path / 'ledgers'
+    ledgers.mkdir()
+    for name in ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl', 'legacy_observable_rows.jsonl'):
+        (ledgers / name).write_text('')
+    crosswalk = B.crosswalk_records(producers, ('derived_ancestry_gaps', 'prebirth_predecessor_at_risk_state'))
+    layers = B.project(dict(RECEIPT, verdict='REJECTED', failed_gates=['coverage'], groups=0, records=0), ledgers, ('derived_ancestry_gaps', 'prebirth_predecessor_at_risk_state'), crosswalk, tmp_path / 'derived')
+    gaps = json.loads(Path(layers['derived_ancestry_gaps']['path']).read_bytes())
+    assert gaps['status'] == 'could_not' and 'emitted no rows' in gaps['reason'] and gaps['partial'] == [] and '900 s' not in gaps['reason']
+    at_risk = json.loads(Path(layers['prebirth_predecessor_at_risk_state']['path']).read_bytes())
+    assert at_risk['status'] == 'could_not' and '900 s' in at_risk['reason']
+    assert gaps['traversal'] == dict(verdict='REJECTED', failed_gates=['coverage'], groups=0, records=0, span_seconds=13.0, candidate_warmup_seconds=900, candidate_min_observations=600)

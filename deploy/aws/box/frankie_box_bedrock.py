@@ -72,6 +72,19 @@ def producers_commit(producers):
     return head
 
 
+def loaded_modules(producers, *modules):
+    """The producer modules that actually loaded, each witnessed by its own __file__ and REQUIRED to live under the pinned
+    checkout: a same-named module resolved from another tree would otherwise run while the receipt swore to the pin."""
+    producers = Path(producers).resolve()
+    out = {}
+    for module in modules:
+        path = Path(module.__file__).resolve()
+        if not path.is_relative_to(producers):
+            raise ValueError(f'{module.__name__} loaded from {path}, not the pinned checkout {producers}')
+        out[module.__name__.rsplit('.', 1)[-1]] = dict(path=str(path), **witness(path))
+    return out
+
+
 def default_producers():
     value = os.environ.get('FRANKIE_BOX_PRODUCERS')
     if value:
@@ -192,11 +205,13 @@ def run(records, container, out_dir, producers, cycle, code_commit, day):
     if not records:
         raise ValueError('no INPUT records; nothing to derive')
     producers = load_producers(producers)
-    from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import NativeCalculationRun
+    from research.kalshi.frankie_raw_mbo_benchmark import native_calculation_runner, native_replay_driver, native_response, native_row_sink
+    from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import NativeCalculationRun, canonical_hash
     from research.kalshi.frankie_raw_mbo_benchmark.native_replay_driver import ExchangeSessionRule, NativeReplayDriver
     from research.kalshi.frankie_raw_mbo_benchmark.native_response import (
         FLOW_RESPONSE, FULL_BOOK_RESPONSE, PRICE_RESPONSE, QUEUE_RESPONSE, horizons_for_version)
     from research.kalshi.frankie_raw_mbo_benchmark.native_row_sink import LedgerSinks
+    modules = loaded_modules(producers, native_replay_driver, native_calculation_runner, native_row_sink, native_response)
     out_dir = Path(out_dir)
     superseded = _move_aside(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -222,6 +237,10 @@ def run(records, container, out_dir, producers, cycle, code_commit, day):
     result['ledger_retention'] = sinks.reconcile_all(member=calculation.member_rows_written,
                                                      lifecycle=calculation.lifecycle_rows_written,
                                                      legacy=driver.counters.legacy_rows_retained)
+    # THE RESULT HASHES TO ITSELF AS WRITTEN (the launcher's F-feed-6): finalize() hashed the result before the
+    # reconciliation was added, so the runner's hash keeps its own name and the declared hash is recomputed last
+    result['runner_result_hash'] = result.pop('result_hash')
+    result['result_hash'] = canonical_hash(result)
     result_witness = write_json(out_dir / 'result.json', result)
     ledgers = {}
     for name in LEDGER_FILES:
@@ -230,8 +249,12 @@ def run(records, container, out_dir, producers, cycle, code_commit, day):
         ledgers[name] = dict(witness(path), path=str(path), rows=rows)
     receipt = dict(schema='FRANKIE_BOX_BEDROCK_RUN_RECEIPT_V1', at=time.time(), cycle=str(cycle), seconds=round(time.time() - started, 3),
                    producers=str(producers), producers_commit=str(code_commit), producers_lineage=PIN_LINEAGE,
-                   driver=dict(path=str(producers / 'research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py'),
-                               **witness(producers / 'research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py')),
+                   driver=modules['native_replay_driver'], modules=modules,     # the modules that actually RAN, by their own __file__
+                   launcher_differences=['no PeriodicCheckpointer / seal_start (no save points; the launcher writes them for the day run)',
+                                         'no stage_spawn (moot under NeverInvoke)',
+                                         'the launcher\'s three pre-traversal gates (registry identity, pre-call layer receipt, RT surface '
+                                         'inventory) are not run, so result.json carries no gates/evidence_identity/slice of its own',
+                                         'result_hash recomputed after ledger_retention, as the launcher does (runner_result_hash kept)'],
                    identity=asdict(ident), identity_inputs=dict(mission=MISSION_PATH, contract=CONTRACT_PATH, knowledge_manifest=KNOWLEDGE_MANIFEST_PATH),
                    cadence_policy='NeverInvoke', driver_arguments=arguments,
                    candidate_warmup_seconds=driver.candidate_warmup_seconds, candidate_min_observations=driver.candidate_min_observations,
@@ -273,7 +296,7 @@ def _select(value, segments):
         return True, value
     head, rest = segments[0], segments[1:]
     if head.endswith('[]'):
-        found, items = _select(value, [head[:-2]] + []) if head[:-2] else (True, value)
+        found, items = _select(value, [head[:-2]]) if head[:-2] else (True, value)
         if not found or not isinstance(items, list):
             return False, None
         out = []
@@ -301,8 +324,9 @@ def crosswalk_records(producers, layers):
     """The pinned crosswalk's record for each layer (native_layer_crosswalk.LAYER_PRODUCERS at the checkout): module,
     symbol, file, line, kind, carrier, member_paths, lifecycle_sections, fixture_dependent_sections, notes. Never
     restated here; a layer the crosswalk does not name is refused."""
-    load_producers(producers)
+    producers = load_producers(producers)
     from research.kalshi.frankie_raw_mbo_benchmark import native_layer_crosswalk as X
+    loaded_modules(producers, X)
     out = {}
     for layer in layers:
         record = X.LAYER_PRODUCERS.get(layer)
@@ -329,6 +353,8 @@ def project(receipt, ledgers_dir, layers, crosswalk, out_dir):
     span = float(receipt.get('span_seconds') or 0.0)
     warmup = receipt.get('candidate_warmup_seconds')
     minimum = receipt.get('candidate_min_observations')
+    traversal = dict(verdict=receipt.get('verdict'), failed_gates=list(receipt.get('failed_gates') or []), groups=receipt.get('groups'),
+                     records=receipt.get('records'), span_seconds=span, candidate_warmup_seconds=warmup, candidate_min_observations=minimum)
     files = {}
     for layer in layers:
         record = crosswalk[layer]
@@ -336,7 +362,7 @@ def project(receipt, ledgers_dir, layers, crosswalk, out_dir):
                             file=record.get('file'), line=record.get('line'), carrier=record.get('carrier'),
                             member_paths=list(record.get('member_paths') or []), lifecycle_sections=list(record.get('lifecycle_sections') or []),
                             fixture_dependent_sections=list(record.get('fixture_dependent_sections') or []), ledgers=list(record.get('ledgers') or []),
-                            notes=record.get('notes'), crosswalk_commit=PIN_COMMIT, member_rows=[], lifecycle_rows=[],
+                            notes=record.get('notes'), crosswalk_commit=PIN_COMMIT, traversal=traversal, member_rows=[], lifecycle_rows=[],
                             section_counts={s: 0 for s in (record.get('lifecycle_sections') or [])}, absent_paths={})
     member_layers = [l for l in layers if files[l]['member_paths']]
     if member_layers:
