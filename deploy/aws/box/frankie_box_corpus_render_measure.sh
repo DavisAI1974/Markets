@@ -40,7 +40,10 @@ for key in ('manifest_base64', 'source_binding_base64', 'mapping_evidence_base64
     if isinstance(payload.get(key), str): members[key.replace('_base64', '')] = base64.b64decode(payload[key])
 for name, b64 in (payload.get('files_base64') or {}).items():
     if isinstance(b64, str): members['files/' + name] = base64.b64decode(b64)
-def plain(doc): return json.dumps(doc, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False).encode()
+def _default(v):
+    if isinstance(v, bytes): return {'$bytes_hex': v.hex()}      # c15 'bytes' values: rendered as hex under a tag, reversible
+    raise TypeError(type(v).__name__)
+def plain(doc): return json.dumps(doc, sort_keys=True, separators=(',', ':'), ensure_ascii=True, allow_nan=False, default=_default).encode()
 def biggest(doc, path='', acc=None, depth=0):
     acc = acc if acc is not None else []
     if isinstance(doc, dict):
