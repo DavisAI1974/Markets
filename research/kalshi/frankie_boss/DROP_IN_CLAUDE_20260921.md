@@ -1,5 +1,45 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
+## READ FIRST (13:4xZ 09-21, chat 5): SIX STACKS MEASURED, THE WHOLE READ IS ~3 PARTS; the RunPod key was ABSENT here
+
+Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later). Run `using-agent-skills`
+and `git-workflow-and-versioning` first; do not stop and restart shells. The RunPod skills (`~/.claude/skills/runpod*`)
+were NOT installed in chat 5's container; the RunPod facts stand in `CLAUDE_HANDOFF_20260920.md` 11:1xZ. FIRST COMMAND
+after the checkout is still `bash deploy/runpod/mcp_connect.sh`: in chat 5 it answered "RUNPOD_API_KEY absent ... nothing
+done" (no MCP, no list-endpoints, no serverInfo.version), so JOB 2's endpoint route stays the trunk-registered
+`frankie_serverless_reading.yml` + runpodctl on the runner unless Greg has added the variable since. Read this block,
+then `CLAUDE_HANDOFF_20260920.md` from 13:0xZ (chat 5's receipts, every run id), then the 12:2xZ block below for the state
+the chat started from. Cycle 0's OLD 163-part reading is still in flight on the retained Pod (jobs_v1, no cancel); the
+session on the box applies everything below at `restart_session` (Greg's word). Box STATUS probes stay PAUSED; a
+committed script run costs ~20 s of the box and none of the Pod.
+
+WHAT STANDS (all committed, every transform exact and proven before use, nothing dropped; 20 tests in
+`tests/test_frankie_box_{digest_render,reading_render,stacked_text,head_render}.py`):
+- The profile of every category with the pinned tokenizer (`frankie_box_render_profile.sh`, run 35603160044).
+- STACK 1 DIGEST_V4 (e8de936b, run 35604003983): the derivation digest 146,765 -> 75,551 tokens (book 75,921 -> 43,148,
+  structures 69,340 -> 30,793): space separator, `^k`/`=k`, exact `n/d` fractions, per-column scales; parse-back proven.
+- STACK 2 render L8/L9/L10 (5af1adf6, run 35604644446): known files by sha256 (7 source files -> references, 23.8k
+  tokens), the stacked envelope as a STACKED_TEXT_V1 block (parse-back proven, the snapshot text put back byte for
+  byte), lists of dicts as DIGEST_V4 table blocks; members 151,705 -> 124,312.
+- STACK 3 HEAD_TEXT_V1 (bbdb1e5d, run 35604904715): the head's six Markdown tables and repeated lines, per section,
+  parse-back checked; head 68,506 -> 66,301 (the findings are prose and stay as written).
+- STACKS 4-5 (0278e898, 953765c7, 2bc0ff03; runs 35605419072, 35605902090): compact JSON, `*k` scales and `#w` digit
+  strings in the stacked spelling (action/side 6.5k -> 1.5k each, size 6.5k -> 3.0k); members -> 108,659; the stacked
+  block 89,528 -> 75,887; the state member 127,003 -> 86,354.
+- STACK 6 (f8b400a7): L10 admits c15 tuples as row containers (the forecast's points and marks); measured in run
+  35606132790 (numbers in the handoff 13:4xZ).
+- WHOLE CORPUS at the next restart: head + members + digest ~= 250k tokens = 3 parts of 87k (was 163, then 4-5).
+  What remains is the data itself: the record table's order_id / timestamp / ts_in_delta / sequence deltas and price
+  indexes (66k), the A_MEMORY findings prose (31.5k), the book/structure rows (74k). The codec cannot re-encode its own
+  decoded root to the delivered envelope, so no `$derivable` snapshot.
+- `/ship` review of chat 5's diff: `SHIP_REVIEW_20260921_CHAT5.md` (decision and follow-ups there).
+
+GREG'S OPEN CALLS (unchanged): `frankie_box_session.sh ACTION=restart_session REASON=lossless-render` (applies the
+render, identity tensors, DIGEST_V4, HEAD_TEXT_V1 and the lane); the GitHub PAT into SSM `/markets/frankie/github-token`;
+the endpoint word (JOB 2: create the H100 serverless reading endpoint, verify, `frankie_box_serverless_config.sh
+ACTION=write ENDPOINT_ID=<id>`, then restart_session); trunk registration of `frankie_box_fetch_response.yml` and
+`frankie_serverless_reading.yml`; `RUNPOD_API_KEY` in the Claude Code environment configuration for the MCP route.
+
 ## READ FIRST (12:2xZ 09-21, chat 4 closed on Greg's word): THE READ IS ~4-5 PARTS, NOT 163; next chat = MORE STACKS ON MORE CATEGORIES
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later). Run `using-agent-skills`,

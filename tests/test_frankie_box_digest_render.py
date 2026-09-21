@@ -164,3 +164,20 @@ def test_paired_offset_resolves_whatever_the_column_order_and_when_the_pair_is_c
     rows = [dict(ts_event_ns=999, ts_recv_ns=1000), dict(ts_event_ns=1001, ts_recv_ns=1000), dict(ts_event_ns=1001, ts_recv_ns=1004)]
     block = DG.render_table('t', rows)                    # ts_recv_ns repeats between rows 0 and 1 (a `^`), then moves (a delta)
     assert DG._same(DG.parse_table(block)[1], rows)
+
+
+def test_v4_tuple_cells_parse_back_as_tuples_and_nested_tuples_refuse():
+    rows = [dict(a=i, q=(5.4, 5.41, 5.42), n=(1, 2)) for i in range(3)]
+    block = DG.render_table('t', rows)
+    assert 'constants: q=U[5.4,5.41,5.42]\tn=U[1,2]' in block and '^q' in block.split('\n')[0]     # a constant tuple column is declared once, with its mark
+    rows2 = [dict(a=i, q=(5.4, 5.41 + i, 5.42)) for i in range(3)]
+    assert 'U[5.4,6.41,5.42]' in DG.render_table('t', rows2) and DG._same(DG.parse_table(DG.render_table('t', rows2))[1], rows2)
+    parsed = DG.parse_table(block)[1]
+    assert DG._same(parsed, rows) and isinstance(parsed[0]['q'], tuple) and isinstance(parsed[0]['n'], tuple)
+    assert not DG._same([dict(q=[1, 2])], [dict(q=(1, 2))])                 # a list is not a tuple
+    try:
+        DG.render_table('t', [dict(a=((1, 2), 3))])
+    except ValueError as err:
+        assert 'nested in a tuple' in str(err)
+    else:
+        raise AssertionError('a tuple nested in a tuple has no exact cell and must refuse')

@@ -216,6 +216,16 @@ def _int_list(v):
     return isinstance(v, list) and bool(v) and all(isinstance(x, int) and not isinstance(x, bool) for x in v)
 
 
+def _no_tuples(value):
+    if isinstance(value, tuple):
+        return False
+    if isinstance(value, dict):
+        return all(_no_tuples(v) for v in value.values())
+    if isinstance(value, list):
+        return all(_no_tuples(v) for v in value)
+    return True
+
+
 def _literal(v, column, r, prev_lists):
     """The inline text of a value that is neither derived, repeated from the previous row, nor a delta:
     (kind, text) with kind 'lit' (final), 'str' (a string; dictionary candidate) or 'json' (a JSON cell; candidate)."""
@@ -231,6 +241,10 @@ def _literal(v, column, r, prev_lists):
         return 'lit', 'nan' if math.isnan(v) else _float_text(v)
     if isinstance(v, str):
         return 'str', v
+    if isinstance(v, tuple):
+        if not _no_tuples(list(v)):
+            raise ValueError('a tuple nested in a tuple has no exact cell')     # render_layers / the caller leaves such a value as it was
+        return 'lit', 'U' + json.dumps(list(v), separators=(',', ':'), sort_keys=True)   # DIGEST_V4: a tuple cell, parsed back as a tuple
     if _int_list(v):
         if column in _DISPOSITION_LISTS and _int_list(r.get('order_ids')):
             ids = r['order_ids']; pos = []
@@ -342,7 +356,8 @@ def render_table(name, rows, context=None):
     head = [f'### table {name}: {len(rows)} rows, sep={"space" if sep == " " else "tab"}, columns: ' + '\t'.join(whole.get(c, '') + c for c in columns)]
     constants = [c for c in columns if whole.get(c) == '^']
     if constants:
-        head.append('constants: ' + '\t'.join('%s=%s' % (c, json.dumps(flat[0][c], separators=(',', ':'), sort_keys=True)) for c in constants))
+        head.append('constants: ' + '\t'.join('%s=%s' % (c, ('U' + json.dumps(list(flat[0][c]), separators=(',', ':'), sort_keys=True)) if isinstance(flat[0][c], tuple)
+                                                       else json.dumps(flat[0][c], separators=(',', ':'), sort_keys=True)) for c in constants))   # a tuple constant keeps its U mark
     if scales:
         head.append('scales: ' + '\t'.join('%s=%d' % (c, k) for c, k in scales.items()))
     if order:
@@ -430,7 +445,7 @@ def parse_table(block, context=None):
     if idx < len(lines) and lines[idx].startswith('constants: '):
         for item in lines[idx][len('constants: '):].split('\t'):
             k, _, val = item.partition('=')
-            constants[k] = json.loads(val)
+            constants[k] = tuple(json.loads(val[1:])) if val.startswith('U') else json.loads(val)
         idx += 1
     if idx < len(lines) and lines[idx].startswith('scales: '):
         for item in lines[idx][len('scales: '):].split('\t'):
@@ -470,6 +485,8 @@ def parse_table(block, context=None):
                 v = cell[1:]
             elif cell.startswith('J'):
                 v = json.loads(cell[1:])
+            elif cell.startswith('U'):
+                v = tuple(json.loads(cell[1:]))
             elif cell.startswith('K'):
                 positional[c] = [int(i) for i in cell[1:].split(',')] if cell[1:] else []; continue
             elif cell.startswith('I'):
@@ -532,7 +549,7 @@ def _same(a, b):
     if isinstance(a, dict) and isinstance(b, dict):
         return a.keys() == b.keys() and all(_same(a[k], b[k]) for k in a)
     if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
-        return len(a) == len(b) and all(_same(x, y) for x, y in zip(a, b))
+        return type(a) is type(b) and len(a) == len(b) and all(_same(x, y) for x, y in zip(a, b))
     return a == b and type(a) is type(b)
 
 
@@ -597,7 +614,7 @@ def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, 
              '"ow-" + sha256 of the canonical descriptor); tables: one header line, tab-separated rows; `^` = the same value as the '
              'previous row in this column; integer timestamp, price_raw and depth/order-count columns as signed deltas from the '
              'previous row (first row absolute); floats as shortest round-trip decimals; `-` = none; T/F = booleans; `S...` = a string; '
-             '`@n` = dictionary entry n (only a value that repeats in the table is in the dictionary); `J...` = JSON; `I<first>,<+d>,...` = '
+             '`@n` = dictionary entry n (only a value that repeats in the table is in the dictionary); `J...` = JSON; `U...` = a tuple, as JSON; `I<first>,<+d>,...` = '
              'a list of integers as its first value (a signed delta from the previous row\'s first when one exists) then successive '
              'differences; `K<i>,<j>` = the list of this row\'s order_ids at those positions; `~<d>` = ts_event as an offset from this '
              'row\'s ts_recv; a header column written `=name` is derived on every row and omitted from the rows, `^name` holds one '

@@ -2990,3 +2990,92 @@ Box-side proof (run 35601486470, `frankie_box_serverless_config.sh ACTION=key`, 
 {"parameter":"/markets/frankie/runpod-serverless","readable":true,"version":1,"length":50,"prefix":"rpa_"}` -- the box
 role reads it. The serverless lane on the box now lacks only the endpoint id (`ACTION=write ENDPOINT_ID=...`).
 
+
+### 13:0xZ 09-21 (chat 5): the RunPod key is absent from this session; every remaining category profiled on the box
+
+Chat 5 opened on `claude/cycle-0-frankie-box-rerun-od5sxk` at 6bacc7ae (the drop-in's 12:2xZ block, this file 10:4xZ to
+12:4xZ, `using-agent-skills` and `git-workflow-and-versioning` run first; the RunPod skills are not installed in this
+container: `~/.claude/skills/runpod*` does not exist here, so the RunPod facts used are the ones this file recorded at
+11:1xZ). FIRST COMMAND, as instructed: `bash deploy/runpod/mcp_connect.sh` -> "RUNPOD_API_KEY absent: add it to the Claude
+Code environment configuration (never paste it into chat); nothing done". So no MCP was registered, no `list-endpoints`,
+no `serverInfo.version` to record; the endpoint route for JOB 2 stays the trunk-registered `frankie_serverless_reading.yml`
+(+ runpodctl on the runner), on Greg's word. This container's AWS identity is a placeholder (InvalidClientTokenId), so
+the real members are reachable only on the box: every measurement below is one `frankie_box_run.yml` dispatch of a
+committed script (about 20 s of the box each, none of the Pod; box STATUS probes untouched, PAUSED as Greg said).
+PROFILE (read-only, `deploy/aws/box/frankie_box_render_profile.sh`, run 35603160044, pinned tokenizer), the facts the
+stacks are built on:
+- tokenizer: a tab never merges with the next number, a space does (`^\t^\t^\t^` = 7 tokens, `^4` = 2; the book table's
+  rows 75,813 tokens with tabs, 57,400 with spaces, 49,188 with `^` runs collapsed too); `1000000` = 3 tokens, `1` = 1;
+  a 64-hex string 38 tokens, its base64 35; `-0.12345678901234567` 10 tokens, `-37/301` 4.
+- state.c15.json 126,604 tokens = the critic's stacked snapshot 91,861 (a TEXT value: the route's `_text` spells the
+  wrapper without sorted keys, so L2 leaves it text and L5 puts the prompt as a marker around it) + seven source files
+  delivered as configuration 23,833 (frankie_controller.py, granite_durable_job_client.py as transport_code,
+  controller_journal.py, granite_context.py, granite_context_compact.py, granite_shadow.py, granite_context_route.py:
+  every one byte-identical to a file in `/opt/frankie-box/markets`) + the rest ~11k. The 42 tensor rows are in the
+  forecast member (2,651 tokens), not in state.
+- the stacked envelope: 144,275 B / 91,357 tokens; leaves cost 6.8k (V 6,293, G 531); the 17-field record C table
+  81,174 tokens = the digits of 3,262 rows x 17 columns already delta/run-encoded by the codec; the codec does NOT
+  re-encode its decoded root to the delivered envelope (`encode(decode(env)) != env`), so a `$derivable` snapshot is out.
+- the head: 191,195 B / 68,506 tokens: A_MEMORY findings 32,571 (316 lines, prose with repeated field prefixes),
+  continuation 8,223 (8 lines, 75 hashes), delivered artifacts 7,974 (73 md rows, 71 hashes, 56 rows sharing a path
+  prefix), knowledge layers 5,775 (24 rows), field census 3,410 (108 rows).
+- DIGEST_V3 columns: depth_imbalance_n 11,225 tokens with 1,082 of 1,101 literals an exact small-integer fraction (-6,152
+  tokens as `n/d`), price_raw_min/max 9.5k each and multiples of 10^6, the timestamps 8k each (ns, no scale), order_ids
+  7.9k; tabs 22,820 in the book table alone.
+
+### 13:1xZ 09-21: STACK 1 = DIGEST_V4 (e8de936b): the digest 146,765 -> 75,551 tokens (run 35604003983)
+
+Four exact transforms on top of V3, each parse-back proven by `render_layers` before a digest is written, pinned by
+`tests/test_frankie_box_digest_render.py` (8 tests): cells separated by one space when no cell of the table holds one
+(`sep=space` in the header, else tabs); `^k` / `=k` for k consecutive `^` / `=` cells (never `-`: `-3` is an integer);
+a float as `n/d` when the IEEE division of those integers IS the float (Fraction.limit_denominator(10^6), checked) and
+the spelling is shorter; a per-column power-of-ten scale declared once on a `scales:` line when every integer literal
+(absolute or delta) is a multiple (SCALE_MIN 10^3). Measured on the real layers: legacy_book_imbalance 75,921 -> 43,148,
+legacy_structure_observables 69,340 -> 30,793, the digest 202,893 B -> 127,294 B. The session regenerates a digest whose
+head is not `DIGEST_V4` (as it did for V3, through `derive`).
+
+### 13:2xZ 09-21: STACK 2 = render L8/L9/L10 (5af1adf6): members 151,705 -> 124,312 tokens (run 35604644446); STACK 3 = HEAD_TEXT_V1 (bbdb1e5d): head 68,506 -> 66,301 (run 35604904715)
+
+L8 known files: a value whose sha256 equals a file in a checkout the box holds (`known_files_index` over
+`/opt/frankie-box/markets` and `/opt/frankie-box/producers`, 3,609 files) renders as `{"$file": path, "checkout",
+"commit", "sha256", "bytes"}`; 7 refs, 92,638 B; state 127,003 -> 100,325 tokens. L9 STACKED_TEXT_V1
+(`deploy/aws/box/frankie_box_stacked_text.py`): the stacked envelope's tagged tree in prefix notation with explicit
+counts, parsed back and compared to the envelope's canonical JSON (`prove`), and for the snapshot TEXT the block plus the
+wrapper must put the text back byte for byte or the node is refused; measured 91,861 -> 89,528 tokens: the syntax was
+2%, the digits are the data. L10 table blocks: a list of same-keyed dicts as a DIGEST_V4 table block, parse-back proven,
+kept only when smaller: the 42 tensor rows 2,651 -> 2,177; the forecast's 101 points and 58 known marks were left as
+JSON by the same-keys rule (fixed in stack 4). The reconstruct proof is unchanged (every member rebuilt byte-exact from
+the decoded documents; blocks and references are presentation). Tests `tests/test_frankie_box_reading_render.py` (the
+package `__init__` imports torch, so the codec modules load as a namespace package) and
+`tests/test_frankie_box_stacked_text.py`. HEAD_TEXT_V1 (`deploy/aws/box/frankie_box_head_render.py`): per section (the
+same `#`/`##`/`###` bounds as the `$read` ledger), a Markdown table of >= 8 rows whose every row rebuilds exactly from
+its cells becomes tab rows with `^` and per-column common prefixes declared once; a line of >= 24 characters repeated in
+the section is written once on a dictionary; each transformed section carries bytes + sha256 and `render` checks
+`parse(render(text)) == text` itself. On the real head: 6 tables (247 rows) and 1 dictionary; knowledge layers 5,775 ->
+5,490, delivered artifacts 7,974 -> 7,380, field census 3,410 -> 2,942, findings 32,571 -> 31,523 (the findings are prose:
+the repeated prefixes are not repeated lines). Wired into the session (`reading_corpus`: L8 index from the box checkouts,
+the head through HEAD_TEXT_V1 after the ledger pass; receipts carry file_refs, blocks, the head report) and the measure
+script (head, digest, blocks, L10 candidates).
+
+### 13:3xZ 09-21: STACKS 4-5 on the stacked spelling and the JSON (0278e898, 953765c7, 2bc0ff03): members 124,312 -> 108,659 tokens (runs 35605419072, 35605902090)
+
+The stacked record table column by column (the measure prints it now): order_id 10.9k, ts_recv 10.5k, ts_event 10.1k,
+price 10.0k (a Q dictionary of 539 prices with 3,262 indexes), ts_in_delta 8.5k, sequence 6.5k, size 6.5k, action 6.5k,
+side 6.5k, flags 3.7k; the rest under 50 each. Stack 4: an integer recipe carries `*k` when every value is a multiple
+of 10^k (no column of the record table qualifies: the prices sit in a dictionary, the timestamps are nanoseconds); the
+rendered JSON uses compact separators (measured 15% fewer tokens on a sample document: members 124,312 -> 122,300).
+Stack 5: an I or D recipe carries `#w` (w 1..3) and writes its values as one zero-padded digit string when every value
+is non-negative and below 10^w (the tokenizer packs three digits into a token; a spaced value costs about two): action
+6,547 -> 1,499, side 6,539 -> 1,489, size 6,531 -> 2,988; the stacked block 89,528 -> 75,887 tokens; state 100,325 ->
+86,354. The remaining 66k of the record table are the deltas of order_id, the two timestamps, ts_in_delta and sequence
+and the price indexes: digits of the market rows, nothing exact left to fold (the codec cannot re-encode its own
+decoded root to the delivered envelope, so no `$derivable`). Stack 6 (f8b400a7): the forecast's 101 points and 58 known
+marks parsed back exactly as tables at half the bytes but were c15 TUPLES, which L10 refused as a container; admitted
+(the node says container=tuple); run 35606132790: the 58 known marks are a table block (9,450 JSON B -> 3,517 tokens),
+members 108,659 -> 107,928; the 101 points still parse back exactly but hold TUPLES of quantiles inside the rows, which
+the grammar had no exact cell for -> stack 7 adds the `U` tuple cell (parsed back as a tuple; a tuple nested in a tuple
+refuses and the value stays JSON; `_same` now tells a list from a tuple).
+WHOLE CORPUS at the next restart, from the runs above: head 66,301 (cycle 0 reads it whole; ledgered from cycle 1) +
+members 107,928 + digest 75,551 = 249,780 tokens = 3 parts of 87k (chat 4 close: ~4-5; the original 163). Every layer
+exact and proven before use; every member rebuilt byte-exact (PROOF all_exact=True on every run); the session applies
+all of it at `restart_session` (Greg's call), the digest regenerating through `derive` because its head is not DIGEST_V4.

@@ -404,7 +404,7 @@ def _same_keys(items):
     between rows: the DIGEST_V4 grammar writes `?` for a cell the row does not carry, and the parse-back proof
     decides (run 35604644446: the forecast's 101 points and 58 known marks were left as JSON by a same-keys rule)."""
     return (isinstance(items, (list, tuple)) and len(items) >= TABLE_MIN and all(isinstance(v, dict) and v for v in items)
-            and not any('.' in k for v in items for k in v) and _no_tuples(list(items)))   # the container may be a c15 tuple (run 35605902090: the forecast's points and marks are); the rows may not hold tuples
+            and not any('.' in k for v in items for k in v))   # the container may be a c15 tuple (run 35605902090: the forecast's points and marks are); a tuple cell is a `U` cell (DIGEST_V4), a tuple nested in one refuses and the value stays JSON
 
 
 def table_candidates(doc, path=''):

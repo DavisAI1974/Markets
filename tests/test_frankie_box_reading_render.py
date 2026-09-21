@@ -121,8 +121,12 @@ def test_a_tuple_of_dicts_becomes_a_table_block_and_says_so():
 
 def test_a_table_that_does_not_round_trip_stays_json(monkeypatch):
     import frankie_box_digest_render as DG
-    rows = [dict(a=i, b=(i, i)) for i in range(20)]        # tuples parse back as lists: not the same rows
+    rows = [dict(a=i, b=((i, i), i)) for i in range(20)]   # a tuple nested in a tuple has no exact cell: the value stays JSON
     doc = dict(rows=rows)
     blocks = []
     out = R._blocks_pass(doc, blocks)
     assert blocks == [] and out == doc
+    rows = tuple(dict(a=i, b=(i, i)) for i in range(20))   # a tuple cell inside a tuple container: a U cell, a table block
+    blocks = []
+    out = R._blocks_pass(dict(rows=rows), blocks)
+    assert len(blocks) == 1 and out['rows']['container'] == 'tuple' and 'U[0,0]' in blocks[0]['text']
