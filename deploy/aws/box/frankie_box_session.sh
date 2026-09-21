@@ -5,7 +5,7 @@
 # Frankie's, run against the restored rows with the staged producers. The engine is the BOSS: frankie_box_boss_session.py
 # (the retained Granite vLLM on the RunPod Pod over jobs_v1); `preflight` proves the reach and starts nothing.
 # Inputs: DAY (20211003), CYCLE (00), MARKETS_REF (this branch), ACTION (start | status | preflight | verify;
-# default status). Never stops a running session (that is Greg's word).
+# default status; restart_session stops ONLY the session unit with a receipt to apply a session-code fix). Never stops a Pod, a box or the native host runner (Greg's word).
 set -u
 ROOT=/opt/frankie-box; S="$ROOT/session"
 DAY="${DAY:-20211003}"; CYCLE="${CYCLE:-00}"; MARKETS_REF="${MARKETS_REF:-claude/cycle-0-frankie-box-rerun-od5sxk}"; ACTION="${ACTION:-status}"
@@ -49,21 +49,17 @@ for n in ('/markets/frankie/github-token',):
   for t in git systemd-run; do printf '%-12s %s\n' "$t" "$(command -v "$t" || echo absent)"; done
   echo "phase file: $(cat "$S/phase" 2>/dev/null || echo '-')"
 }
-case "$ACTION" in
-  status) status ;;
-  preflight) preflight ;;
-  verify) verify ;;
-  start)
-    if systemctl is-active --quiet "$UNIT.service"; then echo "$UNIT is already running; not restarting (Greg's word)"; status; exit 0; fi
-    [ -s "$ROOT/request/session-request.json" ] || { echo "request not on the box"; exit 2; }
-    [ -x "$ROOT/venv/bin/python" ] || { echo "venv not staged"; exit 2; }
+start_session() {
+    if systemctl is-active --quiet "$UNIT.service"; then echo "$UNIT is already running; not restarting (Greg's word)"; status; return 0; fi
+    [ -s "$ROOT/request/session-request.json" ] || { echo "request not on the box"; return 2; }
+    [ -x "$ROOT/venv/bin/python" ] || { echo "venv not staged"; return 2; }
     git -C "$ROOT/markets" fetch -q --depth 1 origin "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD
-    TASK="$ROOT/markets/research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md"; [ -s "$TASK" ] || { echo "task document missing at $TASK"; exit 2; }
-    preflight || exit 3
+    TASK="$ROOT/markets/research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md"; [ -s "$TASK" ] || { echo "task document missing at $TASK"; return 2; }
+    preflight || return 3
     "$ROOT/venv/bin/python" -c "
 import json,sys; sys.path.insert(0,'$ROOT/markets')
 from research.kalshi.frankie_boss.frankie_principal_adapter import digest
-print(digest(json.loads(open('$ROOT/request/session-request.json','rb').read())))" > "$S/request_sha256" || { echo "request digest failed"; exit 2; }
+print(digest(json.loads(open('$ROOT/request/session-request.json','rb').read())))" > "$S/request_sha256" || { echo "request digest failed"; return 2; }
     echo "request_sha256 $(cat "$S/request_sha256")"
     echo "verified" > "$S/phase"; echo "request and data plane verified on the box; session starting" > "$S/note"; rm -f "$S/done"
     systemctl reset-failed "frankie-heartbeat-$CYCLE.service" 2>/dev/null
@@ -72,8 +68,25 @@ print(digest(json.loads(open('$ROOT/request/session-request.json','rb').read()))
     systemctl reset-failed "$UNIT.service" 2>/dev/null
     systemd-run --unit "$UNIT" --collect -p WorkingDirectory="$S" -p StandardOutput=append:"$ROOT/logs/session-$CYCLE.log" -p StandardError=append:"$ROOT/logs/session-$CYCLE.log" \
       "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage run >/dev/null 2>&1 \
-      && echo "$UNIT started (the BOSS session; hours; watch the heartbeat and the session log)" || { echo "$UNIT start failed"; exit 3; }
+      && echo "$UNIT started (the BOSS session; hours; watch the heartbeat and the session log)" || { echo "$UNIT start failed"; return 3; }
     sleep 5
-    status ;;
-  *) echo "ACTION must be start, status, preflight or verify"; exit 2 ;;
+    status
+}
+case "$ACTION" in
+  status) status ;;
+  preflight) preflight ;;
+  verify) verify ;;
+  start) start_session ;;
+  restart_session)
+    # Stops ONLY the session unit (never the heartbeat, never a Pod or a box) to apply a session-code fix, with a receipt,
+    # then starts it again; every stage resumes from its receipts under session/work/. An explicit operator action.
+    echo "### restart_session: stopping $UNIT only (receipted), then start"
+    if systemctl is-active --quiet "$UNIT.service"; then
+      systemctl stop "$UNIT.service" && echo "$UNIT stopped"
+      printf '{"schema":"FRANKIE_BOX_SESSION_RESTART_RECEIPT_V1","at":%s,"unit":"%s","reason":"session-code fix (%s); stages resume from receipts","phase_before":"%s"}\n' \
+        "$(date +%s)" "$UNIT" "${REASON:-unstated}" "$(cat "$S/phase" 2>/dev/null || echo -)" > "$ROOT/receipts/session-restart-$(date +%s).json"
+    else echo "$UNIT was not running"; fi
+    systemctl reset-failed "$UNIT.service" 2>/dev/null
+    start_session ;;
+  *) echo "ACTION must be start, status, preflight, verify or restart_session"; exit 2 ;;
 esac
