@@ -4003,3 +4003,23 @@ rule), so a two-partition stream needs a source object per partition, not a sess
 ingested: the S3 year pull (bucket bento-568968024170-us-east-2-an, nymex_tape/ and nymex_mbp10/, S89-S91) or the box's
 compact journal; to be located, not assumed. The 57,027 count is Greg's one measurement; a whole-day stream is a new
 count and needs his word. This effectively answers his call 1 (the slice vs the day) toward the day; calls 2-4 stay open.
+
+### 00:xxZ 09-22: /SHIP ON THE BEDROCK BUILD (BR-0..BR-7): GO AFTER FIXES, ALL FIXES LANDED (bcffe024, 5ff3ab1c)
+
+`SHIP_REVIEW_20260921_CHAT7.md` has the decision, every finding and the test that pins it. The two Criticals were real
+and would have killed every rerun after the classroom: the teach facts read the driver's recurrence gaps as integers
+(they are mappings) and counted lineage statuses as CLOSED (the producers say TERMINATED / CENSORED_* / OPEN). Both
+fixed on the producers' own shapes; the teach test now derives its work directory with the real session and computes
+its expectations from the ledger. Also fixed: the request-pin gate (checked first, before any engine reach), the number
+check (hex digests never license a number; values compared), the result hash (recomputed after reconcile, as the
+launcher does), the traversal verdict surfaced everywhere, the modules that ran witnessed by their own __file__, dotted
+keys and list-valued paths in the V6 tables (a list rides as its leaf count), the ledgers referenced not shipped,
+containment of frozen names and delivered paths, work/derived moved aside with a receipt, the derive_only shell abort
+and heartbeat guard, the checkout script's worktree identification (tested on a real shallow clone), the tokenizer
+record, the CI checkout credentials. Tests at 5ff3ab1c: the box list 183 green torch present and 183 torch hidden;
+the adapter suites 44. Pushed.
+
+GREG'S CALLS NOW FIVE: (1) the slice vs the day (his CME-Monday note leans to the day); (2) the reading cost after
+checkpoint E; (3) cycles 1-3 keep their pins; (4) the critic's zero hypotheses; (5) NEW: whether a traversal the
+runner's own gates REJECT (a slice cut mid-group) still files its layers as `derived` (today: yes, with the verdict
+beside them everywhere). Nothing runs until he says so; the runbook change (23:xxZ above) is the order of steps.

@@ -1,16 +1,16 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-21 23:5xZ, Frankie/BOSS cycle 0: classroom exchange + rerun changes built and shipped, bedrock spec written; chat 6 closing)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-22 00:xxZ, Frankie/BOSS cycle 0: the bedrock BUILT and SHIPPED (BR-0..BR-7, /ship GO after fixes); checkpoint E and the rerun wait on Greg's five calls; chat 7 closing)
 
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
-- **STATE 2026-09-21 23:5xZ (chat 6 CLOSING on Greg's "make handoff and print drop in"): READ FIRST the 23:5xZ block atop
-  `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`. Built and pushed this chat on branch
-  `claude/cycle-0-frankie-box-rerun-od5sxk` (tip c7b69310 or later): the Dipole classroom exchange in the box session (turn 1
-  ledgers + turn 2 correction, host record/export/supersede plumbing), Frankie's cycle-0 asks (comparison packet, session
-  receipts packet, reading/writing gates), a /ship review with every finding fixed and tested (129 box+host tests), and the
-  SPEC for Greg's "All 3" bedrock expansion (`SPEC_CYCLE0_BEDROCK_20260921.md`, NOT built). Launch HOLD; nothing has run
-  on the host, box, Pod or endpoint since chat 5's write/push. The critic's zero hypotheses and the three bedrock questions
-  are Greg's calls. Family baseline here: 12 pre-existing failures, unchanged by this chat.**
+- **STATE 2026-09-22 00:xxZ (chat 7 CLOSING): READ FIRST the 00:xxZ block atop `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`,
+  then `CLAUDE_HANDOFF_20260920.md` from 22:5xZ 09-21 to the end, then `SHIP_REVIEW_20260921_CHAT7.md`. Branch
+  `claude/cycle-0-frankie-box-rerun-od5sxk` (tip 5ff3ab1c or later; the harness branch is the stale trunk tip). THE BEDROCK IS
+  BUILT (plan BR-0..BR-7: the pinned producers as an in-repo worktree, pin-bedrock, frankie_box_bedrock run/project, the
+  session's derive gate on the request's pin, DIGEST_V6 + ACTION=derive_only, the exhaustion/D teach stage, docs/brain/writing)
+  and SHIPPED (/ship GO after fixes; box list 183 green torch present and hidden). Launch HOLD; nothing has run on the host,
+  box, Pod or endpoint since chat 5. Greg's five calls (slice vs the FULL CME MONDAY he now wants, the reading cost after
+  checkpoint E, cycles 1-3 pins, the critic's zero hypotheses, REJECTED-traversal layers) and the runbook change gate every step.
 - **STATE 2026-09-21 16:2xZ (chat 5 CLOSED, Greg: "We have to start new chat"): READ FIRST the 16:2xZ block atop
   `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`. The read is DONE (4 parts on the Pod), the merges run on
   serverless endpoint k1sqt0haffm61y (H100), then writing on the Pod, then the push; the git token (fine-grained, SSM

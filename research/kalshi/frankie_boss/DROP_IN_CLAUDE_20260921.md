@@ -1,5 +1,45 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
+## READ FIRST (00:xxZ 09-22, chat 7 CLOSING): THE BEDROCK IS BUILT AND SHIPPED (BR-0..BR-7, /ship GO after fixes); CHECKPOINT E AND THE RERUN WAIT ON GREG'S CALLS
+
+Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip 5ff3ab1c or later; `git log --oneline -1` first: the harness cut
+chat 7's own branch from the TRUNK tip, which is the stale-tip trap; the work is on the rerun branch). Run
+`using-agent-skills` and `git-workflow-and-versioning` first; skills win overlaps; attribution lines on every commit;
+no model identifiers in anything pushed. THE SCRATCHPAD IS NEVER USED: working files go in the repo (gitignored paths:
+the producers worktree `.producers-2ebb8ce8` from `bash deploy/aws/box/producers_checkout.sh`) or on the box.
+RULES IN FORCE, verbatim: nothing deleted; every move receipted; no Pod or EC2 stop/terminate without Greg; never stop
+the native host runner; keys never printed or pasted into chat; NO output limits on the BOSS; the pinned Pod bootstrap
+bundle untouched; no outside LLMs as engine; 57,027 is the one measurement (114,054 and 1,189 are derived); records in
+git or AWS only. Box status probes: one at open, then as Greg says. Launch is HOLD: no Frankie, Granite, Pod, EC2 or
+result-bearing action without Greg's explicit go. KEYS: the key question stays DEFERRED (Greg, 16:3xZ 09-21); ask
+before acting on any key statement.
+
+STATE (nothing has run on the host, box, Pod or endpoint since chat 5's write and push; chat 7's one probe at open,
+run 35665068424: unit inactive, phase done, the 17:03Z files in out/, no heartbeat):
+- BUILT + SHIPPED in chat 7 (handoff 23:xxZ 09-21 and 00:xxZ 09-22; `SHIP_REVIEW_20260921_CHAT7.md`): the bedrock,
+  plan BR-0..BR-7, one commit per task with its tests, then two fix commits for every ship finding (two Criticals in
+  the teach facts, real). The box list is 183 green torch present and hidden; the adapter suites 44; the codecs CI is
+  green on GitHub (it now installs numpy; chat 6's last push was red on that). What the rerun now does on the box:
+  derive (the legacy five + the 20 bedrock layers through the pinned driver, REFUSED with a receipt until the request
+  on the box carries this checkout's pin), the DIGEST_V6 (bedrock.layers / bedrock.members with list paths as counts /
+  bedrock.lifecycle.<section> / bedrock.run), reading, classroom (19+1), TEACH (one BOSS call, numbers checked),
+  writing (the teach-back section appended to the analysis text; response.json gains no key), push. `ACTION=derive_only`
+  = checkpoint E (verify, labels, derive, digest, the measurement; no model call).
+- GREG'S FIVE CALLS before anything runs: (1) the 13-second slice or the day (his 2026-09-21 note: the NEXT run is the
+  FULL CME MONDAY, Sunday 18:00 ET open to Monday close; the rest of Monday is ingested on a box, to be LOCATED; a
+  two-partition stream needs a source object per partition; the record count beyond 57,027 needs his word); (2) the
+  reading cost after checkpoint E's measurement; (3) cycles 1-3 keep their pins (built so); (4) the critic's zero
+  hypotheses (host side; handoff 22:xxZ 09-21); (5) whether a traversal the runner's gates REJECT (a slice cut
+  mid-group) still files its layers as derived (today yes, verdict beside them).
+- THE RUNBOOK (handoff 23:xxZ 09-21, "THE RUNBOOK CHANGE", every host step on Greg's go): host advance to this tip;
+  supersede the code-bound state; supersede the PRINCIPAL REQUEST (the pin is in the instruction; the request hash
+  moves) and the recorded response; export turn=initial, update the restore script's request pin (one line), fetch;
+  checkpoint E `ACTION=derive_only` -> the DERIVE_ONLY line (bytes, tokens, parts, tables) to Greg; then
+  `restart_session`; then the restart runbook e-i (record, grade, export turn=correction, fetch_correction,
+  correction, record, pipeline).
+- FIRST PROBE of the next chat: `ACTION=status` (one at open). First read: this block, then the handoff from
+  22:5xZ 09-21 (chat 7 open) to the end, then `SHIP_REVIEW_20260921_CHAT7.md`, then the plan's last section.
+
 ## READ FIRST (23:5xZ 09-21, chat 6 CLOSING on Greg's "make handoff and print drop in"): THE CLASSROOM EXCHANGE AND THE RERUN CHANGES ARE BUILT AND SHIPPED; THE BEDROCK EXPANSION IS SPECCED, NOT BUILT
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip c7b69310 or later; verify `git log --oneline -1` first). Run
