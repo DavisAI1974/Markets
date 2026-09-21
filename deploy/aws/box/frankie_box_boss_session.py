@@ -69,6 +69,16 @@ HTTP_TIMEOUT = 80
 STAGES = ('verify', 'labels', 'engine', 'derive', 'reading', 'writing', 'push')
 
 
+def docs_module():
+    """deploy/aws/box/frankie_box_docs.py, loaded by path (this directory is not a package)."""
+    import importlib.util
+    path = Path(__file__).resolve().parent / 'frankie_box_docs.py'
+    spec = importlib.util.spec_from_file_location('frankie_box_docs', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -1001,6 +1011,7 @@ class Session:
                    corpus_sha256=corpus_sha, notes_dir=str(notes_dir), new_outcomes=outcomes, merged=witness(self.work / 'merged-notes.md'),
                    lane=dict(serverless=self.serverless['endpoint_id'], workers=self.serverless['workers']) if self.serverless else dict(pod=self.pod_id)))
         self.note(f'reading done: {len(chunks)} parts, merged notes {len(merged.encode("utf-8"))} bytes')
+        self.docs()
         ledger = load_json(READING_LEDGER) if READING_LEDGER.exists() else dict(schema='FRANKIE_BOX_READING_LEDGER_V1', values={}, cycles={})
         ledger.setdefault('cycles', {})[self.cycle] = dict(merged_notes_path=str(self.work / 'merged-notes.md'),
                                                           merged_notes_sha256=sha256_bytes((self.work / 'merged-notes.md').read_bytes()), at=time.time())
@@ -1072,7 +1083,7 @@ class Session:
             if len(notes) == 1 or level >= 8:
                 return joined
             outcome = self.reader(f'merge-{level}-final', self._merge_prompt(joined, 'all remaining note groups'))
-            return (outcome.get('text') or joined) + (' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else '')
+            return self._merge_keep(f'merge-{level}-final', notes, outcome)
         groups, current, size = [], [], 0
         for n in notes:
             b = len(n.encode('utf-8'))
@@ -1086,9 +1097,31 @@ class Session:
         def merge_group(item):
             g, group = item
             outcome = self.reader(f'merge-{level}-{g:04d}', self._merge_prompt('\n'.join(group), f'note group {g + 1} of {len(groups)} at level {level}'))
-            return (outcome.get('text') or '\n'.join(group)) + (' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else '')
+            return self._merge_keep(f'merge-{level}-{g:04d}', group, outcome)
         merged = self._fan_out(f'merging level {level}', list(enumerate(groups)), merge_group)
         return self._merge(merged, level + 1)
+
+    def _merge_keep(self, name, inputs, outcome):
+        """The merge guard (chat 6, cycle 0: the final merge discarded a whole note group as 'hallucinated', so the merged
+        notes covered three of four parts). A merge output that loses ANY sha256 value its inputs carried, or is empty,
+        is replaced by the inputs verbatim with a marker; every merge output is kept as Markdown under work/merges/."""
+        text = (outcome.get('text') or '') + (' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else '')
+        kept, note = docs_module().keep_if_lossy(list(inputs), text)
+        merges = self.work / 'merges'
+        merges.mkdir(exist_ok=True)
+        (merges / f'{name}.md').write_text(f'## {name}\n\n' + kept + '\n', encoding='utf-8')
+        if note:
+            (merges / f'{name}.model-output.md').write_text(f'## {name}: the model output that was NOT used ({note})\n\n' + text + '\n', encoding='utf-8')
+            self.note(f'{name}: {note}; inputs kept verbatim')
+        return kept
+
+    def docs(self):
+        """Every session document as Markdown under out/docs (README + index); never fails the session."""
+        try:
+            index = docs_module().build_docs(self.work, self.out / 'docs', self.cycle)
+            self.note(f'docs: {len(index["docs"])} Markdown files in {self.out / "docs"}')
+        except Exception as error:
+            self.note(f'docs: not built ({type(error).__name__}: {error}); the session continues')
 
     def _merge_prompt(self, joined, label):
         return (f'You are Frankie, the BOSS, principal for cycle {self.cycle} (request {self.request["request_id"]}). Below are your own notes '
@@ -1181,6 +1214,7 @@ class Session:
                    files={n: witness(self.out / n) for n in ('response.json', 'analysis.md', 'host-session-record.json', 'host-attestation.json')},
                    lessons=len(response['lessons']), analysis_incomplete=bool(analysis.get('incomplete')), digest_in_writing_calls=digest_included))
         self.note(f'written: four files, response_sha256 {response_sha256[:16]}, {len(response["lessons"])} lessons')
+        self.docs()
 
     @staticmethod
     def _json_entry(outcome, name):

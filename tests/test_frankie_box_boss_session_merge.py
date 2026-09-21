@@ -1,0 +1,35 @@
+"""The session's merge guard as wired (frankie_box_boss_session._merge_keep): every merge output is kept as Markdown
+under work/merges, and an output that loses a hash is replaced by the inputs verbatim (cycle-0 finding, chat 6)."""
+import importlib.util
+import types
+from pathlib import Path
+
+SESSION = Path(__file__).resolve().parents[1] / 'deploy' / 'aws' / 'box' / 'frankie_box_boss_session.py'
+spec = importlib.util.spec_from_file_location('frankie_box_boss_session_under_test', SESSION)
+session = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(session)
+
+H1, H2 = 'a' * 64, 'b' * 64
+
+
+def stub(tmp_path):
+    notes = []
+    return types.SimpleNamespace(work=tmp_path, note=notes.append, _notes=notes)
+
+
+def test_merge_keep_uses_a_complete_merge_and_writes_it_as_markdown(tmp_path):
+    s = stub(tmp_path)
+    kept = session.Session._merge_keep(s, 'merge-0-0000', [f'n1 {H1}', f'n2 {H2}'], dict(text=f'merged {H1} {H2}', incomplete=False))
+    assert kept == f'merged {H1} {H2}'
+    assert (tmp_path / 'merges' / 'merge-0-0000.md').read_text().startswith('## merge-0-0000\n\nmerged ')
+    assert not (tmp_path / 'merges' / 'merge-0-0000.model-output.md').exists() and s._notes == []
+
+
+def test_merge_keep_replaces_a_lossy_merge_with_the_inputs_and_keeps_the_model_output_beside_it(tmp_path):
+    s = stub(tmp_path)
+    inputs = [f'group A {H1}', f'I cannot complete this request {H2}']
+    kept = session.Session._merge_keep(s, 'merge-1-final', inputs, dict(text=f'I will merge only the first group: {H1}', incomplete=True))
+    assert kept.startswith('\n'.join(inputs)) and 'MERGE KEPT VERBATIM' in kept and H2 in kept
+    model = (tmp_path / 'merges' / 'merge-1-final.model-output.md').read_text()
+    assert 'NOT used' in model and '[OUTPUT INCOMPLETE]' in model
+    assert s._notes == ['merge-1-final: the merge output lost 1 of 2 sha256 values; inputs kept verbatim']

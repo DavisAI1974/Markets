@@ -9,9 +9,21 @@ set -u
 ROOT=/opt/frankie-box; OUT="$ROOT/session/out"
 DAY="${DAY:-20211003}"; CYCLE="${CYCLE:-00}"; BASE="${BASE:-claude/cycle-0-frankie-box-rerun-od5sxk}"
 export HOME=/root GIT_TERMINAL_PROMPT=0
-for f in response.json analysis.md host-session-record.json host-attestation.json; do [ -s "$OUT/$f" ] || { echo "missing $OUT/$f"; exit 2; }; done
+DOCS_ONLY="${DOCS_ONLY:-0}"   # 1 = publish only out/docs (built here from the session work directory) under runs/<day>/root/docs-cycle-<NN>/
+if [ "$DOCS_ONLY" = "1" ] && [ -n "${MAP_URL:-}" ]; then echo "DOCS_ONLY publishes through the token route only (no MAP_URL)"; exit 2; fi
+if [ "$DOCS_ONLY" = "1" ]; then
+  # The docs module comes from BASE by a fetch (FETCH_HEAD only): the box's checkout, which a running session may be
+  # using, is never moved by this mode. Reads the session work directory; writes only out/docs.
+  WORKDIR="$ROOT/session/$([ "$CYCLE" = "00" ] && echo work || echo "work-$CYCLE")"
+  mkdir -p "$ROOT/tmp"
+  git -C "$ROOT/markets" fetch -q --depth 1 origin "$BASE" && git -C "$ROOT/markets" show FETCH_HEAD:deploy/aws/box/frankie_box_docs.py > "$ROOT/tmp/frankie_box_docs.py" || { echo "cannot fetch frankie_box_docs.py from $BASE"; exit 2; }
+  echo "docs module from $BASE $(git -C "$ROOT/markets" rev-parse --short FETCH_HEAD), sha256 $(sha256sum "$ROOT/tmp/frankie_box_docs.py" | cut -c1-16); work $WORKDIR"
+  "$ROOT/venv/bin/python" "$ROOT/tmp/frankie_box_docs.py" --work "$WORKDIR" --out "$OUT/docs" --cycle "$CYCLE" || { echo "docs build failed"; exit 2; }
+else
+  for f in response.json analysis.md host-session-record.json host-attestation.json; do [ -s "$OUT/$f" ] || { echo "missing $OUT/$f"; exit 2; }; done
+fi
 export OUT ROOT
-"$ROOT/venv/bin/python" - <<'PY' || exit 1
+[ "$DOCS_ONLY" = "1" ] || "$ROOT/venv/bin/python" - <<'PY' || exit 1
 import hashlib, json, os, sys
 out = os.environ['OUT']
 raw = {n: open(os.path.join(out, n), 'rb').read() for n in ('response.json', 'host-session-record.json', 'host-attestation.json', 'analysis.md')}
@@ -74,9 +86,12 @@ W="$ROOT/session/response-clone"; BR="root/cycle-$CYCLE-response"; DEST="researc
 [ -d "$W/.git" ] || git clone -q --depth 1 --branch "$BASE" https://github.com/DavisAI1974/Markets.git "$W" || exit 2
 cd "$W" || exit 2
 git fetch -q origin "$BR" 2>/dev/null && git checkout -q -B "$BR" FETCH_HEAD || git checkout -q -B "$BR"
-mkdir -p "$DEST"; cp "$OUT"/response.json "$OUT"/host-attestation.json "$OUT"/host-session-record.json "$OUT"/analysis.md "$DEST"/
+mkdir -p "$DEST"
+[ "$DOCS_ONLY" = "1" ] || cp "$OUT"/response.json "$OUT"/host-attestation.json "$OUT"/host-session-record.json "$OUT"/analysis.md "$DEST"/
+if [ -d "$OUT/docs" ]; then mkdir -p "$DEST/docs-cycle-$CYCLE"; cp "$OUT"/docs/*.md "$OUT"/docs/docs-index.json "$DEST/docs-cycle-$CYCLE"/ && echo "docs: $(ls "$OUT"/docs | wc -l) files -> $DEST/docs-cycle-$CYCLE"; fi
 git add "$DEST"
-git -c user.name=frankie-box -c user.email=frankie-box@markets.local commit -q -m "root: cycle $CYCLE Frankie response, attestation, host session record, analysis (from Frankie's box i-035994afa8bdf66a5; request_sha256 per response.json)" || echo "(nothing new to commit)"
+if [ "$DOCS_ONLY" = "1" ]; then MSG="root: cycle $CYCLE session documents as Markdown (reading notes, merges, merged notes, derivation digest, receipts; from Frankie's box)"; else MSG="root: cycle $CYCLE Frankie response, attestation, host session record, analysis, session documents (from Frankie's box i-035994afa8bdf66a5; request_sha256 per response.json)"; fi
+git -c user.name=frankie-box -c user.email=frankie-box@markets.local commit -q -m "$MSG" || echo "(nothing new to commit)"
 git -c credential.helper="$HELPER" push -q origin "HEAD:$BR" || { echo "push failed"; exit 4; }
 unset FRANKIE_GIT_TOKEN
 git log --oneline -1; git ls-remote origin "$BR"
