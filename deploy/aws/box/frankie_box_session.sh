@@ -25,6 +25,7 @@ preflight() {
   # Verifies the request against the authored source contract, computes the timing labels by code, reads the Pod
   # record through the SecureString /markets/frankie/granite-service (never printed) and probes /health. Starts nothing.
   echo "engine: BOSS (retained Granite vLLM, jobs_v1; frankie_box_boss_session.py --stage preflight)"
+  git -C "$ROOT/markets" fetch -q --depth 1 origin "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
   "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage preflight
 }
 verify() {
