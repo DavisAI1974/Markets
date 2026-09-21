@@ -74,16 +74,19 @@ def test_retained_start_requires_actual_capacity_and_fresh_independent_arm(monke
     assert not api.calls
 
 
-def test_deadline_stop_survives_journal_loss(monkeypatch):
+def test_deadline_keeps_the_pod_running_and_survives_journal_loss(monkeypatch):
+    # Greg, 2026-09-21: no runtime stop at the lease deadline; the read-only keep runs once, never a stop.
     info, lease, journal, admission = inputs(monkeypatch)
     api = Api(journal)
     def unavailable(*args, **kwargs):
         raise OSError('shared journal unavailable')
     journal.get = journal.put = unavailable
     calls = []
-    monkeypatch.setattr(life, 'stop_owned_once', lambda *args:
-        calls.append(args) or dict(status='confirmed_stopped', data_retained=True))
-    assert arm(api, journal, info, lease, now=1480)['data_retained']
+    monkeypatch.setattr(life, 'keep_owned_once', lambda *args:
+        calls.append(args) or dict(status='kept_running', data_retained=True))
+    assert not hasattr(life, 'stop_owned_once')
+    result = arm(api, journal, info, lease, now=1480)
+    assert result['status'] == 'kept_running' and result['data_retained']
     assert len(calls) == 1
 
 

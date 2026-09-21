@@ -143,7 +143,7 @@ def validate_intent(intent):
             or type(intent.get('start')) not in (int, float)
             or type(intent.get('deadline')) not in (int, float)
             or intent['deadline'] - intent['start'] not in (600, 900, 1200, 1800)
-            or intent.get('cleanup_mode', 'terminate') not in ('terminate', 'stop_retain')):
+            or intent.get('cleanup_mode', 'terminate') not in ('terminate', 'stop_retain', 'keep')):
         raise ValueError('invalid immutable launch intent')
     return intent
 

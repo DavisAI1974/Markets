@@ -376,9 +376,9 @@ def watchdog(journal, api, info):
                 if finished or fatal:
                     result = completion_cleanup(api, journal,
                         ActiveRunStore(journal.client, journal.bucket, lifecycle.POD_ID),
-                        info, digest, retained.stop_owned_once, acknowledged_stop=True)
+                        info, digest, retained.keep_owned_once, acknowledged_stop=True)
                     save('completion-cleanup.json', result)
-                    if result['status'] in ('confirmed_stopped', 'not_active_run'):
+                    if result['status'] in ('kept_running', 'confirmed_stopped', 'not_active_run'):
                         return
                     # Keep reconciling this stop; an unrelated EXITED sample
                     # must not bypass the acknowledgement/memo/release protocol.
@@ -441,11 +441,12 @@ def cleanup(api):
     journal = cloud.Journal()
     journal.prefix = 'retained-granite/'+startup['request_sha256']+'/'+JOURNAL_GENERATION+'/'
     journal.put('retained-confirmed-fatal.json', {'startup_sha256': digest})
+    # Greg, 2026-09-21: a confirmed-fatal startup releases the run claim but never stops the Pod.
     result = completion_cleanup(api, journal,
         ActiveRunStore(journal.client, journal.bucket, lifecycle.POD_ID), info, digest,
-        retained.stop_owned_once, acknowledged_stop=True)
+        retained.keep_owned_once, acknowledged_stop=True)
     save('cleanup.json', result)
-    if result['status'] != 'confirmed_stopped':
+    if result['status'] not in ('kept_running', 'confirmed_stopped'):
         raise RuntimeError('retained cleanup requires follow-up')
 
 

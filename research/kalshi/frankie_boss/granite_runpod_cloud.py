@@ -198,11 +198,15 @@ def stage_bootstrap(journal):
 
 
 def cleanup_operation(intent):
-    return resume.stop_owned_once if intent.get('cleanup_mode') == 'stop_retain' else control.cleanup_once
+    mode = intent.get('cleanup_mode')
+    if mode == 'keep':
+        return resume.keep_owned_once
+    return resume.stop_owned_once if mode == 'stop_retain' else control.cleanup_once
 
 
 def cleanup_confirmed(result, intent):
-    expected = 'confirmed_stopped' if intent.get('cleanup_mode') == 'stop_retain' else 'confirmed_absent'
+    mode = intent.get('cleanup_mode')
+    expected = 'kept_running' if mode == 'keep' else 'confirmed_stopped' if mode == 'stop_retain' else 'confirmed_absent'
     return result.get('status') == expected
 
 

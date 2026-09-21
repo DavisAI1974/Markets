@@ -79,7 +79,7 @@ class ActiveRunStore:
 
 def completion_cleanup(api, journal, active_runs, info, digest, stop, *, acknowledged_stop=False):
     def finish(result):
-        if result['status'] == 'confirmed_stopped':
+        if result['status'] in ('confirmed_stopped', 'kept_running'):
             receipt = dict(result, startup_sha256=digest)
             journal.put('retained-completion-cleanup.json', receipt, once=True)
             active_runs.finish_stop(digest)
@@ -88,7 +88,7 @@ def completion_cleanup(api, journal, active_runs, info, digest, stop, *, acknowl
 
     prior = journal.get('retained-completion-cleanup.json')
     if prior is not None:
-        if (prior.get('startup_sha256') != digest or prior.get('status') != 'confirmed_stopped'
+        if (prior.get('startup_sha256') != digest or prior.get('status') not in ('confirmed_stopped', 'kept_running')
                 or prior.get('pod_id') != active_runs.pod_id or prior.get('data_retained') is not True):
             raise ValueError('completion cleanup identity differs')
         # A crash after saving completion but before release must not wedge the Pod.

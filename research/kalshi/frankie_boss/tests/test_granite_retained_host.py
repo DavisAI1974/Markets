@@ -20,6 +20,18 @@ def confirmed_stop(calls):
     return stop
 
 
+def kept_running(calls):
+    # Greg, 2026-09-21: the host never stops the Pod; completion and fatal cleanup keep it and release the claim.
+    def keep(api, intent, pod_id, **options):
+        calls.append(pod_id)
+        return dict(status='kept_running', pod_id=pod_id, data_retained=True, pod_status='RUNNING')
+    return keep
+
+
+def never_stop(*args, **kwargs):
+    raise AssertionError('the retained host must never stop the Pod')
+
+
 def test_observer_exhaustion_preserves_pod_even_after_storage_outage(monkeypatch, tmp_path):
     info = {'pod_id': host.lifecycle.POD_ID, 'intent': {}}
     startup = host.lifecycle.make_startup(info, start=1000., request_sha256='a'*64,
@@ -62,7 +74,8 @@ def test_cleanup_uses_cached_ownership_and_run_bound_release(monkeypatch, tmp_pa
     store = ActiveRunStore(journal.client, journal.bucket, host.lifecycle.POD_ID)
     store.claim(digest)
     calls = []
-    monkeypatch.setattr(host.retained, 'stop_owned_once', confirmed_stop(calls))
+    monkeypatch.setattr(host.retained, 'stop_owned_once', never_stop)
+    monkeypatch.setattr(host.retained, 'keep_owned_once', kept_running(calls))
     monkeypatch.setattr(host.cloud, 'Journal', lambda: journal)
     monkeypatch.setattr(host, 'info_from_journal', lambda *args: (_ for _ in ()).throw(AssertionError('cached ownership only')))
     host.cleanup(object())
@@ -71,7 +84,7 @@ def test_cleanup_uses_cached_ownership_and_run_bound_release(monkeypatch, tmp_pa
     assert journal.rows['retained-confirmed-fatal.json'] == {'startup_sha256': digest}
     assert journal.rows['retained-completion-cleanup.json']['startup_sha256'] == digest
     assert store.read()[0]['phase'] == 'closed'
-    assert host.artifacts.strict_json((tmp_path/'cleanup.json').read_bytes())['status'] == 'confirmed_stopped'
+    assert host.artifacts.strict_json((tmp_path/'cleanup.json').read_bytes())['status'] == 'kept_running'
 
 
 def test_startup_requires_fresh_provider_container_timestamp(monkeypatch):
@@ -85,7 +98,7 @@ def test_startup_requires_fresh_provider_container_timestamp(monkeypatch):
     assert records == {'startup': {'startup': {}}, 'startup_event_at': 1001.}
 
 
-def test_open_run_explicit_completion_still_stops_retained_pod(monkeypatch, tmp_path):
+def test_open_run_explicit_completion_keeps_retained_pod_running_and_releases(monkeypatch, tmp_path):
     info = {'pod_id': host.lifecycle.POD_ID, 'intent': {}}
     startup = host.lifecycle.make_startup(info, start=1000., request_sha256='a'*64,
         local_ready=dict(request_sha256='a'*64, host_instance_id='local-ready-instance', admitted_at=999.))
@@ -99,11 +112,12 @@ def test_open_run_explicit_completion_still_stops_retained_pod(monkeypatch, tmp_
     monkeypatch.setattr(host.time, 'time', lambda: 1001.)
     # The watchdog reconciles a stop until the job deadline; with a frozen clock
     # any swallowed cleanup error would spin forever, so a sleep is a failure.
-    monkeypatch.setattr(host.time, 'sleep', lambda seconds: (_ for _ in ()).throw(AssertionError('completion cleanup did not stop the Pod')))
+    monkeypatch.setattr(host.time, 'sleep', lambda seconds: (_ for _ in ()).throw(AssertionError('completion cleanup did not release')))
     monkeypatch.setattr(host, 'watchdog_identity', lambda: dict(run_id='1', job_id='2', job_deadline=2000.))
-    monkeypatch.setattr(host.retained, 'stop_owned_once', confirmed_stop(calls))
+    monkeypatch.setattr(host.retained, 'stop_owned_once', never_stop)
+    monkeypatch.setattr(host.retained, 'keep_owned_once', kept_running(calls))
     host.watchdog(journal, object(), info)
     assert calls == [host.lifecycle.POD_ID]
     assert journal.rows['retained-completion-cleanup.json']['startup_sha256'] == digest
     assert store.read()[0]['phase'] == 'closed'
-    assert host.artifacts.strict_json((tmp_path/'completion-cleanup.json').read_bytes())['status'] == 'confirmed_stopped'
+    assert host.artifacts.strict_json((tmp_path/'completion-cleanup.json').read_bytes())['status'] == 'kept_running'

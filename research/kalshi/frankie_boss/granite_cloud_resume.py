@@ -96,6 +96,28 @@ def stop_owned_once(api, intent, pod_id=None, on_discovered=None, on_ack=None):
     return result
 
 
+def keep_owned_once(api, intent, pod_id=None, on_discovered=None, on_ack=None):
+    """Greg, 2026-09-21: NO runtime stops on Pod startup or lifecycle.
+
+    The read-only twin of stop_owned_once: one exact read, ownership verified, no action ever posted.
+    The Pod stays as it is (RUNNING keeps its GPU); an operator stops it on Greg's word through
+    operations/pod_control.py. The result shape lets completion_cleanup release the run claim.
+    """
+    control.validate_intent(intent)
+    if pod_id is None:
+        pod = control.find_owned(api, intent)
+        if pod is None:
+            return {'status': 'absent_in_inventory', 'pod_id': None, 'data_retained': False}
+        pod_id = _safe_id(pod['id'])
+    else:
+        pod_id = _safe_id(pod_id)
+        pod = api.request('GET', '/v2/pods/' + pod_id)
+    _owned(pod, intent, pod_id)
+    if on_discovered is not None:
+        on_discovered(pod_id)
+    return {'status': 'kept_running', 'pod_id': pod_id, 'data_retained': True, 'pod_status': pod.get('status')}
+
+
 def _pod_info(pod, intent):
     _owned(pod, intent)
     gpu = pod.get('gpu')

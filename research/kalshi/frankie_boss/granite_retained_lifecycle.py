@@ -8,7 +8,7 @@ import hashlib
 import math
 import re
 
-from .granite_cloud_resume import validate_resume, stop_owned_once
+from .granite_cloud_resume import validate_resume, keep_owned_once
 from .granite_run_artifacts import canonical
 from .granite_runpod_admission import CONTEXT
 from .granite_runpod_tokenizer import LocalTokenizerAdmission
@@ -161,7 +161,8 @@ def watchdog_tick(api, journal, info, lease, *, now, watchdog_identity):
     except Exception:
         pass  # Deadline cleanup remains independent of S3 availability.
     if finished or now >= lease['deadline']-120:
-        result = stop_owned_once(api, info['intent'], POD_ID)
+        # Greg, 2026-09-21: no runtime stop at finish or deadline; the Pod keeps its GPU, the lease closes.
+        result = keep_owned_once(api, info['intent'], POD_ID)
         try:
             journal.put('retained-cleanup.json', dict(result, lease_sha256=digest))
         except Exception:

@@ -2,10 +2,9 @@
 
     python research/kalshi/frankie_boss/operations/pod_prepare.py --source-pod ycf4v6lmave6xw
         --runtime-configuration <reviewed runtime configuration json> [--data-centers US-TX-4,...]
-        [--cost-ceiling 1.25] [--wait-seconds 1800] [--stop-after-ready]
+        [--cost-ceiling 1.25] [--wait-seconds 1800]
     ... --resume-pod hhxs2fk7511cz5     (start an EXITED replacement created earlier and watch it instead)
     ... --watch-pod hhxs2fk7511cz5      (watch a RUNNING replacement; no create, no start)
-    ... --on-timeout keep|stop          (default keep: a Pod still bootstrapping at the horizon stays RUNNING)
 
 The retained Pod ycf4v6lmave6xw is pinned to a host whose L40S is taken ("There are not enough free
 GPUs on the host machine to start this pod", run 35503440103). This prepares a second Pod the
@@ -26,11 +25,11 @@ Run 35504624757 created hhxs2fk7511cz5 (EUR-IS-2, LOW stock everywhere) and saw 
 in 30 minutes; --resume-pod restarts such a Pod on its now-cached host instead of creating another,
 and the watch prints the scrubbed Pod state plus a short raw tail of the container and system logs
 every five minutes so a silent bootstrap is diagnosable. Run 35506279203 then showed that the GPU
-of a stop-retained Pod is taken within minutes under LOW stock, so the horizon no longer stops a
-Pod by default (--on-timeout keep) and --watch-pod lets short runs read progress without touching
-the Pod. The source Pod is only ever read. The new Pod is left RUNNING (it holds its GPU) unless
---stop-after-ready is given; a Pod whose bootstrap evidence fails validation or times out is stopped
-(stop-retain), never terminated here. No inference is sent.
+of a stop-retained Pod is taken within minutes under LOW stock. Greg, 2026-09-21: NO runtime stops on
+Pod startup or lifecycle. This script never stops a Pod: not at the watch horizon, not after readiness,
+not on refused bootstrap evidence (that Pod stays RUNNING with confirmed-fatal.json for diagnosis; an
+operator stops or terminates it on Greg's word through pod_control.py). --watch-pod lets short runs read
+progress without touching the Pod. The source Pod is only ever read. No inference is sent.
 """
 import argparse
 import hashlib
@@ -132,9 +131,9 @@ def verify_source(source, configuration, now):
     if expiry - now < 3600:
         raise SystemExit('source bootstrap URLs expire within the hour; refresh them first')
     nonce = environment.get('RUNPOD_SMOKE_OWNER', '')
-    # validate_intent admits only its bounded deadline spans; the span is never used here (stop-retain only).
+    # validate_intent admits only its bounded deadline spans; the span is never used here (cleanup_mode keep: no stop).
     intent = dict(schema='GRANITE_CLOUD_INTENT_V1', nonce=nonce, name=source['name'], image=source['image'],
-                  start=now, deadline=now + 1800, cleanup_mode='stop_retain')
+                  start=now, deadline=now + 1800, cleanup_mode='keep')
     control.validate_intent(intent)
     if not source['name'].endswith('-migration'):
         raise SystemExit('source Pod is not the migrated retained Pod')
@@ -217,10 +216,8 @@ def main():
     parser.add_argument('--data-centers', default='')
     parser.add_argument('--cost-ceiling', type=float, default=1.25)
     parser.add_argument('--wait-seconds', type=int, default=1800)
-    parser.add_argument('--stop-after-ready', action='store_true')
     parser.add_argument('--resume-pod', default='')
     parser.add_argument('--watch-pod', default='')
-    parser.add_argument('--on-timeout', choices=('keep', 'stop'), default='keep')
     args = parser.parse_args()
     key = os.environ['RUNPOD_API_KEY']
     api = control.Runpod(key)
@@ -271,7 +268,8 @@ def main():
     save('pod-facts.json', facts)
     print('CREATED ' + json.dumps(facts, sort_keys=True))
     if type(facts['cost']) not in (int, float) or not 0 < facts['cost'] <= args.cost_ceiling:
-        result = resume.stop_owned_once(api, intent, pod_id)
+        # No runtime stop (Greg, 2026-09-21): the Pod is left as created and the receipt says so; the operator decides.
+        result = resume.keep_owned_once(api, intent, pod_id)
         print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_PREPARE_RECEIPT_V1', outcome='cost_outside_ceiling',
                                           pod=pod_id, cost=facts['cost'], ceiling=args.cost_ceiling, stop=result)))
         raise SystemExit(2)
@@ -333,17 +331,14 @@ def main():
         save('info-sha256.json', dict(INFO_SHA256=info_sha256, POD_ID=pod_id,
                                       JOURNAL_GENERATION='migration-' + pod_id + '-' + configuration['bundle_sha256'][:12]))
         save('health.json', health)
-        if args.stop_after_ready:
-            stop = resume.stop_owned_once(api, intent, pod_id)
-    elif outcome == 'runtime_evidence_refused' or args.on_timeout == 'stop':
-        stop = resume.stop_owned_once(api, intent, pod_id)
+    # No stop here on any outcome (Greg, 2026-09-21): a refused or timed-out Pod stays RUNNING for diagnosis.
     facts = facts_of(api.request('GET', '/v2/pods/' + pod_id), intent)
     save('pod-facts.json', facts)
     print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_PREPARE_RECEIPT_V1', outcome=outcome, pod=pod_id,
                                       source_pod=args.source_pod, facts=facts, data_centers_offered=data_centers,
                                       stock=stock, created_at=created_at, ready_at=health and health['observed_at'],
                                       startup_event=records.get('startup', {}).get('started_at'), stop=stop,
-                                      on_timeout=args.on_timeout, telemetry_lines=len(seen),
+                                      on_timeout='never', telemetry_lines=len(seen),
                                       info_sha256=(json.loads((OUT / 'info-sha256.json').read_bytes()) if outcome == 'service_ready' else None)),
                                  sort_keys=True))
     if outcome != 'service_ready':
