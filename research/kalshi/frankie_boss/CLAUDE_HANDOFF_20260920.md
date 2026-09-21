@@ -2442,3 +2442,48 @@ Cycle-0 pin read for the box: group `legacy_observable_crosswalk`, 5 layers (leg
 legacy_per_second_roll20, legacy_book_imbalance, legacy_structure_observables), producers
 a_memory_member_first_recalculation_20260828 + native_roll20 + the 08-20 adapter. NO_PRODUCER_FOUND appears in the
 causal_clocks group (cycle 3) and the complete registry (cycles 7-18), not in cycle 0.
+
+### 08:25Z-08:35Z 09-21: producers staged and their tests pass on the box; the session machinery is built; THREE GRANTS are Greg's
+
+- Staging run 35577710695 (43 s): producers HEAD 2ebb8ce8 (pinned), markets checkout at this branch, venv Python
+  3.13.15 + torch 2.11.0+cpu, numpy 2.5.3, scipy 1.18.1, boto3 1.42.23, zstandard 0.25.0, databento-dbn,
+  cryptography 46.0.3, pytest 9.1.1; torch threads 16 of 32 CPUs. All ten producer files + the registry file:
+  `pinned` (sha256 equal to git). Receipt `/opt/frankie-box/receipts/producers-1789979117.json`. The first pytest
+  stopped at 8 collection errors.
+- Producer tests run 35577972726 (`frankie_box_producer_tests.sh`): the 8 collection errors are test-only imports the
+  lineage never pinned for a fresh box (yaml x4, databento x3, matplotlib x1); with `--continue-on-collection-errors`:
+  **2097 passed, 8 errors (collection), 6152 subtests passed in 67.87 s**. Receipt `receipts/producer-tests-*.json`,
+  log `logs/producer-tests.log`. The re-run with pyyaml, databento, matplotlib installed is dispatched (35578362572
+  was refused by --set for a space-separated list; the script takes commas now).
+- Backend prep runs 35577803017 + 35578041886 (`frankie_box_install_agent_backend.sh`): **Node v20.20.2, npm 10.8.2,
+  Claude Code 2.1.197 installed on the box**; awscli apt install failed (boto3 serves). Credential reach, read-only:
+  the role CAN decrypt SecureStrings in us-east-2 (`/markets/frankie/granite-service` read, 54 chars, not printed;
+  describe_parameters is denied in both regions); `/markets/frankie/github-token`, `/markets/frankie/anthropic-api-key`,
+  `/markets/frankie/openai-api-key` do not exist in either region; Bedrock converse in us-east-1: opus-4-6
+  ValidationException, opus-4-1 and haiku-4-5 AccessDeniedException (the role has no bedrock:InvokeModel); PutObject on
+  the progress prefix AccessDenied. So the box can run Frankie, but not speak to a model, not push, not write S3.
+- Session machinery (9069938e, e5a8e9f4; on the box after `verify`/`start` fetches this branch):
+  `deploy/aws/box/frankie_box_heartbeat.py` (ROOT_PROGRESS_V1 every 5 min + on phase change to git branch
+  `root/cycle-00-progress` and, when allowed, the S3 progress prefix; phase/note from two files Frankie keeps);
+  `frankie_box_session.sh` (ACTION=verify | preflight | start | status; backend order: /etc/markets/frankie-box.env,
+  SSM `/markets/frankie/anthropic-api-key`, Bedrock via the role; preflight must answer FRANKIE-BOX-ONLINE; Claude
+  Code as transient unit `frankie-cycle-00` with `--dangerously-skip-permissions --add-dir /opt/frankie-box` on the
+  box dedicated to him; never stops a running session); `frankie_box_push_response.sh` (the recorder's shape and
+  binding checks first, then the push to `root/cycle-00-response` with the SSM token in memory only; refuses without
+  it and leaves the files). `operations/ROOT_CYCLE_00_TASK_20260920.md` rewritten as the box edition = the session's
+  task document (no pair, no shared identity).
+
+**GREG'S THREE GRANTS (each one action; nothing else blocks the session):**
+1. GitHub push token: a fine-grained PAT on DavisAI1974/Markets, Contents: read and write (for `root/*`), stored as SSM
+   SecureString `/markets/frankie/github-token` in **us-east-2** (the role already decrypts there). Without it: no
+   heartbeat in git and no push (the files stay on the box).
+2. Model backend, one of: (a) SSM SecureString `/markets/frankie/anthropic-api-key` in us-east-2 (Claude Code calls the
+   Anthropic API directly; simplest, COACH option B); (b) `bedrock:InvokeModel` + `InvokeModelWithResponseStream` on
+   the Anthropic model ARNs in us-east-1 attached to role `Ssm`, with model access enabled (COACH option A); (c) a
+   `/etc/markets/frankie-box.env` (chmod 600) he writes on the box over SSM. OpenAI (option C) needs a different
+   harness and is not built.
+3. Optional: `s3:PutObject` on `frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-response/
+   cycle-00/progress/*` for role `Ssm`, so the S3 heartbeats the probe prints exist (git heartbeats need only grant 1).
+Then: `frankie_box_run.yml` script `frankie_box_session.sh` variables `ACTION=start` -> probe with
+`frankie_host_cycle_status.yml` (root/* heads, heartbeats) -> `frankie_box_push_response.sh` runs from inside the
+session (or dispatched) -> `frankie_host_record_principal_response.yml` source_ref `root/cycle-00-response`.

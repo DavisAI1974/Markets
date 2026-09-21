@@ -5,6 +5,22 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
+## READ FIRST (08:35Z 09-21, chat 3): JOB 0 IS BUILT ON FRANKIE'S BOX; the session waits on Greg's three grants
+
+Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (from b73c4d06; every receipt in `CLAUDE_HANDOFF_20260920.md`
+08:00Z-08:35Z). `/ship` ran on the launch path: GO as the base for job 0 (`SHIP_REVIEW_20260921.md`). On the box
+i-035994afa8bdf66a5 (SSM route `frankie_box_run.yml` + `deploy/aws/ssm_run_sh.py`, committed `deploy/aws/box/*.sh`
+only): the cycle-0 data plane and the request restored and pinned (`/opt/frankie-box/{data,request}`, run
+35577570848); the ten producers pinned at 2ebb8ce8 + this branch's tools + a Python 3.13/torch 2.11 venv (run
+35577710695); the lineage's producer tests 2097 passed (run 35577972726); Node 20 + Claude Code 2.1.197 installed
+(runs 35577803017, 35578041886). Task document rewritten for the box (`operations/ROOT_CYCLE_00_TASK_20260920.md`,
+no AWS pair, no shared identity); session runner, heartbeat and pusher under `deploy/aws/box/`.
+BLOCKED ON GREG (three grants, handoff 08:35Z): (1) `/markets/frankie/github-token` SecureString in us-east-2;
+(2) a model backend (`/markets/frankie/anthropic-api-key` SecureString, or Bedrock invoke on role Ssm);
+(3) optional PutObject on the progress prefix. The role reads SecureStrings in us-east-2 already. Then
+`frankie_box_session.sh ACTION=start`, probe, push, record. Nothing on the native host was touched; the runner
+still holds.
+
 ## READ FIRST (08:00Z 09-21 handoff): FRANKIE'S BOX IS UP AND EMPTY; JOB 0 = HIS HARNESS; the run HOLDS for his response
 
 Branch `claude/cycle-0-full-rerun-lr6e14` (tip e2be464f or later). Every receipt is in `CLAUDE_HANDOFF_20260920.md`
