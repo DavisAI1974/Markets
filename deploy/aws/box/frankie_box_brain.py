@@ -68,6 +68,9 @@ def write_entry(work, out, brain, cycle, include_analysis=True):
             put('derive.md', doc.encode('utf-8'), derive, 'calculation findings: the derivation receipt (layer statuses, producers, digests)')
         except Exception:
             pass
+    classroom = work / 'classroom' / 'classroom.md'
+    if classroom.is_file():
+        put('classroom.md', classroom.read_bytes(), classroom, "the Dipole classroom: Frankie's own teach-back of the 19-dimension surface for this cycle (case by case: set include false to keep it out)")
     derived = work / 'derived'
     if derived.is_dir():
         files = [dict(name=f.name, bytes=f.stat().st_size, sha256=sha256_bytes(f.read_bytes())) for f in sorted(derived.iterdir()) if f.is_file()]

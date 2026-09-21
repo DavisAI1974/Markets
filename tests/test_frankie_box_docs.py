@@ -119,3 +119,15 @@ def test_tolerant_json_reads_clean_fenced_commented_trailing_comma_and_truncated
     assert obj['ledger'] == 'x' and obj['rows'][0] == {'cursor': '1', 'value': 5.6} and 'truncated object closed' in rep
     assert docs.tolerant_json('no json here at all') == (None, [])
     assert docs.tolerant_json('[1, 2, 3]') == (None, [])
+
+
+def test_build_docs_carries_the_classroom_markdown_and_receipts(tmp_path):
+    work, out = tmp_path / 'work', tmp_path / 'out'
+    (work / 'classroom').mkdir(parents=True)
+    (work / 'classroom' / 'classroom.md').write_text('# Dipole classroom: test\n')
+    (work / 'classroom' / 'receipt.json').write_text('{"report": {"components": 19}}')
+    (work / 'classroom' / 'correction-receipt.json').write_text('{"resolutions": 0}')
+    index = docs.build_docs(work, out, '00')
+    names = [e['name'] for e in index['docs']]
+    assert 'classroom.md' in names and 'classroom-receipt.md' in names and 'classroom-correction-receipt.md' in names
+    assert (out / 'classroom.md').read_text() == '# Dipole classroom: test\n' and '"components": 19' in (out / 'classroom-receipt.md').read_text()

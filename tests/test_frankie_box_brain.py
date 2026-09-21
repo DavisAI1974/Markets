@@ -165,3 +165,12 @@ def test_frozen_entry_is_built_from_the_checkout_against_the_delivered_digests_a
     assert 'chains and families' in text1 and "cycle 00, derivation-digest-full.md" in text1 and text1.index('frozen') < text1.index('cycle 00')
     assert brain.identity(b, '01') != before
     assert brain.write_frozen_entry(prompt, repo, b)['entries'] == m['entries'] or True   # idempotent (timestamps aside)
+
+
+def test_write_entry_carries_the_classroom_teachback_when_present(cycle0, tmp_path):
+    work, out = cycle0
+    (work / 'classroom').mkdir()
+    (work / 'classroom' / 'classroom.md').write_bytes(b'# Dipole classroom: Frankie teach-back\n')
+    m = brain.write_entry(work, out, tmp_path / 'brain', '00')
+    entry = [e for e in m['entries'] if e['name'] == 'classroom.md'][0]
+    assert entry['include'] is True and 'case by case' in entry['kind'] and (tmp_path / 'brain' / 'cycle-00' / 'classroom.md').is_file()

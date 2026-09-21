@@ -274,6 +274,18 @@ def build_docs(work, out, cycle):
                 put(name[:-5] + '.md', _json_doc(name[:-5], p).encode('utf-8'), p, 'a session receipt, rendered as JSON in Markdown')
             except Exception as error:
                 entries.append(dict(name=name, error=f'{type(error).__name__}: {error}', source=str(p)))
+    classroom = work / 'classroom'
+    if classroom.is_dir():
+        md = classroom / 'classroom.md'
+        if md.is_file():
+            put('classroom.md', md.read_bytes(), md, "the Dipole classroom: Frankie's teach-back narratives, cycle summary, correlation review, pair scan and novel findings (the per-cursor observation review is in response.json)")
+        for name in ('receipt.json', 'correction-receipt.json'):
+            p = classroom / name
+            if p.is_file():
+                try:
+                    put('classroom-' + name[:-5] + '.md', _json_doc('classroom ' + name[:-5], p).encode('utf-8'), p, 'a classroom receipt, rendered as JSON in Markdown')
+                except Exception as error:
+                    entries.append(dict(name='classroom-' + name, error=f'{type(error).__name__}: {error}', source=str(p)))
     corpus = work / 'reading-corpus-full.md'
     referenced = dict(name='reading-corpus-full.md', bytes=corpus.stat().st_size, sha256=sha256_bytes(corpus.read_bytes()),
                       source=str(corpus), what='the rendered reading corpus; referenced by digest, not copied (size; derivable from the request on the box)') \
