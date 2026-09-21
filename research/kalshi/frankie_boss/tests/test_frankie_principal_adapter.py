@@ -492,18 +492,19 @@ def test_cycle_calculation_pins_are_committed_evidence_and_cover_every_cycle_onc
             assert cycle not in covered, cycle
             covered[cycle] = pin['group']
         assert pin['registry_layers'] and set(pin['registry_layers']) <= registry, pin['group']
-        if pin.get('complete_registry'):
-            assert set(pin['registry_layers']) == registry and pinned_layers == registry, pin['group']
-            continue
-        assert not pinned_layers & set(pin['registry_layers']), pin['group']
-        pinned_layers |= set(pin['registry_layers'])
-        assert pin['registry_layers'] == by_registry_group[pin['group']], pin['group']
+        # every pin's source receipts are re-hashed, the complete-registry pin's included (ship finding, 2026-09-20)
         assert pin['calculations'] and pin['source_receipts']
         for receipt in pin['source_receipts']:
             path = root / receipt['path']
             assert path.is_file(), receipt['path']
             body = path.read_bytes()
             assert len(body) == receipt['bytes'] and hashlib.sha256(body).hexdigest() == receipt['sha256'], receipt['path']
+        if pin.get('complete_registry'):
+            assert set(pin['registry_layers']) == registry and pinned_layers == registry, pin['group']
+            continue
+        assert not pinned_layers & set(pin['registry_layers']), pin['group']
+        pinned_layers |= set(pin['registry_layers'])
+        assert pin['registry_layers'] == by_registry_group[pin['group']], pin['group']
     assert sorted(covered) == list(range(19))
     assert pinned_layers == registry
     assert document['pins'][0]['cycles'] == [0] and document['pins'][1]['cycles'] == [1]

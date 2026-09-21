@@ -626,7 +626,10 @@ class FrankiePrincipalAdapter:
         witness = dict(pin['pins_witness'], cycle_index=pin['cycle_index'], group=pin['group'])
         sidecar = Path(self.directory) / CYCLE_CALCULATION_PIN_SIDECAR
         if sidecar.exists():
-            if json.loads(sidecar.read_bytes()) != witness:
+            # The path is provenance (it names the checkout that rendered the cycle); bytes, sha256, cycle and
+            # group are the identity, so a checkout moved to another root or host still compares (ship finding).
+            retained = json.loads(sidecar.read_bytes())
+            if {k: v for k, v in retained.items() if k != 'path'} != {k: v for k, v in witness.items() if k != 'path'}:
                 raise ValueError('retained calculation pin witness differs from the committed pins file')
         else:
             _write(sidecar, witness)
