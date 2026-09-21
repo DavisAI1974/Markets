@@ -5,6 +5,9 @@
 set -u
 ROOT=/opt/frankie-box; T="$ROOT/tmp"; MODE="${MODE:-both}"; mkdir -p "$T"
 "$ROOT/venv/bin/python" -c "import tokenizers" 2>/dev/null || "$ROOT/venv/bin/pip" install -q tokenizers >/dev/null 2>&1
+# L7 depends on the stacked codec's exact DBN SDK pin (databento-dbn 0.62.0, the pin frankie_box_stage_producers.sh installs)
+"$ROOT/venv/bin/python" -c "from importlib.metadata import version; print('venv databento-dbn', version('databento-dbn'))" 2>&1
+"$ROOT/venv/bin/pip" freeze 2>/dev/null | grep -i '^databento' | sed 's/^/venv pin: /'
 TOK="$T/granite_tokenizer.json"
 [ -s "$TOK" ] || curl -fsS -m 120 -L -o "$TOK" "https://huggingface.co/ibm-granite/granite-4.2-8b/resolve/f8de16cdcdbc6c779ca517604e050d82cc119e44/tokenizer.json"
 # The running session's checkout ($ROOT/markets) is refreshed only by the session's own start; this measurement uses its
@@ -77,5 +80,7 @@ t0 = time.time()
 dense = DG.digest_text(receipt, L, price_rows, L['legacy_book_imbalance']['frames'], L['legacy_structure_observables']['groups'], roll, first, buys, sells)
 open(os.path.join(os.environ['ROOT'], 'tmp', 'derivation-digest-dense.md'), 'w', encoding='utf-8').write(dense)
 print(f'\n=== digest: old {len(old)} B / {tok_n(old.decode("utf-8", "replace"))} tok -> dense (ALL fields, self-checked) {len(dense.encode())} B / {tok_n(dense)} tok; {time.time() - t0:.0f}s')
+for block in dense.split('\n### ')[1:]:
+    print('   table %-40s %9d B %9d tok' % (block.split('\n', 1)[0][:40], len(block.encode()), tok_n(block)))
 print(dense[:1200].replace('\n', ' | ')[:1200])
 PY
