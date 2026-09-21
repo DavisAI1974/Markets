@@ -2651,3 +2651,15 @@ work/reading-corpus.json records each member's treatment (what the BOSS saw is o
 notes-<corpus sha>/ so the two base64 notes never mix in. `frankie_box_session.sh ACTION=restart_session` added: it
 stops ONLY the session unit with a receipt (FRANKIE_BOX_SESSION_RESTART_RECEIPT_V1) and starts it again; heartbeat,
 Pod and box untouched; verify/labels/engine/derive resume from their receipts. Dispatched at 09:57Z.
+
+### 10:2xZ 09-21: GREG: "We had taken that limit out of him! He has no limits on his outputs." The caps were MINE, in the box session script; removed
+
+Reading note 1/9 came back `[OUTPUT INCOMPLETE]` at 4,096 tokens: not the retired Granite context, but a per-call
+`max_tokens` I set this morning in `frankie_box_boss_session.py` (4,096 for a reading note, 6,144/8,192 for merges,
+16,384 for the analysis, 8,192 for the accounting and each ledger) out of habit, to "protect" the context window,
+against the rule already in the same file (output = the remaining context, the incomplete-output alert is the only
+signal). Why it keeps happening: a ceiling written as a defensive default at the call site, not derived from the
+rule. Fix (this commit): every cap removed; `boss()` computes max_tokens as CONTEXT minus the input estimate and
+REFUSES any caller cap; the note/merge prompts say "no length limit"; notes are keyed by corpus AND output policy
+(`notes-<sha>-unbounded/`) so the four capped notes are never reused. Session unit restarted with a receipt; the
+Pod, the heartbeat and every earlier receipt (verify, labels, engine, derive) untouched.
