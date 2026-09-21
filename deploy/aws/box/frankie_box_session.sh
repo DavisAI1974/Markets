@@ -34,9 +34,31 @@ preflight() {
   grep -q "FRANKIE-BOX-ONLINE" "$ROOT/logs/preflight-$CYCLE.log" && { echo "preflight: OK"; return 0; }
   echo "preflight: FAILED (no backend answered; see logs/preflight-$CYCLE.log)"; return 1
 }
+verify() {
+  echo "### verify (no session started): request digest through the adapter, the task document, the pusher's token reach"
+  git -C "$ROOT/markets" fetch -q --depth 1 origin "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
+  TASK="$ROOT/markets/research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md"; [ -s "$TASK" ] && echo "task document: $(wc -c < "$TASK") bytes, sha256 $(sha256sum "$TASK" | cut -c1-16)" || echo "task document MISSING"
+  "$ROOT/venv/bin/python" -c "
+import json,sys,time; sys.path.insert(0,'$ROOT/markets')
+t=time.time()
+from research.kalshi.frankie_boss.frankie_principal_adapter import digest
+req=json.loads(open('$ROOT/request/session-request.json','rb').read())
+print('request_sha256', digest(req)); print('request_id', req.get('request_id')); print('instruction chars', len(req.get('instruction','')))
+print('adapter import + digest %.1fs' % (time.time()-t))" || echo "adapter digest FAILED"
+  "$ROOT/venv/bin/python" -c "
+import boto3
+def code(e): return getattr(e,'response',{}).get('Error',{}).get('Code') or type(e).__name__
+s=boto3.client('ssm',region_name='us-east-2')
+for n in ('/markets/frankie/github-token','/markets/frankie/anthropic-api-key'):
+    try: s.get_parameter(Name=n,WithDecryption=True); print(n, 'readable (not printed)')
+    except Exception as e: print(n, code(e))"
+  for t in claude node systemd-run; do printf '%-12s %s\n' "$t" "$(command -v "$t" || echo absent)"; done
+  echo "phase file: $(cat "$S/phase" 2>/dev/null || echo '-')"
+}
 case "$ACTION" in
   status) status ;;
   preflight) preflight ;;
+  verify) verify ;;
   start)
     if systemctl is-active --quiet "$UNIT.service"; then echo "$UNIT is already running; not restarting (Greg's word)"; status; exit 0; fi
     [ -s "$ROOT/request/session-request.json" ] || { echo "request not on the box"; exit 2; }
@@ -60,5 +82,5 @@ print(digest(json.loads(open('$ROOT/request/session-request.json','rb').read()))
       /usr/bin/claude -p "$PROMPT" --output-format text --dangerously-skip-permissions --add-dir "$ROOT" || { echo "session service start failed"; exit 4; }
     sleep 5; printf '{"schema":"FRANKIE_BOX_SESSION_START_RECEIPT_V1","at":%s,"unit":"%s","cycle":"%s","markets_ref":"%s","markets_head":"%s","request_sha256":"%s","backend":"%s"}\n' "$(date +%s)" "$UNIT" "$CYCLE" "$MARKETS_REF" "$(git -C "$ROOT/markets" rev-parse HEAD)" "$(cat "$S/request_sha256")" "$(grep '^FRANKIE_BACKEND=' "$S/backend.env" | cut -d= -f2)" > "$ROOT/receipts/session-start-$CYCLE-$(date +%s).json"
     status ;;
-  *) echo "ACTION must be start, status or preflight"; exit 2 ;;
+  *) echo "ACTION must be start, status, preflight or verify"; exit 2 ;;
 esac

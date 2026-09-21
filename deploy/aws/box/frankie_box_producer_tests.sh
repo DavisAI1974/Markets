@@ -2,7 +2,8 @@
 # The staging run collected 8 errors and pytest stopped before any test ran; this prints the first tracebacks
 # (dependency or path errors are the usual cause), then re-runs the suite with --continue-on-collection-errors
 # so the tests that do collect actually run, and records the counts. Read-only except the log and one receipt.
-# Optional input: EXTRA_PIP (space-separated extra packages to install into the venv before the run; default none).
+# Optional input: EXTRA_PIP (COMMA-separated extra packages to install into the venv before the run; default none;
+# the workflow's variables input splits on spaces, so commas are the separator here).
 set -u
 ROOT=/opt/frankie-box
 PY="$ROOT/venv/bin/python"
@@ -10,9 +11,10 @@ PY="$ROOT/venv/bin/python"
 export PYTHONDONTWRITEBYTECODE=1 PIP_DISABLE_PIP_VERSION_CHECK=1
 mkdir -p "$ROOT/logs" "$ROOT/receipts"
 if [ -n "${EXTRA_PIP:-}" ]; then
-  echo "### extra packages: $EXTRA_PIP"
+  PKGS=$(printf '%s' "$EXTRA_PIP" | tr ',' ' ')
+  echo "### extra packages: $PKGS"
   # shellcheck disable=SC2086
-  "$PY" -m pip install -q $EXTRA_PIP >>"$ROOT/logs/pip.log" 2>&1 || { echo "pip install failed"; tail -5 "$ROOT/logs/pip.log"; }
+  "$PY" -m pip install -q $PKGS >>"$ROOT/logs/pip.log" 2>&1 || { echo "pip install failed"; tail -5 "$ROOT/logs/pip.log"; }
 fi
 cd "$ROOT/producers" || exit 2
 echo "### collection errors (first 2 tracebacks, trimmed)"
