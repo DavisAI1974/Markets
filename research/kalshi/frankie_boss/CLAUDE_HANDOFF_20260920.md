@@ -2986,4 +2986,7 @@ no User-Agent): run 35601303506, `GET api.runpod.io/v2/pods/g7y3g2w1kor4l3 -> HT
 prefix rpa_`; receipt `FRANKIE_RUNPOD_KEY_TO_SSM_RECEIPT_V1 version 1`. The GitHub secret cannot reach this container
 (secrets are write-only to the API; an artifact would put the value in the transcript), so this session's MCP still
 needs RUNPOD_API_KEY in the Claude Code environment configuration (`deploy/runpod/mcp_connect.sh`).
+Box-side proof (run 35601486470, `frankie_box_serverless_config.sh ACTION=key`, read-only): `KEY_PROBE
+{"parameter":"/markets/frankie/runpod-serverless","readable":true,"version":1,"length":50,"prefix":"rpa_"}` -- the box
+role reads it. The serverless lane on the box now lacks only the endpoint id (`ACTION=write ENDPOINT_ID=...`).
 
