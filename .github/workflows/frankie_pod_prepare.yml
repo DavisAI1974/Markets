@@ -40,8 +40,10 @@ on:
         default: 'keep'
 permissions:
   contents: read
+# Greg, 2026-09-21 02:15Z: "multiple parallel attempts going using servers in different regions ... When one hit
+# you kill the other 2." One attempt per data-center list runs at a time; different lists run in parallel.
 concurrency:
-  group: pod-prepare
+  group: pod-prepare-${{ inputs.data_centers || 'any' }}-${{ inputs.resume_pod }}${{ inputs.watch_pod }}
   cancel-in-progress: false
 jobs:
   prepare:
