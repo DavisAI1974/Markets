@@ -16,6 +16,7 @@ on:
       - 'deploy/aws/host/frankie_host_record_principal_response.ps1'
       - 'deploy/aws/host/frankie_host_export_principal_request.ps1'
       - 'deploy/aws/host/frankie_host_supersede_principal_request.ps1'
+      - 'deploy/aws/host/frankie_host_supersede_principal_response.ps1'
       - 'deploy/aws/ssm_run_ps1.py'
       - '.github/workflows/frankie_host_cycle_binding_probe.yml'
       - '.github/workflows/frankie_host_supersede_code_bound_state.yml'
@@ -25,6 +26,7 @@ on:
       - '.github/workflows/frankie_host_record_principal_response.yml'
       - '.github/workflows/frankie_host_export_principal_request.yml'
       - '.github/workflows/frankie_host_supersede_principal_request.yml'
+      - '.github/workflows/frankie_host_supersede_principal_response.yml'
       - '.github/workflows/frankie_host_scripts_ci.yml'
       - 'research/kalshi/frankie_boss/tests/test_host_cycle_binding_probe.py'
       - 'research/kalshi/frankie_boss/tests/test_host_supersede_code_bound_state.py'
@@ -34,6 +36,7 @@ on:
       - 'research/kalshi/frankie_boss/tests/test_host_record_principal_response.py'
       - 'research/kalshi/frankie_boss/tests/test_host_export_principal_request.py'
       - 'research/kalshi/frankie_boss/tests/test_host_supersede_principal_request.py'
+      - 'research/kalshi/frankie_boss/tests/test_host_supersede_principal_response.py'
       - 'research/kalshi/frankie_boss/tests/test_host_supersede_cycle.py'
       - 'research/kalshi/frankie_boss/c15_journal.py'
       - 'research/kalshi/frankie_boss/causal_packet.py'
@@ -47,6 +50,7 @@ on:
       - 'deploy/aws/host/frankie_host_record_principal_response.ps1'
       - 'deploy/aws/host/frankie_host_export_principal_request.ps1'
       - 'deploy/aws/host/frankie_host_supersede_principal_request.ps1'
+      - 'deploy/aws/host/frankie_host_supersede_principal_response.ps1'
       - 'deploy/aws/ssm_run_ps1.py'
       - '.github/workflows/frankie_host_cycle_binding_probe.yml'
       - '.github/workflows/frankie_host_supersede_code_bound_state.yml'
@@ -56,6 +60,7 @@ on:
       - '.github/workflows/frankie_host_record_principal_response.yml'
       - '.github/workflows/frankie_host_export_principal_request.yml'
       - '.github/workflows/frankie_host_supersede_principal_request.yml'
+      - '.github/workflows/frankie_host_supersede_principal_response.yml'
       - 'research/kalshi/frankie_boss/tests/test_host_cycle_binding_probe.py'
       - 'research/kalshi/frankie_boss/tests/test_host_supersede_code_bound_state.py'
       - 'research/kalshi/frankie_boss/tests/test_host_declare_identity_supersede.py'
@@ -65,6 +70,7 @@ on:
       - 'research/kalshi/frankie_boss/tests/test_host_export_principal_request.py'
       - 'research/kalshi/frankie_boss/tests/test_host_supersede_cycle.py'
       - 'research/kalshi/frankie_boss/tests/test_host_supersede_principal_request.py'
+      - 'research/kalshi/frankie_boss/tests/test_host_supersede_principal_response.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -84,4 +90,4 @@ jobs:
       - name: Probe, supersede, declaration, binding-diff, cycle-report and record-response script contracts
         if: hashFiles('research/kalshi/frankie_boss/tests/test_host_cycle_report.py') != ''
         working-directory: research/kalshi/frankie_boss/tests
-        run: python -m pytest test_host_cycle_binding_probe.py test_host_supersede_code_bound_state.py test_host_declare_identity_supersede.py test_host_binding_diff.py test_host_cycle_report.py test_host_record_principal_response.py test_host_export_principal_request.py test_host_supersede_principal_request.py test_host_supersede_cycle.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider
+        run: python -m pytest test_host_cycle_binding_probe.py test_host_supersede_code_bound_state.py test_host_declare_identity_supersede.py test_host_binding_diff.py test_host_cycle_report.py test_host_record_principal_response.py test_host_export_principal_request.py test_host_supersede_principal_request.py test_host_supersede_principal_response.py test_host_supersede_cycle.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider

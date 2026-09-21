@@ -20,9 +20,13 @@ REQUIRED = ('Day', 'RunRoot', 'CycleIndex', 'RequestUrl', 'PromptUrl', 'Historic
 
 
 def test_refuses_unsupplied_variables():
-    block = CODE.split('foreach ($required in', 1)[1].split(') {', 1)[0]
+    # 2026-09-21: the required set follows the turn (initial = the three request files; correction = the correction request alone)
+    block = CODE.split('$requiredNames = ', 1)[1].split('\n', 1)[0]
     for name in REQUIRED:
         assert f"'{name}'" in block, name
+    assert "else { @('Day', 'RunRoot', 'CycleIndex', 'RequestUrl') }" in block
+    assert 'foreach ($required in $requiredNames) {' in CODE
+    assert "if ($Turn -notin @('initial', 'correction')) { throw" in CODE
     assert "$value -like 'HOST_*'" in CODE and "if ($CycleIndex -notmatch '^\\d{2}$')" in CODE
 
 
@@ -39,8 +43,9 @@ def test_no_path_literal_no_credential_nothing_deleted_urls_never_printed():
 
 
 def test_exactly_the_three_retained_files_unchanged():
-    assert "'session-request.json' = $RequestUrl" in CODE and "'prompt.md'            = $PromptUrl" in CODE
-    assert "'historical-prompt.md' = $HistoricalUrl" in CODE
+    assert "$files['session-request.json'] = $RequestUrl" in CODE and "$files['prompt.md'] = $PromptUrl" in CODE
+    assert "$files['historical-prompt.md'] = $HistoricalUrl" in CODE
+    assert "$files['classroom-correction-request.json'] = $RequestUrl" in CODE       # the correction turn exports this one file
     assert 'Invoke-WebRequest -Uri $files[$name] -Method Put -InFile $path -UseBasicParsing' in CODE
     assert 'Write-Output ("EXPORTED " + $name + " bytes=" + $bytes + " sha256=" + $digest)' in CODE
     assert "$principal = Join-Path (Join-Path (Join-Path $run 'execution') ('cycle-' + $CycleIndex)) 'principal'" in CODE

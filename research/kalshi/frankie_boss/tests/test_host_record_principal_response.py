@@ -20,7 +20,7 @@ SCRIPT = ROOT / 'deploy/aws/host/frankie_host_record_principal_response.ps1'
 WORKFLOW = ROOT / '.github/workflows/frankie_host_record_principal_response.yml'
 TEXT = SCRIPT.read_text()
 CODE = '\n'.join(line for line in TEXT.splitlines() if not line.lstrip().startswith('#'))
-REQUIRED = ('Day', 'RunRoot', 'ToolsRoot', 'Python', 'CycleIndex', 'SourceRef', 'ResponseUrl', 'ResponseSha256',
+REQUIRED = ('Day', 'RunRoot', 'ToolsRoot', 'Python', 'CycleIndex', 'SourceRef', 'Turn', 'ResponseUrl', 'ResponseSha256',
             'ResponseBytes', 'AttestationUrl', 'AttestationSha256', 'AttestationBytes', 'RecordUrl', 'RecordSha256',
             'RecordBytes')
 
@@ -50,13 +50,19 @@ def test_every_delivered_file_is_verified_and_the_attestation_binds_the_record_o
     assert "Fetch $AttestationUrl $attestationFile $AttestationSha256 $AttestationBytes 'host attestation'" in CODE
     assert "Fetch $RecordUrl $recordFile $RecordSha256 $RecordBytes 'host session record'" in CODE
     assert 'if ($got.Length -ne [int64]$expectedBytes -or $gotDigest -ne $expectedSha)' in CODE
-    assert "$recordTarget = Join-Path $principal 'host-session-record.json'" in CODE
+    # 2026-09-21: the turn selects the names (initial = the principal response, correction = the classroom turn 2)
+    assert '$recordTarget = Join-Path $principal $recordTargetName' in CODE
+    assert "$recordTargetName = 'host-session-record.json'; $finalName = 'session-response.json'" in CODE
+    assert "$recordTargetName = 'host-correction-record.json'; $finalName = 'classroom-correction-response.json'" in CODE
+    assert "response = 'correction-response.json'; attestation = 'host-correction-attestation.json'; record = 'host-correction-record.json'" in CODE
+    assert "default { throw \"Turn must be initial or correction" in CODE
+    assert "if ($Turn -eq 'correction' -and -not (Test-Path (Join-Path $principal 'classroom-correction-request.json'))) { throw" in CODE
     assert 'if ((Normal $pinned.path) -ne (Normal $recordTarget))' in CODE
     # Greg's override (21:05Z): a foreign host_record.path is rewritten to the host path WITH a receipt,
     # into a new file, Root's original untouched; the record's bytes and sha256 are still verified unchanged.
     assert '$attestation.host_record.path = $recordTarget' in CODE
     assert 'host_attestation_path_rewritten_from = $attestationPathRewrittenFrom' in CODE
-    assert "Join-Path $incoming 'host-attestation.host-path.json'" in CODE
+    assert "Join-Path $incoming ($incomingNames.attestation -replace '\\.json$', '.host-path.json')" in CODE
     assert 'if ($pinned.sha256 -ne $RecordSha256 -or [int64]$pinned.bytes -ne [int64]$RecordBytes)' in CODE
     assert "$principal = Join-Path (Join-Path (Join-Path $run 'execution') ('cycle-' + $CycleIndex)) 'principal'" in CODE
 
@@ -74,9 +80,10 @@ def test_recorder_runs_from_the_tools_checkout_and_its_status_is_required():
     assert '--configuration $cfgPath --configuration-sha256 $cfgSha --cycle-index ([int]$CycleIndex)' in CODE
     assert '--response $responseFile --response-sha256 $ResponseSha256' in CODE
     assert '--host-attestation $attestationFile --host-attestation-sha256 $AttestationSha256' in CODE
-    assert "$output -notmatch 'actual_principal_response_recorded'" in CODE
-    assert "if (-not (Test-Path $responsePath)) { throw 'the recorder reported success but session-response.json is absent' }" in CODE
-    assert "'FRANKIE_PRINCIPAL_RESPONSE_RECORDED_V1'" in CODE and "Write-Output ('RECEIPT '" in CODE
+    assert '--turn $Turn' in CODE and '$output -notmatch $successPattern' in CODE
+    assert "$successPattern = 'actual_principal_response_recorded'" in CODE and "$successPattern = 'actual_classroom_correction_recorded'" in CODE
+    assert "if (-not (Test-Path $responsePath)) { throw ('the recorder reported success but ' + $finalName + ' is absent') }" in CODE
+    assert "'FRANKIE_PRINCIPAL_RESPONSE_RECORDED_V1'" in CODE and "'FRANKIE_CLASSROOM_CORRECTION_RECORDED_V1'" in CODE and "Write-Output ('RECEIPT '" in CODE
     assert '$env:PYTHONPATH = $ToolsRoot' in CODE and 'Push-Location $ToolsRoot' in CODE
 
 
