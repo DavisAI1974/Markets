@@ -11,8 +11,9 @@ case "$ACTION" in
   remove) [ -s "$F" ] && { mv "$F" "$ROOT/receipts/serverless-removed-$(date +%s).json"; echo "moved aside (nothing deleted)"; } || echo "nothing to remove";;
   write)
     ENDPOINT_ID="${ENDPOINT_ID:-}"; WORKERS="${WORKERS:-16}"; GPU="${GPU:-}"
-    [[ "$ENDPOINT_ID" =~ ^[a-z0-9]{6,40}$ ]] || { echo "ENDPOINT_ID must be the RunPod endpoint id"; exit 2; }
-    [[ "$WORKERS" =~ ^[0-9]{1,3}$ ]] && [ "$WORKERS" -ge 1 ] || { echo "WORKERS must be 1..999"; exit 2; }
+    # POSIX tests: SSM runs this under sh (dash), where `[[` does not exist (run 35617650693: "[[: not found").
+    printf '%s\n' "$ENDPOINT_ID" | grep -Eq '^[a-z0-9]{6,40}$' || { echo "ENDPOINT_ID must be the RunPod endpoint id"; exit 2; }
+    printf '%s\n' "$WORKERS" | grep -Eq '^[0-9]{1,3}$' && [ "$WORKERS" -ge 1 ] || { echo "WORKERS must be 1..999"; exit 2; }
     printf '{"schema":"FRANKIE_BOX_SERVERLESS_READING_V1","endpoint_id":"%s","workers":%s,"gpu":"%s","written_at":%s}\n' "$ENDPOINT_ID" "$WORKERS" "$GPU" "$(date +%s)" > "$F"
     echo "### $F"; cat "$F"
     "$ROOT/venv/bin/python" - <<'PY'

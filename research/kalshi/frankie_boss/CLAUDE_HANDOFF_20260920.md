@@ -3212,3 +3212,31 @@ with his AWS credentials: `aws ssm put-parameter --region us-east-2 --name /mark
 SecureString --value '<the token>' --overwrite`. The box role reads it (heartbeat, pusher, session preflight all name
 that parameter and region); `frankie_box_session.sh ACTION=status` prints "readable (not printed)" once it is there.
 The root read itself is unaffected and still running on the Pod (restart 3).
+
+### 15:4xZ 09-21: JOB 2 DONE TO THE VERIFY: serverless reading endpoint k1sqt0haffm61y CREATED and VERIFIED with a real job (Greg: "Go", 15:3xZ)
+
+Greg's "Go" lifted the block: the same create command was approved on the retry. The committed script's own runpodctl
+call then failed in RunPod's Hub lookup (`--hub-id runpod-workers/worker-vllm` -> "failed to get hub listing: graphql
+error"); runpodctl 2.14's help calls the flag a "hub listing id", and the listing's id (`runpodctl hub get
+runpod-workers/worker-vllm` .id = cm8h09d9n000008jvh2rqdsmb) created the endpoint with the script's exact flags:
+`serverless create --name frankie-reading-granite42 --hub-id cm8h09d9n000008jvh2rqdsmb --model-reference
+https://huggingface.co/ibm-granite/granite-4.2-8b:f8de16cdcdbc6c779ca517604e050d82cc119e44 --workers-min 0
+--workers-max 8 --scale-by requests --scale-threshold 1 --idle-timeout 120 --execution-timeout 14400 --gpu-id "NVIDIA
+H100 80GB HBM3"` plus the 14 pinned env vars (bfloat16, MAX_MODEL_LEN 131072, MAX_NUM_SEQS 2, MAX_CONCURRENCY 2,
+chunked prefill 2048, prefix caching off, served name granite42-smoke). RunPod answered: id k1sqt0haffm61y, pool
+ADA_80_PRO (the H100 pool), gpuCount 1, minCudaVersion 13.0, FLASHBOOT, scaler REQUEST_COUNT 1, executionTimeoutMs
+14400000, templateId qvih13qja5, modelReferences = the pinned checkpoint. Receipt committed:
+`research/kalshi/frankie_boss/receipts/serverless_reading_endpoint_20260921.json` (f428b783; no key in it). The script
+now pins the listing id (`HUB_WORKER`) and names the repo beside it.
+VERIFY (the committed script's --action verify, async /run + /status, the exact body shape the box sends): job
+6c9af209-...-u2, IN_QUEUE -> COMPLETED at +215 s (delayTime 206,202 ms = the cold worker: image + the host-cached
+17.6 GB checkpoint; executionTime 834 ms), output `chat.completion`, model `granite42-smoke`, content "READY",
+finish_reason stop, usage 25 prompt / 2 completion, system_fingerprint vllm-0.29.0-b4d3ce6b, worker i6x6jl1rimp06i.
+`VERIFY: OK (chat.completion under the served name; the box parser accepts this shape)`. Health after: 2 idle, 2
+ready, 4 initializing, 1 throttled (FlashBoot's warm pool; workers-min 0, so nothing bills while idle beyond the
+idle-timeout window).
+BOX SIDE: `frankie_box_serverless_config.sh ACTION=key` (run 35617264569): `/markets/frankie/runpod-serverless`
+readable by the box role, version 1, length 50, prefix rpa_ (the key was already in SSM). ACTION=write
+ENDPOINT_ID=k1sqt0haffm61y WORKERS=8 GPU=NVIDIA_H100_80GB_HBM3 dispatched (run 35617650693; the workflow's variables
+take no spaces, so the GPU label is underscored), then restart_session REASON=serverless-reading: outcomes below.
+Greg: rotation of the pasted key is NOT a concern for now ("I'm not going to worry about rotating at the moment").
