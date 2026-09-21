@@ -247,13 +247,16 @@ def _monotone(doc):
             and all(b - a == 1 for a, b in zip(doc, doc[1:])))
 
 
-def derivable_vectors(members):
+def derivable_vectors(members, notes=None):
     """L7: vectors reconstructible from a stacked envelope delivered in the package (the critic snapshot): sha256 of the
-    canonical list -> description. Decoding is the codec's own (self-verifying); a failure yields nothing."""
+    canonical list -> description. Decoding is the codec's own (self-verifying); a failure yields nothing, and the
+    reason is appended to `notes` (a list) so the corpus receipt states why the layer did not fire."""
     out = {}
+    notes = notes if notes is not None else []
     try:
         from research.kalshi.frankie_boss import granite_context_stacked as stacked
-    except Exception:
+    except Exception as err:
+        notes.append(f'codec import failed: {type(err).__name__}: {str(err)[:200]}')
         return out
     for name, raw in members.items():
         try:
@@ -265,12 +268,15 @@ def derivable_vectors(members):
             continue
         try:
             root = stacked.decode(envelope)
-        except Exception:
+        except Exception as err:
+            notes.append(f'{name}: decode failed: {type(err).__name__}: {str(err)[:200]}')
             continue
         vector = (root.get('receipt') or {}).get('packet_hashes') if isinstance(root, dict) else None
         if isinstance(vector, (list, tuple)) and vector:
             digest = sha(json.dumps(list(vector), separators=(',', ':')).encode())
             out[digest] = dict(kind='packet_hashes', member=name, count=len(vector))
+        else:
+            notes.append(f'{name}: decoded, no receipt.packet_hashes vector')
     return out
 
 
@@ -386,13 +392,15 @@ class RenderReport:
     read_saved_bytes: int = 0
     derived_vectors: int = 0
     ranges: int = 0
+    l7_notes: list = field(default_factory=list)   # why L7 did not fire, per envelope (empty when it did)
 
 
 def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None):
     """members: {name: bytes}. Returns (markdown_text, RenderReport). The plan needed for reconstruction is the
     decoded documents themselves (kept in memory by the caller through `plan`)."""
     pack, unpack, canonical_bytes = _c15()
-    plan, dictionary, stats = {}, Dictionary(already_read=dict(already_read or {}), derivable=derivable_vectors(members)), dict(tensors=0, tensor_bytes=0)
+    l7_notes = []
+    plan, dictionary, stats = {}, Dictionary(already_read=dict(already_read or {}), derivable=derivable_vectors(members, l7_notes)), dict(tensors=0, tensor_bytes=0)
     per = {}
     # decode every member first so the dictionary sees the forecast artifact before its hex copy
     order = sorted(members, key=lambda n: (0 if n.startswith('files/forecast') else 1 if n.startswith('files/state') else 2, n))
@@ -457,7 +465,8 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
                           tensors=stats['tensors'], tensor_bytes=stats['tensor_bytes'], rendered_bytes=len(text.encode('utf-8')),
                           delivered_bytes=sum(len(b) for b in members.values()), proof=proof,
                           dictionary={d: dict(kind=k, path=pth, bytes=n) for d, (k, pth, n) in dictionary.entries.items()},
-                          read_refs=dictionary.read_refs, read_saved_bytes=dictionary.read_saved, derived_vectors=dictionary.derived, ranges=dictionary.ranges)
+                          read_refs=dictionary.read_refs, read_saved_bytes=dictionary.read_saved, derived_vectors=dictionary.derived, ranges=dictionary.ranges,
+                          l7_notes=l7_notes)
     return text, report
 
 

@@ -45,7 +45,7 @@ for mode in modes:
     print('%-30s %10s %9s -> %10s %9s' % ('member', 'B', 'tok', 'B', 'tok'))
     for n, m in rep.members.items():
         print('%-30s %10d %9d -> %10d %9d   exact=%s' % (n[:30], m['delivered_bytes'], m['delivered_tokens'], m.get('rendered_bytes', 0), m['rendered_tokens'], rep.proof[n]['exact']))
-    print('   L7: derivable vectors', rep.derived_vectors, 'ranges', rep.ranges)
+    print('   L7: derivable vectors', rep.derived_vectors, 'ranges', rep.ranges, 'notes', rep.l7_notes)
     if rep.derived_vectors == 0:
         # diagnose: does the delivered critic snapshot decode, and what does its receipt hold?
         try:

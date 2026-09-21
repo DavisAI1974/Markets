@@ -36,12 +36,16 @@ if [ ! -x "$ROOT/venv/bin/python" ]; then "$PY313" -m venv "$ROOT/venv" || exit 
 "$ROOT/venv/bin/python" -m pip install -q torch==2.11.0 --index-url https://download.pytorch.org/whl/cpu >>"$ROOT/logs/pip.log" 2>&1 || { echo "torch install failed (see logs/pip.log)"; tail -5 "$ROOT/logs/pip.log"; exit 2; }
 # the lineage's numeric floor (its requirements.txt: numpy, scipy, scikit-learn) plus the test-only imports its
 # suite makes (pyyaml, databento, matplotlib) and the transfer/archive pins of the journal job
-"$ROOT/venv/bin/python" -m pip install -q "numpy>=1.26" "scipy>=1.11" "scikit-learn>=1.3" pyyaml databento matplotlib boto3==1.42.23 botocore==1.42.97 zstandard "databento-dbn==0.62.0" cryptography==46.0.3 "pytest>=7.4" >>"$ROOT/logs/pip.log" 2>&1 || { echo "pip install failed (see logs/pip.log)"; tail -5 "$ROOT/logs/pip.log"; exit 2; }
+"$ROOT/venv/bin/python" -m pip install -q "numpy>=1.26" "scipy>=1.11" "scikit-learn>=1.3" pyyaml "databento==0.81.0" matplotlib boto3==1.42.23 botocore==1.42.97 zstandard "databento-dbn==0.62.0" cryptography==46.0.3 "pytest>=7.4" >>"$ROOT/logs/pip.log" 2>&1 || { echo "pip install failed (see logs/pip.log)"; tail -5 "$ROOT/logs/pip.log"; exit 2; }
 "$ROOT/venv/bin/python" - <<'PY'
 import importlib, platform
 print('python', platform.python_version())
 for n in ('torch','numpy','scipy','boto3','zstandard','databento_dbn','cryptography','pytest'):
     m = importlib.import_module(n); print(' ', n, getattr(m, '__version__', '?'))
+# the stacked codec (granite_context_stacked._wire) reconstructs DBN wire bytes with EXACTLY databento-dbn 0.62.0; an
+# unpinned databento client drags the SDK up (0.86.0 wants 0.69.0) and the codec then refuses, so the pin is asserted
+from importlib.metadata import version
+assert version('databento-dbn') == '0.62.0', 'databento-dbn drifted to %s (codec pin 0.62.0)' % version('databento-dbn')
 import torch; print('  torch threads', torch.get_num_threads(), 'cpu count', __import__('os').cpu_count())
 PY
 

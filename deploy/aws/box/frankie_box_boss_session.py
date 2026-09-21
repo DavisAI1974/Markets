@@ -911,6 +911,7 @@ class Session:
                                  rendered_bytes=report.rendered_bytes, dictionary_entries=report.dictionary_entries, refs=report.refs,
                                  saved_bytes=report.saved_bytes, tensors=report.tensors, tensor_bytes=report.tensor_bytes, proof=report.proof,
                                  read_refs=report.read_refs, read_saved_bytes=report.read_saved_bytes, ledger=str(READING_LEDGER),
+                                 derived_vectors=report.derived_vectors, ranges=report.ranges, l7_notes=list(report.l7_notes),
                                  tokens=dict(delivered=sum(m.get('delivered_tokens') or 0 for m in report.members.values()),
                                              rendered=sum(m.get('rendered_tokens') or 0 for m in report.members.values())) if tokenizer else 'tokenizer absent')
         else:
