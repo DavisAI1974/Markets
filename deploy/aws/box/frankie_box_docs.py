@@ -47,6 +47,39 @@ def keep_if_lossy(inputs, output):
     return output, None
 
 
+REFUSAL_RE = re.compile(r"^\W{0,40}(I cannot|I can't|I can not|I am unable|I'm unable|I will not|I won't|I must decline|"
+                        r"I am not able|I'm not able|As an AI|Sorry, (but )?I)", re.I)
+MIN_NOTE_CHARS = 200
+
+
+def note_verdict(text, outcome):
+    """Why a reading note is unusable, or None. Checked before a note is accepted for the merge (chat 6, cycle 0: the
+    fourth part's note opened with a refusal and carried an output-incomplete mark; the merge then threw the group away).
+    error: the lane returned no result; empty: no or trivial text; refusal: the model declined instead of taking
+    notes; incomplete: finish_reason length (the output bound = the remaining context, so a length stop means a runaway)."""
+    if outcome.get('error'):
+        return 'error'
+    if text and REFUSAL_RE.match(text.strip()[:300]):
+        return 'refusal'                       # judged before length: a short refusal is a refusal, not an empty note
+    if not text or len(text.strip()) < MIN_NOTE_CHARS:
+        return 'empty'
+    if outcome.get('incomplete'):
+        return 'incomplete'
+    return None
+
+
+def split_range(data, start, end):
+    """Two halves of data[start:end] on a line boundary at or after the middle; (None, None) if it cannot be split."""
+    if end - start < 2:
+        return None, None
+    mid = (start + end) // 2
+    cut = data.find(b'\n', mid, end)
+    cut = (cut + 1) if cut != -1 and cut + 1 < end else mid
+    if cut <= start or cut >= end:
+        return None, None
+    return (start, cut), (cut, end)
+
+
 def _content(result):
     """The text of one job result (chat.completion on both lanes)."""
     try:

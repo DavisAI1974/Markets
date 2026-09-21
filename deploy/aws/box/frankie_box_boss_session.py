@@ -995,14 +995,7 @@ class Session:
 
         def read_part(item):
             i, s, e = item
-            text = header.format(cycle=self.cycle, req=self.request['request_id'], i=i + 1, n=len(chunks), s=s, e=e) + \
-                data[s:e].decode('utf-8', errors='replace') + '\n----- PART ENDS -----\n'
-            outcome = self.reader(f'read-{i:04d}', text)
-            body = outcome.get('text') or f'(no output: {outcome.get("error")})'
-            flag = ' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else ''
-            (notes_dir / f'note-{i:04d}.md').write_text(f'## Notes on part {i + 1}/{len(chunks)} (bytes {s}-{e}){flag}\n\n{body}\n', encoding='utf-8')
-            return dict(part=i, job_id=outcome.get('job_id') or outcome.get('runpod_job_id'), lane='serverless' if self.serverless else 'pod',
-                        incomplete=outcome.get('incomplete'), error=outcome.get('error'))
+            return self._read_part_guarded(i, s, e, len(chunks), data, header, notes_dir)
 
         outcomes = self._fan_out('reading', pending, read_part)
         merged = self._merge([p.read_text(encoding='utf-8') for p in sorted(notes_dir.glob('note-*.md'))], level=0)
@@ -1123,11 +1116,70 @@ class Session:
         except Exception as error:
             self.note(f'docs: not built ({type(error).__name__}: {error}); the session continues')
 
+    def _read_part_guarded(self, i, s, e, n, data, header, notes_dir):
+        """One part's notes, guarded (chat 6, cycle 0: part 4's note was a refusal with an output-incomplete mark and the
+        merge dropped it). A note that is empty, a refusal, an error or output-incomplete is retried ONCE; if the retry
+        is unusable too, the part is split in two halves on a line boundary and each half is read (no further split);
+        every attempt is kept beside the note (attempt-NNNN-*.md, never matched by the note-*.md glob)."""
+        docs = docs_module()
+        label = f'read-{i:04d}'
+        no_output = lambda o: '(no output: %s)' % o.get('error')
+
+        def ask(name, start, end, tag):
+            text = header.format(cycle=self.cycle, req=self.request['request_id'], i=i + 1, n=n, s=start, e=end) + \
+                (f'(This call reads {tag} of part {i + 1}; the other half is read in another call.)\n' if tag else '') + \
+                data[start:end].decode('utf-8', errors='replace') + '\n----- PART ENDS -----\n'
+            outcome = self.reader(name, text)
+            body = outcome.get('text') or ''
+            return outcome, body, docs.note_verdict(body, outcome)
+
+        attempts = []
+        outcome, body, verdict = ask(label, s, e, '')
+        attempts.append((label, outcome, body, verdict))
+        if verdict:
+            self.note(f'{label}: note unusable ({verdict}); retrying once')
+            outcome, body, verdict = ask(f'{label}-retry', s, e, '')
+            attempts.append((f'{label}-retry', outcome, body, verdict))
+        halves = None
+        if verdict:
+            first, second = docs.split_range(data, s, e)
+            if first:
+                self.note(f'{label}: retry unusable ({verdict}); reading the part in two halves')
+                halves = []
+                for tag, (hs, he) in (('a', first), ('b', second)):
+                    o, b, v = ask(f'{label}-{tag}', hs, he, f'half {tag}')
+                    attempts.append((f'{label}-{tag}', o, b, v))
+                    halves.append((tag, hs, he, o, b, v))
+        for name, o, b, v in attempts:
+            (notes_dir / f'attempt-{i:04d}-{name.split("-", 2)[-1] if name.count("-") > 1 else "first"}.md').write_text(
+                f'## {name} (bytes {s}-{e}) verdict {v or "usable"}\n\n{b or no_output(o)}\n', encoding='utf-8')
+        if halves:
+            parts = []
+            for tag, hs, he, o, b, v in halves:
+                mark = f' [UNUSABLE: {v}; kept as returned]' if v else ''
+                parts.append(f'### Half {tag} (bytes {hs}-{he}){mark}\n\n{b or no_output(o)}')
+            note = f'## Notes on part {i + 1}/{n} (bytes {s}-{e}) read in two halves\n\n' + '\n\n'.join(parts) + '\n'
+            final = halves[-1][3]
+            unusable = [v for *_, v in halves if v]
+        else:
+            flag = f' [UNUSABLE: {verdict}; kept as returned]' if verdict else (' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else '')
+            note = f'## Notes on part {i + 1}/{n} (bytes {s}-{e}){flag}\n\n{body or no_output(outcome)}\n'
+            final = outcome
+            unusable = [verdict] if verdict else []
+        (notes_dir / f'note-{i:04d}.md').write_text(note, encoding='utf-8')
+        if unusable:
+            self.note(f'{label}: still unusable after retry and split ({", ".join(unusable)}); kept as returned, marked')
+        return dict(part=i, job_id=final.get('job_id') or final.get('runpod_job_id'), lane='serverless' if self.serverless else 'pod',
+                    incomplete=final.get('incomplete'), error=final.get('error'), attempts=len(attempts),
+                    halves=bool(halves), unusable=unusable)
+
     def _merge_prompt(self, joined, label):
         return (f'You are Frankie, the BOSS, principal for cycle {self.cycle} (request {self.request["request_id"]}). Below are your own notes '
                 f'from reading parts of the delivered evidence ({label}). MERGE them into one set of notes that loses no observed fact, '
                 'number, hash or section id, removes duplicates, keeps the pin-layer material together, and keeps observed facts separate '
-                'from inference. Markdown; no length limit.\n\n----- NOTES BEGIN -----\n' + joined + '\n----- NOTES END -----\n')
+                'from inference. Every note group below is genuinely yours: never judge a group to be foreign, hallucinated or malformed, '
+                'never drop or summarise a group, and if a group looks odd keep it verbatim under its own heading. Never write about the '
+                'merge itself; write only the merged notes. Markdown; no length limit.\n\n----- NOTES BEGIN -----\n' + joined + '\n----- NOTES END -----\n')
 
     # ---- writing (the four files) ------------------------------------------------------------------------
     def writing(self):
