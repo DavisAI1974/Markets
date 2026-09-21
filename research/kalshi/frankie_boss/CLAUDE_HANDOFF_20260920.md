@@ -3560,3 +3560,19 @@ at every session start: 57 files match the delivered digests and are included (4
 edited on 08-24 after delivery; not a line-ending difference; include flippable in the manifest). Loaded for every
 cycle before the cycle entries, headed as the frozen learned structure to compare against layer by layer. Dry run
 over the real prompt and checkout: 9 layers, 59 named, 57 included, corpus text 458,932 bytes.
+
+### 17:1xZ 09-21: GREG: "We'll do the bigger build stuff when we're done with cycle 1" -- STANDING; nothing more before cycle 1
+
+Held for after cycle 1 (not done, on Greg's word): (1) the writing prompt naming exactly which lessons the harness
+files (the cycle-0 analysis claimed a classroom lesson and a run_analysis lesson that were never filed); (2) a
+tolerant parse for a ledger returned as unparseable JSON (knowledge_retrieval_receipts was kept as raw text);
+(3) the deep-dive items: partial movies (41/91 rows, 6 frames), thin candidate discoveries, the unfiled classroom
+claim, the critic's zero-hypotheses prompt caps and t_ctx 4096 hygiene; (4) the security follow-ups from the
+/ship review (OIDC for the AWS pair, presign expiry, content scan, the three copies of the recorder checks).
+WHAT CYCLE 1 CARRIES from this chat (all on this branch, checked out by the session at start): the notes fix
+(reader guard + merge guard + prompt), the docs bundle, Frankie's brain (cycle 0's entry published; the guarantee
+with git restore; the frozen learned structure unfrozen, 57 files). The launch chain from here is exactly cycle 0's
+with CYCLE=01: the recorder on Greg's go -> the host runner resumes (verify, native learning, readback, completion,
+readiness cycle-01) -> the cycle-01 request exported and staged on the box (restore script, one row) -> session
+start CYCLE=01 (its preflight refuses unless cycle 0's brain entry is present, by design) -> status probes as Greg
+says -> push -> record.
