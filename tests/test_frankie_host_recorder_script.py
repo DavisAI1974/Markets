@@ -49,6 +49,18 @@ def test_live_classroom_puts_the_live_block_in_the_attachment_only_when_json_equ
     assert m.live_classroom({'attachment': {}}, {}, lambda pkg: live, json_form) == 'unchanged'
 
 
+def test_classroom_normalizer_applies_to_every_attachment_handed_to_recover():
+    import json
+    m = load_recorder()
+    json_form = lambda v: json.loads(json.dumps(v))
+    live = {'binding': {'pairs': ('a', 'b')}, 'model_visible_hash': 'h' * 64}
+    normalize = m.classroom_normalizer({'pkg': 1}, lambda pkg: live, json_form)
+    from_file = {'dipole_classroom': json_form(live), 'other': 1}
+    out = normalize(from_file)
+    assert out['dipole_classroom'] is live and out['other'] == 1 and from_file['dipole_classroom'] is not live   # the input is not mutated
+    assert normalize({'dipole_classroom': {'x': 1}})['dipole_classroom'] == {'x': 1}
+
+
 def test_the_host_script_carries_the_recorder_source_verbatim():
     text = SCRIPT.read_text(encoding='utf-8')
     start = text.index("$recorderSource = @'\n") + len("$recorderSource = @'\n")

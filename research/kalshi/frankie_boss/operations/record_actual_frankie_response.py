@@ -48,7 +48,18 @@ def live_classroom(request,classroom_package,derive,json_form):
     return 'live'
 
 
-def record_checked(adapter,request,response,attestation,binding,input_hash,canonical):
+def classroom_normalizer(classroom_package,derive,json_form):
+    """A function attachment -> attachment with the Dipole classroom block in its live form (see live_classroom). The
+    adapter re-reads session-request.json inside verify() and recovers again (run 35633328702), so every recover the
+    recorder makes goes through this, not only the first."""
+    def normalize(attachment):
+        holder={'attachment':dict(attachment)}
+        live_classroom(holder,classroom_package,derive,json_form)
+        return holder['attachment']
+    return normalize
+
+
+def record_checked(adapter,request,response,attestation,binding,input_hash,canonical,normalize_attachment=lambda attachment:attachment):
     """Validate in a retained candidate directory before the immutable final write."""
     from research.kalshi.frankie_boss.frankie_principal_adapter import FrankiePrincipalAdapter
     final=adapter.directory/'session-response.json'
@@ -63,7 +74,7 @@ def record_checked(adapter,request,response,attestation,binding,input_hash,canon
         shutil.copyfile(adapter.directory/'receiver'/name,candidate.directory/'receiver'/name)
     # Validate the initial durable response without pretending that the mandatory
     # second classroom turn has already completed. The live host owns grading.
-    initial_recover=lambda request_id,attachment: FrankiePrincipalAdapter.recover(candidate,request_id,attachment)
+    initial_recover=lambda request_id,attachment: FrankiePrincipalAdapter.recover(candidate,request_id,normalize_attachment(attachment))
     envelope=initial_recover(request['request_id'],request['attachment'])
     view=SimpleNamespace(directory=candidate.directory,recover=initial_recover)
     feedback=FrankiePrincipalAdapter.verify(view,envelope,request_id=request['request_id'],input_hash=input_hash,
@@ -82,7 +93,7 @@ def record_checked(adapter,request,response,attestation,binding,input_hash,canon
     if final.exists():
         if final.read_bytes()!=canonical(expected):raise ValueError('retained final principal response differs')
     else:adapter.record_session_response(response,host_attestation=attestation)
-    return FrankiePrincipalAdapter.recover(adapter,request['request_id'],request['attachment'])
+    return FrankiePrincipalAdapter.recover(adapter,request['request_id'],normalize_attachment(request['attachment']))
 
 
 def main():
@@ -119,6 +130,7 @@ def main():
         from research.kalshi.frankie_boss.dipole_classroom_final_review import final_model_visible_classroom
         from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
         print('attachment dipole_classroom: '+live_classroom(request,classroom_package,final_model_visible_classroom,json_form))
+        normalize=classroom_normalizer(classroom_package,final_model_visible_classroom,json_form)
         adapter=make_principal_adapter(binding=binding,handoff_directory=export['directory'],
             expected_manifest_sha256=export['manifest_sha256'],boss_journal_path=plan['source_journal_path'],
             source_journal_checkpoint=plan['source_journal_checkpoint'],mapping_directory=str(Path(config['mapping']['path']).parent),
@@ -131,7 +143,7 @@ def main():
             classroom_package=classroom_package,adapter_class=IntegratedDipoleClassroomPrincipalAdapter)
         response=verified_json(args.response,args.response_sha256)
         attestation=verified_json(args.host_attestation,args.host_attestation_sha256)
-        result=record_checked(adapter,request,response,attestation,binding,plan['input_hash'],canonical)
+        result=record_checked(adapter,request,response,attestation,binding,plan['input_hash'],canonical,normalize_attachment=normalize)
         print(json.dumps(dict(status='actual_principal_response_recorded',request_id=request['request_id'],
             principal_receipt_sha256=result['principal_receipt']['receipt_sha256'])))
 
