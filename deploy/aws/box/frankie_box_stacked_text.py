@@ -93,14 +93,13 @@ WIDTH_MAX = 3
 
 
 def _width(values):
-    """The fixed digit width w (1..WIDTH_MAX) for a non-empty list of non-negative ints all below 10^w, when the digit
-    string is shorter than the spaced spelling; else 0."""
-    if not values or any(v < 0 for v in values):
+    """The fixed digit width w (1..WIDTH_MAX) for a list of at least two non-negative ints all below 10^w, else 0.
+    Measured with the pinned tokenizer: a spaced value costs about two tokens (`1 2 3 4 5 6 7 8` = 15), a digit
+    string one token per three digits, so the string wins for every width up to WIDTH_MAX."""
+    if len(values) < 2 or any(v < 0 for v in values):
         return 0
     w = max(len(str(v)) for v in values)
-    if w > WIDTH_MAX or len(values) * w + 2 >= sum(len(str(v)) + 1 for v in values):   # + 2 for the `#w` suffix
-        return 0
-    return w
+    return w if w <= WIDTH_MAX else 0
 
 
 def _ints(node, out):

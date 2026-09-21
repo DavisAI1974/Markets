@@ -45,7 +45,7 @@ def test_integer_recipes_carry_a_scale_only_when_every_value_is_a_multiple():
     assert ST.spell(['N', 'L', ['I', [3000, 6001, 9000]]]).strip() == 'N L I 3 3000 6001 9000'
     assert ST.spell(['N', 'L', ['R', [[1000000, 5], [0, 7]]]]).strip() == 'N L R*6 2 1 5 0 7'          # counts are never scaled
     assert ST.spell(['N', 'L', ['E', 2000, [[1000, 3]]]]).strip() == 'N L E*3 2 1 1 3'
-    assert ST.spell(['N', 'L', ['I', [0, 0]]]).strip() == 'N L I 2 0 0'                              # all zeros: no scale; a width would not be shorter
+    assert ST.spell(['N', 'L', ['I', [0, 0]]]).strip() == 'N L I#1 2 00'                            # all zeros: no scale, a width
     for node in (['D', 5412000000000, [0, 1000000, -2000000]], ['I', [3000, 6000, 9000]], ['R', [[1000000, 5], [0, 7]]], ['E', 2000, [[1000, 3]]], ['I', [10 ** 14, 0]]):
         assert ST.parse(ST.spell(['N', 'L', node])) == ['N', 'L', node]
 
@@ -54,10 +54,11 @@ def test_fixed_width_digit_strings_for_small_non_negative_values():
     assert ST.spell(['N', 'L', ['I', [0, 1, 2, 0, 1, 2, 7]]]).strip() == 'N L I#1 7 0120127'
     assert ST.spell(['N', 'L', ['D', 1000, [1, 1, 12, 0, 99]]]).strip() == 'N L D#2 1000 5 0101120099'
     assert ST.spell(['N', 'L', ['I', [538, 100, 12, 7]]]).strip() == 'N L I#3 4 538100012007'
-    assert ST.spell(['N', 'L', ['I', [538, 0, 12]]]).strip() == 'N L I 3 538 0 12'                # nine digits either way: spaced
+    assert ST.spell(['N', 'L', ['I', [538, 0, 12]]]).strip() == 'N L I#3 3 538000012'
+    assert ST.spell(['N', 'L', ['I', [1538, 0, 12]]]).strip() == 'N L I 3 1538 0 12'              # four digits: no width, no scale
     assert ST.spell(['N', 'L', ['I', [1, -1, 2]]]).strip() == 'N L I 3 1 -1 2'                  # a negative value: spaced
     assert ST.spell(['N', 'L', ['I', [1000, 2000]]]).strip() == 'N L I*3 2 1 2'                 # four digits: the scale, not a width
-    assert ST.spell(['N', 'L', ['I', [5]]]).strip() == 'N L I 1 5'                              # not shorter than the spaced form
+    assert ST.spell(['N', 'L', ['I', [5]]]).strip() == 'N L I 1 5'                              # one value: the suffix would cost more
     for node in (['I', [0, 1, 2, 0, 1, 2, 7]], ['D', 1000, [1, 1, 12, 0, 99]], ['I', [538, 100, 12, 7]], ['D', -5, [0, 0, 0, 0]]):
         assert ST.parse(ST.spell(['N', 'L', node])) == ['N', 'L', node]
     for bad in ('N L I#1 3 12', 'N L I#4 1 0001', 'N L D#1 0 2 1x', 'N L R#1 1 1 1'):
