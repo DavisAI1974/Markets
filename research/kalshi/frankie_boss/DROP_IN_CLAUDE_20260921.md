@@ -5,30 +5,29 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
-## READ FIRST (00:20Z 09-21 handoff): the whole-cycle round is IN FLIGHT, blocked only on the Pod's GPU
+## READ FIRST (02:55Z 09-21 handoff): the retained Pod is now g7y3g2w1kor4l3; the cycle-0 pipeline is DISPATCHED
 
-State (every receipt in `CLAUDE_HANDOFF_20260920.md` 22:55Z to 00:20Z): the host runner ended on its own at
-~22:31Z (never killed). Tasks A and B are DONE and committed (pins `knowledge/CYCLE_CALCULATION_PINS.json`,
-rendered into every request instruction, tested; exhaustion-objective audit + restorations, ledger entries).
-The round ran in the workflows' order on branch `claude/cycle-0-full-rerun-lr6e14`: host advanced to
-0bb96bfa; cycle 00 superseded whole (35545474954); declaration `supersede_cycle=true` (35545569240);
-pipeline dispatch 35544336615 minted the cycle-0 request, IDENTICAL sha a7b72cf9 (the pin changes no
-bytes of it), critic POST ended `same_critic_attempt_pending_or_ambiguous` because Pod 8vqdacl5t61rjx is
-EXITED (the observer's lifecycle stops it after each critic call, so EVERY critic call needs the observer
-round; never skip it, Greg); readiness superseded (35545639823); observer run 35545909225 admitted with the
-initial-start witness 1789916729.1158657 and observing (`observe_existing_start`), waiting for boot frames.
-BLOCKER: the Pod's host has no free L40S; start refused 15 times (35546214604). A 5.5 h start retry loop is
-running (35547296498, `frankie_pod_control.yml` start, retry 19800 s). The replacement-Pod path
-(`frankie_pod_prepare.yml` + identity re-mint) is GREG'S CALL, not taken.
+State (every receipt in `CLAUDE_HANDOFF_20260920.md` 22:55Z to 02:47Z): Tasks A and B DONE. Cycle 00 superseded whole,
+declared, readiness superseded. Pod 8vqdacl5t61rjx's host never freed an L40S (start refused for two hours), so on
+Greg's word ("multiple parallel attempts ... in different regions ... when one hit you kill the other 2") three
+`frankie_pod_prepare.yml` attempts ran at once (US-TX-4 / US-IL-1 / US-MO-1; concurrency group keyed by region,
+20537edb); US-MO-1 won: **Pod g7y3g2w1kor4l3**, `service_ready` 02:33:47Z, model verified, RUNNING. Losers
+r2570o3g566187 and z71ka5v0zzcmou stop-retained then TERMINATED. Re-mint `feat` 35f857f0 (POD_ID g7y3g2w1kor4l3,
+INFO_SHA256 bdad2896..., generation migration-g7y3g2w1kor4l3-a004983e93b9). Observer 35555116474 adopted it
+(`observe_migrated_start` + restart 35555118454), readiness `retained-granite-ready-35555116474` verified and DELIVERED
+(35555514611, trigger written for request a7b72cf9). Host at 35f857f0, code-bound state superseded (35555381278).
+ONE pipeline dispatch at 02:54Z on `codex/frankie-launch-two-cycle-20260919` (day 20211003, the standing go, cycles 2).
+Old Pods 8vqdacl5t61rjx / ycf4v6lmave6xw stay EXITED, untouched; their observer and start-retry runs were cancelled.
 
-Next, in order, no code changes: the start is accepted -> the observer publishes
-`retained-granite-ready-35545909225` -> `frankie_deliver_readiness.yml` (ready_run_id 35545909225,
-request_id `...-cycle-00`, request_sha256 a7b72cf9...) -> ONE `frankie_journal_stack.yml` dispatch on
-`codex/frankie-launch-two-cycle-20260919` (day 20211003, go 0eb2c2ac..., cycles 2, keep_compute true,
-checks_only false) -> critic -> export -> HOLD -> `frankie_host_export_principal_request.yml` -> Root's task
--> root probe (`frankie_host_cycle_status.yml` now prints `root/*` branches) -> record response -> cycle 1,
-whose NEW request sha goes to the observer through `frankie_host_stage_critic_request.yml` (landed on
-Greg's word, registered on the trunk) and then the FULL observer round. Read-only probes only while waiting.
+Greg's directives tonight, standing: NO runtime stops on the startup process (the horizon-stop option in
+`pod_prepare.py` goes on the after-run list for removal); read the Pod literature (`~/.claude/skills/runpod-usage/`):
+the model on a Pod's volume disk is pinned to its host; a network volume in the same DC would let it move hosts.
+
+Next, in order, no code changes: the pipeline mints the request (same sha a7b72cf9) -> critic on g7y3g2w1kor4l3 ->
+export -> HOLD (`actual_frankie_session_pending`) -> `frankie_host_export_principal_request.yml` -> Root's task ->
+root probe (`frankie_host_cycle_status.yml`) -> `frankie_host_record_principal_response.yml` -> ONE pipeline
+dispatch -> cycle 1, whose NEW request sha goes through `frankie_host_stage_critic_request.yml` and then the FULL
+observer round (never skipped). Read-only probes only while waiting.
 
 ## Superseded 22:20Z handoff (kept for the record): a runner was ALIVE on the host; the full rerun round started after it stopped
 
