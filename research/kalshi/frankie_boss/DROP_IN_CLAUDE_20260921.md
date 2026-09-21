@@ -43,6 +43,14 @@ STATE OF THE RUN (session unit frankie-cycle-00 on box i-035994afa8bdf66a5, rest
   `DOCS_ONLY=1 CYCLE=00` on frankie_box_push_response.sh (box run) so cycle 1 reads cycle 0's findings.
   Cycle 0's docs: root/cycle-00-response docs-cycle-00/ (acb0cd73); handoff 16:4xZ-17:0xZ has the loss chain.
 
+- CHAT 6 (17:5xZ): THE HOST RUNNER STOPPED. Cycle 0's response was recorded on the host (run 35633661236, receipt
+  sha256 738924496462553919276996dedb39553fc50cacef05217e67a4e51112797aa3), the runner (pid 3828) consumed it and
+  stopped with ValueError: the response has NO `dipole_teachback` / observation review / relationship scan / novel
+  findings, and the classroom adapter's grade demands them before the correction turn (handoff 17:5xZ, every id).
+  The runner process is gone; nothing else was touched. GREG'S CALL: build the classroom exchange into the box
+  session (the observation review alone is ~62,000 objects at 3,262 rows, past one turn's 38,633 output tokens) or
+  waive the classroom for cycle 0 on the host. Cycle 1 cannot launch until cycle 0 completes on the host.
+
 CHAT 5 LESSONS, each measured: the Claude Code container has NO AWS identity (proxy placeholders; STS
 InvalidClientTokenId) until a pair is installed at the D48 locations; the agent proxy refuses the GitHub Actions
 secrets API (403) and api.github.com for the runpodctl installer; the repo is PUBLIC, so a secret must never travel

@@ -3644,3 +3644,47 @@ recorder hit at run 35632927377; the runner is a process with 35f857f0's code, s
 The recorder's shipped-source route cannot fix the runner: that needs the host checkout advanced to a commit
 carrying the json_form fix (this branch), then the code-bound-state supersede and a pipeline re-dispatch
 (host actions with the documented consequence; Greg's go).
+
+### 17:5xZ 09-21: CONFIRMED. The runner stopped because cycle 0's response carries NO Dipole classroom teach-back
+
+Read-only probes: cycle report run 35634123314 (report file
+`days/20211003/reports/cycle-00-report-20260921T174655Z.txt`, 448,003 B, sha256
+2e22f7ccfb5ed8b287e988f5d0bd22734b6a63047ee9326bd475479952e1c1b2) and host diag run 35634126402. What they measure:
+- The runner's last status line: `stopped`, ValueError, frames base_events.run_until_complete ->
+  run_actual_sunday_classroom.py:261 run -> sunday_execution.py:336 run_remaining -> :318 run_cycle ->
+  feedback_cycle.py:489 run (`envelope = await asyncio.to_thread(principal.execute, request_id, attachment)`; the
+  intent was re-saved after the supersede, so the runner took the execute branch); both probes cut the frames after
+  that line and the status carries no message. The host checkout is 35f857f0, tree clean (git status empty,
+  diff-stat empty); EC2 r7i.4xlarge running, SSM Online.
+- Classroom status: correction/request ABSENT, correction/response ABSENT, "correction turn: not requested yet";
+  the package (source 11,951,679 B, teacher key 21,195,274 B, pre-message 21,215,543 B, binding: mode TEACH,
+  coverage 19, pairs 171, through_cursor 3261) is in place. The controller result is `incomplete` (critic
+  CONSISTENT, 124 completion tokens on 92,439 prompt tokens); lessons recorded: 0.
+- Cycle 0's response (root/cycle-00-response `runs/20211003/root/response.json`, 147,149 B, sha256
+  b65123b3113846bdba9c232da0542c471b61893061728bbceb0fc604993f0e21): top-level keys feedback, lessons,
+  model_identity_as_reported_by_session, request_sha256, sections, session_id. `dipole_teachback`,
+  `dipole_observation_review`, `dipole_relationship_scan`, `dipole_novel_findings`: ALL ABSENT. Frankie's analysis
+  section 5 says the classroom output "would be written to the lessons ledger"; nothing structured was filed.
+The chain (code at 35f857f0, the process that ran): execute() finds session-request.json, calls recover() ->
+frankie_dipole_classroom_adapter.recover -> _recover_with_classroom(dispatch_followup=False)
+(dipole_classroom_final_review.py:437) -> grade_initial_response (dipole_classroom_session.py:214) ->
+validate_teachback(response.get('dipole_teachback')) (dipole_classroom.py:447) -> ValueError
+`structured Dipole classroom teach-back required`. The correction request is only written after that grade, which
+is why it is absent. The list-vs-tuple hypothesis of 17:4xZ is withdrawn: the runner never reached the classroom
+comparison's failure mode, it failed on the missing teach-back. The recorder could not catch this by design: it
+recovers with FrankiePrincipalAdapter.recover ("the live host owns grading", record_actual_frankie_response.py:76).
+What the classroom contract demands of the response (the adapter's own instruction, dipole_classroom_final_review
+._request): dipole_teachback (schema DIPOLE_CLASSROOM_TEACHBACK_V1, 19 components x 11 fixed fields,
+teacher_message_hash b0fbbf5dcaa11014ed390f0890e52f5be379f7c72494b97a312b782b04319011, relationship_pairs_considered
+171, future_outcome_claimed false), dipole_observation_review (19 ordered objects, each accounting for EVERY retained
+cursor of the cycle window as {cursor,state,value,explanation}; the teacher ledger is one observation per context
+row per dimension, so at the packet's 3,262 rows that is about 62,000 objects), dipole_relationship_scan (171
+canonical pairs x 5 fields), dipole_novel_findings (a list), then a SECOND turn in the same session answering the
+host's correction request. The observation review alone does not fit the 38,633 output tokens the BOSS has on this
+packet in one turn; a build must produce it in parts or under a changed contract.
+Nothing changed on the host, the box, the Pod or the endpoint; no runner started. GREG'S CALL, unchanged: (a) build
+the classroom exchange into the box session (bigger build; Greg's "Rerun classroom also" stands), or (b) a host-side
+waiver of the classroom for cycle 0 (against that word). Either restart needs the host checkout advanced (imports at
+module top), the code-bound-state supersede and a pipeline re-dispatch, each receipted. Cycle 1 is not ready to
+launch until cycle 0 completes on the host. Skills: debugging-and-error-recovery (reproduce/localize/reduce done;
+no fix without Greg's call), git-workflow.
