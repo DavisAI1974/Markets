@@ -2301,3 +2301,16 @@ runs 35560750539 / 35560752032 (04:23Z):
   no AWS helpers, and the derivations are the model's own work in-session. Whether Frankie should get a compute
   harness (a box with workers, code he can run against the rows) is a design call for Greg; today the request
   instructs him to derive and gives him no engine.
+
+### 04:33Z: the three EC2 boxes as EC2 reports them (read-only diag with the new region input, 53c77d09)
+
+| box | instance | region | type | vCPU | state | note |
+|---|---|---|---|---|---|---|
+| native host (BOSS runner) | i-0e90ee6110ef609aa | us-east-2 | r7i.4xlarge | 16 | running, SSM Online | Windows; holds for Root |
+| ingest runner `frankie-ingest32-20260917` | i-035994afa8bdf66a5 | us-east-1 | r7i.8xlarge | 32 | stopped | Linux; the journal job's self-hosted runner, launched 2026-09-17T04:50Z |
+| coach box | i-08cee7171c0a76a04 | us-east-2 | r6i.2xlarge | 8 | stopped | Linux; not in SSM; Root is not on it |
+
+Greg's "16 + 32 = 48" is exactly right: the native host is 16 and the ingest runner is 32. The 2026-09-17 handoff line
+"Native host RESIZED i-0e90ee6110ef609aa r7i.4xlarge -> r7i.8xlarge" therefore misattributes the 8xlarge to the native
+host; the 8xlarge is the ingest runner. CLAUDE.md's "Native host RESIZED to r7i.8xlarge" line carries the same
+misattribution. Correction of that line is Greg's call; recorded here, not edited.
