@@ -15,6 +15,8 @@
   (DIGEST_V3: the derivation digest as dense exact tables, parse-back proven; tests `tests/test_frankie_box_digest_render.py`)
   + `frankie_box_reading_render_measure.sh` (measures both on the box with the pinned tokenizer) + `frankie_box_venv_pins.sh`
   (holds the box venv to databento-dbn 0.62.0 / client 0.81.0, receipted) + the read-only corpus probes `frankie_box_corpus_*.sh`.
+- `deploy/runpod/mcp_connect.sh` - connects a session to the hosted RunPod MCP (Bearer, user scope) + runpodctl from RUNPOD_API_KEY in
+  the environment; prints no key (Greg's permission 2026-09-21).
 - `deploy/aws/box/frankie_box_serverless_config.sh` + `research/kalshi/frankie_boss/operations/serverless_reading_endpoint.py` +
   `.github/workflows/frankie_serverless_reading.yml` - the serverless READING lane (RunPod serverless vLLM workers serving the pinned Granite
   checkpoint; help | inspect | create | verify per the RunPod skills). The session fans parts and merge groups out when /opt/frankie-box/serverless.json exists.

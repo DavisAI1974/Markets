@@ -45,6 +45,10 @@ not a layer.
 `RUNPOD_API_KEY` in the Claude Code environment configuration; the new session runs `claude mcp add --transport http
 runpod -s user https://mcp.getrunpod.io/ --header "Authorization: Bearer $RUNPOD_API_KEY"`, then verifies with
 `list-endpoints` and records `serverInfo.version`. Handoff 12:4xZ.
+12:4xZ GREG: "You have my permission to do that" -> the key route is AUTHORIZED. The key was NOT in chat 4's environment
+(checked, absent), so the new session's FIRST command after the checkout is `bash deploy/runpod/mcp_connect.sh` (registers
+the MCP with the Bearer header, proves the key on the handshake, installs runpodctl; prints no key). If it says the key is
+absent, Greg has not yet added RUNPOD_API_KEY to the Claude Code environment configuration.
 STILL GREG'S (unchanged): `frankie_box_session.sh ACTION=restart_session
 REASON=lossless-render` to apply everything; the GitHub PAT into SSM `/markets/frankie/github-token`
 (`aws ssm put-parameter --region us-east-2 --name /markets/frankie/github-token --type SecureString --value '<PAT>'`);

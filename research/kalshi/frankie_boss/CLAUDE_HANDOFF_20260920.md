@@ -2964,3 +2964,11 @@ Greg adds `RUNPOD_API_KEY` to the Claude Code ENVIRONMENT configuration (the sam
 CLI. Until then the endpoint route is the trunk-registered `frankie_serverless_reading.yml` with a `RUNPOD_API_KEY`
 repository secret. The box's own copy of the key stays the SSM SecureString `/markets/frankie/runpod-serverless`.
 
+### 12:4xZ 09-21: Greg authorized the key route ("You have my permission to do that"); the connector is committed
+
+`deploy/runpod/mcp_connect.sh`: reads RUNPOD_API_KEY from the environment only (refuses when absent or a container
+placeholder), registers the hosted MCP in user scope with the Bearer header, proves the key on the MCP initialize
+handshake (prints serverInfo only), installs runpodctl and checks `runpodctl user`; never prints the key. Run in chat 4:
+"RUNPOD_API_KEY absent from this session's environment" -- the variable is not set here, so the connection happens in the
+next session once Greg adds it to the Claude Code environment configuration. KALSHI_TRADING.md indexes the script.
+
