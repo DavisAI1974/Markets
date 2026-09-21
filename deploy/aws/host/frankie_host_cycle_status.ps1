@@ -28,7 +28,21 @@ if (Test-Path $log) {
 Write-Output "### runner process"
 Get-CimInstance Win32_Process -Filter "Name = 'python.exe'" -ErrorAction SilentlyContinue |
     Where-Object { $_.CommandLine -like '*run_actual_sunday*' } |
-    ForEach-Object { '  pid=' + $_.ProcessId + ' since=' + $_.CreationDate.ToUniversalTime().ToString('s') + 'Z' }
+    ForEach-Object { '  pid=' + $_.ProcessId + ' since=' + $_.CreationDate.ToUniversalTime().ToString('s') + 'Z  threads=' + $_.ThreadCount + '  cpu_s=' + [Math]::Round(($_.KernelModeTime + $_.UserModeTime) / 1e7, 1) + '  ws_mb=' + [Math]::Round($_.WorkingSetSize / 1MB) }
+# Greg, 2026-09-21: "check cpu usage to make sure there isn't only 1 running". Whole-host load, logical CPUs and
+# every python process with its cumulative CPU seconds, so idle (HOLD) and busy (native step, 8 threads) read apart.
+Write-Output "### host cpu (read-only)"
+try {
+    $cpuCount = (Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors
+    $load = (Get-CimInstance Win32_Processor | Measure-Object -Property LoadPercentage -Average).Average
+    Write-Output ('  logical_cpus=' + $cpuCount + '  load_percent=' + [Math]::Round($load, 1))
+    Get-CimInstance Win32_Process -Filter "Name = 'python.exe'" -ErrorAction SilentlyContinue |
+        Sort-Object CreationDate | ForEach-Object {
+            $cmd = if ($_.CommandLine) { $_.CommandLine } else { '' }
+            $tail = if ($cmd.Length -gt 90) { $cmd.Substring($cmd.Length - 90) } else { $cmd }
+            '  python pid=' + $_.ProcessId + ' threads=' + $_.ThreadCount + ' cpu_s=' + [Math]::Round(($_.KernelModeTime + $_.UserModeTime) / 1e7, 1) + ' ws_mb=' + [Math]::Round($_.WorkingSetSize / 1MB) + '  ...' + $tail
+        }
+} catch { Write-Output ('  cpu read failed: ' + $_.Exception.GetType().Name) }
 $cycle = Join-Path $cfg.run_directory ('execution\cycle-' + $CycleIndex)
 Write-Output ("### cycle-" + $CycleIndex + " files (name  mtime  bytes)")
 if (Test-Path $cycle) {
