@@ -59,8 +59,10 @@ def classroom_normalizer(classroom_package,derive,json_form):
     return normalize
 
 
-def record_checked(adapter,request,response,attestation,binding,input_hash,canonical,normalize_attachment=lambda attachment:attachment):
-    """Validate in a retained candidate directory before the immutable final write."""
+def record_checked(adapter,request,response,attestation,binding,input_hash,canonical,normalize_attachment=lambda attachment:attachment,classroom_grade=None):
+    """Validate in a retained candidate directory before the immutable final write. classroom_grade, when given, is the
+    runner's own Dipole classroom grade of the response (turn 1): a response the runner would stop on (run 35633661236's
+    response carried no dipole_teachback; the runner raised inside validate_teachback) is refused HERE, nothing written."""
     from research.kalshi.frankie_boss.frankie_principal_adapter import FrankiePrincipalAdapter
     final=adapter.directory/'session-response.json'
     expected=dict(response=response,host_attestation=attestation)
@@ -90,10 +92,55 @@ def record_checked(adapter,request,response,attestation,binding,input_hash,canon
     validator=object.__new__(NativeForecastLearner)
     validator.config=SimpleNamespace(session_weights=tuple((s.session_id,1.0) for _,s in binding['sessions']))
     validator._validate(binding['sessions'],feedback,binding['as_of'],binding['learning_cutoff_ns'])
+    pregrade=None if classroom_grade is None else classroom_grade(response)
     if final.exists():
         if final.read_bytes()!=canonical(expected):raise ValueError('retained final principal response differs')
     else:adapter.record_session_response(response,host_attestation=attestation)
-    return FrankiePrincipalAdapter.recover(adapter,request['request_id'],normalize_attachment(request['attachment']))
+    result=FrankiePrincipalAdapter.recover(adapter,request['request_id'],normalize_attachment(request['attachment']))
+    if pregrade is not None:result=dict(result,classroom_pregrade=pregrade)
+    return result
+
+
+def classroom_pregrade(classroom_package):
+    """The host runner's classroom grade of an initial response (grade_initial_response + the relationship cross-check +
+    the novel-findings validation, exactly what _recover_with_classroom runs), reduced to what the record receipt carries."""
+    from research.kalshi.frankie_boss.dipole_classroom_session import grade_initial_response
+    from research.kalshi.frankie_boss.dipole_classroom_final_review import apply_relationship_view_crosscheck,validate_novel_findings
+    def grade(response):
+        teachback,graded=grade_initial_response(classroom_package,response)
+        graded=apply_relationship_view_crosscheck(graded,response)
+        findings=validate_novel_findings(response.get('dipole_novel_findings'),classroom_package['pre_message'])
+        return dict(mastered=graded['mastered'],correction_ids=list(graded['correction_ids']),novel_findings=len(findings),
+            observation_claims_reviewed=graded['exhaustive_audit']['observation_claims_reviewed'],
+            relationship_pairs_reviewed=graded['exhaustive_audit']['relationship_pairs_reviewed'],post_grade_hash=graded['post_grade_hash'])
+    return grade
+
+
+def record_correction(adapter,principal,response,attestation,request_id):
+    """Turn 2: record the same session's answer to the Dipole classroom correction request the runner retained. The
+    runner (PrincipalPending, 'same Frankie session must consume Dipole classroom correction') waits for
+    classroom-correction-response.json; this validates the answer exactly as _recover_with_classroom will (host attestation
+    bound to the correction request, validate_correction_response against the retained post-grade,
+    validate_correction_resolutions) and writes it through the adapter's own immutable recorder."""
+    from research.kalshi.frankie_boss.dipole_classroom_session import CORRECTION_REQUEST_SCHEMA,validate_correction_response
+    from research.kalshi.frankie_boss.dipole_classroom_resolution import validate_correction_resolutions
+    principal=Path(principal)
+    request_path=principal/'classroom-correction-request.json';initial_path=principal/'session-response.json'
+    if not initial_path.exists():raise ValueError('the initial principal response is not recorded; the correction turn cannot precede it')
+    if not request_path.exists():raise ValueError('no Dipole classroom correction request is retained; the runner writes it after grading the initial response')
+    correction=json.loads(request_path.read_bytes())
+    if correction.get('schema')!=CORRECTION_REQUEST_SCHEMA:raise ValueError('retained correction request schema differs')
+    initial=json.loads(initial_path.read_bytes())['response']
+    grade_path=Path(adapter.audit_directory)/'dipole-classroom-post-grade.json'
+    if not grade_path.exists():raise ValueError('no retained Dipole post-grade in the audit directory; the runner grades before it asks for a correction')
+    grade=json.loads(grade_path.read_bytes())
+    if grade.get('post_grade_hash')!=correction.get('post_grade_hash'):raise ValueError('retained post-grade differs from the correction request')
+    adapter._attest_host(response,attestation,correction)
+    base=validate_correction_response(correction=correction,response=response,initial_response=initial,grade=grade)
+    ack=validate_correction_resolutions(response.get('dipole_acknowledgement'),grade,base)
+    adapter._record_correction_response(correction,dict(response=response,host_attestation=attestation))
+    return dict(request_id=request_id,correction_request_sha256=correction['request_sha256'],post_grade_hash=correction['post_grade_hash'],
+        resolutions=len(ack['correction_resolutions']),remaining_disagreements=list(ack['remaining_disagreements']),mastered=grade.get('mastered'))
 
 
 def main():
@@ -101,6 +148,7 @@ def main():
     for name in ('configuration','configuration-sha256','response','response-sha256','host-attestation','host-attestation-sha256'):
         parser.add_argument('--'+name,required=True)
     parser.add_argument('--cycle-index',type=int,required=True)
+    parser.add_argument('--turn',choices=('initial','correction'),default='initial')
     args=parser.parse_args()
     config=verified_json(args.configuration,args.configuration_sha256);h=config['host_runtime']
     sys.path.insert(0,h['repository'])
@@ -143,9 +191,14 @@ def main():
             classroom_package=classroom_package,adapter_class=IntegratedDipoleClassroomPrincipalAdapter)
         response=verified_json(args.response,args.response_sha256)
         attestation=verified_json(args.host_attestation,args.host_attestation_sha256)
-        result=record_checked(adapter,request,response,attestation,binding,plan['input_hash'],canonical,normalize_attachment=normalize)
+        if args.turn=='correction':
+            result=record_correction(adapter,principal,response,attestation,request['request_id'])
+            print(json.dumps(dict(status='actual_classroom_correction_recorded',**result)))
+            return
+        result=record_checked(adapter,request,response,attestation,binding,plan['input_hash'],canonical,normalize_attachment=normalize,
+            classroom_grade=classroom_pregrade(classroom_package))
         print(json.dumps(dict(status='actual_principal_response_recorded',request_id=request['request_id'],
-            principal_receipt_sha256=result['principal_receipt']['receipt_sha256'])))
+            principal_receipt_sha256=result['principal_receipt']['receipt_sha256'],classroom_pregrade=result.get('classroom_pregrade'))))
 
 
 if __name__=='__main__':

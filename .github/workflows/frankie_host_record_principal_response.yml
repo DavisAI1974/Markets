@@ -25,6 +25,12 @@ on:
         description: 'Zero-padded cycle index'
         required: false
         default: '00'
+      turn:
+        description: 'initial = the principal response (turn 1); correction = the same session answer to the retained classroom correction request (turn 2)'
+        required: false
+        default: 'initial'
+        type: choice
+        options: ['initial', 'correction']
       instance:
         description: 'Native host instance id'
         required: false
@@ -75,8 +81,10 @@ jobs:
           RESPONSE_PATH: ${{ inputs.response_path }}
           ATTESTATION_PATH: ${{ inputs.attestation_path }}
           RECORD_PATH: ${{ inputs.record_path }}
+          TURN: ${{ inputs.turn }}
         run: |
           set -euo pipefail
+          [[ "$TURN" =~ ^(initial|correction)$ ]] || { echo "turn must be initial or correction"; exit 1; }
           git fetch --depth 1 origin "$SOURCE_REF"
           mkdir -p "$RUNNER_TEMP/delivery"
           git show "FETCH_HEAD:$RESPONSE_PATH" > "$RUNNER_TEMP/delivery/response.json"
@@ -89,13 +97,23 @@ jobs:
           files = {n: (d / f).read_bytes() for n, f in (('response', 'response.json'), ('attestation', 'host-attestation.json'), ('record', 'host-session-record.json'))}
           parsed = {n: json.loads(b) for n, b in files.items()}
           r, a, h = parsed['response'], parsed['attestation'], parsed['record']
-          for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session', 'sections', 'feedback', 'lessons'):
-              if k not in r: raise SystemExit(f'response lacks {k}')
-          if len(r['sections']) != 18: raise SystemExit(f"response cites {len(r['sections'])} sections, not 18")
-          if not isinstance(r['lessons'], list) or not r['lessons']: raise SystemExit('response carries no lessons')
+          turn = os.environ['TURN']
+          if turn == 'initial':
+              for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session', 'sections', 'feedback', 'lessons',
+                        'dipole_teachback', 'dipole_observation_review', 'dipole_relationship_scan', 'dipole_novel_findings'):
+                  if k not in r: raise SystemExit(f'response lacks {k}')
+              if len(r['sections']) != 18: raise SystemExit(f"response cites {len(r['sections'])} sections, not 18")
+              if not isinstance(r['lessons'], list) or not r['lessons']: raise SystemExit('response carries no lessons')
+              if len(r['dipole_relationship_scan']) != 171 or len(r['dipole_observation_review']) != 19: raise SystemExit('classroom ledgers are not 19 components / 171 pairs')
+          else:
+              for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session', 'dipole_acknowledgement'):
+                  if k not in r: raise SystemExit(f'correction response lacks {k}')
+              ack = r['dipole_acknowledgement']
+              if ack.get('acknowledged') is not True or not isinstance(ack.get('correction_resolutions'), list): raise SystemExit('correction response carries no acknowledgement with correction_resolutions')
+              if a.get('request_sha256') == r['request_sha256']: raise SystemExit('a correction attestation binds the adapter digest of the whole correction request, not its inner request_sha256')
           if a.get('schema') != 'FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1' or a.get('mechanism') != 'AGENT_SESSION':
               raise SystemExit('attestation schema/mechanism are not the host agent session attestation')
-          for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session'):
+          for k in (('session_id', 'model_identity_as_reported_by_session') if turn == 'correction' else ('request_sha256', 'session_id', 'model_identity_as_reported_by_session')):
               if a.get(k) != r.get(k): raise SystemExit(f'attestation {k} differs from the response')
           rec = a.get('host_record') or {}
           if set(rec) != {'path', 'bytes', 'sha256'}: raise SystemExit('attestation host_record must be {path, bytes, sha256}')
@@ -142,6 +160,7 @@ jobs:
           TOOLS_ROOT: ${{ inputs.tools_root }}
           HOST_PYTHON: ${{ inputs.python }}
           CYCLE_INDEX: ${{ inputs.cycle_index }}
+          TURN: ${{ inputs.turn }}
           SOURCE_REF: ${{ inputs.source_ref }}
           RESPONSE_SHA256: ${{ steps.files.outputs.response_sha256 }}
           RESPONSE_BYTES: ${{ steps.files.outputs.response_bytes }}
@@ -158,6 +177,7 @@ jobs:
             --set "ToolsRoot=$TOOLS_ROOT" \
             --set "Python=$HOST_PYTHON" \
             --set "CycleIndex=$CYCLE_INDEX" \
+            --set "Turn=$TURN" \
             --set "SourceRef=$SOURCE_REF" \
             --set "ResponseUrl=$(cat "$RUNNER_TEMP/delivery/response.json.url")" \
             --set "ResponseSha256=$RESPONSE_SHA256" \
@@ -168,4 +188,4 @@ jobs:
             --set "RecordUrl=$(cat "$RUNNER_TEMP/delivery/host-session-record.json.url")" \
             --set "RecordSha256=$RECORD_SHA256" \
             --set "RecordBytes=$RECORD_BYTES" \
-            --timeout 900 --tail 0 --comment "record the cycle $CYCLE_INDEX principal response for day $DAY"
+            --timeout 900 --tail 0 --comment "record the cycle $CYCLE_INDEX principal $TURN turn for day $DAY"

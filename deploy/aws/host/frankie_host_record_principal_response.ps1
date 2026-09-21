@@ -12,7 +12,7 @@
 # bytes refuses. $Day, $RunRoot, $ToolsRoot, $Python, $CycleIndex, the three Url/Sha256/Bytes triples
 # and $SourceRef arrive from ssm_run_ps1.py --set; no path literal here.
 $ErrorActionPreference = 'Stop'
-foreach ($required in 'Day', 'RunRoot', 'ToolsRoot', 'Python', 'CycleIndex', 'SourceRef',
+foreach ($required in 'Day', 'RunRoot', 'ToolsRoot', 'Python', 'CycleIndex', 'SourceRef', 'Turn',
         'ResponseUrl', 'ResponseSha256', 'ResponseBytes',
         'AttestationUrl', 'AttestationSha256', 'AttestationBytes',
         'RecordUrl', 'RecordSha256', 'RecordBytes') {
@@ -20,6 +20,22 @@ foreach ($required in 'Day', 'RunRoot', 'ToolsRoot', 'Python', 'CycleIndex', 'So
     if (-not $value -or $value -like 'HOST_*') { throw "$required was not supplied by ssm_run_ps1.py --set (value: '$value')" }
 }
 if ($CycleIndex -notmatch '^\d{2}$') { throw "CycleIndex must be two digits (value: '$CycleIndex')" }
+# The turn selects the file names on the host and the recorder mode (2026-09-21, the Dipole classroom exchange):
+# initial = the principal response (session-response.json); correction = the same session's answer to the runner's
+# retained classroom-correction-request.json (classroom-correction-response.json).
+switch ($Turn) {
+    'initial' {
+        $incomingNames = @{ response = 'response.json'; attestation = 'host-attestation.json'; record = 'host-session-record.json' }
+        $recordTargetName = 'host-session-record.json'; $finalName = 'session-response.json'
+        $successPattern = 'actual_principal_response_recorded'; $receiptSchema = 'FRANKIE_PRINCIPAL_RESPONSE_RECORDED_V1'; $receiptPrefix = 'principal-response-recorded-'
+    }
+    'correction' {
+        $incomingNames = @{ response = 'correction-response.json'; attestation = 'host-correction-attestation.json'; record = 'host-correction-record.json' }
+        $recordTargetName = 'host-correction-record.json'; $finalName = 'classroom-correction-response.json'
+        $successPattern = 'actual_classroom_correction_recorded'; $receiptSchema = 'FRANKIE_CLASSROOM_CORRECTION_RECORDED_V1'; $receiptPrefix = 'classroom-correction-recorded-'
+    }
+    default { throw "Turn must be initial or correction (value: '$Turn')" }
+}
 foreach ($name in 'ResponseSha256', 'AttestationSha256', 'RecordSha256') {
     if ((Get-Variable -Name $name -ValueOnly) -notmatch '^[0-9a-f]{64}$') { throw "$name must be 64 lowercase hex" }
 }
@@ -38,13 +54,14 @@ $run = $cfg.run_directory
 if (-not $run -or -not (Test-Path $run)) { throw ("run directory absent: " + $run) }
 $principal = Join-Path (Join-Path (Join-Path $run 'execution') ('cycle-' + $CycleIndex)) 'principal'
 $requestPath = Join-Path $principal 'session-request.json'
-$responsePath = Join-Path $principal 'session-response.json'
+$responsePath = Join-Path $principal $finalName
 if (-not (Test-Path $requestPath)) { throw ("no durable principal request for cycle " + $CycleIndex + " at " + $requestPath + "; recording cannot precede it") }
+if ($Turn -eq 'correction' -and -not (Test-Path (Join-Path $principal 'classroom-correction-request.json'))) { throw ('no retained classroom-correction-request.json for cycle ' + $CycleIndex + '; the runner writes it after grading the initial response') }
 Write-Output ("configuration " + $cfgPath + " sha256=" + $cfgSha)
 Write-Output ("principal directory " + $principal)
 $stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
 if (Test-Path $responsePath) {
-    Write-Output ("ALREADY_RECORDED session-response.json present, bytes=" + (Get-Item $responsePath).Length + " sha256=" + (Digest $responsePath) + "; nothing written")
+    Write-Output ("ALREADY_RECORDED " + $finalName + " present, bytes=" + (Get-Item $responsePath).Length + " sha256=" + (Digest $responsePath) + "; nothing written")
     exit 0
 }
 $incoming = Join-Path $principal ('incoming-' + $stamp)
@@ -62,16 +79,16 @@ function Fetch([string]$url, [string]$target, [string]$expectedSha, [string]$exp
     }
     Write-Output ("delivered " + $label + " bytes=" + $got.Length + " sha256=" + $gotDigest)
 }
-$responseFile = Join-Path $incoming 'response.json'
-$attestationFile = Join-Path $incoming 'host-attestation.json'
-$recordFile = Join-Path $incoming 'host-session-record.json'
+$responseFile = Join-Path $incoming $incomingNames.response
+$attestationFile = Join-Path $incoming $incomingNames.attestation
+$recordFile = Join-Path $incoming $incomingNames.record
 Fetch $ResponseUrl $responseFile $ResponseSha256 $ResponseBytes 'response'
 Fetch $AttestationUrl $attestationFile $AttestationSha256 $AttestationBytes 'host attestation'
 Fetch $RecordUrl $recordFile $RecordSha256 $RecordBytes 'host session record'
 # The attestation pins the session record by path, bytes and sha256; the recorder reads that path on
 # THIS machine, so the record is placed beside the request and the attestation must name that file.
 $attestation = Get-Content $attestationFile -Raw | ConvertFrom-Json
-$recordTarget = Join-Path $principal 'host-session-record.json'
+$recordTarget = Join-Path $principal $recordTargetName
 $pinned = $attestation.host_record
 if (-not $pinned -or -not $pinned.path -or -not $pinned.sha256) { throw 'the attestation carries no host_record {path, bytes, sha256}' }
 $attestationPathRewrittenFrom = $null
@@ -83,7 +100,7 @@ if ((Normal $pinned.path) -ne (Normal $recordTarget)) {
     # the incoming directory and the original value goes into the receipt.
     $attestationPathRewrittenFrom = [string]$pinned.path
     $attestation.host_record.path = $recordTarget
-    $attestationFile = Join-Path $incoming 'host-attestation.host-path.json'
+    $attestationFile = Join-Path $incoming ($incomingNames.attestation -replace '\.json$', '.host-path.json')
     Set-Content -Path $attestationFile -Value ($attestation | ConvertTo-Json -Depth 12) -NoNewline -Encoding UTF8
     $AttestationSha256 = Digest $attestationFile
     $AttestationBytes = [string](Get-Item $attestationFile).Length
@@ -107,7 +124,7 @@ if (-not (Test-Path $Python)) { throw ("host python missing: " + $Python) }
 $git = Get-Command git -ErrorAction SilentlyContinue
 $toolsHead = if ($git) { (& $git.Source -C $ToolsRoot rev-parse HEAD) } else { 'unknown' }
 Write-Output ("TOOLS_HEAD=" + $toolsHead)
-$log = Join-Path $dayDirectory ('principal-response-recorder-' + $stamp + '.log')
+$log = Join-Path $dayDirectory ($receiptPrefix.Replace('recorded-', 'recorder-') + $stamp + '.log')
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTHONPATH = $ToolsRoot
 $env:PYTHONIOENCODING = 'utf-8'
@@ -181,8 +198,10 @@ def classroom_normalizer(classroom_package,derive,json_form):
     return normalize
 
 
-def record_checked(adapter,request,response,attestation,binding,input_hash,canonical,normalize_attachment=lambda attachment:attachment):
-    """Validate in a retained candidate directory before the immutable final write."""
+def record_checked(adapter,request,response,attestation,binding,input_hash,canonical,normalize_attachment=lambda attachment:attachment,classroom_grade=None):
+    """Validate in a retained candidate directory before the immutable final write. classroom_grade, when given, is the
+    runner's own Dipole classroom grade of the response (turn 1): a response the runner would stop on (run 35633661236's
+    response carried no dipole_teachback; the runner raised inside validate_teachback) is refused HERE, nothing written."""
     from research.kalshi.frankie_boss.frankie_principal_adapter import FrankiePrincipalAdapter
     final=adapter.directory/'session-response.json'
     expected=dict(response=response,host_attestation=attestation)
@@ -212,10 +231,55 @@ def record_checked(adapter,request,response,attestation,binding,input_hash,canon
     validator=object.__new__(NativeForecastLearner)
     validator.config=SimpleNamespace(session_weights=tuple((s.session_id,1.0) for _,s in binding['sessions']))
     validator._validate(binding['sessions'],feedback,binding['as_of'],binding['learning_cutoff_ns'])
+    pregrade=None if classroom_grade is None else classroom_grade(response)
     if final.exists():
         if final.read_bytes()!=canonical(expected):raise ValueError('retained final principal response differs')
     else:adapter.record_session_response(response,host_attestation=attestation)
-    return FrankiePrincipalAdapter.recover(adapter,request['request_id'],normalize_attachment(request['attachment']))
+    result=FrankiePrincipalAdapter.recover(adapter,request['request_id'],normalize_attachment(request['attachment']))
+    if pregrade is not None:result=dict(result,classroom_pregrade=pregrade)
+    return result
+
+
+def classroom_pregrade(classroom_package):
+    """The host runner's classroom grade of an initial response (grade_initial_response + the relationship cross-check +
+    the novel-findings validation, exactly what _recover_with_classroom runs), reduced to what the record receipt carries."""
+    from research.kalshi.frankie_boss.dipole_classroom_session import grade_initial_response
+    from research.kalshi.frankie_boss.dipole_classroom_final_review import apply_relationship_view_crosscheck,validate_novel_findings
+    def grade(response):
+        teachback,graded=grade_initial_response(classroom_package,response)
+        graded=apply_relationship_view_crosscheck(graded,response)
+        findings=validate_novel_findings(response.get('dipole_novel_findings'),classroom_package['pre_message'])
+        return dict(mastered=graded['mastered'],correction_ids=list(graded['correction_ids']),novel_findings=len(findings),
+            observation_claims_reviewed=graded['exhaustive_audit']['observation_claims_reviewed'],
+            relationship_pairs_reviewed=graded['exhaustive_audit']['relationship_pairs_reviewed'],post_grade_hash=graded['post_grade_hash'])
+    return grade
+
+
+def record_correction(adapter,principal,response,attestation,request_id):
+    """Turn 2: record the same session's answer to the Dipole classroom correction request the runner retained. The
+    runner (PrincipalPending, 'same Frankie session must consume Dipole classroom correction') waits for
+    classroom-correction-response.json; this validates the answer exactly as _recover_with_classroom will (host attestation
+    bound to the correction request, validate_correction_response against the retained post-grade,
+    validate_correction_resolutions) and writes it through the adapter's own immutable recorder."""
+    from research.kalshi.frankie_boss.dipole_classroom_session import CORRECTION_REQUEST_SCHEMA,validate_correction_response
+    from research.kalshi.frankie_boss.dipole_classroom_resolution import validate_correction_resolutions
+    principal=Path(principal)
+    request_path=principal/'classroom-correction-request.json';initial_path=principal/'session-response.json'
+    if not initial_path.exists():raise ValueError('the initial principal response is not recorded; the correction turn cannot precede it')
+    if not request_path.exists():raise ValueError('no Dipole classroom correction request is retained; the runner writes it after grading the initial response')
+    correction=json.loads(request_path.read_bytes())
+    if correction.get('schema')!=CORRECTION_REQUEST_SCHEMA:raise ValueError('retained correction request schema differs')
+    initial=json.loads(initial_path.read_bytes())['response']
+    grade_path=Path(adapter.audit_directory)/'dipole-classroom-post-grade.json'
+    if not grade_path.exists():raise ValueError('no retained Dipole post-grade in the audit directory; the runner grades before it asks for a correction')
+    grade=json.loads(grade_path.read_bytes())
+    if grade.get('post_grade_hash')!=correction.get('post_grade_hash'):raise ValueError('retained post-grade differs from the correction request')
+    adapter._attest_host(response,attestation,correction)
+    base=validate_correction_response(correction=correction,response=response,initial_response=initial,grade=grade)
+    ack=validate_correction_resolutions(response.get('dipole_acknowledgement'),grade,base)
+    adapter._record_correction_response(correction,dict(response=response,host_attestation=attestation))
+    return dict(request_id=request_id,correction_request_sha256=correction['request_sha256'],post_grade_hash=correction['post_grade_hash'],
+        resolutions=len(ack['correction_resolutions']),remaining_disagreements=list(ack['remaining_disagreements']),mastered=grade.get('mastered'))
 
 
 def main():
@@ -223,6 +287,7 @@ def main():
     for name in ('configuration','configuration-sha256','response','response-sha256','host-attestation','host-attestation-sha256'):
         parser.add_argument('--'+name,required=True)
     parser.add_argument('--cycle-index',type=int,required=True)
+    parser.add_argument('--turn',choices=('initial','correction'),default='initial')
     args=parser.parse_args()
     config=verified_json(args.configuration,args.configuration_sha256);h=config['host_runtime']
     sys.path.insert(0,h['repository'])
@@ -265,9 +330,14 @@ def main():
             classroom_package=classroom_package,adapter_class=IntegratedDipoleClassroomPrincipalAdapter)
         response=verified_json(args.response,args.response_sha256)
         attestation=verified_json(args.host_attestation,args.host_attestation_sha256)
-        result=record_checked(adapter,request,response,attestation,binding,plan['input_hash'],canonical,normalize_attachment=normalize)
+        if args.turn=='correction':
+            result=record_correction(adapter,principal,response,attestation,request['request_id'])
+            print(json.dumps(dict(status='actual_classroom_correction_recorded',**result)))
+            return
+        result=record_checked(adapter,request,response,attestation,binding,plan['input_hash'],canonical,normalize_attachment=normalize,
+            classroom_grade=classroom_pregrade(classroom_package))
         print(json.dumps(dict(status='actual_principal_response_recorded',request_id=request['request_id'],
-            principal_receipt_sha256=result['principal_receipt']['receipt_sha256'])))
+            principal_receipt_sha256=result['principal_receipt']['receipt_sha256'],classroom_pregrade=result.get('classroom_pregrade'))))
 
 
 if __name__=='__main__':
@@ -303,17 +373,18 @@ $ErrorActionPreference = 'Continue'   # a line on stderr from the recorder is ou
 try {
     & $Python -c $wrapper $tool --configuration $cfgPath --configuration-sha256 $cfgSha --cycle-index ([int]$CycleIndex) `
         --response $responseFile --response-sha256 $ResponseSha256 `
-        --host-attestation $attestationFile --host-attestation-sha256 $AttestationSha256 2>&1 | ForEach-Object { $_.ToString() } | Tee-Object -FilePath $log
+        --host-attestation $attestationFile --host-attestation-sha256 $AttestationSha256 --turn $Turn 2>&1 | ForEach-Object { $_.ToString() } | Tee-Object -FilePath $log
     $recorderExit = $LASTEXITCODE
 } finally { Pop-Location; $ErrorActionPreference = $previousPreference }
 $output = if (Test-Path $log) { Get-Content $log -Raw } else { '' }
-if ($recorderExit -ne 0 -or $output -notmatch 'actual_principal_response_recorded') {
+if ($recorderExit -ne 0 -or $output -notmatch $successPattern) {
     throw ("the recorder did not record (exit " + $recorderExit + "); its output is above and in " + $log)
 }
-if (-not (Test-Path $responsePath)) { throw 'the recorder reported success but session-response.json is absent' }
-$statusLine = ($output -split "`n" | Where-Object { $_ -match 'actual_principal_response_recorded' } | Select-Object -Last 1).Trim()
+if (-not (Test-Path $responsePath)) { throw ('the recorder reported success but ' + $finalName + ' is absent') }
+$statusLine = ($output -split "`n" | Where-Object { $_ -match $successPattern } | Select-Object -Last 1).Trim()
 $receipt = [ordered]@{
-    schema                  = 'FRANKIE_PRINCIPAL_RESPONSE_RECORDED_V1'
+    schema                  = $receiptSchema
+    turn                    = $Turn
     day                     = $Day
     run_id                  = $cfg.run_id
     cycle_index             = [int]$CycleIndex
@@ -335,7 +406,7 @@ $receipt = [ordered]@{
     incoming_directory      = $incoming
     at                      = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
 }
-$receiptPath = Join-Path $dayDirectory ('principal-response-recorded-' + $stamp + '.json')
+$receiptPath = Join-Path $dayDirectory ($receiptPrefix + $stamp + '.json')
 Set-Content -Path $receiptPath -Value ($receipt | ConvertTo-Json -Depth 4) -NoNewline -Encoding UTF8
 Write-Output ("receipt: " + $receiptPath)
 Write-Output ('RECEIPT ' + ($receipt | ConvertTo-Json -Depth 4 -Compress))
