@@ -2878,3 +2878,35 @@ through the MCP tools (no trunk registration of a workflow needed for that); the
 in SSM (`/markets/frankie/runpod-serverless`) to call the endpoint.
 Greg 11:4xZ: the status probes of the box are PAUSED for a while (his word); every read costs by the minute, so the
 render keeps shrinking: dense exact digest, L7 derivable vectors, head-section ledger, exact-token parts (02dc8da3).
+
+### 12:0xZ 09-21: L7 FIRES -- the whole delivered evidence is now 151,705 tokens (2 parts); the DBN pin drift that hid it
+
+Four box runs, each ~1 min of the box and none of the Pod (35596407888, 35596609957, 35596911151, 35597005001). The
+derived-column digest (12a87edc) measured 559,796 -> 419,461 tokens (from 465,836; the 900 `=` cells of spread / mid /
+depth_imbalance_full are exact recomputations, checked before written). Per table: legacy_structure_observables 306,053
+tokens, legacy_book_imbalance 111,916, the rest under 1,000 -- so the digest's next targets are named.
+
+L7 (`derivable vectors 0` since 02dc8da3) had a CAUSE, not a code fault: the stacked codec's `_wire` reconstructs DBN
+wire bytes with EXACTLY databento-dbn 0.62.0 and refuses otherwise; the box venv held 0.69.0 (measured 35596609957:
+`databento==0.86.0`, `databento-dbn==0.69.0`) because `frankie_box_stage_producers.sh` installed an UNPINNED databento
+client beside the SDK pin and the client's own requirement (`databento-dbn>=0.69.0,<0.70.0`) won. `derivable_vectors`
+swallowed the ValueError, so the render reported 0 with no reason. Fixed 1e2689a4: (1) `frankie_box_venv_pins.sh`
+(idempotent) holds the venv to `databento==0.81.0` (PyPI: the client release requiring `databento-dbn>=0.62.0,<0.63.0`)
++ `databento-dbn==0.62.0`; run 35596911151: before 0.69.0, after 0.62.0, MBOMsg constructor ok,
+`VENV_PINS_RECEIPT held=true`. Nothing on the box imports the databento client (grep of the producers and their tests:
+only databento_dbn). (2) the stage script pins the client and ASSERTS the SDK version in its verification block.
+(3) `RenderReport.l7_notes` records why L7 did not fire, per envelope, and the corpus receipt carries
+`derived_vectors`, `ranges`, `l7_notes` -- a silent 0 cannot recur. The running session's venv was changed under it;
+python holds already-imported modules, and the session imports the codec only at the corpus render, which runs at
+`restart_session` (Greg's call, pending).
+
+Measured after the repair (35597005001, identity mode, pinned tokenizer, PROOF all_exact=True on every member):
+delivered 21,087,386 B / 10,128,476 tokens -> rendered 317,839 B / 151,705 tokens (0.015x), parts of 87k: 117 -> 2.
+`files/forecast-000000.bin` 2,642,541 -> 19,086 tokens (was 147,102 before L7: the 3,262-hash packet vector inside
+`context_receipt` is now `{"$derivable": "packet_hashes", ...}` with its sha256, reconstructible from the critic
+snapshot's own stacked recipe, checked by digest). Remaining weight: `files/state.c15.json` 127,003 tokens (the
+decoder snapshot's 42 tensors as identity rows; values mode would be ~2.2M) and the digest 419,461. Whole corpus at
+the next restart ~= head 191 KB (ledgered from cycle 1) + members 151,705 + digest 419,461 ~= 8 parts, against 163
+before the render. Next shrink: the digest's two tables (column-level dictionary / delta encoding on
+legacy_structure_observables and legacy_book_imbalance, both exact and parse-back proven like the rest).
+

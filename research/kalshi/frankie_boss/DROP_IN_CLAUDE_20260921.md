@@ -82,6 +82,12 @@ the trunk; `help`; Greg's word for `create` (GPU tier + workers); `verify`; the 
 the real members: 10.13M tokens -> 291k (identity) or 2.22M (values); whole corpus ~13 or ~35 parts instead of 163.
 Cross-cycle ledger (L6): later cycles read only what changed. GREG: tensor_mode, then `ACTION=restart_session
 REASON=lossless-render`. Handoff 11:3xZ and 11:4xZ.
+12:0xZ: L7 FIRES after a pin repair: the box venv's databento-dbn had drifted to 0.69.0 (the unpinned client dragged
+it; the stacked codec needs exactly 0.62.0), fixed by `frankie_box_venv_pins.sh` (run 35596911151, held). MEASURED
+(35597005001): members 10.13M -> 151,705 tokens (0.015x, 2 parts; the forecast artifact 2.64M -> 19,086); the dense
+digest 559,796 -> 419,461 (structure_observables 306k, book_imbalance 112k = the next targets). Whole corpus ~8
+parts vs 163. RunPod: plugin runpod@runpod 1.2.0 installed; the MCP needs Greg's OAuth sign-in (`/mcp` -> runpod).
+Handoff 12:0xZ.
 
 ## READ FIRST (08:00Z 09-21 handoff): FRANKIE'S BOX IS UP AND EMPTY; JOB 0 = HIS HARNESS; the run HOLDS for his response
 
