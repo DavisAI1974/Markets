@@ -1,0 +1,54 @@
+# Job 0 step 4 (delivery): push Frankie's four cycle files from his box to root/cycle-<NN>-response.
+# Reads /opt/frankie-box/session/out/{response.json,analysis.md,host-session-record.json,host-attestation.json},
+# runs the same shape and binding checks the recorder workflow runs (so a refusal happens here, not there), and pushes
+# them under research/kalshi/frankie_boss/runs/<day>/root/ on a branch cut from BASE. The token comes from SSM
+# SecureString /markets/frankie/github-token (us-east-2) into this process only. Idempotent; never force-pushes.
+# Inputs: DAY (20211003), CYCLE (00), BASE (this branch).
+set -u
+ROOT=/opt/frankie-box; OUT="$ROOT/session/out"
+DAY="${DAY:-20211003}"; CYCLE="${CYCLE:-00}"; BASE="${BASE:-claude/cycle-0-frankie-box-rerun-od5sxk}"
+export HOME=/root GIT_TERMINAL_PROMPT=0
+for f in response.json analysis.md host-session-record.json host-attestation.json; do [ -s "$OUT/$f" ] || { echo "missing $OUT/$f"; exit 2; }; done
+export OUT ROOT
+"$ROOT/venv/bin/python" - <<'PY' || exit 1
+import hashlib, json, os, sys
+out = os.environ['OUT']
+raw = {n: open(os.path.join(out, n), 'rb').read() for n in ('response.json', 'host-session-record.json', 'host-attestation.json', 'analysis.md')}
+r = json.loads(raw['response.json']); rec = json.loads(raw['host-session-record.json']); a = json.loads(raw['host-attestation.json'])
+for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session', 'sections', 'feedback', 'lessons'):
+    if k not in r: sys.exit(f'response.json lacks {k}')
+if len(r['sections']) != 18: sys.exit('response.sections must carry the 18 section ids')
+if 'principal_receipt_hash' in json.dumps(r['feedback']): sys.exit('feedback must carry NO principal_receipt_hash')
+if not isinstance(r['lessons'], list) or not r['lessons']: sys.exit('lessons must be a nonempty list')
+sys.path.insert(0, os.path.join(os.environ['ROOT'], 'markets'))
+from research.kalshi.frankie_boss.frankie_principal_adapter import digest
+req = json.loads(open(os.path.join(os.environ['ROOT'], 'request', 'session-request.json'), 'rb').read())
+if r['request_sha256'] != digest(req): sys.exit('response.request_sha256 is not the adapter digest of the request on this box')
+if rec.get('schema') != 'FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1' or rec.get('mechanism') != 'AGENT_SESSION': sys.exit('host-session-record schema/mechanism')
+if rec.get('response_sha256') != digest(r): sys.exit('host-session-record.response_sha256 is not digest(response)')
+if not rec.get('host_authority'): sys.exit('host_authority must be nonempty')
+for wname, fname in (('response', 'response.json'), ('analysis', 'analysis.md')):
+    w = rec.get(wname) or {}
+    if w.get('sha256') != hashlib.sha256(raw[fname]).hexdigest() or int(w.get('bytes', -1)) != len(raw[fname]): sys.exit(f'host-session-record.{wname} witness differs from the file')
+for k in ('schema', 'mechanism', 'request_sha256', 'response_sha256', 'session_id', 'model_identity_as_reported_by_session'):
+    if a.get(k) != rec.get(k): sys.exit(f'attestation.{k} differs from the record')
+hr = a.get('host_record') or {}
+if set(hr) != {'path', 'bytes', 'sha256'} or hr['sha256'] != hashlib.sha256(raw['host-session-record.json']).hexdigest() or int(hr['bytes']) != len(raw['host-session-record.json']): sys.exit('attestation.host_record must pin the record file {path, bytes, sha256}')
+print('shape and binding checks: OK'); print({n: (len(b), hashlib.sha256(b).hexdigest()) for n, b in raw.items()})
+PY
+TOKEN=$("$ROOT/venv/bin/python" -c "import boto3;print(boto3.client('ssm',region_name='us-east-2').get_parameter(Name='/markets/frankie/github-token',WithDecryption=True)['Parameter']['Value'])" 2>/dev/null) || { echo "no push token readable at /markets/frankie/github-token (us-east-2); files are ready in $OUT, push refused"; exit 3; }
+export FRANKIE_GIT_TOKEN="$TOKEN"; unset TOKEN
+HELPER='!f() { echo username=x-access-token; echo "password=$FRANKIE_GIT_TOKEN"; }; f'
+W="$ROOT/session/response-clone"; BR="root/cycle-$CYCLE-response"; DEST="research/kalshi/frankie_boss/runs/$DAY/root"
+[ -d "$W/.git" ] || git clone -q --depth 1 --branch "$BASE" https://github.com/DavisAI1974/Markets.git "$W" || exit 2
+cd "$W" || exit 2
+git fetch -q origin "$BR" 2>/dev/null && git checkout -q -B "$BR" FETCH_HEAD || git checkout -q -B "$BR"
+mkdir -p "$DEST"; cp "$OUT"/response.json "$OUT"/host-attestation.json "$OUT"/host-session-record.json "$OUT"/analysis.md "$DEST"/
+git add "$DEST"
+git -c user.name=frankie-box -c user.email=frankie-box@markets.local commit -q -m "root: cycle $CYCLE Frankie response, attestation, host session record, analysis (from Frankie's box i-035994afa8bdf66a5; request_sha256 per response.json)" || echo "(nothing new to commit)"
+git -c credential.helper="$HELPER" push -q origin "HEAD:$BR" || { echo "push failed"; exit 4; }
+unset FRANKIE_GIT_TOKEN
+git log --oneline -1; git ls-remote origin "$BR"
+sha=$(git rev-parse HEAD)
+printf '{"schema":"FRANKIE_BOX_RESPONSE_PUSH_RECEIPT_V1","at":%s,"branch":"%s","commit":"%s","files":["response.json","host-attestation.json","host-session-record.json","analysis.md"]}\n' "$(date +%s)" "$BR" "$sha" > "$ROOT/receipts/response-push-$(date +%s).json"
+echo "pushed $BR at $sha; next: frankie_host_record_principal_response.yml source_ref=$BR"
