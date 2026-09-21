@@ -683,7 +683,7 @@ class Session:
         write_json(self.work / 'derive.json', receipt)
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import frankie_box_digest_render as DG
-        digest = DG.digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells)   # dense, exact, self-checked (DIGEST_V2)
+        digest = DG.digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells)   # dense, exact, self-checked (DIGEST_V3)
         (self.work / 'derivation-digest-full.md').write_text(digest, encoding='utf-8')
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
         return receipt
@@ -1210,7 +1210,7 @@ class Session:
         self.engine_reach()
         self.phase('deriving')
         digest_path = self.work / 'derivation-digest-full.md'
-        if not digest_path.exists() or 'DIGEST_V2' not in digest_path.read_text(encoding='utf-8', errors='replace')[:400]:   # whole and dense (DIGEST_V2); an older digest is regenerated
+        if not digest_path.exists() or 'DIGEST_V3' not in digest_path.read_text(encoding='utf-8', errors='replace')[:400]:   # whole and dense (DIGEST_V3); an older digest is regenerated
             self.derive()
         self.phase('reading')
         if not (self.work / 'merged-notes.md').exists():
