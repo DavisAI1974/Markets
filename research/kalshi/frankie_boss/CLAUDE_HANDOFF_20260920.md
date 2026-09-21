@@ -3580,3 +3580,11 @@ says -> push -> record.
 ### 17:2xZ 09-21: Greg: "Then do those 2 things" -- DONE (commit above): tolerant ledger parse (repairs recorded on the
 entry, raw text kept when hopeless) and the analysis task naming exactly what the session files (the analysis, one
 accounting entry, the ten named ledgers; nothing else). Held items (3) and (4) of 17:1xZ stay for after cycle 1.
+
+### 17:2xZ 09-21: GREG: "Ok. Go" -> the recorder dispatched for cycle 0
+
+`frankie_host_record_principal_response.yml` (trunk-registered) dispatched with ref this branch: source_ref
+root/cycle-00-response, response_path / attestation_path / record_path under
+research/kalshi/frankie_boss/runs/20211003/root/, cycle_index 00 (the native host's defaults for instance, day,
+run_root, tools_root, python, bucket). Run id and outcome follow; then the host runner resumes on its own (verify,
+native learning, readback, completion, readiness cycle-01); a read-only `frankie_host_cycle_status.yml` probe after.
