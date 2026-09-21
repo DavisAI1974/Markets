@@ -53,6 +53,7 @@ SERVERLESS_CONFIG = ROOT / 'serverless.json'                       # written by 
 SERVERLESS_KEY_PARAMETER = '/markets/frankie/runpod-serverless'   # the RunPod API key for api.runpod.ai, in memory only
 SERVERLESS_HOST = os.environ.get('FRANKIE_SERVERLESS_HOST', 'api.runpod.ai')   # a local fake only in tests (FRANKIE_SERVERLESS_PLAIN_HTTP=1)
 SERVERLESS_POLL_SECONDS = 15
+READING_LEDGER = ROOT / 'reading-ledger.json'   # L6: every value digest read so far, by cycle; the merged notes per cycle
 READING_CONFIG = ROOT / 'reading.json'    # {"tensor_mode": "values" | "identity"} (frankie_box_serverless_config.sh ACTION=reading)
 SERVERLESS_MAX_RESPONSE = 8 * 1024 * 1024
 POD_ID_DEFAULT = 'g7y3g2w1kor4l3'
@@ -90,7 +91,7 @@ class Session:
     def __init__(self, session, day, cycle, pod_id, served_model=SERVED_MODEL_DEFAULT):
         self.dir = Path(session)
         self.day, self.cycle, self.pod_id, self.served_model = day, cycle, pod_id, served_model
-        self.work = self.dir / 'work'
+        self.work = self.dir / ('work' if cycle == '00' else f'work-{cycle}')   # per cycle; cycle 00 keeps 'work' (its receipts already live there)
         self.out = self.dir / 'out'
         self.jobs = self.work / 'boss-jobs'
         for d in (self.work, self.out, self.jobs, ROOT / 'receipts'):
@@ -854,7 +855,20 @@ class Session:
                     tokenizer = Tokenizer.from_file(str(tok_path))
             except Exception:
                 tokenizer = None
-            rendered, report = R.render(raw_members, tensor_mode=tensor_mode, tokenizer=tokenizer)
+            ledger = load_json(READING_LEDGER) if READING_LEDGER.exists() else dict(schema='FRANKIE_BOX_READING_LEDGER_V1', values={}, cycles={})
+            already = {d: v for d, v in ledger.get('values', {}).items() if v.get('cycle') != self.cycle}
+            rendered, report = R.render(raw_members, tensor_mode=tensor_mode, tokenizer=tokenizer, already_read=already)
+            for cyc, rec in sorted(ledger.get('cycles', {}).items()):
+                notes_path = Path(rec.get('merged_notes_path', ''))
+                if cyc != self.cycle and notes_path.exists():
+                    notes = notes_path.read_bytes()
+                    if rec.get('merged_notes_sha256') == sha256_bytes(notes):
+                        parts.append(f'\n\n## Frankie\'s merged notes from cycle {cyc} (carried forward; values marked $read below were read then)\n\n'
+                                     + notes.decode('utf-8', errors='replace') + '\n')
+                        members.append(dict(name=f'merged-notes-cycle-{cyc}', bytes=len(notes), sha256=rec['merged_notes_sha256'], treatment='prior cycle notes, whole'))
+            for d, v in report.dictionary.items():
+                ledger['values'].setdefault(d, dict(cycle=self.cycle, member_path=v['path'], bytes=v['bytes'], kind=v['kind']))
+            write_json(READING_LEDGER, ledger)
             if not report.proof.get('all_exact'):
                 self.refuse('the lossless reading render did not rebuild every member byte-exact; the corpus is not written')
             parts.append('\n\n## BOSS/Granite producer evidence (decoded by the session for reading, every member whole; the raw '
@@ -867,6 +881,7 @@ class Session:
             render_report = dict(schema='FRANKIE_BOX_READING_RENDER_REPORT_V1', tensor_mode=tensor_mode, delivered_bytes=report.delivered_bytes,
                                  rendered_bytes=report.rendered_bytes, dictionary_entries=report.dictionary_entries, refs=report.refs,
                                  saved_bytes=report.saved_bytes, tensors=report.tensors, tensor_bytes=report.tensor_bytes, proof=report.proof,
+                                 read_refs=report.read_refs, read_saved_bytes=report.read_saved_bytes, ledger=str(READING_LEDGER),
                                  tokens=dict(delivered=sum(m.get('delivered_tokens') or 0 for m in report.members.values()),
                                              rendered=sum(m.get('rendered_tokens') or 0 for m in report.members.values())) if tokenizer else 'tokenizer absent')
         else:
@@ -923,6 +938,10 @@ class Session:
                    corpus_sha256=corpus_sha, notes_dir=str(notes_dir), new_outcomes=outcomes, merged=witness(self.work / 'merged-notes.md'),
                    lane=dict(serverless=self.serverless['endpoint_id'], workers=self.serverless['workers']) if self.serverless else dict(pod=self.pod_id)))
         self.note(f'reading done: {len(chunks)} parts, merged notes {len(merged.encode("utf-8"))} bytes')
+        ledger = load_json(READING_LEDGER) if READING_LEDGER.exists() else dict(schema='FRANKIE_BOX_READING_LEDGER_V1', values={}, cycles={})
+        ledger.setdefault('cycles', {})[self.cycle] = dict(merged_notes_path=str(self.work / 'merged-notes.md'),
+                                                          merged_notes_sha256=sha256_bytes((self.work / 'merged-notes.md').read_bytes()), at=time.time())
+        write_json(READING_LEDGER, ledger)
 
     @staticmethod
     def _chunks(data):

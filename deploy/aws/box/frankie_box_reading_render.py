@@ -19,6 +19,9 @@ as hex bytes. Structural codecs alone gave 1%. These layers give the rest, and e
       package and in the dictionary by digest; nothing is discarded, the reader chooses what to open.
   L5  containment: a large string that contains another rendered large string verbatim has that span replaced
       by a marker naming the digest (the critic prompt contains the snapshot text).
+  L6  cross-cycle ledger: a value already rendered and read in an EARLIER cycle (same sha256 in the box's
+      reading ledger) becomes {"$read": sha256, "cycle": "<NN>"}; the earlier cycle's merged notes travel in the
+      corpus head. The journals are append-only, so a later cycle reads only what was appended or changed.
 The render is Markdown with fenced JSON blocks; `reconstruct()` rebuilds every member's original bytes from the
 render plan and the proof compares sha256s. `RenderReport` carries bytes and (when the tokenizer is present)
 exact Granite tokens per layer so the receipt states the reduction rather than claiming it.
@@ -196,10 +199,13 @@ def tensor_rows(weights, mode):
 # ---- L3/L5: dedup + containment ------------------------------------------------------------------------------------
 @dataclass
 class Dictionary:
-    entries: dict = field(default_factory=dict)      # sha256 -> (kind, value, first_path)
+    entries: dict = field(default_factory=dict)      # sha256 -> (kind, first_path, size)
     order: list = field(default_factory=list)
     refs: int = 0
     saved: int = 0
+    already_read: dict = field(default_factory=dict) # sha256 -> {'cycle': ..} from earlier cycles (L6)
+    read_refs: int = 0
+    read_saved: int = 0
 
     def key(self, value):
         if isinstance(value, str):
@@ -235,6 +241,11 @@ def dedup(doc, dictionary, path=''):
                 dictionary.refs += 1
                 dictionary.saved += size
                 return {'$ref': digest, 'kind': kind, 'bytes': size}
+            if digest in dictionary.already_read:
+                dictionary.read_refs += 1
+                dictionary.read_saved += size
+                dictionary.entries[digest] = (kind, path, size)
+                return {'$read': digest, 'kind': kind, 'bytes': size, 'cycle': dictionary.already_read[digest].get('cycle')}
             dictionary.entries[digest] = (kind, path, size)
             dictionary.order.append(digest)
     if isinstance(doc, dict):
@@ -291,13 +302,16 @@ class RenderReport:
     rendered_bytes: int
     delivered_bytes: int
     proof: dict
+    dictionary: dict = field(default_factory=dict)   # sha256 -> {kind, path, bytes} rendered (or referenced) this cycle
+    read_refs: int = 0
+    read_saved_bytes: int = 0
 
 
-def render(members, *, tensor_mode='identity', tokenizer=None):
+def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None):
     """members: {name: bytes}. Returns (markdown_text, RenderReport). The plan needed for reconstruction is the
     decoded documents themselves (kept in memory by the caller through `plan`)."""
     pack, unpack, canonical_bytes = _c15()
-    plan, dictionary, stats = {}, Dictionary(), dict(tensors=0, tensor_bytes=0)
+    plan, dictionary, stats = {}, Dictionary(already_read=dict(already_read or {})), dict(tensors=0, tensor_bytes=0)
     per = {}
     # decode every member first so the dictionary sees the forecast artifact before its hex copy
     order = sorted(members, key=lambda n: (0 if n.startswith('files/forecast') else 1 if n.startswith('files/state') else 2, n))
@@ -334,6 +348,7 @@ def render(members, *, tensor_mode='identity', tokenizer=None):
     out.append('## Delivered producer evidence, lossless render (every member whole; encodings decoded in place; '
                'repeated values rendered once and referenced by sha256; tensors as tables; nothing sampled or omitted)\n')
     out.append('Legend: {"$decoded": enc, "sha256", "bytes", "value"} = a bytes value decoded from enc (c15 | json | utf8), exact bytes '
+               'reproducible; {"$read": sha256, "cycle"} = the value already rendered and read in that earlier cycle (its notes are carried in this corpus head); '
                'reproducible; {"$ref": sha256} = the value rendered earlier under that digest; {"$tensors": [...]} = a frozen '
                'decoder state, one row per tensor (dtype, shape, bytes, sha256, count, min, max, mean, l2' + (', values' if tensor_mode == 'values' else '') + '); '
                '<<contains sha256:...>> = this text embeds the referenced text verbatim.\n')
@@ -357,7 +372,9 @@ def render(members, *, tensor_mode='identity', tokenizer=None):
     proof = reconstruct_proof(members, plan, decoded)
     report = RenderReport(members=per, dictionary_entries=len(dictionary.entries), refs=dictionary.refs, saved_bytes=dictionary.saved,
                           tensors=stats['tensors'], tensor_bytes=stats['tensor_bytes'], rendered_bytes=len(text.encode('utf-8')),
-                          delivered_bytes=sum(len(b) for b in members.values()), proof=proof)
+                          delivered_bytes=sum(len(b) for b in members.values()), proof=proof,
+                          dictionary={d: dict(kind=k, path=pth, bytes=n) for d, (k, pth, n) in dictionary.entries.items()},
+                          read_refs=dictionary.read_refs, read_saved_bytes=dictionary.read_saved)
     return text, report
 
 
