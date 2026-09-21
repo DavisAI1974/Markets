@@ -2635,3 +2635,19 @@ verified, labels, engine healthy again from the receipts, phase `deriving`; the 
 Heartbeat: git leg disabled (`/markets/frankie/github-token` ParameterNotFound, re-read every beat), S3 leg
 AccessDenied; the box `ACTION=status` is the progress probe until Greg grants the token. Pod RUNNING since 09:30:46Z,
 cost 1.09/h, no stop without Greg's word.
+
+### 09:5xZ 09-21: DERIVE DONE ON THE BOX; the BOSS answered its first durable jobs; the reading corpus corrected to the DECODED evidence
+
+Restart run 35585505365 (5c742183, after the F_LAST book record's duplicate `spread` key): `deriving: 3262 INPUT records
+from prefix-00 (6524 entries)` then `derived: 5/5 pin layers on 3262 records, 2282 F_LAST groups` at 09:51:19Z
+(work/derived/<layer>.json each with its status and producer; work/derive.json the receipt; the derivation digest
+for the BOSS). Reading began at once: `part 1/203` completed by 09:54:14Z (one durable jobs_v1 job on the Pod, about
+three minutes: the BOSS is answering). Then the defect: the 203 parts were bytes of prompt.md, and 28 MB of it is the
+receiver's producer-evidence payload whose members are BASE64, so the BOSS would have spent ten hours reading base64.
+Fix f9bbd26f: `reading_corpus()` renders the prompt text verbatim up to that block and then the block DECODED: the
+attachment receipt, manifest, source binding, mapping evidence and every file, whole when text up to 400,000 bytes,
+the first 150,000 bytes with the full witness when larger machine data, witness only when binary;
+work/reading-corpus.json records each member's treatment (what the BOSS saw is on record); notes live under
+notes-<corpus sha>/ so the two base64 notes never mix in. `frankie_box_session.sh ACTION=restart_session` added: it
+stops ONLY the session unit with a receipt (FRANKIE_BOX_SESSION_RESTART_RECEIPT_V1) and starts it again; heartbeat,
+Pod and box untouched; verify/labels/engine/derive resume from their receipts. Dispatched at 09:57Z.
