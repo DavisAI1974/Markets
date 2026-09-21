@@ -19,6 +19,10 @@ as hex bytes. Structural codecs alone gave 1%. These layers give the rest, and e
       package and in the dictionary by digest; nothing is discarded, the reader chooses what to open.
   L5  containment: a large string that contains another rendered large string verbatim has that span replaced
       by a marker naming the digest (the critic prompt contains the snapshot text).
+  L7  derivable vectors: a list of consecutive integers renders as {"$range": [first, last]}; a list of packet
+      hashes equal to the vector the stacked critic snapshot's packet recipe reconstructs (granite_context_stacked.decode
+      on the delivered snapshot) renders as {"$derivable": "packet_hashes", "from": "critic snapshot", "sha256"}; both
+      recomputed and compared before the reference is written.
   L6  cross-cycle ledger: a value already rendered and read in an EARLIER cycle (same sha256 in the box's
       reading ledger) becomes {"$read": sha256, "cycle": "<NN>"}; the earlier cycle's merged notes travel in the
       corpus head. The journals are append-only, so a later cycle reads only what was appended or changed.
@@ -207,6 +211,9 @@ class Dictionary:
     already_read: dict = field(default_factory=dict) # sha256 -> {'cycle': ..} from earlier cycles (L6)
     read_refs: int = 0
     read_saved: int = 0
+    derivable: dict = field(default_factory=dict)    # L7: digest -> info of vectors the package's stacked snapshot reconstructs
+    derived: int = 0
+    ranges: int = 0
 
     def key(self, value):
         if isinstance(value, str):
@@ -232,8 +239,54 @@ def _size(value):
     return len(json.dumps(value, sort_keys=True, separators=(',', ':'), default=_jsonable))
 
 
+RANGE_MIN = 64
+
+
+def _monotone(doc):
+    return (isinstance(doc, (list, tuple)) and len(doc) >= RANGE_MIN and all(type(v) is int for v in doc)
+            and all(b - a == 1 for a, b in zip(doc, doc[1:])))
+
+
+def derivable_vectors(members):
+    """L7: vectors reconstructible from a stacked envelope delivered in the package (the critic snapshot): sha256 of the
+    canonical list -> description. Decoding is the codec's own (self-verifying); a failure yields nothing."""
+    out = {}
+    try:
+        from research.kalshi.frankie_boss import granite_context_stacked as stacked
+    except Exception:
+        return out
+    for name, raw in members.items():
+        try:
+            doc = json.loads(raw.decode('utf-8'))
+        except Exception:
+            continue
+        envelope = doc.get('codec') if isinstance(doc, dict) else None
+        if not (isinstance(envelope, dict) and envelope.get('schema') == getattr(stacked, 'SCHEMA', None)):
+            continue
+        try:
+            root = stacked.decode(envelope)
+        except Exception:
+            continue
+        vector = (root.get('receipt') or {}).get('packet_hashes') if isinstance(root, dict) else None
+        if isinstance(vector, (list, tuple)) and vector:
+            digest = sha(json.dumps(list(vector), separators=(',', ':')).encode())
+            out[digest] = dict(kind='packet_hashes', member=name, count=len(vector))
+    return out
+
+
 def dedup(doc, dictionary, path=''):
-    """Replace repeated large values by {'$ref': sha256} (L3); first occurrence stays in place and is recorded."""
+    """Replace repeated large values by {'$ref': sha256} (L3); first occurrence stays in place and is recorded.
+    L7: consecutive-integer lists become {'$range': [first, last]}; a hash vector the delivered stacked snapshot
+    reconstructs becomes {'$derivable': ...} (checked by digest against the codec's own reconstruction)."""
+    if _monotone(doc):
+        dictionary.ranges += 1
+        return {'$range': [doc[0], doc[-1]], 'count': len(doc)}
+    if isinstance(doc, (list, tuple)) and dictionary.derivable and doc and all(isinstance(v, str) for v in doc):
+        digest = sha(json.dumps(list(doc), separators=(',', ':')).encode())
+        if digest in dictionary.derivable:
+            info = dictionary.derivable[digest]
+            dictionary.derived += 1
+            return {'$derivable': info['kind'], 'from': f"the stacked packet recipe of {info['member']}", 'count': len(doc), 'sha256': digest}
     if isinstance(doc, (dict, list, tuple, str, bytes)) and not (isinstance(doc, dict) and '$ref' in doc):
         size = _size(doc)
         if size >= DEDUP_BYTES:
@@ -274,7 +327,32 @@ def contain(doc, big_strings):
 
 # ---- render ------------------------------------------------------------------------------------------------------
 def _render_json(value, indent=None):
-    return json.dumps(value, sort_keys=True, indent=indent, ensure_ascii=True, default=_jsonable)
+    return _wrap_json(json.dumps(value, sort_keys=True, indent=indent, ensure_ascii=True, default=_jsonable))
+
+
+def _wrap_json(text, max_depth=2):
+    """Insert a newline after every comma at nesting depth <= max_depth (outside strings), so a document renders as
+    many lines and the part boundaries (line-based) fall between keys, never inside a value. JSON-equivalent."""
+    out, depth, in_string, escape = [], 0, False, False
+    for ch in text:
+        out.append(ch)
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == '\\':
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in '[{':
+            depth += 1
+        elif ch in ']}':
+            depth -= 1
+        elif ch == ',' and depth <= max_depth:
+            out.append('\n')
+    return ''.join(out)
 
 
 def _weights_pass(doc, mode, stats):
@@ -306,13 +384,15 @@ class RenderReport:
     dictionary: dict = field(default_factory=dict)   # sha256 -> {kind, path, bytes} rendered (or referenced) this cycle
     read_refs: int = 0
     read_saved_bytes: int = 0
+    derived_vectors: int = 0
+    ranges: int = 0
 
 
 def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None):
     """members: {name: bytes}. Returns (markdown_text, RenderReport). The plan needed for reconstruction is the
     decoded documents themselves (kept in memory by the caller through `plan`)."""
     pack, unpack, canonical_bytes = _c15()
-    plan, dictionary, stats = {}, Dictionary(already_read=dict(already_read or {})), dict(tensors=0, tensor_bytes=0)
+    plan, dictionary, stats = {}, Dictionary(already_read=dict(already_read or {}), derivable=derivable_vectors(members)), dict(tensors=0, tensor_bytes=0)
     per = {}
     # decode every member first so the dictionary sees the forecast artifact before its hex copy
     order = sorted(members, key=lambda n: (0 if n.startswith('files/forecast') else 1 if n.startswith('files/state') else 2, n))
@@ -350,6 +430,8 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
                'repeated values rendered once and referenced by sha256; tensors as tables; nothing sampled or omitted)\n')
     out.append('Legend: {"$decoded": enc, "sha256", "bytes", "value"} = a bytes value decoded from enc (c15 | json | utf8), exact bytes '
                'reproducible; {"$read": sha256, "cycle"} = the value already rendered and read in that earlier cycle (its notes are carried in this corpus head); '
+               '{"$range": [first, last]} = the consecutive integers first..last; {"$derivable": "packet_hashes", ...} = the hash vector the '
+               'delivered stacked snapshot reconstructs by its packet recipe (checked equal by digest); '
                'reproducible; {"$ref": sha256} = the value rendered earlier under that digest; {"$tensors": [...]} = a frozen '
                'decoder state, one row per tensor (dtype, shape, bytes, sha256, count, min, max, mean, l2' + (', values' if tensor_mode == 'values' else '') + '); '
                '<<contains sha256:...>> = this text embeds the referenced text verbatim.\n')
@@ -375,7 +457,7 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
                           tensors=stats['tensors'], tensor_bytes=stats['tensor_bytes'], rendered_bytes=len(text.encode('utf-8')),
                           delivered_bytes=sum(len(b) for b in members.values()), proof=proof,
                           dictionary={d: dict(kind=k, path=pth, bytes=n) for d, (k, pth, n) in dictionary.entries.items()},
-                          read_refs=dictionary.read_refs, read_saved_bytes=dictionary.read_saved)
+                          read_refs=dictionary.read_refs, read_saved_bytes=dictionary.read_saved, derived_vectors=dictionary.derived, ranges=dictionary.ranges)
     return text, report
 
 

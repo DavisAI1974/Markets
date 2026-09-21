@@ -17,8 +17,11 @@ export ROOT TOK MODE M
 import base64, json, os, sys, time
 sys.path.insert(0, os.environ['M']); sys.path.insert(0, os.environ['M'] + '/deploy/aws/box')
 import frankie_box_reading_render as R
+import re
 from tokenizers import Tokenizer
 tok = Tokenizer.from_file(os.environ['TOK'])
+def tok_n(text):
+    return sum(len(tok.encode(text[i:i + (1 << 20)], add_special_tokens=False).ids) for i in range(0, len(text), 1 << 20))
 data = open(os.environ['ROOT'] + '/request/prompt.md', 'rb').read()
 marker = data.find(b'## BOSS/Granite producer evidence'); block = data[marker:]; start = block.find(b'{')
 payload = json.loads(block[start:].decode('utf-8'))
@@ -39,6 +42,27 @@ for mode in modes:
     print('%-30s %10s %9s -> %10s %9s' % ('member', 'B', 'tok', 'B', 'tok'))
     for n, m in rep.members.items():
         print('%-30s %10d %9d -> %10d %9d   exact=%s' % (n[:30], m['delivered_bytes'], m['delivered_tokens'], m.get('rendered_bytes', 0), m['rendered_tokens'], rep.proof[n]['exact']))
+    print('   L7: derivable vectors', rep.derived_vectors, 'ranges', rep.ranges)
     if mode == 'identity':
         i = text.find('{"$tensors"'); print('--- tensor table head:', text[i:i + 900].replace('\n', ' ')[:900])
+# the dense digest, from the derived layers on this box (read-only: written under tmp/, never under session/)
+import frankie_box_digest_render as DG, math
+work = os.path.join(os.environ['ROOT'], 'session', 'work')
+receipt = json.load(open(os.path.join(work, 'derive.json')))
+L = {n: json.load(open(os.path.join(work, 'derived', n + '.json'))) for n in ('legacy_price', 'legacy_native_signed_flow', 'legacy_per_second_roll20', 'legacy_book_imbalance', 'legacy_structure_observables')}
+prices = L['legacy_price'].get('first', []) and None
+old = open(os.path.join(work, 'derivation-digest-full.md'), 'rb').read()
+ps = L['legacy_native_signed_flow']['per_second']; buys = [r['buy'] for r in ps]; sells = [r['sell'] for r in ps]; first = ps[0]['second'] if ps else L['legacy_per_second_roll20'].get('first_second', 0)
+roll = [float('nan') if v is None else v for v in L['legacy_per_second_roll20']['series']]
+# legacy_price rows are not kept whole in the layer file (first/last only): re-derive from the old digest's lines for the measurement
+price_rows = []
+for line in old.decode('utf-8', 'replace').split('\n'):
+    mm = re.match(r'^(\d+) (\S+) x(\S+) bid (\S+) ask (\S+)$', line)
+    if mm:
+        price_rows.append(dict(ts_recv=int(mm.group(1)), price=float(mm.group(2)), size=int(mm.group(3)), bid_px_00=float(mm.group(4)), ask_px_00=float(mm.group(5))))
+t0 = time.time()
+dense = DG.digest_text(receipt, L, price_rows, L['legacy_book_imbalance']['frames'], L['legacy_structure_observables']['groups'], roll, first, buys, sells)
+open(os.path.join(os.environ['ROOT'], 'tmp', 'derivation-digest-dense.md'), 'w', encoding='utf-8').write(dense)
+print(f'\n=== digest: old {len(old)} B / {tok_n(old.decode("utf-8", "replace"))} tok -> dense (ALL fields, self-checked) {len(dense.encode())} B / {tok_n(dense)} tok; {time.time() - t0:.0f}s')
+print(dense[:1200].replace('\n', ' | ')[:1200])
 PY

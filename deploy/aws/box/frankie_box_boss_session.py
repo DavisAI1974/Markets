@@ -54,6 +54,7 @@ SERVERLESS_KEY_PARAMETER = '/markets/frankie/runpod-serverless'   # the RunPod A
 SERVERLESS_HOST = os.environ.get('FRANKIE_SERVERLESS_HOST', 'api.runpod.ai')   # a local fake only in tests (FRANKIE_SERVERLESS_PLAIN_HTTP=1)
 SERVERLESS_POLL_SECONDS = 15
 READING_LEDGER = ROOT / 'reading-ledger.json'   # L6: every value digest read so far, by cycle; the merged notes per cycle
+PART_INPUT_TOKENS = 87_000                      # exact tokens per part when the tokenizer is present; reading.json part_input_tokens
 READING_CONFIG = ROOT / 'reading.json'    # {"tensor_mode": "values" | "identity"} (frankie_box_serverless_config.sh ACTION=reading)
 SERVERLESS_MAX_RESPONSE = 8 * 1024 * 1024
 POD_ID_DEFAULT = 'g7y3g2w1kor4l3'
@@ -680,7 +681,9 @@ class Session:
             write_json(path, value)
             receipt['layers'][name] = dict(status=value['status'], producer=value.get('producer'), reason=value.get('reason'), **witness(path), path=str(path))
         write_json(self.work / 'derive.json', receipt)
-        digest = self._derivation_digest(receipt, layers, prices, frames, structures, roll, first, buys, sells)
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_digest_render as DG
+        digest = DG.digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells)   # dense, exact, self-checked (DIGEST_V2)
         (self.work / 'derivation-digest-full.md').write_text(digest, encoding='utf-8')
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
         return receipt
@@ -801,6 +804,32 @@ class Session:
         return '\n'.join(lines) + '\n'
 
     # ---- reading (map-reduce over the delivered evidence) ------------------------------------------------
+    def _head_through_ledger(self, head_text):
+        """L6b: the request head's sections (## / ### headings) already read in an EARLIER cycle (same sha256 in the
+        reading ledger) render as one $read line each; this cycle's sections are recorded. Cycle 0 reads everything."""
+        ledger = load_json(READING_LEDGER) if READING_LEDGER.exists() else dict(schema='FRANKIE_BOX_READING_LEDGER_V1', values={}, cycles={})
+        starts = [m.start() for m in re.finditer(r'^#{1,3} ', head_text, re.M)]
+        if not starts:
+            return head_text
+        bounds = [(0, starts[0])] + list(zip(starts, starts[1:] + [len(head_text)]))
+        out, replaced = [], 0
+        for s, e in bounds:
+            section = head_text[s:e]
+            if len(section.encode('utf-8')) < 4096:
+                out.append(section); continue
+            digest = sha256_bytes(section.encode('utf-8'))
+            entry = ledger['values'].get(digest)
+            if entry and entry.get('cycle') != self.cycle:
+                title = section.split('\n', 1)[0][:160]
+                out.append(f'{title}\n{{"$read": "{digest}", "cycle": "{entry["cycle"]}", "bytes": {len(section.encode("utf-8"))}}} (this section was read whole in cycle {entry["cycle"]}; its notes are carried below)\n\n')
+                replaced += 1
+            else:
+                out.append(section)
+                ledger['values'].setdefault(digest, dict(cycle=self.cycle, member_path=f'head:{section.split(chr(10), 1)[0][:80]}', bytes=len(section.encode('utf-8')), kind='head-section'))
+        write_json(READING_LEDGER, ledger)
+        self._head_sections_read_before = replaced
+        return ''.join(out)
+
     def reading_corpus(self):
         """What the BOSS reads, WITHOUT LIMITS (Greg, 2026-09-21: take all of those limits out). prompt.md is the
         instruction, the feedback contract, the run-findings ledger, prior lessons, the preserved historical prompt (the
@@ -817,7 +846,7 @@ class Session:
         data = prompt.read_bytes()
         marker = data.find(b'## BOSS/Granite producer evidence')
         head = data if marker < 0 else data[:marker]
-        parts, members = [head.decode('utf-8', errors='replace')], []
+        parts, members = [self._head_through_ledger(head.decode('utf-8', errors='replace'))], []
         payload = None
         if marker >= 0:
             block = data[marker:]
@@ -907,7 +936,8 @@ class Session:
         notes_dir = self.work / f'notes-{corpus_sha[:12]}-unbounded'   # keyed by the corpus and the output policy: capped notes never mix in
         notes_dir.mkdir(exist_ok=True)
         write_json(self.work / 'reading-plan.json', dict(schema='FRANKIE_BOX_READING_PLAN_V1', corpus=dict(witness(corpus), path=str(corpus)),
-                   notes_dir=str(notes_dir), chunk_bytes=CHUNK_BYTES, chunks=[dict(index=i, start=s, end=e) for i, (s, e) in enumerate(chunks)]))
+                   notes_dir=str(notes_dir), chunk_bytes=CHUNK_BYTES, part_input_tokens=getattr(self, '_part_tokens', None),
+                   chunks=[dict(index=i, start=s, end=e) for i, (s, e) in enumerate(chunks)]))
         header = ('You are Frankie, the BOSS: the principal session for cycle {cycle} of the 20211003 two-cycle run, reading the delivered '
                   'evidence on your box. Request {req}. This is part {i} of {n} of the delivered evidence (the request prompt with the '
                   'producer-evidence members decoded; bytes {s}-{e} of the reading corpus); '
@@ -943,17 +973,52 @@ class Session:
                                                           merged_notes_sha256=sha256_bytes((self.work / 'merged-notes.md').read_bytes()), at=time.time())
         write_json(READING_LEDGER, ledger)
 
-    @staticmethod
-    def _chunks(data):
-        chunks, start = [], 0
-        while start < len(data):
-            end = min(len(data), start + CHUNK_BYTES)
-            if end < len(data):
-                cut = data.rfind(b'\n', start + CHUNK_BYTES // 2, end)
-                if cut > start:
-                    end = cut + 1
-            chunks.append((start, end))
-            start = end
+    def _tokenizer(self):
+        """The pinned Granite tokenizer when it is on the box (tmp/granite_tokenizer.json, sha 883975314d587437...)."""
+        try:
+            from tokenizers import Tokenizer
+            path = ROOT / 'tmp' / 'granite_tokenizer.json'
+            if path.exists() and sha256_bytes(path.read_bytes()).startswith('883975314d587437'):
+                return Tokenizer.from_file(str(path))
+        except Exception:
+            pass
+        return None
+
+    def _chunks(self, data):
+        """Parts of the corpus. With the tokenizer on the box the parts are sized by EXACT tokens (reading.json
+        `part_input_tokens`, default PART_INPUT_TOKENS) on line boundaries, so the output room per part is what the policy
+        says (the remaining context) rather than what a byte estimate guessed; without it, CHUNK_BYTES on line boundaries."""
+        tokenizer = self._tokenizer()
+        target = PART_INPUT_TOKENS
+        if READING_CONFIG.exists():
+            target = int(load_json(READING_CONFIG).get('part_input_tokens', PART_INPUT_TOKENS))
+        if tokenizer is None:
+            chunks, start = [], 0
+            while start < len(data):
+                end = min(len(data), start + CHUNK_BYTES)
+                if end < len(data):
+                    cut = data.rfind(b'\n', start + CHUNK_BYTES // 2, end)
+                    if cut > start:
+                        end = cut + 1
+                chunks.append((start, end))
+                start = end
+            return chunks
+        if not 8_000 <= target <= CONTEXT - 8_192:
+            self.refuse(f'part_input_tokens {target} leaves no room for the answer or none for the part')
+        lines, chunks, start, offset, count = data.split(b'\n'), [], 0, 0, 0
+        for line in lines:
+            piece = line + b'\n'
+            n = len(tokenizer.encode(piece.decode('utf-8', 'replace'), add_special_tokens=False).ids)
+            if count and count + n > target:
+                chunks.append((start, offset))
+                start, count = offset, 0
+            offset += len(piece); count += n
+            while count > target:      # one line longer than a part: it becomes its own part(s) by bytes
+                chunks.append((start, offset)); start, count = offset, 0
+        offset = min(offset, len(data))
+        if start < len(data):
+            chunks.append((start, len(data)))
+        self._part_tokens = target
         return chunks
 
     def _merge(self, notes, level):
@@ -1143,7 +1208,8 @@ class Session:
         self.labels()
         self.engine_reach()
         self.phase('deriving')
-        if not (self.work / 'derivation-digest-full.md').exists():   # the whole digest (no limits); an older cut digest is regenerated
+        digest_path = self.work / 'derivation-digest-full.md'
+        if not digest_path.exists() or 'DIGEST_V2' not in digest_path.read_text(encoding='utf-8', errors='replace')[:400]:   # whole and dense (DIGEST_V2); an older digest is regenerated
             self.derive()
         self.phase('reading')
         if not (self.work / 'merged-notes.md').exists():
