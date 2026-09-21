@@ -2910,3 +2910,26 @@ the next restart ~= head 191 KB (ledgered from cycle 1) + members 151,705 + dige
 before the render. Next shrink: the digest's two tables (column-level dictionary / delta encoding on
 legacy_structure_observables and legacy_book_imbalance, both exact and parse-back proven like the rest).
 
+### 12:1xZ 09-21: DIGEST_V3 -- the derivation digest is 146,765 tokens on the real layers (from 559,796); the whole read ~4 parts
+
+Built `frankie_box_digest_render.py` DIGEST_V3 (36bfec80, 3f05753b), every transform exact and parse-back proven before the
+digest is written (`render_layers` raises, naming the table and the first differing row): every structure column the
+pinned producer computes from the row's own strings, lists and counts renders as derived (terminal action/side, component
+and character counts, mirror identity, fill class and signature, price span, carried family, discovery status,
+candidate_family_id = "ow-" + sha256 of the canonical descriptor), the book `transition` recomputed from the previous frame
+(it was a 100-character sign string per row plus a 15k-token dictionary line); a column derived on EVERY row is declared once
+in the header (`=name`) and omitted from the rows, a constant column likewise (`^name`, `constants:` line); `^` = the value
+repeated from the previous row; ts_event as an offset from the row's ts_recv (`~`); the structure table's timestamps taken
+from the book table row for row (checked, `CROSS_DERIVED`); order-id lists as first-plus-differences (`I`), disposition
+lists as positions in order_ids (`K`); the dictionary holds only values that repeat (a unique value is inline, `S...`; the
+first digest could not render a string starting `J[` -- a tab or such a string now round-trips). `tests/
+test_frankie_box_digest_render.py` pins every mark and the negative cases (a tampered candidate id stays literal, a
+differing timestamp is not declared cross-derived). The first box run (35598259830) failed to parse back the real book
+table (`~` resolved before its pair on the real column order); fixed by resolving offsets after the row's literals
+(3f05753b). MEASURED (35598479176, pinned tokenizer): digest 1,344,422 B / 559,796 tokens -> 202,893 B / 146,765 tokens;
+legacy_book_imbalance 75,921 (from 111,916), legacy_structure_observables 69,340 (from 306,053); members unchanged at
+151,705 (L7 live). Whole corpus at the next restart ~= head (191 KB, ledgered from cycle 1) + 151,705 + 146,765 ~= 4-5
+parts of 87k, against 163 before the render and 13 after its first version. What remains is per-cell cost (2,282 rows x
+the literal columns, ~2 tokens a cell) and `files/state.c15.json` 127,003 tokens (42 tensors as identity rows; values
+mode would be ~2.2M). The session regenerates any digest whose head is not DIGEST_V3 at `restart_session`.
+

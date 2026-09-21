@@ -88,6 +88,8 @@ it; the stacked codec needs exactly 0.62.0), fixed by `frankie_box_venv_pins.sh`
 digest 559,796 -> 419,461 (structure_observables 306k, book_imbalance 112k = the next targets). Whole corpus ~8
 parts vs 163. RunPod: plugin runpod@runpod 1.2.0 installed; the MCP needs Greg's OAuth sign-in (`/mcp` -> runpod).
 Handoff 12:0xZ.
+12:1xZ: DIGEST_V3 measured on the real layers (35598479176): the digest 559,796 -> 146,765 tokens (book 75,921, structures
+69,340; every transform exact, parse-back proven, unit-tested). Whole corpus ~4-5 parts of 87k vs 163. Handoff 12:1xZ.
 
 ## READ FIRST (08:00Z 09-21 handoff): FRANKIE'S BOX IS UP AND EMPTY; JOB 0 = HIS HARNESS; the run HOLDS for his response
 
