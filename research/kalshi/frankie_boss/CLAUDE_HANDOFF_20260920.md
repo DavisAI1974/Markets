@@ -3548,3 +3548,15 @@ witnesses match. VERDICT: cycle 1 needs NOTHING from this response to start. Dee
 absent frozen-structure content for the comparison step, the unparseable knowledge_retrieval output, the partial
 movies, the unfiled classroom claim. NEXT: the recorder (`frankie_host_record_principal_response.yml`, source_ref
 root/cycle-00-response, the three JSON paths under runs/20211003/root/, cycle_index 00) on Greg's go.
+
+### 17:1xZ 09-21: GREG: "unfreeze the structure content before cycle 1, not big builds" -- DONE (commit above)
+
+Measured: the request's knowledge table (historical-prompt.md, "Knowledge layers: 22 of 22 applicable DELIVERED")
+delivers the nine frozen_learned_structure layers BY PATH: 59 distinct repo files with 12-char digests (contracts,
+freezes, findings, brain proposals, the chain scripts), 467,538 bytes; Frankie saw the table, not the files, hence
+no `compared` layer. Now a standing brain entry `brain/frozen-learned-structure/` is rebuilt from the box's checkout
+at every session start: 57 files match the delivered digests and are included (447,706 bytes, ~1.5 reading parts);
+2 excluded with reason (research/kalshi/NG_EXHAUSTION_FRANKIE_{DATA_FEED,SOURCE_FILE}_INVENTORY_20260824.md were
+edited on 08-24 after delivery; not a line-ending difference; include flippable in the manifest). Loaded for every
+cycle before the cycle entries, headed as the frozen learned structure to compare against layer by layer. Dry run
+over the real prompt and checkout: 9 layers, 59 named, 57 included, corpus text 458,932 bytes.
