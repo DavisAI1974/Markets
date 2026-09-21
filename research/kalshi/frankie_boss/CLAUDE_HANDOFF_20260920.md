@@ -3629,3 +3629,18 @@ INSIDE the host script (the host tools checkout 35f857f0 was never moved mid-run
    host runner now resumes on its own (verify, native learning, readback, completion, readiness cycle-01); read-only
    `frankie_host_cycle_status.yml` probe dispatched after. The shipped-recorder mechanism stays until the host
    checkout is advanced (then the pinned copy is the same file). Skills: debugging-and-error-recovery, git-workflow.
+
+### 17:4xZ 09-21: THE HOST RUNNER CONSUMED THE RECORDED RESPONSE AND STOPPED (ValueError)
+
+Read-only probe run 35633877716 (17:45:01Z), two minutes after the record: the runner's last status line is
+`{"status": "stopped", "error_type": "ValueError", "frames": [{... base_events.py run_until_complete}, {...
+research/kalshi/frankie_boss/operation...` (cut at the probe's line width); the progress record
+`operation_failed`, `completed 1, percent 100`, error_type ValueError, 5.7 s without progress; the "runner process"
+section is EMPTY (pid 3828, alive since 02:56:58Z, is gone: the runner stopped itself, nothing stopped it).
+`principal/session-response.json` (127,450 B, 17:43:03Z) is in place; the recorder's receipt stands. Hypothesis to
+confirm from the full frames (cycle report + host diag dispatched, read-only): the runner's own recovery of the
+response runs the host checkout's OLD classroom comparison (raw equality, lists vs tuples), the same defect the
+recorder hit at run 35632927377; the runner is a process with 35f857f0's code, so no shipped script reaches it.
+The recorder's shipped-source route cannot fix the runner: that needs the host checkout advanced to a commit
+carrying the json_form fix (this branch), then the code-bound-state supersede and a pipeline re-dispatch
+(host actions with the documented consequence; Greg's go).
