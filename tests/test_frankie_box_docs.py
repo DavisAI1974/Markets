@@ -156,13 +156,25 @@ def test_build_docs_carries_the_teachback_the_bedrock_receipts_and_ledgers_and_r
     assert 'exhaustion-teachback.md' in names and 'bedrock-receipt.md' in names and 'bedrock-result.md' in names
     assert (out / 'exhaustion-teachback.md').read_text() == '# The exhaustion and D teach-back\n'
     assert '"groups": 3' in (out / 'bedrock-receipt.md').read_text()
-    for name in ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl', 'legacy_observable_rows.jsonl'):
-        assert f'bedrock/ledgers/{name}' in names and (out / 'bedrock' / 'ledgers' / name).read_bytes() == (work / 'bedrock' / 'ledgers' / name).read_bytes()
-        entry = next(e for e in index['docs'] if e['name'] == f'bedrock/ledgers/{name}')
-        assert entry['sha256'] == hashlib.sha256((work / 'bedrock' / 'ledgers' / name).read_bytes()).hexdigest() and 'exact ledger' in entry['what']
     referenced = {r['name']: r for r in index['referenced']}
+    for name in ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl', 'legacy_observable_rows.jsonl'):
+        # the ledgers stay on the box (data, not code; the pusher ships docs/*.md and the index): referenced, never copied
+        assert f'bedrock/ledgers/{name}' not in names and not (out / 'bedrock').exists()
+        entry = referenced[f'bedrock/ledgers/{name}']
+        assert entry['sha256'] == hashlib.sha256((work / 'bedrock' / 'ledgers' / name).read_bytes()).hexdigest() and 'kept on the box' in entry['what']
     assert 'derived/clock_event_time.json' in referenced and 'derived/legacy_price.json' not in referenced
     assert referenced['derived/clock_event_time.json']['sha256'] == hashlib.sha256(b'{"status": "derived"}').hexdigest()
     assert 'DIGEST_V6' in referenced['derived/clock_event_time.json']['what']
     readme = (out / 'README.md').read_text()
     assert 'exhaustion-teachback.md' in readme and 'bedrock/ledgers/exact_member_rows.jsonl' in readme and 'derived/clock_event_time.json' in readme
+
+
+def test_build_docs_records_that_the_bedrock_layer_references_could_not_be_read(tmp_path):
+    work, out = tmp_path / 'work', tmp_path / 'out'
+    work.mkdir()
+    (work / 'derive.json').write_text('{not json')
+    index = docs.build_docs(work, out, '00')
+    errors = [e for e in index['docs'] if 'error' in e]
+    assert any(e['name'] == 'derived/*' and 'could not be read from derive.json' in e['error'] for e in errors)
+    assert any(e['name'] == 'derive.json' for e in errors)       # the receipt loop records the same file
+    assert 'NOT RENDERED' in (out / 'README.md').read_text()

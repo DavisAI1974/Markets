@@ -15,10 +15,17 @@ DIR="$REPO/.producers-${COMMIT:0:8}"
 export GIT_TERMINAL_PROMPT=0
 
 if [ -e "$DIR" ]; then
-  head=$(git -C "$DIR" rev-parse HEAD 2>/dev/null) || { echo "refusing: $DIR exists and is not a git worktree (nothing moved)"; exit 2; }
+  # a worktree is identified by git's own registry and by its top level being the directory itself: a plain directory at
+  # this path would otherwise resolve the PARENT repository's HEAD and be misread
+  git worktree list --porcelain | grep -Fxq "worktree $DIR" || { echo "refusing: $DIR exists and is not the producers worktree (nothing moved)"; exit 2; }
+  top=$(git -C "$DIR" rev-parse --show-toplevel 2>/dev/null) || { echo "refusing: $DIR is not a git checkout (nothing moved)"; exit 2; }
+  [ "$top" = "$DIR" ] || { echo "refusing: $DIR is inside the checkout $top, not the producers worktree (nothing moved)"; exit 2; }
+  head=$(git -C "$DIR" rev-parse HEAD)
   [ "$head" = "$COMMIT" ] || { echo "refusing: $DIR is at $head, not the pinned $COMMIT (nothing moved)"; exit 2; }
   echo "producers worktree present at the pin"
 else
+  # a stale registration (the directory gone, git's metadata kept) would make the add fail: prune only when the path is absent
+  git worktree prune
   if ! git cat-file -e "$COMMIT^{commit}" 2>/dev/null; then
     # a shallow CI checkout: fetch the pinned commit itself first (one commit), then the lineage as a fallback
     git fetch -q --depth 1 origin "$COMMIT" 2>/dev/null || git fetch -q origin "$LINEAGE"

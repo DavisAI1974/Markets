@@ -245,7 +245,8 @@ def run(records, container, out_dir, producers, cycle, code_commit, day):
     ledgers = {}
     for name in LEDGER_FILES:
         path = out_dir / 'ledgers' / name
-        rows = sum(1 for _ in open(path, 'rb'))
+        with open(path, 'rb') as handle:
+            rows = sum(1 for _ in handle)
         ledgers[name] = dict(witness(path), path=str(path), rows=rows)
     receipt = dict(schema='FRANKIE_BOX_BEDROCK_RUN_RECEIPT_V1', at=time.time(), cycle=str(cycle), seconds=round(time.time() - started, 3),
                    producers=str(producers), producers_commit=str(code_commit), producers_lineage=PIN_LINEAGE,

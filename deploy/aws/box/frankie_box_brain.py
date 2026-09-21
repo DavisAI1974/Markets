@@ -83,8 +83,8 @@ def write_entry(work, out, brain, cycle, include_analysis=True):
             doc = '# The bedrock traversal receipt (bedrock/receipt.json: the pinned producers\' own driver on this cycle\'s rows; identity, arguments, ledgers, reconciliation, sections fed)\n\n```json\n' + \
                 json.dumps(json.loads(bedrock.read_bytes()), indent=1, sort_keys=True, ensure_ascii=False) + '\n```\n'
             put('bedrock.md', doc.encode('utf-8'), bedrock, 'calculation findings: the bedrock traversal receipt (the twenty bedrock layers\' provenance)')
-        except Exception:
-            pass
+        except Exception as error:
+            entries.append(dict(name='bedrock.md', error=f'{type(error).__name__}: {error}', source=str(bedrock), include=False))
     derived = work / 'derived'
     if derived.is_dir():
         files = [dict(name=f.name, bytes=f.stat().st_size, sha256=sha256_bytes(f.read_bytes())) for f in sorted(derived.iterdir()) if f.is_file()]
@@ -191,6 +191,11 @@ def write_frozen_entry(historical_prompt, repo, brain):
     repo, entry_dir = Path(repo), Path(brain) / FROZEN_DIR
     text = Path(historical_prompt).read_text(encoding='utf-8', errors='replace')
     files = frozen_files_from_prompt(text)
+    repo_root = Path(repo).resolve()
+    for (path, _prefix) in list(files):
+        # containment: a path the delivered prompt names is data; it must resolve inside the checkout (never .. or absolute)
+        if Path(path).is_absolute() or '..' in Path(path).parts or not (repo_root / path).resolve().is_relative_to(repo_root):
+            raise ValueError(f'the delivered prompt names a frozen file outside the checkout: {path!r}')
     entry_dir.mkdir(parents=True, exist_ok=True)
     entries = []
     for (path, prefix), layers in sorted(files.items()):

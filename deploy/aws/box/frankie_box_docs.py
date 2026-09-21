@@ -303,11 +303,14 @@ def build_docs(work, out, cycle):
                 put('bedrock-' + name[:-5] + '.md', _json_doc('bedrock ' + name[:-5], p).encode('utf-8'), p, 'the bedrock traversal ' + name[:-5] + ' (the pinned producers\' own driver on this cycle\'s rows), rendered as JSON in Markdown')
             except Exception as error:
                 entries.append(dict(name='bedrock-' + name, error=f'{type(error).__name__}: {error}', source=str(p)))
+    referenced = []
     ledgers = bedrock / 'ledgers'
     if ledgers.is_dir():
+        # the three exact ledgers STAY ON THE BOX (git = code, S3 = data; the day's ledgers are about 1 GiB; the pusher ships
+        # docs/*.md and the index): witnessed here by name, bytes and sha256 so the published index matches the published tree
         for p in sorted(ledgers.glob('*.jsonl')):
-            put(f'bedrock/ledgers/{p.name}', p.read_bytes(), p, 'one exact ledger of the bedrock traversal, whole, in emission order (JSONL, sorted keys); reconciled against its counter on the box')
-    referenced = []
+            referenced.append(dict(name=f'bedrock/ledgers/{p.name}', bytes=p.stat().st_size, sha256=sha256_bytes(p.read_bytes()), source=str(p),
+                                   what='one exact ledger of the bedrock traversal, whole, in emission order (JSONL, sorted keys), reconciled against its counter on the box; kept on the box under the session work directory (not published: data, not code)'))
     corpus = work / 'reading-corpus-full.md'
     if corpus.is_file():
         referenced.append(dict(name='reading-corpus-full.md', bytes=corpus.stat().st_size, sha256=sha256_bytes(corpus.read_bytes()),
@@ -316,8 +319,9 @@ def build_docs(work, out, cycle):
     if derive.is_file():
         try:
             layers = json.loads(derive.read_bytes()).get('layers') or {}
-        except Exception:
+        except Exception as error:
             layers = {}
+            entries.append(dict(name='derived/*', error=f'the bedrock layer references could not be read from derive.json: {type(error).__name__}: {error}', source=str(derive)))
         for name, entry in sorted(layers.items()):
             path = Path(entry.get('path') or '')
             if entry.get('bedrock') and path.is_file():

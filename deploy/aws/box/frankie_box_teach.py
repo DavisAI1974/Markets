@@ -169,7 +169,10 @@ def facts(work, brain, producers):
         if not found:
             raise ValueError(f'no included frozen learned-structure file for {layer} in the brain\'s frozen entry ({manifest_path})')
         for e in found:
-            path = brain / FROZEN_DIR / e['name']
+            name = str(e.get('name') or '')
+            path = (brain / FROZEN_DIR / name)
+            if not name or '/' in name or '\\' in name or name in ('.', '..') or path.resolve().parent != (brain / FROZEN_DIR).resolve():
+                raise ValueError(f'the frozen entry names a file outside {FROZEN_DIR}: {name!r}')
             data = path.read_bytes() if path.is_file() else None
             if data is None or sha256_bytes(data) != e.get('sha256'):
                 raise ValueError(f'the frozen file {e["name"]} for {layer} is absent or differs from its manifest digest')

@@ -307,3 +307,15 @@ def test_teach_runs_after_the_classroom_and_before_writing_and_never_enters_the_
     assert "if not (self.work / 'teach' / 'exhaustion-teachback.json').exists():" in run
     writing = text.split('    def writing(self):')[1].split('    def push(')[0]
     assert 'teach' not in writing.split('response = dict(')[1].split('classroom = self.classroom_ledgers()')[0]
+
+
+def test_a_frozen_entry_naming_a_file_outside_the_frozen_directory_is_refused(tmp_path, monkeypatch):
+    work = work_dir(tmp_path, monkeypatch)
+    brain = brain_dir(tmp_path)
+    manifest_path = brain / 'frozen-learned-structure' / 'MANIFEST.json'
+    manifest = json.loads(manifest_path.read_bytes())
+    for bad in ('../MANIFEST.json', 'sub/x.md', '..'):
+        manifest['entries'][0]['name'] = bad
+        manifest_path.write_text(json.dumps(manifest))
+        with pytest.raises(ValueError, match='outside frozen-learned-structure'):
+            T.facts(work, brain, P.require_producers())

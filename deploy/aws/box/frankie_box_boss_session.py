@@ -687,6 +687,9 @@ class Session:
     def derive(self):
         pin = self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
+        moved = _box_module('frankie_box_bedrock')._move_aside(derived)   # an earlier derivation is moved aside with a receipt, never overwritten
+        if moved:
+            self.note(f'derive: the earlier derived files moved aside to {moved} (receipted)')
         derived.mkdir(exist_ok=True)
         status = {}
         rows_path = ROOT / 'data' / f'prefix-{self.cycle}.sqlite'
@@ -854,14 +857,14 @@ class Session:
         and printed, reported to Greg before the rerun is dispatched (success criterion 6). No model call."""
         digest_path = self.work / 'derivation-digest-full.md'
         raw = digest_path.read_bytes()
-        tokens, basis = None, None
+        tokens, basis, tokenizer_error = None, None, None
+        tok_path = ROOT / 'tmp' / 'granite_tokenizer.json'
         try:
             from tokenizers import Tokenizer
-            tok_path = ROOT / 'tmp' / 'granite_tokenizer.json'
             if tok_path.exists() and sha256_bytes(tok_path.read_bytes()).startswith('883975314d587437'):
                 tokens, basis = len(Tokenizer.from_file(str(tok_path)).encode(raw.decode('utf-8', errors='replace')).ids), 'granite tokenizer'
-        except Exception:
-            tokens = None
+        except Exception as error:
+            tokens, tokenizer_error = None, f'{type(error).__name__}: {error}'   # a present tokenizer that fails is recorded, never a silent estimate
         if tokens is None:
             tokens, basis = int(len(raw) / BYTES_PER_TOKEN), 'estimate: bytes / %s' % BYTES_PER_TOKEN
         parts = -(-tokens // PART_INPUT_TOKENS)
@@ -869,13 +872,14 @@ class Session:
         tables = [line[len('### table '):].split(' ', 1)[0] for line in raw.decode('utf-8', errors='replace').splitlines() if line.startswith('### table ')]
         measurement = dict(schema='FRANKIE_BOX_DERIVE_ONLY_MEASUREMENT_V1', at=time.time(), cycle=self.cycle,
                            digest=dict(path=str(digest_path), bytes=len(raw), sha256=sha256_bytes(raw), tokens=tokens, token_basis=basis,
+                                       tokenizer_present=tok_path.exists(), tokenizer_error=tokenizer_error,
                                        **{'parts_at_%d_tokens' % PART_INPUT_TOKENS: parts}, tables=tables),
                            bedrock=(derive.get('bedrock') or {}) and dict(layers=len(derive['bedrock'].get('layers') or []), derived=derive['bedrock'].get('derived'),
                                                                            could_not=derive['bedrock'].get('could_not'), span_seconds=derive['bedrock'].get('span_seconds'),
                                                                            groups=derive['bedrock'].get('groups'), ledgers=derive['bedrock'].get('ledgers')),
                            legacy_reading=dict(parts=4, part_input_tokens=PART_INPUT_TOKENS, note='cycle 0 read 4 parts of 87k on DIGEST_V5 (handoff 2026-09-21)'))
         write_json(self.work / 'derive-only-measurement.json', measurement)
-        self.note(f'DERIVE_ONLY digest {len(raw)} bytes, {tokens} tokens ({basis}), {parts} parts at {PART_INPUT_TOKENS} tokens; {len(tables)} tables')
+        self.note(f'DERIVE_ONLY digest {len(raw)} bytes, {tokens} tokens ({basis}' + (f'; TOKENIZER PRESENT BUT FAILED: {tokenizer_error}' if tokenizer_error else '') + f'), {parts} parts at {PART_INPUT_TOKENS} tokens; {len(tables)} tables')
         return measurement
 
     def _derive_needed(self):

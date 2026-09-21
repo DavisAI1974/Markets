@@ -189,3 +189,25 @@ def test_write_entry_carries_the_teachback_and_the_bedrock_receipt_when_present(
     assert teach['include'] is True and 'exhaustion' in teach['kind'] and (tmp_path / 'brain' / 'cycle-00' / 'exhaustion-teachback.md').read_bytes() == b'# The exhaustion and D teach-back\n'
     receipt = [e for e in m['entries'] if e['name'] == 'bedrock.md'][0]
     assert receipt['include'] is True and 'bedrock' in receipt['kind'] and '"groups": 3' in (tmp_path / 'brain' / 'cycle-00' / 'bedrock.md').read_text()
+
+
+def test_write_entry_records_a_bedrock_receipt_it_could_not_render(cycle0, tmp_path):
+    work, out = cycle0
+    (work / 'bedrock').mkdir()
+    (work / 'bedrock' / 'receipt.json').write_text('{broken')
+    m = brain.write_entry(work, out, tmp_path / 'brain', '00')
+    entry = [e for e in m['entries'] if e['name'] == 'bedrock.md'][0]
+    assert 'error' in entry and entry['include'] is False and not (tmp_path / 'brain' / 'cycle-00' / 'bedrock.md').exists()
+
+
+def test_write_frozen_entry_refuses_a_delivered_path_outside_the_checkout(tmp_path):
+    repo = tmp_path / 'repo'
+    (repo / 'research').mkdir(parents=True)
+    (repo / 'research' / 'STUDY.md').write_bytes(b'# study\n')
+    prompt = tmp_path / 'historical-prompt.md'
+    for bad in ('../secret.md', '/etc/passwd', 'research/../../secret.md'):
+        prompt.write_text('| `learned_dipoles_and_geometry` | frozen_learned_structure | DELIVERED | `' + bad + '` `000000000000` |\n')
+        with pytest.raises(ValueError, match='outside the checkout'):
+            brain.write_frozen_entry(prompt, repo, tmp_path / 'brain')
+    prompt.write_text('| `learned_dipoles_and_geometry` | frozen_learned_structure | DELIVERED | `research/STUDY.md` `000000000000` |\n')
+    brain.write_frozen_entry(prompt, repo, tmp_path / 'brain')      # a path inside the checkout is fine

@@ -131,6 +131,9 @@ def _validate_bedrock(pin, pins, cycle_index):
         raise ValueError('cycle calculation pin for cycle %d: bedrock must be a non-empty list of pin entries' % cycle_index)
     registry = {layer for _, layers in REGISTRY_CALCULATION_SET for layer in layers}
     layers = []
+    groups = [entry.get('group') for entry in bedrock if isinstance(entry, dict)]
+    if len(groups) != len(set(groups)):
+        raise ValueError('cycle calculation pin for cycle %d: bedrock names a group twice' % cycle_index)
     for entry in bedrock:
         if type(entry) is not dict:
             raise ValueError('cycle calculation pin for cycle %d: bedrock entry must be a pin-shaped mapping' % cycle_index)

@@ -81,12 +81,15 @@ derive_only() {
   # Checkpoint E (PLAN_CYCLE0_BEDROCK_20260921.md, on Greg's go; box only, no model call): verify + labels + derive (the
   # legacy five and the bedrock through the pinned producers) + the DIGEST_V6 + its token/part measurement, in the
   # foreground under this SSM command. Refuses while the cycle session unit runs (its checkout would move under it).
-  if systemctl is-active --quiet "$UNIT.service"; then echo "$UNIT is running: derive_only waits (its checkout would move the code under the running session)"; return 2; fi
-  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
+  for U in "$UNIT" "frankie-heartbeat-$CYCLE" "frankie-correction-$CYCLE"; do
+    if systemctl is-active --quiet "$U.service"; then echo "$U is running: derive_only waits (its checkout would move the code under the running unit)"; return 2; fi
+  done
+  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD || { echo "markets fetch/checkout of $MARKETS_REF failed; nothing derived"; return 2; }
+  echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD) ($MARKETS_REF)"
   echo "producers HEAD $(git -C "$ROOT/producers" rev-parse HEAD 2>/dev/null || echo missing)"
   "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage derive_only || { echo "derive_only failed (exit $?)"; return 3; }
   M="$S/work/derive-only-measurement.json"; [ "$CYCLE" = "00" ] || M="$S/work-$CYCLE/derive-only-measurement.json"
-  [ -s "$M" ] && { echo "### derive-only measurement"; cat "$M"; }
+  [ -s "$M" ] && { echo "### derive-only measurement (markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD))"; cat "$M"; }
 }
 fetch_correction() {
   # The host's retained classroom-correction-request.json, exported by frankie_host_export_principal_request.yml

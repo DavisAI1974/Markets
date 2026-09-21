@@ -131,3 +131,10 @@ def test_a_bedrock_layer_outside_the_registry_is_refused(tmp_path):
     document['pins'][0]['bedrock'][0] = dict(ghost)
     with pytest.raises(ValueError, match='bedrock layer ghost_layer is not a registry calculation layer'):
         load_cycle_calculation_pin(0, write(tmp_path, document))
+
+
+def test_a_bedrock_naming_a_group_twice_is_refused(tmp_path):
+    document = committed()
+    document['pins'][0]['bedrock'].append(json.loads(json.dumps(document['pins'][0]['bedrock'][0])))
+    with pytest.raises(ValueError, match='bedrock names a group twice'):
+        load_cycle_calculation_pin(0, write(tmp_path, document))

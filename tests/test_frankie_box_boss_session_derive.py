@@ -213,6 +213,8 @@ def test_derive_only_is_a_stage_that_derives_and_measures_without_the_engine():
     sh = (BOX / 'frankie_box_session.sh').read_text()
     assert 'derive_only) derive_only ;;' in sh and '--stage derive_only' in sh and 'derive_only()' in sh
     assert 'ACTION must be start, status, preflight, verify, restart_session, fetch_correction, correction or derive_only' in sh
+    assert 'markets fetch/checkout of $MARKETS_REF failed; nothing derived' in sh and '"frankie-heartbeat-$CYCLE" "frankie-correction-$CYCLE"' in sh
+    assert 'M="$S/work-$CYCLE/derive-only-measurement.json"' in sh and 'git worktree' not in sh
 
 
 def test_the_legacy_five_are_byte_identical_with_and_without_the_bedrock(tmp_path, monkeypatch):
@@ -249,3 +251,44 @@ def test_the_run_loop_checks_the_request_pin_right_after_verify_before_any_engin
     text = (BOX / 'frankie_box_boss_session.py').read_text()
     run = text.split('    def _run(self, stage):')[1]
     assert run.index('self.verify()') < run.index('self._pin_matches_request()') < run.index('self.brain_ready()') < run.index('self.engine_reach()')
+
+
+def test_a_second_derive_moves_the_earlier_derived_files_aside_with_a_receipt(tmp_path, monkeypatch):
+    s = stub(tmp_path, monkeypatch)
+    session.Session.derive(s)
+    first = (s.work / 'derived' / 'legacy_price.json').read_bytes()
+    session.Session.derive(s)
+    moved = [p for p in s.work.iterdir() if p.name.startswith('derived-superseded-')]
+    receipts = list(s.work.glob('derived-supersede-*.json'))
+    assert len(moved) == 1 and len(receipts) == 1 and (moved[0] / 'legacy_price.json').read_bytes() == first
+    assert json.loads(receipts[0].read_bytes())['moved_to'] == str(moved[0])
+    assert any('moved aside' in n for n in s._notes) and (s.work / 'derived' / 'legacy_price.json').read_bytes() == first
+
+
+def test_measure_digest_uses_the_granite_tokenizer_when_present_and_records_a_failing_one(tmp_path, monkeypatch):
+    import types
+    s = stub(tmp_path, monkeypatch)
+    s._measure_digest = lambda: session.Session._measure_digest(s)
+    (s.work / 'derivation-digest-full.md').write_text('# Derivation digest DIGEST_V6 (x)\nrow row row\n', encoding='utf-8')
+    tok = session.ROOT / 'tmp' / 'granite_tokenizer.json'
+    tok.parent.mkdir(parents=True, exist_ok=True)
+    tok.write_bytes(b'{"stub": true}')
+    real = session.sha256_bytes
+    monkeypatch.setattr(session, 'sha256_bytes', lambda data: '883975314d587437' + 'f' * 48 if data == b'{"stub": true}' else real(data))
+    class Encoded:
+        ids = list(range(37))
+    class Tokenizer:
+        @staticmethod
+        def from_file(path):
+            return types.SimpleNamespace(encode=lambda text: Encoded())
+    monkeypatch.setitem(sys.modules, 'tokenizers', types.SimpleNamespace(Tokenizer=Tokenizer))
+    m = s._measure_digest()
+    assert m['digest']['tokens'] == 37 and m['digest']['token_basis'] == 'granite tokenizer' and m['digest']['tokenizer_present'] is True and m['digest']['tokenizer_error'] is None
+    class Broken:
+        @staticmethod
+        def from_file(path):
+            raise RuntimeError('vocab file truncated')
+    monkeypatch.setitem(sys.modules, 'tokenizers', types.SimpleNamespace(Tokenizer=Broken))
+    m = s._measure_digest()
+    assert m['digest']['token_basis'].startswith('estimate') and m['digest']['tokenizer_present'] is True and 'vocab file truncated' in m['digest']['tokenizer_error']
+    assert any('TOKENIZER PRESENT BUT FAILED' in n for n in s._notes)
