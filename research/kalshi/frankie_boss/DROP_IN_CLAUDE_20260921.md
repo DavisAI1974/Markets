@@ -5,7 +5,32 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
-## READ FIRST (22:20Z handoff): a runner is ALIVE on the host; the full rerun round starts after it stops
+## READ FIRST (00:20Z 09-21 handoff): the whole-cycle round is IN FLIGHT, blocked only on the Pod's GPU
+
+State (every receipt in `CLAUDE_HANDOFF_20260920.md` 22:55Z to 00:20Z): the host runner ended on its own at
+~22:31Z (never killed). Tasks A and B are DONE and committed (pins `knowledge/CYCLE_CALCULATION_PINS.json`,
+rendered into every request instruction, tested; exhaustion-objective audit + restorations, ledger entries).
+The round ran in the workflows' order on branch `claude/cycle-0-full-rerun-lr6e14`: host advanced to
+0bb96bfa; cycle 00 superseded whole (35545474954); declaration `supersede_cycle=true` (35545569240);
+pipeline dispatch 35544336615 minted the cycle-0 request, IDENTICAL sha a7b72cf9 (the pin changes no
+bytes of it), critic POST ended `same_critic_attempt_pending_or_ambiguous` because Pod 8vqdacl5t61rjx is
+EXITED (the observer's lifecycle stops it after each critic call, so EVERY critic call needs the observer
+round; never skip it, Greg); readiness superseded (35545639823); observer run 35545909225 admitted with the
+initial-start witness 1789916729.1158657 and observing (`observe_existing_start`), waiting for boot frames.
+BLOCKER: the Pod's host has no free L40S; start refused 15 times (35546214604). A 5.5 h start retry loop is
+running (35547296498, `frankie_pod_control.yml` start, retry 19800 s). The replacement-Pod path
+(`frankie_pod_prepare.yml` + identity re-mint) is GREG'S CALL, not taken.
+
+Next, in order, no code changes: the start is accepted -> the observer publishes
+`retained-granite-ready-35545909225` -> `frankie_deliver_readiness.yml` (ready_run_id 35545909225,
+request_id `...-cycle-00`, request_sha256 a7b72cf9...) -> ONE `frankie_journal_stack.yml` dispatch on
+`codex/frankie-launch-two-cycle-20260919` (day 20211003, go 0eb2c2ac..., cycles 2, keep_compute true,
+checks_only false) -> critic -> export -> HOLD -> `frankie_host_export_principal_request.yml` -> Root's task
+-> root probe (`frankie_host_cycle_status.yml` now prints `root/*` branches) -> record response -> cycle 1,
+whose NEW request sha goes to the observer through `frankie_host_stage_critic_request.yml` (landed on
+Greg's word, registered on the trunk) and then the FULL observer round. Read-only probes only while waiting.
+
+## Superseded 22:20Z handoff (kept for the record): a runner was ALIVE on the host; the full rerun round started after it stopped
 
 `frankie_host_supersede_cycle.yml` run 35541184794 refused: "a runner process is alive (pid 692 4988)".
 Most likely the cancelled 22:06Z dispatch's host restart resumed `run_actual_sunday` (the `--ec2-resume`

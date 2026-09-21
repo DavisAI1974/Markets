@@ -2054,7 +2054,7 @@ observing (admitted, `observe_existing_start`, waiting for boot frames; the job'
 
 Re-armed the same non-destructive action with the morning's horizon: `frankie_pod_control.yml` action=start,
 retry_seconds 19800 (5.5 h, re-submits every 60 s only while the refusal is exactly the host-busy message; a foreign
-refusal aborts at once), wait_seconds 300, dispatched 00:19Z. When it is accepted the observer sees the boot and
+refusal aborts at once), wait_seconds 300, dispatched 00:18Z (run 35547296498). When it is accepted the observer sees the boot and
 publishes `retained-granite-ready-35545909225`; then `frankie_deliver_readiness.yml` (ready_run_id 35545909225, request
 a7b72cf9) and ONE pipeline dispatch, as recorded at 00:00Z.
 

@@ -3,6 +3,11 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
+- **STATE 2026-09-21 00:20Z: cycle 0 full rerun IN FLIGHT** on `claude/cycle-0-full-rerun-lr6e14`, blocked only on
+  Pod 8vqdacl5t61rjx's host having no free L40S (start retry run 35547296498, 5.5 h). Tasks A (per-cycle calculation
+  pins) and B (exhaustion-objective audit) DONE. Read `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md` READ
+  FIRST, then `CLAUDE_HANDOFF_20260920.md` 22:55Z onward. The observer round is never skipped (every critic call).
+  Replacement Pod = Greg's call.
 - **PRIORITY RULE (Greg, 2026-09-20): launch-critical = anything that changes how Frankie runs or the science. Everything
   else goes on the deferred list and waits; no fixing, no relitigating, until the run is launched.** The identity/evidence
   guards and the tests are provenance, not science: when one blocks the launch, override it with a receipt and move on.
