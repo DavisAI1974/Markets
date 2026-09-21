@@ -3282,3 +3282,15 @@ was only the implied child of `write:packages` and cleared with it). It authenti
 data but CANNOT PUSH, so the heartbeat will read the parameter and the push will still fail (403) until Greg edits
 the token (Settings -> Developer settings -> Tokens (classic) -> this token -> tick `repo` -> Update token; the value is
 unchanged, so SSM needs no rewrite). Status probe dispatched after the write: outcome below.
+
+### 16:1xZ 09-21: THE GIT CHAIN IS CLOSED: the heartbeat PUSHED with the token (the "no scopes" claim is WITHDRAWN)
+
+Status probes 35619488837 and 35620122082: the heartbeat's first beat after the SSM write reads `heartbeat reading
+1790004954 - git` (15:35:54Z) where every earlier beat ended `git heartbeat disabled: ParameterNotFound`, and the
+remote now carries branch `root/cycle-00-progress` at 4a2044785 "root: cycle 00 progress reading 1790004954",
+author frankie-box, 2026-09-21T15:35:54Z, adding `research/kalshi/frankie_boss/runs/20211003/root/progress.jsonl`.
+So the token pushes. The 16:0xZ claim that it "cannot push" rested on GitHub's `x-oauth-scopes` response header
+being empty for this token; the measured push overrides that inference (the header is not the authority, the push
+is). Greg need not edit the token. What stands: PAT in SSM (version 1), heartbeat live on git, the pusher will push
+the response when the session reaches `pushing`. Session at 15:33:50Z: `merging level 0: 1/2 done, 1 in flight
+(serverless x8)`; endpoint jobs completed 2, in progress 1; balance $39.60 at 15:3xZ.
