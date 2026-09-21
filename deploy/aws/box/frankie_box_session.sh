@@ -5,7 +5,9 @@
 # Frankie's, run against the restored rows with the staged producers. The engine is the BOSS: frankie_box_boss_session.py
 # (the retained Granite vLLM on the RunPod Pod over jobs_v1); `preflight` proves the reach and starts nothing.
 # Inputs: DAY (20211003), CYCLE (00), MARKETS_REF (this branch), ACTION (start | status | preflight | verify;
-# default status; restart_session stops ONLY the session unit with a receipt to apply a session-code fix). Never stops a Pod, a box or the native host runner (Greg's word).
+# default status; restart_session stops ONLY the session unit with a receipt to apply a session-code fix;
+# fetch_correction takes the host's exported classroom-correction-request.json through MAP_URL into request/;
+# correction runs the session's Dipole classroom correction turn as its own unit). Never stops a Pod, a box or the native host runner (Greg's word).
 set -u
 ROOT=/opt/frankie-box; S="$ROOT/session"
 DAY="${DAY:-20211003}"; CYCLE="${CYCLE:-00}"; MARKETS_REF="${MARKETS_REF:-claude/cycle-0-frankie-box-rerun-od5sxk}"; ACTION="${ACTION:-status}"
@@ -18,6 +20,7 @@ status() {
   echo "done: $([ -e "$S/done" ] && echo yes || echo no)"; ls -la "$S/out" 2>/dev/null
   echo "--- session log tail"; tail -n 25 "$ROOT/logs/session-$CYCLE.log" 2>/dev/null
   echo "--- heartbeat log tail"; tail -n 5 "$ROOT/logs/heartbeat-$CYCLE.log" 2>/dev/null
+  if [ -s "$ROOT/logs/correction-$CYCLE.log" ]; then echo "--- correction log tail ($(systemctl is-active "frankie-correction-$CYCLE.service" 2>/dev/null))"; tail -n 12 "$ROOT/logs/correction-$CYCLE.log"; fi
   systemctl is-active "frankie-heartbeat-$CYCLE.service" 2>/dev/null || echo "(no heartbeat service)"
 }
 preflight() {
@@ -72,8 +75,52 @@ print(digest(json.loads(open('$ROOT/request/session-request.json','rb').read()))
     sleep 5
     status
 }
+fetch_correction() {
+  # The host's retained classroom-correction-request.json, exported by frankie_host_export_principal_request.yml
+  # (turn=correction) and presigned by frankie_box_run.yml (presign=<bucket>/<key>) into the private map at MAP_URL.
+  # Fetched into request/, sha256 printed; an existing file with different bytes is never overwritten.
+  [ -n "${MAP_URL:-}" ] || { echo "fetch_correction needs MAP_URL (frankie_box_run.yml presign=<bucket>/<key of classroom-correction-request.json>)"; return 2; }
+  mkdir -p "$ROOT/tmp" "$ROOT/request"
+  curl -fsS -m 60 --retry 3 -o "$ROOT/tmp/presigned-map.json" "$MAP_URL" || { echo "presigned map download failed"; return 2; }
+  export ROOT
+  "$ROOT/venv/bin/python" - <<'PY' || return 2
+import hashlib, json, os, subprocess
+root = os.environ['ROOT']
+m = json.load(open(os.path.join(root, 'tmp', 'presigned-map.json')))
+keys = [k for k in m if k.endswith('/classroom-correction-request.json') or k == 'classroom-correction-request.json']
+if len(keys) != 1: raise SystemExit(f'the map must carry exactly one classroom-correction-request.json key ({len(keys)} found)')
+target = os.path.join(root, 'request', 'classroom-correction-request.json'); tmp = target + '.part'
+r = subprocess.run(['curl', '-fsS', '-m', '300', '--retry', '3', '-o', tmp, m[keys[0]]['url']], capture_output=True, text=True)
+if r.returncode: raise SystemExit(f'download failed: curl exit {r.returncode}')
+data = open(tmp, 'rb').read()
+doc = json.loads(data)
+if doc.get('schema') != 'FRANKIE_DIPOLE_CLASSROOM_CORRECTION_REQUEST_V1': raise SystemExit('the downloaded file is not a Dipole classroom correction request')
+if os.path.exists(target) and open(target, 'rb').read() != data:
+    os.unlink(tmp); raise SystemExit('a different classroom-correction-request.json is already on the box; not overwritten (move it aside with a receipt first)')
+os.replace(tmp, target)
+print(f'CORRECTION_REQUEST key={keys[0]} bytes={len(data)} sha256={hashlib.sha256(data).hexdigest()} request_sha256={doc.get("request_sha256")} correction_ids={len(doc.get("correction_ids", []))} session_id={doc.get("session_id")}')
+PY
+}
+correction() {
+  # The same session's turn 2 (frankie_box_boss_session.py --stage correction) as its own transient unit: one BOSS call,
+  # the three correction files into out/, then the pusher with TURN=correction. Requires the fetched request and the
+  # response this session wrote. Never touches the cycle session unit.
+  U="frankie-correction-$CYCLE"
+  if systemctl is-active --quiet "$U.service"; then echo "$U is already running"; status; return 0; fi
+  [ -s "$ROOT/request/classroom-correction-request.json" ] || { echo "no correction request on the box (ACTION=fetch_correction first)"; return 2; }
+  [ -s "$S/out/response.json" ] || { echo "no out/response.json: the correction belongs to the session that wrote the response"; return 2; }
+  git -C "$ROOT/markets" fetch -q --depth 1 origin "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
+  systemctl reset-failed "$U.service" 2>/dev/null
+  systemd-run --unit "$U" --collect -p WorkingDirectory="$S" -p StandardOutput=append:"$ROOT/logs/correction-$CYCLE.log" -p StandardError=append:"$ROOT/logs/correction-$CYCLE.log" \
+    "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage correction >/dev/null 2>&1 \
+    && echo "$U started (the correction turn on the BOSS; minutes; watch logs/correction-$CYCLE.log)" || { echo "$U start failed"; return 3; }
+  sleep 5
+  status
+}
 case "$ACTION" in
   status) status ;;
+  fetch_correction) fetch_correction ;;
+  correction) correction ;;
   preflight) preflight ;;
   verify) verify ;;
   start) start_session ;;
@@ -88,5 +135,5 @@ case "$ACTION" in
     else echo "$UNIT was not running"; fi
     systemctl reset-failed "$UNIT.service" 2>/dev/null
     start_session ;;
-  *) echo "ACTION must be start, status, preflight, verify or restart_session"; exit 2 ;;
+  *) echo "ACTION must be start, status, preflight, verify, restart_session, fetch_correction or correction"; exit 2 ;;
 esac

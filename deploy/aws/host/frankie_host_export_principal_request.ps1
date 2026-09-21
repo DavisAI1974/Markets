@@ -8,7 +8,13 @@
 # day directory. The credential is never opened. $Day, $RunRoot, $CycleIndex and the three Url values
 # arrive from ssm_run_ps1.py --set; no path literal here.
 $ErrorActionPreference = 'Stop'
-foreach ($required in 'Day', 'RunRoot', 'CycleIndex', 'RequestUrl', 'PromptUrl', 'HistoricalUrl') {
+$turnValue = Get-Variable -Name 'Turn' -ValueOnly -ErrorAction SilentlyContinue
+if (-not $turnValue -or $turnValue -like 'HOST_*') { $Turn = 'initial' }
+if ($Turn -notin @('initial', 'correction')) { throw "Turn must be initial or correction (value: '$Turn')" }
+# initial exports the three request files; correction exports the runner's retained classroom-correction-request.json
+# (the Dipole classroom turn 2, 2026-09-21) for the box to answer.
+$requiredNames = if ($Turn -eq 'initial') { @('Day', 'RunRoot', 'CycleIndex', 'RequestUrl', 'PromptUrl', 'HistoricalUrl') } else { @('Day', 'RunRoot', 'CycleIndex', 'RequestUrl') }
+foreach ($required in $requiredNames) {
     $value = Get-Variable -Name $required -ValueOnly -ErrorAction SilentlyContinue
     if (-not $value -or $value -like 'HOST_*') { throw "$required was not supplied by ssm_run_ps1.py --set (value: '$value')" }
 }
@@ -22,10 +28,13 @@ function Digest([string]$path) { ([BitConverter]::ToString($script:sha.ComputeHa
 $run = $cfg.run_directory
 if (-not $run -or -not (Test-Path $run)) { throw ("run directory absent: " + $run) }
 $principal = Join-Path (Join-Path (Join-Path $run 'execution') ('cycle-' + $CycleIndex)) 'principal'
-$files = [ordered]@{
-    'session-request.json' = $RequestUrl
-    'prompt.md'            = $PromptUrl
-    'historical-prompt.md' = $HistoricalUrl
+$files = [ordered]@{}
+if ($Turn -eq 'initial') {
+    $files['session-request.json'] = $RequestUrl
+    $files['prompt.md'] = $PromptUrl
+    $files['historical-prompt.md'] = $HistoricalUrl
+} else {
+    $files['classroom-correction-request.json'] = $RequestUrl
 }
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 $exported = [ordered]@{}
@@ -49,6 +58,7 @@ foreach ($name in $files.Keys) {
 $stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
 $receipt = [ordered]@{
     schema      = 'FRANKIE_PRINCIPAL_REQUEST_EXPORTED_V1'
+    turn        = $Turn
     day         = $Day
     run_id      = $cfg.run_id
     cycle_index = [int]$CycleIndex

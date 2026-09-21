@@ -32,9 +32,15 @@ on:
         required: false
         default: 'frankie-granite42-568968024170-us-east-1'
       request_key:
-        description: 'Key of the session request the box answered (its adapter digest must equal response.request_sha256)'
+        description: 'initial: key of the session request the box answered (its adapter digest must equal response.request_sha256); correction: key of the exported classroom-correction-request.json the box answered'
         required: false
         default: 'host-deliveries/20211003/principal-request/cycle-00/35557744815/session-request.json'
+      turn:
+        description: 'initial = the four cycle files (response, analysis, host session record, attestation); correction = the three Dipole classroom correction files'
+        required: false
+        default: 'initial'
+        type: choice
+        options: ['initial', 'correction']
 permissions:
   contents: write
 concurrency:
@@ -57,7 +63,8 @@ jobs:
       BUCKET: ${{ inputs.bucket }}
       REQUEST_KEY: ${{ inputs.request_key }}
       SCRIPT: deploy/aws/box/frankie_box_push_response.sh
-      FILES: response.json analysis.md host-session-record.json host-attestation.json
+      TURN: ${{ inputs.turn }}
+      FILES: ${{ inputs.turn == 'correction' && 'correction-response.json host-correction-record.json host-correction-attestation.json' || 'response.json analysis.md host-session-record.json host-attestation.json' }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -69,6 +76,8 @@ jobs:
           set -euo pipefail
           [[ "$DAY" =~ ^[0-9]{8}$ ]] || { echo "day must be YYYYMMDD"; exit 1; }
           [[ "$CYCLE" =~ ^[0-9]{2}$ ]] || { echo "cycle must be two digits"; exit 1; }
+          [[ "$TURN" =~ ^(initial|correction)$ ]] || { echo "turn must be initial or correction"; exit 1; }
+          grep -q 'TURN=' "$SCRIPT" || { echo "the pusher on this ref has no TURN route"; exit 1; }
           [[ "$BUCKET" =~ ^[a-z0-9.-]{3,63}$ ]] || { echo "bucket name"; exit 1; }
           [[ "$REQUEST_KEY" != *..* && -n "$REQUEST_KEY" ]] || { echo "request_key"; exit 1; }
           test -f "$SCRIPT"; bash -n "$SCRIPT"
@@ -93,7 +102,7 @@ jobs:
           region = 'us-east-1' if bucket.endswith('us-east-1') else 'us-east-2'
           s3 = boto3.client('s3', region_name=region, endpoint_url=f'https://s3.{region}.amazonaws.com',
                             config=Config(signature_version='s3v4', s3={'addressing_style': 'virtual'}))
-          prefix = f"host-deliveries/{os.environ['DAY']}/principal-response/cycle-{os.environ['CYCLE']}/box-upload/{run}"
+          prefix = f"host-deliveries/{os.environ['DAY']}/principal-response/cycle-{os.environ['CYCLE']}/box-upload/{run}" + ('' if os.environ['TURN'] == 'initial' else '/correction')
           out = {}
           for name in os.environ['FILES'].split():
               key = f'{prefix}/{name}'
@@ -116,7 +125,7 @@ jobs:
           set -euo pipefail
           python deploy/aws/ssm_run_sh.py --instance "$INSTANCE" --region "$REGION" --script "$SCRIPT" \
             --timeout 900 --comment "frankie box: upload the cycle $CYCLE response through presigned PUTs (run $GITHUB_RUN_ID)" \
-            --set "DAY=$DAY" --set "CYCLE=$CYCLE" --set "BASE=$GITHUB_REF_NAME" --set "MAP_URL=$MAP_URL" | tee box-run-output.txt
+            --set "DAY=$DAY" --set "CYCLE=$CYCLE" --set "TURN=$TURN" --set "BASE=$GITHUB_REF_NAME" --set "MAP_URL=$MAP_URL" | tee box-run-output.txt
           grep -q '^UPLOAD_RECEIPT ' box-run-output.txt || { echo "the box printed no UPLOAD_RECEIPT; nothing is committed"; exit 1; }
       - name: Download the uploads and re-run the recorder's checks independently
         id: files
@@ -144,16 +153,41 @@ jobs:
               if (int(said[name]['bytes']), said[name]['sha256']) != got:
                   raise SystemExit(f'{name}: the box uploaded {said[name]} but S3 holds {got}')
           # 2. the recorder's shape and binding checks, plus the analysis witness
+          def digest(value):
+              return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+          turn = os.environ['TURN']
+          if turn == 'correction':
+              r = json.loads(raw['correction-response.json']); rec = json.loads(raw['host-correction-record.json']); a = json.loads(raw['host-correction-attestation.json'])
+              for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session', 'dipole_acknowledgement'):
+                  if k not in r: raise SystemExit(f'correction response lacks {k}')
+              if r['dipole_acknowledgement'].get('acknowledged') is not True: raise SystemExit('the acknowledgement is not acknowledged')
+              if rec.get('schema') != 'FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1' or not rec.get('host_authority'): raise SystemExit('correction record schema/host_authority')
+              if rec.get('response_sha256') != digest(r): raise SystemExit('record.response_sha256 is not the adapter digest of correction-response.json')
+              w = rec.get('response') or {}
+              if w.get('sha256') != hashlib.sha256(raw['correction-response.json']).hexdigest(): raise SystemExit('record.response witness differs from the file')
+              for k in ('schema', 'mechanism', 'request_sha256', 'response_sha256', 'session_id', 'model_identity_as_reported_by_session'):
+                  if a.get(k) != rec.get(k): raise SystemExit(f'attestation {k} differs from the record')
+              hr = a.get('host_record') or {}
+              if set(hr) != {'path', 'bytes', 'sha256'} or hr['sha256'] != hashlib.sha256(raw['host-correction-record.json']).hexdigest() or int(hr['bytes']) != len(raw['host-correction-record.json']):
+                  raise SystemExit('attestation.host_record must pin the record file {path, bytes, sha256}')
+              correction = json.loads(s3.get_object(Bucket=bucket, Key=os.environ['REQUEST_KEY'])['Body'].read())
+              if r['request_sha256'] != correction.get('request_sha256') or rec['request_sha256'] != digest(correction):
+                  raise SystemExit('the correction response does not answer the staged correction request (request_sha256 / adapter digest differ)')
+              print('correction checks: OK; resolutions', len(r['dipole_acknowledgement'].get('correction_resolutions', [])), 'session_id', r['session_id'])
+              print({n: (len(b), hashlib.sha256(b).hexdigest()) for n, b in raw.items()})
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+                  out.write(f"request_sha256={r['request_sha256']}\n")
+              raise SystemExit(0)
           r = json.loads(raw['response.json']); rec = json.loads(raw['host-session-record.json']); a = json.loads(raw['host-attestation.json'])
-          for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session', 'sections', 'feedback', 'lessons'):
+          for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session', 'sections', 'feedback', 'lessons',
+                    'dipole_teachback', 'dipole_observation_review', 'dipole_relationship_scan', 'dipole_novel_findings'):
               if k not in r: raise SystemExit(f'response lacks {k}')
           if len(r['sections']) != 18: raise SystemExit(f"response cites {len(r['sections'])} sections, not 18")
           if 'principal_receipt_hash' in json.dumps(r['feedback']): raise SystemExit('feedback must carry NO principal_receipt_hash')
           if not isinstance(r['lessons'], list) or not r['lessons']: raise SystemExit('response carries no lessons')
+          if len(r['dipole_relationship_scan']) != 171 or len(r['dipole_observation_review']) != 19: raise SystemExit('classroom ledgers are not 19 components / 171 pairs')
           if rec.get('schema') != 'FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1' or rec.get('mechanism') != 'AGENT_SESSION': raise SystemExit('record schema/mechanism')
           if not rec.get('host_authority'): raise SystemExit('host session record carries no host_authority')
-          def digest(value):
-              return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
           if rec.get('response_sha256') != digest(r): raise SystemExit('record.response_sha256 is not the adapter digest of response.json')
           for wname, fname in (('response', 'response.json'), ('analysis', 'analysis.md')):
               w = rec.get(wname) or {}
@@ -184,10 +218,10 @@ jobs:
           for f in $FILES; do cp "$RUNNER_TEMP/delivery/$f" "$DEST/$f"; done
           git add "$DEST"
           git diff --staged --quiet && echo "(nothing new: $BR already holds these exact files)" || \
-            git commit -q -m "root: cycle $CYCLE Frankie response, attestation, host session record, analysis (uploaded from Frankie's box $INSTANCE, committed by frankie_box_fetch_response.yml run $GITHUB_RUN_ID; request_sha256 ${{ steps.files.outputs.request_sha256 }})"
+            git commit -q -m "root: cycle $CYCLE Frankie $TURN turn files (uploaded from Frankie's box $INSTANCE, committed by frankie_box_fetch_response.yml run $GITHUB_RUN_ID; request_sha256 ${{ steps.files.outputs.request_sha256 }})"
           git push origin "HEAD:refs/heads/$BR"
           git log --oneline -1; git ls-remote origin "refs/heads/$BR"
-          echo "delivered $BR; next: frankie_host_record_principal_response.yml source_ref=$BR cycle_index=$CYCLE"
+          echo "delivered $BR; next: frankie_host_record_principal_response.yml source_ref=$BR cycle_index=$CYCLE turn=$TURN"
       - name: Job summary
         if: always()
         run: |

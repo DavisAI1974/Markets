@@ -12,6 +12,12 @@ on:
         description: 'Zero-padded cycle index'
         required: false
         default: '00'
+      turn:
+        description: 'initial = session-request.json + prompt.md + historical-prompt.md; correction = the retained classroom-correction-request.json only (the Dipole classroom turn 2, for the box)'
+        required: false
+        default: 'initial'
+        type: choice
+        options: ['initial', 'correction']
       instance:
         description: 'Native host instance id'
         required: false
@@ -53,7 +59,9 @@ jobs:
           DAY: ${{ inputs.day }}
           CYCLE_INDEX: ${{ inputs.cycle_index }}
           BUCKET: ${{ inputs.bucket }}
+          TURN: ${{ inputs.turn }}
         run: |
+          [[ "$TURN" =~ ^(initial|correction)$ ]] || { echo "turn must be initial or correction"; exit 1; }
           python - <<'PY'
           import os
           from pathlib import Path
@@ -61,7 +69,8 @@ jobs:
           from botocore.config import Config
           s3 = boto3.client('s3', region_name='us-east-1', config=Config(signature_version='s3v4'))
           prefix = f"host-deliveries/{os.environ['DAY']}/principal-request/cycle-{os.environ['CYCLE_INDEX']}/{os.environ['GITHUB_RUN_ID']}"
-          for name in ('session-request.json', 'prompt.md', 'historical-prompt.md'):
+          names = ('session-request.json', 'prompt.md', 'historical-prompt.md') if os.environ['TURN'] == 'initial' else ('classroom-correction-request.json',)
+          for name in names:
               url = s3.generate_presigned_url('put_object', Params={'Bucket': os.environ['BUCKET'], 'Key': f'{prefix}/{name}'}, ExpiresIn=3600, HttpMethod='PUT')
               if "'" in url or '\n' in url:
                   raise SystemExit('presigned URL carries a character ssm_run_ps1.py --set refuses')
@@ -77,21 +86,28 @@ jobs:
           DAY: ${{ inputs.day }}
           RUN_ROOT: ${{ inputs.run_root }}
           CYCLE_INDEX: ${{ inputs.cycle_index }}
+          TURN: ${{ inputs.turn }}
         run: |
+          set -euo pipefail
+          if [ "$TURN" = initial ]; then
+            urls=(--set "RequestUrl=$(cat "$RUNNER_TEMP/session-request.json.url")" --set "PromptUrl=$(cat "$RUNNER_TEMP/prompt.md.url")" --set "HistoricalUrl=$(cat "$RUNNER_TEMP/historical-prompt.md.url")")
+          else
+            urls=(--set "RequestUrl=$(cat "$RUNNER_TEMP/classroom-correction-request.json.url")")
+          fi
           python deploy/aws/ssm_run_ps1.py \
             --instance "$INSTANCE" --region us-east-2 \
             --script deploy/aws/host/frankie_host_export_principal_request.ps1 \
             --set "Day=$DAY" \
             --set "RunRoot=$RUN_ROOT" \
             --set "CycleIndex=$CYCLE_INDEX" \
-            --set "RequestUrl=$(cat "$RUNNER_TEMP/session-request.json.url")" \
-            --set "PromptUrl=$(cat "$RUNNER_TEMP/prompt.md.url")" \
-            --set "HistoricalUrl=$(cat "$RUNNER_TEMP/historical-prompt.md.url")" \
-            --timeout 900 --tail 0 --comment "export the cycle $CYCLE_INDEX principal request for day $DAY" | tee "$RUNNER_TEMP/export.log"
+            --set "Turn=$TURN" \
+            "${urls[@]}" \
+            --timeout 900 --tail 0 --comment "export the cycle $CYCLE_INDEX principal request ($TURN) for day $DAY" | tee "$RUNNER_TEMP/export.log"
       - name: Verify the uploads against the host's hashes and print the keys for Root
         env:
           BUCKET: ${{ inputs.bucket }}
           PREFIX: ${{ steps.sign.outputs.prefix }}
+          TURN: ${{ inputs.turn }}
         run: |
           python - <<'PY'
           import hashlib, os, re
@@ -99,8 +115,9 @@ jobs:
           import boto3
           log = Path(os.environ['RUNNER_TEMP'], 'export.log').read_text()
           printed = {m.group(1): (int(m.group(2)), m.group(3)) for m in re.finditer(r'EXPORTED (\S+) bytes=(\d+) sha256=([0-9a-f]{64})', log)}
-          if set(printed) != {'session-request.json', 'prompt.md', 'historical-prompt.md'}:
-              raise SystemExit(f'host printed hashes for {sorted(printed)}, not all three files')
+          expected = {'session-request.json', 'prompt.md', 'historical-prompt.md'} if os.environ['TURN'] == 'initial' else {'classroom-correction-request.json'}
+          if set(printed) != expected:
+              raise SystemExit(f'host printed hashes for {sorted(printed)}, not {sorted(expected)}')
           s3 = boto3.client('s3', region_name='us-east-1')
           for name, (bytes_, sha) in printed.items():
               body = s3.get_object(Bucket=os.environ['BUCKET'], Key=f"{os.environ['PREFIX']}/{name}")['Body'].read()
@@ -108,5 +125,5 @@ jobs:
               if len(body) != bytes_ or got != sha:
                   raise SystemExit(f'{name}: uploaded object is {len(body)} bytes {got}, host printed {bytes_} {sha}')
               print(f"VERIFIED s3://{os.environ['BUCKET']}/{os.environ['PREFIX']}/{name}  bytes={bytes_}  sha256={sha}")
-          print('Root downloads these three with the AWS pair on the box and verifies the sha256 of each before reading.')
+          print('The box fetches these by key (frankie_box_run.yml presign=<bucket/key>; frankie_box_session.sh ACTION=fetch_correction for the correction turn) and verifies the sha256 of each before reading.')
           PY
