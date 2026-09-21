@@ -864,9 +864,9 @@ class Session:
             # corpus is written. The report (bytes, exact tokens when the tokenizer is present, the proof) is receipted.
             sys.path.insert(0, str(Path(__file__).resolve().parent))
             import frankie_box_reading_render as R
-            tensor_mode = 'values'
+            tensor_mode = 'identity'   # Greg, 2026-09-21 12:3xZ ('do your plan for the tensors'): identity = every tensor by dtype, shape, bytes, sha256 and its count/min/max/mean/l2, the bytes kept by digest
             if READING_CONFIG.exists():
-                tensor_mode = str(load_json(READING_CONFIG).get('tensor_mode', 'values'))
+                tensor_mode = str(load_json(READING_CONFIG).get('tensor_mode', 'identity'))
             if tensor_mode not in ('values', 'identity'):
                 self.refuse(f'{READING_CONFIG} tensor_mode must be values or identity')
             raw_members = {'attachment_receipt': json.dumps(payload.get('attachment_receipt'), indent=1, sort_keys=True).encode()}

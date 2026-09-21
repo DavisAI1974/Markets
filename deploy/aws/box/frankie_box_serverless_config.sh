@@ -27,7 +27,7 @@ PY
     # The lossless reading render's tensor mode (frankie_box_reading_render.py): values = every decoder weight as an exact
     # decimal (all data visible, more tokens); identity = per-tensor name/dtype/shape/sha256/statistics with the bytes kept
     # in the package by digest (fewer tokens). Greg's call; default values.
-    TENSOR_MODE="${TENSOR_MODE:-values}"; case "$TENSOR_MODE" in values|identity) ;; *) echo "TENSOR_MODE must be values or identity"; exit 2;; esac
+    TENSOR_MODE="${TENSOR_MODE:-identity}"; case "$TENSOR_MODE" in values|identity) ;; *) echo "TENSOR_MODE must be values or identity"; exit 2;; esac
     printf '{"schema":"FRANKIE_BOX_READING_CONFIG_V1","tensor_mode":"%s","written_at":%s}\n' "$TENSOR_MODE" "$(date +%s)" > "$ROOT/reading.json"
     echo "### $ROOT/reading.json"; cat "$ROOT/reading.json" ;;
   *) echo "ACTION must be show, write, remove or reading"; exit 2;;
