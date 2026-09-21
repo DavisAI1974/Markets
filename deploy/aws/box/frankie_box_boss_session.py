@@ -142,22 +142,51 @@ class Session:
                       request_id=self.request['request_id'], cycle_index=index, contract_sha256=contract['contract_sha256'],
                       learning_cutoff_ns=contract['learning_cutoff_ns'], as_of=contract['as_of'],
                       source_hash=contract['source_hash'], input_hash=found, prompt=dict(witness(prompt), path=str(prompt)),
+                      input_hash_sources=getattr(Session, '_input_hash_sources', {}),
                       session_id=delivered['session_id'])
         write_json(self.work / 'verify.json', record)
-        self.note(f'verified: request {self.request_sha256[:16]} cycle {index}, input_hash {"found" if found else "NOT FOUND"}')
+        sources = getattr(Session, '_input_hash_sources', {})
+        self.note(f'verified: request {self.request_sha256[:16]} cycle {index}, input_hash '
+                  + ('found in ' + ','.join(sources[found]) if found else f'NOT unique: {len(sources)} distinct values'))
         if found is None:
-            self.refuse('the feedback input_hash is not readable from the delivered prompt (actual BOSS attributed input); '
-                        'the recorder would reject a guessed value')
+            self.refuse('the feedback input_hash is not readable as one value from the delivered prompt (attributed input): '
+                        + json.dumps({v[:12]: n for v, n in sources.items()}) + '; the recorder would reject a guess')
         return record
 
     @staticmethod
     def _input_hash(prompt):
-        """The host's native input hash is rendered in the attributed-input block of prompt.md; exactly one value."""
+        """The host's native input hash lives inside the attributed-input block of prompt.md (the receiver's
+        `## BOSS/Granite producer evidence` payload: a JSON object whose manifest, source binding, mapping evidence
+        and files are base64 members). Decode every member and collect every value keyed `input_hash` (plain JSON
+        `"input_hash":"<hex>"` or the tagged `["input_hash",["str","<hex>"]]`, escaped or not). Exactly one distinct
+        value is accepted; anything else refuses, because the recorder would reject a guess."""
+        import base64
         data = prompt.read_bytes()
-        marker = data.find(b'# Preserved historical principal prompt (exact bytes follow)\n')
-        tail = data[marker:] if marker >= 0 else data
-        values = set(m.group(1).decode() for m in re.finditer(rb'input_hash["\']?\s*[:=]\s*["\']?([0-9a-f]{64})', tail))
-        return values.pop() if len(values) == 1 else None
+        pattern = re.compile(rb'\\?"input_hash\\?"\s*[,:]\s*(?:\[\s*\\?"str\\?"\s*,\s*)?\\?"([0-9a-f]{64})\\?"')
+        found = {}
+        def scan(name, raw):
+            for m in pattern.finditer(raw):
+                found.setdefault(m.group(1).decode(), set()).add(name)
+        marker = data.find(b'## BOSS/Granite producer evidence')
+        block = data[marker:] if marker >= 0 else b''
+        start = block.find(b'{')
+        payload = None
+        if start >= 0:
+            try:
+                payload = json.loads(block[start:].decode('utf-8'))
+            except Exception:
+                payload = None
+        if isinstance(payload, dict):
+            scan('attachment_receipt', json.dumps(payload.get('attachment_receipt'), sort_keys=True).encode())
+            for key in ('manifest_base64', 'source_binding_base64', 'mapping_evidence_base64'):
+                if isinstance(payload.get(key), str):
+                    scan(key, base64.b64decode(payload[key]))
+            for name, b64 in (payload.get('files_base64') or {}).items():
+                if isinstance(b64, str):
+                    scan('files:' + name, base64.b64decode(b64))
+        scan('prompt-text', data[:marker] if marker >= 0 else data)
+        Session._input_hash_sources = {v: sorted(names) for v, names in found.items()}
+        return next(iter(found)) if len(found) == 1 else None
 
     # ---- labels (code; the source contract's own detector) -----------------------------------------------
     def labels(self):
