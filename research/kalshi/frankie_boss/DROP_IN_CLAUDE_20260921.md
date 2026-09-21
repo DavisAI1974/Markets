@@ -30,6 +30,10 @@ STATE OF THE RUN (session unit frankie-cycle-00 on box i-035994afa8bdf66a5, rest
   active, heartbeat pushing (tip 6e7f2a12). Beat 15:54:10Z: phase WRITING (`writing: the analysis`) = the final merge
   is done, the endpoint's work is over, the Pod writes; `pushing` follows. mcp_connect.sh: RUNPOD_API_KEY absent here, nothing done.
   Handoff 15:5xZ chat 6 has the detail. The one status probe at open is spent; the heartbeat branch is the observable.
+- KEYS (Greg, chat 6): the RunPod key may be used for anything. EVERY key's name, location and reader is in
+  `research/kalshi/frankie_boss/KEY_REGISTRY.md` (never values; the repo is public). The chat container holds no key
+  until Greg sets RUNPOD_API_KEY + MARKETS_AWS_* in the Claude Code environment configuration; until then use the
+  trunk-registered workflows (five carry the RunPod secret) and box scripts (the box reads SSM).
 
 CHAT 5 LESSONS, each measured: the Claude Code container has NO AWS identity (proxy placeholders; STS
 InvalidClientTokenId) until a pair is installed at the D48 locations; the agent proxy refuses the GitHub Actions
