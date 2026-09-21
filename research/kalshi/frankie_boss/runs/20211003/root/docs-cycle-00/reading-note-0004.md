@@ -1,0 +1,32 @@
+## Notes on part 5/9 (bytes 493918-633918) [OUTPUT INCOMPLETE]
+
+### NOTES for merge (Part 5/9)
+
+#### (1) Observed facts with exact numbers, hashes and section ids as they appear
+
+- The evidence is structured as a nested list/array with multiple layers: `["M", ["record_recipe", ...]]`, `["schema", ...]`, `["native_hash"]`, etc.
+- `schema` field contains `["schema","trunk_schema","registry_hash","scope_kind","scope_hash","teacher_hash","teacher_binding","input_hash","model_hash","journal_prefix_hash","journal_entries","source_prefix_hash","prefix_rows","entity_rows","other_entity_rows","context_start","context_end","outside_context_rows","context_cursors","packet_hashes","consumed_rows","as_of","t_ctx"]`.
+- `registry_hash` is `["G","Ym2B/zpx+pZXRXTaTzTcuEADsK+EaffzLhYPau0jMwI="]`.
+- `scope_kind` is `["V","BOSS_TRUNK_V2"]`.
+- `scope_hash` is `["V","DATABENTO_DBN_MBOMSG_0_62_0"]`.
+- `teacher_hash` is `["G","CuaEA2zhh1TgygWg+U4KDaG/gKwzUbUx06ZxI0uCC/k="]`.
+- `model_hash` is `["G","dGC1GVmzW9B55ePDEBKmaUOIwv96Jub1avbvMNAIyqI="]`.
+- `native_hash` is `["native_hash","934daa3502990ba210cdb3307c66618c3fb6b0858e4f545ee15c7a2ef2d6abe6"]` (appears as `["native_hash","934daa3502990ba210cdb3307c66618c3fb6b0858e4f545ee15c7a2ef2d6abe6"]` in the first block; later `["native_hash","934daa3502990ba210cdb3307c66618c3fb6b0858e4f545ee15c7a2ef2d6abe6"]` is consistent).
+- `grammar_sha256` is `["grammar_sha256","8486fde97cd8c61aab57ecc75bbeb3ae5c36b9a58e56bd55698dd273818786e3"]`.
+- `prompt_version` is `["prompt_version","BOSS_GRANITE_NATIVE_STACKED_PROMPT_V1"]`.
+- `trunk_schema` includes fields: `["schema","fields","numeric","categorical","action","side","classes","exact_encoding","t_ctx","retained_not_encoded"]`.
+- `fields` list includes `["V","ts_event"]`, `["V","ts_recv"]`, `["V","rtype"]`, `["V","publisher_id"]`, `["V","instrument_id"]`, `["V","price"]`, `["V","size"]`, `["V","channel_id"]`, `["V","order_id"]`, `["V","flags"]`, `["V","ts_in_delta"]`, `["V","sequence"]`, `["V","action"]`, `["V","side"]`, `["V","dbn_length"]`, `["V","ts_out"]`, `["V","dbn_wire_bytes"]`, `["V","dbn_extraction_hash"]`.
+- `exact_encoding` uses `"journal.pack/canonical_bytes UTF-8; byte vocabulary 0..255"`.
+- `t_ctx` appears as `["V",1633298413318097271]` in the first block and `["V",1633298413317923251]` in the second block (two different timestamps; both are present in the same evidence block).
+- `prefix_seed`, `receipt_layout`, etc., are present in `["M",["scope_public","prefix_seed","receipt_layout"]]`.
+- `scope_public` has `["scheme","kind","scope_id","members","adapter_revision"]` with `["V","BOSS_CAUSAL_PREFIX_V1"]`, `["V","RESULT_BEARING"]`, `["G","CuaEA2zhh1TgygWg+U4KDaG/gKwzUbUx06ZxI0uCC/k="]`, and `["V","NG_EXHAUSTION_MBO_V4_STATE_ADAPTER_V2_20260823"]`.
+- `member_index` `0` has `["L",["V","glbx-mdp3-20211003.mbo.dbn.zst"]]` and `["L",["G","Q4C9m6g6W63Eg54SeFqkZIF7h+P6wRF2uVHntHREbYg="]]`.
+- `packet_hashes` includes `["L",["G","Q4C9m6g6W63Eg54SeFqkZIF7h+P6wRF2uVHntHREbYg="]]`.
+- `adapter_revision` is `["V","NG_EXHAUSTION_MBO_V4_STATE_ADAPTER_V2_20260823"]`.
+- `source_dbn_object` is `["S","L",3262,["V","E:\\Codex\\Frankie-BOSS-20260915\\delivery-compressed\\glbx-mdp3-20211003.mbo.dbn.zst"]]`.
+- `source_dbn_sha256` is `["L",["G","Q4C9m6g6W63Eg54SeFqkZIF7h+P6wRF2uVHntHREbYg="]]`.
+- `independent_clocks` is `["V",true]` (appears as `["V",true]` in `["C","L",["raw_symbol","source_dbn_object","source_dbn_sha256","independent_clocks"]]`).
+- `context_start` and `context_end` are present but not numerically specified in this part; `t_ctx` is `["V",1633298413317923251]` (second occurrence).
+- `packet_hashes` list includes `["L",["G","Q4C9m6g6W63Eg54SeFqkZIF7h+P6wRF2uVHntHREbYg="]]`.
+- `member files/critic-snapshot.txt` has size `144407 bytes`, `sha256` `["sha256","0b895d45ef46a58d6fbe736017971ed28b1fded724b6e5f3367fe2b3ba9f0d53"]`.
+- The file content includes `["codec",...]`, `["record_recipe",...]`, `["M",["wire_decoder",...]]`, `["M",["scope_public",...]]`, `["N","L",["D",0,[...]]]` with a long numeric array (starting with `0,0,0,...` and ending with `0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

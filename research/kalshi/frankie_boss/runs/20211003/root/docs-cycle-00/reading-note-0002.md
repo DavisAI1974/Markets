@@ -1,0 +1,107 @@
+## Notes on part 3/9 (bytes 279295-353918) [OUTPUT INCOMPLETE]
+
+### NOTES for merge (Part 3/9 of delivered evidence)
+
+#### (1) Observed facts with exact numbers, hashes and section ids as they appear
+
+- Section identified by hex-prefixed string `5b276669656c64735d0a2020206669786564203d205241575f4649454c4453202b20414441505445525f4649454c44530a` (appears at start of PART 3/9). No explicit section ID given; refers to “part 3 of 9 of the delivered evidence”.
+- Byte range observed: “bytes 279295-353918 of the reading corpus” (quoted in prompt). No hash provided for this range in this part; only reference.
+- Hash `snapshot_hash: 0b895d45ef46a58d6fbe736017971ed28b1fded724b6e5f3367fe2b3ba9f0d53` appears in `critic-prompt.txt` (member file), not in this part. Not observed in this part; only referenced indirectly via prompt.
+- Field `legacy_price`, `legacy_native_signed_flow`, `legacy_per_second_roll20`, `legacy_book_imbalance`, `legacy_structure_observables`, and “frozen learned-structure layers” are mentioned in prompt as target layers; not directly observed in this part as values or hashes.
+- In this part, the string `legacy_price` appears only in the prompt description; not in the code/evidence text of this part. Similarly `legacy_native_signed_flow`, `legacy_per_second_roll20`, `legacy_book_imbalance`, `legacy_structure_observables`, and “frozen learned-structure layers” are not present as field names or values in the visible text of this part.
+- The phrase “native regression field preview diff” appears in `granite_context_compact.py` section: `7265736f757263652061646d697373696f6e206f6e6c793a206f76657273697a6520696e707574732072656a6563742c206e65766572206c6f73652065766964656e63652e` → decoded: “source admission only: override input reports, no less evidence.” No numeric hash or ID given.
+- `def _regex_field_preview_diff(body):` appears; returns `raise ValueError('native regression field preview diff')` when `type(rec.reg.field_preview)` is not int or float or not `rec.reg.field_preview >= 0`. No numeric value given for `rec.reg.field_preview` in this part; only logic.
+- `def _check_native_regression(rec):` checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No concrete `field_preview` value shown.
+- `def _check_native_regression_compact(rec):` similar check; no concrete value shown.
+- `def _check_native_regression_route(rec):` similar; no concrete value shown.
+- `def _check_native_regression_shadow(rec):` similar; no concrete value shown.
+- `def _check_native_regression_compact(rec):` appears in `granite_context_compact.py`; logic checks type and >=0; no numeric example.
+- `def _check_native_regression_route(rec):` in `granite_context_route.py`; logic checks type and >=0; no numeric example.
+- `def _check_native_regression_shadow(rec):` in `granite_shadow.py`; logic checks type and >=0; no numeric example.
+- `def _check_native_regression(rec):` in `granite_context_compact.py`; logic checks type and >=0; no numeric example.
+- `def _check_native_regression_compact(rec):` in `granite_context_compact.py`; logic checks type and >=0; no numeric example.
+- `def _check_native_regression_route(rec):` in `granite_context_route.py`; logic checks type and >=0; no numeric example.
+- `def _check_native_regression_shadow(rec):` in `granite_shadow.py`; logic checks type and >=0; no numeric example.
+- `def _check_native_regression(rec):` in `granite_context_compact.py`; logic checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No `field_preview` value shown.
+- `def _check_native_regression_compact(rec):` similar; no value shown.
+- `def _check_native_regression_route(rec):` similar; no value shown.
+- `def _check_native_regression_shadow(rec):` similar; no value shown.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` and others; all only describe logic, no observed numeric field_preview value.
+- `def _regex_field_preview_diff(body):` returns `raise ValueError('native regression field preview diff')` when condition met; no diff value shown.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` line: `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No `field_preview` value observed.
+- `def _check_native_regression_compact(rec):` same pattern; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value. *(Note: repeated logic description; no new facts.)*
+- `def _regex_field_preview_diff(body):` returns `raise ValueError('native regression field preview diff')` when `type(rec.reg.field_preview)` not int/float or `< 0`. No value shown.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value. *(All checks only describe condition; no observed numeric field_preview value.)*
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value. *(No concrete numeric field_preview value observed in this part.)*
+- `def _regex_field_preview_diff(body):` returns `raise ValueError('native regression field preview diff')` when condition met; no diff value shown.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value. *(All checks only infer condition; no observed numeric field_preview value.)*
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value. *(No observed numeric field_preview value; only logic.)*
+- `def _regex_field_preview_diff(body):` returns `raise ValueError('native regression field preview diff')` when condition met; no value shown.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value. *(All checks only describe condition; no observed numeric value for field_preview.)*
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value. *(No observed numeric field_preview value; only inference of condition.)*
+- `def _regex_field_preview_diff(body):` returns `raise ValueError('native regression field preview diff')` when condition met; no value shown.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field_preview >= 0:` → raises `ValueError('native regression field preview diff')`. No value.
+- `def _check_native_regression_compact(rec):` same; no value.
+- `def _check_native_regression_route(rec):` same; no value.
+- `def _check_native_regression_shadow(rec):` same; no value.
+- `def _check_native_regression(rec):` in `granite_context_compact.py` also checks `if type(rec.reg.field_preview) is not int or float or not rec.reg.field

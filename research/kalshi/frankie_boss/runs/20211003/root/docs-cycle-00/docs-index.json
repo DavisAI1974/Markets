@@ -1,0 +1,248 @@
+{
+ "at": 1790009228.737668,
+ "cycle": "00",
+ "docs": [
+  {
+   "bytes": 77787,
+   "name": "reading-note-0000.md",
+   "sha256": "51759ebe98fceb234f08b2ef9d3a87d7985acc11555ce0858c4f3896c67ecad9",
+   "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0000.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 97873,
+   "name": "reading-note-0001.md",
+   "sha256": "a948bc7f2e5e780678b8b464c17c298d388fe4daf76b0406da50f46cb457a30b",
+   "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0001.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 115097,
+   "name": "reading-note-0002.md",
+   "sha256": "e6d830d42fe8c4e52991194bef6a5f73556e3286fa15db111fdcb09c8e7b5240",
+   "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0002.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 76,
+   "name": "reading-note-0003.md",
+   "sha256": "ffa483a5cbc3ae2565af670c953b2989c7ff64aa91157dcca54d13d1092302c4",
+   "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0003.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 43255,
+   "name": "reading-note-0004.md",
+   "sha256": "442d521ce107d85d36001e22280915d55df61ffbe14eb1beef0c184596fad3bd",
+   "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0004.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 13548,
+   "name": "reading-note-0005.md",
+   "sha256": "a66121510566526bf2fa0721ac71c136af6d0081d5168f622b35e4b9f2945888",
+   "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0005.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 6473,
+   "name": "reading-note-0006.md",
+   "sha256": "3ba8e83d5bb7ee2b472bdadb613875600b6aae32ba9efd743418ba9b2e238323",
+   "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0006.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 12784,
+   "name": "reading-note-0007.md",
+   "sha256": "3674b59e4ca43df3491516ffbbe53f58d87ca8cc86577f5c0e53540bbb7c5089",
+   "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0007.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 17669,
+   "name": "reading-note-0008.md",
+   "sha256": "e3a78f5befa6197580cce5eb1bd9ce8d0db442ed79fb37e0afec60bb801b1c37",
+   "source": "/opt/frankie-box/session/work/notes-6a23e0a09ffe-unbounded/note-0008.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 41009,
+   "name": "reading-note-0000.md",
+   "sha256": "10dbbfc67f1ea88468f7109181b901ed7e1cc1239b40be7fd1a50058bb1827ef",
+   "source": "/opt/frankie-box/session/work/notes-6adc6270cd56-unbounded/note-0000.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 49708,
+   "name": "reading-note-0001.md",
+   "sha256": "7b062f6351340a5169a85bc4c81be09a542133b5fafe5313f4c3bca5fde2158e",
+   "source": "/opt/frankie-box/session/work/notes-6adc6270cd56-unbounded/note-0001.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 26773,
+   "name": "reading-note-0002.md",
+   "sha256": "4e03d3228c06bcb011781659dc86588a400a9b843176750af79e71f669f299a3",
+   "source": "/opt/frankie-box/session/work/notes-6adc6270cd56-unbounded/note-0002.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 21270,
+   "name": "reading-note-0003.md",
+   "sha256": "3e7ab51bc59ae9d815ea2350e306f19570279cb29f069ffa72f772e1b7e1a982",
+   "source": "/opt/frankie-box/session/work/notes-6adc6270cd56-unbounded/note-0003.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 9514,
+   "name": "reading-note-0000.md",
+   "sha256": "6043314fa6875b47454a447270abff2456521d1bf996af8837c7d988f520e6d6",
+   "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0000.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 9696,
+   "name": "reading-note-0001.md",
+   "sha256": "8782a8cd1953387588ed83b93b2ae8746f77940ca89ccde7ef1d4080e4262f74",
+   "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0001.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 13326,
+   "name": "reading-note-0002.md",
+   "sha256": "ac3ab0e00ae5734f9faa67491ec623f76052e13512a35008897c41fc7bc13748",
+   "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0002.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 9166,
+   "name": "reading-note-0003.md",
+   "sha256": "f40603aea7435ac7964025b7dd226209317b7fc80eb3d0cf062cf159ed4db26b",
+   "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0003.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 6480,
+   "name": "reading-note-0004.md",
+   "sha256": "42f7f8c4c63a2804fdfacaccd74eb9b4df8efcb9eb3fc5974f14c70b54987da5",
+   "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0004.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 6581,
+   "name": "reading-note-0005.md",
+   "sha256": "a9c7b9ad55b4c402f4935a26d13da2505bb9ba3324262729facc697bafc2fc4a",
+   "source": "/opt/frankie-box/session/work/notes-acb839fc43be/note-0005.md",
+   "what": "reading notes for one part of the corpus, verbatim"
+  },
+  {
+   "bytes": 80356,
+   "name": "merge-0-0000.md",
+   "sha256": "ec79000303aeedce2f374fc9cf62842c0ac055e16301eda3018ba785c6e4f245",
+   "source": "/opt/frankie-box/session/work/serverless-jobs/merge-0-0000/result.json",
+   "what": "one merge output, extracted from the job result (best effort for cycles before the session wrote merges itself)"
+  },
+  {
+   "bytes": 174406,
+   "name": "merge-0-0001.md",
+   "sha256": "bd788ab0428d28e15c95179b4cc71b0c72799a559b06b803cdf0c223b8c55a88",
+   "source": "/opt/frankie-box/session/work/serverless-jobs/merge-0-0001/result.json",
+   "what": "one merge output, extracted from the job result (best effort for cycles before the session wrote merges itself)"
+  },
+  {
+   "bytes": 58465,
+   "name": "merge-1-0000.md",
+   "sha256": "f9bba17a10aa56d3164879d2ca85d7d8b6bc9e8a66ac52da914315e7338afc1d",
+   "source": "/opt/frankie-box/session/work/serverless-jobs/merge-1-0000/result.json",
+   "what": "one merge output, extracted from the job result (best effort for cycles before the session wrote merges itself)"
+  },
+  {
+   "bytes": 9471,
+   "name": "merge-1-0001.md",
+   "sha256": "d763e3c8f21bc0b6deedc81c35da4496d6468433736279cc5c6f8c3fc7e660a3",
+   "source": "/opt/frankie-box/session/work/serverless-jobs/merge-1-0001/result.json",
+   "what": "one merge output, extracted from the job result (best effort for cycles before the session wrote merges itself)"
+  },
+  {
+   "bytes": 51210,
+   "name": "merge-2-final.md",
+   "sha256": "5e4f356a01081a9abb8aad1e57a42ae4fa56f68034020f63bca412f8d04fbcb0",
+   "source": "/opt/frankie-box/session/work/serverless-jobs/merge-2-final/result.json",
+   "what": "one merge output, extracted from the job result (best effort for cycles before the session wrote merges itself)"
+  },
+  {
+   "bytes": 51132,
+   "name": "merged-notes.md",
+   "sha256": "f255d753c430ebf8973c5b9a77bc46fdb3bdbe36b04e2ec4b62b2cc19eb75553",
+   "source": "/opt/frankie-box/session/work/merged-notes.md",
+   "what": "the merged reading notes the analysis is written from"
+  },
+  {
+   "bytes": 145236,
+   "name": "derivation-digest-full.md",
+   "sha256": "1dbb75a08c3dd1740ff430842c813298454067ba633266dd49637eb0bd783004",
+   "source": "/opt/frankie-box/session/work/derivation-digest-full.md",
+   "what": "Frankie's derivation digest, every layer of the pin"
+  },
+  {
+   "bytes": 1084,
+   "name": "verify.md",
+   "sha256": "7f9a17b7e35ac7e653ba154a3d45ec733090aa174ad97a629d48e4609ac924a8",
+   "source": "/opt/frankie-box/session/work/verify.json",
+   "what": "a session receipt, rendered as JSON in Markdown"
+  },
+  {
+   "bytes": 9889,
+   "name": "labels.md",
+   "sha256": "3f6ef49bd94dfdcb3d25caa7a60a10cb6e907a1a1e5e048f6414878c10f10a07",
+   "source": "/opt/frankie-box/session/work/labels.json",
+   "what": "a session receipt, rendered as JSON in Markdown"
+  },
+  {
+   "bytes": 3599,
+   "name": "derive.md",
+   "sha256": "97c17920541d7f9673bfea7b6518596aa0dd574dfb96f9174c2010ef33b8a9e5",
+   "source": "/opt/frankie-box/session/work/derive.json",
+   "what": "a session receipt, rendered as JSON in Markdown"
+  },
+  {
+   "bytes": 717,
+   "name": "reading-plan.md",
+   "sha256": "c8bec7c6edbd7fa622514a3a13545c5917835355efac5bf8a23d474adafff67e",
+   "source": "/opt/frankie-box/session/work/reading-plan.json",
+   "what": "a session receipt, rendered as JSON in Markdown"
+  },
+  {
+   "bytes": 546,
+   "name": "reading.md",
+   "sha256": "cd5ef0fb2071f7e20061c441a508333d4efd356e56b2ffa422c6b56a67679f44",
+   "source": "/opt/frankie-box/session/work/reading.json",
+   "what": "a session receipt, rendered as JSON in Markdown"
+  },
+  {
+   "bytes": 474,
+   "name": "engine.md",
+   "sha256": "c4497cc12fd8e8151c88cccd52d296c80db2b1e3185a6882b710c7356f26e65b",
+   "source": "/opt/frankie-box/session/work/engine.json",
+   "what": "a session receipt, rendered as JSON in Markdown"
+  },
+  {
+   "bytes": 764,
+   "name": "engine-serverless.md",
+   "sha256": "a773c3b9ee587a493a9b57fb9e70ddbf396af5174931b742af7d2e39a7d2e81e",
+   "source": "/opt/frankie-box/session/work/engine-serverless.json",
+   "what": "a session receipt, rendered as JSON in Markdown"
+  }
+ ],
+ "referenced": [
+  {
+   "bytes": 532065,
+   "name": "reading-corpus-full.md",
+   "sha256": "6adc6270cd56c27cb9617e1e2f65a8bcbb68dc4fffae8a0fb72ff517066fa0a0",
+   "source": "/opt/frankie-box/session/work/reading-corpus-full.md",
+   "what": "the rendered reading corpus; referenced by digest, not copied (size; derivable from the request on the box)"
+  }
+ ],
+ "schema": "FRANKIE_BOX_DOCS_INDEX_V1",
+ "work": "/opt/frankie-box/session/work"
+}
