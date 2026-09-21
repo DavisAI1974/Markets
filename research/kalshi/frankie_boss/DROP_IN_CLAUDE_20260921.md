@@ -72,8 +72,13 @@ WHAT STANDS (all committed, every transform exact and proven before use, nothing
   branch. Unblock = Greg approves the Bash create (or a permission rule), OR registers the workflow on the default branch
   plus the `RUNPOD_API_KEY` repository secret. Fixed meanwhile: `--gpu-id` is one string (first tier passed).
 
-GREG'S OPEN CALLS: the GitHub PAT into SSM `/markets/frankie/github-token` (the heartbeat and the pusher refuse
-without it; files stay safe in session/out/; how-to in the handoff 15:2xZ);
+- 16:0xZ: the git PAT is IN SSM `/markets/frankie/github-token` (version 1), written from the chat with the `Claude`
+  IAM key Greg pasted (session-only files, D48 locations). BUT THE TOKEN HAS NO SCOPES (classic PAT generated with
+  nothing ticked): it cannot push. Greg's step: edit the token, tick `repo`, Update token (same value; SSM unchanged).
+  The container: no AWS identity of its own; the Actions secrets API is proxy-blocked; the repo is PUBLIC, so never
+  pass a secret through a workflow input. Handoff 16:0xZ.
+
+GREG'S OPEN CALLS: the `repo` scope on the git PAT (in SSM already; the pusher fails 403 until then);
 (JOB 2 is DONE: endpoint k1sqt0haffm61y live and applied); trunk registration of `frankie_box_fetch_response.yml`,
 `frankie_serverless_reading.yml` and `frankie_box_codecs_ci.yml`; `RUNPOD_API_KEY` in the Claude Code environment
 configuration (pasted per chat until then); the RunPod key rotation after JOB 2.

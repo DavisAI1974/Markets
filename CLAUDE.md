@@ -15,8 +15,9 @@
   host-cached, workers 0-8) created, verified by a real job, written on the box and applied by restart 4; the Pod had
   already read all 4 parts (14:06-14:53Z); the level-0 merges resumed ON THE ENDPOINT (2 H100 workers, $10.73/h with
   the Pod; merge groups use the reading lane, only the writing stays on the Pod); it scales to zero after them. Greg:
-  no key rotation for now. Open calls: the git PAT (ParameterNotFound on the box), the three trunk registrations,
-  RUNPOD_API_KEY in the environment. Box probes PAUSED.**
+  no key rotation for now. 16:0xZ: the git PAT is in SSM (written with the `Claude` IAM key Greg pasted; both values
+  are in the chat by his choice) but the token has NO SCOPES until Greg ticks `repo` on it. Open calls: that scope,
+  the three trunk registrations, RUNPOD_API_KEY in the environment. Box probes PAUSED.**
 - **STATE 2026-09-21 12:2xZ (chat 4, superseded above): the READ was 163 parts and became ~4-5 (members 10.13M -> 151,705
   tokens, digest 559,796 -> 146,765). Greg: stack more layers on EVERY category, more than two tables.**
 - **STATE 2026-09-21 08:00Z (superseded above): cycle 0's MACHINE HALF DONE on retained Pod g7y3g2w1kor4l3; the run HOLDS for Frankie's

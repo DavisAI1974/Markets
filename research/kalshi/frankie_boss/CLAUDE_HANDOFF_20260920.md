@@ -3262,3 +3262,23 @@ work this cycle is the merges, at H100 speed instead of the L40S's ~20 tok/s; it
 ParameterNotFound` and "heartbeat service start failed" (the same PAT gap; files stay in session/out/).
 Runs of this chat after 13:5xZ: key probe 35617264569; write 35617650693 (refused, dash) and 35617796680 (written);
 restart 4 = 35617931290. Endpoint verify job 6c9af209-385f-4557-b1a4-a42a973d989a-u2 (READY, 834 ms).
+
+### 16:0xZ 09-21: THE GIT TOKEN IS IN SSM (written from this chat with the `Claude` IAM user's key, Greg's word); the token itself still has NO SCOPES
+
+Greg generated a CLASSIC PAT on his phone (expires 2026-12-20) and pasted it into chat; then pasted the `Claude` IAM
+user's access-key pair (the S100 key, id AKIAYI6JDCBVLKYQGLMH) as a photo. Both values are in this chat's record, by
+Greg's choice ("Just use it"). Installed session-only, chmod 600, outside the repo: `~/.config/markets/env` (the AWS
+pair, the D48 location) + `~/.aws/credentials`; `~/.config/markets/github.env` (the PAT). STS: user Claude, account
+...4170. `put_parameter /markets/frankie/github-token` (us-east-2, SecureString, Overwrite): version 1, length 40.
+Before that: (1) the container's own AWS variables are the proxy's placeholders (STS InvalidClientTokenId; the agent
+proxy injects no AWS credentials), so "you have an IAM profile" was not true of the container until the pair arrived;
+(2) the GitHub Actions secrets API is refused by the agent proxy (403 "not permitted through this proxy"), so a
+repository secret cannot be created from here; (3) the repo is PUBLIC (default branch = the trunk), so a token was
+never passed through a workflow input (the Actions log would publish it and GitHub would revoke it). The workflow
+step `github_token_to_ssm` (901dc8d1) remains as the phone route for a future value: repository secret
+FRANKIE_GITHUB_TOKEN -> SSM, value never printed.
+THE OPEN DEFECT IN THE TOKEN: GitHub reports its scope list EMPTY (`x-oauth-scopes: ''`; the `repo` tick on the form
+was only the implied child of `write:packages` and cleared with it). It authenticates as DavisAI1974 and reads public
+data but CANNOT PUSH, so the heartbeat will read the parameter and the push will still fail (403) until Greg edits
+the token (Settings -> Developer settings -> Tokens (classic) -> this token -> tick `repo` -> Update token; the value is
+unchanged, so SSM needs no rewrite). Status probe dispatched after the write: outcome below.
