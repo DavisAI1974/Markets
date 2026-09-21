@@ -15,17 +15,13 @@ on:
         required: false
         default: ''
       cost_ceiling:
-        description: 'Refuse (stop-retain) a Pod priced above this per hour'
+        description: 'Refuse a Pod priced above this per hour (the Pod is left as created and receipted; no stop)'
         required: false
         default: '1.25'
       wait_seconds:
         description: 'Bootstrap watch horizon'
         required: false
         default: '1800'
-      stop_after_ready:
-        description: 'true = stop-retain the Pod once healthy (frees its GPU); false = leave it RUNNING'
-        required: false
-        default: 'false'
       resume_pod:
         description: 'Start and watch this EXITED replacement Pod instead of creating a new one'
         required: false
@@ -34,14 +30,12 @@ on:
         description: 'Only watch this RUNNING replacement Pod (no create, no start)'
         required: false
         default: ''
-      on_timeout:
-        description: 'keep = a Pod still bootstrapping at the horizon stays RUNNING; stop = stop-retain it'
-        required: false
-        default: 'keep'
 permissions:
   contents: read
+# Greg, 2026-09-21 02:15Z: "multiple parallel attempts going using servers in different regions ... When one hit
+# you kill the other 2." One attempt per data-center list runs at a time; different lists run in parallel.
 concurrency:
-  group: pod-prepare
+  group: pod-prepare-${{ inputs.data_centers || 'any' }}-${{ inputs.resume_pod }}${{ inputs.watch_pod }}
   cancel-in-progress: false
 jobs:
   prepare:
@@ -67,8 +61,7 @@ jobs:
           python -m pip install numpy==2.4.3 boto3==1.42.23 transformers==5.8.0 tokenizers==0.22.2 cryptography==46.0.3
       - name: Create and watch the replacement Pod
         run: |
-          STOP=""; if [ "${{ inputs.stop_after_ready }}" = "true" ]; then STOP="--stop-after-ready"; fi
-          PYTHONPATH="$GITHUB_WORKSPACE" python research/kalshi/frankie_boss/operations/pod_prepare.py --source-pod "${{ inputs.source_pod }}" --runtime-configuration research/kalshi/frankie_boss/runs/20260919/reviewed-bootstrap-image-defaults-runtime.json --data-centers "${{ inputs.data_centers }}" --cost-ceiling "${{ inputs.cost_ceiling }}" --wait-seconds "${{ inputs.wait_seconds }}" --resume-pod "${{ inputs.resume_pod }}" --watch-pod "${{ inputs.watch_pod }}" --on-timeout "${{ inputs.on_timeout }}" $STOP
+          PYTHONPATH="$GITHUB_WORKSPACE" python research/kalshi/frankie_boss/operations/pod_prepare.py --source-pod "${{ inputs.source_pod }}" --runtime-configuration research/kalshi/frankie_boss/runs/20260919/reviewed-bootstrap-image-defaults-runtime.json --data-centers "${{ inputs.data_centers }}" --cost-ceiling "${{ inputs.cost_ceiling }}" --wait-seconds "${{ inputs.wait_seconds }}" --resume-pod "${{ inputs.resume_pod }}" --watch-pod "${{ inputs.watch_pod }}"
       - name: Retain prepare evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
