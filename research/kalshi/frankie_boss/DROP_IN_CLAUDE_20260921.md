@@ -26,8 +26,10 @@ STATE OF THE RUN (session unit frankie-cycle-00 on box i-035994afa8bdf66a5, rest
 - REPOSITORY SECRETS (names-only report on every box run since eab049c1, measured 15:47Z): RUNPOD_API_KEY=true,
   AWS pair=true, FRANKIE_GITHUB_TOKEN=false, DATABENTO_API_KEY=false. Last session line 15:46:37Z: `merging level 0:
   2/2 done` (the final merge, then writing, then pushing follow).
-- FIRST PROBE of the next chat: `frankie_box_run.yml` script `frankie_box_session.sh` variables `ACTION=status`
-  (the run also prints which repository secrets are set, names only). Expect phase writing or pushing, or done.
+- CHAT 6 (15:5xZ): the probe (run 35621992986) read phase reading, `merging level 1: 2/2 done, 0 in flight`, unit
+  active, heartbeat pushing (tip 6e7f2a12). Beat 15:54:10Z: phase WRITING (`writing: the analysis`) = the final merge
+  is done, the endpoint's work is over, the Pod writes; `pushing` follows. mcp_connect.sh: RUNPOD_API_KEY absent here, nothing done.
+  Handoff 15:5xZ chat 6 has the detail. The one status probe at open is spent; the heartbeat branch is the observable.
 
 CHAT 5 LESSONS, each measured: the Claude Code container has NO AWS identity (proxy placeholders; STS
 InvalidClientTokenId) until a pair is installed at the D48 locations; the agent proxy refuses the GitHub Actions

@@ -3327,3 +3327,27 @@ from him, and the token expiry read off GitHub's header). The key question is DE
 word; nothing key-related is to be acted on from chat 5's records without asking him. The measured facts that stand
 are the SSM parameters as read back, the heartbeat's pushes, and the names-only repository-secrets report. The
 drop-in's top block and the CLAUDE.md state line are corrected to say exactly that.
+
+### 15:5xZ 09-21: CHAT 6 OPEN; first probe = run 35621992986: the session is past BOTH merge levels, level 2 (or the final merge) in flight
+
+Checkout: `claude/cycle-0-frankie-box-rerun-od5sxk` at c78583d0 (the tip named in the drop-in). Skills run first:
+`using-agent-skills`, `git-workflow-and-versioning`, then `/ship` (fan-out below). FIRST COMMAND `bash
+deploy/runpod/mcp_connect.sh`: `RUNPOD_API_KEY absent ... nothing done` (this container has no RunPod variable, no MCP,
+no runpodctl; nothing key-related acted on, per Greg's deferral). Heartbeat branch fetched read-only: tip 6e7f2a12 at
+15:51:01Z, beats every ~5 min, all `git`.
+THE PROBE (`frankie_box_run.yml`, `frankie_box_session.sh`, `ACTION=status`, dispatched 15:53:30Z, success at
+15:54:06Z, SSM command 98d8576a): unit frankie-cycle-00 ACTIVE, phase reading, note `merging level 1: 2/2 done, 0 in
+flight (serverless x8)`, done: no, `session/out` empty. Session log: level 0 `2/2 done` 15:46:37Z; level 1 `1/2 done`
+15:48:08Z, `2/2 done` 15:51:24Z. Heartbeat unit active, last beat 1790005861 `git`. Repository secrets (names only):
+RUNPOD_API_KEY=true, AWS pair=true, FRANKIE_GITHUB_TOKEN=false, DATABENTO_API_KEY=false. Box Online (Ubuntu 24.04).
+WHAT THE MERGE TREE SAYS (`frankie_box_boss_session.py` `_merge`, budget CHUNK_BYTES - 4000 = 136,000 bytes): notes
+are grouped by bytes; a level of 2 single-note groups means each merged note still exceeds the budget, so the tree
+recurses level by level (a few minutes each on the H100) until the notes fit, when ONE `merge-<level>-final` job
+produces `merged-notes.md`; at level >= 8 the notes are joined without that final merge. So `merging level 1: 2/2
+done` is not the final merge: level 2 follows, then (when it fits) the final merge, then `writing` on the Pod, then
+`pushing`. Observation only; no session code touched. Box probes: the one at open is spent; the heartbeat branch is
+the observable from here.
+MEASURED 8 s AFTER THE PROBE: heartbeat beat 15:54:10Z = phase WRITING, note `writing: the analysis`. So the notes fit
+after level 1 and the final merge completed between 15:51:24Z and 15:54:10Z; the endpoint's work this cycle is done
+(it scales to zero 120 s after its last job). The writing runs on the Pod (`boss()`, no output limit); `pushing`
+follows, the pusher reading the git token from SSM at push time. Watching the heartbeat branch for the phase change.
