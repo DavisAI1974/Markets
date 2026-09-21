@@ -9,8 +9,10 @@
   a /ship review (GO after fixes, `SHIP_REVIEW_20260921_CHAT5.md`), every transform exact and parse-back/byte-exact
   proven, nothing dropped. Branch `claude/cycle-0-frankie-box-rerun-od5sxk`. READ FIRST:
   the 13:5xZ block atop `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`, then `CLAUDE_HANDOFF_20260920.md`
-  from 13:0xZ. The RunPod key was ABSENT from chat 5's environment (mcp_connect.sh refused; no MCP). Greg's open calls:
-  the git PAT, the endpoint word, the two trunk registrations, RUNPOD_API_KEY in the environment. Box probes PAUSED.**
+  from 13:0xZ. The RunPod key was absent from chat 5's environment until Greg pasted it at 15:0xZ: MCP CONNECTED (serverInfo
+  "4.0.0 [specgen]"), list-endpoints HTTP 200 = ZERO endpoints, engine Pod RUNNING; runpodctl did not install (proxy).
+  The key lives only in `~/.config/markets/runpod.env` and must be ROTATED after JOB 2. Greg's open calls: the git
+  PAT, the endpoint word, the three trunk registrations, RUNPOD_API_KEY in the environment. Box probes PAUSED.**
 - **STATE 2026-09-21 12:2xZ (chat 4, superseded above): the READ was 163 parts and became ~4-5 (members 10.13M -> 151,705
   tokens, digest 559,796 -> 146,765). Greg: stack more layers on EVERY category, more than two tables.**
 - **STATE 2026-09-21 08:00Z (superseded above): cycle 0's MACHINE HALF DONE on retained Pod g7y3g2w1kor4l3; the run HOLDS for Frankie's

@@ -1,6 +1,6 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
-## READ FIRST (13:5xZ 09-21, chat 5): THE READ IS RUNNING ON THE RENDER, 4 PARTS (restart 3 = run 35608016668, status 35608448008); the RunPod key was ABSENT here
+## READ FIRST (13:5xZ 09-21, chat 5): THE READ IS RUNNING ON THE RENDER, 4 PARTS (restart 3 = run 35608016668, status 35608448008); the RunPod key arrived at 15:0xZ (MCP connected, 0 endpoints)
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later). Run `using-agent-skills`
 and `git-workflow-and-versioning` first; do not stop and restart shells. The RunPod skills (`~/.claude/skills/runpod*`)
@@ -48,11 +48,19 @@ WHAT STANDS (all committed, every transform exact and proven before use, nothing
   decoded root to the delivered envelope, so no `$derivable` snapshot.
 - `/ship` review of chat 5's diff: `SHIP_REVIEW_20260921_CHAT5.md` (decision and follow-ups there).
 
+- 15:0xZ: Greg pasted the RunPod key into chat; it lives ONLY in `~/.config/markets/runpod.env` (chmod 600, session-only,
+  never echoed). `mcp_connect.sh`: MCP registered (user scope, Bearer), Connected, serverInfo.version "4.0.0 [specgen]";
+  runpodctl install FAILED (proxy, as chat 4). list-endpoints over REST: HTTP 200, ZERO endpoints; pods: the engine Pod
+  g7y3g2w1kor4l3 RUNNING, three old smoke Pods EXITED, untouched. JOB 2 is now reachable by the key route (REST, since
+  runpodctl is absent) ON GREG'S WORD ONLY. ROTATE THE KEY after the endpoint work (it was pasted into chat). If the
+  next chat's environment lacks the variable again, ask Greg for `RUNPOD_API_KEY` in the environment configuration.
+
 GREG'S OPEN CALLS: the GitHub PAT into SSM `/markets/frankie/github-token` (the heartbeat and the pusher refuse
 without it; files stay safe in session/out/);
 the endpoint word (JOB 2: create the H100 serverless reading endpoint, verify, `frankie_box_serverless_config.sh
-ACTION=write ENDPOINT_ID=<id>`, then restart_session); trunk registration of `frankie_box_fetch_response.yml` and
-`frankie_serverless_reading.yml`; `RUNPOD_API_KEY` in the Claude Code environment configuration for the MCP route.
+ACTION=write ENDPOINT_ID=<id>`, then restart_session); trunk registration of `frankie_box_fetch_response.yml`,
+`frankie_serverless_reading.yml` and `frankie_box_codecs_ci.yml`; `RUNPOD_API_KEY` in the Claude Code environment
+configuration (pasted per chat until then); the RunPod key rotation after JOB 2.
 
 ## READ FIRST (12:2xZ 09-21, chat 4 closed on Greg's word): THE READ IS ~4-5 PARTS, NOT 163; next chat = MORE STACKS ON MORE CATEGORIES
 

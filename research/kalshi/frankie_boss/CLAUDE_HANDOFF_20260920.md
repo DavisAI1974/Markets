@@ -3153,3 +3153,22 @@ exists; files safe in session/out/). No more box probes from this chat (PAUSED s
 `frankie_box_run.yml` script `frankie_box_session.sh` variables `ACTION=status`.
 Runs of this chat, in order: profile 35603160044; stacks 35604003983, 35604644446, 35604904715, 35605419072,
 35605902090, 35606132790, 35606423208; restarts 35606762128, 35607741484, 35608016668; status 35608448008.
+
+### 15:0xZ 09-21: the RunPod MCP is CONNECTED by the key route (serverInfo.version "4.0.0 [specgen]"); list-endpoints verified; the key must be ROTATED
+
+Greg pasted the RunPod API key into chat after the 13:5xZ close. It was written ONLY to `~/.config/markets/runpod.env`
+(chmod 600, outside the repo, session-only) and never echoed; `bash deploy/runpod/mcp_connect.sh` then reported
+`RUNPOD_API_KEY present (length 50)`, `mcp: runpod registered (user scope, Bearer)`, `runpod: https://mcp.getrunpod.io/
+(HTTP) - Connected`, handshake `serverInfo {"name":"Runpod API Server","version":"4.0.0 [specgen]"}` (the version the
+drop-in asked for). `runpodctl install failed (see /tmp/runpodctl-install.log)`: the same proxy refusal as chat 4, so
+the CLI lane is still absent in the container; the MCP tools appear only after the session reconnects (not loaded in
+this chat). The list-endpoints verification ran over REST with the same key (read-only, no spend): `GET
+/v1/endpoints` HTTP 200, ZERO serverless endpoints exist; `GET /v1/pods` HTTP 200: the retained engine Pod
+g7y3g2w1kor4l3 RUNNING (the read is on it), three older `granite-smoke-*` Pods EXITED, all untouched.
+CONSEQUENCES. (1) JOB 2 can now run by the key route from a chat (golden path 20: `runpodctl serverless create
+--hub-id runpod-workers/worker-vllm --model-reference <pinned Granite>:<rev> --workers-min 0`, H100, or the REST
+equivalent since runpodctl does not install here) on Greg's explicit word only; it is billable and nothing was
+created. (2) The key was pasted into chat, so it must be ROTATED at https://console.runpod.io/user/settings once the
+endpoint work is done (the same rule as the photographed AWS pair: rotate after, not during); until then it lives in
+that file only. (3) Greg at 15:0xZ asked "We can get root going now right?": it IS going, since restart 3 at 13:49Z
+(4 parts on the Pod); nothing further was dispatched and box probes stay PAUSED.
