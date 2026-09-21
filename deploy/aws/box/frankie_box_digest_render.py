@@ -22,6 +22,28 @@ import math
 import re
 
 DELTA_KEYS = ('ts_recv_ns', 'ts_event_ns', 'ts_recv', 'ts_event', 'second')
+# Columns the pinned adapter computes from other columns of the same row (ng_exhaustion_mbo_v4_state_adapter_20260820
+# book_snapshot): rendered as `=` when the recomputation equals the stored value exactly, else literal. Exact by check.
+DERIVED = {
+    'spread': (('best_ask', 'best_bid'), lambda a, b: a - b),
+    'mid': (('best_bid', 'best_ask'), lambda b, a: 0.5 * (b + a)),
+    'depth_imbalance_full': (('bid_depth_full', 'ask_depth_full'), lambda b, a: None if abs(float(b + a)) < 1e-15 else float(b - a) / float(b + a)),
+}
+
+
+def _derived(row, column):
+    spec = DERIVED.get(column)
+    if not spec:
+        return False
+    keys, fn = spec
+    if any(k not in row or row[k] is None for k in keys):
+        return row.get(column) is None
+    try:
+        value = fn(*[row[k] for k in keys])
+    except Exception:
+        return False
+    stored = row.get(column)
+    return (value is None and stored is None) or (type(value) is type(stored) and value == stored) or (isinstance(value, float) and isinstance(stored, (int, float)) and value == float(stored) and not isinstance(stored, bool))
 NONE, TRUE, FALSE = '-', 'T', 'F'
 
 
@@ -54,7 +76,13 @@ def _cell(v, dictionary, order):
             dictionary[v] = len(order)
             order.append(v)
         return '@%d' % dictionary[v]
-    return 'J' + json.dumps(v, separators=(',', ':'), sort_keys=True)
+    text = 'J' + json.dumps(v, separators=(',', ':'), sort_keys=True)
+    if len(text) > 12:                       # repeated JSON cells (nested records) go through the dictionary too
+        if text not in dictionary:
+            dictionary[text] = len(order)
+            order.append(text)
+        return '@%d' % dictionary[text]
+    return text
 
 
 def render_table(name, rows):
@@ -74,6 +102,9 @@ def render_table(name, rows):
             missing = c not in r
             if missing:
                 cells.append('?')
+                continue
+            if _derived(r, c):
+                cells.append('=')
                 continue
             if c.endswith(DELTA_KEYS) and isinstance(v, int) and not isinstance(v, bool) and isinstance(previous.get(c), int):
                 cells.append('+%d' % (v - previous[c]) if v >= previous[c] else '%d' % (v - previous[c]))
@@ -102,7 +133,7 @@ def parse_table(block):
     rows, previous = [], {}
     for line in lines[idx:idx + n]:
         cells = line.split('\t') if columns else []
-        row = {}
+        row, derived_cols = {}, []
         for c, cell in zip(columns, cells):
             if cell == '?':
                 continue
@@ -112,8 +143,12 @@ def parse_table(block):
                 v = True
             elif cell == FALSE:
                 v = False
+            elif cell == '=':
+                derived_cols.append(c); continue
             elif cell.startswith('@'):
                 v = dictionary[int(cell[1:])]
+                if isinstance(v, str) and v.startswith('J') and v[1:2] in '[{':
+                    v = json.loads(v[1:])
             elif cell.startswith('J'):
                 v = json.loads(cell[1:])
             elif cell == 'nan':
@@ -127,6 +162,9 @@ def parse_table(block):
             if isinstance(v, int) and not isinstance(v, bool):
                 previous[c] = v
             row[c] = v
+        for c in derived_cols:
+            keys, fn = DERIVED[c]
+            row[c] = None if any(row.get(k) is None for k in keys) else fn(*[row[k] for k in keys])
         rows.append(_unflatten(row))
     return name, rows
 
@@ -190,7 +228,9 @@ def per_second_rows(first, buys, sells, roll, window=20):
 def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells):
     """The whole digest: layer status, then every derived layer as a dense exact table (all fields)."""
     lines = ['# Derivation digest DIGEST_V2 (Frankie\'s own calculations on this cycle\'s rows; written by the session code; whole, no '
-             'limits; every derived field, exact; tables: one header line, tab-separated rows, integer timestamp columns as deltas '
+             'limits; every derived field, exact; `=` = the column the adapter computes from this row (spread = best_ask - best_bid, '
+             'mid = 0.5*(best_bid + best_ask), depth_imbalance_full = (bid_depth_full - ask_depth_full)/(bid_depth_full + ask_depth_full)), '
+             'checked equal before it is written that way; tables: one header line, tab-separated rows, integer timestamp columns as deltas '
              'from the previous row (first row absolute), floats as shortest round-trip decimals, `-` = none, T/F = booleans, '
              '`@n` = dictionary string n, `J...` = JSON; roll20 = n/d, the exact fraction (b-s)/(b+s) of the trailing 20-second '
              'buy and sell sums, its float being that division)', '',

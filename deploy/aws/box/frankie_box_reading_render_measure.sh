@@ -43,6 +43,19 @@ for mode in modes:
     for n, m in rep.members.items():
         print('%-30s %10d %9d -> %10d %9d   exact=%s' % (n[:30], m['delivered_bytes'], m['delivered_tokens'], m.get('rendered_bytes', 0), m['rendered_tokens'], rep.proof[n]['exact']))
     print('   L7: derivable vectors', rep.derived_vectors, 'ranges', rep.ranges)
+    if rep.derived_vectors == 0:
+        # diagnose: does the delivered critic snapshot decode, and what does its receipt hold?
+        try:
+            from research.kalshi.frankie_boss import granite_context_stacked as stacked
+            snap = json.loads(members['files/critic-snapshot.txt'].decode('utf-8'))
+            env = snap.get('codec'); print('   snapshot envelope schema', env.get('schema'), 'expected', stacked.SCHEMA, 'prompt_version', env.get('prompt_version'), 'expected', stacked.PROMPT_VERSION)
+            root = stacked.decode(env); print('   decoded root keys', list(root)[:12] if isinstance(root, dict) else type(root).__name__)
+            rc = root.get('receipt') if isinstance(root, dict) else None; print('   receipt keys', list(rc)[:20] if isinstance(rc, dict) else rc)
+            ph = (rc or {}).get('packet_hashes'); print('   packet_hashes', type(ph).__name__, len(ph) if ph else None)
+            fc = R.decode_member('files/forecast-000000.bin', members['files/forecast-000000.bin'])[0][0]
+            v = fc['context_receipt']['value']['context']['packet_hashes']; print('   forecast packet_hashes', len(v), 'equal to snapshot vector:', list(v) == list(ph or []))
+        except Exception as err:
+            import traceback; print('   diagnose failed:', type(err).__name__, str(err)[:300])
     if mode == 'identity':
         i = text.find('{"$tensors"'); print('--- tensor table head:', text[i:i + 900].replace('\n', ' ')[:900])
 # the dense digest, from the derived layers on this box (read-only: written under tmp/, never under session/)
