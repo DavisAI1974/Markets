@@ -3,13 +3,13 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
-- **STATE 2026-09-21 13:4xZ (chat 5): Frankie's cycle-0 session runs on his box with the retained Pod as the BOSS;
-  the READ was 163 parts of 87k tokens, then 4-5, and is now ~3 after six measured stacks (digest 146,765 -> 75,551;
-  members 151,705 -> ~108k; head 68,506 -> 66,301; every transform exact and parse-back/byte-exact proven; nothing
-  dropped). Branch `claude/cycle-0-frankie-box-rerun-od5sxk`. READ FIRST: the 13:4xZ block atop
-  `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`, then `CLAUDE_HANDOFF_20260920.md` from 13:0xZ. The RunPod
-  key was ABSENT from chat 5's environment (mcp_connect.sh refused; no MCP). Greg's open calls: `restart_session`, the
-  git PAT, the endpoint word, the two trunk registrations, RUNPOD_API_KEY in the environment. Box probes PAUSED.**
+- **STATE 2026-09-21 13:5xZ (chat 5): Frankie's cycle-0 session was RESTARTED on the render (Greg: "get the root read
+  going"; run 35606762128): the READ was 163 parts of 87k tokens, then 4-5, and is now ~3 (248,111 tokens: digest
+  146,765 -> 75,562; members 151,705 -> 106,248; head 68,506 -> 66,301) after seven measured stacks, every transform
+  exact and parse-back/byte-exact proven, nothing dropped. Branch `claude/cycle-0-frankie-box-rerun-od5sxk`. READ FIRST:
+  the 13:5xZ block atop `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`, then `CLAUDE_HANDOFF_20260920.md`
+  from 13:0xZ. The RunPod key was ABSENT from chat 5's environment (mcp_connect.sh refused; no MCP). Greg's open calls:
+  the git PAT, the endpoint word, the two trunk registrations, RUNPOD_API_KEY in the environment. Box probes PAUSED.**
 - **STATE 2026-09-21 12:2xZ (chat 4, superseded above): the READ was 163 parts and became ~4-5 (members 10.13M -> 151,705
   tokens, digest 559,796 -> 146,765). Greg: stack more layers on EVERY category, more than two tables.**
 - **STATE 2026-09-21 08:00Z (superseded above): cycle 0's MACHINE HALF DONE on retained Pod g7y3g2w1kor4l3; the run HOLDS for Frankie's

@@ -1,6 +1,6 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
-## READ FIRST (13:4xZ 09-21, chat 5): SIX STACKS MEASURED, THE WHOLE READ IS ~3 PARTS; the RunPod key was ABSENT here
+## READ FIRST (13:5xZ 09-21, chat 5): THE READ IS RESTARTED ON THE RENDER (~3 PARTS, run 35606762128); the RunPod key was ABSENT here
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later). Run `using-agent-skills`
 and `git-workflow-and-versioning` first; do not stop and restart shells. The RunPod skills (`~/.claude/skills/runpod*`)
@@ -26,16 +26,23 @@ WHAT STANDS (all committed, every transform exact and proven before use, nothing
 - STACKS 4-5 (0278e898, 953765c7, 2bc0ff03; runs 35605419072, 35605902090): compact JSON, `*k` scales and `#w` digit
   strings in the stacked spelling (action/side 6.5k -> 1.5k each, size 6.5k -> 3.0k); members -> 108,659; the stacked
   block 89,528 -> 75,887; the state member 127,003 -> 86,354.
-- STACK 6 (f8b400a7): L10 admits c15 tuples as row containers (the forecast's points and marks); measured in run
-  35606132790 (numbers in the handoff 13:4xZ).
-- WHOLE CORPUS at the next restart: head + members + digest ~= 250k tokens = 3 parts of 87k (was 163, then 4-5).
+- STACKS 6-7 (f8b400a7, 6fd64a67; runs 35606132790, 35606423208): L10 admits c15 tuples as row containers and the
+  DIGEST_V4 grammar gains an exact tuple cell (`U`): the forecast's marks and points are table blocks; members 106,248.
+- WHOLE CORPUS = head 66,301 + members 106,248 + digest 75,562 = 248,111 tokens = 2.85 parts of 87k (was 163, then 4-5).
+- GREG 13:4xZ: "Yes the aws is valid. You have to use the workflow in git. Any reduction helps. Let's get the root read
+  going soon." -> `restart_session REASON=lossless-render` DISPATCHED (run 35606762128, 5ff0472e): the session unit
+  stopped with a receipt (the old read had reached part 10/163), the box checkout moved to this branch's head, preflight
+  OK (engine healthy on the Pod), unit restarted 13:37:31Z, phase deriving. The corpus receipt now carries an IDENTITY
+  (render + DIGEST_V4 + HEAD_TEXT_V1 + tensor mode + digest sha): the old corpus is moved aside under
+  `work/superseded-corpus-<ts>/` (nothing deleted) and the corpus is rebuilt through every layer, then the reading
+  runs in ~3 parts on the Pod (part 1 queues behind the in-flight old part, FIFO, no cancel).
   What remains is the data itself: the record table's order_id / timestamp / ts_in_delta / sequence deltas and price
   indexes (66k), the A_MEMORY findings prose (31.5k), the book/structure rows (74k). The codec cannot re-encode its own
   decoded root to the delivered envelope, so no `$derivable` snapshot.
 - `/ship` review of chat 5's diff: `SHIP_REVIEW_20260921_CHAT5.md` (decision and follow-ups there).
 
-GREG'S OPEN CALLS (unchanged): `frankie_box_session.sh ACTION=restart_session REASON=lossless-render` (applies the
-render, identity tensors, DIGEST_V4, HEAD_TEXT_V1 and the lane); the GitHub PAT into SSM `/markets/frankie/github-token`;
+GREG'S OPEN CALLS: the GitHub PAT into SSM `/markets/frankie/github-token` (the heartbeat and the pusher refuse
+without it; files stay safe in session/out/);
 the endpoint word (JOB 2: create the H100 serverless reading endpoint, verify, `frankie_box_serverless_config.sh
 ACTION=write ENDPOINT_ID=<id>`, then restart_session); trunk registration of `frankie_box_fetch_response.yml` and
 `frankie_serverless_reading.yml`; `RUNPOD_API_KEY` in the Claude Code environment configuration for the MCP route.
