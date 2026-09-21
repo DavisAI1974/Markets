@@ -3351,3 +3351,14 @@ MEASURED 8 s AFTER THE PROBE: heartbeat beat 15:54:10Z = phase WRITING, note `wr
 after level 1 and the final merge completed between 15:51:24Z and 15:54:10Z; the endpoint's work this cycle is done
 (it scales to zero 120 s after its last job). The writing runs on the Pod (`boss()`, no output limit); `pushing`
 follows, the pusher reading the git token from SSM at push time. Watching the heartbeat branch for the phase change.
+
+### 16:0xZ 09-21: GREG'S STANDING WORD FOR THE CYCLE-0 FILES: a quick one-over only, deep dives after cycle 1 launches
+
+Greg (chat 6, 16:0xZ): "we are only going to give any analysis files generated a quick one over to see if there is
+anything that cycle 1 absolutely needs; if nothing, we will put off the deep dives once we get cycle 1 launched."
+So when `root/cycle-00-response` lands: read the four files ONCE for (a) anything the response says cycle 1 needs
+(a missing input, a refusal, an output-incomplete mark, a request the principal makes of the host), (b) the shape and
+binding checks the recorder runs; then straight on to the cycle-1 launch chain. No characterization, no scoring, no
+findings write-up until cycle 1 is running. Also Greg 16:0xZ: the RunPod key may be used for anything (all
+permissions); every key's name and location is in `KEY_REGISTRY.md` (e4e53386). Writing phase measured at 15:54:10Z
+and 15:59:12Z (heartbeat), still `writing: the analysis` at 16:02Z.
