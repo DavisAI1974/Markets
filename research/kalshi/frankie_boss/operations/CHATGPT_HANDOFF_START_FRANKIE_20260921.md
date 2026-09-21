@@ -1,30 +1,25 @@
 # Handoff for ChatGPT: start Frankie's cycle-0 session on his box (2026-09-21)
 
-Everything is built and verified on the box i-035994afa8bdf66a5 (us-east-1, Ubuntu, 32 vCPU). The session
-cannot start only because it has no model credential and no git push credential. Your job: get Greg through
-the two grants below, start the session, watch it, record the response. Essentials only; no tests, no gates.
+Everything is built and verified on the box i-035994afa8bdf66a5 (us-east-1, Ubuntu, 32 vCPU). The engine is the
+BOSS (no external model, no API key). The session needs one git credential and the BOSS engine call wired on the
+box. Your job: get Greg through the grant below, then preflight, start, watch, record. Essentials only; no tests,
+no gates.
 
 Branch for every dispatch: `claude/cycle-0-frankie-box-rerun-od5sxk`. All actions are GitHub `workflow_dispatch`
 on DavisAI1974/Markets (Actions tab). Never stop, resize or terminate any box or Pod. Never touch the native host
 i-0e90ee6110ef609aa (its runner is holding for the response by design).
 
-## Step 1 (Greg, AWS console or CLI, us-east-2 SSM Parameter Store): two SecureStrings
+## Step 1 (Greg, AWS console or CLI, us-east-2 SSM Parameter Store): ONE SecureString
 
-The box's instance role `Ssm` already decrypts SecureStrings in us-east-2 (verified). Create:
+The engine is the BOSS (Greg, 2026-09-21): no API keys, no external model. The only credential the box needs is
+for git. The box's instance role `Ssm` already decrypts SecureStrings in us-east-2 (verified). Create:
 
-1. `/markets/frankie/github-token` = a GitHub fine-grained personal access token, repository DavisAI1974/Markets,
-   permission Contents: Read and write (nothing else). Frankie pushes `root/cycle-00-response` and
-   `root/cycle-00-progress` with it.
-2. `/markets/frankie/anthropic-api-key` = an Anthropic API key (console.anthropic.com). Claude Code on the box
-   calls the API directly with it. (Alternative if Greg prefers Bedrock: attach `bedrock:InvokeModel` and
-   `bedrock:InvokeModelWithResponseStream` on the Anthropic model ARNs in us-east-1 to role `Ssm` and enable
-   model access; then no key is needed. The box tries the key first, Bedrock second.)
-
-CLI form (Greg's own credentials, values never pasted anywhere else):
+- `/markets/frankie/github-token` = a GitHub fine-grained personal access token, repository DavisAI1974/Markets,
+  permission Contents: Read and write (nothing else). Frankie pushes `root/cycle-00-response` and
+  `root/cycle-00-progress` with it.
 
 ```
 aws ssm put-parameter --region us-east-2 --name /markets/frankie/github-token --type SecureString --value '<PAT>'
-aws ssm put-parameter --region us-east-2 --name /markets/frankie/anthropic-api-key --type SecureString --value '<KEY>'
 ```
 
 Optional, for S3 heartbeats (git heartbeats work without it): allow `s3:PutObject` on
@@ -37,8 +32,8 @@ Workflow `Frankie box run` (frankie_box_run.yml), ref `claude/cycle-0-frankie-bo
 - script: `deploy/aws/box/frankie_box_session.sh`
 - variables: `ACTION=preflight`
 - timeout: `600`
-Expected in the job summary: `backend: anthropic-api-ssm` (or `bedrock-role`) and `preflight: OK` with the
-line FRANKIE-BOX-ONLINE. If it says FAILED, the credential is wrong or missing; fix step 1 and repeat.
+Expected in the job summary once the BOSS engine call is wired on the box: `preflight: OK`. Until then it prints
+`engine: BOSS (not wired on the box yet)` and refuses; nothing starts.
 
 ## Step 3: start the session
 

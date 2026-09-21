@@ -87,8 +87,8 @@ Option A, concretely (Greg, 07:5xZ):
 as `actual-frankie-response.json`, `actual-host-session-record.json`, `actual-host-attestation.json`,
 `actual-frankie-analysis.md`)
 
-1. `response.json`: keys `request_sha256` (the digest above), `session_id` (yours, e.g. `claude-code:frankie-box:i-035994afa8bdf66a5:cycle-00`),
-   `model_identity_as_reported_by_session` (what your backend reports; never invented), `sections` (all 18 section
+1. `response.json`: keys `request_sha256` (the digest above), `session_id` (yours, e.g. `boss:frankie-box:i-035994afa8bdf66a5:cycle-00`),
+   `model_identity_as_reported_by_session` (what the BOSS reports of itself; never invented), `sections` (all 18 section
    IDs to the retained sha256 from the request's `attachment`), `feedback` (`request_id`, `input_hash`,
    `source_hash`, integer `available_ns`, `sessions` with the exact roster: per session `session_id`, `timing`,
    `gap` or null, `path` labels per the repository's FrankieFeedback schema; NO `principal_receipt_hash`), `lessons`

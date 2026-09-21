@@ -2532,3 +2532,18 @@ Every scheduled run (269, the last 35562573017 at 04:53Z) failed at `nws_temp_fe
 the workflow's install step pinned boto3 only. Fixed on this branch (10a4261a) and on the trunk the schedule
 runs from (GitHub API; the collector checks out the trunk itself); one manual dispatch to prove it. Not a
 Frankie file; nothing else in the workflow changed.
+
+### 09:0xZ 09-21: GREG: NO API KEYS, NO OPUS. THE ENGINE IS THE BOSS. Every API/model mention taken out of the box harness
+
+Greg: "We aren't using any api keys or opus. That's why we made the boss." and "Any mention of apis should be taken
+out. That's months old." Withdrawn: grant 2 (a model credential) and the Claude Code runner. Taken out (this
+commit): the session runner's backend (it now refuses `start`/`preflight` with "the BOSS engine call is wired
+next"), the Node/Claude Code install and the model probes in the backend prep script (now a git-token and
+progress-prefix reach probe only), the model names in the task document, the ChatGPT handoff (one grant: the git
+token), the drop-in. Node and Claude Code remain installed on the box from run 35577803017 (nothing deleted; unused).
+The 08:35Z/08:50Z entries above stand as the record of what was built before this word; they are superseded on
+the engine. OPEN, Greg's call: which BOSS surface answers the principal request on the box: the retained Granite
+service on Pod g7y3g2w1kor4l3 (EXITED; a Pod start on his word; the request is admitted at 92,439 input tokens in
+131,072), or the native BOSS on the host (whose runner holds for this very response). Under either, the producers
+run on the box as a scripted step against prefix-00 and their outputs are attached as evidence; the BOSS derives and
+writes. The one remaining grant: `/markets/frankie/github-token` SecureString in us-east-2.

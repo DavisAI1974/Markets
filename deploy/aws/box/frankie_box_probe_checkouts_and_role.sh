@@ -9,7 +9,7 @@ for d in /opt/frankie-main /opt/frankie-receiver /opt/frankie-receiver-checks /o
   ls -d "$d"/research/kalshi/frankie_raw_mbo_benchmark "$d"/research/kalshi/frankie_boss "$d"/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py "$d"/venv "$d"/.venv 2>/dev/null
 done
 echo "### pythons"; ls /opt/hostedtoolcache/Python 2>/dev/null; for p in /opt/hostedtoolcache/Python/*/x64/bin/python; do [ -x "$p" ] && "$p" --version; done; ls -d /opt/*/venv /opt/*/.venv /opt/frankie-*/bin/python 2>/dev/null
-for v in /opt/frankie-main/venv /opt/frankie-receiver/venv /opt/frankie-receiver-checks/venv /opt/frankie-profile-20260917/venv; do [ -x "$v/bin/python" ] && { echo "--- $v"; "$v/bin/python" --version; "$v/bin/python" -m pip list 2>/dev/null | grep -iE "^(torch|numpy|boto3|zstandard|databento|cryptography|pandas|scipy|openai|anthropic) " ; }; done
+for v in /opt/frankie-main/venv /opt/frankie-receiver/venv /opt/frankie-receiver-checks/venv /opt/frankie-profile-20260917/venv; do [ -x "$v/bin/python" ] && { echo "--- $v"; "$v/bin/python" --version; "$v/bin/python" -m pip list 2>/dev/null | grep -iE "^(torch|numpy|boto3|zstandard|databento|cryptography|pandas|scipy) " ; }; done
 echo "### instance role identity and S3 reach (read-only)"
 python3 - <<'PY'
 import boto3, botocore
@@ -31,9 +31,6 @@ for bucket, region, key, prefix in checks:
 try:
     r = boto3.client('ssm', region_name='us-east-1').get_parameter(Name='/markets/DATABENTO_API_KEY', WithDecryption=False); print('ssm get-parameter (no decrypt) reachable: yes (value not printed)')
 except Exception as e: print('ssm get-parameter:', type(e).__name__, getattr(e,'response',{}).get('Error',{}).get('Code'))
-try:
-    b = boto3.client('bedrock', region_name='us-east-1').list_foundation_models(byProvider='Anthropic'); print('bedrock list models OK:', len(b['modelSummaries']), 'anthropic models')
-except Exception as e: print('bedrock list models:', type(e).__name__, getattr(e,'response',{}).get('Error',{}).get('Code'))
 PY
-echo "### outbound reach"; for u in https://github.com https://pypi.org/simple/pip/ https://download.pytorch.org/whl/cpu/ https://api.anthropic.com; do printf '%-45s ' "$u"; curl -s -m 8 -o /dev/null -w '%{http_code}\n' "$u" || echo "unreachable"; done
+echo "### outbound reach"; for u in https://github.com https://pypi.org/simple/pip/ https://download.pytorch.org/whl/cpu/; do printf '%-45s ' "$u"; curl -s -m 8 -o /dev/null -w '%{http_code}\n' "$u" || echo "unreachable"; done
 echo "### done (read-only)"

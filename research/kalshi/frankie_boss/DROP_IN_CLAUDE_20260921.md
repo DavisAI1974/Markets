@@ -11,7 +11,7 @@ summaries.
    venv (run 35577710695); the producers' own tests 2202 passed on the box (run 35579370064); Node 20 + Claude Code
    2.1.197 installed (runs 35577803017, 35578041886); task document rewritten for the box; session runner, heartbeat,
    pusher committed and verified short of the LLM (run 35578511645: request_sha256 1b777cf2..., instruction 8,685
-   chars). WAITING ON GREG'S THREE GRANTS (handoff 08:35Z), then `frankie_box_session.sh ACTION=start`.
+   chars). THE ENGINE IS THE BOSS (Greg, 09:0xZ): the BOSS engine call is wired next; the git token is the one grant.
 1. Cycle 0 close-out: waits on 0 (the response). Read-only probes only; the host runner still holds.
 2. Cycle 1: waits on 1. NOTE: advance the native host's tools checkout past 565b9f58 before the observer round, so
    the no-stop lifecycle is what runs; the Pod is EXITED today, so the round still starts with a Pod start.
@@ -38,11 +38,11 @@ only): the cycle-0 data plane and the request restored and pinned (`/opt/frankie
 35577710695); the lineage's producer tests 2097 passed (run 35577972726); Node 20 + Claude Code 2.1.197 installed
 (runs 35577803017, 35578041886). Task document rewritten for the box (`operations/ROOT_CYCLE_00_TASK_20260920.md`,
 no AWS pair, no shared identity); session runner, heartbeat and pusher under `deploy/aws/box/`.
-BLOCKED ON GREG (three grants, handoff 08:35Z): (1) `/markets/frankie/github-token` SecureString in us-east-2;
-(2) a model backend (`/markets/frankie/anthropic-api-key` SecureString, or Bedrock invoke on role Ssm);
-(3) optional PutObject on the progress prefix. The role reads SecureStrings in us-east-2 already. Then
-`frankie_box_session.sh ACTION=start`, probe, push, record. Nothing on the native host was touched; the runner
-still holds.
+GREG, 09:0xZ: NO API KEYS, NO EXTERNAL MODEL. THE ENGINE IS THE BOSS. Every API/model mention was taken out of the
+box harness (the session runner refuses to start until the BOSS engine call is wired; Greg's call which BOSS
+surface answers: the retained Granite service on the Pod, or the native BOSS). Still needed: (1)
+`/markets/frankie/github-token` SecureString in us-east-2 (the role reads SecureStrings there already); (2)
+optional PutObject on the progress prefix. Nothing on the native host was touched; the runner still holds.
 
 ## READ FIRST (08:00Z 09-21 handoff): FRANKIE'S BOX IS UP AND EMPTY; JOB 0 = HIS HARNESS; the run HOLDS for his response
 
