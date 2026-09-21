@@ -1,5 +1,7 @@
 # Frankie full-stack October and boss/Sol-replacement lifecycle
 
+> NEXT TRANCHE (2026-09-21, not started): cycle 0's bedrock. Plan: `research/kalshi/frankie_boss/PLAN_CYCLE0_BEDROCK_20260921.md`; spec: `SPEC_CYCLE0_BEDROCK_20260921.md`. Tasks BR-0..BR-8 are listed there; this file keeps the active tranche below unchanged.
+
 ## Active tranche: BOSS state serialization
 
 ### Overview

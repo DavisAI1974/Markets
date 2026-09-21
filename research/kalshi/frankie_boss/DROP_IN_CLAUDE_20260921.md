@@ -21,7 +21,11 @@ chat 6):
   comparison packet, the session receipts packet, reading gated by corpus identity, writing gated by its inputs);
   `/ship` GO after fixes, all fixes landed in 4416e6ac with the test that would have caught each (129 box+host tests,
   29 classroom tests torch-hidden). RESTART RUNBOOK a-i: handoff 18:xxZ (unchanged by the fixes).
-- SPECCED, NOT BUILT: `SPEC_CYCLE0_BEDROCK_20260921.md` = Greg's "All 3": cycle 0's pin gains `derived_geometry` (8),
+- PLANNED, NOT BUILT (Greg: "We definitely need a spec plan to follow before we put our hardhats on and build"; "Don't use
+  scratchpad"): `PLAN_CYCLE0_BEDROCK_20260921.md` = tasks BR-0..BR-8 with the dependency graph, checkpoints A-E, risks and
+  rollback; BR-0 puts the producers checkout INSIDE the repo as a gitignored worktree (`deploy/aws/box/producers_checkout.sh`),
+  no scratchpad anywhere in the build. JOB 1 of the build chat = BR-0, then BR-1 beside BR-2/BR-3, TDD, torch-hidden runs.
+  The spec: `SPEC_CYCLE0_BEDROCK_20260921.md` = Greg's "All 3": cycle 0's pin gains `derived_geometry` (8),
   `prebirth_opportunity` (5) and `causal_clocks` (7) as a BEDROCK set; the box derives the 20 layers through the pinned
   `NativeReplayDriver` (checkout `ccode/frankie-receiver-feed-20260916` at 2ebb8ce8, already on the box) and projects them
   by the producers' own `native_layer_crosswalk`; a box-side exhaustion/D teach-back beside the classroom (host grader

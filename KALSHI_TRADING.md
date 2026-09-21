@@ -4,6 +4,7 @@
 
 ### The Dipole classroom exchange in the box session (2026-09-21, chat 6; Greg: option 1, built before anything runs)
 - `research/kalshi/frankie_boss/SPEC_CLASSROOM_EXCHANGE_20260921.md` - the spec and capability map (the contract the host grades, read from the code; the restart runbook is in the handoff 18:xxZ).
+- `research/kalshi/frankie_boss/PLAN_CYCLE0_BEDROCK_20260921.md` - THE PLAN for the bedrock build (tasks BR-0..BR-8, dependency graph, checkpoints A-E, risks, rollback; no scratchpad: the producers checkout is an in-repo gitignored worktree). Not started.
 - `research/kalshi/frankie_boss/SPEC_CYCLE0_BEDROCK_20260921.md` - SPEC (Greg: "All 3", 2026-09-21): cycle 0's pin gains derived_geometry, prebirth_opportunity and causal_clocks as a BEDROCK set; the box derives the 20 layers through the pinned NativeReplayDriver and projects them by the producers' own crosswalk; a box-side exhaustion/D teach-back beside the Dipole classroom. NOT BUILT; three open questions for Greg (the 13-second slice cannot reach the candidate lane's 900 s warmup).
 - `deploy/aws/box/frankie_box_classroom.py` - TEACH facts transcribed from the model-visible pre-message, the BOSS's interpretation parsed, the four ledgers
   (dipole_teachback, dipole_observation_review, dipole_relationship_scan, dipole_novel_findings) assembled and validated by the repo's own validators

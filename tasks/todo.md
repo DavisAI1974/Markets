@@ -1,5 +1,7 @@
 # Frankie full-stack October and boss/Sol-replacement lifecycle
 
+> NEXT TRANCHE (2026-09-21, not started): cycle 0's bedrock, tasks BR-0..BR-8 with acceptance and verify lines in `research/kalshi/frankie_boss/PLAN_CYCLE0_BEDROCK_20260921.md`. Rule for that tranche: no scratchpad; the producers checkout is a gitignored worktree inside the repo (`deploy/aws/box/producers_checkout.sh`, BR-0).
+
 ## Active: BOSS state serialization
 
 ### Task BSS-1 — RED serializer contract
