@@ -79,6 +79,19 @@ def docs_module():
     return module
 
 
+def brain_module():
+    """deploy/aws/box/frankie_box_brain.py, loaded by path (Frankie's brain: prior cycles' calculation findings)."""
+    import importlib.util
+    path = Path(__file__).resolve().parent / 'frankie_box_brain.py'
+    spec = importlib.util.spec_from_file_location('frankie_box_brain', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+BRAIN_DIR = ROOT / 'brain'   # Frankie's brain on the box: <brain>/cycle-<NN>/ entries (published to git by the pusher)
+
+
 def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -865,7 +878,8 @@ class Session:
         # A restart with new session code (restart_session, Greg's word) therefore rebuilds it; the old corpus, its
         # receipt and plan are moved aside under work/ (nothing deleted; its notes stay under their own notes-<sha> dir).
         identity = (f'{R.RENDER_VERSION}+{DG.SCHEMA}+{HR.SCHEMA}+tensors:{tensor_mode}'
-                    f'+digest:{(sha256_bytes(digest_path.read_bytes())[:16] if digest_path.exists() else "none")}')
+                    f'+digest:{(sha256_bytes(digest_path.read_bytes())[:16] if digest_path.exists() else "none")}'
+                    f'+brain:{brain_module().identity(BRAIN_DIR, self.cycle)}')
         receipt_path = self.work / 'reading-corpus.json'
         if corpus_path.exists() and receipt_path.exists():
             prior = load_json(receipt_path)
@@ -936,6 +950,13 @@ class Session:
                         parts.append(f'\n\n## Frankie\'s merged notes from cycle {cyc} (carried forward; values marked $read below were read then)\n\n'
                                      + notes.decode('utf-8', errors='replace') + '\n')
                         members.append(dict(name=f'merged-notes-cycle-{cyc}', bytes=len(notes), sha256=rec['merged_notes_sha256'], treatment='prior cycle notes, whole'))
+            brain_text, brain_members = brain_module().load(BRAIN_DIR, self.cycle)
+            if brain_text:
+                parts.append("\n\n## Frankie's brain: the calculation findings of the earlier cycles, carried forward whole (Greg, 2026-09-21). "
+                             'These are your own prior derivations and findings; read them as your own memory, compare this cycle\'s '
+                             'derivations with them, and never mistake them for the delivered evidence.\n' + brain_text)
+            members.extend(brain_members)
+            self.note(f'brain: {sum(1 for m in brain_members if m["treatment"].startswith("brain: prior"))} prior-cycle documents in the corpus')
             for d, v in report.dictionary.items():
                 ledger['values'].setdefault(d, dict(cycle=self.cycle, member_path=v['path'], bytes=v['bytes'], kind=v['kind']))
             write_json(READING_LEDGER, ledger)
@@ -1108,6 +1129,14 @@ class Session:
             self.note(f'{name}: {note}; inputs kept verbatim')
         return kept
 
+    def brain_entry(self):
+        """This cycle's calculation findings into Frankie's brain (digest, accounting + ledgers, analysis); never fails the session."""
+        try:
+            m = brain_module().write_entry(self.work, self.out, BRAIN_DIR, self.cycle)
+            self.note(f'brain: cycle {self.cycle} entry written, {len(m["entries"])} documents in {BRAIN_DIR / ("cycle-" + self.cycle)}')
+        except Exception as error:
+            self.note(f'brain: entry not written ({type(error).__name__}: {error}); the session continues')
+
     def docs(self):
         """Every session document as Markdown under out/docs (README + index); never fails the session."""
         try:
@@ -1273,6 +1302,7 @@ class Session:
                    lessons=len(response['lessons']), analysis_incomplete=bool(analysis.get('incomplete')), digest_in_writing_calls=digest_included))
         self.note(f'written: four files, response_sha256 {response_sha256[:16]}, {len(response["lessons"])} lessons')
         self.docs()
+        self.brain_entry()
 
     @staticmethod
     def _json_entry(outcome, name):

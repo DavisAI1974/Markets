@@ -10,6 +10,8 @@ ROOT=/opt/frankie-box; OUT="$ROOT/session/out"
 DAY="${DAY:-20211003}"; CYCLE="${CYCLE:-00}"; BASE="${BASE:-claude/cycle-0-frankie-box-rerun-od5sxk}"
 export HOME=/root GIT_TERMINAL_PROMPT=0
 DOCS_ONLY="${DOCS_ONLY:-0}"   # 1 = publish only out/docs (built here from the session work directory) under runs/<day>/root/docs-cycle-<NN>/
+BRAIN_ONLY="${BRAIN_ONLY:-0}" # 1 = build this cycle's brain entry (digest, accounting + ledgers, analysis) from work + out and publish it under runs/<day>/root/brain/cycle-<NN>/
+[ "$BRAIN_ONLY" = "1" ] && DOCS_ONLY=1   # same token-only, four-files-untouched path
 if [ "$DOCS_ONLY" = "1" ] && [ -n "${MAP_URL:-}" ]; then echo "DOCS_ONLY publishes through the token route only (no MAP_URL)"; exit 2; fi
 if [ "$DOCS_ONLY" = "1" ]; then
   # The docs module comes from BASE by a fetch (FETCH_HEAD only): the box's checkout, which a running session may be
@@ -18,7 +20,12 @@ if [ "$DOCS_ONLY" = "1" ]; then
   mkdir -p "$ROOT/tmp"
   git -C "$ROOT/markets" fetch -q --depth 1 origin "$BASE" && git -C "$ROOT/markets" show FETCH_HEAD:deploy/aws/box/frankie_box_docs.py > "$ROOT/tmp/frankie_box_docs.py" || { echo "cannot fetch frankie_box_docs.py from $BASE"; exit 2; }
   echo "docs module from $BASE $(git -C "$ROOT/markets" rev-parse --short FETCH_HEAD), sha256 $(sha256sum "$ROOT/tmp/frankie_box_docs.py" | cut -c1-16); work $WORKDIR"
-  "$ROOT/venv/bin/python" "$ROOT/tmp/frankie_box_docs.py" --work "$WORKDIR" --out "$OUT/docs" --cycle "$CYCLE" || { echo "docs build failed"; exit 2; }
+  if [ "$BRAIN_ONLY" = "1" ]; then
+    git -C "$ROOT/markets" show FETCH_HEAD:deploy/aws/box/frankie_box_brain.py > "$ROOT/tmp/frankie_box_brain.py" || { echo "cannot fetch frankie_box_brain.py from $BASE"; exit 2; }
+    "$ROOT/venv/bin/python" "$ROOT/tmp/frankie_box_brain.py" --work "$WORKDIR" --out "$OUT" --brain "$ROOT/brain" --cycle "$CYCLE" || { echo "brain entry failed"; exit 2; }
+  else
+    "$ROOT/venv/bin/python" "$ROOT/tmp/frankie_box_docs.py" --work "$WORKDIR" --out "$OUT/docs" --cycle "$CYCLE" || { echo "docs build failed"; exit 2; }
+  fi
 else
   for f in response.json analysis.md host-session-record.json host-attestation.json; do [ -s "$OUT/$f" ] || { echo "missing $OUT/$f"; exit 2; }; done
 fi
@@ -88,9 +95,10 @@ cd "$W" || exit 2
 git fetch -q origin "$BR" 2>/dev/null && git checkout -q -B "$BR" FETCH_HEAD || git checkout -q -B "$BR"
 mkdir -p "$DEST"
 [ "$DOCS_ONLY" = "1" ] || cp "$OUT"/response.json "$OUT"/host-attestation.json "$OUT"/host-session-record.json "$OUT"/analysis.md "$DEST"/
-if [ -d "$OUT/docs" ]; then mkdir -p "$DEST/docs-cycle-$CYCLE"; cp "$OUT"/docs/*.md "$OUT"/docs/docs-index.json "$DEST/docs-cycle-$CYCLE"/ && echo "docs: $(ls "$OUT"/docs | wc -l) files -> $DEST/docs-cycle-$CYCLE"; fi
+if [ "$BRAIN_ONLY" != "1" ] && [ -d "$OUT/docs" ]; then mkdir -p "$DEST/docs-cycle-$CYCLE"; cp "$OUT"/docs/*.md "$OUT"/docs/docs-index.json "$DEST/docs-cycle-$CYCLE"/ && echo "docs: $(ls "$OUT"/docs | wc -l) files -> $DEST/docs-cycle-$CYCLE"; fi
+if [ -d "$ROOT/brain/cycle-$CYCLE" ]; then mkdir -p "$DEST/brain/cycle-$CYCLE"; cp "$ROOT/brain/cycle-$CYCLE"/* "$DEST/brain/cycle-$CYCLE"/ && echo "brain: cycle $CYCLE entry ($(ls "$ROOT/brain/cycle-$CYCLE" | wc -l) files) -> $DEST/brain/cycle-$CYCLE"; fi
 git add "$DEST"
-if [ "$DOCS_ONLY" = "1" ]; then MSG="root: cycle $CYCLE session documents as Markdown (reading notes, merges, merged notes, derivation digest, receipts; from Frankie's box)"; else MSG="root: cycle $CYCLE Frankie response, attestation, host session record, analysis, session documents (from Frankie's box i-035994afa8bdf66a5; request_sha256 per response.json)"; fi
+if [ "$BRAIN_ONLY" = "1" ]; then MSG="root: cycle $CYCLE brain entry (derivation digest, accounting and ledgers, analysis; Frankie's calculation findings carried forward)"; elif [ "$DOCS_ONLY" = "1" ]; then MSG="root: cycle $CYCLE session documents as Markdown (reading notes, merges, merged notes, derivation digest, receipts; from Frankie's box)"; else MSG="root: cycle $CYCLE Frankie response, attestation, host session record, analysis, session documents (from Frankie's box i-035994afa8bdf66a5; request_sha256 per response.json)"; fi
 git -c user.name=frankie-box -c user.email=frankie-box@markets.local commit -q -m "$MSG" || echo "(nothing new to commit)"
 git -c credential.helper="$HELPER" push -q origin "HEAD:$BR" || { echo "push failed"; exit 4; }
 unset FRANKIE_GIT_TOKEN
