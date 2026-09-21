@@ -3382,3 +3382,12 @@ tests, Python 3.13, pytest only). First dispatch through the registration: `fran
 action=inspect endpoint=k1sqt0haffm61y, ref = this branch (read-only; proves the file resolves on the trunk, the
 checksum-pinned runpodctl install and the step-scoped key on the runner, and reads the endpoint's health after the
 merges). Its run id and outcome follow.
+Outcome: run 35623944324 SUCCESS (16:10:55Z -> 16:11:20Z, 20 s of runner): validate OK, runpodctl 2.14.0 downloaded
+and checksum-verified in 1 s, the key held by the action step only. Endpoint k1sqt0haffm61y at 16:11:16Z: name
+frankie-reading-granite42, gpuIds [H100 PCIe, H100 80GB HBM3, H100 NVL], workersMin 0 / workersMax 8, idleTimeout
+120 s, executionTimeoutMs 14,400,000, FlashBoot, scaler REQUEST_COUNT 1, templateId qvih13qja5. Health: jobs
+completed 6, failed 0, inProgress 0, inQueue 0; workers running 0, idle 3, ready 3, throttled 5, initializing 0,
+unhealthy 0. So the endpoint's work this cycle = the verify job + 2 level-0 merges + 2 level-1 merges + the final
+merge = 6 jobs, all completed, none failed, nothing running since. Whether "idle 3" still bills 17 min after the
+last job is not readable from the health shape (the idle timeout is 120 s); the account balance is the measurement
+for that and was not read. All three registered workflows now resolve on the trunk; the codecs CI passed on the push.
