@@ -3989,3 +3989,17 @@ THE RUNBOOK CHANGE (the pin change re-renders cycle 0's request on the host; eve
     re-reads (the corpus moved: the V6 digest), runs the classroom (19+1), TEACHES BACK (1 BOSS call), writes with the
     packets (twelve Pod calls), pushes; then the restart runbook e-i unchanged (record turn=initial; grade; export
     turn=correction; fetch_correction; correction; record turn=correction; pipeline).
+
+### 23:4xZ 09-21: GREG'S NOTE, NOT ACTED ON: the next run is the FULL CME MONDAY (opens Sunday 18:00 ET)
+
+Greg: "We're going to have to do the full Monday trading day, by CME standards which starts at 6 pm on Sunday for this
+next run ... I think the rest of Monday (that starts on Sunday) is already ingested in one of those boxes so we should
+just be able to combine with what we've already been running." Nothing done now (his words: not right this minute).
+What it means for the build, to check before anything runs: cycle 0's rows are the first 3,262 INPUT records of the
+20211003 prefix (Sunday 2021-10-03 22:00:00 UTC = 18:00 ET, the CME open), so the full CME Monday = the rest of the
+20211003 partition (57,027 records, the one measurement) PLUS the 20211004 partition to the Monday close, which spans
+two DBN date partitions; the record's source object carries ONE day (`journal:<day>:<container>`, the driver's own day
+rule), so a two-partition stream needs a source object per partition, not a session day. Where the rest of Monday is
+ingested: the S3 year pull (bucket bento-568968024170-us-east-2-an, nymex_tape/ and nymex_mbp10/, S89-S91) or the box's
+compact journal; to be located, not assumed. The 57,027 count is Greg's one measurement; a whole-day stream is a new
+count and needs his word. This effectively answers his call 1 (the slice vs the day) toward the day; calls 2-4 stay open.
