@@ -112,6 +112,9 @@ def main():
             r = git(['push', '-q', 'origin', f'HEAD:{branch}'], cwd=work, tok=tok)
             if r.returncode:
                 print('git heartbeat push failed:', r.stderr[-200:].replace(tok, '***'), flush=True)
+                # the token may have been replaced or expired in SSM while this process held the old one (2026-09-21:
+                # the parameter went to version 2 under a running heartbeat): re-read it for the next beat
+                tok = token() or tok
         print('heartbeat', phase, now, 's3' if s3_ok else '-', 'git' if have_git else '-', flush=True)
         last_phase = phase
         if a.once or (session / 'done').exists() and phase == 'done':
