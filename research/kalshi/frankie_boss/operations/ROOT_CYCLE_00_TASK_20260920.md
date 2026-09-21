@@ -1,4 +1,4 @@
-# Root: cycle 0 Frankie session for the 20211003 two-cycle run (2026-09-20, 21:40Z)
+# Root: cycle 0 Frankie session for the 20211003 two-cycle run (2026-09-21, 03:31Z; supersedes the 21:40Z export)
 
 You are the Frankie principal session for cycle 0. Nothing you reported earlier today reached Greg's
 repository: `rootdavis` is not a GitHub account, no fork exists, and no file of yours is in
@@ -6,12 +6,14 @@ DavisAI1974/Markets. Start from this page; every step below is verifiable and yo
 
 ## 1. Download the durable request (private S3, the AWS pair on the box: see KEYS.md)
 
-Run 35539110298 exported the retained request unchanged from the host. Download all three and verify:
+Run 35557744815 exported the request unchanged from the host (cycle 0 re-run WHOLE on 2026-09-21; this request
+carries the cycle-0 calculation pin and the run-findings ledger; the 21:40Z export 35539110298 is superseded and
+must not be used). Download all three and verify:
 
 ```
-aws s3 cp s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-request/cycle-00/35539110298/session-request.json . --region us-east-1
-aws s3 cp s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-request/cycle-00/35539110298/prompt.md . --region us-east-1
-aws s3 cp s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-request/cycle-00/35539110298/historical-prompt.md . --region us-east-1
+aws s3 cp s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-request/cycle-00/35557744815/session-request.json . --region us-east-1
+aws s3 cp s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-request/cycle-00/35557744815/prompt.md . --region us-east-1
+aws s3 cp s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-request/cycle-00/35557744815/historical-prompt.md . --region us-east-1
 sha256sum session-request.json prompt.md historical-prompt.md
 ```
 
@@ -19,8 +21,8 @@ Expected (refuse to proceed on any mismatch):
 
 | file | bytes | sha256 |
 |---|---|---|
-| session-request.json | 14909376 | e0c461d73d45bbba025057f5b056429a7b97b3458cb7fa7b20fd11c0eea54827 |
-| prompt.md | 28294692 | 58a96207b24bcc646e061ecc06fe60bf8b7d4dcf9e9bfb26c71da127786805ab |
+| session-request.json | 14915624 | 1b777cf28c34415c4387119b1a42aed7dbc1f5e7b1799fdc0ed2cabd755624be |
+| prompt.md | 28310877 | 2403f47f0bdbe04e429aaff15859df6919c4a5e4434e8b0edf646e11c3bb24ee |
 | historical-prompt.md | 158950 | 8ff55bb2a5bb6a0e3549b0260d38b0e9237b26a020ab5d8fad8372e77a6d7705 |
 
 ## 2. Perform the session
@@ -62,11 +64,11 @@ workflow below does that.
 ## 4. Push the files to Greg's repository (you push as DavisAI1974, as every codex/ branch was)
 
 ```
-git checkout -b root/cycle-00-response origin/claude/frankie-launch-verification-lqmv0m
+git checkout -b root/cycle-00-response origin/claude/cycle-0-full-rerun-lr6e14
 mkdir -p research/kalshi/frankie_boss/runs/20211003/root
 cp response.json host-attestation.json host-session-record.json analysis.md research/kalshi/frankie_boss/runs/20211003/root/
 git add research/kalshi/frankie_boss/runs/20211003/root
-git commit -m "root: cycle 0 Frankie response, attestation, host session record, analysis (request e0c461d7)"
+git commit -m "root: cycle 0 Frankie response, attestation, host session record, analysis (request file sha 1b777cf2; request_sha256 per response.json)"
 git push origin root/cycle-00-response
 git log --oneline -1 && git ls-remote origin root/cycle-00-response
 ```
