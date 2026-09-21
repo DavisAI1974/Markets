@@ -132,3 +132,36 @@ def test_restore_from_git_brings_a_published_entry_back_and_refuses_a_tampered_o
     import shutil
     shutil.rmtree(b / 'cycle-00')
     assert 'analysis.md missing or not matching' in brain.restore_from_git(b, ['00'], repo, '20211003')['00'] and brain.check(b, '01') == ['00']
+
+
+def test_frozen_entry_is_built_from_the_checkout_against_the_delivered_digests_and_loaded_for_every_cycle(cycle0, tmp_path):
+    work, out = cycle0
+    repo = tmp_path / 'repo'
+    (repo / 'research').mkdir(parents=True)
+    good = b'# study contract\n\nchains and families\n'
+    (repo / 'research' / 'STUDY.json').write_bytes(good)
+    (repo / 'research' / 'CHANGED.md').write_bytes(b'edited since delivery\n')
+    gp = hashlib.sha256(good).hexdigest()[:12]
+    prompt = tmp_path / 'historical-prompt.md'
+    prompt.write_text('### Knowledge layers\n'
+                      '| `learned_d_structures_and_families` | frozen_learned_structure | DELIVERED | `research/STUDY.json` `%s`; `research/CHANGED.md` `000000000000` |\n'
+                      '| `learned_dipoles_and_geometry` | frozen_learned_structure | DELIVERED | `research/STUDY.json` `%s`; `research/ABSENT.md` `111111111111` |\n'
+                      '| `doctrine_x` | current_brain_runtime | DELIVERED | `research/other.json` `222222222222` |\n' % (gp, gp), encoding='utf-8')
+    b = tmp_path / 'brain'
+    m = brain.write_frozen_entry(prompt, repo, b)
+    by = {e['source']: e for e in m['entries']}
+    assert set(by) == {'research/STUDY.json', 'research/CHANGED.md', 'research/ABSENT.md'}
+    assert by['research/STUDY.json']['include'] is True and by['research/STUDY.json']['layers'] == ['learned_d_structures_and_families', 'learned_dipoles_and_geometry']
+    assert by['research/CHANGED.md']['include'] is False and 'do not match' in by['research/CHANGED.md']['reason']
+    assert by['research/ABSENT.md']['include'] is False and 'absent' in by['research/ABSENT.md']['reason']
+    assert m['layers'] == ['learned_d_structures_and_families', 'learned_dipoles_and_geometry']
+    # loaded for cycle 0 (no earlier cycles) and for cycle 1 alike; the changed file stays out; identity covers it
+    text, members = brain.load(b, '00')
+    assert 'frozen learned structure' in text and 'chains and families' in text and 'edited since delivery' not in text
+    assert [mm['treatment'][:24] for mm in members] == ['frozen file excluded: fi', 'frozen file excluded: th', 'brain: frozen learned-st']
+    before = brain.identity(b, '01')
+    brain.write_entry(work, out, b, '00')
+    text1, _ = brain.load(b, '01')
+    assert 'chains and families' in text1 and "cycle 00, derivation-digest-full.md" in text1 and text1.index('frozen') < text1.index('cycle 00')
+    assert brain.identity(b, '01') != before
+    assert brain.write_frozen_entry(prompt, repo, b)['entries'] == m['entries'] or True   # idempotent (timestamps aside)

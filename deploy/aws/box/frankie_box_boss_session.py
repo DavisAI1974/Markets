@@ -1377,6 +1377,14 @@ class Session:
         the brain docs must be available for the rest of the cycles). A missing entry is restored from its published
         branch (root/cycle-NN-response, a fetch only); still missing = refuse with a receipt."""
         brain = brain_module()
+        prompt = ROOT / 'request' / 'historical-prompt.md'
+        if prompt.is_file():
+            fm = brain.write_frozen_entry(prompt, MARKETS, BRAIN_DIR)
+            inc = sum(1 for e in fm['entries'] if e.get('include'))
+            self.note(f'brain: frozen learned structure {inc} of {len(fm["entries"])} files from the checkout match the delivered digests '
+                      f'({len(fm["layers"])} layers); excluded: ' + (', '.join(e['source'] for e in fm['entries'] if not e.get('include')) or 'none'))
+        else:
+            self.note(f'brain: no historical prompt at {prompt}; the frozen learned structure is not carried')
         missing = brain.check(BRAIN_DIR, self.cycle)
         if missing:
             restored = brain.restore_from_git(BRAIN_DIR, missing, MARKETS, self.day)

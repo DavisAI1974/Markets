@@ -13,6 +13,7 @@ deleted; a changed manifest changes the corpus identity, so the corpus is rebuil
 import argparse
 import hashlib
 import json
+import re
 import time
 from pathlib import Path
 
@@ -145,6 +146,72 @@ def restore_from_git(brain, cycles, repo, day, remote='origin', branch_format='r
     return result
 
 
+FROZEN_DIR = 'frozen-learned-structure'
+FROZEN_ROW = re.compile(r'^\|\s*`([^`]+)`\s*\|\s*frozen_learned_structure\s*\|')
+FILE_REF = re.compile(r'`([^`]+)`\s+`([0-9a-f]{12})`')
+
+
+def frozen_files_from_prompt(historical_prompt_text):
+    """{(path, sha256 prefix): [layers]} for every file the request's knowledge table names under frozen_learned_structure."""
+    found = {}
+    for line in historical_prompt_text.splitlines():
+        m = FROZEN_ROW.match(line)
+        if not m:
+            continue
+        layer = m.group(1)
+        for path, prefix in FILE_REF.findall(line):
+            found.setdefault((path, prefix), []).append(layer)
+    return found
+
+
+def write_frozen_entry(historical_prompt, repo, brain):
+    """Greg, 2026-09-21 ("unfreeze the structure content"): the frozen learned-structure layers are delivered BY PATH
+    only (the request names the files and 12-char digests; Frankie saw only that table in cycle 0). This writes
+    <brain>/frozen-learned-structure/ from the box's own checkout: every named file whose bytes match the delivered
+    digest prefix, flattened by path, with a manifest (include true); a file whose bytes differ, or is absent, is
+    listed with include false and the reason (case by case: flip include to carry the checkout's version anyway).
+    Deterministic and idempotent; rebuilt at every session start."""
+    repo, entry_dir = Path(repo), Path(brain) / FROZEN_DIR
+    text = Path(historical_prompt).read_text(encoding='utf-8', errors='replace')
+    files = frozen_files_from_prompt(text)
+    entry_dir.mkdir(parents=True, exist_ok=True)
+    entries = []
+    for (path, prefix), layers in sorted(files.items()):
+        src = repo / path
+        name = path.replace('/', '__')
+        if not src.is_file():
+            entries.append(dict(name=name, source=path, layers=layers, include=False, reason='file absent from the checkout', delivered_prefix=prefix))
+            continue
+        data = src.read_bytes()
+        digest = sha256_bytes(data)
+        (entry_dir / name).write_bytes(data)
+        e = dict(name=name, source=path, bytes=len(data), sha256=digest, layers=layers, delivered_prefix=prefix,
+                 kind='frozen learned structure: a file the request names for these layers, from the checkout')
+        if digest.startswith(prefix):
+            e['include'] = True
+        else:
+            e['include'] = False
+            e['reason'] = 'the checkout bytes do not match the delivered digest prefix; excluded unless include is set true'
+        entries.append(e)
+    manifest = dict(schema='FRANKIE_BOX_BRAIN_FROZEN_ENTRY_V1', at=time.time(), historical_prompt=str(historical_prompt),
+                    layers=sorted({l for ls in files.values() for l in ls}), entries=entries,
+                    note='the frozen learned-structure content, so the comparison step can run; rebuilt from the checkout at every session start')
+    (entry_dir / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
+    return manifest
+
+
+def frozen_entry(brain):
+    """(manifest, entry_dir) of the standing frozen entry, or (None, None)."""
+    d = Path(brain) / FROZEN_DIR
+    m = d / 'MANIFEST.json'
+    if not m.is_file():
+        return None, None
+    try:
+        return json.loads(m.read_bytes()), d
+    except Exception:
+        return None, None
+
+
 def entries_before(brain, cycle):
     """(cycle, manifest, entry_dir) for every earlier cycle's entry, in cycle order."""
     brain = Path(brain)
@@ -165,6 +232,10 @@ def entries_before(brain, cycle):
 def identity(brain, cycle):
     """A short digest of every included prior entry (name + sha256): part of the corpus identity."""
     h = hashlib.sha256()
+    fm, _ = frozen_entry(brain)
+    for e in (fm or {}).get('entries', []):
+        if e.get('include'):
+            h.update(f'frozen/{e["name"]}/{e["sha256"]}\n'.encode())
     for cyc, manifest, d in entries_before(brain, cycle):
         for e in manifest.get('entries', []):
             if e.get('include'):
@@ -175,6 +246,23 @@ def identity(brain, cycle):
 def load(brain, cycle):
     """(text, members): the included, digest-verified entries of every earlier cycle as corpus text plus member records."""
     parts, members = [], []
+    fm, fd = frozen_entry(brain)
+    if fm:
+        parts.append("\n\n## Frankie's brain: the frozen learned structure, the files the request's knowledge layers name (delivered by path; "
+                     "their content here from the checkout, each verified against the delivered digest). Compare this cycle's derivations "
+                     "with them, layer by layer.\n")
+        for e in fm.get('entries', []):
+            name = e.get('name', '')
+            p = fd / name
+            if not e.get('include'):
+                members.append(dict(name=f'brain-frozen-{name}', bytes=e.get('bytes'), treatment=f'frozen file excluded: {e.get("reason", "include false")}'))
+                continue
+            data = p.read_bytes() if p.is_file() else None
+            if data is None or sha256_bytes(data) != e.get('sha256'):
+                members.append(dict(name=f'brain-frozen-{name}', treatment='frozen file missing or changed since its manifest; not in the corpus'))
+                continue
+            parts.append(f"\n### {e['source']} (layers: {', '.join(e.get('layers', []))}; sha256 {e['sha256'][:16]})\n\n" + data.decode('utf-8', errors='replace') + '\n')
+            members.append(dict(name=f'brain-frozen-{name}', bytes=len(data), sha256=e['sha256'], treatment='brain: frozen learned-structure file, whole'))
     for cyc, manifest, d in entries_before(brain, cycle):
         for e in manifest.get('entries', []):
             name = e.get('name', '')
