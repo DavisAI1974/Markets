@@ -2158,3 +2158,29 @@ host-instance.c15.json and native-host-runtime.json; the five cycle-00 records w
 receipt `superseded-code-bound-state-20260921T024919Z.json` (`FRANKIE_CODE_BOUND_STATE_SUPERSEDED_V1`).
 `frankie_deliver_readiness.yml` dispatched 02:51Z (ready_run_id 35555116474, request
 `frankie-boss-sunday-two-cycle-20260919-cycle-00`, sha a7b72cf9). Then ONE `frankie_journal_stack.yml` dispatch.
+
+### 03:12Z: THE CRITIC RAN ON g7y3g2w1kor4l3; completion publication refused on the launch branch (same as 15:52Z) and re-published from this branch
+
+Pipeline run 35555649070 (dispatched 02:53:33Z on `codex/frankie-launch-two-cycle-20260919`): sources OK (host restarted
+on dispatch), journal skipped (ingest receipt present), checks OK (family green 02:56:25Z), host job 106199139034 running
+from 02:56:57Z. Status probes (read-only, runs 35556090939 at 03:02Z and 35557021761 at 03:17Z): runner pids 3828/5080
+since 02:56:58Z; cycle-00 written in order: classroom adapter + prefix (02:57Z), context cache (03:02:16Z), the three
+classroom records (source 11.95 MB, teacher key 21.2 MB, pre-message 21.2 MB, 03:02:38-45Z), `actual-critic-request.json`
+151,132 bytes at 03:05:08Z (the same size as every a7b72cf9 mint; the runner status line reads `actual_input_admitted`
+for request a7b72cf9), host-preparation / host-ready / host-service 03:05:09Z, genesis witnesses, request-plan,
+native appends 03:06:47Z / 03:07:35Z (`native.sqlite` 12,001,280 B), controller appends 03:05Z-03:10Z; then
+`critic-spool/d1478ea8.../` dispatch 03:12:03Z, **`remote-accepted.json` 03:12:06Z** (the Pod accepted the job),
+five observations, **`outcome.json` 03:12:37Z** (1,861 B), `completion-publication/intent` + `dispatch-accepted`
+03:12:38-40Z, controller appends 03:14:48Z / 03:16:39Z (`controller.sqlite` 1,425,408 B), `completed-journal-pins`
+03:16:39Z; progress at 03:17:47Z: phase `causal_delivery`, owner transport. No Root branch yet. Nothing is claimed
+about the outcome's content here; it is recorded as it lands.
+
+The runner's `publish_completion` dispatched `frankie_retained_completion.yml` on `completion_workflow_ref` =
+`codex/frankie-launch-two-cycle-20260919` (run 35556751991, 03:12:40Z) with REQUEST a7b72cf9, STARTUP 93b5bc6f...,
+OUTCOME 3cf54434131b9724477aeca6a9ecee5e8c339363c75ba502fe3d9f1cead0e092, JOB
+7352745e6fd83ee35fa5ac86880f32a9e0b707af2e9f7f9b76675cd5c9d5c79c, CODE 35f857f0; that branch's workflow still
+defaults `JOURNAL_GENERATION migration-ycf4v6lmave6xw-a004983e93b9`, so it refused `completion differs from retained
+startup` at 03:13:45Z, exactly as run 35520949738 did at 15:52Z. The runner does not wait on the publication (the
+cycle continued). Re-published with the same five pins under `migration-g7y3g2w1kor4l3-a004983e93b9` on this branch:
+run 35557167702, 03:20:02Z, success. The proper fix (the day configuration's `completion_workflow_ref`, or carrying the
+current identity on the launch branch) stays on the after-run list; repeat this re-publication for cycle 1's outcome.
