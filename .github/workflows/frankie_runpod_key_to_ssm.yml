@@ -1,0 +1,59 @@
+name: Frankie RunPod key to SSM (the repository secret becomes the box's SecureString; nothing printed)
+# Greg, 2026-09-21 12:5xZ ("Look in git secrets"): the RunPod API key already lives in this repository's secrets
+# (RUNPOD_API_KEY, the console key named RUNPOD_API_KEY, in use by the Pod workflows). Frankie's box reads its copy from
+# the SSM SecureString /markets/frankie/runpod-serverless (us-east-2; frankie_box_boss_session.py, in memory only). This
+# job copies the secret into that parameter on the runner, where both credentials are already present, and verifies the
+# copy by reading it back and by one authenticated, read-only call to RunPod. It prints lengths and status codes only.
+on:
+  workflow_dispatch:
+    inputs:
+      parameter:
+        description: 'SSM SecureString name that receives the key'
+        required: false
+        default: '/markets/frankie/runpod-serverless'
+      region:
+        description: 'SSM region (the box reads us-east-2)'
+        required: false
+        default: 'us-east-2'
+permissions:
+  contents: read
+jobs:
+  copy:
+    if: github.repository == 'DavisAI1974/Markets'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_EC2_METADATA_DISABLED: 'true'
+      PARAMETER: ${{ inputs.parameter }}
+      REGION: ${{ inputs.region }}
+    steps:
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Copy the secret into the SecureString and verify (no value printed)
+        run: |
+          python - <<'PY'
+          import json, os, time, urllib.request
+          key = os.environ.get('RUNPOD_API_KEY', '').strip()
+          assert key and key.startswith('rpa_') and 20 <= len(key) <= 200, 'RUNPOD_API_KEY secret absent or not an API key shape (not printed)'
+          req = urllib.request.Request('https://rest.runpod.io/v1/endpoints', headers={'Authorization': 'Bearer ' + key})
+          try:
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  code, n = r.status, len(json.loads(r.read().decode('utf-8')) or [])
+          except urllib.error.HTTPError as e:
+              code, n = e.code, None
+          print(f'runpod: GET /v1/endpoints -> HTTP {code}; endpoints listed: {n}; key length {len(key)}, prefix {key[:4]}')
+          assert code == 200, 'the secret is not accepted by RunPod; nothing written'
+          import boto3
+          ssm = boto3.client('ssm', region_name=os.environ['REGION'])
+          ssm.put_parameter(Name=os.environ['PARAMETER'], Type='SecureString', Value=key, Overwrite=True,
+                            Description='RunPod API key for the serverless reading lane (copied from the repository secret by frankie_runpod_key_to_ssm.yml)')
+          back = ssm.get_parameter(Name=os.environ['PARAMETER'], WithDecryption=True)['Parameter']
+          assert back['Value'] == key, 'read-back differs'
+          print(json.dumps(dict(schema='FRANKIE_RUNPOD_KEY_TO_SSM_RECEIPT_V1', parameter=os.environ['PARAMETER'], region=os.environ['REGION'],
+                                version=back['Version'], key_length=len(key), key_prefix=key[:4], runpod_http=code, at=int(time.time()))))
+          PY
