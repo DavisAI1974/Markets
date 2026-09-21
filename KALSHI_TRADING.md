@@ -10,6 +10,9 @@
   this branch, Python 3.13 venv); `frankie_box_producer_tests.sh`; `frankie_box_install_agent_backend.sh` (Node 20 + Claude Code + a
   credential-reach probe); `frankie_box_session.sh` (verify | preflight | start | status); `frankie_box_boss_session.py` (THE SESSION: the BOSS vLLM over jobs_v1; verify, labels by code, engine, derive, reading, writing, push); `frankie_box_heartbeat.py`;
   `frankie_box_push_response.sh` (git route with the SSM token, or presigned-PUT uploads when MAP_URL is set); `frankie_box_read_log.sh`.
+- `deploy/aws/box/frankie_box_serverless_config.sh` + `research/kalshi/frankie_boss/operations/serverless_reading_endpoint.py` +
+  `.github/workflows/frankie_serverless_reading.yml` - the serverless READING lane (RunPod serverless vLLM workers serving the pinned Granite
+  checkpoint; help | inspect | create | verify per the RunPod skills). The session fans parts and merge groups out when /opt/frankie-box/serverless.json exists.
 - `.github/workflows/frankie_box_fetch_response.yml` - token-free delivery: signs the uploads, runs the pusher on the box, re-checks what landed
   (shape, binding, request digest) and commits root/cycle-NN-response with the workflow token. Needs registering on the trunk (Greg's word).
 - `research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md` - the cycle-0 task document, box edition (= the session prompt).

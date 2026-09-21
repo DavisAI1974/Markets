@@ -69,6 +69,13 @@ commits `root/cycle-00-response` with the workflow token. It is NOT dispatchable
 workflow file exists on the trunk `claude/kalshi-s79-kickoff-ij8t9o` (Greg's word, one file, no credential). So
 Greg's item (1) is now EITHER the git token OR that one registration; either completes the chain. Files wait in
 `session/out/` meanwhile. Handoff record: `CLAUDE_HANDOFF_20260920.md` 10:2xZ to 10:4xZ.
+11:1xZ: THE READING IS SLOW BECAUSE THE POD IS ONE L40S SERVING ONE SEQUENCE at ~20 output tokens/s (uncapped part ~36
+min; 163 parts ~4 days); the box's CPUs are idle by construction. KV arithmetic: 20 GiB per 131k sequence, 1.27 fit,
+so more sequences on that Pod gain nothing. GREG: fan the reading out on RunPod SERVERLESS. BUILT: the session's
+serverless reading lane + `frankie_box_serverless_config.sh` + `operations/serverless_reading_endpoint.py` +
+`frankie_serverless_reading.yml` (per the RunPod skills, golden path 20). Needs, in order: the workflow registered on
+the trunk; `help`; Greg's word for `create` (GPU tier + workers); `verify`; the RunPod API key in SSM
+`/markets/frankie/runpod-serverless`; the box config; `restart_session`. Full list in the handoff 11:1xZ.
 
 ## READ FIRST (08:00Z 09-21 handoff): FRANKIE'S BOX IS UP AND EMPTY; JOB 0 = HIS HARNESS; the run HOLDS for his response
 

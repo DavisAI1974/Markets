@@ -2761,3 +2761,40 @@ pinned bundle plus a parallel reading loop on the box (the parts are independent
 depends on KV-cache room at 131k context on 48 GB, which the Granite 4.2-8b config decides; (3) more retained Pods
 (the prepare workflow exists; L40S stock has stranded two); (4) the corpus decision above. Nothing changed on the
 Pod or the box in this entry; the token remains the one grant for delivery (Greg: "Go ahead with the token").
+
+### 11:1xZ 09-21: GREG: "Do option 2. You have my permission" / serverless for the reading / "Run the runpod skills before we do anything else"
+
+Option 2 measured before touching the Pod: Granite 4.2-8b (config.json f8de16cd, sha 85611f4e verified) is dense,
+40 layers, 8 KV heads, head_dim 128: 160 KiB of KV per token, 20.0 GiB per 131,072-token sequence. The L40S at 0.9
+utilization holds ~25.3 GiB beside the 16.4 GiB of weights: 1.27 full-context sequences. `--max-num-seqs` above 1 on
+this Pod multiplies nothing at this context (H100 80 GB: 2.7; H200: 5.5). So the Pod bundle was NOT changed; the
+multiplier is the fan-out Greg named: RunPod serverless, one worker per part.
+The RunPod skills were run first (Greg's instruction): runpod router -> golden path 20 (host-cached HF model on the
+Hub vLLM worker via `runpodctl serverless create --hub-id runpod-workers/worker-vllm --model-reference
+https://huggingface.co/<repo>:<rev>`), 13 (scaling: `--scale-by requests --scale-threshold 1`, one worker per queued
+job), 15 (health/status/logs), endpoint-workflows, storage (HF cache beats a volume for serverless), gotchas (sync
+routes 524 on a cold worker: async /run + /status only; first cold start can be >20 min on a fresh pool; a `ready`
+worker with jobs stuck IN_QUEUE is a broken image, switch). The skills say prefer runpodctl or the MCP over
+hand-rolled rest.runpod.io/v1 creates, so the first draft of the endpoint script (REST v1) was replaced.
+BUILT (commit above): the session's serverless reading lane (parts + merge groups fan out; same body, same parser,
+same alerts; durable job ids; refusal without key/health), `frankie_box_serverless_config.sh`,
+`operations/serverless_reading_endpoint.py` (help | inspect | create | verify) and `frankie_serverless_reading.yml`.
+Fake-endpoint tests: 6 parts over 4 workers in 31 s of polling, incomplete alert + receipt, resume, merges in parallel.
+runpodctl could not be installed in this container (cli.runpod.net's installer cannot reach the GitHub release
+API through the proxy), so the create flags were taken from the skills and the `help` action prints the binary's
+own `serverless create --help` on the runner BEFORE any create.
+WHAT THE LANE NEEDS, in order (nothing runs until each is there):
+1. `.github/workflows/frankie_serverless_reading.yml` registered on the trunk (Greg's word; same 404 as the fetch
+   workflow) - and the same for `frankie_box_fetch_response.yml`.
+2. Dispatch `help` (read-only): confirms runpodctl's flags (`--model-reference`, `--env`, `--execution-timeout`,
+   `--gpu-id` repeatable) and prints GPU prices/stock. Adjust the create if a flag differs.
+3. Greg's word for `create`: GPU tier (L40S-class $1.75/h/worker: ~36 min a part, ~98 worker-hours ~ $170 for the
+   163 parts; H100 $4.79/h: ~3x faster, ~33 worker-hours ~ $160 and a third of the wall) and workers_max
+   (16 -> ~6 h wall on L40S, ~2 h on H100; plus the merges).
+4. `verify` (one real request, cold start minutes) until VERIFY: OK.
+5. The RunPod API key as SecureString `/markets/frankie/runpod-serverless` (us-east-2) for the box role; the box has
+   no RunPod key today (the Pod bearer is a service credential, not an account key).
+6. `frankie_box_run.yml` script `frankie_box_serverless_config.sh` variables `ACTION=write ENDPOINT_ID=<id> WORKERS=<n>`,
+   then `frankie_box_session.sh` `ACTION=restart_session REASON=serverless-reading-lane` (the session resumes from its
+   receipts; the notes already written stay; the in-flight Pod job is left to finish on the Pod).
+Box at 10:50Z: part 1/163 still queued behind the 10:21 incarnation's orphan on the Pod (FIFO); expected ~11:34.

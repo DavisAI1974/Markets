@@ -99,3 +99,17 @@ The recorder workflow checks these before anything reaches the native host; the 
 `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (08:00Z to 08:58Z on 09-21) and
 `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md` (READ FIRST). The task document Frankie reads is
 `research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md`.
+
+## The serverless READING lane (11:1xZ 09-21, Greg's word)
+
+The Pod reads one part at a time at ~20 tokens/s (about four days for 163 parts). The reading now fans out over RunPod
+serverless when configured. Steps, all on `claude/cycle-0-frankie-box-rerun-od5sxk` once Greg has registered
+`frankie_serverless_reading.yml` on the trunk:
+1. `Frankie serverless reading endpoint`, action `help` (read-only): read runpodctl's own create flags and the GPU list.
+2. action `create` with Greg's GPU choice and workers_max (billable; his word). Note the endpoint id it prints.
+3. action `verify` with that endpoint id until the summary says `VERIFY: OK` (a cold first worker takes minutes).
+4. Greg: SecureString `/markets/frankie/runpod-serverless` (us-east-2) = a RunPod API key.
+5. `Frankie box run`, script `deploy/aws/box/frankie_box_serverless_config.sh`, variables
+   `ACTION=write ENDPOINT_ID=<id> WORKERS=<workers_max>`.
+6. `Frankie box run`, script `deploy/aws/box/frankie_box_session.sh`, variables `ACTION=restart_session REASON=serverless-reading-lane`.
+   The session resumes; the status note reads `reading: N/163 done, M in flight (serverless xW)`.
