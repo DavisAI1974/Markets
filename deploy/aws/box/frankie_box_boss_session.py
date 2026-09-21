@@ -886,7 +886,9 @@ class Session:
                 tokenizer = None
             ledger = load_json(READING_LEDGER) if READING_LEDGER.exists() else dict(schema='FRANKIE_BOX_READING_LEDGER_V1', values={}, cycles={})
             already = {d: v for d, v in ledger.get('values', {}).items() if v.get('cycle') != self.cycle}
-            rendered, report = R.render(raw_members, tensor_mode=tensor_mode, tokenizer=tokenizer, already_read=already)
+            # L8: a delivered value byte-identical to a file in a checkout on this box is referenced by path, commit and sha256
+            known = R.known_files_index({label: str(ROOT / label) for label in ('markets', 'producers') if (ROOT / label).is_dir()})
+            rendered, report = R.render(raw_members, tensor_mode=tensor_mode, tokenizer=tokenizer, already_read=already, known_files=known)
             for cyc, rec in sorted(ledger.get('cycles', {}).items()):
                 notes_path = Path(rec.get('merged_notes_path', ''))
                 if cyc != self.cycle and notes_path.exists():
@@ -906,12 +908,14 @@ class Session:
             for name, m in report.members.items():
                 members.append(dict(name=name, bytes=m['delivered_bytes'], rendered_bytes=m.get('rendered_bytes'),
                                     delivered_tokens=m.get('delivered_tokens'), rendered_tokens=m.get('rendered_tokens'),
-                                    treatment='lossless render (decoded, deduplicated, tensors as ' + tensor_mode + '); rebuilt byte-exact'))
+                                    treatment='lossless render (decoded, deduplicated, tensors as ' + tensor_mode + ', known files by reference, stacked text and table blocks); rebuilt byte-exact'))
             render_report = dict(schema='FRANKIE_BOX_READING_RENDER_REPORT_V1', tensor_mode=tensor_mode, delivered_bytes=report.delivered_bytes,
                                  rendered_bytes=report.rendered_bytes, dictionary_entries=report.dictionary_entries, refs=report.refs,
                                  saved_bytes=report.saved_bytes, tensors=report.tensors, tensor_bytes=report.tensor_bytes, proof=report.proof,
                                  read_refs=report.read_refs, read_saved_bytes=report.read_saved_bytes, ledger=str(READING_LEDGER),
                                  derived_vectors=report.derived_vectors, ranges=report.ranges, l7_notes=list(report.l7_notes),
+                                 file_refs=report.file_refs, file_saved_bytes=report.file_saved_bytes, known_files=len(known),
+                                 stacked_blocks=report.stacked_blocks, table_blocks=report.table_blocks, table_rows=report.table_rows, blocks=report.blocks,
                                  tokens=dict(delivered=sum(m.get('delivered_tokens') or 0 for m in report.members.values()),
                                              rendered=sum(m.get('rendered_tokens') or 0 for m in report.members.values())) if tokenizer else 'tokenizer absent')
         else:

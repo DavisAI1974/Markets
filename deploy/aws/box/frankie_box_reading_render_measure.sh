@@ -34,9 +34,12 @@ for key in ('manifest_base64', 'source_binding_base64', 'mapping_evidence_base64
 for name, b64 in (payload.get('files_base64') or {}).items():
     if isinstance(b64, str): members['files/' + name] = base64.b64decode(b64)
 modes = ('identity', 'values') if os.environ['MODE'] == 'both' else (os.environ['MODE'],)
+# L8: the checkouts the box holds (the session's own markets checkout and the pinned producers), indexed by sha256
+known = R.known_files_index({'markets': os.environ['ROOT'] + '/markets', 'producers': os.environ['ROOT'] + '/producers'})
+print('known files indexed', len(known))
 for mode in modes:
     t0 = time.time()
-    text, rep = R.render(members, tensor_mode=mode, tokenizer=tok)
+    text, rep = R.render(members, tensor_mode=mode, tokenizer=tok, known_files=known)
     out = os.path.join(os.environ['ROOT'], 'tmp', f'reading-render-{mode}.md'); open(out, 'w', encoding='utf-8').write(text)
     d_tok = sum(m['delivered_tokens'] for m in rep.members.values()); r_tok = sum(m['rendered_tokens'] for m in rep.members.values())
     print(f'\n=== mode {mode}: delivered {rep.delivered_bytes} B / {d_tok} tok -> rendered {rep.rendered_bytes} B / {r_tok} tok ({r_tok / max(1, d_tok):.3f}x); '
@@ -46,6 +49,11 @@ for mode in modes:
     for n, m in rep.members.items():
         print('%-30s %10d %9d -> %10d %9d   exact=%s' % (n[:30], m['delivered_bytes'], m['delivered_tokens'], m.get('rendered_bytes', 0), m['rendered_tokens'], rep.proof[n]['exact']))
     print('   L7: derivable vectors', rep.derived_vectors, 'ranges', rep.ranges, 'notes', rep.l7_notes)
+    print('   L8: file refs', rep.file_refs, 'saving', rep.file_saved_bytes, 'B; L9: stacked blocks', rep.stacked_blocks, '; L10: table blocks', rep.table_blocks, 'rows', rep.table_rows)
+    for n, bs in rep.blocks.items():
+        for b in bs:
+            i = text.find(f"\n#### block {b['id']} ("); j = text.find('\n```\n', text.find('```\n', i) + 4)
+            print('      block %-22s %-16s %-70s %8d JSON B -> %7d tok' % (b['id'], b['kind'], b['path'][-70:], b['bytes'], tok_n(text[i:j])))
     if rep.derived_vectors == 0:
         # diagnose: does the delivered critic snapshot decode, and what does its receipt hold?
         try:
