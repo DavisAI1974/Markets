@@ -354,7 +354,7 @@ def parse_table(block, context=None):
     cross = {c: CROSS_DERIVED[(name, c)] for c, mark in whole.items() if mark == '=' and (name, c) in CROSS_DERIVED and (context or {}).get(CROSS_DERIVED[(name, c)][0]) is not None}
     for i, line in enumerate(lines[idx:idx + n]):
         cells = line.split('\t') if kept else []
-        row, derived_cols, positional = {}, set(c for c, mark in whole.items() if mark == '=' and c not in cross), {}
+        row, derived_cols, positional, paired = {}, set(c for c, mark in whole.items() if mark == '=' and c not in cross), {}, {}
         for c in constants:
             row[c] = copy.deepcopy(constants[c])
         for c, (table, column) in cross.items():
@@ -387,7 +387,7 @@ def parse_table(block, context=None):
                 for d in parts[1:]:
                     v.append(v[-1] + int(d))
             elif cell.startswith('~'):
-                v = row[PAIRED[c]] + int(cell[1:])
+                paired[c] = int(cell[1:]); continue      # resolved once every literal of the row is in, whatever the column order
             elif cell == 'nan':
                 v = float('nan')
             elif cell.startswith('+') or (cell.startswith('-') and c.endswith(DELTA_KEYS) and isinstance(prev_ints.get(c), int) and re.fullmatch(r'-\d+', cell)):
@@ -397,6 +397,10 @@ def parse_table(block, context=None):
             else:
                 v = float(cell)
             row[c] = v
+        for c, offset in paired.items():
+            if PAIRED[c] not in row:
+                raise ValueError(f'table {name} row {i}: {c} is an offset from {PAIRED[c]}, which this row does not carry')
+            row[c] = row[PAIRED[c]] + offset
         for c, pos in positional.items():
             row[c] = [row['order_ids'][i] for i in pos]
         for c in _derived_order(columns):
@@ -443,9 +447,13 @@ def render_layers(tables):
     out, context = [], {}
     for name, rows in tables.items():
         block = render_table(name, rows, context)
-        parsed_name, parsed = parse_table(block, context)
+        try:
+            parsed_name, parsed = parse_table(block, context)
+        except Exception as err:
+            raise ValueError(f'digest table {name} does not parse back: {type(err).__name__}: {err}; header: {block.split(chr(10))[0][:400]}') from err
         if parsed_name != name or not _same(parsed, [dict(r) for r in rows]):
-            raise ValueError(f'digest table {name} does not round-trip')
+            bad = next((k for k, (a, b) in enumerate(zip(parsed, rows)) if not _same(a, dict(b))), None)
+            raise ValueError(f'digest table {name} does not round-trip (first differing row {bad} of {len(rows)}; parsed {len(parsed)})')
         out.append(block)
         context[name] = parsed
     return '\n'.join(out)

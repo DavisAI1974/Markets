@@ -104,3 +104,13 @@ def test_constants_and_same_marks():
     assert name == 't' and DG._same(parsed, rows)
     assert block.split('\n')[3] == '^\t^'                # row 1 repeats row 0's b and d; a and c are constants, omitted
     assert block.split('\n')[2] == 'Sx\t2.5'             # 'x' is written once inline: its second occurrence is a `^`, so it never repeats as a literal
+
+
+def test_paired_offset_resolves_whatever_the_column_order_and_when_the_pair_is_constant():
+    rows = [dict(ts_event_ns=999, x=1, ts_recv_ns=1000), dict(ts_event_ns=1000, x=2, ts_recv_ns=1000), dict(ts_event_ns=1005, x=3, ts_recv_ns=1000)]
+    block = DG.render_table('t', rows)                    # ts_recv_ns is constant here, so it is declared in the header and absent from the rows
+    assert '^ts_recv_ns' in block.split('\n')[0] and '~-1' in block
+    assert DG._same(DG.parse_table(block)[1], rows)
+    rows = [dict(ts_event_ns=999, ts_recv_ns=1000), dict(ts_event_ns=1001, ts_recv_ns=1000), dict(ts_event_ns=1001, ts_recv_ns=1004)]
+    block = DG.render_table('t', rows)                    # ts_recv_ns repeats between rows 0 and 1 (a `^`), then moves (a delta)
+    assert DG._same(DG.parse_table(block)[1], rows)
