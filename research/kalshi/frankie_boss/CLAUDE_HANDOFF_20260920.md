@@ -3362,3 +3362,13 @@ binding checks the recorder runs; then straight on to the cycle-1 launch chain. 
 findings write-up until cycle 1 is running. Also Greg 16:0xZ: the RunPod key may be used for anything (all
 permissions); every key's name and location is in `KEY_REGISTRY.md` (e4e53386). Writing phase measured at 15:54:10Z
 and 15:59:12Z (heartbeat), still `writing: the analysis` at 16:02Z.
+
+### 16:1xZ 09-21: GREG: CYCLE 1 = EXACTLY THE CYCLE-0 RUN WITH THE CYCLE NUMBER CHANGED; no workflow changes now
+
+Greg (chat 6, 16:1xZ): "We are going to be doing some bigger Frankie workflow changes once cycle 1 is done so don't
+spend time making big workflow adjustments. Just change the cycle number and use exactly what we used for cycle 0.
+Literally nothing needs rebuilt or generated to start the cycle 1 run." Standing until cycle 1 is done: no workflow
+work beyond what the run needs; the cycle-1 dispatches are the cycle-0 dispatches with CYCLE=01 (the box session is
+cycle-parameterized: unit frankie-cycle-01, work-01, data/prefix-01.sqlite already on the box, the request's
+cycle_index must read 1). The /ship fixes to frankie_serverless_reading.yml (this chat) stand as committed; no further
+workflow adjustments. Codecs CI on the push: run 35623661122.
