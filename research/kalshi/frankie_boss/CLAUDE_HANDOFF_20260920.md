@@ -3604,3 +3604,28 @@ host action with the code-bound consequence): the host script carries the fixed 
 `principal-response-recorder-<stamp>.py` beside the log and runs its main() with PYTHONPATH = the host checkout;
 a test pins the embedded copy to the file. Skills followed: debugging-and-error-recovery (reproduce with the message,
 localize, root cause, guard, verify) and git-workflow (one fix per commit). Re-dispatch follows.
+
+### 17:4xZ 09-21: CYCLE 0's RESPONSE IS RECORDED ON THE NATIVE HOST (run 35633661236, success 17:43:23Z)
+
+The recorder had never recorded on this host; eight dispatches on Greg's go, each refusal one check deeper, each a
+latent defect in the recorder's never-exercised path, each fixed on this branch with a test and carried to the host
+INSIDE the host script (the host tools checkout 35f857f0 was never moved mid-run):
+1. 35630974458: `{"status": "refused", "error_type": "ValueError"}`, no message (the recorder's __main__ swallowed it).
+   Fix f25386a9/d0a51e06: the host script runs main() through a wrapper printing the traceback + message to stdout,
+   under ErrorActionPreference Continue (the first stderr line had ended the script under Stop, 35631652890).
+2. 35631841089: `actual composed principal prompt required before sealed proof`: record_checked validated in a fresh
+   candidate directory without prompt.md / sealed-proof.json / memory-a-witness.json, which _admission_record reads
+   there. Copies (12e325df) then refused 35632243715 `principal admission ... changed since preparation`
+   (sealed_absence() records the proof's RESOLVED path; a copy carries the candidate's); links (e1507586) refused
+   35632610025 `regular evidence file required` (file_witness refuses a link). Fix 3ba8fbe2: candidate_of() gives the
+   candidate the real adapter's bound _admission_record (the admission record is provenance of the principal directory).
+3. 35632927377: `principal attachment Dipole classroom differs from final model-visible contract`: the classroom
+   adapter compares attachment['dipole_classroom'] (from JSON: lists) with final_model_visible_classroom(package)
+   (c15-loaded: tuples) by raw equality. Fix d6e9866f live_classroom() (the adapter's json_form rule); then 35633328702
+   showed verify() re-reads the request and recovers again: fix 9ee7e8a4 classroom_normalizer() on every recover the
+   recorder makes, and the ROOT fix in dipole_classroom_final_review._request (json_form both sides) for the host's
+   next advance.
+4. 35633661236: SUCCESS. The host script's own checks held throughout (delivered bytes/sha of the three files). The
+   host runner now resumes on its own (verify, native learning, readback, completion, readiness cycle-01); read-only
+   `frankie_host_cycle_status.yml` probe dispatched after. The shipped-recorder mechanism stays until the host
+   checkout is advanced (then the pinned copy is the same file). Skills: debugging-and-error-recovery, git-workflow.
