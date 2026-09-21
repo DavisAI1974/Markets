@@ -72,16 +72,37 @@ def scrub(value):
     return value
 
 
+SECRET_ENV = re.compile('token|key|secret|password', re.I)
+
+
+def redact_argv(cmd):
+    """The printed command line: every `--env NAME=VALUE` whose NAME looks like a credential is spelled NAME=<redacted>."""
+    out = list(cmd)
+    for i, a in enumerate(out):
+        if i and out[i - 1] == '--env' and '=' in a and SECRET_ENV.search(a.split('=', 1)[0]):
+            out[i] = a.split('=', 1)[0] + '=<redacted>'
+    return out
+
+
+def credential_values(cmd):
+    """Values that must never appear in runpodctl's output: the API key and any credential-named --env value."""
+    values = [os.environ.get('RUNPOD_API_KEY', '')]
+    for i, a in enumerate(cmd):
+        if i and cmd[i - 1] == '--env' and '=' in a and SECRET_ENV.search(a.split('=', 1)[0]):
+            values.append(a.split('=', 1)[1])
+    return [v for v in values if v]
+
+
 def ctl(*args, check=True, capture=True):
     """runpodctl: JSON on stdout, a coded JSON error on stderr with a nonzero exit (never printed with the key)."""
     cmd = ['runpodctl', *args]
-    print('$', ' '.join(cmd), flush=True)
+    print('$', ' '.join(redact_argv(cmd)), flush=True)
     r = subprocess.run(cmd, capture_output=capture, text=True)
     if capture:
         out = r.stdout.strip(); err = r.stderr.strip()
-        key = os.environ.get('RUNPOD_API_KEY', '')
-        if key and (key in out or key in err):
-            raise SystemExit('credential echo in runpodctl output; refused')
+        for secret in credential_values(cmd):
+            if secret and (secret in out or secret in err):
+                raise SystemExit('credential echo in runpodctl output; refused')
         if err:
             print(err[:3000], file=sys.stderr, flush=True)
         if r.returncode and check:
@@ -140,11 +161,33 @@ def inspect(key, endpoint):
     print(f'/health HTTP {status}:', json.dumps(data)[:1000])
 
 
+WORKERS_MAX_CEILING = 16     # H100 workers; a typo (80 for 8) must not create an 80-worker billable endpoint
+SEQS_PER_WORKER_ALLOWED = (1, 2)
+
+
+def existing_endpoints(key):
+    """Every serverless endpoint on the account (REST GET /v1/endpoints; a list, or an object carrying one). Fails closed."""
+    status, data = api(key, 'GET', '/v1/endpoints')
+    if status != 200:
+        raise SystemExit(f'GET /v1/endpoints HTTP {status}; cannot prove no same-named endpoint exists, nothing created')
+    rows = data if isinstance(data, list) else (data or {}).get('data') or (data or {}).get('endpoints') or []
+    return [r for r in rows if isinstance(r, dict)]
+
+
 def create(args):
     repo, rev = pins()
     gpus = [g.strip() for g in args.gpu.split(',') if g.strip()]
-    if not gpus or args.workers_max < 1:
-        raise SystemExit('--gpu and --workers-max >= 1 are required')
+    if not gpus:
+        raise SystemExit('--gpu is required')
+    if not 1 <= int(args.workers_max) <= WORKERS_MAX_CEILING:
+        raise SystemExit(f'--workers-max must be 1..{WORKERS_MAX_CEILING} (got {args.workers_max})')
+    if int(args.seqs_per_worker) not in SEQS_PER_WORKER_ALLOWED:
+        raise SystemExit(f'--seqs-per-worker must be one of {SEQS_PER_WORKER_ALLOWED} (got {args.seqs_per_worker})')
+    key = os.environ.get('RUNPOD_API_KEY', '')
+    same = [e for e in existing_endpoints(key) if e.get('name') == args.name]
+    if same and getattr(args, 'confirm', '') != 'create-another':
+        ids = ', '.join(str(e.get('id')) for e in same)
+        raise SystemExit(f'an endpoint named {args.name!r} already exists ({ids}); pass --confirm create-another to bill a second one; nothing created')
     cmd = ['serverless', 'create', '--name', args.name, '--hub-id', HUB_WORKER,
            '--model-reference', f'https://huggingface.co/{repo}:{rev}',
            '--workers-min', '0', '--workers-max', str(args.workers_max),
@@ -232,6 +275,7 @@ def main():
     p.add_argument('--network-volume', default='')
     p.add_argument('--data-centers', default='')
     p.add_argument('--hf-token-env', default='')
+    p.add_argument('--confirm', default='', help="create: 'create-another' to create although a same-named endpoint exists (billable)")
     p.add_argument('--wait-seconds', type=int, default=1500)
     p.add_argument('--work-dir', default='work/serverless-reading')
     args = p.parse_args()
