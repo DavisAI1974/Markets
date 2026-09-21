@@ -148,8 +148,12 @@ def create(args):
            '--workers-min', '0', '--workers-max', str(args.workers_max),
            '--scale-by', 'requests', '--scale-threshold', '1',
            '--idle-timeout', str(args.idle_timeout), '--execution-timeout', str(args.execution_timeout)]
-    for g in gpus:
-        cmd += ['--gpu-id', g]
+    # runpodctl 2.14.0: --gpu-id is ONE string (a repeated flag keeps only the LAST value, which for the default tier
+    # list would have been the LOW-availability PCIe); the first tier is the one created, the rest are named in the
+    # receipt for a later `set-endpoint-gpus`. Measured 2026-09-21 15:2xZ against `serverless create --help`.
+    cmd += ['--gpu-id', gpus[0]]
+    if len(gpus) > 1:
+        print('runpodctl takes one --gpu-id: creating on %r; not passed: %s' % (gpus[0], ', '.join(gpus[1:])), flush=True)
     env = pinned_env(args.seqs_per_worker)
     if args.hf_token_env and os.environ.get(args.hf_token_env):
         env['HF_TOKEN'] = os.environ[args.hf_token_env]          # only if the operator says the repo needs it; never printed

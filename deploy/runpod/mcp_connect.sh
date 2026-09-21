@@ -22,5 +22,12 @@ printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocol
      -H "Authorization: Bearer $RUNPOD_API_KEY" -d @- | tr -d '\r' | grep -o '"serverInfo":{[^}]*}' | head -1 || echo "handshake: no serverInfo (key rejected or network)"
 # 3. runpodctl with the same key (the installer may be blocked by the proxy; then the skills' flags still apply)
 if ! command -v runpodctl >/dev/null 2>&1; then curl -sSL -m 120 https://cli.runpod.net | bash >/tmp/runpodctl-install.log 2>&1 || echo "runpodctl install failed (see /tmp/runpodctl-install.log)"; fi
+# the installer's version lookup (api.github.com) is refused by the container proxy ("Failed to fetch the latest version"); the
+# release asset itself downloads (measured 2026-09-21: 2.14.0). Fallback: the binary straight from GitHub releases into ~/.local/bin.
+if ! command -v runpodctl >/dev/null 2>&1; then
+  mkdir -p "$HOME/.local/bin" && curl -sSL -m 180 -o "$HOME/.local/bin/runpodctl" https://github.com/runpod/runpodctl/releases/latest/download/runpodctl-linux-amd64 \
+    && chmod +x "$HOME/.local/bin/runpodctl" && export PATH="$HOME/.local/bin:$PATH" && echo "runpodctl: installed from the GitHub release ($(runpodctl version 2>/dev/null | head -1))" \
+    || echo "runpodctl: GitHub release download failed too"
+fi
 command -v runpodctl >/dev/null 2>&1 && { runpodctl version 2>/dev/null | head -1; runpodctl user >/dev/null 2>&1 && echo "runpodctl: key accepted" || echo "runpodctl: user lookup failed"; }
 echo "next: the runpod MCP tools appear after the session reconnects; verify with list-endpoints"

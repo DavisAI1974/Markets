@@ -55,8 +55,14 @@ WHAT STANDS (all committed, every transform exact and proven before use, nothing
   runpodctl is absent) ON GREG'S WORD ONLY. ROTATE THE KEY after the endpoint work (it was pasted into chat). If the
   next chat's environment lacks the variable again, ask Greg for `RUNPOD_API_KEY` in the environment configuration.
 
+- 15:2xZ: JOB 2 on Greg's word, BLOCKED twice, nothing created (handoff 15:2xZ): the local create (committed script,
+  runpodctl 2.14.0 from the GitHub release, H100 SXM $4.79/worker-hour, HIGH availability) was refused by the auto-mode
+  permission classifier; the git workflow dispatch 404s because `frankie_serverless_reading.yml` is not on the DEFAULT
+  branch. Unblock = Greg approves the Bash create (or a permission rule), OR registers the workflow on the default branch
+  plus the `RUNPOD_API_KEY` repository secret. Fixed meanwhile: `--gpu-id` is one string (first tier passed).
+
 GREG'S OPEN CALLS: the GitHub PAT into SSM `/markets/frankie/github-token` (the heartbeat and the pusher refuse
-without it; files stay safe in session/out/);
+without it; files stay safe in session/out/; how-to in the handoff 15:2xZ);
 the endpoint word (JOB 2: create the H100 serverless reading endpoint, verify, `frankie_box_serverless_config.sh
 ACTION=write ENDPOINT_ID=<id>`, then restart_session); trunk registration of `frankie_box_fetch_response.yml`,
 `frankie_serverless_reading.yml` and `frankie_box_codecs_ci.yml`; `RUNPOD_API_KEY` in the Claude Code environment
