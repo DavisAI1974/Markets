@@ -39,6 +39,10 @@ on:
         description: 'Presigned GET validity in hours (the URLs live in the private JSON; only MAP_URL travels, masked)'
         required: false
         default: '4'
+      github_token_to_ssm:
+        description: "true = first copy the repository secret FRANKIE_GITHUB_TOKEN into the SSM SecureString /markets/frankie/github-token (us-east-2) the box reads; prints length and version only, never the value; then the script runs as usual (pass frankie_box_session.sh ACTION=status to see it read)"
+        required: false
+        default: 'false'
 permissions:
   contents: read
 concurrency:
@@ -78,6 +82,20 @@ jobs:
           [[ "$RUN_TIMEOUT" =~ ^[0-9]+$ ]] || { echo "timeout must be an integer number of seconds"; exit 1; }
           bash -n "$SCRIPT"
           echo "script sha256: $(sha256sum "$SCRIPT" | cut -c1-64)  ref: $GITHUB_SHA"
+      - name: Copy the repository secret FRANKIE_GITHUB_TOKEN into SSM /markets/frankie/github-token (only on request; value never printed)
+        if: inputs.github_token_to_ssm == 'true'
+        env:
+          FRANKIE_GITHUB_TOKEN: ${{ secrets.FRANKIE_GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import boto3, os, re
+          token = os.environ.get('FRANKIE_GITHUB_TOKEN', '').strip()
+          if not re.fullmatch(r'(ghp|github_pat)_[A-Za-z0-9_]{20,255}', token):
+              raise SystemExit('repository secret FRANKIE_GITHUB_TOKEN is absent or not a GitHub token shape (length %d); nothing written' % len(token))
+          r = boto3.client('ssm', region_name='us-east-2').put_parameter(Name='/markets/frankie/github-token', Type='SecureString', Value=token, Overwrite=True,
+                                                                          Description='GitHub PAT for the Frankie box heartbeat and response push (repo scope)')
+          print('SSM /markets/frankie/github-token written (us-east-2): version %s, length %d' % (r.get('Version'), len(token)))
+          PY
       - name: Require the box Online in SSM (read-only)
         run: |
           python - <<'PY'
