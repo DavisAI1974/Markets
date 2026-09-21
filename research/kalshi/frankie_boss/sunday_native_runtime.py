@@ -138,14 +138,20 @@ def current_training_identity(context, decoder, optimizer, checkpoint, *, expect
 
 
 def prepare_critic_request(context, *, as_of, through_cursor, source_as_of,
-                           served_model_name='granite42-smoke', output_tokens=1200,
+                           served_model_name='granite42-smoke', output_tokens=None,
                            context_encoding='compact_v1', context_encoding_options=None,
                            service_context=SERVICE_CONTEXT):
     """No forward, remote call or publication. Preserve every prepared context row.
 
     Return exact compact service bytes for LocalTokenizerAdmission; capacity
     failure must be resolved before any paid Pod resume. No truncation/fallback.
+    THE OUTPUT HAS NO CAP (Greg Davis, 2026-09-21): output_tokens defaults to the whole
+    service context as a placeholder that LocalTokenizerAdmission.with_remaining_output
+    replaces with the exact remaining context; a body dispatched without that admission
+    is refused by the service (input plus output over the context), never truncated.
     """
+    if output_tokens is None:
+        output_tokens = service_context
     if (type(service_context) is not int or service_context != SERVICE_CONTEXT
             or type(output_tokens) is not int
             or not 1 <= output_tokens <= service_context):

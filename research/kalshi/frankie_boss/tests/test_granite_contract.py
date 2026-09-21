@@ -1,9 +1,11 @@
-"""Granite critique contract: frozen prompt bytes, single-source limits, honest identity.
+"""Granite critique contract: frozen prompt bytes, no output caps, honest identity.
 
 The three system prompts were frozen at de27bb26 (tests/fixtures/granite_prompts)
-BEFORE granite_contract.py existed. Every test here runs against the refactored
-modules and proves: (1) the rendered prompts are byte-identical to those fixtures,
-(2) the validator enforces exactly the contract's limits at their boundaries,
+BEFORE granite_contract.py existed and RE-FROZEN on 2026-09-21 when every output cap
+left the contract (Greg Davis: no limits on the BOSS's outputs). Every test here runs
+against the refactored modules and proves: (1) the rendered prompts are byte-identical
+to those fixtures, (2) the validator imposes no count or length cap and keeps the
+lower bound on hypotheses,
 (3) a contract source change moves every parser identity even when it leaves the
 prompt bytes unchanged, and (4) package and standalone imports see one contract.
 """
@@ -25,11 +27,11 @@ from test_granite_parser import snapshot, valid_output
 
 FIXTURES = Path(__file__).with_name('fixtures') / 'granite_prompts'
 CONTRACT_FILE = Path(contract.__file__)
-# Frozen at de27bb26, before the refactor. A change here is a prompt change and must be deliberate.
+# Re-frozen 2026-09-21 (no output caps). A change here is a prompt change and must be deliberate.
 FROZEN_SHA256 = {
-    'serialized_v2': '7259a047c59e4d0b58457fe7022426e70b7116aaf0d061d12ef4da24f9d4263c',
-    'native_v1': 'a55ca0222e5e954682682df9e2cd9837dc47dc84a61d517701f8ef21526be7dd',
-    'compact_native_v1': 'f3e99a9d283c72424a22d6677c353a5ee6742632810ad6249f1e7b7c6ae18605',
+    'serialized_v2': '39ee5480d95929ca60d35df2a2fb9d2cad9b58bfdef9ff33871cccbf9f993060',
+    'native_v1': '214d76a5bb1c44d13e92d96a98110d0a110f974ad42366b524654675f2887930',
+    'compact_native_v1': '11360d72fee565ab9f5f4791100d5b4a9a0c5e550264122a0b671a445998a21d',
 }
 OWNER = {'serialized_v2': granite_prompt, 'native_v1': granite_context, 'compact_native_v1': granite_context_compact}
 
@@ -72,9 +74,9 @@ def test_rendered_prompt_is_byte_identical_to_frozen_fixture(variant):
 
 
 def test_contract_values_frozen_at_de27bb26():
-    assert contract.LIMITS == contract.GraniteLimits(
-        max_evidence_refs=16, max_contradictions=8, max_missing_evidence=8,
-        min_hypotheses=1, max_hypotheses=4, note_chars=200, missing_evidence_chars=120, label_chars=40)
+    # 2026-09-21: no output caps remain; the only limit value is the lower bound on hypotheses.
+    assert contract.LIMITS == contract.GraniteLimits(min_hypotheses=1)
+    assert set(vars(contract.LIMITS)) == {'min_hypotheses'}
     assert contract.SCHEMA_VERSION == 'BOSS_GRANITE_OUTPUT_SCHEMA_V1'
     assert contract.REQUIRED_KEY_ORDER == ('schema_version', 'snapshot_hash', 'evidence_refs', 'contradictions',
                                            'missing_evidence', 'hypotheses', 'evidence_verdict')
@@ -95,11 +97,8 @@ def test_schema_and_parser_consume_the_contract_objects():
 
 
 REF = {'row': 0, 'field': 'mid'}
-LIMIT_OF = {
-    'evidence_refs': 'max_evidence_refs', 'contradictions': 'max_contradictions',
-    'missing_evidence': 'max_missing_evidence', 'hypotheses': 'max_hypotheses',
-    'note': 'note_chars', 'missing_text': 'missing_evidence_chars', 'label': 'label_chars',
-}
+FORMER_CAPS = {'evidence_refs': 16, 'contradictions': 8, 'missing_evidence': 8, 'hypotheses': 4,
+               'note': 200, 'missing_text': 120, 'label': 40}   # the de27bb26 caps, gone since 2026-09-21
 
 
 def at(name, n):
@@ -121,11 +120,12 @@ def at(name, n):
     return out
 
 
-@pytest.mark.parametrize('name', sorted(LIMIT_OF))
-def test_validator_enforces_exactly_the_contract_limit_at_its_boundary(name):
-    limit = getattr(contract.LIMITS, LIMIT_OF[name])
-    assert schema.validate_schema(at(name, limit)) is True
-    assert schema.validate_schema(at(name, limit + 1)) is False
+@pytest.mark.parametrize('name', sorted(FORMER_CAPS))
+def test_validator_imposes_no_cap_above_the_former_boundary(name):
+    former = FORMER_CAPS[name]
+    assert schema.validate_schema(at(name, former)) is True
+    assert schema.validate_schema(at(name, former + 1)) is True
+    assert schema.validate_schema(at(name, former * 50 + 1)) is True
 
 
 def test_hypotheses_lower_bound_is_the_contract_minimum():
@@ -136,7 +136,7 @@ def test_hypotheses_lower_bound_is_the_contract_minimum():
 
 def test_support_and_against_carry_no_invented_cap():
     out = valid_output(snapshot())
-    many = [dict(REF)] * (contract.LIMITS.max_evidence_refs + 1)
+    many = [dict(REF)] * (FORMER_CAPS['evidence_refs'] + 1)
     out['hypotheses'] = [{'label': 'h', 'support': list(many), 'against': list(many)}]
     assert schema.validate_schema(out) is True
     assert sum(1 for _ in schema.iter_refs(out)) == 1 + 2 * len(many)
@@ -173,23 +173,22 @@ def test_negative_row_is_shape_valid_here_and_rejected_by_the_scorers():
 
 # --- 3. the contract is the only prompt owner -----------------------------------
 
-def test_render_rejects_unknown_variant_and_inconsistent_v2_caps():
+def test_render_rejects_unknown_variant_and_every_prompt_states_no_cap():
     with pytest.raises(ValueError, match='unknown prompt variant'):
         contract.render_system_text('serialized_v3')
-    uneven = replace(contract.CONTRACT, limits=replace(contract.LIMITS, max_missing_evidence=9))
-    with pytest.raises(ValueError, match='equal contradictions and missing_evidence'):
-        uneven.render_system_text('serialized_v2')
-    assert '0..9 strings' in uneven.render_system_text('native_v1')
+    for variant in contract.PROMPT_VARIANTS:
+        text = contract.render_system_text(variant)
+        assert 'No cap' in text and 'any count' in text
+        assert 'at most' not in text and '0..' not in text and 'bounded prose' not in text
 
 
 @pytest.mark.parametrize('variant', contract.PROMPT_VARIANTS)
-def test_changing_a_limit_moves_the_prompt_hash_visibly(variant):
-    wider = replace(contract.CONTRACT, limits=replace(contract.LIMITS, max_hypotheses=6))
-    text = wider.render_system_text(variant)
+def test_changing_the_lower_bound_moves_the_prompt_hash_visibly(variant):
+    higher = replace(contract.CONTRACT, limits=replace(contract.LIMITS, min_hypotheses=2))
+    text = higher.render_system_text(variant)
     assert text != contract.render_system_text(variant)
-    assert wider.system_prompt_hash(variant) != FROZEN_SHA256[variant]
-    assert ('1 to 6' in text) or ('1..6' in text)
-    assert '1 to 4' not in text and '1..4' not in text
+    assert higher.system_prompt_hash(variant) != FROZEN_SHA256[variant]
+    assert 'at least 2' in text
 
 
 @pytest.mark.parametrize('variant', contract.PROMPT_VARIANTS)
@@ -202,9 +201,8 @@ def test_render_fails_closed_when_a_contract_value_cannot_reach_the_prompt(varia
         fewer.render_system_text(variant)
 
 
-@pytest.mark.parametrize('kwargs', [dict(max_hypotheses=0), dict(min_hypotheses=0), dict(min_hypotheses=5),
-                                    dict(max_evidence_refs=0), dict(note_chars=-1), dict(label_chars=True),
-                                    dict(max_contradictions=8.0)])
+@pytest.mark.parametrize('kwargs', [dict(min_hypotheses=0), dict(min_hypotheses=-1), dict(min_hypotheses=True),
+                                    dict(min_hypotheses=1.0)])
 def test_invalid_limits_are_rejected(kwargs):
     with pytest.raises(ValueError):
         contract.GraniteLimits(**kwargs)
@@ -290,10 +288,10 @@ def test_standalone_and_package_imports_share_one_contract():
 
 
 def test_alternate_render_contract_cannot_claim_per_instance_validation():
-    wider = replace(contract.CONTRACT, limits=replace(contract.LIMITS, max_hypotheses=6))
-    assert '1..6' in wider.render_system_text('native_v1')
-    assert schema.validate_schema(at('hypotheses', 6)) is False
-    assert not hasattr(wider, 'validate')
+    higher = replace(contract.CONTRACT, limits=replace(contract.LIMITS, min_hypotheses=2))
+    assert 'at least 2' in higher.render_system_text('native_v1')
+    assert schema.validate_schema(at('hypotheses', 1)) is True   # the validator reads the real contract, not this one
+    assert not hasattr(higher, 'validate')
 
 
 def test_compact_services_and_controller_reject_changed_contract_before_work(tmp_path, mutated_contract_source):

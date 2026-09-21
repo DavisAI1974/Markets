@@ -645,7 +645,6 @@ class ActualHost:
         if not path.exists() or (binding['cycle_index']==0 and self.host.get('retained_preparation_recovery') is not None):
             return self.api.native.prepare_critic_request(self.context,
                 **{k:binding[k] for k in ('as_of','through_cursor','source_as_of')},
-                output_tokens=1 if self.host.get('output_budget')=='remaining_context' else self.host['output_tokens'],
                 service_context=self.host['service_context'],
                 context_encoding=self.host['context_encoding'],context_encoding_options=self.encoding_options(binding))
         value=json.loads(path.read_bytes())
@@ -674,22 +673,21 @@ class ActualHost:
             info['teacher_binding']!=self.context.teacher.binding or
             prefix['journal_count']!=self.source_checkpoint['count'] or prefix['journal_head_hash']!=self.source_checkpoint['head_hash'] or
             prefix['source_prefix_hash']!=binding['source_hash'] or prefix['as_of']!=binding['as_of'] or
-            prefix['source_as_of']!=binding['source_as_of'] or prefix['records_in_prefix']!=binding['through_cursor']+1 or
-            (self.host.get('output_budget')!='remaining_context' and json.loads(body)['max_tokens']!=self.host['output_tokens'])):
+            prefix['source_as_of']!=binding['source_as_of'] or prefix['records_in_prefix']!=binding['through_cursor']+1):
             raise ValueError('retained preparation differs from current source/model/teacher/checkpoint')
         self.api.driver._save(cycle_directory/'host-preparation-reuse.c15.json',dict(
             witness_path=str(path.resolve()),witness_sha256=sha(path),witness=value,current_checkpoint_hash=current))
         return body,receipt
 
     def admit_preparation(self,body,receipt):
-        policy=self.host.get('output_budget','explicit')
-        if policy=='remaining_context':
-            if 'output_tokens' in self.host:raise ValueError('remaining-context policy cannot also declare a fixed output cap')
-            body,admission=self.admit.with_remaining_output(body)
-            receipt=dict(receipt,request_sha256=hashlib.sha256(body).hexdigest(),request_bytes=len(body),
-                output_budget='remaining_context')
-        elif policy=='explicit':admission=self.admit(body)
-        else:raise ValueError('explicit known output budget policy required')
+        # THE BOSS HAS NO OUTPUT LIMIT (Greg Davis, 2026-09-21): the only admissible policy is the remaining context;
+        # a fixed output cap in the host configuration is refused, never applied.
+        policy=self.host.get('output_budget','remaining_context')
+        if policy!='remaining_context' or 'output_tokens' in self.host:
+            raise ValueError('the BOSS has no output limit; output_budget must be remaining_context and no fixed output_tokens may be declared')
+        body,admission=self.admit.with_remaining_output(body)
+        receipt=dict(receipt,request_sha256=hashlib.sha256(body).hexdigest(),request_bytes=len(body),
+            output_budget='remaining_context')
         return body,receipt,admission
 
     def prepared_before_restart(self,binding,request_id,path):

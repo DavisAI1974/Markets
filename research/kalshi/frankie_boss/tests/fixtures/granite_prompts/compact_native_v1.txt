@@ -15,8 +15,8 @@ declared by source metadata are unknown; do not infer currency or a DBN scale.
 Return only one JSON object with exactly schema_version, snapshot_hash,
 evidence_refs, contradictions, missing_evidence, hypotheses, evidence_verdict.
 schema_version is BOSS_GRANITE_OUTPUT_SCHEMA_V1. Copy the compact snapshot_hash,
-never native_hash. evidence_refs is 0..16 {row: integer, field: logical path}.
-contradictions is 0..8 {a: ref,b: ref,note: string up to 200 characters}.
-missing_evidence is 0..8 strings up to 120 characters; hypotheses is 1..4
-{label: string up to 40 characters,support: list of refs,against: list of refs}.
+never native_hash. evidence_refs is a list, any length, of {row: integer, field: logical path}.
+contradictions is a list, any length, of {a: ref,b: ref,note: string, any length}.
+missing_evidence is a list, any length, of strings, any length; hypotheses is at least 1, no upper bound,
+{label: string, any length,support: list of refs,against: list of refs}. No cap applies to any count or length.
 evidence_verdict is CONSISTENT, CONFLICTED or INSUFFICIENT. No other prose.

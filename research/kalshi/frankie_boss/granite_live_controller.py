@@ -64,14 +64,15 @@ def _request_payload(request):
     return dict(request, sessions=tuple((asdict(t),asdict(s)) for t,s in request['sessions']))
 
 
-def measure_fixture(fixture, tokenizer_directory, *, output_tokens=1200):
-    """Measure the exact service message using the selected image's tokenizer versions."""
+def measure_fixture(fixture, tokenizer_directory, *, output_tokens=None):
+    """Measure the exact service message using the selected image's tokenizer versions.
+    output_tokens None = the whole remaining positional context (no output cap; Greg Davis, 2026-09-21)."""
     from . import granite_run_artifacts as artifacts
     from transformers import AutoTokenizer
     versions = {name:importlib.metadata.version(name) for name in TOKENIZER_VERSIONS}
     if versions != TOKENIZER_VERSIONS:
         raise ValueError('tokenizer implementation differs from selected image')
-    if type(output_tokens) is not int or output_tokens <= 0:
+    if output_tokens is not None and (type(output_tokens) is not int or output_tokens <= 0):
         raise ValueError('explicit positive output budget required')
     directory = Path(tokenizer_directory)
     manifest = artifacts.strict_json(artifacts.DEFAULT_MANIFEST.read_bytes())
@@ -87,6 +88,8 @@ def measure_fixture(fixture, tokenizer_directory, *, output_tokens=1200):
     if type(ids) is not list or not ids or any(type(token) is not int or token < 0 for token in ids):
         raise ValueError('tokenizer did not return exact complete token IDs')
     positional_limit = artifacts.strict_json((directory/'config.json').read_bytes())['max_position_embeddings']
+    if output_tokens is None:
+        output_tokens = positional_limit - len(ids)   # everything the context leaves is the output
     required = len(ids) + output_tokens
     if type(positional_limit) is not int or required > positional_limit:
         raise ValueError('complete input and output exceed model positional limit')

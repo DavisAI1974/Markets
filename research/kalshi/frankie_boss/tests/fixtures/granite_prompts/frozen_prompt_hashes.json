@@ -1,14 +1,14 @@
 {
   "compact_native_v1": {
-    "bytes": 1746,
-    "sha256": "f3e99a9d283c72424a22d6677c353a5ee6742632810ad6249f1e7b7c6ae18605"
+    "bytes": 1835,
+    "sha256": "11360d72fee565ab9f5f4791100d5b4a9a0c5e550264122a0b671a445998a21d"
   },
   "native_v1": {
-    "bytes": 1014,
-    "sha256": "a55ca0222e5e954682682df9e2cd9837dc47dc84a61d517701f8ef21526be7dd"
+    "bytes": 1103,
+    "sha256": "214d76a5bb1c44d13e92d96a98110d0a110f974ad42366b524654675f2887930"
   },
   "serialized_v2": {
-    "bytes": 1496,
-    "sha256": "7259a047c59e4d0b58457fe7022426e70b7116aaf0d061d12ef4da24f9d4263c"
+    "bytes": 1576,
+    "sha256": "39ee5480d95929ca60d35df2a2fb9d2cad9b58bfdef9ff33871cccbf9f993060"
   }
 }
