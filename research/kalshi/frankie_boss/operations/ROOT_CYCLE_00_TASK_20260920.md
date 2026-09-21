@@ -25,6 +25,27 @@ Expected (refuse to proceed on any mismatch):
 | prompt.md | 28310877 | 2403f47f0bdbe04e429aaff15859df6919c4a5e4434e8b0edf646e11c3bb24ee |
 | historical-prompt.md | 158950 | 8ff55bb2a5bb6a0e3549b0260d38b0e9237b26a020ab5d8fad8372e77a6d7705 |
 
+## 1b. HEARTBEAT (Greg, 2026-09-21): write your progress where we can read it, or we cannot tell working from hung
+
+Greg's status probe reads two places. Write to BOTH, at every phase change and at least every 10 minutes
+while you work (a cron/loop in your shell is fine). Nothing else about the session changes.
+
+(a) S3, with the same AWS pair you download with (the bucket takes PutObject from it):
+
+```
+NOW=$(date -u +%s); PHASE=reading   # one of: downloaded verified reading deriving writing pushing done
+printf '{"schema":"ROOT_PROGRESS_V1","cycle_index":"00","request_sha256":"<digest of session-request.json per step 3>","phase":"%s","at":%s,"note":"<one line: what you are doing, which section/layer, files written so far>"}' "$PHASE" "$NOW" > progress-$NOW-$PHASE.json
+aws s3 cp progress-$NOW-$PHASE.json s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-response/cycle-00/progress/progress-$NOW-$PHASE.json --region us-east-1
+```
+
+Keys are append-only (a new file each time; never overwrite). `note` is free text, one line, no secrets.
+The probe prints the last six and flags the latest STALE when it is more than 15 minutes old.
+
+(b) Git, as a fallback and as the durable record: a branch `root/cycle-00-progress` from the same base as
+step 4, one file `research/kalshi/frankie_boss/runs/20211003/root/progress.jsonl`, one JSON line per
+heartbeat (the same object), `git push origin root/cycle-00-progress` after each append. `git ls-remote
+origin 'root/*'` is how we see it.
+
 ## 2. Perform the session
 
 `session-request.json` is the durable request (`FRANKIE_BOSS_SESSION_REQUEST_V1`); its `instruction`

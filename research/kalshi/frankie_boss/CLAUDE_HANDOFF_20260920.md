@@ -2226,3 +2226,16 @@ through the observer's own start on this generation or the operator's start if i
 
 WAITING ON ROOT. Read-only root probe only (`frankie_host_cycle_status.yml`: `session-response.json`, `root/*`
 branches). Nothing here is Frankie's analysis; nothing is claimed about the critic outcome's content.
+
+### 03:5xZ: Greg: "We need some sort of probe that measures Root's progress" -> the heartbeat contract + probe step
+
+Root runs outside our infrastructure; until now the only signals were `session-response.json` on the host and a
+`root/*` branch on origin, both absent while he works, so working and hung looked the same. Built with what exists:
+(1) `operations/ROOT_CYCLE_00_TASK_20260920.md` step 1b: Root writes an append-only `ROOT_PROGRESS_V1` heartbeat
+(phase, at, note) to `s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-response/
+cycle-00/progress/` with the AWS pair he already downloads with, at every phase change and at least every 10 min,
+plus a git fallback branch `root/cycle-00-progress` (`progress.jsonl`). (2) `frankie_host_cycle_status.yml` gets a
+read-only step that lists that prefix, prints the last six heartbeats with age, phase and note, flags the latest
+STALE past 15 minutes, and lists `root/*` heads on origin; new optional input `bucket`. Landed via the GitHub API on
+Greg's word (workflow file). Root must be told the contract (his task document carries it); until he writes the
+first heartbeat the probe says so explicitly.
