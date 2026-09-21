@@ -7,10 +7,15 @@ ROOT=/opt/frankie-box; T="$ROOT/tmp"; MODE="${MODE:-both}"; mkdir -p "$T"
 "$ROOT/venv/bin/python" -c "import tokenizers" 2>/dev/null || "$ROOT/venv/bin/pip" install -q tokenizers >/dev/null 2>&1
 TOK="$T/granite_tokenizer.json"
 [ -s "$TOK" ] || curl -fsS -m 120 -L -o "$TOK" "https://huggingface.co/ibm-granite/granite-4.2-8b/resolve/f8de16cdcdbc6c779ca517604e050d82cc119e44/tokenizer.json"
-export ROOT TOK MODE
+# The running session's checkout ($ROOT/markets) is refreshed only by the session's own start; this measurement uses its
+# own fresh checkout of the branch so the running session's code is never touched.
+M="$ROOT/tmp/markets-measure"; REF="${MARKETS_REF:-claude/cycle-0-frankie-box-rerun-od5sxk}"
+if [ -d "$M/.git" ]; then git -C "$M" fetch -q --depth 1 origin "$REF" && git -C "$M" checkout -q FETCH_HEAD; else git clone -q --depth 1 --branch "$REF" https://github.com/DavisAI1974/Markets.git "$M"; fi
+echo "measure checkout $(git -C "$M" rev-parse --short HEAD)"
+export ROOT TOK MODE M
 "$ROOT/venv/bin/python" - <<'PY'
 import base64, json, os, sys, time
-sys.path.insert(0, os.environ['ROOT'] + '/markets'); sys.path.insert(0, os.environ['ROOT'] + '/markets/deploy/aws/box')
+sys.path.insert(0, os.environ['M']); sys.path.insert(0, os.environ['M'] + '/deploy/aws/box')
 import frankie_box_reading_render as R
 from tokenizers import Tokenizer
 tok = Tokenizer.from_file(os.environ['TOK'])
