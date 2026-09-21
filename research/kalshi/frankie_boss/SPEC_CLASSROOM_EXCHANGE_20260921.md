@@ -208,3 +208,23 @@ with stubbed lanes (fan-out order, durability/resume, response keys, record/atte
 - Whether cycle 0's analysis text is rewritten (it says the classroom "would be written to the lessons ledger"): the
   spec re-runs only the classroom stage and the writing stage's assembly, keeping the analysis and ledgers as
   produced, and files the classroom keys beside them. The analysis prompt no longer says "no classroom lesson".
+
+## Addendum: the rerun changes (Greg, 2026-09-21 evening: "make the changes that Frankie asked for and add the calcs he wants to cyc 0 and rerun with the corrections we already made")
+
+What Frankie asked for in cycle 0's analysis (sections 3, 4, 6) and the accounting document, and what is built:
+
+| Frankie's ask (his words, shortened) | What is built (996828f3) | Where |
+|---|---|---|
+| "The comparison will be performed layer-by-layer in the accounting ledger ... frozen full-structure hash not provided; compare layer-by-layer using available layer hashes" (every layer was filed `derived`, none `compared`) | The comparison packet: every derived pin layer (status, count, digest, producer) beside the files each of the 9 frozen learned-structure layers names (delivered digest, checkout digest, carried or not, content shape); the frozen files themselves already ride the corpus (brain, frozen entry); the accounting prompt asks for `compared` with what differed and which frozen file | `frankie_box_compare.py`, stage `compare` after derive, packet in the writing base |
+| Three ledgers `could_not`: "no observed facts ... about provider invocation response receipts", "no ... 'answer wall access receipts'", knowledge retrieval (parse failure) | The session receipts packet: every BOSS and serverless job (request/result witnesses, usage, model), what the session read (corpus, parts, notes, merges, reading ledger), the wall it kept (as_of, learning cutoff, input hash, timing labels by code); the three ledger prompts point at it as observed fact | `frankie_box_receipts.py`, stage `receipts` before writing |
+| `output_knowledge_retrieval_receipts`: "the BOSS output was not parseable JSON" (a fenced block) | `tolerant_json` (fences, comments, trailing commas, truncated close) already parses it on the rerun | `frankie_box_docs.tolerant_json` (chat 6) |
+| Section 5 "Dipole classroom output (summary of what will be filed)" was never filed | The classroom exchange (this spec) | stages `classroom`, `correction` |
+| "Granite critic returned zero hypotheses despite contract requiring 1-4; ensure hypothesis generation step is invoked before final critique" | NOT built: host-side. The native critic prompt already says "at least ${MIN_HYPOTHESES}"; the BOSS answered `hypotheses: []`, the schema check fails, verdict != L4, `rejected`, controller `incomplete`. Two routes, both Greg's: harden the prompt template (changes the prompt hash, so the sealed critic identity is re-minted, a host action like the Pod re-mint), or a follow-up turn on a zero-hypothesis answer (a protocol change: one shadow request = one prompt hash = one response, which the controller's receipt check pins) | `granite_contract.py`, `granite_shadow.py`, `frankie_controller._critic_result` |
+| "Section 4.2 absent, no book-regime scale ... expected"; "`^k` placeholders ... keep as marker" | Nothing to change (Frankie's own reading: correct as delivered) | |
+
+The rerun (the restart runbook a-i, unchanged) re-reads the corpus: the brain now carries the frozen learned-structure
+files and the derivation digest is regenerated, so the corpus identity moves and `_corpus_current()` sends the session
+through reading again (4 parts and the merges on the reading lane, with the notes fix in force), then the classroom, then
+writing with the packets in the base (every writing call runs again: its prompt changed). Cost: the reading lane for
+roughly an hour (two H100 workers about $10/h with the Pod), then the Pod for the classroom summary and the twelve
+writing calls (hours at $1.15/h). Nothing runs before Greg's go.

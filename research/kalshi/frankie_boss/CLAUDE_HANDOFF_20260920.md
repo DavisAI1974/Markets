@@ -3749,3 +3749,35 @@ RESTART RUNBOOK for cycle 0 (every host step on Greg's go; each receipted; nothi
 OPEN (Greg): the observation explanations are one BOSS sentence per STATE per component expanded to every cursor
 (the spec's assumption 1; one sentence per cursor is a switch in the classroom module, hours on the endpoint);
 response.json grows by the review (about 19 x N observations; several MB) and is committed to root/cycle-NN-response.
+
+### 22:xxZ 09-21: THE RERUN CHANGES (Greg: "make the changes that Frankie asked for and add the calcs he wants to cyc 0 and rerun")
+
+Read from cycle 0's analysis (sections 3, 4, 6) and the accounting document (the docs bundle Greg has: root/cycle-00-response
+docs-cycle-00/, brain/cycle-00/). Built on this branch, commit 996828f3, box suite 102 tests green:
+- THE COMPARISON STEP that never ran: every pin layer was filed `derived`, none `compared`, because the frozen learned
+  structure was delivered by path only. `deploy/aws/box/frankie_box_compare.py` writes work/comparison.{json,md}: each
+  derived layer (status, count, digest, producer) beside the files each of the 9 frozen learned-structure layers names
+  (delivered digest, checkout digest, carried whole or not, content shape); the files themselves are in the corpus (the
+  brain's frozen entry, Greg's "unfreeze the structure content"). Stage `compare` after derive; the packet enters the
+  writing base after the instruction; the accounting prompt asks for `compared` with what differed and which frozen file.
+- THE THREE RECEIPT LEDGERS filed could_not: `deploy/aws/box/frankie_box_receipts.py` writes work/session-receipts.{json,md}
+  (every BOSS and serverless job with request/result witnesses, usage and model; the corpus, parts, notes, merges and
+  reading ledger; the wall: as_of, learning cutoff, input hash, the timing labels by code). Stage `receipts` right before
+  writing; the ledger prompts for output_provider_invocation_response_receipts, output_knowledge_retrieval_receipts and
+  output_answer_wall_access_receipts point at it as observed fact.
+- THE GATES: reading ran only when merged-notes.md was absent, so a rerun would have kept cycle 0's notes although the
+  corpus moved (the brain's frozen files, the regenerated digest, the notes fix). `_corpus_current()` compares
+  reading.json's corpus sha with the corpus the session would read now; writing runs again when any of its inputs
+  (merged notes, digest, the two packets) moved (writing.json records their sha256; durable jobs reuse unchanged prompts).
+- The packets ride the docs bundle and the brain entry (comparison.md include true).
+- NOT built, Greg's call (host side): the critic's zero hypotheses. The native critic prompt already demands at least
+  one; the BOSS answered `hypotheses: []`, the output-schema check fails, verdict != L4, `rejected`, controller
+  `incomplete`. Route 1: harden the prompt template (`granite_contract.py`); the prompt hash changes, so the sealed
+  critic identity is re-minted on the host (a host action like the Pod re-mint). Route 2: a follow-up turn on a
+  zero-hypothesis answer; a protocol change (one shadow request = one prompt hash = one response, pinned by
+  `frankie_controller._critic_result`). Torch 2.11 (CPU) is now installed in this container so the frankie_boss family
+  can run here for either route (the family baseline is recorded below when its run completes).
+- Section 4.2 absent (no book-regime scale) and the `^k` placeholders: Frankie read them as expected; nothing to change.
+THE RERUN = the runbook a-i unchanged. The session re-reads (4 parts + merges on the reading lane, about an hour), runs
+the classroom (19 + 1 calls), and writes again with the packets in the base (twelve Pod calls, hours). Every host step on
+Greg's go; nothing has run.

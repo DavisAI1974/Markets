@@ -60,6 +60,12 @@ STATE OF THE RUN (session unit frankie-cycle-00 on box i-035994afa8bdf66a5, rest
   request stays). THE RESTART RUNBOOK (a-i, every host step on Greg's go) is in the handoff 18:xxZ. Cycle 1 runs
   the same code.
 
+- CHAT 6 (22:xxZ): THE RERUN CHANGES BUILT (Greg: "make the changes that Frankie asked for and add the calcs he wants
+  to cyc 0 and rerun"): the comparison packet (derived layers beside the frozen learned-structure files; `compared` in
+  the accounting), the session receipts packet (the three receipt ledgers filled from observed facts), reading and
+  writing gated by their inputs so the rerun actually re-reads and re-writes (commit 996828f3). NOT built: the critic's
+  zero hypotheses (host side; two routes in the handoff 22:xxZ, Greg's call). Cycle 0 docs delivered to Greg as files.
+
 CHAT 5 LESSONS, each measured: the Claude Code container has NO AWS identity (proxy placeholders; STS
 InvalidClientTokenId) until a pair is installed at the D48 locations; the agent proxy refuses the GitHub Actions
 secrets API (403) and api.github.com for the runpodctl installer; the repo is PUBLIC, so a secret must never travel

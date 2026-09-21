@@ -13,6 +13,9 @@
   turn recorded through the adapter's immutable recorder) + `frankie_host_record_principal_response.{ps1,yml}` turn input.
 - `frankie_host_export_principal_request.{ps1,yml}` turn=correction (the retained correction request), `frankie_box_push_response.sh` TURN=correction,
   `frankie_box_fetch_response.yml` turn; `tests/test_frankie_correction_turn_plumbing.py`.
+- `deploy/aws/box/frankie_box_compare.py` (the comparison packet: every derived pin layer beside the frozen learned-structure files the brain carries; stage
+  `compare`) + `deploy/aws/box/frankie_box_receipts.py` (the session receipts packet: provider invocations, what was read, the wall; stage `receipts`) +
+  `tests/test_frankie_box_packets.py`, `tests/test_frankie_box_boss_session_rerun.py` (reading gated by the corpus identity, writing by its inputs).
 - `deploy/aws/host/frankie_host_supersede_principal_response.ps1` + `.github/workflows/frankie_host_supersede_principal_response.yml` - move a cycle's
   RECORDED response aside (never deleted, receipted); the request stays. Text contract `research/kalshi/frankie_boss/tests/test_host_supersede_principal_response.py`.
 
