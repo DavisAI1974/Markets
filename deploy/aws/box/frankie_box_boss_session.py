@@ -767,7 +767,8 @@ class Session:
         write_json(self.work / 'derive.json', receipt)
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import frankie_box_digest_render as DG
-        digest = DG.digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells)   # dense, exact, self-checked (DG.SCHEMA)
+        bedrock_files = {name: load_json(entry['path']) for name, entry in receipt['layers'].items() if entry.get('bedrock')} or None
+        digest = DG.digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells, bedrock=bedrock_files)   # dense, exact, self-checked (DG.SCHEMA)
         (self.work / 'derivation-digest-full.md').write_text(digest, encoding='utf-8')
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
         return receipt
@@ -843,6 +844,36 @@ class Session:
                     candidate_warmup_seconds=run['candidate_warmup_seconds'], candidate_min_observations=run['candidate_min_observations'],
                     verdict=run['verdict'], derived=derived_count, could_not=len(layers) - derived_count,
                     crosswalk=str(PRODUCERS / 'research/kalshi/frankie_raw_mbo_benchmark/native_layer_crosswalk.py'))
+
+    def _measure_digest(self):
+        """Checkpoint E (plan BR-5): the V6 digest's size in bytes and tokens (the Granite tokenizer when it is on the box,
+        else the session's own bytes-per-token estimate, said so) and the parts it would take at PART_INPUT_TOKENS; filed
+        and printed, reported to Greg before the rerun is dispatched (success criterion 6). No model call."""
+        digest_path = self.work / 'derivation-digest-full.md'
+        raw = digest_path.read_bytes()
+        tokens, basis = None, None
+        try:
+            from tokenizers import Tokenizer
+            tok_path = ROOT / 'tmp' / 'granite_tokenizer.json'
+            if tok_path.exists() and sha256_bytes(tok_path.read_bytes()).startswith('883975314d587437'):
+                tokens, basis = len(Tokenizer.from_file(str(tok_path)).encode(raw.decode('utf-8', errors='replace')).ids), 'granite tokenizer'
+        except Exception:
+            tokens = None
+        if tokens is None:
+            tokens, basis = int(len(raw) / BYTES_PER_TOKEN), 'estimate: bytes / %s' % BYTES_PER_TOKEN
+        parts = -(-tokens // PART_INPUT_TOKENS)
+        derive = load_json(self.work / 'derive.json') if (self.work / 'derive.json').exists() else {}
+        tables = [line[len('### table '):].split(' ', 1)[0] for line in raw.decode('utf-8', errors='replace').splitlines() if line.startswith('### table ')]
+        measurement = dict(schema='FRANKIE_BOX_DERIVE_ONLY_MEASUREMENT_V1', at=time.time(), cycle=self.cycle,
+                           digest=dict(path=str(digest_path), bytes=len(raw), sha256=sha256_bytes(raw), tokens=tokens, token_basis=basis,
+                                       **{'parts_at_%d_tokens' % PART_INPUT_TOKENS: parts}, tables=tables),
+                           bedrock=(derive.get('bedrock') or {}) and dict(layers=len(derive['bedrock'].get('layers') or []), derived=derive['bedrock'].get('derived'),
+                                                                           could_not=derive['bedrock'].get('could_not'), span_seconds=derive['bedrock'].get('span_seconds'),
+                                                                           groups=derive['bedrock'].get('groups'), ledgers=derive['bedrock'].get('ledgers')),
+                           legacy_reading=dict(parts=4, part_input_tokens=PART_INPUT_TOKENS, note='cycle 0 read 4 parts of 87k on DIGEST_V5 (handoff 2026-09-21)'))
+        write_json(self.work / 'derive-only-measurement.json', measurement)
+        self.note(f'DERIVE_ONLY digest {len(raw)} bytes, {tokens} tokens ({basis}), {parts} parts at {PART_INPUT_TOKENS} tokens; {len(tables)} tables')
+        return measurement
 
     def _derive_needed(self):
         """Whether derive() must run: no digest, a digest of another schema, no derive.json, a derive.json without the pin
@@ -1777,6 +1808,20 @@ class Session:
             self.correction()
             self.push(turn='correction')
             return
+        if stage == 'derive_only':
+            # checkpoint E (plan BR-5): verify, labels, derive (the legacy five and the bedrock), the V6 digest and its
+            # measurement; no engine reach, no reading lane, no model call; the session unit is not started
+            self.labels()
+            self.phase('deriving', 'derive_only: the legacy five and the bedrock on this cycle\'s rows; no model call')
+            needed, why = self._derive_needed()
+            if needed:
+                self.note('deriving: ' + why)
+                self.derive()
+            else:
+                self.note('derivation current: ' + why)
+            self._measure_digest()
+            self.phase('derived', 'derive_only done; the measurement is in work/derive-only-measurement.json')
+            return
         self.phase('verified', 'request, contract and rows verified on the box; session running')
         self.labels()
         self.engine_reach()
@@ -1812,7 +1857,7 @@ def main():
     parser.add_argument('--cycle', default='00')
     parser.add_argument('--pod', default=POD_ID_DEFAULT)
     parser.add_argument('--served-model', default=SERVED_MODEL_DEFAULT)
-    parser.add_argument('--stage', default='run', choices=('run', 'preflight', 'correction'))
+    parser.add_argument('--stage', default='run', choices=('run', 'preflight', 'correction', 'derive_only'))
     args = parser.parse_args()
     Session(args.session, args.day, args.cycle, args.pod, args.served_model).run(args.stage)
 

@@ -170,3 +170,44 @@ def test_the_run_loop_uses_the_gate_and_the_docstring_names_the_bedrock():
     text = (BOX / 'frankie_box_boss_session.py').read_text()
     assert 'needed, why = self._derive_needed()' in text and 'if needed:' in text
     assert 'bedrock' in text.split('class Session')[0].lower()
+
+
+# ---- BR-5: the digest carries the bedrock tables; ACTION=derive_only measures it (checkpoint E) ----------------------
+
+def test_derive_writes_a_v6_digest_with_the_bedrock_tables(tmp_path, monkeypatch):
+    s = stub(tmp_path, monkeypatch)
+    session.Session.derive(s)
+    sys.path.insert(0, str(BOX))
+    import frankie_box_digest_render as DG
+    text = (s.work / 'derivation-digest-full.md').read_text(encoding='utf-8')
+    assert text.startswith('# Derivation digest DIGEST_V6 ')
+    assert '## Bedrock' in text and '### table bedrock.layers' in text and '### table bedrock.members' in text
+    assert '### table bedrock.lifecycle.lineage' in text and '### table bedrock.lifecycle.flow_substrate' in text
+    parsed = DG.parse_digest(text)
+    assert [r['group_index'] for r in parsed['bedrock.members']] == [0, 1, 2]
+    assert 'candidate_family_id' in parsed['bedrock.members'][0]['structure'] and 'decision_ts_recv_ns' in parsed['bedrock.members'][0]['clocks']
+    index = {r['layer']: r for r in parsed['bedrock.layers']}
+    assert set(index) == set(FX.BEDROCK_LAYERS) and index['clock_lock_time']['status'] == 'could_not'
+    assert 'episode' in index['derived_roll20_and_dipole_state']['partial']
+
+
+def test_measure_digest_reports_tokens_and_parts_and_files_the_measurement(tmp_path, monkeypatch):
+    s = stub(tmp_path, monkeypatch)
+    s._measure_digest = lambda: session.Session._measure_digest(s)
+    (s.work / 'derivation-digest-full.md').write_text('# Derivation digest DIGEST_V6 (x)\n' + 'row ' * 100_000, encoding='utf-8')
+    measurement = s._measure_digest()
+    assert measurement['schema'] == 'FRANKIE_BOX_DERIVE_ONLY_MEASUREMENT_V1' and measurement['digest']['bytes'] == (s.work / 'derivation-digest-full.md').stat().st_size
+    assert measurement['digest']['tokens'] > 0 and measurement['digest']['token_basis'] in ('granite tokenizer', 'estimate: bytes / %s' % session.BYTES_PER_TOKEN)
+    assert measurement['digest']['parts_at_%d_tokens' % session.PART_INPUT_TOKENS] == -(-measurement['digest']['tokens'] // session.PART_INPUT_TOKENS)
+    assert json.loads((s.work / 'derive-only-measurement.json').read_bytes())['digest']['tokens'] == measurement['digest']['tokens']
+    assert any(n.startswith('DERIVE_ONLY digest ') for n in s._notes)
+
+
+def test_derive_only_is_a_stage_that_derives_and_measures_without_the_engine():
+    text = (BOX / 'frankie_box_boss_session.py').read_text()
+    assert "choices=('run', 'preflight', 'correction', 'derive_only')" in text
+    block = text.split("if stage == 'derive_only':")[1].split("self.phase('verified'")[0]
+    assert 'self.derive()' in block and 'self._measure_digest()' in block and 'engine_reach' not in block and 'serverless' not in block and 'return' in block
+    sh = (BOX / 'frankie_box_session.sh').read_text()
+    assert 'derive_only) derive_only ;;' in sh and '--stage derive_only' in sh and 'derive_only()' in sh
+    assert 'ACTION must be start, status, preflight, verify, restart_session, fetch_correction, correction or derive_only' in sh

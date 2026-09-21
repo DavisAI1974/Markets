@@ -7,7 +7,9 @@
 # Inputs: DAY (20211003), CYCLE (00), MARKETS_REF (this branch), ACTION (start | status | preflight | verify;
 # default status; restart_session stops ONLY the session unit with a receipt to apply a session-code fix;
 # fetch_correction takes the host's exported classroom-correction-request.json through MAP_URL into request/;
-# correction runs the session's Dipole classroom correction turn as its own unit). Never stops a Pod, a box or the native host runner (Greg's word).
+# correction runs the session's Dipole classroom correction turn as its own unit; derive_only = checkpoint E of the
+# bedrock plan: the legacy five and the bedrock derived in the foreground and the V6 digest measured, no model call,
+# the session unit untouched). Never stops a Pod, a box or the native host runner (Greg's word).
 set -u
 ROOT=/opt/frankie-box; S="$ROOT/session"
 DAY="${DAY:-20211003}"; CYCLE="${CYCLE:-00}"; MARKETS_REF="${MARKETS_REF:-claude/cycle-0-frankie-box-rerun-od5sxk}"; ACTION="${ACTION:-status}"
@@ -75,6 +77,17 @@ print(digest(json.loads(open('$ROOT/request/session-request.json','rb').read()))
     sleep 5
     status
 }
+derive_only() {
+  # Checkpoint E (PLAN_CYCLE0_BEDROCK_20260921.md, on Greg's go; box only, no model call): verify + labels + derive (the
+  # legacy five and the bedrock through the pinned producers) + the DIGEST_V6 + its token/part measurement, in the
+  # foreground under this SSM command. Refuses while the cycle session unit runs (its checkout would move under it).
+  if systemctl is-active --quiet "$UNIT.service"; then echo "$UNIT is running: derive_only waits (its checkout would move the code under the running session)"; return 2; fi
+  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
+  echo "producers HEAD $(git -C "$ROOT/producers" rev-parse HEAD 2>/dev/null || echo missing)"
+  "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage derive_only || { echo "derive_only failed (exit $?)"; return 3; }
+  M="$S/work/derive-only-measurement.json"; [ "$CYCLE" = "00" ] || M="$S/work-$CYCLE/derive-only-measurement.json"
+  [ -s "$M" ] && { echo "### derive-only measurement"; cat "$M"; }
+}
 fetch_correction() {
   # The host's retained classroom-correction-request.json, exported by frankie_host_export_principal_request.yml
   # (turn=correction) and presigned by frankie_box_run.yml (presign=<bucket>/<key>) into the private map at MAP_URL.
@@ -129,6 +142,7 @@ case "$ACTION" in
   status) status ;;
   fetch_correction) fetch_correction ;;
   correction) correction ;;
+  derive_only) derive_only ;;
   preflight) preflight ;;
   verify) verify ;;
   start) start_session ;;
@@ -143,5 +157,5 @@ case "$ACTION" in
     else echo "$UNIT was not running"; fi
     systemctl reset-failed "$UNIT.service" 2>/dev/null
     start_session ;;
-  *) echo "ACTION must be start, status, preflight, verify, restart_session, fetch_correction or correction"; exit 2 ;;
+  *) echo "ACTION must be start, status, preflight, verify, restart_session, fetch_correction, correction or derive_only"; exit 2 ;;
 esac

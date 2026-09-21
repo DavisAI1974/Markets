@@ -260,3 +260,110 @@ def test_random_structural_rows_round_trip():
             continue
         block = DG.render_table('t', rows)
         assert DG._same(DG.parse_table(block)[1], rows), block
+
+
+# ---- DIGEST_V6: the bedrock tables (BR-5; SPEC_CYCLE0_BEDROCK_20260921.md) ------------------------------------------
+
+def _bedrock_files():
+    """Two bedrock layer files as frankie_box_bedrock.project writes them (member projections beside the group key; lifecycle
+    rows whole), one could_not layer, and the shapes the real ledgers carry (nested dicts, lists of dicts, JSON cells)."""
+    members = []
+    for g in range(3):
+        recv = 1633298400_300150000 + g * 4_000_000_000
+        members.append({'group_index': g, 'ts_recv_ns': recv, 'f_last_ts_recv_ns': recv, 'clocks.first_lawful_availability_ns': recv,
+                        'structure.candidate_family_id': 'ow-%d' % g, 'structure.mirror.orientation': 'SAME',
+                        'activity_since.*.top_level_qty_by_action': {'session_open': {'A': 5 + g, 'C': 0}, 'last_trade': {'A': 1}},
+                        'book_full.bid_levels_full[].fifo_queue[]': [[{'order_id': 701, 'size': 5}], [{'order_id': 702, 'size': 1}]],
+                        'capture_observations': {}})
+    clocks = [dict(m) for m in members]
+    for c in clocks:
+        c.pop('structure.candidate_family_id'); c.pop('structure.mirror.orientation'); c.pop('activity_since.*.top_level_qty_by_action')
+        c.pop('book_full.bid_levels_full[].fifo_queue[]'); c.pop('capture_observations')
+        c['clocks.decision_ts_recv_ns'] = c['ts_recv_ns']; c['decision_basis'] = 'REPLAY_EARLIEST_LAWFUL_AVAILABILITY'; c['f_last_to_decision_delay_ns'] = 0
+    lineage = [dict(emitting_section='lineage', emitted_on='STAGE_CLOSED', emitted_at_recv_ns=1633298400_300150000 + i * 4_000_000_000, node_id=700 + i,
+                    parent_id=None if i == 0 else 700, depth=i, depth_label='D%d' % i, status='OPEN' if i == 2 else 'CLOSED', side_orientation='B') for i in range(3)]
+    flow = [dict(emitting_section='flow_substrate', emitted_on='SECOND_COMPLETED', emitted_at_recv_ns=1633298401_000000000 + i * 1_000_000_000, second=1633298401 + i,
+                 roll20_value=None if i < 2 else 0.5, roll20_defined=i >= 2, polarity='BUY', rows=[dict(a=1)], last_quote=dict(bid=3_500_000_000, ask=3_510_000_000)) for i in range(4)]
+    return {
+        'derived_d_family_geometry': dict(layer='derived_d_family_geometry', status='derived', reason=None, producer='a_memory_member_first_recalculation_20260828.describe_structure',
+                                          member_paths=['structure.candidate_family_id', 'structure.mirror.orientation'], lifecycle_sections=['lineage'],
+                                          member_rows=members, lifecycle_rows=lineage, section_counts=dict(lineage=3), count=6, partial=[]),
+        'derived_v4_mechanics_fifo_features': dict(layer='derived_v4_mechanics_fifo_features', status='derived', reason=None, producer='native_full_capture_adapter._window_extras',
+                                                   member_paths=['activity_since.*.top_level_qty_by_action', 'book_full.bid_levels_full[].fifo_queue[]', 'capture_observations'],
+                                                   lifecycle_sections=['queue'], member_rows=members, lifecycle_rows=[], section_counts=dict(queue=0), count=3, partial=[]),
+        'derived_roll20_and_dipole_state': dict(layer='derived_roll20_and_dipole_state', status='derived', reason=None, producer='native_flow_substrate.complete_second',
+                                                member_paths=[], lifecycle_sections=['flow_substrate', 'episode'], member_rows=[], lifecycle_rows=flow,
+                                                section_counts=dict(flow_substrate=4, episode=0), count=4,
+                                                partial=[dict(section='episode', rows=0, reason='the candidate lane needs 900 s of warmup and 600 observations before any candidate can be detected; this cycle\'s rows span 13.0 s')]),
+        'clock_model_evaluation': dict(layer='clock_model_evaluation', status='derived', reason=None, producer='native_clocks.member_clock_row',
+                                       member_paths=['clocks.decision_ts_recv_ns', 'decision_basis', 'f_last_to_decision_delay_ns'], lifecycle_sections=[],
+                                       member_rows=clocks, lifecycle_rows=[], section_counts={}, count=3, partial=[]),
+        'prebirth_predecessor_at_risk_state': dict(layer='prebirth_predecessor_at_risk_state', status='could_not', producer='native_replay_driver._open_candidate',
+                                                   reason='the candidate lane needs 900 s of warmup and 600 observations before any candidate can be detected; this cycle\'s rows span 13.0 s',
+                                                   member_paths=[], lifecycle_sections=['episode', 'candidate'], member_rows=[], lifecycle_rows=[],
+                                                   section_counts=dict(episode=0, candidate=0), count=0, partial=[]),
+        'clock_lock_time': dict(layer='clock_lock_time', status='could_not', producer=None, reason='NO_PRODUCER_FOUND: lock time is Frankie\'s OUTPUT',
+                                member_paths=[], lifecycle_sections=[], member_rows=[], lifecycle_rows=[], section_counts={}, count=0, partial=[]),
+    }
+
+
+def test_v6_schema_and_header_name_the_bedrock_tables():
+    assert DG.SCHEMA == 'DIGEST_V6'
+    receipt = dict(rows=dict(path='p', count=2, kinds={}, head='h' * 64, head_is_request_source_hash=True), input_records=1, legacy_rows=1, f_last_groups=1,
+                   failure_count=0, pin_group='legacy_observable_crosswalk', layers={})
+    text = DG.digest_text(receipt, {}, [], [], [], [], 0, [], [], bedrock=_bedrock_files())
+    head = text[:3000]
+    assert head.startswith('# Derivation digest DIGEST_V6 ')
+    assert 'bedrock.members' in head and 'bedrock.lifecycle.<section>' in head and 'bedrock.layers' in head
+    without = DG.digest_text(receipt, {}, [], [], [], [], 0, [], [])
+    assert '## Bedrock' not in without and '### table bedrock.' not in without
+
+
+def test_v6_bedrock_tables_are_one_members_table_one_table_per_section_and_an_index_all_parsing_back():
+    tables = DG.bedrock_tables(_bedrock_files())
+    assert list(tables) == ['bedrock.layers', 'bedrock.members', 'bedrock.lifecycle.flow_substrate', 'bedrock.lifecycle.lineage']
+    index = tables['bedrock.layers']
+    assert [r['layer'] for r in index] == ['derived_d_family_geometry', 'derived_v4_mechanics_fifo_features', 'derived_roll20_and_dipole_state',
+                                            'clock_model_evaluation', 'prebirth_predecessor_at_risk_state', 'clock_lock_time']
+    assert index[0]['status'] == 'derived' and index[0]['member_paths'] == 'structure.candidate_family_id structure.mirror.orientation'
+    assert index[2]['partial'] == 'episode' and index[4]['status'] == 'could_not' and '900 s' in index[4]['reason']
+    members = tables['bedrock.members']
+    assert len(members) == 3 and [r['group_index'] for r in members] == [0, 1, 2]
+    columns = set(DG._flatten(members[0]))                  # the codec's columns: every derived layer's carrier path, each once
+    assert {'group_index', 'ts_recv_ns', 'f_last_ts_recv_ns', 'clocks.first_lawful_availability_ns', 'structure.candidate_family_id',
+            'structure.mirror.orientation', 'book_full.bid_levels_full[].fifo_queue[]', 'capture_observations', 'clocks.decision_ts_recv_ns',
+            'decision_basis', 'f_last_to_decision_delay_ns', 'activity_since.*.top_level_qty_by_action.session_open.A'} <= columns
+    assert members[1]['activity_since']['*']['top_level_qty_by_action'] == {'session_open': {'A': 6, 'C': 0}, 'last_trade': {'A': 1}}
+    assert members[0]['capture_observations'] == '{}'       # an empty mapping is one JSON string cell (it cannot flatten to a column)
+    assert len(tables['bedrock.lifecycle.lineage']) == 3 and len(tables['bedrock.lifecycle.flow_substrate']) == 4
+    text = DG.render_layers(tables)                          # rendered, parsed back and compared by the codec itself
+    parsed = DG.parse_digest(text)
+    assert set(parsed) == set(tables)
+    assert parsed['bedrock.members'][2]['book_full']['bid_levels_full[]']['fifo_queue[]'] == [[{'order_id': 701, 'size': 5}], [{'order_id': 702, 'size': 1}]]
+    assert parsed['bedrock.members'] == members
+    assert parsed['bedrock.lifecycle.flow_substrate'][0]['roll20_value'] is None and parsed['bedrock.lifecycle.flow_substrate'][3]['roll20_value'] == 0.5
+    assert parsed['bedrock.lifecycle.flow_substrate'][1]['last_quote']['bid'] == 3_500_000_000   # nested dicts flatten to dotted columns and back
+    assert parsed['bedrock.lifecycle.lineage'][1]['parent_id'] == 700 and parsed['bedrock.lifecycle.lineage'][0]['parent_id'] is None
+
+
+def test_v6_a_nested_key_the_table_cannot_spell_becomes_one_json_string_cell():
+    files = _bedrock_files()
+    flow = files['derived_roll20_and_dipole_state']['lifecycle_rows']
+    for row in flow:
+        row['section_totals'] = {'rejected: no quote': 2, 'a=b': 1}
+    tables = DG.bedrock_tables(files)
+    cell = tables['bedrock.lifecycle.flow_substrate'][0]['section_totals']
+    assert isinstance(cell, str) and json.loads(cell) == {'rejected: no quote': 2, 'a=b': 1}
+    parsed = DG.parse_digest(DG.render_layers(tables))
+    assert json.loads(parsed['bedrock.lifecycle.flow_substrate'][0]['section_totals']) == {'rejected: no quote': 2, 'a=b': 1}
+
+
+def test_v6_a_conflicting_member_projection_between_layers_refuses():
+    files = _bedrock_files()
+    files['clock_model_evaluation']['member_rows'][1]['ts_recv_ns'] += 1     # the same group projected with a different key value
+    try:
+        DG.bedrock_tables(files)
+    except ValueError as err:
+        assert 'group 1' in str(err) and 'ts_recv_ns' in str(err)
+    else:
+        raise AssertionError('two layers disagreeing on a group key must refuse')

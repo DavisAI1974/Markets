@@ -28,7 +28,8 @@ import math
 import re
 from fractions import Fraction
 
-SCHEMA = 'DIGEST_V5'   # V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
+SCHEMA = 'DIGEST_V6'   # V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
+BEDROCK_GROUP_KEY = ('group_index', 'ts_recv_ns', 'f_last_ts_recv_ns')
 FRACTION_DENOMINATOR = 1_000_000   # DIGEST_V4: a float spelled n/d only when float(n)/float(d) is that float exactly and the spelling is shorter
 SCALE_MIN, SCALE_MAX = 3, 9       # DIGEST_V4: a per-column power of ten every integer literal of the column divides by (declared once, checked)
 RUN_MARKS = ('^', '=')            # DIGEST_V4: k consecutive identical mark cells collapse to `^k` / `=k` (never `-`: `-3` is an integer)
@@ -620,8 +621,81 @@ def per_second_rows(first, buys, sells, roll, window=20):
     return rows
 
 
-def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells):
-    """The whole digest: layer status, then every derived layer as a dense exact table (all fields)."""
+def _spellable(key):
+    return bool(key) and isinstance(key, str) and key[0] not in '=^' and not any(ch in key for ch in '\t\n= ')
+
+
+def _spell(value):
+    """A value the table can carry exactly: a mapping whose every key the header can spell stays a mapping (flattened
+    to dotted columns by the codec); an EMPTY mapping, or one with a key the header cannot spell, becomes one JSON
+    string cell (`S{...}`), exact and declared in the V6 header. Lists are left whole (J / I cells)."""
+    if isinstance(value, dict):
+        if value and all(_spellable(k) for k in value):
+            return {k: _spell(v) for k, v in value.items()}
+        return json.dumps(value, separators=(',', ':'), sort_keys=True)
+    return value
+
+
+def _nest(flat):
+    out = {}
+    for path, value in flat.items():
+        parts = path.split('.')
+        node = out
+        for part in parts[:-1]:
+            node = node.setdefault(part, {})
+        node[parts[-1]] = value
+    return out
+
+
+def bedrock_tables(files):
+    """DIGEST_V6 (BR-5): the bedrock layer files (frankie_box_bedrock.project's shape, {layer: file}) as dense exact
+    tables, every derived fact once: `bedrock.layers` (one row per layer: status, reason, producer, carrier columns,
+    sections, counts, partial), `bedrock.members` (one row per F_LAST group: the group key and the UNION of every
+    derived layer's member_paths, a column once however many layers name it; a disagreement between layers on a
+    group's value refuses), and `bedrock.lifecycle.<section>` (one table per lifecycle section a derived layer names,
+    its rows whole, in ledger order, taken once). The whole ledgers stay in work/bedrock/ledgers/ and ride the bundle."""
+    tables = {}
+    index = []
+    for name, f in files.items():
+        index.append(dict(layer=name, status=f.get('status'), reason=f.get('reason'), producer=f.get('producer'),
+                          member_paths=' '.join(f.get('member_paths') or []), lifecycle_sections=' '.join(f.get('lifecycle_sections') or []),
+                          section_counts=json.dumps(f.get('section_counts') or {}, separators=(',', ':'), sort_keys=True),
+                          member_count=len(f.get('member_rows') or []), lifecycle_count=len(f.get('lifecycle_rows') or []), count=f.get('count'),
+                          partial=' '.join(p['section'] for p in (f.get('partial') or []))))
+    tables['bedrock.layers'] = index
+    members = {}
+    for name, f in files.items():
+        if f.get('status') != 'derived':
+            continue
+        for row in f.get('member_rows') or []:
+            key = row.get('group_index')
+            merged = members.setdefault(key, {})
+            for column, value in row.items():
+                if column in merged:
+                    if not _same(merged[column], value):
+                        raise ValueError(f'bedrock member projection conflict: group {key} column {column} differs between layers ({name})')
+                    continue
+                merged[column] = value
+    if members:
+        # nested by path segment (`structure.mirror.orientation` -> structure: {mirror: {orientation}}; `*` and `name[]` are
+        # literal segments), so the codec's flattened column IS the crosswalk path and the parse-back rebuilds the same row
+        tables['bedrock.members'] = [_nest({c: _spell(v) for c, v in members[k].items()}) for k in sorted(members, key=lambda g: (g is None, g))]
+    sections = {}
+    for name, f in files.items():
+        if f.get('status') != 'derived':
+            continue
+        for section in f.get('lifecycle_sections') or []:
+            rows = [r for r in (f.get('lifecycle_rows') or []) if r.get('emitting_section') == section]
+            if rows and section not in sections:
+                sections[section] = rows
+    for section in sorted(sections):
+        tables[f'bedrock.lifecycle.{section}'] = [{c: _spell(v) for c, v in r.items()} for r in sections[section]]
+    return tables
+
+
+def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells, bedrock=None):
+    """The whole digest: layer status, then every derived layer as a dense exact table (all fields); with `bedrock`
+    ({layer: file}), the V6 bedrock tables after them."""
     lines = ['# Derivation digest ' + SCHEMA + ' (Frankie\'s own calculations on this cycle\'s rows; written by the session code; whole, no '
              'limits; every derived field, exact; `=` = the column the adapter computes from this row (spread = best_ask - best_bid, '
              'mid = 0.5*(best_bid + best_ask), depth_imbalance_full = (bid_depth_full - ask_depth_full)/(bid_depth_full + ask_depth_full)), '
@@ -641,7 +715,13 @@ def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, 
              'space when no cell of the table holds a space (`sep=space` in the header, else tabs); `^k` / `=k` = k consecutive '
              '`^` / `=` cells; a bare `n/d` float cell is the IEEE division of those two integers, which IS the stored float exactly '
              '(checked; used only when shorter than its decimal); a column on the `scales:` line has every integer literal (absolute '
-             'or delta) written divided by that power of ten, all of them being exact multiples (checked))', '',
+             'or delta) written divided by that power of ten, all of them being exact multiples (checked)); DIGEST_V6 on top: the BEDROCK '
+             'tables, when this cycle\'s pin carries a bedrock (Greg, 2026-09-21): `bedrock.layers` = one row per bedrock layer (status, '
+             'reason, producer, its carrier member paths, its lifecycle sections, counts, the sections left empty by the candidate lane), '
+             '`bedrock.members` = one row per F_LAST group with the group key (group_index, ts_recv_ns, f_last_ts_recv_ns) and the union '
+             'of every derived bedrock layer\'s member paths as columns (each once), `bedrock.lifecycle.<section>` = every exact lifecycle '
+             'row of that section, whole, in ledger order, once; a mapping cell whose keys the header cannot spell, or an empty mapping, '
+             'is one JSON string cell; the three whole ledgers are in the bundle under bedrock/ledgers/)', '',
              f'Rows: {receipt["rows"]["path"]} ({receipt["rows"]["count"]} entries, kinds {receipt["rows"]["kinds"]}, head {receipt["rows"]["head"][:16]}...; '
              f'head equals the request source_hash: {receipt["rows"]["head_is_request_source_hash"]}).',
              f'INPUT records fed to the V4 adapter: {receipt["input_records"]}; legacy control rows projected: {receipt["legacy_rows"]}; '
@@ -659,4 +739,10 @@ def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, 
         'legacy_structure_observables': list(structures),
         'structure_families': [dict(action_string=k, count=v) for k, v in sorted(families.items(), key=lambda kv: -kv[1])],
     }
-    return '\n'.join(lines) + '\n\n' + render_layers(tables)
+    text = '\n'.join(lines) + '\n\n' + render_layers(tables)
+    if bedrock:
+        derived = sum(1 for f in bedrock.values() if f.get('status') == 'derived')
+        head = ['', '## Bedrock (the pinned producers\' own traversal on this cycle\'s rows, projected by their crosswalk; '
+                f'{derived} of {len(bedrock)} layers derived; every derived fact once, whole)', '']
+        text += '\n'.join(head) + '\n' + render_layers(bedrock_tables(bedrock))
+    return text
