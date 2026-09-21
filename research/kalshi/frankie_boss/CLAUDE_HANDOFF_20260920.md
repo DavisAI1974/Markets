@@ -2201,3 +2201,28 @@ Observer run 35555116474: `hold` returned at 03:20:52Z, fourteen seconds after t
 lifecycle the Pod is stop-retained after the critic call; the inspect that confirms its status is on record below.
 Next: the pipeline host job ends at the HOLD and commits its receipts; `frankie_host_export_principal_request.yml`
 (cycle 00) exports the request to S3 for Root; Root's task document updated with keys, bytes and sha256; root probe.
+
+### 03:31Z: EXPORTED TO ROOT (run 35557744815); the run HOLDS live for Root's response; Pod stop-retained
+
+`frankie_host_export_principal_request.yml` run 35557744815 (03:30:26Z): three presigned PUTs, export over SSM
+(read-only on the host plus one receipt), uploads verified against the host's hashes:
+`s3://frankie-granite42-568968024170-us-east-1/host-deliveries/20211003/principal-request/cycle-00/35557744815/`
+`session-request.json` 14,915,624 B sha256 1b777cf28c34415c4387119b1a42aed7dbc1f5e7b1799fdc0ed2cabd755624be;
+`prompt.md` 28,310,877 B sha256 2403f47f0bdbe04e429aaff15859df6919c4a5e4434e8b0edf646e11c3bb24ee;
+`historical-prompt.md` 158,950 B sha256 8ff55bb2a5bb6a0e3549b0260d38b0e9237b26a020ab5d8fad8372e77a6d7705 (byte-identical
+to the 21:40Z export; the request and prompt differ from it by the pin block and the reworded instruction). Root's task
+`operations/ROOT_CYCLE_00_TASK_20260920.md` now points at this export (keys, bytes, sha256, base branch
+`claude/cycle-0-full-rerun-lr6e14`); the 21:40Z export 35539110298 is superseded there.
+
+How the HOLD works (read in `run_actual_sunday.await_recorded_principal`): the runner prints
+`actual_frankie_session_pending`, releases the host lock and WAITS (1 s poll) for
+`execution/cycle-00/principal/session-response.json`; the recorder (`frankie_host_record_principal_response.yml`)
+writes it, then the runner verifies the request is unchanged and resumes into verify, native learning, readback,
+completion, cycle 1. So the pipeline host job 106199139034 stays `in_progress` while Root works; that is the design,
+not a stall. Pod g7y3g2w1kor4l3: inspect run 35557690740 at 03:29:51Z reads EXITED (`actions [start, terminate]`,
+`startedAt 02:44:57Z`), stop-retained by the lifecycle after the completion was published; cycle 1's critic call
+needs the observer round again (request staging via `frankie_host_stage_critic_request.yml`, observer, Pod start
+through the observer's own start on this generation or the operator's start if it observes an existing intent).
+
+WAITING ON ROOT. Read-only root probe only (`frankie_host_cycle_status.yml`: `session-response.json`, `root/*`
+branches). Nothing here is Frankie's analysis; nothing is claimed about the critic outcome's content.

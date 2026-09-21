@@ -5,29 +5,28 @@ state); `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260920.md` (every receipt
 `using-agent-skills` and `git-workflow-and-versioning` first; typed atomic commits, why-not-what, change
 summaries.
 
-## READ FIRST (02:55Z 09-21 handoff): the retained Pod is now g7y3g2w1kor4l3; the cycle-0 pipeline is DISPATCHED
+## READ FIRST (03:40Z 09-21 handoff): CYCLE 0's MACHINE HALF IS DONE on Pod g7y3g2w1kor4l3; the run HOLDS for ROOT
 
-State (every receipt in `CLAUDE_HANDOFF_20260920.md` 22:55Z to 02:47Z): Tasks A and B DONE. Cycle 00 superseded whole,
-declared, readiness superseded. Pod 8vqdacl5t61rjx's host never freed an L40S (start refused for two hours), so on
-Greg's word ("multiple parallel attempts ... in different regions ... when one hit you kill the other 2") three
-`frankie_pod_prepare.yml` attempts ran at once (US-TX-4 / US-IL-1 / US-MO-1; concurrency group keyed by region,
-20537edb); US-MO-1 won: **Pod g7y3g2w1kor4l3**, `service_ready` 02:33:47Z, model verified, RUNNING. Losers
-r2570o3g566187 and z71ka5v0zzcmou stop-retained then TERMINATED. Re-mint `feat` 35f857f0 (POD_ID g7y3g2w1kor4l3,
-INFO_SHA256 bdad2896..., generation migration-g7y3g2w1kor4l3-a004983e93b9). Observer 35555116474 adopted it
-(`observe_migrated_start` + restart 35555118454), readiness `retained-granite-ready-35555116474` verified and DELIVERED
-(35555514611, trigger written for request a7b72cf9). Host at 35f857f0, code-bound state superseded (35555381278).
-ONE pipeline dispatch at 02:54Z on `codex/frankie-launch-two-cycle-20260919` (day 20211003, the standing go, cycles 2).
-Old Pods 8vqdacl5t61rjx / ycf4v6lmave6xw stay EXITED, untouched; their observer and start-retry runs were cancelled.
+State (receipts in `CLAUDE_HANDOFF_20260920.md` 22:55Z to 03:31Z): Tasks A and B DONE. Cycle 0 re-run WHOLE under the
+current code: native BOSS (02:57-03:05Z) -> request minted (a7b72cf9, the same bytes as every mint; the pin block is
+in it) -> critic on the NEW retained Pod **g7y3g2w1kor4l3** (remote-accepted 03:12:06Z, outcome 03:12:37Z, job
+7352745e..., outcome 3cf54434...) -> completion published (35557167702, after the launch branch's refusal, as at
+15:52Z) -> observer closed, Pod stop-retained (EXITED) -> export written 03:22Z -> `frankie_calculation` HOLD ->
+EXPORTED TO S3 for Root (run 35557744815; keys, bytes, sha256 in `operations/ROOT_CYCLE_00_TASK_20260920.md`).
+The pipeline host job 106199139034 (run 35555649070) stays `in_progress` on purpose: the runner waits for
+`session-response.json`. Retained identity re-minted 35f857f0 (8vqdacl5t61rjx's host never freed a GPU; Greg's
+parallel-region attempts, losers terminated). Host at 35f857f0.
 
-Greg's directives tonight, standing: NO runtime stops on the startup process (the horizon-stop option in
-`pod_prepare.py` goes on the after-run list for removal); read the Pod literature (`~/.claude/skills/runpod-usage/`):
-the model on a Pod's volume disk is pinned to its host; a network volume in the same DC would let it move hosts.
+Greg's directives tonight, standing: NO runtime stops on the startup process (remove `--on-timeout stop` and the
+bounded intent from `pod_prepare.py`, after the runs); read the Pod literature (`~/.claude/skills/runpod-usage/`:
+volume disk is host-pinned; a same-DC network volume would let the model move hosts).
 
-Next, in order, no code changes: the pipeline mints the request (same sha a7b72cf9) -> critic on g7y3g2w1kor4l3 ->
-export -> HOLD (`actual_frankie_session_pending`) -> `frankie_host_export_principal_request.yml` -> Root's task ->
-root probe (`frankie_host_cycle_status.yml`) -> `frankie_host_record_principal_response.yml` -> ONE pipeline
-dispatch -> cycle 1, whose NEW request sha goes through `frankie_host_stage_critic_request.yml` and then the FULL
-observer round (never skipped). Read-only probes only while waiting.
+Next, in order, no code changes: root probe (`frankie_host_cycle_status.yml`) until `root/cycle-00-response` exists
+-> `frankie_host_record_principal_response.yml` (source_ref root/cycle-00-response, cycle 00) -> the runner resumes on
+its own into verify, native learning, readback, completion, then cycle 1 -> cycle 1's NEW request sha:
+`frankie_host_stage_critic_request.yml`, then the FULL observer round (never skipped), completion re-publication from
+this branch if the launch branch refuses again. After-run list: `completion_workflow_ref` in the day configuration;
+runtime-stop removal; network volume for the model; ship findings on the pins commit.
 
 ## Superseded 22:20Z handoff (kept for the record): a runner was ALIVE on the host; the full rerun round started after it stopped
 
