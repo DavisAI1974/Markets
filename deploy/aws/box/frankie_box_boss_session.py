@@ -1153,17 +1153,23 @@ class Session:
         for name, o, b, v in attempts:
             (notes_dir / f'attempt-{i:04d}-{name.split("-", 2)[-1] if name.count("-") > 1 else "first"}.md').write_text(
                 f'## {name} (bytes {s}-{e}) verdict {v or "usable"}\n\n{b or no_output(o)}\n', encoding='utf-8')
+        def kept_text(b, v):
+            """What the note carries for the merge when an answer is kept as returned: a runaway tail is removed with a
+            marker (the full text stays in the attempt file); anything else is kept whole."""
+            if v in ('runaway', 'incomplete'):
+                return docs.deloop(b) or b
+            return b
         if halves:
             parts = []
             for tag, hs, he, o, b, v in halves:
                 mark = f' [UNUSABLE: {v}; kept as returned]' if v else ''
-                parts.append(f'### Half {tag} (bytes {hs}-{he}){mark}\n\n{b or no_output(o)}')
+                parts.append(f'### Half {tag} (bytes {hs}-{he}){mark}\n\n{kept_text(b, v) or no_output(o)}')
             note = f'## Notes on part {i + 1}/{n} (bytes {s}-{e}) read in two halves\n\n' + '\n\n'.join(parts) + '\n'
             final = halves[-1][3]
             unusable = [v for *_, v in halves if v]
         else:
             flag = f' [UNUSABLE: {verdict}; kept as returned]' if verdict else (' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else '')
-            note = f'## Notes on part {i + 1}/{n} (bytes {s}-{e}){flag}\n\n{body or no_output(outcome)}\n'
+            note = f'## Notes on part {i + 1}/{n} (bytes {s}-{e}){flag}\n\n{kept_text(body, verdict) or no_output(outcome)}\n'
             final = outcome
             unusable = [verdict] if verdict else []
         (notes_dir / f'note-{i:04d}.md').write_text(note, encoding='utf-8')

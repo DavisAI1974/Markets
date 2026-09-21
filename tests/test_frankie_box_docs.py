@@ -89,3 +89,17 @@ def test_build_docs_survives_a_broken_receipt(work, tmp_path):
     index = docs.build_docs(work, tmp_path / 'docs', '00')
     broken = [e for e in index['docs'] if e.get('name') == 'derive.json']
     assert broken and 'error' in broken[0] and 'NOT RENDERED' in (tmp_path / 'docs' / 'README.md').read_text()
+
+
+def test_build_docs_keeps_the_current_corpus_notes_apart_from_superseded_ones(work, tmp_path):
+    old = work / 'notes-000000000000-unbounded'
+    old.mkdir()
+    (old / 'note-0000.md').write_bytes(b'## old corpus note\n')
+    (old / 'attempt-0000-first.md').write_bytes(b'## old attempt\n')
+    (work / 'reading-plan.json').write_text(json.dumps(dict(notes_dir='/x/y/notes-abcdef123456-unbounded')), encoding='utf-8')
+    (work / 'notes-abcdef123456-unbounded' / 'attempt-0001-retry.md').write_bytes(b'## retry attempt\n')
+    index = docs.build_docs(work, tmp_path / 'docs', '00')
+    names = [e['name'] for e in index['docs']]
+    assert 'reading-note-0000.md' in names and 'reading-note-0001.md' in names and 'reading-attempt-0001-retry.md' in names
+    assert 'superseded-notes-000000000000-unbounded-note-0000.md' in names and 'superseded-notes-000000000000-unbounded-attempt-0000-first.md' in names
+    assert (tmp_path / 'docs' / 'reading-note-0000.md').read_bytes() == (work / 'notes-abcdef123456-unbounded' / 'note-0000.md').read_bytes()

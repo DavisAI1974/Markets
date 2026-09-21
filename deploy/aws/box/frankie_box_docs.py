@@ -50,6 +50,36 @@ def keep_if_lossy(inputs, output):
 REFUSAL_RE = re.compile(r"^\W{0,40}(I cannot|I can't|I can not|I am unable|I'm unable|I will not|I won't|I must decline|"
                         r"I am not able|I'm not able|As an AI|Sorry, (but )?I)", re.I)
 MIN_NOTE_CHARS = 200
+RUNAWAY_WINDOW = 200        # lines examined at the end of a note
+RUNAWAY_DISTINCT = 5        # a tail of >= RUNAWAY_MIN lines drawn from <= this many distinct lines is a runaway
+RUNAWAY_MIN = 60
+
+
+def runaway_tail(text):
+    """The line index where a repeating tail begins, or None. Cycle 0, part 4: the reader copied the digest's delta
+    spellings and repeated `I+1` for the whole remaining context (174 KB); a tail of many lines drawn from a handful
+    of distinct lines is not notes. Deterministic; the full text is always kept in the attempt file."""
+    lines = (text or '').split('\n')
+    tail = [l.strip() for l in lines[-RUNAWAY_WINDOW:]]
+    body = [l for l in tail if l]
+    if len(body) < RUNAWAY_MIN or len(set(body)) > RUNAWAY_DISTINCT:
+        return None
+    pool = set(body)
+    start = len(lines)
+    while start > 0 and (not lines[start - 1].strip() or lines[start - 1].strip() in pool):
+        start -= 1
+    return start
+
+
+def deloop(text):
+    """The note with a runaway tail removed and a marker in its place (None if there is no runaway)."""
+    start = runaway_tail(text)
+    if start is None:
+        return None
+    lines = text.split('\n')
+    kept, removed = lines[:start], lines[start:]
+    return '\n'.join(kept).rstrip('\n') + f'\n\n[RUNAWAY TAIL REMOVED FROM THIS NOTE: {len(removed)} lines drawn from ' \
+        f'{len(set(l.strip() for l in removed if l.strip()))} distinct lines; the full text is kept in the attempt file]\n'
 
 
 def note_verdict(text, outcome):
@@ -63,6 +93,8 @@ def note_verdict(text, outcome):
         return 'refusal'                       # judged before length: a short refusal is a refusal, not an empty note
     if not text or len(text.strip()) < MIN_NOTE_CHARS:
         return 'empty'
+    if runaway_tail(text) is not None:
+        return 'runaway'
     if outcome.get('incomplete'):
         return 'incomplete'
     return None
@@ -104,9 +136,19 @@ def build_docs(work, out, cycle):
         (out / name).write_bytes(data)
         entries.append(dict(name=name, bytes=len(data), sha256=sha256_bytes(data), source=str(source), what=what))
 
+    current = None
+    plan = work / 'reading-plan.json'
+    if plan.is_file():
+        try:
+            current = Path(json.loads(plan.read_bytes())['notes_dir']).name
+        except Exception:
+            current = None
     for notes_dir in sorted(work.glob('notes-*')):
-        for p in sorted(notes_dir.glob('note-*.md')):
-            put(f'reading-{p.stem}.md', p.read_bytes(), p, 'reading notes for one part of the corpus, verbatim')
+        this = current is None or notes_dir.name == current
+        prefix = 'reading-' if this else f'superseded-{notes_dir.name}-'
+        what = 'reading notes for one part of the corpus, verbatim' if this else 'notes of a SUPERSEDED corpus (an earlier restart), verbatim'
+        for p in sorted(notes_dir.glob('*.md')):
+            put(f'{prefix}{p.stem}.md', p.read_bytes(), p, what if p.name.startswith('note-') else what.replace('reading notes for one part', 'one reading attempt'))
     merges_dir = work / 'merges'
     if merges_dir.is_dir():
         for p in sorted(merges_dir.glob('merge-*.md')):

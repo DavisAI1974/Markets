@@ -3465,3 +3465,24 @@ checks out at start (MARKETS_REF fetch; the running cycle-0 session is untouched
 - Docs (fee2e08b): all of the above lands in out/docs as Markdown with an index, published with the four files.
 Tests: 54 in the codecs CI command (reader over a fake lane: usable first time; refusal retried; two unusable answers
 split into halves whose bytes re-join to the part; still-unusable marked; verdict order; split_range).
+
+### 16:5xZ 09-21: CYCLE 0's DOCS ARE IN GIT; THE LOSS CHAIN MEASURED FROM THEM; the fix extended (runaway detection)
+
+`DOCS_ONLY=1 CYCLE=00` (run 35627468391, success): branch `root/cycle-00-response` created by frankie-box at
+16:47:18Z (acb0cd73) with `runs/20211003/root/docs-cycle-00/` = 25 files: the reading notes, every merge output,
+merged-notes.md (51,132 B), derivation-digest-full.md (145,236 B), the receipts as JSON blocks, README + index. The
+session's own push adds the four files to the same branch when it reaches `pushing`.
+THE LOSS CHAIN, from the published merges (corpus 6adc6270cd56, 532,065 bytes, 4 parts; part 4 = bytes
+527078-532065, the last 5 KB of the digest = delta spellings such as `^4 -3 -3 I+1 ^3`):
+1. READER, part 4: the note copied those lines "verbatim" and repeated `I+1` for the whole remaining context: an
+   output-incomplete note of ~174 KB (merge-0-0001.md is that group's level-0 output, 174,406 B). A runaway.
+2. LEVEL 1, group 2 (that note alone): the model refused, "I cannot complete this request as written because the
+   provided notes are incomplete", 9,471 B (merge-1-0001.md).
+3. FINAL (level 2): inputs merge-1-0000 (58,465 B, parts 1-3) + merge-1-0001 (the refusal): the model declared the
+   second group hallucinated and re-emitted parts 1-3 (51,210 B) = merged-notes.md.
+So the reader's runaway is the root; the two merges compounded it. The fix now covers all three: `note_verdict`
+adds `runaway` (a tail of >= 60 lines drawn from <= 5 distinct lines), retry once, then two halves; a runaway or
+incomplete answer kept as returned is DE-LOOPED for the merge (the repeating tail replaced by a marker; the full text
+stays in the attempt file, nothing deleted); the merge guard keeps inputs on any lost hash; the merge prompt never
+drops a group. Docs builder: the current corpus's notes (from reading-plan.json) are `reading-*`; other notes dirs
+are `superseded-<dir>-*` (the first bundle mixed three corpora's notes under one name; corrected at the next publish).

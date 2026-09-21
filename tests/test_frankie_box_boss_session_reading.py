@@ -90,3 +90,19 @@ def test_note_verdicts_and_split_range():
     first, second = docs.split_range(b'ab\ncd\nef\n', 0, 9)
     assert first == (0, 6) and second == (6, 9)
     assert docs.split_range(b'a', 0, 1) == (None, None)
+
+
+def test_a_runaway_note_is_detected_and_deloops_when_kept(tmp_path):
+    docs = session.docs_module()
+    runaway = GOOD + '\n' + '\n'.join(['- `^4 -3 -3 I+1 ^3`', '- `I+1`'] * 200)
+    assert docs.note_verdict(runaway, dict(incomplete=True)) == 'runaway'
+    assert docs.note_verdict(GOOD + '\n' + '\n'.join(f'- line {k}' for k in range(300)), dict()) is None
+    d = docs.deloop(runaway)
+    assert d.startswith(GOOD.rstrip('\n')) and 'RUNAWAY TAIL REMOVED' in d and 'lines drawn from 2 distinct lines' in d and d.count('I+1') == 0
+    # four unusable answers: the final note is de-looped for the merge, the attempt files keep the full runaway text
+    s, notes_dir = make(tmp_path, [(runaway, True, None)] * 4)
+    r = session.Session._read_part_guarded(s, 3, 0, len(DATA), 4, DATA, HEADER, notes_dir)
+    assert r['unusable'] == ['runaway', 'runaway'] and r['halves'] is True
+    note = (notes_dir / 'note-0003.md').read_text()
+    assert note.count('RUNAWAY TAIL REMOVED') == 2 and note.count('I+1') == 0 and GOOD.rstrip('\n') in note
+    assert (notes_dir / 'attempt-0003-first.md').read_text().count('I+1') == 400
