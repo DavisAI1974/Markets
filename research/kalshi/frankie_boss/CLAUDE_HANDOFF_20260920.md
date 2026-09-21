@@ -2487,3 +2487,41 @@ causal_clocks group (cycle 3) and the complete registry (cycles 7-18), not in cy
 Then: `frankie_box_run.yml` script `frankie_box_session.sh` variables `ACTION=start` -> probe with
 `frankie_host_cycle_status.yml` (root/* heads, heartbeats) -> `frankie_box_push_response.sh` runs from inside the
 session (or dispatched) -> `frankie_host_record_principal_response.yml` source_ref `root/cycle-00-response`.
+
+### 08:35Z-08:50Z 09-21: producers fully green on the box; item 3 (no runtime Pod stops) DONE; item 5 partly closed; session verified short of the LLM
+
+- Producer tests on the box, final: run 35579370064 with scikit-learn: **2202 passed, 6620 subtests passed in 73.56 s,
+  0 failures, 0 collection errors**. The nine earlier failures (run 35578515021) were all `No module named 'sklearn'`
+  from the differential harness importing `research/ng_exhaustion_chain_phase1_discovery_20260817.py`; the staging
+  script now installs the lineage's numeric floor (numpy, scipy, scikit-learn) and its test-only imports (pyyaml,
+  databento, matplotlib) (e99abd96). `frankie_box_read_log.sh` (a9ab2844) reads any file under /opt/frankie-box.
+- Session verify run 35578511645 (`frankie_box_session.sh ACTION=verify`): markets checkout fetched to this branch,
+  task document present, claude/node/systemd-run present, `/markets/frankie/github-token` and
+  `/markets/frankie/anthropic-api-key` ParameterNotFound (Greg's grants 1 and 2 still absent); the request digest
+  line is in the run's artifact `box-run-35578511645`.
+- **Drop-in item 3 DONE (Greg: NO runtime stops on Pod startup or lifecycle): 565b9f58 + 5248c370, trunk 27b3fbae.**
+  `granite_cloud_resume.keep_owned_once` (one exact read, ownership verified, no action, status `kept_running`)
+  replaces every runtime stop: the retained host's completion and confirmed-fatal cleanup, the lifecycle watchdog at
+  finish or deadline, the cloud path's cleanup under the new intent mode `keep`; `completion_cleanup` releases the
+  S3 run claim on `kept_running` exactly as on `confirmed_stopped` (ownership protocol unchanged, no stop);
+  `pod_prepare.py` has no `--on-timeout`, no `--stop-after-ready`, no stop on refused evidence, on the horizon or on
+  a cost outside the ceiling (the Pod stays as created, the receipt says so, the operator decides on Greg's word
+  through `pod_control.py`); `frankie_pod_prepare.yml` exposes no stop input. The retained INFO identity (bdad2896)
+  is untouched: its `cleanup_mode` field is a recorded fact the runtime no longer follows. Tests: the deadline and
+  completion tests assert `kept_running` and that `stop_owned_once` is never called; `test_no_runtime_pod_stops.py`
+  pins the prepare text, the workflow inputs, the twin's contract and the release; 57 passed across the retained
+  suite. Consequence for cycle 1: after the critic call the Pod stays RUNNING (keeps its GPU); the observer's
+  `hold` returns when the completion is published; nothing stops g7y3g2w1kor4l3 again. The native host's tools
+  checkout (35f857f0) still carries the old behaviour until advanced: advance before cycle 1's observer round.
+- Drop-in item 5, closed parts (6b5489f2, + the seam test): every pin's source receipts re-hashed (the complete-
+  registry pin included); the retained pin sidecar compares bytes/sha256/cycle/group and ignores the absolute path;
+  loader refusals each tested; the `cycle_limit` seam (prefix gate scales with the batch; limit 1..19) tested.
+  Deferred: `registry_file` commit sha (the pins file's bytes are pinned by the cycle-0 sidecar on the native host
+  mid-HOLD; edit after cycle 0 closes; the sha is 9006b633829cc2d7d34df269d6645d1ec4ddee54, registry file 7ee754f1
+  there); the classroom objective test and the classroom-host drift guard need the original finding text (the
+  09-20 persona reports were not persisted; only the item list survives).
+- Local regression on this container: 2715 passed, 15 failed, 12 errors, and the same 15 fail on the base commit
+  b73c4d06 in a worktree (pyo3/cffi runtime, "no torch dependency" tests with torch installed, databento absent):
+  environmental, not this branch's.
+- Item 4 (`completion_workflow_ref` / carrying the current identity on the launch branch) is a push to
+  `codex/frankie-launch-two-cycle-20260919`: Greg's word. Not done.
