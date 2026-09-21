@@ -3533,3 +3533,18 @@ extra scale needed per Section 7). His section 5 describes a "dipole classroom o
 "written to lessons"; the session's writing code files only the analysis, the accounting entry and the ten ledgers,
 so that claim is checked against response.json (subagent read, outcome below). Nothing in the analysis asks the host
 or cycle 1 for an input beyond the frozen learned-structure content for the comparison step.
+RESPONSE.JSON one-over (subagent read, all hashes re-verified against the git bytes): keys feedback, lessons,
+model_identity_as_reported_by_session, request_sha256 (1b777cf2...), sections (18), session_id
+`boss:frankie-box:i-035994afa8bdf66a5:cycle-00`. 12 lessons = the analysis + calculation_accounting + the ten output
+ledgers (exactly what the writing code files; NO dipole classroom lesson and NO `run_analysis` lesson exist, so the
+analysis's section 5 and its closing claim describe entries that were never filed: an observation for the deep dive,
+not a cycle-1 need). Accounting: all five layers `derived`, BOSS and harness statuses and digests agree, no layer
+`compared` (the frozen-structure content is absent from the evidence). Ledgers: candidate_discoveries thin (6 entries,
+5 the same cursor), first_locks 66 rows, reasoning_movie self-declared partial (41 of 91), probability_movie 77
+cursor values, state_delta 6 frames, knowledge_retrieval_receipts `could_not` (the BOSS output was not parseable
+JSON; raw text retained), negative_sparse and provider_invocation and answer_wall unfilled with reasons,
+source_state_manifest filled. Attestation/record: response_sha256 fa36c7e0... = digest(response.json) recomputed;
+witnesses match. VERDICT: cycle 1 needs NOTHING from this response to start. Deep-dive items (after cycle 1): the
+absent frozen-structure content for the comparison step, the unparseable knowledge_retrieval output, the partial
+movies, the unfiled classroom claim. NEXT: the recorder (`frankie_host_record_principal_response.yml`, source_ref
+root/cycle-00-response, the three JSON paths under runs/20211003/root/, cycle_index 00) on Greg's go.
