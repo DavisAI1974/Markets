@@ -3510,3 +3510,26 @@ any still missing = REFUSAL with a receipt naming the cycles and the publish com
 the calculation findings of every cycle before it, on the box or from git. The entry also carries the derivation
 receipt (included) and the derived files' witnesses. For cycle 1 this means: cycle 0's entry must be published
 (`BRAIN_ONLY=1 CYCLE=00`, after the response lands) or the cycle-1 preflight refuses, by design.
+
+### 17:0xZ 09-21: CYCLE 0's RESPONSE IS PUSHED (17:03:37Z); the brain entry and the docs are beside it; the quick one-over
+
+Heartbeat 17:03:40Z: `done: response pushed; the recorder workflow is next`. Branch `root/cycle-00-response`:
+8e54b417 (frankie-box, 17:03:37Z) = the four files under `runs/20211003/root/`: response.json 147,149 B,
+analysis.md 27,568 B, host-session-record.json 1,155 B, host-attestation.json 748 B (the pusher's shape and binding
+checks passed before the push). Then `BRAIN_ONLY=1 CYCLE=00` (run 35629683916, success): `brain/cycle-00/` =
+derivation-digest-full.md 145,236 B (1dbb75a0..., byte-identical to the docs copy), accounting-and-ledgers.md
+103,515 B (the accounting entry + the ten ledgers from response.json), analysis.md, derive.md 3,613 B, derived-files.md
+(witness, include false), MANIFEST.json. Then `DOCS_ONLY=1 CYCLE=00` (run 35629687950, success, 6879fb87): the docs
+republished with the current corpus's notes as reading-* and the earlier restarts' as superseded-*. Cycle 1's
+`brain_ready()` will find cycle 0 on the box (or restore it from this branch).
+QUICK ONE-OVER of analysis.md (Greg: only what cycle 1 absolutely needs): six sections (observed results verbatim
+from the merged notes; interpretation; failures/unavailable/uncertainties; the accounting entry; a dipole classroom
+section; closing). All five pin layers `derived` with file + sha (legacy_price 507d51fe..., native_signed_flow
+515d41d4..., per_second_roll20 eacce174..., book_imbalance 73939ae6..., structure_observables c65376c8...). NO layer
+`compared`: Frankie states the frozen learned-structure layers' full hash/content is not in the delivered evidence
+("only layer names and example hashes appear"), so the comparison is deferred layer by layer. Failures named: the
+critic's zero hypotheses (known, host side); section 4.2 absent, so no spread / book-regime scale (he judges no
+extra scale needed per Section 7). His section 5 describes a "dipole classroom output" (19 observations, 171 pairs)
+"written to lessons"; the session's writing code files only the analysis, the accounting entry and the ten ledgers,
+so that claim is checked against response.json (subagent read, outcome below). Nothing in the analysis asks the host
+or cycle 1 for an input beyond the frozen learned-structure content for the comparison step.
