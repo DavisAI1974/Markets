@@ -2864,3 +2864,17 @@ identity, and the default in code stays values until he says), then `frankie_box
 REASON=lossless-render` re-renders the corpus and restarts the reading (derive stays; the notes of the old corpus
 stay under their own notes-<sha> directory; part 2/163 of the old corpus is in flight on the Pod and runs out on
 the Pod, as jobs_v1 has no cancel).
+
+### 11:4xZ 09-21: RunPod agent setup done per the official page (Greg: "fetch https://docs.runpod.io/agent-setup.md and follow it ... make sure you save it")
+
+Saved verbatim: `research/kalshi/frankie_boss/operations/runpod/AGENT_SETUP_runpod_docs_20260921.md` (6,656 B, sha256
+c4f89667...). Followed the Claude Code route in this container: `claude plugin marketplace add
+runpod/runpod-plugins-official` (marketplace `runpod` declared in user settings) and `claude plugin install runpod@runpod`
+-> version 1.2.0, scope user, Status enabled (verified with `claude plugin list`). `claude mcp list` shows
+`plugin:runpod:runpod: https://mcp.getrunpod.io/ (HTTP) - Needs authentication`. The two USER steps remain Greg's:
+`/reload-plugins`, then `/mcp` -> runpod -> Sign in with Runpod (OAuth; no key stored). The skills' own rule: runpodctl and
+Flash install later on demand; nothing else set up. Once signed in, the endpoint can be created from this session
+through the MCP tools (no trunk registration of a workflow needed for that); the box still needs its own RunPod API key
+in SSM (`/markets/frankie/runpod-serverless`) to call the endpoint.
+Greg 11:4xZ: the status probes of the box are PAUSED for a while (his word); every read costs by the minute, so the
+render keeps shrinking: dense exact digest, L7 derivable vectors, head-section ledger, exact-token parts (02dc8da3).
