@@ -2,10 +2,30 @@
 
 ## 2026-09-20 — Frankie/BOSS launch day: the Pod that could not start, the replacement, the operator workflows
 
+### The bedrock build (2026-09-21, chat 7; Greg: "All 3"; plan BR-0..BR-7 built, every task one commit with its tests; nothing has run)
+- `deploy/aws/box/producers_checkout.sh` - BR-0: the pinned producers (ccode/frankie-receiver-feed-20260916 at 2ebb8ce8) as the in-repo GITIGNORED worktree
+  `.producers-2ebb8ce8` (never a scratchpad; refuses another commit; idempotent); `tests/_producers.py` (FRANKIE_BOX_PRODUCERS) + `tests/test_producers_checkout.py`;
+  the codecs CI runs it before pytest.
+- `research/kalshi/frankie_boss/knowledge/CYCLE_CALCULATION_PINS.json` pin 0 `bedrock` (the three groups' own entries verbatim) + root `bedrock_rule`;
+  `frankie_principal_adapter.py` `_validate_bedrock`, `bedrock_layers`, THIS CYCLE'S BEDROCK in the instruction (cycles 1-3 render as before).
+- `deploy/aws/box/frankie_box_bedrock.py` - BR-2/3: `run` (the pinned NativeReplayDriver with the launcher's arguments, NeverInvoke cadence, LedgerSinks
+  under work/bedrock/ledgers, reconciled; source object `journal:<day>:<container>`) and `project` (the twenty layer files by the pinned crosswalk's
+  member_paths and lifecycle_sections; `status_of`: derived only with rows, could_not with the MEASURED reason, NO_PRODUCER_FOUND for clock_lock_time);
+  `tests/test_frankie_box_bedrock.py` (the real driver on a journal-shaped three-group stream, torch present and hidden).
+- `deploy/aws/box/frankie_box_boss_session.py` - BR-4/5/6/7: `_pin_matches_request` (the request's calculation pin witness must equal the checkout's pins
+  file; refused with derive-refusal-*.json otherwise), `_derive_bedrock`, `_derive_needed` (the gate), `--stage derive_only` + `_measure_digest`
+  (checkpoint E: bytes, tokens, parts, no model call), stage `teach` (the exhaustion/D teach-back), `_teach_section` (appended to the analysis text);
+  `tests/test_frankie_box_boss_session_derive.py`, `tests/test_frankie_box_boss_session_teach.py`. `frankie_box_session.sh` ACTION=derive_only.
+- `deploy/aws/box/frankie_box_digest_render.py` DIGEST_V6 (`bedrock_tables`: bedrock.layers, bedrock.members = the union of carrier paths per group,
+  bedrock.lifecycle.<section> whole, once; TABLE_GRAMMAR = DIGEST_V5 for the block marker); `deploy/aws/box/frankie_box_teach.py` (the facts by code,
+  the prompt, `parse_answer` with the number transcription check, the Markdown); `frankie_box_docs.py` / `frankie_box_brain.py` carry the teach-back,
+  the bedrock receipt/result and the ledgers whole (docs) and reference the layer files.
+- `research/kalshi/frankie_boss/SHIP_REVIEW_20260921_CHAT7.md` - the /ship decision on BR-0..BR-7 (see the handoff 23:xxZ 09-21, chat 7).
+
 ### The Dipole classroom exchange in the box session (2026-09-21, chat 6; Greg: option 1, built before anything runs)
 - `research/kalshi/frankie_boss/SPEC_CLASSROOM_EXCHANGE_20260921.md` - the spec and capability map (the contract the host grades, read from the code; the restart runbook is in the handoff 18:xxZ).
-- `research/kalshi/frankie_boss/PLAN_CYCLE0_BEDROCK_20260921.md` - THE PLAN for the bedrock build (tasks BR-0..BR-8, dependency graph, checkpoints A-E, risks, rollback; no scratchpad: the producers checkout is an in-repo gitignored worktree). Not started.
-- `research/kalshi/frankie_boss/SPEC_CYCLE0_BEDROCK_20260921.md` - SPEC (Greg: "All 3", 2026-09-21): cycle 0's pin gains derived_geometry, prebirth_opportunity and causal_clocks as a BEDROCK set; the box derives the 20 layers through the pinned NativeReplayDriver and projects them by the producers' own crosswalk; a box-side exhaustion/D teach-back beside the Dipole classroom. NOT BUILT; three open questions for Greg (the 13-second slice cannot reach the candidate lane's 900 s warmup).
+- `research/kalshi/frankie_boss/PLAN_CYCLE0_BEDROCK_20260921.md` - THE PLAN for the bedrock build (tasks BR-0..BR-8, dependency graph, checkpoints A-E, risks, rollback; no scratchpad: the producers checkout is an in-repo gitignored worktree). BR-0..BR-7 BUILT in chat 7 (see above); BR-8 = /ship + records; checkpoint E and the rerun on Greg's go.
+- `research/kalshi/frankie_boss/SPEC_CYCLE0_BEDROCK_20260921.md` - SPEC (Greg: "All 3", 2026-09-21): cycle 0's pin gains derived_geometry, prebirth_opportunity and causal_clocks as a BEDROCK set; the box derives the 20 layers through the pinned NativeReplayDriver and projects them by the producers' own crosswalk; a box-side exhaustion/D teach-back beside the Dipole classroom. BUILT in chat 7 (BR-0..BR-7); Greg's calls (slice vs day, the reading cost after checkpoint E, cycles 1-3 pins) still open.
 - `deploy/aws/box/frankie_box_classroom.py` - TEACH facts transcribed from the model-visible pre-message, the BOSS's interpretation parsed, the four ledgers
   (dipole_teachback, dipole_observation_review, dipole_relationship_scan, dipole_novel_findings) assembled and validated by the repo's own validators
   (torch-free load), the correction acknowledgement; `tests/test_frankie_box_classroom.py` (the real grader on a synthetic TEACH package).

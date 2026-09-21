@@ -3862,3 +3862,130 @@ call, two routes, 22:xxZ). Nothing ran on the host, box, Pod or endpoint in this
 23:5xZ block atop `DROP_IN_CLAUDE_20260921.md`. THE SCRATCHPAD IS NOT USED FROM HERE ON (Greg, twice); what chat 6 had
 on it is committed whole under `records/chat6_scratchpad_20260921/` (README names every file and every exclusion); the
 producers checkout becomes an in-repo worktree at BR-0 of the plan.
+
+### 22:5xZ 09-21: CHAT 7 OPEN: the branch trap, the one status probe, Greg's four calls put
+
+The harness cut this chat's branch (`claude/cycle-0-bedrock-build-vfol23`) from the TRUNK tip f4fb6e5b (the CI
+registrations), not from the work; the drop-in names `claude/cycle-0-frankie-box-rerun-od5sxk` (082e2ec9), 2,693
+commits ahead of the trunk from their merge base 7f492b2b. The work continues on the rerun branch, as the drop-in
+says; nothing was pushed to the harness branch. (`git log --oneline -1` first, as the standing rule says.)
+
+THE ONE PROBE (`frankie_box_run.yml` script `frankie_box_session.sh` variables `ACTION=status`, run 35665068424,
+dispatched 22:54:56Z, success 22:55:27Z, SSM command f2e64cee): box Online (Ubuntu 24.04); unit frankie-cycle-00
+INACTIVE (no service); phase `done`, note `done: response pushed; the recorder workflow is next (not mine)`; done: yes;
+session/out still holds the 17:03Z four files (response.json 147,149 bytes, analysis.md 27,568, host-attestation.json 748,
+host-session-record.json 1,155) and docs/; the session log tail is the 17:03Z write and push; no heartbeat service.
+Repository secrets (names only): as before. Nothing has run on the host, box, Pod or endpoint since chat 5's write and
+push. The probe at open is spent.
+
+GREG'S FOUR CALLS (the plan's last section; asked at open, answered by nothing yet): (1) the bedrock on the 13-second
+slice now, or hold for the whole-day run (the candidate lane needs 900 s of warmup and 600 observations; cycle 0's rows
+span 13 s, so six candidate-carried layers file could_not on the slice whatever is built); (2) the reading cost after
+checkpoint E's measurement (accept the parts, or carrier columns only in the digest with the whole ledgers in the
+bundle, which is what is built); (3) cycles 1-3 keep their own pins (built that way); (4) the critic's zero
+hypotheses (host side, two routes, handoff 22:xxZ 09-21). Greg was not in the chat at the time of the build; the
+build went ahead on the plan as written (JOB 1 of the drop-in: build per the PLAN, task by task), with every host, box,
+Pod and endpoint step still on his go.
+
+### 23:xxZ 09-21: THE BEDROCK BUILT, BR-0..BR-7 (plan PLAN_CYCLE0_BEDROCK_20260921.md), every task one commit with its tests, torch present and hidden
+
+Commits on `claude/cycle-0-frankie-box-rerun-od5sxk`, in order (base 082e2ec9):
+- c7d10fd5 BR-0 `deploy/aws/box/producers_checkout.sh`: the pinned producers (ccode/frankie-receiver-feed-20260916 at
+  2ebb8ce8) as the in-repo gitignored worktree `.producers-2ebb8ce8` (refuses a directory at another commit; checks
+  native_replay_driver.py against the sha256 pinned in frankie_box_stage_producers.sh; idempotent; a shallow CI
+  checkout fetches the pinned commit itself first); `tests/_producers.py` (FRANKIE_BOX_PRODUCERS: set and absent =
+  FAIL, unset and absent = SKIP with the reason); the codecs CI runs the checkout before pytest. Run 35667907290 proved
+  the step on GitHub's shallow clone.
+- 6aeec4c2 BR-1 pin-bedrock: `CYCLE_CALCULATION_PINS.json` pin 0 gains `bedrock` (the derived_geometry,
+  prebirth_opportunity and causal_clocks entries VERBATIM from their own pins, cycles included) and the root gains
+  `bedrock_rule` (Greg's words, dated); schema V1; `load_cycle_calculation_pin` returns `bedrock_layers` (20 on cycle 0,
+  [] elsewhere) and refuses a malformed bedrock, a group no other cycle pins as its own, an entry differing from its
+  own pin, a layer outside the registry; `calculation_pin_instruction` renders THIS CYCLE'S BEDROCK after the pin
+  sentence. DECISION: the "layers of other cycles' pins are not required now" clause is narrowed ("... that are not in
+  this cycle's bedrock ...") ONLY on a pin that carries a bedrock, so cycles 1-3 render byte-for-byte as before (Greg,
+  16:1xZ: cycle 1 = exactly the cycle-0 run with the number changed). Adapter suites 43 green (checkpoint A).
+- 6bda0122 BR-2 `deploy/aws/box/frankie_box_bedrock.py` run: the pinned driver with the launcher's canonical arguments
+  (60 s replenishment horizon, a-arm-h2 horizons, the four response values, companions unaliased, change points on),
+  ExchangeSessionRule, LedgerSinks under work/bedrock/ledgers, NeverInvoke cadence (the BOSS is never asked inside the
+  traversal); consume -> finalize -> reconcile_all (a mismatch raises); result.json + receipt.json (identity, arguments,
+  the driver's own candidate constants read from the instance, span, sections fed, ledger witnesses); an earlier bedrock
+  is moved aside with a receipt. DECISION: the driver derives the source day from the source object's name (the first
+  20YYMMDD; native_replay_driver._source_day), so the record's `source_dbn_object` is `journal:<day>:<verified prefix
+  container path>` and `source_dbn_sha256` the container's sha256 (the receipt states the rule); a container path that
+  carries a date of its own cannot win over the session day. The V4 adapter is registered from the pinned file by path
+  (both trees carry research/ng_exhaustion_mbo_v4_state_adapter_20260820.py).
+- 2617d732 BR-3 project + status_of: `crosswalk_records` from native_layer_crosswalk.LAYER_PRODUCERS at the checkout;
+  one pass over each ledger; member rows projected to the crosswalk member_paths (dotted, `*`, `name[]`) beside the group
+  key; lifecycle rows of the named sections whole; `could_not` with the MEASURED reason (warmup and observation floor
+  against the span) when the carrier is candidate-carried (the crosswalk's fixture_dependent_sections), "emitted no rows"
+  otherwise, NO_PRODUCER_FOUND for clock_lock_time; a mixed layer whose candidate sections stayed empty is derived with
+  `partial`. On the fixture stream (three F_LAST groups over 10 s) 13 layers derive, 6 candidate-carried file could_not
+  with the measured reason, clock_lock_time NO_PRODUCER_FOUND: the statuses the spec predicts for the 13-second slice.
+- de5d9ffb BR-4 the session: `_pin_matches_request` (attachment.calculation_pin_witness.sha256 must equal the checkout
+  pins file's; another pin, or none, is REFUSED with derive-refusal-*.json, never derived: on the box today the request
+  carries the OLD pins sha, so `restart_session` on this branch refuses at derive until the host re-renders, as the
+  runbook orders); `_derive_bedrock` after the legacy five (their bytes on the fixture are pinned by test);
+  derive.json gains `bedrock` and `pin_identity`; `_derive_needed` replaces the header check in `_run` (no digest,
+  another schema, no derive.json, no pin identity, a moved pin, a missing bedrock = derive again). `load_producers`
+  repairs the `research`/`research.kalshi` namespace paths when a process already holds them. Checkpoint B: box list
+  144 green both modes.
+- 0e442726 BR-5 DIGEST_V6 + ACTION=derive_only. DECISION (the reading cost, Greg's call 2): the digest carries the
+  bedrock ONCE, not once per layer: `bedrock.layers` (one row per layer: status, reason, producer, carrier paths,
+  sections, counts, the sections the candidate lane left empty), `bedrock.members` (one row per F_LAST group: the group
+  key and the UNION of every derived layer's member paths, nested by path segment so the codec's column IS the
+  crosswalk path; layers disagreeing on a group refuse) and `bedrock.lifecycle.<section>` (every exact row of each
+  section, whole, once); a mapping the header cannot spell, or an empty one, is one JSON string cell; every table is
+  rendered, parsed back and compared as before; the whole ledgers stay under work/bedrock/ledgers/. `--stage
+  derive_only` / `ACTION=derive_only` (refused while the cycle unit runs): verify, labels, derive through the gate,
+  `_measure_digest` -> work/derive-only-measurement.json (bytes; tokens by the Granite tokenizer when on the box, else
+  the byte estimate and says so; parts at 87k; the tables) and a DERIVE_ONLY line; no engine reach, no reading lane,
+  no model call (checkpoint E, on Greg's go).
+- 949acfc7 fix: the reading render's `$table` marker is the TABLE GRAMMAR version (frankie_box_digest_render.TABLE_GRAMMAR
+  = DIGEST_V5; V6 adds tables, not marks), so the block marker stays truthful and the two reading-render tests hold.
+- 58655d48 BR-6 `deploy/aws/box/frankie_box_teach.py` + stage `teach` (after the classroom, before writing): the facts
+  computed by code from the session's own files (each bedrock layer's status/count/reason; the lineage rows' D-depth
+  histogram and open vs closed; the ancestry gaps listed per event with the largest named, never averaged; the causal
+  clock order per group with its violations; the family descriptor counts; the candidate lane's measured verdict) plus
+  the TEXT of the frozen learned-structure files for the four D/exhaustion layers from the brain's frozen entry (digest
+  checked, whole; absent = refuse); one BOSS call through `_classroom_call` (asked once more if unusable; over the part
+  budget = refused with the sizes); a missing topic or field, or a NUMBER NOT IN THE FACTS, is unusable (the check
+  caught a foreign number in the test fixture itself); filed under work/teach/ (json, md, prompt), durable, never a key
+  of response.json.
+- 024ff09f BR-7: docs bundle carries exhaustion-teachback.md, bedrock-receipt.md, bedrock-result.md and the three
+  exact ledgers copied WHOLE under bedrock/ledgers/, and references every bedrock layer file by name, bytes, sha256
+  (its rows are in the V6 tables and the ledgers); brain entry carries exhaustion-teachback.md and bedrock.md (include
+  true); the accounting prompt says a bedrock layer is accounted for like a pinned one, with its own status and reason;
+  the analysis prompt names THE EXHAUSTION AND D TEACH-BACK and the writing stage appends that section to the analysis
+  text from the filed teach-back. DECISION: the analysis text is lessons[0] of response.json, so the section rides
+  inside it; response.json gains NO key (the host's response schema and classroom grader untouched).
+- 5e979b4e ci: the codecs CI installs numpy. Chat 6's last push (run 35663044367) was already RED on the branch:
+  test_a_serverless_outcome_is_resumed_only_for_the_prompt_it_answered reaches granite_sagemaker -> state_serialization
+  -> research.refrag -> markets_adapter (repo root) -> numpy, absent from the CI runner; run 35667907290 on 024ff09f
+  showed the same single failure with 161 passed (the producers checkout step included). Run 35667982872 on 5e979b4e:
+  SUCCESS, 162 passed; the codecs CI is green on the branch for the first time since 4416e6ac.
+
+Tests at 024ff09f: the box list (18 files, the codecs CI's list plus the four new suites) 162 green with torch present
+and 162 with torch hidden (PYTHONPATH=research/kalshi/frankie_boss/records/chat6_scratchpad_20260921/notorch); the
+adapter suites 43. torch 2.11 CPU installed in this container for the adapter package; the bedrock path never imports it.
+
+THE RUNBOOK CHANGE (the pin change re-renders cycle 0's request on the host; every step on Greg's go; nothing has run):
+ 0. Greg's calls 1 and 2 above; then checkpoint E on the box BEFORE the host moves: `frankie_box_run.yml`
+    script=frankie_box_session.sh variables=`ACTION=derive_only` (this branch's tip). It refuses at derive today because
+    the request on the box was rendered under the old pins file (the refusal receipt names both sha256s); that refusal
+    is the measured proof that the gate works, not a failure. To MEASURE the V6 digest before the host moves, run
+    derive_only AFTER step 1-3 below (the fetched request carries the new pin), still with no model call.
+ 1. `frankie_host_advance.yml` target = this branch's tip (the host must carry the new pins file and the adapter).
+ 2. `frankie_host_supersede_code_bound_state.yml` (as the restart runbook a-b).
+ 3. Supersede the PRINCIPAL REQUEST (the pin is rendered into the instruction; request_sha256 and the config hash move):
+    `frankie_host_supersede_principal_request.yml` cycle 00, then the pipeline's re-render, then
+    `frankie_host_export_principal_request.yml` turn=initial and `frankie_box_run.yml` presign -> the box fetches the
+    new session-request.json. NOTE: `frankie_box_restore_data_plane.sh` pins request/session-request.json by sha256
+    (1b777cf2..., 14,915,624 bytes): the re-rendered request needs that pin updated on the branch (one line) before
+    the fetch, and the old request moved aside with a receipt (never overwritten). Also supersede the recorded
+    response (restart runbook c).
+ 4. Checkpoint E: `ACTION=derive_only` -> the DERIVE_ONLY line (bytes, tokens, parts, tables) reported to Greg with the
+    reading-lane cost per part; Greg's call 2 decides the read.
+ 5. `ACTION=restart_session`: the session re-derives (25 layers; the bedrock traversal on 3,262 records is minutes),
+    re-reads (the corpus moved: the V6 digest), runs the classroom (19+1), TEACHES BACK (1 BOSS call), writes with the
+    packets (twelve Pod calls), pushes; then the restart runbook e-i unchanged (record turn=initial; grade; export
+    turn=correction; fetch_correction; correction; record turn=correction; pipeline).
