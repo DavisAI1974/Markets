@@ -403,8 +403,8 @@ def _same_keys(items):
     """L10 candidates: a list of >= TABLE_MIN non-empty dicts, no key holding a '.', no tuples. Key sets may differ
     between rows: the DIGEST_V4 grammar writes `?` for a cell the row does not carry, and the parse-back proof
     decides (run 35604644446: the forecast's 101 points and 58 known marks were left as JSON by a same-keys rule)."""
-    return (isinstance(items, list) and len(items) >= TABLE_MIN and all(isinstance(v, dict) and v for v in items)
-            and not any('.' in k for v in items for k in v) and _no_tuples(items))
+    return (isinstance(items, (list, tuple)) and len(items) >= TABLE_MIN and all(isinstance(v, dict) and v for v in items)
+            and not any('.' in k for v in items for k in v) and _no_tuples(list(items)))   # the container may be a c15 tuple (run 35605902090: the forecast's points and marks are); the rows may not hold tuples
 
 
 def table_candidates(doc, path=''):
@@ -487,7 +487,10 @@ def _blocks_pass(doc, blocks, path=''):
                     digest = sha(spelled.encode('utf-8'))
                     ident = 'table-' + digest[:12]
                     blocks.append(dict(id=ident, kind='DIGEST_V4', text=block, sha256=digest, path=path, rows=len(rows), bytes=len(spelled.encode('utf-8'))))
-                    return {'$table': 'DIGEST_V4', 'block': ident, 'rows': len(rows), 'columns': list(doc[0]), 'sha256': digest}
+                    node = {'$table': 'DIGEST_V4', 'block': ident, 'rows': len(rows), 'columns': list(doc[0]), 'sha256': digest}
+                    if isinstance(doc, tuple):
+                        node['container'] = 'tuple'
+                    return node
         except Exception:
             pass
     if isinstance(doc, (list, tuple)):

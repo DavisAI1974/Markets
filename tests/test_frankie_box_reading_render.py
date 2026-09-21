@@ -110,6 +110,15 @@ def test_without_known_files_the_source_is_spelled_and_a_short_list_stays_json(t
     assert report.table_blocks == 0 and '"$table":"DIGEST_V4","block":"table-' not in text and report.proof['all_exact'] is True
 
 
+def test_a_tuple_of_dicts_becomes_a_table_block_and_says_so():
+    rows = tuple(dict(time_ns=1633298400000000000 + i * 1000, observed=i % 2 == 0, quantiles=[5.4, 5.41, 5.42]) for i in range(20))
+    blocks = []
+    out = R._blocks_pass(dict(points=rows), blocks)
+    assert len(blocks) == 1 and blocks[0]['rows'] == 20 and out['points']['container'] == 'tuple' and out['points']['$table'] == 'DIGEST_V4'
+    import frankie_box_digest_render as DG
+    assert DG._same(DG.parse_table(blocks[0]['text'])[1], [dict(r) for r in rows])
+
+
 def test_a_table_that_does_not_round_trip_stays_json(monkeypatch):
     import frankie_box_digest_render as DG
     rows = [dict(a=i, b=(i, i)) for i in range(20)]        # tuples parse back as lists: not the same rows
