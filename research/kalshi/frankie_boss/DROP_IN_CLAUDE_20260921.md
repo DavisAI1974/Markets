@@ -53,7 +53,7 @@ absent, Greg has not yet added RUNPOD_API_KEY to the Claude Code environment con
 secret by the trunk-registered `frankie_runpod_key_to_ssm.yml` (run 35601303506, key proven on the Pod control route,
 HTTP 200 RUNNING). One open item fewer: the box's serverless lane needs only the endpoint + `frankie_box_serverless_config.sh
 ACTION=write ENDPOINT_ID=...`. The GitHub secret cannot reach a session container: the MCP still needs RUNPOD_API_KEY in
-the Claude Code environment configuration.
+the Claude Code environment configuration. Box-side: `ACTION=key` probe 35601486470 -> readable, version 1.
 STILL GREG'S (unchanged): `frankie_box_session.sh ACTION=restart_session
 REASON=lossless-render` to apply everything; the GitHub PAT into SSM `/markets/frankie/github-token`
 (`aws ssm put-parameter --region us-east-2 --name /markets/frankie/github-token --type SecureString --value '<PAT>'`);
