@@ -21,6 +21,10 @@ on:
         description: 'Zero-padded cycle index to list'
         required: false
         default: '00'
+      bucket:
+        description: "Private bucket Root's progress heartbeats land in (host-deliveries/<day>/principal-response/cycle-NN/progress/)"
+        required: false
+        default: 'frankie-granite42-568968024170-us-east-1'
 permissions:
   contents: read
 jobs:
@@ -54,3 +58,35 @@ jobs:
             --set "RunRoot=$RUN_ROOT" \
             --set "CycleIndex=$CYCLE_INDEX" \
             --timeout 120 --comment "read-only cycle status for day $DAY"
+      - name: Root progress heartbeats (S3 + origin, read-only; Greg, 2026-09-21)
+        env:
+          BUCKET: ${{ inputs.bucket }}
+          DAY: ${{ inputs.day }}
+          CYCLE_INDEX: ${{ inputs.cycle_index }}
+        run: |
+          echo "### root progress (heartbeats Root writes while he works; contract in operations/ROOT_CYCLE_00_TASK_20260920.md)"
+          git ls-remote --heads origin 'root/*' | sed 's/^/  origin: /' || true
+          python - <<'PY'
+          import json, os, time, boto3
+          bucket, day, cycle = os.environ['BUCKET'], os.environ['DAY'], os.environ['CYCLE_INDEX']
+          prefix = f'host-deliveries/{day}/principal-response/cycle-{cycle}/progress/'
+          s3 = boto3.client('s3', region_name='us-east-1')
+          objects = []
+          for page in s3.get_paginator('list_objects_v2').paginate(Bucket=bucket, Prefix=prefix):
+              objects.extend(page.get('Contents', []))
+          if not objects:
+              print(f'  no heartbeat under s3://{bucket}/{prefix} yet (Root has not started, or is not writing them)')
+              raise SystemExit(0)
+          objects.sort(key=lambda o: o['LastModified'])
+          print(f'  {len(objects)} heartbeat(s); first {objects[0]["LastModified"].isoformat()}')
+          for o in objects[-6:]:
+              age = (time.time() - o['LastModified'].timestamp()) / 60
+              try:
+                  body = json.loads(s3.get_object(Bucket=bucket, Key=o['Key'])['Body'].read(4096))
+                  detail = ' '.join(f'{k}={body[k]!r}' for k in ('phase', 'step', 'note', 'files_written') if k in body)
+              except Exception as error:
+                  detail = 'unreadable ' + type(error).__name__
+              print(f'  {o["LastModified"].isoformat()}  age {age:5.1f} min  {o["Key"].rsplit("/", 1)[-1]}  {detail}')
+          age = (time.time() - objects[-1]['LastModified'].timestamp()) / 60
+          print(f'  LATEST HEARTBEAT {age:.1f} min old' + ('  STALE (>15 min; Root is idle, hung, or stopped)' if age > 15 else '  live'))
+          PY
