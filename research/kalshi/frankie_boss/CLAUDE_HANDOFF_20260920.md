@@ -3588,3 +3588,19 @@ root/cycle-00-response, response_path / attestation_path / record_path under
 research/kalshi/frankie_boss/runs/20211003/root/, cycle_index 00 (the native host's defaults for instance, day,
 run_root, tools_root, python, bucket). Run id and outcome follow; then the host runner resumes on its own (verify,
 native learning, readback, completion, readiness cycle-01); a read-only `frankie_host_cycle_status.yml` probe after.
+
+### 17:2xZ 09-21: THE RECORDER REFUSED (runs 35630974458, 35631652890, 35631841089) -- ROOT CAUSE FOUND AND FIXED
+
+Run 1: `{"status": "refused", "error_type": "ValueError"}` and no message (the recorder's __main__ swallows it).
+Runs 2-3 with a wrapper (sent with the host script from this branch) surfaced it: `ValueError: actual composed
+principal prompt required before sealed proof`, raised in `_admission_record` via `recover -> _request`, because
+`record_checked` validates in a fresh `response-check-<uuid>` directory holding only session-request.json,
+session-response.json and receiver/*, while the admission record re-derives the sealed proof from prompt.md and
+compares memory-a-witness.json IN that directory. The recorder had never recorded on this host (the 09-17 rewrite).
+Frankie's response is not at fault (its shape, digests and binding were verified independently). FIX (commit
+above): `stage_admission_inputs()` copies prompt.md, sealed-proof.json, memory-a-witness.json from the principal
+directory into the candidate before recovery. DELIVERY without moving the host checkout (35f857f0; an advance is a
+host action with the code-bound consequence): the host script carries the fixed recorder source verbatim, writes
+`principal-response-recorder-<stamp>.py` beside the log and runs its main() with PYTHONPATH = the host checkout;
+a test pins the embedded copy to the file. Skills followed: debugging-and-error-recovery (reproduce with the message,
+localize, root cause, guard, verify) and git-workflow (one fix per commit). Re-dispatch follows.
