@@ -3252,10 +3252,13 @@ initializing 2, ready 4`), unit started 15:18:00Z; phase reading, `reading: 4 pa
 THE SESSION LOG SHOWS THE POD HAD ALREADY READ EVERY PART OF THE RENDERED CORPUS between restart 3 and 4: part 1 done
 14:06:01Z (17 min), part 2 14:41:51Z (36 min), part 3 14:49:51Z (8 min), part 4 14:53:28Z (4 min; the parts are
 87k-token cuts on line boundaries and the last ones are short), then `merging level 0: 1/2 done` at 15:09:14Z. Restart
-4 caught the session in the second level-0 merge; the four read outcomes were reused (0 to read) and the merges and
-the writing continue on the Pod (the serverless lane serves READS only, by design). So the endpoint read nothing this
-cycle: it is verified, configured and idle at workers-min 0 for the next reading stage (any restart that has parts
-to read, or the next cycle). Heartbeat: `git heartbeat disabled: /markets/frankie/github-token not readable:
+4 caught the session in the second level-0 merge; the four read outcomes were reused (0 to read). CORRECTION, measured
+minutes later: the MERGE GROUPS go through the same reader as the parts (`merge_group` -> `self.reader` ->
+`serverless_job`; the session docstring says "one reading part (or merge group)"), so the level-0 merges resumed ON
+THE ENDPOINT: health at 15:5xZ `jobs inProgress 2, workers running 2`, account spend $10.73/h = the Pod $1.15 + two
+H100 workers at $4.79 (balance $41.26). Only the WRITING stays on the Pod (`boss()`). So the endpoint's first real
+work this cycle is the merges, at H100 speed instead of the L40S's ~20 tok/s; it scales back to zero after them
+(idle-timeout 120 s, workers-min 0). Heartbeat: `git heartbeat disabled: /markets/frankie/github-token not readable:
 ParameterNotFound` and "heartbeat service start failed" (the same PAT gap; files stay in session/out/).
 Runs of this chat after 13:5xZ: key probe 35617264569; write 35617650693 (refused, dash) and 35617796680 (written);
 restart 4 = 35617931290. Endpoint verify job 6c9af209-385f-4557-b1a4-a42a973d989a-u2 (READY, 834 ms).

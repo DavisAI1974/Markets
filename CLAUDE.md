@@ -13,7 +13,8 @@
   "4.0.0 [specgen]"), list-endpoints HTTP 200 = ZERO endpoints, engine Pod RUNNING; runpodctl did not install (proxy).
   JOB 2 DONE 15:5xZ on Greg's "Go": serverless reading endpoint k1sqt0haffm61y (H100 pool, worker-vllm, pinned Granite
   host-cached, workers 0-8) created, verified by a real job, written on the box and applied by restart 4; the Pod had
-  already read all 4 parts (14:06-14:53Z) and is merging, so the endpoint idles until the next reading stage. Greg:
+  already read all 4 parts (14:06-14:53Z); the level-0 merges resumed ON THE ENDPOINT (2 H100 workers, $10.73/h with
+  the Pod; merge groups use the reading lane, only the writing stays on the Pod); it scales to zero after them. Greg:
   no key rotation for now. Open calls: the git PAT (ParameterNotFound on the box), the three trunk registrations,
   RUNPOD_API_KEY in the environment. Box probes PAUSED.**
 - **STATE 2026-09-21 12:2xZ (chat 4, superseded above): the READ was 163 parts and became ~4-5 (members 10.13M -> 151,705

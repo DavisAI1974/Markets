@@ -61,8 +61,9 @@ WHAT STANDS (all committed, every transform exact and proven before use, nothing
   GitHub release), VERIFIED by a real async job (READY, cold pickup 206 s, exec 834 ms, chat.completion shape the box
   parses), WRITTEN on the box (`serverless.json`, key `/markets/frankie/runpod-serverless` readable) and APPLIED by
   restart 4 (run 35617931290: `reading: 4 parts, 0 to read (serverless x8)`). THE POD HAD ALREADY READ ALL 4 PARTS
-  (14:06-14:53Z) and was merging; the restart resumed at the merges on the Pod. The endpoint idles at workers-min 0
-  until the next reading stage. Receipt `receipts/serverless_reading_endpoint_20260921.json`. Two box-script facts:
+  (14:06-14:53Z) and was merging; the restart resumed the level-0 MERGES ON THE ENDPOINT (merge groups use the same
+  reader as parts; only the writing stays on the Pod): 2 H100 workers running at 15:5xZ, spend $10.73/h, balance $41.26.
+  It scales to zero after the merges (workers-min 0). Receipt `receipts/serverless_reading_endpoint_20260921.json`. Two box-script facts:
   SSM runs box scripts under dash (no `[[`; fixed in frankie_box_serverless_config.sh), and the workflow's variables
   take no spaces (GPU label underscored). Handoff 15:2xZ-15:5xZ has every run id.
 - 15:2xZ (superseded above): JOB 2 on Greg's word, BLOCKED twice, nothing created (handoff 15:2xZ): the local create (committed script,
