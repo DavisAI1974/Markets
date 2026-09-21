@@ -2618,3 +2618,20 @@ Still Greg's: the SecureString `/markets/frankie/github-token` (us-east-2). With
 the pusher refuses at the last step with the four files safe on the box; the heartbeat's git leg is disabled and the
 box `status` action is the progress probe. A grant while the session runs is picked up on the next heartbeat push
 and by re-dispatching the pusher.
+
+### 09:43Z 09-21: FRANKIE'S SESSION IS RUNNING ON HIS BOX (unit frankie-cycle-00, the BOSS as engine)
+
+Preflight OK on run 35584321275 (09:37Z): `verified: request 1b777cf28c34415c cycle 0, input_hash found in
+files:controller.c15.jsonl, files:forecast-000000.bin, files:state.c15.json` (one value across the three attachment
+members, decoded from the base64 payload of the receiver's producer-evidence block), `labels: 29 timing labels from
+133 authored marks (48 confirmations)`, `engine: BOSS granite42-smoke on Pod g7y3g2w1kor4l3 healthy (jobs_v1)`.
+Between 09:25Z and 09:37Z four preflight refusals, each a fact about the box learned and fixed in code (aefdcd48
+fetch before preflight; 8a9046a8 markets first on the import path, the pinned V4 adapter by file path; 7504b7be the
+input hash inside the attributed input; df4a4dac the granite-service SecureString IS the Pod's service credential,
+not an account key). `ACTION=start` run 35584495493 (09:39:46Z) started the unit and the heartbeat; the derive stage
+failed on prefix-00.sqlite: it is the first run's RAW prefix (`entries` table, 6,524 rows), not a compact container
+(8f8a78d2: both layouts read, the raw one through VerifiedJournalReader). Restart run 35584783105 (09:42:54Z):
+verified, labels, engine healthy again from the receipts, phase `deriving`; the heartbeat unit was already active.
+Heartbeat: git leg disabled (`/markets/frankie/github-token` ParameterNotFound, re-read every beat), S3 leg
+AccessDenied; the box `ACTION=status` is the progress probe until Greg grants the token. Pod RUNNING since 09:30:46Z,
+cost 1.09/h, no stop without Greg's word.
