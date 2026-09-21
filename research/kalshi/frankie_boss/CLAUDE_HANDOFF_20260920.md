@@ -3576,3 +3576,7 @@ with CYCLE=01: the recorder on Greg's go -> the host runner resumes (verify, nat
 readiness cycle-01) -> the cycle-01 request exported and staged on the box (restore script, one row) -> session
 start CYCLE=01 (its preflight refuses unless cycle 0's brain entry is present, by design) -> status probes as Greg
 says -> push -> record.
+
+### 17:2xZ 09-21: Greg: "Then do those 2 things" -- DONE (commit above): tolerant ledger parse (repairs recorded on the
+entry, raw text kept when hopeless) and the analysis task naming exactly what the session files (the analysis, one
+accounting entry, the ten named ledgers; nothing else). Held items (3) and (4) of 17:1xZ stay for after cycle 1.
