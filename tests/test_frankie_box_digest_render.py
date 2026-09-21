@@ -11,6 +11,7 @@ import importlib.util
 import json
 import math
 import pathlib
+import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -75,10 +76,10 @@ def test_round_trip_and_marks():
                    '=fill_disposition.signature.fill_id_count', '=price_raw_span', '=discovery_status', '=action_counts.A'):
         assert column in group_head, column
     body = text.split(group_head, 1)[1]
-    assert '\tK0\t' in body or '\tK0' in body            # a disposition list as positions in order_ids
+    assert re.search(r'(^|[ \t])K0([ \t]|$)', body, re.M)   # a disposition list as positions in order_ids
     assert '~-50000' in text                              # ts_event as an offset from ts_recv
     assert 'I7000000000001,+8' in body                    # an integer list: first, then differences
-    assert '\tI+19,' in body                              # the next list's first as a delta from the previous row's first
+    assert re.search(r'[ \t]I\+19,', body)                # the next list's first as a delta from the previous row's first
 
 
 def test_negative_cases_stay_literal_and_round_trip():
@@ -102,8 +103,57 @@ def test_constants_and_same_marks():
     assert '^a' in head and '^c' in head and 'constants: ' in block
     name, parsed = DG.parse_table(block)
     assert name == 't' and DG._same(parsed, rows)
-    assert block.split('\n')[3] == '^\t^'                # row 1 repeats row 0's b and d; a and c are constants, omitted
-    assert block.split('\n')[2] == 'Sx\t2.5'             # 'x' is written once inline: its second occurrence is a `^`, so it never repeats as a literal
+    assert block.split('\n')[3] == '^2'                  # row 1 repeats row 0's b and d (DIGEST_V4: two `^` cells collapse to `^2`); a and c are constants, omitted
+    assert block.split('\n')[2] == 'Sx 2.5'              # 'x' is written once inline: its second occurrence is a `^`, so it never repeats as a literal; sep=space
+
+
+def test_v4_separator_is_a_space_only_when_no_cell_holds_one():
+    rows = [dict(a='no space', b=1), dict(a='no space', b=2), dict(a='x', b=3)]
+    block = DG.render_table('t', rows)
+    assert 'sep=tab' in block.split('\n')[0] and '\t' in block.split('\n')[-2]   # `Sno space` holds a space: tabs
+    assert DG._same(DG.parse_table(block)[1], rows)
+    rows = [dict(a='nospace', b=1), dict(a='y', b=2)]
+    block = DG.render_table('t', rows)
+    assert 'sep=space' in block.split('\n')[0] and block.split('\n')[1] == 'Snospace 1'
+    assert DG._same(DG.parse_table(block)[1], rows)
+
+
+def test_v4_run_collapse_expands_back_and_never_touches_minus():
+    rows = [dict(a=1, b=2, c=3, d=None, e=None, f=-3), dict(a=1, b=2, c=3, d=None, e=None, f=-3), dict(a=1, b=9, c=3, d=None, e=None, f=-3)]
+    block = DG.render_table('t', rows)
+    lines = block.split('\n')
+    assert '^a' in lines[0] and '^c' in lines[0] and '^d' in lines[0] and '^e' in lines[0] and '^f' in lines[0]   # constants
+    assert lines[2] == '2' and lines[3] == '^'            # (constants line at 1) one `^` stays bare
+    rows = [dict(a=1, b=2, c=3, d=4), dict(a=1, b=2, c=3, d=5), dict(a=1, b=2, c=3, d=5), dict(a=7, b=2, c=3, d=5)]
+    block = DG.render_table('t', rows)
+    lines = block.split('\n')
+    assert lines[2] == '1 4' and lines[3] == '^ 5' and lines[4] == '^2' and lines[5] == '7 ^'   # b and c are constants (line 1); a and d kept
+    assert DG._same(DG.parse_table(block)[1], rows)
+    assert DG._expand(['^3', '=2', '-3', 'x', '^']) == ['^', '^', '^', '=', '=', '-3', 'x', '^']
+
+
+def test_v4_fraction_cells_are_exact_and_only_when_shorter():
+    x = float(-37) / float(301)
+    rows = [dict(f=x, g=5.412, h=0.5, i=1e-7, j=float(1) / float(3)), dict(f=x + 1e-3, g=5.413, h=0.25, i=2e-7, j=float(2) / float(3))]
+    block = DG.render_table('t', rows)
+    body = block.split('\n')[1]
+    assert body.split(' ')[0] == '-37/301' and body.split(' ')[1] == '5.412' and body.split(' ')[2] == '0.5' and body.split(' ')[4] == '1/3'
+    parsed = DG.parse_table(block)[1]
+    assert DG._same(parsed, rows) and parsed[0]['f'] == x and parsed[1]['j'] == float(2) / float(3)
+    assert DG._float_text(0.1 + 0.2) == '0.30000000000000004'    # not an IEEE division of small integers: decimal stays
+
+
+def test_v4_column_scale_declared_once_and_deltas_written_divided():
+    rows = [dict(price_raw_min=5412001000000, price_raw_max=5413000000000, n=1000, ts_recv_ns=1_000_000_000_000),
+            dict(price_raw_min=5412001000000, price_raw_max=5424000000000, n=35000, ts_recv_ns=1_000_000_000_777),
+            dict(price_raw_min=5401000000000, price_raw_max=5424000000000, n=30000, ts_recv_ns=1_000_000_000_777)]
+    block = DG.render_table('t', rows)
+    lines = block.split('\n')
+    assert lines[1] == 'scales: price_raw_min=1000000\tprice_raw_max=1000000000\tn=1000'   # ts_recv_ns: +777 is not a multiple of 1000
+    assert lines[2] == '5412001 5413 1 1000000000000'
+    assert lines[3] == '^ +11 35 +777'
+    assert lines[4] == '-11001 ^ 30 ^'
+    assert DG._same(DG.parse_table(block)[1], rows)
 
 
 def test_paired_offset_resolves_whatever_the_column_order_and_when_the_pair_is_constant():

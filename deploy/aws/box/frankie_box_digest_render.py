@@ -11,6 +11,12 @@ render carries EVERY field of every derived layer (work/derived/<layer>.json is 
   - nested dicts flattened to dotted columns; lists rendered as JSON.
 `parse(text)` inverts the render; `render_layers` checks parse(render(x)) == x for every table before returning, so
 the digest is a projection the code can prove, not prose.
+DIGEST_V4 (Greg, 2026-09-21 12:2xZ: stack the stacks) adds four exact transforms on top of V3, measured with the pinned
+tokenizer on the real tables (run 35603160044): one space between cells instead of a tab when no cell holds a space (the
+tokenizer merges a space into the next number, a tab never does: 75.8k -> 57.4k tokens on the book table); k consecutive
+`^` or `=` cells as `^k` / `=k`; a float as the exact fraction `n/d` when the IEEE division of those integers IS the float
+and the spelling is shorter (1,082 of the 1,101 depth_imbalance_n literals); a per-column power-of-ten scale declared
+once when every integer literal of the column is a multiple of it (price_raw_min/max are multiples of 10^6).
 roll20 is (b - s) / (b + s) over the trailing window of per-second volumes (native_roll20.roll20): its float is the
 IEEE division of two integers, so the per-second table carries the exact fraction `n/d` and the float is recomputed
 from it (checked equal to the producer's float for every second).
@@ -20,6 +26,11 @@ from __future__ import annotations
 import json
 import math
 import re
+from fractions import Fraction
+
+FRACTION_DENOMINATOR = 1_000_000   # DIGEST_V4: a float spelled n/d only when float(n)/float(d) is that float exactly and the spelling is shorter
+SCALE_MIN, SCALE_MAX = 3, 9       # DIGEST_V4: a per-column power of ten every integer literal of the column divides by (declared once, checked)
+RUN_MARKS = ('^', '=')            # DIGEST_V4: k consecutive identical mark cells collapse to `^k` / `=k` (never `-`: `-3` is an integer)
 
 DELTA_KEYS = ('ts_recv_ns', 'ts_event_ns', 'ts_recv', 'ts_event', 'second', 'price_raw_min', 'price_raw_max',
               'bid_depth_full', 'ask_depth_full', 'bid_order_count_full', 'ask_order_count_full')
@@ -217,7 +228,7 @@ def _literal(v, column, r, prev_lists):
     if isinstance(v, int):
         return 'lit', str(v)
     if isinstance(v, float):
-        return 'lit', 'nan' if math.isnan(v) else repr(v)
+        return 'lit', 'nan' if math.isnan(v) else _float_text(v)
     if isinstance(v, str):
         return 'str', v
     if _int_list(v):
@@ -232,6 +243,18 @@ def _literal(v, column, r, prev_lists):
         first = ('%+d' % (v[0] - prev_lists[column])) if isinstance(prev_lists.get(column), int) else str(v[0])
         return 'lit', 'I' + ','.join([first] + ['%+d' % (b - a) for a, b in zip(v, v[1:])])   # first (as a delta from the previous row's first when one exists), then successive differences
     return 'json', json.dumps(v, separators=(',', ':'), sort_keys=True)
+
+
+def _float_text(v):
+    """repr(v), or the exact fraction `n/d` (the IEEE division of two integers that IS this float, checked) when shorter."""
+    text = repr(v)
+    if math.isfinite(v) and not v.is_integer():
+        fr = Fraction(v).limit_denominator(FRACTION_DENOMINATOR)
+        if fr.denominator > 1 and float(fr.numerator) / float(fr.denominator) == v:
+            frac = '%d/%d' % (fr.numerator, fr.denominator)
+            if len(frac) < len(text):
+                return frac
+    return text
 
 
 def _plan_row(r, columns, prev_row, prev_values, prev_ints, prev_lists):
@@ -293,13 +316,15 @@ def render_table(name, rows, context=None):
             if kind != 'lit':
                 key = json.dumps(text) if kind == 'str' else text
                 counts[key] = counts.get(key, 0) + 1
-    dictionary, order, lines = {}, [], []
+    scales = _scales(planned, kept, columns)
+    dictionary, order, table = {}, [], []
     for cells in planned:
         out = []
         for j in kept:
             kind, text = cells[j]
             if kind == 'lit':
-                out.append(text)
+                scale = scales.get(columns[j])
+                out.append(_scaled(text, scale) if scale and _INT_CELL.fullmatch(text) else text)
                 continue
             key = json.dumps(text) if kind == 'str' else text
             if counts[key] >= 2:
@@ -311,14 +336,75 @@ def render_table(name, rows, context=None):
                 out.append(('S' + text) if ('\t' not in text and '\n' not in text) else ('J' + key))
             else:
                 out.append('J' + text)
-        lines.append('\t'.join(out))
-    head = [f'### table {name}: {len(rows)} rows, columns: ' + '\t'.join(whole.get(c, '') + c for c in columns)]
+        table.append(_collapse(out))
+    sep = ' ' if not any(' ' in cell for row in table for cell in row) else '\t'
+    lines = [sep.join(row) for row in table]
+    head = [f'### table {name}: {len(rows)} rows, sep={"space" if sep == " " else "tab"}, columns: ' + '\t'.join(whole.get(c, '') + c for c in columns)]
     constants = [c for c in columns if whole.get(c) == '^']
     if constants:
         head.append('constants: ' + '\t'.join('%s=%s' % (c, json.dumps(flat[0][c], separators=(',', ':'), sort_keys=True)) for c in constants))
+    if scales:
+        head.append('scales: ' + '\t'.join('%s=%d' % (c, k) for c, k in scales.items()))
     if order:
         head.append('dictionary: ' + '\t'.join('@%d=%s' % (i, key) for i, key in enumerate(order)))
     return '\n'.join(head + lines) + '\n'
+
+
+_INT_CELL = re.compile(r'[+-]?\d+')
+
+
+def _scales(planned, kept, columns):
+    """DIGEST_V4 per-column scale: when every integer literal of a column (absolute or signed delta) is a multiple of
+    10^k, k >= SCALE_MIN, the column is declared `scales: name=10^k` once and its cells are written divided by it."""
+    scales = {}
+    for j in kept:
+        k, seen = SCALE_MAX, False
+        for cells in planned:
+            kind, text = cells[j]
+            if kind != 'lit' or not _INT_CELL.fullmatch(text):
+                continue
+            value = abs(int(text))
+            if value == 0:
+                seen = True
+                continue
+            z = 0
+            while value % 10 == 0 and z < k:
+                value //= 10; z += 1
+            k, seen = min(k, z), True
+            if k < SCALE_MIN:
+                break
+        if seen and k >= SCALE_MIN:
+            scales[columns[j]] = 10 ** k
+    return scales
+
+
+def _scaled(text, scale):
+    value = int(text) // scale if int(text) >= 0 else -((-int(text)) // scale)
+    return ('%+d' % value) if text[0] in '+-' else str(value)
+
+
+def _collapse(cells):
+    """DIGEST_V4: k >= 2 consecutive identical `^` or `=` cells become one `^k` / `=k` cell."""
+    out, i = [], 0
+    while i < len(cells):
+        j = i
+        while cells[i] in RUN_MARKS and j < len(cells) and cells[j] == cells[i]:
+            j += 1
+        if j - i >= 2:
+            out.append(cells[i] + str(j - i)); i = j
+        else:
+            out.append(cells[i]); i += 1
+    return out
+
+
+def _expand(cells):
+    out = []
+    for cell in cells:
+        if len(cell) > 1 and cell[0] in RUN_MARKS and cell[1:].isdigit():
+            out.extend([cell[0]] * int(cell[1:]))
+        else:
+            out.append(cell)
+    return out
 
 
 def _derived_order(columns):
@@ -333,17 +419,23 @@ def _derived_order(columns):
 def parse_table(block, context=None):
     import copy
     lines = block.rstrip('\n').split('\n')
-    m = re.match(r'### table (\S+): (\d+) rows, columns: (.*)$', lines[0])
+    m = re.match(r'### table (\S+): (\d+) rows, (?:sep=(space|tab), )?columns: (.*)$', lines[0])
     name, n = m.group(1), int(m.group(2))
-    declared = m.group(3).split('\t') if m.group(3) else []
+    sep = ' ' if m.group(3) == 'space' else '\t'
+    declared = m.group(4).split('\t') if m.group(4) else []
     columns = [c.lstrip('=^') for c in declared]
     whole = {c.lstrip('=^'): c[0] for c in declared if c[:1] in '=^'}
     kept = [c for c in columns if c not in whole]
-    idx, constants, dictionary = 1, {}, []
+    idx, constants, dictionary, scales = 1, {}, [], {}
     if idx < len(lines) and lines[idx].startswith('constants: '):
         for item in lines[idx][len('constants: '):].split('\t'):
             k, _, val = item.partition('=')
             constants[k] = json.loads(val)
+        idx += 1
+    if idx < len(lines) and lines[idx].startswith('scales: '):
+        for item in lines[idx][len('scales: '):].split('\t'):
+            k, _, val = item.partition('=')
+            scales[k] = int(val)
         idx += 1
     if idx < len(lines) and lines[idx].startswith('dictionary: '):
         for item in lines[idx][len('dictionary: '):].split('\t'):
@@ -353,7 +445,7 @@ def parse_table(block, context=None):
     rows, prev_row, prev_values, prev_ints, prev_lists = [], None, {}, {}, {}
     cross = {c: CROSS_DERIVED[(name, c)] for c, mark in whole.items() if mark == '=' and (name, c) in CROSS_DERIVED and (context or {}).get(CROSS_DERIVED[(name, c)][0]) is not None}
     for i, line in enumerate(lines[idx:idx + n]):
-        cells = line.split('\t') if kept else []
+        cells = _expand(line.split(sep)) if kept else []
         row, derived_cols, positional, paired = {}, set(c for c, mark in whole.items() if mark == '=' and c not in cross), {}, {}
         for c in constants:
             row[c] = copy.deepcopy(constants[c])
@@ -390,10 +482,13 @@ def parse_table(block, context=None):
                 paired[c] = int(cell[1:]); continue      # resolved once every literal of the row is in, whatever the column order
             elif cell == 'nan':
                 v = float('nan')
+            elif re.fullmatch(r'-?\d+/\d+', cell):
+                num, _, den = cell.partition('/')
+                v = float(int(num)) / float(int(den))      # DIGEST_V4 exact fraction: the IEEE division that is the float
             elif cell.startswith('+') or (cell.startswith('-') and c.endswith(DELTA_KEYS) and isinstance(prev_ints.get(c), int) and re.fullmatch(r'-\d+', cell)):
-                v = prev_ints[c] + int(cell)
+                v = prev_ints[c] + int(cell) * scales.get(c, 1)
             elif re.fullmatch(r'-?\d+', cell):
-                v = int(cell)
+                v = int(cell) * scales.get(c, 1)
             else:
                 v = float(cell)
             row[c] = v
@@ -493,7 +588,7 @@ def per_second_rows(first, buys, sells, roll, window=20):
 
 def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells):
     """The whole digest: layer status, then every derived layer as a dense exact table (all fields)."""
-    lines = ['# Derivation digest DIGEST_V3 (Frankie\'s own calculations on this cycle\'s rows; written by the session code; whole, no '
+    lines = ['# Derivation digest DIGEST_V4 (Frankie\'s own calculations on this cycle\'s rows; written by the session code; whole, no '
              'limits; every derived field, exact; `=` = the column the adapter computes from this row (spread = best_ask - best_bid, '
              'mid = 0.5*(best_bid + best_ask), depth_imbalance_full = (bid_depth_full - ask_depth_full)/(bid_depth_full + ask_depth_full)), '
              'checked equal before it is written that way, and likewise every structure column the pinned producer computes from the '
@@ -508,7 +603,11 @@ def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, 
              'row\'s ts_recv; a header column written `=name` is derived on every row and omitted from the rows, `^name` holds one '
              'value on every row (given on the `constants:` line) and is omitted too; `transition` = the sign of each book field\'s '
              'change from the previous frame, recomputed; roll20 = n/d, the exact fraction (b-s)/(b+s) of the '
-             'trailing 20-second buy and sell sums, its float being that division)', '',
+             'trailing 20-second buy and sell sums, its float being that division; DIGEST_V4 on top: cells are separated by one '
+             'space when no cell of the table holds a space (`sep=space` in the header, else tabs); `^k` / `=k` = k consecutive '
+             '`^` / `=` cells; a bare `n/d` float cell is the IEEE division of those two integers, which IS the stored float exactly '
+             '(checked; used only when shorter than its decimal); a column on the `scales:` line has every integer literal (absolute '
+             'or delta) written divided by that power of ten, all of them being exact multiples (checked))', '',
              f'Rows: {receipt["rows"]["path"]} ({receipt["rows"]["count"]} entries, kinds {receipt["rows"]["kinds"]}, head {receipt["rows"]["head"][:16]}...; '
              f'head equals the request source_hash: {receipt["rows"]["head_is_request_source_hash"]}).',
              f'INPUT records fed to the V4 adapter: {receipt["input_records"]}; legacy control rows projected: {receipt["legacy_rows"]}; '
