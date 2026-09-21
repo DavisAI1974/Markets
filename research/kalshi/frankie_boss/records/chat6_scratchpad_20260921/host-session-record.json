@@ -1,0 +1,19 @@
+{
+ "analysis": {
+  "bytes": 27568,
+  "path": "/opt/frankie-box/session/out/analysis.md",
+  "sha256": "82c562feb4c4b76c677427e7e816a177bcd7becc469d1a0380091721ba0fea74"
+ },
+ "host_authority": "Frankie, the BOSS, on Greg Davis's box i-035994afa8bdf66a5 (us-east-1), under Greg's instruction of 2026-09-21 (option A: the calculations are Frankie's, run on the box; the engine is the BOSS vLLM on Pod g7y3g2w1kor4l3); session code deploy/aws/box/frankie_box_boss_session.py",
+ "mechanism": "AGENT_SESSION",
+ "model_identity_as_reported_by_session": "granite42-smoke (the BOSS: vLLM on RunPod Pod g7y3g2w1kor4l3, jobs_v1, context 131072; as reported in the chat completion \"model\" field)",
+ "request_sha256": "1b777cf28c34415c4387119b1a42aed7dbc1f5e7b1799fdc0ed2cabd755624be",
+ "response": {
+  "bytes": 147149,
+  "path": "/opt/frankie-box/session/out/response.json",
+  "sha256": "b65123b3113846bdba9c232da0542c471b61893061728bbceb0fc604993f0e21"
+ },
+ "response_sha256": "fa36c7e06ecb78ce66dd078d022c9294fd0eedc785fb1fd02f1ddc7c09cc8797",
+ "schema": "FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1",
+ "session_id": "boss:frankie-box:i-035994afa8bdf66a5:cycle-00"
+}

@@ -1,0 +1,137 @@
+{
+  "name": "NG exhaustion chain-birth V2 brain proposal",
+  "date": "2026-08-19",
+  "status": "PROPOSAL_ONLY_POST_PHASE2_NO_PERMANENT_BRAIN_MUTATION",
+  "relationship": {
+    "parent_runway_proposal": "research/FRANKIE_NG_EXHAUSTION_BRAIN_LESSON_PROPOSAL_20260817.md",
+    "parent_phase2_chain_proposal": "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+    "parent_entry_timing_proposal": "research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json",
+    "relation": "EXTENDS_ALL_THREE_DOES_NOT_REPLACE_ANY"
+  },
+  "purpose": "Refine the entry-timing proposal around the executable question of chain birth: identify the earliest causal point at which the next exhaustion-chain stage can be predicted to begin, prefer PRIOR prediction before target onset, and use detector-relative timing only as fallback recognition when PRIOR fails.",
+  "proposal_lessons": [
+    {
+      "id": "exhaustion.chain_birth.primary_target",
+      "status": "PROPOSAL",
+      "lesson": "For entry timing, the primary target is whether the chain extends to the next D-stage, conditional on having reached D-1. The full future behavior vector of a stage is secondary and should be analyzed only after birth timing is established.",
+      "do_not_learn": "Do not condition the primary timing model on a target stage already being known to exist and then call that pre-birth prediction."
+    },
+    {
+      "id": "exhaustion.chain_birth.prior_first",
+      "status": "PROPOSAL",
+      "lesson": "Exhaust PRIOR prediction before using the detector-relative fallback ladder. At active predecessor-information H, a stage is prior-eligible only when every required predecessor detector-confirmation plus H is no later than target t0. The earliest chronologically/OOT validated PRIOR signal wins.",
+      "active_H_grid_seconds": {
+        "dense_initial": [1, 2, 3, 4, 5, 10, 15],
+        "every_5_seconds_from": 20,
+        "through": 3600
+      },
+      "actual_lead_rule": "PRIOR_LEAD_SECONDS = target.t0_idx - max(predecessor.causal_confirmation_idx + H)",
+      "do_not_learn": "Do not delay a valid PRIOR birth call to +0 or a later checkpoint merely because later recognition is cleaner."
+    },
+    {
+      "id": "exhaustion.chain_birth.fallback_recognition",
+      "status": "PROPOSAL",
+      "lesson": "Only rules/subfamilies that fail PRIOR prediction enter the fallback ladder: target detector confirmation +0, then +1/+2/+3/+4/+5/+10/+15/+20/+25 and every 5 seconds thereafter through +3600 while structurally alive. These are recognition times, not pre-birth predictions.",
+      "do_not_learn": "Do not relabel target detection or post-detection survival as prediction of the beginning."
+    },
+    {
+      "id": "exhaustion.chain_birth.conditional_controls",
+      "status": "RESEARCH_METHOD_PROPOSAL",
+      "lesson": "For stage D, compare chains that extend to depth >= D against frozen exact-(D-1) stops. Use the frozen lineage to create real controls; do not synthesize negative cases.",
+      "current_forward_oot_plus_held_cohorts": {
+        "D1": {"birth_positive": 20562, "executable_exact_D0_control": 135823, "censored": 37},
+        "D2": {"birth_positive": 1725, "exact_D1_control": 18837, "censored": 0},
+        "D3": {"birth_positive": 133, "exact_D2_control": 1592, "censored": 0},
+        "D4": {"birth_positive": 9, "exact_D3_control": 124, "censored": 0},
+        "D5": {"birth_positive": 1, "exact_D4_control": 8, "censored": 0}
+      }
+    },
+    {
+      "id": "exhaustion.chain_birth.per_occurrence_price_structure",
+      "status": "PROPOSAL",
+      "lesson": "Each predecessor exhaustion occurrence carries its own separate causal one-second price path. At H, the model sees the full integer-second path from 1 through H for each predecessor, in chain order, relative to the last authoritative trade known at or before that predecessor detector-confirmation time.",
+      "encoding": "one signed cumulative price value per second aligned to occurrence polarity; adjacent differences recover one-second changes",
+      "causal_rule": "second s uses only the last trade known by detector_confirmation+s; carry forward the last already-known price if no new trade occurs; never interpolate from future tape",
+      "do_not_learn": "Do not collapse multiple predecessor occurrences into one generic chain price path."
+    },
+    {
+      "id": "exhaustion.chain_birth.price_availability_infrastructure",
+      "status": "RESEARCH_METHOD_PROPOSAL",
+      "lesson": "Raw price structure availability is infrastructure, not a predictive feature. The workflow must fail closed if authoritative raw tape or a causal baseline is missing; once integrity passes, missingness or availability may not distinguish births from stops.",
+      "do_not_learn": "Do not use price_structure_available, missingness, or data-completeness differences as model signals."
+    },
+    {
+      "id": "exhaustion.chain_birth.characteristics_wall",
+      "status": "PROPOSAL",
+      "lesson": "PRIOR birth prediction must preserve the settled Phase-1 characteristics wall. Timing may establish availability and lead only; target identity/polarity/state, future-revealing predecessor link fields, final depth/duration, future path shape, family, post-state, flow, book, time-of-day, session position, and pre-exhaustion shape are excluded from the birth model.",
+      "do_not_learn": "Do not let retrospective target or final-chain information enter an earlier birth prediction."
+    },
+    {
+      "id": "exhaustion.chain_birth.availability_not_skill",
+      "status": "PROPOSAL",
+      "lesson": "Substantial PRIOR windows exist for D1-D3 and several D4/D5 cases, but causal availability is not predictive skill. A stage becomes a candidate only after chronological/OOT predictive validation against frozen stop controls.",
+      "H1_positive_availability": {
+        "D1": 13372,
+        "D2": 1171,
+        "D3": 88,
+        "D4": 7,
+        "D5": 1
+      }
+    },
+    {
+      "id": "exhaustion.chain_birth.failed_clues_preserved",
+      "status": "PROPOSAL",
+      "lesson": "A partial structural clue that fails the predeclared validation gate remains research memory, not a promoted timing rule. The current D2 H=1 polarity-only probe is an explicit example: extra trees passed but logistic and KNN failed, so the required 2-of-3 gate was not met.",
+      "policy": "FLAG_AND_DECOMPOSE_NOT_AUTO_PROMOTE"
+    },
+    {
+      "id": "exhaustion.chain_birth.strategy_handoff",
+      "status": "PROPOSAL",
+      "lesson": "For every validated PRIOR birth signal, trade research starts from the exact causal RULE_READY timestamp. Attach direction/behavior evidence and raw-tape economics from that timestamp, then measure fill, remaining runway, MFE, MAE, displacement, path efficiency/chop, costs, and candidate exits. Use fallback recognition timing only for PRIOR failures.",
+      "do_not_learn": "Do not optimize a strategy from a timestamp that was not causally knowable live."
+    }
+  ],
+  "current_findings_boundary": {
+    "settled_protocol": [
+      "PRIOR-first chain-birth target",
+      "dense H grid 1/2/3/4/5/10/15 then every 5 seconds through 3600",
+      "conditional birth controls",
+      "per-occurrence one-second causal price structure",
+      "price availability as infrastructure only",
+      "chronological/OOT validation and characteristics wall"
+    ],
+    "availability_only": "Substantial pre-birth windows exist; see research/NG_EXHAUSTION_D1_D5_CHAIN_BIRTH_PRIOR_AVAILABILITY_20260819.md",
+    "explicit_nonfinding": "D2 H=1 polarity-only does not pass the required 2-of-3 gate",
+    "pending": [
+      "earliest validated V2 PRIOR H for D1",
+      "earliest validated V2 PRIOR H for D2",
+      "earliest validated V2 PRIOR H for D3",
+      "D4/D5 individual case timing with price paths",
+      "exact-signal-time trade economics and strategy proposals"
+    ],
+    "durable_findings_record": "research/NG_EXHAUSTION_CHAIN_BIRTH_V2_ALL_FINDINGS_20260819.md"
+  },
+  "promotion_boundary": {
+    "permanent_frankie_mutation": false,
+    "frankie_1_mutation": false,
+    "runway_clock_mutation": false,
+    "detector_mutation": false,
+    "canonical_row_mutation": false,
+    "phase1_mutation": false,
+    "phase2_mutation": false,
+    "spawn_py_mutation": false,
+    "play_freeze": false,
+    "requirement": "Any chain-birth timing or trade strategy remains proposal/historical research until a predeclared fresh prospective/OOT promotion contract is passed."
+  },
+  "do_not_learn": [
+    "Do not treat availability as predictive skill.",
+    "Do not treat +0 or post-detection recognition as pre-birth prediction.",
+    "Do not replace an earlier validated PRIOR signal with a later cleaner checkpoint.",
+    "Do not use realized final depth, final duration, future target identity, or future path at an earlier H.",
+    "Do not collapse multiple predecessor price paths into one generic availability flag.",
+    "Do not use raw-tape missingness as a birth feature.",
+    "Do not promote the failed D2 H=1 polarity-only clue.",
+    "Do not infer a universal D4/D5 law from current support.",
+    "Do not merge this proposal into permanent Frankie without deliberate adjudication with all parent proposal layers."
+  ]
+}

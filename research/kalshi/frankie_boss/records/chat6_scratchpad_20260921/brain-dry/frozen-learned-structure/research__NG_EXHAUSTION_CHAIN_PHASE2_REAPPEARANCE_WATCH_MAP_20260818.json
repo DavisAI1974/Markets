@@ -1,0 +1,167 @@
+{
+  "name": "NG exhaustion chain Phase-2 delayed reappearance and causal watch map",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
+  "status": "REAPPEARANCE_MAPPED_WATCH_LADDER_RESEARCH_ONLY",
+  "principle": {
+    "original_trade_not_invalidated_by_future_uncertainty": true,
+    "uncertainty_affects_management_not_entry": true,
+    "reset_then_reenter_when_trusted_setup_reappears": true,
+    "keep_all_valid_instances": true,
+    "no_posthoc_instance_deletion": true
+  },
+  "short_lag_delayed_reexpression": {
+    "population": "P-O-X with current polarity same as latest X predecessor, negative at fixed +60",
+    "oot_36w_negative_cases": 57,
+    "oot_recovered_nonnegative_by_plus120": 18,
+    "oot_additional_recovered_nonnegative_by_plus300": 9,
+    "oot_nonnegative_by_plus300_total": 27,
+    "oot_nonnegative_by_plus300_rate": 0.47368421052631576,
+    "held_negative_cases": 5,
+    "held_recovered_nonnegative_by_plus120": 3,
+    "held_additional_recovered_nonnegative_by_plus300": 1,
+    "held_nonnegative_by_plus300_total": 4,
+    "held_nonnegative_by_plus300_rate": 0.8,
+    "trusted_full_setup_within_300s_oot": 1,
+    "interpretation": "Recovery inside +120/+300 is usually not caused by a newly completed trusted POX-opposite or SSOS setup. It is a delayed-expression/re-origin feature of the unresolved original thread and must be mapped separately from fresh re-entry."
+  },
+  "later_fresh_reentry_after_adverse_pox_same": {
+    "oot_36w": {
+      "adverse_cases": 57,
+      "next_trusted_before_week_close": 55,
+      "share": 0.9649122807017544,
+      "next_type_counts": {"SSOS": 35, "POX_OPP": 20},
+      "lag_median_s": 18026.0,
+      "lag_p25_s": 7171.5,
+      "lag_p75_s": 30510.5,
+      "events_between_median": 174.0
+    },
+    "held_20260329": {
+      "adverse_cases": 5,
+      "next_trusted_before_week_close": 5,
+      "share": 1.0,
+      "next_type_counts": {"POX_OPP": 3, "SSOS": 2},
+      "lag_median_s": 9212.0,
+      "lag_p25_s": 8558.0,
+      "lag_p75_s": 10000.0,
+      "events_between_median": 119.0
+    },
+    "falsifier": {
+      "interpretation": "The hours-later trusted setup is operationally useful to map but is not unusually faster after adverse P-O-X than after other P-O-X cases. Therefore it is treated as a fresh re-entry opportunity, not evidence that the original P-O-X ancestor causally persisted for hours."
+    }
+  },
+  "global_causal_watch_ladder": {
+    "POX_OPP": {
+      "P": {
+        "role": "background_only",
+        "completion_rate_era1_to_3": 0.008207934336525308,
+        "completion_rate_era4_to_5": 0.0,
+        "completion_rate_confirmation": 0.007633587786259542,
+        "completion_rate_held": 0.0
+      },
+      "PO": {
+        "role": "background_only",
+        "completion_rate_era1_to_3": 0.018111254851228976,
+        "completion_rate_era4_to_5": 0.008064516129032258,
+        "completion_rate_confirmation": 0.03896103896103896,
+        "completion_rate_held": 0.06060606060606061
+      },
+      "POX": {
+        "role": "armed_watch",
+        "actionable_n_era1_to_3": 308,
+        "completed_n_era1_to_3": 103,
+        "completion_rate_era1_to_3": 0.3344155844155844,
+        "median_lead_s_era1_to_3": 23.0,
+        "completion_rate_era4_to_5": 0.2801724137931034,
+        "median_lead_s_era4_to_5": 17.0,
+        "completion_rate_confirmation": 0.2932330827067669,
+        "median_lead_s_confirmation": 14.0,
+        "completion_rate_held": 0.2727272727272727,
+        "median_lead_s_held": 26.5,
+        "interpretation": "Once P-O-X predecessor state is fully causally available, the next exhaustion is a high-value checkpoint. Entry still requires the trusted current-polarity resolution; the watch itself is not an entry."
+      }
+    },
+    "SSOS": {
+      "S": {
+        "role": "background_only",
+        "completion_rate_era1_to_3": 0.03298483286702989,
+        "completion_rate_era4_to_5": 0.0397665874216555,
+        "completion_rate_confirmation": 0.030277185501066096,
+        "completion_rate_held": 0.06128133704735376
+      },
+      "SS": {
+        "role": "background_watch",
+        "completion_rate_era1_to_3": 0.08989657915672236,
+        "completion_rate_era4_to_5": 0.1072234762979684,
+        "completion_rate_confirmation": 0.09764309764309764,
+        "completion_rate_held": 0.12318840579710146
+      },
+      "SSO": {
+        "role": "early_watch",
+        "actionable_n_era1_to_3": 1016,
+        "completed_n_era1_to_3": 216,
+        "completion_rate_era1_to_3": 0.2125984251968504,
+        "median_lead_s_era1_to_3": 285.0,
+        "completion_rate_era4_to_5": 0.24157303370786518,
+        "median_lead_s_era4_to_5": 232.5,
+        "completion_rate_confirmation": 0.21114369501466276,
+        "median_lead_s_confirmation": 179.0,
+        "completion_rate_held": 0.23728813559322035,
+        "median_lead_s_held": 280.5,
+        "interpretation": "SSO is an early warning only. It consistently gives a roughly 21-24% completion rate with several minutes of lead when it completes."
+      },
+      "SSOS": {
+        "role": "armed_watch",
+        "actionable_n_era1_to_3": 420,
+        "completed_n_era1_to_3": 389,
+        "completion_rate_era1_to_3": 0.9261904761904762,
+        "median_lead_s_era1_to_3": 48.0,
+        "completion_rate_era4_to_5": 0.95625,
+        "median_lead_s_era4_to_5": 46.0,
+        "completion_rate_confirmation": 0.9097222222222222,
+        "median_lead_s_confirmation": 37.0,
+        "completion_rate_held": 1.0,
+        "median_lead_s_held": 94.0,
+        "interpretation": "A fully causally known SSOS predecessor motif is a very strong armed state for the already-frozen SSOS paper play."
+      }
+    }
+  },
+  "watch_lead_on_actual_oot_reentries_after_adverse_pox_same": {
+    "eventual_POX_OPP": {
+      "n": 20,
+      "P_median_lead_s": 105.0,
+      "PO_median_lead_s": 82.0,
+      "POX_median_lead_s": 22.0
+    },
+    "eventual_SSOS": {
+      "n": 35,
+      "S_median_lead_s": 353.0,
+      "SS_median_lead_s": 233.0,
+      "SSO_median_lead_s": 150.0,
+      "SSOS_median_lead_s": 52.0
+    }
+  },
+  "trusted_signal_transition_map_base54": {
+    "POX_OPP_to_POX_OPP": {"n": 131, "lag_median_s": 11562.0, "lag_p25_s": 4460.5, "lag_p75_s": 18436.5, "events_between_median": 142.0},
+    "POX_OPP_to_SSOS": {"n": 198, "lag_median_s": 16580.0, "lag_p25_s": 9213.5, "lag_p75_s": 29212.75, "events_between_median": 205.0},
+    "SSOS_to_POX_OPP": {"n": 178, "lag_median_s": 22802.5, "lag_p25_s": 8102.75, "lag_p75_s": 40862.75, "events_between_median": 217.5},
+    "SSOS_to_SSOS": {"n": 1020, "lag_median_s": 5045.5, "lag_p25_s": 2093.75, "lag_p75_s": 11362.0, "events_between_median": 33.0}
+  },
+  "boundaries": {
+    "watch_state_is_not_trade_entry": true,
+    "partial_prefix_does_not_authorize_entry": true,
+    "reentry_requires_existing_trusted_full_setup": true,
+    "hours_later_reentry_is_fresh_chain_attribution": true,
+    "p_o_x_opposite_branch_not_frozen_from_this_pass": true,
+    "ssos_paper_play_unchanged": true
+  },
+  "protected_mutations": {
+    "frozen_exhaustion_detector": false,
+    "base_54w": false,
+    "held_week_rows": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "research/kalshi/spawn.py": false
+  }
+}

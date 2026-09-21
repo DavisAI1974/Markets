@@ -1,0 +1,90 @@
+{
+  "name": "NG exhaustion chain Phase-2 finalization checklist",
+  "date": "2026-08-18",
+  "branch": "chatgpt/ng-exhaustion-chain-phase2-20260817",
+  "status": "PHASE2_CHARACTERIZATION_FINALIZED_CURRENT_55W_PASS",
+  "final_freeze": {
+    "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+    "commit": "b959a8259547b0f0d998c96ec440c9a4bc5c083c"
+  },
+  "required_before_finalization": {
+    "postexit_parent_reset_reentry_map": "COMPLETE",
+    "short_lag_pox_same_delayed_reexpression_kept_separate": "COMPLETE_POSTEXIT_WATCH_SUBTYPES_NO_TRADE",
+    "phase1_reusable_pair_triplet_longer_modules": "COMPLETE",
+    "chain_extension_families_d1_to_d2": "COMPLETE",
+    "chain_extension_families_d2_to_d3_and_deeper": "D2_TO_D3_CHARACTERIZED_D4_D5_EXPLICITLY_TOO_SPARSE",
+    "timing_lifespan_families": "D2_D3_COMPLETE_D4_D5_SPARSITY_RECORDED",
+    "true_false_context_investigator": "COMPLETE_FOR_PHASE2_FUTURE_WORK_CANDIDATE_SPECIFIC_NO_HARD_FAILS",
+    "independent_module_novelty_screen": "COMPLETE_CANDIDATE_QUEUE_DEFINED_NO_PLAY_PROMOTION",
+    "parallel_independent_recurrence_reconciliation": "FOUR_LANE_PARALLEL_VERIFIED_COMMIT_5ed07a15f857c92f73458d370e0722846b14b0d1",
+    "phase2_brain_proposal_index_update": "COMPLETE_AND_SYNCHRONIZED",
+    "protected_file_diff_audit": "PASS_40_COMMITS_AHEAD_0_BEHIND_BEFORE_FINAL_CHECKLIST_STAMP",
+    "permanent_frankie_merge": "BLOCKED_UNLESS_GREG_EXPLICITLY_APPROVES"
+  },
+  "settled_execution_order": [
+    "take valid original P-O-X parent trade",
+    "exit at frozen normal structural endpoint+60",
+    "reset after exit",
+    "classify same-current adverse exit as delayed-reexpression watch context only",
+    "watch only",
+    "re-enter only when a trusted full SSOS or P-O-X-opposite setup materializes"
+  ],
+  "candidate_failure_policy": {
+    "automatic_hard_fail_on_single_fold": false,
+    "required_action": "FLAG_AND_DECOMPOSE",
+    "preserve_true_instances": true,
+    "preserve_false_instances": true,
+    "investigate_longer_context": true,
+    "investigate_timing_lifespan": true,
+    "delete_failed_valid_instances": false
+  },
+  "candidate_queue_not_frozen": {
+    "higher_support_independent_modules": [
+      "OOSS->FLIP AGAINST_CURRENT",
+      "SOOS->SAME WITH_CURRENT",
+      "OOO->SAME AGAINST_CURRENT",
+      "XSX->FLIP AGAINST_CURRENT"
+    ],
+    "higher_magnitude_lower_frequency_modules": [
+      "OSP->SAME WITH_CURRENT",
+      "OSP->FLIP WITH_CURRENT",
+      "PSOS->FLIP WITH_CURRENT",
+      "SXOO->FLIP WITH_CURRENT"
+    ],
+    "promotion_performed": false
+  },
+  "parallel_verification": {
+    "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_LOCAL_VERIFICATION_20260818.json",
+    "commit": "5ed07a15f857c92f73458d370e0722846b14b0d1",
+    "status": "PARALLEL_RECURRENCE_FOUR_LANE_VERIFIED",
+    "all_process_exit_codes": 0,
+    "source_artifact_hashes_verified": true,
+    "github_actions_replay_success_claimed": false,
+    "note": "The connected GitHub interface cannot expose/dispatch the branch-only replay workflow, so the exact four contracts were executed concurrently against the verified immutable artifacts and committed as the durable verification record."
+  },
+  "phase2_completion": {
+    "characterization_complete": true,
+    "new_play_frozen": false,
+    "existing_ssos_play_changed": false,
+    "pox_opposite_frozen": false,
+    "permanent_brain_mutated": false,
+    "runway_clock_mutated": false
+  },
+  "future_research_not_a_phase2_finalization_blocker": [
+    "prospective/OOT promotion study for P-O-X opposite-current",
+    "candidate-specific promotion studies for any independent recurrence module selected later",
+    "candidate-specific deeper true/false decomposition",
+    "additional D4/D5 timing-family research if future sample size becomes sufficient",
+    "selective older-ancestry tests at specific future re-origin subtypes"
+  ],
+  "protected_mutations": {
+    "frozen_exhaustion_detector": false,
+    "base_54w": false,
+    "held_week_rows": false,
+    "runway_clock": false,
+    "permanent_frankie": false,
+    "frankie_1": false,
+    "research/kalshi/spawn.py": false,
+    "ssos_frozen_paper_play": false
+  }
+}

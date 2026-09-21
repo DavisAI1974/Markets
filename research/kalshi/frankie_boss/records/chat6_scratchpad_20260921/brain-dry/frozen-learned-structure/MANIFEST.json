@@ -1,0 +1,785 @@
+{
+ "at": 1790010764.710778,
+ "entries": [
+  {
+   "bytes": 20557,
+   "delivered_prefix": "47ad3db18b93",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_pair_triplet_recurrence",
+    "learned_chains_extensions_reappearances_ancestry",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md",
+   "sha256": "47ad3db18b936050d26a7c21534c2648d43ff830db91f0c04e889d029c478f23",
+   "source": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md"
+  },
+  {
+   "bytes": 2665,
+   "delivered_prefix": "cc67e9d38de3",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_ADDENDUM_20260820.md",
+   "sha256": "cc67e9d38de3433bde4d7ed0541c71350821819d714e2fbad6a933078f36a1c7",
+   "source": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_ADDENDUM_20260820.md"
+  },
+  {
+   "bytes": 2617,
+   "delivered_prefix": "ab497ee95e4e",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json",
+   "sha256": "ab497ee95e4eede611c0bfdac677ec7324096cc47d838b7d69755f35983c4cb6",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json"
+  },
+  {
+   "bytes": 2872,
+   "delivered_prefix": "5dddfbf77f1a",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json",
+   "sha256": "5dddfbf77f1a60e30f567f2e91001cbdf7094a59aaa7e294a882ec7e4cd958d5",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json"
+  },
+  {
+   "bytes": 482,
+   "delivered_prefix": "171acfe17f29",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILE_LAUNCH_20260817.json",
+   "sha256": "171acfe17f29217e83706f2aa1c3303d473f8f35b6959984fc93cdb72aadcecd",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILE_LAUNCH_20260817.json"
+  },
+  {
+   "bytes": 3139,
+   "delivered_prefix": "1dff5c5e2251",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers",
+    "predecessor_ancestry_unresolved_chain_state"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json",
+   "sha256": "1dff5c5e22510d7770d6967aa494ec7c5b1e4f4f45a64d247ce0b174a442474d",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json"
+  },
+  {
+   "bytes": 4359,
+   "delivered_prefix": "635e041b4a78",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+   "sha256": "635e041b4a78eea44116af1fc89352b762edd19c4b3cbd12e1c323729f35d37d",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json"
+  },
+  {
+   "bytes": 2798,
+   "delivered_prefix": "49036a33fd80",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
+   "sha256": "49036a33fd80a01da8a864f31c4dffb4faeb5934da16d832774c3d1c76709056",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json"
+  },
+  {
+   "bytes": 14018,
+   "delivered_prefix": "d3e273b934ef",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_d_structures_and_families",
+    "learned_pair_triplet_recurrence",
+    "learned_chains_extensions_reappearances_ancestry",
+    "phase2_findings_modules_timing_pox_negatives"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
+   "sha256": "d3e273b934ef31312cf1fc5ddd67345da3efd4809f4da3cc770b8f3f80ef6d7b",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md"
+  },
+  {
+   "bytes": 4158,
+   "delivered_prefix": "82a95aadd0b0",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase2_findings_modules_timing_pox_negatives"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json",
+   "sha256": "82a95aadd0b0e4593c35197fdd98b8c8d22dda919d7d8220f924524a744e7845",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json"
+  },
+  {
+   "bytes": 11140,
+   "delivered_prefix": "49133cbcbfcd",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_d_structures_and_families",
+    "learned_pair_triplet_recurrence",
+    "learned_chains_extensions_reappearances_ancestry",
+    "phase2_findings_modules_timing_pox_negatives"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+   "sha256": "49133cbcbfcdf589201724ee1dc60fc0c0cb059593736a5ac97caa30c68093a1",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md"
+  },
+  {
+   "bytes": 8166,
+   "delivered_prefix": "0e217af8983a",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_d_structures_and_families",
+    "phase2_findings_modules_timing_pox_negatives",
+    "predecessor_ancestry_unresolved_chain_state"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md",
+   "sha256": "0e217af8983a5492bb6bff64f109b9b8b92622cc2d694b386784fd0d37c52bbc",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md"
+  },
+  {
+   "bytes": 5561,
+   "delivered_prefix": "3a745e98378c",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase2_findings_modules_timing_pox_negatives"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_ADDENDUM_POX_20260818.md",
+   "sha256": "3a745e98378c6abb64327175e35efbc8e36ff1eb2150c3bc842ef7731854011c",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_ADDENDUM_POX_20260818.md"
+  },
+  {
+   "bytes": 6255,
+   "delivered_prefix": "fe9ea9cd380e",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase2_findings_modules_timing_pox_negatives"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md",
+   "sha256": "fe9ea9cd380e8ccfb3b861065ed3e5369fd1cded1aadfccd10337ea238f54e14",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md"
+  },
+  {
+   "bytes": 3185,
+   "delivered_prefix": "9e68f222832a",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_pair_triplet_recurrence",
+    "phase2_findings_modules_timing_pox_negatives"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md",
+   "sha256": "9e68f222832a3136b750016a9253df213bf4b4dfe44a973c07b659fa55b1b7bf",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md"
+  },
+  {
+   "bytes": 9732,
+   "delivered_prefix": "da4f5c991251",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_pair_triplet_recurrence",
+    "learned_chains_extensions_reappearances_ancestry",
+    "phase2_findings_modules_timing_pox_negatives"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md",
+   "sha256": "da4f5c991251668344290ac10f319aabfa5df52e8f0b7321da0eefbea864d1eb",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md"
+  },
+  {
+   "bytes": 6300,
+   "delivered_prefix": "83028f75d80b",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase2_findings_modules_timing_pox_negatives"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_POX_BRANCH_RECONCILIATION_V2_20260818.md",
+   "sha256": "83028f75d80b787742bb4cacb9eb8935f1992bac3b5a0f734bf38fb6159efe48",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_BRANCH_RECONCILIATION_V2_20260818.md"
+  },
+  {
+   "bytes": 4113,
+   "delivered_prefix": "08f94ea20901",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_chains_extensions_reappearances_ancestry",
+    "phase2_findings_modules_timing_pox_negatives"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md",
+   "sha256": "08f94ea20901768fa64b82c39b023b3fab9845106cf1d17b14e5a74e3fd74d81",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md"
+  },
+  {
+   "bytes": 7251,
+   "delivered_prefix": "5c22e5ce72e3",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_chains_extensions_reappearances_ancestry",
+    "phase2_findings_modules_timing_pox_negatives"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json",
+   "sha256": "5c22e5ce72e3a0863b16cbf469b6d491edadf1e161c494ca6d4a753e058da15c",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json"
+  },
+  {
+   "bytes": 5781,
+   "delivered_prefix": "fe1810198c24",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_d_structures_and_families",
+    "learned_pair_triplet_recurrence",
+    "phase2_findings_modules_timing_pox_negatives",
+    "historical_timing_lifespan_context"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md",
+   "sha256": "fe1810198c249390a383434eec74c90aa854a07bfaefa26f5159c6b98af2eb18",
+   "source": "research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md"
+  },
+  {
+   "bytes": 6035,
+   "delivered_prefix": "cc40727f2753",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "predecessor_ancestry_unresolved_chain_state"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json",
+   "sha256": "cc40727f275303dd1978bdf4e47bdfc19821d3d530c846e173d0f8eb953cef02",
+   "source": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json"
+  },
+  {
+   "bytes": 10291,
+   "delivered_prefix": "3f717ad70d56",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "predecessor_ancestry_unresolved_chain_state"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md",
+   "sha256": "3f717ad70d56c9ee3e0a002b9ff4de22d1d7cd209485ef7c7f3c1d6165ef69d1",
+   "source": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md"
+  },
+  {
+   "bytes": 7252,
+   "delivered_prefix": "8d2d268401e1",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md",
+   "sha256": "8d2d268401e18410a9d77473c703d239b7fc1adc020d40e0b85c25415b328246",
+   "source": "research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md"
+  },
+  {
+   "bytes": 7321,
+   "delivered_prefix": "c226eff3f993",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_d_structures_and_families",
+    "learned_chains_extensions_reappearances_ancestry",
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+   "sha256": "c226eff3f99347dc41f9ec32e04eaeb0d3451ee92fa5408fdf66c097e668ac79",
+   "source": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json"
+  },
+  {
+   "bytes": 5256,
+   "delivered_prefix": "553c119d0809",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "historical_timing_lifespan_context",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md",
+   "sha256": "553c119d0809f5f36f98752ec601adef75eb04b1c80515885487c9a6a460ca24",
+   "source": "research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md"
+  },
+  {
+   "bytes": 2942,
+   "delivered_prefix": "b7d75c3f34e4",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_CONTINUOUS_LIVE_INFORMATION_CORRECTION_20260819.md",
+   "sha256": "b7d75c3f34e468c5a84503d80f2a964ba7a07653e16983050daf1844a9db98ce",
+   "source": "research/NG_EXHAUSTION_CONTINUOUS_LIVE_INFORMATION_CORRECTION_20260819.md"
+  },
+  {
+   "bytes": 9441,
+   "delivered_prefix": "e36d82e245a7",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_d_structures_and_families",
+    "learned_dipoles_and_geometry",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+   "sha256": "e36d82e245a718624bb21a14ae1cd5d172b64630d38580d7fe4e66d9357909db",
+   "source": "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json"
+  },
+  {
+   "bytes": 17183,
+   "delivered_prefix": "00875cb7ea46",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_d_structures_and_families",
+    "learned_dipoles_and_geometry",
+    "predecessor_ancestry_unresolved_chain_state",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+   "sha256": "00875cb7ea460e7f91cf2733cca47b9855bbb6bf2656da960c06c9311faf8e09",
+   "source": "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md"
+  },
+  {
+   "bytes": 2218,
+   "delivered_prefix": "b3c0f05a3d43",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_dipoles_and_geometry",
+    "historical_timing_lifespan_context",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md",
+   "sha256": "b3c0f05a3d43a384b7445553000234c08dcd8ba31c6ee75bc955c3547da07a2a",
+   "source": "research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md"
+  },
+  {
+   "bytes": 4639,
+   "delivered_prefix": "fc08cbe26dd2",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "predecessor_ancestry_unresolved_chain_state",
+    "historical_timing_lifespan_context",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md",
+   "sha256": "fc08cbe26dd25f74f0438d218d201a370aef6448ef6da3df32647e6438c5bb16",
+   "source": "research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md"
+  },
+  {
+   "bytes": 2493,
+   "delivered_prefix": "d449ed24c0d2",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_POLARITY_NOT_PRIMARY_TARGET_CORRECTION_20260819.md",
+   "sha256": "d449ed24c0d2a6f51d11cd49fa734eef42d0d06440e50acb7bd0bc1f1b3b1cc7",
+   "source": "research/NG_EXHAUSTION_POLARITY_NOT_PRIMARY_TARGET_CORRECTION_20260819.md"
+  },
+  {
+   "bytes": 4731,
+   "delivered_prefix": "67280c2bdf32",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "predecessor_ancestry_unresolved_chain_state",
+    "historical_timing_lifespan_context",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md",
+   "sha256": "67280c2bdf3204c3ac93a52fd44df86ee951a1f17b62b3b284e7a3b4d77b7845",
+   "source": "research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md"
+  },
+  {
+   "bytes": 18591,
+   "delivered_prefix": "07cc6b9209e7",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md",
+   "sha256": "07cc6b9209e79f75f540a8a3b191f7fd9de99f6138d4e97ee247702a70f076e2",
+   "source": "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md"
+  },
+  {
+   "bytes": 6212,
+   "delivered_prefix": "c585312bf731",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md",
+   "sha256": "c585312bf731a3c7ff47d26013c08ce411c3356620eed06d928bc1485c378e7f",
+   "source": "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md"
+  },
+  {
+   "bytes": 14248,
+   "delivered_prefix": "39b936ed132f",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_dipoles_and_geometry",
+    "predecessor_ancestry_unresolved_chain_state",
+    "historical_timing_lifespan_context",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
+   "sha256": "39b936ed132fa1b066a37ed5a20432e5c9ccee96ab699fc54607720a26e1cd58",
+   "source": "research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md"
+  },
+  {
+   "bytes": 7565,
+   "delivered_prefix": "ac6018f9379f",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "predecessor_ancestry_unresolved_chain_state",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md",
+   "sha256": "ac6018f9379f747d5a75108ab70bc4d129a589a327a9fbbbaf9031d79ab1180d",
+   "source": "research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md"
+  },
+  {
+   "bytes": 8161,
+   "delivered_prefix": "f6759964d9d6",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "historical_timing_lifespan_context",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md",
+   "sha256": "f6759964d9d65a2f0322e7b74834c27a11460094a7f6af43b5d0de5a03f3278b",
+   "source": "research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md"
+  },
+  {
+   "bytes": 3923,
+   "delivered_prefix": "e8e74ffd603f",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md",
+   "sha256": "e8e74ffd603faf6e9e75c9659a6e434e7a8da982bee7224ef4fabdd867f10b8f",
+   "source": "research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md"
+  },
+  {
+   "bytes": 7315,
+   "delivered_prefix": "31ff5a9d7e5d",
+   "include": false,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__kalshi__NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md",
+   "reason": "the checkout bytes do not match the delivered digest prefix; excluded unless include is set true",
+   "sha256": "bea60752e3d49cf5fc4c8c7b95de43da3369d27eae1cb6760c5e16fe32d2f97f",
+   "source": "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md"
+  },
+  {
+   "bytes": 12517,
+   "delivered_prefix": "1603a4bc329c",
+   "include": false,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__kalshi__NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md",
+   "reason": "the checkout bytes do not match the delivered digest prefix; excluded unless include is set true",
+   "sha256": "9baddf8747ac4ae7224b51bd220239b4e23cab82e2f08d09cddcde27dc1b2895",
+   "source": "research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md"
+  },
+  {
+   "bytes": 9289,
+   "delivered_prefix": "9251176dbb56",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_chains_extensions_reappearances_ancestry",
+    "predecessor_ancestry_unresolved_chain_state",
+    "historical_timing_lifespan_context",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__kalshi__knowledge__ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+   "sha256": "9251176dbb5657ab22107c8ab3e4c27a260a7ea995f3c745491a778e21066b14",
+   "source": "research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json"
+  },
+  {
+   "bytes": 15263,
+   "delivered_prefix": "c734c8c19c09",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_pair_triplet_recurrence",
+    "learned_chains_extensions_reappearances_ancestry",
+    "phase2_findings_modules_timing_pox_negatives",
+    "historical_timing_lifespan_context",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__kalshi__knowledge__ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+   "sha256": "c734c8c19c0974650960308b5f836c9ed26ea5b3debfc832a604a99f695b4739",
+   "source": "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json"
+  },
+  {
+   "bytes": 10176,
+   "delivered_prefix": "1b9f161bfb5e",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase2_findings_modules_timing_pox_negatives",
+    "historical_timing_lifespan_context",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__kalshi__knowledge__ng_brain_exhaustion_entry_timing_extension_20260818.json",
+   "sha256": "1b9f161bfb5e775e75bf49996a6448355bb0cbb6f9ecf670a5c27a1c582bc9b0",
+   "source": "research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json"
+  },
+  {
+   "bytes": 6262,
+   "delivered_prefix": "925deedaec76",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase2_findings_modules_timing_pox_negatives",
+    "learned_structure_proposal_index_material"
+   ],
+   "name": "research__kalshi__knowledge__ng_brain_exhaustion_pox_focused_proposal_20260819.json",
+   "sha256": "925deedaec7687eed64e7b37aa9ed4c9515af8081f4fbbe5c856b3e5b59dcb3f",
+   "source": "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json"
+  },
+  {
+   "bytes": 6464,
+   "delivered_prefix": "842f2ca650f2",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__ng_exhaustion_chain_canonical_54w_merge_20260817.py",
+   "sha256": "842f2ca650f28b602e9b7f07208a692b092ae5e65aa574ebd79d1b5a84da1e8a",
+   "source": "research/ng_exhaustion_chain_canonical_54w_merge_20260817.py"
+  },
+  {
+   "bytes": 5920,
+   "delivered_prefix": "f6a80d415ba7",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__ng_exhaustion_chain_canonical_54w_shard_20260817.py",
+   "sha256": "f6a80d415ba71aee7ec002d3d97f0a17b13ecd3ea88883999a8edc180f5136d3",
+   "source": "research/ng_exhaustion_chain_canonical_54w_shard_20260817.py"
+  },
+  {
+   "bytes": 22371,
+   "delivered_prefix": "4325776b4d70",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_d_structures_and_families",
+    "learned_dipoles_and_geometry"
+   ],
+   "name": "research__ng_exhaustion_chain_canonical_table_20260817.py",
+   "sha256": "4325776b4d70bfa3808bce1b9473d6da75cc18c8cbe00be3cf5652f849573ffa",
+   "source": "research/ng_exhaustion_chain_canonical_table_20260817.py"
+  },
+  {
+   "bytes": 6725,
+   "delivered_prefix": "9325f8a83d2e",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__ng_exhaustion_chain_phase1_causal_54w_20260817.py",
+   "sha256": "9325f8a83d2e567d785af197468e2d865a8b44273c938408f58ea157e8652c6b",
+   "source": "research/ng_exhaustion_chain_phase1_causal_54w_20260817.py"
+  },
+  {
+   "bytes": 4460,
+   "delivered_prefix": "57897aa5af54",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_chains_extensions_reappearances_ancestry",
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__ng_exhaustion_chain_phase1_continuity_54w_20260817.py",
+   "sha256": "57897aa5af54c5afe6206117c9bf27cf961e6b9b413f7e26bea5b31948a0b94b",
+   "source": "research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py"
+  },
+  {
+   "bytes": 11897,
+   "delivered_prefix": "e64d05a25aee",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__ng_exhaustion_chain_phase1_discovery_20260817.py",
+   "sha256": "e64d05a25aee66047750fe1923162c3694c6fc3179d979352b95853806a04cc9",
+   "source": "research/ng_exhaustion_chain_phase1_discovery_20260817.py"
+  },
+  {
+   "bytes": 9210,
+   "delivered_prefix": "45718cfff65b",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__ng_exhaustion_chain_phase1_falsifier_54w_20260817.py",
+   "sha256": "45718cfff65b8a1b5a09d7f05c9ab8af4dc6071b2483b710171c82c3546ebb79",
+   "source": "research/ng_exhaustion_chain_phase1_falsifier_54w_20260817.py"
+  },
+  {
+   "bytes": 8172,
+   "delivered_prefix": "16be2b7249e6",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_chains_extensions_reappearances_ancestry",
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__ng_exhaustion_chain_phase1_lineage_54w_20260817.py",
+   "sha256": "16be2b7249e6cd74951670421308baf3e8c942d95b0f85aeb4228b51b201af3b",
+   "source": "research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py"
+  },
+  {
+   "bytes": 20813,
+   "delivered_prefix": "c0b226dae18b",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__ng_exhaustion_chain_phase1_reconcile_55w_20260817.py",
+   "sha256": "c0b226dae18b46d88ae6933cc8a450331210abf3e33f4a0d93281df3f5ddfdf9",
+   "source": "research/ng_exhaustion_chain_phase1_reconcile_55w_20260817.py"
+  },
+  {
+   "bytes": 10492,
+   "delivered_prefix": "2b93cfeb39cc",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase1_discoveries_structural_falsifiers"
+   ],
+   "name": "research__ng_exhaustion_chain_phase1_structural_54w_20260817.py",
+   "sha256": "2b93cfeb39cc73409f04b9d9fc61e0fe02f79823fd1df064ae819a82c27d05d9",
+   "source": "research/ng_exhaustion_chain_phase1_structural_54w_20260817.py"
+  },
+  {
+   "bytes": 11949,
+   "delivered_prefix": "389594824363",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "phase2_findings_modules_timing_pox_negatives",
+    "predecessor_ancestry_unresolved_chain_state",
+    "historical_timing_lifespan_context"
+   ],
+   "name": "research__ng_exhaustion_chain_phase2_characterize_20260817.py",
+   "sha256": "389594824363d69daa1df85a0b36400d7caec3d6ce06e89949b3be59de664055",
+   "source": "research/ng_exhaustion_chain_phase2_characterize_20260817.py"
+  },
+  {
+   "bytes": 6609,
+   "delivered_prefix": "ffc4781a693f",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_pair_triplet_recurrence",
+    "phase2_findings_modules_timing_pox_negatives"
+   ],
+   "name": "research__ng_exhaustion_chain_phase2_parallel_agents_20260818.py",
+   "sha256": "ffc4781a693fa354185e1a240f4b7275b8248de3c336d33a858bac1d318150d9",
+   "source": "research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py"
+  },
+  {
+   "bytes": 2440,
+   "delivered_prefix": "30d220ae1578",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_chains_extensions_reappearances_ancestry"
+   ],
+   "name": "research__ng_exhaustion_chain_state_enrich_20260817.py",
+   "sha256": "30d220ae15786ef73e4d3a729723f932bbefdf00c238c3bb48778498c315ae9c",
+   "source": "research/ng_exhaustion_chain_state_enrich_20260817.py"
+  },
+  {
+   "bytes": 4776,
+   "delivered_prefix": "ebe7f9525aaa",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_d_structures_and_families",
+    "learned_chains_extensions_reappearances_ancestry"
+   ],
+   "name": "research__ng_exhaustion_week_chain_state_roster_20260817.py",
+   "sha256": "ebe7f9525aaa48dff4374989e68c7cdc65e91f1d6145f3d3bb31aa684e4ec069",
+   "source": "research/ng_exhaustion_week_chain_state_roster_20260817.py"
+  },
+  {
+   "bytes": 10767,
+   "delivered_prefix": "638a13b81548",
+   "include": true,
+   "kind": "frozen learned structure: a file the request names for these layers, from the checkout",
+   "layers": [
+    "learned_d_structures_and_families"
+   ],
+   "name": "research__ng_exhaustion_week_continuous_roster_20260817.py",
+   "sha256": "638a13b8154863deb3816e4406d4f0cd4a9a74a860cfecce2f74c440f840a0ca",
+   "source": "research/ng_exhaustion_week_continuous_roster_20260817.py"
+  }
+ ],
+ "historical_prompt": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/historical-prompt.md",
+ "layers": [
+  "historical_timing_lifespan_context",
+  "learned_chains_extensions_reappearances_ancestry",
+  "learned_d_structures_and_families",
+  "learned_dipoles_and_geometry",
+  "learned_pair_triplet_recurrence",
+  "learned_structure_proposal_index_material",
+  "phase1_discoveries_structural_falsifiers",
+  "phase2_findings_modules_timing_pox_negatives",
+  "predecessor_ancestry_unresolved_chain_state"
+ ],
+ "note": "the frozen learned-structure content, so the comparison step can run; rebuilt from the checkout at every session start",
+ "schema": "FRANKIE_BOX_BRAIN_FROZEN_ENTRY_V1"
+}

@@ -1,0 +1,37 @@
+{
+  "name": "NG exhaustion chain Phase-1 54-week immutable base cohort",
+  "date": "2026-08-17",
+  "status": "FROZEN_BEFORE_54W_BASE_RUN",
+  "parent_coverage_freeze": "research/NG_EXHAUSTION_FULL_HISTORY_COVERAGE_FREEZE_20260817.json",
+  "purpose": "Run and freeze the 54 unaffected historical weeks now, while holding the week starting 2026-03-29 aside for separate repair and insert-only reconciliation later.",
+  "authoritative_full_history_week_count": 55,
+  "base_week_count": 54,
+  "temporarily_excluded_weeks": ["20260329"],
+  "exclusion_reason": "User-authorized temporary hold-aside pending separate repair/reconstruction of the week containing 2026-04-03; do not synthesize an empty closure day and do not silently treat the 54-week base as the completed 55-week campaign.",
+  "base_weeks": [
+    "20250629","20250706","20250713","20250720","20250727","20250803","20250810","20250817","20250824","20250831",
+    "20250907","20250914","20250921","20250928","20251005","20251012","20251019","20251026","20251102","20251109",
+    "20251116","20251123","20251130","20251207","20251214","20251221","20251228","20260104","20260111","20260118",
+    "20260125","20260201","20260208","20260215","20260222","20260301","20260308","20260315","20260322",
+    "20260405","20260412","20260419","20260426","20260503","20260510","20260517","20260524","20260531","20260607",
+    "20260614","20260621","20260628","20260705","20260712"
+  ],
+  "immutability_after_base_freeze": {
+    "existing_54_week_event_rows_may_be_rebuilt_after_repair": false,
+    "existing_54_week_event_ids_may_change": false,
+    "existing_54_week_detector_semantics_may_change": false,
+    "existing_54_week_scores_may_be_retuned_after_repair": false,
+    "repair_week_policy": "Build 20260329 separately with the identical frozen detector/event-table contract, score it as an out-of-time insert fold using the already-frozen 54-week models/settings where applicable, then append/reconcile it without rewriting the 54-week base evidence."
+  },
+  "phase1_rules": {
+    "same_frozen_coverage_contract": true,
+    "same_week_continuity_semantics": true,
+    "same_canonical_detector": true,
+    "same_endpoint_definition": true,
+    "same_chain_definition": true,
+    "phase2_characterization_allowed": false,
+    "permanent_frankie_mutation_allowed": false,
+    "runway_clock_mutation_allowed": false
+  },
+  "completion_rule": "The 54-week base may be frozen and analyzed provisionally, but Phase 1 is not historically complete and Phase 2 remains locked until the separately repaired 20260329 week is reconciled into the final 55-week evidence set."
+}

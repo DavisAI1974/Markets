@@ -43,6 +43,9 @@ chat 6):
   the packets (twelve Pod calls), pushes; then the host records turn 1 (`turn=initial`), the runner grades and writes the
   correction request; export `turn=correction`, box `ACTION=fetch_correction` then `ACTION=correction`, push, record
   `turn=correction`. Every host step on Greg's go. First probe of the next chat: `ACTION=status` (one at open).
+- THE SCRATCHPAD IS NEVER USED (Greg, 2026-09-21, said again at close). Chat 6's scratchpad is committed whole under
+  `research/kalshi/frankie_boss/records/chat6_scratchpad_20260921/` (README: every file, every exclusion, the torch-hiding
+  stub at `notorch/`). Working files go in the repo (gitignored paths for checkouts and venvs) or on the box, nowhere else.
 - Family baseline in this container: 12 failed / 2936 passed / 2 skipped, the same 12 on the base commit (listed in the
   handoff 23:xxZ); torch 2.11 CPU, cffi and databento-dbn 0.62.0 installed here, not on the box.
 

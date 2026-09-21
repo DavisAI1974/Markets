@@ -3859,5 +3859,6 @@ delivered to Greg (7 files); Frankie's cycle-0 asks built (22:xxZ, 996828f3); `/
 finding fixed with its test (4416e6ac; decision 0d497e32, 23:xxZ); the bedrock spec for Greg's "All 3" (c7b69310).
 Not built: the bedrock expansion (three modules, specced with tests named) and the critic's zero hypotheses (Greg's
 call, two routes, 22:xxZ). Nothing ran on the host, box, Pod or endpoint in this chat. The next chat starts from the
-23:5xZ block atop `DROP_IN_CLAUDE_20260921.md`; the scratchpad producers worktree (2ebb8ce8) does not survive the
-container and is re-fetched with `git fetch origin ccode/frankie-receiver-feed-20260916` when the build starts.
+23:5xZ block atop `DROP_IN_CLAUDE_20260921.md`. THE SCRATCHPAD IS NOT USED FROM HERE ON (Greg, twice); what chat 6 had
+on it is committed whole under `records/chat6_scratchpad_20260921/` (README names every file and every exclusion); the
+producers checkout becomes an in-repo worktree at BR-0 of the plan.
