@@ -2733,3 +2733,31 @@ completes the chain; the files wait safely in `/opt/frankie-box/session/out/` un
 Box at 10:43Z (run 35590204122): unit active, phase `reading`, part 1/163 since 10:23:59Z under no cap (the capped
 parts took 3-4 minutes; an uncapped part takes as long as the BOSS writes), Pod healthy, heartbeat S3 leg
 AccessDenied, git leg waiting for the token.
+
+### 10:5xZ 09-21: WHY THE READING IS SLOW, MEASURED (Greg: "Even with the 32 cpus root is going this slow?")
+
+The box's 32 vCPUs are not what reads. The reading is the BOSS, the Granite 4.2-8b vLLM on ONE NVIDIA L40S (Pod
+g7y3g2w1kor4l3, `granite_retained_migration_receipt.json`), launched with `--max-num-seqs 1` (`granite_startup.vllm_argv`,
+pinned bundle): one sequence at a time. The box's session process sits at 2% CPU polling a durable job every 10 s
+(`frankie_box_inventory.sh`, run 35590535980). New read-only probe `deploy/aws/box/frankie_box_job_timing.sh`
+(run 35590798184) on every job so far:
+- capped era (4,096 output tokens): prompt 37k-90k tokens, completion 4,096, 149-376 s wall; 19-28 tok/s of output
+  (one 10.9 tok/s outlier); every one INCOMPLETE at the cap.
+- uncapped era: output room 43,054 tokens per part (131,072 minus ~87.8k of input). At ~20 tok/s a part that writes
+  to the end of its context takes ~36 min. 163 parts -> ~98 h (~4 days) for the reading alone, then the merges and
+  the writing calls. Not months; days per Sunday.
+- The queue on the Pod is FIFO at one sequence: the 10:21 incarnation's uncapped read-0000 (job 93c03d58...) was
+  accepted before the live one (050cd074..., 10:24), so the live part 1 starts only when that orphan finishes
+  (~10:58) and lands ~11:34. jobs_v1 has no cancel endpoint (`granite_runpod_jobs.py`, `SPEC-granite-durable-jobs.md`);
+  the box's own outcome fetch for a restarted incarnation's job is simply never made (prompt bytes changed, new id).
+- The corpus is 22,627,337 bytes (`reading-corpus.json`, run 35590705926): files/native.c15.jsonl 11,977,861 (53%),
+  files/forecast-000000.bin 5,987,733 (26%, text, rendered whole), files/controller.c15.jsonl 1,410,438,
+  files/state.c15.json 1,408,446, derivation-digest-full.md 1,344,422, critic prompt/snapshot 148,492 + 144,407,
+  head 191,195. Greg's call whether the receiver's native journal and the forecast artifact are "the picture" the
+  BOSS must read line by line; the code reads whatever is delivered, whole, as ordered.
+Levers that do not touch Frankie's science, all Greg's word because each is a Pod action or a corpus decision:
+(1) a faster GPU for the retained model (H100/H200: ~2.5-3x single-stream decode); (2) `--max-num-seqs` > 1 in the
+pinned bundle plus a parallel reading loop on the box (the parts are independent; the merge is unchanged) - the gain
+depends on KV-cache room at 131k context on 48 GB, which the Granite 4.2-8b config decides; (3) more retained Pods
+(the prepare workflow exists; L40S stock has stranded two); (4) the corpus decision above. Nothing changed on the
+Pod or the box in this entry; the token remains the one grant for delivery (Greg: "Go ahead with the token").
