@@ -96,6 +96,14 @@ jobs:
                                                                           Description='GitHub PAT for the Frankie box heartbeat and response push (repo scope)')
           print('SSM /markets/frankie/github-token written (us-east-2): version %s, length %d' % (r.get('Version'), len(token)))
           PY
+      - name: Report which repository secrets are set (names and set/unset only; values never read)
+        env:
+          HAS_RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY != '' }}
+          HAS_FRANKIE_GITHUB_TOKEN: ${{ secrets.FRANKIE_GITHUB_TOKEN != '' }}
+          HAS_DATABENTO_API_KEY: ${{ secrets.DATABENTO_API_KEY != '' }}
+          HAS_AWS_PAIR: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+        run: |
+          echo "repository secrets set: RUNPOD_API_KEY=$HAS_RUNPOD_API_KEY FRANKIE_GITHUB_TOKEN=$HAS_FRANKIE_GITHUB_TOKEN DATABENTO_API_KEY=$HAS_DATABENTO_API_KEY AWS_PAIR=$HAS_AWS_PAIR"
       - name: Require the box Online in SSM (read-only)
         run: |
           python - <<'PY'
