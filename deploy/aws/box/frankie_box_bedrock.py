@@ -1,0 +1,222 @@
+"""Cycle 0's bedrock on the box (SPEC_CYCLE0_BEDROCK_20260921.md, box-bedrock-derive; Greg, 2026-09-21: "All 3").
+
+The bedrock layers (derived_geometry 8, prebirth_opportunity 5, causal_clocks 7) are derived by the PINNED producers'
+own traversal, `native_replay_driver.NativeReplayDriver` at lineage ccode/frankie-receiver-feed-20260916 commit 2ebb8ce8
+(the checkout the box holds at /opt/frankie-box/producers; the in-repo worktree .producers-2ebb8ce8 for tests), built
+with the canonical arguments `native_a_arm_launch.launch` names, and projected into layer files by the producers' own
+`native_layer_crosswalk`. Nothing here computes a layer: this module stamps the records, runs the driver, files its
+exact ledgers whole, and copies what the crosswalk names. Stdlib only; torch is never imported on this path.
+
+Rules: nothing deleted (an earlier bedrock is moved aside with a receipt); every file written whole with a witness;
+a zero-row layer says WHY (never an empty `derived`); the BOSS is not invoked inside the traversal (NeverInvoke).
+"""
+import hashlib
+import json
+import os
+import sys
+import time
+from dataclasses import asdict
+from pathlib import Path
+
+PIN_COMMIT = '2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134'
+PIN_LINEAGE = 'ccode/frankie-receiver-feed-20260916'
+V4_ADAPTER = 'research/ng_exhaustion_mbo_v4_state_adapter_20260820.py'
+V4_ADAPTER_MODULE = 'research.ng_exhaustion_mbo_v4_state_adapter_20260820'
+# the launcher's identity inputs (native_a_arm_launch.MISSION_PATH / CONTRACT_PATH / KNOWLEDGE_MANIFEST_PATH); named here
+# so the receipt can say which files were hashed even before the launcher is imported
+MISSION_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md'
+CONTRACT_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md'
+KNOWLEDGE_MANIFEST_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_knowledge/KNOWLEDGE_MANIFEST_20260828.json'
+LEDGER_FILES = ('exact_member_rows.jsonl', 'exact_lifecycle_rows.jsonl', 'legacy_observable_rows.jsonl')
+NS = 1_000_000_000
+
+
+class NeverInvoke:
+    """A declared CadencePolicy that never fires: the BOSS is invoked by the session's own stages (reading, classroom,
+    teach, writing), never inside the traversal. The receipt records `cadence_policy: NeverInvoke`."""
+
+    def should_invoke(self, **_kwargs):
+        return False
+
+
+def sha256_file(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def witness(path):
+    path = Path(path)
+    return dict(bytes=path.stat().st_size, sha256=sha256_file(path))
+
+
+def write_json(path, value):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=1, sort_keys=True, default=str) + '\n', encoding='utf-8')
+    return dict(witness(path), path=str(path))
+
+
+def default_producers():
+    value = os.environ.get('FRANKIE_BOX_PRODUCERS')
+    if value:
+        return Path(value)
+    root = os.environ.get('FRANKIE_BOX_ROOT')
+    if root:
+        return Path(root) / 'producers'
+    return Path(__file__).resolve().parents[3] / f'.producers-{PIN_COMMIT[:8]}'
+
+
+def load_producers(producers):
+    """Make the pinned checkout importable: its path on sys.path AFTER whatever is already there (markets first, as the
+    session orders it), and the V4 adapter registered from the PINNED file by path, as the session's _producer_module
+    does, so `research.ng_exhaustion_mbo_v4_state_adapter_20260820` is the pinned bytes wherever it is imported from.
+    Refuses a checkout whose adapter is already loaded from elsewhere."""
+    import importlib.util
+    producers = Path(producers).resolve()
+    if not (producers / V4_ADAPTER).is_file():
+        raise ValueError(f'producers checkout at {producers} lacks {V4_ADAPTER}')
+    if str(producers) not in sys.path:
+        sys.path.append(str(producers))
+    loaded = sys.modules.get(V4_ADAPTER_MODULE)
+    if loaded is None:
+        spec = importlib.util.spec_from_file_location(V4_ADAPTER_MODULE, producers / V4_ADAPTER)
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[V4_ADAPTER_MODULE] = module
+        spec.loader.exec_module(module)
+    elif Path(getattr(loaded, '__file__', '') or '').resolve() != (producers / V4_ADAPTER).resolve():
+        raise ValueError(f'{V4_ADAPTER_MODULE} is loaded from {getattr(loaded, "__file__", None)}, not the pinned {producers / V4_ADAPTER}')
+    return producers
+
+
+def source_object(container, day):
+    """The driver's source object for the box's rows: `journal:<day>:<container path>`. The driver reads the source day
+    as the first 20YYMMDD in the object name (native_replay_driver._source_day), so the session day leads and the
+    verified prefix container path follows; the container's sha256 is the record's source_dbn_sha256."""
+    path = (container or {}).get('path')
+    sha = (container or {}).get('sha256')
+    if not path or not sha:
+        raise ValueError('the source object is required: the verified prefix container path and sha256')
+    day = str(day or '')
+    if not (len(day) == 8 and day.isdigit() and day.startswith('20')):
+        raise ValueError(f'the source day must be 20YYMMDD, not {day!r}')
+    return f'journal:{day}:{path}', str(sha)
+
+
+def driver_records(records, container, day):
+    """The session's INPUT observations stamped for the driver: `source_dbn_object` = journal:<day>:<verified prefix
+    container path>, `source_dbn_sha256` = the container's sha256 (the driver refuses a record without a source object;
+    the box's source object IS the verified container), `raw_symbol` = the observation's own raw_symbol/symbol when
+    present, else None. Copies; the input is left untouched."""
+    path, sha = source_object(container, day)
+    out = []
+    for record in records:
+        stamped = dict(record)
+        stamped['source_dbn_object'] = path
+        stamped['source_dbn_sha256'] = str(sha)
+        stamped['raw_symbol'] = record.get('raw_symbol') or record.get('symbol') or None
+        out.append(stamped)
+    return out
+
+
+def span_seconds(records):
+    """The receive-clock span of the rows, in seconds (ts_recv ns on the wire record; ts_recv_ns on a normalized one)."""
+    clocks = [int(r.get('ts_recv') if r.get('ts_recv') is not None else r.get('ts_recv_ns')) for r in records
+              if r.get('ts_recv') is not None or r.get('ts_recv_ns') is not None]
+    if not clocks:
+        return 0.0
+    return (max(clocks) - min(clocks)) / NS
+
+
+def identity(producers, container, count, cycle, code_commit):
+    from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import RunIdentity
+    producers = Path(producers)
+    knowledge = json.loads((producers / KNOWLEDGE_MANIFEST_PATH).read_bytes())
+    return RunIdentity(run_id=f'frankie-box-cycle-{cycle}', arm='A_MEMORY',
+                       mission_sha256=sha256_file(producers / MISSION_PATH),
+                       calculation_contract_sha256=sha256_file(producers / CONTRACT_PATH),
+                       knowledge_manifest_hash=knowledge['manifest_hash'],
+                       source_manifest_hash=str(container['sha256']),
+                       total_mbo_records=int(count), code_commit=str(code_commit))
+
+
+def _move_aside(out_dir):
+    """An earlier bedrock under out_dir is moved beside it, receipted; nothing is deleted."""
+    out_dir = Path(out_dir)
+    if not out_dir.exists() or not any(out_dir.iterdir()):
+        return None
+    stamp = int(time.time())
+    target = out_dir.with_name(f'{out_dir.name}-superseded-{stamp}')
+    while target.exists():
+        stamp += 1
+        target = out_dir.with_name(f'{out_dir.name}-superseded-{stamp}')
+    out_dir.rename(target)
+    write_json(out_dir.with_name(f'{out_dir.name}-supersede-{stamp}.json'),
+               dict(schema='FRANKIE_BOX_BEDROCK_SUPERSEDE_RECEIPT_V1', at=time.time(), moved_from=str(out_dir), moved_to=str(target),
+                    reason='the bedrock is derived again (a pin change, a schema change or an operator restart); the earlier files are kept whole'))
+    return str(target)
+
+
+def run(records, container, out_dir, producers, cycle, code_commit, day):
+    """The pinned traversal on this cycle's rows: identity -> NativeCalculationRun (the launcher's canonical arguments) ->
+    NativeReplayDriver(ExchangeSessionRule, NeverInvoke, LedgerSinks) -> consume -> finalize -> reconcile (a mismatch
+    raises: a ledger that does not match its counter is not evidence). Files result.json (the exact rows live in the
+    ledgers) and receipt.json under out_dir; returns the receipt."""
+    records = list(records)
+    if not records:
+        raise ValueError('no INPUT records; nothing to derive')
+    producers = load_producers(producers)
+    from research.kalshi.frankie_raw_mbo_benchmark.native_calculation_runner import NativeCalculationRun
+    from research.kalshi.frankie_raw_mbo_benchmark.native_replay_driver import ExchangeSessionRule, NativeReplayDriver
+    from research.kalshi.frankie_raw_mbo_benchmark.native_response import (
+        FLOW_RESPONSE, FULL_BOOK_RESPONSE, PRICE_RESPONSE, QUEUE_RESPONSE, horizons_for_version)
+    from research.kalshi.frankie_raw_mbo_benchmark.native_row_sink import LedgerSinks
+    out_dir = Path(out_dir)
+    superseded = _move_aside(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stamped = driver_records(records, container, day)
+    ident = identity(producers, container, len(stamped), cycle, code_commit)
+    sinks = LedgerSinks(out_dir / 'ledgers')
+    # the launcher's canonical arguments (native_a_arm_launch.launch): 60 s replenishment horizon, the a-arm-h2 horizons,
+    # the four response values the contract's inputs reach, companion keys unaliased
+    arguments = dict(replenishment_horizon_ns=60 * NS, response_horizon_version='a-arm-h2',
+                     response_horizons_ns=list(horizons_for_version('a-arm-h2')),
+                     response_value_names=[PRICE_RESPONSE, FLOW_RESPONSE, FULL_BOOK_RESPONSE, QUEUE_RESPONSE],
+                     alias_companion_keys=False, emit_change_points=True, session_rule='ExchangeSessionRule')
+    calculation = NativeCalculationRun(ident, sinks=sinks, alias_companion_keys=False,
+                                       replenishment_horizon_ns=arguments['replenishment_horizon_ns'],
+                                       response_horizons_ns=tuple(arguments['response_horizons_ns']),
+                                       response_horizon_version=arguments['response_horizon_version'],
+                                       response_value_names=tuple(arguments['response_value_names']))
+    driver = NativeReplayDriver(identity=ident, session_rule=ExchangeSessionRule(), cadence=NeverInvoke(), run=calculation,
+                                sinks=sinks, emit_change_points=True)
+    started = time.time()
+    driver.consume(stamped)
+    result = driver.finalize()
+    result['ledger_retention'] = sinks.reconcile_all(member=calculation.member_rows_written,
+                                                     lifecycle=calculation.lifecycle_rows_written,
+                                                     legacy=driver.counters.legacy_rows_retained)
+    result_witness = write_json(out_dir / 'result.json', result)
+    ledgers = {}
+    for name in LEDGER_FILES:
+        path = out_dir / 'ledgers' / name
+        rows = sum(1 for _ in open(path, 'rb'))
+        ledgers[name] = dict(witness(path), path=str(path), rows=rows)
+    receipt = dict(schema='FRANKIE_BOX_BEDROCK_RUN_RECEIPT_V1', at=time.time(), cycle=str(cycle), seconds=round(time.time() - started, 3),
+                   producers=str(producers), producers_commit=str(code_commit), producers_lineage=PIN_LINEAGE,
+                   driver=dict(path=str(producers / 'research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py'),
+                               **witness(producers / 'research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py')),
+                   identity=asdict(ident), identity_inputs=dict(mission=MISSION_PATH, contract=CONTRACT_PATH, knowledge_manifest=KNOWLEDGE_MANIFEST_PATH),
+                   cadence_policy='NeverInvoke', driver_arguments=arguments,
+                   candidate_warmup_seconds=driver.candidate_warmup_seconds, candidate_min_observations=driver.candidate_min_observations,
+                   candidate_selection=driver.candidate_selection,
+                   source_object=dict(object=source_object(container, day)[0], container=str(container['path']), sha256=str(container['sha256']), day=str(day),
+                                      rule='journal:<day>:<verified prefix container path>; the driver reads the source day as the first 20YYMMDD in the object name'),
+                   records=len(stamped), groups=result['traversal']['groups_seen'], span_seconds=span_seconds(records),
+                   verdict=result.get('verdict'), failed_gates=result.get('failed_gates'),
+                   sections_fed=result['traversal']['sections_fed'], reconciliation=result['ledger_retention'],
+                   ledgers=ledgers, result=result_witness, superseded=superseded)
+    write_json(out_dir / 'receipt.json', receipt)
+    return receipt
