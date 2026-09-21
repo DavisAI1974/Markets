@@ -13,7 +13,12 @@ What this session does, in order (each stage leaves a receipt under <session>/wo
   derive   THE CALCULATIONS ARE FRANKIE'S, NOT A RUNNER'S: the cycle's pin producers run on this cycle's rows
            (prefix-<NN>.sqlite through the V4 adapter -> legacy control rows -> SecondBinner on ts_recv -> roll20;
            price; native signed flow; the F_LAST book; describe_structure per F_LAST group); every layer written
-           to work/derived/ with a status; nothing precomputed elsewhere;
+           to work/derived/ with a status; nothing precomputed elsewhere. THE BEDROCK (Greg, 2026-09-21, "All 3"):
+           when the pin carries one, the pinned producers' own traversal (native_replay_driver at 2ebb8ce8, the
+           launcher's arguments, NeverInvoke cadence; frankie_box_bedrock.py) runs on the same rows, its three exact
+           ledgers stream to work/bedrock/ and reconcile, and the twenty bedrock layers are projected from them by
+           the producers' own crosswalk, each filed derived or could_not with the measured reason (the candidate lane's
+           900 s warmup against the slice). The request must carry this checkout's pin (refused, receipted, otherwise);
   reading  the BOSS reads the whole delivered evidence (prompt.md) in bounded chunks that fit its 131,072 context,
            one job per chunk, notes per chunk, then merges the notes hierarchically. THE READING LANE (Greg,
            2026-09-21, "park the reading part"): when /opt/frankie-box/serverless.json names a RunPod serverless
@@ -137,6 +142,10 @@ def write_json(path, value):
 
 def load_json(path):
     return json.loads(Path(path).read_bytes())
+
+
+def pin_groups(pin):
+    return [entry['group'] for entry in (pin.get('bedrock') or [])]
 
 
 class Session:
@@ -676,10 +685,10 @@ class Session:
 
     # ---- derive (the pin's producers on this cycle's rows) ------------------------------------------------
     def derive(self):
+        pin = self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
         derived.mkdir(exist_ok=True)
         status = {}
-        pin = self._pin()
         rows_path = ROOT / 'data' / f'prefix-{self.cycle}.sqlite'
         records, container = self._input_records(rows_path)
         status['rows'] = container
@@ -750,6 +759,11 @@ class Session:
             path = derived / f'{name}.json'
             write_json(path, value)
             receipt['layers'][name] = dict(status=value['status'], producer=value.get('producer'), reason=value.get('reason'), **witness(path), path=str(path))
+        # THE BEDROCK rides beside the legacy five (never through them): the pinned traversal on the same records, the
+        # twenty layers projected by the producers' own crosswalk into the same work/derived/ (frankie_box_bedrock.py).
+        receipt['bedrock'] = self._derive_bedrock(records, container, pin, derived, receipt['layers']) if pin.get('bedrock') else None
+        receipt['pin_identity'] = dict(sha256=pin['pins_witness']['sha256'], cycle_index=pin['cycle_index'], group=pin['group'],
+                                       bedrock_layers=list(pin.get('bedrock_layers') or []))
         write_json(self.work / 'derive.json', receipt)
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import frankie_box_digest_render as DG
@@ -782,6 +796,77 @@ class Session:
             path = PRODUCERS / rel
             out[rel] = dict(witness(path), path=str(path)) if path.is_file() else dict(missing=True)
         return out
+
+    def _pin_matches_request(self):
+        """The pin this checkout would derive is the pin the request was rendered under (attachment.calculation_pin_witness,
+        the sidecar the adapter saves beside the prompt). A request rendered under another pins file (the bedrock
+        added on the host but not yet re-rendered, or the reverse) is REFUSED with a receipt, never derived: the box
+        would otherwise derive a bedrock the instruction never asked for, or skip one it did (plan BR-4)."""
+        pin = self._pin()
+        attachment = (self.request or {}).get('attachment') or {}
+        carried = attachment.get('calculation_pin_witness') or {}
+        checkout = pin['pins_witness']['sha256']
+        problem = None
+        if not carried:
+            problem = 'the request carries no calculation pin witness; it predates the calculation pins (re-render it on the host)'
+        elif carried.get('sha256') != checkout:
+            problem = ('the request was rendered under a different calculation pin (request %s, this checkout %s); re-render the '
+                       'request on the host (supersede the principal request, export, fetch) before deriving' % (carried.get('sha256'), checkout))
+        if problem:
+            write_json(self.work / f'derive-refusal-{int(time.time())}.json',
+                       dict(schema='FRANKIE_BOX_DERIVE_REFUSAL_RECEIPT_V1', at=time.time(), cycle=self.cycle, reason=problem,
+                            request_pin_sha256=carried.get('sha256'), request_pin_cycle_index=carried.get('cycle_index'), request_pin_group=carried.get('group'),
+                            checkout_pin_sha256=checkout, checkout_pin_group=pin['group'], checkout_bedrock_layers=list(pin.get('bedrock_layers') or [])))
+            self.note('derive refused: ' + problem)
+            raise ValueError(problem)
+        return pin
+
+    def _derive_bedrock(self, records, container, pin, derived, receipt_layers):
+        """The pinned traversal, the projection and their receipts; the layer entries go into receipt_layers."""
+        B = _box_module('frankie_box_bedrock')
+        layers = list(pin['bedrock_layers'])
+        code_commit = B.producers_commit(PRODUCERS)
+        self.note(f'bedrock: the pinned traversal ({code_commit[:8]}) on {len(records)} INPUT records for {len(layers)} layers')
+        run = B.run(records, container, self.work / 'bedrock', PRODUCERS, self.cycle, code_commit, self.day)
+        crosswalk = B.crosswalk_records(PRODUCERS, layers)
+        projected = B.project(run, self.work / 'bedrock' / 'ledgers', layers, crosswalk, derived)
+        for name, entry in projected.items():
+            receipt_layers[name] = dict(status=entry['status'], producer=entry['producer'], reason=entry['reason'], sha256=entry['sha256'],
+                                        bytes=entry['bytes'], path=entry['path'], count=entry['count'], partial=entry['partial'], bedrock=True)
+        derived_count = sum(1 for e in projected.values() if e['status'] == 'derived')
+        self.note(f'bedrock: {derived_count}/{len(layers)} layers derived by the pinned traversal on {run["groups"]} groups '
+                  f'({run["span_seconds"]:.1f} s of rows; the candidate lane needs {run["candidate_warmup_seconds"]} s)')
+        return dict(schema='FRANKIE_BOX_DERIVE_BEDROCK_V1', layers=layers, bedrock_groups=pin_groups(pin), producers_commit=code_commit,
+                    cadence_policy=run['cadence_policy'], receipt=dict(witness(self.work / 'bedrock' / 'receipt.json'), path=str(self.work / 'bedrock' / 'receipt.json')),
+                    result=run['result'], ledgers=run['ledgers'], reconciliation=run['reconciliation'], sections_fed=run['sections_fed'],
+                    groups=run['groups'], records=run['records'], span_seconds=run['span_seconds'],
+                    candidate_warmup_seconds=run['candidate_warmup_seconds'], candidate_min_observations=run['candidate_min_observations'],
+                    verdict=run['verdict'], derived=derived_count, could_not=len(layers) - derived_count,
+                    crosswalk=str(PRODUCERS / 'research/kalshi/frankie_raw_mbo_benchmark/native_layer_crosswalk.py'))
+
+    def _derive_needed(self):
+        """Whether derive() must run: no digest, a digest of another schema, no derive.json, a derive.json without the pin
+        identity, a pin that moved since, or a pin whose bedrock the derivation does not carry. Returns (needed, why)."""
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        import frankie_box_digest_render as DG
+        digest_path = self.work / 'derivation-digest-full.md'
+        if not digest_path.exists():
+            return True, 'no derivation digest'
+        if ('# Derivation digest ' + DG.SCHEMA + ' ') not in digest_path.read_text(encoding='utf-8', errors='replace')[:400]:
+            return True, 'the digest is not ' + DG.SCHEMA
+        if not (self.work / 'derive.json').exists():
+            return True, 'no derive.json'
+        recorded = load_json(self.work / 'derive.json')
+        identity = recorded.get('pin_identity')
+        if not identity:
+            return True, 'derive.json carries no pin identity'
+        pin = self._pin()
+        if identity.get('sha256') != pin['pins_witness']['sha256']:
+            return True, 'the calculation pin moved since the derivation'
+        wanted = list(pin.get('bedrock_layers') or [])
+        if wanted and (not recorded.get('bedrock') or list(recorded['bedrock'].get('layers') or []) != wanted):
+            return True, 'the derivation does not carry this pin\'s bedrock'
+        return False, 'current'
 
     def _input_records(self, rows_path):
         """The cycle's rows: either a compact container (blocks + seal; CompactReader) or the raw prefix snapshot
@@ -1696,10 +1781,9 @@ class Session:
         self.labels()
         self.engine_reach()
         self.phase('deriving')
-        digest_path = self.work / 'derivation-digest-full.md'
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import frankie_box_digest_render as DG
-        if not digest_path.exists() or ('# Derivation digest ' + DG.SCHEMA + ' ') not in digest_path.read_text(encoding='utf-8', errors='replace')[:400]:   # whole and dense at the current schema; an older digest is regenerated
+        needed, why = self._derive_needed()     # whole and dense at the current schema, under the request's pin, bedrock included
+        if needed:
+            self.note('deriving: ' + why)
             self.derive()
         self.compare()                       # cheap, rebuilt every run: the derived layers beside the frozen files the brain carries now
         self.phase('reading')

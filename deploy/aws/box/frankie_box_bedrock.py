@@ -59,6 +59,19 @@ def write_json(path, value):
     return dict(witness(path), path=str(path))
 
 
+def producers_commit(producers):
+    """The checkout's commit, measured (git rev-parse HEAD); refused unless it is the pin: the pinned bytes are the ones
+    that must run, and a checkout at another commit is not the producers the crosswalk and the receipts name."""
+    import subprocess
+    try:
+        head = subprocess.run(['git', '-C', str(producers), 'rev-parse', 'HEAD'], capture_output=True, text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError) as error:
+        raise ValueError(f'the producers checkout at {producers} has no readable git HEAD: {error}')
+    if head != PIN_COMMIT:
+        raise ValueError(f'the producers checkout at {producers} is at {head}, not the pinned {PIN_COMMIT}')
+    return head
+
+
 def default_producers():
     value = os.environ.get('FRANKIE_BOX_PRODUCERS')
     if value:
@@ -80,6 +93,17 @@ def load_producers(producers):
         raise ValueError(f'producers checkout at {producers} lacks {V4_ADAPTER}')
     if str(producers) not in sys.path:
         sys.path.append(str(producers))
+    # `research` and `research.kalshi` are namespace packages in both trees; a process that already holds them (or a
+    # test that registered a stand-in with a fixed __path__) does not see the checkout's subpackage until its path is
+    # on the package's __path__, so it is added there too, once.
+    for name, sub in (('research', 'research'), ('research.kalshi', 'research/kalshi')):
+        package = sys.modules.get(name)
+        path = getattr(package, '__path__', None)
+        if package is not None and path is not None and str(producers / sub) not in list(path):
+            try:
+                path.append(str(producers / sub))
+            except AttributeError:
+                package.__path__ = list(path) + [str(producers / sub)]
     loaded = sys.modules.get(V4_ADAPTER_MODULE)
     if loaded is None:
         spec = importlib.util.spec_from_file_location(V4_ADAPTER_MODULE, producers / V4_ADAPTER)

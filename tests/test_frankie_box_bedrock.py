@@ -113,6 +113,7 @@ def test_the_source_object_leads_with_the_day_so_the_drivers_own_day_rule_reads_
 
 def test_run_traverses_a_journal_shaped_stream_through_the_pinned_driver_reconciles_and_files_the_ledgers(tmp_path):
     producers = P.require_producers()
+    torch_before = 'torch' in sys.modules
     out = tmp_path / 'bedrock'
     receipt = B.run(stream(), container(tmp_path), out, producers, cycle='00', code_commit=P.PIN, day=DAY)
     assert receipt['schema'] == 'FRANKIE_BOX_BEDROCK_RUN_RECEIPT_V1'
@@ -135,7 +136,7 @@ def test_run_traverses_a_journal_shaped_stream_through_the_pinned_driver_reconci
     assert result['traversal']['invocation_cutoff_count'] == 0            # NeverInvoke: the BOSS is never asked inside the traversal
     assert result['traversal']['sections_fed']['candidate_unit_events'] == 0   # a 10-second slice never reaches the 900 s warmup
     assert receipt['sections_fed'] == result['traversal']['sections_fed']
-    assert 'torch' not in sys.modules
+    assert ('torch' in sys.modules) == torch_before   # this path never imports torch (the hidden-torch run proves it outright)
     member = [json.loads(line) for line in (out / 'ledgers' / 'exact_member_rows.jsonl').read_text().splitlines()]
     assert [row['group_index'] for row in member] == list(range(len(GROUPS)))
     assert all('clocks' in row and 'structure' in row and 'book_regime' in row for row in member)
@@ -295,6 +296,7 @@ def test_project_records_a_member_path_the_rows_do_not_carry(tmp_path):
 
 def test_run_then_project_on_the_fixture_stream_files_twenty_layers_with_the_measured_verdict(tmp_path):
     producers = P.require_producers()
+    torch_before = 'torch' in sys.modules
     out = tmp_path / 'bedrock'
     receipt = B.run(stream(), container(tmp_path), out, producers, cycle='00', code_commit=P.PIN, day=DAY)
     crosswalk = B.crosswalk_records(producers, BEDROCK_LAYERS)
@@ -308,4 +310,10 @@ def test_run_then_project_on_the_fixture_stream_files_twenty_layers_with_the_mea
         assert statuses[name] == 'derived', (name, layers[name]['reason'])
     geometry = json.loads(Path(layers['derived_d_family_geometry']['path']).read_bytes())
     assert [r['group_index'] for r in geometry['member_rows']] == [0, 1, 2]
-    assert 'torch' not in sys.modules
+    assert ('torch' in sys.modules) == torch_before   # this path never imports torch (the hidden-torch run proves it outright)
+
+
+def test_producers_commit_is_measured_and_must_be_the_pin(tmp_path):
+    assert B.producers_commit(P.require_producers()) == P.PIN
+    with pytest.raises(ValueError, match='no readable git HEAD'):
+        B.producers_commit(tmp_path)
