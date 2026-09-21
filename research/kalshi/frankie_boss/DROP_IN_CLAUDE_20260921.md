@@ -49,6 +49,11 @@ runpod -s user https://mcp.getrunpod.io/ --header "Authorization: Bearer $RUNPOD
 (checked, absent), so the new session's FIRST command after the checkout is `bash deploy/runpod/mcp_connect.sh` (registers
 the MCP with the Bearer header, proves the key on the handshake, installs runpodctl; prints no key). If it says the key is
 absent, Greg has not yet added RUNPOD_API_KEY to the Claude Code environment configuration.
+12:4xZ: the RunPod key is IN SSM `/markets/frankie/runpod-serverless` (us-east-2, version 1), copied from the repository
+secret by the trunk-registered `frankie_runpod_key_to_ssm.yml` (run 35601303506, key proven on the Pod control route,
+HTTP 200 RUNNING). One open item fewer: the box's serverless lane needs only the endpoint + `frankie_box_serverless_config.sh
+ACTION=write ENDPOINT_ID=...`. The GitHub secret cannot reach a session container: the MCP still needs RUNPOD_API_KEY in
+the Claude Code environment configuration.
 STILL GREG'S (unchanged): `frankie_box_session.sh ACTION=restart_session
 REASON=lossless-render` to apply everything; the GitHub PAT into SSM `/markets/frankie/github-token`
 (`aws ssm put-parameter --region us-east-2 --name /markets/frankie/github-token --type SecureString --value '<PAT>'`);

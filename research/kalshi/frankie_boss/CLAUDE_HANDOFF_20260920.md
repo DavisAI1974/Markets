@@ -2972,3 +2972,18 @@ handshake (prints serverInfo only), installs runpodctl and checks `runpodctl use
 "RUNPOD_API_KEY absent from this session's environment" -- the variable is not set here, so the connection happens in the
 next session once Greg adds it to the Claude Code environment configuration. KALSHI_TRADING.md indexes the script.
 
+### 12:4xZ 09-21: the RunPod key reached the box's SSM SecureString from the repository secret ("Look in git secrets")
+
+Greg: the console holds three keys (RUNPOD_API_KEY, his, 14 Sep, used 20 Sep; two `runpod-mcp` keys Codex made); the
+repository secret RUNPOD_API_KEY is the one the Pod workflows use (pod control run 35583672111 succeeded 09:30Z today).
+Built and registered on the trunk (`.github/workflows/frankie_runpod_key_to_ssm.yml`, trunk commits a37befe7, 5f3511f0,
+1d7e5de1): copies the secret into `/markets/frankie/runpod-serverless` (us-east-2, SecureString) on the runner where
+both credentials already are, after ONE read-only RunPod call proves the key, then reads it back; prints lengths and
+codes only. Two refused attempts taught the route: `rest.runpod.io/v1/endpoints` answers 403 to this key
+(35601030834), and urllib's default User-Agent draws a 403 from the edge even on the Pod control route (35601186816 --
+the Cloudflare shape CLAUDE.md records for the COT fetch). Sent as `pod_control.control_call` sends it (http.client,
+no User-Agent): run 35601303506, `GET api.runpod.io/v2/pods/g7y3g2w1kor4l3 -> HTTP 200; seen: RUNNING; key length 50,
+prefix rpa_`; receipt `FRANKIE_RUNPOD_KEY_TO_SSM_RECEIPT_V1 version 1`. The GitHub secret cannot reach this container
+(secrets are write-only to the API; an artifact would put the value in the transcript), so this session's MCP still
+needs RUNPOD_API_KEY in the Claude Code environment configuration (`deploy/runpod/mcp_connect.sh`).
+
