@@ -422,9 +422,14 @@ class Session:
                                        bid_px_00=row.get(native_roll20.BID_TOUCH_FIELD), ask_px_00=row.get(native_roll20.ASK_TOUCH_FIELD)))
             if frame is not None:
                 book = frame.get('book') or {}
-                frames.append(dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'),
-                                   **{k: book.get(k) for k in ('best_bid', 'best_ask', 'spread', 'mid', 'depth_imbalance_n')},
-                                   **book_values(book), transition=book_transition(previous_book, book)['sign_signature']))
+                try:
+                    record_book = dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'))
+                    record_book.update({k: book.get(k) for k in ('best_bid', 'best_ask', 'mid', 'depth_imbalance_n')})
+                    record_book.update(book_values(book))  # carries spread and the full-depth fields
+                    record_book['transition'] = book_transition(previous_book, book)['sign_signature']
+                    frames.append(record_book)
+                except Exception as error:
+                    failures.append(dict(index=index, book=True, error=f'{type(error).__name__}: {error}'))
                 previous_book = book
                 try:
                     structures.append(dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'),
