@@ -2184,3 +2184,20 @@ startup` at 03:13:45Z, exactly as run 35520949738 did at 15:52Z. The runner does
 cycle continued). Re-published with the same five pins under `migration-g7y3g2w1kor4l3-a004983e93b9` on this branch:
 run 35557167702, 03:20:02Z, success. The proper fix (the day configuration's `completion_workflow_ref`, or carrying the
 current identity on the launch branch) stays on the after-run list; repeat this re-publication for cycle 1's outcome.
+
+### 03:22Z: FRANKIE'S REQUEST IS EXPORTED ON THE HOST; the run is at the HOLD (`frankie_calculation`); observer closed its lifecycle
+
+Status probe run 35557597206 (03:28:18Z): cycle-00 `principal/` written 03:22:12-48Z: `receiver/attachment-request.json`
+(1,154 B), `receiver/source-binding.json` (1,023 B), `historical-prompt.md` (158,950 B), `run-findings-witness.json`
+(197 B), **`calculation-pin-witness.json` (263 B, the cycle-0 pin is in the request)**, `prompt.md` (28,310,877 B),
+`sealed-proof.json` (2,413 B), `memory-a-witness.json` (886 B), `dipole-classroom-pre-message.json` (14,874,583 B),
+`dipole-classroom-model-visible.json` (14,875,948 B), `session-request.json` (14,915,624 B); `classroom-audit/`
+source (8,184,147 B) + teacher-key audit (14,855,320 B). Run progress: phase `frankie_calculation`, owner frankie,
+0 outputs (Frankie's step: the derivations are his, after the machine result reached him; never concurrent). No Root
+branch yet.
+
+Observer run 35555116474: `hold` returned at 03:20:52Z, fourteen seconds after the completion was published
+(03:20:38Z); cleanup and evidence steps succeeded; artifact `retained-granite-prepare-35555116474`. Per the retained
+lifecycle the Pod is stop-retained after the critic call; the inspect that confirms its status is on record below.
+Next: the pipeline host job ends at the HOLD and commits its receipts; `frankie_host_export_principal_request.yml`
+(cycle 00) exports the request to S3 for Root; Root's task document updated with keys, bytes and sha256; root probe.
