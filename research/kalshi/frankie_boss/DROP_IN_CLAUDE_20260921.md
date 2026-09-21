@@ -1,6 +1,6 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
-## READ FIRST (13:5xZ 09-21, chat 5): THE READ IS RUNNING ON THE RENDER, 4 PARTS (restart 3 = run 35608016668, status 35608448008); the RunPod key arrived at 15:0xZ (MCP connected, 0 endpoints)
+## READ FIRST (13:5xZ 09-21, chat 5): THE READ IS RUNNING ON THE RENDER, 4 PARTS (restart 3 = run 35608016668, status 35608448008); the serverless reading endpoint k1sqt0haffm61y is LIVE (15:5xZ); the Pod read all 4 parts and is merging
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later). Run `using-agent-skills`
 and `git-workflow-and-versioning` first; do not stop and restart shells. The RunPod skills (`~/.claude/skills/runpod*`)
@@ -55,7 +55,17 @@ WHAT STANDS (all committed, every transform exact and proven before use, nothing
   runpodctl is absent) ON GREG'S WORD ONLY. ROTATE THE KEY after the endpoint work (it was pasted into chat). If the
   next chat's environment lacks the variable again, ask Greg for `RUNPOD_API_KEY` in the environment configuration.
 
-- 15:2xZ: JOB 2 on Greg's word, BLOCKED twice, nothing created (handoff 15:2xZ): the local create (committed script,
+- 15:5xZ: JOB 2 DONE on Greg's "Go": serverless reading endpoint **k1sqt0haffm61y** (worker-vllm v2.27.0 via the Hub
+  listing id cm8h09d9n000008jvh2rqdsmb, H100 pool ADA_80_PRO, pinned Granite host-cached by --model-reference, workers
+  0-8, 2 seqs/worker, 4 h execution timeout, served name granite42-smoke) CREATED with runpodctl 2.14.0 (installed from the
+  GitHub release), VERIFIED by a real async job (READY, cold pickup 206 s, exec 834 ms, chat.completion shape the box
+  parses), WRITTEN on the box (`serverless.json`, key `/markets/frankie/runpod-serverless` readable) and APPLIED by
+  restart 4 (run 35617931290: `reading: 4 parts, 0 to read (serverless x8)`). THE POD HAD ALREADY READ ALL 4 PARTS
+  (14:06-14:53Z) and was merging; the restart resumed at the merges on the Pod. The endpoint idles at workers-min 0
+  until the next reading stage. Receipt `receipts/serverless_reading_endpoint_20260921.json`. Two box-script facts:
+  SSM runs box scripts under dash (no `[[`; fixed in frankie_box_serverless_config.sh), and the workflow's variables
+  take no spaces (GPU label underscored). Handoff 15:2xZ-15:5xZ has every run id.
+- 15:2xZ (superseded above): JOB 2 on Greg's word, BLOCKED twice, nothing created (handoff 15:2xZ): the local create (committed script,
   runpodctl 2.14.0 from the GitHub release, H100 SXM $4.79/worker-hour, HIGH availability) was refused by the auto-mode
   permission classifier; the git workflow dispatch 404s because `frankie_serverless_reading.yml` is not on the DEFAULT
   branch. Unblock = Greg approves the Bash create (or a permission rule), OR registers the workflow on the default branch
@@ -63,8 +73,7 @@ WHAT STANDS (all committed, every transform exact and proven before use, nothing
 
 GREG'S OPEN CALLS: the GitHub PAT into SSM `/markets/frankie/github-token` (the heartbeat and the pusher refuse
 without it; files stay safe in session/out/; how-to in the handoff 15:2xZ);
-the endpoint word (JOB 2: create the H100 serverless reading endpoint, verify, `frankie_box_serverless_config.sh
-ACTION=write ENDPOINT_ID=<id>`, then restart_session); trunk registration of `frankie_box_fetch_response.yml`,
+(JOB 2 is DONE: endpoint k1sqt0haffm61y live and applied); trunk registration of `frankie_box_fetch_response.yml`,
 `frankie_serverless_reading.yml` and `frankie_box_codecs_ci.yml`; `RUNPOD_API_KEY` in the Claude Code environment
 configuration (pasted per chat until then); the RunPod key rotation after JOB 2.
 

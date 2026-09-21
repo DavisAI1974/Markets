@@ -3240,3 +3240,22 @@ readable by the box role, version 1, length 50, prefix rpa_ (the key was already
 ENDPOINT_ID=k1sqt0haffm61y WORKERS=8 GPU=NVIDIA_H100_80GB_HBM3 dispatched (run 35617650693; the workflow's variables
 take no spaces, so the GPU label is underscored), then restart_session REASON=serverless-reading: outcomes below.
 Greg: rotation of the pasted key is NOT a concern for now ("I'm not going to worry about rotating at the moment").
+
+### 15:5xZ 09-21: RESTART 4 (run 35617931290) = THE SERVERLESS LANE IS LIVE ON THE BOX, AND THE POD HAD ALREADY READ ALL 4 PARTS
+
+The write (retry run 35617796680 after a POSIX fix: SSM runs box scripts under dash, where `[[` does not exist, so
+the first write, run 35617650693, refused with "[[: not found") put `/opt/frankie-box/serverless.json`
+(`FRANKIE_BOX_SERVERLESS_READING_V1`, endpoint k1sqt0haffm61y, workers 8) on the box with the key readable. Restart 4
+(`restart_session REASON=serverless-reading`, 15:17:56Z): unit stopped with a receipt, HEAD 2a75f11b, preflight OK
+(engine healthy on the Pod; `reading lane: serverless endpoint k1sqt0haffm61y, up to 8 workers; health idle 4,
+initializing 2, ready 4`), unit started 15:18:00Z; phase reading, `reading: 4 parts, 0 to read (serverless x8)`.
+THE SESSION LOG SHOWS THE POD HAD ALREADY READ EVERY PART OF THE RENDERED CORPUS between restart 3 and 4: part 1 done
+14:06:01Z (17 min), part 2 14:41:51Z (36 min), part 3 14:49:51Z (8 min), part 4 14:53:28Z (4 min; the parts are
+87k-token cuts on line boundaries and the last ones are short), then `merging level 0: 1/2 done` at 15:09:14Z. Restart
+4 caught the session in the second level-0 merge; the four read outcomes were reused (0 to read) and the merges and
+the writing continue on the Pod (the serverless lane serves READS only, by design). So the endpoint read nothing this
+cycle: it is verified, configured and idle at workers-min 0 for the next reading stage (any restart that has parts
+to read, or the next cycle). Heartbeat: `git heartbeat disabled: /markets/frankie/github-token not readable:
+ParameterNotFound` and "heartbeat service start failed" (the same PAT gap; files stay in session/out/).
+Runs of this chat after 13:5xZ: key probe 35617264569; write 35617650693 (refused, dash) and 35617796680 (written);
+restart 4 = 35617931290. Endpoint verify job 6c9af209-385f-4557-b1a4-a42a973d989a-u2 (READY, 834 ms).
