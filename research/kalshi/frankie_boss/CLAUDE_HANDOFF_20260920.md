@@ -4159,7 +4159,12 @@ from the VERIFIED SCHEDULE's `model_context_rows`, the prefix builder reads the 
 `build_schedule(model_context_rows=)` required, encoder payload V2 without a window; one Granite test literal -> 131072;
 eleven test files moved to declared values. Guard: `tests/test_row_window_is_declared_not_literal.py`. Tests: the
 targeted family suites 424 passed, the same 9 pre-existing failures before and after in this container (8 boto3
-absent, 1 journal-prefix snapshot), 0 introduced. FLAGGED for Greg's word, not changed: `runpod_cloud_environment.json`
+absent, 1 journal-prefix snapshot), 0 introduced. WHOLE FAMILY at ccf9bac1 (boto3, databento-dbn 0.62.0, torch cpu
+installed): 10 failed / 2947 passed / 2 skipped, every failure in chat 6's baseline set (authority_map x1 here,
+benchmark_checkpoint, boss_precision caps, dipole_classroom seam, feedback_cycle x2, forecast_bridge,
+journal_prefix_snapshot, source_recovery, teacher_streaming). One earlier full run also showed
+test_run_actual_sunday_compact_source::test_prefix_is_lawful_text_modulo_anchor failing; it passes in isolation,
+among its neighbours, and on a second identical full run: order-dependent state, not the change. FLAGGED for Greg's word, not changed: `runpod_cloud_environment.json`
 GRANITE_MAX_MODEL_LEN "4096" (the pinned Pod bootstrap bundle's environment, read by the retired cloud controller) and
 `research/kalshi/frankie_backends.py` Bedrock `maxTokens: 4096` (the S93 coach's Bedrock lane, an output cap on an
 LLM call, not the BOSS). Host consequence: the full-rerun order gains step 1b (re-pin the prefix batch), above.
