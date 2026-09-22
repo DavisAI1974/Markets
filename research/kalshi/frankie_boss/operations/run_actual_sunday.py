@@ -119,8 +119,7 @@ def await_recorded_principal(request,directory,host_lock,probe=None):
     # This is frankie_principal_adapter.json_form, inlined so this module keeps its stdlib-only import.
     expected=json.loads(json.dumps(request,sort_keys=True,ensure_ascii=True,separators=(',',':'),allow_nan=False))
     matches=[]
-    for index in range(19):
-        path=Path(directory)/'execution'/f'cycle-{index:02d}'/'principal'/'session-request.json'
+    for path in sorted((Path(directory)/'execution').glob('cycle-*/principal/session-request.json')):
         if path.exists() and json.loads(path.read_bytes())==expected:matches.append(path)
     if len(matches)!=1:raise ValueError('unique retained principal request required')
     request_path=matches[0];response_path=request_path.with_name('session-response.json')
@@ -280,7 +279,7 @@ class ActualHost:
                 or not source['trigger_directory']
                 or not (re.fullmatch('[0-9a-f]{64}',str(request_id)) or
                     (re.fullmatch(r'[A-Za-z0-9_-]{1,128}',str(getattr(self,'config',{}).get('run_id',''))) and
-                     request_id in {f"{self.config['run_id']}-cycle-{index:02d}" for index in range(19)}))
+                     request_id in {f"{self.config['run_id']}-cycle-{index:02d}" for index in range(len(self.schedule['steps']))}))
                 or schema not in ('FRANKIE_ACTUAL_EXECUTE_V1','FRANKIE_ACTUAL_RESUME_JOB_V1')):
             raise ValueError('explicit SSM credential source and request identity required')
         path=Path(source['trigger_directory'])/request_id/(schema+'.json')
@@ -348,9 +347,13 @@ class ActualHost:
         if verified(self.host['ingestion_receipt']).resolve()!= (source/'ingestion-receipt.json').resolve():
             raise ValueError('source receipt outside declared execution')
         completion=json.loads((source/'completion.json').read_bytes())
-        if (receipt['record_count']!=57027 or completion['record_count']!=57027 or
-            outer['source_records']!=57027 or outer['steps']!=19 or outer['source_completion']!=completion):
-            raise ValueError('full Sunday source and nineteen-step schedule required')
+        from research.kalshi.frankie_boss.verified_sunday_schedule import verified_schedule
+        declared = verified_schedule(verified_json(self.host['schedule']), expected_digest=outer['schedule_sha256'])
+        expected_records = declared['terminal_delivery']['records_delivered']
+        expected_steps = len(declared['steps'])
+        if (receipt['record_count'] != expected_records or completion['record_count'] != expected_records or
+            outer['source_records'] != expected_records or outer['steps'] != expected_steps or outer['source_completion'] != completion):
+            raise ValueError('complete source and declared trading-day schedule required')
         checkpoint=source/'builder-checkpoint.c15.json'
         if sha(checkpoint)!=receipt['checkpoint_sha256'] or outer['source_checkpoint_sha256']!=receipt['checkpoint_sha256']:
             raise ValueError('complete source checkpoint bytes changed')
@@ -366,6 +369,26 @@ class ActualHost:
         self.schedule=verified_schedule(json.loads(actual_schedule.read_bytes()), expected_digest=outer['schedule_sha256'])
         manifest=verified_json(self.config['source_manifest'])
         scope=self.api.source_scope(manifest,expected_manifest_hash=manifest['manifest_hash'])
+        if self.schedule.get('schema') == 'BOSS_TRADING_DAY_CAUSAL_CYCLE_SCHEDULE_V1':
+            from research.kalshi.frankie_boss.source_contract_runtime import load_contract
+            contract = load_contract(self.config['contract']['path'], self.config['contract']['sha256'])
+            if (self.config.get('trading_day') != self.schedule['trading_day']
+                    or manifest.get('trading_day') != self.schedule['trading_day']
+                    or manifest['manifest_hash'] != self.schedule['source_manifest_hash']
+                    or [m['member_key'] for m in manifest['sources']] != self.schedule['source_partitions']
+                    or receipt.get('session_policy') != 'cme_trading_day'
+                    or receipt.get('trading_day') != self.schedule['trading_day']
+                    or receipt['journal_sha256'] != self.schedule['journal_sha256']
+                    or receipt['journal_hash'] != self.schedule['journal_hash']
+                    or receipt['journal_count'] != self.schedule['journal_count']
+                    or self.host['compact_journal']['sha256'] != receipt['journal_sha256']
+                    or self.host['compact_journal']['bytes'] != receipt['journal_bytes']
+                    or contract.get('trading_day') != self.schedule['trading_day']
+                    or contract.get('source_manifest_hash') != manifest['manifest_hash']
+                    or contract.get('cycle_count') != len(self.schedule['steps'])):
+                raise ValueError('trading-day source, schedule, contract and compact identity disagree')
+            if not hasattr(self, 'compact_source'):
+                raise ValueError('trading-day compact source requires the compact-source host')
         if (state['scope_genesis_hash']!=scope.genesis_hash() or completion['scope_hash']!=scope.genesis_hash()):
             raise ValueError('complete source scope differs from actual selected source')
         if (state['journal_count']!=completion['journal_count'] or state['journal_hash']!=completion['journal_hash']):
@@ -374,7 +397,7 @@ class ActualHost:
         self.full_source_completion=completion
         self.ingestion_receipt_sha256=self.host['ingestion_receipt']['sha256']
         self.completion_sha256=sha(source/'completion.json')
-        self.source_origins={str((source/'source.sqlite').resolve()):completion['journal_count']}
+        self.source_origins={str((source/receipt.get('journal_file', 'source.sqlite')).resolve()):completion['journal_count']}
         recovery_path=source/'recovery-receipt.json'
         if 'source_lineage' in self.host:
             self.source_lineage(source,receipt)
@@ -449,7 +472,7 @@ class ActualHost:
             receipt['records_in_prefix']!=binding['through_cursor']+1 or
             receipt['source_prefix_hash']!=binding['source_hash'] or
             receipt['as_of']!=binding['as_of'] or receipt['source_as_of']!=binding['source_as_of'] or
-            receipt['source_records_expected']!=57027):
+            receipt['source_records_expected']!=self.full_source_completion['record_count']):
             raise ValueError('actual prefix snapshot differs from full source and authored cutoff')
         connection=sqlite3.connect(origin.as_uri()+'?mode=ro',uri=True)
         try:
@@ -572,13 +595,19 @@ class ActualHost:
             raise ValueError('raw prefix seeds require independently verified sidecar witnesses')
         index=binding['cycle_index'];seed=None
         # The original first request began at genesis. Preserve its exact options.
-        if index==0:return dict(scope_public=self.scope.public_dict(),prefix_seed=None)
+        if index==0 and self.schedule.get('schema') == 'BOSS_SUNDAY_CAUSAL_CYCLE_SCHEDULE_V1':
+            return dict(scope_public=self.scope.public_dict(),prefix_seed=None)
         manifest=verified_json(self.host['prefix_manifest'])
         full = manifest.get('schema') == 'FRANKIE_FULL_SUNDAY_PREFIX_WITNESSES_V1' and manifest.get('prefixes') == 19
         pilot = (manifest.get('schema') == 'FRANKIE_SUNDAY_PREFIX_BATCH_V1'
             and manifest.get('prefixes') == 2 and manifest.get('scheduled_cycles') == 19
             and getattr(self, 'cycle_limit', 19) <= 2)
-        if (not (full or pilot) or manifest.get('source_records') != 57027
+        trading = (self.schedule.get('schema') == 'BOSS_TRADING_DAY_CAUSAL_CYCLE_SCHEDULE_V1'
+            and manifest.get('schema') == 'FRANKIE_TRADING_DAY_PREFIX_WITNESSES_V1'
+            and manifest.get('schedule_sha256') == self.schedule['schedule_sha256']
+            and manifest.get('scheduled_cycles') == len(self.schedule['steps'])
+            and manifest.get('prefixes', 0) >= getattr(self, 'cycle_limit', len(self.schedule['steps'])))
+        if (not (full or pilot or trading) or manifest.get('source_records') != self.full_source_completion['record_count']
                 or len(manifest.get('witnesses', [])) != manifest.get('prefixes')
                 or index >= manifest['prefixes']):
             raise ValueError('independently pinned Sunday prefix manifest covering the requested cycles required')
@@ -586,9 +615,9 @@ class ActualHost:
         receipt=verified_json(files['receipt'])
         selection=verified_json(manifest['prefix_seed_witnesses'][str(index)])
         batch=verified_json(manifest['binding'])
-        if (batch.get('schema')!='FRANKIE_REMAINING_SUNDAY_PREFIXES_V1'
+        if (batch.get('schema') not in ('FRANKIE_REMAINING_SUNDAY_PREFIXES_V1', 'FRANKIE_TRADING_DAY_PREFIXES_V1')
                 or any(batch[key]['sha256']!=self.host[key]['sha256']
-                       for key in ('ingestion_receipt','schedule_receipt','schedule','source_lineage'))
+                       for key in (('ingestion_receipt','schedule_receipt','schedule') if trading else ('ingestion_receipt','schedule_receipt','schedule','source_lineage')))
                 or batch['source_count']!=self.full_source_completion['journal_count']
                 or batch['source_head_hash']!=self.full_source_completion['journal_hash']):
             raise ValueError('prefix seed batch differs from independently pinned completed source')
@@ -768,7 +797,7 @@ class ActualHost:
             raise self.api.JobAttention('RETAINED_COMPLETION_PUBLICATION_PENDING',outcome['job_id'],str(marker.resolve())) from None
 
     def runtime(self,binding,cycle_directory,retained_plan):
-        self.progress('input_inventory',completed=binding['cycle_index'],total=19,unit='steps')
+        self.progress('input_inventory',completed=binding['cycle_index'],total=len(self.schedule['steps']),unit='steps')
         self.source()
         self.prefix(binding,cycle_directory)
         if self.context is None:self._training()

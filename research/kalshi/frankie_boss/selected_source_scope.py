@@ -20,6 +20,9 @@ def source_manifest():
 
 def source_scope(manifest, *, expected_manifest_hash):
     """Bind the complete user-selected source; no four-date or warmup gate."""
+    if isinstance(manifest, dict) and manifest.get('schema') == 'BOSS_BLOCK_SOURCE_MANIFEST_V1':
+        from .block_source_scope import block_source_scope
+        return block_source_scope(manifest, expected_manifest_hash=expected_manifest_hash)
     if (manifest != source_manifest()
             or expected_manifest_hash != manifest['manifest_hash']):
         raise ValueError('source differs from the independently pinned single-source scope')

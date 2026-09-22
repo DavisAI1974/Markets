@@ -39,7 +39,7 @@ class _CompletedJournal:
 
 
 def open_completed_schedule_view(scope,journal_path,state_path,expected_state_sha256,
-                                 expected_state_hash,completion):
+                                 expected_state_hash,completion, *, reader_factory=VerifiedJournalReader):
     raw=Path(state_path).read_bytes()
     if hashlib.sha256(raw).hexdigest()!=expected_state_sha256:
         raise ValueError('completed state bytes differ from independent witness')
@@ -70,7 +70,7 @@ def open_completed_schedule_view(scope,journal_path,state_path,expected_state_sh
             state['adapter']['record_count']!=chain.next_cursor or
             state['adapter']['completed_event_group_count']!=chain.next_global_group_ordinal):
         raise ValueError('completed state adapter/pair counts mismatch')
-    reader=VerifiedJournalReader(journal_path,expected_count=state['journal_count'],
+    reader=reader_factory(journal_path,expected_count=state['journal_count'],
                                  expected_head_hash=state['journal_hash'])
     return SimpleNamespace(scope=scope,chain=chain,journal=_CompletedJournal(reader,chain),
         _failed=False,evidence_class='READ_ONLY_COMPLETED_SOURCE_SCHEDULE_VIEW')

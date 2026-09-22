@@ -20,8 +20,6 @@ foreach ($required in 'Day', 'ToolsRoot', 'Python', 'RunRoot') {
     }
 }
 $dayDirectory = Join-Path $RunRoot $Day
-if (-not (Get-Variable CycleLimit -ErrorAction SilentlyContinue)) { $CycleLimit = 19 }
-if ([int]$CycleLimit -lt 1 -or [int]$CycleLimit -gt 19) { throw 'CycleLimit must be 1 through 19' }
 $configurationPath = Join-Path $dayDirectory 'actual-host-configuration.json'
 if (-not (Test-Path $configurationPath)) { throw "no run configuration for $Day at $configurationPath" }
 $configuration = Get-Content $configurationPath -Raw | ConvertFrom-Json
@@ -31,8 +29,17 @@ if (-not $prefixesDirectory) { throw "run configuration for $Day declares no hos
 $manifestPath = $configuration.host_runtime.prefix_manifest.path
 if (-not (Test-Path $manifestPath)) { throw "cycles need the prefix manifest first; none at $manifestPath" }
 $available = @((Get-Content $manifestPath -Raw | ConvertFrom-Json).witnesses).Count
+$schedulePath = $configuration.host_runtime.schedule.path
+if (-not $schedulePath -or -not (Test-Path -LiteralPath $schedulePath)) { throw 'Verified schedule required' }
+$actualScheduleHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $schedulePath).Hash.ToLower()
+if ($actualScheduleHash -ne $configuration.host_runtime.schedule.sha256) { throw 'Schedule bytes changed' }
+$schedule = Get-Content -LiteralPath $schedulePath -Raw | ConvertFrom-Json
+$expected = @($schedule.steps).Count
+if ($expected -lt 1) { throw 'Schedule declares no cycles' }
+if (-not (Get-Variable CycleLimit -ErrorAction SilentlyContinue)) { $CycleLimit = $expected }
+if ([int]$CycleLimit -lt 1 -or [int]$CycleLimit -gt $expected) { throw 'CycleLimit exceeds the declared schedule' }
+
 if ($available -lt [int]$CycleLimit) { throw 'Requested cycles lack verified prefixes' }
-$expected = 19
 
 $git = Get-Command git -ErrorAction SilentlyContinue
 if ($git) { Write-Output ("TOOLS_HEAD=" + (& $git.Source -C $ToolsRoot rev-parse HEAD)) }
@@ -51,7 +58,7 @@ try {
     $code = $LASTEXITCODE
 } finally { Pop-Location }
 if (Test-Path $log) {
-    Get-Content $log -Tail 60 | ForEach-Object { $_.ToString().Substring(0, [Math]::Min(400, $_.ToString().Length)) }
+    Get-Content -LiteralPath $log
 }
 
 # The runner states its own outcome on its last JSON line. This script never infers a completion
@@ -63,7 +70,7 @@ if (Test-Path $log) {
 }
 if ($code -ne 0 -or -not $statusLine) { throw "cycles exited $code for $Day; last status: $statusLine" }
 $status = $statusLine | ConvertFrom-Json
-if ($status.status -ne 'all_nineteen_cycles_complete' -and $status.status -ne 'requested_cycles_complete') {
+if ($status.status -ne 'all_scheduled_cycles_complete' -and $status.status -ne 'all_nineteen_cycles_complete' -and $status.status -ne 'requested_cycles_complete') {
     throw "cycles did not complete for $Day; runner reported '$($status.status)'"
 }
 $receipt = [ordered]@{

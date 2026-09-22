@@ -1,0 +1,20 @@
+{
+  "schema": "FRANKIE_TRADING_DAY_LAUNCH_V1",
+  "trading_day": "20211004",
+  "session_policy": "cme_trading_day",
+  "open_utc": "2021-10-03T22:00:00Z",
+  "halt_utc": "2021-10-04T21:00:00Z",
+  "source_manifest": {
+    "path": "research/kalshi/frankie_boss/blocks/BLOCK_20211004_SOURCE_MANIFEST.json",
+    "manifest_hash": "a399377b5b005d989daa467048438437c47b8597dc8cfb5861c3706c6f92a355"
+  },
+  "declared_record_count": 2032203,
+  "model_context_rows": null,
+  "cutoff_rule": null,
+  "cutoffs": null,
+  "ingestion_receipt": null,
+  "mapping": null,
+  "source_contract": null,
+  "publish_route": null,
+  "_note": "Declared count is not an ingestion measurement. Every null is a blocking input; do not infer it. Source contract conventions and cutoff roster require authorship; runtime checks preserve this distinction."
+}

@@ -41,17 +41,28 @@ def snapshot_compact_prefix(source_path, destination_path, *, compact_path,
         raise ValueError('original physical pin differs')
     before, compact_before = source.stat(), compact.stat()
     count = 2*(through_cursor+1)
-    with VerifiedJournalReader(source, expected_count=parent_count,
-                               expected_head_hash=parent_head_hash):
-        pass
-    db = sqlite3.connect(source.as_uri()+'?mode=ro', uri=True)
-    try:
-        anchor = db.execute('SELECT digest FROM entries WHERE ordinal=?',(count-1,)).fetchone()
-    finally:
-        db.close()
-    if anchor is None:
-        raise ValueError('original causal anchor missing')
-    expected_head = anchor[0]
+    if source == compact:
+        # A fresh trading-day ingest has no raw journal. Read the anchor from its
+        # independently witnessed compact container, preserving the same digest.
+        try:
+            from .compact_source import CompactSource
+        except ImportError:
+            from compact_source import CompactSource
+        with CompactSource(compact, expected_sha256=compact_sha256,
+                expected_count=parent_count, expected_head_hash=parent_head_hash) as original_source:
+            expected_head = original_source.digest_at(count - 1)
+    else:
+        with VerifiedJournalReader(source, expected_count=parent_count,
+                                   expected_head_hash=parent_head_hash):
+            pass
+        db = sqlite3.connect(source.as_uri()+'?mode=ro', uri=True)
+        try:
+            anchor = db.execute('SELECT digest FROM entries WHERE ordinal=?',(count-1,)).fetchone()
+        finally:
+            db.close()
+        if anchor is None:
+            raise ValueError('original causal anchor missing')
+        expected_head = anchor[0]
     staging = destination.with_name(destination.name+'.partial-'+uuid.uuid4().hex)
     copied, head = 0, GENESIS_HASH
     try:

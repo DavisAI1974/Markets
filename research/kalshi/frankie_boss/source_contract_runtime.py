@@ -18,8 +18,19 @@ def load_contract(path, expected_sha256):
     if hashlib.sha256(raw).hexdigest()!=expected_sha256:
         raise ValueError('principal source contract differs from independent pin')
     body=json.loads(raw)
-    if body.get('schema')!='FRANKIE_OWN_SOURCE_CONTRACT_V1' or len(body.get('cycles',[]))!=19:
-        raise ValueError('complete principal-authored 19-cycle source contract required')
+    trading = body.get('schema') == 'FRANKIE_TRADING_DAY_SOURCE_CONTRACT_V1'
+    count = body.get('cycle_count') if trading else 19
+    if (body.get('schema') not in ('FRANKIE_OWN_SOURCE_CONTRACT_V1', 'FRANKIE_TRADING_DAY_SOURCE_CONTRACT_V1')
+            or type(count) is not int or count < 1 or len(body.get('cycles', [])) != count):
+        raise ValueError('complete principal-authored source contract required')
+    if trading:
+        from .trading_day_schedule import _hash
+        _hash(body.get('source_manifest_hash'), 'source_contract.source_manifest_hash')
+        day = body.get('trading_day')
+        if type(day) is not str or len(day) != 8 or not day.isdigit():
+            raise ValueError('source_contract.trading_day required')
+        if [c.get('cycle_index') for c in body['cycles']] != list(range(count)):
+            raise ValueError('source contract cycle indices must cover the declared roster')
     for name in ('convention','calendar','timing_policy','query_policy'):
         if digest(body[name])!=body[name+'_hash']:
             raise ValueError('principal policy bytes differ from authored hash')
@@ -64,6 +75,8 @@ def bind_cycle(contract_path, expected_contract_sha256, cycle_index, prefix):
             'through_cursor':c['source_prefix']['source_cursor'],'learning_cutoff_ns':c['learning_cutoff_ns'],
             'learning_through_source_cursor':c['learning_through_source_cursor']} for c in contract['cycles']]}
     return {'sessions':sessions,'expected_sessions_hash':session_registry_hash(sessions),
+        **({'trading_day':contract['trading_day'], 'cycle_count':contract['cycle_count'],
+            'source_manifest_hash':contract['source_manifest_hash']} if 'trading_day' in contract else {}),
         **expected,'source_hash':source_hash,'learning_cutoff_ns':cycle['learning_cutoff_ns'],
         'learning_through_source_cursor':cycle['learning_through_source_cursor'],
         'timing_policy_hash':contract['timing_policy_hash'],'query_policy_hash':contract['query_policy_hash'],
@@ -121,7 +134,7 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
     delivered=_checked_receipt(delivery_receipt)
     result=json.loads(Path(result_path).read_bytes())
     identity=result['layers']['identity_receipt']
-    agent={'run_id':identity['run_id'],'arm':identity['arm'],'source_day':'20211003',
+    agent={'run_id':identity['run_id'],'arm':identity['arm'],'source_day':binding.get('trading_day', '20211003'),
         'source_manifest_hash':identity['source_manifest_hash'],
         'delivery_manifest_sha256':delivered['manifest_sha256'],
         'delivery_receipt_sha256':delivered['receipt_sha256'],'result_hash':result['result_hash']}

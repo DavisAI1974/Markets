@@ -69,7 +69,7 @@ def receipt_line(output):
 
 
 class DayPipeline:
-    def __init__(self, configuration, day, *, runner=subprocess_runner, runs_root='runs', now=time.time, cycle_limit=19):
+    def __init__(self, configuration, day, *, runner=subprocess_runner, runs_root='runs', now=time.time, cycle_limit=None):
         self.c, self.day, self.run, self.now = dict(configuration), str(day), runner, now
         if not self.day.isdigit() or len(self.day) != 8:
             raise ValueError('day must be YYYYMMDD')
@@ -177,7 +177,7 @@ class DayPipeline:
         gate = {name: value.get(name) for name in GATES[stage]}
         if any(gate[name] is None for name in gate):
             raise StageRefused(f'{stage} receipt line lacks {[n for n in gate if gate[n] is None]}')
-        if stage == 'schedule-prefixes' and gate['prefix_count'] < min(self.c.get('minimum_prefixes', 19), self.cycle_limit):
+        if stage == 'schedule-prefixes' and gate['prefix_count'] < min(self.c.get('minimum_prefixes', self.cycle_count), self.cycle_limit):
             raise StageRefused('fewer prefixes than the day requires')
         if stage == 'cycles' and gate['cycles_completed'] != gate['cycles_total']:
             raise StageRefused('cycles incomplete; resume with the same run directory')
@@ -234,10 +234,10 @@ class DayPipeline:
         if stage == 'cycles':
             value = receipt_line(output)
             if value.get('status') == 'requested_cycles_complete':
-                if (value.get('day') != self.day or value.get('cycles_total') != 19
+                if (value.get('day') != self.day or value.get('cycles_total') != self.cycle_count
                         or value.get('cycles_completed') != self.cycle_limit
                         or value.get('requested_cycles') != self.cycle_limit
-                        or self.cycle_limit == 19):
+                        or self.cycle_limit == self.cycle_count):
                     raise StageRefused('partial cycles receipt differs from the requested batch')
                 path = self.directory / f'04-cycles-batch-{self.cycle_limit:02d}.json'
                 if path.exists():
@@ -352,7 +352,7 @@ def main(argv=None):
     parser.add_argument('--record', default=None, choices=STAGES, help='record a stage that ran as its own job')
     parser.add_argument('--from', dest='receipt_from', default=None, help="that job's verification receipt")
     parser.add_argument('--runs-root', default='runs')
-    parser.add_argument('--cycles', type=int, choices=range(1, 20), default=19)
+    parser.add_argument('--cycles', type=int, default=None)
     args = parser.parse_args(argv)
     configuration = json.loads(Path(args.configuration).read_bytes())
     if any(word in json.dumps(configuration).lower() for word in ('secret', 'api_key', 'password', 'token')):

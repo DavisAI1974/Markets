@@ -94,7 +94,7 @@ def load_cycle_calculation_pin(cycle_index, path=None):
     Refuses an absent or malformed file, an index no pin covers, and an index two pins cover.
     Returns the pin entry with the file witness attached so the caller can pin it.
     """
-    if type(cycle_index) is not int or not 0 <= cycle_index < 19:
+    if type(cycle_index) is not int or cycle_index < 0:
         raise ValueError('cycle calculation pin required: valid Sunday cycle index required')
     pins_path = Path(path or CYCLE_CALCULATION_PINS_PATH)
     if not pins_path.is_file():
@@ -653,9 +653,13 @@ class FrankiePrincipalAdapter:
                 handle.write(original)
         block = self._receiver_input_block(prepared)
         findings = self._run_findings_block()
-        prefix = ("# Current authorized continuation\n"
-            "Sunday 2021-10-03 is the sole source and run day. No separate source day or October 1 "
-            "prerequisite applies. Reuse completed principal-authored sections with their original "
+        source_instruction = (
+            "Trading day " + self.feedback_contract['trading_day'] +
+            " is the source session; its UTC partitions form one continuous stream. "
+            if self.feedback_contract.get('trading_day') else
+            "Sunday 2021-10-03 is the sole source and run day. No separate source day or October 1 prerequisite applies. ")
+        prefix = ("# Current authorized continuation\n" + source_instruction +
+            "Reuse completed principal-authored sections with their original "
             "authorship; author the new source convention, BOSS feedback and run analysis. Preserve frozen "
             "pre-Sunday Memory A; store new lessons separately. The original historical prompt follows "
             "unchanged for provenance, followed by the newly verified BOSS attributed input. Its "
@@ -770,7 +774,7 @@ class FrankiePrincipalAdapter:
             'instruction': ('Read the full delivered causal evidence and actual BOSS attributed input. '
                 'Reuse the preserved Frankie-authored 18-section evidence with its original authorship as '
                 'provenance; never substitute runner findings for your own calculations. This authorized run '
-                'is Sunday only and requires no separate source day. Preserve Memory A. Author new '
+                'uses the source session declared in feedback_contract. Preserve Memory A. Author new '
                 'feedback and lessons against feedback_contract; use null for unavailable values. '
                 'Cite every retained section hash. Supply feedback without principal_receipt_hash, '
                 'lessons, sections (section ID to retained SHA256), session_id and '

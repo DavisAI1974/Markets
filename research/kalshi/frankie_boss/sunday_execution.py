@@ -205,9 +205,23 @@ class SundayExecution:
             raise ValueError('runtime schedule differs from trusted source receipt')
         schedule=json.loads(raw)
         self.steps=schedule['steps'] if isinstance(schedule,dict) else schedule
-        if len(self.steps)!=19 or any(a['as_of']>=b['as_of'] or a['through_cursor']>=b['through_cursor']
+        declared_count = schedule.get('step_count', 19) if isinstance(schedule, dict) else 19
+        if type(declared_count) is not int or declared_count < 1 or len(self.steps)!=declared_count or any(a['as_of']>=b['as_of'] or a['through_cursor']>=b['through_cursor']
                 for a,b in zip(self.steps,self.steps[1:])):
-            raise ValueError('complete increasing 19-cycle runtime schedule required')
+            raise ValueError('complete increasing declared runtime schedule required')
+        if isinstance(schedule, dict) and schedule.get('schema') == 'BOSS_TRADING_DAY_CAUSAL_CYCLE_SCHEDULE_V1':
+            from .trading_day_schedule import verify
+            from .source_contract_runtime import load_contract
+            verify(schedule, expected_digest=schedule['schedule_sha256'])
+            contract = load_contract(self.contract_path, self.contract_hash)
+            if any(contract.get(k) != schedule[k] for k in ('trading_day', 'source_manifest_hash')) or contract.get('cycle_count') != len(self.steps):
+                raise ValueError('source contract differs from the trading-day schedule')
+            for index, step in enumerate(self.steps):
+                bound = bind_cycle(self.contract_path, self.contract_hash, index, step)
+                feedback = step['feedback_available_through']
+                if (bound['learning_cutoff_ns'] != feedback['as_of'] or
+                        bound['learning_through_source_cursor'] != feedback['through_cursor']):
+                    raise ValueError('source contract learning boundary differs from the schedule')
         if self.principal_configuration.get('receiver_commit')!=agent_commit:
             raise ValueError('principal receiver differs from pinned exporter lineage')
         _save(self.directory/'execution-identity.c15.json',dict(run_id=run_id,
@@ -218,7 +232,7 @@ class SundayExecution:
     def request_id(self,index):return f'{self.run_id}-cycle-{index:02d}'
 
     async def run_cycle(self,index):
-        if type(index) is not int or not 0<=index<19:raise ValueError('valid Sunday cycle index required')
+        if type(index) is not int or not 0<=index<len(self.steps):raise ValueError('valid Sunday cycle index required')
         request_id=self.request_id(index)
         async with self._lock:
             with _exclusive(self.directory/'execution.lock'):
@@ -328,9 +342,10 @@ class SundayExecution:
                     if controller_journal is not None:controller_journal.close()
                     if runtime.release is not None:runtime.release()
 
-    async def run_remaining(self, *, cycles=19):
+    async def run_remaining(self, *, cycles=None):
         """Run in order until complete or an actual host principal handoff is pending."""
-        if type(cycles) is not int or not 1 <= cycles <= 19:
+        if cycles is None: cycles = len(self.steps)
+        if type(cycles) is not int or not 1 <= cycles <= len(self.steps):
             raise ValueError('cycles must be an integer from 1 through 19')
         results=[]
         for index in range(cycles):results.append(await self.run_cycle(index))

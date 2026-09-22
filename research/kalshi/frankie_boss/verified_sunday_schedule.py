@@ -22,6 +22,9 @@ def _ordered(value,keys):
     return {key:value[key] for key in keys}
 
 def verified_schedule(value,*,expected_digest):
+    from .trading_day_schedule import SCHEMA, verify
+    if isinstance(value, dict) and value.get('schema') == SCHEMA:
+        return verify(value, expected_digest=expected_digest)
     result=_ordered(value,(*TOP,'schedule_sha256'))
     if result['schema']!='BOSS_SUNDAY_CAUSAL_CYCLE_SCHEDULE_V1':
         raise ValueError('unsupported schedule schema')

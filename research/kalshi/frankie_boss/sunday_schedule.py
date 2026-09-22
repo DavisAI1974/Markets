@@ -8,7 +8,7 @@ from .context_session import journal_prefix
 
 
 def build_schedule(builder, mapping_index, *, expected_index_sha256,
-                   cutoffs_path, expected_cutoffs_sha256, model_context_rows):
+                   cutoffs_path, expected_cutoffs_sha256, model_context_rows, trading_day=None):
     """Read every source entry once; no forecasts or market labels are computed.
 
     Retained group_index is zero-based (the verified first member is group zero).
@@ -21,7 +21,8 @@ def build_schedule(builder, mapping_index, *, expected_index_sha256,
         raise ValueError('retained principal cutoff bytes changed')
     cutoffs = json.loads(raw)['invocation_cutoffs']
     indices = [row['group_index'] for row in cutoffs]
-    if len(indices) != 19 or indices != sorted(set(indices)):
+    if (not indices or any(type(i) is not int or i < 0 for i in indices)
+            or (trading_day is None and len(indices) != 19) or indices != sorted(set(indices))):
         raise ValueError('complete retained nineteen-cutoff roster required')
     mapped, index_hash, group_count, final_cursor = {}, hashlib.sha256(), 0, -1
     with Path(mapping_index).open('rb') as stream:
@@ -73,4 +74,12 @@ def build_schedule(builder, mapping_index, *, expected_index_sha256,
         steps=steps, terminal_delivery=terminal, first_observed_trade_candidate=first_trade,
         anchor_authorship='candidate evidence only; principal must certify interval convention',
         model_context_rows=model_context_rows, source_dates_required=1, feedback_lag='next retained cutoff')
+    if trading_day is not None:
+        from .trading_day_schedule import SCHEMA, IDENTITY, seal
+        if set(trading_day) != set(IDENTITY):
+            raise ValueError('complete trading-day schedule identity required')
+        result.update(trading_day)
+        result['schema'] = SCHEMA
+        result['source_dates_required'] = len(trading_day['source_partitions'])
+        return seal(result)
     return dict(result, schedule_sha256=hashlib.sha256(canonical_bytes(pack(result))).hexdigest())

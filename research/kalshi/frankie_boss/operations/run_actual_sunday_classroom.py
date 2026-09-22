@@ -258,7 +258,7 @@ class ClassroomActualHost(base.ActualHost):
             agent_commit=c["receiver_commit"],
             state_defects_and_gaps_reported=h["state_defects_and_gaps_reported"],
         )
-        return await runner.run_remaining(cycles=getattr(self, 'cycle_limit', 19))
+        return await runner.run_remaining(cycles=getattr(self, 'cycle_limit', None))
 
 
 ActualHost = ClassroomActualHost
@@ -275,7 +275,7 @@ def main(host_class=ActualHost):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--configuration", required=True)
     parser.add_argument("--prepare-only", action="store_true")
-    parser.add_argument("--cycles", type=int, choices=range(1, 20), default=19,
+    parser.add_argument("--cycles", type=int, default=None,
                         help="Run the first N scheduled cycles; resume the same run later.")
     args = parser.parse_args()
     configuration = json.loads(Path(args.configuration).read_bytes())
@@ -305,15 +305,19 @@ def main(host_class=ActualHost):
             )
         ) as probe:
             host = host_class(configuration, prepare_only=args.prepare_only, probe=probe)
-            host.cycle_limit = args.cycles
+            host.source()
+            total_cycles = len(host.schedule['steps'])
+            host.cycle_limit = total_cycles if args.cycles is None else args.cycles
+            if type(host.cycle_limit) is not int or not 1 <= host.cycle_limit <= total_cycles:
+                raise ValueError('cycles must be within the verified schedule')
             host.principal_host_lock = host_lock
             try:
                 result = asyncio.run(host.run())
-                probe.advance("complete", completed=len(result), total=args.cycles, unit="steps")
+                probe.advance("complete", completed=len(result), total=host.cycle_limit, unit="steps")
                 print(
                     json.dumps(
                         dict(
-                            status=("all_nineteen_cycles_complete" if args.cycles == 19
+                            status=("all_scheduled_cycles_complete" if host.cycle_limit == total_cycles
                                     else "requested_cycles_complete"),
                             cycles=len(result),
                         )

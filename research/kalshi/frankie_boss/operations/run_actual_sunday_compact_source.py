@@ -102,7 +102,7 @@ def host_class(actual, tools_root=None, base=None):
                 receipt['records_in_prefix']!=binding['through_cursor']+1 or
                 receipt['source_prefix_hash']!=binding['source_hash'] or
                 receipt['as_of']!=binding['as_of'] or receipt['source_as_of']!=binding['source_as_of'] or
-                receipt['source_records_expected']!=57027):
+                receipt['source_records_expected']!=self.full_source_completion['record_count']):
                 raise ValueError('actual prefix snapshot differs from full source and authored cutoff')
             if self.compact_source().digest_at(receipt['journal_count']-1)!=receipt['journal_head_hash']:
                 raise ValueError('snapshot head differs from compact source prefix')

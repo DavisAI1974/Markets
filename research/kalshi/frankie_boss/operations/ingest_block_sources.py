@@ -446,7 +446,7 @@ def main():
                        ingest_seconds=result['ingest_seconds'], ingest_cpu_seconds=result['ingest_cpu_seconds'],
                        records_per_second=result['records_per_second'], ms_per_record=result['ms_per_record'],
                        conformance_seconds=result['conformance_seconds'], sessions=result['sessions'],
-                       partial_members_ingested=result['partial_members'], packing=result['packing'], boxes=_boxes(journal),
+                       partial_members_ingested=result['partial_members'], packing=result['packing'], boxes=(_boxes(journal) if writer == 'compact' else None),
                        ingested_unix=int(time.time()), model_calls=0, training_updates=0)
         write_once(directory / 'ingestion-receipt.json', receipt)
         emit(dict(phase='complete', writer=writer, journal_count=receipt['journal_count'], journal_hash=receipt['journal_hash'],
