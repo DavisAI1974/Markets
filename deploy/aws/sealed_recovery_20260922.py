@@ -51,6 +51,7 @@ def main():
         Parameters={'commands':[script],'executionTimeout':['21600']},TimeoutSeconds=21600,
         Comment='Conformance-only sealed Monday recovery; no source replay; original journal read-only')
     cid=response['Command']['CommandId']
+    print('SSM_RECOVERY_COMMAND '+cid,flush=True)
     dispatch=dict(schema='FRANKIE_SEALED_RECOVERY_DISPATCH_V1',run_id=run,code_commit=commit,
         instance_id=INSTANCE,ssm_command_id=cid,bundle_sha256=sha,bundle_bytes=len(bundle),s3_prefix=prefix)
     dispatch_raw=(json.dumps(dispatch,sort_keys=True)+'\n').encode()
@@ -80,11 +81,31 @@ def main():
         print(result.get('StandardErrorContent',''),flush=True)
         raise RuntimeError('recovery did not finish; preserve attempt and inspect recorded evidence')
     for name in filenames:
-        body=s3.get_object(Bucket=BUCKET,Key=prefix+name)['Body'].read()
+        try:
+            body=s3.get_object(Bucket=BUCKET,Key=prefix+name)['Body'].read()
+        except s3.exceptions.NoSuchKey:
+            if name=='progress.jsonl':
+                continue
+            raise
         Path(name).write_bytes(body)
     receipt=json.loads(Path('recovery-receipt.json').read_bytes())
-    for key in ('checkpoint','completion'):
+    expected=dict(schema='FRANKIE_SEALED_INGESTION_RECOVERY_RECEIPT_V1',status='complete',code_commit=commit,
+        manifest_hash='a399377b5b005d989daa467048438437c47b8597dc8cfb5861c3706c6f92a355',
+        record_count=2032203,journal_count=4064406,
+        journal_hash='534f442aa0008032064c540f1c472433cb665a97bfec94399f8137ca103f207c',
+        source_boundary_sha256=hashlib.sha256(boundary).hexdigest(),
+        source_replays=0,adapter_apply_calls=0,parent_writes=0,original_ingest_status='Cancelled')
+    if any(receipt.get(k)!=v for k,v in expected.items()):
+        raise RuntimeError('recovered receipt differs from independently dispatched pins')
+    container=receipt['container']
+    if (container['sha256']!='947949d84732b0d7fa22b2e853ee89fdcfaf995955d9de652b36b344333b9888'
+            or container['bytes']!=23687368704
+            or container['path']!='/opt/frankie-box/work/ingest-20211004-ingest-1790057801/journal.compact.sqlite'):
+        raise RuntimeError('recovered container differs from independent physical witness')
+    for key,filename in (('checkpoint','builder-checkpoint.c15.json'),('completion','completion.json')):
         artifact=receipt['artifacts'][key]
+        if artifact['file']!=filename:
+            raise RuntimeError('unexpected recovery artifact path')
         body=Path(artifact['file']).read_bytes()
         if len(body)!=artifact['bytes'] or hashlib.sha256(body).hexdigest()!=artifact['sha256']:
             raise RuntimeError('published artifact identity differs from receipt')

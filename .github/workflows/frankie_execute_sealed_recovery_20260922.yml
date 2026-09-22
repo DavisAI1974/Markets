@@ -1,0 +1,60 @@
+name: Monday sealed journal conformance recovery
+on:
+  push:
+    branches: ['codex/trading-day-readiness-20260922']
+    paths: ['.github/workflows/frankie_execute_sealed_recovery_20260922.yml']
+permissions:
+  contents: read
+concurrency:
+  group: monday-sealed-recovery-20211004
+  cancel-in-progress: false
+jobs:
+  recover:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      RECOVERY_ORIGINAL_ROOT: ${{ github.workspace }}/.original
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 2ae4da204b0d2a12f605e765f281b505ff51491a
+          path: .original
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --no-cache-dir torch==2.9.1 --index-url https://download.pytorch.org/whl/cpu
+      - run: python -m pip install --no-cache-dir numpy==2.3.5 pytest==9.1.1 boto3==1.42.23 botocore==1.42.97
+      - name: Gate actual recovery on exact reconstruction and publication tests
+        run: |
+          python -m compileall -q research/kalshi/frankie_boss/sealed_recovery_run.py deploy/aws/sealed_recovery_20260922.py deploy/aws/box/frankie_box_recovery_bootstrap.py
+          python -m pytest -q research/kalshi/frankie_boss/tests/test_sealed_compact_recovery.py research/kalshi/frankie_boss/tests/test_sealed_recovery_publication.py
+      - name: Bind independently verified cutoff witness
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          raw=Path('research/kalshi/frankie_boss/blocks/MONDAY_SOURCE_BOUNDARY_VERIFIED_20260922.json').read_bytes()
+          with Path('source-boundary.json').open('xb') as stream:stream.write(raw)
+          PY
+      - name: Recover from sealed journal without source replay
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: python deploy/aws/sealed_recovery_20260922.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: sealed-monday-recovery
+          path: |
+            recovery-dispatch.json
+            source-boundary.json
+            builder-checkpoint.c15.json
+            completion.json
+            recovery-receipt.json
+            progress.jsonl

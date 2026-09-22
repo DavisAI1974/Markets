@@ -66,6 +66,9 @@ def main():
         raise ValueError('recovery requires a fresh isolated work directory')
     output.mkdir(exist_ok=False)
     uploads=json.loads(Path(args.upload_map).read_bytes())
+    required={'source-boundary.json','builder-checkpoint.c15.json','completion.json','recovery-receipt.json'}
+    if not required.issubset(uploads) or any(not isinstance(uploads[name],str) or not uploads[name].startswith('https://') for name in required):
+        raise ValueError('complete HTTPS publication destinations required before recovery')
     root=Path(__file__).resolve().parents[3]
     manifest_raw=(root/'research/kalshi/frankie_boss/blocks/BLOCK_20211004_SOURCE_MANIFEST.json').read_bytes()
     manifest=json.loads(manifest_raw)
