@@ -43,3 +43,16 @@ def test_json_entry_rescues_a_messy_ledger_and_keeps_raw_text_when_hopeless():
     assert 'parse_repairs' not in e
     e = session.Session._json_entry(dict(text='nothing usable', incomplete=False), 'output_z')
     assert e['status'] == 'could_not' and e['boss_text'] == 'nothing usable' and 'raw text retained' in e['reason']
+
+
+import pytest
+
+@pytest.mark.parametrize('outcome', [dict(text='I cannot complete this request.'),
+    dict(text='I+1 ' * 500, incomplete=True), dict(text='provider failure', error='transport'),
+    dict(text='intro\n' + 'I+1\n' * 100)])
+def test_unusable_hash_free_merge_keeps_all_input_notes(tmp_path, outcome):
+    s = stub(tmp_path)
+    inputs = ['price moved 5.544 to 5.634', 'part four structure facts']
+    kept = session.Session._merge_keep(s, 'merge-safe', inputs, outcome)
+    assert kept.startswith('\n'.join(inputs)) and 'MERGE KEPT VERBATIM' in kept
+    assert outcome['text'] in (tmp_path / 'merges' / 'merge-safe.model-output.md').read_text()

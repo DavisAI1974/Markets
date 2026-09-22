@@ -106,3 +106,47 @@ def test_a_runaway_note_is_detected_and_deloops_when_kept(tmp_path):
     note = (notes_dir / 'note-0003.md').read_text()
     assert note.count('RUNAWAY TAIL REMOVED') == 2 and note.count('I+1') == 0 and GOOD.rstrip('\n') in note
     assert (notes_dir / 'attempt-0003-first.md').read_text().count('I+1') == 400
+
+
+import json
+import pytest
+
+def integrated_reader(tmp_path, monkeypatch, answers):
+    fake, unused = make(tmp_path, answers)
+    s = session.Session.__new__(session.Session)
+    s.__dict__.update(fake.__dict__)
+    s.work = tmp_path / 'work'
+    s.work.mkdir()
+    s.day, s.pod_id, s.request_sha256 = '20211004', 'unused', 'a'*64
+    corpus = s.work / 'corpus.md'
+    corpus.write_bytes(DATA)
+    s.reading_corpus = lambda: corpus
+    s._chunks = lambda data: [(0, len(data))]
+    s._fan_out = lambda label, items, fn: [fn(item) for item in items]
+    s._merge_calls = []
+    s._merge = lambda notes, level: s._merge_calls.append(notes) or '\n'.join(notes)
+    s.docs = lambda: None
+    s.refuse = lambda reason: (_ for _ in ()).throw(RuntimeError(reason))
+    monkeypatch.setattr(session, 'READING_LEDGER', tmp_path / 'ledger.json')
+    return s
+
+def test_unusable_reading_cannot_merge_or_become_current_on_restart(tmp_path, monkeypatch):
+    s = integrated_reader(tmp_path, monkeypatch, [('', False, None)] * 4 + [(GOOD, False, None)])
+    with pytest.raises(RuntimeError, match='unusable'):
+        s.reading()
+    assert s._merge_calls == [] and not s._corpus_current()
+    first = json.loads((s.work / 'reading.json').read_text())
+    assert first['status'] == 'incomplete' and first['outcomes'][0]['unusable']
+    s.reading()
+    assert len(s._calls) == 5 and s._corpus_current()
+    assert len(s._merge_calls) == 1
+    assert any(p.read_text() == json.dumps(first, indent=2, sort_keys=True) + '\n'
+               or json.loads(p.read_text()) == first for p in s.work.glob('superseded-reading-*/reading.json'))
+    receipt = json.loads((s.work / 'reading.json').read_text())
+    assert receipt['status'] == 'complete' and receipt['outcomes'][0]['unusable'] == []
+    assert '20211004 trading-day run' in s._calls[-1][1]
+    assert s._calls[-1][0] != s._calls[0][0]
+    note = Path(receipt['notes_dir']) / 'note-0000.md'
+    note.write_text('tampered')
+    assert not s._corpus_current()
+    assert list(s.work.glob('superseded-reading-*/move-receipt.json'))

@@ -169,3 +169,24 @@ def test_every_publication_retries_brain_retention_first(tmp_path, monkeypatch):
     assert events == ['brain'] and not (s.dir / 'done').exists()
     assert session.Session.push(s) is True
     assert events == ['brain', 'brain', 'push']
+
+
+@pytest.mark.parametrize('payload', ['', '## BOSS/Granite producer evidence\n{broken'])
+def test_raw_corpus_carries_the_pinned_prior_cycle_zero_documents(tmp_path, monkeypatch, payload):
+    s = stub(tmp_path, monkeypatch)
+    s.day = '20211004'
+    s._head_through_ledger = lambda text: text
+    monkeypatch.setattr(session, 'ROOT', tmp_path)
+    monkeypatch.setattr(session, 'READING_CONFIG', tmp_path / 'absent.json')
+    (tmp_path / 'request').mkdir()
+    (tmp_path / 'request' / 'prompt.md').write_text('request instructions\n' + payload)
+    (s.work / 'derivation-digest-full.md').write_text('historical digest')
+    (s.out / 'analysis.md').write_text('prior cycle zero observed knowledge')
+    (s.out / 'response.json').write_text('{"lessons": []}')
+    brain = session.brain_module()
+    brain.write_entry(s.work, s.out, session.BRAIN_DIR, '00')
+    s.knowledge_base = brain.pin_session_base(session.BRAIN_DIR, 'a'*64, s.work / 'base-receipt.json')
+    corpus = session.Session.reading_corpus(s)
+    assert 'prior cycle zero observed knowledge' in corpus.read_text()
+    report = json.loads((s.work / 'reading-corpus.json').read_text())
+    assert any(m['name'].endswith('analysis.md') for m in report['members'])
