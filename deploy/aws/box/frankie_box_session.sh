@@ -130,7 +130,7 @@ correction() {
   # response this session wrote. Never touches the cycle session unit.
   U="frankie-correction-$CYCLE"
   if systemctl is-active --quiet "$U.service"; then echo "$U is already running"; status; return 0; fi
-  if systemctl is-active --quiet "frankie-session-$CYCLE.service"; then echo "frankie-session-$CYCLE is running: the correction waits (its checkout would move the code under the running session)"; return 2; fi
+  if systemctl is-active --quiet "$UNIT.service"; then echo "$UNIT is running: the correction waits (its checkout would move the code under the running session)"; return 2; fi
   [ -s "$ROOT/request/classroom-correction-request.json" ] || { echo "no correction request on the box (ACTION=fetch_correction first)"; return 2; }
   [ -s "$S/out/response.json" ] || { echo "no out/response.json: the correction belongs to the session that wrote the response"; return 2; }
   git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"

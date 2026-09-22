@@ -224,6 +224,12 @@ def test_a_16_plus_digit_decimal_is_a_number_not_a_digest():
     assert T._number_tokens('at 1633298400123456789 ns') == ['1633298400123456789']
 
 
+def test_a_short_hex_prefix_never_licenses_its_digit_runs():
+    assert T.missing_numbers('777 nodes', 'commit 1b777cf2') == ['777']                   # the prefix is a digest, not three numbers
+    assert T.missing_numbers('commit 1b777cf2 again', 'commit 1b777cf2') == []
+    assert T.missing_numbers('gap 47500000 ns', 'gap 47500000 ns') == []                   # eight decimal digits stay a number
+
+
 def test_a_range_or_date_hyphen_is_not_a_minus_sign():
     assert T.missing_numbers('groups 0-2 on 2026-09-21', 'groups 0 and 2, dated 2026 09 21') == []
     assert T.missing_numbers('a -5 delta', 'the 5 groups') == ['-5']                      # a real minus still travels

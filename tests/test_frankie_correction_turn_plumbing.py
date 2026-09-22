@@ -45,7 +45,10 @@ def test_export_host_script_exports_the_correction_request_alone_on_the_correcti
 
 def test_the_correction_unit_waits_for_a_running_cycle_session():
     text = (ROOT / 'deploy' / 'aws' / 'box' / 'frankie_box_session.sh').read_text()
-    assert 'if systemctl is-active --quiet "frankie-session-$CYCLE.service"; then echo "frankie-session-$CYCLE is running: the correction waits' in text
+    import re
+    unit = re.search(r'^UNIT="([^"]+)"', text, re.M).group(1)                                # the unit start_session starts
+    guard = re.search(r'if systemctl is-active --quiet "(\$UNIT|[^"]+)\.service"; then echo "[^"]*the correction waits', text)
+    assert guard and guard.group(1) == '$UNIT' and unit == 'frankie-cycle-$CYCLE'            # the guard names the unit that runs, not a name never started
     assert 'trap' in text and "doc.get('original_request_sha256') != answered" in text
 
 

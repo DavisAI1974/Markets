@@ -30,7 +30,7 @@ PRINTED_VIOLATIONS = 20
 MAX_QUESTIONS, MAX_QUESTION_CHARS = 20, 500
 _NUMBER = re.compile(r'(?:(?<![\d.])-)?\d+(?:\.\d+)?')   # a minus stays with its number; a hyphen after a digit is a range or a date
 _THOUSANDS = re.compile(r'(?<=\d),(?=\d{3}(?!\d))')
-_HEX = re.compile(r'\b(?=[0-9]*[a-f])[0-9a-f]{16,}\b')   # sha256 values and their prefixes (a letter among them) never license a number; a 19-digit ns clock is a NUMBER
+_HEX = re.compile(r'\b(?=[0-9]*[a-f])[0-9a-f]{8,}\b')    # sha256 values and their prefixes (8+ hex chars with a letter among them) never license a number; a 19-digit ns clock is a NUMBER
 
 
 def sha256_bytes(data):
@@ -235,7 +235,7 @@ def prompt(text, *, cycle, request_id):
 
 
 def _number_tokens(text):
-    """The number literals of a text, thousands separators removed and hex digests (16+ hex chars with at least one letter)
+    """The number literals of a text, thousands separators removed and hex digests (8+ hex chars with at least one letter)
     removed first: a digit run inside a sha256 never licenses a number, and a pure-decimal run (a ns clock, a gap) is never
     mistaken for one. A leading minus stays with its number; a hyphen after a digit (0-2, 2026-09-21) is not a minus."""
     cleaned = _HEX.sub(' ', _THOUSANDS.sub('', text or ''))

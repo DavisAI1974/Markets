@@ -270,6 +270,18 @@ def test_a_second_derive_moves_the_earlier_derived_files_aside_with_a_receipt(tm
     assert receipt['reason'].startswith('the layers are derived again')
 
 
+def test_a_derive_that_fails_after_the_move_aside_never_leaves_a_current_derivation(tmp_path, monkeypatch):
+    s = stub(tmp_path, monkeypatch)
+    session.Session.derive(s)
+    assert s._derive_needed()[0] is False
+    monkeypatch.setattr(s, '_derive_bedrock', lambda *a, **k: (_ for _ in ()).throw(RuntimeError('traversal died')))
+    with pytest.raises(RuntimeError, match='traversal died'):
+        session.Session.derive(s)
+    needed, why = s._derive_needed()
+    assert needed is True and why == 'no derivation digest'                                  # the earlier receipt and digest moved with the directory
+    assert not (s.work / 'derive.json').exists()
+
+
 def test_move_aside_moves_named_sibling_files_even_without_a_directory_and_never_collides_on_the_receipt(tmp_path):
     B = FX.B
     (tmp_path / 'derive.json').write_text('{"a": 1}')
