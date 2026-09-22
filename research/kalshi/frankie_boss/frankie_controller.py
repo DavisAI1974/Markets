@@ -204,7 +204,7 @@ class FrankieForecastController:
         self._validate_pins()
         config = self._configuration()
         if critic_knowledge is not None:
-            from .critic_knowledge import validate_knowledge
+            from research.kalshi.frankie_boss.critic_knowledge import validate_knowledge
             critic_knowledge = validate_knowledge(critic_knowledge, cutoff_ns=as_of, request_id=request_id)
             if self.context_encoding != 'stacked_v1':
                 raise ValueError('critic knowledge requires stacked_v1 route')

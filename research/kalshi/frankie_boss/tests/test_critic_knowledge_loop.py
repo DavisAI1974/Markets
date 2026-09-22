@@ -208,6 +208,7 @@ def test_request_plan_preserves_arrays_on_resume(tmp_path,monkeypatch,tamper):
         adapter_class=IntegratedDipoleClassroomPrincipalAdapter)
     runtime=driver.runtime_factory(None,None,None)
     runtime.context_encoding='stacked_v1'
+    monkeypatch.setattr(module,'NativeForecastRefresh',lambda *a,**kw:object())
     bundle=build([record('prior',99)],cutoff=100,request_id='request-cycle-00')
     runtime.critic_knowledge=copy.deepcopy(bundle)
     with pytest.raises(Pending): asyncio.run(driver.run_cycle(0))
@@ -234,26 +235,38 @@ def test_prepared_body_cannot_lie_about_knowledge(tmp_path):
         knowledge.verify_prepared_knowledge(body,altered)
 
 def test_legacy_lesson_retry_does_not_rewrite_history(tmp_path,monkeypatch):
+    from research.kalshi.frankie_boss.c15_journal import canonical_bytes,pack
     store,checkpoint,args,calls=cycle_fixture(tmp_path,monkeypatch)
-    original=store._save
+    original_save=store._save; original_lessons=store._save_lessons
+    class Controller:
+        async def refresh(self,**kw):
+            calls['controller']+=1
+            return dict(request_id='sun',request_hash='e'*64,status='complete',records=(),critic={})
+    args['controller_factory']=Controller
+    def legacy_lessons(request_id,feedback,envelope,training):
+        record=dict(request_id=request_id,available_ns=feedback.available_ns,
+            feedback_hash=feedback.digest,principal_receipt_hash=feedback.principal_receipt_hash,
+            training_checkpoint_hash=training['checkpoint_hash'],lessons=envelope['lessons'],
+            frozen_memory_sha256=store.memory_hash)
+        digest=evidence_hash(record)
+        with store.lessons:
+            store.lessons.execute('INSERT INTO lessons VALUES (?,?,?,?)',
+                (request_id,feedback.available_ns,canonical_bytes(pack(record)),digest))
+        return dict(lessons_hash=digest,available_ns=feedback.available_ns)
     def crash(request_id,stage,value):
-        if stage=='complete': raise RuntimeError('crash after lesson commit')
-        return original(request_id,stage,value)
+        if stage=='complete':raise RuntimeError('crash after lesson commit')
+        return original_save(request_id,stage,value)
     monkeypatch.setattr(store,'_save',crash)
+    monkeypatch.setattr(store,'_save_lessons',legacy_lessons)
     try:
         with pytest.raises(RuntimeError):asyncio.run(store.run(**args))
         old=store.lessons.execute('SELECT payload,digest FROM lessons').fetchone()
-        monkeypatch.setattr(store,'_save',original)
-        # Upgrade sees an exchange now, while the retained legacy lesson lacks it.
-        original_load=store._load
-        def loaded(request_id,stage):
-            result=original_load(request_id,stage)
-            return dict(result,critic={}) if stage=='controller' and result else result
-        monkeypatch.setattr(store,'_load',loaded)
+        monkeypatch.setattr(store,'_save',original_save)
+        monkeypatch.setattr(store,'_save_lessons',original_lessons)
         monkeypatch.setattr(knowledge,'critic_exchange',lambda *a,**kw:dict(diagnostic='new optional exchange'))
         asyncio.run(store.run(**args))
         assert store.lessons.execute('SELECT payload,digest FROM lessons').fetchone()==old
-        assert calls['learner']==calls['principal']==1
+        assert calls['learner']==calls['principal']==calls['controller']==1
     finally:store.close();checkpoint.close()
 
 class KnowledgeCritic:

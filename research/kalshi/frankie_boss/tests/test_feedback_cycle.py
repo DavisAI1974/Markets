@@ -6,6 +6,7 @@ import pytest
 import torch
 
 from research.kalshi.frankie_boss import feedback_cycle as cycle
+from research.kalshi.frankie_boss.c15_journal import evidence_hash
 from research.kalshi.frankie_boss.boss_training_checkpoint import BossTrainingCheckpoint
 from research.kalshi.frankie_boss.native_forecast_learning import FrankieFeedback
 

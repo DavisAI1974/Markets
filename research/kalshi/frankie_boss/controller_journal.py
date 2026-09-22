@@ -27,7 +27,7 @@ def _critic_context(state, intent):
         raise ValueError('critic encoding differs from exact native snapshot')
     knowledge = state['intent']['request'].get('critic_knowledge')
     if knowledge is not None:
-        from .critic_knowledge import validate_knowledge
+        from research.kalshi.frankie_boss.critic_knowledge import validate_knowledge
         validate_knowledge(knowledge, cutoff_ns=state['intent']['request']['as_of'])
     if route.encoding == 'stacked_v1' and route.encode(native, knowledge=knowledge, **(config.get('context_encoding_options') or {})).text != snapshot.text:
         raise ValueError('critic encoding differs from configured exact derivation options')
