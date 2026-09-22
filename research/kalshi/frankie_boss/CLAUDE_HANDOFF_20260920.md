@@ -4422,3 +4422,20 @@ NOT built, on Greg's call if the canary is not minutes: the parallel-replay writ
 book checkpoints, workers replaying slices from the checkpoints to emit bodies, the parent patching each previous hash and
 hashing: the parent's sequential work falls to one sha256 per entry, about 0.1 ms; bytes identical, provable by the
 both-writers test; a day's build in the pinned writer).
+
+### 06:1xZ 09-22: THE CANARY OVER THE IMPROVEMENTS: 1.77 ms per record, 1.0 hour projected (was 8.9 ms, 5.02 hours)
+
+The first dispatch (run 35693626919) died at import on the box: the ingest tool had pulled in journal_stack_execution for
+the box standard, and that module's FLAT imports resolve under the test conftest, not under the box's PYTHONPATH (the
+markets root only). Fixed (86c02edc): the standard lives in `box_standard.py` (package- and flat-importable),
+journal_stack_execution re-exports it, and a test now runs the tool exactly as the box does (cd markets, PYTHONPATH=root,
+--help), shown failing first. Second dispatch (run 35693868307, 06:13:16Z, success 06:14:30Z, SSM command in the log):
+20,000 records in 35.4 s = 564.97 records/s = 1.77 ms/record; extrapolated_hours_for_total 1.0 for the 2,032,203 declared;
+journal_count 40,000; worker CPU 171.0 s (31 encoders, blocks of 256 rows or 16 MiB); packing block_rows 256, block_bytes
+16,777,216; scope_hash fb8e2dcc, head 41134507. The first canary (177.8 s, 112.49 records/s, head 80397485) ran on the
+OLD Monday manifest (79ea97f8): the scope id IS the manifest hash, so the re-derived manifest (a399377b, d68c0b90) changed
+every INPUT entry's scope_genesis_hash and the two heads are NOT comparable; the byte identity of the observation on real
+data is the builder's own differential check (the first observation and every 64th, about 300 checks on this canary,
+none refused) beside the fixture's both-writers proof. Speed-up 5.0x; the parent is still the bound (1.77 ms/record):
+what remains is the INPUT entry (pack, dumps, sha of the raw record), the chain hash, the composed join and sha256 of
+~200 KB, the adapter apply and the decode; the parallel-replay writer is the next lever if an hour is not minutes.
