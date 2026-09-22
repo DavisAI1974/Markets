@@ -128,9 +128,16 @@ mkdir -p "$DEST"
 if [ "$DOCS_ONLY" != "1" ]; then for f in $FILES; do cp "$OUT/$f" "$DEST"/; done; fi
 if [ "$BRAIN_ONLY" != "1" ] && [ -d "$OUT/docs" ]; then mkdir -p "$DEST/docs-cycle-$CYCLE"; cp "$OUT"/docs/*.md "$OUT"/docs/docs-index.json "$DEST/docs-cycle-$CYCLE"/ && echo "docs: $(ls "$OUT"/docs | wc -l) files -> $DEST/docs-cycle-$CYCLE"; fi
 if [ -d "$ROOT/brain/cycle-$CYCLE" ]; then mkdir -p "$DEST/brain/cycle-$CYCLE"; cp "$ROOT/brain/cycle-$CYCLE"/* "$DEST/brain/cycle-$CYCLE"/ && echo "brain: cycle $CYCLE entry ($(ls "$ROOT/brain/cycle-$CYCLE" | wc -l) files) -> $DEST/brain/cycle-$CYCLE"; fi
+# Preserve every prior run and each request's knowledge-base manifest in git as well as on the box.
+for part in history bases; do
+  if [ -d "$ROOT/brain/$part" ]; then
+    mkdir -p "$DEST/brain/$part"
+    cp -a "$ROOT/brain/$part/." "$DEST/brain/$part/" || exit 2
+  fi
+done
 git add "$DEST"
 if [ "$TURN" = "correction" ]; then MSG="root: cycle $CYCLE Frankie Dipole classroom correction response, host correction record and attestation (from Frankie's box i-035994afa8bdf66a5; the same session's turn 2)"; elif [ "$BRAIN_ONLY" = "1" ]; then MSG="root: cycle $CYCLE brain entry (derivation digest, accounting and ledgers, analysis; Frankie's calculation findings carried forward)"; elif [ "$DOCS_ONLY" = "1" ]; then MSG="root: cycle $CYCLE session documents as Markdown (reading notes, merges, merged notes, derivation digest, receipts; from Frankie's box)"; else MSG="root: cycle $CYCLE Frankie response, attestation, host session record, analysis, session documents (from Frankie's box i-035994afa8bdf66a5; request_sha256 per response.json)"; fi
-git -c user.name=frankie-box -c user.email=frankie-box@markets.local commit -q -m "$MSG" || echo "(nothing new to commit)"
+git -c user.name=frankie-box -c user.email=frankie-box@markets.local commit -q -m "$MSG" -m "Co-Authored-By: Codex <noreply@openai.com>" || echo "(nothing new to commit)"
 git -c credential.helper="$HELPER" push -q origin "HEAD:$BR" || { echo "push failed"; exit 4; }
 unset FRANKIE_GIT_TOKEN
 git log --oneline -1; git ls-remote origin "$BR"

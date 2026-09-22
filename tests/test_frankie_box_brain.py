@@ -211,3 +211,41 @@ def test_write_frozen_entry_refuses_a_delivered_path_outside_the_checkout(tmp_pa
             brain.write_frozen_entry(prompt, repo, tmp_path / 'brain')
     prompt.write_text('| `learned_dipoles_and_geometry` | frozen_learned_structure | DELIVERED | `research/STUDY.md` `000000000000` |\n')
     brain.write_frozen_entry(prompt, repo, tmp_path / 'brain')      # a path inside the checkout is fine
+
+
+def test_rerun_adds_knowledge_and_cycle_zero_reads_prior_run_documents(cycle0, tmp_path):
+    work, out = cycle0
+    b = tmp_path / 'brain'
+    (out / 'docs').mkdir()
+    (out / 'docs' / 'reading.md').write_text('The prior reading findings.\n')
+    brain.write_entry(work, out, b, '00')
+    original = (b / 'cycle-00' / 'MANIFEST.json').read_bytes()
+    base = brain.capture_base(b, 'a' * 64)
+    text, members = brain.load(b, '00', snapshot=base)
+    assert 'The prior reading findings.' in text and 'observed: the run went so.' in text
+    assert any(m['name'].endswith('session-doc-reading.md') for m in members)
+    before = base.read_bytes()
+    (out / 'analysis.md').write_text('New findings from the next run.\n')
+    brain.write_entry(work, out, b, '00')
+    receipts = list((b / 'history').glob('move-*.json'))
+    assert len(receipts) == 1
+    moved = Path(json.loads(receipts[0].read_bytes())['destination'])
+    assert (moved / 'MANIFEST.json').read_bytes() == original
+    assert base.read_bytes() == before
+    assert 'New findings from the next run.' not in brain.load(b, '00', snapshot=base)[0]
+    later = brain.capture_base(b, 'b' * 64)
+    text, _ = brain.load(b, '00', snapshot=later)
+    assert 'observed: the run went so.' in text and 'New findings from the next run.' in text
+
+
+def test_pinned_knowledge_refuses_missing_or_modified_included_document(cycle0, tmp_path):
+    work, out = cycle0
+    b = tmp_path / 'brain'
+    brain.write_entry(work, out, b, '00')
+    base = brain.capture_base(b, 'c' * 64)
+    entry = json.loads(base.read_bytes())['entries'][0]
+    (b / entry['path'] / 'analysis.md').write_text('changed')
+    with pytest.raises(ValueError, match='historical knowledge missing or changed'):
+        brain.load(b, '00', snapshot=base)
+    with pytest.raises(ValueError, match='historical knowledge missing or changed'):
+        brain.capture_base(b, 'c' * 64)

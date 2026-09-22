@@ -1,7 +1,7 @@
 """Frankie's brain: the calculation findings of every prior cycle, carried into the next cycle's reading (Greg, 2026-09-21
 chat 6: "cycle 0 and 1 calc findings should be in the brain without a doubt; other generated docs case by case").
 
-One entry per cycle under <brain>/cycle-<NN>/: the derivation digest (every layer of the pin, what the calculations
+The latest entry remains under <brain>/cycle-<NN>/ for compatibility; every replaced version is preserved in history with a move receipt. Requests pin all accumulated entries, including earlier runs of the same cycle number, through capture_base. Each entry holds: the derivation digest (every layer of the pin, what the calculations
 found), the accounting entry and the ten output ledgers (from response.json's lessons), the analysis, each with its
 bytes and sha256 in MANIFEST.json. The next cycle's session loads every entry of an EARLIER cycle whose manifest says
 include: true and whose bytes still match, and appends it to the reading corpus as members, so Frankie reads and
@@ -38,10 +38,102 @@ def _lessons_doc(response):
     return f'# Accounting entry and output ledgers ({len(blocks)} JSON lessons of the response)\n\n' + '\n'.join(blocks)
 
 
+def _archive_entry(brain, entry_dir):
+    """Preserve the previous version with a receipt for its move."""
+    import uuid
+    brain, entry_dir = Path(brain).resolve(), Path(entry_dir)
+    if not entry_dir.exists():
+        return None
+    if entry_dir.is_symlink() or entry_dir.resolve().parent != brain:
+        raise ValueError('brain entry must be an immediate real directory')
+    history = brain / 'history'
+    history.mkdir(exist_ok=True)
+    stamp = str(time.time_ns()) + '-' + uuid.uuid4().hex
+    target = history / (entry_dir.name + '-' + stamp)
+    manifest = entry_dir / 'MANIFEST.json'
+    value = dict(schema='FRANKIE_BRAIN_PRESERVATION_RECEIPT_V1', source=str(entry_dir),
+                 destination=str(target), manifest_sha256=sha256_bytes(manifest.read_bytes()) if manifest.is_file() else None,
+                 reason='new run adds knowledge; previous entry retained whole')
+    entry_dir.rename(target)
+    with (history / ('move-' + stamp + '.json')).open('x', encoding='utf-8') as handle:
+        json.dump(value, handle, indent=1, sort_keys=True)
+    return target
+
+
+def _checked_entry(directory, expected_hash=None):
+    directory = Path(directory)
+    raw = (directory / 'MANIFEST.json').read_bytes()
+    if expected_hash is not None and sha256_bytes(raw) != expected_hash:
+        raise ValueError('knowledge manifest differs from pinned base')
+    manifest = json.loads(raw)
+    for entry in manifest.get('entries', []):
+        if not entry.get('include'):
+            continue
+        name = entry.get('name', '')
+        path = directory / name
+        if (not name or Path(name).name != name or path.is_symlink() or not path.is_file()
+                or sha256_bytes(path.read_bytes()) != entry.get('sha256')
+                or path.stat().st_size != entry.get('bytes')):
+            raise ValueError('included historical knowledge missing or changed: ' + name)
+    return manifest, sha256_bytes(raw)
+
+
+def capture_base(brain, request_identity):
+    """Pin all accumulated prior-run knowledge, including cycle zero, for this request."""
+    import re
+    import shutil
+    if not re.fullmatch('[0-9a-f]{64}', request_identity):
+        raise ValueError('full request identity required for knowledge base')
+    brain = Path(brain)
+    snapshot = brain / 'bases' / request_identity / 'MANIFEST.json'
+    if snapshot.is_file():
+        list(snapshot_entries(brain, snapshot))
+        return snapshot
+    history = brain / 'history'
+    history.mkdir(parents=True, exist_ok=True)
+    candidates = list(brain.glob('cycle-*/MANIFEST.json')) + list(history.glob('*/MANIFEST.json'))
+    frozen = brain / FROZEN_DIR / 'MANIFEST.json'
+    if frozen.is_file():
+        candidates.append(frozen)
+    entries = {}
+    for path in sorted(candidates):
+        manifest, digest = _checked_entry(path.parent)
+        if digest in entries:
+            continue
+        destination = history / ('entry-' + digest)
+        if not destination.exists():
+            shutil.copytree(path.parent, destination)
+        _checked_entry(destination, digest)
+        entries[digest] = dict(path=str(destination.relative_to(brain)), sha256=digest,
+                               cycle=manifest.get('cycle'), source_schema=manifest.get('schema'))
+    value = dict(schema='FRANKIE_ACCUMULATED_KNOWLEDGE_BASE_V1', request_identity=request_identity,
+                 entries=list(entries.values()), rule='all previously stored intact knowledge; immutable for this request')
+    snapshot.parent.mkdir(parents=True, exist_ok=True)
+    with snapshot.open('x', encoding='utf-8') as handle:
+        json.dump(value, handle, indent=1, sort_keys=True)
+    return snapshot
+
+
+def snapshot_entries(brain, snapshot):
+    brain = Path(brain).resolve()
+    value = json.loads(Path(snapshot).read_bytes())
+    if value.get('schema') != 'FRANKIE_ACCUMULATED_KNOWLEDGE_BASE_V1':
+        raise ValueError('accumulated knowledge base schema differs')
+    for entry in value['entries']:
+        path = (brain / entry['path']).resolve()
+        if not path.is_relative_to(brain / 'history'):
+            raise ValueError('knowledge base entry is outside retained history')
+        manifest, digest = _checked_entry(path, entry['sha256'])
+        yield ('prior-run-' + digest[:16] + '-cycle-' + str(entry.get('cycle')), manifest, path)
+
+
 def write_entry(work, out, brain, cycle, include_analysis=True):
     """Write <brain>/cycle-<cycle>/ from the session's work and out directories. Returns the manifest."""
     work, out, entry_dir = Path(work), Path(out), Path(brain) / f'cycle-{cycle}'
-    entry_dir.mkdir(parents=True, exist_ok=True)
+    if not (work / 'derivation-digest-full.md').is_file():
+        raise FileNotFoundError('the brain entry needs the calculation findings')
+    _archive_entry(brain, entry_dir)
+    entry_dir.mkdir(parents=True, exist_ok=False)
     entries = []
 
     def put(name, data, source, kind, include=True):
@@ -91,6 +183,11 @@ def write_entry(work, out, brain, cycle, include_analysis=True):
         doc = ('# Derived files of this cycle (witnessed by name, bytes, sha256; the derivation digest renders their content losslessly)\n\n'
                '| file | bytes | sha256 |\n|---|---:|---|\n' + '\n'.join(f"| {f['name']} | {f['bytes']} | {f['sha256']} |" for f in files) + '\n')
         put('derived-files.md', doc.encode('utf-8'), derived, 'witness of the derived files (their content is in the digest)', False)
+    docs = out / 'docs'
+    if docs.is_dir():
+        for path in sorted(docs.glob('*.md')):
+            put('session-doc-' + path.name, path.read_bytes(), path,
+                'session document: retained whole for subsequent runs')
     manifest = dict(schema=SCHEMA, cycle=cycle, at=time.time(), entries=entries,
                     note='Greg, 2026-09-21: the calculation findings of cycles 0 and 1 are in the brain without a doubt; other documents '
                          'case by case: set include to false to keep an entry out of the next corpus, add a file with include true to bring one in.')
@@ -196,7 +293,8 @@ def write_frozen_entry(historical_prompt, repo, brain):
         # containment: a path the delivered prompt names is data; it must resolve inside the checkout (never .. or absolute)
         if Path(path).is_absolute() or '..' in Path(path).parts or not (repo_root / path).resolve().is_relative_to(repo_root):
             raise ValueError(f'the delivered prompt names a frozen file outside the checkout: {path!r}')
-    entry_dir.mkdir(parents=True, exist_ok=True)
+    _archive_entry(brain, entry_dir)
+    entry_dir.mkdir(parents=True, exist_ok=False)
     entries = []
     for (path, prefix), layers in sorted(files.items()):
         src = repo / path
@@ -251,24 +349,24 @@ def entries_before(brain, cycle):
     return found
 
 
-def identity(brain, cycle):
+def identity(brain, cycle, *, snapshot=None):
     """A short digest of every included prior entry (name + sha256): part of the corpus identity."""
     h = hashlib.sha256()
-    fm, _ = frozen_entry(brain)
+    fm, _ = (None, None) if snapshot else frozen_entry(brain)
     for e in (fm or {}).get('entries', []):
         if e.get('include'):
             h.update(f'frozen/{e["name"]}/{e["sha256"]}\n'.encode())
-    for cyc, manifest, d in entries_before(brain, cycle):
+    for cyc, manifest, d in (snapshot_entries(brain, snapshot) if snapshot else entries_before(brain, cycle)):
         for e in manifest.get('entries', []):
             if e.get('include'):
                 h.update(f'{cyc}/{e["name"]}/{e["sha256"]}\n'.encode())
     return h.hexdigest()[:16]
 
 
-def load(brain, cycle):
+def load(brain, cycle, *, snapshot=None):
     """(text, members): the included, digest-verified entries of every earlier cycle as corpus text plus member records."""
     parts, members = [], []
-    fm, fd = frozen_entry(brain)
+    fm, fd = (None, None) if snapshot else frozen_entry(brain)
     if fm:
         parts.append("\n\n## Frankie's brain: the frozen learned structure, the files the request's knowledge layers name (delivered by path; "
                      "their content here from the checkout, each verified against the delivered digest). Compare this cycle's derivations "
@@ -285,7 +383,7 @@ def load(brain, cycle):
                 continue
             parts.append(f"\n### {e['source']} (layers: {', '.join(e.get('layers', []))}; sha256 {e['sha256'][:16]})\n\n" + data.decode('utf-8', errors='replace') + '\n')
             members.append(dict(name=f'brain-frozen-{name}', bytes=len(data), sha256=e['sha256'], treatment='brain: frozen learned-structure file, whole'))
-    for cyc, manifest, d in entries_before(brain, cycle):
+    for cyc, manifest, d in (snapshot_entries(brain, snapshot) if snapshot else entries_before(brain, cycle)):
         for e in manifest.get('entries', []):
             name = e.get('name', '')
             p = d / name

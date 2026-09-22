@@ -1086,7 +1086,7 @@ class Session:
         # receipt and plan are moved aside under work/ (nothing deleted; its notes stay under their own notes-<sha> dir).
         identity = (f'{R.RENDER_VERSION}+{DG.SCHEMA}+{HR.SCHEMA}+tensors:{tensor_mode}'
                     f'+digest:{(sha256_bytes(digest_path.read_bytes())[:16] if digest_path.exists() else "none")}'
-                    f'+brain:{brain_module().identity(BRAIN_DIR, self.cycle)}')
+                    f'+brain:{brain_module().identity(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))}')
         receipt_path = self.work / 'reading-corpus.json'
         if corpus_path.exists() and receipt_path.exists():
             prior = load_json(receipt_path)
@@ -1157,7 +1157,7 @@ class Session:
                         parts.append(f'\n\n## Frankie\'s merged notes from cycle {cyc} (carried forward; values marked $read below were read then)\n\n'
                                      + notes.decode('utf-8', errors='replace') + '\n')
                         members.append(dict(name=f'merged-notes-cycle-{cyc}', bytes=len(notes), sha256=rec['merged_notes_sha256'], treatment='prior cycle notes, whole'))
-            brain_text, brain_members = brain_module().load(BRAIN_DIR, self.cycle)
+            brain_text, brain_members = brain_module().load(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))
             if brain_text:
                 parts.append("\n\n## Frankie's brain: the calculation findings of the earlier cycles, carried forward whole (Greg, 2026-09-21). "
                              'These are your own prior derivations and findings; read them as your own memory, compare this cycle\'s '
@@ -1342,7 +1342,7 @@ class Session:
             m = brain_module().write_entry(self.work, self.out, BRAIN_DIR, self.cycle)
             self.note(f'brain: cycle {self.cycle} entry written, {len(m["entries"])} documents in {BRAIN_DIR / ("cycle-" + self.cycle)}')
         except Exception as error:
-            self.note(f'brain: entry not written ({type(error).__name__}: {error}); the session continues')
+            raise RuntimeError(f'brain findings were not retained: {type(error).__name__}: {error}') from error
 
     def docs(self):
         """Every session document as Markdown under out/docs (README + index); never fails the session."""
@@ -1895,6 +1895,13 @@ class Session:
         if missing:
             self.refuse(f'brain: no calculation findings entry for cycle(s) {", ".join(missing)}; cycle {self.cycle} must read them first '
                         f'(Greg, 2026-09-21). Publish them: frankie_box_push_response.sh BRAIN_ONLY=1 CYCLE=<NN>, or restore {BRAIN_DIR}')
+
+        self.knowledge_base = brain.capture_base(BRAIN_DIR, self.request_sha256)
+        base = load_json(self.knowledge_base)
+        write_json(self.work / ('knowledge-base-' + self.request_sha256 + '.json'), dict(
+            schema='FRANKIE_SESSION_KNOWLEDGE_BASE_RECEIPT_V1', request_identity=self.request_sha256,
+            path=str(self.knowledge_base), entries=len(base['entries']), **witness(self.knowledge_base)))
+        self.note(f'brain: pinned {len(base["entries"])} accumulated entries for this request, including prior cycle-zero runs')
 
     def _run(self, stage):
         self.verify()

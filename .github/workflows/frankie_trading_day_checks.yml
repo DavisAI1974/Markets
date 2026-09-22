@@ -4,6 +4,8 @@ on:
     branches: ['codex/trading-day-readiness-20260922']
     paths:
       - 'research/kalshi/frankie_boss/**'
+      - 'deploy/aws/box/frankie_box_brain.py'
+      - 'deploy/aws/box/frankie_box_push_response.sh'
       - 'deploy/aws/box/frankie_box_bedrock.py'
       - 'deploy/aws/box/frankie_box_boss_session.py'
       - 'deploy/aws/box/frankie_box_digest_render.py'
@@ -34,4 +36,4 @@ jobs:
         run: python -m pytest -q research/kalshi/frankie_boss/tests/test_trading_day_schedule.py research/kalshi/frankie_boss/tests/test_schedule_serialization.py research/kalshi/frankie_boss/tests/test_completed_schedule_view.py research/kalshi/frankie_boss/tests/test_ingest_block_sources.py research/kalshi/frankie_boss/tests/test_run_actual_sunday_compact_source.py research/kalshi/frankie_boss/tests/test_day_pipeline.py research/kalshi/frankie_boss/tests/test_source_contract_runtime.py research/kalshi/frankie_boss/tests/test_compact_prefix_through_cache.py
       - name: Expanded cycle zero regressions
         if: success() || failure()
-        run: python -m pytest -q tests/test_frankie_box_classroom.py tests/test_frankie_box_packets.py tests/test_frankie_box_boss_session_rerun.py tests/test_frankie_box_bedrock.py tests/test_frankie_box_digest_render.py tests/test_frankie_box_boss_session_derive.py tests/test_frankie_box_boss_session_teach.py
+        run: python -m pytest -q tests/test_frankie_box_brain.py tests/test_frankie_box_classroom.py tests/test_frankie_box_packets.py tests/test_frankie_box_boss_session_rerun.py tests/test_frankie_box_bedrock.py tests/test_frankie_box_digest_render.py tests/test_frankie_box_boss_session_derive.py tests/test_frankie_box_boss_session_teach.py
