@@ -22,6 +22,8 @@
   the bedrock receipt/result and the ledgers whole (docs) and reference the layer files.
 - `research/kalshi/frankie_boss/operations/derive_trading_day_manifest.py` + `blocks/BLOCK_20211004_SOURCE_MANIFEST.json` - a trading day's manifest from a staged block (the Monday 2021-10-04 day: 2,032,203 records declared, the partial take at the halt).
 - `deploy/aws/box/frankie_box_ingest_block.sh` - the trading-day ingest on Frankie's box: fetch by presigned map, canary, ingest (all CPUs), status.
+- `research/kalshi/frankie_boss/SHIP_REVIEW_20260922_CHAT9_INGEST.md` - the /ship decision on the ingest-speed commits (the incremental observation, the box standard in the writer): GO, required items fixed (chat 9).
+- `research/kalshi/frankie_boss/SPEC-ingest-parallel-replay.md` - the next lever after 1.77 ms per record: bodies produced in parallel from book checkpoints, the parent keeping only the digest chain; not built, Greg's call.
 - `research/kalshi/frankie_boss/SHIP_REVIEW_20260922_CHAT9.md` - the /ship decision on the chat-8 code (the row window out, the Friday anchor, module 1, the box wrapper): GO after fixes, all landed (chat 9).
 - `research/kalshi/frankie_boss/SPEC-bedrock-section-tables.md` - BR-9: sections 4.2 (daily book regime) and 4.4 (the mirror) projected into V6 tables on the box side, the producers untouched (built, chat 9).
 - `research/kalshi/frankie_boss/SPEC-trading-day-ingest.md` - module 1 of the trading-day map: the staged block ingested whole under the trading-day policy on Frankie's box, canary first, the count measured.
