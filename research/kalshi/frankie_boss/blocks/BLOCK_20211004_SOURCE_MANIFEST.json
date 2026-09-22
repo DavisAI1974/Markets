@@ -8,11 +8,10 @@
     "block": "20211004_20211006",
     "manifest_hash": "75c7134df98e83820f5472c828e6c7f07c8b0348e26aabf91726d2683be3b7b0"
   },
-  "derived_unix": 1790044906,
   "halt_boundaries_close_groups": true,
   "halt_utc_hour": 21,
   "ingested": false,
-  "manifest_hash": "79ea97f8f5d22e2d5b9f79e15eb158ab43263d1eef01eb06c9d3a4ccc3d52da7",
+  "manifest_hash": "a399377b5b005d989daa467048438437c47b8597dc8cfb5861c3706c6f92a355",
   "member_seams_close_groups": true,
   "model_calls": 0,
   "partial_members": [

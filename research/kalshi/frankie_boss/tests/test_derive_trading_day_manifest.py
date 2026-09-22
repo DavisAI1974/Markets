@@ -43,3 +43,31 @@ def test_a_manifest_whose_hash_or_sessions_do_not_reconcile_is_refused():
     bad = json.loads(json.dumps(BLOCK)); bad['sessions'][1]['before_halt'] -= 1; bad['manifest_hash'] = D.manifest_hash(bad)
     with pytest.raises(ValueError, match='do not reconcile'):
         D.derive(bad, '20211004')
+
+
+def test_contributions_replay_in_source_order_whatever_the_sessions_list_order():
+    # the chat-9 ship review: replay order followed the SESSIONS list; a reordered staged manifest derived Monday's UTC
+    # file before Sunday's. The order is the sources' own member_index, and a session naming no source is refused.
+    shuffled = json.loads(json.dumps(BLOCK)); shuffled['sessions'].reverse(); shuffled['manifest_hash'] = D.manifest_hash(shuffled)
+    body = D.derive(shuffled, '20211004')
+    assert [(s['member_index'], s['member_key']) for s in body['sources']] == [(0, 'glbx-mdp3-20211003.mbo.dbn.zst'), (1, 'glbx-mdp3-20211004.mbo.dbn.zst')]
+    assert [s['member_key'] for s in body['sessions']] == [s['member_key'] for s in body['sources']]
+    orphan = json.loads(json.dumps(BLOCK)); orphan['sessions'][0]['member_key'] = 'glbx-mdp3-20211002.mbo.dbn.zst'; orphan['manifest_hash'] = D.manifest_hash(orphan)
+    with pytest.raises(ValueError, match='names no source'):
+        D.derive(orphan, '20211004')
+
+
+def test_a_staged_manifest_without_measured_halt_counts_is_refused_with_the_reason():
+    bare = json.loads(json.dumps(BLOCK)); bare['sessions'][1].pop('before_halt'); bare['manifest_hash'] = D.manifest_hash(bare)
+    with pytest.raises(ValueError, match='before_halt'):
+        D.derive(bare, '20211004')
+
+
+def test_the_committed_monday_manifest_is_the_derivation_of_the_staged_block_byte_for_byte():
+    # the chat-9 ship review: the derivation is a pure function of the staged block and the trading day (no clock in the
+    # hashed body), so the committed file IS re-derivable and its hash confirmable by anyone
+    committed = (ROOT / 'research/kalshi/frankie_boss/blocks/BLOCK_20211004_SOURCE_MANIFEST.json').read_bytes()
+    body = D.derive(BLOCK, '20211004')
+    assert 'derived_unix' not in body
+    assert json.dumps(body, indent=2, sort_keys=True).encode() + b'\n' == committed
+    assert D.derive(BLOCK, '20211004') == body

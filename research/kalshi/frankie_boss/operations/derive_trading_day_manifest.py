@@ -11,7 +11,10 @@ A partition whose contribution is its WHOLE file is a full member; one whose con
 records (a leading take) is a partial member (`partial_members`, which ingest_block_sources stops at and verifies at
 the boundary). A contribution that would be a TAIL (post-halt records only, the prior partition of a weekday) is refused
 here: that day is ingested from the whole block, not by itself. The members keep their sha256 and size (the whole file),
-`mbo_records` becomes the take, and the manifest hash is recomputed by raw_mbo_source_manifest.manifest_hash.
+`mbo_records` becomes the take, and the manifest hash is recomputed by raw_mbo_source_manifest.manifest_hash. The
+derivation is a pure function of the block manifest and the trading day (no clock in the body; the chat-9 ship review), so
+a committed trading-day manifest is re-derivable byte for byte and its hash confirmable by anyone; provenance is
+`derived_from` (the block and its hash) and the git commit that carries the file.
 
     python operations/derive_trading_day_manifest.py --block-manifest blocks/BLOCK_20211004_20211006_SOURCE_MANIFEST.json \
         --trading-day 20211004 --out blocks/BLOCK_20211004_SOURCE_MANIFEST.json
@@ -22,7 +25,6 @@ import argparse
 import datetime as dt
 import json
 import sys
-import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
@@ -39,12 +41,31 @@ def _roll(day):
     return day
 
 
+MEASURED = ('day_utc', 'mbo_records', 'before_halt', 'after_halt')
+
+
+def sessions_in_replay_order(block):
+    """The block's session entries, each naming a source and carrying the counts measured at staging, in the SOURCES'
+    replay order (member_index), whatever order the sessions list holds (the chat-9 ship review)."""
+    by_key = {s['member_key']: s for s in block['sources']}
+    out = []
+    for entry in block['sessions']:
+        if entry.get('member_key') not in by_key:
+            raise ValueError(f'session {entry.get("member_key")} names no source of the block')
+        for field in MEASURED:
+            if field not in entry:
+                raise ValueError(f'session {entry["member_key"]} carries no measured {field}; the staged block manifest must '
+                                 'carry the halt counts decoded at staging')
+        out.append(entry)
+    return sorted(out, key=lambda e: by_key[e['member_key']]['member_index'])
+
+
 def contributions(block, trading_day):
     """Per partition, in replay order: (session entry, records this trading day takes, kind) with kind in
     whole | leading | tail | none."""
     target = dt.datetime.strptime(trading_day, '%Y%m%d').date()
     out = []
-    for entry in block['sessions']:
+    for entry in sessions_in_replay_order(block):
         day = dt.datetime.strptime(entry['day_utc'], '%Y%m%d').date()
         before = entry['before_halt'] if _roll(day) == target else 0
         after = entry['after_halt'] if _roll(day + dt.timedelta(days=1)) == target else 0
@@ -64,7 +85,7 @@ def contributions(block, trading_day):
 def derive(block, trading_day):
     if block.get('schema') != 'BOSS_BLOCK_SOURCE_MANIFEST_V1' or manifest_hash(block) != block.get('manifest_hash'):
         raise ValueError('a hash-bound block source manifest is required')
-    if any(s['mbo_records'] != s['before_halt'] + s['after_halt'] for s in block['sessions']):
+    if any(s['mbo_records'] != s['before_halt'] + s['after_halt'] for s in sessions_in_replay_order(block)):
         raise ValueError('the block manifest sessions do not reconcile to their partitions')
     by_key = {s['member_key']: s for s in block['sources']}
     sources, sessions, partial = [], [], []
@@ -88,7 +109,7 @@ def derive(block, trading_day):
     body.update(block=trading_day, trading_day=trading_day, sources=sources, sessions=sessions,
                 total_mbo_records=sum(s['mbo_records'] for s in sources), partial_members=partial,
                 derived_from=dict(block=block['block'], manifest_hash=block['manifest_hash']),
-                derived_unix=int(time.time()), ingested=False, scheduled=False, prefixes_built=False)
+                ingested=False, scheduled=False, prefixes_built=False)   # no clock in the hashed body: the derivation is a pure function
     body['manifest_hash'] = manifest_hash(body)
     block_source_scope(body, expected_manifest_hash=body['manifest_hash'])      # the validator's word, before anything is written
     return body
