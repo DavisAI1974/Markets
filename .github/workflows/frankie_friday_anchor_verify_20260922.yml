@@ -1,0 +1,110 @@
+name: Frankie Friday anchor verification (hosted read-only source)
+on:
+  push:
+    branches: ['codex/trading-day-readiness-20260922']
+    paths: ['.github/workflows/frankie_friday_anchor_verify_20260922.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      PYTHONDONTWRITEBYTECODE: '1'
+      ANCHOR_BUCKET: bento-568968024170-us-east-2-an
+      ANCHOR_KEY: nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211001.mbo.dbn.zst
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97 databento-dbn==0.62.0 zstandard==0.25.0
+      - name: Read the exact retained Friday object
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          import boto3
+          root = Path(os.environ['RUNNER_TEMP']) / ('friday-anchor-' + os.environ['GITHUB_RUN_ID'] + '-' + os.environ['GITHUB_RUN_ATTEMPT'])
+          root.mkdir(exist_ok=False)
+          (root / 'data/anchor').mkdir(parents=True)
+          (root / 'receipts').mkdir()
+          dest = root / 'data/anchor/glbx-mdp3-20211001.mbo.dbn.zst'
+          response = boto3.client('s3', region_name='us-east-2').get_object(Bucket=os.environ['ANCHOR_BUCKET'], Key=os.environ['ANCHOR_KEY'])
+          with response['Body'] as body, dest.open('xb') as out:
+              for chunk in iter(lambda: body.read(1024 * 1024), b''):
+                  out.write(chunk)
+          with dest.open('rb') as stream:
+              digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+          if dest.stat().st_size != 25628861 or digest != 'e6b4ec01bd9b34d57cb22c770b5d49c756e7f41a658f081823d923004a0121b2':
+              raise SystemExit('Friday source bytes differ from the committed pin')
+          (root / 'anchor-map.json').write_text(json.dumps({os.environ['ANCHOR_KEY']: {'bytes': 25628861}}))
+          with open(os.environ['GITHUB_ENV'], 'a') as env:
+              env.write('ANCHOR_ROOT=' + str(root) + '\n')
+          PY
+      - name: Run the corrected committed decoder without credentials
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, subprocess, sys
+          from pathlib import Path
+          source = Path('deploy/aws/box/frankie_box_friday_anchor.sh')
+          raw = source.read_bytes()
+          script = raw.decode()
+          marker = '"$ROOT/venv/bin/python" - <<\'PY\'\n'
+          if script.count(marker) != 1:
+              raise SystemExit('Friday decoder boundary differs')
+          body, tail = script.split(marker, 1)[1].split('\nPY\n', 1)
+          root = Path(os.environ['ANCHOR_ROOT'])
+          env = dict(os.environ, ROOT=str(root), INSTRUMENT='111313')
+          if any(env.get(key) for key in ('AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN')):
+              raise SystemExit('decoder must not receive AWS credentials')
+          subprocess.run([sys.executable, '-c', body], cwd=root, env=env, check=True)
+          receipts = list((root / 'receipts').glob('friday-anchor-*.json'))
+          if len(receipts) != 1:
+              raise SystemExit('exactly one fresh anchor receipt required')
+          receipt = json.loads(receipts[0].read_bytes())
+          anchor = receipt['anchor']
+          if not (anchor and anchor['instrument_id'] == 111313 and anchor['ts_recv'] < receipt['halt_ns']
+                  and receipt['file']['read_across_frames'] is True
+                  and receipt['file']['decoded_sha256'] == receipt['file']['sha256']):
+              raise SystemExit('corrected Friday verification refused')
+          verification = dict(schema='FRANKIE_FRIDAY_ANCHOR_VERIFICATION_V1', commit=os.environ['GITHUB_SHA'],
+              run_id=os.environ['GITHUB_RUN_ID'], decoder_script_sha256=hashlib.sha256(raw).hexdigest(),
+              receipt_sha256=hashlib.sha256(receipts[0].read_bytes()).hexdigest(),
+              anchor_receipt=receipt, source_replays=0, model_calls=0, host_operations=0)
+          (root / 'receipts/verification.json').write_text(json.dumps(verification, indent=2, sort_keys=True) + '\n')
+          print(json.dumps(verification, sort_keys=True))
+          PY
+      - name: Preserve verified receipts in AWS
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          import boto3
+          s3 = boto3.client('s3', region_name='us-east-1')
+          prefix = 'readiness/20260922/friday-anchor/' + os.environ['GITHUB_RUN_ID'] + '/' + os.environ['GITHUB_RUN_ATTEMPT'] + '/'
+          for path in sorted((Path(os.environ['ANCHOR_ROOT']) / 'receipts').glob('*.json')):
+              key = prefix + path.name
+              s3.put_object(Bucket='frankie-granite42-568968024170-us-east-1', Key=key, Body=path.read_bytes(),
+                            ContentType='application/json', ServerSideEncryption='AES256', IfNoneMatch='*')
+              print('preserved s3://frankie-granite42-568968024170-us-east-1/' + key)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: friday-anchor-verification
+          path: ${{ env.ANCHOR_ROOT }}/receipts/
+          if-no-files-found: error
+          retention-days: 90
