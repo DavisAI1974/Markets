@@ -4246,3 +4246,11 @@ use fewer); (2) the prefix copier's and the compact reader's `data_workers` (hos
 native step's thread count = 8, a DECLARED NUMERIC IDENTITY fixed for the whole run (`launch_pins.py:15 native_threads`),
 the root's own, not a throughput knob; (4) the serverless reading endpoint's H100 workers (0-8, two sequences each), the
 reading lane's. Greg's word taken: whole block; ingest workers = all the box's CPUs (32, the parent included).
+
+### 02:5xZ 09-22: GREG: "So I would like to do 'Monday' by itself before we do 4 days at a time"
+
+Decided: module 1 ingests the MONDAY TRADING DAY 2021-10-04 alone: a two-partition manifest (the 20211003 and 20211004
+partitions, the same S3 objects and sha256s the staged four-partition block already pins, derived from that manifest
+with the stage tool's own hashing, no AWS write) and an ingest bounded at the Monday halt (a `--through-trading-day`
+bound in `ingest_block_sources.py`, TDD; the container then holds the Monday trading day and nothing of Tuesday). The
+four-partition block ingest comes after Monday is proven. The earlier "whole block" reading is superseded by this.
