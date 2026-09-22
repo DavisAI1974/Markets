@@ -110,9 +110,12 @@ run_tool() {   # $1 = canary|ingest (prepare ran: units idle, the dispatched com
   EXTRA=""; [ "$1" = canary ] && EXTRA="--canary-records $CANARY"
   [ "${PROFILE:-0}" = 1 ] && EXTRA="$EXTRA --profile"     # PROFILE=1: cProfile the parent, profile.txt in the work directory (a measurement)
   echo "### $1: block $BLOCK, $WORKERS workers, manifest $MANIFEST, markets $MARKETS_SHA, out $OUT"
+  # the tool's whole stdout and stderr go to a log BESIDE the run directory (SSM caps its output at 24,000 characters and
+  # truncated the ingest run 35694087514's tail, the failure with it); only the log's tail is printed here
   ( cd "$ROOT/markets" && PYTHONPATH="$ROOT/markets" "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
-      --manifest "$M" --sources-dir "$DATA" --output-dir "$OUT" --session-policy cme_trading_day --workers "$WORKERS" $EXTRA ) \
-    || { echo "$1 failed (exit $?); the directory $OUT is kept"; return 3; }
+      --manifest "$M" --sources-dir "$DATA" --output-dir "$OUT" --session-policy cme_trading_day --workers "$WORKERS" $EXTRA ) >"$OUT.log" 2>&1 \
+    || { echo "$1 failed (exit $?); the directory $OUT is kept; the log $OUT.log (last 40 lines):"; tail -n 40 "$OUT.log"; return 3; }
+  echo "### $OUT.log (last 12 lines)"; tail -n 12 "$OUT.log"
   for R in canary-receipt.json ingestion-receipt.json; do [ -s "$OUT/$R" ] && { echo "### $R"; cat "$OUT/$R"; }; done
   [ -s "$OUT/profile.txt" ] && { echo "### profile.txt (whole)"; cat "$OUT/profile.txt"; }
   return 0     # the tool's exit decided above; a missing ingestion receipt on a canary is not a failure (run 35681037861 exited 1 on this test)
@@ -122,6 +125,7 @@ status() {
   echo "### partitions under $ROOT/data"; ls -la "$ROOT"/data/block_* 2>/dev/null || echo "(none)"
   echo "### ingest work directories"; ls -d "$ROOT"/work/ingest-* 2>/dev/null || echo "(none)"
   for d in "$ROOT"/work/ingest-*/; do [ -d "$d" ] || continue; for R in canary-receipt.json ingestion-receipt.json; do [ -s "$d$R" ] && { echo "### $d$R"; "$PY" -c "import json,sys; r=json.load(open(sys.argv[1])); keys=('schema','block','trading_day','records','record_count','records_per_second','extrapolated_hours_for_total','journal_count','journal_head_hash','journal_sha256','sessions','partial_members','partial_members_ingested','completion_claimed','workers'); print(json.dumps({k: r[k] for k in keys if k in r}, sort_keys=True))" "$d$R"; }; done; done
+  for d in "$ROOT"/work/ingest-*/; do d="${d%/}"; [ -s "$d/progress.jsonl" ] && { echo "### $d/progress.jsonl (last 6 of $(wc -l < "$d/progress.jsonl") lines)"; tail -n 6 "$d/progress.jsonl" | cut -c1-600; }; [ -s "$d.log" ] && { echo "### $d.log (last 30 lines)"; tail -n 30 "$d.log" | cut -c1-600; }; done
   for d in "$ROOT"/work/ingest-*/; do [ -s "$d/journal.compact.sqlite" ] && { echo "### $d/journal.compact.sqlite (boxes, rows, bytes)"; "$PY" -c "import sqlite3,sys,os; p=sys.argv[1]; db=sqlite3.connect('file:'+p+'?mode=ro', uri=True); n,rows,body=next(db.execute('SELECT count(*), coalesce(sum(count),0), coalesce(sum(length(body)),0) FROM blocks')); print(dict(boxes=n, rows=rows, block_bytes=body, file_bytes=os.path.getsize(p), bytes_per_row=(round(body/rows,1) if rows else None)))" "$d/journal.compact.sqlite"; }; done
   echo "### receipts"; ls "$ROOT"/receipts/ingest-* 2>/dev/null || echo "(none)"
   df -h / | tail -1
