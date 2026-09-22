@@ -109,14 +109,39 @@ def session_policy(name, *, halt_utc_hour):
     raise ValueError('session policy must be per_member_file, cme_trading_day or constant:<id>')
 
 
+def partial_takes(manifest, *, policy_name):
+    """The manifest's partial members (Greg, 2026-09-22: the TRADING DAY is the unit, a UTC partition is not): each names a
+    member whose declared mbo_records is the TAKE, the records of that partition that belong to this trading day (the
+    ones before the halt), with the partition's own count beside it. The take must end at a trading-day boundary, which
+    the ingest verifies on the next record; so the trading-day policy is required."""
+    raw = manifest.get('partial_members')
+    if not raw:
+        return {}
+    if policy_name != 'cme_trading_day':
+        raise ValueError('partial members need the cme_trading_day policy (the take ends at a trading-day boundary)')
+    by_key = {m['member_key']: m for m in manifest['sources']}
+    takes = {}
+    for entry in raw:
+        if (type(entry) is not dict or entry.get('member_key') not in by_key
+                or type(entry.get('take')) is not int or entry['take'] <= 0
+                or type(entry.get('partition_mbo_records')) is not int or entry['take'] >= entry['partition_mbo_records']
+                or by_key[entry['member_key']]['mbo_records'] != entry['take']):
+            raise ValueError('a partial member must name a source whose mbo_records is its take, below the partition count')
+        takes[entry['member_key']] = dict(take=entry['take'], partition_mbo_records=entry['partition_mbo_records'])
+    return takes
+
+
 def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, journal_path,
-           writer='compact', canary_records=None, block_bytes=4 * 1024 * 1024, workers=0, event=None):
+           writer='compact', canary_records=None, block_bytes=4 * 1024 * 1024, workers=0, event=None, takes=None):
     """The ingest_sources loop with a chosen writer, a per-record session policy and member-key naming.
 
     Returns dict(kind='canary'|'complete', ...). The record decode is mbo_source's pinned extractor,
-    untouched; the builder is the lawful C15Builder through SourceConformanceDriver.
+    untouched; the builder is the lawful C15Builder through SourceConformanceDriver. `takes` (from
+    partial_takes) stops a partial member after its declared take and refuses a take that does not end
+    at a trading-day boundary; the pinned conformance stack then reconciles the declared counts as ever.
     """
     SourceConformanceDriver._check_scope(scope, expected_scope_hash)
+    takes = dict(takes or {})
     dbn, zstd = mbo_source._check_pin(pin)
     if type(paths) is not tuple or len(paths) != len(scope.members):
         raise ValueError('complete ordered source paths required')
@@ -136,18 +161,31 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
         else:
             driver = SourceConformanceDriver(scope, journal_path, expected_scope_hash=expected_scope_hash)
         stack.callback(driver.close)
-        cursor, sessions_seen, stopped = 0, [], False
+        cursor, sessions_seen, stopped, partials = 0, [], False, []
         if event is not None:
             event(dict(phase='ingestion', records=0, total_records=total))
         for index, (stream, (_, ts_out), member, path) in enumerate(zip(streams, metadata, scope.members, paths)):
             name = member.member_key if source_object == 'member_key' else str(path)
-            for raw in mbo_source._records(stream, pin, ts_out, dbn):
+            take = takes.get(member.member_key)
+            taken = 0
+            records = mbo_source._records(stream, pin, ts_out, dbn)
+            for raw in records:
                 session_id = session(member, raw)
                 if not sessions_seen or sessions_seen[-1][0] != session_id:
                     sessions_seen.append((session_id, cursor, index))
                 driver.append(raw, cursor=cursor, source_member_index=index, source_sha256=member.sha256,
                               session_id=session_id, raw_symbol=None, source_dbn_object=name)
                 cursor += 1
+                taken += 1
+                if take is not None and taken == take['take']:
+                    following = next(records, None)                     # the take ends here; the next record must open a later trading day
+                    next_session = None if following is None else session(member, following)
+                    if following is not None and next_session <= session_id:
+                        raise ValueError(f'the declared take of {member.member_key} does not end at a trading-day boundary '
+                                         f'(record {take["take"] + 1} is still {next_session})')
+                    partials.append(dict(member_key=member.member_key, take=take['take'], partition_mbo_records=take['partition_mbo_records'],
+                                         next_session_id=next_session, boundary='trading_day'))
+                    break
                 if event is not None and (cursor % 10000 == 0 or cursor == total):
                     event(dict(phase='ingestion', records=cursor, total_records=total,
                                seconds=round(time.perf_counter() - started, 3)))
@@ -167,7 +205,8 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                         ms_per_record=round(1000 * ingest_seconds / cursor, 3),
                         extrapolated_hours_for_total=round(total * ingest_seconds / cursor / 3600, 2),
                         journal_count=journal_count, journal_head_hash=head, sessions=sessions, workers=workers,
-                        worker_cpu_seconds=round(worker_cpu, 3), ingested_records=cursor, completion_claimed=False)
+                        worker_cpu_seconds=round(worker_cpu, 3), ingested_records=cursor, completion_claimed=False,
+                        partial_members=partials)
         if event is not None:
             event(dict(phase='source_verification', records=cursor, total_records=total))
         verify_started = time.perf_counter()
@@ -193,7 +232,7 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                       records_per_second=round(cursor / ingest_seconds, 2),
                       ms_per_record=round(1000 * ingest_seconds / cursor, 3),
                       conformance_seconds=round(verify_seconds, 3), sessions=sessions, records=cursor,
-                      workers=workers, worker_cpu_seconds=round(worker_cpu, 3))
+                      workers=workers, worker_cpu_seconds=round(worker_cpu, 3), partial_members=partials)
         if event is not None:
             event(dict(phase='source_saved', records=cursor, total_records=total, journal_hash=completion.journal_hash))
         return result
@@ -300,11 +339,13 @@ def main():
         source_label = dict(scope='block', block=manifest['block'], bucket=manifest['bucket'], prefix=manifest['prefix'],
                             member_keys=[m.member_key for m in scope.members])
     policy_name, session = session_policy(args.session_policy, halt_utc_hour=halt)
+    takes = partial_takes(manifest, policy_name=policy_name) if not args.sunday else {}
     pin = mbo_source.MboSourcePin(3, mbo_source.runtime_hash())
     common = dict(schema=None, manifest_hash=manifest['manifest_hash'], scope_hash=scope.genesis_hash(),
                   scope_kind=scope.kind.value, session_policy=policy_name, halt_utc_hour=halt,
                   source_object_naming=args.source_object, extraction_pin=asdict(pin), extraction_hash=pin.digest,
-                  total_mbo_records=sum(m.mbo_records for m in scope.members), python=sys.version.split()[0], **source_label)
+                  total_mbo_records=sum(m.mbo_records for m in scope.members), python=sys.version.split()[0], **source_label,
+                  trading_day=manifest.get('trading_day'), partial_members=list(manifest.get('partial_members') or []))
 
     writers = ('raw', 'compact') if args.writer == 'both' else (args.writer,)
     results = {}
@@ -315,7 +356,7 @@ def main():
         emit(dict(phase='start', writer=writer, journal=str(journal), canary_records=args.canary_records))
         result = ingest(scope, paths, expected_scope_hash=scope.genesis_hash(), pin=pin, session=session,
                         source_object=args.source_object, journal_path=journal, writer=writer,
-                        canary_records=args.canary_records, block_bytes=args.block_bytes, workers=args.workers, event=emit)
+                        canary_records=args.canary_records, block_bytes=args.block_bytes, workers=args.workers, event=emit, takes=takes)
         results[writer] = result
         if result['kind'] == 'canary':
             receipt = dict(common, schema=CANARY_SCHEMA, writer=writer, **{k: v for k, v in result.items() if k != 'kind'})
@@ -339,6 +380,7 @@ def main():
                        ingest_seconds=result['ingest_seconds'], ingest_cpu_seconds=result['ingest_cpu_seconds'],
                        records_per_second=result['records_per_second'], ms_per_record=result['ms_per_record'],
                        conformance_seconds=result['conformance_seconds'], sessions=result['sessions'],
+                       partial_members_ingested=result['partial_members'],
                        ingested_unix=int(time.time()), model_calls=0, training_updates=0)
         write_once(directory / 'ingestion-receipt.json', receipt)
         emit(dict(phase='complete', writer=writer, journal_count=receipt['journal_count'], journal_hash=receipt['journal_hash'],

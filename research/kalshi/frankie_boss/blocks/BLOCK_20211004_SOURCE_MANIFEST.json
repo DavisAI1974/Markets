@@ -1,0 +1,80 @@
+{
+  "archive_prefix": "nymex/ng_mbo_5y_v0/native/2021-10",
+  "block": "20211004",
+  "bucket": "bento-568968024170-us-east-2-an",
+  "canonical_source_rewritten": false,
+  "causal_clock": "ts_recv_ns",
+  "derived_from": {
+    "block": "20211004_20211006",
+    "manifest_hash": "75c7134df98e83820f5472c828e6c7f07c8b0348e26aabf91726d2683be3b7b0"
+  },
+  "derived_unix": 1790044906,
+  "halt_boundaries_close_groups": true,
+  "halt_utc_hour": 21,
+  "ingested": false,
+  "manifest_hash": "79ea97f8f5d22e2d5b9f79e15eb158ab43263d1eef01eb06c9d3a4ccc3d52da7",
+  "member_seams_close_groups": true,
+  "model_calls": 0,
+  "partial_members": [
+    {
+      "member_key": "glbx-mdp3-20211004.mbo.dbn.zst",
+      "partition_mbo_records": 1994358,
+      "reason": "records before the 21:00Z halt belong to this trading day; the rest are the next day",
+      "take": 1975176
+    }
+  ],
+  "prefix": "frankie/block_20211004_20211006/sources",
+  "prefixes_built": false,
+  "role": "HELD_OUT_BLIND_BLOCK",
+  "sampled": false,
+  "scheduled": false,
+  "schema": "BOSS_BLOCK_SOURCE_MANIFEST_V1",
+  "sessions": [
+    {
+      "after_halt": 56782,
+      "before_halt": 245,
+      "day_utc": "20211003",
+      "f_last_groups": 43569,
+      "first_ts_recv_ns": 1633277168244072526,
+      "halt_boundary_f_last": true,
+      "instruments": 1,
+      "last_record_f_last": true,
+      "last_ts_recv_ns": 1633305596372071705,
+      "mbo_records": 57027,
+      "member_key": "glbx-mdp3-20211003.mbo.dbn.zst"
+    },
+    {
+      "after_halt": 19182,
+      "before_halt": 1975176,
+      "day_utc": "20211004",
+      "f_last_groups": 1506255,
+      "first_ts_recv_ns": 1633305600000000000,
+      "halt_boundary_f_last": true,
+      "instruments": 1,
+      "last_record_f_last": true,
+      "last_ts_recv_ns": 1633391999955312214,
+      "mbo_records": 1994358,
+      "member_key": "glbx-mdp3-20211004.mbo.dbn.zst"
+    }
+  ],
+  "source_kind": "NATIVE_DBN_MBO",
+  "sources": [
+    {
+      "mbo_records": 57027,
+      "member_index": 0,
+      "member_key": "glbx-mdp3-20211003.mbo.dbn.zst",
+      "sha256": "4380bd9ba83a5badc4839e12785aa464817b87e3fac11176b951e7b474446d88",
+      "size_bytes": 973355
+    },
+    {
+      "mbo_records": 1975176,
+      "member_index": 1,
+      "member_key": "glbx-mdp3-20211004.mbo.dbn.zst",
+      "sha256": "8ed47cc0a68cf40cae9fde45e158142978076e60d3f9fc7cf940196babfddc0a",
+      "size_bytes": 34300424
+    }
+  ],
+  "staged_unix": 1789548979,
+  "total_mbo_records": 2032203,
+  "trading_day": "20211004"
+}

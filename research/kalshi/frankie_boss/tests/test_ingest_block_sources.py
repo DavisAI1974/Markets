@@ -53,10 +53,11 @@ def _block(tmp_path):
 def _run(tmp_path, manifest, *, policy, writer, out, canary=None):
     scope = block_source_scope(manifest, expected_manifest_hash=manifest['manifest_hash'])
     name, session = tool.session_policy(policy, halt_utc_hour=manifest['halt_utc_hour'])
+    takes = tool.partial_takes(manifest, policy_name=name)          # as main() does: the manifest's partial members
     paths = tuple(tmp_path / m.member_key for m in scope.members)
     return scope, tool.ingest(scope, paths, expected_scope_hash=scope.genesis_hash(), pin=pin(), session=session,
                               source_object='member_key', journal_path=tmp_path / out, writer=writer,
-                              canary_records=canary, block_bytes=4096)
+                              canary_records=canary, block_bytes=4096, takes=takes)
 
 
 def test_session_policies_name_the_trading_day_and_the_member_file():
@@ -115,3 +116,43 @@ def test_canary_stops_early_without_a_completion_claim(tmp_path):
     assert result['extrapolated_hours_for_total'] >= 0
     with sqlite3.connect(tmp_path / 'canary.compact.sqlite') as db:
         assert db.execute('SELECT count(*) FROM seal').fetchone()[0] == 0       # never sealed, never claimed
+
+
+def _monday_manifest(tmp_path, take):
+    # ONE partition (the 20211004 UTC file: two records before the 21:00Z halt, two after) declared as a PARTIAL member:
+    # the Monday trading day takes `take` records of it; the manifest says so in partial_members (Greg, 2026-09-22:
+    # Monday by itself; the trading day, not the partition, is the unit).
+    rows = [record(1, ts_recv=DAY + 2 * HOUR), record(2, ts_recv=DAY + 20 * HOUR), record(3, ts_recv=DAY + 21 * HOUR),
+            record(4, ts_recv=DAY + 23 * HOUR)]
+    member = _member_file(tmp_path, '20211004', rows)
+    partition = member['mbo_records']; member['mbo_records'] = take
+    body = dict(schema='BOSS_BLOCK_SOURCE_MANIFEST_V1', source_kind='NATIVE_DBN_MBO', role='TEST', causal_clock='ts_recv_ns',
+                sampled=False, canonical_source_rewritten=False, member_seams_close_groups=True, halt_boundaries_close_groups=True,
+                block='20211004', trading_day='20211004', bucket='none', prefix='none', halt_utc_hour=21,
+                sources=[dict(member_index=0, **member)], sessions=[], total_mbo_records=take,
+                partial_members=[dict(member_key=member['member_key'], partition_mbo_records=partition, take=take,
+                                      reason='records before the 21:00Z halt belong to this trading day; the rest are the next day')],
+                ingested=False, scheduled=False, prefixes_built=False, model_calls=0)
+    body['manifest_hash'] = manifest_hash(body)
+    return body
+
+
+def test_a_partial_member_take_ends_the_trading_day_at_the_halt_and_completes(tmp_path):
+    manifest = _monday_manifest(tmp_path, take=2)
+    scope, result = _run(tmp_path, manifest, policy='cme_trading_day', writer='compact', out='monday.compact.sqlite')
+    assert result['kind'] == 'complete' and result['records'] == 2 and result['completion']['record_count'] == 2
+    assert [s['session_id'] for s in result['sessions']] == ['20211004']
+    assert result['partial_members'] == [dict(member_key=manifest['sources'][0]['member_key'], take=2, partition_mbo_records=4,
+                                              next_session_id='20211005', boundary='trading_day')]
+
+
+def test_a_partial_take_that_does_not_end_at_a_trading_day_boundary_is_refused(tmp_path):
+    manifest = _monday_manifest(tmp_path, take=3)          # record 3 (21:00Z) is already the next day; record 4 is the same day as 3
+    with pytest.raises(ValueError, match='does not end at a trading-day boundary'):
+        _run(tmp_path, manifest, policy='cme_trading_day', writer='compact', out='bad.compact.sqlite')
+
+
+def test_a_partial_member_needs_the_trading_day_policy(tmp_path):
+    manifest = _monday_manifest(tmp_path, take=2)
+    with pytest.raises(ValueError, match='partial members need the cme_trading_day policy'):
+        _run(tmp_path, manifest, policy='per_member_file', writer='compact', out='policy.compact.sqlite')
