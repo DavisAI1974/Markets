@@ -71,3 +71,17 @@ rerun order (handoff 01:3xZ 09-22, steps 0-9, with 1b).
 
 Every module gets its own spec (`SPEC-trading-day-<id>.md`) after Greg reviews this map. No build, no run, no ingest
 before his word on the map and the assumptions.
+
+
+## Chat 11 status addendum — 2026-09-22
+
+This addendum records current state without rewriting earlier history. Reviewed implementation e297553a7c96dd615879e5aa8e5c5a0118aeaff2; see [SHIP_REVIEW_20260922_CHAT11.md](SHIP_REVIEW_20260922_CHAT11.md).
+
+- Ingest STOPPED by Greg; all 2,032,203 records reached conformance, cancelled at62.76%, no successful ingestion receipt/checkpoint. Sealed original preserved; no restart/replay.
+- Trading-day preparation and host configuration handoff now pass compact-prefix integration/regression tests. Explicit Greg/receipt-dependent launch blanks remain.
+- Brain/history retention, usable reading coverage, failed merge handling, corpus integrity and preservation fixes pass hosted tests; not deployed and not proven by production reading receipts.
+- Friday5.544 verified with corrected all-frame decoder in run35708373395; exact Git/AWS receipts retained. Actual Monday contract/request binding still outstanding.
+- Reviewed conformance-only recovery design is SPEC_SEALED_COMPACT_RECOVERY_20260922.md; implementation/proof pending.
+- Disk-backed rows and streaming layer JSON remain. Complete digest-generation streaming is pending per SPEC_DIGEST_STREAMING_20260922.md.
+- Exact-commit CI: readiness35710468658 (84+135 passing), codec35710468808 (216 passing; suites overlap).
+- Full launch NO-GO; original step1b re-pins, deployment, actual reading/section measurements and cycle0 remain. No Monday completion or cycle0 result claimed.
