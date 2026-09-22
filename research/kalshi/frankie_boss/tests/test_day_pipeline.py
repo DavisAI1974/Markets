@@ -287,3 +287,72 @@ def test_trading_day_receipt_uses_records_not_paired_journal_entries(tmp_path):
     assert pipeline.record_external('ingest', path) == 'done'
     gate = pipeline.receipt('ingest')['gate']
     assert gate['journal_count'] == 2032203 and gate['journal_entries'] == 4064406
+
+def trading_configuration():
+    return dict(CONFIG, trading_day_schedule=dict(trading_day='20211004', step_count=2,
+        source_record_count=2032203, source_manifest_hash='a'*64, schedule_sha256='b'*64))
+
+def prepared_receipt():
+    return dict(prefix_count=2, prefixes_sha256='c'*64, day='20211004',
+        source_records=2032203, schedule_sha256='b'*64,
+        configuration=dict(path='D:/frankie/prepared.json', sha256='d'*64, bytes=123))
+
+@pytest.mark.parametrize('field,bad', [('day','20211003'), ('source_records',57027),
+    ('schedule_sha256','e'*64), ('prefixes_sha256','not-a-hash'), ('prefix_count',1),
+    ('prefix_count',3), ('configuration',None),
+    ('configuration',dict(path='p',sha256='d'*64,bytes=0))])
+def test_trading_preparation_receipt_is_bound_to_day_schedule_and_file(tmp_path, field, bad):
+    pipeline = dp.DayPipeline(trading_configuration(), '20211004', runs_root=tmp_path)
+    value = prepared_receipt()
+    value[field] = bad
+    with pytest.raises(dp.StageRefused, match='prepared configuration receipt'):
+        pipeline.gate_of('schedule-prefixes', 'PIPELINE_RECEIPT ' + json.dumps(value))
+
+def test_trading_cycles_dispatch_only_retained_prepared_configuration(tmp_path):
+    calls = []
+    def run(argv, *, timeout):
+        calls.append(argv)
+        value = prepared_receipt() if 'prefix.ps1' in argv else dict(
+            status='all_scheduled_cycles_complete', day='20211004',
+            requested_cycles=2, cycles_completed=2, cycles_total=2)
+        return 0, 'PIPELINE_RECEIPT ' + json.dumps(value)
+    config = trading_configuration()
+    config['host_variables'] = dict(PreparedConfigurationPath='stale.json',
+        PreparedConfigurationSha256='e'*64, ExpectedTradingDayScheduleSha256='f'*64)
+    pipeline = dp.DayPipeline(config, '20211004', runs_root=tmp_path, runner=run)
+    assert 'cycles.ps1' in pipeline.commands()['cycles']
+    pipeline.write('stage-sources', dict(manifest='manifest.json', manifest_hash='a'*64, records=2032203), command=[])
+    pipeline.write('host-start', dict(ssm_online=True), command=[])
+    pipeline.write('ingest', dict(journal_count=2032203, journal_hash='a'*64, compact_sha256='b'*64), command=[])
+    assert pipeline.run_stage('schedule-prefixes') == 'done'
+    assert pipeline.receipt('schedule-prefixes')['gate'] == prepared_receipt()
+    resumed = dp.DayPipeline(config, '20211004', runs_root=tmp_path, runner=run)
+    assert resumed.run_stage('cycles', go='a'*64) == 'done'
+    args = calls[-1]
+    values = [args[i+1] for i, part in enumerate(args) if part == '--set']
+    assert 'PreparedConfigurationPath=D:/frankie/prepared.json' in values
+    assert 'PreparedConfigurationSha256='+'d'*64 in values
+    assert 'ExpectedTradingDayScheduleSha256='+'b'*64 in values
+    assert 'RequirePreparedConfiguration=1' in values
+    assert not any('stale.json' in v or v.endswith('e'*64) or v.endswith('f'*64) for v in values)
+
+@pytest.mark.parametrize('change', [dict(day='20211003'), dict(cycles_total=19,cycles_completed=19),
+    dict(requested_cycles=1), dict(status='all_nineteen_cycles_complete')])
+def test_trading_full_cycle_completion_cannot_use_another_roster(tmp_path, change):
+    pipeline = dp.DayPipeline(trading_configuration(), '20211004', runs_root=tmp_path)
+    value = dict(status='all_scheduled_cycles_complete', day='20211004',
+        requested_cycles=2, cycles_completed=2, cycles_total=2)
+    value.update(change)
+    with pytest.raises(dp.StageRefused, match='completed cycles receipt'):
+        pipeline.gate_of('cycles', 'PIPELINE_RECEIPT ' + json.dumps(value))
+
+def test_trading_cycles_refuse_retained_prefix_receipt_without_configuration(tmp_path):
+    calls = []
+    pipeline = dp.DayPipeline(trading_configuration(), '20211004', runs_root=tmp_path, runner=runner(calls))
+    pipeline.write('stage-sources', dict(manifest='m',manifest_hash='a'*64,records=2032203), command=[])
+    pipeline.write('host-start', dict(ssm_online=True), command=[])
+    pipeline.write('ingest', dict(journal_count=2032203,journal_hash='a'*64,compact_sha256='b'*64), command=[])
+    pipeline.write('schedule-prefixes', dict(prefix_count=2,prefixes_sha256='c'*64), command=[])
+    with pytest.raises(dp.StageRefused, match='prepared configuration receipt'):
+        pipeline.run_stage('cycles', go='a'*64)
+    assert calls == []
