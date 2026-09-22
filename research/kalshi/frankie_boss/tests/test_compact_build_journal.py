@@ -117,3 +117,24 @@ def test_the_observation_packs_from_a_cache_of_its_orders_and_levels_byte_identi
         assert reused > 0
     finally:
         driver.close()
+
+
+def test_the_writer_cuts_boxes_by_the_declared_row_standard(tmp_path):
+    # Greg, 2026-09-17/22: TARGET_BOXES = 1189 is the standard for every day we ingest; the ingest writer cut 4 MiB blocks
+    # of its own and never saw it. The writer now takes the rows per box (journal_stack_execution.partition_entries_for on
+    # the day's entry count) and the format's byte ceiling; the entries, count and head hash are invariant to the cut.
+    payloads = [dict(cursor=i, observation=dict(orders=[dict(id=i % 3, price=100, size=3)])) for i in range(9)]
+    by_rows = CompactBuildJournal(tmp_path / 'rows.sqlite', block_rows=4)
+    by_bytes = CompactBuildJournal(tmp_path / 'bytes.sqlite', block_bytes=2048)
+    for i, payload in enumerate(payloads):
+        kind = 'INPUT' if i % 2 == 0 else 'APPLIED'
+        assert by_rows.append(kind, payload) == by_bytes.append(kind, payload)
+    by_rows.seal(); by_bytes.seal()
+    assert (by_rows.count, by_rows.head_hash) == (by_bytes.count, by_bytes.head_hash)
+    assert [r[1] for r in by_rows.writer.db.execute('SELECT start,count FROM blocks ORDER BY start')] == [4, 4, 1]
+    assert by_rows.block_rows == 4 and by_rows.block_bytes == 16 * 1024 * 1024        # the format's ceiling is the byte bound
+    by_rows.close(); by_bytes.close()
+    with pytest.raises(ValueError, match='rows per box'):
+        CompactBuildJournal(tmp_path / 'bad.sqlite', block_rows=0)
+    with pytest.raises(ValueError, match='rows per box'):
+        CompactBuildJournal(tmp_path / 'bad2.sqlite', block_rows=257)

@@ -56,13 +56,19 @@ class CompactBuildJournal:
     the trees already in hand, inserted and read back the way the first run's journal stack did.
     """
 
-    def __init__(self, path, *, block_bytes=4 * 1024 * 1024, workers=0):
+    def __init__(self, path, *, block_bytes=MAX_BYTES // 2, workers=0, block_rows=MAX_ROWS):
         """workers > 0 encodes blocks (order dedup, gzip) on that many spawned processes while the
         parent stays on the causal sequence; blocks are inserted in order and read back, as the
-        first run's journal stack did. workers == 0 encodes inline."""
+        first run's journal stack did. workers == 0 encodes inline. A box is cut at `block_rows`
+        rows (the day's standard, journal_stack_execution.partition_entries_for; Greg, 2026-09-17:
+        TARGET_BOXES = 1189 for every day we ingest) or at `block_bytes` of bodies (the format's
+        ceiling by default), whichever comes first; the entries, count and head hash are invariant
+        to the cut, the container's bytes are not."""
+        if type(block_rows) is not int or not 0 < block_rows <= MAX_ROWS:
+            raise ValueError(f'rows per box must be an integer in 1..{MAX_ROWS}')
         self.path = Path(path)
         self.writer = CompactWriter(self.path, block_bytes=block_bytes)
-        self.block_bytes = block_bytes
+        self.block_bytes, self.block_rows = block_bytes, block_rows
         self.appends = 0
         self._rows, self._trees, self._pending_bytes, self._pending_previous = [], [], 0, GENESIS_HASH
         self.workers = int(workers)
@@ -95,7 +101,7 @@ class CompactBuildJournal:
         digest = hashlib.sha256(DIGEST_PREFIX + body).hexdigest()            # == evidence_hash(envelope)
         if len(body) > MAX_BYTES // 2:
             raise ValueError('oversized row')
-        if self._rows and (self._pending_bytes + len(body) > self.block_bytes or len(self._rows) == MAX_ROWS):
+        if self._rows and (self._pending_bytes + len(body) > self.block_bytes or len(self._rows) == self.block_rows):
             self.flush()
         if not self._rows:
             self._pending_previous = previous
@@ -195,7 +201,8 @@ def _encode_rows(rows):
     return encode_block(rows), time.process_time() - started
 
 
-def conformance_driver_with_compact_journal(scope, journal_path, *, expected_scope_hash, block_bytes=4 * 1024 * 1024, workers=0):
+def conformance_driver_with_compact_journal(scope, journal_path, *, expected_scope_hash, block_bytes=MAX_BYTES // 2, workers=0,
+                                            block_rows=MAX_ROWS):
     """SourceConformanceDriver whose builder writes the compact container directly.
 
     Same construction as source_recovery.rehydrate_source: the builder's __init__ hard-wires an
@@ -207,7 +214,7 @@ def conformance_driver_with_compact_journal(scope, journal_path, *, expected_sco
     builder.scope, builder.chain = scope, RecordPrefixChain(scope)
     builder.adapter, builder.identity = V4MboAdapter(), implementation_identity()
     builder._sessions, builder._failed = {}, False
-    builder.journal = CompactBuildJournal(journal_path, block_bytes=block_bytes, workers=workers)
+    builder.journal = CompactBuildJournal(journal_path, block_bytes=block_bytes, workers=workers, block_rows=block_rows)
     driver = SourceConformanceDriver.__new__(SourceConformanceDriver)
     driver._builder = builder
     driver._stopped = driver._completed = driver._closed = False

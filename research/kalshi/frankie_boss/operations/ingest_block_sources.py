@@ -59,7 +59,8 @@ from research.kalshi.frankie_boss import mbo_source                             
 from research.kalshi.frankie_boss.block_source_scope import block_source_scope          # noqa: E402
 from research.kalshi.frankie_boss.c15_journal import evidence_hash, pack, canonical_bytes  # noqa: E402
 from research.kalshi.frankie_boss.compact_build_journal import conformance_driver_with_compact_journal  # noqa: E402
-from research.kalshi.frankie_boss.compact_journal import CompactReader                 # noqa: E402
+from research.kalshi.frankie_boss.compact_journal import CompactReader, MAX_BYTES      # noqa: E402
+from research.kalshi.frankie_boss.journal_stack_execution import partition_entries_for  # noqa: E402
 from research.kalshi.frankie_boss.frankie_journal_reader import FrankieCompactReader     # noqa: E402
 from research.kalshi.frankie_boss.selected_source_scope import source_manifest, source_scope  # noqa: E402
 from research.kalshi.frankie_boss.source_conformance import SourceConformanceDriver     # noqa: E402
@@ -140,7 +141,7 @@ def partial_takes(manifest, *, policy_name):
 
 
 def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, journal_path,
-           writer='compact', canary_records=None, block_bytes=4 * 1024 * 1024, workers=0, event=None, takes=None):
+           writer='compact', canary_records=None, block_bytes=MAX_BYTES // 2, workers=0, event=None, takes=None, block_rows=None):
     """The ingest_sources loop with a chosen writer, a per-record session policy and member-key naming.
 
     Returns dict(kind='canary'|'complete', ...). The record decode is mbo_source's pinned extractor,
@@ -158,6 +159,14 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
     if canary_records is not None and (type(canary_records) is not int or canary_records <= 0):
         raise ValueError('canary record count must be a positive integer')
     total = sum(member.mbo_records for member in scope.members)
+    # THE BOX STANDARD (Greg, 2026-09-17: TARGET_BOXES = 1189 for every day we ingest; 2026-09-22: "turn the single lines
+    # into boxes"): rows per box derived from the day's entry count (two entries per record: INPUT and APPLIED), clamped by
+    # the format; the bytes per box at the format's ceiling. The ingest writer cut 4 MiB blocks of its own before this.
+    if block_rows is None:
+        block_rows = partition_entries_for(2 * total)
+    packing = dict(block_rows=block_rows, block_bytes=block_bytes,
+                   standard='journal_stack_execution.TARGET_BOXES 1189: rows per box = partition_entries_for(2 x declared records), '
+                            'bytes per box = the format ceiling')
     started, cpu_started = time.perf_counter(), time.process_time()
     with ExitStack() as stack:
         snapshots = [mbo_source._verified_copy(path, member, stack) for path, member in zip(paths, scope.members)]
@@ -165,7 +174,7 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
         metadata = [mbo_source._metadata(stream, pin, dbn) for stream in streams]
         if writer == 'compact':
             driver = conformance_driver_with_compact_journal(scope, journal_path,
-                expected_scope_hash=expected_scope_hash, block_bytes=block_bytes, workers=workers)
+                expected_scope_hash=expected_scope_hash, block_bytes=block_bytes, workers=workers, block_rows=block_rows)
         else:
             driver = SourceConformanceDriver(scope, journal_path, expected_scope_hash=expected_scope_hash)
         stack.callback(driver.close)
@@ -222,7 +231,7 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                         extrapolated_hours_for_total=round(total * ingest_seconds / cursor / 3600, 2),
                         journal_count=journal_count, journal_head_hash=head, sessions=sessions, workers=workers,
                         worker_cpu_seconds=round(worker_cpu, 3), ingested_records=cursor, completion_claimed=False,
-                        partial_members=partials)
+                        partial_members=partials, packing=packing)
         if event is not None:
             event(dict(phase='source_verification', records=cursor, total_records=total))
         verify_started = time.perf_counter()
@@ -248,7 +257,7 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                       records_per_second=round(cursor / ingest_seconds, 2),
                       ms_per_record=round(1000 * ingest_seconds / cursor, 3),
                       conformance_seconds=round(verify_seconds, 3), sessions=sessions, records=cursor,
-                      workers=workers, worker_cpu_seconds=round(worker_cpu, 3), partial_members=partials)
+                      workers=workers, worker_cpu_seconds=round(worker_cpu, 3), partial_members=partials, packing=packing)
         if event is not None:
             event(dict(phase='source_saved', records=cursor, total_records=total, journal_hash=completion.journal_hash))
         return result
@@ -349,7 +358,8 @@ def main():
     parser.add_argument('--source-object', choices=('member_key', 'path'), default='member_key')
     parser.add_argument('--writer', choices=('compact', 'raw', 'both'), default='compact')
     parser.add_argument('--canary-records', type=int)
-    parser.add_argument('--block-bytes', type=int, default=4 * 1024 * 1024)
+    parser.add_argument('--block-bytes', type=int, default=MAX_BYTES // 2, help='bytes of bodies per box; default the format ceiling')
+    parser.add_argument('--block-rows', type=int, help='rows per box; default the standard, partition_entries_for(2 x declared records)')
     parser.add_argument('--workers', type=int, default=0, help='encode blocks on this many spawned processes; 0 = inline')
     parser.add_argument('--profile', action='store_true',
                         help='run the ingest under cProfile and file profile.txt (top functions by own time and by cumulative time) '
@@ -398,7 +408,8 @@ def main():
         emit(dict(phase='start', writer=writer, journal=str(journal), canary_records=args.canary_records))
         run_ingest = lambda: ingest(scope, paths, expected_scope_hash=scope.genesis_hash(), pin=pin, session=session,
                                     source_object=args.source_object, journal_path=journal, writer=writer,
-                                    canary_records=args.canary_records, block_bytes=args.block_bytes, workers=args.workers, event=emit, takes=takes)
+                                    canary_records=args.canary_records, block_bytes=args.block_bytes, workers=args.workers, event=emit, takes=takes,
+                                    block_rows=args.block_rows)
         if args.profile:
             result = profiled(run_ingest, directory / 'profile.txt')
         else:

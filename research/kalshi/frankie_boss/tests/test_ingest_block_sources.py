@@ -210,3 +210,16 @@ def test_profile_files_a_report_and_leaves_the_result_unchanged(tmp_path, capsys
     report = (tmp_path / 'profile.txt').read_text()
     assert report.startswith('### top 40 by tottime') and '### top 40 by cumulative' in report
     assert '### profile (' in capsys.readouterr().out
+
+
+def test_the_ingest_packs_boxes_to_the_standard_derived_from_the_declared_records(tmp_path):
+    # the box standard (TARGET_BOXES 1189) derived from 2 x the declared records (INPUT + APPLIED per record), clamped by the
+    # format: on this six-record block one entry per box; the receipt says so
+    from journal_stack_execution import partition_entries_for
+    manifest = _block(tmp_path)
+    _, result = _run(tmp_path, manifest, policy='cme_trading_day', writer='compact', out='packed.compact.sqlite')
+    assert result['packing'] == dict(block_rows=partition_entries_for(12), block_bytes=4096,     # 4096 = this helper's bound
+                                     standard='journal_stack_execution.TARGET_BOXES 1189: rows per box = partition_entries_for(2 x declared records), bytes per box = the format ceiling')
+    assert tool.ingest.__kwdefaults__['block_bytes'] == 16 * 1024 * 1024 and tool.ingest.__kwdefaults__['block_rows'] is None
+    with sqlite3.connect(tmp_path / 'packed.compact.sqlite') as db:
+        assert [r[0] for r in db.execute('SELECT count FROM blocks ORDER BY start')] == [1] * 12
