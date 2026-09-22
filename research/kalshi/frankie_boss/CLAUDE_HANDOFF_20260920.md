@@ -4023,3 +4023,64 @@ GREG'S CALLS NOW FIVE: (1) the slice vs the day (his CME-Monday note leans to th
 checkpoint E; (3) cycles 1-3 keep their pins; (4) the critic's zero hypotheses; (5) NEW: whether a traversal the
 runner's own gates REJECT (a slice cut mid-group) still files its layers as `derived` (today: yes, with the verdict
 beside them everywhere). Nothing runs until he says so; the runbook change (23:xxZ above) is the order of steps.
+
+### 01:3xZ 09-22: CHAT 8 OPEN: the branch trap again, the one status probe, the fixes re-measured, GREG'S WORD: THE RERUN IS A FULL RERUN FROM THE BEGINNING
+
+The harness cut this chat's branch (`claude/agent-skills-runbook-zx8a2x`) from the TRUNK tip f4fb6e5b; it shares no
+merge base with the rerun branch. The work continues on `claude/cycle-0-frankie-box-rerun-od5sxk` (tip a58a688a at
+open), as the drop-in says; nothing pushed to the harness branch. `using-agent-skills` and `git-workflow-and-versioning`
+run first, then `/ship` on the post-review commits (below).
+
+THE ONE PROBE (`frankie_box_run.yml` script `frankie_box_session.sh` `ACTION=status`, run 35676094239, dispatched
+01:31:47Z on a58a688a, success 01:32:22Z, SSM command 17a7d6fe): identical to chat 7's: box Online (Ubuntu 24.04);
+unit frankie-cycle-00 INACTIVE; phase `done`, note `done: response pushed; the recorder workflow is next (not mine)`;
+session/out = the 17:03Z four files (response.json 147,149; analysis.md 27,568; host-attestation.json 748;
+host-session-record.json 1,155) and docs/; no heartbeat service. Repository secrets (names only): RUNPOD_API_KEY=true,
+AWS_PAIR=true, FRANKIE_GITHUB_TOKEN=false, DATABENTO_API_KEY=false. Nothing has run on the host, box, Pod or endpoint
+since chat 5's write and push. The probe at open is spent.
+
+RE-MEASURED in this container at a58a688a (the producers worktree `.producers-2ebb8ce8` from
+`deploy/aws/box/producers_checkout.sh`, driver sha256 67996f3e...): the codecs CI list 183 green with torch ABSENT
+(this container had none at open), 183 green torch HIDDEN (the notorch stub on PYTHONPATH), then torch 2.14.0+cpu
+installed and the list 183 green torch PRESENT; the adapter suites (pin loader + principal adapter) 44 green. The
+chat-7 ship review's torch-hidden anomaly (two rerun failures through compare()'s adapter import) did not reproduce in
+any of the three runs.
+
+GREG'S WORD (01:4xZ 09-22, verbatim): "When we rerun cyc 0 we will do a full rerun from the beginning in the correct
+order." This SUPERSEDES the runbook change of 23:xxZ 09-21 (a box `restart_session` on a re-rendered request): cycle 0
+runs again from its first host stage under the current code, the way the 09-20 23:xxZ chain ran it (supersede the
+cycle whole, declare, one pipeline dispatch, the native BOSS mints a NEW critic request), and the box session starts
+FRESH on the request that chain mints. Every step still on Greg's go; nothing has run.
+
+THE FULL-RERUN ORDER, read from the machinery (the 09-20 23:01Z-23:25Z entries above, `frankie_host_supersede_cycle.ps1`,
+`frankie_box_session.sh`), not invented:
+ 0. PREREQUISITE ON THE TRUNK (Greg's word needed; a git push, not a run): `frankie_host_supersede_principal_response.yml`
+    is on this branch but NOT on the trunk `claude/kalshi-s79-kickoff-ij8t9o`, so GitHub does not list it (measured
+    01:4xZ: the workflow listing carries every other host supersede workflow and not this one; dispatch inputs are read
+    from the default branch). It is REQUIRED: `frankie_host_supersede_cycle.ps1` line 36 throws "refusing: a
+    session-response.json is recorded for this cycle" and cycle 0's response IS recorded on the host (run 35633661236,
+    17:43:23Z 09-21). Register it on the trunk exactly as the request-supersede was (98a92692), one commit, before step 3.
+ 1. `frankie_host_advance.yml` target = this branch's tip (the new pins file, the adapter, the bedrock).
+ 2. `frankie_host_supersede_code_bound_state.yml` cycle 00 (the code-bound records aside; the runner re-mints them).
+ 3. `frankie_host_supersede_principal_response.yml` cycle 00 (the recorded response aside with a receipt; the request
+    stays; reason = full rerun from the beginning, Greg 2026-09-22).
+ 4. `frankie_host_supersede_cycle.yml` cycle 00 (execution/cycle-00 whole and handoff-<sha256(request id)> aside with
+    the per-file receipt; refuses on a recorded response or a live runner, hence steps 2-3 first).
+ 5. `frankie_host_declare_identity_supersede.yml` supersede_cycle=true (every live stage may be superseded).
+ 6. ONE pipeline dispatch (`frankie_journal_stack.yml`, the standard inputs): the native BOSS runs from the beginning
+    and mints a NEW Granite critic request; the retained readiness is bound to the old request sha, so the observer
+    (`frankie_retained_granite.yml`) and `frankie_deliver_readiness.yml` for the new sha, then one re-dispatch (the
+    09-20 15:53Z worked example); the critic runs on the Pod (a Pod START is Greg's call: the L40S host refused 15
+    times on 09-21 00:20Z); the principal request is minted under the NEW pins (new request_sha256, new export run id).
+ 7. `frankie_host_export_principal_request.yml` turn=initial; then ON THE BRANCH the one-line pin in
+    `deploy/aws/box/frankie_box_restore_data_plane.sh` (line 26-27: export run id, bytes, sha256 of the new
+    session-request.json) and the old request moved aside on the box with a receipt (never overwritten); then
+    `frankie_box_run.yml` presign -> the box fetches the new request.
+ 8. Checkpoint E on the box: `ACTION=derive_only` -> the DERIVE_ONLY line (bytes, tokens, parts, tables) to Greg;
+    his call 2 (the reading cost) decides the read. No model call.
+ 9. `ACTION=start` (start_session: refuses while the unit runs; verifies the request; re-fetches this branch; the
+    session's own gates re-derive on the moved pin, supersede the old reading corpus and move earlier derived files
+    aside with receipts). Then the restart runbook e-i unchanged: record turn=initial; grade; export turn=correction;
+    fetch_correction; correction; record turn=correction; pipeline.
+Greg's five calls (00:xxZ 09-22 above) stand; call 1 (the slice vs the full CME Monday) decides the source stream BEFORE
+step 6 mints the request, since the request carries the stream.

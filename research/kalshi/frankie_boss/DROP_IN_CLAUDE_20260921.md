@@ -1,5 +1,19 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
+## READ FIRST (01:4xZ 09-22, chat 8 OPEN): GREG: THE RERUN IS A FULL RERUN FROM THE BEGINNING, IN THE CORRECT ORDER
+
+Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (the harness cut chat 8's branch from the trunk again; the work is here).
+Greg (01:4xZ 09-22): "When we rerun cyc 0 we will do a full rerun from the beginning in the correct order." That
+supersedes the 23:xxZ 09-21 runbook change (box restart on a re-rendered request). THE FULL-RERUN ORDER is in the handoff
+01:3xZ 09-22 (steps 0-9): trunk registration of `frankie_host_supersede_principal_response.yml` (REQUIRED: the whole-cycle
+supersede refuses while the recorded response exists, and it is not on the trunk) -> host advance -> supersede
+code-bound state -> supersede the recorded response -> supersede the cycle whole -> declare supersede_cycle=true -> one
+pipeline dispatch (new critic request, observer + readiness, re-dispatch, critic on the Pod, new principal request under
+the new pins) -> export turn=initial + the restore script's one-line pin + presign fetch -> checkpoint E derive_only ->
+ACTION=start -> record/grade/correction/record/pipeline. Every step on Greg's go. Chat 8's probe at open (run
+35676094239) = chat 7's state exactly; nothing has run. Tests at a58a688a: 183/183/183 (torch absent/hidden/present),
+adapter suites 44.
+
 ## READ FIRST (00:xxZ 09-22, chat 7 CLOSING): THE BEDROCK IS BUILT AND SHIPPED (BR-0..BR-7, /ship GO after fixes); CHECKPOINT E AND THE RERUN WAIT ON GREG'S CALLS
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip 5ff3ab1c or later; `git log --oneline -1` first: the harness cut
