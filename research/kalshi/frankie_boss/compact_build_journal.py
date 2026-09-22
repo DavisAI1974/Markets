@@ -60,7 +60,7 @@ class CompactBuildJournal:
         """workers > 0 encodes blocks (order dedup, gzip) on that many spawned processes while the
         parent stays on the causal sequence; blocks are inserted in order and read back, as the
         first run's journal stack did. workers == 0 encodes inline. A box is cut at `block_rows`
-        rows (the day's standard, journal_stack_execution.partition_entries_for; Greg, 2026-09-17:
+        rows (the day's standard, box_standard.partition_entries_for; Greg, 2026-09-17:
         TARGET_BOXES = 1189 for every day we ingest) or at `block_bytes` of bodies (the format's
         ceiling by default), whichever comes first; the entries, count and head hash are invariant
         to the cut, the container's bytes are not."""

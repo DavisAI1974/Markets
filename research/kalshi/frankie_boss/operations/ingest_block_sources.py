@@ -60,7 +60,7 @@ from research.kalshi.frankie_boss.block_source_scope import block_source_scope  
 from research.kalshi.frankie_boss.c15_journal import evidence_hash, pack, canonical_bytes  # noqa: E402
 from research.kalshi.frankie_boss.compact_build_journal import conformance_driver_with_compact_journal  # noqa: E402
 from research.kalshi.frankie_boss.compact_journal import CompactReader, MAX_BYTES      # noqa: E402
-from research.kalshi.frankie_boss.journal_stack_execution import partition_entries_for  # noqa: E402
+from research.kalshi.frankie_boss.box_standard import partition_entries_for            # noqa: E402
 from research.kalshi.frankie_boss.frankie_journal_reader import FrankieCompactReader     # noqa: E402
 from research.kalshi.frankie_boss.selected_source_scope import source_manifest, source_scope  # noqa: E402
 from research.kalshi.frankie_boss.source_conformance import SourceConformanceDriver     # noqa: E402
@@ -159,13 +159,13 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
     if canary_records is not None and (type(canary_records) is not int or canary_records <= 0):
         raise ValueError('canary record count must be a positive integer')
     total = sum(member.mbo_records for member in scope.members)
-    # THE BOX STANDARD (Greg, 2026-09-17: TARGET_BOXES = 1189 for every day we ingest; 2026-09-22: "turn the single lines
+    # THE BOX STANDARD (box_standard.py; Greg, 2026-09-17: TARGET_BOXES = 1189 for every day we ingest; 2026-09-22: "turn the single lines
     # into boxes"): rows per box derived from the day's entry count (two entries per record: INPUT and APPLIED), clamped by
     # the format; the bytes per box at the format's ceiling. The ingest writer cut 4 MiB blocks of its own before this.
     if block_rows is None:
         block_rows = partition_entries_for(2 * total)
     packing = dict(block_rows=block_rows, block_bytes=block_bytes,
-                   standard='journal_stack_execution.TARGET_BOXES 1189: rows per box = partition_entries_for(2 x declared records), '
+                   standard='box_standard.TARGET_BOXES 1189: rows per box = partition_entries_for(2 x declared records), '
                             'bytes per box = the format ceiling')
     started, cpu_started = time.perf_counter(), time.process_time()
     with ExitStack() as stack:

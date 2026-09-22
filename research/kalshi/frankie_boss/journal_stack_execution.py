@@ -77,14 +77,7 @@ def _convert_partition(path, start, length):
 # CHANGING THIS CHANGES THE COMPACT JOURNAL'S BYTES AND sha256. The decoded entries, the count and
 # the head hash are invariant (test_partition_packing.py proves it on a real run); the first run's
 # compact_sha256 19603159... no longer reproduces, and a run under this standard is a new baseline.
-TARGET_BOXES = 1189
-
-
-def partition_entries_for(count, *, target=TARGET_BOXES, ceiling=MAX_ROWS):
-    """Entries per partition, and therefore per box, for a journal of `count` entries."""
-    if type(count) is not int or count <= 0:
-        raise ValueError('positive entry count required')
-    return max(1, min(ceiling, -(-count // target)))
+from box_standard import TARGET_BOXES, partition_entries_for   # the standard lives in box_standard (package- and flat-importable); re-exported here
 
 
 class MigratingConformanceReader:

@@ -215,11 +215,25 @@ def test_profile_files_a_report_and_leaves_the_result_unchanged(tmp_path, capsys
 def test_the_ingest_packs_boxes_to_the_standard_derived_from_the_declared_records(tmp_path):
     # the box standard (TARGET_BOXES 1189) derived from 2 x the declared records (INPUT + APPLIED per record), clamped by the
     # format: on this six-record block one entry per box; the receipt says so
-    from journal_stack_execution import partition_entries_for
+    from box_standard import partition_entries_for
     manifest = _block(tmp_path)
     _, result = _run(tmp_path, manifest, policy='cme_trading_day', writer='compact', out='packed.compact.sqlite')
     assert result['packing'] == dict(block_rows=partition_entries_for(12), block_bytes=4096,     # 4096 = this helper's bound
-                                     standard='journal_stack_execution.TARGET_BOXES 1189: rows per box = partition_entries_for(2 x declared records), bytes per box = the format ceiling')
+                                     standard='box_standard.TARGET_BOXES 1189: rows per box = partition_entries_for(2 x declared records), bytes per box = the format ceiling')
     assert tool.ingest.__kwdefaults__['block_bytes'] == 16 * 1024 * 1024 and tool.ingest.__kwdefaults__['block_rows'] is None
     with sqlite3.connect(tmp_path / 'packed.compact.sqlite') as db:
         assert [r[0] for r in db.execute('SELECT count FROM blocks ORDER BY start')] == [1] * 12
+
+
+def test_the_ingest_tool_imports_the_way_the_box_runs_it():
+    # canary run 35693626919 (2026-09-22): the tool imported a module that uses FLAT imports (from compact_journal import ...),
+    # which the test conftest resolves and the box's PYTHONPATH=<markets root> does not. The box's invocation, exactly:
+    # cd <markets> && PYTHONPATH=<markets> python research/kalshi/frankie_boss/operations/ingest_block_sources.py ...
+    import os, subprocess, sys
+    root = Path(tool.__file__).resolve().parents[4]
+    env = {k: v for k, v in os.environ.items() if k not in ('PYTHONPATH', 'PYTHONSAFEPATH')}
+    env['PYTHONPATH'] = str(root)
+    done = subprocess.run([sys.executable, 'research/kalshi/frankie_boss/operations/ingest_block_sources.py', '--help'],
+                          cwd=root, env=env, capture_output=True, text=True, timeout=120)
+    assert done.returncode == 0, done.stderr[-2000:]
+    assert '--block-rows' in done.stdout and '--profile' in done.stdout
