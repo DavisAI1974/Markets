@@ -137,7 +137,12 @@ def witness(path):
 def write_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=1, sort_keys=True, default=str) + '\n', encoding='utf-8')
+    # The pure streaming encoder honors disk-backed row sequences without a full JSON string.
+    encoder = json.JSONEncoder(indent=1, sort_keys=True, default=str)
+    with path.open('w', encoding='utf-8', newline='\n') as handle:
+        for chunk in encoder.iterencode(value):
+            handle.write(chunk)
+        handle.write('\n')
 
 
 def load_json(path):
@@ -720,7 +725,10 @@ class Session:
             describe_structure, book_values, book_transition, BOOK_FIELDS)
         adapter = V4MboAdapter()
         binner = native_roll20.SecondBinner(clock=native_roll20.RECV_CLOCK)
-        prices, frames, structures, legacy_count, failures = [], [], [], 0, []
+        B = _box_module('frankie_box_bedrock')
+        prices, frames, structures, failures = [B.RowSpool(derived / '.rows' / (name + '.jsonl'))
+                                               for name in ('prices', 'frames', 'structures', 'failures')]
+        legacy_count = 0
         previous_book = None
         for index, record in enumerate(records):
             try:
@@ -753,6 +761,8 @@ class Session:
                                            **describe_structure(frame.get('raw_actions') or [])))
                 except Exception as error:
                     failures.append(dict(index=index, structure=True, error=f'{type(error).__name__}: {error}'))
+        for rows in (prices, frames, structures, failures):
+            rows.close()
         buys, sells, first = binner.series()
         roll = native_roll20.roll20(buys, sells)
         layers = {
@@ -954,7 +964,9 @@ class Session:
             db.close()
         container = dict(path=str(rows_path), layout=layout, format=fmt, count=count, head=head, **witness(rows_path),
                          head_is_request_source_hash=(head == self.request['attachment']['feedback_contract']['source_hash']))
-        records, kinds = [], {}
+        B = _box_module('frankie_box_bedrock')
+        records = B.RowSpool(self.work / 'derived' / '.rows' / ('input-' + uuid.uuid4().hex + '.jsonl'))
+        kinds = {}
         def take(kind, payload):
             kinds[kind] = kinds.get(kind, 0) + 1
             if kind != 'INPUT':
@@ -968,10 +980,12 @@ class Session:
                     entry = unpack(json.loads(body))
                     take(kind, entry.get('payload', entry) if isinstance(entry, dict) else entry)
         else:
-            reader = VerifiedJournalReader(rows_path, expected_count=count, expected_head_hash=head)
-            for envelope in reader.entries():
-                take(envelope.get('kind'), envelope.get('payload', envelope))
+            with VerifiedJournalReader(rows_path, expected_count=count, expected_head_hash=head) as reader:
+                for envelope in reader.entries():
+                    take(envelope.get('kind'), envelope.get('payload', envelope))
+        records.close()
         container['kinds'] = kinds
+        container['record_spool'] = dict(path=str(records.path), **witness(records.path))
         return records, container
 
     @staticmethod

@@ -89,7 +89,8 @@ class DayPipeline:
         if cycle_limit is None:
             cycle_limit = self.cycle_count
         if type(cycle_limit) is not int or not 1 <= cycle_limit <= self.cycle_count:
-            raise ValueError('cycle_limit must be within the declared schedule')
+            raise ValueError('cycle_limit must be within the declared schedule' if declaration is not None
+                             else 'cycle_limit must be from 1 through 19')
         self.cycle_limit = cycle_limit
         self.python = self.c.get('python', sys.executable)
 

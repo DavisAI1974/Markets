@@ -424,3 +424,43 @@ def test_project_sections_refuses_an_aliased_averages_layer_and_files_could_not_
     result.write_text(json.dumps(aliased), encoding='utf-8')
     with pytest.raises(ValueError, match='alias'):
         B.project_sections(RECEIPT, result, ledgers, tmp_path / 'derived2')
+
+
+def test_row_spool_preserves_exact_types_and_existing_json_bytes(tmp_path):
+    import math
+    values = [dict(i=i, values=(float(i), [True, None]), nested={'x': i}) for i in range(12)]
+    rows = B.RowSpool(tmp_path / 'rows.jsonl')
+    for value in values:
+        rows.append(value)
+    rows.close()
+    assert len(rows) == len(values) and list(rows) == values
+    assert rows[:1] == values[:1] and rows[-1:] == values[-1:]
+    assert rows[3:8:2] == values[3:8:2]
+    assert rows[-1] == values[-1]
+    with pytest.raises(IndexError):
+        _ = rows[12]
+    actual = tmp_path / 'layer.json'
+    B.write_json(actual, dict(rows=rows, count=len(rows)))
+    expected = json.dumps(dict(rows=values, count=len(values)), indent=1, sort_keys=True, default=str) + '\n'
+    assert actual.read_text() == expected
+    with pytest.raises(FileExistsError):
+        B.RowSpool(tmp_path / 'rows.jsonl')
+    exact = B.RowSpool(tmp_path / 'special.jsonl')
+    exact.append(dict(value=float('nan'), negative_zero=-0.0, tuple=(b'x',)))
+    exact.close()
+    value = list(exact)[0]
+    assert math.isnan(value['value']) and math.copysign(1.0, value['negative_zero']) == -1.0
+    assert value['tuple'] == (b'x',)
+
+
+def test_driver_records_are_lazy_and_span_is_single_pass(tmp_path):
+    seen = []
+    def source():
+        for row in stream():
+            seen.append(row)
+            yield row
+    stamped = B.iter_driver_records(source(), container(tmp_path), '20211004')
+    assert seen == []
+    first = next(stamped)
+    assert len(seen) == 1 and first['source_dbn_object'].startswith('journal:20211004:')
+    assert B.span_seconds(source()) == pytest.approx(10.0)

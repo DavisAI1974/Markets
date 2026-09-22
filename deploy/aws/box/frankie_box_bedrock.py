@@ -52,12 +52,85 @@ def witness(path):
     return dict(bytes=path.stat().st_size, sha256=sha256_file(path))
 
 
+class RowSpool(list):
+    """Append-only, replayable rows on the AWS box; no row collection in RAM.
+
+    Every row uses the journal's exact type-preserving codec. The file is retained
+    with its derivation, including after failure; a new spool never overwrites one.
+    The list interface lets the streaming JSON encoder preserve existing layer bytes.
+    """
+    def __init__(self, path):
+        self.path = Path(path)
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._writer = self.path.open('x', encoding='utf-8', newline='\n')
+        self._count = 0
+        self._ends = []
+
+    def __len__(self):
+        return self._count
+
+    def append(self, value):
+        from research.kalshi.frankie_boss.c15_journal import pack
+        self._writer.write(json.dumps(pack(value), separators=(',', ':')) + '\n')
+        self._count += 1
+        if not self._ends:
+            self._ends = [value, value]
+        else:
+            self._ends[1] = value
+
+    def close(self):
+        if not self._writer.closed:
+            self._writer.close()
+
+    def __iter__(self):
+        from research.kalshi.frankie_boss.c15_journal import unpack
+        if not self._writer.closed:
+            self._writer.flush()
+        seen = 0
+        with self.path.open(encoding='utf-8') as handle:
+            for line in handle:
+                seen += 1
+                yield unpack(json.loads(line))
+        if seen != self._count:
+            raise ValueError('retained row spool count changed')
+
+    def __getitem__(self, key):
+        from itertools import islice
+        if isinstance(key, slice):
+            start, stop, step = key.indices(self._count)
+            if step < 1:
+                raise ValueError('reverse spool slices are not supported')
+            if stop <= start:
+                return []
+            if start == 0 and stop == 1:
+                return self._ends[:1]
+            if start == self._count - 1:
+                return self._ends[-1:]
+            return list(islice(iter(self), start, stop, step))
+        index = key + self._count if key < 0 else key
+        if not 0 <= index < self._count:
+            raise IndexError(key)
+        if index == 0:
+            return self._ends[0]
+        if index == self._count - 1:
+            return self._ends[-1]
+        return next(islice(iter(self), index, index + 1))
+
+    def __del__(self):
+        writer = getattr(self, '_writer', None)
+        if writer is not None and not writer.closed:
+            writer.close()
+
+
 def write_json(path, value):
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, indent=1, sort_keys=True, default=str) + '\n', encoding='utf-8')
+    encoder = json.JSONEncoder(indent=1, sort_keys=True, default=str)
+    with path.open('w', encoding='utf-8', newline='\n') as handle:
+        for chunk in encoder.iterencode(value):
+            handle.write(chunk)
+        handle.write('\n')
     return dict(witness(path), path=str(path))
-
 
 def producers_commit(producers):
     """The checkout's commit, measured (git rev-parse HEAD); refused unless it is the pin: the pinned bytes are the ones
@@ -142,29 +215,34 @@ def source_object(container, day):
     return f'journal:{day}:{path}', str(sha)
 
 
-def driver_records(records, container, day):
+def iter_driver_records(records, container, day):
     """The session's INPUT observations stamped for the driver: `source_dbn_object` = journal:<day>:<verified prefix
     container path>, `source_dbn_sha256` = the container's sha256 (the driver refuses a record without a source object;
     the box's source object IS the verified container), `raw_symbol` = the observation's own raw_symbol/symbol when
     present, else None. Copies; the input is left untouched."""
     path, sha = source_object(container, day)
-    out = []
     for record in records:
         stamped = dict(record)
         stamped['source_dbn_object'] = path
         stamped['source_dbn_sha256'] = str(sha)
         stamped['raw_symbol'] = record.get('raw_symbol') or record.get('symbol') or None
-        out.append(stamped)
-    return out
+        yield stamped
+
+
+def driver_records(records, container, day):
+    return list(iter_driver_records(records, container, day))
 
 
 def span_seconds(records):
     """The receive-clock span of the rows, in seconds (ts_recv ns on the wire record; ts_recv_ns on a normalized one)."""
-    clocks = [int(r.get('ts_recv') if r.get('ts_recv') is not None else r.get('ts_recv_ns')) for r in records
-              if r.get('ts_recv') is not None or r.get('ts_recv_ns') is not None]
-    if not clocks:
-        return 0.0
-    return (max(clocks) - min(clocks)) / NS
+    low = high = None
+    for row in records:
+        value = row.get('ts_recv') if row.get('ts_recv') is not None else row.get('ts_recv_ns')
+        if value is not None:
+            value = int(value)
+            low = value if low is None else min(low, value)
+            high = value if high is None else max(high, value)
+    return 0.0 if low is None else (high - low) / NS
 
 
 def identity(producers, container, count, cycle, code_commit):
@@ -214,7 +292,8 @@ def run(records, container, out_dir, producers, cycle, code_commit, day):
     NativeReplayDriver(ExchangeSessionRule, NeverInvoke, LedgerSinks) -> consume -> finalize -> reconcile (a mismatch
     raises: a ledger that does not match its counter is not evidence). Files result.json (the exact rows live in the
     ledgers) and receipt.json under out_dir; returns the receipt."""
-    records = list(records)
+    if not hasattr(records, '__len__'):
+        raise ValueError('bedrock input must be counted and replayable before traversal')
     if not records:
         raise ValueError('no INPUT records; nothing to derive')
     producers = load_producers(producers)
@@ -228,8 +307,8 @@ def run(records, container, out_dir, producers, cycle, code_commit, day):
     out_dir = Path(out_dir)
     superseded = _move_aside(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    stamped = driver_records(records, container, day)
-    ident = identity(producers, container, len(stamped), cycle, code_commit)
+    stamped = iter_driver_records(records, container, day)
+    ident = identity(producers, container, len(records), cycle, code_commit)
     sinks = LedgerSinks(out_dir / 'ledgers')
     # the launcher's canonical arguments (native_a_arm_launch.launch): 60 s replenishment horizon, the a-arm-h2 horizons,
     # the four response values the contract's inputs reach, companion keys unaliased
@@ -275,7 +354,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day):
                    candidate_selection=driver.candidate_selection,
                    source_object=dict(object=source_object(container, day)[0], container=str(container['path']), sha256=str(container['sha256']), day=str(day),
                                       rule='journal:<day>:<verified prefix container path>; the driver reads the source day as the first 20YYMMDD in the object name'),
-                   records=len(stamped), groups=result['traversal']['groups_seen'], span_seconds=span_seconds(records),
+                   records=len(records), groups=result['traversal']['groups_seen'], span_seconds=span_seconds(records),
                    verdict=result.get('verdict'), failed_gates=result.get('failed_gates'),
                    sections_fed=result['traversal']['sections_fed'], reconciliation=result['ledger_retention'],
                    ledgers=ledgers, result=result_witness, superseded=superseded)
@@ -386,7 +465,11 @@ def project_sections(receipt, result_path, ledgers_dir, out_dir):
     warmup, minimum = receipt.get('candidate_warmup_seconds'), receipt.get('candidate_min_observations')
     traversal = dict(verdict=receipt.get('verdict'), failed_gates=list(receipt.get('failed_gates') or []), groups=receipt.get('groups'),
                      records=receipt.get('records'), span_seconds=span, candidate_warmup_seconds=warmup, candidate_min_observations=minimum)
-    mirror_rows = [row for row in _rows(ledgers_dir / 'exact_lifecycle_rows.jsonl') if row.get('emitting_section') == 'mirror']
+    mirror_rows = RowSpool(out_dir / '.rows' / 'section-mirror.jsonl')
+    for row in _rows(ledgers_dir / 'exact_lifecycle_rows.jsonl'):
+        if row.get('emitting_section') == 'mirror':
+            mirror_rows.append(row)
+    mirror_rows.close()
     out = {}
     for name, spec in SECTION_FILES.items():
         section = spec['section']
@@ -447,7 +530,9 @@ def project(receipt, ledgers_dir, layers, crosswalk, out_dir):
                             file=record.get('file'), line=record.get('line'), carrier=record.get('carrier'),
                             member_paths=list(record.get('member_paths') or []), lifecycle_sections=list(record.get('lifecycle_sections') or []),
                             fixture_dependent_sections=list(record.get('fixture_dependent_sections') or []), ledgers=list(record.get('ledgers') or []),
-                            notes=record.get('notes'), crosswalk_commit=PIN_COMMIT, traversal=traversal, member_rows=[], lifecycle_rows=[],
+                            notes=record.get('notes'), crosswalk_commit=PIN_COMMIT, traversal=traversal,
+                            member_rows=RowSpool(out_dir / '.rows' / (layer + '-members.jsonl')),
+                            lifecycle_rows=RowSpool(out_dir / '.rows' / (layer + '-lifecycle.jsonl')),
                             section_counts={s: 0 for s in (record.get('lifecycle_sections') or [])}, absent_paths={})
     member_layers = [l for l in layers if files[l]['member_paths']]
     if member_layers:
@@ -476,6 +561,8 @@ def project(receipt, ledgers_dir, layers, crosswalk, out_dir):
     result = {}
     for layer in layers:
         entry = files[layer]
+        entry['member_rows'].close()
+        entry['lifecycle_rows'].close()
         entry['member_count'] = len(entry['member_rows'])
         entry['lifecycle_count'] = len(entry['lifecycle_rows'])
         entry['count'] = entry['member_count'] + entry['lifecycle_count']
