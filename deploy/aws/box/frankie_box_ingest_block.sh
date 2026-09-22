@@ -14,7 +14,7 @@ MARKETS_REF="${MARKETS_REF:-claude/cycle-0-frankie-box-rerun-od5sxk}"
 MANIFEST="${MANIFEST:-research/kalshi/frankie_boss/blocks/BLOCK_20211004_SOURCE_MANIFEST.json}"
 case "$MARKETS_REF" in -*|*[!A-Za-z0-9._/-]*) echo "bad MARKETS_REF"; exit 2;; esac
 case "$MANIFEST" in research/kalshi/frankie_boss/blocks/BLOCK_*_SOURCE_MANIFEST.json) ;; *) echo "MANIFEST must be a committed blocks/BLOCK_*_SOURCE_MANIFEST.json"; exit 2;; esac
-[[ "$WORKERS" =~ ^[0-9]+$ && "$CANARY" =~ ^[0-9]+$ ]] || { echo "WORKERS and CANARY must be integers"; exit 2; }
+case "$WORKERS$CANARY" in ""|*[!0-9]*) echo "WORKERS and CANARY must be integers"; exit 2;; esac   # SSM runs this under sh: POSIX only
 mkdir -p "$ROOT/data" "$ROOT/work" "$ROOT/receipts" "$ROOT/tmp"
 PY="$ROOT/venv/bin/python"; [ -x "$PY" ] || { echo "venv not staged"; exit 2; }
 git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD || { echo "markets fetch/checkout of $MARKETS_REF failed"; exit 2; }

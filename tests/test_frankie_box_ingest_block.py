@@ -16,3 +16,4 @@ def test_the_wrapper_fetches_by_the_map_verifies_every_partition_and_runs_the_to
     assert 'boto3' not in text and 'put_object' not in text and 'rm -rf' not in text and 'os.remove' not in text
     assert "rm -f \"$ROOT/tmp/ingest-map.json\"" in text                 # only the private map leaves; data never does
     assert 'a fresh directory per run' in text
+    assert '[[' not in text and 'local ' not in text and '$((' not in text    # SSM runs the script under sh (dash): POSIX only
