@@ -15,7 +15,7 @@ NEXT_RUN = {
     'native_threads': 8,                   # declared numeric identity, fixed for the whole run
     'output_ledgers': 32,
     'science_byte_exceptions': {           # audit finding 7: pin these two blobs, never claim byte-identity with 050c5056
-        'research/kalshi/frankie_boss/c15_journal.py': 'a2dd5e9be76c47a9738b28caa5f364ddaf8d4064',
+        'research/kalshi/frankie_boss/c15_journal.py': 'dd323e2ac423988a0b78d066071f8e8b79a30951',   # 2026-09-22: PrePacked, SerializedObservation, OBSERVATION_SENTINEL (the incremental observation); the journal bytes unchanged, the builder identity re-minted (c15_registry hashes c15_builder/c15_observer/c15_journal)
         'research/kalshi/frankie_boss/prepared_context_cache.py': '8062f60200305567b1a0ef3394b7b5e58c6a5d22',
     },
 }

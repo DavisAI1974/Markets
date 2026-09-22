@@ -62,6 +62,7 @@ def _level_fragment(price, ids):
 class IncrementalObservation:
     def __init__(self, book):
         self.book = book
+        self.observations = 0          # observations composed for this instrument; the differential check's own count
         self.rebuild()
 
     def rebuild(self):

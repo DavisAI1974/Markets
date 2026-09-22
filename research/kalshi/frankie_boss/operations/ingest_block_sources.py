@@ -286,6 +286,15 @@ def profiled(call, report_path, *, top=40):
         print('\n'.join(line for line in out.getvalue().splitlines()[:top + 12]))
 
 
+def _boxes(journal_path):
+    """The measured box count of a compact container (the outcome beside the packing bounds in the receipt)."""
+    db = sqlite3.connect(Path(journal_path).resolve().as_uri() + '?mode=ro', uri=True)
+    try:
+        return next(db.execute('SELECT count(*) FROM blocks'))[0]
+    finally:
+        db.close()
+
+
 def write_once(path, value):
     raw = json.dumps(value, indent=1, sort_keys=True, default=str).encode()
     with Path(path).open('xb') as stream:
@@ -437,7 +446,7 @@ def main():
                        ingest_seconds=result['ingest_seconds'], ingest_cpu_seconds=result['ingest_cpu_seconds'],
                        records_per_second=result['records_per_second'], ms_per_record=result['ms_per_record'],
                        conformance_seconds=result['conformance_seconds'], sessions=result['sessions'],
-                       partial_members_ingested=result['partial_members'],
+                       partial_members_ingested=result['partial_members'], packing=result['packing'], boxes=_boxes(journal),
                        ingested_unix=int(time.time()), model_calls=0, training_updates=0)
         write_once(directory / 'ingestion-receipt.json', receipt)
         emit(dict(phase='complete', writer=writer, journal_count=receipt['journal_count'], journal_hash=receipt['journal_hash'],

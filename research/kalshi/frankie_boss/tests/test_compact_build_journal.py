@@ -209,3 +209,80 @@ def test_the_writer_splices_exactly_one_observation_and_the_inline_encoder_parse
     import json
     assert unpack(json.loads(rows[0][2]))['payload']['observation'] == dict(orders=[])
     journal.close()
+
+
+def test_every_adapter_path_composes_byte_identically_at_the_default_cadence_and_on_every_record(tmp_path):
+    # the chat-9 ship review on the incremental observation: the fixture stream above exercises add, modify same price,
+    # fill, partial cancel, cancel of a missing order and a reset only. This stream (journal-shaped rows, the tests' own)
+    # walks every mutation path of the pinned adapter: duplicate add, modify with and without priority loss, modify with
+    # side change, modify of a missing order, modify to size 0, full cancel emptying a level, cancel of a missing order,
+    # trade/fill/none, an invalid-side add, the F_TOB one-side clear, a reset, a second instrument emptied, a non-F_LAST
+    # group. The raw and the compact journals must agree row for row at the DEFAULT cadence, and the composer must equal
+    # observe_book after every record when checked on every observation.
+    from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import UNDEF_PRICE, F_LAST, F_TOB
+    from test_c15_full_evidence import row
+    from c15_observer import observe_book
+    from verified_journal_reader import canonical_tagged_bytes
+    stream = [row(0, oid=1, side='A', price=101, size=10), row(1, oid=2, side='A', price=101, size=5), row(2, oid=3, side='B', price=99, size=7),
+              row(3, oid=4, side='B', price=98, size=3, flags=0), row(4, oid=5, side='B', price=98, size=4),
+              row(5, oid=1, side='A', price=102, size=10),                                   # duplicate add
+              row(6, oid=2, action='M', side='A', price=101, size=3),                        # modify, no priority loss
+              row(7, oid=3, action='M', side='B', price=99, size=9),                         # modify, priority lost (size up)
+              row(8, oid=4, action='M', side='B', price=97, size=3),                         # modify, priority lost (price)
+              row(9, oid=5, action='M', side='A', price=103, size=4),                        # modify with side change
+              row(10, oid=77, action='M', side='B', price=96, size=2),                       # modify of a missing order
+              row(11, oid=2, action='C', side='A', price=101, size=1), row(12, oid=2, action='C', side='A', price=101, size=2),   # partial then full cancel
+              row(13, oid=999, action='C', side='A', price=101, size=1),                     # cancel of a missing order
+              row(14, oid=1, action='T', side='A', price=102, size=1), row(15, oid=1, action='F', side='A', price=102, size=1),
+              row(16, oid=0, action='N', side='N', price=0, size=0),
+              row(17, oid=4, action='M', side='B', price=97, size=0),                        # modify to size 0
+              row(18, oid=8, side='N', price=100, size=1),                                   # invalid-side add
+              row(19, oid=0, side='A', price=UNDEF_PRICE, size=0, flags=F_LAST | F_TOB),     # the one-side clear
+              row(20, oid=9, side='A', price=105, size=1),
+              row(21, oid=0, action='R', side='N', price=0, size=0),                         # reset
+              row(22, oid=10, side='B', price=90, size=1),
+              row(23, oid=11, iid=2, side='B', price=50, size=1), row(24, oid=11, iid=2, action='C', side='B', price=50, size=1),   # a second instrument, emptied
+              row(25, oid=10, action='M', side='B', price=90, size=1, flags=0), row(26, oid=12, side='B', price=90, size=2)]
+    declared = _scope((len(stream),))
+    raw = SourceConformanceDriver(declared, tmp_path / 'raw.sqlite', expected_scope_hash=declared.genesis_hash())
+    compact = conformance_driver_with_compact_journal(declared, tmp_path / 'compact.sqlite', expected_scope_hash=declared.genesis_hash(), block_bytes=4096)
+    checked = conformance_driver_with_compact_journal(declared, tmp_path / 'checked.sqlite', expected_scope_hash=declared.genesis_hash(), block_bytes=4096)
+    checked._builder.observation_check_every = 1
+    try:
+        for cursor, raw_row in enumerate(stream):
+            for driver in (raw, compact, checked):
+                driver.append(raw_row, cursor=cursor, source_member_index=0, source_sha256=SHA_A, session_id="s", raw_symbol="NG", source_dbn_object="synthetic")
+            for iid, composer in checked._builder._composers.items():
+                assert composer.canonical() == canonical_tagged_bytes(pack(observe_book(checked._builder.adapter.books[iid]))), cursor
+        completions = [d.complete() for d in (raw, compact, checked)]
+        assert completions[0].digest == completions[1].digest == completions[2].digest
+        raw_rows = list(raw._builder.journal.entries())
+        assert pack(raw_rows) == pack(list(compact._builder.journal.entries())) == pack(list(checked._builder.journal.entries()))
+        assert len(raw_rows) == 2 * len(stream)
+        integrity = checked._builder.adapter.books[1].integrity
+        assert {'duplicate_add_order_id', 'modify_side_change', 'modify_missing_treated_as_add', 'cancel_missing_order', 'add_invalid_side'} <= set(integrity)
+    finally:
+        raw.close(); compact.close(); checked.close()
+
+
+def test_the_differential_check_counts_per_instrument_composer(tmp_path):
+    # the chat-9 ship review: the cadence counted observations per BUILDER while composers are per INSTRUMENT, so a second
+    # instrument's composer could be unchecked at its own first observation. Each composer is checked at ITS first and
+    # every OBSERVATION_CHECK_EVERY-th observation.
+    from test_c15_full_evidence import row
+    import c15_builder
+    assert c15_builder.OBSERVATION_CHECK_EVERY == 64
+    declared = _scope((4,))
+    driver = conformance_driver_with_compact_journal(declared, tmp_path / 'c.sqlite', expected_scope_hash=declared.genesis_hash(), block_bytes=4096)
+    driver._builder.observation_check_every = 2
+    try:
+        driver.append(row(0, oid=1), cursor=0, source_member_index=0, source_sha256=SHA_A, session_id="s", raw_symbol="NG", source_dbn_object="synthetic")
+        driver.append(row(1, oid=5, iid=2, flags=0), cursor=1, source_member_index=0, source_sha256=SHA_A, session_id="s", raw_symbol="NG", source_dbn_object="synthetic")
+        composer = driver._builder._composers[2]
+        assert composer.observations == 0
+        oid = composer.sorted_oids[0]
+        composer.order_frag[oid] = (composer.order_frag[oid][0], b'["dict",[]]')
+        with pytest.raises(ValueError, match='incremental observation differs'):     # instrument 2's FIRST observation is checked
+            driver.append(row(2, oid=6, iid=2), cursor=2, source_member_index=0, source_sha256=SHA_A, session_id="s", raw_symbol="NG", source_dbn_object="synthetic")
+    finally:
+        driver.close()

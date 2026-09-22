@@ -35,6 +35,15 @@ class AppliedEvidence:
     evidence: dict
 
 
+# The incremental observation's differential check runs at each instrument composer's FIRST observation and every
+# OBSERVATION_CHECK_EVERY-th after it (the chat-9 ship review: the count is per composer, not per builder). Between checks
+# up to OBSERVATION_CHECK_EVERY - 1 observations are appended unchecked; a drift that persists is refused at the next
+# check with those bodies already in the container (completion is then impossible: complete() refuses a FAILED entry),
+# and the codec re-parses every spliced body at flush and refuses a non-canonical one. The full-path differential test
+# (test_compact_build_journal) is the proof the composer needs no window at all; the check is the guard on the day.
+OBSERVATION_CHECK_EVERY = 64
+
+
 class C15Builder:
     def __init__(self, scope, journal_path):
         self.scope = scope
@@ -109,10 +118,9 @@ class C15Builder:
                 else:
                     composer.note(msg.order_id, before, new, msg.side, msg.price_raw)
                 if receipt is not None:
-                    every = self.__dict__.get('observation_check_every', 64)
-                    n = self.__dict__.get('_observations', 0)
-                    spliced = composer.checked() if n % every == 0 else composer.canonical()
-                    self._observations = n + 1
+                    every = self.__dict__.get('observation_check_every', OBSERVATION_CHECK_EVERY)
+                    spliced = composer.checked() if composer.observations % every == 0 else composer.canonical()
+                    composer.observations += 1
                 observation = OBSERVATION_SENTINEL if receipt is not None else None
             else:
                 observation = self._prepacked(observe_book(book)) if receipt is not None else None

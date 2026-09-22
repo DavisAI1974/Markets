@@ -237,3 +237,18 @@ def test_the_ingest_tool_imports_the_way_the_box_runs_it():
                           cwd=root, env=env, capture_output=True, text=True, timeout=120)
     assert done.returncode == 0, done.stderr[-2000:]
     assert '--block-rows' in done.stdout and '--profile' in done.stdout
+
+
+def test_main_writes_packing_into_both_receipts(tmp_path, monkeypatch):
+    # the chat-9 ship review: the completion receipt enumerated its keys and packing was not among them
+    import sys
+    manifest = _block(tmp_path)
+    path = tmp_path / 'manifest.json'; path.write_text(json.dumps(manifest))
+    for out, extra in (('canary-run', ['--canary-records', '2']), ('full-run', [])):
+        monkeypatch.setattr(sys, 'argv', ['ingest', '--manifest', str(path), '--sources-dir', str(tmp_path), '--output-dir', str(tmp_path / out),
+                                          '--session-policy', 'cme_trading_day', '--block-bytes', '4096'] + extra)
+        tool.main()
+    canary = json.loads((tmp_path / 'canary-run' / 'canary-receipt.json').read_bytes())
+    receipt = json.loads((tmp_path / 'full-run' / 'ingestion-receipt.json').read_bytes())
+    assert canary['packing']['block_rows'] == receipt['packing']['block_rows'] == 1 and receipt['packing']['block_bytes'] == 4096
+    assert receipt['boxes'] == 12 and receipt['journal_count'] == 12                      # the outcome beside the bounds
