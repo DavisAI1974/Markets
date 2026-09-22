@@ -252,3 +252,23 @@ def test_main_writes_packing_into_both_receipts(tmp_path, monkeypatch):
     receipt = json.loads((tmp_path / 'full-run' / 'ingestion-receipt.json').read_bytes())
     assert canary['packing']['block_rows'] == receipt['packing']['block_rows'] == 1 and receipt['packing']['block_bytes'] == 4096
     assert receipt['boxes'] == 12 and receipt['journal_count'] == 12                      # the outcome beside the bounds
+
+@pytest.mark.parametrize("writer", ["raw", "both"])
+def test_full_cli_receipts_support_raw_and_both_writers(tmp_path, monkeypatch, writer):
+    import sys
+    manifest = _block(tmp_path)
+    path = tmp_path / 'manifest.json'
+    path.write_text(json.dumps(manifest))
+    output = tmp_path / 'cli-output'
+    monkeypatch.setattr(sys, 'argv', ['ingest', '--manifest', str(path),
+        '--sources-dir', str(tmp_path), '--output-dir', str(output),
+        '--session-policy', 'cme_trading_day', '--writer', writer])
+    tool.main()
+    raw_dir = output / 'raw' if writer == 'both' else output
+    receipt = json.loads((raw_dir / 'ingestion-receipt.json').read_bytes())
+    assert receipt['record_count'] == 6 and receipt['journal_count'] == 12
+    assert receipt['boxes'] is None
+    if writer == 'both':
+        compact = json.loads((output / 'compact' / 'ingestion-receipt.json').read_bytes())
+        assert compact['journal_hash'] == receipt['journal_hash']
+        assert compact['boxes'] > 0
