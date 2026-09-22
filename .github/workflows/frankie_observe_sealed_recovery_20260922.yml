@@ -1,0 +1,61 @@
+name: Observe sealed recovery progress
+on:
+  push:
+    branches: ['codex/trading-day-readiness-20260922']
+    paths: ['.github/workflows/frankie_observe_sealed_recovery_20260922.yml']
+permissions:
+  contents: read
+  statuses: write
+jobs:
+  observe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 360
+    steps:
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Read AWS progress and publish commit status
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import boto3,json,os,time,urllib.request
+          s3=boto3.client('s3',region_name='us-east-1')
+          ssm=boto3.client('ssm',region_name='us-east-1')
+          bucket='frankie-granite42-568968024170-us-east-1'
+          prefix='readiness/20260922/sealed-recovery/35796528082/'
+          endpoint='https://api.github.com/repos/DavisAI1974/Markets/statuses/5e801a8d25e027223a9a0ea34274ebb8a27be578'
+          last=None
+          def read(name):
+              try:return s3.get_object(Bucket=bucket,Key=prefix+name)['Body'].read()
+              except s3.exceptions.NoSuchKey:return None
+          while True:
+              dispatch=read('dispatch.json')
+              progress=read('progress.jsonl')
+              state='pending'
+              description='Waiting for recovery dispatch'
+              if dispatch:
+                  d=json.loads(dispatch)
+                  result=ssm.get_command_invocation(CommandId=d['ssm_command_id'],InstanceId=d['instance_id'])
+                  status=result['Status']
+                  description='SSM '+status
+                  if progress:
+                      p=json.loads(progress.decode().strip().splitlines()[-1])
+                      description=p['phase']
+                      if 'percent' in p:description+=' '+str(p['percent'])+'%; '+str(round(p['records_per_second'],1))+' records/s'
+                  if status not in ('Pending','InProgress','Delayed'):
+                      state='success' if status=='Success' and read('recovery-receipt.json') else 'failure'
+                      description='SSM '+status+'; '+description
+              payload=dict(state=state,context='sealed-recovery/conformance',description=description[:140],
+                  target_url='https://github.com/DavisAI1974/Markets/actions/runs/35796528082')
+              if payload!=last:
+                  req=urllib.request.Request(endpoint,data=json.dumps(payload).encode(),method='POST',
+                      headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
+                  with urllib.request.urlopen(req,timeout=30) as r:assert r.status==201
+                  print(json.dumps(payload),flush=True)
+                  last=payload
+              if state!='pending':break
+              time.sleep(30)
+          PY
