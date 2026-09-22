@@ -14,14 +14,14 @@ from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import (
 
 try:
     from .causal_prefix_records import RecordInput, RecordPrefixChain
-    from .c15_journal import EvidenceJournal, PrePacked, SCHEMA, evidence_hash, pack, unpack
-    from .c15_observer import observe_book, order_rank
+    from .c15_journal import EvidenceJournal, OBSERVATION_SENTINEL, PrePacked, SCHEMA, SerializedObservation, evidence_hash, pack, unpack
+    from .c15_observer import IncrementalObservation, observe_book, order_rank
     from .c15_registry import implementation_identity
     from .mbo_resume_state import export_adapter_state, restore_adapter_state
 except ImportError:
     from causal_prefix_records import RecordInput, RecordPrefixChain
-    from c15_journal import EvidenceJournal, PrePacked, SCHEMA, evidence_hash, pack, unpack
-    from c15_observer import observe_book, order_rank
+    from c15_journal import EvidenceJournal, OBSERVATION_SENTINEL, PrePacked, SCHEMA, SerializedObservation, evidence_hash, pack, unpack
+    from c15_observer import IncrementalObservation, observe_book, order_rank
     from c15_registry import implementation_identity
     from mbo_resume_state import export_adapter_state, restore_adapter_state
 
@@ -95,8 +95,27 @@ class C15Builder:
                 self.adapter.completed_event_group_count += 1
             if (receipt is None) != (frame is None):
                 raise ValueError("adapter and prefix disagree on F_LAST closure")
-            observation = self._prepacked(observe_book(book)) if receipt is not None else None
             new = book.orders.get(msg.order_id)
+            spliced = None
+            if getattr(self.journal, 'accepts_spliced', False):
+                # the compact path (Greg, 2026-09-22): the observation's bytes maintained incrementally and spliced by the
+                # writer; the raw path below still packs observe_book, and the two are proven byte-identical by test
+                composers = self.__dict__.setdefault('_composers', {})
+                composer = composers.get(msg.instrument_id)
+                if composer is None:
+                    composer = composers[msg.instrument_id] = IncrementalObservation(book)
+                elif effect.action == 'R' or (effect.action == 'A' and effect.removed):
+                    composer.rebuild()                      # the book was cleared (a reset, or the one-side clear)
+                else:
+                    composer.note(msg.order_id, before, new, msg.side, msg.price_raw)
+                if receipt is not None:
+                    every = self.__dict__.get('observation_check_every', 64)
+                    n = self.__dict__.get('_observations', 0)
+                    spliced = composer.checked() if n % every == 0 else composer.canonical()
+                    self._observations = n + 1
+                observation = OBSERVATION_SENTINEL if receipt is not None else None
+            else:
+                observation = self._prepacked(observe_book(book)) if receipt is not None else None
             evidence = dict(input_ordinal=input_ordinal, cursor=cursor, raw_record=raw,
                             source_member_index=source_member_index, session_id=session_id,
                             normalized=msg.public_dict(), effect=asdict(effect),
@@ -110,7 +129,11 @@ class C15Builder:
                             terminal_prefix_hash=self.chain.prefix_hash,
                             record_count=self.adapter.record_count,
                             group_count=self.adapter.completed_event_group_count)
-            self.journal.append("APPLIED", evidence)
+            if spliced is not None:
+                self.journal.append("APPLIED", evidence, spliced=spliced)
+                observation = evidence['observation'] = SerializedObservation(spliced)
+            else:
+                self.journal.append("APPLIED", evidence)
             self._sessions[msg.instrument_id] = session_id
             return AppliedEvidence(frame, legacy, receipt, observation, evidence)
         except Exception as exc:

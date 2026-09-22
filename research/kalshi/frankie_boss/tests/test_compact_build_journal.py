@@ -95,7 +95,7 @@ def test_the_observation_packs_from_a_cache_of_its_orders_and_levels_byte_identi
     from c15_journal import PrePacked
     records = _records()
     declared = _scope((len(records),))
-    driver = conformance_driver_with_compact_journal(declared, tmp_path / 'c.sqlite', expected_scope_hash=declared.genesis_hash(), block_bytes=4096)
+    driver = SourceConformanceDriver(declared, tmp_path / 'raw.sqlite', expected_scope_hash=declared.genesis_hash())   # the raw path packs the tree
     previous = {}
     reused = 0
     try:
@@ -138,3 +138,74 @@ def test_the_writer_cuts_boxes_by_the_declared_row_standard(tmp_path):
         CompactBuildJournal(tmp_path / 'bad.sqlite', block_rows=0)
     with pytest.raises(ValueError, match='rows per box'):
         CompactBuildJournal(tmp_path / 'bad2.sqlite', block_rows=257)
+
+
+def test_the_compact_path_composes_the_observation_bytes_incrementally_and_the_raw_path_proves_them(tmp_path):
+    # Greg, 2026-09-22 ("we just want time"): on the compact path the builder no longer copies and re-walks the whole book
+    # per closed group; it maintains each order's and each level's canonical fragment as the adapter mutates ONE order per
+    # message (a reset rebuilds), joins them into the observation's bytes, and splices those bytes into the APPLIED body.
+    # The raw path still packs observe_book; the both-writers test above proves the two byte-identical end to end. Here:
+    # every observation equals the reference on every record, a drifted fragment is REFUSED at the next check, and the
+    # in-memory observation is a sealed object that materializes from its own bytes, never from the live book.
+    from c15_journal import SerializedObservation, unpack
+    from c15_observer import IncrementalObservation, observe_book
+    from verified_journal_reader import canonical_tagged_bytes
+    import json
+    records = _records()
+    declared = _scope((len(records),))
+    driver = conformance_driver_with_compact_journal(declared, tmp_path / 'c.sqlite', expected_scope_hash=declared.genesis_hash(), block_bytes=4096)
+    builder = driver._builder
+    builder.observation_check_every = 1                      # the differential check on every observation, for the test
+    seen = 0
+    try:
+        for cursor, raw in enumerate(records):
+            applied = driver.append(raw, cursor=cursor, source_member_index=0, source_sha256=SHA_A, session_id="s",
+                                    raw_symbol="NG", source_dbn_object="synthetic")
+            for iid, composer in builder._composers.items():
+                assert composer.canonical() == canonical_tagged_bytes(pack(observe_book(builder.adapter.books[iid])))
+            if applied.observation is not None:
+                seen += 1
+                assert type(applied.observation) is SerializedObservation and applied.evidence['observation'] is applied.observation
+                book = builder.adapter.books[applied.evidence['normalized']['instrument_id']]
+                assert applied.observation.materialize() == unpack(json.loads(canonical_tagged_bytes(pack(observe_book(book)))))
+                with pytest.raises(TypeError):
+                    applied.observation['orders']                # not a mapping: a reader must materialize() and say so
+        assert seen >= 3
+        rows = list(driver._builder.journal.rows())
+        applied_bodies = [r[2] for r in rows if r[1] == 'APPLIED']
+        assert all(b'@@C15-OBSERVATION' not in body for body in applied_bodies)      # the sentinel never reaches the journal
+    finally:
+        driver.close()
+    # a drifted fragment is refused at the next check, never written
+    from test_c15_full_evidence import row
+    driver = conformance_driver_with_compact_journal(_scope((3,)), tmp_path / 'd.sqlite', expected_scope_hash=_scope((3,)).genesis_hash(), block_bytes=4096)
+    driver._builder.observation_check_every = 1
+    try:
+        driver.append(row(0), cursor=0, source_member_index=0, source_sha256=SHA_A, session_id="s", raw_symbol="NG", source_dbn_object="synthetic")
+        composer = next(iter(driver._builder._composers.values()))
+        oid = composer.sorted_oids[0]
+        composer.order_frag[oid] = (composer.order_frag[oid][0], b'["dict",[]]')
+        with pytest.raises(ValueError, match='incremental observation differs'):
+            driver.append(row(1, oid=2), cursor=1, source_member_index=0, source_sha256=SHA_A, session_id="s", raw_symbol="NG", source_dbn_object="synthetic")
+    finally:
+        driver.close()
+
+
+def test_the_writer_splices_exactly_one_observation_and_the_inline_encoder_parses_the_composed_body(tmp_path):
+    from c15_journal import OBSERVATION_SENTINEL
+    journal = CompactBuildJournal(tmp_path / 's.sqlite', block_bytes=4096)
+    observation = b'["dict",[["orders",["list",[]]]]]'
+    digest = journal.append('APPLIED', dict(cursor=0, observation=OBSERVATION_SENTINEL), spliced=observation)
+    assert journal.head_hash == digest
+    with pytest.raises(ValueError, match='exactly one'):
+        journal.append('APPLIED', dict(cursor=1, observation=None), spliced=observation)
+    with pytest.raises(ValueError, match='exactly one'):
+        journal.append('APPLIED', dict(cursor=1, observation=OBSERVATION_SENTINEL, other=OBSERVATION_SENTINEL), spliced=observation)
+    journal.append('INPUT', dict(cursor=1))
+    journal.seal()
+    rows = list(journal.rows())
+    assert len(rows) == 2 and observation in rows[0][2] and OBSERVATION_SENTINEL.encode() not in rows[0][2]
+    from c15_journal import unpack
+    import json
+    assert unpack(json.loads(rows[0][2]))['payload']['observation'] == dict(orders=[])
+    journal.close()

@@ -26,7 +26,7 @@ import time
 
 try:
     from .c15_builder import C15Builder
-    from .c15_journal import SCHEMA, pack
+    from .c15_journal import OBSERVATION_SENTINEL, SCHEMA, pack
     from .c15_registry import implementation_identity
     from .causal_prefix_records import RecordPrefixChain
     from .compact_journal import CompactWriter, FORMAT, MAX_BYTES, MAX_ROWS, decode_block, encode_block, verified_rows
@@ -34,7 +34,7 @@ try:
     from .verified_journal_reader import DIGEST_PREFIX, GENESIS_HASH, canonical_tagged_bytes
 except ImportError:   # the tests import the package modules flat, as every module here allows
     from c15_builder import C15Builder
-    from c15_journal import SCHEMA, pack
+    from c15_journal import OBSERVATION_SENTINEL, SCHEMA, pack
     from c15_registry import implementation_identity
     from causal_prefix_records import RecordPrefixChain
     from compact_journal import CompactWriter, FORMAT, MAX_BYTES, MAX_ROWS, decode_block, encode_block, verified_rows
@@ -89,7 +89,14 @@ class CompactBuildJournal:
     def sealed(self):
         return self.writer.sealed
 
-    def append(self, kind, payload):
+    accepts_spliced = True     # the builder may hand the observation as canonical bytes (c15_observer.IncrementalObservation)
+    _SENTINEL_NODE = None
+
+    def append(self, kind, payload, *, spliced=None):
+        """`spliced`: the observation's canonical bytes, replacing the one OBSERVATION_SENTINEL string node of the payload in
+        the body (Greg, 2026-09-22): the bytes are what pack() of the mapping would have serialised to, so the body and the
+        digest are those of the plain envelope; the parsed tree is then not kept for this row (the inline encoder parses
+        the body). Exactly one sentinel is required, else refused."""
         if self.sealed:
             raise ValueError('container already sealed')
         if type(kind) is not str or not kind:
@@ -98,6 +105,16 @@ class CompactBuildJournal:
         envelope = dict(schema=SCHEMA, ordinal=ordinal, previous_hash=previous, kind=kind, payload=payload)
         tree = pack(envelope)
         body = canonical_tagged_bytes(tree)                                  # == canonical_bytes(tree)
+        if spliced is not None:
+            if type(spliced) is not bytes or not spliced:
+                raise ValueError('spliced observation bytes required')
+            if CompactBuildJournal._SENTINEL_NODE is None:
+                CompactBuildJournal._SENTINEL_NODE = canonical_tagged_bytes(pack(OBSERVATION_SENTINEL))
+            token = CompactBuildJournal._SENTINEL_NODE
+            if body.count(token) != 1:
+                raise ValueError('the payload must carry exactly one observation sentinel to splice')
+            body = body.replace(token, spliced, 1)
+            tree = None
         digest = hashlib.sha256(DIGEST_PREFIX + body).hexdigest()            # == evidence_hash(envelope)
         if len(body) > MAX_BYTES // 2:
             raise ValueError('oversized row')
@@ -134,7 +151,8 @@ class CompactBuildJournal:
             return
         start, count, head = self._rows[0][0], len(self._rows), self._rows[-1][3]
         if self._pool is None:
-            self._insert(start, count, encode_block(self._rows, self._trees), self._pending_previous, head)
+            trees = self._trees if all(tree is not None for tree in self._trees) else None    # a spliced row: the encoder parses the body
+            self._insert(start, count, encode_block(self._rows, trees), self._pending_previous, head)
         else:
             future = self._pool.submit(_encode_rows, self._rows)     # the worker parses the bodies itself
             self._inflight.append((future, start, count, self._pending_previous, head))

@@ -35,6 +35,31 @@ except ImportError:
 SCHEMA = "C15_FULL_EVIDENCE_V1"
 
 
+OBSERVATION_SENTINEL = '@@C15-OBSERVATION-SPLICE-9c1f@@'   # the placeholder the compact writer replaces with the observation's bytes
+
+
+class SerializedObservation:
+    """The observation of one closed group as its canonical bytes (the compact path composes them incrementally, the
+    writer splices them into the APPLIED body). Not a mapping on purpose: a reader that wants the mapping calls
+    materialize(), which decodes THESE bytes, never the live book, so it is the snapshot at that record whenever it
+    is read."""
+    __slots__ = ('canonical',)
+
+    def __init__(self, canonical):
+        if type(canonical) is not bytes or not canonical:
+            raise ValueError('canonical observation bytes required')
+        self.canonical = canonical
+
+    def materialize(self):
+        return unpack(json.loads(self.canonical))
+
+    def __eq__(self, other):
+        return type(other) is SerializedObservation and other.canonical == self.canonical
+
+    def __repr__(self):
+        return f'SerializedObservation({len(self.canonical)} bytes)'
+
+
 class PrePacked(dict):
     """A mapping whose tagged tree is already built (the builder's observation, whose orders' and levels' subtrees are
     reused across closed groups while their fields are unchanged; Greg, 2026-09-22). It IS the mapping for every other
