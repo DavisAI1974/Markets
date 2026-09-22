@@ -4384,3 +4384,41 @@ layers only (unchanged).
 - Greg's calls still open (unchanged): the publish route; the two flagged 4096s; pre-warm from Friday; chat 7's calls 2-5;
   NEW: the Friday anchor re-run (to clear the decode caveat; one box run), the presigned-map SecureString or presign_hours
   cap, porting the dispatched-commit checkout to the cycle's session scripts.
+
+### 05:4xZ-06:xxZ 09-22: GREG: "apply optimizer stacks to ingestion before we ingest ... see if you can get it smaller"; "Stop it. We just want time"; "turn the single lines into boxes exactly like we did last night"
+
+MEASURED against the build (nothing assumed): (1) the reducer stack (order dedup + gzip, the pinned codec) IS applied at
+ingest by CompactBuildJournal; (2) the BOX STANDARD (TARGET_BOXES = 1189, Greg 2026-09-17, "for every day we ingest") was
+applied ONLY in the journal-stack reader stage (journal_stack_execution.partition_entries_for); the ingest writer cut 4 MiB
+blocks by its own byte bound (16 entries on the Sunday's body size) and never saw it; (3) the parent's 8.9 ms per record
+(canary 35681037861, 177.8 s for 20,000 records, parent CPU-bound) is the APPLIED entry: observe_book copies EVERY resting
+order and level of the book on every closed group and pack() walks every field of every order in Python, about 160-256 KB
+of canonical JSON per group, while the adapter mutates ONE order per message (read: _add_order, _cancel, _modify,
+_book_effect; a reset or the one-side F_TOB clear is the only multi-order mutation). No real records exist in git (the
+packet seeds hold cursors only), so the profile had to run on the box; Greg stopped it (run 35692188075, cancelled
+05:54Z, ~5 min in; a profiled parent runs about half speed; its box-side command wrote only its own canary directory).
+
+BUILT, byte-identical, each pinned by tests shown failing first (4494c854 the --profile flag; b884fc7f; 87b55109; 022053eb):
+- The BOX STANDARD IN THE INGEST WRITER (87b55109): CompactBuildJournal takes `block_rows` = partition_entries_for(2 x the
+  declared records) and `block_bytes` = the format's ceiling (MAX_BYTES // 2 = 16 MiB of bodies, CompactWriter's own bound);
+  the ingest tool derives both (--block-rows / --block-bytes override) and the receipt carries `packing`. Monday:
+  4,064,406 entries -> 3,419 per box clamped to MAX_ROWS 256, the byte ceiling cutting first at the Sunday body size (about
+  64-100 entries per box instead of 16): the order dictionary of each box then dedups across 4-6x more observations, the
+  SIZE lever Greg named. Entries, count and head hash invariant (test_partition_packing's invariant holds on the writer too).
+- THE INCREMENTAL OBSERVATION (022053eb; the tree memoization b884fc7f stays for the raw path): on the compact path the
+  builder keeps each order's and each level's canonical fragment (c15_observer.IncrementalObservation), updates only what
+  the message touched (before/after of msg.order_id, the touched levels; a reset rebuilds), joins them into the observation
+  bytes (json.dumps is compositional for lists, so the join IS canonical_tagged_bytes(pack(observe_book(book)))), and the
+  writer splices them into the APPLIED body in place of one sentinel node (exactly one, else refused). A differential check
+  against observe_book runs at the first observation and every 64th and REFUSES on a mismatch (never a wrong body). The raw
+  path still packs observe_book; test_builder_through_compact_journal_equals_raw_build_then_convert proves the two paths
+  byte-identical end to end on the fixture stream; 147 tests green across the journal, builder, ingest and reader suites.
+  The in-memory observation on the compact path is SerializedObservation (materialize() decodes its own bytes; a mapping
+  read raises: loud, never a stale book). Expected parent cost per record: fragment update O(1) + a C-level join of the
+  book's fragments + sha256 of the body + the INPUT entry + the chain, against the 8.9 ms measured: the canary decides.
+- The plain canary over the improvements was dispatched 06:xxZ (frankie_box_run.yml, ACTION=canary WORKERS=31, this
+  branch); its receipt is the number.
+NOT built, on Greg's call if the canary is not minutes: the parallel-replay writer (a fast first pass for the chain and
+book checkpoints, workers replaying slices from the checkpoints to emit bodies, the parent patching each previous hash and
+hashing: the parent's sequential work falls to one sha256 per entry, about 0.1 ms; bytes identical, provable by the
+both-writers test; a day's build in the pinned writer).
