@@ -1,0 +1,51 @@
+name: Monday opening window verification
+on:
+  push:
+    branches: ['codex/trading-day-readiness-20260922']
+    paths: ['.github/workflows/frankie_recovery_opening_20260922.yml', 'deploy/aws/verify_monday_source_opening.py']
+permissions:
+  contents: read
+jobs:
+  boundary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97 databento-dbn==0.62.0 zstandard==0.25.0
+      - name: Fetch existing pinned source object
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: |
+          python - <<'PY'
+          import boto3
+          name='glbx-mdp3-20211003.mbo.dbn.zst'
+          boto3.client('s3',region_name='us-east-2').download_file('bento-568968024170-us-east-2-an','frankie/block_20211004_20211006/sources/'+name,name)
+          PY
+      - name: Inspect full partition without ingest
+        run: python deploy/aws/verify_monday_source_opening.py
+      - name: Preserve new boundary witness in AWS
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: |
+          python - <<'PY'
+          import boto3,os
+          from pathlib import Path
+          key='readiness/20260922/sealed-recovery/'+os.environ['GITHUB_RUN_ID']+'/source-opening.json'
+          boto3.client('s3',region_name='us-east-1').put_object(Bucket='frankie-granite42-568968024170-us-east-1',Key=key,Body=Path('source-opening.json').read_bytes(),IfNoneMatch='*',ServerSideEncryption='AES256')
+          print('AWS_OPENING '+key)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: monday-source-opening
+          path: source-opening.json
