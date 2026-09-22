@@ -1,4 +1,4 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-22 00:xxZ, Frankie/BOSS cycle 0: the bedrock BUILT and SHIPPED (BR-0..BR-7, /ship GO after fixes); checkpoint E and the rerun wait on Greg's five calls; chat 7 closing)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-22 03:xxZ, Frankie/BOSS: THE TRADING DAY IS THE STANDARD; the row window is OUT of the code; the Monday 2021-10-04 ingest (module 1) is BUILT and its partitions are on the box; the rerun program is GO on Greg's word; 4.2/4.4 table projection next)
 
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
@@ -12,14 +12,13 @@
   receipt names (`sunday_*`, "full Sunday source") are the UTC-split era's and are to be read as that. Never say "Sunday
   and Monday"; say the Monday trading day. A trading day's record count is measured at ingest, never assumed from a
   partition's size.
-- **STATE 2026-09-22 00:xxZ (chat 7 CLOSING): READ FIRST the 00:xxZ block atop `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`,
-  then `CLAUDE_HANDOFF_20260920.md` from 22:5xZ 09-21 to the end, then `SHIP_REVIEW_20260921_CHAT7.md`. Branch
-  `claude/cycle-0-frankie-box-rerun-od5sxk` (tip 5ff3ab1c or later; the harness branch is the stale trunk tip). THE BEDROCK IS
-  BUILT (plan BR-0..BR-7: the pinned producers as an in-repo worktree, pin-bedrock, frankie_box_bedrock run/project, the
-  session's derive gate on the request's pin, DIGEST_V6 + ACTION=derive_only, the exhaustion/D teach stage, docs/brain/writing)
-  and SHIPPED (/ship GO after fixes; box list 183 green torch present and hidden). Launch HOLD; nothing has run on the host,
-  box, Pod or endpoint since chat 5. Greg's five calls (slice vs the FULL CME MONDAY he now wants, the reading cost after
-  checkpoint E, cycles 1-3 pins, the critic's zero hypotheses, REJECTED-traversal layers) and the runbook change gate every step.
+- **STATE 2026-09-22 03:xxZ (chat 8 CLOSING): READ FIRST the 03:xxZ block atop `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`,
+  then `CLAUDE_HANDOFF_20260920.md` from 01:3xZ 09-22 to the end, then `SPEC-trading-day-ingest.md`. Branch
+  `claude/cycle-0-frankie-box-rerun-od5sxk` (the harness branch is the stale trunk tip). Greg's go "Lets rerun cyc 0" = the
+  full rerun on the MONDAY TRADING DAY by itself; module 1 (the Monday ingest) built, both partitions fetched to the box, the
+  canary run; the Friday anchor measured (5.544); sections 4.2 and 4.4 identified as the dropped pieces (registered in the
+  pinned producers; their V6 table projection is the next build). Greg's calls open: the publish route, the two flagged
+  4096s, pre-warm from Friday, chat 7's calls 2-5. No Databento pull is possible (the secret is absent).
 - **STATE 2026-09-21 16:2xZ (chat 5 CLOSED, Greg: "We have to start new chat"): READ FIRST the 16:2xZ block atop
   `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`. The read is DONE (4 parts on the Pod), the merges run on
   serverless endpoint k1sqt0haffm61y (H100), then writing on the Pod, then the push; the git token (fine-grained, SSM

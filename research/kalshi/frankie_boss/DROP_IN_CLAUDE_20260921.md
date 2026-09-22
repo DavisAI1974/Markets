@@ -1,5 +1,54 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
+## READ FIRST (03:xxZ 09-22, chat 8 CLOSING on Greg's "Let's do everything we do to end a chat"): THE TRADING DAY IS THE STANDARD; THE ROW WINDOW IS OUT OF THE CODE; MODULE 1 (THE MONDAY INGEST) IS BUILT, THE PARTITIONS ARE ON THE BOX, THE CANARY RAN; 4.2 AND 4.4 ARE THE NEXT BUILD
+
+Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later; `git log --oneline -1`
+first: the harness cuts each chat's branch from the TRUNK tip, the stale-tip trap; the work is here). Run
+`using-agent-skills` and `git-workflow-and-versioning` first; skills win overlaps; attribution lines on every commit; no
+model identifiers in anything pushed; the scratchpad is never used (the producers worktree `.producers-2ebb8ce8` from
+`bash deploy/aws/box/producers_checkout.sh`). RULES IN FORCE, verbatim: nothing deleted; every move receipted; no Pod or
+EC2 stop/terminate without Greg; never stop the native host runner; keys never printed; NO output limits on the BOSS; the
+pinned Pod bootstrap bundle untouched; no outside LLMs as engine; records in git or AWS only. Box probes: one at open,
+then as Greg says. Launch HOLD except what Greg has said go to (below). NO DATABENTO PULL (the secret is absent; measured).
+
+THE STANDARD (CLAUDE.md, first FRANKIE/BOSS rule, Greg verbatim): "A Monday trading day (the new standard) starts at 6 pm
+on Sun and ends at 5 pm on Mon for 23 hrs. There is no more 'Sunday'. Monday and every trading day starts at 6pm the day
+prior." The DBN files are UTC PARTITIONS, not days. Cycle 0's rows were the first 13 s of the Monday 2021-10-04 trading day.
+
+STATE:
+- THE ROW WINDOW IS OUT OF THE CODE (ccf9bac1 + 903b36f2 fixes; Greg: "the last time"): no T_CTX, no default, no `!= 4096`
+  gate; the verified schedule's `model_context_rows` is the one declaration; guard test
+  `tests/test_row_window_is_declared_not_literal.py`. Whole family 10 failed = the baseline set, 2947 passed. Two 4096s
+  FLAGGED for Greg's word: the pinned Pod bundle env's GRANITE_MAX_MODEL_LEN and the coach's Bedrock maxTokens.
+- GREG'S GO: "Lets rerun cyc 0" = the full rerun program on the MONDAY TRADING DAY, BY ITSELF first (the four-partition
+  block after). STEP 0 DONE (the response-supersede workflow on the trunk, e194892d). The full-rerun order = handoff
+  01:3xZ 09-22 steps 0-9 with 1b (re-pin the prefix batch on the host: the changed session/runtime bytes).
+- MODULE 1 BUILT (`SPEC-trading-day-ingest.md`, `CAPABILITY_MAP_TRADING_DAY_20260922.md`): the Monday manifest
+  `blocks/BLOCK_20211004_SOURCE_MANIFEST.json` (the 20211003 partition whole 57,027 + the 20211004 partition before the halt
+  1,975,176 = 2,032,203 declared, from the staged block's measured halt counts; derived by
+  `operations/derive_trading_day_manifest.py`); the partial-member take in `ingest_block_sources.py` (stops at the take,
+  verifies the trading-day boundary; the pinned conformance stack untouched); the box wrapper
+  `deploy/aws/box/frankie_box_ingest_block.sh` (fetch | canary | ingest | status; POSIX sh; the tool creates its output dir).
+  ON THE BOX: both partitions fetched and verified (run 35680671366, receipt ingest-fetch-20211004-1790045196.json).
+  THE CANARY: RUNNING at close (run 35681037861, dispatched 02:52:02Z, ACTION=canary WORKERS=31 CANARY=20000, timeout 3600 s). Its canary-receipt.json on the box (records_per_second, extrapolated_hours_for_total for the 2,032,203 declared) is the rate; read it with `ACTION=status` at the next open (the job summary and artifact of run 35681037861 carry it too).
+- THE FRIDAY ANCHOR (Greg's ask): instrument 111313's last trade before the Friday 2021-10-01 21:00Z halt = 5.544 (raw
+  5544000000) at 20:59:56.64Z, size 3; `blocks/FRIDAY_ANCHOR_20211001.json` + the box receipt; the Sunday-evening open's
+  first trade is 5.628. The 900 s / 600-observation candidate warm-up is the pinned producers' DATA warm-up (constructor
+  defaults, read from the instance), not a machine warm-up; pre-warming from Friday's last minutes is Greg's modelling call.
+- THE TWO DROPPED PIECES (Greg's 4.2): sections 4.2 (the daily book regime companion) and 4.4 (the mirror), D-4/D-16 in the
+  pinned producers, both REGISTERED there and run by the bedrock; cycle 0 read the first replay's artifact where they were
+  dark. GAP: 4.2's per-day companion reaches Frankie as bedrock-result.md and 4.4's lifecycle rows as a ledger reference,
+  not as V6 TABLES. Greg: "We are going to have to take care of that" = NEXT BUILD: a crosswalk-side projection of both
+  into V6 tables (box side, TDD, no producers change), before the rerun's read.
+- STILL GREG'S CALLS: the publish route for the container (presigned PUT via the run workflow vs S3 rights on the box);
+  the two flagged 4096s; pre-warm from Friday; calls 2-5 of chat 7 (the row count = a schedule value).
+
+NEXT CHAT, in order: probe `ACTION=status` (one); read this block, then the handoff from 01:3xZ 09-22 to the end, then
+`SPEC-trading-day-ingest.md`; (1) the 4.2/4.4 table projection (spec line, TDD); (2) on Greg's word: the ingest
+(`ACTION=ingest WORKERS=31`, hours; the receipt = the Monday count), the publish route; (3) SPEC-trading-day-schedule
+(the 57027/19/one-date gates become the schedule's declared counts; the prefixes re-seeded under Greg's row count; the
+binding re-pinned); then host and box modules; then the full rerun order.
+
 ## READ FIRST (01:4xZ 09-22, chat 8 OPEN): GREG: THE RERUN IS A FULL RERUN FROM THE BEGINNING, IN THE CORRECT ORDER
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (the harness cut chat 8's branch from the trunk again; the work is here).

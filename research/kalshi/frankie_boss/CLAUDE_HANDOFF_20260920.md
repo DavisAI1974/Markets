@@ -4315,3 +4315,14 @@ sha256, not projected: no crosswalk layer names a `mirror` or `book_regime` life
 rerun's read: 4.2's per-day companion and 4.4's lifecycle rows are delivered as a document and a ledger reference, not as
 V6 TABLES; if Greg wants them read as tables (Section 7's daily diagnostic as rows), that is one crosswalk-side projection
 (a box change, TDD, no producers change). Put to Greg.
+
+### 03:xxZ 09-22: CHAT 8 CLOSING (Greg: "We are going to have to take care of that. Let's do everything we do to end a chat")
+
+The canary (run 35680854102) died on the wrapper pre-creating the tool's output directory (the tool refuses an existing
+one); fixed (8c089436, pinned by test) and re-dispatched: RUNNING at close (run 35681037861, dispatched 02:52:02Z, ACTION=canary WORKERS=31 CANARY=20000, timeout 3600 s). Its canary-receipt.json on the box (records_per_second, extrapolated_hours_for_total for the 2,032,203 declared) is the rate; read it with `ACTION=status` at the next open (the job summary and artifact of run 35681037861 carry it too).
+Greg's "take care of that" = the 4.2/4.4 V6 table projection, the next build (drop-in NEXT CHAT list). Chat 8's commits on
+the rerun branch, in order: the ship fixes (077fcb5a, 903b36f2), the row window out of the code (ccf9bac1), step 0 on the
+trunk (e194892d), the Friday anchor (8388b441, f9b62c9a), the trading-day standard (06814e05), module 1 (6261dcaf,
+fd2922bf, f6b1cc5c, 8c089436), the records between. The drop-in's top block is the state; CLAUDE.md's header and STATE
+line point at it. Nothing on the host, Pod or endpoint has run; the box ran read-only probes, the Friday anchor decode,
+the fetch and the canary (no model call, nothing deleted, every step receipted).
