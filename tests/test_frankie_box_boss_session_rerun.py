@@ -145,3 +145,27 @@ def test_writing_prompts_account_for_the_bedrock_and_the_analysis_carries_the_te
     assert section.startswith('\n\n## THE EXHAUSTION AND D TEACH-BACK')
     assert '**what_it_is**: a' in section and '### clocks' in section and '- u?' in section and 'f' * 64 in section
     assert 'research/X.md' in section and '# FACTS' not in section       # the answer and its witnesses; the facts stay in the teach-back file
+
+
+def test_every_publication_retries_brain_retention_first(tmp_path, monkeypatch):
+    s = stub(tmp_path, monkeypatch)
+    s.dir = tmp_path / 'session'
+    s.dir.mkdir()
+    s.day = '20211004'
+    events, attempts = [], []
+    def retain():
+        attempts.append(1)
+        events.append('brain')
+        if len(attempts) == 1:
+            raise RuntimeError('retention unavailable')
+    s.brain_entry = retain
+    s.phase = lambda *args: None
+    def publish(*args, **kwargs):
+        events.append('push')
+        return types.SimpleNamespace(returncode=0, stdout='', stderr='')
+    monkeypatch.setattr(session.subprocess, 'run', publish)
+    with pytest.raises(RuntimeError, match='retention unavailable'):
+        session.Session.push(s)
+    assert events == ['brain'] and not (s.dir / 'done').exists()
+    assert session.Session.push(s) is True
+    assert events == ['brain', 'brain', 'push']

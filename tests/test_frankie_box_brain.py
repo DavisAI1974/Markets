@@ -164,7 +164,7 @@ def test_frozen_entry_is_built_from_the_checkout_against_the_delivered_digests_a
     text1, _ = brain.load(b, '01')
     assert 'chains and families' in text1 and "cycle 00, derivation-digest-full.md" in text1 and text1.index('frozen') < text1.index('cycle 00')
     assert brain.identity(b, '01') != before
-    assert brain.write_frozen_entry(prompt, repo, b)['entries'] == m['entries'] or True   # idempotent (timestamps aside)
+    assert brain.write_frozen_entry(prompt, repo, b)['entries'] == m['entries']   # idempotent
 
 
 def test_write_entry_carries_the_classroom_teachback_when_present(cycle0, tmp_path):
@@ -249,3 +249,63 @@ def test_pinned_knowledge_refuses_missing_or_modified_included_document(cycle0, 
         brain.load(b, '00', snapshot=base)
     with pytest.raises(ValueError, match='historical knowledge missing or changed'):
         brain.capture_base(b, 'c' * 64)
+
+
+def test_unchanged_frozen_entry_is_one_document_across_requests(tmp_path):
+    repo = tmp_path / 'repo'
+    repo.mkdir()
+    data = b'# retained knowledge\n'
+    (repo / 'study.md').write_bytes(data)
+    prompt = tmp_path / 'prompt.md'
+    prompt.write_text('| `learned_dipoles_and_geometry` | frozen_learned_structure | DELIVERED | `study.md` `' + hashlib.sha256(data).hexdigest()[:12] + '` |\n')
+    b = tmp_path / 'brain'
+    first = brain.write_frozen_entry(prompt, repo, b)
+    brain.capture_base(b, 'a' * 64)
+    for _ in range(3):
+        assert brain.write_frozen_entry(prompt, repo, b) == first
+    later = brain.capture_base(b, 'b' * 64)
+    text, members = brain.load(b, '00', snapshot=later)
+    assert text.count('# retained knowledge') == 1
+    assert len(members) == 1
+    assert list((b / 'history').glob('move-*.json')) == []
+
+
+def test_session_base_refuses_removed_entries_and_preserves_receipt(cycle0, tmp_path):
+    work, out = cycle0
+    b = tmp_path / 'brain'
+    brain.write_entry(work, out, b, '00')
+    receipt = work / 'knowledge-base.json'
+    base = brain.pin_session_base(b, 'd' * 64, receipt)
+    original = receipt.read_bytes()
+    assert brain.pin_session_base(b, 'd' * 64, receipt) == base
+    value = json.loads(base.read_bytes())
+    value['entries'] = []
+    base.write_text(json.dumps(value))
+    with pytest.raises(ValueError, match='retained receipt'):
+        brain.pin_session_base(b, 'd' * 64, receipt)
+    assert receipt.read_bytes() == original
+
+
+def test_session_base_refuses_unreceipted_reuse(cycle0, tmp_path):
+    work, out = cycle0
+    b = tmp_path / 'brain'
+    brain.write_entry(work, out, b, '00')
+    base = brain.capture_base(b, 'e' * 64)
+    original = base.read_bytes()
+    with pytest.raises(ValueError, match='no retained receipt'):
+        brain.pin_session_base(b, 'e' * 64, work / 'missing-receipt.json')
+    assert base.read_bytes() == original
+
+
+def test_capture_refuses_unlisted_symlink_without_copying_it(cycle0, tmp_path):
+    work, out = cycle0
+    b = tmp_path / 'brain'
+    brain.write_entry(work, out, b, '00')
+    outside = tmp_path / 'outside.txt'
+    outside.write_text('unrelated private contents')
+    link = b / 'cycle-00' / 'unlisted.txt'
+    link.symlink_to(outside)
+    with pytest.raises(ValueError, match='symbolic link'):
+        brain.capture_base(b, 'f' * 64)
+    assert link.is_symlink() and outside.read_text() == 'unrelated private contents'
+    assert not list((b / 'history').glob('entry-*'))
