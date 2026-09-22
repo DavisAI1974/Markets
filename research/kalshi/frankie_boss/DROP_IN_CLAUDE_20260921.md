@@ -25,8 +25,13 @@ schedule's model_context_rows; no `!= 4096` gate; encoder payload V2) with the g
 host, the 2026-09-20 precedent) because the changed files are byte-pinned by the first run's binding and seeds. Two
 4096s FLAGGED for Greg's word, not changed: the pinned Pod bootstrap environment's GRANITE_MAX_MODEL_LEN and the coach's
 Bedrock maxTokens (frankie_backends.py). STILL OPEN FOR GREG: step 0 (the trunk registration of the response-supersede
-workflow), his word on the two flagged 4096s, the trade-day spec go/hold, calls 1-5 (the rerun's row count = a schedule
-value, his modelling call).
+workflow), his word on the two flagged 4096s, calls 2-5 (the rerun's row count = a schedule value, his modelling call).
+02:xxZ: GREG DECIDED THE DAY: the rerun is the CME TRADING DAY (Sunday 18:00 ET to Monday 17:00 ET, 23 h), follow trading
+days from now on, the Monday hours from the staged block in S3, the count measured; NO Databento pull (measured: the
+secret is absent). `CAPABILITY_MAP_TRADING_DAY_20260922.md` = his words verbatim, what is measured (the block is staged,
+NOT ingested on record), five assumptions ("override the runner problem" read as the prefix-batch re-pin), four modules
+(ingest -> schedule -> host, box). NEXT = Greg's word on the map and the assumptions, then SPEC-trading-day-ingest.md
+first, then the others; nothing built, ingested or run before that.
 
 ## READ FIRST (00:xxZ 09-22, chat 7 CLOSING): THE BEDROCK IS BUILT AND SHIPPED (BR-0..BR-7, /ship GO after fixes); CHECKPOINT E AND THE RERUN WAIT ON GREG'S CALLS
 

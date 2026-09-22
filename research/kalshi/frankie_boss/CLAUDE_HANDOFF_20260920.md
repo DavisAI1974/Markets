@@ -4163,3 +4163,17 @@ absent, 1 journal-prefix snapshot), 0 introduced. FLAGGED for Greg's word, not c
 GRANITE_MAX_MODEL_LEN "4096" (the pinned Pod bootstrap bundle's environment, read by the retired cloud controller) and
 `research/kalshi/frankie_backends.py` Bedrock `maxTokens: 4096` (the S93 coach's Bedrock lane, an output cap on an
 LLM call, not the BOSS). Host consequence: the full-rerun order gains step 1b (re-pin the prefix batch), above.
+
+### 02:xxZ 09-22: GREG'S CALLS ON THE TRADING DAY; "YOU AREN'T PULLING FROM BENTO ARE YOU"; THE CAPABILITY MAP PUT
+
+Greg's words are verbatim in `CAPABILITY_MAP_TRADING_DAY_20260922.md` with what is measured against each: no Databento
+pull is happening or possible (the DATABENTO_API_KEY secret is absent, measured 01:32Z; no key here; pull workflows
+dispatch-only or filtered to old branches; the pipeline decodes S3 files only); the data IS in S3 (the four-member
+block, 6,471,475 records); the block is STAGED, NOT INGESTED on record (`ingested: false`, 09-18 handoff: prefixes and
+schedule not built); the Sunday-only split is hard-coded in fourteen code sites (listed) and in the box driver's one-UTC-
+day source object. His calls: the rerun is the CME TRADING DAY, Sunday 18:00 ET open to Monday 17:00 ET halt, 23 hours;
+follow trading days from now on; take the Monday hours from the block; the count goes up and is measured; "override the
+runner problem on this run" (read as: re-pin the prefix batch so the runner accepts the advanced checkout, assumption 1
+in the map; not a data-gate bypass). The map has four modules (ingest -> schedule -> host, box) and five assumptions;
+nothing is built or run before his word on it. This turns call 1 and the "two members or four" question into decided
+inputs; the row count stays his number in the schedule.
