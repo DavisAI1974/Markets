@@ -6,10 +6,11 @@
 # (the roster instrument id; cycle 0's entity is (1, 111313)).
 set -u
 [ -n "${MAP_URL:-}" ] || { echo "MAP_URL not set (dispatch frankie_box_run.yml with presign=bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211001.mbo.dbn.zst)"; exit 2; }
+case "$MAP_URL" in https://*.amazonaws.com/*) ;; *) echo "MAP_URL must be an https amazonaws URL"; exit 2;; esac
 ROOT=/opt/frankie-box; INSTRUMENT="${INSTRUMENT:-111313}"
 mkdir -p "$ROOT/data/anchor" "$ROOT/receipts" "$ROOT/tmp"
 cd "$ROOT/tmp" || exit 2
-curl -fsS -m 60 --retry 3 -o anchor-map.json "$MAP_URL" || { echo "map download failed"; exit 2; }
+curl -fsS --proto =https -m 60 --retry 3 -o anchor-map.json --url "$MAP_URL" || { echo "map download failed"; exit 2; }
 [ -x "$ROOT/venv/bin/python" ] || { echo "venv not staged (databento-dbn lives in the box venv)"; exit 2; }
 export ROOT INSTRUMENT
 "$ROOT/venv/bin/python" - <<'PY'
@@ -37,8 +38,10 @@ if os.path.exists(dest):
     if have != WANT_SHA: raise SystemExit('a different file is already at ' + dest + '; not overwritten (move it aside with a receipt first)')
     print('present', dest)
 else:
+    url = entry.get('url')
+    if not (isinstance(url, str) and url.startswith('https://') and '.amazonaws.com/' in url.split('?', 1)[0]): raise SystemExit('the map entry is not an https amazonaws URL; refused')
     part = dest + '.part'; t0 = time.time()
-    r = subprocess.run(['curl', '-fsS', '-L', '--retry', '5', '--retry-delay', '5', '-C', '-', '-o', part, entry['url']])
+    r = subprocess.run(['curl', '-fsS', '--proto', '=https', '-L', '--retry', '5', '--retry-delay', '5', '-C', '-', '-o', part, '--url', url])
     if r.returncode != 0: raise SystemExit(f'download failed ({r.returncode})')
     got = sha(part)
     if os.path.getsize(part) != WANT_BYTES or got != WANT_SHA:
@@ -48,46 +51,59 @@ import databento_dbn as dbn, zstandard
 from importlib.metadata import version
 versions = dict(databento_dbn=version('databento-dbn'), zstandard=version('zstandard'))
 decoder = dbn.DBNDecoder()          # metadata first, then records, from the decompressed stream
-last_before_halt, last_any, counts_last_hour, trades_total, records_total = {}, {}, {}, 0, 0
+last_before_halt, last_any, counts_last_hour = {}, {}, {}
+totals = dict(records=0, trades=0, frames=0)
 kinds = {}
+def observe(rec):
+    totals['records'] += 1
+    if type(rec) is not dbn.MBOMsg:
+        kinds[type(rec).__name__] = kinds.get(type(rec).__name__, 0) + 1; return
+    if str(rec.action) != 'T': return
+    totals['trades'] += 1
+    row = dict(instrument_id=rec.instrument_id, ts_event=rec.ts_event, ts_recv=rec.ts_recv, price_raw=rec.price,
+               price=rec.price / 1e9, size=rec.size, side=str(rec.side), sequence=rec.sequence, order_id=rec.order_id)
+    last_any[rec.instrument_id] = row
+    if rec.ts_recv < HALT_NS:
+        last_before_halt[rec.instrument_id] = row
+        if rec.ts_recv >= HALT_NS - 3600 * 1_000_000_000:
+            counts_last_hour[rec.instrument_id] = counts_last_hour.get(rec.instrument_id, 0) + 1
+# The decode reads ACROSS zstd frames and hashes the bytes it decodes (the chat-9 ship review: stream_reader stops after the
+# FIRST frame by default, and the first measurement decoded the checked path, not the checked bytes). The frame loop is the
+# ingest's own (mbo_source._decompressed): a new decompressor per frame, unused_data carried into the next.
+digest = hashlib.sha256(); dctx = zstandard.ZstdDecompressor(); dec = None
 with open(dest, 'rb') as f:
-    reader = zstandard.ZstdDecompressor().stream_reader(f)
-    while True:
-        chunk = reader.read(1 << 20)
-        if not chunk: break
-        decoder.write(chunk)
-        for rec in decoder.decode():
-            records_total += 1
-            if type(rec) is not dbn.MBOMsg:
-                kinds[type(rec).__name__] = kinds.get(type(rec).__name__, 0) + 1; continue
-            if str(rec.action) != 'T': continue
-            trades_total += 1
-            row = dict(instrument_id=rec.instrument_id, ts_event=rec.ts_event, ts_recv=rec.ts_recv, price_raw=rec.price,
-                       price=rec.price / 1e9, size=rec.size, side=str(rec.side), sequence=rec.sequence, order_id=rec.order_id)
-            last_any[rec.instrument_id] = row
-            if rec.ts_recv < HALT_NS:
-                last_before_halt[rec.instrument_id] = row
-                if rec.ts_recv >= HALT_NS - 3600 * 1_000_000_000:
-                    counts_last_hour[rec.instrument_id] = counts_last_hour.get(rec.instrument_id, 0) + 1
+    for chunk in iter(lambda: f.read(1 << 20), b''):
+        digest.update(chunk); remaining = chunk
+        while remaining:
+            if dec is None: dec = dctx.decompressobj(); totals['frames'] += 1
+            decoder.write(dec.decompress(remaining)); remaining = dec.unused_data
+            if dec.eof: dec = None
+            else: break
+        for rec in decoder.decode(): observe(rec)
+if dec is not None: raise SystemExit('truncated compressed source frame; refused')
+decoded_sha = digest.hexdigest()
+if decoded_sha != WANT_SHA: raise SystemExit(f'the bytes decoded ({decoded_sha}) differ from the pin; no receipt')
+records_total, trades_total = totals['records'], totals['trades']
 def iso(ns): return datetime.fromtimestamp(ns / 1e9, tz=timezone.utc).isoformat()
 def show(row): return dict(row, ts_event_iso=iso(row['ts_event']), ts_recv_iso=iso(row['ts_recv']))
 anchor = last_before_halt.get(instrument)
 top = sorted(counts_last_hour.items(), key=lambda kv: -kv[1])[:8]
-result = dict(schema='FRANKIE_FRIDAY_ANCHOR_V1', at=time.time(), file=dict(key=key, bytes=WANT_BYTES, sha256=WANT_SHA), versions=versions,
+result = dict(schema='FRANKIE_FRIDAY_ANCHOR_V1', at=time.time(), versions=versions,
+              file=dict(key=key, bytes=WANT_BYTES, sha256=WANT_SHA, decoded_sha256=decoded_sha, zstd_frames=totals['frames'], read_across_frames=True),
               halt_utc=HALT.isoformat(), halt_ns=HALT_NS, instrument=instrument, records_total=records_total, trades_total=trades_total,
               non_mbo_records=kinds, anchor=show(anchor) if anchor else None,
               last_trade_any_time=show(last_any[instrument]) if instrument in last_any else None,
               last_hour_by_instrument=[dict(instrument_id=i, trades_last_hour=n, last_before_halt=show(last_before_halt[i])) for i, n in top],
               rule='the anchor is the last MBO trade (action T) with ts_recv before the 21:00Z Friday halt for the roster instrument; nothing averaged, nothing derived')
 name = os.path.join(root, 'receipts', f'friday-anchor-{int(time.time())}.json')
-with open(name, 'w') as f: json.dump(result, f, indent=1, sort_keys=True)
+with open(name, 'x') as f: json.dump(result, f, indent=1, sort_keys=True)
 print('RECEIPT', name)
 print('### FRIDAY ANCHOR', 'instrument', instrument, 'halt', HALT.isoformat())
 print(json.dumps(result['anchor'], sort_keys=True))
 print('### last trade of the file for the instrument (any time)'); print(json.dumps(result['last_trade_any_time'], sort_keys=True))
 print('### last hour before the halt, by instrument (trade counts; the front is the busiest)')
 for row in result['last_hour_by_instrument']: print(json.dumps(row, sort_keys=True))
-print('records', records_total, 'trades', trades_total, 'other record kinds', kinds, 'versions', versions)
+print('records', records_total, 'trades', trades_total, 'zstd frames', totals['frames'], 'decoded sha256', decoded_sha, 'other record kinds', kinds, 'versions', versions)
 PY
 code=$?
 rm -f "$ROOT/tmp/anchor-map.json"

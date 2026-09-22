@@ -9,7 +9,10 @@
     "sha256": "e6b4ec01bd9b34d57cb22c770b5d49c756e7f41a658f081823d923004a0121b2",
     "records": 1504375,
     "trades": 69424,
-    "decoder": {"databento_dbn": "0.62.0", "zstandard": "0.25.0"}
+    "decoder": {
+      "databento_dbn": "0.62.0",
+      "zstandard": "0.25.0"
+    }
   },
   "halt_utc": "2021-10-01T21:00:00+00:00",
   "halt_ns": 1633122000000000000,
@@ -35,5 +38,6 @@
     "price": 5.628,
     "ts_event_iso": "2021-10-03T22:00:00+00:00",
     "note": "a reference row, not a derivation: Friday last 5.544 -> Sunday first 5.628; the gap is Frankie's to read, not ours to average"
-  }
+  },
+  "decode_caveat": "measured (run 35679422333) with zstandard's stream_reader at its default read_across_frames=False, which stops after the FIRST zstd frame: records and trades are the first frame's if the object holds more than one frame, and the decode read the checked path rather than the checked bytes (the chat-9 ship review, 2026-09-22). The anchor at 20:59:56.64Z lies 3.4 s before the halt, so a truncated read is unlikely but unproven. frankie_box_friday_anchor.sh now decodes across frames and hashes the bytes it decodes (zstd_frames, decoded_sha256 in its receipt); a re-run on the box, on Greg's word, replaces this caveat with the measured frame count. The anchor value itself is not changed here."
 }
