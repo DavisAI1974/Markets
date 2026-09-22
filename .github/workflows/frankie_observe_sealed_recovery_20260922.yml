@@ -25,8 +25,8 @@ jobs:
           s3=boto3.client('s3',region_name='us-east-1')
           ssm=boto3.client('ssm',region_name='us-east-1')
           bucket='frankie-granite42-568968024170-us-east-1'
-          prefix='readiness/20260922/sealed-recovery/35796528082/'
-          endpoint='https://api.github.com/repos/DavisAI1974/Markets/statuses/5e801a8d25e027223a9a0ea34274ebb8a27be578'
+          prefix='readiness/20260922/sealed-recovery/35796793428/'
+          endpoint='https://api.github.com/repos/DavisAI1974/Markets/statuses/01945e24da7ac3e628b897a5d45fda2cde9b1536'
           last=None
           def read(name):
               try:return s3.get_object(Bucket=bucket,Key=prefix+name)['Body'].read()
@@ -49,7 +49,7 @@ jobs:
                       state='success' if status=='Success' and read('recovery-receipt.json') else 'failure'
                       description='SSM '+status+'; '+description
               payload=dict(state=state,context='sealed-recovery/conformance',description=description[:140],
-                  target_url='https://github.com/DavisAI1974/Markets/actions/runs/35796528082')
+                  target_url='https://github.com/DavisAI1974/Markets/actions/runs/35796793428')
               if payload!=last:
                   req=urllib.request.Request(endpoint,data=json.dumps(payload).encode(),method='POST',
                       headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
