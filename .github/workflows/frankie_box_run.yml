@@ -154,6 +154,9 @@ jobs:
           sets=()
           for pair in $VARIABLES; do sets+=(--set "$pair"); done
           [ -z "${MAP_URL:-}" ] || sets+=(--set "MAP_URL=$MAP_URL")
+          # the dispatched commit travels with the script (the chat-9 ship review): a box script that checks out the markets
+          # tree pins it to THIS commit, never to a branch name; set last so no variable can replace it
+          sets+=(--set "MARKETS_SHA=$GITHUB_SHA")
           python deploy/aws/ssm_run_sh.py --instance "$INSTANCE" --region "$REGION" --script "$SCRIPT" \
             --timeout "$RUN_TIMEOUT" --comment "$COMMENT" "${sets[@]}" | tee box-run-output.txt
       - name: Job summary = the box output
