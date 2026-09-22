@@ -47,7 +47,7 @@ jobs:
           print('RUNTIME_STATUS '+json.dumps(result,sort_keys=True))
           """
           script="/opt/frankie-box/venv/bin/python - <<'READ_ONLY_STATUS'\n"+code+"\nREAD_ONLY_STATUS\n"
-          cid=s.send_command(InstanceIds=[dispatch['instance_id'}},DocumentName='AWS-RunShellScript',Parameters={'commands':[script],'executionTimeout':['120']},Comment='Read-only current recovery progress; no process control')['Command']['CommandId']
+          cid=s.send_command(InstanceIds=[dispatch['instance_id']],DocumentName='AWS-RunShellScript',Parameters={'commands':[script],'executionTimeout':['120']},Comment='Read-only current recovery progress; no process control')['Command']['CommandId']
           while True:
               time.sleep(3)
               try:r=s.get_command_invocation(CommandId=cid,InstanceId=dispatch['instance_id'])
