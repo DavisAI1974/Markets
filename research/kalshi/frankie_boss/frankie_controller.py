@@ -99,7 +99,7 @@ class FrankieForecastController:
             **({'durable_storage_identity':self.critic.durable_storage_identity}
                if getattr(self.critic,'durable_same_attempt_recovery',False) is True else {}))
 
-    def _snapshot(self, publications, *, as_of, source_as_of, source_hash, through_cursor):
+    def _snapshot(self, publications, *, as_of, source_as_of, source_hash, through_cursor, critic_knowledge=None):
         from research.kalshi.frankie_boss import granite_context as mapper
         try:
             from .forecast_artifact import NativeForecastArtifact
@@ -136,7 +136,7 @@ class FrankieForecastController:
             expected_packet_hash=packet,source_as_of=source_as_of,expected_qsv_binding=qsv_binding)
         from research.kalshi.frankie_boss.granite_context_route import context_route
         route = context_route(self.context_encoding)
-        encoded = route.encode(snapshot, **(self.context_encoding_options or {}))
+        encoded = route.encode(snapshot, knowledge=critic_knowledge, **(self.context_encoding_options or {}))
         return encoded,route.build_prompt(encoded),asdict(receipt),packet,snapshot.hash
 
     def _critic_result(self, receipt, *, snapshot, prompt, attempt_id):
@@ -168,7 +168,7 @@ class FrankieForecastController:
 
     async def refresh(self, *, request_id=None, sessions=None, expected_sessions_hash=None,
                       arm_hash=None, as_of=None, source_as_of=None, source_hash=None,
-                      through_cursor=None, metadata=None, material=False, recovery_attempt_id=None):
+                      through_cursor=None, metadata=None, material=False, recovery_attempt_id=None, critic_knowledge=None):
         if not self.enabled:
             return self.legacy()
         if not self._busy.acquire(blocking=False):
@@ -178,7 +178,7 @@ class FrankieForecastController:
             return await self._refresh(request_id=request_id,sessions=sessions,
                 expected_sessions_hash=expected_sessions_hash,arm_hash=arm_hash,as_of=as_of,
                 source_as_of=source_as_of,source_hash=source_hash,through_cursor=through_cursor,
-                metadata=metadata,material=material,recovery_attempt_id=recovery_attempt_id)
+                metadata=metadata,material=material,recovery_attempt_id=recovery_attempt_id,critic_knowledge=critic_knowledge)
         except Exception:
             try:
                 self._observe('request_failed', through_cursor=through_cursor)
@@ -190,7 +190,7 @@ class FrankieForecastController:
 
     async def _refresh(self, *, request_id, sessions, expected_sessions_hash, arm_hash,
                        as_of, source_as_of, source_hash, through_cursor, metadata,
-                       material, recovery_attempt_id):
+                       material, recovery_attempt_id, critic_knowledge):
         try:
             from .native_forecast_refresh import session_registry_hash
             from .forecast_contract import sha256_digest
@@ -203,6 +203,11 @@ class FrankieForecastController:
             from frankie_forecast_consumer import consume_forecast
         self._validate_pins()
         config = self._configuration()
+        if critic_knowledge is not None:
+            from .critic_knowledge import validate_knowledge
+            critic_knowledge = validate_knowledge(critic_knowledge, cutoff_ns=as_of, request_id=request_id)
+            if self.context_encoding != 'stacked_v1':
+                raise ValueError('critic knowledge requires stacked_v1 route')
         if (type(request_id) is not str or not request_id.strip()
                 or type(through_cursor) is not int or through_cursor < 0
                 or type(as_of) is not int or type(source_as_of) is not int
@@ -237,7 +242,8 @@ class FrankieForecastController:
             as_of=as_of,source_as_of=source_as_of,source_hash=source_hash,
             through_cursor=through_cursor,material=material)
         intent = dict(schema='BOSS_FRANKIE_CONTROLLER_V1',configuration=config,
-            request={**native_args,'sessions':tuple((asdict(t),asdict(s)) for t,s in sessions)},
+            request={**native_args,'sessions':tuple((asdict(t),asdict(s)) for t,s in sessions),
+                **({'critic_knowledge':critic_knowledge} if critic_knowledge is not None else {})},
             metadata=tuple(owned_metadata))
         state = self.journal.begin(request_id,intent)
         if state['result'] is not None:
@@ -269,7 +275,7 @@ class FrankieForecastController:
             self._observe('output_persisted', through_cursor=through_cursor, count=0, status='idle')
             return result
         snapshot,prompt,context_receipt,packet_hash,native_snapshot_hash = self._snapshot(publications,as_of=as_of,
-            source_as_of=source_as_of,source_hash=source_hash,through_cursor=through_cursor)
+            source_as_of=source_as_of,source_hash=source_hash,through_cursor=through_cursor,critic_knowledge=critic_knowledge)
         unchanged()
         if state['critic_result'] is None:
             previous = state['critic_intent']

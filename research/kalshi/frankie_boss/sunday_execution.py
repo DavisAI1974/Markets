@@ -154,6 +154,7 @@ class SundayRuntime:
     principal_adapter_class: type | None = None
     context_encoding: str = 'compact_v1'
     context_encoding_options: dict | None = None
+    critic_knowledge: dict | None = None
     controller_event: Callable | None = None
     learning_event: Callable | None = None
     release: Callable | None = None
@@ -269,6 +270,8 @@ class SundayExecution:
                             development_identity=runtime.development_identity,optimizer=runtime.optimizer,
                             checkpoint=runtime.checkpoint,expected_checkpoint_hash=runtime.expected_checkpoint_hash)
                         controller_kwargs.pop('request_id')
+                        if runtime.critic_knowledge is not None:
+                            controller_kwargs['critic_knowledge']=unpack(pack(runtime.critic_knowledge))
                         if native_model_pin(bridge)!=runtime.expected_native_hash:
                             raise ValueError('native controller identity differs from host pin')
                         learner_kwargs={k:binding[k] for k in ('as_of','through_cursor','source_hash','sessions',
@@ -276,8 +279,11 @@ class SundayExecution:
                         learner_kwargs['input_hash']=runtime.input_hash
                         config=learning_config(runtime.optimizer,binding['sessions'],
                             **{k:binding[k] for k in ('timing_policy_hash','query_policy_hash','split_hash')})
+                        plan_controller=_plain(controller_kwargs)
+                        if runtime.critic_knowledge is not None:
+                            plan_controller['critic_knowledge']=unpack(pack(runtime.critic_knowledge))
                         plan=dict(schema='FRANKIE_SUNDAY_REQUEST_PLAN_V1',request_id=request_id,
-                            contract_sha256=self.contract_hash,controller_kwargs=_plain(controller_kwargs),
+                            contract_sha256=self.contract_hash,controller_kwargs=plan_controller,
                             learning_kwargs=_plain(learner_kwargs),learning_config_hash=config.digest,
                             initial_checkpoint_hash=runtime.expected_checkpoint_hash,
                             expected_native_hash=runtime.expected_native_hash,
@@ -297,6 +303,7 @@ class SundayExecution:
                                 plan['source_journal_path']!=str(Path(runtime.source_journal_path).resolve()) or
                                 plan['input_hash']!=runtime.input_hash or plan['context_encoding']!=runtime.context_encoding or
                                 plan.get('context_encoding_options')!=_plain(runtime.context_encoding_options) or
+                                pack(plan['controller_kwargs'].get('critic_knowledge'))!=pack(runtime.critic_knowledge) or
                                 plan.get('classroom_binding_hash')!=classroom_binding_hash or
                                 plan.get('principal_adapter_identity')!=principal_adapter_identity):
                             raise ValueError('retained source/admission/classroom identity differs')

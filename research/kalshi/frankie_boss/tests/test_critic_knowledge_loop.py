@@ -104,3 +104,87 @@ def test_outer_hash_cannot_hide_knowledge_tamper(tmp_path):
     body=json.loads(encoded.text);body['knowledge']['entries'][0]['record']['lessons'][0]['text']='tampered'
     text=native._text(body)
     with pytest.raises(ValueError): route.parse(text,expected_hash=hashlib.sha256(text.encode()).hexdigest())
+
+def test_two_cycles_freeze_prior_lessons(tmp_path,monkeypatch):
+    store,checkpoint,args,calls=cycle_fixture(tmp_path,monkeypatch)
+    seen=[]
+    class Controller:
+        context_encoding='stacked_v1'
+        async def refresh(self,*,request_id,critic_knowledge,**kwargs):
+            assert store._load(request_id,'critic_knowledge')==critic_knowledge
+            knowledge.validate_knowledge(critic_knowledge,request_id=request_id)
+            seen.append(copy.deepcopy(critic_knowledge)); calls['controller']+=1
+            return dict(request_id=request_id,request_hash='e'*64,status='complete',records=())
+    args['controller_factory']=Controller
+    original_verify=args['principal'].verify
+    def verify(envelope,**kwargs):
+        return replace(original_verify(envelope,**kwargs),request_id=kwargs['request_id'],
+            available_ns=20 if kwargs['request_id']=='sun' else 30)
+    args['principal'].verify=verify
+    original_execute=args['principal'].execute
+    def execute(request_id,attachment):
+        return dict(original_execute(request_id,attachment),lessons=[dict(text='verified lesson from '+request_id)])
+    args['principal'].execute=execute
+    original_learner=args['learner_factory']
+    class Learner(original_learner):
+        def step(self,**kwargs):
+            return dict(super().step(**kwargs),feedback_hash=kwargs['feedback'].digest)
+    args['learner_factory']=Learner
+    try:
+        first=asyncio.run(store.run(**args))
+        assert seen[0]['entries']==[]
+        previous=store.lessons_available(20)
+        args['request_id']='mon'
+        args['learning_kwargs']=dict(args['learning_kwargs'],as_of=20,through_cursor=3,learning_cutoff_ns=30)
+        frozen=store.critic_knowledge('mon',cutoff_ns=20)
+        assert frozen['entries']==build(previous,cutoff=20,request_id='mon')['entries']
+        assert frozen['origins'][0]['source_hash']==args['learning_kwargs']['source_hash']
+        assert store.critic_knowledge('mon',cutoff_ns=20)==frozen
+        with pytest.raises(ValueError):store.critic_knowledge('mon',cutoff_ns=21)
+        args['controller_kwargs']=dict(critic_knowledge=copy.deepcopy(frozen))
+        second=asyncio.run(store.run(**args))
+        assert seen[1]==frozen
+        assert seen[1]['entries'][0]['record']['lessons']==[{'text':'verified lesson from sun'}]
+        assert [r['request_id'] for r in store.lessons_available(30)]==['sun','mon']
+        assert second['training']['checkpoint_hash']!=first['training']['checkpoint_hash']
+        assert (tmp_path/'memory-a').read_bytes()==b'frozen'
+    finally: store.close();checkpoint.close()
+
+def test_sql_availability_cannot_hide_future_payload(tmp_path,monkeypatch):
+    store,checkpoint,args,calls=cycle_fixture(tmp_path,monkeypatch)
+    try:
+        asyncio.run(store.run(**args))
+        with store.lessons:
+            store.lessons.execute('UPDATE lessons SET available_ns=0')
+        with pytest.raises(ValueError,match='availability'):
+            store.lessons_available(10)
+    finally: store.close();checkpoint.close()
+
+def test_missing_origin_refuses_and_retry_rechecks_origin(tmp_path,monkeypatch):
+    store,checkpoint,args,calls=cycle_fixture(tmp_path,monkeypatch)
+    try:
+        asyncio.run(store.run(**args))
+        store.critic_knowledge('next',20)
+        with store.db:
+            store.db.execute("DELETE FROM stages WHERE request='sun' AND stage='complete'")
+        with pytest.raises(ValueError,match='origin'):
+            store.critic_knowledge('next',20)
+    finally: store.close();checkpoint.close()
+
+def test_preflight_includes_identical_knowledge_hash(tmp_path,monkeypatch):
+    from types import SimpleNamespace
+    from research.kalshi.frankie_boss import sunday_native_runtime as runtime
+    source=snapshot(tmp_path)
+    info=native.unpack(json.loads(source.text)['receipt'])
+    cutoff=info['as_of'];info.pop('input_hash');info.pop('model_hash')
+    context=SimpleNamespace(_prepare=lambda *a:({},info,'a'*64,None,[]),
+        _model_hash=lambda:'d'*64,qsv=None,teacher=None,builder=None,entity=(1,1),
+        model=SimpleNamespace(trunk=SimpleNamespace(registry=None)))
+    monkeypatch.setattr(runtime,'journal_prefix',lambda *a:[])
+    monkeypatch.setattr(runtime,'map_native_context',lambda **kw:source)
+    bundle=build(cutoff=cutoff)
+    body,receipt=runtime.prepare_critic_request(context,as_of=cutoff,through_cursor=0,
+        source_as_of=1,context_encoding='stacked_v1',critic_knowledge=bundle)
+    route=context_route('stacked_v1')
+    assert json.loads(body)['messages'][0]['content']==route.build_prompt(route.encode(source,knowledge=bundle)).text
+    assert receipt['critic_knowledge_hash']==evidence_hash(bundle)

@@ -30,13 +30,13 @@ class ContextRoute:
         checked = self.parse(snapshot.text, expected_hash=snapshot.hash)
         return checked.native() if self.encoding in ('compact_v1', 'stacked_v1') else checked
 
-    def encode(self, snapshot, *, scope_public=None, prefix_seed=None):
+    def encode(self, snapshot, *, scope_public=None, prefix_seed=None, knowledge=None):
         checked = native.parse_native_context(snapshot.text, expected_hash=snapshot.hash)
         if self.encoding == 'stacked_v1':
             from .granite_context_stacked_route import stacked_native_context
-            encoded = stacked_native_context(checked, scope_public=scope_public, prefix_seed=prefix_seed)
+            encoded = stacked_native_context(checked, scope_public=scope_public, prefix_seed=prefix_seed, knowledge=knowledge)
         else:
-            if scope_public is not None or prefix_seed is not None:
+            if scope_public is not None or prefix_seed is not None or knowledge is not None:
                 raise ValueError('derivation options require explicit stacked_v1 route')
             encoded = compact.compact_native_context(checked) if self.encoding == 'compact_v1' else checked
         restored = self.native(encoded)

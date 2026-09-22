@@ -671,17 +671,19 @@ class ActualHost:
             raise ValueError('exact independently witnessed preceding source prefix required')
         return dict(scope_public=self.scope.public_dict(), prefix_seed=seed)
 
-    def prepared_input(self,binding,cycle_directory):
+    def prepared_input(self,binding,cycle_directory,critic_knowledge=None):
         path=Path(self.host['prefixes_directory'])/f"prefix-{binding['cycle_index']:02d}-preparation.json"
         if not path.exists() or (binding['cycle_index']==0 and self.host.get('retained_preparation_recovery') is not None):
             return self.api.native.prepare_critic_request(self.context,
                 **{k:binding[k] for k in ('as_of','through_cursor','source_as_of')},
-                service_context=self.host['service_context'],
+                service_context=self.host['service_context'],critic_knowledge=critic_knowledge,
                 context_encoding=self.host['context_encoding'],context_encoding_options=self.encoding_options(binding))
         value=json.loads(path.read_bytes())
         if set(value)!={'body','receipt','initialization','prefix_receipt','training_checkpoint_hash'}:
             raise ValueError('explicit actual preparation witnesses required')
         body=verified(value['body']).read_bytes();receipt=verified_json(value['receipt'])
+        if critic_knowledge is not None and receipt.get('critic_knowledge_hash')!=self.api.journal.evidence_hash(critic_knowledge):
+            raise ValueError('retained prefix preparation differs from frozen critic knowledge; prepare a new request')
         identity=self.api.journal.unpack(json.loads(verified(value['initialization']).read_bytes()))
         prefix=verified_json(value['prefix_receipt'])
         live_hash=self.context._model_hash()
@@ -721,12 +723,14 @@ class ActualHost:
             output_budget='remaining_context')
         return body,receipt,admission
 
-    def prepared_before_restart(self,binding,request_id,path):
+    def prepared_before_restart(self,binding,request_id,path,critic_knowledge=None):
         if not path.exists():return None
         prepared=self.api.driver._load(path)
         body=Path(prepared['request_path']).read_bytes()
         admission=prepared['admission'];receipt=prepared['receipt'];info=receipt['context']
         native_pin=self.api.native_model_pin(SimpleNamespace(context=self.context,decoder=self.decoder))
+        if critic_knowledge is not None and receipt.get('critic_knowledge_hash')!=self.api.journal.evidence_hash(critic_knowledge):
+            raise ValueError('retained pre-dispatch preparation differs from frozen critic knowledge')
         if (prepared['request_id']!=request_id or prepared['initial_checkpoint_hash']!=self.checkpoint.checkpoint_hash or
             prepared['native_pin']!=native_pin or prepared['source_checkpoint']!=self.source_checkpoint or
             receipt['request_sha256']!=hashlib.sha256(body).hexdigest() or receipt['request_bytes']!=len(body) or
@@ -810,6 +814,20 @@ class ActualHost:
         controller_done=self.coordinator._load(request_id,'controller') is not None
         preparation=cycle_directory/'host-preparation.c15.json'
         service_record=cycle_directory/'host-service.c15.json'
+        critic_knowledge=None
+        if self.host['context_encoding']=='stacked_v1':
+            if preparation.exists():
+                old_prepared=self.api.driver._load(preparation)
+                if 'critic_knowledge_hash' not in old_prepared['receipt']:
+                    raise ValueError('retained critic preparation predates knowledge loop; preserve and use a new request')
+            if retained_plan is not None and 'critic_knowledge' not in retained_plan['controller_kwargs']:
+                raise ValueError('retained critic plan predates knowledge loop; preserve and use a new request')
+            critic_knowledge=self.coordinator.critic_knowledge(request_id,binding['as_of'])
+            if preparation.exists() and old_prepared['receipt']['critic_knowledge_hash']!=self.api.journal.evidence_hash(critic_knowledge):
+                raise ValueError('retained critic preparation differs from frozen knowledge')
+            if (retained_plan is not None and self.api.journal.pack(retained_plan['controller_kwargs']['critic_knowledge'])
+                    !=self.api.journal.pack(critic_knowledge)):
+                raise ValueError('retained critic plan differs from frozen knowledge')
         # A completed controller whose host-service record is absent (superseded after a code advance:
         # the training identity encodes code_hash, so the retained preparation pins went stale) is
         # re-prepared and re-admitted against the same immutable trigger; the request is deterministic,
@@ -818,9 +836,9 @@ class ActualHost:
         if not controller_done or not service_record.exists():self.prime_cache(binding,cycle_directory)
         recovering_critic=not controller_done and retained_plan is not None and service_record.exists() and any((cycle_directory/'critic-spool').glob('*/dispatch.json'))
         if not service_record.exists():
-            prepared=self.prepared_before_restart(binding,request_id,preparation)
+            prepared=self.prepared_before_restart(binding,request_id,preparation,critic_knowledge)
             if prepared is None:
-                body,receipt=self.prepared_input(binding,cycle_directory)
+                body,receipt=self.prepared_input(binding,cycle_directory,critic_knowledge)
                 request_path=cycle_directory/'actual-critic-request.json'
                 try:body,receipt,admission=self.admit_preparation(body,receipt)
                 except Exception as error:
@@ -855,7 +873,7 @@ class ActualHost:
                 files={name:sha(ready/name) for name in ('pod-info.json','startup-intent.json','run.json','service-ready.json','observer.json')})
             self.api.driver._save(service_record,service)
         else:
-            prepared=self.prepared_before_restart(binding,request_id,preparation) if not controller_done else self.api.driver._load(preparation)
+            prepared=self.prepared_before_restart(binding,request_id,preparation,critic_knowledge) if not controller_done else self.api.driver._load(preparation)
             if prepared is None:raise ValueError('retained readiness has no admitted preparation')
             service=self.api.driver._load(service_record)
             ready=Path(service['directory'])
@@ -866,6 +884,8 @@ class ActualHost:
                 key,trigger=self.read_execution_trigger('FRANKIE_ACTUAL_RESUME_JOB_V1',('request_id','service_pins_sha256'),request_id)
                 if trigger['request_id']!=request_id or trigger['service_pins_sha256']!=service['pins_sha256']:
                     raise ValueError('same-job recovery differs from retained service witness')
+        if critic_knowledge is not None and prepared['receipt'].get('critic_knowledge_hash')!=self.api.journal.evidence_hash(critic_knowledge):
+            raise ValueError('admitted critic request differs from frozen knowledge')
         for name,digest in service['files'].items():verified(dict(path=str(ready/name),sha256=digest))
         if pins['request_sha256']!=prepared['admission']['request_sha256'] or pins['admission']!=prepared['admission']:
             raise ValueError('startup admission differs from the actual prepared request')
@@ -903,7 +923,8 @@ class ActualHost:
             expected_critic_identity_hash=pins['identity_hash'],critic_factory=critic,
             source_journal_path=self.source_journal_path,source_journal_checkpoint=self.source_checkpoint,release=self.close_cache,
             controller_event=None if self.probe is None else self.probe.controller,
-            context_encoding=self.host['context_encoding'],context_encoding_options=self.encoding_options(binding))
+            context_encoding=self.host['context_encoding'],context_encoding_options=self.encoding_options(binding),
+            critic_knowledge=critic_knowledge)
 
     async def run(self):
         c=self.config;h=self.host

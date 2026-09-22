@@ -384,6 +384,10 @@ class CycleCoordinator:
             feedback_hash=feedback.digest, principal_receipt_hash=feedback.principal_receipt_hash,
             training_checkpoint_hash=training['checkpoint_hash'], lessons=envelope['lessons'],
             frozen_memory_sha256=self.memory_hash)
+        result = self._load(request_id, 'controller')
+        if result is not None and 'critic' in result:
+            from .critic_knowledge import critic_exchange
+            record['critic_exchange'] = critic_exchange(result, available_ns=feedback.available_ns)
         digest = evidence_hash(record)
         with self.lessons:
             old = self.lessons.execute('SELECT digest FROM lessons WHERE request=?', (request_id,)).fetchone()
@@ -396,11 +400,69 @@ class CycleCoordinator:
     def lessons_available(self, cutoff_ns):
         if type(cutoff_ns) is not int: raise ValueError('integer lesson availability cutoff required')
         result = []
-        for raw, digest in self.lessons.execute('SELECT payload,digest FROM lessons WHERE available_ns<=? ORDER BY available_ns,request', (cutoff_ns,)):
+        for request, available_ns, raw, digest in self.lessons.execute(
+                'SELECT request,available_ns,payload,digest FROM lessons ORDER BY available_ns,request'):
             value = unpack(json.loads(raw))
             if evidence_hash(value) != digest: raise ValueError('new lessons evidence changed')
-            result.append(value)
+            if value.get('request_id') != request or value.get('available_ns') != available_ns or type(available_ns) is not int:
+                raise ValueError('lesson availability index differs from verified payload')
+            if available_ns <= cutoff_ns:
+                result.append(value)
         return result
+
+    def critic_knowledge(self, request_id, cutoff_ns):
+        """Freeze once before admission; completed origin evidence remains authoritative."""
+        from .critic_knowledge import build_knowledge, validate_knowledge
+        saved = self._load(request_id, 'critic_knowledge')
+        if saved is not None:
+            validate_knowledge(saved, cutoff_ns=cutoff_ns, request_id=request_id)
+            records = [entry['record'] for entry in saved['entries']]
+        else:
+            records = self.lessons_available(cutoff_ns)
+        origins = []
+        for record in records:
+            previous = record['request_id']
+            row = self.lessons.execute('SELECT available_ns,payload,digest FROM lessons WHERE request=?', (previous,)).fetchone()
+            if row is None: raise ValueError('knowledge origin lesson disappeared')
+            original = unpack(json.loads(row[1]))
+            if (evidence_hash(original) != row[2] or row[0] != record['available_ns']
+                    or json.loads(json.dumps(original, allow_nan=False)) != json.loads(json.dumps(record, allow_nan=False))):
+                raise ValueError('knowledge differs from retained lesson evidence')
+            binding = self._load(previous, 'binding')
+            feedback = self._load(previous, 'feedback')
+            training = self._load(previous, 'training')
+            complete = self._load(previous, 'complete')
+            if any(value is None for value in (binding, feedback, training, complete)):
+                raise ValueError('knowledge origin lacks completed verified cycle stages')
+            fields = feedback['feedback']
+            digest = evidence_hash(dict(schema='BOSS_FORECAST_CONTRACT_V1', kind='FrankieFeedback', fields=fields))
+            learning = binding['learning']
+            if (previous == request_id or fields['request_id'] != previous
+                    or fields['available_ns'] != record['available_ns']
+                    or fields['source_hash'] != learning['source_hash'] or fields['input_hash'] != learning['input_hash']
+                    or not learning['as_of'] <= fields['available_ns'] <= learning['learning_cutoff_ns']
+                    or digest != feedback['feedback_hash'] or digest != record['feedback_hash']
+                    or fields['principal_receipt_hash'] != record['principal_receipt_hash']
+                    or training['checkpoint_hash'] != record['training_checkpoint_hash']
+                    or complete['feedback_hash'] != digest or complete['training'] != training
+                    or complete['lessons_hash'] != row[2]
+                    or record['frozen_memory_sha256'] != self.memory_hash):
+                raise ValueError('knowledge origin provenance differs')
+            if 'critic_exchange' in record:
+                from .critic_knowledge import critic_exchange
+                result = self._load(previous, 'controller')
+                if result is None or critic_exchange(result, available_ns=fields['available_ns']) != record['critic_exchange']:
+                    raise ValueError('knowledge critic exchange differs from verified origin')
+            origins.append(dict(request_id=previous,binding_hash=evidence_hash(binding),
+                feedback_stage_hash=evidence_hash(feedback),training_hash=evidence_hash(training),
+                completion_hash=evidence_hash(complete),source_hash=learning['source_hash'],
+                input_hash=learning['input_hash'],through_cursor=learning['through_cursor'],as_of=learning['as_of']))
+        value = build_knowledge(records, cutoff_ns=cutoff_ns, request_id=request_id)
+        value['origins'] = origins
+        validate_knowledge(value, cutoff_ns=cutoff_ns, request_id=request_id)
+        if saved is not None and value != saved:
+            raise ValueError('frozen knowledge origin changed')
+        return self._save(request_id, 'critic_knowledge', value)
 
     def _check_chronology(self, request_id, as_of):
         """A learned state may only serve at or after its feedback availability."""
@@ -448,7 +510,16 @@ class CycleCoordinator:
                 if result is None:
                     self._observe('boss_reasoning', request_id)
                     controller = controller_factory()
-                    result = await controller.refresh(request_id=request_id, **controller_kwargs)
+                    actual_kwargs = dict(controller_kwargs)
+                    if getattr(controller, 'context_encoding', None) == 'stacked_v1':
+                        knowledge = self.critic_knowledge(request_id, learning_kwargs['as_of'])
+                        if ('critic_knowledge' in actual_kwargs and actual_kwargs['critic_knowledge'] != knowledge):
+                            raise ValueError('controller knowledge differs from frozen preflight')
+                        actual_kwargs['critic_knowledge'] = knowledge
+                    elif getattr(controller, 'context_encoding', None) is not None:
+                        if 'critic_knowledge' in actual_kwargs or self.lessons_available(learning_kwargs['as_of']):
+                            raise ValueError('causal knowledge requires stacked critic route')
+                    result = await controller.refresh(request_id=request_id, **actual_kwargs)
                     if (result.get('request_id') != request_id
                             or result.get('status') not in ('complete', 'incomplete')):
                         raise ValueError('cycle requires actual verified integrated controller result')
