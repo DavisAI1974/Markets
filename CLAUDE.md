@@ -1,4 +1,4 @@
-# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-22 03:xxZ, Frankie/BOSS: THE TRADING DAY IS THE STANDARD; the row window is OUT of the code; the Monday 2021-10-04 ingest (module 1) is BUILT and its partitions are on the box; the rerun program is GO on Greg's word; 4.2/4.4 table projection next)
+# CLAUDE.md — DavisAI Markets / Kalshi (Updated 2026-09-22 05:xxZ, Frankie/BOSS: THE TRADING DAY IS THE STANDARD; the row window is OUT of the code; /ship on the chat-8 code GO after fixes, all landed; BR-9 (4.2/4.4 as V6 tables) BUILT; the box wrapper pins the dispatched commit; the Monday ingest waits on Greg's go)
 
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
@@ -12,6 +12,13 @@
   receipt names (`sunday_*`, "full Sunday source") are the UTC-split era's and are to be read as that. Never say "Sunday
   and Monday"; say the Monday trading day. A trading day's record count is measured at ingest, never assumed from a
   partition's size.
+- **STATE 2026-09-22 05:xxZ (chat 9 CLOSING): READ FIRST the 05:xxZ block atop `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`,
+  then `CLAUDE_HANDOFF_20260920.md` from 04:5xZ 09-22 to the end, then `SHIP_REVIEW_20260922_CHAT9.md`. Branch
+  `claude/cycle-0-monday-rerun-hk2q2z` (carries the whole rerun history; the harness cuts new branches from the stale trunk
+  tip). /ship on the chat-8 code = GO after fixes, all landed (the wrapper pins the DISPATCHED COMMIT and checks the units
+  idle first; the take closes the stream lawfully; the derivation is a pure function and the Monday manifest re-derived,
+  hash a399377b; the Friday anchor decodes across frames, its record carries a caveat until a re-run). BR-9 built: 4.2
+  and 4.4 as V6 tables. The Monday ingest (about 5 h) and every box run wait on Greg's go; dispatch from this branch.**
 - **STATE 2026-09-22 03:xxZ (chat 8 CLOSING): READ FIRST the 03:xxZ block atop `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`,
   then `CLAUDE_HANDOFF_20260920.md` from 01:3xZ 09-22 to the end, then `SPEC-trading-day-ingest.md`. Branch
   `claude/cycle-0-frankie-box-rerun-od5sxk` (the harness branch is the stale trunk tip). Greg's go "Lets rerun cyc 0" = the

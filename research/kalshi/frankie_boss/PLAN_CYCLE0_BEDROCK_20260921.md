@@ -152,6 +152,13 @@ work is lost. The pin change is reverted by reverting BR-1's commit (the request
 - [ ] `frankie_box_docs.py`, `frankie_box_brain.py`, the session's writing prompts.
 - Acceptance: checkpoint C. Files: the two modules, the session, `test_frankie_box_docs.py`, `test_frankie_box_brain.py`.
 
+### BR-9 sections 4.2 and 4.4 as V6 tables (Greg, 2026-09-22; SPEC-bedrock-section-tables.md; built da294b91)
+- [x] RED: project_sections on the pinned driver's fixture run (6 companion rows, 1 pair, 6 mirror rows); the render of the
+      five section tables parsing back equal; derive.json indexing both files; the docs bundle referencing them.
+- [x] frankie_box_bedrock.project_sections; frankie_box_digest_render.bedrock_tables section tables + the header sentence;
+      frankie_box_boss_session._derive_bedrock wiring (`sections` in the bedrock record). The producers untouched.
+- [ ] Checkpoint E re-measures the V6 digest with the section tables (on Greg's go; his call 2).
+
 ### BR-8 ship, records, runbook
 - [ ] `/ship` on BR-0..BR-7; fix every finding with its test; decision recorded in the handoff.
 - [ ] Runbook: the pin change's host steps (supersede principal request, export, fetch, restart_session), checkpoint E

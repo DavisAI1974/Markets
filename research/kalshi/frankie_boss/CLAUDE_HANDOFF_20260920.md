@@ -4326,3 +4326,61 @@ trunk (e194892d), the Friday anchor (8388b441, f9b62c9a), the trading-day standa
 fd2922bf, f6b1cc5c, 8c089436), the records between. The drop-in's top block is the state; CLAUDE.md's header and STATE
 line point at it. Nothing on the host, Pod or endpoint has run; the box ran read-only probes, the Friday anchor decode,
 the fetch and the canary (no model call, nothing deleted, every step receipted).
+
+### 04:5xZ 09-22: CHAT 9 OPEN: the branch trap again, the one status probe, /SHIP ON THE CHAT-8 CODE
+
+The harness cut this chat's branch `claude/cycle-0-monday-rerun-hk2q2z` from the TRUNK tip e194892d (2,780 commits behind);
+reset onto the rerun branch's tip ba4d25ed and pushed, so both branches hold the same history and this chat's commits go to
+`claude/cycle-0-monday-rerun-hk2q2z` (the harness's designated branch). `using-agent-skills`, `git-workflow-and-versioning`,
+then `/ship` on 903b36f2..ba4d25ed (Greg: "run the ship agent skill so we can move forward focused").
+
+THE ONE PROBE (`frankie_box_ingest_block.sh` `ACTION=status`, run 35688540984, dispatched 04:52:41Z, success 04:53:22Z, SSM
+command c99e3d73): box Online; markets HEAD ba4d25ed; both partitions under data/block_20211004 (20211003 973,355 B;
+20211004 34,300,424 B); two canary work directories; the canary receipt as recorded at close (112.49 records/s, 5.02 h
+projected, 31 workers, journal_count 40,000, completion_claimed false); one fetch receipt; 177 GB free. Nothing new. The
+probe at open is spent. (That probe ran the OLD wrapper, which checked out the branch default od5sxk = ba4d25ed at the time;
+harmless, and the reason for the first ship finding below.)
+
+### 05:xxZ 09-22: /SHIP: GO AFTER FIXES, ALL FIXES LANDED (a2f32bae, d68c0b90, 68340beb, 094e06b1, 891bd26a)
+
+`SHIP_REVIEW_20260922_CHAT9.md` has the decision, every finding, the fix and the test that pins it (each shown failing first).
+The three reports converged on the box wrapper (the checkout of a BRANCH NAME before the units-idle check, and the fetch
+trusting the manifest's paths before validation: now the DISPATCHED COMMIT via MARKETS_SHA from frankie_box_run.yml,
+units idle first, block_source_scope before any path, every destination pinned under data/, https amazonaws only, WORKERS
+bounded, receipts written once, status touches no git) and on two take edge cases (a partition ending at its take was
+accepted; a canary of exactly the take claimed completion) plus two the test review found (a partial member not last let the
+next member ingest whole; two partials accepted). The Friday anchor decoded ONE zstd frame (stream_reader's default) and the
+checked path rather than the checked bytes: fixed (multi-frame loop, bytes hashed as decoded), the committed anchor carries a
+`decode_caveat` until the re-run (Greg's word; the value 5.544 itself untouched). The derivation is now a pure function
+(replay order = member_index, refusals with reasons, no clock in the hash): the committed Monday manifest RE-DERIVED byte
+for byte (hash 79ea97f8 -> a399377b; partitions, sha256s, counts and the take 1,975,176 unchanged; the box's fetched
+partitions still verify; the ingest receipt will carry the new hash). The three frankie_boss suites join the torch-equipped
+CI list. The wrapper now REQUIRES MARKETS_SHA: dispatch `frankie_box_run.yml` from THIS branch (its workflow file sets it).
+
+### 05:xxZ 09-22: BR-9 BUILT: SECTIONS 4.2 AND 4.4 AS V6 TABLES (Greg: "We are going to have to take care of that")
+
+`SPEC-bedrock-section-tables.md` (the spec), da294b91 (the build, TDD on the pinned driver's own fixture run). MEASURED
+first by running the pinned driver on the bedrock test stream (three F_LAST groups): 195 averaged rows of which 6 are
+section 4.2 (one per measure: book_spread_raw, book_total_depth, book_order_count, book_level_count, relative_imbalance,
+actions_per_group), one first/last pair, 50 lifecycle rows of which 6 are `mirror` (3 PENDING offers at GROUP_CLOSE, 3
+UNMATCHED at STREAM_END, NO_COUNTERPART_IN_SCOPE; members_seen 3 = 2 x 0 pairs + 3 unmatched). The mirror is offered at
+EVERY group close (not the candidate lane), so both sections have rows on cycle 0's 13 seconds. BUILT: `frankie_box_bedrock.
+project_sections` files `bedrock_section_4_2.json` (companion_rows, declarations once per measure, first_last_pairs, the
+4.2 summary) and `bedrock_section_4_4.json` (every `mirror` lifecycle row whole from the exact ledger, the matching rule,
+the 4.4 summary) beside the twenty crosswalk layers, from result.json's averaged_companions (PLAIN form required) and the
+exact ledger, computing nothing, `status_of` on the count; `bedrock_tables` renders `bedrock.companions.<section>`,
+`bedrock.declarations.<section>`, `bedrock.first_last.<section>`, `bedrock.matching_rule.<section>` and
+`bedrock.lifecycle.mirror`, every table parsed back equal; the session's `_derive_bedrock` wires it (derive.json's layers
+carry both with bedrock=True; the bedrock record carries `sections`); the docs bundle references both files like any layer
+file. The producers untouched (worktree clean at 2ebb8ce8). Tests: bedrock 19, render 24, derive 18, docs 11 (72). The
+V6 digest grows by these tables: checkpoint E re-measures it (Greg's call 2). The teach stage reads the pin's twenty
+layers only (unchanged).
+
+### 05:xxZ 09-22: STANDING: what the next chat needs to know that is new
+- The box wrapper needs `MARKETS_SHA` (the run workflow on this branch sets it). A dispatch of an older workflow file
+  (another ref) would be refused by the wrapper: "MARKETS_SHA must be the dispatched commit".
+- The Monday manifest's hash is a399377b (re-derivable: `derive_trading_day_manifest.py` is a pure function; the test pins
+  byte identity). 57,027 + 1,975,176 = 2,032,203 declared, unchanged.
+- Greg's calls still open (unchanged): the publish route; the two flagged 4096s; pre-warm from Friday; chat 7's calls 2-5;
+  NEW: the Friday anchor re-run (to clear the decode caveat; one box run), the presigned-map SecureString or presign_hours
+  cap, porting the dispatched-commit checkout to the cycle's session scripts.

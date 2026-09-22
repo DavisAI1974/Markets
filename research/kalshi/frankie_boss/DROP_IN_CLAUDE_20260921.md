@@ -1,5 +1,51 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
+## READ FIRST (05:xxZ 09-22, chat 9 CLOSING): /SHIP ON THE CHAT-8 CODE = GO AFTER FIXES, ALL LANDED; BR-9 (4.2/4.4 AS V6 TABLES) IS BUILT; THE WRAPPER NOW PINS THE DISPATCHED COMMIT; THE MONDAY INGEST WAITS ON GREG'S GO
+
+Branch `claude/cycle-0-monday-rerun-hk2q2z` (the harness's designated branch; reset onto the rerun branch's tip ba4d25ed at
+open, so it carries the whole history; tip = the commit carrying this block or later; `git log --oneline -1` first: the
+harness cuts each chat's branch from the TRUNK tip, the stale-tip trap; if the new chat's branch is 2,000+ commits behind,
+`git checkout -B <its name> origin/claude/cycle-0-monday-rerun-hk2q2z` and push). Run `using-agent-skills` and
+`git-workflow-and-versioning` first; skills win overlaps; attribution lines on every commit; no model identifiers in
+anything pushed; the scratchpad only for throwaway probes (the producers worktree `.producers-2ebb8ce8` from
+`bash deploy/aws/box/producers_checkout.sh`). RULES IN FORCE, verbatim: nothing deleted; every move receipted; no Pod or
+EC2 stop/terminate without Greg; never stop the native host runner; keys never printed; NO output limits on the BOSS; the
+pinned Pod bootstrap bundle untouched; no outside LLMs as engine; records in git or AWS only. Box probes: one at open,
+then as Greg says. Launch HOLD except what Greg has said go to. NO DATABENTO PULL (the secret is absent; measured).
+
+THE STANDARD (unchanged, CLAUDE.md first FRANKIE/BOSS rule): the Monday trading day 2021-10-04 = 18:00 ET Sunday to
+17:00 ET Monday, 23 hours; the DBN files are UTC partitions; there is no "Sunday".
+
+STATE:
+- /SHIP (chat 9, `SHIP_REVIEW_20260922_CHAT9.md`): GO after fixes, every fix landed with its test shown failing first:
+  the box wrapper checks the cycle units idle BEFORE any checkout and checks out the DISPATCHED COMMIT (`MARKETS_SHA`, set
+  by `frankie_box_run.yml` on this branch from GITHUB_SHA; a HEAD that differs is refused; `status` touches no git); the
+  fetch validates the manifest by `block_source_scope` before any path exists, pins every destination under data/, https
+  amazonaws only, WORKERS bounded by the CPUs, receipts written once; the take: one partial member and it is the last, a
+  partition ending at its take is refused, the canary stop precedes the take; the derivation is a pure function (replay
+  order = member_index; the committed Monday manifest re-derived byte for byte, hash 79ea97f8 -> a399377b, partitions,
+  sha256s, counts and the take unchanged); the Friday anchor decodes across zstd frames and hashes what it decodes (the
+  record carries a `decode_caveat` until a re-run; 5.544 untouched); the three frankie_boss suites join the torch CI list.
+  DISPATCH THE WRAPPER FROM THIS BRANCH ONLY (an older workflow file sets no MARKETS_SHA and the wrapper refuses).
+- BR-9 BUILT (`SPEC-bedrock-section-tables.md`, da294b91): sections 4.2 (the daily book regime companion) and 4.4 (the
+  mirror) reach Frankie as V6 TABLES: `bedrock_section_4_2.json` / `bedrock_section_4_4.json` beside the twenty layers,
+  copied whole from the traversal's own result.json and exact ledger; tables `bedrock.companions.4.2`,
+  `bedrock.declarations.4.2`, `bedrock.first_last.4.2`, `bedrock.matching_rule.4.4`, `bedrock.lifecycle.mirror`; wired
+  into the session's derive and the docs bundle; the producers untouched. On cycle 0's rows: 6 companion rows, 6
+  declarations, 1 pair, 6 mirror rows, 1 rule. Checkpoint E re-measures the digest (Greg's call 2).
+- THE BOX (probe 04:53Z, run 35688540984): Online, HEAD ba4d25ed, both partitions present, the canary receipt (112.49
+  records/s, 5.02 h projected for 2,032,203), 177 GB free. Nothing has run since. The probe at open is spent.
+- STILL GREG'S CALLS: the ingest go (`ACTION=ingest WORKERS=31`, about 5 h; the receipt = the Monday count); the publish
+  route; the two flagged 4096s; pre-warm from Friday; chat 7's calls 2-5; NEW: the Friday anchor re-run (one box run,
+  clears the caveat); the presigned map in SSM history (SecureString per run or a presign_hours cap); porting the
+  dispatched-commit checkout to the cycle's session scripts.
+
+NEXT CHAT, in order: probe `ACTION=status` (one; from this branch); read this block, then the handoff from 04:5xZ 09-22 to
+the end, then `SHIP_REVIEW_20260922_CHAT9.md`; (1) on Greg's word: the ingest, then the publish route; (2)
+SPEC-trading-day-schedule (the 57027/19/one-date gates become the schedule's declared counts; the prefixes re-seeded
+under Greg's row count; the binding re-pinned); (3) host and box modules; then the full rerun order (handoff 01:3xZ 09-22
+steps 0-9 with 1b).
+
 ## READ FIRST (03:xxZ 09-22, chat 8 CLOSING on Greg's "Let's do everything we do to end a chat"): THE TRADING DAY IS THE STANDARD; THE ROW WINDOW IS OUT OF THE CODE; MODULE 1 (THE MONDAY INGEST) IS BUILT, THE PARTITIONS ARE ON THE BOX, THE CANARY RAN; 4.2 AND 4.4 ARE THE NEXT BUILD
 
 Branch `claude/cycle-0-frankie-box-rerun-od5sxk` (tip = the commit carrying this block or later; `git log --oneline -1`
