@@ -190,3 +190,27 @@ def test_raw_corpus_carries_the_pinned_prior_cycle_zero_documents(tmp_path, monk
     assert 'prior cycle zero observed knowledge' in corpus.read_text()
     report = json.loads((s.work / 'reading-corpus.json').read_text())
     assert any(m['name'].endswith('analysis.md') for m in report['members'])
+
+
+
+def test_cached_corpus_damage_or_changed_prompt_is_preserved_and_rebuilt(tmp_path, monkeypatch):
+    s = stub(tmp_path, monkeypatch)
+    s.day = '20211004'
+    s._head_through_ledger = lambda text: text
+    monkeypatch.setattr(session, 'ROOT', tmp_path)
+    monkeypatch.setattr(session, 'READING_CONFIG', tmp_path / 'absent.json')
+    (tmp_path / 'request').mkdir()
+    prompt = tmp_path / 'request' / 'prompt.md'
+    prompt.write_text('original instructions')
+    (s.work / 'derivation-digest-full.md').write_text('kept derivation')
+    corpus = session.Session.reading_corpus(s)
+    corpus.write_text('damaged corpus')
+    rebuilt = session.Session.reading_corpus(s)
+    assert 'original instructions' in rebuilt.read_text() and 'kept derivation' in rebuilt.read_text()
+    prompt.write_text('new instructions')
+    newest = session.Session.reading_corpus(s)
+    assert 'new instructions' in newest.read_text() and 'original instructions' not in newest.read_text()
+    preserved = list(s.work.glob('superseded-reading-*/reading-corpus-full.md'))
+    assert len(preserved) == 2
+    assert any(p.read_text() == 'damaged corpus' for p in preserved)
+    assert all((p.parent / 'move-receipt.json').is_file() for p in preserved)

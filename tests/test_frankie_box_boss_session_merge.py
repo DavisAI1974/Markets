@@ -56,3 +56,18 @@ def test_unusable_hash_free_merge_keeps_all_input_notes(tmp_path, outcome):
     kept = session.Session._merge_keep(s, 'merge-safe', inputs, outcome)
     assert kept.startswith('\n'.join(inputs)) and 'MERGE KEPT VERBATIM' in kept
     assert outcome['text'] in (tmp_path / 'merges' / 'merge-safe.model-output.md').read_text()
+
+
+
+def test_repeated_merge_name_preserves_both_previous_artifacts(tmp_path):
+    import json
+    s = stub(tmp_path)
+    inputs = ['first input group', 'second input group']
+    session.Session._merge_keep(s, 'repeat', inputs, dict(text='I cannot complete this request.'))
+    old = {p.name: p.read_bytes() for p in (tmp_path / 'merges').iterdir()}
+    session.Session._merge_keep(s, 'repeat', inputs, dict(text='new usable merge'))
+    receipts = list(tmp_path.glob('superseded-reading-*/move-receipt.json'))
+    assert receipts
+    for name, raw in old.items():
+        assert any((p.parent / name).read_bytes() == raw for p in receipts if (p.parent / name).exists())
+    assert all(json.loads(p.read_text())['moves'] for p in receipts)
