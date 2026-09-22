@@ -87,6 +87,7 @@ def test_exact_stacked_prompt_and_response_acknowledgment(tmp_path):
     assert 'FRANKIE_PRIOR_LESSON_MUST_REACH_GRANITE' in prompt
     assert '"request_id":"future"' not in prompt
     value=valid_output(encoded)
+    value['evidence_refs']=[{'row':0,'field':'/record/extension/odd~1key/1'}]
     assert route.score(json.dumps(value),encoded)[1].name!='L4'
     value.update(knowledge_hash=evidence_hash(bundle),knowledge_review=[
         dict(lesson_hash=e['lesson_hash'],assessment='Considered as prior inference, not raw evidence')
@@ -188,3 +189,69 @@ def test_preflight_includes_identical_knowledge_hash(tmp_path,monkeypatch):
     route=context_route('stacked_v1')
     assert json.loads(body)['messages'][0]['content']==route.build_prompt(route.encode(source,knowledge=bundle)).text
     assert receipt['critic_knowledge_hash']==evidence_hash(bundle)
+
+@pytest.mark.parametrize('bad',[[],{},None,True,''])
+def test_malformed_acknowledgment_is_rejected(bad):
+    bundle=build()
+    reply=dict(knowledge_hash=evidence_hash(bundle),knowledge_review=[dict(lesson_hash=bad,assessment='review')])
+    assert knowledge.acknowledged(reply,bundle) is False
+
+def test_canonical_full_envelope_hash_survives_sorted_json():
+    bundle=build()
+    assert evidence_hash(bundle)==evidence_hash(json.loads(json.dumps(bundle,sort_keys=True)))
+
+@pytest.mark.parametrize('tamper',[False,True])
+def test_request_plan_preserves_arrays_on_resume(tmp_path,monkeypatch,tamper):
+    from test_sunday_execution import _composition_fixture
+    from research.kalshi.frankie_boss.dipole_classroom_integration import IntegratedDipoleClassroomPrincipalAdapter
+    module,Pending,driver,calls=_composition_fixture(tmp_path,monkeypatch,
+        adapter_class=IntegratedDipoleClassroomPrincipalAdapter)
+    runtime=driver.runtime_factory(None,None,None)
+    runtime.context_encoding='stacked_v1'
+    bundle=build([record('prior',99)],cutoff=100,request_id='request-cycle-00')
+    runtime.critic_knowledge=copy.deepcopy(bundle)
+    with pytest.raises(Pending): asyncio.run(driver.run_cycle(0))
+    path=tmp_path/'run/cycle-00/request-plan.c15.json'
+    saved=module._load(path)['controller_kwargs']['critic_knowledge']
+    assert saved==bundle and evidence_hash(saved)==evidence_hash(bundle)
+    assert type(saved['entries']) is list
+    calls.clear()
+    if tamper:
+        runtime.critic_knowledge['entries'][0]['record']['lessons'][0]['text']='changed'
+        with pytest.raises(ValueError): asyncio.run(driver.run_cycle(0))
+        assert calls==[]
+    else:
+        with pytest.raises(Pending): asyncio.run(driver.run_cycle(0))
+        assert calls==['coordinator-after-plan']
+
+def test_prepared_body_cannot_lie_about_knowledge(tmp_path):
+    source=snapshot(tmp_path); cutoff=native.unpack(json.loads(source.text)['receipt'])['as_of']
+    route=context_route('stacked_v1');bundle=build(cutoff=cutoff)
+    body=json.dumps(dict(messages=[dict(role='user',content=route.build_prompt(route.encode(source,knowledge=bundle)).text)]))
+    knowledge.verify_prepared_knowledge(body,bundle)
+    altered=build([dict(record(),lessons=[dict(text='other knowledge')])],cutoff=cutoff)
+    with pytest.raises(ValueError):
+        knowledge.verify_prepared_knowledge(body,altered)
+
+def test_legacy_lesson_retry_does_not_rewrite_history(tmp_path,monkeypatch):
+    store,checkpoint,args,calls=cycle_fixture(tmp_path,monkeypatch)
+    original=store._save
+    def crash(request_id,stage,value):
+        if stage=='complete': raise RuntimeError('crash after lesson commit')
+        return original(request_id,stage,value)
+    monkeypatch.setattr(store,'_save',crash)
+    try:
+        with pytest.raises(RuntimeError):asyncio.run(store.run(**args))
+        old=store.lessons.execute('SELECT payload,digest FROM lessons').fetchone()
+        monkeypatch.setattr(store,'_save',original)
+        # Upgrade sees an exchange now, while the retained legacy lesson lacks it.
+        original_load=store._load
+        def loaded(request_id,stage):
+            result=original_load(request_id,stage)
+            return dict(result,critic={}) if stage=='controller' and result else result
+        monkeypatch.setattr(store,'_load',loaded)
+        monkeypatch.setattr(knowledge,'critic_exchange',lambda *a,**kw:dict(diagnostic='new optional exchange'))
+        asyncio.run(store.run(**args))
+        assert store.lessons.execute('SELECT payload,digest FROM lessons').fetchone()==old
+        assert calls['learner']==calls['principal']==1
+    finally:store.close();checkpoint.close()

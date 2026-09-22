@@ -390,8 +390,16 @@ class CycleCoordinator:
             record['critic_exchange'] = critic_exchange(result, available_ns=feedback.available_ns)
         digest = evidence_hash(record)
         with self.lessons:
-            old = self.lessons.execute('SELECT digest FROM lessons WHERE request=?', (request_id,)).fetchone()
-            if old is not None and old[0] != digest: raise ValueError('saved new lessons changed')
+            old = self.lessons.execute('SELECT payload,digest FROM lessons WHERE request=?', (request_id,)).fetchone()
+            if old is not None:
+                retained = unpack(json.loads(old[0]))
+                if (evidence_hash(retained) != old[1] or
+                        {k:v for k,v in retained.items() if k!='critic_exchange'} !=
+                        {k:v for k,v in record.items() if k!='critic_exchange'} or
+                        ('critic_exchange' in retained and retained['critic_exchange'] != record.get('critic_exchange'))):
+                    raise ValueError('saved new lessons changed')
+                # An older completed lesson may lack this new optional field. Preserve it.
+                digest = old[1]
             if old is None:
                 self.lessons.execute('INSERT INTO lessons VALUES (?,?,?,?)',
                     (request_id, feedback.available_ns, canonical_bytes(pack(record)), digest))
@@ -437,7 +445,8 @@ class CycleCoordinator:
             fields = feedback['feedback']
             digest = evidence_hash(dict(schema='BOSS_FORECAST_CONTRACT_V1', kind='FrankieFeedback', fields=fields))
             learning = binding['learning']
-            if (previous == request_id or fields['request_id'] != previous
+            if (previous == request_id or binding['request_id'] != previous or complete['request_id'] != previous
+                    or fields['request_id'] != previous
                     or fields['available_ns'] != record['available_ns']
                     or fields['source_hash'] != learning['source_hash'] or fields['input_hash'] != learning['input_hash']
                     or not learning['as_of'] <= fields['available_ns'] <= learning['learning_cutoff_ns']
@@ -451,7 +460,8 @@ class CycleCoordinator:
             if 'critic_exchange' in record:
                 from .critic_knowledge import critic_exchange
                 result = self._load(previous, 'controller')
-                if result is None or critic_exchange(result, available_ns=fields['available_ns']) != record['critic_exchange']:
+                if (result is None or evidence_hash(result) != complete['controller_result_hash']
+                        or critic_exchange(result, available_ns=fields['available_ns']) != record['critic_exchange']):
                     raise ValueError('knowledge critic exchange differs from verified origin')
             origins.append(dict(request_id=previous,binding_hash=evidence_hash(binding),
                 feedback_stage_hash=evidence_hash(feedback),training_hash=evidence_hash(training),
@@ -459,7 +469,7 @@ class CycleCoordinator:
                 input_hash=learning['input_hash'],through_cursor=learning['through_cursor'],as_of=learning['as_of']))
         value = build_knowledge(records, cutoff_ns=cutoff_ns, request_id=request_id)
         value['origins'] = origins
-        validate_knowledge(value, cutoff_ns=cutoff_ns, request_id=request_id)
+        value = validate_knowledge(value, cutoff_ns=cutoff_ns, request_id=request_id)
         if saved is not None and value != saved:
             raise ValueError('frozen knowledge origin changed')
         return self._save(request_id, 'critic_knowledge', value)

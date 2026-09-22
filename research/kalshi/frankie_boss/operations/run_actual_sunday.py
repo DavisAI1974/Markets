@@ -684,6 +684,9 @@ class ActualHost:
         body=verified(value['body']).read_bytes();receipt=verified_json(value['receipt'])
         if critic_knowledge is not None and receipt.get('critic_knowledge_hash')!=self.api.journal.evidence_hash(critic_knowledge):
             raise ValueError('retained prefix preparation differs from frozen critic knowledge; prepare a new request')
+        if critic_knowledge is not None:
+            from research.kalshi.frankie_boss.critic_knowledge import verify_prepared_knowledge
+            verify_prepared_knowledge(body,critic_knowledge)
         identity=self.api.journal.unpack(json.loads(verified(value['initialization']).read_bytes()))
         prefix=verified_json(value['prefix_receipt'])
         live_hash=self.context._model_hash()
@@ -728,6 +731,9 @@ class ActualHost:
         prepared=self.api.driver._load(path)
         body=Path(prepared['request_path']).read_bytes()
         admission=prepared['admission'];receipt=prepared['receipt'];info=receipt['context']
+        if critic_knowledge is not None:
+            from research.kalshi.frankie_boss.critic_knowledge import verify_prepared_knowledge
+            verify_prepared_knowledge(body,critic_knowledge)
         native_pin=self.api.native_model_pin(SimpleNamespace(context=self.context,decoder=self.decoder))
         if critic_knowledge is not None and receipt.get('critic_knowledge_hash')!=self.api.journal.evidence_hash(critic_knowledge):
             raise ValueError('retained pre-dispatch preparation differs from frozen critic knowledge')

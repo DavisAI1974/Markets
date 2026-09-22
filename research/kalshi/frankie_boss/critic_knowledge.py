@@ -63,7 +63,7 @@ def build_knowledge(records, *, cutoff_ns, request_id):
         if record['available_ns']<=cutoff_ns:
             entries.append(dict(lesson_hash=evidence_hash(record),record=record))
     entries.sort(key=lambda entry:(entry['record']['available_ns'],entry['record']['request_id']))
-    return dict(schema=SCHEMA,request_id=request_id,cutoff_ns=cutoff_ns,entries=entries)
+    return _json(dict(schema=SCHEMA,request_id=request_id,cutoff_ns=cutoff_ns,entries=entries))
 
 def validate_knowledge(value, *, cutoff_ns=None, request_id=None):
     if type(value) is not dict or set(value) not in ({'schema','request_id','cutoff_ns','entries'}, {'schema','request_id','cutoff_ns','entries','origins'}) or value['schema']!=SCHEMA:
@@ -93,7 +93,7 @@ def validate_knowledge(value, *, cutoff_ns=None, request_id=None):
             if origin['as_of']>entry['record']['available_ns']: raise ValueError('origin chronology differs')
         expected['origins']=_json(origins)
     if value!=expected: raise ValueError('knowledge order, availability or canonical content differs')
-    return expected
+    return _json(expected)
 
 def acknowledged(value, knowledge):
     """Receipt acknowledgment is observable output, not a claim about cognition."""
@@ -105,6 +105,8 @@ def acknowledged(value, knowledge):
     for item in review:
         if (type(item) is not dict or set(item)!={'lesson_hash','assessment'}
                 or type(item['assessment']) is not str or not item['assessment'].strip()): return False
+        try: _hash(item['lesson_hash'])
+        except ValueError: return False
         actual.append(item['lesson_hash'])
     return len(set(actual))==len(actual) and set(actual)==set(expected)
 
@@ -116,6 +118,8 @@ def critic_exchange(result, *, available_ns):
     raw=shadow['request']
     request=ShadowRequest(**{**raw,'identity':GraniteIdentity(**raw['identity'])})
     response=shadow['response']
+    if shadow['status']=='binding_mismatch':
+        response=None  # Foreign bytes remain in the original receipt, never in reusable knowledge.
     if response is not None and (response['request_hash']!=request.request_hash
             or response['identity_hash']!=request.identity.identity_hash):
         raise ValueError('critic exchange response binding differs')
@@ -124,3 +128,22 @@ def critic_exchange(result, *, available_ns):
         request_hash=request.request_hash,snapshot_hash=request.snapshot_hash,
         response_text=text,response_hash=None if text is None else hashlib.sha256(text.encode()).hexdigest(),
         available_ns=available_ns)
+
+
+def verify_prepared_knowledge(body, expected):
+    """Read the actual admitted body, not an uncorroborated sidecar claim."""
+    from .granite_context_route import context_route
+    try:
+        payload=json.loads(body)
+        messages=payload['messages']
+        if len(messages)!=1 or messages[0]['role']!='user':
+            raise ValueError('one exact critic prompt required')
+        prompt=messages[0]['content']
+        _, separator, text=prompt.partition('\nstacked_native_context:\n')
+        if not separator: raise ValueError('stacked critic body required')
+        route=context_route('stacked_v1')
+        snapshot=route.parse(text,expected_hash=hashlib.sha256(text.encode()).hexdigest())
+        if json.loads(snapshot.text).get('knowledge')!=expected or route.build_prompt(snapshot).text!=prompt:
+            raise ValueError('prepared body differs from frozen critic knowledge')
+    except (KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError('invalid prepared critic knowledge body') from exc
