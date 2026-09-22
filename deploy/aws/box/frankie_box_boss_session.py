@@ -687,7 +687,10 @@ class Session:
     def derive(self):
         pin = self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
-        moved = _box_module('frankie_box_bedrock')._move_aside(derived)   # an earlier derivation is moved aside with a receipt, never overwritten
+        moved = _box_module('frankie_box_bedrock')._move_aside(              # an earlier derivation is moved aside with a receipt, never overwritten
+            derived, siblings=[self.work / 'derive.json', self.work / 'derivation-digest-full.md', self.work / 'derive-only-measurement.json'],
+            schema='FRANKIE_BOX_DERIVED_SUPERSEDE_RECEIPT_V1',
+            reason='the layers are derived again (a pin change, a schema change or an operator restart): the legacy five, the bedrock projections and the derivation receipt, digest and measurement are kept whole')
         if moved:
             self.note(f'derive: the earlier derived files moved aside to {moved} (receipted)')
         derived.mkdir(exist_ok=True)

@@ -263,6 +263,30 @@ def test_a_second_derive_moves_the_earlier_derived_files_aside_with_a_receipt(tm
     assert len(moved) == 1 and len(receipts) == 1 and (moved[0] / 'legacy_price.json').read_bytes() == first
     assert json.loads(receipts[0].read_bytes())['moved_to'] == str(moved[0])
     assert any('moved aside' in n for n in s._notes) and (s.work / 'derived' / 'legacy_price.json').read_bytes() == first
+    # the derivation's receipt (derive.json) is moved with its directory, never overwritten in place
+    receipt = json.loads(receipts[0].read_bytes())
+    assert (moved[0] / 'derive.json').is_file() and 'derive.json' in [Path(x).name for x in receipt['moved_files']]
+    assert json.loads((moved[0] / 'derive.json').read_bytes())['pin_identity'] == json.loads((s.work / 'derive.json').read_bytes())['pin_identity']
+    assert receipt['reason'].startswith('the layers are derived again')
+
+
+def test_move_aside_moves_named_sibling_files_even_without_a_directory_and_never_collides_on_the_receipt(tmp_path):
+    B = FX.B
+    (tmp_path / 'derive.json').write_text('{"a": 1}')
+    moved = B._move_aside(tmp_path / 'derived', siblings=[tmp_path / 'derive.json', tmp_path / 'absent.md'])
+    assert moved and (Path(moved) / 'derive.json').read_text() == '{"a": 1}' and not (tmp_path / 'derive.json').exists()
+    receipt = json.loads(next(tmp_path.glob('derived-supersede-*.json')).read_bytes())
+    assert [Path(x).name for x in receipt['moved_files']] == ['derive.json'] and receipt['moved_to'] == moved
+    assert B._move_aside(tmp_path / 'derived', siblings=[tmp_path / 'absent.md']) is None
+
+
+def test_the_restore_script_refuses_to_overwrite_a_different_file_at_a_pinned_destination():
+    text = (BOX / 'frankie_box_restore_data_plane.sh').read_text(encoding='utf-8')
+    refusal = "not overwritten (move it aside with a receipt first)"
+    assert refusal in text
+    body = text.split('for key, entry in m.items():')[1]
+    assert body.index(refusal) < body.index("part = dest + '.part'") < body.index('os.replace(part, dest)')
+    assert "os.replace(part, dest + '.rejected')" not in text and ".rejected-" in text      # a rejected download never overwrites an earlier one
 
 
 def test_measure_digest_uses_the_granite_tokenizer_when_present_and_records_a_failing_one(tmp_path, monkeypatch):

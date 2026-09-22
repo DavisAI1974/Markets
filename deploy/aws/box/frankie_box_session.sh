@@ -30,12 +30,12 @@ preflight() {
   # Verifies the request against the authored source contract, computes the timing labels by code, reads the Pod
   # record through the SecureString /markets/frankie/granite-service (never printed) and probes /health. Starts nothing.
   echo "engine: BOSS (retained Granite vLLM, jobs_v1; frankie_box_boss_session.py --stage preflight)"
-  git -C "$ROOT/markets" fetch -q --depth 1 origin "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
+  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
   "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage preflight
 }
 verify() {
   echo "### verify (no session started): request digest through the adapter, the task document, the pusher's token reach"
-  git -C "$ROOT/markets" fetch -q --depth 1 origin "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
+  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
   TASK="$ROOT/markets/research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md"; [ -s "$TASK" ] && echo "task document: $(wc -c < "$TASK") bytes, sha256 $(sha256sum "$TASK" | cut -c1-16)" || echo "task document MISSING"
   "$ROOT/venv/bin/python" -c "
 import json,sys,time; sys.path.insert(0,'$ROOT/markets')
@@ -58,7 +58,7 @@ start_session() {
     if systemctl is-active --quiet "$UNIT.service"; then echo "$UNIT is already running; not restarting (Greg's word)"; status; return 0; fi
     [ -s "$ROOT/request/session-request.json" ] || { echo "request not on the box"; return 2; }
     [ -x "$ROOT/venv/bin/python" ] || { echo "venv not staged"; return 2; }
-    git -C "$ROOT/markets" fetch -q --depth 1 origin "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD
+    git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD
     TASK="$ROOT/markets/research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md"; [ -s "$TASK" ] || { echo "task document missing at $TASK"; return 2; }
     preflight || return 3
     "$ROOT/venv/bin/python" -c "

@@ -3,7 +3,8 @@
 # is a short-lived presigned GET). The box's instance role reads nothing in S3 (probe 35577004016), so this is the
 # only route. Every file lands under /opt/frankie-box/, is verified against the sha256 pinned BELOW (from git:
 # RESTORATION_MANIFEST.json and ROOT_CYCLE_00_TASK_20260920.md), and a receipt is written. Idempotent: a file
-# already present with the right digest is kept. Nothing on the box is deleted or overwritten.
+# already present with the right digest is kept. Nothing on the box is deleted or overwritten: a DIFFERENT file at a
+# pinned destination (a request restored under an earlier pin) is REFUSED until the operator moves it aside with a receipt.
 set -u
 [ -n "${MAP_URL:-}" ] || { echo "MAP_URL not set (dispatch frankie_box_run.yml with presign keys)"; exit 2; }
 ROOT=/opt/frankie-box
@@ -47,6 +48,10 @@ for key, entry in m.items():
         receipt['refused'].append(dict(key=key, reason='bytes differ from pin', have=entry.get('bytes'), want=want_bytes)); print('REFUSED (bytes):', key); continue
     if os.path.exists(dest) and os.path.getsize(dest) == want_bytes and sha(dest) == want_sha:
         receipt['files'].append(dict(key=key, path=dest, bytes=want_bytes, sha256=want_sha, status='already_present')); print('present ', dest); continue
+    if os.path.exists(dest):
+        have = sha(dest)
+        receipt['refused'].append(dict(key=key, reason='a different file is already at the destination; not overwritten (move it aside with a receipt first)', path=dest, bytes=os.path.getsize(dest), sha256=have, want_sha256=want_sha))
+        print('REFUSED (present, different):', dest, have[:16], 'want', want_sha[:16]); continue
     part = dest + '.part'
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     t0 = time.time()
@@ -55,7 +60,7 @@ for key, entry in m.items():
         receipt['refused'].append(dict(key=key, reason='download failed', returncode=r.returncode)); print('FAILED download', key); continue
     got = sha(part); size = os.path.getsize(part)
     if size != want_bytes or got != want_sha:
-        receipt['refused'].append(dict(key=key, reason='digest differs from pin', bytes=size, sha256=got)); print('REFUSED (digest):', key, size, got); os.replace(part, dest + '.rejected'); continue
+        receipt['refused'].append(dict(key=key, reason='digest differs from pin', bytes=size, sha256=got)); print('REFUSED (digest):', key, size, got); os.replace(part, dest + f'.rejected-{int(time.time())}'); continue
     os.replace(part, dest)
     receipt['files'].append(dict(key=key, path=dest, bytes=size, sha256=got, status='restored', seconds=round(time.time() - t0, 1)))
     print('restored', dest, size, f'{time.time()-t0:.1f}s')

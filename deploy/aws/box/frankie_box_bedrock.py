@@ -179,20 +179,33 @@ def identity(producers, container, count, cycle, code_commit):
                        total_mbo_records=int(count), code_commit=str(code_commit))
 
 
-def _move_aside(out_dir):
-    """An earlier bedrock under out_dir is moved beside it, receipted; nothing is deleted."""
+def _move_aside(out_dir, siblings=(), schema='FRANKIE_BOX_BEDROCK_SUPERSEDE_RECEIPT_V1',
+                reason='the bedrock is derived again (a pin change, a schema change or an operator restart); the earlier files are kept whole'):
+    """An earlier bedrock under out_dir is moved beside it, receipted; nothing is deleted. `siblings` are files beside the
+    directory that belong to the same derivation (its receipt, digest, measurement): they move INTO the superseded directory
+    under their own names, so nothing writes over them either. The receipt's stamp is taken where neither the directory nor
+    the receipt exists."""
     out_dir = Path(out_dir)
-    if not out_dir.exists() or not any(out_dir.iterdir()):
+    present = out_dir.exists() and any(out_dir.iterdir())
+    files = [Path(s) for s in siblings if Path(s).is_file()]
+    if not present and not files:
         return None
     stamp = int(time.time())
     target = out_dir.with_name(f'{out_dir.name}-superseded-{stamp}')
-    while target.exists():
+    receipt = out_dir.with_name(f'{out_dir.name}-supersede-{stamp}.json')
+    while target.exists() or receipt.exists():
         stamp += 1
         target = out_dir.with_name(f'{out_dir.name}-superseded-{stamp}')
-    out_dir.rename(target)
-    write_json(out_dir.with_name(f'{out_dir.name}-supersede-{stamp}.json'),
-               dict(schema='FRANKIE_BOX_BEDROCK_SUPERSEDE_RECEIPT_V1', at=time.time(), moved_from=str(out_dir), moved_to=str(target),
-                    reason='the bedrock is derived again (a pin change, a schema change or an operator restart); the earlier files are kept whole'))
+        receipt = out_dir.with_name(f'{out_dir.name}-supersede-{stamp}.json')
+    if present:
+        out_dir.rename(target)
+    else:
+        target.mkdir(parents=True)
+    moved_files = []
+    for f in files:
+        f.rename(target / f.name)
+        moved_files.append(str(target / f.name))
+    write_json(receipt, dict(schema=schema, at=time.time(), moved_from=str(out_dir), moved_to=str(target), moved_files=moved_files, reason=reason))
     return str(target)
 
 

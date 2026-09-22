@@ -216,6 +216,20 @@ def test_numbers_in_an_answer_are_checked_against_the_facts_as_values():
     assert T.missing_numbers('a delta of -2282', facts) == ['-2282']
 
 
+def test_a_16_plus_digit_decimal_is_a_number_not_a_digest():
+    # the digest strip must not exempt nanosecond clocks and gaps (19 digits): an invented one is refused, a cited one licensed
+    assert T.missing_numbers('the decision at 1633298400123456789 ns', 'gap 1 ns') == ['1633298400123456789']
+    assert T.missing_numbers('recv 1633298400123456789 ns', 'recv 1633298400123456789 ns') == []
+    assert T.missing_numbers('gap 4750000000000000 ns', 'the largest gap 4750000000000000 ns') == []          # 16 digits, decimal
+    assert T._number_tokens('at 1633298400123456789 ns') == ['1633298400123456789']
+
+
+def test_a_range_or_date_hyphen_is_not_a_minus_sign():
+    assert T.missing_numbers('groups 0-2 on 2026-09-21', 'groups 0 and 2, dated 2026 09 21') == []
+    assert T.missing_numbers('a -5 delta', 'the 5 groups') == ['-5']                      # a real minus still travels
+    assert T._number_tokens('0-2 and -3 and 1.5-2.5') == ['0', '2', '-3', '1.5', '2.5']
+
+
 def test_digit_runs_inside_a_sha256_in_the_facts_never_license_a_number(tmp_path, monkeypatch):
     facts = T.facts(work_dir(tmp_path, monkeypatch), brain_dir(tmp_path), P.require_producers())
     text = T.facts_text(facts)
