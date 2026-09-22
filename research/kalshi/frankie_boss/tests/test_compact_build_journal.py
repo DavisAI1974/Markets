@@ -85,3 +85,35 @@ def test_compact_journal_refuses_a_rewritten_block_on_drain(tmp_path):
     compact.writer.db.commit()
     with pytest.raises(ValueError, match='block identity'):
         list(compact.entries())
+
+
+def test_the_observation_packs_from_a_cache_of_its_orders_and_levels_byte_identically(tmp_path):
+    # Greg, 2026-09-22 ("see if you can get it smaller"): the book changes by one order per record, yet pack() re-walked
+    # every field of every resting order on every closed group. The builder now keeps each order's and each level's
+    # packed subtree and reuses it while the fields are unchanged; the tree it hands the journal equals pack() of the
+    # plain mapping node for node, so the bytes written do not change.
+    from c15_journal import PrePacked
+    records = _records()
+    declared = _scope((len(records),))
+    driver = conformance_driver_with_compact_journal(declared, tmp_path / 'c.sqlite', expected_scope_hash=declared.genesis_hash(), block_bytes=4096)
+    previous = {}
+    reused = 0
+    try:
+        for cursor, raw in enumerate(records):
+            applied = driver.append(raw, cursor=cursor, source_member_index=0, source_sha256=SHA_A, session_id="s",
+                                    raw_symbol="NG", source_dbn_object="synthetic")
+            observation = applied.observation
+            if observation is None:
+                continue
+            assert type(observation) is PrePacked and isinstance(observation, dict)
+            assert observation.tree == pack(dict(observation))                  # byte identity, node for node
+            assert pack(observation) is observation.tree                        # pack() hands the cached tree through
+            orders = {repr(node): node for node in observation.tree[1][1][1][1]}   # ['dict', [['instrument_id',..], ['orders', ['list', [...]]], ...]]
+            for key, node in orders.items():
+                if key in previous.get(observation['instrument_id'], {}):
+                    assert previous[observation['instrument_id']][key] is node   # an unchanged order = the SAME subtree object
+                    reused += 1
+            previous[observation['instrument_id']] = orders
+        assert reused > 0
+    finally:
+        driver.close()

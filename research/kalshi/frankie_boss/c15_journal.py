@@ -35,6 +35,14 @@ except ImportError:
 SCHEMA = "C15_FULL_EVIDENCE_V1"
 
 
+class PrePacked(dict):
+    """A mapping whose tagged tree is already built (the builder's observation, whose orders' and levels' subtrees are
+    reused across closed groups while their fields are unchanged; Greg, 2026-09-22). It IS the mapping for every other
+    reader; pack() alone reads `tree`, which the producer guarantees equals pack(dict(self)) node for node, so the
+    canonical bytes and the digest are those of the plain mapping."""
+    __slots__ = ('tree',)
+
+
 def pack(value):
     """Tag every node so exact floats/bytes cannot collide with user mappings.
 
@@ -70,6 +78,8 @@ def pack(value):
                 raise ValueError("evidence must use explicit mappings, sequences, bytes and primitive values")
             items.append([key, pack(val)])
         return ["dict", items]
+    if kind is PrePacked:
+        return value.tree
     raise ValueError("evidence must use explicit mappings, sequences, bytes and primitive values")
 
 

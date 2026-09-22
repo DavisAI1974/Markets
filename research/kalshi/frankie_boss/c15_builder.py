@@ -14,13 +14,13 @@ from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import (
 
 try:
     from .causal_prefix_records import RecordInput, RecordPrefixChain
-    from .c15_journal import EvidenceJournal, SCHEMA, evidence_hash, pack, unpack
+    from .c15_journal import EvidenceJournal, PrePacked, SCHEMA, evidence_hash, pack, unpack
     from .c15_observer import observe_book, order_rank
     from .c15_registry import implementation_identity
     from .mbo_resume_state import export_adapter_state, restore_adapter_state
 except ImportError:
     from causal_prefix_records import RecordInput, RecordPrefixChain
-    from c15_journal import EvidenceJournal, SCHEMA, evidence_hash, pack, unpack
+    from c15_journal import EvidenceJournal, PrePacked, SCHEMA, evidence_hash, pack, unpack
     from c15_observer import observe_book, order_rank
     from c15_registry import implementation_identity
     from mbo_resume_state import export_adapter_state, restore_adapter_state
@@ -95,7 +95,7 @@ class C15Builder:
                 self.adapter.completed_event_group_count += 1
             if (receipt is None) != (frame is None):
                 raise ValueError("adapter and prefix disagree on F_LAST closure")
-            observation = observe_book(book) if receipt is not None else None
+            observation = self._prepacked(observe_book(book)) if receipt is not None else None
             new = book.orders.get(msg.order_id)
             evidence = dict(input_ordinal=input_ordinal, cursor=cursor, raw_record=raw,
                             source_member_index=source_member_index, session_id=session_id,
@@ -118,6 +118,48 @@ class C15Builder:
             self.journal.append("FAILED", dict(input_ordinal=input_ordinal, cursor=cursor,
                                                error_type=type(exc).__name__, error=str(exc)))
             raise
+
+    def _prepacked(self, observation):
+        """The observation with its tagged tree built from a cache of the previous observation's order and level
+        subtrees (Greg, 2026-09-22: the ingest must take minutes). The book changes by one order per record while
+        pack() walked every field of every resting order on every closed group. A subtree is reused only for an
+        identical field tuple (RestingOrder is mutated in place, so identity is not enough), the cache holds the
+        current book only, and every other node is pack()ed as before, so the tree equals pack(observation) node
+        for node and the journal bytes are unchanged."""
+        orders_cache = self.__dict__.get('_packed_orders') or {}
+        levels_cache = self.__dict__.get('_packed_levels') or {}
+        new_orders, new_levels, items = {}, {}, []
+        for key, value in observation.items():
+            if key == 'orders':
+                packed = []
+                for order in value:
+                    k = tuple(order.values())
+                    node = orders_cache.get(k)
+                    if node is None:
+                        node = pack(order)
+                    new_orders[k] = node
+                    packed.append(node)
+                node = ['list', packed]
+            elif key == 'levels':
+                sides = []
+                for side, levels in value.items():
+                    packed = []
+                    for level in levels:
+                        k = (side, level['price_raw'], tuple(level['order_ids']))
+                        node = levels_cache.get(k)
+                        if node is None:
+                            node = pack(level)
+                        new_levels[k] = node
+                        packed.append(node)
+                    sides.append([side, ['list', packed]])
+                node = ['dict', sides]
+            else:
+                node = pack(value)
+            items.append([key, node])
+        self._packed_orders, self._packed_levels = new_orders, new_levels
+        wrapped = PrePacked(observation)
+        wrapped.tree = ['dict', items]
+        return wrapped
 
     def evidence_stream(self, *, through_cursor=None):
         """Every applied event in source order. Optional bound is causal, not retention.
