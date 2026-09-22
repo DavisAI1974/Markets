@@ -120,6 +120,10 @@ def partial_takes(manifest, *, policy_name):
     if policy_name != 'cme_trading_day':
         raise ValueError('partial members need the cme_trading_day policy (the take ends at a trading-day boundary)')
     by_key = {m['member_key']: m for m in manifest['sources']}
+    if len(raw) != 1:
+        # the ship review 2026-09-22: after a take the stream ENDS (the take closes the trading day), so a second partial member
+        # could never be reached and a manifest naming two is not the declaration it looks like
+        raise ValueError('a manifest declares at most one partial member (the take ends the stream)')
     takes = {}
     for entry in raw:
         if (type(entry) is not dict or entry.get('member_key') not in by_key
@@ -127,6 +131,10 @@ def partial_takes(manifest, *, policy_name):
                 or type(entry.get('partition_mbo_records')) is not int or entry['take'] >= entry['partition_mbo_records']
                 or by_key[entry['member_key']]['mbo_records'] != entry['take']):
             raise ValueError('a partial member must name a source whose mbo_records is its take, below the partition count')
+        if entry['member_key'] != manifest['sources'][-1]['member_key']:
+            # the ship review 2026-09-22: a member after the take would be ingested whole after it and the container would
+            # claim completion holding another trading day's records
+            raise ValueError('the partial member must be the last member of the manifest (the take ends the stream)')
         takes[entry['member_key']] = dict(take=entry['take'], partition_mbo_records=entry['partition_mbo_records'])
     return takes
 
@@ -177,21 +185,29 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
                               session_id=session_id, raw_symbol=None, source_dbn_object=name)
                 cursor += 1
                 taken += 1
+                if canary_records is not None and cursor >= canary_records:
+                    # the canary stop comes BEFORE the take (the ship review 2026-09-22): a canary of exactly the take once ran
+                    # complete() and wrote an ingestion receipt inside a canary directory; a canary verifies no boundary
+                    stopped = True
+                    break
                 if take is not None and taken == take['take']:
                     following = next(records, None)                     # the take ends here; the next record must open a later trading day
-                    next_session = None if following is None else session(member, following)
-                    if following is not None and next_session <= session_id:
+                    if following is None:
+                        # the manifest declared take < partition count, so a partition that ENDS at the take contradicts its own
+                        # declaration and the boundary cannot be verified on a record that does not exist (the ship review 2026-09-22)
+                        raise ValueError(f'{member.member_key} ends at its take of {take["take"]} records; the manifest declares '
+                                         f'{take["partition_mbo_records"]} in the partition, so the trading-day boundary is unverified')
+                    next_session = session(member, following)
+                    if next_session <= session_id:
                         raise ValueError(f'the declared take of {member.member_key} does not end at a trading-day boundary '
                                          f'(record {take["take"] + 1} is still {next_session})')
-                    partials.append(dict(member_key=member.member_key, take=take['take'], partition_mbo_records=take['partition_mbo_records'],
+                    partials.append(dict(member_key=member.member_key, take=take['take'],
+                                         declared_partition_mbo_records=take['partition_mbo_records'],   # declared: the remainder is never counted
                                          next_session_id=next_session, boundary='trading_day'))
                     break
                 if event is not None and (cursor % 10000 == 0 or cursor == total):
                     event(dict(phase='ingestion', records=cursor, total_records=total,
                                seconds=round(time.perf_counter() - started, 3)))
-                if canary_records is not None and cursor >= canary_records:
-                    stopped = True
-                    break
             if stopped:
                 break
         ingest_seconds, ingest_cpu = time.perf_counter() - started, time.process_time() - cpu_started

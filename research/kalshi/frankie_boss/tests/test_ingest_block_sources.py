@@ -118,14 +118,15 @@ def test_canary_stops_early_without_a_completion_claim(tmp_path):
         assert db.execute('SELECT count(*) FROM seal').fetchone()[0] == 0       # never sealed, never claimed
 
 
-def _monday_manifest(tmp_path, take):
+def _monday_manifest(tmp_path, take, rows=None, partition=None):
     # ONE partition (the 20211004 UTC file: two records before the 21:00Z halt, two after) declared as a PARTIAL member:
     # the Monday trading day takes `take` records of it; the manifest says so in partial_members (Greg, 2026-09-22:
-    # Monday by itself; the trading day, not the partition, is the unit).
-    rows = [record(1, ts_recv=DAY + 2 * HOUR), record(2, ts_recv=DAY + 20 * HOUR), record(3, ts_recv=DAY + 21 * HOUR),
-            record(4, ts_recv=DAY + 23 * HOUR)]
+    # Monday by itself; the trading day, not the partition, is the unit). `partition` overrides the declared partition
+    # count (a manifest whose declaration disagrees with the file it names).
+    rows = rows or [record(1, ts_recv=DAY + 2 * HOUR), record(2, ts_recv=DAY + 20 * HOUR), record(3, ts_recv=DAY + 21 * HOUR),
+                    record(4, ts_recv=DAY + 23 * HOUR)]
     member = _member_file(tmp_path, '20211004', rows)
-    partition = member['mbo_records']; member['mbo_records'] = take
+    partition = partition or member['mbo_records']; member['mbo_records'] = take
     body = dict(schema='BOSS_BLOCK_SOURCE_MANIFEST_V1', source_kind='NATIVE_DBN_MBO', role='TEST', causal_clock='ts_recv_ns',
                 sampled=False, canonical_source_rewritten=False, member_seams_close_groups=True, halt_boundaries_close_groups=True,
                 block='20211004', trading_day='20211004', bucket='none', prefix='none', halt_utc_hour=21,
@@ -142,14 +143,57 @@ def test_a_partial_member_take_ends_the_trading_day_at_the_halt_and_completes(tm
     scope, result = _run(tmp_path, manifest, policy='cme_trading_day', writer='compact', out='monday.compact.sqlite')
     assert result['kind'] == 'complete' and result['records'] == 2 and result['completion']['record_count'] == 2
     assert [s['session_id'] for s in result['sessions']] == ['20211004']
-    assert result['partial_members'] == [dict(member_key=manifest['sources'][0]['member_key'], take=2, partition_mbo_records=4,
-                                              next_session_id='20211005', boundary='trading_day')]
+    assert result['partial_members'] == [dict(member_key=manifest['sources'][0]['member_key'], take=2, declared_partition_mbo_records=4,
+                                              next_session_id='20211005', boundary='trading_day')]   # declared: the remainder is never counted
+
+
+def test_a_take_that_reaches_the_end_of_its_partition_is_refused_not_receipted_as_a_boundary(tmp_path):
+    # the ship review 2026-09-22 (chat 9): the manifest declares take < partition count, so a file that ENDS at the take
+    # contradicts the declaration; the boundary cannot be verified on a record that does not exist
+    rows = [record(1, ts_recv=DAY + 2 * HOUR), record(2, ts_recv=DAY + 20 * HOUR)]
+    manifest = _monday_manifest(tmp_path, take=2, rows=rows, partition=3)
+    with pytest.raises(ValueError, match='ends at its take'):
+        _run(tmp_path, manifest, policy='cme_trading_day', writer='compact', out='eof.compact.sqlite')
+
+
+def test_a_canary_that_ends_exactly_at_the_take_claims_nothing(tmp_path):
+    # the ship review 2026-09-22 (chat 9): the take's break came before the canary stop, so a canary of exactly the take on
+    # the last member ran complete() and wrote an ingestion receipt inside a canary directory
+    manifest = _monday_manifest(tmp_path, take=2)
+    _, result = _run(tmp_path, manifest, policy='cme_trading_day', writer='compact', out='canary-take.compact.sqlite', canary=2)
+    assert result['kind'] == 'canary' and result['records'] == 2 and result['completion_claimed'] is False
+    assert result['partial_members'] == []                      # a canary verifies no boundary and claims no take
+    assert not (tmp_path / 'canary-take.compact.sqlite.completion.json').exists()
 
 
 def test_a_partial_take_that_does_not_end_at_a_trading_day_boundary_is_refused(tmp_path):
     manifest = _monday_manifest(tmp_path, take=3)          # record 3 (21:00Z) is already the next day; record 4 is the same day as 3
     with pytest.raises(ValueError, match='does not end at a trading-day boundary'):
         _run(tmp_path, manifest, policy='cme_trading_day', writer='compact', out='bad.compact.sqlite')
+
+
+def test_a_partial_member_must_be_the_last_member_and_there_is_one(tmp_path):
+    # the ship review 2026-09-22 (chat 9): after a take the stream ENDS (the trading day is the unit); a later member would be
+    # ingested whole after it and completion claimed for a container holding another day's records. Refused at the
+    # manifest (partial_takes), before any record is decoded.
+    first = [record(1, ts_recv=DAY + 2 * HOUR), record(2, ts_recv=DAY + 20 * HOUR), record(3, ts_recv=DAY + 21 * HOUR)]
+    second = [record(4, ts_recv=DAY + 26 * HOUR)]
+    partial = _member_file(tmp_path, '20211004', first); partial['mbo_records'] = 2
+    later = _member_file(tmp_path, '20211005', second)
+    body = dict(schema='BOSS_BLOCK_SOURCE_MANIFEST_V1', source_kind='NATIVE_DBN_MBO', role='TEST', causal_clock='ts_recv_ns',
+                sampled=False, canonical_source_rewritten=False, member_seams_close_groups=True, halt_boundaries_close_groups=True,
+                block='20211004', bucket='none', prefix='none', halt_utc_hour=21,
+                sources=[dict(member_index=0, **partial), dict(member_index=1, **later)], sessions=[], total_mbo_records=3,
+                partial_members=[dict(member_key=partial['member_key'], partition_mbo_records=3, take=2, reason='test')],
+                ingested=False, scheduled=False, prefixes_built=False, model_calls=0)
+    body['manifest_hash'] = manifest_hash(body)
+    with pytest.raises(ValueError, match='last member'):
+        _run(tmp_path, body, policy='cme_trading_day', writer='compact', out='not-last.compact.sqlite')
+    two = _monday_manifest(tmp_path, take=2)
+    two['partial_members'].append(dict(two['partial_members'][0]))
+    two['manifest_hash'] = manifest_hash(two)
+    with pytest.raises(ValueError, match='one partial member'):
+        tool.partial_takes(two, policy_name='cme_trading_day')
 
 
 def test_a_partial_member_needs_the_trading_day_policy(tmp_path):
