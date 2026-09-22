@@ -243,3 +243,47 @@ def test_cycle_limit_seam_gates_the_prefix_count_and_refuses_out_of_range_limits
     full = dp.DayPipeline(dict(CONFIG, ingest_on='host', minimum_prefixes=19), '20211003', runner=runner([]), runs_root=tmp_path)
     with pytest.raises(dp.StageRefused, match='prefix'):
         full.gate_of('schedule-prefixes', 'PIPELINE_RECEIPT ' + json.dumps(dict(prefix_count=2, prefixes_sha256='a' * 64)))
+
+
+def test_declared_schedule_controls_cycle_bounds_and_default(tmp_path):
+    declaration = dict(trading_day='20211004', step_count=23, source_record_count=2032203,
+                       source_manifest_hash='a'*64, schedule_sha256='b'*64)
+    config = dict(CONFIG, trading_day_schedule=declaration)
+    pipeline = dp.DayPipeline(config, '20211004', runs_root=tmp_path)
+    assert pipeline.cycle_limit == pipeline.cycle_count == 23
+    assert 'CycleLimit=23' in pipeline.commands()['cycles']
+    assert dp.DayPipeline(config, '20211004', cycle_limit=1).cycle_limit == 1
+    with pytest.raises(ValueError, match='declared schedule'):
+        dp.DayPipeline(config, '20211004', cycle_limit=24)
+    with pytest.raises(ValueError, match='pinned day'):
+        dp.DayPipeline(config, '20211003')
+
+
+def test_trading_day_does_not_dispatch_utc_restage(tmp_path):
+    calls = []
+    config = dict(CONFIG, trading_day_schedule=dict(trading_day='20211004', step_count=2,
+        source_record_count=2032203, source_manifest_hash='a'*64, schedule_sha256='b'*64))
+    pipeline = dp.DayPipeline(config, '20211004', runner=runner(calls), runs_root=tmp_path)
+    with pytest.raises(dp.StageRefused, match='no UTC restaging'):
+        pipeline.run_stage('stage-sources')
+    assert calls == []
+
+
+def test_trading_day_receipt_uses_records_not_paired_journal_entries(tmp_path):
+    config = dict(CONFIG, trading_day_schedule=dict(trading_day='20211004', step_count=2,
+        source_record_count=2032203, source_manifest_hash='a'*64, schedule_sha256='b'*64))
+    pipeline = dp.DayPipeline(config, '20211004', runs_root=tmp_path)
+    pipeline.write('stage-sources', dict(manifest='m.json', manifest_hash='a'*64, records=2032203), command=[])
+    pipeline.write('host-start', dict(ssm_online=True), command=[])
+    path = tmp_path / 'ingest.json'
+    value = dict(schema='BOSS_BLOCK_INGESTION_RECEIPT_V1', writer='compact', session_policy='cme_trading_day',
+        trading_day='20211004', manifest_hash='a'*64, record_count=2032203, journal_count=4064406,
+        journal_hash='c'*64, journal_sha256='d'*64, sessions=[dict(session_id='20211004')])
+    path.write_text(json.dumps(dict(value, trading_day='20211003')))
+    with pytest.raises(dp.StageRefused, match='declared trading day'):
+        pipeline.record_external('ingest', path)
+    assert pipeline.receipt('ingest') is None
+    path.write_text(json.dumps(value))
+    assert pipeline.record_external('ingest', path) == 'done'
+    gate = pipeline.receipt('ingest')['gate']
+    assert gate['journal_count'] == 2032203 and gate['journal_entries'] == 4064406

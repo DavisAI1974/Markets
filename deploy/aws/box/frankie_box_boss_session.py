@@ -197,10 +197,24 @@ class Session:
         (self.dir / 'request_sha256').write_text(self.request_sha256 + '\n', encoding='utf-8')
         contract = self.request['attachment']['feedback_contract']
         path = MARKETS / CONTRACT_PATH
-        raw = path.read_bytes()
+        if contract.get('trading_day'):
+            if contract['trading_day'] != self.day:
+                self.refuse('the requested trading day differs from this session day')
+            authored_json = contract.get('authored_contract_json')
+            if not isinstance(authored_json, str):
+                self.refuse('the trading-day request lacks its independently pinned authored contract')
+            raw = authored_json.encode('utf-8')
+        else:
+            raw = path.read_bytes()
         if sha256_bytes(raw) != contract['contract_sha256']:
             self.refuse(f'the authored source contract at {CONTRACT_PATH} differs from the request\'s contract_sha256')
         self.contract = json.loads(raw)
+        if contract.get('trading_day') and (
+                self.contract.get('schema') != 'FRANKIE_TRADING_DAY_SOURCE_CONTRACT_V1'
+                or self.contract.get('trading_day') != self.day
+                or self.contract.get('source_manifest_hash') != contract.get('source_manifest_hash')
+                or self.contract.get('cycle_count') != contract.get('cycle_count')):
+            self.refuse('the authored contract differs from the request trading-day identity')
         index = contract['cycle_index']
         if index != int(self.cycle):
             self.refuse(f'the request is cycle {index}, this session is cycle {self.cycle}')
@@ -1679,7 +1693,7 @@ class Session:
         notes = (self.work / 'merged-notes.md').read_text(encoding='utf-8')
         instruction = self.request['instruction']
         packets = self._packets_text()
-        head = (f'You are Frankie, the BOSS: the principal session for cycle {self.cycle} of the 20211003 two-cycle run, on your box '
+        head = (f'You are Frankie, the BOSS: the principal session for cycle {self.cycle} of the {self.day} trading-day run, on your box '
                 f'i-035994afa8bdf66a5 (Greg Davis, 2026-09-21, option A). Request {self.request["request_id"]}, request_sha256 '
                 f'{self.request_sha256}. You have read the whole delivered evidence and your whole derivation in parts; your merged '
                 'notes follow, then the request instruction, then the packets the session code wrote for you (the comparison packet: '

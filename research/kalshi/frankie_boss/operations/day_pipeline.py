@@ -51,7 +51,7 @@ def canonical(value):
 def subprocess_runner(argv, *, timeout):
     """Default runner: argv -> (returncode, stdout). Never echoes the environment."""
     done = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
-    return done.returncode, done.stdout + ('\nSTDERR: ' + done.stderr[-2000:] if done.stderr else '')
+    return done.returncode, done.stdout + ('\nSTDERR: ' + done.stderr if done.stderr else '')
 
 
 def receipt_line(output):
@@ -74,8 +74,22 @@ class DayPipeline:
         if not self.day.isdigit() or len(self.day) != 8:
             raise ValueError('day must be YYYYMMDD')
         self.directory = Path(runs_root) / self.day
-        if type(cycle_limit) is not int or not 1 <= cycle_limit <= 19:
-            raise ValueError('cycle_limit must be from 1 through 19')
+        declaration = self.c.get('trading_day_schedule')
+        self.declaration = declaration
+        self.cycle_count = 19
+        if declaration is not None:
+            if (declaration.get('trading_day') != self.day
+                    or type(declaration.get('step_count')) is not int or declaration['step_count'] < 1
+                    or type(declaration.get('source_record_count')) is not int or declaration['source_record_count'] < 1
+                    or any(not isinstance(declaration.get(k), str) or len(declaration[k]) != 64
+                           or any(c not in '0123456789abcdef' for c in declaration[k])
+                           for k in ('schedule_sha256', 'source_manifest_hash'))):
+                raise ValueError('trading_day_schedule needs the pinned day, counts and full hashes')
+            self.cycle_count = declaration['step_count']
+        if cycle_limit is None:
+            cycle_limit = self.cycle_count
+        if type(cycle_limit) is not int or not 1 <= cycle_limit <= self.cycle_count:
+            raise ValueError('cycle_limit must be within the declared schedule')
         self.cycle_limit = cycle_limit
         self.python = self.c.get('python', sys.executable)
 
@@ -225,12 +239,14 @@ class DayPipeline:
                     reason='no go naming this day\'s source manifest hash; data plane only',
                     manifest_hash=expected, at=self.now()), indent=1, sort_keys=True).encode() + b'\n')
                 return 'hold'
+        if self.declaration is not None and stage in ('stage-sources', 'ingest'):
+            raise StageRefused('the trading-day source manifest and completed ingestion are recorded externally; no UTC restaging or re-ingest')
         command = self.commands()[stage]
         if command is None:
             raise StageRefused(f'the configuration declares no host script for {stage}')
         code, output = self.run(command, timeout=self.c.get('stage_timeout', 13 * 3600))
         if code != 0:
-            raise StageRefused(f'{stage} exited {code}: {output[-1500:]}')
+            raise StageRefused(f'{stage} exited {code}: {output}')
         if stage == 'cycles':
             value = receipt_line(output)
             if value.get('status') == 'requested_cycles_complete':
@@ -270,7 +286,27 @@ class DayPipeline:
         self.require(stage)
         raw = Path(receipt_path).read_bytes()
         value = json.loads(raw)
-        if stage == 'ingest':
+        if stage == 'stage-sources' and self.declaration is not None:
+            from research.kalshi.frankie_boss.block_source_scope import block_source_scope
+            block_source_scope(value, expected_manifest_hash=self.declaration['source_manifest_hash'])
+            if (value.get('trading_day') != self.day
+                    or value.get('total_mbo_records') != self.declaration['source_record_count']):
+                raise StageRefused('source manifest differs from the declared trading day')
+            gate = dict(manifest=str(receipt_path), manifest_hash=value['manifest_hash'],
+                        records=value['total_mbo_records'], receipt_sha256=hashlib.sha256(raw).hexdigest())
+        elif stage == 'ingest' and self.declaration is not None:
+            if (value.get('schema') != 'BOSS_BLOCK_INGESTION_RECEIPT_V1'
+                    or value.get('writer') != 'compact' or value.get('session_policy') != 'cme_trading_day'
+                    or value.get('trading_day') != self.day
+                    or value.get('manifest_hash') != self.declaration['source_manifest_hash']
+                    or value.get('record_count') != self.declaration['source_record_count']
+                    or value.get('journal_count') != 2 * self.declaration['source_record_count']
+                    or [s.get('session_id') for s in value.get('sessions', [])] != [self.day]):
+                raise StageRefused('ingestion receipt differs from the declared trading day')
+            gate = dict(journal_count=value['record_count'], journal_entries=value['journal_count'],
+                        journal_hash=value.get('journal_hash'), compact_sha256=value.get('journal_sha256'),
+                        receipt_sha256=hashlib.sha256(raw).hexdigest())
+        elif stage == 'ingest':
             if value.get('schema') != 'FRANKIE_COMBINED_JOURNAL_EXECUTION_V1' or value.get('status') != 'verified':
                 raise StageRefused('journal stack receipt is not a verified FRANKIE_COMBINED_JOURNAL_EXECUTION_V1')
             completion = value.get('completion') or {}
@@ -293,7 +329,8 @@ class DayPipeline:
             raise StageRefused(f'{stage} has no external receipt form')
         if any(gate[name] is None for name in GATES[stage]):
             raise StageRefused(f'{stage} receipt lacks {[n for n in GATES[stage] if gate[n] is None]}')
-        self.reconcile_ingest(gate['journal_count'])
+        if stage == 'ingest':
+            self.reconcile_ingest(gate['journal_count'])
         self.write(stage, gate, command=['record', stage, str(receipt_path)])
         return 'done'
 

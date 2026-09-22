@@ -85,8 +85,15 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
     # Verify the authored contract against every derived cutoff before creating files.
     from research.kalshi.frankie_boss.source_contract_runtime import bind_cycle
     for index, step in enumerate(schedule['steps']):
-        bind_cycle(launch['source_contract']['path'], launch['source_contract']['sha256'], index, step)
+        bound = bind_cycle(launch['source_contract']['path'], launch['source_contract']['sha256'], index, step)
+        feedback = step['feedback']
+        if (bound['learning_cutoff_ns'] != feedback['as_of']
+                or bound['learning_through_source_cursor'] != feedback['through_cursor']):
+            raise ValueError('source_contract learning boundary differs from schedule feedback')
     h = configuration['host_runtime']
+    entity = tuple(h['source_entity'])
+    if len(entity) != 2 or any(type(v) is not int for v in entity):
+        raise ValueError('host_runtime.source_entity must explicitly declare publisher and instrument')
     schedule_dir = Path(configuration['schedule_directory']).resolve()
     prefixes = Path(h['prefixes_directory']).resolve()
     output_configuration = Path(output_configuration).resolve()
@@ -107,9 +114,6 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
         schedule_sha256=schedule['schedule_sha256'], schedule_file_sha256=sha(schedule_dir / 'schedule.json'),
         ingestion_receipt=launch['ingestion_receipt'], launch=configuration['trading_day_launch'], model_calls=0)
     save_new(schedule_dir / 'receipt.json', outer)
-    entity = tuple(h['source_entity'])
-    if len(entity) != 2 or any(type(v) is not int for v in entity):
-        raise ValueError('host_runtime.source_entity must explicitly declare publisher and instrument')
     binding = dict(schema='FRANKIE_TRADING_DAY_PREFIXES_V1',
         ingestion_receipt=launch['ingestion_receipt'], schedule_receipt=witness(schedule_dir / 'receipt.json'),
         schedule=witness(schedule_dir / 'schedule.json'), compact_journal=container,
@@ -139,7 +143,9 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
         schedule_receipt=binding['schedule_receipt'], compact_journal=container,
         prefix_manifest=witness(manifest_path))
     result = dict(configuration, source_directory=str(source.resolve()), host_runtime=host,
-        contract=launch['source_contract'], trading_day=launch['trading_day'])
+        contract=launch['source_contract'], trading_day=launch['trading_day'],
+        trading_day_schedule={k: schedule[k] for k in
+            ('trading_day', 'step_count', 'source_record_count', 'source_manifest_hash', 'schedule_sha256')})
     save_new(output_configuration, result)
     return dict(prefix_count=cycles, prefixes_sha256=sha(manifest_path),
         schedule_sha256=schedule['schedule_sha256'], configuration=witness(output_configuration),

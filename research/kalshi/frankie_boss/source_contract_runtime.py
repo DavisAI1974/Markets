@@ -76,7 +76,8 @@ def bind_cycle(contract_path, expected_contract_sha256, cycle_index, prefix):
             'learning_through_source_cursor':c['learning_through_source_cursor']} for c in contract['cycles']]}
     return {'sessions':sessions,'expected_sessions_hash':session_registry_hash(sessions),
         **({'trading_day':contract['trading_day'], 'cycle_count':contract['cycle_count'],
-            'source_manifest_hash':contract['source_manifest_hash']} if 'trading_day' in contract else {}),
+            'source_manifest_hash':contract['source_manifest_hash'],
+            'authored_contract_json':Path(contract_path).read_bytes().decode('utf-8')} if 'trading_day' in contract else {}),
         **expected,'source_hash':source_hash,'learning_cutoff_ns':cycle['learning_cutoff_ns'],
         'learning_through_source_cursor':cycle['learning_through_source_cursor'],
         'timing_policy_hash':contract['timing_policy_hash'],'query_policy_hash':contract['query_policy_hash'],

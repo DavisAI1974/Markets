@@ -58,3 +58,18 @@ def test_metadata_is_explicit_abstention_with_host_reported_defects(tmp_path):
     assert metadata[0][1]['disposition']=='ABSTAIN'
     assert metadata[0][1]['state_defects_and_gaps_reported']==['explicit missing source']
     assert metadata[0][1]['plays_fired']==[]
+
+
+def test_trading_day_binding_carries_exact_authored_bytes_and_dynamic_roster(tmp_path):
+    path, _, prefix = fixture(tmp_path)
+    body = json.loads(path.read_bytes())
+    body.update(schema='FRANKIE_TRADING_DAY_SOURCE_CONTRACT_V1', trading_day='20211004',
+                source_manifest_hash='a'*64, cycle_count=2, cycles=body['cycles'][:2])
+    raw = json.dumps(body, indent=2).encode()
+    path.write_bytes(raw)
+    import hashlib
+    bound = bind_cycle(path, hashlib.sha256(raw).hexdigest(), 0, prefix)
+    assert bound['cycle_count'] == 2 and bound['trading_day'] == '20211004'
+    assert bound['authored_contract_json'].encode() == raw
+    with pytest.raises(ValueError, match='chronological cycle'):
+        bind_cycle(path, hashlib.sha256(raw).hexdigest(), 2, prefix)

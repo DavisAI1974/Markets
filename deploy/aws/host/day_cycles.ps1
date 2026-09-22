@@ -20,7 +20,15 @@ foreach ($required in 'Day', 'ToolsRoot', 'Python', 'RunRoot') {
     }
 }
 $dayDirectory = Join-Path $RunRoot $Day
-$configurationPath = Join-Path $dayDirectory 'actual-host-configuration.json'
+if (Get-Variable PreparedConfigurationPath -ErrorAction SilentlyContinue) {
+    if (-not $PreparedConfigurationSha256) { throw 'PreparedConfigurationSha256 required with PreparedConfigurationPath' }
+    $configurationPath = $PreparedConfigurationPath
+    if ((Get-FileHash -Algorithm SHA256 -LiteralPath $configurationPath).Hash.ToLower() -ne $PreparedConfigurationSha256) {
+        throw 'Prepared configuration bytes changed'
+    }
+} else {
+    $configurationPath = Join-Path $dayDirectory 'actual-host-configuration.json'
+}
 if (-not (Test-Path $configurationPath)) { throw "no run configuration for $Day at $configurationPath" }
 $configuration = Get-Content $configurationPath -Raw | ConvertFrom-Json
 if (-not $configuration.host_runtime.pod_credential_ssm) { throw 'cycles over SSM require pod_credential_ssm' }
@@ -46,7 +54,7 @@ if ($git) { Write-Output ("TOOLS_HEAD=" + (& $git.Source -C $ToolsRoot rev-parse
 $tool = Join-Path $ToolsRoot 'research\kalshi\frankie_boss\operations\run_actual_sunday_ec2.py'
 $resume = ''
 if (Test-Path (Join-Path $configuration.run_directory 'native-host-runtime.json')) { $resume = '--ec2-resume' }
-$log = Join-Path $dayDirectory 'day-cycles.log'
+$log = Join-Path $dayDirectory ('day-cycles-' + [guid]::NewGuid().ToString('N') + '.log')
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTHONPATH = $ToolsRoot
 Push-Location $ToolsRoot
