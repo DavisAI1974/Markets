@@ -37,8 +37,10 @@ ANCHOR MEASURED on the box (run 35679422333): instrument 111313 last trade befor
 5544000000) at 2021-10-01T20:59:56.64Z, size 3; record `blocks/FRIDAY_ANCHOR_20211001.json`; the Sunday open's first trade
 is 5.628. The box holds the Sunday compact journal only (inventory run 35679158434): the block is staged, NOT ingested.
 `SPEC-trading-day-ingest.md` written (a4edd808): whole block, cme_trading_day, canary first, on Frankie's box; OPEN: the
-publish route (presigned PUT vs S3 rights on the box), whole block vs two members, workers. NEXT on Greg's word: the
-ingest wrapper script (TDD), the canary dispatch, then SPEC-trading-day-schedule.
+publish route (presigned PUT vs S3 rights on the box). DECIDED 02:4xZ: whole block; all 32 CPUs. THE STANDARD (CLAUDE.md,
+first FRANKIE/BOSS rule): the trading day, named by its trade date, opens 18:00 ET the prior calendar day, halts 17:00
+ET; "there is no more Sunday"; the DBN files are UTC partitions, not days; a day's count is measured at ingest. NEXT on
+Greg's word (the publish route): the ingest wrapper script (TDD), the canary dispatch, then SPEC-trading-day-schedule.
 
 ## READ FIRST (00:xxZ 09-22, chat 7 CLOSING): THE BEDROCK IS BUILT AND SHIPPED (BR-0..BR-7, /ship GO after fixes); CHECKPOINT E AND THE RERUN WAIT ON GREG'S CALLS
 

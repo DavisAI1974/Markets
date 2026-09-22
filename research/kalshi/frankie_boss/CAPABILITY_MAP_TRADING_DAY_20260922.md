@@ -10,6 +10,11 @@ Greg's word (02:xxZ 09-22, verbatim, in order):
 - "Override the runner problem on this run"
 - Earlier (01:5xZ): "57,027 is the one measurement. Sunday plus Monday to the halt is a new count. This number will go up.
   A trade day runs from the prior day at 6 pm to 5pm on the trade day."
+- 02:4xZ (THE STANDARD, verbatim): "Monday won't be that big. We have to stop breaking it up that way. A Monday trading day
+  (the new standard) starts at 6 pm on Sun and ends at 5 pm on Mon for 23 hrs. There is no more 'Sunday'. Monday and every
+  trading day starts at 6pm the day prior." Read: the DBN files are UTC partitions, not days; the Monday 2021-10-04 trading
+  day = the 20211003 partition (57,027 records, all of it: the open is 22:00Z) plus the 20211004 partition's records BEFORE
+  the 21:00Z halt; the partition's last three hours are Tuesday's. Its count is measured, not the sum of partition sizes.
 
 ## What is measured (not assumed)
 - NO Databento pull is happening or possible from here: the repository secret DATABENTO_API_KEY is ABSENT (measured by the

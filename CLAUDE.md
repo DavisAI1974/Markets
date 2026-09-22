@@ -3,6 +3,15 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
+- **THE TRADING DAY IS THE STANDARD (Greg, 2026-09-22, verbatim): "A Monday trading day (the new standard) starts at 6 pm
+  on Sun and ends at 5 pm on Mon for 23 hrs. There is no more 'Sunday'. Monday and every trading day starts at 6pm the day
+  prior."** Every day is named by its trade date; it opens 18:00 ET the prior calendar day and halts 17:00 ET (21:00Z
+  under EDT). The DBN files are UTC partitions (glbx-mdp3-YYYYMMDD), NOT days: the Monday 2021-10-04 trading day spans the
+  20211003 and 20211004 partitions, cut at the halt; the last three hours of the 20211004 partition belong to Tuesday.
+  Cycle 0's rows were the first 13 seconds of the Monday trading day (the old "Sunday slice"); the legacy module and
+  receipt names (`sunday_*`, "full Sunday source") are the UTC-split era's and are to be read as that. Never say "Sunday
+  and Monday"; say the Monday trading day. A trading day's record count is measured at ingest, never assumed from a
+  partition's size.
 - **STATE 2026-09-22 00:xxZ (chat 7 CLOSING): READ FIRST the 00:xxZ block atop `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`,
   then `CLAUDE_HANDOFF_20260920.md` from 22:5xZ 09-21 to the end, then `SHIP_REVIEW_20260921_CHAT7.md`. Branch
   `claude/cycle-0-frankie-box-rerun-od5sxk` (tip 5ff3ab1c or later; the harness branch is the stale trunk tip). THE BEDROCK IS

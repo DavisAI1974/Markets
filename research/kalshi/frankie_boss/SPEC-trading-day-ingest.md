@@ -1,21 +1,22 @@
 # Spec: trading-day-ingest (module 1 of CAPABILITY_MAP_TRADING_DAY_20260922.md)
 
-Greg's go: "Lets rerun cyc 0" (02:2xZ 09-22); the rerun is the CME trading day, Sunday 18:00 ET open to Monday 17:00 ET
-halt, 23 hours; the Monday hours come from the block already staged in S3; the count is measured; no Databento pull.
+Greg's go: "Lets rerun cyc 0" (02:2xZ 09-22); the rerun is the MONDAY TRADING DAY 2021-10-04 (the standard: it opens 18:00 ET
+the prior calendar day and halts 17:00 ET, 23 hours; there is no "Sunday"); its records come from the block already staged
+in S3; the count is measured; no Databento pull.
 
 ## Objective
 Produce ONE compact container of the staged block (bucket `bento-568968024170-us-east-2-an`, prefix
 `frankie/block_20211004_20211006/sources/`, four members, 6,471,475 MBO records) ingested as one continuous stream under the
-`cme_trading_day` session policy (already in `operations/ingest_block_sources.py`, 2026-09-16), so that the trading day
-2021-10-04 (Sunday 22:00Z open through the Monday 21:00Z halt) is a SESSION inside it, its record count measured and
+`cme_trading_day` session policy (already in `operations/ingest_block_sources.py`, 2026-09-16), so that the Monday trading
+day 2021-10-04 (22:00Z open on the prior calendar day through the 21:00Z halt) is a SESSION inside it, its record count measured and
 receipted, the container pinned by sha256 in S3, ready for the schedule module. Success = the schedule module can read
 the trading day's records by session identity from a pinned container without touching Databento or the raw archive again.
 
-Why the whole block and not two members: the tool replays the members in manifest order with no gap and labels every
-record with its trading day; the halt boundary closes an F_LAST group; the later members (Tuesday, Wednesday) become the
-next trading days' sessions in the same container at no extra design cost. The trading-day count is then a query, not a
-second ingest. (If Greg prefers a two-member manifest, `stage_block_sources.py --days 20211003 20211004` stages it; the
-rest of this spec is unchanged.)
+The block's four files are UTC PARTITIONS (glbx-mdp3-20211003, -04, -05, -06), not days. Whole block (Greg's word, 02:4xZ):
+the tool replays the partitions in manifest order with no gap and labels every record with its TRADING DAY; the halt
+boundary closes an F_LAST group; so the container holds the Monday trading day (the 20211003 partition whole plus the
+20211004 partition before the halt), then Tuesday's and Wednesday's, at once. The Monday count is then a query, not a
+second ingest, and never the sum of partition sizes.
 
 ## Tech stack
 Python 3.12 on Frankie's Linux box (i-035994afa8bdf66a5, 32 CPUs, 256 GB, 178 GB free, venv `/opt/frankie-box/venv`
@@ -68,7 +69,7 @@ it to the next); nothing in the wrapper re-derives a date.
   trading-day count to Greg as a measurement (57,027 stays the Sunday slice's one measurement).
 - Ask first: the publish route (the box's role writes nothing in S3: a presigned PUT added to `frankie_box_run.yml`
   (`presign_put=` input, the runner signs, the box `curl -T`s) versus S3 rights on the box's instance profile; both are
-  Greg's AWS decisions); the worker count above 8; any change to `ingest_block_sources.py`.
+  Greg's AWS decisions); any change to `ingest_block_sources.py`. Workers = all 32 CPUs (Greg: no reason for fewer).
 - Never: pull from Databento; print or copy a key; delete or overwrite a member, a container or a receipt; run the ingest
   while the cycle unit runs on the box; claim completion from the canary.
 
@@ -76,13 +77,12 @@ it to the next); nothing in the wrapper re-derives a date.
 1. `canary-receipt.json` on the box with a measured rate; Greg has the rate and the projected wall time.
 2. `journal.compact.sqlite` for the block with `completion_claimed: true`, per-member counts equal to the manifest's, sha256
    recorded in the ingestion receipt.
-3. The trading-day session 2021-10-04 read back: first record at the Sunday 22:00Z open, last record before the Monday
-   21:00Z halt, its record count reported (a number greater than 57,027; the exact value is the measurement).
+3. The Monday trading-day session 2021-10-04 read back: first record at the 22:00Z open (calendar 10-03), last record
+   before the 21:00Z halt (calendar 10-04), its record count reported: the measurement, whatever it is.
 4. The container and both receipts published to the S3 prefix above (or the publish route Greg chooses), pinned by sha256
    in a committed manifest (`blocks/BLOCK_20211004_20211006_COMPACT_MANIFEST.json`), `ingested: true` recorded.
 5. Nothing on the box deleted or overwritten; the four members still present with the manifest's sha256s.
 
-## Open questions (Greg)
-1. Whole block (recommended, one ingest, four trading days labelled) or a two-member manifest?
-2. The publish route: presigned PUT through the run workflow (no role change, no key on the box) or S3 rights on the box?
-3. Worker count on the 32-CPU box after the canary's measured rate.
+## Decided (Greg, 02:4xZ) and open
+- Decided: whole block; workers = all the box's CPUs; the standard language (trading days, partitions).
+- Open: the publish route: presigned PUT through the run workflow (no role change, no key on the box) or S3 rights on the box?
