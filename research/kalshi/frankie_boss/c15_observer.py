@@ -69,8 +69,9 @@ class IncrementalObservation:
         book = self.book
         self.sorted_oids = sorted(book.orders)
         self.order_frag = {oid: (tuple(vars(book.orders[oid]).values()), _order_fragment(book.orders[oid])) for oid in self.sorted_oids}
+        self.order_bytes = [self.order_frag[oid][1] for oid in self.sorted_oids]      # aligned with sorted_oids: the join runs in C
         self.level_frag = {(side, price): _level_fragment(price, ids)
-                           for side in ("B", "A") for price, ids in book.levels[side].items()}
+                           for side in ("B", "A") for price, ids in book.levels[side].items() if ids is not None}
 
     def note(self, order_id, before, after, side=None, price_raw=None):
         """After the adapter applied one message: `before` = the order's fields before (a mapping or None), `after` = the
@@ -83,14 +84,22 @@ class IncrementalObservation:
                 if index >= len(self.sorted_oids) or self.sorted_oids[index] != order_id:
                     raise ValueError('incremental observation differs from the book (order index); refused')
                 del self.sorted_oids[index]
+                del self.order_bytes[index]
         else:
             key = tuple(vars(after).values())
             current = self.order_frag.get(order_id)
             if current is None:
-                bisect.insort(self.sorted_oids, order_id)
-                self.order_frag[order_id] = (key, _order_fragment(after))
+                index = bisect.bisect_left(self.sorted_oids, order_id)
+                fragment = _order_fragment(after)
+                self.sorted_oids.insert(index, order_id)
+                self.order_bytes.insert(index, fragment)
+                self.order_frag[order_id] = (key, fragment)
             elif current[0] != key:
-                self.order_frag[order_id] = (key, _order_fragment(after))
+                fragment = _order_fragment(after)
+                self.order_frag[order_id] = (key, fragment)
+                self.order_bytes[bisect.bisect_left(self.sorted_oids, order_id)] = fragment
+        if before is None and after is None and side not in ("B", "A"):
+            return                                   # a trade, fill or none message mutates nothing
         touched = set()
         if before is not None:
             touched.add((before['side'], before['price_raw']))
@@ -107,14 +116,13 @@ class IncrementalObservation:
 
     def canonical(self):
         book = self.book
-        frag = self.order_frag
         levels = self.level_frag
         parts = [b'["dict",[["instrument_id",', canonical_tagged_bytes(pack(book.instrument_id)),
-                 b'],["orders",["list",[', b','.join(frag[oid][1] for oid in self.sorted_oids), b']]],["levels",["dict",[']
+                 b'],["orders",["list",[', b','.join(self.order_bytes), b']]],["levels",["dict",[']
         for side in ("B", "A"):
             prices = sorted(book.levels[side], reverse=side == "B")
             parts.append(b'["' + side.encode() + b'",["list",[')
-            parts.append(b','.join(levels[(side, price)] for price in prices))
+            parts.append(b','.join([levels[(side, price)] for price in prices]))
             parts.append(b']]]' + (b',' if side == "B" else b''))
         parts.extend([b']]],["integrity",', canonical_tagged_bytes(pack(dict(book.integrity))),
                       b'],["last_sequence",', canonical_tagged_bytes(pack(book.last_sequence)),

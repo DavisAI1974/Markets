@@ -184,7 +184,7 @@ def test_the_compact_path_composes_the_observation_bytes_incrementally_and_the_r
         driver.append(row(0), cursor=0, source_member_index=0, source_sha256=SHA_A, session_id="s", raw_symbol="NG", source_dbn_object="synthetic")
         composer = next(iter(driver._builder._composers.values()))
         oid = composer.sorted_oids[0]
-        composer.order_frag[oid] = (composer.order_frag[oid][0], b'["dict",[]]')
+        composer.order_bytes[0] = b'["dict",[]]'          # the joined fragment, not the map: what the body is built from
         with pytest.raises(ValueError, match='incremental observation differs'):
             driver.append(row(1, oid=2), cursor=1, source_member_index=0, source_sha256=SHA_A, session_id="s", raw_symbol="NG", source_dbn_object="synthetic")
     finally:
@@ -281,7 +281,7 @@ def test_the_differential_check_counts_per_instrument_composer(tmp_path):
         composer = driver._builder._composers[2]
         assert composer.observations == 0
         oid = composer.sorted_oids[0]
-        composer.order_frag[oid] = (composer.order_frag[oid][0], b'["dict",[]]')
+        composer.order_bytes[0] = b'["dict",[]]'          # the joined fragment, not the map: what the body is built from
         with pytest.raises(ValueError, match='incremental observation differs'):     # instrument 2's FIRST observation is checked
             driver.append(row(2, oid=6, iid=2), cursor=2, source_member_index=0, source_sha256=SHA_A, session_id="s", raw_symbol="NG", source_dbn_object="synthetic")
     finally:
