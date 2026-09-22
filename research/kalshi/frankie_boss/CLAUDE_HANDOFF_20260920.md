@@ -4195,3 +4195,15 @@ starts from at the Sunday open (the schedule's `first_observed_trade_candidate` 
 price_raw 5628000000 at cursor 447; the Friday close is the reference it gaps from).
 STEP 0 DONE: `frankie_host_supersede_principal_response.yml` registered on the trunk (e194892d), one file, the 98a92692
 pattern; the whole-cycle supersede can now be preceded by the recorded response's supersede.
+
+### 02:2xZ 09-22: THE FRIDAY ANCHOR MEASURED (run 35679422333, the box, 33 s): 5.544 at 20:59:56.64Z on 2021-10-01
+
+`deploy/aws/box/frankie_box_friday_anchor.sh` (8388b441; text-contract tested) decoded the archive's pinned Friday
+object (25,628,861 bytes, sha256 e6b4ec01..., presigned GET; 1,504,375 records, 69,424 trades, one instrument) on the box
+with databento-dbn 0.62.0. The last trade before the 21:00Z halt for instrument 111313: price_raw 5544000000 = 5.544,
+size 3, side A, ts_event 2021-10-01T20:59:56.642686Z, ts_recv 20:59:56.644001Z, sequence 70999223; it is also the last
+trade of the file at any time (no trade after the halt); 1,028 trades in the final hour. Receipt on the box
+`/opt/frankie-box/receipts/friday-anchor-1790043966.json`; the git record `blocks/FRIDAY_ANCHOR_20211001.json` (with the
+Sunday open's first trade 5.628 beside it as a reference row, not a derivation). The box inventory (run 35679158434)
+shows the Sunday compact journal only: no three-day container, no journal-stack leftovers; the block is staged, not
+ingested. `SPEC-trading-day-ingest.md` (a4edd808) is the first module spec, on Greg's review.

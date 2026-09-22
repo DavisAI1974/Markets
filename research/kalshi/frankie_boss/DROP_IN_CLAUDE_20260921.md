@@ -32,6 +32,13 @@ secret is absent). `CAPABILITY_MAP_TRADING_DAY_20260922.md` = his words verbatim
 NOT ingested on record), five assumptions ("override the runner problem" read as the prefix-batch re-pin), four modules
 (ingest -> schedule -> host, box). NEXT = Greg's word on the map and the assumptions, then SPEC-trading-day-ingest.md
 first, then the others; nothing built, ingested or run before that.
+02:2xZ: GREG "Lets rerun cyc 0" = the GO. Step 0 DONE (the response-supersede workflow on the trunk, e194892d). THE FRIDAY
+ANCHOR MEASURED on the box (run 35679422333): instrument 111313 last trade before the Friday 21:00Z halt = 5.544 (raw
+5544000000) at 2021-10-01T20:59:56.64Z, size 3; record `blocks/FRIDAY_ANCHOR_20211001.json`; the Sunday open's first trade
+is 5.628. The box holds the Sunday compact journal only (inventory run 35679158434): the block is staged, NOT ingested.
+`SPEC-trading-day-ingest.md` written (a4edd808): whole block, cme_trading_day, canary first, on Frankie's box; OPEN: the
+publish route (presigned PUT vs S3 rights on the box), whole block vs two members, workers. NEXT on Greg's word: the
+ingest wrapper script (TDD), the canary dispatch, then SPEC-trading-day-schedule.
 
 ## READ FIRST (00:xxZ 09-22, chat 7 CLOSING): THE BEDROCK IS BUILT AND SHIPPED (BR-0..BR-7, /ship GO after fixes); CHECKPOINT E AND THE RERUN WAIT ON GREG'S CALLS
 

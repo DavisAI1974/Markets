@@ -20,6 +20,8 @@
   bedrock.lifecycle.<section> whole, once; TABLE_GRAMMAR = DIGEST_V5 for the block marker); `deploy/aws/box/frankie_box_teach.py` (the facts by code,
   the prompt, `parse_answer` with the number transcription check, the Markdown); `frankie_box_docs.py` / `frankie_box_brain.py` carry the teach-back,
   the bedrock receipt/result and the ledgers whole (docs) and reference the layer files.
+- `research/kalshi/frankie_boss/SPEC-trading-day-ingest.md` - module 1 of the trading-day map: the staged block ingested whole under the trading-day policy on Frankie's box, canary first, the count measured.
+- `research/kalshi/frankie_boss/blocks/FRIDAY_ANCHOR_20211001.json` + `deploy/aws/box/frankie_box_friday_anchor.sh` - the Friday last trade before the halt (5.544 at 20:59:56Z, 2021-10-01), measured on the box; Frankie's start anchor.
 - `research/kalshi/frankie_boss/CAPABILITY_MAP_TRADING_DAY_20260922.md` - the cycle-0 rerun on the CME trading day: Greg's calls verbatim, what is measured, the assumptions, the four-module map (spec per module follows his review).
 - `research/kalshi/frankie_boss/SHIP_REVIEW_20260922_CHAT8.md` - the /ship decision on the chat-7 fixes and the full-rerun runbook: GO after fixes (see the handoff 01:5xZ 09-22, chat 8).
 - `research/kalshi/frankie_boss/SHIP_REVIEW_20260921_CHAT7.md` - the /ship decision on BR-0..BR-7 (see the handoff 23:xxZ 09-21, chat 7).

@@ -1,0 +1,39 @@
+{
+  "schema": "FRANKIE_FRIDAY_ANCHOR_V1",
+  "purpose": "Greg, 2026-09-22: the proper value to anchor the last trade on Friday so Frankie knows where to start at the Sunday open (the trading day 2021-10-04 opens Sunday 2021-10-03 22:00Z)",
+  "measured_on": "Frankie's box i-035994afa8bdf66a5, run 35679422333 (frankie_box_friday_anchor.sh), receipt /opt/frankie-box/receipts/friday-anchor-1790043966.json",
+  "file": {
+    "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211001.mbo.dbn.zst",
+    "bucket": "bento-568968024170-us-east-2-an",
+    "bytes": 25628861,
+    "sha256": "e6b4ec01bd9b34d57cb22c770b5d49c756e7f41a658f081823d923004a0121b2",
+    "records": 1504375,
+    "trades": 69424,
+    "decoder": {"databento_dbn": "0.62.0", "zstandard": "0.25.0"}
+  },
+  "halt_utc": "2021-10-01T21:00:00+00:00",
+  "halt_ns": 1633122000000000000,
+  "instrument_id": 111313,
+  "rule": "the last MBO trade (action T) with ts_recv before the 21:00Z Friday halt for the roster instrument; nothing averaged, nothing derived",
+  "anchor": {
+    "price_raw": 5544000000,
+    "price": 5.544,
+    "size": 3,
+    "side": "A",
+    "sequence": 70999223,
+    "order_id": 786260673951,
+    "ts_event_ns": 1633121996642686187,
+    "ts_event_iso": "2021-10-01T20:59:56.642686+00:00",
+    "ts_recv_ns": 1633121996644001342,
+    "ts_recv_iso": "2021-10-01T20:59:56.644001+00:00"
+  },
+  "also_the_last_trade_of_the_file_at_any_time": true,
+  "trades_in_the_last_hour_before_the_halt": 1028,
+  "sunday_open_first_trade_for_reference": {
+    "source": "the pinned schedule's first_observed_trade_candidate (cursor 447)",
+    "price_raw": 5628000000,
+    "price": 5.628,
+    "ts_event_iso": "2021-10-03T22:00:00+00:00",
+    "note": "a reference row, not a derivation: Friday last 5.544 -> Sunday first 5.628; the gap is Frankie's to read, not ours to average"
+  }
+}
