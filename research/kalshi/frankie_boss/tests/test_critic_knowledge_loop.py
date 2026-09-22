@@ -303,8 +303,8 @@ class KnowledgeCritic:
 @pytest.mark.parametrize('acknowledge',[True,False])
 def test_real_controller_exchange_and_exact_replay(tmp_path,monkeypatch,acknowledge):
     from test_frankie_controller import build_controller
-    from research.kalshi.frankie_boss.frankie_controller import FrankieForecastController,native_model_pin
-    from research.kalshi.frankie_boss.controller_journal import ControllerJournal
+    from frankie_controller import FrankieForecastController,native_model_pin
+    from controller_journal import ControllerJournal
     base,bridge,_,request=build_controller(tmp_path);base.journal.close()
     critic=KnowledgeCritic(acknowledge)
     journal=ControllerJournal(tmp_path/'stacked-controller.sqlite',create=True)
