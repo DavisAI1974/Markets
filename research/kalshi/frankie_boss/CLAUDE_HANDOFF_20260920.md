@@ -4271,3 +4271,22 @@ a fresh work directory per run), status; refuses while the cycle units run; no S
 Tests: ingest/block-scope/derive/compact-journal suites and the two box contract tests green; the codecs CI list gains
 the two box tests. NEXT (on Greg's go, given by "Lets rerun cyc 0"): fetch the two partitions to the box, run the canary,
 report the rate and the projected wall time, then the ingest.
+
+### 03:1xZ 09-22: GREG: as many workers as will not trip over each other; the SAME reducer stack as the 6-hour ingest on the full Monday trade day; the stack BEFORE any helper touches it
+
+Greg (verbatim): "So we want as many workers we can get going that aren't tripping over each other to help with the ingest
+and we will have to apply the same ingest reducer stack he had been using on the 6 hr ingest the full Monday trade day.
+And apply the reducer stack before any helper works on it."
+MEASURED against the build: (1) `CompactBuildJournal` (the block ingest's writer) computes the same envelope, canonical
+body and digest as the first run's EvidenceJournal.append and writes the pinned compact codec (`compact_journal.py`:
+bounded gzip blocks, chained previous/head hashes, the same 4 MiB block bound that gave the first run its blocks of 16
+entries), "a container byte-identical to raw-then-convert; the Sunday both-ways run proves it on the real day"
+(compact_build_journal.py docstring; test_block_ingests_as_one_stream_and_both_writers_agree). So the reducer stack is
+applied AT INGEST, before anything else exists: the raw journal is never written and every helper (the bedrock
+producers, the prefix copier, the reading lane) reads only the sealed container. (2) Workers: `--workers N` spawns N
+processes that encode blocks (order dedup, gzip) while the PARENT alone stays on the causal sequence; blocks are
+inserted in submission order and the queue holds at most 2 x N, so the workers cannot trip over each other or over the
+replay; the verification drain after the seal uses the same N through the parallel verified reader. The box has 32
+CPUs: N = 31 leaves the parent its own; the canary's rate says whether the encoders or the parent bound the run.
+Nothing in the pinned stack changed for this; the wrapper passes WORKERS (default 32 -> set 31) and the block bound stays
+the default.

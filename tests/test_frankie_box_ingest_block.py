@@ -8,7 +8,7 @@ def test_the_wrapper_fetches_by_the_map_verifies_every_partition_and_runs_the_to
     text = SCRIPT.read_text(encoding='utf-8')
     assert 'ACTION must be fetch, canary, ingest or status' in text
     assert 'BLOCK_20211004_SOURCE_MANIFEST.json' in text and 'blocks/BLOCK_*_SOURCE_MANIFEST.json' in text
-    assert '--session-policy cme_trading_day' in text and '--workers "$WORKERS"' in text and 'WORKERS="${WORKERS:-32}"' in text
+    assert '--session-policy cme_trading_day' in text and '--workers "$WORKERS"' in text and 'WORKERS="${WORKERS:-31}"' in text
     assert '--canary-records $CANARY' in text and 'ingest_block_sources.py' in text
     assert 'not overwritten (move it aside with a receipt first)' in text and ".rejected-" in text
     assert "git -C \"$ROOT/markets\" fetch -q --depth 1 origin -- \"$MARKETS_REF\"" in text

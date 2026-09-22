@@ -1,5 +1,5 @@
 # The TRADING-DAY INGEST on Frankie's box (SPEC-trading-day-ingest.md; Greg 2026-09-22: "Lets rerun cyc 0", "Monday by
-# itself before we do 4 days at a time", all the box's CPUs). One committed script, four read-then-act actions:
+# itself before we do 4 days at a time", every CPU the encoders can use while the parent keeps the causal sequence). One committed script, four read-then-act actions:
 #   fetch   the manifest's partitions by the presigned map (MAP_URL from frankie_box_run.yml presign=<bucket>/<key> ...),
 #           each verified against the manifest's sha256 and size; present and equal = kept; different = REFUSED
 #   canary  the ingest tool on the first CANARY records: the measured rate, no completion claim
@@ -9,7 +9,7 @@
 # MARKETS_REF (this branch), CYCLE (00). Nothing deleted, nothing overwritten, no key, no model call, no S3 write
 # (publish is a separate action on Greg's word).
 set -u
-ROOT=/opt/frankie-box; CYCLE="${CYCLE:-00}"; ACTION="${ACTION:-status}"; WORKERS="${WORKERS:-32}"; CANARY="${CANARY:-20000}"
+ROOT=/opt/frankie-box; CYCLE="${CYCLE:-00}"; ACTION="${ACTION:-status}"; WORKERS="${WORKERS:-31}"; CANARY="${CANARY:-20000}"
 MARKETS_REF="${MARKETS_REF:-claude/cycle-0-frankie-box-rerun-od5sxk}"
 MANIFEST="${MANIFEST:-research/kalshi/frankie_boss/blocks/BLOCK_20211004_SOURCE_MANIFEST.json}"
 case "$MARKETS_REF" in -*|*[!A-Za-z0-9._/-]*) echo "bad MARKETS_REF"; exit 2;; esac
