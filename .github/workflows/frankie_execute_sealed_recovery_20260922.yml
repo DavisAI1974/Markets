@@ -1,4 +1,5 @@
 name: Monday sealed journal conformance recovery
+# Attempt 2: include transitive root dependency and prove isolated archive imports before dispatch.
 on:
   push:
     branches: ['codex/trading-day-readiness-20260922']

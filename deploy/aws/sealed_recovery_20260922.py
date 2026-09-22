@@ -3,6 +3,8 @@ import hashlib
 import io
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 import time
 import zipfile
@@ -31,12 +33,23 @@ def main():
             if p.is_symlink():
                 raise ValueError('symbolic link in code bundle')
             archive.write(p,p.as_posix())
+        archive.write('markets_adapter.py','markets_adapter.py')
         for name in ('BLOCK_20211004_SOURCE_MANIFEST.json',):
             p=Path('research/kalshi/frankie_boss/blocks')/name
             archive.write(p,p.as_posix())
         archive.writestr('source-boundary.json',boundary)
     bundle=raw.getvalue()
     sha=hashlib.sha256(bundle).hexdigest()
+    preflight=Path('recovery-bundle-preflight').absolute()
+    preflight.mkdir(exist_ok=False)
+    with zipfile.ZipFile(io.BytesIO(bundle)) as archive:
+        for info in archive.infolist():
+            dest=preflight/info.filename
+            dest.parent.mkdir(parents=True,exist_ok=True)
+            with dest.open('xb') as stream:stream.write(archive.read(info))
+    # Isolated Python path proves the actual shipped archive carries transitive imports.
+    script="import sys,runpy;sys.path.insert(0,sys.argv[1]);sys.argv=['sealed_recovery_run','--help'];runpy.run_module('research.kalshi.frankie_boss.sealed_recovery_run',run_name='__main__')"
+    subprocess.run([sys.executable,'-I','-c',script,str(preflight)],cwd=preflight,check=True)
     s3.put_object(Bucket=BUCKET,Key=prefix+'code.zip',Body=bundle,IfNoneMatch='*',ServerSideEncryption='AES256')
     get=s3.generate_presigned_url('get_object',Params=dict(Bucket=BUCKET,Key=prefix+'code.zip'),ExpiresIn=21600)
     filenames=('source-boundary.json','builder-checkpoint.c15.json','completion.json','recovery-receipt.json','progress.jsonl')
