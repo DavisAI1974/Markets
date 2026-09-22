@@ -4207,3 +4207,29 @@ trade of the file at any time (no trade after the halt); 1,028 trades in the fin
 Sunday open's first trade 5.628 beside it as a reference row, not a derivation). The box inventory (run 35679158434)
 shows the Sunday compact journal only: no three-day container, no journal-stack leftovers; the block is staged, not
 ingested. `SPEC-trading-day-ingest.md` (a4edd808) is the first module spec, on Greg's review.
+
+### 02:3xZ 09-22: GREG ON THE 900-SECOND WARMUP AND ON FILLING THE JOURNAL FOR THE ADDED HOURS
+
+Greg (verbatim): "The reason I'm doing this full day is because something takes 900 seconds to warm up and you said a full
+day should cover that my question is did we hard code that 900 secs and if we could have it already warmed up by the time
+we need it? If we are running in serverless i think we can have serverless warm it up ahead of time. We need to fill the
+rest of the journal out to account for the additional hours and we shouldn't end up with 57k for a number. It should be
+bigger and i think we'll need to shrink and optimize the new addition to the journal."
+
+MEASURED: the 900 s and the 600 observations are the PINNED PRODUCERS' candidate lane, not our code: defaults of
+`native_replay_driver.NativeCalculationRun(candidate_warmup_seconds=900, candidate_min_observations=600)` and
+`native_candidate.py` (`warmup_seconds=900`, `min_threshold_observations=600`) at checkout 2ebb8ce8; the box reads them
+from the driver INSTANCE into the receipt (`frankie_box_bedrock.py:274`) and files `could_not` with the measured reason
+when the span is shorter (`status_of`, :291-296). They are a DATA warm-up: the candidate detector needs 900 seconds of
+tape to build its rolling window and 600 finite observations before it judges a second (native_detector_coverage.py:5:
+"at least 600 finite observations after a 900 s warm-up"). Not a machine warm-up: no serverless worker can pre-warm it;
+only earlier tape can. On the 23-hour trading day the first 15 minutes after the Sunday 22:00Z open are the warm-up and
+the lane fires for the remaining 22.75 hours; on the 13-second slice it never fires (six layers could_not). Pre-warming
+with tape from before the open would mean feeding the Friday session's final minutes (5.544 at 20:59:56Z, 49 hours
+before) as the window: possible (the constants are constructor arguments, the source object is ours), but it carries
+Friday's regime across the weekend halt and changes the traversal's identity; Greg's modelling call, not done.
+The JOURNAL: `SPEC-trading-day-ingest.md` is exactly the fill: the trading day's records ingested through the same
+reducer stack (the container packs about 21x); the count is measured and will be far above 57,027 (the Monday file alone
+holds 1,994,358 records; the trading day = the Sunday 57,027 plus Monday's records before the 21:00Z halt). Shrinking
+the ADDITION on the model-facing side (the cycle window = Greg's row count in the schedule; the reading lane's parts) stays
+the standing job ("shrinking/optimizing the packet is one of the most important jobs"); the reducer stack is not rebuilt.
