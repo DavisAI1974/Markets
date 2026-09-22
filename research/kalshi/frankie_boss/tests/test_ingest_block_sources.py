@@ -200,3 +200,13 @@ def test_a_partial_member_needs_the_trading_day_policy(tmp_path):
     manifest = _monday_manifest(tmp_path, take=2)
     with pytest.raises(ValueError, match='partial members need the cme_trading_day policy'):
         _run(tmp_path, manifest, policy='per_member_file', writer='compact', out='policy.compact.sqlite')
+
+
+def test_profile_files_a_report_and_leaves_the_result_unchanged(tmp_path, capsys):
+    # Greg, 2026-09-22: measure where the parent's time goes before optimising; the profile is a report beside the run
+    calls = []
+    result = tool.profiled(lambda: calls.append(1) or dict(kind='canary'), tmp_path / 'profile.txt')
+    assert result == dict(kind='canary') and calls == [1]
+    report = (tmp_path / 'profile.txt').read_text()
+    assert report.startswith('### top 40 by tottime') and '### top 40 by cumulative' in report
+    assert '### profile (' in capsys.readouterr().out

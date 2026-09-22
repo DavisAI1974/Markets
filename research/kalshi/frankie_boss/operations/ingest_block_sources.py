@@ -254,6 +254,29 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
         return result
 
 
+def profiled(call, report_path, *, top=40):
+    """Run `call` under cProfile (the parent process only; the encoders are separate processes) and file the report:
+    the top functions by own time, then by cumulative time. The result of `call` is returned unchanged; profiling
+    changes nothing that is written to the journal. Greg, 2026-09-22: the ingest must take minutes, so first measure
+    where the parent's 8.9 ms per record go."""
+    import cProfile
+    import io
+    import pstats
+    profiler = cProfile.Profile()
+    profiler.enable()
+    try:
+        return call()
+    finally:
+        profiler.disable()
+        out = io.StringIO()
+        for key in ('tottime', 'cumulative'):
+            out.write(f'### top {top} by {key}\n')
+            pstats.Stats(profiler, stream=out).sort_stats(key).print_stats(top)
+        Path(report_path).write_text(out.getvalue(), encoding='utf-8')
+        print(f'### profile ({report_path})')
+        print('\n'.join(line for line in out.getvalue().splitlines()[:top + 12]))
+
+
 def write_once(path, value):
     raw = json.dumps(value, indent=1, sort_keys=True, default=str).encode()
     with Path(path).open('xb') as stream:
@@ -328,6 +351,9 @@ def main():
     parser.add_argument('--canary-records', type=int)
     parser.add_argument('--block-bytes', type=int, default=4 * 1024 * 1024)
     parser.add_argument('--workers', type=int, default=0, help='encode blocks on this many spawned processes; 0 = inline')
+    parser.add_argument('--profile', action='store_true',
+                        help='run the ingest under cProfile and file profile.txt (top functions by own time and by cumulative time) '
+                             'in the output directory; a measurement of where the parent\'s time goes, no change to what is written')
     args = parser.parse_args()
     output = Path(args.output_dir).resolve()
     if args.canary_records is not None and not any(word in output.name.lower() for word in ('scratch', 'canary')):
@@ -370,9 +396,13 @@ def main():
         directory.mkdir(exist_ok=True)
         journal = directory / ('source.sqlite' if writer == 'raw' else 'journal.compact.sqlite')
         emit(dict(phase='start', writer=writer, journal=str(journal), canary_records=args.canary_records))
-        result = ingest(scope, paths, expected_scope_hash=scope.genesis_hash(), pin=pin, session=session,
-                        source_object=args.source_object, journal_path=journal, writer=writer,
-                        canary_records=args.canary_records, block_bytes=args.block_bytes, workers=args.workers, event=emit, takes=takes)
+        run_ingest = lambda: ingest(scope, paths, expected_scope_hash=scope.genesis_hash(), pin=pin, session=session,
+                                    source_object=args.source_object, journal_path=journal, writer=writer,
+                                    canary_records=args.canary_records, block_bytes=args.block_bytes, workers=args.workers, event=emit, takes=takes)
+        if args.profile:
+            result = profiled(run_ingest, directory / 'profile.txt')
+        else:
+            result = run_ingest()
         results[writer] = result
         if result['kind'] == 'canary':
             receipt = dict(common, schema=CANARY_SCHEMA, writer=writer, **{k: v for k, v in result.items() if k != 'kind'})
