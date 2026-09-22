@@ -15,5 +15,5 @@ def test_the_wrapper_fetches_by_the_map_verifies_every_partition_and_runs_the_to
     assert 'units_idle' in text and 'frankie-cycle-$CYCLE' in text and 'frankie-heartbeat-$CYCLE' in text
     assert 'boto3' not in text and 'put_object' not in text and 'rm -rf' not in text and 'os.remove' not in text
     assert "rm -f \"$ROOT/tmp/ingest-map.json\"" in text                 # only the private map leaves; data never does
-    assert 'a fresh directory per run' in text
+    assert 'a fresh directory per run' in text and 'mkdir -p "$OUT"' not in text      # the tool creates its output directory and refuses an existing one
     assert '[[' not in text and 'local ' not in text and '$((' not in text    # SSM runs the script under sh (dash): POSIX only

@@ -73,7 +73,7 @@ run_tool() {   # $1 = canary|ingest
   for member in $("$PY" -c "import json,sys; print(' '.join(s['member_key'] for s in json.load(open(sys.argv[1]))['sources']))" "$M"); do
     [ -s "$DATA/$member" ] || { echo "partition $member not on the box (ACTION=fetch first)"; return 2; }
   done
-  OUT="$ROOT/work/ingest-$BLOCK-$1-$(date +%s)"; mkdir -p "$OUT"     # a fresh directory per run; the tool writes once, never over
+  OUT="$ROOT/work/ingest-$BLOCK-$1-$(date +%s)"     # a fresh directory per run, CREATED BY THE TOOL (it refuses an existing one; run 35680854102); it writes once, never over
   EXTRA=""; [ "$1" = canary ] && EXTRA="--canary-records $CANARY"
   echo "### $1: block $BLOCK, $WORKERS workers, manifest $MANIFEST, out $OUT"
   ( cd "$ROOT/markets" && PYTHONPATH="$ROOT/markets" "$PY" research/kalshi/frankie_boss/operations/ingest_block_sources.py \
