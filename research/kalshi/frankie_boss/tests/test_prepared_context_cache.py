@@ -17,6 +17,8 @@ from test_context_session import model
 AS_OF, CURSOR = 202, 2
 
 
+ALL_FIXTURE_ROWS = 1 << 20   # a declared window larger than any fixture: the row window has no default (Greg, 2026-09-22)
+
 def session(tmp_path, teacher=True):
     builder = build(tmp_path)
     for i in range(3):

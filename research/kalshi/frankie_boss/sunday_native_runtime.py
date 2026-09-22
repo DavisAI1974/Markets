@@ -34,7 +34,7 @@ DEVELOPMENT = dict(schema='BOSS_SUNDAY_DEVELOPMENT_V1', seed=20260915,
                 d_ff_mult=4, use_delta_memory=True, use_qsv=False),
     recurrence=dict(k_max=8, k_fixed=8, halt_policy='FIXED', conv_tau=1e-3,
                     inject_input=True, step_embedding=True),
-    decoder=dict(d_model=256, hidden=128), context_rows=4096,
+    decoder=dict(d_model=256, hidden=128),
     dtype='float64', device='cpu', teacher='C15R3_UPDATING',
     qsv='explicitly unavailable: lawful source-to-QSV mapping not yet supplied',
     optimizer=dict(lr=0.0001, betas=(0.9, 0.999), eps=1e-8,
@@ -45,13 +45,18 @@ DEVELOPMENT = dict(schema='BOSS_SUNDAY_DEVELOPMENT_V1', seed=20260915,
     empirical_claim='none; one supplied source is development training only')
 
 
-def initialize(builder):
+def initialize(builder, *, context_rows):
     """Fresh initialization only; restore checkpoints before continuing a run.
+
+    context_rows = the row window DECLARED by the verified schedule (model_context_rows), passed by the host; it is
+    never a literal or a default here (Greg, 2026-09-22: the 4,096 window is retired from code).
 
     R3 consumes every prefix record. Its online normalizer starts empty and uses
     only earlier observations; cold-start/missing target masks remain explicit.
     NG raw tick 1e6 is $0.001 at DBN 1e9 scale, matching build_anchor_block.py.
     """
+    if type(context_rows) is not int or context_rows < 1:
+        raise ValueError('a positive declared context_rows is required (the schedule declares model_context_rows)')
     random.seed(DEVELOPMENT['seed'])
     np.random.seed(DEVELOPMENT['seed'])
     torch.manual_seed(DEVELOPMENT['seed'])
@@ -62,10 +67,10 @@ def initialize(builder):
         NormalizerConfig(instrument_ids=(111313,), mode='UPDATING',
                          n_norm=4096, n_warm=256, floors=SCALE_FLOORS, clip=8.0)))
     context = ContextSessionRunner(native, builder, entity=(1, 111313),
-                                   t_ctx=4096, teacher=teacher)
+                                   t_ctx=context_rows, teacher=teacher)
     optimizer = torch.optim.AdamW(list(native.parameters())+list(decoder.parameters()),
                                   **DEVELOPMENT['optimizer'])
-    identity = dict(config=copy.deepcopy(DEVELOPMENT), native_hash=context._model_hash(),
+    identity = dict(config=copy.deepcopy(DEVELOPMENT), context_rows=context_rows, native_hash=context._model_hash(),
                     teacher_binding=teacher.binding, teacher_normalizer=teacher.normalizer.export(),
                     optimizer_hash=optimizer_identity(optimizer))
     return context, decoder, optimizer, identity

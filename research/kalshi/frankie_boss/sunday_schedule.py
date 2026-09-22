@@ -8,12 +8,14 @@ from .context_session import journal_prefix
 
 
 def build_schedule(builder, mapping_index, *, expected_index_sha256,
-                   cutoffs_path, expected_cutoffs_sha256):
+                   cutoffs_path, expected_cutoffs_sha256, model_context_rows):
     """Read every source entry once; no forecasts or market labels are computed.
 
     Retained group_index is zero-based (the verified first member is group zero).
     Source clocks are prefix maxima, never guessed from the last event alone.
     """
+    if type(model_context_rows) is not int or model_context_rows < 1:
+        raise ValueError('the schedule declares a positive model_context_rows; it is never a code default')
     raw = Path(cutoffs_path).read_bytes()
     if hashlib.sha256(raw).hexdigest() != expected_cutoffs_sha256:
         raise ValueError('retained principal cutoff bytes changed')
@@ -70,5 +72,5 @@ def build_schedule(builder, mapping_index, *, expected_index_sha256,
         cutoff_file_sha256=expected_cutoffs_sha256, mapping_index_sha256=expected_index_sha256,
         steps=steps, terminal_delivery=terminal, first_observed_trade_candidate=first_trade,
         anchor_authorship='candidate evidence only; principal must certify interval convention',
-        model_context_rows=4096, source_dates_required=1, feedback_lag='next retained cutoff')
+        model_context_rows=model_context_rows, source_dates_required=1, feedback_lag='next retained cutoff')
     return dict(result, schedule_sha256=hashlib.sha256(canonical_bytes(pack(result))).hexdigest())

@@ -9,6 +9,8 @@ from research.refrag.qsv_registry import QSV_FEATURE_REGISTRY
 from markets_adapter import MarketChunkEncoder
 
 
+ALL_FIXTURE_ROWS = 1 << 20   # a declared window larger than any fixture: the row window has no default (Greg, 2026-09-22)
+
 def config():
     return ProducerConfig('synthetic-source', 'a'*64, 'b'*64, 'c'*64, encoder_code_hash())
 
@@ -91,7 +93,7 @@ def test_real_encoder_artifact_reaches_native_context(tmp_path):
     source, cfg = chunks(event['terminal_prefix_hash']), config()
     store = QSVProducerStore(tmp_path/'qsv.sqlite', create=True)
     produced = store.produce(source, cfg, expected_input_hash=source_input_hash(source, cfg))
-    runner = ContextSessionRunner(model, builder, entity=(1, 1), qsv=produced.artifact,
+    runner = ContextSessionRunner(model, builder, entity=(1, 1), t_ctx=ALL_FIXTURE_ROWS, qsv=produced.artifact,
                                   expected_qsv_hash=produced.artifact.digest)
     tokens, _, _, _, _ = runner._prepare(2, 0)
     assert tokens['qsv'][0, 0].tolist() == list(produced.artifact.rows[0].values)

@@ -62,7 +62,7 @@ def configuration(tmp_path, *, b1=True, qsv=False, records=1):
         sessions=saved(tmp_path, 'sessions.json', tuple((asdict(t), asdict(s)) for t,s in sessions)) if b1 else None,
         expected_sessions_hash=session_registry_hash(sessions) if b1 else None,
         cadence=asdict(RefreshPolicy(((10000, 1),))) if b1 else None,
-        entity=(1, 1), t_ctx=4096, qsv=None, calibration=None)
+        entity=(1, 1), t_ctx=64, qsv=None, calibration=None)
     if qsv:
         producer = ProducerConfig('synthetic bars', H, H, H, H)
         artifact = QSVContext(producer.digest, QSV_FEATURE_REGISTRY, (

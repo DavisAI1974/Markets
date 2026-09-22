@@ -13,6 +13,8 @@ from mbo_source import (MboSourcePin, runtime_hash, extract_mbo, ingest_sources,
                         SOURCE_EXTRA_FIELDS)
 
 
+ALL_FIXTURE_ROWS = 1 << 20   # a declared window larger than any fixture: the row window has no default (Greg, 2026-09-22)
+
 def pin(version=3):
     return MboSourcePin(version, runtime_hash())
 
@@ -86,7 +88,7 @@ def test_file_to_driver_restore_and_native_tensor_roundtrip(tmp_path, compressed
         from native_mbo_encoder import NativeTrunk
         from context_session import ContextSessionRunner
         model = NativeTrunk(registry, d_model=16, n_heads=2, n_layers=1).double().eval()
-        output = ContextSessionRunner(model, restored._builder, entity=(1, 1)).run(
+        output = ContextSessionRunner(model, restored._builder, entity=(1, 1),t_ctx=ALL_FIXTURE_ROWS).run(
             as_of=201, through_cursor=1)
         assert output.receipt.consumed_rows == 2
         assert restored.complete() == result.completion

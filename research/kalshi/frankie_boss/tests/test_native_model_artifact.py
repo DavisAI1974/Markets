@@ -10,6 +10,8 @@ from native_model_artifact import NativeModelSnapshot
 from test_c15_full_evidence import build, submit, row
 
 
+ALL_FIXTURE_ROWS = 1 << 20   # a declared window larger than any fixture: the row window has no default (Greg, 2026-09-22)
+
 def model(b1=True, qsv=False):
     native = NativeTrunk(NativeRegistry(), d_model=16, n_heads=2, n_layers=1,
                          use_qsv=qsv).double().eval()
@@ -30,8 +32,8 @@ def test_exact_roundtrip_outputs_and_rng(tmp_path, b1, qsv):
     assert NativeModelSnapshot.capture(restored) == snapshot
     assert all(not p.requires_grad for p in restored.parameters())
     builder = build(tmp_path); submit(builder, row(0))
-    first = ContextSessionRunner(original, builder, entity=(1, 1)).run(as_of=2)
-    second = ContextSessionRunner(restored, builder, entity=(1, 1)).run(as_of=2)
+    first = ContextSessionRunner(original, builder, entity=(1, 1),t_ctx=ALL_FIXTURE_ROWS).run(as_of=2)
+    second = ContextSessionRunner(restored, builder, entity=(1, 1),t_ctx=ALL_FIXTURE_ROWS).run(as_of=2)
     assert first.receipt == second.receipt
     assert all(torch.equal(first.heads[k], second.heads[k]) for k in first.heads)
 

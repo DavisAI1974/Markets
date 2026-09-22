@@ -54,13 +54,13 @@ def test_running_migration_is_observed_without_second_start(monkeypatch):
         evidence_class='LOCAL_TOKENIZER_ADMISSION'
         def __call__(self,body):
             assert body==request_body
-            return dict(request_sha256=request_hash,context=4096,input_tokens=1,output_tokens=1)
+            return dict(request_sha256=request_hash,context=131072,input_tokens=1,output_tokens=1)
     monkeypatch.setattr(lifecycle,'LocalTokenizerAdmission',Admission)
     monkeypatch.setattr(lifecycle,'check_startup',lambda startup,info:digest)
     monkeypatch.setattr(lifecycle,'_watchdog',lambda identity,lease:None)
 
     from research.kalshi.frankie_boss import granite_startup_pins
-    monkeypatch.setattr(granite_startup_pins,'validate_configuration',lambda value:{'service_context':4096})
+    monkeypatch.setattr(granite_startup_pins,'validate_configuration',lambda value:{'service_context':131072})
     monkeypatch.setattr(granite_startup_pins,'validate_url_freshness',lambda pod,configuration,now:999.0)
     monkeypatch.setattr(resume,'validate_running_migration',lambda info,pod,manifest:dict(info))
 

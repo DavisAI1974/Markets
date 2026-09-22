@@ -9,6 +9,8 @@ from research.refrag.qsv_registry import QSV_FEATURE_REGISTRY
 from test_c15_full_evidence import build, submit, row
 
 
+ALL_FIXTURE_ROWS = 1 << 20   # a declared window larger than any fixture: the row window has no default (Greg, 2026-09-22)
+
 def make_case(tmp_path):
     builder = build(tmp_path)
     submit(builder, row(0))
@@ -24,7 +26,7 @@ def make_case(tmp_path):
 
 
 def runner(builder, model, artifact):
-    return ContextSessionRunner(model, builder, entity=(1, 1),
+    return ContextSessionRunner(model, builder, entity=(1, 1), t_ctx=ALL_FIXTURE_ROWS,
                                 qsv=artifact, expected_qsv_hash=artifact.digest)
 
 
@@ -56,7 +58,7 @@ def test_invalid_or_noncausal_artifact_rejected(tmp_path, change):
 def test_wrong_trusted_identity_and_registry_rejected(tmp_path):
     builder, model, artifact = make_case(tmp_path)
     with pytest.raises(ValueError, match='trusted'):
-        ContextSessionRunner(model,builder,entity=(1,1),qsv=artifact,expected_qsv_hash='0'*64)
+        ContextSessionRunner(model,builder,entity=(1,1),t_ctx=ALL_FIXTURE_ROWS,qsv=artifact,expected_qsv_hash='0'*64)
     with pytest.raises(ValueError, match='registry'):
         replace(artifact, names=tuple(reversed(artifact.names)))
 

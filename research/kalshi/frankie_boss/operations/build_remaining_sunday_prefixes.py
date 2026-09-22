@@ -336,8 +336,8 @@ def main(configuration_path, *, cycles=19):
     manifest=read_pinned(configuration['source_manifest'])
     scope=source_scope(manifest,expected_manifest_hash=manifest['manifest_hash'])
     if scope.genesis_hash()!=completion['scope_hash']: raise ValueError('final completion scope differs from pinned source')
-    entity=(1,111313);t_ctx=sunday_native_runtime.DEVELOPMENT['context_rows']
-    if t_ctx!=4096: raise ValueError('reviewed Sunday context selection changed')
+    entity=(1,111313);t_ctx=schedule['model_context_rows']   # the row window is the verified schedule's declaration, never a literal here
+    if type(t_ctx) is not int or t_ctx<1: raise ValueError('the verified schedule must declare a positive model_context_rows')
     output = Path(configuration['host_runtime']['prefixes_directory'])
     output.mkdir(parents=True, exist_ok=True)
     with _exclusive(output / 'remaining-prefix-writer.lock'):

@@ -20,8 +20,7 @@ except ImportError:
     from causal_packet import canonical_bytes
     from trunk import Trunk, TrunkConfig
 
-SCHEMA = 'BOSS_NATIVE_MBO_ENCODER_V1'
-T_CTX = 4096  # Provisional registry value; no mechanics-probe result claimed.
+SCHEMA = 'BOSS_NATIVE_MBO_ENCODER_V2'   # V2: the payload no longer carries a row window; the model context is the session's declaration (Greg, 2026-09-22)
 RAW_FIELDS = ('ts_event', 'ts_recv', 'rtype', 'publisher_id', 'instrument_id',
               'action', 'side', 'price', 'size', 'channel_id', 'order_id',
               'flags', 'ts_in_delta', 'sequence')
@@ -59,7 +58,7 @@ class NativeRegistry:
                         'numeric_and_exact_bytes' if f in ('price', 'size', 'sequence', 'ts_event', 'ts_recv', 'ts_in_delta') else
                         'categorical_exact_bytes') for f in self.fields},
                     exact_encoding='journal.pack/canonical_bytes UTF-8; byte vocabulary 0..255',
-                    t_ctx=T_CTX, retained_not_encoded=())
+                    retained_not_encoded=())
 
     @property
     def digest(self):

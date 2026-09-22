@@ -12,12 +12,12 @@ import torch
 from research.refrag.qsv_registry import QSV_FEATURE_REGISTRY
 
 try:
-    from .native_mbo_encoder import NativeTrunk, T_CTX, encode, reconstruct_payloads
+    from .native_mbo_encoder import NativeTrunk, encode, reconstruct_payloads
     from .b1_reasoner import B1Reasoner
     from .c15_journal import evidence_hash, pack, unpack
     from .trunk import TRUNK_SCHEMA
 except ImportError:
-    from native_mbo_encoder import NativeTrunk, T_CTX, encode, reconstruct_payloads
+    from native_mbo_encoder import NativeTrunk, encode, reconstruct_payloads
     from b1_reasoner import B1Reasoner
     from c15_journal import evidence_hash, pack, unpack
     from trunk import TRUNK_SCHEMA
@@ -108,7 +108,8 @@ class ContextOutput:
 
 
 class ContextSessionRunner:
-    def __init__(self,model,builder,*,entity,t_ctx=T_CTX,teacher=None,qsv=None,expected_qsv_hash=None):
+    def __init__(self,model,builder,*,entity,t_ctx,teacher=None,qsv=None,expected_qsv_hash=None):
+        # t_ctx is DECLARED by the caller (the verified schedule's model_context_rows), never a default (Greg, 2026-09-22)
         if type(t_ctx) is not int or t_ctx<1:
             raise ValueError('positive declared context length required')
         if type(entity) is not tuple or len(entity)!=2 or any(type(x) is not int for x in entity):

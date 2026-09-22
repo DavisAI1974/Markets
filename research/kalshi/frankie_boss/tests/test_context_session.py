@@ -7,6 +7,8 @@ from context_session import ContextSessionRunner
 from test_c15_full_evidence import build, submit, row
 
 
+ALL_FIXTURE_ROWS = 1 << 20   # a declared window larger than any fixture: the row window has no default (Greg, 2026-09-22)
+
 def model():
     torch.manual_seed(20)
     return NativeTrunk(NativeRegistry(), d_model=16, n_heads=2, n_layers=1).double().eval()
@@ -15,7 +17,7 @@ def model():
 def test_second_handle_source_change_during_forward_cannot_return_or_export(tmp_path, monkeypatch):
     from c15_journal import EvidenceJournal
     builder=build(tmp_path); submit(builder,row(0)); m=model()
-    session=ContextSessionRunner(m,builder,entity=(1,1))
+    session=ContextSessionRunner(m,builder,entity=(1,1),t_ctx=ALL_FIXTURE_ROWS)
     original=m.forward
     def changed(**kwargs):
         result=original(**kwargs)
@@ -31,7 +33,7 @@ def test_second_handle_source_change_during_forward_cannot_return_or_export(tmp_
 def test_export_checks_physical_source_but_preserves_valid_later_prefix(tmp_path):
     from c15_journal import EvidenceJournal
     builder=build(tmp_path); submit(builder,row(0)); m=model()
-    session=ContextSessionRunner(m,builder,entity=(1,1))
+    session=ContextSessionRunner(m,builder,entity=(1,1),t_ctx=ALL_FIXTURE_ROWS)
     output=session.run(as_of=2)
     session.append(row(1),source_member_index=0,session_id='s')
     state=session.export()
@@ -144,8 +146,8 @@ def test_earlier_cursor_receipt_is_unchanged_by_future_suffix(tmp_path):
 def test_training_mode_and_incomplete_or_unmapped_source_fail_closed(tmp_path):
     builder=build(tmp_path); m=model()
     with pytest.raises(ValueError,match='eval'):
-        ContextSessionRunner(m.train(),builder,entity=(1,1))
-    m.eval(); session=ContextSessionRunner(m,builder,entity=(1,1))
+        ContextSessionRunner(m.train(),builder,entity=(1,1),t_ctx=ALL_FIXTURE_ROWS)
+    m.eval(); session=ContextSessionRunner(m,builder,entity=(1,1),t_ctx=ALL_FIXTURE_ROWS)
     session.append({**row(0),'undeclared':17},source_member_index=0,session_id='s')
     with pytest.raises(ValueError,match='unmapped'):
         session.run(as_of=2)
@@ -154,7 +156,7 @@ def test_training_mode_and_incomplete_or_unmapped_source_fail_closed(tmp_path):
 
 def test_failed_forward_cannot_retry_with_changed_weights(tmp_path, monkeypatch):
     builder=build(tmp_path); m=model(); submit(builder,row(0))
-    session=ContextSessionRunner(m,builder,entity=(1,1))
+    session=ContextSessionRunner(m,builder,entity=(1,1),t_ctx=ALL_FIXTURE_ROWS)
     original=m.forward
     def fail(**kwargs): raise RuntimeError('synthetic')
     monkeypatch.setattr(m,'forward',fail)
@@ -168,7 +170,7 @@ def test_explicit_qsv_ablation_remains_allowed(tmp_path):
     builder=build(tmp_path); submit(builder,row(0))
     m=NativeTrunk(NativeRegistry(),d_model=16,n_heads=2,n_layers=1,use_qsv=True).double().eval()
     m.encoder.ablate_qsv()
-    assert ContextSessionRunner(m,builder,entity=(1,1)).run(as_of=2).receipt.consumed_rows==1
+    assert ContextSessionRunner(m,builder,entity=(1,1),t_ctx=ALL_FIXTURE_ROWS).run(as_of=2).receipt.consumed_rows==1
 
 
 def test_failed_forward_cannot_retry_with_changed_context(tmp_path,monkeypatch):

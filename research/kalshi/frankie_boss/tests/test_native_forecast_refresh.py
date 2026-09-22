@@ -17,10 +17,12 @@ from test_c15_full_evidence import build, submit, row
 H = 'a'*64
 
 
+ALL_FIXTURE_ROWS = 1 << 20   # a declared window larger than any fixture: the row window has no default (Greg, 2026-09-22)
+
 def build_refresh(tmp_path):
     builder = build(tmp_path); submit(builder, row(0))
     boss = B1Reasoner(model(), B1Config(k_max=1, k_fixed=1)).double().eval()
-    runner = ContextSessionRunner(boss, builder, entity=(1, 1))
+    runner = ContextSessionRunner(boss, builder, entity=(1, 1),t_ctx=ALL_FIXTURE_ROWS)
     torch.manual_seed(8)
     decoder = NativeForecastHeads(16, 8).eval()
     with torch.no_grad():

@@ -10,10 +10,10 @@ def test_training_event_persists_only_safe_scalar_diagnostics(tmp_path):
     emitted=[]
     probe=RunProbe(tmp_path,'new-run',emit=emitted.append)
     value=probe.training_event(dict(request_id='new-run-cycle-00',stage='forward_start',
-        elapsed_seconds=12.5,context_rows=4096))
+        elapsed_seconds=12.5,context_rows=3262))
     assert value['schema']=='FRANKIE_NATIVE_TRAINING_DIAGNOSTIC_V1'
     assert value['stage']=='forward_start'
-    assert value['context_rows']==4096
+    assert value['context_rows']==3262
     assert 'message' not in value and 'exception' not in value and 'traceback' not in value
     lines=(tmp_path/'native-training.jsonl').read_text(encoding='utf-8').splitlines()
     assert len(lines)==1 and json.loads(lines[0])==value

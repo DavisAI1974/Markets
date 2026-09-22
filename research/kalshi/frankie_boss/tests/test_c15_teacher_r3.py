@@ -6,6 +6,8 @@ from c15_teacher_r3 import RawJournalTeacherR3
 from c15_normalizer import State
 
 
+ALL_FIXTURE_ROWS = 1 << 20   # a declared window larger than any fixture: the row window has no default (Greg, 2026-09-22)
+
 def attach(builder, evidence=None):
     evidence = list(builder.evidence_stream()) if evidence is None else evidence
     return RawJournalTeacherR3().attach(evidence, context_cursors=(evidence[-1]['cursor'],),

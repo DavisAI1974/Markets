@@ -250,6 +250,7 @@ class ActualHost:
         self.directory=Path(configuration['run_directory']);self.directory.mkdir(parents=True,exist_ok=True)
         self.instance_id=self.retained_instance_id()
         self.builder=self.context=self.decoder=self.optimizer=self.checkpoint=self.admit=None
+        self.schedule=None   # the verified schedule (its model_context_rows is the declared row window); set by source verification, required before training
         self.scope=None;self.cache=None;self.original_prepare=None
         self.coordinator=None
         actual=subprocess.check_output(['git','rev-parse','HEAD'],cwd=self.repo,text=True).strip()
@@ -362,7 +363,7 @@ class ActualHost:
         if actual_schedule.resolve()!=(schedule/'schedule.json').resolve() or sha(actual_schedule)!=outer['schedule_file_sha256']:
             raise ValueError('full schedule differs from verified execution receipt')
         from research.kalshi.frankie_boss.verified_sunday_schedule import verified_schedule
-        verified_schedule(json.loads(actual_schedule.read_bytes()), expected_digest=outer['schedule_sha256'])
+        self.schedule=verified_schedule(json.loads(actual_schedule.read_bytes()), expected_digest=outer['schedule_sha256'])
         manifest=verified_json(self.config['source_manifest'])
         scope=self.api.source_scope(manifest,expected_manifest_hash=manifest['manifest_hash'])
         if (state['scope_genesis_hash']!=scope.genesis_hash() or completion['scope_hash']!=scope.genesis_hash()):
@@ -476,7 +477,8 @@ class ActualHost:
     def _training(self):
         """Precommit exact serialized states before every training SQLite insert."""
         t=self.api.training;j=self.api.journal
-        self.context,self.decoder,self.optimizer,identity=self.api.native.initialize(self.builder)
+        if self.schedule is None: raise ValueError('the verified schedule (model_context_rows) is required before training; verify the sources first')
+        self.context,self.decoder,self.optimizer,identity=self.api.native.initialize(self.builder,context_rows=self.schedule['model_context_rows'])   # the declared row window, from the verified schedule
         self.identity=identity
         identities=dict(training_config_hash=j.evidence_hash(self.api.native.DEVELOPMENT),
             code_hash=j.evidence_hash(self.code),source_hash=self.scope.genesis_hash(),

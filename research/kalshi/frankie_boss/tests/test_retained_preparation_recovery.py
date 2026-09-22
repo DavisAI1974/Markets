@@ -15,7 +15,7 @@ def test_teacher_only_recovery_matches_entire_retained_tuple(tmp_path,monkeypatc
     builder=C15Builder(scope,tmp_path/'prefix.sqlite')
     for i in range(3):
         builder.apply(dict(instrument_id=111313,publisher_id=1,channel_id=1,order_id=i+1,action='A',side='A',price=1000000000+i*1000000,size=10,flags=128,sequence=i,ts_event=i*100+1,ts_recv=i*100+2,ts_in_delta=1),source_member_index=0,session_id='s')
-    context,_,_,initial=initialize(builder)
+    context,_,_,initial=initialize(builder,context_rows=8)
     monkeypatch.setattr(context.model,'forward',lambda *a,**k:pytest.fail('native forward forbidden'))
     expected=context._prepare(202,2)
     monkeypatch.setattr(context,'_prepare',lambda *a,**k:expected)
@@ -47,7 +47,7 @@ def retained_guard_case(tmp_path,monkeypatch):
     scope=SourceScope(ScopeKind.RESULT_BEARING,'c'*64,(SourceMember(0,'guard-synthetic','d'*64,100,1),),SUPPORTED_ADAPTER_REVISION)
     builder=C15Builder(scope,tmp_path/'guard-prefix.sqlite')
     builder.apply(dict(instrument_id=111313,publisher_id=1,channel_id=1,order_id=1,action='A',side='A',price=1000000000,size=10,flags=128,sequence=1,ts_event=101,ts_recv=102,ts_in_delta=1),source_member_index=0,session_id='guard')
-    context,_,_,initial=initialize(builder)
+    context,_,_,initial=initialize(builder,context_rows=8)
     monkeypatch.setattr(context.model,'forward',lambda *a,**k:pytest.fail('native forward forbidden'))
     prepared_tuple=context._prepare(102,0)
     monkeypatch.setattr(context,'_prepare',lambda *a,**k:prepared_tuple)
