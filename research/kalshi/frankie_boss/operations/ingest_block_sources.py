@@ -61,7 +61,7 @@ from research.kalshi.frankie_boss.c15_journal import evidence_hash, pack, canoni
 from research.kalshi.frankie_boss.compact_build_journal import conformance_driver_with_compact_journal  # noqa: E402
 from research.kalshi.frankie_boss.compact_journal import CompactReader, MAX_BYTES      # noqa: E402
 from research.kalshi.frankie_boss.box_standard import partition_entries_for            # noqa: E402
-from research.kalshi.frankie_boss.frankie_journal_reader import FrankieCompactReader     # noqa: E402
+from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader     # noqa: E402
 from research.kalshi.frankie_boss.selected_source_scope import source_manifest, source_scope  # noqa: E402
 from research.kalshi.frankie_boss.source_conformance import SourceConformanceDriver     # noqa: E402
 
@@ -237,10 +237,11 @@ def ingest(scope, paths, *, expected_scope_hash, pin, session, source_object, jo
         verify_started = time.perf_counter()
         if writer == 'compact' and workers > 0:
             # Seal at the writer's tail, then run the one conformance drain through the first run's
-            # parallel verified reader (decode and verify on the workers, the causal replay on the
-            # parent). The seal states what was written; complete() is the claim, made after it.
+            # conformance reader: workers verify every original body and hash, then send only
+            # the conformance fields. Full book observations do not cross IPC. The seal
+            # states what was written; complete() is the claim, made after it.
             journal.seal()
-            reader = FrankieCompactReader(journal_path, expected_count=journal.count,
+            reader = CompactConformanceReader(journal_path, expected_count=journal.count,
                                           expected_head_hash=journal.head_hash, workers=workers, emit=event)
             stack.callback(reader.close)
             driver._builder.journal = reader

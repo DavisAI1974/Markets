@@ -59,42 +59,30 @@ def _verify_partition(path, start, previous):
     return projected, rows[-1][3], time.process_time()-cpu
 
 
-class CompactConformanceReader(CompactReader):
-    def __init__(self, path, *, expected_count, expected_head_hash, workers=1):
-        if type(workers) is not int or not 1 <= workers <= 64:
-            raise ValueError('explicit worker budget must be between 1 and 64')
-        self.workers = workers
-        self.worker_cpu_seconds = 0.0
-        super().__init__(path, expected_count=expected_count, expected_head_hash=expected_head_hash)
+def _read_conformance_block(path, index):
+    start, length, previous, head = index
+    entries, actual_head, cpu = _verify_partition(path, start, previous)
+    if len(entries) != length or actual_head != head:
+        raise ValueError('conformance partition identity differs')
+    return entries, cpu
 
-    def entries(self):
-        # To schedule independent blocks without rereading bodies, the predecessor
-        # digest is included in the index and checked against each validated seam.
-        index = iter(self.db.execute('SELECT start,count,previous,head FROM blocks ORDER BY start'))
-        with ProcessPoolExecutor(max_workers=self.workers,
-                mp_context=multiprocessing.get_context('spawn')) as pool:
-            pending = deque()
-            def submit():
-                row = next(index, None)
-                if row is None:
-                    return False
-                start, count, previous, head = row
-                pending.append((row, pool.submit(_verify_partition, str(self.path), start, previous)))
-                return True
-            for _ in range(2*self.workers):
-                if not submit():
-                    break
-            count, previous = 0, GENESIS_HASH
-            while pending:
-                (start, length, seam, head), future = pending.popleft()
-                entries, actual_head, cpu = future.result()
-                self.worker_cpu_seconds += cpu
-                if (start != count or seam != previous or len(entries) != length
-                        or actual_head != head):
-                    raise ValueError('partition seam or coverage differs')
-                yield from entries
-                count, previous = count+length, head
-                submit()
-            if (count, previous) != (self.count, self.head_hash):
-                raise ValueError('partition terminal identity differs')
-        self._check_seal()
+
+try:
+    from .frankie_journal_reader import FrankieCompactReader
+except ImportError:
+    from frankie_journal_reader import FrankieCompactReader
+
+
+class CompactConformanceReader(FrankieCompactReader):
+    """The shared verified seams, affinity and progress; only IPC is projected.
+
+    _verify_partition still validates every canonical body and logical hash before
+    projecting. This class must never serve model context or general evidence.
+    """
+    block_task = staticmethod(_read_conformance_block)
+    progress_phase = 'compact_conformance_read'
+
+    def __init__(self, path, *, expected_count, expected_head_hash, workers=1, emit=None):
+        super().__init__(path, expected_count=expected_count, expected_head_hash=expected_head_hash,
+                         workers=workers, emit=emit)
+        self.workers = len(self.worker_cpus)

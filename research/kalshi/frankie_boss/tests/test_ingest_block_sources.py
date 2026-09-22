@@ -50,14 +50,14 @@ def _block(tmp_path):
     return body
 
 
-def _run(tmp_path, manifest, *, policy, writer, out, canary=None):
+def _run(tmp_path, manifest, *, policy, writer, out, canary=None, workers=0, event=None):
     scope = block_source_scope(manifest, expected_manifest_hash=manifest['manifest_hash'])
     name, session = tool.session_policy(policy, halt_utc_hour=manifest['halt_utc_hour'])
     takes = tool.partial_takes(manifest, policy_name=name)          # as main() does: the manifest's partial members
     paths = tuple(tmp_path / m.member_key for m in scope.members)
     return scope, tool.ingest(scope, paths, expected_scope_hash=scope.genesis_hash(), pin=pin(), session=session,
                               source_object='member_key', journal_path=tmp_path / out, writer=writer,
-                              canary_records=canary, block_bytes=4096, takes=takes)
+                              canary_records=canary, block_bytes=4096, takes=takes, workers=workers, event=event)
 
 
 def test_session_policies_name_the_trading_day_and_the_member_file():
@@ -272,3 +272,54 @@ def test_full_cli_receipts_support_raw_and_both_writers(tmp_path, monkeypatch, w
         compact = json.loads((output / 'compact' / 'ingestion-receipt.json').read_bytes())
         assert compact['journal_hash'] == receipt['journal_hash']
         assert compact['boxes'] > 0
+
+
+def test_parallel_conformance_matches_full_evidence_without_book_ipc(tmp_path):
+    from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader, project_entries
+    from research.kalshi.frankie_boss.compact_journal import CompactReader as FullReader
+    manifest = _block(tmp_path)
+    events = []
+    _, projected = _run(tmp_path, manifest, policy='cme_trading_day', writer='compact',
+        out='parallel.sqlite', workers=2, event=events.append)
+    _, raw = _run(tmp_path, manifest, policy='cme_trading_day', writer='raw', out='raw.sqlite')
+    assert projected['completion'] == raw['completion'] and projected['state'] == raw['state']
+    assert any(e['phase'] == 'compact_conformance_read' for e in events)
+    pin = dict(expected_count=12, expected_head_hash=projected['completion']['journal_hash'])
+    with FullReader(tmp_path / 'parallel.sqlite', **pin) as full:
+        original = list(full.entries())
+    with CompactConformanceReader(tmp_path / 'parallel.sqlite', workers=2, **pin) as reader:
+        entries = list(reader.entries())
+    assert entries == project_entries(original)
+    assert all('observation' not in e['payload'] for e in entries)
+    assert any('observation' in e['payload'] for e in original)
+
+
+def test_conformance_projection_still_verifies_unprojected_observation_bytes(tmp_path):
+    from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader
+    from research.kalshi.frankie_boss.compact_journal import decode_block, encode_block
+    manifest = _block(tmp_path)
+    _, result = _run(tmp_path, manifest, policy='cme_trading_day', writer='compact', out='tamper.sqlite')
+    path = tmp_path / 'tamper.sqlite'
+    with sqlite3.connect(path) as db:
+        for start, blob in db.execute('SELECT start,body FROM blocks ORDER BY start').fetchall():
+            rows = decode_block(blob)
+            target = next((i for i,r in enumerate(rows) if r[1] == 'APPLIED'), None)
+            if target is None:
+                continue
+            row = rows[target]
+            tree = json.loads(row[2])
+            payload = next(v for k,v in tree[1] if k == 'payload')
+            for pair in payload[1]:
+                if pair[0] == 'observation':
+                    pair[1] = ['null']
+                    break
+            from research.kalshi.frankie_boss.verified_journal_reader import canonical_tagged_bytes
+            rows[target] = (row[0], row[1], canonical_tagged_bytes(tree), row[3])
+            changed = encode_block(rows)
+            db.execute('UPDATE blocks SET body=?, sha256=? WHERE start=?',
+                       (changed, hashlib.sha256(changed).hexdigest(), start))
+            break
+    with CompactConformanceReader(path, expected_count=12, expected_head_hash=result['completion']['journal_hash'],
+                                  workers=2) as reader:
+        with pytest.raises(ValueError):
+            list(reader.entries())

@@ -77,6 +77,9 @@ def _read_block(path, index):
 
 
 class FrankieCompactReader(CompactReader):
+    block_task = staticmethod(_read_block)
+    progress_phase = 'frankie_compact_read'
+
     def __init__(self, path, *, expected_count, expected_head_hash, workers=1, emit=None):
         self.worker_cpus = worker_budget(workers)
         self.emit = emit
@@ -100,7 +103,7 @@ class FrankieCompactReader(CompactReader):
                     if row is None:
                         return False
                     pending.append((row, time.perf_counter(),
-                                    pool.submit(_read_block, str(self.path), row)))
+                                    pool.submit(self.block_task, str(self.path), row)))
                     return True
                 # At most two bounded blocks per worker; no full-day materialization.
                 for _ in range(2*len(self.worker_cpus)):
@@ -119,7 +122,7 @@ class FrankieCompactReader(CompactReader):
                     now = time.perf_counter()
                     if self.emit is not None and (now-last_emit >= 10 or count == self.count):
                         try:
-                            self.emit(dict(phase='frankie_compact_read', entries=count,
+                            self.emit(dict(phase=self.progress_phase, entries=count,
                                 total=self.count, percent=round(100*count/max(1,self.count),4),
                                 records_per_second=count/2/max(now-started,1e-9),
                                 worker_cpus=self.worker_cpus, worker_cpu_seconds=self.worker_cpu_seconds,
