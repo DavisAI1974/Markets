@@ -46,7 +46,7 @@ def _archive_entry(brain, entry_dir):
         return None
     if entry_dir.is_symlink() or entry_dir.resolve().parent != brain:
         raise ValueError('brain entry must be an immediate real directory')
-    history = brain / 'history'
+    history = _require_real_path(brain / 'history')
     history.mkdir(exist_ok=True)
     stamp = str(time.time_ns()) + '-' + uuid.uuid4().hex
     target = history / (entry_dir.name + '-' + stamp)
@@ -60,8 +60,24 @@ def _archive_entry(brain, entry_dir):
     return target
 
 
+def _require_real_path(path):
+    path = Path(path)
+    if any(part.is_symlink() for part in (path, *path.parents)):
+        raise ValueError('knowledge path contains a symbolic link')
+    return path
+
+
+def _checked_tree(directory):
+    directory = _require_real_path(directory)
+    for path in directory.rglob('*'):
+        _require_real_path(path)
+        if not (path.is_file() or path.is_dir()):
+            raise ValueError('knowledge tree contains a nonregular member')
+
+
 def _checked_entry(directory, expected_hash=None):
     directory = Path(directory)
+    _checked_tree(directory)
     raw = (directory / 'MANIFEST.json').read_bytes()
     if expected_hash is not None and sha256_bytes(raw) != expected_hash:
         raise ValueError('knowledge manifest differs from pinned base')
@@ -85,11 +101,11 @@ def capture_base(brain, request_identity):
     if not re.fullmatch('[0-9a-f]{64}', request_identity):
         raise ValueError('full request identity required for knowledge base')
     brain = Path(brain)
-    snapshot = brain / 'bases' / request_identity / 'MANIFEST.json'
+    snapshot = _require_real_path(brain / 'bases' / request_identity / 'MANIFEST.json')
     if snapshot.is_file():
         list(snapshot_entries(brain, snapshot))
         return snapshot
-    history = brain / 'history'
+    history = _require_real_path(brain / 'history')
     history.mkdir(parents=True, exist_ok=True)
     candidates = list(brain.glob('cycle-*/MANIFEST.json')) + list(history.glob('*/MANIFEST.json'))
     frozen = brain / FROZEN_DIR / 'MANIFEST.json'
@@ -125,6 +141,44 @@ def snapshot_entries(brain, snapshot):
             raise ValueError('knowledge base entry is outside retained history')
         manifest, digest = _checked_entry(path, entry['sha256'])
         yield ('prior-run-' + digest[:16] + '-cycle-' + str(entry.get('cycle')), manifest, path)
+
+
+def pin_session_base(brain, request_identity, receipt_path):
+    """Pin one request's base once; refuse changed or unreceipted reused bases."""
+    if not re.fullmatch('[0-9a-f]{64}', request_identity):
+        raise ValueError('full request identity required for knowledge base')
+    brain = _require_real_path(Path(brain)).resolve()
+    snapshot = _require_real_path(brain / 'bases' / request_identity / 'MANIFEST.json')
+    receipt_path = _require_real_path(Path(receipt_path))
+    schema = 'FRANKIE_SESSION_KNOWLEDGE_BASE_RECEIPT_V1'
+    if receipt_path.exists():
+        receipt = json.loads(receipt_path.read_bytes())
+        raw = snapshot.read_bytes()
+        base = json.loads(raw)
+        if (receipt.get('schema') != schema
+                or receipt.get('request_identity') != request_identity
+                or receipt.get('path') != str(snapshot)
+                or receipt.get('sha256') != sha256_bytes(raw)
+                or receipt.get('bytes') != len(raw)
+                or base.get('request_identity') != request_identity
+                or receipt.get('entries') != len(base.get('entries', []))):
+            raise ValueError('request knowledge base differs from its retained receipt')
+        list(snapshot_entries(brain, snapshot))
+        return snapshot
+    if snapshot.exists():
+        raise ValueError('existing request knowledge base has no retained receipt')
+    snapshot = capture_base(brain, request_identity)
+    raw = snapshot.read_bytes()
+    base = json.loads(raw)
+    if base.get('request_identity') != request_identity:
+        raise ValueError('knowledge base request identity differs')
+    list(snapshot_entries(brain, snapshot))
+    receipt = dict(schema=schema, request_identity=request_identity,
+        path=str(snapshot), entries=len(base['entries']), bytes=len(raw), sha256=sha256_bytes(raw))
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    with receipt_path.open('x', encoding='utf-8') as handle:
+        json.dump(receipt, handle, indent=1, sort_keys=True)
+    return snapshot
 
 
 def write_entry(work, out, brain, cycle, include_analysis=True):
@@ -293,8 +347,6 @@ def write_frozen_entry(historical_prompt, repo, brain):
         # containment: a path the delivered prompt names is data; it must resolve inside the checkout (never .. or absolute)
         if Path(path).is_absolute() or '..' in Path(path).parts or not (repo_root / path).resolve().is_relative_to(repo_root):
             raise ValueError(f'the delivered prompt names a frozen file outside the checkout: {path!r}')
-    _archive_entry(brain, entry_dir)
-    entry_dir.mkdir(parents=True, exist_ok=False)
     entries = []
     for (path, prefix), layers in sorted(files.items()):
         src = repo / path
@@ -304,7 +356,6 @@ def write_frozen_entry(historical_prompt, repo, brain):
             continue
         data = src.read_bytes()
         digest = sha256_bytes(data)
-        (entry_dir / name).write_bytes(data)
         e = dict(name=name, source=path, bytes=len(data), sha256=digest, layers=layers, delivered_prefix=prefix,
                  kind='frozen learned structure: a file the request names for these layers, from the checkout')
         if digest.startswith(prefix):
@@ -316,6 +367,20 @@ def write_frozen_entry(historical_prompt, repo, brain):
     manifest = dict(schema='FRANKIE_BOX_BRAIN_FROZEN_ENTRY_V1', at=time.time(), historical_prompt=str(historical_prompt),
                     layers=sorted({l for ls in files.values() for l in ls}), entries=entries,
                     note='the frozen learned-structure content, so the comparison step can run; rebuilt from the checkout at every session start')
+    if (entry_dir / 'MANIFEST.json').is_file():
+        previous, _ = _checked_entry(entry_dir)
+        stable = lambda value: {k: v for k, v in value.items() if k != 'at'}
+        if stable(previous) == stable(manifest):
+            return previous
+    _archive_entry(brain, entry_dir)
+    entry_dir.mkdir(parents=True, exist_ok=False)
+    for entry in entries:
+        if 'sha256' not in entry:
+            continue
+        data = (repo / entry['source']).read_bytes()
+        if sha256_bytes(data) != entry['sha256'] or len(data) != entry['bytes']:
+            raise ValueError('frozen source changed while preserving knowledge')
+        (entry_dir / entry['name']).write_bytes(data)
     (entry_dir / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     return manifest
 

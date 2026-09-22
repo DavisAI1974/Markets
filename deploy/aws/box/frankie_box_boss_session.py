@@ -1337,7 +1337,7 @@ class Session:
         return kept
 
     def brain_entry(self):
-        """This cycle's calculation findings into Frankie's brain (digest, accounting + ledgers, analysis); never fails the session."""
+        """Retain this cycle\'s findings before publication; failure refuses the push."""
         try:
             m = brain_module().write_entry(self.work, self.out, BRAIN_DIR, self.cycle)
             self.note(f'brain: cycle {self.cycle} entry written, {len(m["entries"])} documents in {BRAIN_DIR / ("cycle-" + self.cycle)}')
@@ -1809,7 +1809,6 @@ class Session:
                    classroom=classroom_receipt['report'], inputs=self._writing_inputs(), packets=[n for n in PACKETS if (self.work / n).is_file()]))
         self.note(f'written: four files, response_sha256 {response_sha256[:16]}, {len(response["lessons"])} lessons, the four classroom ledgers')
         self.docs()
-        self.brain_entry()
 
     @staticmethod
     def _json_entry(outcome, name):
@@ -1849,6 +1848,7 @@ class Session:
 
     # ---- push ---------------------------------------------------------------------------------------------
     def push(self, turn='initial'):
+        self.brain_entry()  # Every publication, including retries, requires durable findings.
         files = 'the four files' if turn == 'initial' else 'the three correction files'
         self.phase('pushing', f'pushing {files} to root/cycle-{self.cycle}-response')
         result = subprocess.run(['bash', str(MARKETS / 'deploy' / 'aws' / 'box' / 'frankie_box_push_response.sh')],
@@ -1896,11 +1896,10 @@ class Session:
             self.refuse(f'brain: no calculation findings entry for cycle(s) {", ".join(missing)}; cycle {self.cycle} must read them first '
                         f'(Greg, 2026-09-21). Publish them: frankie_box_push_response.sh BRAIN_ONLY=1 CYCLE=<NN>, or restore {BRAIN_DIR}')
 
-        self.knowledge_base = brain.capture_base(BRAIN_DIR, self.request_sha256)
+        self.knowledge_base = brain.pin_session_base(
+            BRAIN_DIR, self.request_sha256,
+            self.work / ('knowledge-base-' + self.request_sha256 + '.json'))
         base = load_json(self.knowledge_base)
-        write_json(self.work / ('knowledge-base-' + self.request_sha256 + '.json'), dict(
-            schema='FRANKIE_SESSION_KNOWLEDGE_BASE_RECEIPT_V1', request_identity=self.request_sha256,
-            path=str(self.knowledge_base), entries=len(base['entries']), **witness(self.knowledge_base)))
         self.note(f'brain: pinned {len(base["entries"])} accumulated entries for this request, including prior cycle-zero runs')
 
     def _run(self, stage):
