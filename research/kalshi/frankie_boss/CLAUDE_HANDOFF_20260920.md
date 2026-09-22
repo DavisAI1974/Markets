@@ -4290,3 +4290,28 @@ replay; the verification drain after the seal uses the same N through the parall
 CPUs: N = 31 leaves the parent its own; the canary's rate says whether the encoders or the parent bound the run.
 Nothing in the pinned stack changed for this; the wrapper passes WORKERS (default 32 -> set 31) and the block bound stays
 the default.
+
+### 03:2xZ 09-22: GREG: "did we wire in the 2 pieces into Frankie that somehow got dropped ... 4.2 on one of our build docs"; his upload = Frankie's cycle-0 analysis, "missing items"
+
+The two pieces are the pinned producers' own D-4 and D-16 (frankie_raw_mbo_benchmark at 2ebb8ce8): SECTION 4.2, the
+daily book regime companion (per-day first/last/min/max/mean of spread, full-depth imbalance, bid/ask depth, order
+count, level count; "the section whose entire job is to summarise book_full, 10.13 GB, 93.47% of the exact member
+ledger"), which "did not run at all" on the first replay (run 33605852433), and SECTION 4.4, the mirror matcher, "absent
+from the runner's section map entirely" (the numbering jumped 4.2 to 4.5). Both are FIXED at the pinned checkout:
+`native_calculation_runner.py` registers "4.2": BookRegimeCalculator and "4.4": the mirror (lines 386-412) with a
+dark-section regression test; the driver writes `book_regime` per group on every member row (`native_replay_driver.py:
+1117`), 4.2's companion_rows reach the runner's `averaged_companions` layer and its summary reaches result.json
+(`finalize`), and the mirror emits lifecycle `mirror` rows and `structure.mirror.orientation` on member rows.
+WHAT FRANKIE SAW: his cycle-0 analysis (Greg's upload, section 3) read the FIRST REPLAY's artifact as its corpus, where
+both were dark, hence "section 4.2 absent, no spread / book-regime scale" and "averaged_companion_sections_absent:
+4.1, 4.2, 4.3, 4.4, 4.15". The other missing items there: the critic's zero hypotheses (call 4, host side) and the
+frozen full-structure hash not delivered (BR-6/BR-7 now deliver the frozen layer files whole to the teach-back and every
+layer file by name, bytes and sha256 in the docs bundle).
+WHAT THE RERUN DELIVERS (the bedrock, chat 7): the box runs the pinned NativeCalculationRun, so 4.2 and 4.4 RUN; the
+crosswalk projects `book_regime.relative_imbalance / best_bid / total_depth` and `structure.mirror.orientation` into the
+V6 member tables; result.json (with the averaged companions, 4.2's daily rows among them) is rendered into the docs
+bundle as bedrock-result.md; the mirror's lifecycle rows stay in the exact ledgers on the box (referenced by name, bytes,
+sha256, not projected: no crosswalk layer names a `mirror` or `book_regime` lifecycle section). GAP TO CLOSE before the
+rerun's read: 4.2's per-day companion and 4.4's lifecycle rows are delivered as a document and a ledger reference, not as
+V6 TABLES; if Greg wants them read as tables (Section 7's daily diagnostic as rows), that is one crosswalk-side projection
+(a box change, TDD, no producers change). Put to Greg.
