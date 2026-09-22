@@ -1,6 +1,6 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
-## READ FIRST (06:4xZ 09-22, chat 9, THE MONDAY INGEST IS RUNNING ON THE BOX): the ingest is 5x faster and running (run 35694087514, started 06:16Z, about an hour plus the drain); the launch build is NOT ready behind it (the schedule, host and box modules are unbuilt)
+## READ FIRST (06:5xZ 09-22, chat 9 CLOSING on Greg's "commit, push, make the handoff for Codex"): THE MONDAY INGEST IS RUNNING ON THE BOX; Greg's directive = BUILD MODULES 2-4 NOW WITH THE INGEST-DEPENDENT VALUES LEFT BLANK; the Codex handoff is `CODEX_HANDOFF_20260922.md`
 
 Branch `claude/cycle-0-monday-rerun-hk2q2z` (tip = the commit carrying this block or later; the harness cuts new branches
 from the stale trunk tip: `git checkout -B <new name> origin/claude/cycle-0-monday-rerun-hk2q2z` and push). Run
@@ -46,6 +46,10 @@ carrying the trading-day stream); (4) the box module (the driver's source object
 and ledgers at 2 million rows, per-layer streaming). Then the full rerun order (handoff 01:3xZ 09-22 steps 0-9 with 1b).
 Also open before any of it: the publish route for the container (presigned PUT vs S3 rights on the box: Greg's AWS
 call), the two flagged 4096s, pre-warm from Friday, chat 7's calls 2-5, the Friday-anchor re-run.
+
+GREG'S DIRECTIVE AT CLOSE (06:5xZ, verbatim): "Build everything and just leave the things we need from ingest we'll just leave
+blank" = build modules 2-4 (schedule, host, box) now; every value only the ingest receipt or Greg can supply is an EXPLICIT
+BLANK the gates refuse to run past, never a guess. The full brief, chat by chat since 09-21 morning: `CODEX_HANDOFF_20260922.md`.
 
 NEXT CHAT, in order: (0) read run 35694087514's receipt (no dispatch needed: the job summary), report the Monday count;
 then ONE `ACTION=status` for the container size; (1) Greg's row count -> SPEC-trading-day-schedule -> build (TDD);

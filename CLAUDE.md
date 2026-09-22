@@ -12,14 +12,14 @@
   receipt names (`sunday_*`, "full Sunday source") are the UTC-split era's and are to be read as that. Never say "Sunday
   and Monday"; say the Monday trading day. A trading day's record count is measured at ingest, never assumed from a
   partition's size.
-- **STATE 2026-09-22 06:4xZ (chat 9, the ingest running): READ FIRST the 06:4xZ block atop
+- **STATE 2026-09-22 06:5xZ (chat 9 CLOSING): READ FIRST `research/kalshi/frankie_boss/CODEX_HANDOFF_20260922.md` (everything since 09-21 morning, what runs now, what to finish), then the 06:5xZ block atop
   `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`, then the handoff from 05:4xZ 09-22 to the end, then
   `SHIP_REVIEW_20260922_CHAT9_INGEST.md`. Branch `claude/cycle-0-monday-rerun-hk2q2z`. The Monday ingest runs on the box
   (run 35694087514, started 06:16Z, 2,032,203 declared records, 1.77 ms/record measured on the canary before it, about an
   hour plus the drain); its receipt's record_count is the Monday count. The ingest writer packs boxes to the standard and
   composes the observation incrementally (journal bytes identical, builder identity re-minted). NO CANARY without Greg's
-  word. The launch build behind the ingest is NOT built: the schedule (Greg's row count pending), host and box modules,
-  then the full rerun order.**
+  word. Greg's directive at close: BUILD modules 2-4 (schedule, host, box) now with the ingest-dependent values left as
+  explicit blanks the gates refuse to run past; then the full rerun order.**
 - **STATE 2026-09-22 05:xxZ (chat 9 CLOSING): READ FIRST the 05:xxZ block atop `research/kalshi/frankie_boss/DROP_IN_CLAUDE_20260921.md`,
   then `CLAUDE_HANDOFF_20260920.md` from 04:5xZ 09-22 to the end, then `SHIP_REVIEW_20260922_CHAT9.md`. Branch
   `claude/cycle-0-monday-rerun-hk2q2z` (carries the whole rerun history; the harness cuts new branches from the stale trunk

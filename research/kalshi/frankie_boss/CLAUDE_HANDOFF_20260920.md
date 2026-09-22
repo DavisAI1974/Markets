@@ -4439,3 +4439,17 @@ data is the builder's own differential check (the first observation and every 64
 none refused) beside the fixture's both-writers proof. Speed-up 5.0x; the parent is still the bound (1.77 ms/record):
 what remains is the INPUT entry (pack, dumps, sha of the raw record), the chain hash, the composed join and sha256 of
 ~200 KB, the adapter apply and the decode; the parallel-replay writer is the next lever if an hour is not minutes.
+
+### 06:5xZ 09-22: CHAT 9 CLOSING (Greg: "commit, push and make sure all end docs are updated, make handoff for codex")
+
+Greg's directive (verbatim): "Build everything and just leave the things we need from ingest we'll just leave blank" =
+modules 2-4 of the capability map are to be built now, the ingest-dependent and Greg-dependent values as explicit blanks
+the gates refuse to run past. `CODEX_HANDOFF_20260922.md` carries the whole brief since 09-21 morning; the drop-in's top
+block and CLAUDE.md point at it. The Monday ingest (run 35694087514) is running at close (started 06:16Z; about an hour
+plus the drain); its receipt is the Monday count. Chat 9's commits on this branch, in order: a2f32bae, d68c0b90, 68340beb,
+094e06b1, 891bd26a (the chat-8 ship fixes), da294b91 (BR-9), b606dcdc (records), 4494c854 (--profile), b884fc7f (the
+tree memoization), 87b55109 (the box standard in the writer), 022053eb (the incremental observation), 7ceba67b,
+86c02edc (box_standard, the import fix), 2ae4da20 (the canary number), e63d68bd/014fcb8f (status readout), 206c2dfd
+(the parallel-replay spec), 39628236 (the ship review's required items), fcc15558, 7eb76a94 (aligned joins), 591640dc,
+and this close. The Explore agent mapping the fourteen Sunday-slice sites was read-only and its map, if it lands, is
+advisory; the capability map's list stands.
