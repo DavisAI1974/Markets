@@ -83,6 +83,11 @@ it to the next); nothing in the wrapper re-derives a date.
    in a committed manifest (`blocks/BLOCK_20211004_20211006_COMPACT_MANIFEST.json`), `ingested: true` recorded.
 5. Nothing on the box deleted or overwritten; the four members still present with the manifest's sha256s.
 
-## Decided (Greg, 02:4xZ) and open
-- Decided: whole block; workers = all the box's CPUs; the standard language (trading days, partitions).
+## Decided (Greg, 02:4xZ-02:5xZ) and open
+- Decided: MONDAY BY ITSELF first (the four-partition block after): the manifest `blocks/BLOCK_20211004_SOURCE_MANIFEST.json`
+  derived from the staged block's measured halt counts = the 20211003 partition whole (57,027) + the 20211004 partition's
+  records before the halt (1,975,176) = 2,032,203 records declared, the take verified at the boundary by the ingest;
+  workers = all the box's CPUs; the standard language (trading days, partitions).
+- Built (TDD): the partial-member take in `ingest_block_sources.py`, `operations/derive_trading_day_manifest.py`, the box
+  wrapper `deploy/aws/box/frankie_box_ingest_block.sh` (fetch | canary | ingest | status).
 - Open: the publish route: presigned PUT through the run workflow (no role change, no key on the box) or S3 rights on the box?

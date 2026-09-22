@@ -20,6 +20,8 @@
   bedrock.lifecycle.<section> whole, once; TABLE_GRAMMAR = DIGEST_V5 for the block marker); `deploy/aws/box/frankie_box_teach.py` (the facts by code,
   the prompt, `parse_answer` with the number transcription check, the Markdown); `frankie_box_docs.py` / `frankie_box_brain.py` carry the teach-back,
   the bedrock receipt/result and the ledgers whole (docs) and reference the layer files.
+- `research/kalshi/frankie_boss/operations/derive_trading_day_manifest.py` + `blocks/BLOCK_20211004_SOURCE_MANIFEST.json` - a trading day's manifest from a staged block (the Monday 2021-10-04 day: 2,032,203 records declared, the partial take at the halt).
+- `deploy/aws/box/frankie_box_ingest_block.sh` - the trading-day ingest on Frankie's box: fetch by presigned map, canary, ingest (all CPUs), status.
 - `research/kalshi/frankie_boss/SPEC-trading-day-ingest.md` - module 1 of the trading-day map: the staged block ingested whole under the trading-day policy on Frankie's box, canary first, the count measured.
 - `research/kalshi/frankie_boss/blocks/FRIDAY_ANCHOR_20211001.json` + `deploy/aws/box/frankie_box_friday_anchor.sh` - the Friday last trade before the halt (5.544 at 20:59:56Z, 2021-10-01), measured on the box; Frankie's start anchor.
 - `research/kalshi/frankie_boss/CAPABILITY_MAP_TRADING_DAY_20260922.md` - the cycle-0 rerun on the CME trading day: Greg's calls verbatim, what is measured, the assumptions, the four-module map (spec per module follows his review).

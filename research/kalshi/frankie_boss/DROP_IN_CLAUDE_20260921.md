@@ -39,8 +39,12 @@ is 5.628. The box holds the Sunday compact journal only (inventory run 356791584
 `SPEC-trading-day-ingest.md` written (a4edd808): whole block, cme_trading_day, canary first, on Frankie's box; OPEN: the
 publish route (presigned PUT vs S3 rights on the box). DECIDED 02:4xZ: whole block; all 32 CPUs. THE STANDARD (CLAUDE.md,
 first FRANKIE/BOSS rule): the trading day, named by its trade date, opens 18:00 ET the prior calendar day, halts 17:00
-ET; "there is no more Sunday"; the DBN files are UTC partitions, not days; a day's count is measured at ingest. NEXT on
-Greg's word (the publish route): the ingest wrapper script (TDD), the canary dispatch, then SPEC-trading-day-schedule.
+ET; "there is no more Sunday"; the DBN files are UTC partitions, not days; a day's count is measured at ingest.
+02:5xZ-03:0xZ: GREG "Monday by itself before we do 4 days at a time" -> MODULE 1 BUILT: the Monday manifest
+`blocks/BLOCK_20211004_SOURCE_MANIFEST.json` (57,027 + 1,975,176 = 2,032,203 declared, derived from the staged halt counts),
+the partial-member take in the ingest tool (TDD), the box wrapper `frankie_box_ingest_block.sh` (fetch|canary|ingest|status).
+NEXT: fetch the two partitions to the box (presign both keys), the canary, the rate to Greg, the ingest; the publish route
+is still Greg's call; then SPEC-trading-day-schedule.
 
 ## READ FIRST (00:xxZ 09-22, chat 7 CLOSING): THE BEDROCK IS BUILT AND SHIPPED (BR-0..BR-7, /ship GO after fixes); CHECKPOINT E AND THE RERUN WAIT ON GREG'S CALLS
 

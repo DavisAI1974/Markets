@@ -4254,3 +4254,20 @@ partitions, the same S3 objects and sha256s the staged four-partition block alre
 with the stage tool's own hashing, no AWS write) and an ingest bounded at the Monday halt (a `--through-trading-day`
 bound in `ingest_block_sources.py`, TDD; the container then holds the Monday trading day and nothing of Tuesday). The
 four-partition block ingest comes after Monday is proven. The earlier "whole block" reading is superseded by this.
+
+### 03:0xZ 09-22: MODULE 1 BUILT: the Monday trading-day manifest, the partial-member take, the box ingest wrapper
+
+Greg: "Monday by itself before we do 4 days at a time." The pinned conformance stack reconciles per-member counts to
+the manifest, so the lawful way to ingest one trading day from UTC partitions is a manifest that DECLARES the take:
+`blocks/BLOCK_20211004_SOURCE_MANIFEST.json` (derived by `operations/derive_trading_day_manifest.py` from the staged
+block manifest's own measured `before_halt`/`after_halt`, no AWS call; hash-bound; validated by block_source_scope) =
+the 20211003 partition whole (57,027; its 245 pre-halt records roll to Monday under the weekend rule) plus the 20211004
+partition's 1,975,176 records before the 21:00Z halt = 2,032,203 records, the STAGED measurement of the Monday trading
+day (the ingest measures it again and the receipt is the number). `ingest_block_sources.py` gains `partial_takes`: a
+partial member stops after its take and the next record must open a later trading day, else refused; the receipt carries
+`partial_members_ingested`. The box wrapper `deploy/aws/box/frankie_box_ingest_block.sh`: fetch (presigned map, every
+partition verified against the manifest, never overwritten), canary (20,000 records, rate only), ingest (all 32 CPUs,
+a fresh work directory per run), status; refuses while the cycle units run; no S3 write (publish = Greg's route call).
+Tests: ingest/block-scope/derive/compact-journal suites and the two box contract tests green; the codecs CI list gains
+the two box tests. NEXT (on Greg's go, given by "Lets rerun cyc 0"): fetch the two partitions to the box, run the canary,
+report the rate and the projected wall time, then the ingest.
