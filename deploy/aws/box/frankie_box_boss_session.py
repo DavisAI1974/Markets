@@ -1086,7 +1086,7 @@ class Session:
         # receipt and plan are moved aside under work/ (nothing deleted; its notes stay under their own notes-<sha> dir).
         identity = (f'{R.RENDER_VERSION}+{DG.SCHEMA}+{HR.SCHEMA}+tensors:{tensor_mode}'
                     f'+digest:{(sha256_bytes(digest_path.read_bytes())[:16] if digest_path.exists() else "none")}'
-                    f'+brain:{brain_module().identity(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))}')
+                    f'+reading-policy:verified-parts-v2+brain:{brain_module().identity(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))}')
         receipt_path = self.work / 'reading-corpus.json'
         if corpus_path.exists() and receipt_path.exists():
             prior = load_json(receipt_path)
@@ -1157,13 +1157,6 @@ class Session:
                         parts.append(f'\n\n## Frankie\'s merged notes from cycle {cyc} (carried forward; values marked $read below were read then)\n\n'
                                      + notes.decode('utf-8', errors='replace') + '\n')
                         members.append(dict(name=f'merged-notes-cycle-{cyc}', bytes=len(notes), sha256=rec['merged_notes_sha256'], treatment='prior cycle notes, whole'))
-            brain_text, brain_members = brain_module().load(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))
-            if brain_text:
-                parts.append("\n\n## Frankie's brain: the calculation findings of the earlier cycles, carried forward whole (Greg, 2026-09-21). "
-                             'These are your own prior derivations and findings; read them as your own memory, compare this cycle\'s '
-                             'derivations with them, and never mistake them for the delivered evidence.\n' + brain_text)
-            members.extend(brain_members)
-            self.note(f'brain: {sum(1 for m in brain_members if m["treatment"].startswith("brain: prior"))} prior-cycle documents in the corpus')
             for d, v in report.dictionary.items():
                 ledger['values'].setdefault(d, dict(cycle=self.cycle, member_path=v['path'], bytes=v['bytes'], kind=v['kind']))
             write_json(READING_LEDGER, ledger)
@@ -1188,6 +1181,13 @@ class Session:
         else:
             parts.append(data[marker:].decode('utf-8', errors='replace') if marker >= 0 else '')
             members.append(dict(name='producer-evidence block', treatment='payload not parseable; rendered raw'))
+        brain_text, brain_members = brain_module().load(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))
+        if brain_text:
+            parts.append("\n\n## Frankie's brain: the calculation findings of the earlier cycles, carried forward whole (Greg, 2026-09-21). "
+                         'These are your own prior derivations and findings; read them as your own memory, compare this cycle\'s '
+                         'derivations with them, and never mistake them for the delivered evidence.\n' + brain_text)
+        members.extend(brain_members)
+        self.note(f'brain: {sum(1 for m in brain_members if m["treatment"].startswith("brain: prior"))} prior-cycle documents in the corpus')
         if digest_path.exists():
             digest = digest_path.read_bytes()
             parts.append('\n\n## Frankie\'s own derivation of this cycle (the session code ran the pin producers on the cycle rows; whole)\n\n'
@@ -1199,6 +1199,40 @@ class Session:
                    members=members))
         return corpus_path
 
+    def _preserve_reading_paths(self, paths):
+        """Retain superseded reading evidence with a receipt for every move."""
+        paths = [p for p in paths if p.exists()]
+        if not paths:
+            return None
+        aside = self.work / ('superseded-reading-' + str(time.time_ns()))
+        aside.mkdir(exist_ok=False)
+        moves = [dict(source=str(path), destination=str(aside / path.name), **witness(path)) for path in paths]
+        write_json(aside / 'move-receipt.json', dict(schema='FRANKIE_READING_MOVES_V1',
+                   at=time.time(), moves=moves))
+        for path in paths:
+            path.rename(aside / path.name)
+        write_json(aside / 'move-completed.json', dict(schema='FRANKIE_READING_MOVES_COMPLETE_V1',
+                   at=time.time(), receipt=witness(aside / 'move-receipt.json')))
+        return aside
+
+    def _reading_part_receipt(self, notes_dir, i, start, end, corpus_sha):
+        path = notes_dir / f'part-{i:04d}.json'
+        note = notes_dir / f'note-{i:04d}.md'
+        if not path.is_file() or not note.is_file():
+            return None
+        try:
+            value = load_json(path)
+            if (value.get('schema') != 'FRANKIE_READING_PART_V1'
+                    or value.get('request_sha256') != self.request_sha256
+                    or value.get('corpus_sha256') != corpus_sha
+                    or value.get('part') != i or value.get('start') != start or value.get('end') != end
+                    or value.get('note') != witness(note)
+                    or value.get('outcome', {}).get('unusable') != []):
+                return None
+            return value
+        except (ValueError, OSError, TypeError):
+            return None
+
     def reading(self):
         corpus = self.reading_corpus()
         data = corpus.read_bytes()
@@ -1206,10 +1240,11 @@ class Session:
         chunks = self._chunks(data)
         notes_dir = self.work / f'notes-{corpus_sha[:12]}-unbounded'   # keyed by the corpus and the output policy: capped notes never mix in
         notes_dir.mkdir(exist_ok=True)
+        self._preserve_reading_paths([self.work / name for name in ('reading.json', 'reading-plan.json', 'merged-notes.md')])
         write_json(self.work / 'reading-plan.json', dict(schema='FRANKIE_BOX_READING_PLAN_V1', corpus=dict(witness(corpus), path=str(corpus)),
                    notes_dir=str(notes_dir), chunk_bytes=CHUNK_BYTES, part_input_tokens=getattr(self, '_part_tokens', None),
                    chunks=[dict(index=i, start=s, end=e) for i, (s, e) in enumerate(chunks)]))
-        header = ('You are Frankie, the BOSS: the principal session for cycle {cycle} of the 20211003 two-cycle run, reading the delivered '
+        header = ('You are Frankie, the BOSS: the principal session for cycle {cycle} of the ' + self.day + ' trading-day run, reading the delivered '
                   'evidence on your box. Request {req}. This is part {i} of {n} of the delivered evidence (the request prompt with the '
                   'producer-evidence members decoded; bytes {s}-{e} of the reading corpus); '
                   'you see only this part now, the other parts in other calls, and your notes are merged afterwards. Write NOTES for the '
@@ -1218,18 +1253,37 @@ class Session:
                   'legacy_book_imbalance, legacy_structure_observables, and on the frozen learned-structure layers; (3) instructions '
                   'the evidence gives the principal; (4) open questions. Distinguish what is observed from what you infer. Never invent '
                   'a number or a hash. Markdown; no length limit.\n\n----- PART {i}/{n} BEGINS -----\n')
-        pending = [(i, s, e) for i, (s, e) in enumerate(chunks) if not (notes_dir / f'note-{i:04d}.md').exists()]
+        pending = [(i, s, e) for i, (s, e) in enumerate(chunks)
+                   if self._reading_part_receipt(notes_dir, i, s, e, corpus_sha) is None]
+        self._reading_passes = {}
+        for i, _, _ in pending:
+            retained = [notes_dir / f'note-{i:04d}.md', notes_dir / f'part-{i:04d}.json',
+                        *sorted(notes_dir.glob(f'attempt-{i:04d}-*.md'))]
+            aside = self._preserve_reading_paths(retained)
+            if aside is not None:
+                self._reading_passes[i] = '-pass-' + aside.name.rsplit('-', 1)[-1]
         self.note(f'reading: {len(chunks)} parts, {len(pending)} to read ({"serverless x%d" % self.serverless["workers"] if self.serverless else "Pod x1"})')
 
         def read_part(item):
             i, s, e = item
-            return self._read_part_guarded(i, s, e, len(chunks), data, header, notes_dir)
+            outcome = self._read_part_guarded(i, s, e, len(chunks), data, header, notes_dir)
+            write_json(notes_dir / f'part-{i:04d}.json', dict(schema='FRANKIE_READING_PART_V1',
+                       request_sha256=self.request_sha256, corpus_sha256=corpus_sha,
+                       part=i, start=s, end=e, note=witness(notes_dir / f'note-{i:04d}.md'), outcome=outcome))
+            return outcome
 
-        outcomes = self._fan_out('reading', pending, read_part)
-        merged = self._merge([p.read_text(encoding='utf-8') for p in sorted(notes_dir.glob('note-*.md'))], level=0)
+        new_outcomes = self._fan_out('reading', pending, read_part)
+        outcomes = [load_json(notes_dir / f'part-{i:04d}.json')['outcome'] for i in range(len(chunks))]
+        if any(o.get('unusable') != [] for o in outcomes):
+            write_json(self.work / 'reading.json', dict(schema='FRANKIE_BOX_READING_RECEIPT_V2',
+                       status='incomplete', at=time.time(), parts=len(chunks), corpus_sha256=corpus_sha,
+                       notes_dir=str(notes_dir), outcomes=outcomes, new_outcomes=new_outcomes))
+            self.refuse('reading contains unusable parts after retry and split; preserved, no merge or advancement')
+        merged = self._merge([(notes_dir / f'note-{i:04d}.md').read_text(encoding='utf-8')
+                              for i in range(len(chunks))], level=0)
         (self.work / 'merged-notes.md').write_text(merged, encoding='utf-8')
-        write_json(self.work / 'reading.json', dict(schema='FRANKIE_BOX_READING_RECEIPT_V1', at=time.time(), parts=len(chunks),
-                   corpus_sha256=corpus_sha, notes_dir=str(notes_dir), new_outcomes=outcomes, merged=witness(self.work / 'merged-notes.md'),
+        write_json(self.work / 'reading.json', dict(schema='FRANKIE_BOX_READING_RECEIPT_V2', status='complete', at=time.time(), parts=len(chunks),
+                   corpus_sha256=corpus_sha, notes_dir=str(notes_dir), outcomes=outcomes, new_outcomes=new_outcomes, merged=witness(self.work / 'merged-notes.md'),
                    lane=dict(serverless=self.serverless['endpoint_id'], workers=self.serverless['workers']) if self.serverless else dict(pod=self.pod_id)))
         self.note(f'reading done: {len(chunks)} parts, merged notes {len(merged.encode("utf-8"))} bytes')
         self.docs()
@@ -1327,7 +1381,16 @@ class Session:
         notes covered three of four parts). A merge output that loses ANY sha256 value its inputs carried, or is empty,
         is replaced by the inputs verbatim with a marker; every merge output is kept as Markdown under work/merges/."""
         text = (outcome.get('text') or '') + (' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else '')
-        kept, note = docs_module().keep_if_lossy(list(inputs), text)
+        docs = docs_module()
+        kept, note = docs.keep_if_lossy(list(inputs), text)
+        if note is None:
+            reason = ('provider error' if outcome.get('error') else
+                      'output incomplete' if outcome.get('incomplete') else
+                      'refusal' if docs.REFUSAL_RE.match(text.strip()[:300]) else
+                      'runaway' if docs.runaway_tail(text) is not None else None)
+            if reason:
+                note = 'unusable merge output: ' + reason
+                kept = '\n'.join(inputs) + '\n\n[MERGE KEPT VERBATIM: ' + note + '; inputs retained]\n'
         merges = self.work / 'merges'
         merges.mkdir(exist_ok=True)
         (merges / f'{name}.md').write_text(f'## {name}\n\n' + kept + '\n', encoding='utf-8')
@@ -1358,7 +1421,7 @@ class Session:
         is unusable too, the part is split in two halves on a line boundary and each half is read (no further split);
         every attempt is kept beside the note (attempt-NNNN-*.md, never matched by the note-*.md glob)."""
         docs = docs_module()
-        label = f'read-{i:04d}'
+        label = f'read-{i:04d}' + getattr(self, '_reading_passes', {}).get(i, '')
         no_output = lambda o: '(no output: %s)' % o.get('error')
 
         def ask(name, start, end, tag):
@@ -1695,7 +1758,19 @@ class Session:
         if not receipt.exists() or not (self.work / 'merged-notes.md').exists():
             return False
         corpus = self.reading_corpus()
-        return load_json(receipt).get('corpus_sha256') == sha256_bytes(corpus.read_bytes())
+        value = load_json(receipt)
+        if value.get('schema') != 'FRANKIE_BOX_READING_RECEIPT_V2' or value.get('status') != 'complete':
+            return False
+        data = corpus.read_bytes()
+        corpus_sha = sha256_bytes(data)
+        chunks = self._chunks(data)
+        notes_dir = self.work / f'notes-{corpus_sha[:12]}-unbounded'
+        return (value.get('schema') == 'FRANKIE_BOX_READING_RECEIPT_V2'
+                and value.get('status') == 'complete' and value.get('parts') == len(chunks)
+                and value.get('corpus_sha256') == corpus_sha
+                and value.get('merged') == witness(self.work / 'merged-notes.md')
+                and all(self._reading_part_receipt(notes_dir, i, start, end, corpus_sha) is not None
+                        for i, (start, end) in enumerate(chunks)))
 
     # ---- writing (the four files) ------------------------------------------------------------------------
     def writing(self):

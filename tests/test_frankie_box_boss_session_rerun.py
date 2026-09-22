@@ -44,7 +44,7 @@ def test_compare_and_receipts_stages_write_the_packets_and_the_base_carries_them
     assert set(inputs) == {'comparison.md', 'session-receipts.md'} and all(len(v) == 64 for v in inputs.values())
 
 
-def test_reading_runs_again_only_when_the_corpus_differs(tmp_path, monkeypatch):
+def test_legacy_reading_receipt_without_coverage_must_be_read_again(tmp_path, monkeypatch):
     s = stub(tmp_path, monkeypatch)
     corpus = s.work / 'reading-corpus-full.md'
     corpus.write_text('corpus v1')
@@ -52,7 +52,7 @@ def test_reading_runs_again_only_when_the_corpus_differs(tmp_path, monkeypatch):
     assert s._corpus_current() is False                                         # never read
     (s.work / 'merged-notes.md').write_text('notes')
     (s.work / 'reading.json').write_text(json.dumps(dict(corpus_sha256=session.sha256_bytes(b'corpus v1'))))
-    assert s._corpus_current() is True                                          # read this exact corpus
+    assert s._corpus_current() is False                                         # legacy receipt lacks verified coverage
     corpus.write_text('corpus v2: the brain now carries the frozen learned structure')
     assert s._corpus_current() is False                                         # the corpus moved: read again
 
