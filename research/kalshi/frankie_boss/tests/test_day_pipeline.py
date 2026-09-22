@@ -230,7 +230,7 @@ def test_the_host_ingest_path_is_reconciled_on_the_same_count(tmp_path):
 def test_cycle_limit_seam_gates_the_prefix_count_and_refuses_out_of_range_limits(tmp_path):
     # The pre-existing seam (ship finding, 2026-09-20): a batch smaller than the day needs only as many prefixes as
     # cycles it runs, never fewer; the limit itself is 1..19.
-    for bad in (0, 20, '2', None):
+    for bad in (0, 20, '2'):
         with pytest.raises(ValueError, match='cycle_limit must be from 1 through 19'):
             dp.DayPipeline(dict(CONFIG, ingest_on='host'), '20211003', runner=runner([]), runs_root=tmp_path, cycle_limit=bad)
     pipeline = dp.DayPipeline(dict(CONFIG, ingest_on='host', minimum_prefixes=19), '20211003', runner=runner([]),

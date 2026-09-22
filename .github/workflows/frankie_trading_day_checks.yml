@@ -2,6 +2,14 @@ name: Frankie trading-day readiness checks
 on:
   push:
     branches: ['codex/trading-day-readiness-20260922']
+    paths:
+      - 'research/kalshi/frankie_boss/**'
+      - 'deploy/aws/box/frankie_box_bedrock.py'
+      - 'deploy/aws/box/frankie_box_boss_session.py'
+      - 'deploy/aws/box/frankie_box_digest_render.py'
+      - 'tests/test_frankie_box_*.py'
+      - 'deploy/aws/host/*.ps1'
+      - '.github/workflows/frankie_trading_day_checks.yml'
 permissions:
   contents: read
 jobs:
