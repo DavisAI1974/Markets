@@ -63,3 +63,4 @@ def test_the_wrapper_validates_the_manifest_with_the_tools_own_scope_pins_every_
     assert '[ "${PROFILE:-0}" = 1 ] && EXTRA="$EXTRA --profile"' in text and 'profile.txt' in text     # PROFILE=1 = a measurement run
     assert '>"$OUT.log" 2>&1' in text and 'tail -n 40 "$OUT.log"' in text                              # the tool's whole output beside the run; SSM caps at 24k
     assert 'progress.jsonl (last 6 of' in text and 'tail -n 30 "$d.log"' in text                        # status shows how far each run got and how it ended
+    assert 'SELECT format,count,head FROM seal' in text and "or 'UNSEALED'" in text and 'journalctl -k' in text   # the seal state and the kernel's kills, read-only
