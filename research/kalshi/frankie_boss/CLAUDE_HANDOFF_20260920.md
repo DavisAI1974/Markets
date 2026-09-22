@@ -4233,3 +4233,16 @@ reducer stack (the container packs about 21x); the count is measured and will be
 holds 1,994,358 records; the trading day = the Sunday 57,027 plus Monday's records before the 21:00Z halt). Shrinking
 the ADDITION on the model-facing side (the cycle window = Greg's row count in the schedule; the reading lane's parts) stays
 the standing job ("shrinking/optimizing the packet is one of the most important jobs"); the reducer stack is not rebuilt.
+
+### 02:4xZ 09-22: GREG: "What do you mean by whole block?" and "why would we have any less workers?"
+
+Answered: the staged block manifest carries FOUR UTC-day files (2021-10-03 Sunday 57,027; 10-04 Monday 1,994,358;
+10-05 Tuesday 2,111,930; 10-06 Wednesday 2,308,160); "whole block" = all four ingested as one continuous stream, the
+trading-day policy labelling every record with its trade date, so the container holds Monday (the rerun), Tuesday and
+Wednesday (the next trading days) at once; "two members" = a new manifest of the Sunday and Monday files only. The
+worker knobs, each its own: (1) the ingest's `--workers` = spawned decode-and-verify processes on the box (the first run
+had parent + 3 on a 4-vCPU GitHub runner; the box has 32 CPUs: use them all, the canary measures the rate, no reason to
+use fewer); (2) the prefix copier's and the compact reader's `data_workers` (host runtime config, default 1); (3) the
+native step's thread count = 8, a DECLARED NUMERIC IDENTITY fixed for the whole run (`launch_pins.py:15 native_threads`),
+the root's own, not a throughput knob; (4) the serverless reading endpoint's H100 workers (0-8, two sequences each), the
+reading lane's. Greg's word taken: whole block; ingest workers = all the box's CPUs (32, the parent included).
