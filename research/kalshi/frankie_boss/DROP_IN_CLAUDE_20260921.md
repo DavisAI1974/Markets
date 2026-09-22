@@ -1,5 +1,56 @@
 # Frankie/BOSS drop-in — next chat after 2026-09-20 (launch day)
 
+## READ FIRST (06:4xZ 09-22, chat 9, THE MONDAY INGEST IS RUNNING ON THE BOX): the ingest is 5x faster and running (run 35694087514, started 06:16Z, about an hour plus the drain); the launch build is NOT ready behind it (the schedule, host and box modules are unbuilt)
+
+Branch `claude/cycle-0-monday-rerun-hk2q2z` (tip = the commit carrying this block or later; the harness cuts new branches
+from the stale trunk tip: `git checkout -B <new name> origin/claude/cycle-0-monday-rerun-hk2q2z` and push). Run
+`using-agent-skills` and `git-workflow-and-versioning` first; skills win overlaps; attribution lines on every commit; no
+model identifiers pushed. RULES IN FORCE, verbatim: nothing deleted; every move receipted; no Pod or EC2 stop/terminate
+without Greg; never stop the native host runner; keys never printed; NO output limits on the BOSS; the pinned Pod
+bootstrap bundle untouched; no outside LLMs as engine; records in git or AWS only. NO CANARY without Greg's word (his
+06:xxZ order, verbatim: "STOP SECRETLY RESTARTING CANARY"). Box probes: `ACTION=status` is read-only and moves nothing,
+but a dispatch QUEUES behind the running ingest (the workflow's concurrency group per instance) and the ingest wrapper
+refuses to run the tool while a cycle unit is active; do not dispatch anything until run 35694087514 completes.
+
+THE INGEST (Greg 06:16Z: "Start ingest ... Seriously we need to get moving"): `frankie_box_run.yml`
+`frankie_box_ingest_block.sh ACTION=ingest WORKERS=31`, run 35694087514 on 2ae4da20, the Monday trading day 2021-10-04 =
+the 20211003 partition whole (57,027; first record 16:06:08Z Sunday, 245 pre-open records the weekend rule folds into
+Monday) + the 20211004 partition before the 21:00Z halt (1,975,176) = 2,032,203 declared; 23 trading hours (22:00Z Sunday
+to 21:00Z Monday). Rate measured on the canary before it (run 35693868307): 1.77 ms/record, 565 records/s, 1.0 hour
+projected, then the seal and the conformance drain (budget 15-30 min more). When it lands: the job summary/artifact of
+run 35694087514 carries the ingestion receipt (record_count, journal_count, journal_hash, group_count, journal_sha256,
+journal_bytes, ingest_seconds, conformance_seconds; this run's receipt has NO packing key, fixed after dispatch); then ONE
+`ACTION=status` prints the container's boxes, rows and bytes (e63d68bd/014fcb8f). The receipt's record_count is THE
+MONDAY COUNT, reported to Greg as a measurement. If the run failed: the wrapper keeps the directory and prints the tool's
+stderr; the differential check refusing ("incremental observation differs") or the conformance stack refusing are the
+two real failure classes; nothing on the box is deleted or overwritten.
+
+WHAT LANDED THIS CHAT (all pushed; /ship GO, `SHIP_REVIEW_20260922_CHAT9_INGEST.md`): the box standard in the ingest
+writer (rows per box = partition_entries_for(2 x declared records) clamped at 256, bytes per box = 16 MiB; the writer
+had cut 4 MiB blocks of 16 entries); the incremental observation (the parent keeps each order's and level's canonical
+fragment, updates what the message touched, joins in C, the writer splices the bytes into the APPLIED body; a
+differential check against observe_book per instrument at its first and every 64th observation; the raw path packs
+observe_book and the both-writers and full-adapter-path tests prove byte identity of the journal; the BUILDER IDENTITY is
+re-minted: c15_builder/c15_observer/c15_journal changed, the science-byte pin updated, step 1b's re-pin covers it);
+`--profile`; `box_standard.py` after the box died on a flat import (a test now runs the tool as the box does); the
+receipt carries packing and the measured box count; `SPEC-ingest-parallel-replay.md` = the next lever (an hour to
+minutes; not built, Greg's call). Ship-review baseline failures unchanged (authority_map x3, source_recovery x1,
+pre-existing).
+
+THE LAUNCH BUILD IS NOT READY BEHIND THE INGEST (Greg's question 06:4xZ): the capability map's modules 2-4 are UNBUILT:
+(2) SPEC-trading-day-schedule not written: the schedule for the trading day (cutoffs over 23 hours), the prefixes
+re-seeded under GREG'S ROW COUNT (pending; the code carries none), the binding re-pinned; the 57027/19/one-date/"full
+Sunday" gates in fourteen code sites (listed in `CAPABILITY_MAP_TRADING_DAY_20260922.md`) become the schedule's declared
+counts; (3) the host module (the runner's gates reading the declared counts, the code pins re-minted, the request
+carrying the trading-day stream); (4) the box module (the driver's source object per TRADING DAY, the bedrock traversal
+and ledgers at 2 million rows, per-layer streaming). Then the full rerun order (handoff 01:3xZ 09-22 steps 0-9 with 1b).
+Also open before any of it: the publish route for the container (presigned PUT vs S3 rights on the box: Greg's AWS
+call), the two flagged 4096s, pre-warm from Friday, chat 7's calls 2-5, the Friday-anchor re-run.
+
+NEXT CHAT, in order: (0) read run 35694087514's receipt (no dispatch needed: the job summary), report the Monday count;
+then ONE `ACTION=status` for the container size; (1) Greg's row count -> SPEC-trading-day-schedule -> build (TDD);
+(2) the publish route on Greg's call; (3) host and box modules; (4) the full rerun order.
+
 ## READ FIRST (05:xxZ 09-22, chat 9 CLOSING): /SHIP ON THE CHAT-8 CODE = GO AFTER FIXES, ALL LANDED; BR-9 (4.2/4.4 AS V6 TABLES) IS BUILT; THE WRAPPER NOW PINS THE DISPATCHED COMMIT; THE MONDAY INGEST WAITS ON GREG'S GO
 
 Branch `claude/cycle-0-monday-rerun-hk2q2z` (the harness's designated branch; reset onto the rerun branch's tip ba4d25ed at
