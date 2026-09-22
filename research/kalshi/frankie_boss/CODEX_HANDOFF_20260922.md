@@ -96,8 +96,9 @@ an EXPLICIT BLANK that the gates refuse to run past (a declared `null` with a re
   (member keys, sha256s), the declared record count (2,032,203), the number of cutoffs/steps and their rule (BLANK: Greg's
   modelling call), `model_context_rows` (BLANK: Greg's row count), and the journal-derived fields (cursors, prefix
   hashes, as_of clocks, the container sha256, the head hash) filled from the container after the ingest (BLANK now).
-  Every gate that hard-codes the Sunday slice reads the declared value instead; the fourteen sites are listed in
-  `CAPABILITY_MAP_TRADING_DAY_20260922.md` ("The Sunday-only assumption is hard-coded in code"): build_remaining_sunday_
+  Every gate that hard-codes the Sunday slice reads the declared value instead; the sites are mapped line by line, with
+  what each guards and the data shapes of the schedule, binding, seeds and host flow, in `SUNDAY_SITE_MAP_20260922.md`
+  (advisory, verify before changing), and listed in `CAPABILITY_MAP_TRADING_DAY_20260922.md` ("The Sunday-only assumption is hard-coded in code"): build_remaining_sunday_
   prefixes.py, run_actual_sunday.py, run_actual_sunday_compact_source.py, seal_final_prelaunch_candidate.py,
   run_journal_stack.py, parallel_source/verify_snapshot.py, sunday_execution.py, source_contract_runtime.py,
   day_pipeline.py, verified_sunday_schedule.py, selected_source_scope.py, and the box driver's one-UTC-day source object
