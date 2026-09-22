@@ -4182,3 +4182,16 @@ runner problem on this run" (read as: re-pin the prefix batch so the runner acce
 in the map; not a data-gate bypass). The map has four modules (ingest -> schedule -> host, box) and five assumptions;
 nothing is built or run before his word on it. This turns call 1 and the "two members or four" question into decided
 inputs; the row count stays his number in the schedule.
+
+### 02:2xZ 09-22: GREG: "LETS RERUN CYC 0"; "I thought there was a 3 day ingest that we did but maybe not"; THE FRIDAY ANCHOR
+
+Greg (verbatim): "Lets rerun cyc 0. I thought there was a 3 day ingest that we did but maybe not. And while you're in aws,
+get the proper value to anchor the last trade on fri so frankie knows where to start." Read as: the GO on the trading-day
+rerun program (the capability map and its assumptions stand unobjected); the block's ingestion is not assumed (the box
+inventory probe, run 35679158434, settles what the box holds); and a read-only data task: the LAST TRADE on Friday
+2021-10-01 before the 21:00Z halt, for the roster instrument, from the 5-year native archive in S3
+(`nymex/ng_mbo_5y_v0/native/20211001_20211101/`, the month window that holds the Sunday member), as the anchor Frankie
+starts from at the Sunday open (the schedule's `first_observed_trade_candidate` is the Sunday open's first trade,
+price_raw 5628000000 at cursor 447; the Friday close is the reference it gaps from).
+STEP 0 DONE: `frankie_host_supersede_principal_response.yml` registered on the trunk (e194892d), one file, the 98a92692
+pattern; the whole-cycle supersede can now be preceded by the recorded response's supersede.
