@@ -1090,15 +1090,17 @@ class Session:
         receipt_path = self.work / 'reading-corpus.json'
         if corpus_path.exists() and receipt_path.exists():
             prior = load_json(receipt_path)
-            if prior.get('identity') == identity:
+            cached = prior.get('corpus') or {}
+            original = prior.get('prompt') or {}
+            if (prior.get('identity') == identity
+                    and witness(corpus_path) == {k: cached.get(k) for k in ('bytes', 'sha256')}
+                    and witness(prompt) == {k: original.get(k) for k in ('bytes', 'sha256')}):
                 return corpus_path
-            aside = self.work / f'superseded-corpus-{int(time.time())}'
-            aside.mkdir(exist_ok=True)
-            for name in ('reading-corpus-full.md', 'reading-corpus.json', 'reading-plan.json'):
-                if (self.work / name).exists():
-                    (self.work / name).rename(aside / name)
-            write_json(aside / 'superseded.json', dict(schema='FRANKIE_BOX_CORPUS_SUPERSEDED_V1', at=time.time(), prior_identity=prior.get('identity'),
-                                                      identity=identity, prior_corpus=prior.get('corpus'), note='moved aside, nothing deleted; its notes stay under their notes-<sha> directory'))
+            aside = Session._preserve_reading_paths(self, [self.work / name for name in
+                ('reading-corpus-full.md', 'reading-corpus.json', 'reading-plan.json')])
+            write_json(aside / 'superseded.json', dict(schema='FRANKIE_BOX_CORPUS_SUPERSEDED_V1', at=time.time(),
+                       prior_identity=prior.get('identity'), identity=identity, prior_corpus=prior.get('corpus'),
+                       note='preserved with move receipts; notes stay under their corpus-specific directory'))
             self.note(f'reading corpus superseded: {prior.get("identity") or "(no identity: the pre-render corpus)"} -> {identity}; kept under {aside.name}')
         data = prompt.read_bytes()
         marker = data.find(b'## BOSS/Granite producer evidence')
@@ -1393,6 +1395,7 @@ class Session:
                 kept = '\n'.join(inputs) + '\n\n[MERGE KEPT VERBATIM: ' + note + '; inputs retained]\n'
         merges = self.work / 'merges'
         merges.mkdir(exist_ok=True)
+        Session._preserve_reading_paths(self, [merges / f'{name}.md', merges / f'{name}.model-output.md'])
         (merges / f'{name}.md').write_text(f'## {name}\n\n' + kept + '\n', encoding='utf-8')
         if note:
             (merges / f'{name}.model-output.md').write_text(f'## {name}: the model output that was NOT used ({note})\n\n' + text + '\n', encoding='utf-8')
