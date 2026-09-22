@@ -350,6 +350,77 @@ def crosswalk_records(producers, layers):
     return out
 
 
+# ---- BR-9: sections 4.2 and 4.4 as files beside the crosswalk layers (SPEC-bedrock-section-tables.md) -----------------
+# The two pieces Greg found dropped (03:2xZ 09-22): 4.2, the daily book regime companion, and 4.4, the mirror matcher.
+# Both RUN at the pin (native_calculation_runner.sections registers them); the crosswalk names no layer for 4.2's companion
+# rows and none whose lifecycle section is `mirror`, so project() never filed them. These two files copy the traversal's own
+# numbers whole (result.json's averaged_companions rows and section summaries; the exact lifecycle ledger's `mirror` rows);
+# nothing is computed here. The file shape is project()'s so bedrock.layers indexes them and status_of names a zero-row reason.
+BRG = 'research/kalshi/frankie_raw_mbo_benchmark/native_book_regime.py'
+MIR = 'research/kalshi/frankie_raw_mbo_benchmark/native_mirror.py'
+SECTION_FILES = {
+    'bedrock_section_4_2': dict(section='4.2', kind='SECTION_COMPANION', producer='native_book_regime.BookRegimeCalculator', file=BRG, line=66,
+                                carrier="averaged_companions.rows[section=4.2] (one row per measure per stratum: the per-day book regime companion); "
+                                        "section_summaries['4.2'].first_last_pairs (the exact first and last book of each day-segment-phase)",
+                                lifecycle_sections=[]),
+    'bedrock_section_4_4': dict(section='4.4', kind='SECTION_LIFECYCLE', producer='native_mirror.MirrorMatcher', file=MIR, line=270,
+                                carrier="exact_lifecycle_rows.jsonl[emitting_section=mirror] (every offer at GROUP_CLOSE and every finalize row at "
+                                        "STREAM_END, whole); section_summaries['4.4'].matching_rule (the rule the pairs were formed under)",
+                                lifecycle_sections=['mirror']),
+}
+
+
+def project_sections(receipt, result_path, ledgers_dir, out_dir):
+    """One file per dropped section from the traversal's own result.json and exact lifecycle ledger, copied whole. Returns
+    {name: status, producer, reason, count, witness} like project(). The averages layer must be unaliased (the run passes
+    alias_companion_keys=False); an aliased layer is refused rather than read through a legend."""
+    ledgers_dir, out_dir = Path(ledgers_dir), Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    result = json.loads(Path(result_path).read_bytes())
+    layers = result['layers']
+    averages = layers['averaged_companions']
+    if averages.get('key_alias_form') != 'PLAIN':
+        raise ValueError(f"the averaged_companions layer is {averages.get('key_alias_form')!r}, not PLAIN: an alias form is not read here")
+    summaries = layers['exact_lifecycle_and_runway_ledger']['section_summaries']
+    span = float(receipt.get('span_seconds') or 0.0)
+    warmup, minimum = receipt.get('candidate_warmup_seconds'), receipt.get('candidate_min_observations')
+    traversal = dict(verdict=receipt.get('verdict'), failed_gates=list(receipt.get('failed_gates') or []), groups=receipt.get('groups'),
+                     records=receipt.get('records'), span_seconds=span, candidate_warmup_seconds=warmup, candidate_min_observations=minimum)
+    mirror_rows = [row for row in _rows(ledgers_dir / 'exact_lifecycle_rows.jsonl') if row.get('emitting_section') == 'mirror']
+    out = {}
+    for name, spec in SECTION_FILES.items():
+        section = spec['section']
+        summary = summaries.get(section)
+        entry = dict(layer=name, section=section, kind=spec['kind'], producer=spec['producer'], file=spec['file'], line=spec['line'],
+                     carrier=spec['carrier'], member_paths=[], lifecycle_sections=list(spec['lifecycle_sections']), fixture_dependent_sections=[],
+                     crosswalk_commit=PIN_COMMIT, traversal=traversal, member_rows=[], lifecycle_rows=[], companion_rows=[],
+                     first_last_pairs=[], declarations=[], matching_rule=None, summary=summary, section_counts={}, absent_paths={})
+        if section == '4.2':
+            rows = [r for r in averages['rows'] if r.get('section') == section]
+            entry['companion_rows'] = rows
+            entry['first_last_pairs'] = list((summary or {}).get('first_last_pairs') or [])
+            declarations = {}
+            for r in rows:
+                declared = dict(measure=r['measure'], kind=r.get('kind'), **(r.get('declaration') or {}))
+                if r['measure'] in declarations and declarations[r['measure']] != declared:
+                    raise ValueError(f"section 4.2 measure {r['measure']} carries two different declarations")
+                declarations[r['measure']] = declared
+            entry['declarations'] = [declarations[m] for m in sorted(declarations)]
+            entry['count'] = len(rows) + len(entry['first_last_pairs'])
+        else:
+            entry['lifecycle_rows'] = mirror_rows
+            entry['section_counts'] = dict(mirror=len(mirror_rows))
+            entry['matching_rule'] = (summary or {}).get('matching_rule')
+            entry['count'] = len(mirror_rows)
+        entry['member_count'], entry['lifecycle_count'] = 0, len(entry['lifecycle_rows'])
+        entry['status'], entry['reason'] = status_of(entry['count'], False, span, warmup, minimum)
+        entry['partial'] = []
+        w = write_json(out_dir / f'{name}.json', entry)
+        out[name] = dict(status=entry['status'], producer=entry['producer'], reason=entry['reason'], count=entry['count'],
+                         member_count=0, lifecycle_count=entry['lifecycle_count'], partial=[], carrier=entry['carrier'], **w)
+    return out
+
+
 def _rows(path):
     with open(path, 'r', encoding='utf-8') as handle:
         for line in handle:

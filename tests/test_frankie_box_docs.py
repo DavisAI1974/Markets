@@ -148,9 +148,11 @@ def test_build_docs_carries_the_teachback_the_bedrock_receipts_and_ledgers_and_r
     (work / 'derived').mkdir()
     (work / 'derived' / 'clock_event_time.json').write_text('{"status": "derived"}')
     (work / 'derived' / 'legacy_price.json').write_text('{"status": "derived"}')
+    (work / 'derived' / 'bedrock_section_4_4.json').write_text('{"status": "derived", "section": "4.4"}')     # BR-9: a section file rides like a layer file
     (work / 'derive.json').write_text(json.dumps(dict(layers=dict(clock_event_time=dict(status='derived', bedrock=True, path=str(work / 'derived' / 'clock_event_time.json')),
-                                                                  legacy_price=dict(status='derived', path=str(work / 'derived' / 'legacy_price.json'))),
-                                                      bedrock=dict(layers=['clock_event_time']))))
+                                                                  legacy_price=dict(status='derived', path=str(work / 'derived' / 'legacy_price.json')),
+                                                                  bedrock_section_4_4=dict(status='derived', bedrock=True, path=str(work / 'derived' / 'bedrock_section_4_4.json'))),
+                                                      bedrock=dict(layers=['clock_event_time'], sections=dict(bedrock_section_4_4='derived')))))
     index = docs.build_docs(work, out, '00')
     names = [e['name'] for e in index['docs']]
     assert 'exhaustion-teachback.md' in names and 'bedrock-receipt.md' in names and 'bedrock-result.md' in names
@@ -163,6 +165,7 @@ def test_build_docs_carries_the_teachback_the_bedrock_receipts_and_ledgers_and_r
         entry = referenced[f'bedrock/ledgers/{name}']
         assert entry['sha256'] == hashlib.sha256((work / 'bedrock' / 'ledgers' / name).read_bytes()).hexdigest() and 'kept on the box' in entry['what']
     assert 'derived/clock_event_time.json' in referenced and 'derived/legacy_price.json' not in referenced
+    assert 'derived/bedrock_section_4_4.json' in referenced and 'DIGEST_V6' in referenced['derived/bedrock_section_4_4.json']['what']
     assert referenced['derived/clock_event_time.json']['sha256'] == hashlib.sha256(b'{"status": "derived"}').hexdigest()
     assert 'DIGEST_V6' in referenced['derived/clock_event_time.json']['what']
     readme = (out / 'README.md').read_text()

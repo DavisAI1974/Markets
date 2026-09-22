@@ -840,13 +840,17 @@ class Session:
         run = B.run(records, container, self.work / 'bedrock', PRODUCERS, self.cycle, code_commit, self.day)
         crosswalk = B.crosswalk_records(PRODUCERS, layers)
         projected = B.project(run, self.work / 'bedrock' / 'ledgers', layers, crosswalk, derived)
-        for name, entry in projected.items():
+        # BR-9 (Greg, 2026-09-22): sections 4.2 and 4.4 as files beside the twenty layers, from the traversal's own result and ledger
+        sections = B.project_sections(run, self.work / 'bedrock' / 'result.json', self.work / 'bedrock' / 'ledgers', derived)
+        for name, entry in list(projected.items()) + list(sections.items()):
             receipt_layers[name] = dict(status=entry['status'], producer=entry['producer'], reason=entry['reason'], sha256=entry['sha256'],
                                         bytes=entry['bytes'], path=entry['path'], count=entry['count'], partial=entry['partial'], bedrock=True)
         derived_count = sum(1 for e in projected.values() if e['status'] == 'derived')
         self.note(f'bedrock: {derived_count}/{len(layers)} layers derived by the pinned traversal on {run["groups"]} groups '
-                  f'({run["span_seconds"]:.1f} s of rows; the candidate lane needs {run["candidate_warmup_seconds"]} s)')
-        return dict(schema='FRANKIE_BOX_DERIVE_BEDROCK_V1', layers=layers, bedrock_groups=pin_groups(pin), producers_commit=code_commit,
+                  f'({run["span_seconds"]:.1f} s of rows; the candidate lane needs {run["candidate_warmup_seconds"]} s); sections '
+                  + ', '.join(f'{name[-3:].replace("_", ".")} {e["status"]} ({e["count"]} rows)' for name, e in sections.items()))
+        return dict(schema='FRANKIE_BOX_DERIVE_BEDROCK_V1', layers=layers, sections={name: e['status'] for name, e in sections.items()},
+                    bedrock_groups=pin_groups(pin), producers_commit=code_commit,
                     cadence_policy=run['cadence_policy'], receipt=dict(witness(self.work / 'bedrock' / 'receipt.json'), path=str(self.work / 'bedrock' / 'receipt.json')),
                     result=run['result'], ledgers=run['ledgers'], reconciliation=run['reconciliation'], sections_fed=run['sections_fed'],
                     groups=run['groups'], records=run['records'], span_seconds=run['span_seconds'],

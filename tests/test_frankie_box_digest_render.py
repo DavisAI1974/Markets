@@ -408,3 +408,74 @@ def test_v6_a_none_group_index_sorts_last_and_round_trips():
     tables = DG.bedrock_tables(files)
     assert [r['group_index'] for r in tables['bedrock.members']] == [0, 1, 2, None]
     assert DG.parse_digest(DG.render_layers(tables))['bedrock.members'] == tables['bedrock.members']
+
+
+def _section_files():
+    """The two BR-9 section files (frankie_box_bedrock.project_sections' shape) with rows the pinned run's own shape carries."""
+    decl = dict(causal_cutoff='snapshot receive time (ts_recv_ns)', missingness_rule='no exclusions', numerator_formula='bid_depth_full + ask_depth_full',
+                population='full-book snapshots within the day', status='RESOLVED')
+    stratum = dict(chain_signature='', clock='ts_recv_ns', cluster_version='NO_CLUSTERING_D5', continuity_segment=18904, family_id='POOLED',
+                   session_phase='PRE_SETTLEMENT', source_day='20211003', source_role='SCORED_FINDINGS_DAY')
+    value = dict(n=3, arithmetic_mean=15.0, minimum=10, maximum=20, p50=15.0)
+    companions = [dict(measure='book_total_depth', kind='DISTRIBUTION', section='4.2', stratum=stratum, declaration=decl, excluded_missing_members=0, value=value),
+                  dict(measure='relative_imbalance', kind='DISTRIBUTION', section='4.2', stratum=stratum, declaration=dict(decl, numerator_formula='(b - a) / (b + a)'),
+                       excluded_missing_members=1, value=dict(value, arithmetic_mean=0.75, minimum=0.5, maximum=1.0, p50=0.75))]
+    pairs = [dict(source_day='20211003', source_role='SCORED_FINDINGS_DAY', continuity_segment=18904, session_phase='PRE_SETTLEMENT',
+                  first_book=dict(best_bid=3, best_ask=None, bid_depth=10, ask_depth=0, spread_raw=None, total_depth=10, recv_ns=1633298403300150000),
+                  last_book=dict(best_bid=3, best_ask=3, bid_depth=15, ask_depth=5, spread_raw=0, total_depth=20, recv_ns=1633298410300150000))]
+    mirror = [dict(emitting_section='mirror', emitted_on='GROUP_CLOSE', emitted_at_recv_ns=1633298403300150000 + i * 3_500_000_000, member_id=f'grp-20211003-{i}',
+                   disposition='PENDING', mirror_pair_key='ABB|BAA', orientation='CANONICAL' if i == 2 else 'MIRROR', counterparts_considered=0,
+                   nearest_candidate_distance=None) for i in range(3)]
+    mirror += [dict(emitting_section='mirror', emitted_on='STREAM_END', emitted_at_recv_ns=1633298410300150000, member_id=f'grp-20211003-{i}',
+                    disposition='UNMATCHED', mirror_pair_key='ABB|BAA', orientation='MIRROR', nearest_candidate_distance=None,
+                    unmatched_reason='NO_COUNTERPART_IN_SCOPE') for i in range(3)]
+    rule = dict(rule_id='MIRROR_EXACT_SIDE_SWAP_NEAREST_COORDINATE_V1', attribution='ONE_TO_ONE', attributions_per_member=1, coordinate_name='group_ts_recv_ns',
+                distance_bound=60000000000.0, lookahead='none; a member matches only against members already offered',
+                scope_fields=['source_day', 'source_role', 'continuity_segment', 'family_id', 'session_phase', 'subfamily_id'])
+    base = dict(member_paths=[], member_rows=[], partial=[], section_counts={}, absent_paths={}, reason=None, status='derived')
+    return {
+        'bedrock_section_4_2': dict(base, layer='bedrock_section_4_2', section='4.2', kind='SECTION_COMPANION', producer='native_book_regime.BookRegimeCalculator',
+                                    lifecycle_sections=[], lifecycle_rows=[], companion_rows=companions, first_last_pairs=pairs,
+                                    declarations=[dict(measure='book_total_depth', kind='DISTRIBUTION', **decl),
+                                                  dict(measure='relative_imbalance', kind='DISTRIBUTION', **dict(decl, numerator_formula='(b - a) / (b + a)'))],
+                                    matching_rule=None, count=3),
+        'bedrock_section_4_4': dict(base, layer='bedrock_section_4_4', section='4.4', kind='SECTION_LIFECYCLE', producer='native_mirror.MirrorMatcher',
+                                    lifecycle_sections=['mirror'], lifecycle_rows=mirror, section_counts=dict(mirror=6), companion_rows=[], first_last_pairs=[],
+                                    declarations=[], matching_rule=rule, count=6),
+    }
+
+
+def test_v6_the_two_section_files_render_as_companion_declaration_first_last_mirror_and_matching_rule_tables():
+    # BR-9 (Greg, 2026-09-22: 4.2 and 4.4 reach Frankie as TABLES): every fact once, parsed back equal
+    files = dict(_bedrock_files(), **_section_files())
+    tables = DG.bedrock_tables(files)
+    assert list(tables) == ['bedrock.layers', 'bedrock.members', 'bedrock.lifecycle.flow_substrate', 'bedrock.lifecycle.lineage', 'bedrock.lifecycle.mirror',
+                            'bedrock.companions.4.2', 'bedrock.declarations.4.2', 'bedrock.first_last.4.2', 'bedrock.matching_rule.4.4']
+    index = {r['layer']: r for r in tables['bedrock.layers']}
+    assert index['bedrock_section_4_2']['count'] == 3 and index['bedrock_section_4_4']['lifecycle_count'] == 6 and index['bedrock_section_4_4']['lifecycle_sections'] == 'mirror'
+    assert len(tables['bedrock.lifecycle.mirror']) == 6 and tables['bedrock.lifecycle.mirror'][5]['unmatched_reason'] == 'NO_COUNTERPART_IN_SCOPE'
+    companions = tables['bedrock.companions.4.2']
+    assert len(companions) == 2 and 'declaration' not in companions[0] and 'section' not in companions[0]      # the declaration once, in its own table
+    assert companions[0]['measure'] == 'book_total_depth' and companions[0]['value']['arithmetic_mean'] == 15.0 and companions[0]['stratum']['source_day'] == '20211003'
+    assert [d['measure'] for d in tables['bedrock.declarations.4.2']] == ['book_total_depth', 'relative_imbalance']
+    assert tables['bedrock.declarations.4.2'][1]['numerator_formula'] == '(b - a) / (b + a)'
+    assert tables['bedrock.first_last.4.2'][0]['first_book']['spread_raw'] is None and tables['bedrock.first_last.4.2'][0]['last_book']['total_depth'] == 20
+    assert tables['bedrock.matching_rule.4.4'][0]['rule_id'] == 'MIRROR_EXACT_SIDE_SWAP_NEAREST_COORDINATE_V1' and tables['bedrock.matching_rule.4.4'][0]['scope_fields'][0] == 'source_day'
+    assert 'bedrock.members' in tables and len(tables['bedrock.members']) == 3                 # the section files add no member columns
+    text = DG.render_layers(tables)
+    parsed = DG.parse_digest(text)
+    assert set(parsed) == set(tables)
+    for name in ('bedrock.lifecycle.mirror', 'bedrock.companions.4.2', 'bedrock.declarations.4.2', 'bedrock.first_last.4.2', 'bedrock.matching_rule.4.4'):
+        assert parsed[name] == tables[name], name
+    head = DG.digest_text(dict(rows=dict(path='p', count=2, kinds={}, head='h' * 64, head_is_request_source_hash=True), input_records=1, legacy_rows=1,
+                               f_last_groups=1, failure_count=0, pin_group='legacy_observable_crosswalk', layers={}), {}, [], [], [], [], 0, [], [], bedrock=files).split('## Layer status')[0]
+    assert 'bedrock.companions.<section>' in head and 'bedrock.declarations.<section>' in head and 'bedrock.first_last.<section>' in head and 'bedrock.matching_rule.<section>' in head
+
+
+def test_v6_a_could_not_section_file_renders_no_section_table_and_stays_in_the_index():
+    files = dict(_bedrock_files(), **_section_files())
+    files['bedrock_section_4_4'] = dict(files['bedrock_section_4_4'], status='could_not', reason='the traversal emitted no rows for this carrier on this cycle\'s rows',
+                                        lifecycle_rows=[], section_counts=dict(mirror=0), matching_rule=None, count=0)
+    tables = DG.bedrock_tables(files)
+    assert 'bedrock.lifecycle.mirror' not in tables and 'bedrock.matching_rule.4.4' not in tables and 'bedrock.companions.4.2' in tables
+    assert {r['layer']: r['status'] for r in tables['bedrock.layers']}['bedrock_section_4_4'] == 'could_not'

@@ -83,8 +83,14 @@ def test_derive_writes_the_legacy_five_and_the_twenty_bedrock_layers_and_records
     receipt = session.Session.derive(s)
     derived = s.work / 'derived'
     names = sorted(p.stem for p in derived.glob('*.json'))
-    assert len(names) == 25 and set(LEGACY) <= set(names) and set(FX.BEDROCK_LAYERS) <= set(names)
+    assert len(names) == 27 and set(LEGACY) <= set(names) and set(FX.BEDROCK_LAYERS) <= set(names)
+    assert {'bedrock_section_4_2', 'bedrock_section_4_4'} <= set(names)        # BR-9: the two dropped sections as files beside the twenty layers
     assert set(receipt['layers']) == set(names)
+    for name in ('bedrock_section_4_2', 'bedrock_section_4_4'):
+        entry = receipt['layers'][name]
+        assert entry['bedrock'] is True and entry['status'] == 'derived' and entry['reason'] is None and len(entry['sha256']) == 64
+    assert receipt['layers']['bedrock_section_4_2']['count'] == 7 and receipt['layers']['bedrock_section_4_4']['count'] == 6
+    assert receipt['bedrock']['sections'] == dict(bedrock_section_4_2='derived', bedrock_section_4_4='derived')
     assert receipt['bedrock']['layers'] == list(FX.BEDROCK_LAYERS)
     assert receipt['bedrock']['receipt']['sha256'] and (s.work / 'bedrock' / 'receipt.json').is_file()
     assert receipt['bedrock']['producers_commit'] == P.PIN and receipt['bedrock']['cadence_policy'] == 'NeverInvoke'
@@ -106,6 +112,9 @@ def test_derive_writes_the_legacy_five_and_the_twenty_bedrock_layers_and_records
     assert digest.startswith('# Derivation digest ')
     for name in FX.BEDROCK_LAYERS:
         assert f'- {name}: ' in digest
+    for table in ('bedrock.lifecycle.mirror', 'bedrock.companions.4.2', 'bedrock.declarations.4.2', 'bedrock.first_last.4.2', 'bedrock.matching_rule.4.4'):
+        assert f'### table {table}: ' in digest, table                              # BR-9: the two sections read as TABLES
+    assert '### table bedrock.lifecycle.mirror: 6 rows' in digest and '### table bedrock.companions.4.2: 6 rows' in digest
     assert any(n.startswith('bedrock: ') for n in s._notes)
     assert ('torch' in sys.modules) == torch_before   # this path never imports torch (the hidden-torch run proves it outright)
 
@@ -189,8 +198,17 @@ def test_derive_writes_a_v6_digest_with_the_bedrock_tables(tmp_path, monkeypatch
     assert [r['group_index'] for r in parsed['bedrock.members']] == [0, 1, 2]
     assert 'candidate_family_id' in parsed['bedrock.members'][0]['structure'] and 'decision_ts_recv_ns' in parsed['bedrock.members'][0]['clocks']
     index = {r['layer']: r for r in parsed['bedrock.layers']}
-    assert set(index) == set(FX.BEDROCK_LAYERS) and index['clock_lock_time']['status'] == 'could_not'
+    assert set(index) == set(FX.BEDROCK_LAYERS) | {'bedrock_section_4_2', 'bedrock_section_4_4'} and index['clock_lock_time']['status'] == 'could_not'
     assert 'episode' in index['derived_roll20_and_dipole_state']['partial']
+    # BR-9: the two sections as tables, the fixture run's own counts (6 companion rows = one per 4.2 measure, 1 first/last pair,
+    # 6 mirror rows = 3 PENDING offers at GROUP_CLOSE + 3 UNMATCHED at STREAM_END)
+    assert index['bedrock_section_4_2']['status'] == 'derived' and index['bedrock_section_4_4']['lifecycle_sections'] == 'mirror'
+    assert len(parsed['bedrock.companions.4.2']) == 6 and sorted(r['measure'] for r in parsed['bedrock.companions.4.2']) == [
+        'actions_per_group', 'book_level_count', 'book_order_count', 'book_spread_raw', 'book_total_depth', 'relative_imbalance']
+    assert len(parsed['bedrock.declarations.4.2']) == 6 and len(parsed['bedrock.first_last.4.2']) == 1
+    assert parsed['bedrock.first_last.4.2'][0]['source_day'] == FX.DAY
+    assert [r['disposition'] for r in parsed['bedrock.lifecycle.mirror']] == ['PENDING'] * 3 + ['UNMATCHED'] * 3
+    assert parsed['bedrock.matching_rule.4.4'][0]['rule_id'] == 'MIRROR_EXACT_SIDE_SWAP_NEAREST_COORDINATE_V1'
 
 
 def test_measure_digest_reports_tokens_and_parts_and_files_the_measurement(tmp_path, monkeypatch):

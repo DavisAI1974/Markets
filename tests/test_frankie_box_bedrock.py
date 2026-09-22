@@ -359,3 +359,68 @@ def test_project_files_could_not_emitted_no_rows_for_a_non_candidate_layer_whose
     at_risk = json.loads(Path(layers['prebirth_predecessor_at_risk_state']['path']).read_bytes())
     assert at_risk['status'] == 'could_not' and '900 s' in at_risk['reason']
     assert gaps['traversal'] == dict(verdict='REJECTED', failed_gates=['coverage'], groups=0, records=0, span_seconds=13.0, candidate_warmup_seconds=900, candidate_min_observations=600)
+
+
+# ---- BR-9: sections 4.2 and 4.4 as files beside the crosswalk layers (SPEC-bedrock-section-tables.md) -----------------
+
+def test_project_sections_files_4_2_companions_and_4_4_mirror_rows_from_the_traversals_own_result_and_ledger(tmp_path):
+    """Greg, 2026-09-22: the two dropped pieces reach Frankie as TABLES. The pinned run on the fixture stream emits 6 section-4.2
+    companion rows (one per measure), one first/last pair and 6 `mirror` lifecycle rows (3 PENDING offers at GROUP_CLOSE, 3
+    UNMATCHED at STREAM_END); project_sections copies them whole, computing nothing."""
+    producers = P.require_producers()
+    out = tmp_path / 'bedrock'
+    run = B.run(stream(), container(tmp_path), out, producers, '00', B.producers_commit(producers), DAY)
+    derived = tmp_path / 'derived'
+    sections = B.project_sections(run, out / 'result.json', out / 'ledgers', derived)
+    assert set(sections) == {'bedrock_section_4_2', 'bedrock_section_4_4'}
+    s42 = json.loads((derived / 'bedrock_section_4_2.json').read_bytes())
+    assert s42['status'] == 'derived' and s42['reason'] is None and s42['section'] == '4.2' and s42['crosswalk_commit'] == P.PIN
+    assert s42['producer'] == 'native_book_regime.BookRegimeCalculator' and s42['kind'] == 'SECTION_COMPANION'
+    assert sorted(r['measure'] for r in s42['companion_rows']) == ['actions_per_group', 'book_level_count', 'book_order_count',
+                                                                    'book_spread_raw', 'book_total_depth', 'relative_imbalance']
+    assert all(r['section'] == '4.2' and 'declaration' in r and 'stratum' in r and 'value' in r for r in s42['companion_rows'])
+    assert len(s42['first_last_pairs']) == 1 and s42['first_last_pairs'][0]['source_day'] == DAY
+    assert s42['first_last_pairs'][0]['last_book']['total_depth'] == 20 and s42['first_last_pairs'][0]['first_book']['spread_raw'] is None
+    assert [d['measure'] for d in s42['declarations']] == sorted(r['measure'] for r in s42['companion_rows'])
+    assert s42['declarations'][3]['numerator_formula'] == 'best_ask - best_bid at the snapshot'
+    assert s42['summary']['section'] == '4.2' and s42['summary']['snapshots_observed'] == s42['summary']['groups_observed'] == 3
+    assert s42['count'] == 7 == len(s42['companion_rows']) + len(s42['first_last_pairs']) and s42['member_rows'] == [] and s42['lifecycle_rows'] == []
+    assert sections['bedrock_section_4_2']['count'] == 7 and sections['bedrock_section_4_2']['status'] == 'derived'
+    s44 = json.loads((derived / 'bedrock_section_4_4.json').read_bytes())
+    assert s44['status'] == 'derived' and s44['section'] == '4.4' and s44['kind'] == 'SECTION_LIFECYCLE'
+    assert s44['producer'] == 'native_mirror.MirrorMatcher' and s44['lifecycle_sections'] == ['mirror'] and s44['section_counts'] == dict(mirror=6)
+    rows = s44['lifecycle_rows']
+    assert len(rows) == 6 == s44['count'] and all(r['emitting_section'] == 'mirror' for r in rows)
+    assert [r['disposition'] for r in rows] == ['PENDING'] * 3 + ['UNMATCHED'] * 3
+    assert [r['emitted_on'] for r in rows] == ['GROUP_CLOSE'] * 3 + ['STREAM_END'] * 3
+    assert {r['unmatched_reason'] for r in rows[3:]} == {'NO_COUNTERPART_IN_SCOPE'}
+    assert [r['member_id'] for r in rows[:3]] == [f'grp-{DAY}-{i}' for i in range(3)]
+    ledger = [json.loads(l) for l in (out / 'ledgers' / 'exact_lifecycle_rows.jsonl').read_text().splitlines() if l.strip()]
+    assert rows == [r for r in ledger if r.get('emitting_section') == 'mirror']      # the ledger's rows, whole, in ledger order
+    assert s44['matching_rule']['rule_id'] == 'MIRROR_EXACT_SIDE_SWAP_NEAREST_COORDINATE_V1' and s44['matching_rule']['attribution'] == 'ONE_TO_ONE'
+    assert s44['summary']['members_seen'] == 3 == 2 * s44['summary']['members_paired'] + s44['summary']['members_unmatched']
+    assert s44['companion_rows'] == [] and s44['member_rows'] == []
+    for name in ('bedrock_section_4_2', 'bedrock_section_4_4'):
+        entry = sections[name]
+        assert entry['path'] == str(derived / f'{name}.json') and len(entry['sha256']) == 64 and entry['partial'] == []
+        file = json.loads(Path(entry['path']).read_bytes())
+        assert file['traversal']['groups'] == 3 and file['file'] and file['line'] and file['carrier']
+
+
+def test_project_sections_refuses_an_aliased_averages_layer_and_files_could_not_when_a_section_emitted_nothing(tmp_path):
+    ledgers = tmp_path / 'ledgers'
+    ledgers.mkdir()
+    (ledgers / 'exact_lifecycle_rows.jsonl').write_text('{"emitting_section": "lineage", "emitted_on": "STAGE_CLOSED"}\n', encoding='utf-8')
+    layers = {'averaged_companions': dict(rows=[], key_alias_form='PLAIN', key_alias_legend={}),
+              'exact_lifecycle_and_runway_ledger': dict(section_summaries={'4.2': dict(section='4.2', first_last_pairs=[], snapshots_observed=0, groups_observed=0),
+                                                                            '4.4': dict(section='4.4', matching_rule=dict(rule_id='R'), members_seen=0, members_paired=0, members_unmatched=0)})}
+    result = tmp_path / 'result.json'
+    result.write_text(json.dumps(dict(layers=layers)), encoding='utf-8')
+    sections = B.project_sections(RECEIPT, result, ledgers, tmp_path / 'derived')
+    for name in sections:
+        file = json.loads(Path(sections[name]['path']).read_bytes())
+        assert file['status'] == 'could_not' and file['count'] == 0 and 'emitted no rows' in file['reason']
+    aliased = dict(layers=dict(layers, averaged_companions=dict(rows=[], key_alias_form='ALIASED', key_alias_legend={})))
+    result.write_text(json.dumps(aliased), encoding='utf-8')
+    with pytest.raises(ValueError, match='alias'):
+        B.project_sections(RECEIPT, result, ledgers, tmp_path / 'derived2')

@@ -709,6 +709,22 @@ def bedrock_tables(files):
                 sections[section] = rows
     for section in sorted(sections):
         tables[f'bedrock.lifecycle.{section}'] = [{c: _spell(v) for c, v in r.items()} for r in sections[section]]
+    # BR-9 (Greg, 2026-09-22): a SECTION file (frankie_box_bedrock.project_sections: 4.2, 4.4) adds, when derived, its companion
+    # rows as `bedrock.companions.<section>` (the declaration and the section label lifted out: the declaration is one row per
+    # measure in `bedrock.declarations.<section>`), its first/last books as `bedrock.first_last.<section>`, and its matching
+    # rule as the one row of `bedrock.matching_rule.<section>`; its lifecycle rows rode `bedrock.lifecycle.<section>` above.
+    for name, f in files.items():
+        section = f.get('section')
+        if f.get('status') != 'derived' or not section:
+            continue
+        if f.get('companion_rows'):
+            tables[f'bedrock.companions.{section}'] = [{c: _spell(v) for c, v in r.items() if c not in ('declaration', 'section')} for r in f['companion_rows']]
+        if f.get('declarations'):
+            tables[f'bedrock.declarations.{section}'] = [{c: _spell(v) for c, v in r.items()} for r in f['declarations']]
+        if f.get('first_last_pairs'):
+            tables[f'bedrock.first_last.{section}'] = [{c: _spell(v) for c, v in r.items()} for r in f['first_last_pairs']]
+        if f.get('matching_rule'):
+            tables[f'bedrock.matching_rule.{section}'] = [{c: _spell(v) for c, v in f['matching_rule'].items()}]
     return tables
 
 
@@ -741,7 +757,12 @@ def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, 
              'of every derived bedrock layer\'s member paths as columns (each once; a LIST-valued path `name[]` is carried as its leaf '
              'count in `<path>#count`, its values staying whole in the layer file and the ledger), `bedrock.lifecycle.<section>` = every exact '
              'lifecycle row of that section, whole, in ledger order, once, `bedrock.run` = the traversal\'s own verdict and failed gates over '
-             'this slice; a mapping cell whose keys the header cannot spell (a dot, a space, `=`), or an empty mapping, is one JSON string '
+             'this slice; the two SECTION files (4.2 the daily book regime companion, 4.4 the mirror matcher; Greg, 2026-09-22) add '
+             '`bedrock.companions.<section>` = one row per measure per stratum (the section\'s averaged rows, whole), '
+             '`bedrock.declarations.<section>` = one row per measure (numerator formula, population, causal cutoff, missingness rule, once), '
+             '`bedrock.first_last.<section>` = the exact first and last book of each day-segment-phase, `bedrock.matching_rule.<section>` = '
+             'the one rule the mirror pairs were formed under, and the mirror\'s own rows as `bedrock.lifecycle.mirror`; a mapping cell whose '
+             'keys the header cannot spell (a dot, a space, `=`), or an empty mapping, is one JSON string '
              'cell; the three whole ledgers stay on the box under work/bedrock/ledgers/, witnessed by name, bytes and sha256 in the bundle index)', '',
              f'Rows: {receipt["rows"]["path"]} ({receipt["rows"]["count"]} entries, kinds {receipt["rows"]["kinds"]}, head {receipt["rows"]["head"][:16]}...; '
              f'head equals the request source_hash: {receipt["rows"]["head_is_request_source_hash"]}).',
