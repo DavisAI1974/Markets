@@ -255,3 +255,82 @@ def test_legacy_lesson_retry_does_not_rewrite_history(tmp_path,monkeypatch):
         assert store.lessons.execute('SELECT payload,digest FROM lessons').fetchone()==old
         assert calls['learner']==calls['principal']==1
     finally:store.close();checkpoint.close()
+
+class KnowledgeCritic:
+    enabled=True
+    config_hash='c'*64
+    request_timeout=1.0
+    def __init__(self,acknowledge):
+        from test_frankie_controller import Critic
+        route=context_route('stacked_v1')
+        self.identity=replace(Critic().identity,
+            system_prompt_hash=hashlib.sha256(route.system_text.encode()).hexdigest(),
+            parser_code_hash=route.parser_code_hash())
+        self.acknowledge=acknowledge;self.calls=0;self.sent=[]
+    async def critique_stacked(self,snapshot,*,request_id):
+        from research.kalshi.frankie_boss.granite_context_route import serve_context
+        from research.kalshi.frankie_boss.granite_shadow import ShadowResponse
+        from research.kalshi.frankie_boss.granite_bedrock import BedrockReceipt
+        self.calls+=1
+        async def transport(request):
+            self.sent.append(request)
+            value=valid_output(snapshot);value['evidence_refs']=[{'row':0,'field':'/record/price'}]
+            bundle=json.loads(snapshot.text)['knowledge']
+            if self.acknowledge:
+                value.update(knowledge_hash=evidence_hash(bundle),knowledge_review=[
+                    dict(lesson_hash=e['lesson_hash'],assessment='Retain prior uncertainty')
+                    for e in bundle['entries']])
+            return ShadowResponse(request.request_hash,request.identity.identity_hash,json.dumps(value))
+        shadow=await serve_context(snapshot,self.identity,context_encoding='stacked_v1',
+            request_id=request_id,timeout_seconds=self.request_timeout,transport=transport)
+        call_hash=hashlib.sha256(json.dumps(dict(config_hash=self.config_hash,
+            request_hash=shadow.request.request_hash),sort_keys=True,separators=(',',':')).encode()).hexdigest()
+        return BedrockReceipt(shadow,self.config_hash,call_hash,None,None)
+
+@pytest.mark.parametrize('acknowledge',[True,False])
+def test_real_controller_exchange_and_exact_replay(tmp_path,monkeypatch,acknowledge):
+    from test_frankie_controller import build_controller
+    from research.kalshi.frankie_boss.frankie_controller import FrankieForecastController,native_model_pin
+    from research.kalshi.frankie_boss.controller_journal import ControllerJournal
+    base,bridge,_,request=build_controller(tmp_path);base.journal.close()
+    critic=KnowledgeCritic(acknowledge)
+    journal=ControllerJournal(tmp_path/'stacked-controller.sqlite',create=True)
+    bundle=build([record('prior',1)],cutoff=request['as_of'],request_id=request['request_id'])
+    request=dict(request,critic_knowledge=bundle)
+    def controller(journal):
+        return FrankieForecastController(enabled=True,bridge=bridge,journal=journal,critic=critic,
+            context_encoding='stacked_v1',expected_native_hash=native_model_pin(bridge),
+            expected_critic_config_hash=critic.config_hash,expected_critic_identity_hash=critic.identity.identity_hash)
+    active=controller(journal)
+    try:
+        result=asyncio.run(active.refresh(**request))
+        assert result['status']==('complete' if acknowledge else 'incomplete')
+        assert critic.calls==1 and len(result['records'])==3
+        sent=critic.sent[0];parsed=json.loads(sent.snapshot_text)['knowledge']
+        assert parsed==bundle and evidence_hash(parsed)==evidence_hash(bundle)
+        state=journal.state(request['request_id'])
+        assert state['intent']['request']['critic_knowledge']==bundle
+        assert state['critic_intent']['prompt_text']==sent.prompt_text
+        exchange=knowledge.critic_exchange(result,available_ns=3)
+        assert exchange['status']==('accepted' if acknowledge else 'rejected')
+        assert exchange['response_text']==result['critic']['receipt']['shadow']['response']['text']
+        assert exchange['request_hash']==sent.request_hash
+        previous=record(request['request_id'],3);previous['critic_exchange']=exchange
+        carried=build([previous],cutoff=3,request_id='next')
+        assert carried['entries'][0]['record']['critic_exchange']==exchange
+        # A foreign response remains in the original receipt, never reusable knowledge.
+        foreign=copy.deepcopy(result);shadow=foreign['critic']['receipt']['shadow']
+        shadow['status']='binding_mismatch';shadow['response']['request_hash']='f'*64
+        mismatch=knowledge.critic_exchange(foreign,available_ns=3)
+        assert mismatch['status']=='binding_mismatch' and mismatch['response_text'] is None
+        timeout=copy.deepcopy(result);timeout['critic']['receipt']['shadow'].update(status='timeout',response=None,verdict=None)
+        assert knowledge.critic_exchange(timeout,available_ns=3)['response_hash'] is None
+        witness=journal.checkpoint();journal.close()
+        journal=ControllerJournal(tmp_path/'stacked-controller.sqlite',checkpoint=witness);active=controller(journal)
+        monkeypatch.setattr(bridge.context.model,'forward_decision',lambda **kw:pytest.fail('second forward'))
+        assert asyncio.run(active.refresh(**request))==result and critic.calls==1
+        changed=build([dict(record('prior',1),lessons=[dict(text='changed')])],
+            cutoff=request['as_of'],request_id=request['request_id'])
+        with pytest.raises(ValueError):asyncio.run(active.refresh(**dict(request,critic_knowledge=changed)))
+        assert critic.calls==1
+    finally:journal.close();bridge.book.close()

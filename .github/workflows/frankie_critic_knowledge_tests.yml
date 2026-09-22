@@ -40,3 +40,6 @@ jobs:
           research/kalshi/frankie_boss/tests/test_frankie_controller.py
           research/kalshi/frankie_boss/tests/test_feedback_cycle.py
           research/kalshi/frankie_boss/tests/test_sunday_execution.py
+          research/kalshi/frankie_boss/tests/test_granite_jobs_integration.py
+          research/kalshi/frankie_boss/tests/test_granite_open_ended_service.py
+          research/kalshi/frankie_boss/tests/test_retained_preparation_recovery.py
