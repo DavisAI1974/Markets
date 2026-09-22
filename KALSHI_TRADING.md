@@ -20,6 +20,7 @@
   bedrock.lifecycle.<section> whole, once; TABLE_GRAMMAR = DIGEST_V5 for the block marker); `deploy/aws/box/frankie_box_teach.py` (the facts by code,
   the prompt, `parse_answer` with the number transcription check, the Markdown); `frankie_box_docs.py` / `frankie_box_brain.py` carry the teach-back,
   the bedrock receipt/result and the ledgers whole (docs) and reference the layer files.
+- `research/kalshi/frankie_boss/SHIP_REVIEW_20260922_CHAT8.md` - the /ship decision on the chat-7 fixes and the full-rerun runbook: GO after fixes (see the handoff 01:5xZ 09-22, chat 8).
 - `research/kalshi/frankie_boss/SHIP_REVIEW_20260921_CHAT7.md` - the /ship decision on BR-0..BR-7 (see the handoff 23:xxZ 09-21, chat 7).
 
 ### The Dipole classroom exchange in the box session (2026-09-21, chat 6; Greg: option 1, built before anything runs)

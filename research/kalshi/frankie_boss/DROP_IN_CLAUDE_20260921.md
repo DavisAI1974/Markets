@@ -11,8 +11,15 @@ code-bound state -> supersede the recorded response -> supersede the cycle whole
 pipeline dispatch (new critic request, observer + readiness, re-dispatch, critic on the Pod, new principal request under
 the new pins) -> export turn=initial + the restore script's one-line pin + presign fetch -> checkpoint E derive_only ->
 ACTION=start -> record/grade/correction/record/pipeline. Every step on Greg's go. Chat 8's probe at open (run
-35676094239) = chat 7's state exactly; nothing has run. Tests at a58a688a: 183/183/183 (torch absent/hidden/present),
-adapter suites 44.
+35676094239) = chat 7's state exactly; nothing has run. /SHIP on the chat-7 fixes (`SHIP_REVIEW_20260922_CHAT8.md`): GO
+after fixes, all landed (077fcb5a, 903b36f2: the number gate exempted every ns clock, the restore script overwrote a
+pinned file, a hyphen read as a minus, the derive receipt now moves with its directory, the dead correction guard).
+Tests at 903b36f2: box list 189/189 (torch present/hidden), adapter suites 44. GREG'S WORD (01:5xZ): "This number will
+go up. A trade day runs from the prior day at 6 pm to 5pm on the trade day" = the cme_trading_day policy; the new count
+is measured at ingest and reported. Tokens: ingest (compact container + reducer stack), the T_CTX cycle window and the
+87k-token reading parts are automatic; nothing shrinks a day into one cycle (handoff 01:5xZ). Paper 2609.14412
+(Question's Gambit, retrieval warm-start) filed as an option against call 4. STILL OPEN FOR GREG: step 0 (the trunk
+registration of the response-supersede workflow), the trade-day spec go/hold, calls 1-5.
 
 ## READ FIRST (00:xxZ 09-22, chat 7 CLOSING): THE BEDROCK IS BUILT AND SHIPPED (BR-0..BR-7, /ship GO after fixes); CHECKPOINT E AND THE RERUN WAIT ON GREG'S CALLS
 

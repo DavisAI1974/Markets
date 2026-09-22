@@ -4094,3 +4094,46 @@ THE FULL-RERUN ORDER, read from the machinery (the 09-20 23:01Z-23:25Z entries a
     fetch_correction; correction; record turn=correction; pipeline.
 Greg's five calls (00:xxZ 09-22 above) stand; call 1 (the slice vs the full CME Monday) decides the source stream BEFORE
 step 6 mints the request, since the request carries the stream.
+
+### 01:5xZ 09-22: /SHIP ON THE CHAT-7 FIXES AND THE FULL-RERUN RUNBOOK: GO AFTER FIXES, ALL FIXES LANDED (077fcb5a, 903b36f2)
+
+`SHIP_REVIEW_20260922_CHAT8.md` has the decision, every finding and the test that pins it, each shown failing first.
+The three reports converged on two real defects in the chat-7 fixes themselves: the sha256 strip in the teach number gate
+exempted every 16+ digit decimal (every ns clock and gap), and the restore script overwrote a different pinned file
+silently. Also fixed: a range or date hyphen read as a minus (a correct answer refused twice = the rollback trigger);
+derive.json, the digest and the measurement now move with `work/derived` under one receipt (a traversal that dies
+mid-derive leaves no current gate); the correction stage's guard named a unit no script starts (dead; pre-existing);
+`--` on the three remaining fetch lines. Tests at 903b36f2: the box list 189 green torch present and hidden; adapter
+suites 44; GitHub codecs CI green on 077fcb5a. The after-run list is the review's acknowledged risks.
+
+### 01:5xZ 09-22: GREG'S WORD: THE TRADE DAY, THE COUNT WILL GO UP, TOKENS ON THE NEW HOURS, A PAPER AS AN OPTION
+
+Greg (verbatim): "57,027 is the one measurement. Sunday plus Monday to the halt is a new count. This number will go up.
+A trade day runs from the prior day at 6 pm to 5pm on the trade day." Recorded: the trade day is the `cme_trading_day`
+session policy already in `operations/ingest_block_sources.py` (opens 18:00 ET the prior day, halts 17:00 ET = 21:00Z
+under EDT; the halt closes an F_LAST group); the new count is MEASURED at ingest (the block manifest's members: the
+20211003 file 57,027 and the 20211004 file 1,994,358 MBO records; the trade-day count = the Sunday file plus the Monday
+file's records before the 21:00Z halt, measured, then reported to Greg; 57,027 stays the one measurement of the Sunday
+slice). Nothing ingested (`ingested: false` on BLOCK_20211004_20211006_SOURCE_MANIFEST.json).
+
+Greg's question, "do we also need to optimize the tokens and shrink the size of the new hours or does the code
+automatically do that when we ingest them?" -- answered from the machinery: (a) INGEST is automatic and the gold
+standard: the block ingests as one continuous stream into the compact container (CompactBuildJournal; no 2 TB raw
+journal) and the reducer stack packs the journal (57,027 records = 114,054 INPUT/APPLIED entries -> 7,129 gzip blocks
+of 16 entries, 20.9x; run 34962256086); more hours = more blocks, same stack. (b) The CYCLE window is automatic too: a
+cycle's rows are the top T_CTX rows by receive time and cursor (`TOP_T_CTX_BY_RECEIVE_TIME_AND_CURSOR`), so a longer
+stream is walked as MORE prefixes/cycles, not a bigger packet; T_CTX = 4096 is the provisional value whose replacement
+is Greg's pending modelling call, and the proven packet is 92,427 input tokens at 3,262 rows. (c) The READING lane
+splits the digest into 87,000-token parts (PART_INPUT_TOKENS) with merge levels, automatically; the V6 digest's size
+per cycle is what checkpoint E measures. NOT automatic: nothing shrinks a trade day into one cycle (about 2 million
+records = about 500 windows of 4,096), the bedrock traversal and the ledgers scale with the rows (about 1 GiB of
+ledgers on a day; per-layer streaming is on the after-run list), and "shrinking/optimizing the packet is one of the
+most important jobs" (CLAUDE.md) stays a job, not a property of the ingest.
+
+The paper Greg linked (an option, not a directive; https://arxiv.org/html/2609.14412v1): "Question's Gambit: The First
+Move Matters in Agentic Deep Search" (Toronto/Mila/Waterloo/Berkeley/McGill): a first-move retrieval module that
+decomposes a question into clues, retrieves per clue with corpus feedback, consolidates and reranks against the whole
+question to warm-start the agent's context; BrowseComp-Plus +7.4 points on one model, +10.9 on a small one. It is a
+retrieval warm-start, not a token-compression method. Where it could apply here, if a cycle shows the problem: the
+critic's zero hypotheses (call 4: a cold start at hypothesis generation) and the reading lane's part selection. Filed as
+an option against call 4; not acted on.
