@@ -31,6 +31,27 @@ def put(url, raw):
     except Exception:
         raise RuntimeError('artifact upload failed; retained local evidence requires publication retry') from None
 
+def validate_boundary(boundary,manifest):
+    if (boundary.get('schema')!='FRANKIE_MONDAY_SOURCE_BOUNDARY_V1' or
+            boundary.get('manifest_hash')!=MANIFEST_HASH or boundary.get('verified') is not True):
+        raise ValueError('fresh independently verified source boundary required')
+    last=boundary['last_included']
+    first=boundary['first_excluded']
+    if (boundary['take']!=1975176 or boundary['partition_mbo_records']!=1994358 or
+            boundary['source_sha256']!=manifest['sources'][1]['sha256'] or
+            last['session_id']!='20211004' or first['session_id']<='20211004' or
+            last['is_last'] is not True):
+        raise ValueError('boundary witness disagrees with declared Monday source')
+
+
+def validate_retained(result,boundary):
+    last=boundary['last_included']
+    retained=result['member_boundaries'][1]
+    if (retained['wire_sha256']!=last['wire_sha256'] or retained['ts_recv_ns']!=last['ts_recv_ns'] or
+            retained['session_id']!=last['session_id'] or retained['is_last']!=last['is_last'] or
+            retained['cursor']!=2032202):
+        raise ValueError('source cutoff witness differs from the retained journal boundary')
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', required=True)
@@ -51,17 +72,7 @@ def main():
     scope=block_source_scope(manifest, expected_manifest_hash=MANIFEST_HASH)
     boundary_raw=Path(args.boundary).read_bytes()
     boundary=json.loads(boundary_raw)
-    # Boundary witness is checked before the expensive journal scan, then bound to its actual last wire record.
-    if (boundary.get('schema')!='FRANKIE_MONDAY_SOURCE_BOUNDARY_V1' or
-            boundary.get('manifest_hash')!=MANIFEST_HASH or boundary.get('verified') is not True):
-        raise ValueError('fresh independently verified source boundary required')
-    last=boundary['last_included']
-    first=boundary['first_excluded']
-    if (boundary['take']!=1975176 or boundary['partition_mbo_records']!=1994358 or
-            boundary['source_sha256']!=manifest['sources'][1]['sha256'] or
-            last['session_id']!='20211004' or first['session_id']<='20211004' or
-            last['is_last'] is not True):
-        raise ValueError('boundary witness disagrees with declared Monday source')
+    validate_boundary(boundary,manifest)
     write_once(output/'source-boundary.json',boundary_raw)
     started=time.time()
     def emit(value):
@@ -71,23 +82,27 @@ def main():
             stream.write(line)
             stream.flush()
         if 'progress.jsonl' in uploads:
-            put(uploads['progress.jsonl'],(output/'progress.jsonl').read_bytes())
+            try:
+                put(uploads['progress.jsonl'],(output/'progress.jsonl').read_bytes())
+            except RuntimeError:
+                print('Progress upload unavailable; local append-only progress retained',flush=True)
     emit(dict(phase='physical_identity_verification',bytes=23687368704))
     result=reconstruct(scope,PARENT,expected_sha256=PARENT_SHA,expected_bytes=23687368704,
         expected_count=4064406,expected_head_hash=PARENT_HEAD,code_blobs=ORIGINAL_CODE_BLOBS,
         workers=31,expected_session='20211004',emit=emit)
-    retained=result['member_boundaries'][1]
-    if (retained['wire_sha256']!=last['wire_sha256'] or retained['ts_recv_ns']!=last['ts_recv_ns'] or
-            retained['session_id']!=last['session_id'] or retained['is_last']!=last['is_last'] or
-            retained['cursor']!=2032202):
-        raise ValueError('source cutoff witness differs from the retained journal boundary')
+    validate_retained(result,boundary)
+    emit(dict(phase='conformance_complete',records=result['completion']['record_count']))
+    publish(output,uploads,result,boundary_raw,scope,args.code_commit,started)
+
+
+def publish(output,uploads,result,boundary_raw,scope,code_commit,started):
     artifacts={}
     raw_checkpoint=canonical_bytes(pack(result['state']))
     artifacts['checkpoint']=write_once(output/'builder-checkpoint.c15.json',raw_checkpoint)
     raw_completion=(json.dumps(result['completion'],sort_keys=True,indent=2)+'\n').encode()
     artifacts['completion']=write_once(output/'completion.json',raw_completion)
     receipt=dict(schema='FRANKIE_SEALED_INGESTION_RECOVERY_RECEIPT_V1',status='complete',
-        recovery_started_unix=started,recovered_unix=time.time(),code_commit=args.code_commit,
+        recovery_started_unix=started,recovered_unix=time.time(),code_commit=code_commit,
         original_ingest_status='Cancelled',original_run_id=35694087514,
         original_ssm_command_id='eea87d2f-a1d7-428e-ab57-3fdab2980eb6',
         manifest_hash=MANIFEST_HASH,scope_hash=scope.genesis_hash(),trading_day='20211004',
@@ -106,8 +121,6 @@ def main():
     for name in ('source-boundary.json','builder-checkpoint.c15.json','completion.json'):
         put(uploads[name],(output/name).read_bytes())
     put(uploads['recovery-receipt.json'],raw_receipt)
-    emit(dict(phase='recovery_complete',record_count=receipt['record_count'],
-        journal_count=receipt['journal_count'],checkpoint_state_hash=receipt['checkpoint_state_hash']))
     print('RECOVERY_RECEIPT '+raw_receipt.decode().replace('\n',''),flush=True)
 
 if __name__=='__main__':
