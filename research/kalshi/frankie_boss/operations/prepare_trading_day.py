@@ -65,9 +65,10 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
         raise ValueError('cycles must be within the declared cutoff roster')
     contract = read_pinned(launch['source_contract'])
     if (contract.get('schema') != 'FRANKIE_TRADING_DAY_SOURCE_CONTRACT_V1'
+            or contract.get('source_manifest_hash') != manifest['manifest_hash']
             or contract.get('trading_day') != launch['trading_day']
             or contract.get('cycle_count') != total or len(contract.get('cycles', [])) != total):
-        raise ValueError('source_contract must cover the declared trading day and cutoff roster')
+        raise ValueError('source_contract must cover the declared source manifest, trading day and cutoff roster')
     view = open_completed_schedule_view(scope, journal, source / 'builder-checkpoint.c15.json',
         receipt['checkpoint_sha256'], receipt['checkpoint_state_hash'], completion,
         reader_factory=FrankieCompactReader)
@@ -86,7 +87,7 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
     from research.kalshi.frankie_boss.source_contract_runtime import bind_cycle
     for index, step in enumerate(schedule['steps']):
         bound = bind_cycle(launch['source_contract']['path'], launch['source_contract']['sha256'], index, step)
-        feedback = step['feedback']
+        feedback = step['feedback_available_through']
         if (bound['learning_cutoff_ns'] != feedback['as_of']
                 or bound['learning_through_source_cursor'] != feedback['through_cursor']):
             raise ValueError('source_contract learning boundary differs from schedule feedback')

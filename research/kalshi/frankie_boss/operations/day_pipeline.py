@@ -146,6 +146,10 @@ class DayPipeline:
         command = [self.python, self.c['ssm_run'], '--instance', self.c['instance'], '--region', self.c['region'],
                    '--script', script, '--timeout', str(timeout), '--set', f'Day={self.day}']
         for name, value in sorted((self.c.get('host_variables') or {}).items()):
+            if (self.declaration is not None and script_key == 'cycles' and name.lower() in
+                    ('preparedconfigurationpath', 'preparedconfigurationsha256',
+                     'requirepreparedconfiguration', 'expectedtradingdayschedulesha256')):
+                continue
             command += ['--set', f'{name}={value}']
         if script_key in ('cycles', 'schedule_prefixes'):
             command += ['--set', f'CycleLimit={self.cycle_limit}']
@@ -169,6 +173,24 @@ class DayPipeline:
             'snapshot-stop': self._ec2('snapshot', '--label', self.day),
         }
 
+    def _prepared_gate(self, value):
+        def full_hash(v):
+            return isinstance(v, str) and len(v) == 64 and all(c in '0123456789abcdef' for c in v)
+        config = value.get('configuration')
+        count = value.get('prefix_count')
+        if (value.get('day') != self.day
+                or value.get('source_records') != self.declaration['source_record_count']
+                or value.get('schedule_sha256') != self.declaration['schedule_sha256']
+                or type(count) is not int or not self.cycle_limit <= count <= self.cycle_count
+                or not full_hash(value.get('prefixes_sha256'))
+                or not isinstance(config, dict)
+                or not isinstance(config.get('path'), str) or not config['path'].strip()
+                or not full_hash(config.get('sha256'))
+                or type(config.get('bytes')) is not int or config['bytes'] < 1):
+            raise StageRefused('prepared configuration receipt differs from the declared day, schedule or file')
+        return {k: value[k] for k in ('prefix_count', 'prefixes_sha256', 'day',
+                                     'source_records', 'schedule_sha256', 'configuration')}
+
     def gate_of(self, stage, output):
         value = receipt_line(output) if stage not in ('host-start', 'snapshot-stop') else {}
         if stage == 'stage-sources':
@@ -189,6 +211,14 @@ class DayPipeline:
             if snapshot is None or 'completed' not in output:
                 raise StageRefused('snapshot did not complete')
             return dict(snapshot_id=snapshot, host_state='snapshotted')
+        if self.declaration is not None and stage == 'schedule-prefixes':
+            return self._prepared_gate(value)
+        if self.declaration is not None and stage == 'cycles':
+            if (value.get('status') != 'all_scheduled_cycles_complete'
+                    or value.get('day') != self.day or self.cycle_limit != self.cycle_count
+                    or any(type(value.get(k)) is not int or value[k] != self.cycle_count
+                           for k in ('cycles_completed', 'cycles_total', 'requested_cycles'))):
+                raise StageRefused('completed cycles receipt differs from the declared day and roster')
         gate = {name: value.get(name) for name in GATES[stage]}
         if any(gate[name] is None for name in gate):
             raise StageRefused(f'{stage} receipt line lacks {[n for n in gate if gate[n] is None]}')
@@ -245,6 +275,13 @@ class DayPipeline:
         command = self.commands()[stage]
         if command is None:
             raise StageRefused(f'the configuration declares no host script for {stage}')
+        if self.declaration is not None and stage == 'cycles':
+            prepared = self._prepared_gate(self.receipt('schedule-prefixes')['gate'])
+            configuration = prepared['configuration']
+            command += ['--set', 'RequirePreparedConfiguration=1',
+                        '--set', 'PreparedConfigurationPath=' + configuration['path'],
+                        '--set', 'PreparedConfigurationSha256=' + configuration['sha256'],
+                        '--set', 'ExpectedTradingDayScheduleSha256=' + prepared['schedule_sha256']]
         code, output = self.run(command, timeout=self.c.get('stage_timeout', 13 * 3600))
         if code != 0:
             raise StageRefused(f'{stage} exited {code}: {output}')

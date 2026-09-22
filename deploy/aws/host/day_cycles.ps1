@@ -20,6 +20,10 @@ foreach ($required in 'Day', 'ToolsRoot', 'Python', 'RunRoot') {
     }
 }
 $dayDirectory = Join-Path $RunRoot $Day
+$requiresPrepared = (Get-Variable RequirePreparedConfiguration -ErrorAction SilentlyContinue) -and $RequirePreparedConfiguration
+if ($requiresPrepared -and -not (Get-Variable PreparedConfigurationPath -ErrorAction SilentlyContinue)) {
+    throw 'PreparedConfigurationPath required for the trading day'
+}
 if (Get-Variable PreparedConfigurationPath -ErrorAction SilentlyContinue) {
     if (-not $PreparedConfigurationSha256) { throw 'PreparedConfigurationSha256 required with PreparedConfigurationPath' }
     $configurationPath = $PreparedConfigurationPath
@@ -42,6 +46,17 @@ if (-not $schedulePath -or -not (Test-Path -LiteralPath $schedulePath)) { throw 
 $actualScheduleHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $schedulePath).Hash.ToLower()
 if ($actualScheduleHash -ne $configuration.host_runtime.schedule.sha256) { throw 'Schedule bytes changed' }
 $schedule = Get-Content -LiteralPath $schedulePath -Raw | ConvertFrom-Json
+if ($requiresPrepared -or $configuration.trading_day -or $schedule.schema -eq 'BOSS_TRADING_DAY_CAUSAL_CYCLE_SCHEDULE_V1') {
+    if (-not $PreparedConfigurationPath -or -not $PreparedConfigurationSha256 -or -not $ExpectedTradingDayScheduleSha256) {
+        throw 'Trading day requires the receipted prepared configuration and schedule'
+    }
+    if ($configuration.trading_day -ne $Day -or $schedule.trading_day -ne $Day -or
+        $schedule.schema -ne 'BOSS_TRADING_DAY_CAUSAL_CYCLE_SCHEDULE_V1' -or
+        $schedule.schedule_sha256 -ne $ExpectedTradingDayScheduleSha256 -or
+        $configuration.trading_day_schedule.schedule_sha256 -ne $ExpectedTradingDayScheduleSha256) {
+        throw 'Prepared configuration or schedule differs from the requested trading day'
+    }
+}
 $expected = @($schedule.steps).Count
 if ($expected -lt 1) { throw 'Schedule declares no cycles' }
 if (-not (Get-Variable CycleLimit -ErrorAction SilentlyContinue)) { $CycleLimit = $expected }
