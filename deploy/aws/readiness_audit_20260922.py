@@ -15,7 +15,7 @@ def main():
     # Exactly one ACTION=status call, followed by a read-only audit in the same SSM command.
     status = Path('deploy/aws/box/frankie_box_ingest_block.sh').read_text()
     audit = Path('deploy/aws/box/frankie_box_readiness_audit.py').read_text()
-    script = "ACTION='status'\n" + status + "\n/opt/frankie-box/venv/bin/python - <<'READINESS_AUDIT_PY'\n" + audit + "\nREADINESS_AUDIT_PY\n"
+    script = "ACTION='status'\nMARKETS_SHA='2ae4da204b0d2a12f605e765f281b505ff51491a'\n" + status + "\n/opt/frankie-box/venv/bin/python - <<'READINESS_AUDIT_PY'\n" + audit + "\nREADINESS_AUDIT_PY\n"
     command = ssm.send_command(InstanceIds=[INSTANCE], DocumentName='AWS-RunShellScript',
         Parameters={'commands': [script], 'executionTimeout': ['240']}, TimeoutSeconds=300,
         Comment='Greg requested read-only packing, process, brain and Friday-anchor audit')['Command']['CommandId']

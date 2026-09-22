@@ -26,7 +26,9 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
       - name: Read-only packing, process, brain and anchor audit
-        run: python deploy/aws/readiness_audit_20260922.py | tee readiness-audit-output.txt
+        run: |
+          set -euo pipefail
+          python deploy/aws/readiness_audit_20260922.py | tee readiness-audit-output.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
