@@ -4072,10 +4072,20 @@ THE FULL-RERUN ORDER, read from the machinery (the 09-20 23:01Z-23:25Z entries a
     (`frankie_retained_granite.yml`) and `frankie_deliver_readiness.yml` for the new sha, then one re-dispatch (the
     09-20 15:53Z worked example); the critic runs on the Pod (a Pod START is Greg's call: the L40S host refused 15
     times on 09-21 00:20Z); the principal request is minted under the NEW pins (new request_sha256, new export run id).
- 7. `frankie_host_export_principal_request.yml` turn=initial; then ON THE BRANCH the one-line pin in
-    `deploy/aws/box/frankie_box_restore_data_plane.sh` (line 26-27: export run id, bytes, sha256 of the new
-    session-request.json) and the old request moved aside on the box with a receipt (never overwritten); then
-    `frankie_box_run.yml` presign -> the box fetches the new request.
+ 7. `frankie_host_export_principal_request.yml` turn=initial; then ON THE BRANCH the pins in
+    `deploy/aws/box/frankie_box_restore_data_plane.sh`: NOT one line (the chat-8 ship review): the request entry's KEY
+    carries the export run id (`principal-request/cycle-00/<run id>/session-request.json`), its bytes and its sha256
+    all move, and the `prompt.md` entry (the rendered instruction the box reads) moves with the re-render; an entry
+    left stale is REFUSED at the fetch (the safe failure). ON THE BOX, before the fetch: move `request/session-request.json`
+    and `request/prompt.md` aside with a receipt (a box run of a committed script, on Greg's go); since 077fcb5a the
+    restore script REFUSES a different file at a pinned destination ("not overwritten (move it aside with a receipt
+    first)", the fetch_correction precedent) instead of overwriting it as it did before. Then `frankie_box_run.yml`
+    presign -> the box fetches the new request and prompt.
+    Two readings the operator must not mistake for defects (the chat-8 code review): (a) `ACTION=derive_only` refuses
+    with "waits" (exit 2) while the heartbeat unit is active, and the heartbeat exits only when the session reaches
+    `done`; after a session that ended in a refusal the heartbeat may still be up; (b) the request-pin refusal writes
+    its receipt under `session/work/derive-refusal-<ts>-<uuid>.json` (both sha256s) and `receipts/boss-session-refusal-*.json`,
+    exit 3; the SSM output shows only "derive_only failed (exit 3)".
  8. Checkpoint E on the box: `ACTION=derive_only` -> the DERIVE_ONLY line (bytes, tokens, parts, tables) to Greg;
     his call 2 (the reading cost) decides the read. No model call.
  9. `ACTION=start` (start_session: refuses while the unit runs; verifies the request; re-fetches this branch; the
