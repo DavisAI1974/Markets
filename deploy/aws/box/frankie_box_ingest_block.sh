@@ -122,6 +122,7 @@ status() {
   echo "### partitions under $ROOT/data"; ls -la "$ROOT"/data/block_* 2>/dev/null || echo "(none)"
   echo "### ingest work directories"; ls -d "$ROOT"/work/ingest-* 2>/dev/null || echo "(none)"
   for d in "$ROOT"/work/ingest-*/; do [ -d "$d" ] || continue; for R in canary-receipt.json ingestion-receipt.json; do [ -s "$d$R" ] && { echo "### $d$R"; "$PY" -c "import json,sys; r=json.load(open(sys.argv[1])); keys=('schema','block','trading_day','records','record_count','records_per_second','extrapolated_hours_for_total','journal_count','journal_head_hash','journal_sha256','sessions','partial_members','partial_members_ingested','completion_claimed','workers'); print(json.dumps({k: r[k] for k in keys if k in r}, sort_keys=True))" "$d$R"; }; done; done
+  for d in "$ROOT"/work/ingest-*/; do [ -s "$d/journal.compact.sqlite" ] && { echo "### $d/journal.compact.sqlite (boxes, rows, bytes)"; "$PY" -c "import sqlite3,sys,os; p=sys.argv[1]; db=sqlite3.connect('file:'+p+'?mode=ro', uri=True); n,rows,body=db.execute('SELECT count(*), coalesce(sum(count),0), coalesce(sum(length(body)),0) FROM blocks').fetchone(); print(dict(boxes=n, rows=rows, block_bytes=body, file_bytes=os.path.getsize(p), bytes_per_row=(round(body/rows,1) if rows else None)))" "$d/journal.compact.sqlite"; }; done
   echo "### receipts"; ls "$ROOT"/receipts/ingest-* 2>/dev/null || echo "(none)"
   df -h / | tail -1
 }

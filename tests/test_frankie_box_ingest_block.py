@@ -59,4 +59,5 @@ def test_the_wrapper_validates_the_manifest_with_the_tools_own_scope_pins_every_
     assert "with open(name, 'x') as f" in text and "markets_sha=os.environ['MARKETS_SHA']" in text and "manifest_hash=manifest['manifest_hash']" in text
     assert '.late-' in text and "if os.path.exists(dest):   # something landed at the destination during the download" in text
     assert "{k: r[k] for k in keys if k in r}" in text                        # status prints the keys a receipt has, never nulls
+    assert "SELECT count(*), coalesce(sum(count),0), coalesce(sum(length(body)),0) FROM blocks" in text and "?mode=ro" in text   # status reads the container's boxes read-only
     assert '[ "${PROFILE:-0}" = 1 ] && EXTRA="$EXTRA --profile"' in text and 'profile.txt' in text     # PROFILE=1 = a measurement run
