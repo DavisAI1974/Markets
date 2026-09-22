@@ -65,9 +65,18 @@
   a day does not always land on 1,189. What IS independently verified is the seal -- `journal_hash d8de0394...`,
   `state_hash d46ec933...`, pinned in `operations/parallel_source/verify_snapshot.py` -- and the verification status
   of the prefixes, which is the first two, not all 19.
-- **The native row context `T_CTX = 4096` is a provisional value** (its own comment says so). Greg has retired the
-  4,096-row cycle in prose at least three times; it was never changed in code, so every token projection re-derives it.
-  Do NOT quote projections at 4,096 rows. The replacement row count is Greg's modelling call and is still pending.
+- **The native row window is OUT OF THE CODE (Greg, 2026-09-22: "take it out ... the last time")**. `T_CTX` is gone;
+  `ContextSessionRunner` takes `t_ctx` as a required argument; `sunday_native_runtime.initialize(builder, context_rows=)`
+  takes the window from the VERIFIED SCHEDULE's `model_context_rows` (data, pinned by digest) which the host runner
+  passes; the prefix builder reads the same field and refuses a schedule without it; `build_schedule` takes it as an
+  argument. The guard `tests/test_row_window_is_declared_not_literal.py` sweeps every .py/.sh/.yml for a row-window or
+  Granite-context 4096 literal and fails on one. WHY it kept coming back: the literal was inside the first run's pinned
+  identity (161 byte-pinned files; the binding and the 19 seeds pin the sha256 of context_session.py and
+  sunday_native_runtime.py), so the host refuses cycle 0 on the changed bytes until the prefix batch is re-pinned
+  (`frankie_host_rebuild_prefix_batch.yml`, the 2026-09-20 precedent: code pins re-minted, snapshots untouched) --
+  a step of the full rerun, on Greg's go. The first run's data still DECLARES 4096 (schedule model_context_rows,
+  binding t_ctx, the seeds): the rerun's row count is Greg's modelling call, set in the schedule, never in code.
+  Do NOT quote projections at 4,096 rows.
 - **Token figures**: the proven packet is 92,427 input tokens at 3,262 rows (stacked_v1), leaving 38,645 output tokens.
   Shrinking/optimizing the packet is one of the most important jobs. **114,054 is the journal ENTRY count (2 x 57,027
   records, INPUT + APPLIED), not a token count** -- do not let it surface as "114k tokens", and see the derived-number

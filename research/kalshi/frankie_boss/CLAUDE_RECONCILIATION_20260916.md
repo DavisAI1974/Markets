@@ -231,3 +231,34 @@ overhead six-fold: each partition opens the source read-only and runs three quer
 The journal is invariant - same entries, same bytes, same order, same completion and seal, proved on a real run of
 the reader at 96 and at 16 over the same fixture (`tests/test_partition_packing.py`). The compact container's bytes
 and sha256 change by design.
+
+## Standing rule, said again 2026-09-22 (Greg): the row window leaves the code; a guard keeps it out
+
+Greg, 2026-09-22 (verbatim): "This needs to be the last time I have to repeat myself about the context output limits. We
+must have taken that 4096 number out 10 different times. Take it out and look for the rule we made about this stuff and
+see if limits were reimposed other places."
+
+The sweep (every .py/.sh/.yml/.json under research/kalshi/frankie_boss, deploy, .github, the pinned package and records
+excluded from the code count), classified by ROLE, not by digit string:
+
+| Role | Where | Action |
+|---|---|---|
+| the native ROW WINDOW as a code literal or default | `native_mbo_encoder.py` T_CTX (+ the encoder payload), `context_session.py` default, `sunday_native_runtime.py` DEVELOPMENT.context_rows + `t_ctx=4096`, `sunday_schedule.py` model_context_rows=4096, `build_remaining_sunday_prefixes.py` gate `!= 4096` | REMOVED: declared once in the verified schedule (`model_context_rows`), read by the host runner (which now keeps `self.schedule`) and the prefix builder; `initialize` and `ContextSessionRunner` require it; encoder payload V2 without it |
+| a REIMPOSED gate on the number | `build_remaining_sunday_prefixes.py:340` refused any window but 4096 | REMOVED (refuses a schedule without a positive declared window instead) |
+| Granite context in a test | `tests/test_lawful_recovery_migration.py` context=4096, service_context 4096 | 131072 |
+| the row window as a test fixture value or default | `test_production_bindings.py`, `test_native_runtime_diagnostics.py`, `test_retained_preparation_recovery.py`, `test_context_session.py` and six helpers that relied on the default | declared values (64, 3262, 8, ALL_FIXTURE_ROWS) |
+| Granite context REIMPOSED in a pinned environment | `runpod_cloud_environment.json` GRANITE_MAX_MODEL_LEN "4096" (read by `granite_runpod_cloud.py`, the retired cloud controller) | FLAGGED, not changed: it is the pinned Pod bootstrap bundle's environment ("untouched"); Greg's word |
+| an OUTPUT CAP on an LLM call | `research/kalshi/frankie_backends.py:71` Bedrock `maxTokens: 4096` (the S93 coach agent's Bedrock lane, not the BOSS) | FLAGGED, not changed: a different program; removing the cap is Greg's word (the BOSS itself has none: `max_tokens` = the remaining context, `output_budget=remaining_context` enforced) |
+| byte sizes and windows that are not a context | `DEDUP_BYTES`, head-render section bytes, cursor length bounds, `read(4096)`, `block_bytes=4096`, `recv(4096)`; the C15 normalizer's `n_norm=4096` (its running-statistics window, a modelling registry value beside d_model, not the context) | unchanged; the guard's patterns are role-specific so these never trip it |
+| the selection policy's NAME | `TOP_T_CTX_BY_RECEIVE_TIME_AND_CURSOR` (a pinned data string in every seed) | unchanged; the guard matches `T_CTX` only as a whole word |
+
+Why it kept coming back: every file that carried the literal is in the first run's byte-pinned identity
+(`WORKING_TREE_IDENTITY_BYTES_20260915.json`, 161 files) and the prefix binding and the 19 seed receipts pin the sha256
+of `context_session.py` and `sunday_native_runtime.py`; `run_actual_sunday` refuses cycle 0 when those bytes move. So
+the number could be retired in prose and never in code without breaking the gold standard's own gates. The way out is
+the host's own precedent (`frankie_host_rebuild_prefix_batch.ps1`, 2026-09-20): re-mint the code pins in the binding and
+the seeds with the snapshots untouched. That is a host step of the full rerun, on Greg's go.
+
+The first run's DATA still declares 4096 (schedule `model_context_rows`, binding `context_selection.t_ctx`, every seed):
+it is the measured identity of that run and is not rewritten. The rerun's row count is Greg's modelling call, set in
+the schedule the rerun verifies; the code carries no number.

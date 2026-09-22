@@ -18,8 +18,15 @@ Tests at 903b36f2: box list 189/189 (torch present/hidden), adapter suites 44. G
 go up. A trade day runs from the prior day at 6 pm to 5pm on the trade day" = the cme_trading_day policy; the new count
 is measured at ingest and reported. Tokens: ingest (compact container + reducer stack), the T_CTX cycle window and the
 87k-token reading parts are automatic; nothing shrinks a day into one cycle (handoff 01:5xZ). Paper 2609.14412
-(Question's Gambit, retrieval warm-start) filed as an option against call 4. STILL OPEN FOR GREG: step 0 (the trunk
-registration of the response-supersede workflow), the trade-day spec go/hold, calls 1-5.
+(Question's Gambit, retrieval warm-start) filed as an option against call 4. 02:xxZ: GREG "take it out ... the last
+time": THE ROW WINDOW IS OUT OF THE CODE (T_CTX gone; t_ctx and context_rows required; the host runner passes the verified
+schedule's model_context_rows; no `!= 4096` gate; encoder payload V2) with the guard
+`tests/test_row_window_is_declared_not_literal.py`; the full-rerun order gains step 1b (re-pin the prefix batch on the
+host, the 2026-09-20 precedent) because the changed files are byte-pinned by the first run's binding and seeds. Two
+4096s FLAGGED for Greg's word, not changed: the pinned Pod bootstrap environment's GRANITE_MAX_MODEL_LEN and the coach's
+Bedrock maxTokens (frankie_backends.py). STILL OPEN FOR GREG: step 0 (the trunk registration of the response-supersede
+workflow), his word on the two flagged 4096s, the trade-day spec go/hold, calls 1-5 (the rerun's row count = a schedule
+value, his modelling call).
 
 ## READ FIRST (00:xxZ 09-22, chat 7 CLOSING): THE BEDROCK IS BUILT AND SHIPPED (BR-0..BR-7, /ship GO after fixes); CHECKPOINT E AND THE RERUN WAIT ON GREG'S CALLS
 

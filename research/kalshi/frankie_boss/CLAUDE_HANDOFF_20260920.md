@@ -4060,7 +4060,13 @@ THE FULL-RERUN ORDER, read from the machinery (the 09-20 23:01Z-23:25Z entries a
     from the default branch). It is REQUIRED: `frankie_host_supersede_cycle.ps1` line 36 throws "refusing: a
     session-response.json is recorded for this cycle" and cycle 0's response IS recorded on the host (run 35633661236,
     17:43:23Z 09-21). Register it on the trunk exactly as the request-supersede was (98a92692), one commit, before step 3.
- 1. `frankie_host_advance.yml` target = this branch's tip (the new pins file, the adapter, the bedrock).
+ 1. `frankie_host_advance.yml` target = this branch's tip (the new pins file, the adapter, the bedrock, and since
+    02:xxZ 09-22 the row window OUT of `context_session.py` and `sunday_native_runtime.py`).
+ 1b. `frankie_host_rebuild_prefix_batch.yml` (the 2026-09-20 precedent): the binding's and the seeds' code pins
+    (sha256 of context_session.py and sunday_native_runtime.py) are re-minted against the advanced checkout, the
+    snapshots untouched; without it `run_actual_sunday` refuses cycle 0 on the changed bytes ("prefix seed differs
+    from verified current snapshot/context selection"). The schedule's `model_context_rows` is the declared window
+    the runner now passes to `initialize`; changing that number is Greg's call and means a new schedule.
  2. `frankie_host_supersede_code_bound_state.yml` cycle 00 (the code-bound records aside; the runner re-mints them).
  3. `frankie_host_supersede_principal_response.yml` cycle 00 (the recorded response aside with a receipt; the request
     stays; reason = full rerun from the beginning, Greg 2026-09-22).
@@ -4137,3 +4143,23 @@ question to warm-start the agent's context; BrowseComp-Plus +7.4 points on one m
 retrieval warm-start, not a token-compression method. Where it could apply here, if a cycle shows the problem: the
 critic's zero hypotheses (call 4: a cold start at hypothesis generation) and the reading lane's part selection. Filed as
 an option against call 4; not acted on.
+
+### 02:xxZ 09-22: GREG: "TAKE IT OUT ... THE LAST TIME": THE ROW WINDOW IS OUT OF THE CODE, A GUARD KEEPS IT OUT
+
+Greg (verbatim): "This needs to be the last time I have to repeat myself about the context output limits. We must have
+taken that 4096 number out 10 different times. Take it out and look for the rule we made about this stuff and see if
+limits were reimposed other places." The rule is CLAUDE.md's FRANKIE/BOSS standing rules (2026-09-16) and
+`CLAUDE_RECONCILIATION_20260916.md`; the sweep, the classification by role and the record are appended there
+(section "Standing rule, said again 2026-09-22"). Headline: the Granite side was clean (the BOSS has no output limit;
+`max_tokens` = the remaining context; the admission and verify probes' 16/64 are probes, not the BOSS); the NATIVE ROW
+WINDOW was still a code literal in five files plus a gate that refused any other value, and every one of those files is
+byte-pinned by the first run's identity, which is why it was retired in prose and never in code. Done now: `T_CTX`
+gone, `ContextSessionRunner(t_ctx=)` required, `initialize(builder, context_rows=)` required and fed by the host runner
+from the VERIFIED SCHEDULE's `model_context_rows`, the prefix builder reads the same field (no `!= 4096` gate),
+`build_schedule(model_context_rows=)` required, encoder payload V2 without a window; one Granite test literal -> 131072;
+eleven test files moved to declared values. Guard: `tests/test_row_window_is_declared_not_literal.py`. Tests: the
+targeted family suites 424 passed, the same 9 pre-existing failures before and after in this container (8 boto3
+absent, 1 journal-prefix snapshot), 0 introduced. FLAGGED for Greg's word, not changed: `runpod_cloud_environment.json`
+GRANITE_MAX_MODEL_LEN "4096" (the pinned Pod bootstrap bundle's environment, read by the retired cloud controller) and
+`research/kalshi/frankie_backends.py` Bedrock `maxTokens: 4096` (the S93 coach's Bedrock lane, an output cap on an
+LLM call, not the BOSS). Host consequence: the full-rerun order gains step 1b (re-pin the prefix batch), above.
