@@ -437,3 +437,89 @@ def test_focused_ci_tracks_transport_workflow_and_ssm_runner():
     body=(SOURCE.parents[3]/'.github/workflows/frankie_code_staging_ci.yml').read_text()
     assert "      - '.github/workflows/frankie_stage_code.yml'" in body
     assert "      - 'deploy/aws/ssm_run_sh.py'" in body
+
+
+def workflow_document(name):
+    import yaml
+    path=SOURCE.parents[3]/'.github/workflows'/name
+    # BaseLoader parses the complete YAML while preserving GitHub's literal "on"
+    # key and input strings (PyYAML's YAML 1.1 bool coercion would rename "on").
+    return yaml.load(path.read_text(),Loader=yaml.BaseLoader)
+
+def test_registered_caller_routes_staging_to_same_commit_reusable_workflow():
+    caller=workflow_document('frankie_box_run.yml')
+    callee=workflow_document('frankie_stage_code.yml')
+    assert set(caller['on'])=={'workflow_dispatch'}
+    assert set(callee['on'])=={'workflow_dispatch','workflow_call'}
+    assert callee['on']['workflow_call']['inputs']['action']==dict(type='string',required='true')
+    validation=caller['jobs']['validate-staging-route']
+    assert validation['if']=="github.repository == 'DavisAI1974/Markets' && inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh'"
+    assert validation['permissions']=={}
+    assert validation['outputs']['action']=='${{ steps.validate.outputs.action }}'
+    step=validation['steps'][0]
+    assert step['id']=='validate' and len(validation['steps'])==1
+    assert 'secrets.' not in json.dumps(validation)
+    assert 'boto3' not in step['run'] and 'aws ' not in step['run']
+    assert step['env']==dict(SCRIPT='${{ inputs.script }}',VARIABLES='${{ inputs.variables }}',
+                             INSTANCE='${{ inputs.instance }}',REGION='${{ inputs.region }}',
+                             PRESIGN='${{ inputs.presign }}',
+                             GITHUB_TOKEN_TO_SSM='${{ inputs.github_token_to_ssm }}')
+    route=caller['jobs']['stage-code']
+    assert route['needs']=='validate-staging-route'
+    assert route['if']==validation['if']
+    assert route['uses']=='./.github/workflows/frankie_stage_code.yml'
+    assert route['with']==dict(action='${{ needs.validate-staging-route.outputs.action }}')
+    assert route['secrets']=='inherit'
+    assert 'steps' not in route and 'env' not in route
+    generic=caller['jobs']['run']
+    assert generic['if']=="github.repository == 'DavisAI1974/Markets' && inputs.script != 'deploy/aws/box/frankie_box_stage_code.sh'"
+    assert generic['env']['SCRIPT']=='${{ inputs.script }}'
+    assert generic['env']['VARIABLES']=='${{ inputs.variables }}'
+    assert generic['env']['INSTANCE']=='${{ inputs.instance }}'
+    assert generic['env']['REGION']=='${{ inputs.region }}'
+    names={step.get('name'):step for step in generic['steps'] if 'name' in step}
+    assert 'Run the committed script on the box' in names
+    assert 'Presign the requested objects into one private map (URLs masked, never printed)' in names
+    assert any('put_parameter' in step.get('run','') for step in generic['steps'])
+    ci=workflow_document('frankie_code_staging_ci.yml')
+    assert '.github/workflows/frankie_box_run.yml' in ci['on']['push']['paths']
+
+def route_validation_code():
+    body=workflow_document('frankie_box_run.yml')['jobs']['validate-staging-route']['steps'][0]['run']
+    lines=body.splitlines()
+    assert lines[0]=="python3 -I -S -B - <<'PY'" and lines[-1]=='PY'
+    return '\n'.join(lines[1:-1])
+
+def route_validation_environment(tmp_path):
+    return dict(PATH=os.environ.get('PATH',''),SCRIPT='deploy/aws/box/frankie_box_stage_code.sh',
+                VARIABLES='ACTION=inventory',INSTANCE='i-035994afa8bdf66a5',REGION='us-east-1',
+                PRESIGN='',GITHUB_TOKEN_TO_SSM='false',GITHUB_OUTPUT=str(tmp_path/'outputs'))
+
+@pytest.mark.parametrize('action',['inventory','stage'])
+def test_registered_route_validation_emits_only_allowed_action(tmp_path,action):
+    import sys
+    env=route_validation_environment(tmp_path); env['VARIABLES']='ACTION='+action
+    result=subprocess.run([sys.executable,'-I','-S','-B','-c',route_validation_code()],
+                          env=env,capture_output=True,text=True)
+    assert result.returncode==0,result.stderr
+    assert Path(env['GITHUB_OUTPUT']).read_text()=='action='+action+'\n'
+    assert result.stdout==''
+
+@pytest.mark.parametrize('field,value',[
+    ('VARIABLES',''),('VARIABLES','ACTION=inventory EXTRA=1'),
+    ('VARIABLES','ACTION=stage ACTION=inventory'),('VARIABLES','ACTION=inventory\n'),
+    ('VARIABLES',' ACTION=inventory'),('VARIABLES','ACTION=unknown'),
+    ('VARIABLES','ACTION=$(touch injected)'),('INSTANCE','i-00000000000000000'),
+    ('REGION','us-east-2'),('PRESIGN','bucket/private-key'),
+    ('PRESIGN',' '),('GITHUB_TOKEN_TO_SSM','true'),('GITHUB_TOKEN_TO_SSM',''),
+    ('SCRIPT','deploy/aws/box/frankie_box_inventory.sh'),
+])
+def test_registered_route_validation_refuses_extra_authority_before_output(tmp_path,field,value):
+    import sys
+    env=route_validation_environment(tmp_path); env[field]=value
+    result=subprocess.run([sys.executable,'-I','-S','-B','-c',route_validation_code()],
+                          env=env,capture_output=True,text=True)
+    assert result.returncode!=0
+    assert not Path(env['GITHUB_OUTPUT']).exists()
+    assert not (tmp_path/'injected').exists()
+    assert result.stdout==''
