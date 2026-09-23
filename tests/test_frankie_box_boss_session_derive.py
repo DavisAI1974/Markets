@@ -508,3 +508,74 @@ def test_two_member_binding_refuses_unverified_or_noncausal_prefix(tmp_path, dam
     with pytest.raises(ValueError):
         mapping.bind_prefix(**args)
     assert not args["output_path"].exists()
+
+
+def _scope_mapping_inputs(tmp_path, monkeypatch):
+    from research.kalshi.frankie_boss import frankie_source_mapping as mapping
+    from research.kalshi.frankie_boss.causal_prefix import SourceMember, SourceScope, ScopeKind
+    from research.kalshi.frankie_boss.causal_prefix_records import SUPPORTED_ADAPTER_REVISION
+    paths, members, actions = [], [], []
+    for index in range(2):
+        # The second physical member has a retained tail outside the declared source scope.
+        wires = [bytes([index * 2 + n + 1]) * 56 for n in range(2 + index)]
+        raw = b"".join(wires)
+        path = tmp_path / f"member-{index}.dbn"
+        path.write_bytes(raw)
+        paths.append(path)
+        members.append(SourceMember(index, path.name, hashlib.sha256(raw).hexdigest(), len(raw), 2))
+        actions.append({"raw_actions": [{"source_record": {"wire_bytes_hex": wire.hex()}}
+                                        for wire in wires[:2]]})
+    scope = SourceScope(ScopeKind.PROBE_ONLY, "a" * 64, tuple(members), SUPPORTED_ADAPTER_REVISION)
+    pin = mapping.mbo_source.MboSourcePin(3, "b" * 64)
+    monkeypatch.setattr(mapping.mbo_source, "_check_pin", lambda pin: (None, None))
+    monkeypatch.setattr(mapping.mbo_source, "_decompressed", lambda snapshot, zstd, stack: snapshot)
+    monkeypatch.setattr(mapping.mbo_source, "_metadata", lambda stream, pin, dbn: (b"fixture", False))
+    def records(stream, pin, ts_out, dbn):
+        while wire := stream.read(56):
+            ordinal = wire[0] - 1
+            yield dict(dbn_wire_bytes=wire, flags=128 if ordinal % 2 else 0,
+                       publisher_id=1, instrument_id=111313,
+                       ts_recv=ordinal + 101, ts_event=ordinal + 100)
+    monkeypatch.setattr(mapping.mbo_source, "_records", records)
+    ledger = tmp_path / "members.jsonl"
+    raw = b"".join(json.dumps(row).encode() + b"\n" for row in actions)
+    ledger.write_bytes(raw)
+    return dict(source_paths=paths, source_scope=scope, extraction_pin=pin,
+                member_ledger_path=ledger,
+                member_ledger_witness=dict(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()),
+                output_directory=tmp_path / "scope-mapping")
+
+
+def test_scope_mapping_builds_both_members_with_declared_partial_member_only(tmp_path, monkeypatch):
+    from research.kalshi.frankie_boss import frankie_source_mapping as mapping
+    args = _scope_mapping_inputs(tmp_path, monkeypatch)
+    before = [path.read_bytes() for path in args["source_paths"]]
+    result = mapping.build_scope_mapping(**args)
+    assert result["schema"] == "FRANKIE_SOURCE_MEMBERS_MAPPING_V2"
+    assert result["record_count"] == 4 and result["group_count"] == 2
+    assert [m["member_index"] for m in result["sources"]] == [0, 1]
+    rows = [json.loads(row) for row in (args["output_directory"] / "index.jsonl").read_bytes().splitlines()]
+    assert [(r["cursor_start"], r["cursor_end"], r["source_member_index"]) for r in rows] == [(0, 1, 0), (2, 3, 1)]
+    assert [path.read_bytes() for path in args["source_paths"]] == before
+
+
+@pytest.mark.parametrize("damage", ["source_bytes", "ledger_wire", "source_roster", "cross_member_group"])
+def test_scope_mapping_refuses_mismatched_source_or_ledger_without_publication(tmp_path, monkeypatch, damage):
+    from research.kalshi.frankie_boss import frankie_source_mapping as mapping
+    args = _scope_mapping_inputs(tmp_path, monkeypatch)
+    if damage == "source_bytes":
+        args["source_paths"][1].write_bytes(b"changed")
+    elif damage == "source_roster":
+        args["source_paths"].pop()
+    else:
+        rows = [json.loads(row) for row in args["member_ledger_path"].read_bytes().splitlines()]
+        if damage == "ledger_wire":
+            rows[1]["raw_actions"][0]["source_record"]["wire_bytes_hex"] = "00" * 56
+        else:
+            rows = [{"raw_actions": rows[0]["raw_actions"] + rows[1]["raw_actions"]}]
+        raw = b"".join(json.dumps(row).encode() + b"\n" for row in rows)
+        args["member_ledger_path"].write_bytes(raw)
+        args["member_ledger_witness"] = dict(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    with pytest.raises(ValueError):
+        mapping.build_scope_mapping(**args)
+    assert not args["output_directory"].exists()
