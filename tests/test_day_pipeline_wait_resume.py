@@ -25,14 +25,14 @@ def state(tmp_path):
         bucket="fixture", blocks_dir="blocks", restore_prefix="fixture", pending_return=True,
         host_scripts=dict(ingest="ingest.ps1", schedule_prefixes="prefix.ps1", cycles="cycles.ps1"),
         workflow_run=dict(run_id="retained-run", run_directory="/retained/run", boss_commit="f"*40,
-            configuration_sha256="e"*64,schedule_sha256="b"*64),
+            configuration_sha256="e"*64,schedule_sha256="6"*64),
         trading_day_schedule=dict(trading_day="20211004", step_count=3, source_record_count=17,
             source_manifest_hash="a"*64, schedule_sha256="b"*64))
     prepared = dict(prefix_count=3, prefixes_sha256="c"*64, day="20211004", source_records=17,
         schedule_sha256="b"*64, configuration=dict(path="/retained/configuration.json", sha256="d"*64, bytes=123))
     wait = dict(schema="FRANKIE_WORKFLOW_WAIT_V1", state="WAIT", kind="readiness",
         run_id="retained-run", run_directory="/retained/run", cycle_index=2, request_id="retained-run-cycle-02",
-        configuration_sha256="e"*64, boss_commit="f"*40, schedule_sha256="b"*64, job_id=None,
+        configuration_sha256="e"*64, boss_commit="f"*40, schedule_sha256="6"*64, job_id=None,
         artifacts={"host-identity.c15.json":dict(sha256="1"*64, bytes=10),
             "execution/cycle-02/host-preparation.c15.json":dict(sha256="2"*64, bytes=20),
             "execution/cycle-02/actual-critic-request.json":dict(sha256="3"*64, bytes=30)})

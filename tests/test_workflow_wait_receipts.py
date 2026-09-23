@@ -42,8 +42,8 @@ def state(tmp_path):
         boss_commit="a"*40,schedule=dict(path=str(tmp_path/"schedule.json"),sha256="b"*64)))
     return dict(run=run,cycle=cycle,files=files,configuration=configuration)
 
-def write(api,state,kind="readiness",**kw):
-    return api.write_wait_receipt(state["configuration"],state["cycle"],kind,**kw)
+def write(api,fixture,kind="readiness",**kw):
+    return api.write_wait_receipt(fixture["configuration"],fixture["cycle"],kind,**kw)
 
 def test_receipt_binds_same_run_exact_artifact_bytes_without_copying_context(api,state):
     result = write(api,state)
@@ -254,3 +254,65 @@ def test_changed_artifact_after_durable_wait_cannot_be_rewritten_as_new_identity
     with pytest.raises(ValueError):
         write(api,state)
     assert Path(first["receipt_path"]).read_bytes()==raw
+
+def test_interrupted_publication_keeps_partial_evidence_and_replays(api,state,monkeypatch):
+    original=api.os.link
+    def interrupted(*args,**kwargs):
+        raise OSError("injected publication interruption")
+    monkeypatch.setattr(api.os,"link",interrupted)
+    with pytest.raises(OSError):
+        write(api,state)
+    retained={path:path.read_bytes() for path in state["run"].rglob("*.partial-*")}
+    assert retained
+    monkeypatch.setattr(api.os,"link",original)
+    result=write(api,state)
+    assert api.read_wait_receipt(result["receipt_path"],result["receipt_sha256"],state["configuration"])==result["wait_receipt"]
+    assert all(path.read_bytes()==raw for path,raw in retained.items())
+
+def test_service_resume_requires_the_retained_admitted_service(api,state):
+    with pytest.raises((ValueError,OSError)):
+        write(api,state,"service_resume")
+    (state["cycle"]/"host-service.c15.json").write_bytes(b"same admitted service")
+    result=write(api,state,"service_resume")
+    assert result["wait_receipt"]["artifacts"]["execution/cycle-00/host-service.c15.json"]["sha256"]==sha(b"same admitted service")
+
+def test_correction_wait_requires_exact_correction_request(api,state):
+    (state["cycle"]/"request-plan.c15.json").write_bytes(b"plan")
+    principal=state["cycle"]/"principal"
+    principal.mkdir()
+    (principal/"session-request.json").write_bytes(b"principal exact")
+    with pytest.raises((ValueError,OSError)):
+        write(api,state,"principal_correction")
+    correction=principal/"classroom-correction-request.json"
+    correction.write_bytes(b"exact correction request")
+    result=write(api,state,"principal_correction")
+    correction.write_bytes(b"another correction request")
+    with pytest.raises((ValueError,OSError)):
+        api.read_wait_receipt(result["receipt_path"],result["receipt_sha256"],state["configuration"])
+
+def test_symlinked_receipt_directory_cannot_publish_outside_retained_cycle(api,state,tmp_path):
+    outside=tmp_path/"foreign-waits"
+    outside.mkdir()
+    (state["cycle"]/"workflow-wait").symlink_to(outside,target_is_directory=True)
+    with pytest.raises((ValueError,OSError)):
+        write(api,state)
+    assert list(outside.iterdir())==[]
+
+def test_lost_retained_request_cannot_be_rebuilt_under_wait_identity(api,state):
+    result=write(api,state)
+    request=state["cycle"]/"actual-critic-request.json"
+    request.rename(request.with_name("retained-fixture.json"))
+    with pytest.raises((ValueError,OSError)):
+        api.resume_admission(state["configuration"],result["receipt_sha256"])
+
+def test_resolution_symlink_cannot_substitute_foreign_admission(api,state,tmp_path):
+    result=write(api,state)
+    response=state["cycle"]/"verified-response.json"
+    response.write_bytes(b"admitted")
+    api.resolve_wait(result,[response])
+    outside=tmp_path/"foreign-response.json"
+    outside.write_bytes(response.read_bytes())
+    response.rename(response.with_name("retained-fixture-response.json"))
+    response.symlink_to(outside)
+    with pytest.raises((ValueError,OSError)):
+        api.pending_receipts(state["configuration"],state["cycle"])

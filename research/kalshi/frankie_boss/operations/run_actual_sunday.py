@@ -335,7 +335,10 @@ class ActualHost:
     def transport_pending(self):
         dispatches=list(self._workflow_cycle.glob('critic-spool/*/dispatch.json'))
         if len(dispatches)!=1:raise ValueError('unique retained job required for attention receipt')
-        self.workflow_pending('same_job',state='ATTENTION',job_id=dispatches[0].parent.name)
+        binding=json.loads(dispatches[0].read_bytes())['binding']
+        if binding.get('body_sha256')!=sha(self._workflow_cycle/'actual-critic-request.json'):
+            raise ValueError('retained job body differs from admitted request')
+        self.workflow_pending('same_job',state='ATTENTION',job_id=binding['job_id'])
 
     def workflow_pending(self,kind,*,state='WAIT',job_id=None):
         from research.kalshi.frankie_boss.operations.workflow_wait import write_wait_receipt,WorkflowPending
