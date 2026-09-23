@@ -37,8 +37,13 @@ def run_task(session, cache, *, role, phase, sources, reading_receipt,
         available = dict(retained, **extra_sources)
         catalog=[dict(source_id=key, bytes=len(raw),sha256=science.hashlib.sha256(raw).hexdigest())
                  for key,raw in available.items()]
-        navigation={'reading_plan_hash':reading['plan_hash'],'sources':catalog,
-            'instruction':'All full sources and completed earlier exchanges remain available through exact range reads.'}
+        index_id='source-index'
+        available[index_id]=b''.join(science.canonical(item)+b'\n' for item in catalog)
+        navigation={'reading_plan_hash':reading['plan_hash'],
+            'source_index':dict(source_id=index_id,bytes=len(available[index_id]),
+                               sha256=science.hashlib.sha256(available[index_id]).hexdigest()),
+            'source_count':len(catalog),
+            'instruction':'Read source-index to locate all full sources, staged assessments and completed exchanges. Exact byte ranges remain available; this index is navigation, not replacement knowledge.'}
         current = dict(navigation=navigation)
         turns=[]
         seen=set()
@@ -58,14 +63,18 @@ def run_task(session, cache, *, role, phase, sources, reading_receipt,
             return dict(final=parse_final(text))
         while True:
             prompt=base_prompt(current)
-            prompt+= ('\nYou may request exact source ranges before answering with '
+            prompt+= ('\nBefore your final answer, retrieve task-specific evidence using '
                 '{"read_requests":[{"source_id":"<catalog id>","start":0,"end":1000}]}. '
                 'Offsets are UTF-8 bytes and must land on character boundaries. Ask for smaller ranges if a request '
                 'does not fit the physical context. Every original source and prior exchange remains available. '
                 'Reading assessments are navigation aids, not replacement evidence.\n')
             identity=role+'-'+phase+'-'+science.digest(dict(item=item['item_id'],prompt=prompt))[:24]
+            if session._input_tokens(prompt) > 87000:
+                raise ValueError('task instruction exceeds the physical context; full evidence remains retained')
             parsed,record=call('scientific-'+identity,prompt,parse,role)
             if 'final' in parsed:
+                if not turns:
+                    raise ValueError('a final assessment requires task-specific evidence retrieval; source delivery is not comprehension')
                 return parsed['final'],record,turns
             query_hash=science.digest(parsed)
             if query_hash in seen:
@@ -84,14 +93,18 @@ def run_task(session, cache, *, role, phase, sources, reading_receipt,
             next_context=dict(navigation=navigation,requested_ranges=chunks,
                               previous_request_hash=query_hash)
             # Measure the final wrapped prompt, with an allowance for the same retrieval instruction.
-            if session._input_tokens(base_prompt(next_context)+prompt[prompt.rfind('\nYou may request'):]) > 87000:
+            if session._input_tokens(base_prompt(next_context)+prompt[prompt.rfind('\nBefore your final answer'):]) > 87000:
                 next_context=dict(navigation=navigation,range_request=parsed,
                     error='Requested ranges plus the task exceed context. Request smaller ranges; nothing was clipped.')
             current=next_context
             turn_id='dialogue:'+role+':'+item['item_id']+':'+str(len(turns))
             available[turn_id]=science.canonical(record)
-            navigation['sources'].append(dict(source_id=turn_id,bytes=len(available[turn_id]),
+            catalog.append(dict(source_id=turn_id,bytes=len(available[turn_id]),
                 sha256=science.hashlib.sha256(available[turn_id]).hexdigest()))
+            available[index_id]=b''.join(science.canonical(item)+b'\n' for item in catalog)
+            navigation['source_index'].update(bytes=len(available[index_id]),
+                sha256=science.hashlib.sha256(available[index_id]).hexdigest())
+            navigation['source_count']=len(catalog)
 
 
     parsed,call,turns=interact({'item_id':task_id},role,task_instruction,parse_final,{})

@@ -1554,6 +1554,10 @@ class Session:
             C.validate(visible, complete)
             self.note('classroom: ledgers already assembled; nothing to do')
             return complete
+        if visible['pre_message'].get('shared_knowledge') is not None:
+            return _box_module('frankie_box_classroom_staged').run(
+                self,C,cache,root=ROOT,staged=_box_module('frankie_box_staged_session'),
+                dialogue=_box_module('frankie_box_scientific_dialogue'))
         names = [c['name'] for c in C.components(visible)]
         rid = self.request['request_id']
         mode = visible['pre_message']['mode']

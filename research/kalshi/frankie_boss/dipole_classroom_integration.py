@@ -149,6 +149,7 @@ def prepare_integrated_cycle(
         from .dipole_scientific_review import POLICY
         message['shared_knowledge'] = validate_descriptor(shared_knowledge)
         message['scientific_dialogue_policy'] = POLICY
+        message['observation_cursor_roster'] = tuple(snapshot['context_cursors'])
         message['novelty_invitation'] += (' Share all observations and learning, not only novelty. '
             'The scientific teacher will examine the mechanism, mathematics, assumptions and evidence; '
             'a second occurrence is supporting evidence, not an exclusive validation gate. '
