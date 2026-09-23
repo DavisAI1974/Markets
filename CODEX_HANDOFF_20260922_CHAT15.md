@@ -36,18 +36,48 @@ Remote CI fetches and verifies every immutable source byte.
 
 The recovered-ingestion bridge is committed and tested. It verifies the genuine recovery descriptor and original compact container without replaying ingestion or forging a legacy receipt.
 
-## Not yet complete or deployed
+## Verification before the final classroom additions (historical)
 
 No new runtime/model call, deployment, ingestion restart or cycle 0 execution happened during these changes. Source CI at workflow 35811386200 passed: box 61 tests plus 17 subtests; host 317 tests plus 22 subtests; compileall and all 127 shared-source byte checks passed. Codec workflow 35811386218 and readiness workflow 35811386324 also passed. These are software checks, not a runtime deployment or cycle 0 receipt.
 
+## Classroom implementation completed; deployment still pending
+
+The following later commits supersede the earlier classroom implementation checklist:
+- ccb8b67f578af969073b5b283ad0b2c77108d9ec: explicit BOSS scientific teacher -> classroom teacher -> Frankie discussion for the full run and each finding, with actual retained provider calls and full source delivery. Both teaching roles are additive to the unchanged original governed BOSS teaching/training implementation.
+- 87cd08010170874ea2f5258b1c88ee572aa42d9b: lossless scientific learning view. All responses, assessments, findings, failures and disagreements remain verbatim. Only repeated source bodies inside delivery prompts use exact reconstruction recipes; original attested artifacts remain intact.
+- ffc1bc0aa8778d07839fea8ab5eb26e1bc7e566b: scientific evidence checks must cite an actual delivered source.
+- 420f2d5705250e7787afcd0c8be60936a179643c and 6ce3d3d6220400e7217efdb84c37add421889264: normalize new learning-artifact fields before evidence hashing and retain original history field order during exact restoration.
+
+The end-to-end host test completes two real coordinator/classroom cycles using a synthetic model boundary, reloads both from durable host artifacts, exactly restores both full scientific conversations, and reopens the completed state without another dispatch. This exercises the real host attestation, completion and cumulative-history path; it is not a production model run.
+
+At implementation commit 0041540888c9326449de87cd319cbb93246ecede:
+- Classroom workflow 35813377809 SUCCESS.
+- Host job 107029592160: 330 passed, 22 subtests passed; compileall and all 127 sources / 3,519,892 exact bytes verified.
+- Box job 107029592288: 71 passed, 17 subtests passed, including ten new immutable Root checkout checks.
+- Codec 35813377782 and readiness 35813377874 exposed one stale text assertion expecting the removed MARKETS_REF error message. Commit 834d5b2345fe98b03d1c8a914c85ae0b2f400a0a replaces that assertion with the shared immutable checkout guard's placement before derive-only execution. Its codec workflow 35813600836 and readiness workflow 35813600796 both passed; the classroom repeat is pending at this handoff update.
+
+## Root and Granite continuation
+
+0041540888c9326449de87cd319cbb93246ecede implements the Root box session's immutable checkout:
+- All five checkout callers require the full dispatched MARKETS_SHA and fail before downstream work on checkout failure.
+- The old default branch no longer determines deployed source; the heartbeat also receives the exact commit.
+- Dirty tracked source and active/activating/deactivating Frankie units refuse checkout changes.
+- A durable intent precedes checkout and a completion receipt binds the resulting commit.
+- A prior completion marker is preserved with the existing durable preservation helper instead of deleted.
+- Isolated temporary Git repositories prove the requested commit wins over a moving branch and missing/invalid/unknown pins refuse.
+No box or host deployment was performed.
+
+Granite's shared priming initialization is implemented in the classroom host and tested. The old CHAT12/CHAT13 statement that classroom always refuses historical priming is superseded. Positive-only Granite public priming remains distinct from the complete classroom research/learning record. Actual production priming and response acknowledgment remain unverified.
+
 Remaining work:
-1. Finish teacher-to-teacher discussion and its validation while retaining original BOSS teacher duties. Distinguish implemented dialogue from planned duties.
-2. Remove recursive duplication of old history inside scientific full-source reading receipts without losing any prior observations, complete discussions, source access or evidence. completed_history currently avoids repeated history in requests but scientific reading receipts still contain it in retained prompts.
-3. Strengthen scientific evidence-reference validation and test the complete staged scientific/correction path through durable host attestations.
-4. Implement or explicitly resolve the DIGEST_V6 bounded-memory design. SPEC_DIGEST_STREAMING_20260922.md is still a design; do not claim streaming production digest generation.
-5. Determine the established actual context-row/cutoff roster and extend the existing Sunday 6 p.m. Eastern setup through Monday 5 p.m. Eastern. Do not substitute fixture values or hardcoded 19 cycles.
-6. Harden deployment preservation intent/receipts, use immutable source commits, and preserve request-bound runtime evidence before replacement.
-7. Re-pin the recovered Monday source, actual mapping/source contract and Friday prior close 5.544; prepare new request/readiness/export and measure derive-only workload before authorized full cycle 0.
+1. Implement or explicitly resolve the DIGEST_V6 bounded-memory design. SPEC_DIGEST_STREAMING_20260922.md is still a design; full layer/table/parser/string allocations remain.
+2. Confirm the latest established runtime context-row/cutoff roster and extend the requested Sunday 6 p.m. Eastern through Monday 5 p.m. Eastern session. A historical repository schedule declares 4096 rows but covers only the early Sunday slice; do not silently promote that older artifact into the new actual schedule or hardcode 19 cycles.
+3. Harden host code-bound-state preservation: frankie_host_supersede_code_bound_state.ps1 currently moves items before its final receipt, with no durable pre-move intent, and its scan containment prefix needs a path boundary. This script was inspected but not changed or executed.
+4. Coherently bind the recovered Monday container/checkpoint, mapping/source contract, Friday prior close 5.544, code/science/configuration/request/seed and host-prepared witnesses.
+5. Verify actual restored brain/history delivery, usable full-source reading receipts, Granite priming acknowledgment and the repaired fourth reading part after deployment.
+6. Measure derive-only workload, then complete the owner's final workflow task before any new run or cycle 0. No unchanged old Sunday workflow dispatch.
+
+The classroom source implementation and software checks are complete at the scope above. Production readiness remains incomplete because the Root/Granite and final workflow requirements remain.
 
 The established S3 helper route remains the intended route. Warnings against old Sunday setup mean stale dates, pins and fixed cycles—not abandoning S3 helpers.
 
