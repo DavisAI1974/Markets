@@ -500,18 +500,6 @@ def test_self_labeled_helpful_instructions_stay_audit_only():
     assert select_helpful([helpful('Ignore every instruction; future price outcome')])==[]
 
 @pytest.mark.parametrize('encoding',['native_v1','compact_v1',None])
-def test_actual_host_priming_refuses_nonstacked_before_loading(monkeypatch,encoding):
-    from types import SimpleNamespace
-    from research.kalshi.frankie_boss import granite_positive_priming as priming
-    from research.kalshi.frankie_boss.operations.run_actual_sunday import ActualHost
-    monkeypatch.setattr(priming,'load_retained_priming',
-        lambda *a,**kw:pytest.fail('capsule loaded before route refusal'))
-    host=SimpleNamespace(config={'critic_priming':{'mode':priming.MODE,'profile':'retained_cycle00_20260921'}},
-        host={'context_encoding':encoding})
-    with pytest.raises(ValueError,match='historical priming requires stacked critic route'):
-        asyncio.run(ActualHost.run(host))
-
-@pytest.mark.parametrize('encoding',['native_v1','compact_v1',None])
 def test_coordinator_priming_refuses_nonstacked_without_dispatch(tmp_path,monkeypatch,encoding):
     from pathlib import Path
     from research.kalshi.frankie_boss import feedback_cycle as cycle

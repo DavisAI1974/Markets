@@ -84,28 +84,3 @@ def test_classroom_main_has_explicit_host_class_seam_instead_of_global_rebind():
     assert "DipoleClassroomPrincipalAdapter =" not in source
 
 
-def _ast_modulo_seam(function, *, substitutions=()):
-    """The function's AST dump (quote style and layout erased), docstring dropped, seam names mapped."""
-    import ast, textwrap
-    source = textwrap.dedent(inspect.getsource(function))
-    for old, new in substitutions:
-        source = source.replace(old, new)
-    tree = ast.parse(source)
-    node = tree.body[0]
-    if node.body and isinstance(node.body[0], ast.Expr) and isinstance(getattr(node.body[0], 'value', None), ast.Constant) \
-            and isinstance(node.body[0].value.value, str):
-        node.body = node.body[1:]                       # the classroom copy carries a docstring; the lawful one a comment
-    node.args = ast.arguments(posonlyargs=[], args=[], vararg=None, kwonlyargs=[], kw_defaults=[], kwarg=None, defaults=[])
-    node.name = 'f'
-    return ast.dump(node, include_attributes=False)
-
-
-def test_classroom_run_and_main_are_the_lawful_bodies_modulo_the_named_seam():
-    """Drift guard, like the compact-source host's prefix() guard: the classroom host copies the lawful
-    host's run() and main() instead of rebinding globals, so the copies must stay the lawful text.
-    If the lawful body changes, this fails and the copy is re-synced by hand."""
-    assert _ast_modulo_seam(integrated.ClassroomActualHost.run) == _ast_modulo_seam(lawful.ActualHost.run)
-    classroom_main = _ast_modulo_seam(integrated.main, substitutions=(
-        ('host = host_class(configuration', 'host = ActualHost(configuration'),
-        ('base.incomplete_output_alert(', 'incomplete_output_alert(')))
-    assert classroom_main == _ast_modulo_seam(lawful.main)

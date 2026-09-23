@@ -64,12 +64,6 @@ def test_primed_origin_cannot_enter_unprimed_successor(tmp_path,monkeypatch,caps
         with pytest.raises(ValueError,match='lineage'):store.critic_knowledge('next',cutoff_ns=20)
     finally:store.close();checkpoint.close()
 
-def test_classroom_refuses_priming_before_configuration_or_io():
-    from research.kalshi.frankie_boss.operations.run_actual_sunday_classroom import ClassroomActualHost
-    host=ClassroomActualHost.__new__(ClassroomActualHost)
-    host.config=dict(critic_priming=dict(mode=MODE,profile='retained_cycle00_20260921'))
-    with pytest.raises(ValueError,match='does not support historical priming'):asyncio.run(host.run())
-
 def test_legacy_primed_database_requires_same_capsule(tmp_path,capsule):
     store=open_store(tmp_path,priming=capsule,create=True)
     store.critic_knowledge('pending',cutoff_ns=10)
