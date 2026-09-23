@@ -41,4 +41,4 @@ jobs:
         run: command -v pwsh
       - name: Real receipt files and actual pipeline with fake process boundary
         working-directory: tests
-        run: python -B -m pytest test_workflow_wait_receipts.py test_day_pipeline_wait_resume.py test_workflow_delivery.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider
+        run: python -B -m pytest test_workflow_wait_receipts.py test_day_pipeline_wait_resume.py test_workflow_delivery.py test_day_cycles_pending_return.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider
