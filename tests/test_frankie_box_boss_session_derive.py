@@ -383,3 +383,17 @@ def test_work_probe_unknown_and_mismatched_totals_are_not_success(tmp_path):
     assert module.snapshot(tmp_path)['percent'] is None
     with pytest.raises(ValueError):
         probe.update('bad', 2, 1)
+
+
+def test_probe_highlights_are_honest_and_ignore_invalid_snapshots(tmp_path):
+    module = load('frankie_box_progress')
+    (tmp_path / 'progress.json').write_text('[]')
+    assert module.snapshot(tmp_path)['status'] == 'identity_or_phase_mismatch'
+    probe = module.Probe(tmp_path, 'request', 'classroom')
+    probe.update('classroom-tasks', 1, 4, in_flight=1)
+    probe.checkpoint('read_verified', 'part.json')
+    text = module.highlight(module.snapshot(tmp_path))
+    assert '1/4 (25.0%)' in text and 'verified_reads=1' in text
+    assert 'worker_alive=' in text and 'in_flight=1' in text
+    probe.update('root-digest')
+    assert '(unknown)' in module.highlight(module.snapshot(tmp_path))

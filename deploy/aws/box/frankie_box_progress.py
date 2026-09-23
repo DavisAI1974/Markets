@@ -86,7 +86,7 @@ def snapshot(directory, request_sha256=None, phase=None):
     """Read-only; distinguish worker liveness from a heartbeat process being alive."""
     try:
         value = json.loads((Path(directory) / 'progress.json').read_text(encoding='utf-8'))
-        if (value.get('schema') != 'FRANKIE_WORK_PROBE_V1'
+        if (type(value) is not dict or value.get('schema') != 'FRANKIE_WORK_PROBE_V1'
                 or request_sha256 is not None and value.get('request_sha256') != request_sha256
                 or phase is not None and value.get('phase') != phase):
             return dict(status='identity_or_phase_mismatch')
@@ -98,10 +98,31 @@ def snapshot(directory, request_sha256=None, phase=None):
         value['progress_age_seconds'] = max(0, round(time.time() - value['at'], 1))
         try:
             saved = json.loads((Path(directory) / 'checkpoints.json').read_text(encoding='utf-8'))
-            if all(saved.get(k) == value.get(k) for k in ('request_sha256', 'pid', 'process_token')):
+            if type(saved) is dict and all(saved.get(k) == value.get(k) for k in ('request_sha256', 'pid', 'process_token')):
                 value['checkpoints'] = saved
         except (OSError, ValueError, TypeError):
             pass
         return value
     except (OSError, ValueError, TypeError, KeyError):
         return dict(status='unavailable')
+
+
+def highlight(value):
+    if value.get('schema') != 'FRANKIE_WORK_PROBE_V1':
+        return 'work probe: ' + value.get('status', 'unavailable')
+    percent = value['percent']
+    pct = 'unknown' if percent is None else str(percent) + '%'
+    checks = value.get('checkpoints', {}).get('counts', {})
+    return (f"{value['stage']}: {value['completed']}/{value['total']} ({pct}); "
+            f"worker_alive={value['process_alive']}; progress_age={value['progress_age_seconds']}s; "
+            f"in_flight={value['in_flight']}; failed={value['failed']}; "
+            f"saved={checks.get('saved', 0)}; verified_reads={checks.get('read_verified', 0)}; "
+            f"rejected_reads={checks.get('read_rejected', 0)}")
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--directory', required=True)
+    args = parser.parse_args()
+    print(json.dumps(snapshot(args.directory), sort_keys=True))
