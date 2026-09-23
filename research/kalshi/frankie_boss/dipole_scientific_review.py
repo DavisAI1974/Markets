@@ -107,7 +107,8 @@ def review_prompt(request, item, reading):
         'Reading context: ' + canonical(reading).decode() + '\n'
         'Return ONE JSON object with exactly: item_id, disposition (SUPPORTED_SCOPED, PLAUSIBLE_UNRESOLVED, '
         'CONTRADICTED_SCOPED or INSUFFICIENT_EVIDENCE), scope (text), reasoning_steps (nonempty text list), '
-        'evidence_checks (nonempty list of {source_id,claim,check,result}; result supports/contradicts/unresolved), '
+        'evidence_checks (nonempty list of {source_id,claim,check,result}; result supports/contradicts/unresolved; '
+        'source_id names a full shared source, initial-response, fact-review or learning-history), '
         'contradictions (text list), assumptions (text list), uncertainty (nonempty text list), next_tests '
         '(nonempty text list), build_forward (text list), replication_status (NO_SECOND_OCCURRENCE, '
         'REPLICATION_AVAILABLE or UNKNOWN), predictive_status=UNESTABLISHED, economic_status=UNESTABLISHED. '
@@ -134,6 +135,10 @@ def parse_review(text, request, item):
         if type(check) is not dict or set(check) != {'source_id','claim','check','result'}:
             raise ValueError('evidence check fields differ')
         for field in ('source_id','claim','check'): _text(check[field],field)
+        allowed_sources={x['source_id'] for x in request['shared_knowledge'].get('sources',[])} | {
+            'initial-response','fact-review','learning-history'}
+        if check['source_id'] not in allowed_sources:
+            raise ValueError('scientific evidence must cite a delivered source')
         if check['result'] not in ('supports','contradicts','unresolved'):
             raise ValueError('evidence check result differs')
     if value['disposition']=='SUPPORTED_SCOPED' and not any(c['result']=='supports' for c in checks):
