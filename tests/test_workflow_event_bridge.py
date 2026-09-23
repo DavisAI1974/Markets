@@ -381,3 +381,56 @@ def test_actual_loader_refuses_missing_earlier_receipt(api,retained_pipeline,mon
     fake_git(api,monkeypatch)
     with pytest.raises((ValueError,RuntimeError)):
         api.load_pipeline(f["event"],overlay=False)
+
+def test_actual_resume_cli_keeps_missing_owner_release_held_without_ssm(api,retained_pipeline,monkeypatch,capsys):
+    f=retained_pipeline
+    event_path=Path("event.json")
+    event_path.write_bytes(canonical(f["event"]))
+    calls=fake_git(api,monkeypatch)
+    monkeypatch.setattr(api.sys,"argv",["bridge","resume","--event",str(event_path)])
+    api.main()
+    result=json.loads(capsys.readouterr().out.splitlines()[-1])
+    assert result["status"]=="HELD"
+    assert all(command[0]=="git" for command in calls)
+    assert f["pipeline"].receipt("cycles") is None
+
+def test_actual_dispatch_cli_requires_uploaded_outbox_before_external_api(api,retained_pipeline,monkeypatch):
+    f=retained_pipeline
+    event_path=Path("event.json")
+    event_path.write_bytes(canonical(f["event"]))
+    directory=Path("outbox")
+    api.WAIT._publish(directory/"intent.json",dict(schema="FRANKIE_WORKFLOW_EVENT_OUTBOX_V1",event=f["event"]))
+    calls=fake_git(api,monkeypatch)
+    monkeypatch.delenv("WORKFLOW_OUTBOX_ARTIFACT_CONFIRMED",raising=False)
+    monkeypatch.setattr(api.sys,"argv",["bridge","dispatch","--event",str(event_path),"--directory",str(directory)])
+    with pytest.raises(ValueError):
+        api.main()
+    assert all(command[0]=="git" for command in calls)
+    assert not (directory/"accepted.json").exists()
+
+def test_actual_dispatch_cli_targets_registered_route_with_exact_event_once(api,retained_pipeline,monkeypatch):
+    f=retained_pipeline
+    event_path=Path("event.json")
+    event_path.write_bytes(canonical(f["event"]))
+    directory=Path("outbox")
+    api.WAIT._publish(directory/"intent.json",dict(schema="FRANKIE_WORKFLOW_EVENT_OUTBOX_V1",event=f["event"]))
+    calls=fake_git(api,monkeypatch)
+    git_run=api.subprocess.run
+    sent=[]
+    def external(argv,**kwargs):
+        if argv[0]=="git":
+            return git_run(argv,**kwargs)
+        assert argv[:4]==["gh","workflow","run","frankie_journal_stack.yml"]
+        assert (directory/"intent.json").is_file()
+        sent.append(argv)
+        return SimpleNamespace(returncode=0)
+    monkeypatch.setattr(api.subprocess,"run",external)
+    monkeypatch.setenv("WORKFLOW_OUTBOX_ARTIFACT_CONFIRMED","true")
+    monkeypatch.setattr(api.sys,"argv",["bridge","dispatch","--event",str(event_path),"--directory",str(directory)])
+    api.main()
+    api.main()
+    assert len(sent)==1
+    value=next(part.split("=",1)[1] for part in sent[0] if part.startswith("continuation_event="))
+    assert json.loads(value)==f["event"]
+    assert "checks_only=true" in sent[0] and "keep_compute=true" in sent[0]
+    assert (directory/"accepted.json").is_file()
