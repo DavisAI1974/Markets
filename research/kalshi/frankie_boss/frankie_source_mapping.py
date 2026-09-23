@@ -121,18 +121,43 @@ def _action_wire(action, dbn):
 
 def build_mapping(*, source_path, source_member, extraction_pin, member_ledger_path,
                   member_ledger_witness, output_directory, max_line_bytes=256*1024*1024, event=None):
-    """Verify one complete single-entity source against every ordered member action.
-
-    Output is a small index and canonical receipt. Gzip is never materialized
-    plain on disk; physical decompressed line offsets/hashes witness full rows,
-    including fields unrelated to the wire comparison. A mismatch commits nothing.
-    """
-    output = _output(output_directory)
-    source_path, ledger_path = _plain(source_path), _plain(member_ledger_path)
-    expected = _witness(member_ledger_witness)
+    """Preserve the historical complete single-member mapping contract."""
     if type(source_member) is not SourceMember or source_member.member_index != 0:
         raise ValueError('one explicit source member at index zero required')
     source_member.__post_init__()
+    return _build_mapping(sources=((source_path, source_member),), extraction_pin=extraction_pin,
+        member_ledger_path=member_ledger_path, member_ledger_witness=member_ledger_witness,
+        output_directory=output_directory, max_line_bytes=max_line_bytes, event=event)
+
+
+def build_scope_mapping(*, source_paths, source_scope, extraction_pin, member_ledger_path,
+                        member_ledger_witness, output_directory, max_line_bytes=256*1024*1024, event=None):
+    """Map every record in an explicitly declared source scope, including partial physical members.
+
+    Physical files are checked in full against their supplied hashes. Only the
+    already-authored per-member record counts select prefixes; no time/row limit
+    is invented here. This is source verification, not source ingestion.
+    """
+    from .causal_prefix import SourceScope
+    if type(source_scope) is not SourceScope:
+        raise ValueError('explicit typed source scope required')
+    source_scope.__post_init__()
+    if type(source_paths) not in (tuple, list) or len(source_paths) != len(source_scope.members):
+        raise ValueError('one source path per declared member required')
+    return _build_mapping(sources=tuple(zip(source_paths, source_scope.members)), source_scope=source_scope,
+        extraction_pin=extraction_pin, member_ledger_path=member_ledger_path,
+        member_ledger_witness=member_ledger_witness, output_directory=output_directory,
+        max_line_bytes=max_line_bytes, event=event)
+
+
+def _build_mapping(*, sources, extraction_pin, member_ledger_path, member_ledger_witness,
+                   output_directory, max_line_bytes, event, source_scope=None):
+    """Shared exact physical ledger comparison; a mismatch publishes nothing."""
+    output = _output(output_directory)
+    sources = tuple((_plain(path), member) for path, member in sources)
+    ledger_path = _plain(member_ledger_path)
+    total = sum(member.mbo_records for _, member in sources)
+    expected = _witness(member_ledger_witness)
     if type(max_line_bytes) is not int or max_line_bytes <= 0:
         raise ValueError('positive line capacity required; oversized rows are refused, not dropped')
     if event is not None and not callable(event):
@@ -140,10 +165,24 @@ def build_mapping(*, source_path, source_member, extraction_pin, member_ledger_p
     dbn, zstd = mbo_source._check_pin(extraction_pin)
     with ExitStack() as stack:
         temporary = Path(stack.enter_context(tempfile.TemporaryDirectory(prefix='frankie-map-', dir=output.parent)))
-        snapshot = mbo_source._verified_copy(source_path, source_member, stack)
-        stream = mbo_source._decompressed(snapshot, zstd, stack)
-        metadata, ts_out = mbo_source._metadata(stream, extraction_pin, dbn)
-        records = iter(mbo_source._records(stream, extraction_pin, ts_out, dbn))
+        metadata_hashes = []
+        def source_records():
+            for path, member in sources:
+                with ExitStack() as member_stack:
+                    snapshot = mbo_source._verified_copy(path, member, member_stack)
+                    stream = mbo_source._decompressed(snapshot, zstd, member_stack)
+                    metadata, ts_out = mbo_source._metadata(stream, extraction_pin, dbn)
+                    metadata_hashes.append(_sha(metadata))
+                    decoded = iter(mbo_source._records(stream, extraction_pin, ts_out, dbn))
+                    for _ in range(member.mbo_records):
+                        raw = next(decoded, None)
+                        if raw is None:
+                            raise ValueError('physical source is shorter than declared member')
+                        yield member.member_index, raw
+                    if source_scope is None and next(decoded, None) is not None:
+                        raise ValueError('complete single-member source has extra records')
+        records = source_records()
+        stack.callback(records.close)
         source_file = stack.enter_context(ledger_path.open('rb'))
         physical = _HashingReader(source_file)
         buffered = stack.enter_context(io.BufferedReader(physical))
@@ -166,11 +205,15 @@ def build_mapping(*, source_path, source_member, extraction_pin, member_ledger_p
             actions = row.get('raw_actions') if type(row) is dict else None
             if type(actions) is not list or not actions:
                 raise ValueError('every member row must retain its complete raw_actions')
-            start, hashes, final = cursor, [], None
+            start, hashes, final, group_member = cursor, [], None, None
             for action_index, action in enumerate(actions):
-                raw = next(records, None)
-                if raw is None:
+                selected = next(records, None)
+                if selected is None:
                     raise ValueError('member ledger contains extra source records')
+                member_index, raw = selected
+                if group_member is not None and member_index != group_member:
+                    raise ValueError('ledger group crosses a source member seam')
+                group_member = member_index
                 wire, mode = _action_wire(action, dbn)
                 if wire != raw['dbn_wire_bytes']:
                     raise ValueError(f'full source wire differs at cursor {cursor}')
@@ -187,6 +230,8 @@ def build_mapping(*, source_path, source_member, extraction_pin, member_ledger_p
             record = dict(cursor_start=start, cursor_end=cursor-1, line_number=line_number,
                 plain_offset=offset, plain_bytes=len(raw_line), line_sha256=_sha(raw_line),
                 wire_sha256=hashes, last_ts_recv_ns=final['ts_recv'], last_ts_event_ns=final['ts_event'])
+            if source_scope is not None:
+                record['source_member_index'] = group_member
             encoded = _json(record) + b'\n'
             index.write(encoded)
             index_hash.update(encoded)
@@ -194,16 +239,22 @@ def build_mapping(*, source_path, source_member, extraction_pin, member_ledger_p
             groups += 1
             if event is not None:
                 event(dict(phase='mapping', plain_bytes=plain_size, records=cursor, groups=groups))
-        if (next(records, None) is not None or cursor != source_member.mbo_records
+        if (next(records, None) is not None or cursor != total
                 or plain_size != expected['bytes'] or plain_hash.hexdigest() != expected['sha256']):
             raise ValueError('complete source/member byte witness or record coverage differs')
-        receipt = dict(schema=SCHEMA, source=asdict(source_member), extraction_pin=asdict(extraction_pin),
-            extraction_hash=extraction_pin.digest, metadata_sha256=_sha(metadata),
+        receipt = dict(schema=SCHEMA, source=asdict(sources[0][1]), extraction_pin=asdict(extraction_pin),
+            extraction_hash=extraction_pin.digest, metadata_sha256=metadata_hashes[0],
             member_ledger=dict(plain=expected, physical=dict(bytes=physical.size, sha256=physical.digest.hexdigest()),
                                encoding='gzip' if compressed else 'plain'),
             record_count=cursor, group_count=groups, entity=list(entity), encodings=encodings,
             index=dict(path='index.jsonl', bytes=index_size, sha256=index_hash.hexdigest()),
             boss_prefix_bound=False, market_calculations=False)
+        if source_scope is not None:
+            receipt.pop('source')
+            receipt.pop('metadata_sha256')
+            receipt.update(schema='FRANKIE_SOURCE_MEMBERS_MAPPING_V2',
+                           sources=[asdict(member) for _, member in sources],
+                           source_scope=source_scope.public_dict(), metadata_sha256_by_member=metadata_hashes)
         index.close()
         (temporary/'mapping.json').write_bytes(_json(receipt))
         # Both members have closed, fully verified bytes before the output appears.

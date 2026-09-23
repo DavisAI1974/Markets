@@ -579,3 +579,39 @@ def test_scope_mapping_refuses_mismatched_source_or_ledger_without_publication(t
     with pytest.raises(ValueError):
         mapping.build_scope_mapping(**args)
     assert not args["output_directory"].exists()
+
+
+def test_scope_builder_preserves_the_historical_single_member_api(tmp_path, monkeypatch):
+    from research.kalshi.frankie_boss import frankie_source_mapping as mapping
+    args = _scope_mapping_inputs(tmp_path, monkeypatch)
+    raw = args["member_ledger_path"].read_bytes().splitlines(keepends=True)[0]
+    args["member_ledger_path"].write_bytes(raw)
+    result = mapping.build_mapping(source_path=args["source_paths"][0],
+        source_member=args["source_scope"].members[0], extraction_pin=args["extraction_pin"],
+        member_ledger_path=args["member_ledger_path"],
+        member_ledger_witness=dict(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest()),
+        output_directory=args["output_directory"])
+    assert result["schema"] == mapping.SCHEMA
+    assert result["source"]["member_index"] == 0
+    assert result["record_count"] == 2 and result["group_count"] == 1
+    row = json.loads((args["output_directory"] / "index.jsonl").read_bytes())
+    assert "source_member_index" not in row
+
+
+def test_multi_member_binder_reads_a_sealed_compact_container_without_replay(tmp_path):
+    import sqlite3
+    from research.kalshi.frankie_boss import frankie_source_mapping as mapping
+    from research.kalshi.frankie_boss.compact_journal import CompactReader, CompactWriter
+    args = _two_member_mapping_fixture(tmp_path)
+    compact = tmp_path / "source.compact.sqlite"
+    with sqlite3.connect(args["boss_journal_path"]) as source:
+        with CompactWriter(compact) as writer:
+            for row in source.execute("SELECT ordinal, kind, body, digest FROM entries ORDER BY ordinal"):
+                writer.add(row)
+            writer.seal(expected_count=args["journal_checkpoint"]["count"],
+                        expected_head_hash=args["journal_checkpoint"]["head_hash"])
+    before = compact.read_bytes()
+    args["boss_journal_path"] = compact
+    result = mapping.bind_prefix(**args, reader_factory=CompactReader)
+    assert result["matched_records_by_member"] == [2, 2]
+    assert compact.read_bytes() == before
