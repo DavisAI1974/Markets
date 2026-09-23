@@ -54,7 +54,7 @@ At implementation commit 0041540888c9326449de87cd319cbb93246ecede:
 - Classroom workflow 35813377809 SUCCESS.
 - Host job 107029592160: 330 passed, 22 subtests passed; compileall and all 127 sources / 3,519,892 exact bytes verified.
 - Box job 107029592288: 71 passed, 17 subtests passed, including ten new immutable Root checkout checks.
-- Codec 35813377782 and readiness 35813377874 exposed one stale text assertion expecting the removed MARKETS_REF error message. Commit 834d5b2345fe98b03d1c8a914c85ae0b2f400a0a replaces that assertion with the shared immutable checkout guard's placement before derive-only execution. Its codec workflow 35813600836 and readiness workflow 35813600796 both passed; the classroom repeat is pending at this handoff update.
+- Codec 35813377782 and readiness 35813377874 exposed one stale text assertion expecting the removed MARKETS_REF error message. Commit 834d5b2345fe98b03d1c8a914c85ae0b2f400a0a replaces that assertion with the shared immutable checkout guard's placement before derive-only execution. Its codec workflow 35813600836, readiness workflow 35813600796 and classroom workflow 35813600725 all passed. This is the latest fully green implementation/test revision.
 
 ## Root and Granite continuation
 
