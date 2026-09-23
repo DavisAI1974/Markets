@@ -112,7 +112,7 @@ class ReleasableHostLock:
         if self.context is not None:self.release()
 
 
-def await_recorded_principal(request,directory,host_lock,probe=None):
+def await_recorded_principal(request,directory,host_lock,probe=None,pending=None):
     """Observe only; this callback never dispatches or fabricates a session."""
     # The durable file is the request's canonical JSON; the live object holds tuples the c15
     # loader preserved (run 35522815675, 2026-09-20), so compare the file with that same form.
@@ -126,6 +126,7 @@ def await_recorded_principal(request,directory,host_lock,probe=None):
     if probe is not None:probe.advance('frankie_calculation',unit='outputs')
     print(json.dumps(dict(status='actual_frankie_session_pending',request_id=request['request_id'],
         request_path=str(request_path),prepared_context_retained=True)),flush=True)
+    if pending is not None and not response_path.exists():pending()
     host_lock.release()
     try:
         while not response_path.exists():time.sleep(1)
@@ -265,6 +266,8 @@ class ActualHost:
         self.schedule=None   # the verified schedule (its model_context_rows is the declared row window); set by source verification, required before training
         self.scope=None;self.cache=None;self.original_prepare=None
         self.coordinator=None
+        self.pending_return=False;self.resume_wait_sha256=None;self._workflow_cycle=None
+        self._workflow_resuming=[]
         actual=subprocess.check_output(['git','rev-parse','HEAD'],cwd=self.repo,text=True).strip()
         if actual!=self.host['boss_commit']:raise ValueError('explicit current BOSS commit required')
         subprocess.run(['git','diff','--exit-code','HEAD','--','research/kalshi/frankie_boss','research/refrag'],cwd=self.repo,check=True,stdout=subprocess.DEVNULL)
@@ -285,7 +288,9 @@ class ActualHost:
         same-job checks below still apply. No timeout authorizes another attempt.
         """
         source=self.host.get('pod_credential_ssm')
-        if source is None:return read_trigger(schema,fields)
+        if source is None:
+            if getattr(self,'pending_return',False):raise ValueError('pending return requires request-bound public trigger delivery')
+            return read_trigger(schema,fields)
         if (type(source) is not dict or set(source)!={'name','region','trigger_directory'}
                 or not re.fullmatch(r'/[A-Za-z0-9_./-]{1,1000}',str(source['name']))
                 or not re.fullmatch(r'[a-z]{2}(?:-[a-z]+)+-\d',str(source['region']))
@@ -297,6 +302,8 @@ class ActualHost:
             raise ValueError('explicit SSM credential source and request identity required')
         path=Path(source['trigger_directory'])/request_id/(schema+'.json')
         print(json.dumps(dict(status='waiting_for_request_bound_service_trigger',request_id=request_id)),flush=True)
+        if getattr(self,'pending_return',False) and not path.exists():
+            self.workflow_pending('service_resume' if schema=='FRANKIE_ACTUAL_RESUME_JOB_V1' else 'readiness')
         while not path.exists():time.sleep(1)
         with path.open('rb') as stream:raw=stream.read(32769)
         if len(raw)>32768:raise ValueError('bounded execution trigger required')
@@ -318,6 +325,42 @@ class ActualHost:
                 raise ValueError('private SSM credential unavailable or invalid') from None
             self._ssm_pod_key=key
         return self._ssm_pod_key,trigger
+
+    def principal_pending(self):
+        cycle=self._workflow_cycle
+        kind='principal_correction' if (cycle/'principal/classroom-correction-request.json').exists() else 'principal'
+        if kind=='principal_correction':self.workflow_resolved('principal')
+        self.workflow_pending(kind)
+
+    def transport_pending(self):
+        dispatches=list(self._workflow_cycle.glob('critic-spool/*/dispatch.json'))
+        if len(dispatches)!=1:raise ValueError('unique retained job required for attention receipt')
+        self.workflow_pending('same_job',state='ATTENTION',job_id=dispatches[0].parent.name)
+
+    def workflow_pending(self,kind,*,state='WAIT',job_id=None):
+        from research.kalshi.frankie_boss.operations.workflow_wait import write_wait_receipt,WorkflowPending
+        if self._workflow_cycle is None:raise ValueError('active retained cycle required for pending return')
+        raise WorkflowPending(write_wait_receipt(self.config,self._workflow_cycle,kind,state=state,job_id=job_id))
+
+    def workflow_reentry(self,cycle_directory):
+        from research.kalshi.frankie_boss.operations.workflow_wait import pending_receipts,WorkflowPending
+        self._workflow_cycle=Path(cycle_directory)
+        if not getattr(self,'pending_return',False):return
+        self._workflow_resuming=pending_receipts(self.config,self._workflow_cycle)
+        for result in self._workflow_resuming:
+            if result['wait_receipt']['state']!='WAIT':raise ValueError('attention does not authorize automatic retry')
+            if result['receipt_sha256']!=self.resume_wait_sha256:raise WorkflowPending(result)
+
+    def workflow_resolved(self,kind):
+        from research.kalshi.frankie_boss.operations.workflow_wait import resolve_wait
+        for result in getattr(self,'_workflow_resuming',[]):
+            if result['wait_receipt']['kind']!=kind:continue
+            cycle=Path(result['receipt_path']).parent.parent
+            admitted=[cycle/'host-service.c15.json'] if kind in ('readiness','service_resume') else [
+                cycle/'principal/session-response.json']
+            if kind=='principal_correction':
+                admitted.append(cycle/'principal/classroom-correction-response.json')
+            resolve_wait(result,admitted)
 
     def progress(self,phase,**values):
         if getattr(self,'probe',None) is not None:self.probe.advance(phase,**values)
@@ -849,6 +892,7 @@ class ActualHost:
             raise self.api.JobAttention('RETAINED_COMPLETION_PUBLICATION_PENDING',outcome['job_id'],str(marker.resolve())) from None
 
     def runtime(self,binding,cycle_directory,retained_plan):
+        self.workflow_reentry(cycle_directory)
         self.progress('input_inventory',completed=binding['cycle_index'],total=len(self.schedule['steps']),unit='steps')
         self.source()
         self.prefix(binding,cycle_directory)
@@ -857,7 +901,7 @@ class ActualHost:
             self.admit=self.api.LocalTokenizerAdmission(self.host['tokenizer_directory'],served_model_name='granite42-smoke',context=self.host['service_context'])
             if self.admit.tokenizer_sha256!=self.host['expected_tokenizer_sha256']:
                 raise ValueError('actual tokenizer differs from independent accepted identity')
-        key=None
+        key=None;resume_credential=False
         request_id=f"{self.config['run_id']}-cycle-{binding['cycle_index']:02d}"
         controller_done=self.coordinator._load(request_id,'controller') is not None
         preparation=cycle_directory/'host-preparation.c15.json'
@@ -929,9 +973,7 @@ class ActualHost:
             dispatches=list((cycle_directory/'critic-spool').glob('*/dispatch.json'))
             if not controller_done and (not dispatches or any(not p.with_name('outcome.json').exists() for p in dispatches)):
                 print(json.dumps(dict(status='same_job_recovery_requires_in_memory_credential',request_id=request_id)),flush=True)
-                key,trigger=self.read_execution_trigger('FRANKIE_ACTUAL_RESUME_JOB_V1',('request_id','service_pins_sha256'),request_id)
-                if trigger['request_id']!=request_id or trigger['service_pins_sha256']!=service['pins_sha256']:
-                    raise ValueError('same-job recovery differs from retained service witness')
+                resume_credential=True
         if critic_knowledge is not None and prepared['receipt'].get('critic_knowledge_hash')!=self.api.journal.evidence_hash(critic_knowledge):
             raise ValueError('admitted critic request differs from frozen knowledge')
         for name,digest in service['files'].items():verified(dict(path=str(ready/name),sha256=digest))
@@ -954,6 +996,12 @@ class ActualHost:
         service_inputs['admit_request']=retained_admission(prepared['admission'],prepared['receipt']['request_bytes'])
         if (service_inputs['config'].config_hash!=pins['config_hash'] or
             service_inputs['identity'].identity_hash!=pins['identity_hash']):raise ValueError('trusted host service pins differ')
+        self.workflow_resolved('readiness')
+        if resume_credential:
+            key,trigger=self.read_execution_trigger('FRANKIE_ACTUAL_RESUME_JOB_V1',('request_id','service_pins_sha256'),request_id)
+            if trigger['request_id']!=request_id or trigger['service_pins_sha256']!=service['pins_sha256']:
+                raise ValueError('same-job recovery differs from retained service witness')
+        self.workflow_resolved('service_resume')
         def critic():
             if (key is None and not recovering_critic) or not open_run or self.host['transport_protocol']!='jobs_v1':
                 raise ValueError('actual in-memory credential and verified open run required')
@@ -1003,13 +1051,17 @@ class ActualHost:
             retained_directory=str(Path(c['retained_witnesses']['path']).parent),expected_retained_witnesses_sha256=c['retained_witnesses']['sha256'],
             delivery_receipt=c['delivery_receipt']['path'],expected_delivery_file_sha256=c['delivery_receipt']['sha256'],
             result_path=c['calculation_result']['path'],
-            session_executor=lambda request:await_recorded_principal(request,self.directory,self.principal_host_lock,self.probe))
+            session_executor=lambda request:await_recorded_principal(request,self.directory,self.principal_host_lock,self.probe,
+                pending=(lambda:self.principal_pending()) if getattr(self,'pending_return',False) else None))
         runner=self.api.driver.SundayExecution(directory=self.directory/'execution',run_id=c['run_id'],coordinator=self.coordinator,
             contract_path=c['contract']['path'],expected_contract_sha256=c['contract']['sha256'],
             schedule_path=h['schedule']['path'],expected_schedule_sha256=h['schedule']['sha256'],runtime_factory=self.runtime,
             principal_configuration=principal,boss_commit=h['boss_commit'],agent_commit=c['receiver_commit'],
             state_defects_and_gaps_reported=h['state_defects_and_gaps_reported'])
-        return await runner.run_remaining()
+        result=await runner.run_remaining(cycles=getattr(self,'cycle_limit',None))
+        self.workflow_resolved('principal')
+        self.workflow_resolved('principal_correction')
+        return result
 
     def close(self):
         if hasattr(self,'_ssm_pod_key'):del self._ssm_pod_key
@@ -1042,12 +1094,19 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--configuration',required=True)
     parser.add_argument('--prepare-only',action='store_true')
+    parser.add_argument('--pending-return',action='store_true')
+    parser.add_argument('--resume-wait-sha256')
     args=parser.parse_args();configuration=json.loads(Path(args.configuration).read_bytes())
     # The configuration must remain secret-free. Credential only enters later via stdin.
     if any(word in json.dumps(configuration).lower() for word in ('service_key','api_key','bearer ')):
         raise ValueError('host configuration must contain no service credentials')
     host=None
     try:
+        from research.kalshi.frankie_boss.operations.workflow_wait import resume_admission,WorkflowPending
+        if args.resume_wait_sha256 and not args.pending_return:raise ValueError('pending return required for receipt resume')
+        try:cycle_limit=resume_admission(configuration,args.resume_wait_sha256)
+        except WorkflowPending as pending:
+            print(json.dumps(pending.result),flush=True);return pending.exit_code
         repo=Path(configuration['host_runtime']['repository']);api=imports(repo)
         Path(configuration['run_directory']).mkdir(parents=True,exist_ok=True)
         with api._exclusive(Path(configuration['run_directory'])/'actual-host-session.lock'), \
@@ -1056,13 +1115,21 @@ def main():
                     resume=(Path(configuration['run_directory'])/'host-progress'/'progress.json').exists())) as probe:
             host=ActualHost(configuration,prepare_only=args.prepare_only,probe=probe)
             host.principal_host_lock=host_lock
+            host.pending_return=args.pending_return;host.resume_wait_sha256=args.resume_wait_sha256
+            host.cycle_limit=cycle_limit
             try:
                 result=asyncio.run(host.run())
                 probe.advance('complete',completed=len(result),total=19,unit='steps')
                 print(json.dumps(dict(status='all_nineteen_cycles_complete',cycles=len(result))),flush=True)
                 return 0
             except PreparationComplete:return 0
+            except WorkflowPending as pending:
+                print(json.dumps(pending.result),flush=True);return pending.exit_code
             except api.JobAttention as error:
+                if host.pending_return:
+                    try:host.workflow_pending('same_job',state='ATTENTION',job_id=error.job_id)
+                    except WorkflowPending as pending:
+                        print(json.dumps(pending.result),flush=True);return pending.exit_code
                 message=('Same durable job requires a fresh in-memory credential; no new job or Pod start.'
                     if error.code=='REMOTE_JOB_CREDENTIAL_REJECTED' else
                     'Remote job ended in terminal failure; no fragment was scored or retried.'
@@ -1072,9 +1139,17 @@ def main():
                     cleanup_pending=error.details.get('cleanup_pending'))),flush=True)
                 return 4
             except api.PendingTransport:
+                if host.pending_return:
+                    try:host.transport_pending()
+                    except WorkflowPending as pending:
+                        print(json.dumps(pending.result),flush=True);return pending.exit_code
                 print(json.dumps(dict(status='same_critic_attempt_pending_or_ambiguous',run_directory=configuration['run_directory'])),flush=True)
                 return 4
             except api.PrincipalPending:
+                if host.pending_return:
+                    try:host.principal_pending()
+                    except WorkflowPending as pending:
+                        print(json.dumps(pending.result),flush=True);return pending.exit_code
                 print(json.dumps(dict(status='actual_frankie_session_pending',run_directory=configuration['run_directory'])),flush=True)
                 return 3
             except api.IncompleteModelOutput as error:

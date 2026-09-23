@@ -40,7 +40,7 @@ def _adapter_identity(adapter_class):
     }
 
 
-def await_recorded_principal(request, directory, host_lock, probe=None):
+def await_recorded_principal(request, directory, host_lock, probe=None, pending=None):
     schema = request.get("schema") if type(request) is dict else None
     if schema == INITIAL_REQUEST_SCHEMA:
         request_name, response_name, status = (
@@ -81,6 +81,8 @@ def await_recorded_principal(request, directory, host_lock, probe=None):
     else:
         public["session_id"] = request["session_id"]
     print(json.dumps(public), flush=True)
+    if pending is not None and not response_path.exists():
+        pending()
     host_lock.release()
     try:
         while not response_path.exists():
@@ -249,7 +251,8 @@ class ClassroomActualHost(base.ActualHost):
             expected_delivery_file_sha256=c["delivery_receipt"]["sha256"],
             result_path=c["calculation_result"]["path"],
             session_executor=lambda request: await_recorded_principal(
-                request, self.directory, self.principal_host_lock, self.probe
+                request, self.directory, self.principal_host_lock, self.probe,
+                pending=(lambda: self.principal_pending()) if getattr(self,'pending_return',False) else None
             ),
         )
         runner = self.api.driver.SundayExecution(
@@ -266,7 +269,10 @@ class ClassroomActualHost(base.ActualHost):
             agent_commit=c["receiver_commit"],
             state_defects_and_gaps_reported=h["state_defects_and_gaps_reported"],
         )
-        return await runner.run_remaining(cycles=getattr(self, 'cycle_limit', None))
+        result = await runner.run_remaining(cycles=getattr(self, 'cycle_limit', None))
+        self.workflow_resolved('principal')
+        self.workflow_resolved('principal_correction')
+        return result
 
 
 ActualHost = ClassroomActualHost
@@ -283,6 +289,8 @@ def main(host_class=ActualHost):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--configuration", required=True)
     parser.add_argument("--prepare-only", action="store_true")
+    parser.add_argument("--pending-return", action="store_true")
+    parser.add_argument("--resume-wait-sha256")
     parser.add_argument("--cycles", type=int, default=None,
                         help="Run the first N scheduled cycles; resume the same run later.")
     args = parser.parse_args()
@@ -294,6 +302,16 @@ def main(host_class=ActualHost):
         raise ValueError("host configuration must contain no service credentials")
     host = None
     try:
+        from research.kalshi.frankie_boss.operations.workflow_wait import resume_admission, WorkflowPending
+        if args.resume_wait_sha256 and not args.pending_return:
+            raise ValueError('pending return required for receipt resume')
+        try:
+            resume_limit = resume_admission(configuration, args.resume_wait_sha256)
+        except WorkflowPending as pending:
+            print(json.dumps(pending.result), flush=True)
+            return pending.exit_code
+        if resume_limit is not None and args.cycles is not None and args.cycles != resume_limit:
+            raise ValueError('receipt resume must remain within its retained cycle')
         repo = Path(configuration["host_runtime"]["repository"])
         api = imports(repo)
         Path(configuration["run_directory"]).mkdir(parents=True, exist_ok=True)
@@ -315,7 +333,9 @@ def main(host_class=ActualHost):
             host = host_class(configuration, prepare_only=args.prepare_only, probe=probe)
             host.source()
             total_cycles = len(host.schedule['steps'])
-            host.cycle_limit = total_cycles if args.cycles is None else args.cycles
+            host.cycle_limit = resume_limit if resume_limit is not None else (total_cycles if args.cycles is None else args.cycles)
+            host.pending_return = args.pending_return
+            host.resume_wait_sha256 = args.resume_wait_sha256
             if type(host.cycle_limit) is not int or not 1 <= host.cycle_limit <= total_cycles:
                 raise ValueError('cycles must be within the verified schedule')
             host.principal_host_lock = host_lock
@@ -335,7 +355,16 @@ def main(host_class=ActualHost):
                 return 0
             except PreparationComplete:
                 return 0
+            except WorkflowPending as pending:
+                print(json.dumps(pending.result), flush=True)
+                return pending.exit_code
             except api.JobAttention as error:
+                if host.pending_return:
+                    try:
+                        host.workflow_pending('same_job', state='ATTENTION', job_id=error.job_id)
+                    except WorkflowPending as pending:
+                        print(json.dumps(pending.result), flush=True)
+                        return pending.exit_code
                 message = (
                     "Same durable job requires a fresh in-memory credential; no new job or Pod start."
                     if error.code == "REMOTE_JOB_CREDENTIAL_REJECTED"
@@ -357,6 +386,12 @@ def main(host_class=ActualHost):
                 )
                 return 4
             except api.PendingTransport:
+                if host.pending_return:
+                    try:
+                        host.transport_pending()
+                    except WorkflowPending as pending:
+                        print(json.dumps(pending.result), flush=True)
+                        return pending.exit_code
                 print(
                     json.dumps(
                         dict(
@@ -368,6 +403,12 @@ def main(host_class=ActualHost):
                 )
                 return 4
             except api.PrincipalPending:
+                if host.pending_return:
+                    try:
+                        host.principal_pending()
+                    except WorkflowPending as pending:
+                        print(json.dumps(pending.result), flush=True)
+                        return pending.exit_code
                 print(
                     json.dumps(
                         dict(

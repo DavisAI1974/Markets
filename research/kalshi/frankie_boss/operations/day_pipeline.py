@@ -96,6 +96,7 @@ class DayPipeline:
                              else 'cycle_limit must be from 1 through 19')
         self.cycle_limit = cycle_limit
         self.python = self.c.get('python', sys.executable)
+        self._pending_mode()
 
     # ---- receipts -------------------------------------------------------------------------
     def path(self, stage):
@@ -299,7 +300,7 @@ class DayPipeline:
         if (set(wait) != fields or wait['schema'] != 'FRANKIE_WORKFLOW_WAIT_V1'
                 or wait['state'] not in ('WAIT', 'ATTENTION')
                 or value['status'] != ('workflow_wait' if wait['state'] == 'WAIT' else 'workflow_attention')
-                or wait['kind'] not in ('readiness', 'principal', 'principal_correction', 'same_job')
+                or wait['kind'] not in ('readiness', 'service_resume', 'principal', 'principal_correction', 'same_job')
                 or any(wait[k] != pins[k] for k in pins)
                 or type(wait['cycle_index']) is not int or not 0 <= wait['cycle_index'] < requested
                 or wait['request_id'] != f"{pins['run_id']}-cycle-{wait['cycle_index']:02d}"
