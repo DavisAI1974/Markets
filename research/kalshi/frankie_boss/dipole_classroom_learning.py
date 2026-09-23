@@ -133,6 +133,9 @@ def completed_history(host, *, request_id, cutoff_ns, cycle_index):
             frankie_correction_response=correction_response_for_learning, completion=completion))
         if scientific_delivery_artifact is not None:
             entry['scientific_delivery_artifact'] = scientific_delivery_artifact
+        # c15 hashes bind mapping order; normalize newly attached artifact fields
+        # before hashing, just as the complete learning-history envelope does.
+        entry = json_form(entry)
         entry['exchange_hash'] = evidence_hash(entry)
         exchanges.append(entry)
     body = json_form(dict(schema=SCHEMA,learning_policy=CUMULATIVE,knowledge=knowledge,exchanges=exchanges))
