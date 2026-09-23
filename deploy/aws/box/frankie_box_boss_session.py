@@ -195,10 +195,15 @@ class Session:
             print(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), text, flush=True)
 
     def refuse(self, why):
-        _box_module('frankie_box_progress').for_session(self).update('refused', state='failed')
         self.note('REFUSED: ' + why)
         write_json(ROOT / 'receipts' / f'boss-session-refusal-{int(time.time())}-{uuid.uuid4().hex[:8]}.json',
                    dict(schema='FRANKIE_BOX_BOSS_SESSION_REFUSAL_V1', at=time.time(), cycle=self.cycle, reason=why))
+        probe = getattr(self, '_work_probe', None)
+        if probe is not None:
+            try:
+                probe.update('refused', state='failed')
+            except OSError:
+                self.note('work probe unavailable; refusal receipt retained')
         sys.exit(3)
 
     # ---- verify ------------------------------------------------------------------------------------------
