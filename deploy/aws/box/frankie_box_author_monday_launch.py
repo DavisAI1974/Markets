@@ -1,7 +1,7 @@
 """Author the Monday 20211004 cycle-0 launch bindings from the recovered journal.
 
-Frankie principal authorship (Greg, 2026-09-23: "act as Frankie principal and author it"; the row count is
-Sunday cycle 0's proven stacked_v1 packet, 3,262 rows). One read-only pass over the sealed original
+Frankie principal authorship (Greg, 2026-09-23: "act as Frankie principal and author it"). Cycle 0 is the first
+window of the Monday trading day, as large as fits the 131,072 context under stacked_v2 (~15.6 tokens/row). One read-only pass over the sealed original
 container through the existing verified view; every output is new under one fresh root. No model call,
 ingestion, replay, runtime control or source write. The existing preparation operation stays the
 authority for the schedule and prefixes; this only writes the launch inputs it requires.
@@ -23,14 +23,14 @@ from frankie_box_prepare_trading_day import (  # noqa: E402
 
 RECOVERY = Path('/opt/frankie-box/work/sealed-recovery-35796793428')
 AUTHOR_PARENT = Path('/opt/frankie-box/work/monday-launch')
-MODEL_CONTEXT_ROWS = 3262
+MODEL_CONTEXT_ROWS = 6500
 INSTRUMENT = 111313
 OPEN_NS = 1633298400000000000    # 2021-10-03T22:00:00Z, the declared CME trading-day open
 CLOSE_NS = 1633381200000000000   # 2021-10-04T21:00:00Z, the declared halt
 PRICE_SCALE = 10**9
 SENTINEL = 2**63 - 1
 CUTOFF_RULE = ('Frankie principal, one-cycle roster: cycle 0 cuts at the first complete F_LAST group, in source '
-               'order, whose inclusive prefix holds at least model_context_rows (3262) rows of the roster entity '
+               'order, whose inclusive prefix holds at least model_context_rows (6500) rows of the roster entity '
                '(its publisher, instrument 111313); availability is the maximum receive clock of that prefix. The '
                'single retained cutoff learns through the terminal delivery of the trading day.')
 
@@ -217,7 +217,7 @@ def author(commit, output_root, preparation_root):
         model_context_rows=MODEL_CONTEXT_ROWS, cutoff_rule=CUTOFF_RULE, cutoffs=cutoffs_pin,
         ingestion_receipt=descriptor_pin, mapping=mapping_pin, source_contract=contract_pin,
         publish_route='presigned PUT through frankie_box_run.yml (frankie_box_prepare_trading_day.sh ACTION=publish)',
-        _note='Frankie principal authorship, Greg 2026-09-23; row count = Sunday cycle 0 proven stacked_v1 packet.')
+        _note='Frankie principal authorship, Greg 2026-09-23; cycle 0 = first window of the day, largest that fits under stacked_v2.')
     save_new(output/'launch.json', launch)
     configuration = dict(trading_day_launch=witness(output/'launch.json'), source_manifest=manifest_pin,
         schedule_directory=str(preparation/'schedule'),
