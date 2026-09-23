@@ -98,4 +98,7 @@ def test_finalization_requires_retained_result_and_successful_or_unneeded_next_a
     download=next(i for i,step in enumerate(steps) if step.get("uses","").startswith("actions/download-artifact@"))
     finalize=next(i for i,step in enumerate(steps) if " finalize " in step.get("run",""))
     assert download<finalize
-    assert steps[download]["with"]["name"]=="continuation-resume-${{ github.run_id }}-${{ github.run_attempt }}"
+    assert steps[download]["with"]["name"]=="${{ needs.resume.outputs.resume_artifact }}"
+    resume=workflow(CONTINUATION)["jobs"]["resume"]
+    producer=next(step for step in resume["steps"] if step.get("uses","").startswith("actions/upload-artifact@"))
+    assert resume["outputs"]["resume_artifact"]==producer["with"]["name"]

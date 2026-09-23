@@ -649,3 +649,13 @@ def test_completed_requested_batch_cannot_emit_archive_for_historical_wait(api,r
     assert api.archive_event(pipeline,source_commit=event["source_commit"],
         receipts_commit=event["receipts_commit"],configuration_path=event["pipeline_configuration"]["path"],
         runs_root="partial-runs",go=event["go"]) is None
+
+
+def test_publication_retry_without_local_intent_reuses_exact_remote_consumption(api,publication_repo):
+    f=publication_repo
+    original=api.publish_receipts(f["pipeline"],f["event"],"wait")
+    Path("workflow-event-outbox").rename("retained-first-attempt-outbox")
+    confirmed=api.publish_receipts(f["pipeline"],f["event"],"wait")
+    assert confirmed==original
+    assert f["git"]("ls-remote","--heads","origin","refs/heads/"+f["ref"]).split()[0]==original
+    assert Path("retained-first-attempt-outbox/receipt-publication-intent.json").is_file()
