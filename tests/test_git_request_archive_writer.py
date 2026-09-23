@@ -320,3 +320,71 @@ def test_git_checkout_replay_refuses_changed_pending_envelope(writer, tmp_path):
     with pytest.raises((ValueError, FileExistsError)):
         write(writer, checkout)
     assert snapshot(checkout) == before
+
+
+def fail_final_publication_sync(writer, directory, monkeypatch):
+    """Leave complete bytes but inject failure before final directory durability."""
+    import os
+    import stat
+    original = writer.os.fsync
+    hit = []
+    def interrupted(fd):
+        if (stat.S_ISDIR(os.fstat(fd).st_mode)
+                and (directory/'envelope.json').exists()):
+            hit.append(True)
+            raise OSError('fixture final publication sync failure')
+        return original(fd)
+    monkeypatch.setattr(writer.os, 'fsync', interrupted)
+    with pytest.raises(ValueError, match='private Git request archive'):
+        write(writer, directory)
+    assert hit == [True]
+    assert set(snapshot(directory)) == FILES
+    monkeypatch.setattr(writer.os, 'fsync', original)
+    return original
+
+
+def sync_target(fd, directory):
+    import os
+    import stat
+    if stat.S_ISDIR(os.fstat(fd).st_mode):
+        return 'archive-directory'
+    # This suite runs in isolated Linux CI; every descriptor belongs to tmp_path.
+    path = Path(os.readlink('/proc/self/fd/'+str(fd)))
+    assert path.parent == directory
+    return path.name
+
+
+def test_post_link_sync_failure_replay_syncs_verified_files_then_directory(writer, tmp_path, monkeypatch):
+    directory = tmp_path/'archive'
+    original = fail_final_publication_sync(writer, directory, monkeypatch)
+    before = snapshot(directory)
+    calls = []
+    def recorded(fd):
+        calls.append(sync_target(fd, directory))
+        return original(fd)
+    monkeypatch.setattr(writer.os, 'fsync', recorded)
+    result = write(writer, directory)
+    assert result['request_sha256'] == SHA
+    assert FILES <= set(calls)
+    assert calls[-1] == 'archive-directory'
+    assert snapshot(directory) == before
+    assert module('git_request_archive').read_request_archive(directory, SHA, FakeSSM()) == BODY
+
+
+@pytest.mark.parametrize('target', ['request.enc', 'envelope.json.pending', 'archive-directory'])
+def test_post_link_sync_failure_replay_cannot_succeed_if_resync_fails(writer, tmp_path, monkeypatch, target):
+    directory = tmp_path/'archive'
+    original = fail_final_publication_sync(writer, directory, monkeypatch)
+    before = snapshot(directory)
+    hit = []
+    def interrupted(fd):
+        if sync_target(fd, directory) == target:
+            hit.append(True)
+            raise OSError('fixture replay durability failure')
+        return original(fd)
+    monkeypatch.setattr(writer.os, 'fsync', interrupted)
+    with pytest.raises(ValueError, match='private Git request archive'):
+        write(writer, directory)
+    assert hit
+    assert snapshot(directory) == before
+    assert_private(directory)
