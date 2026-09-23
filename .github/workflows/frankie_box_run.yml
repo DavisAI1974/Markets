@@ -46,7 +46,9 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: box-run-${{ inputs.instance }}
+  # The existing read-only work probe must remain observable during a long stage.
+  # All execution and staging scripts still share the original serial lock.
+  group: ${{ inputs.script == 'deploy/aws/box/frankie_box_progress.sh' && format('box-progress-{0}', inputs.instance) || format('box-run-{0}', inputs.instance) }}
   cancel-in-progress: false
 jobs:
   validate-staging-route:
