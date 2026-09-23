@@ -1,0 +1,92 @@
+name: Inactive reviewed code staging on Frankie Linux box
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        type: choice
+        description: Inventory only, or stage source in a new inactive checkout
+        options: [inventory, stage]
+        default: inventory
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: frankie-inactive-code-staging
+  cancel-in-progress: false
+jobs:
+  inactive-code:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      ACTION: ${{ inputs.action }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_EC2_METADATA_DISABLED: 'true'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Produce exact commit object pack outside checkout
+        if: inputs.action == 'stage'
+        run: |
+          set -euo pipefail
+          python -I -S -B deploy/aws/box/frankie_box_stage_code.py pack \
+            --repository "$GITHUB_WORKSPACE" --commit "$GITHUB_SHA" \
+            --output "$RUNNER_TEMP/source.pack" > "$RUNNER_TEMP/source-pin.json"
+      - name: Inventory or stage inactive source through reviewed SSM script
+        run: |
+          python -B - <<'PY'
+          import base64, hashlib, json, os, pathlib, subprocess
+          import boto3
+          from botocore.config import Config
+          root=pathlib.Path(os.environ['GITHUB_WORKSPACE'])
+          action=os.environ['ACTION']
+          if action not in ('inventory','stage'):
+              raise SystemExit('unknown action')
+          commit=os.environ['GITHUB_SHA']
+          run_id=os.environ['GITHUB_RUN_ID']+'-'+os.environ['GITHUB_RUN_ATTEMPT']
+          helper=(root/'deploy/aws/box/frankie_box_stage_code.py').read_bytes()
+          variables=dict(ACTION=action,MARKETS_SHA=commit,CODE_B64=base64.b64encode(helper).decode(),
+                         CODE_SHA256=hashlib.sha256(helper).hexdigest())
+          if action=='stage':
+              temp=pathlib.Path(os.environ['RUNNER_TEMP'])
+              pin=json.loads((temp/'source-pin.json').read_bytes())
+              if pin.get('schema')!='FRANKIE_SOURCE_PACK_V1' or pin.get('commit')!=commit:
+                  raise SystemExit('source pack pin differs')
+              bucket='frankie-granite42-568968024170-us-east-1'
+              prefix='readiness/20260923/code-staging/'+run_id
+              client=boto3.client('s3',region_name='us-east-1',
+                  endpoint_url='https://s3.us-east-1.amazonaws.com',
+                  config=Config(signature_version='s3v4',s3={'addressing_style':'virtual'}))
+              key=prefix+'/source.pack'
+              with (temp/'source.pack').open('rb') as source:
+                  client.put_object(Bucket=bucket,Key=key,Body=source,ContentLength=pin['bytes'],
+                      IfNoneMatch='*',ServerSideEncryption='AES256',
+                      ChecksumSHA256=base64.b64encode(bytes.fromhex(pin['sha256'])).decode())
+              url=client.generate_presigned_url('get_object',Params={'Bucket':bucket,'Key':key},ExpiresIn=3600)
+              print('::add-mask::'+url,flush=True)
+              mapping={'source.pack':dict(url=url,bytes=pin['bytes'],sha256=pin['sha256'],commit=commit)}
+              raw=json.dumps(mapping,sort_keys=True,separators=(',',':')).encode()
+              map_key=prefix+'/presigned-map.json'
+              client.put_object(Bucket=bucket,Key=map_key,Body=raw,IfNoneMatch='*',
+                  ServerSideEncryption='AES256',
+                  ChecksumSHA256=base64.b64encode(hashlib.sha256(raw).digest()).decode())
+              map_url=client.generate_presigned_url('get_object',Params={'Bucket':bucket,'Key':map_key},ExpiresIn=3600)
+              print('::add-mask::'+map_url,flush=True)
+              variables.update(RUN_ID=run_id,PACK_SHA256=pin['sha256'],PACK_BYTES=str(pin['bytes']),MAP_URL=map_url)
+              print(json.dumps(dict(source_pack=pin,bucket=bucket,key=key)),flush=True)
+          command=['python','-B','deploy/aws/ssm_run_sh.py','--instance','i-035994afa8bdf66a5',
+                   '--region','us-east-1','--script','deploy/aws/box/frankie_box_stage_code.sh',
+                   '--timeout','1800' if action=='stage' else '300',
+                   '--comment','Inactive reviewed source '+action+' '+commit]
+          for name,value in variables.items():
+              command.extend(['--set',name+'='+value])
+          raise SystemExit(subprocess.run(command,check=False).returncode)
+          PY

@@ -175,3 +175,128 @@ def test_launcher_inventory_checks_reviewed_helper_hash(tmp_path):
     result = subprocess.run(['sh',str(script)],env=env,capture_output=True,text=True)
     assert result.returncode != 0
     assert 'helper hash' in result.stderr
+
+def test_inventory_disables_git_filters_and_fsmonitor(tmp_path, source, monkeypatch):
+    import shlex
+    repo, _ = source
+    (repo/'.gitattributes').write_text('tracked.txt filter=tripwire\n')
+    git(repo,'add','.'); git(repo,'commit','-qm','attributes')
+    marker=tmp_path/'executed'
+    command='sh -c '+shlex.quote('touch '+shlex.quote(str(marker))+'; cat')
+    git(repo,'config','filter.tripwire.clean',command)
+    git(repo,'config','filter.tripwire.process',command)
+    git(repo,'config','filter.tripwire.required','true')
+    git(repo,'config','core.fsmonitor',command)
+    (repo/'tracked.txt').write_text('force a worktree comparison\n')
+    root=tmp_path/'box'; root.mkdir(); repo.rename(root/'markets')
+    monkeypatch.setattr(stage_code,'ROOT',root)
+    monkeypatch.setattr(stage_code,'CODE_PARENT',root/'code')
+    monkeypatch.setattr(stage_code,'service_state',lambda: [])
+    result=stage_code.inventory()
+    assert result['checkout']['tracked_dirty'] is True
+    assert not marker.exists()
+
+@pytest.mark.parametrize('redirect', ['gitfile','symlink','commondir','alternates','include','worktree_config'])
+def test_git_metadata_redirection_refuses(tmp_path,source,redirect):
+    repo,commit=source
+    external=tmp_path/'external-git'
+    if redirect in ('gitfile','symlink'):
+        (repo/'.git').rename(external)
+        if redirect=='gitfile': (repo/'.git').write_text('gitdir: '+str(external)+'\n')
+        else: (repo/'.git').symlink_to(external,target_is_directory=True)
+    elif redirect=='commondir':
+        (repo/'.git'/'commondir').write_text(str(tmp_path)+'\n')
+    elif redirect=='alternates':
+        (repo/'.git'/'objects'/'info'/'alternates').write_text(str(tmp_path)+'\n')
+    elif redirect=='include':
+        git(repo,'config','include.path',str(tmp_path/'private-config'))
+    else:
+        (repo/'.git'/'config.worktree').write_text('[core]\nworktree=/outside\n')
+    with pytest.raises(ValueError):
+        stage_code.clean_checkout(repo,commit)
+
+def test_stage_rejects_symlink_in_a_valid_foreign_pack_before_checkout(tmp_path,source,monkeypatch):
+    repo,_=source
+    (repo/'escape').symlink_to('/outside')
+    git(repo,'add','.'); git(repo,'commit','-qm','symlink')
+    commit=git(repo,'rev-parse','HEAD')
+    objects=git(repo,'rev-list','--objects','--no-object-names',commit)
+    pack=tmp_path/'foreign.pack'
+    with pack.open('wb') as stream:
+        subprocess.run(['git','-C',str(repo),'pack-objects','--stdout','--no-reuse-delta'],
+                       input=(objects+'\n').encode(),stdout=stream,check=True)
+    parent=tmp_path/'code'; monkeypatch.setattr(stage_code,'CODE_PARENT',parent)
+    with pytest.raises(ValueError,match='mode'):
+        stage_code.stage(pack,hashlib.sha256(pack.read_bytes()).hexdigest(),commit,'links')
+    root=parent/(commit+'-links')
+    assert (root/'staging-intent.json').exists()
+    assert not (root/'staging-receipt.json').exists()
+    assert not (root/'markets'/'escape').exists()
+    assert not (root/'markets'/'escape').is_symlink()
+
+def test_shell_bootstrap_executes_only_checked_bytes_in_isolated_python():
+    import base64
+    code=b'import sys\nassert sys.flags.isolated and sys.flags.no_site and sys.dont_write_bytecode\nprint("BOOTSTRAP_OK",sys.argv[1:])\n'
+    env=dict(os.environ,ACTION='inventory',MARKETS_SHA='a'*40,
+             CODE_B64=base64.b64encode(code).decode(),CODE_SHA256=hashlib.sha256(code).hexdigest())
+    result=subprocess.run(['sh',str(SOURCE.with_suffix('.sh'))],env=env,capture_output=True,text=True)
+    assert result.returncode==0,result.stderr
+    assert "BOOTSTRAP_OK ['inventory', '--commit', '"+'a'*40+"']" in result.stdout
+
+def test_live_staging_workflow_requires_explicit_dispatch_and_exact_source():
+    workflow=SOURCE.parents[3]/'.github/workflows/frankie_stage_code.yml'
+    body=workflow.read_text()
+    assert '  workflow_dispatch:' in body
+    assert '\n  push:' not in body and '\n  pull_request:' not in body
+    assert "options: [inventory, stage]" in body
+    assert "default: inventory" in body
+    assert "MARKETS_SHA=commit" in body and "CODE_SHA256=hashlib.sha256(helper).hexdigest()" in body
+    assert "IfNoneMatch='*'" in body and "ChecksumSHA256=" in body
+    assert "deploy/aws/ssm_run_sh.py" in body
+    assert "get_parameter" not in body and "stop_instances" not in body
+
+def test_pack_rejects_attribute_normalization_that_git_diff_calls_clean(tmp_path,source):
+    repo,_=source
+    (repo/'.gitattributes').write_bytes(b'*.txt text eol=crlf\n')
+    git(repo,'add','.'); git(repo,'commit','-qm','newline attributes')
+    commit=git(repo,'rev-parse','HEAD')
+    (repo/'tracked.txt').write_bytes(b'exact source\r\n')
+    assert git(repo,'diff','--exit-code','HEAD')==''
+    with pytest.raises(ValueError,match='raw blob'):
+        stage_code.create_pack(repo,commit,tmp_path/'source.pack')
+
+def test_stage_refuses_checkout_attribute_transform_and_retains_intent(tmp_path,source,monkeypatch):
+    repo,_=source
+    (repo/'.gitattributes').write_bytes(b'*.txt text eol=crlf\n')
+    git(repo,'add','.'); git(repo,'commit','-qm','newline attributes')
+    commit=git(repo,'rev-parse','HEAD')
+    pack,checksum,_=packed(tmp_path,(repo,commit))
+    parent=tmp_path/'code'; monkeypatch.setattr(stage_code,'CODE_PARENT',parent)
+    with pytest.raises(ValueError,match='raw blob'):
+        stage_code.stage(pack,checksum,commit,'crlf')
+    root=parent/(commit+'-crlf')
+    assert (root/'staging-intent.json').exists()
+    assert not (root/'staging-receipt.json').exists()
+
+def test_pack_rejects_executable_bit_hidden_by_git_config(tmp_path,source):
+    repo,commit=source
+    git(repo,'config','core.filemode','false')
+    (repo/'tracked.txt').chmod(0o755)
+    assert git(repo,'diff','--exit-code','HEAD')==''
+    with pytest.raises(ValueError,match='raw mode'):
+        stage_code.create_pack(repo,commit,tmp_path/'source.pack')
+
+def test_ssm_payload_fits_reserved_document_budget():
+    import base64
+    runner=SOURCE.parents[3]/'deploy/aws/ssm_run_sh.py'
+    runner_spec=importlib.util.spec_from_file_location('ssm_staging_fixture',runner)
+    module=importlib.util.module_from_spec(runner_spec); runner_spec.loader.exec_module(module)
+    helper=SOURCE.read_bytes()
+    variables=dict(ACTION='stage',MARKETS_SHA='a'*40,CODE_B64=base64.b64encode(helper).decode(),
+                   CODE_SHA256=hashlib.sha256(helper).hexdigest(),RUN_ID='9'*96,
+                   PACK_SHA256='b'*64,PACK_BYTES='999999999999',MAP_URL='https://example.invalid/'+'x'*4096)
+    script=module.preamble([name+'='+value for name,value in variables.items()])+SOURCE.with_suffix('.sh').read_text()
+    payload=json.dumps(dict(commands=[script],executionTimeout=['1800'])).encode()
+    assert len(payload)<=48*1024
+    workflow=(SOURCE.parents[3]/'.github/workflows/frankie_stage_code.yml').read_text()
+    assert '48*1024' in workflow and 'ssm_parameter_bytes' in workflow
