@@ -48,7 +48,7 @@ def fixture(tmp_path,monkeypatch):
     configuration=dict(pending_return=True,instance="i-0e90ee6110ef609aa",
         workflow_automation=dict(context=dict(tools_root="/tools/Markets",tools_commit="d"*40,
             python="/native/python",configuration_path="/native/configuration.json"),
-            archive=dict(instance="i-0e90ee6110ef609aa",run_root="/native/days",
+            archive=dict(instance="i-0e90ee6110ef609aa",run_root="C:/fixture/days",
                 bucket="frankie-granite42-568968024170-us-east-1",key_parameter="/markets/frankie/request-transport/test"),
             workflow_ref="codex/trading-day-readiness-20260922"),workflow_run={k:wait[k] for k in (
         "run_id","run_directory","configuration_sha256","boss_commit","schedule_sha256")},
@@ -72,7 +72,7 @@ def fixture(tmp_path,monkeypatch):
     event=seal(dict(schema="FRANKIE_WORKFLOW_EVENT_V1",action="archive",source_commit="d"*40,receipts_commit="8"*40,day="20211004",
         pipeline_configuration=dict(path="pipeline.json",sha256=sha(config_path.read_bytes())),
         runs_root="runs",go="b"*64,context=context,payload=dict(request_sha256="3"*64,cycle_index="00",
-            instance="i-0e90ee6110ef609aa",day="20211004",run_root="/native/days",
+            instance="i-0e90ee6110ef609aa",day="20211004",run_root="C:/fixture/days",
             bucket="frankie-granite42-568968024170-us-east-1",key_parameter="/markets/frankie/request-transport/test")))
     return dict(tmp=tmp_path,pipeline=pipeline,pending=pending,wait=wait,event=event,configuration=configuration)
 
@@ -139,7 +139,7 @@ def test_attention_cannot_be_promoted_by_an_event(api,fixture):
         api.validate_event(fixture["event"],fixture["pipeline"])
 
 def test_changed_pipeline_configuration_refuses(api,fixture):
-    fixture["pipeline"].c["unexpected_rebinding"]=True
+    fixture["pipeline"].c["workflow_automation"]["context"]["tools_commit"]="0"*40
     with pytest.raises(ValueError):
         api.validate_event(fixture["event"],fixture["pipeline"])
 

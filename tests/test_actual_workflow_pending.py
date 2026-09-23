@@ -251,6 +251,15 @@ def test_actual_ec2_delegated_entrypoint_returns_wait_before_runtime_imports(mod
     wait.write_wait_receipt(configuration,cycle,'readiness')
     config_path=cycle/'config.json'
     config_path.write_text(json.dumps(configuration))
+    # Only the changed entrypoint boundary is under test. The production package
+    # initializer imports torch; replace its parent namespaces as well as its
+    # classroom imports so this isolated test never opens that implementation.
+    from types import ModuleType
+    for name in ('research','research.kalshi','research.kalshi.frankie_boss',
+                 'research.kalshi.frankie_boss.operations'):
+        package=ModuleType(name)
+        package.__path__=[]
+        monkeypatch.setitem(sys.modules,name,package)
     prefix='research.kalshi.frankie_boss.'
     monkeypatch.setitem(sys.modules,prefix+'dipole_classroom_integration',
         SimpleNamespace(IntegratedDipoleClassroomPrincipalAdapter=object,

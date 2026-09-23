@@ -328,3 +328,10 @@ def test_declared_cycles_ignore_stale_day_and_cycle_limit_variables(state):
     command=state["calls"][-1]
     assert [part for part in command if part.lower().startswith("day=")]==["Day=20211004"]
     assert [part for part in command if part.lower().startswith("cyclelimit=")]==["CycleLimit=3"]
+
+def test_automation_configuration_cannot_disable_pending_return(state):
+    config=copy.deepcopy(state["config"])
+    config.update(workflow_automation={},pending_return=False)
+    with pytest.raises((dp.StageRefused,ValueError)):
+        dp.DayPipeline(config,"20211004",runner=state["pipeline"].run,runs_root=state["tmp"])
+    assert state["calls"]==[]
