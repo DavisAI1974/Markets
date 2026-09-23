@@ -87,7 +87,10 @@ def state(request, tmp_path):
 
 def invoke(state, *, before=False, after=0, process='absent'):
     capture = state.tmp/('observation-'+uuid.uuid4().hex+'.json')
-    process_body = {'absent': 'return',
+    process_body = {'absent': "[pscustomobject]@{ Name = 'fixture-idle.exe'; CommandLine = 'fixture idle'; ProcessId = 42 }",
+                    'empty': 'return',
+                    'opaque-python': "[pscustomobject]@{ Name = 'python.exe'; CommandLine = $null; ProcessId = 43 }",
+                    'opaque-py': "[pscustomobject]@{ Name = 'py.exe'; CommandLine = '   '; ProcessId = 44 }",
                     'alive': "[pscustomobject]@{ CommandLine = 'python run_actual_sunday.py'; ProcessId = 12345 }",
                     'failed': "throw 'TEST_PROCESS_INVENTORY_FAILED'"}[process]
     prelude = f"""
@@ -210,7 +213,7 @@ def test_retry_after_response_or_cycle_already_moved(state, after):
     assert path.read_bytes() == original
     assert_done(state)
 
-@pytest.mark.parametrize('process', ['alive', 'failed'])
+@pytest.mark.parametrize('process', ['alive', 'failed', 'empty', 'opaque-python', 'opaque-py'])
 def test_process_gate_refuses_alive_or_unavailable_inventory(state, process):
     result, capture = invoke(state, process=process)
     assert result.returncode != 0 and not capture.exists()
