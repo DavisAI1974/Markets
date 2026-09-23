@@ -157,9 +157,9 @@ def main():
     from research.kalshi.frankie_boss.frankie_principal_adapter import canonical
     from research.kalshi.frankie_boss.feedback_cycle import _exclusive
     from research.kalshi.frankie_boss.dipole_classroom_integration import IntegratedDipoleClassroomPrincipalAdapter
-    if not 0<=args.cycle_index<19:raise ValueError('authored cycle index required')
     schedule=verified_json(h['schedule']['path'],h['schedule']['sha256'])
     steps=schedule['steps'] if type(schedule) is dict else schedule
+    if not 0<=args.cycle_index<len(steps):raise ValueError('authored cycle index required')
     binding=bind_cycle(config['contract']['path'],config['contract']['sha256'],args.cycle_index,steps[args.cycle_index])
     run=Path(config['run_directory']);directory=run/'execution'/f'cycle-{args.cycle_index:02d}'
     with _exclusive(run/'actual-host.lock'):
