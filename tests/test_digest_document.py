@@ -57,7 +57,7 @@ def test_complete_document_is_byte_identical_to_pinned_reference(tmp_path, refer
     frames, structures = tables['legacy_book_imbalance'], tables['legacy_structure_observables']
     prices = [dict(ts_recv=1633298400000000001+i, price=5.5+i/100, size=i+1) for i in range(4)]
     buys, sells = [0.0,1.0,2.0,3.0], [0.0,0.0,2.0,1.0]
-    roll = [float('nan'),1.0,1.0/5.0,2.0/10.0]
+    roll = [float('nan'),1.0,1.0/5.0,1.0/3.0]
     pins, layers = ({}, None) if layers_kind == 'none' else pinned_layers(
         tmp_path/'inputs', FX._section_files() if layers_kind == 'sections' else FX._bedrock_files())
     expected = reference.digest_text(receipt(), {}, prices, frames, structures, roll, 10, buys, sells, bedrock=layers)
@@ -140,7 +140,7 @@ def test_session_digest_path_invokes_file_writer_without_full_layer_load(tmp_pat
     mod=document()
     pins,_=pinned_layers(tmp_path/'inputs',FX._bedrock_files())
     rec=receipt()
-    rec['layers']={name:dict(entry,bedrock=True) for name,entry in pins.items()}
+    rec['layers']={name:dict(entry,bedrock=True,status='derived',producer='fixture') for name,entry in pins.items()}
     obj._write_digest(rec,{},[],[],[],[],0,[],[])
     assert (tmp_path/'derivation-digest-full.md').exists()
     proof=json.loads((tmp_path/'digest-proof.json').read_bytes())

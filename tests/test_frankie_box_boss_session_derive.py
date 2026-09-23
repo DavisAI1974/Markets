@@ -72,6 +72,7 @@ def stub(tmp_path, monkeypatch, pin=None, request_pin_sha=None):
     s._pin_matches_request = lambda: session.Session._pin_matches_request(s)
     s._derive_needed = lambda: session.Session._derive_needed(s)
     s._derive_bedrock = lambda *args: session.Session._derive_bedrock(s, *args)
+    s._write_digest = lambda *args: session.Session._write_digest(s, *args)
     s.request = dict(attachment=dict(feedback_contract=dict(source_hash='h' * 64),
                                      calculation_pin_witness=dict(sha256=request_pin_sha or pin['pins_witness']['sha256'], cycle_index=0, group=pin['group'])))
     return s

@@ -728,9 +728,8 @@ def bedrock_tables(files):
     return tables
 
 
-def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells, bedrock=None):
-    """The whole digest: layer status, then every derived layer as a dense exact table (all fields); with `bedrock`
-    ({layer: file}), the V6 bedrock tables after them."""
+def digest_header(receipt):
+    """Small shared header; table/document streaming does not change its bytes."""
     lines = ['# Derivation digest ' + SCHEMA + ' (Frankie\'s own calculations on this cycle\'s rows; written by the session code; whole, no '
              'limits; every derived field, exact; `=` = the column the adapter computes from this row (spread = best_ask - best_bid, '
              'mid = 0.5*(best_bid + best_ask), depth_imbalance_full = (bid_depth_full - ask_depth_full)/(bid_depth_full + ask_depth_full)), '
@@ -771,6 +770,19 @@ def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, 
              '## Layer status (pin group ' + receipt['pin_group'] + ')']
     for name, value in receipt['layers'].items():
         lines.append(f'- {name}: {value["status"]}' + (f' ({value["reason"]})' if value.get('reason') else '') + f'; producer: {value.get("producer")}; file {value["path"]} sha256 {value["sha256"][:16]}')
+    return '\n'.join(lines) + '\n\n'
+
+
+def bedrock_header(derived, total, verdict):
+    head = ['', '## Bedrock (the pinned producers\' own traversal on this cycle\'s rows, projected by their crosswalk; '
+            f'{derived} of {total} layers derived; every derived fact once, whole; the traversal\'s own verdict over this slice: '
+            f'{verdict.get("verdict")}' + (f', failed gates {", ".join(verdict["failed_gates"])}' if verdict.get('failed_gates') else ', no failed gate') + ')', '']
+    return '\n'.join(head) + '\n'
+
+
+def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells, bedrock=None):
+    """The whole digest: layer status, then every derived layer as a dense exact table (all fields); with `bedrock`
+    ({layer: file}), the V6 bedrock tables after them."""
     families = {}
     for st in structures:
         families[st['action_string']] = families.get(st['action_string'], 0) + 1
@@ -781,12 +793,9 @@ def digest_text(receipt, layers, prices, frames, structures, roll, first, buys, 
         'legacy_structure_observables': list(structures),
         'structure_families': [dict(action_string=k, count=v) for k, v in sorted(families.items(), key=lambda kv: -kv[1])],
     }
-    text = '\n'.join(lines) + '\n\n' + render_layers(tables)
+    text = digest_header(receipt) + render_layers(tables)
     if bedrock:
         derived = sum(1 for f in bedrock.values() if f.get('status') == 'derived')
         verdict = next((f.get('traversal') for f in bedrock.values() if isinstance(f.get('traversal'), dict)), None) or {}
-        head = ['', '## Bedrock (the pinned producers\' own traversal on this cycle\'s rows, projected by their crosswalk; '
-                f'{derived} of {len(bedrock)} layers derived; every derived fact once, whole; the traversal\'s own verdict over this slice: '
-                f'{verdict.get("verdict")}' + (f', failed gates {", ".join(verdict["failed_gates"])}' if verdict.get('failed_gates') else ', no failed gate') + ')', '']
-        text += '\n'.join(head) + '\n' + render_layers(bedrock_tables(bedrock))
+        text += bedrock_header(derived, len(bedrock), verdict) + render_layers(bedrock_tables(bedrock))
     return text

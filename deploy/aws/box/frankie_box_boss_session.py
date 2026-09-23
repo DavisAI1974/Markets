@@ -130,8 +130,12 @@ def sha256_bytes(data):
 
 
 def witness(path):
-    raw = Path(path).read_bytes()
-    return dict(bytes=len(raw), sha256=sha256_bytes(raw))
+    hashed, size = hashlib.sha256(), 0
+    with Path(path).open('rb') as source:
+        for block in iter(lambda: source.read(1024 * 1024), b''):
+            hashed.update(block)
+            size += len(block)
+    return dict(bytes=size, sha256=hashed.hexdigest())
 
 
 def write_json(path, value):
@@ -707,7 +711,7 @@ class Session:
         pin = self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
         moved = _box_module('frankie_box_bedrock')._move_aside(              # an earlier derivation is moved aside with a receipt, never overwritten
-            derived, siblings=[self.work / 'derive.json', self.work / 'derivation-digest-full.md', self.work / 'derive-only-measurement.json'],
+            derived, siblings=[self.work / 'derive.json', self.work / 'derivation-digest-full.md', self.work / 'derive-only-measurement.json', self.work / 'digest-proof.json'],
             schema='FRANKIE_BOX_DERIVED_SUPERSEDE_RECEIPT_V1',
             reason='the layers are derived again (a pin change, a schema change or an operator restart): the legacy five, the bedrock projections and the derivation receipt, digest and measurement are kept whole')
         if moved:
@@ -795,13 +799,21 @@ class Session:
         receipt['pin_identity'] = dict(sha256=pin['pins_witness']['sha256'], cycle_index=pin['cycle_index'], group=pin['group'],
                                        bedrock_layers=list(pin.get('bedrock_layers') or []))
         write_json(self.work / 'derive.json', receipt)
-        sys.path.insert(0, str(Path(__file__).resolve().parent))
-        import frankie_box_digest_render as DG
-        bedrock_files = {name: load_json(entry['path']) for name, entry in receipt['layers'].items() if entry.get('bedrock')} or None
-        digest = DG.digest_text(receipt, layers, prices, frames, structures, roll, first, buys, sells, bedrock=bedrock_files)   # dense, exact, self-checked (DG.SCHEMA)
-        (self.work / 'derivation-digest-full.md').write_text(digest, encoding='utf-8')
+        self._write_digest(receipt, layers, prices, frames, structures, roll, first, buys, sells)
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
         return receipt
+
+    def _write_digest(self, receipt, layers, prices, frames, structures, roll, first, buys, sells):
+        """Publish a file from pinned layer snapshots only after exact table proofs."""
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        writer = _box_module('frankie_box_digest_document')
+        proof = writer.write_digest(
+            self.work / 'derivation-digest-full.md', receipt, layers, prices, frames, structures,
+            roll, first, buys, sells,
+            bedrock_entries={name: entry for name, entry in receipt['layers'].items() if entry.get('bedrock')},
+            scratch_directory=self.work / 'derived' / ('.digest-' + uuid.uuid4().hex))
+        write_json(self.work / 'digest-proof.json', proof)
+        return proof
 
     @staticmethod
     def _producer_module(relative, name):
