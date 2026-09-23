@@ -87,7 +87,8 @@ def completed_history(host, *, request_id, cutoff_ns, cycle_index):
         correction = bind_final_resolution_requirement(build_final_correction_request(
             original_request_sha256=digest(request), response=response, grade=grade,
             key=package['teacher_key'], teachback=teachback, novelty_investigation=novelty,
-            learning_history=package['pre_message'].get('learning_history')))
+            learning_history=package['pre_message'].get('learning_history'),
+            shared_knowledge=package['pre_message'].get('shared_knowledge')))
         _same(read('classroom-correction-request.json'), correction, 'correction request')
         corrected = read('classroom-correction-response.json')
         FrankiePrincipalAdapter._attest_host(None, corrected['response'], corrected['host_attestation'], correction)
@@ -106,6 +107,14 @@ def completed_history(host, *, request_id, cutoff_ns, cycle_index):
         teacher_message = dict(package['pre_message'])
         earlier = teacher_message.pop('learning_history', None)
         correction_without_history = {k:v for k,v in correction.items() if k != 'learning_history'}
+        scientific = correction_without_history.get('scientific_review_request')
+        if scientific is not None:
+            # The full initial response and prior exchanges already appear once in this bundle.
+            correction_without_history['scientific_review_request'] = {
+                k:v for k,v in scientific.items() if k not in ('initial_response','learning_history')}
+            correction_without_history['scientific_review_request']['initial_response_hash'] = evidence_hash(response)
+            correction_without_history['scientific_review_request']['earlier_learning_history_hash'] = (
+                None if earlier is None else earlier['history_hash'])
         # Earlier exchanges already occur once in this ordered bundle; avoid recursive duplication.
         entry = json_form(dict(origin=origin, teacher_message_without_repeated_history=teacher_message,
             earlier_learning_history_hash=None if earlier is None else validate_history(earlier)['history_hash'],

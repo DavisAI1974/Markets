@@ -328,7 +328,7 @@ def group_review_items(items: Sequence[Mapping[str, Any]]) -> tuple[dict, ...]:
         groups.setdefault(root, []).append(correction_id)
     return tuple(({'root_cause_id': root, 'member_review_ids': tuple(members)} for root, members in groups.items()))
 
-def build_final_correction_request(*, original_request_sha256: str, response: Mapping[str, Any], grade: Mapping[str, Any], key: Mapping[str, Any], teachback: Mapping[str, Any], novelty_investigation: Mapping[str, Any], learning_history: Mapping[str, Any] | None = None) -> dict:
+def build_final_correction_request(*, original_request_sha256: str, response: Mapping[str, Any], grade: Mapping[str, Any], key: Mapping[str, Any], teachback: Mapping[str, Any], novelty_investigation: Mapping[str, Any], learning_history: Mapping[str, Any] | None = None, shared_knowledge: Mapping[str, Any] | None = None) -> dict:
     if type(original_request_sha256) is not str or len(original_request_sha256) != 64:
         raise ValueError('original principal request sha256 required')
     if type(response) is not dict or not isinstance(response.get('session_id'), str) or not response['session_id'].strip():
@@ -344,6 +344,13 @@ def build_final_correction_request(*, original_request_sha256: str, response: Ma
         from .dipole_classroom_learning import validate_history
         body['learning_history'] = validate_history(learning_history)
         body['instruction'] += ' Build on the complete retained learning history, preserving source identities, uncertainty and corrections.'
+    if shared_knowledge is not None:
+        from .dipole_scientific_review import build_request
+        body['scientific_review_request'] = build_request(initial_response=response,
+            original_request_sha256=original_request_sha256, fact_review=novelty_investigation,
+            shared_knowledge=shared_knowledge, learning_history=learning_history)
+        body['instruction'] += (' Complete the separately receipted scientific-teacher conversation about the '
+            'whole run and every finding. Preserve scientific disagreement separately from factual corrections.')
     body['request_sha256'] = evidence_hash(body)
     return body
 
@@ -412,9 +419,16 @@ def _render_dipole_review(correction: Mapping[str, Any]) -> str:
             parts.append('')
     return '\n'.join(parts)
 
-def render_final_transcript(pre_message: Mapping[str, Any], teachback: Mapping[str, Any], novel_findings: Sequence[Mapping[str, Any]], correction: Mapping[str, Any], acknowledgement: Mapping[str, Any]) -> str:
+def render_final_transcript(pre_message: Mapping[str, Any], teachback: Mapping[str, Any], novel_findings: Sequence[Mapping[str, Any]], correction: Mapping[str, Any], acknowledgement: Mapping[str, Any], scientific_exchange: Mapping[str, Any] | None = None) -> str:
     header = '\n'.join(['# Dipole classroom — actual exchange transcript', '', "This transcript contains the model-visible teaching/correction exchange and Frankie's responses only. The full host grade and teacher key are excluded.", '', 'Narrative prose and novel hypotheses are retained for audit but are not part of the deterministic classroom mastery score. Novelty is evaluated separately.'])
-    return '\n\n---\n\n'.join((header, _render_final_pre(pre_message), render_teachback(teachback), _render_novel_findings(novel_findings), _render_dipole_review(correction), render_acknowledgement(acknowledgement))) + '\n'
+    parts = [header, _render_final_pre(pre_message), render_teachback(teachback),
+        _render_novel_findings(novel_findings), _render_dipole_review(correction), render_acknowledgement(acknowledgement)]
+    if scientific_exchange is not None:
+        from .dipole_scientific_review import validate_exchange
+        validate_exchange(correction['scientific_review_request'], scientific_exchange)
+        parts.append('# Scientific teacher and Frankie — retained conversation\n\n' +
+            json.dumps(scientific_exchange, sort_keys=True, ensure_ascii=False, indent=2))
+    return '\n\n---\n\n'.join(parts) + '\n'
 
 class FinalDipoleClassroomPrincipalAdapter(hardened.HardenedDipoleClassroomPrincipalAdapter):
     """Leak-resistant classroom plus protected novelty and local evidence review."""
@@ -453,7 +467,7 @@ class FinalDipoleClassroomPrincipalAdapter(hardened.HardenedDipoleClassroomPrinc
         self._retain_audit('dipole-classroom-post-grade.json', grade)
         self._retain('dipole-classroom-novel-findings.json', novel_findings)
         self._retain('dipole-classroom-novelty-investigation.json', novelty)
-        correction = bind_final_resolution_requirement(build_final_correction_request(original_request_sha256=digest(request), response=initial_response, grade=grade, key=self.classroom_package['teacher_key'], teachback=teachback, novelty_investigation=novelty, learning_history=self.classroom_package['pre_message'].get('learning_history')))
+        correction = bind_final_resolution_requirement(build_final_correction_request(original_request_sha256=digest(request), response=initial_response, grade=grade, key=self.classroom_package['teacher_key'], teachback=teachback, novelty_investigation=novelty, learning_history=self.classroom_package['pre_message'].get('learning_history'), shared_knowledge=self.classroom_package['pre_message'].get('shared_knowledge')))
         correction_path = self.directory / 'classroom-correction-request.json'
         created = False
         if correction_path.exists():
@@ -475,7 +489,7 @@ class FinalDipoleClassroomPrincipalAdapter(hardened.HardenedDipoleClassroomPrinc
         self._retain('dipole-classroom-acknowledgement.json', acknowledgement)
         completion = finish(self.classroom_package, teachback=teachback, grade=grade, acknowledgement=acknowledgement)
         self._retain('dipole-classroom-completion.json', completion)
-        transcript = render_final_transcript(self.classroom_package['pre_message'], teachback, novel_findings, correction, acknowledgement)
+        transcript = render_final_transcript(self.classroom_package['pre_message'], teachback, novel_findings, correction, acknowledgement, correction_envelope['response'].get('dipole_scientific_exchange'))
         transcript_path = self._retain_text('dipole-classroom-transcript.md', transcript)
         self._retain('dipole-classroom-receipt.json', {'schema': 'FRANKIE_DIPOLE_CLASSROOM_RECEIPT_V2', 'classroom_binding_hash': self.classroom_package['binding']['classroom_binding_hash'], 'teacher_key_hash': self.classroom_package['teacher_key']['teacher_key_hash'], 'completion_hash': completion['completion_hash'], 'exhaustive_audit_hash': completion['exhaustive_audit_hash'], 'observation_claims_reviewed': completion['observation_claims_reviewed'], 'relationship_pairs_explicitly_reviewed': completion['relationship_pairs_explicitly_reviewed'], 'correction_resolutions': len(acknowledgement['correction_resolutions']), 'novel_findings': len(novel_findings), 'novelty_investigation_hash': novelty['investigation_bundle_hash'], 'independent_discovery_eligible': final_model_visible_classroom(self.classroom_package)['independent_discovery_eligible'], 'transcript_scope': 'MODEL_VISIBLE_EXCHANGE_ONLY', 'transcript': file_witness(transcript_path), 'initial_session_id': initial_response['session_id'], 'correction_session_id': correction_envelope['response']['session_id'], 'teacher_complete': completion['teacher_complete']})
         return envelope

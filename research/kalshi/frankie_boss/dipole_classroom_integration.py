@@ -105,6 +105,7 @@ def prepare_integrated_cycle(
     history: Sequence[Mapping[str, Any]] = (),
     prior_grade: Mapping[str, Any] | None = None,
     learning_history: Mapping[str, Any] | None = None,
+    shared_knowledge: Mapping[str, Any] | None = None,
 ) -> dict:
     """Build the final reviewed classroom package without the intermediate hardening layer."""
     snapshot = classroom.snapshot_teacher_attachment(
@@ -143,6 +144,15 @@ def prepare_integrated_cycle(
         message['future_wall'] = ('All completed earlier learning is available in this learning replay, '
             'including knowledge acquired after the current market cutoff. Preserve its origin and status. '
             'Do not claim an unseen future outcome or relabel prior learning as a new observation.')
+    if shared_knowledge is not None:
+        from .dipole_shared_knowledge import validate_descriptor
+        from .dipole_scientific_review import POLICY
+        message['shared_knowledge'] = validate_descriptor(shared_knowledge)
+        message['scientific_dialogue_policy'] = POLICY
+        message['novelty_invitation'] += (' Share all observations and learning, not only novelty. '
+            'The scientific teacher will examine the mechanism, mathematics, assumptions and evidence; '
+            'a second occurrence is supporting evidence, not an exclusive validation gate. '
+            'Carry forward scoped findings, uncertainty, failures and disagreements.')
     message["teacher_message_hash"] = evidence_hash(message)
     binding = {
         "request_id": request_id,
@@ -164,6 +174,9 @@ def prepare_integrated_cycle(
     if learning_history is not None:
         binding.update(learning_policy=learned['learning_policy'], learning_history_hash=learned['history_hash'],
             learning_measurement='CUMULATIVE_LEARNING_REPLAY', independent_discovery_eligible=False)
+    if shared_knowledge is not None:
+        binding['shared_knowledge_snapshot_hash'] = message['shared_knowledge']['snapshot_hash']
+        binding['scientific_dialogue_policy'] = message['scientific_dialogue_policy']
     binding["classroom_binding_hash"] = evidence_hash(binding)
     return {
         "source": snapshot,

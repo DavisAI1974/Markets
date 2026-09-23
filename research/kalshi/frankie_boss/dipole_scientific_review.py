@@ -175,11 +175,25 @@ def validate_exchange(request, value, *, require_reply=True):
     if digest({k:v for k,v in value.items() if k!='exchange_hash'})!=value.get('exchange_hash'):
         raise ValueError('scientific exchange changed')
     reading=value.get('reading')
-    if (type(reading) is not dict or reading.get('role')!='scientific_teacher'
-            or reading.get('request_hash')!=request['scientific_request_hash']
-            or reading.get('snapshot_hash')!=value['snapshot_hash']
-            or reading.get('coverage_complete') is not True or not reading.get('receipt_hash')):
-        raise ValueError('complete scientific teacher source delivery receipt required')
+    from deploy.aws.box.frankie_box_staged_reading import validate_receipt
+    from .dipole_shared_knowledge import validate_descriptor
+    validate_receipt(reading)
+    knowledge=validate_descriptor(request['shared_knowledge'])
+    binding=reading['binding']
+    if (binding['role']!='scientific_teacher'
+            or binding['request_hash']!=request['scientific_request_hash']
+            or binding['snapshot_hash']!=value['snapshot_hash']):
+        raise ValueError('scientific teacher source delivery binding differs')
+    expected={x['source_id']:{k:x[k] for k in ('sha256','bytes')} for x in knowledge['sources']}
+    for source_id,body in (('initial-response',request['initial_response']),
+            ('fact-review',request['fact_review']),('learning-history',request['learning_history'])):
+        if source_id in expected:
+            raise ValueError('shared source uses a reserved conversation id')
+        payload=canonical(body)
+        expected[source_id]=dict(sha256=hashlib.sha256(payload).hexdigest(),bytes=len(payload))
+    actual={x['source_id']:{k:x[k] for k in ('sha256','bytes')} for x in reading['sources']}
+    if actual!=expected:
+        raise ValueError('teacher did not receive the complete shared research and full run')
     reviews=value.get('reviews')
     items=request_items(request)
     if type(reviews) is not list or len(reviews)!=len(items):
@@ -188,6 +202,12 @@ def validate_exchange(request, value, *, require_reply=True):
         if type(entry) is not dict:
             raise ValueError('scientific review entry required')
         call=validate_call(entry.get('teacher_call'),role='scientific_teacher',request_hash=request['scientific_request_hash'])
+        for field,role in (('teacher_context_calls','scientific_teacher'),('frankie_context_calls','principal')):
+            context_calls=entry.get(field,[])
+            if type(context_calls) is not list:
+                raise ValueError('retained retrieval turns must be a list')
+            for context_call in context_calls:
+                validate_call(context_call,role=role,request_hash=request['scientific_request_hash'])
         parsed=parse_review(call['response_text'],request,item)
         if entry.get('review')!=parsed or item['item_id'] not in call['prompt'] or request['scientific_request_hash'] not in call['prompt']:
             raise ValueError('review differs from retained teacher call')

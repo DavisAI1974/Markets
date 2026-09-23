@@ -156,10 +156,7 @@ class SharedKnowledgeTests(unittest.TestCase):
         outside = self.root / "outside"
         outside.write_bytes(target.read_bytes())
         target.unlink()
-        try:
-            target.symlink_to(outside)
-        except (OSError, NotImplementedError):
-            self.skipTest("test platform cannot create symlinks")
+        target.symlink_to(outside)
         with self.assertRaisesRegex(ValueError, "symlink"):
             knowledge.load_snapshot(snapshot.directory, snapshot.snapshot_hash)
 
@@ -240,6 +237,59 @@ class SharedKnowledgeTests(unittest.TestCase):
         part["provider_job"]["response_sha256"] = part["response"]["sha256"]
         with self.assertRaisesRegex(ValueError, "ack"):
             self.validate(snapshot, receipt)
+
+
+    def test_descriptor_is_portable_and_detects_catalog_or_projection_tampering(self):
+        snapshot = self.build()
+        value = knowledge.descriptor(snapshot)
+        self.assertEqual(knowledge.validate_descriptor(value), value)
+        self.assertEqual(value["snapshot_hash"], snapshot.snapshot_hash)
+        self.assertEqual(value["catalog_hash"], sha(json.dumps(
+            snapshot.catalog, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")))
+        for field in ("catalog", "sources", "snapshot_hash", "catalog_hash"):
+            broken = copy.deepcopy(value)
+            if field == "catalog":
+                broken[field]["sources"][0]["status"] = "PROMOTED"
+            elif field == "sources":
+                broken[field] = broken[field][:-1]
+            else:
+                broken[field] = "e" * 64
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                knowledge.validate_descriptor(broken)
+
+    def test_scientific_review_requires_full_additional_response_and_history(self):
+        snapshot = self.build()
+        receipt = self.receipt(snapshot, "scientific_teacher")
+        receipt["binding"]["phase"] = "scientific_review"
+        additional = [dict(source_id="initial-response", content="Initial claims. α\n"),
+                      dict(source_id="completed-history", content="All prior learning, including old corrections.\n")]
+        for source in additional:
+            raw = source["content"].encode("utf-8")
+            ack = dict(part_id=source["source_id"], source_id=source["source_id"],
+                       start=0, end=len(raw), source_sha256=sha(raw), chunk_sha256=sha(raw))
+            prefix = json.dumps(dict(binding=receipt["binding"], ack=ack), sort_keys=True) + "\n"
+            prompt = witnessed(prefix + source["content"])
+            response = witnessed(json.dumps(dict(ack=ack, assessment="Reviewed supplied evidence.")))
+            receipt["parts"].append(dict(**ack, ack=ack, source_offset=len(prefix.encode("utf-8")),
+                prompt=prompt, response=response, provider_job=dict(
+                    id="job-" + source["source_id"], status="completed", role="scientific_teacher",
+                    request_hash="b" * 64, prompt_sha256=prompt["sha256"], response_sha256=response["sha256"])))
+        result = knowledge.validate_reading(snapshot, receipt, "scientific_teacher", "b" * 64,
+            additional_sources=additional, expected_phase="scientific_review")
+        self.assertEqual(result["source_ids"][-2:], ["initial-response", "completed-history"])
+        for changed in (additional[:-1], [dict(additional[0], content="changed"), additional[1]]):
+            with self.assertRaises(ValueError):
+                knowledge.validate_reading(snapshot, receipt, "scientific_teacher", "b" * 64,
+                    additional_sources=changed, expected_phase="scientific_review")
+        with self.assertRaisesRegex(ValueError, "binding"):
+            knowledge.validate_reading(snapshot, receipt, "scientific_teacher", "b" * 64,
+                additional_sources=additional)
+
+    def test_additional_source_cannot_shadow_snapshot(self):
+        snapshot = self.build()
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            knowledge.validate_reading(snapshot, self.receipt(snapshot), "principal", "b" * 64,
+                additional_sources=[dict(id="baseline", content="replacement")])
 
 
 if __name__ == "__main__":
