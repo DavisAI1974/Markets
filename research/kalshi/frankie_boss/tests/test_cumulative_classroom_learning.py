@@ -134,3 +134,16 @@ def test_policy_change_before_learning_cannot_update_weights(tmp_path,monkeypatc
         with pytest.raises(ValueError):asyncio.run(store.run(**args))
         assert calls['learner']==0 and checkpoint.checkpoint_hash==original
     finally:store.close();checkpoint.close()
+
+def test_missing_completed_lesson_refuses_new_successor_before_dispatch(tmp_path,monkeypatch):
+    store,checkpoint,args,calls,seen=fixture(tmp_path,monkeypatch)
+    try:
+        for name,as_of,cutoff in [('z-first',10,40),('a-second',5,20)]:
+            select(args,name,as_of,cutoff);asyncio.run(store.run(**args))
+        with store.lessons:
+            store.lessons.execute("DELETE FROM lessons WHERE request='z-first'")
+        before=dict(calls)
+        with pytest.raises(ValueError,match='completed'):
+            store.critic_knowledge('next',cutoff_ns=1)
+        assert calls==before
+    finally:store.close();checkpoint.close()
