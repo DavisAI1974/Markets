@@ -24,7 +24,7 @@ def assert_table(tmp_path, name, rows, context=None):
     destination = tmp_path / 'table.txt'
     receipt = mod.write_table(destination, name, iter(rows), tmp_path / 'scratch',
                               context={k: iter(v) for k, v in (context or {}).items()})
-    assert destination.read_text(encoding='utf-8') == DG.render_table(name, rows, context)
+    assert destination.read_bytes().decode('utf-8') == DG.render_table(name, rows, context)
     assert receipt['rows'] == len(rows)
     assert receipt['verified'] is True
     mod.verify_table(destination, name, iter(rows), tmp_path / 'verify', context=context)
@@ -42,7 +42,7 @@ def test_existing_codec_fixtures_have_identical_bytes(tmp_path, monkeypatch, tes
         destination = tmp_path / ('table-%d.txt' % ordinal)
         receipt = mod.write_table(destination, name, iter(rows), tmp_path / ('scratch-%d' % ordinal),
                                   context=context)
-        text = destination.read_text(encoding='utf-8')
+        text = destination.read_bytes().decode('utf-8')
         assert text == original(name, rows, context)
         assert receipt['verified'] is True
         return text
