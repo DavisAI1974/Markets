@@ -480,3 +480,31 @@ def test_two_member_mapping_rejects_invalid_member_coverage(tmp_path, damage):
     with pytest.raises(ValueError):
         mapping.bind_prefix(**args)
     assert not args["output_path"].exists()
+
+
+def test_two_member_prefix_checks_full_mapping_but_selects_only_closed_prefix(tmp_path):
+    from research.kalshi.frankie_boss import frankie_source_mapping as mapping
+    args = _two_member_mapping_fixture(tmp_path)
+    args["boss_source"].update(through_cursor=1, prefix_hash="6" * 64, as_of=102, source_as_of=101)
+    result = mapping.bind_prefix(**args)
+    assert result["matched_records_by_member"] == [2, 0]
+    assert result["matched_records"] == 2 and result["matched_groups"] == 1
+    assert result["selected_member_plain_end"] == 10
+
+
+@pytest.mark.parametrize("damage", ["open_group", "index_hash", "journal_pin", "causal_clock"])
+def test_two_member_binding_refuses_unverified_or_noncausal_prefix(tmp_path, damage):
+    from research.kalshi.frankie_boss import frankie_source_mapping as mapping
+    args = _two_member_mapping_fixture(tmp_path)
+    if damage == "open_group":
+        args["boss_source"].update(through_cursor=2, prefix_hash="7" * 64)
+    elif damage == "index_hash":
+        with (args["mapping_directory"] / "index.jsonl").open("ab") as handle:
+            handle.write(b"\n")
+    elif damage == "journal_pin":
+        args["journal_checkpoint"]["head_hash"] = "f" * 64
+    else:
+        args["boss_source"].update(as_of=101, source_as_of=100)
+    with pytest.raises(ValueError):
+        mapping.bind_prefix(**args)
+    assert not args["output_path"].exists()

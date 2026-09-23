@@ -213,8 +213,124 @@ def build_mapping(*, source_path, source_member, extraction_pin, member_ledger_p
     return receipt
 
 
+def _bind_members_prefix(mapping, directory, output, expected_mapping_sha256,
+                         boss_journal_path, journal_checkpoint, boss_source, reader_factory):
+    """Stream a complete multi-member mapping against an independently pinned journal."""
+    from .verified_journal_reader import VerifiedJournalReader
+    sources = mapping.get('sources')
+    if type(sources) is not list or not sources:
+        raise ValueError('ordered source member roster required')
+    members = [SourceMember(**member) for member in sources]
+    if any(m.member_index != i for i, m in enumerate(members)):
+        raise ValueError('source members must retain their original contiguous order')
+    total = sum(m.mbo_records for m in members)
+    if (mapping.get('record_count') != total or journal_checkpoint['count'] != 2 * total
+            or type(mapping.get('group_count')) is not int or mapping['group_count'] < 1
+            or boss_source['through_cursor'] >= total):
+        raise ValueError('complete source member coverage differs')
+    if not re.fullmatch('[0-9a-f]{64}', str(mapping.get('extraction_hash', ''))):
+        raise ValueError('pinned source extraction hash required')
+    index_pin = _witness({k: mapping['index'][k] for k in ('bytes', 'sha256')})
+    ledger_pin = _witness(mapping['member_ledger']['plain'])
+    matched = [0] * len(members)
+    selected_groups = selected_end = 0
+
+    def indexed_records():
+        nonlocal selected_groups, selected_end
+        digest, size, cursor, groups, plain_end = hashlib.sha256(), 0, 0, 0, 0
+        member_index, member_end = 0, members[0].mbo_records
+        with _plain(directory/'index.jsonl').open('rb') as stream:
+            for line in stream:
+                digest.update(line)
+                size += len(line)
+                if size > index_pin['bytes']:
+                    raise ValueError('mapping index exceeds pinned size')
+                row = _load(line)
+                while cursor == member_end and member_index + 1 < len(members):
+                    member_index += 1
+                    member_end += members[member_index].mbo_records
+                hashes = row.get('wire_sha256')
+                start, end = row.get('cursor_start'), row.get('cursor_end')
+                offset, length = row.get('plain_offset'), row.get('plain_bytes')
+                if (type(start) is not int or type(end) is not int or start != cursor
+                        or type(hashes) is not list or not hashes or end - start + 1 != len(hashes)
+                        or row.get('source_member_index') != member_index or end >= member_end
+                        or type(offset) is not int or type(length) is not int or length <= 0
+                        or offset < plain_end or offset + length > ledger_pin['bytes']):
+                    raise ValueError('mapping index member, cursor or physical coverage differs')
+                if start <= boss_source['through_cursor'] < end:
+                    raise ValueError('BOSS cutoff must be an indexed closed member group')
+                plain_end = offset + length
+                groups += 1
+                if end <= boss_source['through_cursor']:
+                    selected_groups += 1
+                    selected_end = plain_end
+                for ordinal, wire_hash in enumerate(hashes):
+                    if type(wire_hash) is not str or not re.fullmatch('[0-9a-f]{64}', wire_hash):
+                        raise ValueError('malformed mapped wire digest')
+                    yield member_index, wire_hash, ordinal == len(hashes) - 1
+                    cursor += 1
+        if (size != index_pin['bytes'] or digest.hexdigest() != index_pin['sha256']
+                or cursor != total or groups != mapping['group_count']):
+            raise ValueError('mapping index bytes or complete source coverage differs')
+
+    records = indexed_records()
+    reader_factory = reader_factory or VerifiedJournalReader
+    journal = reader_factory(_plain(boss_journal_path), expected_count=journal_checkpoint['count'],
+                             expected_head_hash=journal_checkpoint['head_hash'])
+    count, pending, terminal = 0, None, None
+    try:
+        for entry in journal.entries():
+            value = entry['payload']
+            if entry['kind'] == 'INPUT':
+                if pending is not None:
+                    raise ValueError('unpaired source journal input')
+                pending = value
+            elif entry['kind'] == 'APPLIED':
+                if (pending is None or value['cursor'] != count or pending['cursor'] != count
+                        or pack(pending['record']) != pack(value['raw_record'])):
+                    raise ValueError('actual applied input continuity differs')
+                expected = next(records, None)
+                if expected is None:
+                    raise ValueError('journal exceeds complete mapped source')
+                member_index, wire_hash, group_end = expected
+                record = value['raw_record']
+                wire = record.get('dbn_wire_bytes')
+                if (type(wire) is not bytes or _sha(wire) != wire_hash
+                        or value['source_member_index'] != member_index
+                        or value['normalized']['source_dbn_sha256'] != members[member_index].sha256
+                        or record.get('dbn_extraction_hash') != mapping['extraction_hash']
+                        or bool(record['flags'] & 128) != group_end):
+                    raise ValueError('actual BOSS raw bytes, member identity or closed group differs')
+                if count <= boss_source['through_cursor']:
+                    if record['ts_recv'] > boss_source['as_of'] or record['ts_event'] > boss_source['source_as_of']:
+                        raise ValueError('actual BOSS causal clock differs')
+                    matched[member_index] += 1
+                    terminal = value
+                count += 1
+                pending = None
+            else:
+                raise ValueError('failed or unknown source journal entry')
+        if (next(records, None) is not None or count != total or pending is not None
+                or terminal is None or terminal['receipt'] is None
+                or terminal['terminal_prefix_hash'] != boss_source['prefix_hash']):
+            raise ValueError('actual BOSS selected prefix is incomplete or differs')
+    finally:
+        records.close()
+        journal.close()
+    bound = dict(schema='FRANKIE_BOSS_BYTE_PREFIX_MAPPING_V2', mapping_sha256=expected_mapping_sha256,
+        sources=sources, member_ledger=mapping['member_ledger'], index=mapping['index'],
+        boss_source=dict(boss_source), journal_checkpoint=dict(journal_checkpoint),
+        matched_records=sum(matched), matched_records_by_member=matched, matched_groups=selected_groups,
+        selected_member_plain_end=selected_end, market_calculations=False,
+        mapping_status='EXACT_WIRE_BYTES_AND_ACTUAL_BOSS_PREFIX')
+    with output.open('xb') as handle:
+        handle.write(_json(bound))
+    return bound
+
+
 def bind_prefix(*, mapping_directory, expected_mapping_sha256, boss_journal_path,
-                journal_checkpoint, boss_source, output_path):
+                journal_checkpoint, boss_source, output_path, reader_factory=None):
     """Bind a closed selected member prefix to actual independently pinned journal bytes.
 
     Original DBN and large member ledger are not opened again. Complete journal
@@ -226,7 +342,7 @@ def bind_prefix(*, mapping_directory, expected_mapping_sha256, boss_journal_path
     if _sha(raw) != expected_mapping_sha256:
         raise ValueError('mapping differs from independent pin')
     mapping = _load(raw)
-    if mapping.get('schema') != SCHEMA or mapping.get('boss_prefix_bound') is not False:
+    if mapping.get('schema') not in (SCHEMA, 'FRANKIE_SOURCE_MEMBERS_MAPPING_V2') or mapping.get('boss_prefix_bound') is not False:
         raise ValueError('complete source/member mapping required')
     source_keys = {'prefix_hash', 'through_cursor', 'as_of', 'source_as_of', 'arm_hash'}
     if (type(boss_source) is not dict or set(boss_source) != source_keys
@@ -239,6 +355,11 @@ def bind_prefix(*, mapping_directory, expected_mapping_sha256, boss_journal_path
             or type(journal_checkpoint['head_hash']) is not str
             or not re.fullmatch('[0-9a-f]{64}', journal_checkpoint['head_hash'])):
         raise ValueError('independently trusted journal checkpoint required')
+    if mapping['schema'] == 'FRANKIE_SOURCE_MEMBERS_MAPPING_V2':
+        return _bind_members_prefix(mapping, directory, output, expected_mapping_sha256,
+                                    boss_journal_path, journal_checkpoint, boss_source, reader_factory)
+    if reader_factory is not None:
+        raise ValueError('explicit reader factories require the multi-member mapping schema')
     index_raw = _plain(directory/'index.jsonl').read_bytes()
     if (len(index_raw) != mapping['index']['bytes'] or _sha(index_raw) != mapping['index']['sha256']):
         raise ValueError('mapping index physical bytes changed')
