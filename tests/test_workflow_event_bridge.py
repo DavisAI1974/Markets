@@ -434,3 +434,168 @@ def test_actual_dispatch_cli_targets_registered_route_with_exact_event_once(api,
     assert json.loads(value)==f["event"]
     assert "checks_only=true" in sent[0] and "keep_compute=true" in sent[0]
     assert (directory/"accepted.json").is_file()
+
+
+@pytest.mark.parametrize("diff",[
+    "",
+    "A\truns/20211004/04-cycles-wait-"+("a"*64)+".json\n",
+    "A\tresearch/kalshi/frankie_boss/runs/request-archives/exact/archive.json\n",
+])
+def test_caller_revision_accepts_only_new_immutable_evidence(api,fixture,monkeypatch,diff):
+    calls=[]
+    def git(*args,**kwargs):
+        calls.append(args)
+        return diff.encode()
+    monkeypatch.setattr(api,"git",git)
+    assert api.validate_caller_revision(fixture["event"],"9"*40) is True
+    assert calls==[("diff","--name-status","d"*40,"9"*40)]
+
+@pytest.mark.parametrize("diff",[
+    "M\truns/20211004/04-cycles-wait-"+("a"*64)+".json\n",
+    "D\truns/20211004/00-stage-sources.json\n",
+    "R100\truns/20211004/old.json\truns/20211004/new.json\n",
+    "A\t.github/workflows/frankie_workflow_continuation.yml\n",
+    "A\tresearch/kalshi/frankie_boss/operations/foreign.py\n",
+    "A\truns/20211005/04-cycles.json\n",
+    "A\truns/202110040/04-cycles.json\n",
+    "A\tresearch/kalshi/frankie_boss/runs/request-archives-foreign/archive.json\n",
+])
+def test_caller_revision_rejects_changed_code_receipts_or_foreign_day(api,fixture,monkeypatch,diff):
+    monkeypatch.setattr(api,"git",lambda *args,**kw:diff.encode())
+    with pytest.raises(ValueError):
+        api.validate_caller_revision(fixture["event"],"9"*40)
+
+@pytest.fixture
+def publication_repo(api,retained_pipeline,tmp_path):
+    """Real Git objects and a temporary local bare remote, never a network repository."""
+    import subprocess
+    f=retained_pipeline
+    def git(*args,cwd=None):
+        return subprocess.check_output(["git",*args],cwd=cwd).decode().strip()
+    git("init","-q")
+    git("config","user.name","isolated-ci")
+    git("config","user.email","isolated-ci@example.invalid")
+    ref=f["configuration"]["workflow_automation"]["workflow_ref"]
+    git("checkout","-qb",ref)
+    git("add","pipeline.json","runs")
+    git("commit","-qm","synthetic source and retained WAIT")
+    source=git("rev-parse","HEAD")
+    remote=tmp_path.parent/(tmp_path.name+"-synthetic-origin.git")
+    git("init","--bare","-q",str(remote))
+    git("remote","add","origin",str(remote))
+    git("push","-q","origin",ref)
+    event=copy.deepcopy(f["event"])
+    event["source_commit"]=source
+    event["receipts_commit"]=source
+    seal(event)
+    f.update(event=event,git=git,remote=remote,ref=ref,source=source)
+    return f
+
+def test_publication_keeps_source_checkout_and_confirms_exact_cas_commit(api,publication_repo):
+    f=publication_repo
+    commit=api.publish_receipts(f["pipeline"],f["event"],"wait")
+    assert f["git"]("rev-parse","HEAD")==f["source"]
+    assert f["git"]("ls-remote","--heads","origin","refs/heads/"+f["ref"]).split()[0]==commit
+    retained=json.loads(Path("workflow-event-outbox/receipt-publication-intent.json").read_bytes())
+    assert retained["parent_commit"]==f["source"]
+    assert retained["receipts_commit"]==commit
+    marker=api.consumer_marker(f["pipeline"],f["event"]).as_posix()
+    remote_marker=json.loads(f["git"]("show",commit+":"+marker))
+    assert remote_marker["input_wait_sha256"]==f["event"]["context"]["wait_receipt_sha256"]
+    assert remote_marker["event_sha256"]==sha(canonical(f["event"]))
+    assert "Co-Authored-By: Codex <noreply@openai.com>" in f["git"]("show","-s","--format=%B",commit)
+
+def test_lost_push_ack_is_recovered_only_by_exact_remote_commit_readback(api,publication_repo,monkeypatch):
+    f=publication_repo
+    real_run=api.subprocess.run
+    attempts=[]
+    def lose_ack(argv,**kwargs):
+        result=real_run(argv,**kwargs)
+        if argv[:2]==["git","push"]:
+            attempts.append(argv)
+            assert result.returncode==0
+            return SimpleNamespace(returncode=1,stdout=b"",stderr=b"synthetic lost acknowledgment")
+        return result
+    monkeypatch.setattr(api.subprocess,"run",lose_ack)
+    commit=api.publish_receipts(f["pipeline"],f["event"],"wait")
+    assert len(attempts)==1
+    assert json.loads(Path("workflow-event-outbox/receipt-publication.json").read_bytes())["receipts_commit"]==commit
+
+def test_failed_push_without_matching_remote_head_remains_unconfirmed(api,publication_repo,monkeypatch):
+    f=publication_repo
+    real_run=api.subprocess.run
+    def reject_push(argv,**kwargs):
+        if argv[:2]==["git","push"]:
+            return SimpleNamespace(returncode=1,stdout=b"",stderr=b"synthetic rejected CAS")
+        return real_run(argv,**kwargs)
+    monkeypatch.setattr(api.subprocess,"run",reject_push)
+    with pytest.raises(ValueError):
+        api.publish_receipts(f["pipeline"],f["event"],"wait")
+    assert Path("workflow-event-outbox/receipt-publication-intent.json").is_file()
+    assert not Path("workflow-event-outbox/receipt-publication.json").exists()
+    assert f["git"]("ls-remote","--heads","origin","refs/heads/"+f["ref"]).split()[0]==f["source"]
+
+def test_publication_refuses_remote_cycle_evidence_missing_from_local_chain(api,publication_repo,tmp_path):
+    f=publication_repo
+    other=tmp_path.parent/(tmp_path.name+"-concurrent-writer")
+    f["git"]("clone","-q","--branch",f["ref"],str(f["remote"]),str(other))
+    f["git"]("config","user.name","other-isolated-ci",cwd=other)
+    f["git"]("config","user.email","other-isolated-ci@example.invalid",cwd=other)
+    foreign=other/"runs/20211004"/("04-cycles-wait-"+("0"*64)+".json")
+    foreign.write_bytes(canonical(dict(schema="FRANKIE_DAY_PIPELINE_RECEIPT_V1",day="20211004",stage="cycles",
+                                      status="WAIT",previous_wait_sha256=f["event"]["context"]["wait_receipt_sha256"])))
+    f["git"]("add","runs",cwd=other)
+    f["git"]("commit","-qm","synthetic competing WAIT",cwd=other)
+    f["git"]("push","-q","origin",f["ref"],cwd=other)
+    competing=f["git"]("rev-parse","HEAD",cwd=other)
+    with pytest.raises(ValueError):
+        api.publish_receipts(f["pipeline"],f["event"],"wait")
+    assert f["git"]("ls-remote","--heads","origin","refs/heads/"+f["ref"]).split()[0]==competing
+    assert not Path("workflow-event-outbox/receipt-publication.json").exists()
+
+def test_retained_consumed_event_prevents_second_resume(api,publication_repo):
+    f=publication_repo
+    assert api.consumed(f["pipeline"],f["event"]) is False
+    api.publish_receipts(f["pipeline"],f["event"],"wait")
+    assert api.consumed(f["pipeline"],f["event"]) is True
+
+def resume_record(fixture,result):
+    event=fixture["event"]
+    return dict(schema="FRANKIE_WORKFLOW_EVENT_RESUME_RESULT_V1",event_id=event["event_id"],
+        event_sha256=sha(canonical(event)),input_wait_sha256=event["context"]["wait_receipt_sha256"],
+        result=result)
+
+def test_finalize_accepts_unchanged_wait_as_exact_idempotent_resume(api,retained_pipeline):
+    f=retained_pipeline
+    prior=copy.deepcopy(f["pipeline"].pending())
+    result=api.validate_resume_result(f["pipeline"],f["event"],resume_record(f,"wait"),prior)
+    assert result["gate"]["receipt_sha256"]==prior["gate"]["receipt_sha256"]
+    assert f["pipeline"].receipt("cycles") is None
+
+@pytest.mark.parametrize("field,value",[
+    ("event_id","0"*64),("event_sha256","0"*64),("input_wait_sha256","0"*64),
+    ("schema","foreign"),("result","cleanup"),
+])
+def test_finalize_rejects_foreign_resume_result_identity(api,retained_pipeline,field,value):
+    f=retained_pipeline
+    record=resume_record(f,"wait");record[field]=value
+    with pytest.raises(ValueError):
+        api.validate_resume_result(f["pipeline"],f["event"],record,copy.deepcopy(f["pipeline"].pending()))
+
+@pytest.mark.parametrize("result",["done","present"])
+def test_finalize_cannot_promote_wait_without_exact_completed_gate(api,retained_pipeline,result):
+    f=retained_pipeline
+    prior=copy.deepcopy(f["pipeline"].pending())
+    f["pipeline"].write("cycles",dict(day="20211004",cycles_completed=1,cycles_total=3),command=[])
+    with pytest.raises(ValueError):
+        api.validate_resume_result(f["pipeline"],f["event"],resume_record(f,result),prior)
+
+def test_finalize_cannot_use_unrelated_preexisting_batch_as_new_partial_progress(api,retained_pipeline):
+    f=retained_pipeline
+    prior=copy.deepcopy(f["pipeline"].pending())
+    path=f["pipeline"].directory/"04-cycles-batch-99.json"
+    path.write_bytes(canonical(dict(schema="FRANKIE_DAY_PIPELINE_RECEIPT_V1",day="20211004",stage="cycles",
+        status="PARTIAL",gate=dict(status="requested_cycles_complete",day="20211004",
+        cycles_completed=99,requested_cycles=99,cycles_total=3))))
+    with pytest.raises(ValueError):
+        api.validate_resume_result(f["pipeline"],f["event"],resume_record(f,"partial"),prior)
