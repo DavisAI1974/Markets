@@ -13,6 +13,7 @@ on:
       - 'research/kalshi/frankie_boss/sunday_execution.py'
       - 'research/kalshi/frankie_boss/operations/run_actual_sunday.py'
       - 'research/kalshi/frankie_boss/tests/test_critic_knowledge_loop.py'
+      - 'research/kalshi/frankie_boss/tests/test_sunday_execution.py'
       - '.github/workflows/frankie_critic_knowledge_tests.yml'
 permissions:
   contents: read

@@ -10,6 +10,7 @@ from research.kalshi.frankie_boss.frankie_principal_adapter import canonical, di
 
 def test_two_cycle_batch_stops_then_full_resume_preserves_order():
     execution = object.__new__(SundayExecution)
+    execution.steps = tuple(range(19))  # Explicit fixture schedule, not a runtime default.
     completed = {}
     fresh = []
 
@@ -30,6 +31,7 @@ def test_two_cycle_batch_stops_then_full_resume_preserves_order():
 @pytest.mark.parametrize('cycles', [0, 20, -1, True, 1.5])
 def test_invalid_cycle_batch_refuses_before_runtime(cycles):
     execution = object.__new__(SundayExecution)
+    execution.steps = tuple(range(19))  # Explicit fixture schedule, not a runtime default.
     execution.run_cycle = lambda index: pytest.fail('invalid batch reached runtime')
     with pytest.raises(ValueError, match='cycles'):
         asyncio.run(execution.run_remaining(cycles=cycles))
