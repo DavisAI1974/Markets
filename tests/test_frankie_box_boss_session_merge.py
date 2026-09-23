@@ -71,3 +71,31 @@ def test_repeated_merge_name_preserves_both_previous_artifacts(tmp_path):
     for name, raw in old.items():
         assert any((p.parent / name).read_bytes() == raw for p in receipts if (p.parent / name).exists())
     assert all(json.loads(p.read_text())['moves'] for p in receipts)
+
+def test_retained_fourth_part_survives_original_failed_merge_chain(tmp_path):
+    """Replay retained text through current guard; no provider call or new market calculation."""
+    import hashlib
+    import json
+    root=Path(__file__).resolve().parents[1]/'research/kalshi/frankie_boss/records/chat6_scratchpad_20260921/cycle-00-docs/docs-cycle-00'
+    index=json.loads((root/'docs-index.json').read_bytes())
+    pins={row['name']:row for row in index['docs']}
+    def read(name):
+        raw=(root/name).read_bytes()
+        assert hashlib.sha256(raw).hexdigest()==pins[name]['sha256']
+        assert len(raw)==pins[name]['bytes']
+        return raw.decode()
+    def outcome(name):
+        text=read(name)
+        # The archival extractor's Markdown title is not provider-generated output.
+        assert text.startswith('## '+name[:-3]+' (extracted from ')
+        return dict(text=text.split('\n\n',1)[1],incomplete=False)
+    fourth=read('reading-note-0003.md');assert 'part 4/4 (bytes 527078-532065)' in fourth
+    s=stub(tmp_path)
+    kept=session.Session._merge_keep(s,'retained-level0',[fourth],outcome('merge-0-0001.md'))
+    assert fourth in kept
+    kept=session.Session._merge_keep(s,'retained-level1',[kept],outcome('merge-1-0001.md'))
+    assert fourth in kept
+    kept=session.Session._merge_keep(s,'retained-final',[read('merge-1-0000.md'),kept],outcome('merge-2-final.md'))
+    assert fourth in kept
+    assert (tmp_path/'merges/retained-final.model-output.md').is_file()
+    assert all((tmp_path/f'merges/retained-{stage}.model-output.md').is_file() for stage in ('level0','level1','final'))

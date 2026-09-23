@@ -7,6 +7,7 @@ on:
       - 'research/kalshi/frankie_boss/knowledge_calendar.py'
       - 'research/kalshi/frankie_boss/operations/run_actual_sunday_classroom.py'
       - 'research/kalshi/frankie_boss/tests/test_critic_replay_lineage.py'
+      - 'research/kalshi/frankie_boss/tests/test_actual_training_knowledge_lineage.py'
       - 'research/kalshi/frankie_boss/granite_positive_priming.py'
       - 'research/kalshi/frankie_boss/granite_context_stacked_route.py'
       - 'research/kalshi/frankie_boss/granite_context_route.py'
@@ -36,7 +37,7 @@ jobs:
       - run: python -m pip install --no-cache-dir torch==2.9.1 --index-url https://download.pytorch.org/whl/cpu
       - run: python -m pip install --no-cache-dir pytest==9.1.1 numpy==2.3.5 boto3==1.42.1 zstandard==0.25.0 cffi==2.0.0 databento-dbn==0.62.0
       - name: Knowledge loop regression
-        run: python -m pytest -q research/kalshi/frankie_boss/tests/test_critic_knowledge_loop.py research/kalshi/frankie_boss/tests/test_critic_replay_lineage.py
+        run: python -m pytest -q research/kalshi/frankie_boss/tests/test_critic_knowledge_loop.py research/kalshi/frankie_boss/tests/test_critic_replay_lineage.py research/kalshi/frankie_boss/tests/test_actual_training_knowledge_lineage.py
       - name: Route and durable cycle preservation
         run: >-
           python -m pytest -q

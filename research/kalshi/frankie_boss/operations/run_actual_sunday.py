@@ -501,9 +501,19 @@ class ActualHost:
         """Precommit exact serialized states before every training SQLite insert."""
         t=self.api.training;j=self.api.journal
         if self.schedule is None: raise ValueError('the verified schedule (model_context_rows) is required before training; verify the sources first')
-        self.context,self.decoder,self.optimizer,identity=self.api.native.initialize(self.builder,context_rows=self.schedule['model_context_rows'])   # the declared row window, from the verified schedule
+        self.coordinator._knowledge_lineage_unchanged()
+        lineage=self.coordinator._lineage_value()
+        training_config=self.api.native.DEVELOPMENT
+        if lineage['priming'] is not None:
+            training_config=dict(schema='FRANKIE_PRIMED_TRAINING_CONFIGURATION_V1',
+                development=self.api.native.DEVELOPMENT,knowledge_lineage=lineage)
+            self.save('training-knowledge-lineage.c15.json',dict(
+                schema='FRANKIE_TRAINING_KNOWLEDGE_BINDING_V1',
+                knowledge_mode=lineage['priming']['mode'],knowledge_lineage=lineage,
+                training_config_hash=j.evidence_hash(training_config)))
+        self.context,self.decoder,self.optimizer,identity=self.api.native.initialize(self.builder,context_rows=self.schedule['model_context_rows'])
         self.identity=identity
-        identities=dict(training_config_hash=j.evidence_hash(self.api.native.DEVELOPMENT),
+        identities=dict(training_config_hash=j.evidence_hash(training_config),
             code_hash=j.evidence_hash(self.code),source_hash=self.scope.genesis_hash(),
             model_hash=j.evidence_hash(dict(native=identity['native_hash'],decoder=sha_state(t,self.decoder))))
         self.save('initialization.c15.json',dict(identity=identity,identities=identities))
