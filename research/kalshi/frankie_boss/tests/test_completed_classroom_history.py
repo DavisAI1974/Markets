@@ -99,7 +99,7 @@ def completed_run(tmp_path, monkeypatch):
         package = prepare_integrated_cycle(
             _teacher(offset=float(index)),
             request_id=request_id, cycle_index=index, cycle_count=8,
-            source_hash="c" * 64, as_of=as_of, through_cursor=6,
+            source_hash="c" * 64, as_of=as_of, through_cursor=6 + index,
             previous_snapshot=None if not packages else packages[-1]["source"],
             history=tuple(completions), learning_history=learned,
         )
@@ -178,7 +178,7 @@ def completed_run(tmp_path, monkeypatch):
                     controller_factory=Controller, learner_factory=Learner)
         args["learning_kwargs"] = dict(
             arguments["learning_kwargs"], as_of=as_of,
-            through_cursor=6, learning_cutoff_ns=available,
+            through_cursor=6 + index, learning_cutoff_ns=available,
         )
         asyncio.run(store.run(**args))
         assert store._load(request_id, "complete") is not None
