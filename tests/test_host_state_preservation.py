@@ -613,3 +613,22 @@ def test_equivalent_run_path_spelling_resumes_the_retained_intent(state):
     receipts = json_files(state.day, RECEIPT_SCHEMA)
     assert len(receipts) == 1
     assert_preserved(state, next(iter(receipts.values())))
+
+
+@pytest.mark.parametrize("prefix,schema", [
+    ("principal-response-superseded-", "FRANKIE_PRINCIPAL_RESPONSE_INTENT_V1"),
+    ("cycle-state-superseded-", "FRANKIE_CYCLE_STATE_INTENT_V1"),
+])
+@pytest.mark.parametrize("completed", [False, True])
+def test_foreign_unfinished_or_bad_completion_intents_block_code_bound_moves(state, prefix, schema, completed):
+    path = state.day / (prefix + "foreign.intent.json")
+    write(path, json.dumps({"schema": schema, "run_directory": str(state.run)}).encode())
+    if completed:
+        write(path.with_name(path.name.removesuffix(".intent.json") + ".json"),
+              b'{"intent_sha256":"wrong"}')
+    result, capture = invoke(state)
+    assert result.returncode != 0
+    assert not capture.exists()
+    for relative, body in state.moved.items():
+        assert (state.run / relative).read_bytes() == body
+    assert_kept(state)
