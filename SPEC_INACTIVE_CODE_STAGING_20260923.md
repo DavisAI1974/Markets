@@ -50,8 +50,11 @@ symlink refusal, create-new semantics, retained intent after interruption, inven
 without writes/imports and hash-bound downloads. Adversarial cases cover configured Git
 execution hooks/filters, metadata redirection, foreign symlink packs, CRLF normalization,
 hidden executable modes, isolated shell bootstrap and the SSM payload budget. No production workflow is automatic:
-frankie_code_staging_ci.yml is test-only on scoped pushes; frankie_stage_code.yml is
-workflow_dispatch only. Root reviews and owns commits and dispatch.
+frankie_code_staging_ci.yml is test-only on scoped pushes; frankie_stage_code.yml accepts
+workflow_dispatch and workflow_call only. The already-registered frankie_box_run.yml routes the
+exact staging script to that same-commit reusable workflow after credential-free validation of
+ACTION=inventory or ACTION=stage, the canonical instance/region, empty presign and token-copy=false.
+The generic script route is unchanged except for excluding that exact script. Root reviews and owns commits and dispatch.
 
 ## Remaining native boundary
 
