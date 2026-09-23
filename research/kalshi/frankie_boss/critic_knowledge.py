@@ -66,7 +66,7 @@ def build_knowledge(records, *, cutoff_ns, request_id):
     return _json(dict(schema=SCHEMA,request_id=request_id,cutoff_ns=cutoff_ns,entries=entries))
 
 def validate_knowledge(value, *, cutoff_ns=None, request_id=None):
-    if type(value) is not dict or set(value) not in ({'schema','request_id','cutoff_ns','entries'}, {'schema','request_id','cutoff_ns','entries','origins'}) or value['schema']!=SCHEMA:
+    if type(value) is not dict or not {'schema','request_id','cutoff_ns','entries'} <= set(value) or set(value)-{'schema','request_id','cutoff_ns','entries','origins','priming'} or value['schema']!=SCHEMA:
         raise ValueError('invalid critic knowledge envelope')
     if type(value['entries']) is not list: raise ValueError('knowledge entries must be ordered list')
     if cutoff_ns is not None and value['cutoff_ns']!=cutoff_ns: raise ValueError('knowledge cutoff differs')
@@ -92,15 +92,20 @@ def validate_knowledge(value, *, cutoff_ns=None, request_id=None):
             _ns(origin['as_of']); _ns(origin['through_cursor'])
             if origin['as_of']>entry['record']['available_ns']: raise ValueError('origin chronology differs')
         expected['origins']=_json(origins)
+    if 'priming' in value:
+        from .granite_positive_priming import validate_priming
+        expected['priming']=validate_priming(value['priming'])
     if value!=expected: raise ValueError('knowledge order, availability or canonical content differs')
     return _json(expected)
 
 def acknowledged(value, knowledge):
     """Receipt acknowledgment is observable output, not a claim about cognition."""
     if value.get('knowledge_hash')!=evidence_hash(knowledge): return False
+    from .granite_positive_priming import public_knowledge
+    visible=public_knowledge(knowledge)
     review=value.get('knowledge_review')
-    if type(review) is not list or len(review)!=len(knowledge['entries']): return False
-    expected=[entry['lesson_hash'] for entry in knowledge['entries']]
+    if type(review) is not list or len(review)!=len(visible['entries']): return False
+    expected=[entry['lesson_hash'] for entry in visible['entries']]
     actual=[]
     for item in review:
         if (type(item) is not dict or set(item)!={'lesson_hash','assessment'}
@@ -142,8 +147,15 @@ def verify_prepared_knowledge(body, expected):
         _, separator, text=prompt.partition('\nstacked_native_context:\n')
         if not separator: raise ValueError('stacked critic body required')
         route=context_route('stacked_v1')
-        snapshot=route.parse(text,expected_hash=hashlib.sha256(text.encode()).hexdigest())
-        if json.loads(snapshot.text).get('knowledge')!=expected or route.build_prompt(snapshot).text!=prompt:
+        from .granite_context import _text
+        from .granite_positive_priming import public_knowledge
+        visible=json.loads(text)
+        if visible.pop('knowledge_view',None)!=public_knowledge(expected):
+            raise ValueError('prepared body differs from helpful knowledge projection')
+        visible['knowledge']=expected
+        audit_text=_text(visible)
+        snapshot=route.parse(audit_text,expected_hash=hashlib.sha256(audit_text.encode()).hexdigest())
+        if route.build_prompt(snapshot).text!=prompt:
             raise ValueError('prepared body differs from frozen critic knowledge')
     except (KeyError, TypeError, json.JSONDecodeError) as exc:
         raise ValueError('invalid prepared critic knowledge body') from exc

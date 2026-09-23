@@ -138,7 +138,9 @@ def _export_verified(directory, export_args, result, learning, superseded=None):
 
 class CycleCoordinator:
     def __init__(self, path, *, lessons_path, frozen_memory_path, frozen_memory_sha256,
-                 create=False, phase_callback=None):
+                 create=False, phase_callback=None, critic_priming=None):
+        from .granite_positive_priming import validate_priming
+        self.critic_priming = None if critic_priming is None else validate_priming(critic_priming)
         self.path = Path(path)
         self.memory = Path(frozen_memory_path)
         self.memory_hash = frozen_memory_sha256
@@ -423,6 +425,8 @@ class CycleCoordinator:
         from .critic_knowledge import build_knowledge, validate_knowledge
         saved = self._load(request_id, 'critic_knowledge')
         if saved is not None:
+            if saved.get('priming') != self.critic_priming:
+                raise ValueError('frozen historical priming changed')
             validate_knowledge(saved, cutoff_ns=cutoff_ns, request_id=request_id)
             records = [entry['record'] for entry in saved['entries']]
         else:
@@ -469,6 +473,8 @@ class CycleCoordinator:
                 input_hash=learning['input_hash'],through_cursor=learning['through_cursor'],as_of=learning['as_of']))
         value = build_knowledge(records, cutoff_ns=cutoff_ns, request_id=request_id)
         value['origins'] = origins
+        if self.critic_priming is not None:
+            value['priming'] = self.critic_priming
         value = validate_knowledge(value, cutoff_ns=cutoff_ns, request_id=request_id)
         if saved is not None and value != saved:
             raise ValueError('frozen knowledge origin changed')
@@ -599,7 +605,9 @@ class CycleCoordinator:
                 lessons = self._save_lessons(request_id, feedback, envelope, training)
                 self._memory_unchanged()
                 completed = dict(schema='FRANKIE_BOSS_FEEDBACK_CYCLE_V1', request_id=request_id,
-                    controller_result_hash=result_hash, feedback_hash=feedback.digest, training=training, **lessons)
+                    controller_result_hash=result_hash, feedback_hash=feedback.digest, training=training, **lessons,
+                    **({'knowledge_mode':self.critic_priming['mode'], 'priming_hash':evidence_hash(self.critic_priming)}
+                       if self.critic_priming is not None else {}))
                 self._save(request_id, 'complete', completed)
                 self._observe('saved_completion', request_id)
                 return completed

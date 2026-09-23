@@ -934,9 +934,17 @@ class ActualHost:
 
     async def run(self):
         c=self.config;h=self.host
+        priming=None
+        if c.get('critic_priming') is not None:
+            declared=c['critic_priming']
+            if (set(declared)!={'mode','profile'} or declared['profile']!='retained_cycle00_20260921'):
+                raise ValueError('explicit retained historical priming profile required')
+            from research.kalshi.frankie_boss.granite_positive_priming import load_retained_priming
+            priming=load_retained_priming(h['repository'],mode=declared['mode'])
+            self.save('historical-priming-provenance.c15.json',priming)
         self.coordinator=self.api.CycleCoordinator(self.directory/'cycles.sqlite',lessons_path=self.directory/'lessons.sqlite',
             frozen_memory_path=c['memory']['path'],frozen_memory_sha256=c['memory']['sha256'],
-            create=not (self.directory/'cycles.sqlite').exists(),phase_callback=self.phase)
+            create=not (self.directory/'cycles.sqlite').exists(),phase_callback=self.phase,critic_priming=priming)
         principal=dict(mapping_directory=str(Path(c['mapping']['path']).parent),expected_mapping_sha256=c['mapping']['sha256'],
             receiver_root=c['receiver_root'],receiver_commit=c['receiver_commit'],python=sys.executable,
             admission=c.get('principal_admission'),  # audit finding 4: declared per run; undeclared refuses at use

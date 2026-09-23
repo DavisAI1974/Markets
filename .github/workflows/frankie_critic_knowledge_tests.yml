@@ -4,6 +4,7 @@ on:
     branches: ['codex/trading-day-readiness-20260922']
     paths:
       - 'research/kalshi/frankie_boss/critic_knowledge.py'
+      - 'research/kalshi/frankie_boss/granite_positive_priming.py'
       - 'research/kalshi/frankie_boss/granite_context_stacked_route.py'
       - 'research/kalshi/frankie_boss/granite_context_route.py'
       - 'research/kalshi/frankie_boss/frankie_controller.py'
@@ -13,7 +14,6 @@ on:
       - 'research/kalshi/frankie_boss/sunday_execution.py'
       - 'research/kalshi/frankie_boss/operations/run_actual_sunday.py'
       - 'research/kalshi/frankie_boss/tests/test_critic_knowledge_loop.py'
-      - 'research/kalshi/frankie_boss/tests/test_sunday_execution.py'
       - '.github/workflows/frankie_critic_knowledge_tests.yml'
 permissions:
   contents: read
@@ -44,3 +44,11 @@ jobs:
           research/kalshi/frankie_boss/tests/test_granite_jobs_integration.py
           research/kalshi/frankie_boss/tests/test_granite_open_ended_service.py
           research/kalshi/frankie_boss/tests/test_retained_preparation_recovery.py
+      - name: Verify retained positive priming provenance
+        run: |
+          python - <<'PY'
+          import json
+          from research.kalshi.frankie_boss.granite_positive_priming import load_retained_priming, MODE
+          capsule=load_retained_priming('.',mode=MODE)
+          print('HISTORICAL_PRIMING_CAPSULE '+json.dumps(capsule,sort_keys=True))
+          PY

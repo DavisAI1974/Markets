@@ -16,7 +16,7 @@ from test_granite_parser import valid_output
 def record(request_id='prior', available_ns=1):
     return dict(request_id=request_id, available_ns=available_ns, feedback_hash='a'*64,
         principal_receipt_hash='b'*64, training_checkpoint_hash='c'*64,
-        lessons=[dict(text='FRANKIE_PRIOR_LESSON_MUST_REACH_GRANITE')], frozen_memory_sha256='d'*64)
+        lessons=[dict(schema='FRANKIE_HELPFUL_KNOWLEDGE_V1',statement='FRANKIE_PRIOR_LESSON_MUST_REACH_GRANITE',evidence_hashes=['e'*64])], frozen_memory_sha256='d'*64)
 
 def build(records=None, *, cutoff=2, request_id='current'):
     return knowledge.build_knowledge([record()] if records is None else records,
@@ -370,3 +370,75 @@ def test_positive_only_model_view_preserves_full_audit(tmp_path):
     assert json.loads(encoded.text)['knowledge']==audit
     assert route.native(encoded).text==source.text
     assert json.dumps(original,sort_keys=True)==before
+
+def test_pinned_historical_priming_time_neutral_view(tmp_path):
+    from pathlib import Path
+    from research.kalshi.frankie_boss import granite_positive_priming as priming
+    repository=Path(__file__).resolve().parents[4]
+    capsule=priming.load_retained_priming(repository,mode=priming.MODE)
+    assert capsule['source_available_ns']==1633298449136124134
+    assert len(capsule['lessons'])==5
+    assert capsule['response_sha256']==priming.PINS['response-00.json']
+    with pytest.raises(ValueError):priming.load_retained_priming(repository,mode='blind')
+    source=snapshot(tmp_path);cutoff=native.unpack(json.loads(source.text)['receipt'])['as_of']
+    audit=build([],cutoff=cutoff);audit['priming']=capsule
+    audit=knowledge.validate_knowledge(audit)
+    route=context_route('stacked_v1');encoded=route.encode(source,knowledge=audit)
+    prompt=route.build_prompt(encoded).text
+    assert capsule['source_available_ns']>cutoff
+    for lesson in capsule['lessons']: assert lesson['statement'] in prompt
+    assert str(capsule['source_available_ns']) not in prompt
+    assert capsule['source_request_id'] not in prompt
+    assert '5.628' not in prompt and '5.544' not in prompt
+    visible=json.loads(prompt.split('\nstacked_native_context:\n',1)[1])['knowledge_view']
+    assert visible==priming.public_knowledge(audit)
+    assert 'knowledge' not in json.loads(prompt.split('\nstacked_native_context:\n',1)[1])
+    assert json.loads(encoded.text)['knowledge']['priming']==capsule
+    body=json.dumps(dict(messages=[dict(role='user',content=prompt)]))
+    knowledge.verify_prepared_knowledge(body,audit)
+    changed=copy.deepcopy(audit);changed['priming']['response_sha256']='f'*64
+    with pytest.raises(ValueError):knowledge.verify_prepared_knowledge(body,changed)
+    value=valid_output(encoded);value['evidence_refs']=[{'row':0,'field':'/record/extension/odd~1key/1'}]
+    value.update(knowledge_hash=evidence_hash(audit),knowledge_review=[
+        dict(lesson_hash=e['lesson_hash'],assessment='Useful calculation procedure')
+        for e in visible['entries']])
+    assert route.score(json.dumps(value),encoded)[1].name=='L4'
+
+def test_future_ordinary_helpful_lesson_stays_excluded(tmp_path):
+    source=snapshot(tmp_path);cutoff=native.unpack(json.loads(source.text)['receipt'])['as_of']
+    row=record('future',cutoff+1);row['lessons']=[helpful('SUPPORTED_FUTURE_SENTINEL')]
+    audit=build([row],cutoff=cutoff)
+    assert not audit['entries']
+    route=context_route('stacked_v1')
+    assert 'SUPPORTED_FUTURE_SENTINEL' not in route.build_prompt(route.encode(source,knowledge=audit)).text
+
+def test_helpful_schema_cannot_smuggle_freeform_diagnostics():
+    from research.kalshi.frankie_boss.granite_positive_priming import select_helpful
+    value=helpful();value['reason']='MISSING_DATA_SENTINEL'
+    with pytest.raises(ValueError):select_helpful([value])
+    assert select_helpful([{'text':'helpful successful unverified prose'}])==[]
+
+def test_successful_calculation_selection_requires_matching_support():
+    from research.kalshi.frankie_boss.granite_positive_priming import select_helpful,METHODS
+    producer,statement=METHODS['legacy_native_signed_flow']
+    row=dict(ledger='calculation_accounting',harness_derivation={
+        'legacy_native_signed_flow':dict(status='derived',producer=producer,sha256='a'*64)},
+        layers=[dict(layer='legacy_native_signed_flow',status='derived',where='sha256 '+'a'*16,
+            reason='DIAGNOSTIC_MUST_STAY_IN_AUDIT')])
+    selected=select_helpful([row])
+    assert len(selected)==1 and selected[0]['statement']==statement
+    assert 'DIAGNOSTIC_MUST_STAY_IN_AUDIT' not in json.dumps(selected)
+    row['harness_derivation']['legacy_native_signed_flow']['status']='could_not'
+    assert select_helpful([row])==[]
+
+def test_pinned_priming_source_tamper_refuses(tmp_path):
+    from pathlib import Path
+    from research.kalshi.frankie_boss import granite_positive_priming as priming
+    repository=Path(__file__).resolve().parents[4]
+    for name in priming.PINS:
+        target=tmp_path/priming.RETAINED/name;target.parent.mkdir(parents=True,exist_ok=True)
+        target.write_bytes((repository/priming.RETAINED/name).read_bytes())
+    path=tmp_path/priming.RETAINED/'response-00.json'
+    path.write_bytes(path.read_bytes()+b' ')
+    with pytest.raises(ValueError,match='hash changed'):
+        priming.load_retained_priming(tmp_path,mode=priming.MODE)

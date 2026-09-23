@@ -1,0 +1,6 @@
+{
+  "critic_priming": {
+    "mode": "knowledge_primed_learning_replay",
+    "profile": "retained_cycle00_20260921"
+  }
+}
