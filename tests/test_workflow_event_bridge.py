@@ -618,3 +618,13 @@ def test_publication_retry_reconciles_retained_intent_after_post_push_crash(api,
     commit=api.publish_receipts(f["pipeline"],f["event"],"wait")
     assert commit==intent["receipts_commit"]
     assert json.loads(Path("workflow-event-outbox/receipt-publication.json").read_bytes())["receipts_commit"]==commit
+
+
+def test_completed_pipeline_cannot_emit_archive_for_its_historical_wait(api,retained_pipeline):
+    f=retained_pipeline
+    f["pipeline"].write("cycles",dict(status="all_scheduled_cycles_complete",
+        day="20211004",cycles_completed=3,cycles_total=3),command=[])
+    event=f["event"]
+    assert api.archive_event(f["pipeline"],source_commit=event["source_commit"],
+        receipts_commit=event["receipts_commit"],configuration_path=event["pipeline_configuration"]["path"],
+        runs_root=event["runs_root"],go=event["go"]) is None
