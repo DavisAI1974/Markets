@@ -38,3 +38,6 @@ Do not automatically retire supersede/recovery tools or historical record reader
 Retain canonical recovery and validate explicit native transport/provenance closure, original step1b source/context/runtime/seed rebinding, durable host preservation, actual Linux/native capacity and inactive staging receipts.
 No release occurs merely because CI passes. Cycle0 remains held until the final workflow task is identified/completed and owner release conditions are satisfied.
 Automation code added after the comparison candidate needs its own RED/GREEN and independent review; it is not covered by the earlier source shipping decision.
+
+## Completed follow-up at ca176dda82882a8cb48eb1452456f5aba5232376
+The first archive automation dependency is implemented and tested: a reusable durable exact-byte writer, safe native export evidence, and workflow_call integration into the existing archive route. Eighty-three focused tests pass; independent scoped review is recorded in SHIP_REVIEW_REQUEST_ARCHIVE_AUTOMATION_20260923.md. Source readiness does not mean the whole run is automated. WAIT/event dispatch and retained-context resume integration remain next, with all holds preserved.
