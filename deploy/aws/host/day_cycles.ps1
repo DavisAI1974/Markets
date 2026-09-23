@@ -69,6 +69,24 @@ if ($git) { Write-Output ("TOOLS_HEAD=" + (& $git.Source -C $ToolsRoot rev-parse
 $tool = Join-Path $ToolsRoot 'research\kalshi\frankie_boss\operations\run_actual_sunday_ec2.py'
 $resume = ''
 if (Test-Path (Join-Path $configuration.run_directory 'native-host-runtime.json')) { $resume = '--ec2-resume' }
+$pending = ''
+$pendingReturnEnabled = (Get-Variable PendingReturn -ErrorAction SilentlyContinue) -and ([string]$PendingReturn -eq '1')
+if ((Get-Variable PendingReturn -ErrorAction SilentlyContinue) -and ([string]$PendingReturn -notin @('0', '1'))) {
+    throw 'PendingReturn must be 0 or 1'
+}
+if ($pendingReturnEnabled) {
+    if (-not $PreparedConfigurationPath -or -not $PreparedConfigurationSha256 -or -not $ExpectedTradingDayScheduleSha256) {
+        throw 'Pending return requires the pinned prepared configuration and schedule'
+    }
+    $pending = '--pending-return'
+}
+if (Get-Variable ResumeWaitSha256 -ErrorAction SilentlyContinue) {
+    if (-not $pendingReturnEnabled -or ([string]$ResumeWaitSha256 -cnotmatch '^[0-9a-f]{64}$')) {
+        throw 'ResumeWaitSha256 requires pending return and an exact receipt hash'
+    }
+    if (-not $resume) { throw 'A workflow event cannot start a new native run' }
+    $pending += ' --resume-wait-sha256 ' + $ResumeWaitSha256
+}
 $log = Join-Path $dayDirectory ('day-cycles-' + [guid]::NewGuid().ToString('N') + '.log')
 $env:PYTHONDONTWRITEBYTECODE = '1'
 $env:PYTHONPATH = $ToolsRoot
@@ -77,7 +95,7 @@ try {
     # cmd.exe owns the redirection, as in the retained host scripts: under
     # $ErrorActionPreference='Stop' PowerShell turns a native command's first stderr line into a
     # terminating error, which is how two earlier runs lost their tracebacks.
-    & cmd.exe /c "`"$Python`" `"$tool`" --configuration `"$configurationPath`" --compact-source-tools `"$ToolsRoot`" --cycles $CycleLimit $resume > `"$log`" 2>&1"
+    & cmd.exe /c "`"$Python`" `"$tool`" --configuration `"$configurationPath`" --compact-source-tools `"$ToolsRoot`" --cycles $CycleLimit $resume $pending > `"$log`" 2>&1"
     $code = $LASTEXITCODE
 } finally { Pop-Location }
 if (Test-Path $log) {
@@ -90,6 +108,56 @@ if (Test-Path $log) {
 $statusLine = $null
 if (Test-Path $log) {
     $statusLine = Get-Content $log | Where-Object { $_.TrimStart().StartsWith('{') } | Select-Object -Last 1
+}
+# A lawful pending return is not completion. Python validates the original configuration
+# and receipt bytes, retaining exact integer values; PowerShell never rewrites those documents.
+if ($pendingReturnEnabled -and $code -in @(3, 4) -and $statusLine) {
+    $waitModule = Join-Path $ToolsRoot 'research/kalshi/frankie_boss/operations/workflow_wait.py'
+    $verifyPending = @'
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import sys
+try:
+    module_path, configuration_path, log_path, exit_code, day, config_sha, schedule_sha, cycle_limit = sys.argv[1:]
+    raw = Path(configuration_path).read_bytes()
+    if hashlib.sha256(raw).hexdigest() != config_sha:
+        raise ValueError('prepared configuration changed')
+    configuration = json.loads(raw)
+    spec = importlib.util.spec_from_file_location('retained_workflow_wait_validator', module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    lines = Path(log_path).read_text(encoding='utf-8-sig').splitlines()
+    status = json.loads(next(line for line in reversed(lines) if line.lstrip().startswith('{')))
+    receipt = module.read_wait_receipt(status['receipt_path'], status['receipt_sha256'], configuration)
+    if status != module.outcome(status['receipt_path'], receipt):
+        raise ValueError('runner outcome differs from the retained receipt')
+    if int(exit_code) != (3 if receipt['state'] == 'WAIT' else 4):
+        raise ValueError('runner exit differs from retained pending state')
+    schedule_pin = configuration['host_runtime']['schedule']
+    schedule_raw = Path(schedule_pin['path']).read_bytes()
+    schedule = json.loads(schedule_raw)
+    if (hashlib.sha256(schedule_raw).hexdigest() != schedule_pin['sha256']
+            or configuration.get('trading_day') != day or schedule.get('trading_day') != day
+            or schedule.get('schema') != 'BOSS_TRADING_DAY_CAUSAL_CYCLE_SCHEDULE_V1'
+            or schedule.get('schedule_sha256') != schedule_sha
+            or configuration['trading_day_schedule']['schedule_sha256'] != schedule_sha
+            or not 0 <= receipt['cycle_index'] < int(cycle_limit) <= len(schedule['steps'])):
+        raise ValueError('pending run differs from prepared day or schedule')
+    if hashlib.sha256(Path(configuration_path).read_bytes()).hexdigest() != config_sha:
+        raise ValueError('prepared configuration changed during verification')
+    result = dict(status, day=day, requested_cycles=int(cycle_limit), cycles_total=len(schedule['steps']),
+        run_directory=configuration['run_directory'], run_id=configuration['run_id'],
+        prepared_configuration_sha256=config_sha, schedule_sha256=schedule_sha)
+    print(json.dumps(result,sort_keys=True,separators=(',', ':'),ensure_ascii=True,allow_nan=False))
+except Exception:
+    raise SystemExit('retained workflow wait refused') from None
+'@
+    $verifiedPending = & $Python -B -c $verifyPending $waitModule $configurationPath $log ([string]$code) $Day $PreparedConfigurationSha256 $ExpectedTradingDayScheduleSha256 ([string]$CycleLimit)
+    if ($LASTEXITCODE -ne 0 -or -not $verifiedPending) { throw 'Pending receipt verification failed' }
+    Write-Output ('PIPELINE_RECEIPT ' + ($verifiedPending -join ''))
+    return
 }
 if ($code -ne 0 -or -not $statusLine) { throw "cycles exited $code for $Day; last status: $statusLine" }
 $status = $statusLine | ConvertFrom-Json
