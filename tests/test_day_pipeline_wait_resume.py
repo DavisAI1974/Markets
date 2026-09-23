@@ -40,8 +40,8 @@ def state(tmp_path):
     envelope = dict(status="workflow_wait", day="20211004", requested_cycles=3, cycles_total=3,
         run_id="retained-run", run_directory="/retained/run", prepared_configuration_sha256="d"*64,
         schedule_sha256="b"*64,wait_receipt=wait,
-        receipt_path="/retained/run/execution/cycle-02/workflow-wait/"+wait["receipt_id"]+".json",
-        receipt_sha256=hashlib.sha256(canonical(wait)+b"\n").hexdigest())
+        receipt_path="/retained/run/execution/cycle-02/workflow-wait/readiness.json",
+        receipt_sha256=hashlib.sha256(canonical(wait)).hexdigest())
     calls = []
     output = [envelope]
     def runner(argv, *, timeout):
@@ -127,7 +127,7 @@ def test_attention_is_retained_and_never_automatically_resumed(state):
     value["wait_receipt"]["job_id"] = "4"*64
     value["wait_receipt"].pop("receipt_id")
     value["wait_receipt"]["receipt_id"] = digest(value["wait_receipt"])
-    value["receipt_sha256"] = hashlib.sha256(canonical(value["wait_receipt"])+b"\n").hexdigest()
+    value["receipt_sha256"] = hashlib.sha256(canonical(value["wait_receipt"])).hexdigest()
     assert state["pipeline"].resume(go="a"*64)["cycles"] == "attention"
     assert reopen(state).resume(go="a"*64)["cycles"] == "attention"
     with pytest.raises((dp.StageRefused,ValueError)):

@@ -181,3 +181,76 @@ def test_wait_cannot_succeed_when_durable_flush_fails(api,state,monkeypatch):
         write(api,state)
     for name,raw in state["files"].items():
         assert (state["run"]/name).read_bytes()==raw
+
+def test_unpinned_reentry_returns_same_pending_without_advancing(api,state):
+    result = write(api,state)
+    with pytest.raises(api.WorkflowPending) as caught:
+        api.resume_admission(state["configuration"])
+    assert caught.value.result == result
+    assert caught.value.exit_code == 3
+
+def test_exact_wait_receipt_admits_only_its_existing_cycle(api,state):
+    result = write(api,state)
+    assert api.resume_admission(state["configuration"],result["receipt_sha256"]) == 1
+
+@pytest.mark.parametrize("pin",["0"*64,"invalid",""])
+def test_invalid_resume_event_never_admits_a_new_cycle(api,state,pin):
+    write(api,state)
+    with pytest.raises(ValueError):
+        api.resume_admission(state["configuration"],pin)
+
+def test_resume_event_without_any_retained_wait_refuses_new_run(api,state):
+    with pytest.raises(ValueError):
+        api.resume_admission(state["configuration"],"0"*64)
+
+def test_attention_cannot_be_used_as_automatic_resume_authority(api,state):
+    result = write(api,state,"same_job",state="ATTENTION",job_id="c"*64)
+    with pytest.raises(api.WorkflowPending) as caught:
+        api.resume_admission(state["configuration"])
+    assert caught.value.exit_code == 4
+    with pytest.raises(ValueError):
+        api.resume_admission(state["configuration"],result["receipt_sha256"])
+
+def test_resolution_requires_actual_admitted_artifact_and_keeps_wait_evidence(api,state):
+    result = write(api,state)
+    raw = Path(result["receipt_path"]).read_bytes()
+    with pytest.raises(ValueError):
+        api.resolve_wait(result,[])
+    response = state["cycle"]/"verified-response.json"
+    response.write_bytes(b"admitted response")
+    api.resolve_wait(result,[response])
+    assert Path(result["receipt_path"]).read_bytes()==raw
+    assert api.pending_receipts(state["configuration"],state["cycle"]) == []
+    assert api.resume_admission(state["configuration"],result["receipt_sha256"]) == 1
+    assert api.resume_admission(state["configuration"]) is None
+
+def test_changed_admitted_response_cannot_resolve_a_retained_wait(api,state):
+    result = write(api,state)
+    response = state["cycle"]/"verified-response.json"
+    response.write_bytes(b"admitted response")
+    api.resolve_wait(result,[response])
+    response.write_bytes(b"changed")
+    with pytest.raises(ValueError):
+        api.pending_receipts(state["configuration"],state["cycle"])
+
+def test_newer_boundary_cannot_be_bypassed_by_duplicate_old_event(api,state):
+    first = write(api,state)
+    admitted = state["cycle"]/"verified-response.json"
+    admitted.write_bytes(b"admitted service")
+    api.resolve_wait(first,[admitted])
+    (state["cycle"]/"request-plan.c15.json").write_bytes(b"plan")
+    principal=state["cycle"]/"principal"
+    principal.mkdir()
+    (principal/"session-request.json").write_bytes(b"principal exact request")
+    second = write(api,state,"principal")
+    with pytest.raises(api.WorkflowPending) as caught:
+        api.resume_admission(state["configuration"],first["receipt_sha256"])
+    assert caught.value.result == second
+
+def test_changed_artifact_after_durable_wait_cannot_be_rewritten_as_new_identity(api,state):
+    first = write(api,state)
+    raw=Path(first["receipt_path"]).read_bytes()
+    (state["cycle"]/"actual-critic-request.json").write_bytes(b"other request")
+    with pytest.raises(ValueError):
+        write(api,state)
+    assert Path(first["receipt_path"]).read_bytes()==raw
