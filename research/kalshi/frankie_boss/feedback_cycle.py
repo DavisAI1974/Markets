@@ -138,7 +138,9 @@ def _export_verified(directory, export_args, result, learning, superseded=None):
 
 class CycleCoordinator:
     def __init__(self, path, *, lessons_path, frozen_memory_path, frozen_memory_sha256,
-                 create=False, phase_callback=None, critic_priming=None):
+                 create=False, phase_callback=None, critic_priming=None, learning_policy=None):
+        from .critic_knowledge import validate_learning_policy
+        self.learning_policy = validate_learning_policy(learning_policy)
         from .granite_positive_priming import validate_priming
         self.critic_priming = None if critic_priming is None else validate_priming(critic_priming)
         self.path = Path(path)
@@ -177,8 +179,12 @@ class CycleCoordinator:
     def _lineage_value(self):
         from .granite_positive_priming import validate_priming
         capsule = None if self.critic_priming is None else validate_priming(self.critic_priming)
-        return dict(schema='FRANKIE_KNOWLEDGE_LINEAGE_V1', priming=capsule,
+        from .critic_knowledge import validate_learning_policy
+        policy = validate_learning_policy(self.learning_policy)
+        value = dict(schema='FRANKIE_KNOWLEDGE_LINEAGE_V1', priming=capsule,
             priming_hash=None if capsule is None else evidence_hash(capsule))
+        if policy is not None: value['learning_policy'] = policy
+        return value
 
     def _origin_priming_unchanged(self, request_id, complete):
         from .granite_positive_priming import validate_priming
@@ -186,8 +192,11 @@ class CycleCoordinator:
         capsule = None if knowledge is None else knowledge.get('priming')
         mode = complete.get('knowledge_mode')
         digest = complete.get('priming_hash')
+        if complete.get('learning_policy') != self.learning_policy or (knowledge or {}).get('learning_policy') != self.learning_policy:
+            raise ValueError('origin completed-cycle learning lineage differs')
         if capsule is None:
-            if mode is not None or digest is not None:
+            expected_mode = 'knowledge_primed_learning_replay' if self.learning_policy is not None else None
+            if mode != expected_mode or digest is not None:
                 raise ValueError('origin replay lineage lacks retained capsule')
             return
         capsule = validate_priming(capsule)
@@ -204,8 +213,8 @@ class CycleCoordinator:
             return
         for (request_id,) in self.db.execute("SELECT request FROM stages WHERE stage='critic_knowledge'").fetchall():
             value = self._load(request_id, 'critic_knowledge')
-            if value.get('priming') != self.critic_priming:
-                raise ValueError('legacy replay lineage differs from configured capsule')
+            if value.get('priming') != self.critic_priming or value.get('learning_policy') != self.learning_policy:
+                raise ValueError('legacy replay lineage differs from configured capsule or learning policy')
         for (request_id,) in self.db.execute("SELECT request FROM stages WHERE stage='complete'").fetchall():
             self._origin_priming_unchanged(request_id, self._load(request_id, 'complete'))
         self._save(self.LINEAGE_REQUEST, self.LINEAGE_STAGE, expected)
@@ -464,8 +473,14 @@ class CycleCoordinator:
             if evidence_hash(value) != digest: raise ValueError('new lessons evidence changed')
             if value.get('request_id') != request or value.get('available_ns') != available_ns or type(available_ns) is not int:
                 raise ValueError('lesson availability index differs from verified payload')
-            if available_ns <= cutoff_ns:
+            if self.learning_policy is not None or available_ns <= cutoff_ns:
                 result.append(value)
+        if self.learning_policy is not None:
+            completed = [row[0] for row in self.db.execute("SELECT request FROM stages WHERE stage='complete' ORDER BY rowid")]
+            by_request = {row['request_id']: row for row in result}
+            if set(by_request) - set(completed):
+                raise ValueError('knowledge origin lacks completed verified cycle stages')
+            result = [by_request[request] for request in completed if request in by_request]
         return result
 
     def critic_knowledge(self, request_id, cutoff_ns):
@@ -474,8 +489,8 @@ class CycleCoordinator:
         from .critic_knowledge import build_knowledge, validate_knowledge
         saved = self._load(request_id, 'critic_knowledge')
         if saved is not None:
-            if saved.get('priming') != self.critic_priming:
-                raise ValueError('frozen historical priming changed')
+            if saved.get('priming') != self.critic_priming or saved.get('learning_policy') != self.learning_policy:
+                raise ValueError('frozen historical priming or learning policy changed')
             validate_knowledge(saved, cutoff_ns=cutoff_ns, request_id=request_id)
             records = [entry['record'] for entry in saved['entries']]
         else:
@@ -521,7 +536,7 @@ class CycleCoordinator:
                 feedback_stage_hash=evidence_hash(feedback),training_hash=evidence_hash(training),
                 completion_hash=evidence_hash(complete),source_hash=learning['source_hash'],
                 input_hash=learning['input_hash'],through_cursor=learning['through_cursor'],as_of=learning['as_of']))
-        value = build_knowledge(records, cutoff_ns=cutoff_ns, request_id=request_id)
+        value = build_knowledge(records, cutoff_ns=cutoff_ns, request_id=request_id, learning_policy=self.learning_policy)
         value['origins'] = origins
         if self.critic_priming is not None:
             value['priming'] = self.critic_priming
@@ -538,7 +553,7 @@ class CycleCoordinator:
             if self._load(previous, 'complete') is None:
                 raise ValueError('finish the retained prior cycle before starting another request')
             feedback = self._load(previous, 'feedback')
-            if feedback is None or as_of < feedback['feedback']['available_ns']:
+            if feedback is None or (self.learning_policy is None and as_of < feedback['feedback']['available_ns']):
                 raise ValueError('new request precedes learned feedback availability')
 
     async def run(self, *, request_id, controller_factory, controller_kwargs, export_kwargs,
@@ -579,7 +594,7 @@ class CycleCoordinator:
                     self._observe('boss_reasoning', request_id)
                     controller = controller_factory()
                     actual_kwargs = dict(controller_kwargs)
-                    if (self.critic_priming is not None
+                    if ((self.critic_priming is not None or self.learning_policy is not None)
                             and getattr(controller, 'context_encoding', None) != 'stacked_v1'):
                         raise ValueError('historical priming requires stacked critic route')
                     if getattr(controller, 'context_encoding', None) == 'stacked_v1':
@@ -664,6 +679,8 @@ class CycleCoordinator:
                     controller_result_hash=result_hash, feedback_hash=feedback.digest, training=training, **lessons,
                     **({'knowledge_mode':self.critic_priming['mode'], 'priming_hash':evidence_hash(self.critic_priming)}
                        if self.critic_priming is not None else {}))
+                if self.learning_policy is not None:
+                    completed.update(learning_policy=self.learning_policy, knowledge_mode='knowledge_primed_learning_replay')
                 self._save(request_id, 'complete', completed)
                 self._observe('saved_completion', request_id)
                 return completed

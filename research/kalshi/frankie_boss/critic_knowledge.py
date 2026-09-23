@@ -4,6 +4,13 @@ import json
 from .c15_journal import evidence_hash
 
 SCHEMA = 'FRANKIE_CRITIC_KNOWLEDGE_V1'
+CUMULATIVE = 'cumulative_completed_cycles_v1'
+
+def validate_learning_policy(value):
+    if value is not None and value != CUMULATIVE:
+        raise ValueError('explicit cumulative completed-cycle learning policy required')
+    return value
+
 RECORD_FIELDS = {'request_id', 'available_ns', 'feedback_hash', 'principal_receipt_hash',
     'training_checkpoint_hash', 'lessons', 'frozen_memory_sha256'}
 HASH_FIELDS = RECORD_FIELDS - {'request_id', 'available_ns', 'lessons'}
@@ -50,7 +57,8 @@ def _record(record):
         elif type(text) is not str or hashlib.sha256(text.encode()).hexdigest()!=value['response_hash']:
             raise ValueError('retained critic response changed')
 
-def build_knowledge(records, *, cutoff_ns, request_id):
+def build_knowledge(records, *, cutoff_ns, request_id, learning_policy=None):
+    validate_learning_policy(learning_policy)
     _ns(cutoff_ns); _id(request_id)
     if type(records) not in (list, tuple): raise ValueError('explicit knowledge record list required')
     owned=_json(records); seen=set(); entries=[]
@@ -60,13 +68,16 @@ def build_knowledge(records, *, cutoff_ns, request_id):
         if key==request_id or key in seen:
             raise ValueError('duplicate or current request in prior knowledge')
         seen.add(key)
-        if record['available_ns']<=cutoff_ns:
+        if learning_policy == CUMULATIVE or record['available_ns']<=cutoff_ns:
             entries.append(dict(lesson_hash=evidence_hash(record),record=record))
-    entries.sort(key=lambda entry:(entry['record']['available_ns'],entry['record']['request_id']))
-    return _json(dict(schema=SCHEMA,request_id=request_id,cutoff_ns=cutoff_ns,entries=entries))
+    if learning_policy is None:
+        entries.sort(key=lambda entry:(entry['record']['available_ns'],entry['record']['request_id']))
+    body=dict(schema=SCHEMA,request_id=request_id,cutoff_ns=cutoff_ns,entries=entries)
+    if learning_policy is not None: body['learning_policy']=learning_policy
+    return _json(body)
 
 def validate_knowledge(value, *, cutoff_ns=None, request_id=None):
-    if type(value) is not dict or not {'schema','request_id','cutoff_ns','entries'} <= set(value) or set(value)-{'schema','request_id','cutoff_ns','entries','origins','priming'} or value['schema']!=SCHEMA:
+    if type(value) is not dict or not {'schema','request_id','cutoff_ns','entries'} <= set(value) or set(value)-{'schema','request_id','cutoff_ns','entries','origins','priming','learning_policy'} or value['schema']!=SCHEMA:
         raise ValueError('invalid critic knowledge envelope')
     if type(value['entries']) is not list: raise ValueError('knowledge entries must be ordered list')
     if cutoff_ns is not None and value['cutoff_ns']!=cutoff_ns: raise ValueError('knowledge cutoff differs')
@@ -78,7 +89,8 @@ def validate_knowledge(value, *, cutoff_ns=None, request_id=None):
         _hash(entry['lesson_hash'])
         if entry['lesson_hash']!=evidence_hash(entry['record']): raise ValueError('knowledge record hash changed')
         records.append(entry['record'])
-    expected=build_knowledge(records,cutoff_ns=value['cutoff_ns'],request_id=value['request_id'])
+    expected=build_knowledge(records,cutoff_ns=value['cutoff_ns'],request_id=value['request_id'],
+        learning_policy=value.get('learning_policy'))
     if 'origins' in value:
         origins=value['origins']
         if type(origins) is not list or len(origins)!=len(expected['entries']):

@@ -90,9 +90,17 @@ def validate_priming(value):
 def public_knowledge(audit):
     """Only this projection enters model-visible text; the source audit remains intact."""
     from .knowledge_calendar import market_calendar
+    from .critic_knowledge import CUMULATIVE
+    cumulative=audit.get('learning_policy')==CUMULATIVE
     entries=[]
     origins={row['request_id']:row for row in audit.get('origins',[])}
     for entry in audit['entries']:
+        if cumulative:
+            origin=origins.get(entry['record']['request_id'])
+            context=(dict(status='unverified',reason='source_market_time_not_bound')
+                if origin is None else market_calendar(origin['as_of']))
+            entries.append(dict(lesson_hash=entry['lesson_hash'], learned_record=entry['record'], market_context=context))
+            continue
         items=select_helpful(entry['record']['lessons'])
         if items:
             origin=origins.get(entry['record']['request_id'])
@@ -103,6 +111,9 @@ def public_knowledge(audit):
     if capsule is not None:
         capsule=validate_priming(capsule)
         entries.append(dict(lesson_hash=evidence_hash(capsule),helpful_lessons=capsule['lessons'],market_context=capsule['market_context']))
+    if cumulative:
+        return canonical(dict(schema='FRANKIE_CUMULATIVE_MODEL_VIEW_V1', knowledge_mode=MODE,
+            learning_policy=audit['learning_policy'], entries=entries))
     return canonical(dict(schema='FRANKIE_HELPFUL_MODEL_VIEW_V1',entries=entries))
 
 def load_retained_priming(repository, *, mode):
