@@ -99,3 +99,43 @@ def test_retained_fourth_part_survives_original_failed_merge_chain(tmp_path):
     assert fourth in kept
     assert (tmp_path/'merges/retained-final.model-output.md').is_file()
     assert all((tmp_path/f'merges/retained-{stage}.model-output.md').is_file() for stage in ('level0','level1','final'))
+
+@pytest.mark.parametrize('output',[
+    '## Notes on part 1/4\nsource '+H1,
+    '## Notes on part 1/4\nsource '+H1+'\n## Notes on part 4/4',
+    '## Notes on part 1/4\nsource '+H1+'\n## Notes on part 4/4\nAll four parts are preserved.'])
+def test_quiet_hash_free_part_loss_retains_inputs(tmp_path,output):
+    s=stub(tmp_path)
+    inputs=['## Notes on part 1/4\nsource '+H1,
+        '## Notes on part 4/4\n@4 ^3 -45 -45 I-870 ^3\nstructure_families: 24 rows']
+    kept=session.Session._merge_keep(s,'quiet-drop',inputs,dict(text=output))
+    assert kept.startswith('\n'.join(inputs))
+    assert 'MERGE KEPT VERBATIM' in kept
+    assert output in (tmp_path/'merges/quiet-drop.model-output.md').read_text()
+
+def test_hash_in_intermediate_group_does_not_mask_lost_hash_free_body(tmp_path):
+    s=stub(tmp_path);mixed='prior pinned source '+H1+'\npart four fact without a hash'
+    kept=session.Session._merge_keep(s,'mixed-drop',[mixed,'another exact fact'],
+        dict(text='prior pinned source '+H1+'\nanother exact fact'))
+    assert kept.startswith(mixed+'\nanother exact fact')
+    assert 'MERGE KEPT VERBATIM' in kept
+
+def test_verbatim_lines_may_be_reordered_and_deduplicated(tmp_path):
+    s=stub(tmp_path);inputs=['fact A\nshared fact','fact B\nshared fact']
+    output='fact B\nshared fact\nfact A'
+    assert session.Session._merge_keep(s,'covered',inputs,dict(text=output))==output
+    assert not (tmp_path/'merges/covered.model-output.md').exists()
+
+def test_nonshrinking_guarded_merge_stops_without_discarding_notes(tmp_path,monkeypatch):
+    s=stub(tmp_path);calls=[]
+    monkeypatch.setattr(session,'CHUNK_BYTES',4100)
+    inputs=['A'*80,'B'*80]
+    def reader(name,text):
+        calls.append(name);return dict(text='I cannot complete this request.')
+    s.reader=reader;s._merge_prompt=session.Session._merge_prompt.__get__(s)
+    s._merge_keep=session.Session._merge_keep.__get__(s)
+    s._fan_out=lambda label,items,work:[work(item) for item in items]
+    s._merge=lambda *args:pytest.fail('a nonshrinking merge must not recurse')
+    kept=session.Session._merge(s,inputs,0)
+    assert all(note in kept for note in inputs) and len(calls)==2
+    assert 'MERGE KEPT VERBATIM' in kept
