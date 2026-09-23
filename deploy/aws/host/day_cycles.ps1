@@ -128,8 +128,12 @@ try:
     spec = importlib.util.spec_from_file_location('retained_workflow_wait_validator', module_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    lines = Path(log_path).read_text(encoding='utf-8-sig').splitlines()
-    status = json.loads(next(line for line in reversed(lines) if line.lstrip().startswith('{')))
+    status_line = None
+    with Path(log_path).open(encoding='utf-8-sig') as stream:
+        for line in stream:
+            if line.lstrip().startswith('{'):
+                status_line = line
+    status = json.loads(status_line)
     receipt = module.read_wait_receipt(status['receipt_path'], status['receipt_sha256'], configuration)
     if status != module.outcome(status['receipt_path'], receipt):
         raise ValueError('runner outcome differs from the retained receipt')
