@@ -53,11 +53,11 @@ def state(tmp_path):
     return dict(tmp=tmp_path,pwsh=pwsh,run=run,day=day,config=config,
         configuration=configuration,outcome=outcome,helper=helper,cycle=cycle)
 
-def invoke(state, *, code=3, outcome=None, pending=True, resume=None):
+def invoke(state, *, code=3, outcome=None, pending=True, resume=None, log_prefix=""):
     marker=state["tmp"]/("command-"+uuid.uuid4().hex+".txt")
     wrapper=state["tmp"]/("wrapper-"+uuid.uuid4().hex+".ps1")
     value=state["outcome"] if outcome is None else outcome
-    status=json.dumps(value)
+    status=log_prefix+json.dumps(value)
     wrapper.write_text(f"""
 $ErrorActionPreference='Stop'
 $Day='20211004'
@@ -153,3 +153,31 @@ def test_pending_status_cannot_claim_unverified_embedded_receipt(state):
     value["wait_receipt"]=dict(value["wait_receipt"],run_id="foreign")
     got=invoke(state,outcome=value)
     assert got["result"].returncode!=0 and got["receipt"] is None
+
+
+@pytest.mark.parametrize("kind",["wait","complete"])
+def test_large_native_log_is_retained_exactly_while_control_receipt_remains_visible(state,kind):
+    prefix=("native-output-preserved ts_recv=1633302000123456789\n"*1400)
+    outcome=state["outcome"] if kind=="wait" else dict(status="all_scheduled_cycles_complete",cycles=2)
+    got=invoke(state,code=3 if kind=="wait" else 0,outcome=outcome,log_prefix=prefix)
+    assert got["result"].returncode==0,got["result"].stderr
+    assert got["receipt"] is not None
+    expected=(prefix+json.dumps(outcome)+"\n").encode()
+    log=got["receipt"]["native_log"]
+    retained=Path(log["path"]).read_bytes()
+    assert retained==expected
+    assert log["bytes"]==len(expected)>32768
+    assert log["sha256"]==sha(expected)
+    # Verify the receipt survives the actual SSM control-channel prefix boundary.
+    control=got["result"].stdout.encode()[:24000].decode()
+    assert "PIPELINE_RECEIPT " in control
+    assert prefix not in got["result"].stdout
+    assert "native-output-preserved" not in got["result"].stdout
+
+def test_legacy_mode_still_streams_native_log(state):
+    prefix="legacy-native-output\n"
+    got=invoke(state,code=0,pending=False,
+        outcome=dict(status="all_scheduled_cycles_complete",cycles=2),log_prefix=prefix)
+    assert got["result"].returncode==0,got["result"].stderr
+    assert prefix in got["result"].stdout
+    assert "native_log" not in got["receipt"]

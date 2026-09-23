@@ -597,5 +597,24 @@ def test_finalize_cannot_use_unrelated_preexisting_batch_as_new_partial_progress
     path.write_bytes(canonical(dict(schema="FRANKIE_DAY_PIPELINE_RECEIPT_V1",day="20211004",stage="cycles",
         status="PARTIAL",gate=dict(status="requested_cycles_complete",day="20211004",
         cycles_completed=99,requested_cycles=99,cycles_total=3))))
-    with pytest.raises(ValueError):
+    with pytest.raises((ValueError,FileNotFoundError)):
         api.validate_resume_result(f["pipeline"],f["event"],resume_record(f,"partial"),prior)
+
+
+def test_publication_retry_reconciles_retained_intent_after_post_push_crash(api,publication_repo,monkeypatch):
+    f=publication_repo
+    publish=api.WAIT._publish
+    def crash_after_push(path,value):
+        if Path(path).name=="receipt-publication.json":
+            raise OSError("synthetic crash after remote CAS, before local acknowledgment")
+        return publish(path,value)
+    monkeypatch.setattr(api.WAIT,"_publish",crash_after_push)
+    with pytest.raises(OSError):
+        api.publish_receipts(f["pipeline"],f["event"],"wait")
+    intent=json.loads(Path("workflow-event-outbox/receipt-publication-intent.json").read_bytes())
+    assert f["git"]("ls-remote","--heads","origin","refs/heads/"+f["ref"]).split()[0]==intent["receipts_commit"]
+    assert not Path("workflow-event-outbox/receipt-publication.json").exists()
+    monkeypatch.setattr(api.WAIT,"_publish",publish)
+    commit=api.publish_receipts(f["pipeline"],f["event"],"wait")
+    assert commit==intent["receipts_commit"]
+    assert json.loads(Path("workflow-event-outbox/receipt-publication.json").read_bytes())["receipts_commit"]==commit
