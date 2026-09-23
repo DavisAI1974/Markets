@@ -85,7 +85,8 @@ def fixture(tmp_path,monkeypatch):
 
 def select(args,name,as_of,cutoff):
     args['request_id']=name
-    args['learning_kwargs']=dict(args['learning_kwargs'],as_of=as_of,learning_cutoff_ns=cutoff)
+    args['learning_kwargs']=dict(args['learning_kwargs'],as_of=as_of,learning_cutoff_ns=cutoff,
+        through_cursor={'z-first':2,'a-second':3,'next':4}[name])
 
 def test_three_completed_cycles_accumulate_despite_reverse_market_clock(tmp_path,monkeypatch):
     store,checkpoint,args,calls,seen=fixture(tmp_path,monkeypatch)
