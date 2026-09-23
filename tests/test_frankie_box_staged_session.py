@@ -103,3 +103,19 @@ class StagedSessionTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_provider_result_and_consumed_outcome_must_agree(tmp_path):
+    session=FakeSession(tmp_path)
+    original=session._classroom_call
+    def mismatched(name,text,parse,lane):
+        parsed,call=original(name,text,parse,lane)
+        path=session.jobs/call['job_id'][:24]/'result.json'
+        result=json.loads(path.read_text(encoding='utf-8'))
+        result['choices'][0]['message']['content']='Different provider answer'
+        path.write_text(json.dumps(result),encoding='utf-8')
+        return parsed,call
+    session._classroom_call=mismatched
+    cache=C.ClassroomCache(tmp_path/'cache',{'test':'same-identity'})
+    with unittest.TestCase().assertRaisesRegex(ValueError,'provider response'):
+        consume(session,cache,'complete evidence')
