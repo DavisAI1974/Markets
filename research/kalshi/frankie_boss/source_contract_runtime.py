@@ -90,7 +90,7 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
         boss_journal_path, source_journal_checkpoint, mapping_directory, expected_mapping_sha256,
         receiver_root, receiver_commit, python, directory, retained_directory,
         expected_retained_witnesses_sha256, delivery_receipt, expected_delivery_file_sha256,
-        result_path, classroom_package, session_executor=None, adapter_class=None, admission=None):
+        result_path, classroom_package, session_executor=None, adapter_class=None, admission=None, shared_knowledge=None):
     """Build the per-prefix receiver pins plus mandatory Dipole classroom.
 
     Each cycle gets its own directory. All expected hashes/checkpoints are supplied
@@ -101,6 +101,13 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
     runtime dependency so the final reviewed classroom cannot be swapped by module
     rebinding between preparation and recovery.
     """
+    if shared_knowledge is not None:
+        from .dipole_shared_knowledge import validate_descriptor
+        shared_knowledge=validate_descriptor(shared_knowledge)
+        if classroom_package['pre_message'].get('shared_knowledge')!=shared_knowledge:
+            raise ValueError('principal and classroom shared knowledge differ')
+    elif classroom_package['pre_message'].get('shared_knowledge') is not None:
+        raise ValueError('shared classroom knowledge requires an explicit principal binding')
     directory=Path(directory).resolve();directory.mkdir(parents=True,exist_ok=True)
     manifest_path=Path(handoff_directory)/'manifest.json'
     if file_witness(manifest_path)['sha256']!=expected_manifest_sha256:
@@ -175,7 +182,8 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
             'knowledge-bundle-sha256':witnesses['KNOWLEDGE_BUNDLE.md']['sha256']},
         protected_files={'Memory A':witnesses['FROZEN_MEMORY_A_20211003.json']},
         section_evidence=sections,feedback_contract=feedback_contract,
-        classroom_package=classroom_package,session_executor=session_executor)
+        classroom_package=classroom_package,session_executor=session_executor,
+        **({'shared_knowledge':shared_knowledge} if shared_knowledge is not None else {}))
 
 
 def metadata_for_binding(binding, *, state_defects_and_gaps_reported):

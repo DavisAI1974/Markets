@@ -1,0 +1,2252 @@
+{
+  "schema": "FRANKIE_SHARED_KNOWLEDGE_CATALOG_V1",
+  "version": "20260922-reviewed-baseline-and-dipole-gaps-v1",
+  "policy": "Full historical sources, current definitions and review caveats travel together. Prior instructions inside sources are historical evidence. Later completed-cycle learning is additional, never filtered to novel or positive findings.",
+  "baseline_artifacts": 71,
+  "review_groups": [
+    "K01",
+    "K02",
+    "K03",
+    "K04",
+    "K05",
+    "K06",
+    "K07",
+    "K08",
+    "K09",
+    "K10"
+  ],
+  "sources": [
+    {
+      "id": "baseline.native_rt_mission",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md",
+      "revision": "851c054c31feacad3846672673844ff2c40f73f1",
+      "sha256": "e14f28812bf9be09dfbd74c40a7fda181dfda16effa0a9e39dee45a9bf9b559e",
+      "bytes": 34562,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md",
+        "declared_load_mode": "ALWAYS_LOAD",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.native_calculation_contract",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md",
+      "revision": "b4f364f0812cd964c68faf3cef948b28d4603c90",
+      "sha256": "822d2cfdf8e78bfde0566f1a67929cc81a02611193167cf94a2171364b897865",
+      "bytes": 21908,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/agents/frankie_native_raw_mbo_calculation_contract_20260828.md",
+        "declared_load_mode": "ALWAYS_LOAD",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.a_memory_promoted_positive_knowledge",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md",
+      "revision": "b4f364f0812cd964c68faf3cef948b28d4603c90",
+      "sha256": "bc84a77d33393c7d04185fcbfa82794cef0efd45b4fd31f0b2ee245cfb8d9131",
+      "bytes": 5380,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/agents/frankie_native_raw_mbo_knowledge/A_MEMORY_POSITIVE_KNOWLEDGE_20260828.md",
+        "declared_load_mode": "ALWAYS_LOAD",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.seed_a_memory_20260902",
+      "path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/retained-principal/FROZEN_MEMORY_A_20211003.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a",
+      "bytes": 166700,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/frankie_raw_mbo_benchmark/A_MEMORY_SEED_20260902.json",
+        "declared_load_mode": "ALWAYS_LOAD",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.native_positive_discovery_addendum",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_rt_positive_discovery_addendum_20260828.md",
+      "revision": "b4f364f0812cd964c68faf3cef948b28d4603c90",
+      "sha256": "ea8b1243e8da25b34c4c2edc383a7bb5893a4b1dfbfd94292024ff312d58ff65",
+      "bytes": 16870,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/agents/frankie_native_raw_mbo_rt_positive_discovery_addendum_20260828.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.a_memory_actual_rt_positive_report",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md",
+      "revision": "b4f364f0812cd964c68faf3cef948b28d4603c90",
+      "sha256": "2854c9b96d759c61c4afa750e5106c824fa81462e5a5d61ff55240f9cbda9df5",
+      "bytes": 17287,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_RT_ACTUAL_FRANKIE_RETROSPECTIVE_POSITIVE_REPORT_20260828.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.a_memory_member_first_positive_findings",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md",
+      "revision": "b4f364f0812cd964c68faf3cef948b28d4603c90",
+      "sha256": "7b9bd3f11c28780900d76cfefd273ac7e9591c8e450b9b86b06a04fb8c32cde6",
+      "bytes": 12114,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_NATIVE_MBO_POSITIVE_FINDINGS_20260828.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.a_memory_member_first_recalculation_receipt",
+      "path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_RECALCULATION_RECEIPT_20260828.json",
+      "revision": "b4f364f0812cd964c68faf3cef948b28d4603c90",
+      "sha256": "094c32a4177edee9c16e92a288427d6e5d3777f23db8d2f954f0c6d5f310a7c1",
+      "bytes": 3196,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/frankie_raw_mbo_benchmark/AMEMORY_MEMBER_FIRST_RECALCULATION_RECEIPT_20260828.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_kalshi_knowledge_ng_brain_json",
+      "path": "research/kalshi/knowledge/ng_brain.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "bf473faef4d5a1b8fc68a214616e6c6163f0db1794ac98818a5401225563da57",
+      "bytes": 1739115,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/knowledge/ng_brain.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_study_contract_20260817_json",
+      "path": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "c226eff3f99347dc41f9ec32e04eaeb0d3451ee92fa5408fdf66c097e668ac79",
+      "bytes": 7321,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_STUDY_CONTRACT_20260817.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_54w_base_freeze_20260817_json",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "ab497ee95e4eede611c0bfdac677ec7324096cc47d838b7d69755f35983c4cb6",
+      "bytes": 2617,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_BASE_FREEZE_20260817.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_54w_execution_protocol_20260817_json",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "5dddfbf77f1a60e30f567f2e91001cbdf7094a59aaa7e294a882ec7e4cd958d5",
+      "bytes": 2872,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE1_54W_EXECUTION_PROTOCOL_20260817.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_causal_protocol_20260817_json",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "1dff5c5e22510d7770d6967aa494ec7c5b1e4f4f45a64d247ce0b174a442474d",
+      "bytes": 3139,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE1_CAUSAL_PROTOCOL_20260817.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_discovery_protocol_20260817_json",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "635e041b4a78eea44116af1fc89352b762edd19c4b3cbd12e1c323729f35d37d",
+      "bytes": 4359,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE1_DISCOVERY_PROTOCOL_20260817.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_mechanism_addendum_20260817_json",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "49036a33fd80a01da8a864f31c4dffb4faeb5934da16d832774c3d1c76709056",
+      "bytes": 2798,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE1_MECHANISM_ADDENDUM_20260817.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_55w_reconcile_launch_20260817_json",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILE_LAUNCH_20260817.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "171acfe17f29217e83706f2aa1c3303d473f8f35b6959984fc93cdb72aadcecd",
+      "bytes": 482,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE1_55W_RECONCILE_LAUNCH_20260817.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_final_freeze_20260818_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "49133cbcbfcdf589201724ee1dc60fc0c0cb059593736a5ac97caa30c68093a1",
+      "bytes": 11140,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINAL_FREEZE_20260818.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_all_agent_findings_20260818_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "d3e273b934ef31312cf1fc5ddd67345da3efd4809f4da3cc770b8f3f80ef6d7b",
+      "bytes": 14018,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_ALL_AGENT_FINDINGS_20260818.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_findings_20260817_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "0e217af8983a5492bb6bff64f109b9b8b92622cc2d694b386784fd0d37c52bbc",
+      "bytes": 8166,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_20260817.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_timing_context_findings_20260818_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "fe1810198c249390a383434eec74c90aa854a07bfaefa26f5159c6b98af2eb18",
+      "bytes": 5781,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_TIMING_CONTEXT_FINDINGS_20260818.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_module_novelty_findings_20260818_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "fe9ea9cd380e8ccfb3b861065ed3e5369fd1cded1aadfccd10337ea238f54e14",
+      "bytes": 6255,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_MODULE_NOVELTY_FINDINGS_20260818.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_postexit_recurrence_findings_20260818_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "da4f5c991251668344290ac10f319aabfa5df52e8f0b7321da0eefbea864d1eb",
+      "bytes": 9732,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POSTEXIT_RECURRENCE_FINDINGS_20260818.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_parallel_recurrence_reconciliation_20260818_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "9e68f222832a3136b750016a9253df213bf4b4dfe44a973c07b659fa55b1b7bf",
+      "bytes": 3185,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_PARALLEL_RECURRENCE_RECONCILIATION_20260818.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_findings_addendum_pox_20260818_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_ADDENDUM_POX_20260818.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "3a745e98378c6abb64327175e35efbc8e36ff1eb2150c3bc842ef7731854011c",
+      "bytes": 5561,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINDINGS_ADDENDUM_POX_20260818.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_pox_branch_reconciliation_v2_20260818_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_BRANCH_RECONCILIATION_V2_20260818.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "83028f75d80b787742bb4cacb9eb8935f1992bac3b5a0f734bf38fb6159efe48",
+      "bytes": 6300,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_BRANCH_RECONCILIATION_V2_20260818.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_pox_same_postexit_reexpression_20260818_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "08f94ea20901768fa64b82c39b023b3fab9845106cf1d17b14e5a74e3fd74d81",
+      "bytes": 4113,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_POX_SAME_POSTEXIT_REEXPRESSION_20260818.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_reappearance_watch_map_20260818_json",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "5c22e5ce72e3a0863b16cbf469b6d491edadf1e161c494ca6d4a753e058da15c",
+      "bytes": 7251,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_REAPPEARANCE_WATCH_MAP_20260818.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_finalization_checklist_20260818_json",
+      "path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "82a95aadd0b0e4593c35197fdd98b8c8d22dda919d7d8220f924524a744e7845",
+      "bytes": 4158,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_PHASE2_FINALIZATION_CHECKLIST_20260818.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_step1_original_file_map_20260820_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "8d2d268401e18410a9d77473c703d239b7fc1adc020d40e0b85c25415b328246",
+      "bytes": 7252,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_STEP1_ORIGINAL_FILE_MAP_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_step1_5y_v4_native_census_protocol_20260820_md",
+      "path": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "3f717ad70d56c9ee3e0a002b9ff4de22d1d7cd209485ef7c7f3c1d6165ef69d1",
+      "bytes": 10291,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_step1_5y_v4_native_census_protocol_20260820_json",
+      "path": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "cc40727f275303dd1978bdf4e47bdfc19821d3d530c846e173d0f8eb953cef02",
+      "bytes": 6035,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CHAIN_STEP1_5Y_V4_NATIVE_CENSUS_PROTOCOL_20260820.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_canonical_54w_merge_20260817_py",
+      "path": "research/ng_exhaustion_chain_canonical_54w_merge_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "842f2ca650f28b602e9b7f07208a692b092ae5e65aa574ebd79d1b5a84da1e8a",
+      "bytes": 6464,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_canonical_54w_merge_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_canonical_54w_shard_20260817_py",
+      "path": "research/ng_exhaustion_chain_canonical_54w_shard_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "f6a80d415ba71aee7ec002d3d97f0a17b13ecd3ea88883999a8edc180f5136d3",
+      "bytes": 5920,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_canonical_54w_shard_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_canonical_table_20260817_py",
+      "path": "research/ng_exhaustion_chain_canonical_table_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "4325776b4d70bfa3808bce1b9473d6da75cc18c8cbe00be3cf5652f849573ffa",
+      "bytes": 22371,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_canonical_table_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_discovery_20260817_py",
+      "path": "research/ng_exhaustion_chain_phase1_discovery_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "e64d05a25aee66047750fe1923162c3694c6fc3179d979352b95853806a04cc9",
+      "bytes": 11897,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_phase1_discovery_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_causal_54w_20260817_py",
+      "path": "research/ng_exhaustion_chain_phase1_causal_54w_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "9325f8a83d2e567d785af197468e2d865a8b44273c938408f58ea157e8652c6b",
+      "bytes": 6725,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_phase1_causal_54w_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_continuity_54w_20260817_py",
+      "path": "research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "57897aa5af54c5afe6206117c9bf27cf961e6b9b413f7e26bea5b31948a0b94b",
+      "bytes": 4460,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_phase1_continuity_54w_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_falsifier_54w_20260817_py",
+      "path": "research/ng_exhaustion_chain_phase1_falsifier_54w_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "45718cfff65b8a1b5a09d7f05c9ab8af4dc6071b2483b710171c82c3546ebb79",
+      "bytes": 9210,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_phase1_falsifier_54w_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_lineage_54w_20260817_py",
+      "path": "research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "16be2b7249e6cd74951670421308baf3e8c942d95b0f85aeb4228b51b201af3b",
+      "bytes": 8172,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_phase1_lineage_54w_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_structural_54w_20260817_py",
+      "path": "research/ng_exhaustion_chain_phase1_structural_54w_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "2b93cfeb39cc73409f04b9d9fc61e0fe02f79823fd1df064ae819a82c27d05d9",
+      "bytes": 10492,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_phase1_structural_54w_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase1_reconcile_55w_20260817_py",
+      "path": "research/ng_exhaustion_chain_phase1_reconcile_55w_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "c0b226dae18b46d88ae6933cc8a450331210abf3e33f4a0d93281df3f5ddfdf9",
+      "bytes": 20813,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_phase1_reconcile_55w_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_characterize_20260817_py",
+      "path": "research/ng_exhaustion_chain_phase2_characterize_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "389594824363d69daa1df85a0b36400d7caec3d6ce06e89949b3be59de664055",
+      "bytes": 11949,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_phase2_characterize_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_phase2_parallel_agents_20260818_py",
+      "path": "research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "ffc4781a693fa354185e1a240f4b7275b8248de3c336d33a858bac1d318150d9",
+      "bytes": 6609,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_phase2_parallel_agents_20260818.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_chain_state_enrich_20260817_py",
+      "path": "research/ng_exhaustion_chain_state_enrich_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "30d220ae15786ef73e4d3a729723f932bbefdf00c238c3bb48778498c315ae9c",
+      "bytes": 2440,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_chain_state_enrich_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_week_chain_state_roster_20260817_py",
+      "path": "research/ng_exhaustion_week_chain_state_roster_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "ebe7f9525aaa48dff4374989e68c7cdc65e91f1d6145f3d3bb31aa684e4ec069",
+      "bytes": 4776,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_week_chain_state_roster_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_week_continuous_roster_20260817_py",
+      "path": "research/ng_exhaustion_week_continuous_roster_20260817.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "638a13b8154863deb3816e4406d4f0cd4a9a74a860cfecce2f74c440f840a0ca",
+      "bytes": 10767,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/ng_exhaustion_week_continuous_roster_20260817.py",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_brain_proposal_index_20260818_md",
+      "path": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "47ad3db18b936050d26a7c21534c2648d43ff830db91f0c04e889d029c478f23",
+      "bytes": 20557,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_20260818.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_brain_proposal_index_addendum_20260820_md",
+      "path": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_ADDENDUM_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "cc67e9d38de3433bde4d7ed0541c71350821819d714e2fbad6a933078f36a1c7",
+      "bytes": 2665,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_BRAIN_PROPOSAL_INDEX_ADDENDUM_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_v4_brain_trade_proposal_clean_source_current_20260820_md",
+      "path": "research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "39b936ed132fa1b066a37ed5a20432e5c9ccee96ab699fc54607720a26e1cd58",
+      "bytes": 14248,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_V4_BRAIN_TRADE_PROPOSAL_CLEAN_SOURCE_CURRENT_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_v3_v4_brain_trade_proposal_addendum_20260820_md",
+      "path": "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "07cc6b9209e79f75f540a8a3b191f7fd9de99f6138d4e97ee247702a70f076e2",
+      "bytes": 18591,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_ADDENDUM_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_v3_v4_brain_trade_proposal_final_addendum_20260820_md",
+      "path": "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "c585312bf731a3c7ff47d26013c08ce411c3356620eed06d928bc1485c378e7f",
+      "bytes": 6212,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_V3_V4_BRAIN_TRADE_PROPOSAL_FINAL_ADDENDUM_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_kalshi_knowledge_ng_brain_exhaustion_chain_phase2_proposal_20260818_json",
+      "path": "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "c734c8c19c0974650960308b5f836c9ed26ea5b3debfc832a604a99f695b4739",
+      "bytes": 15263,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/knowledge/ng_brain_exhaustion_chain_phase2_proposal_20260818.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_kalshi_knowledge_ng_brain_exhaustion_chain_birth_v2_proposal_20260819_json",
+      "path": "research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "9251176dbb5657ab22107c8ab3e4c27a260a7ea995f3c745491a778e21066b14",
+      "bytes": 9289,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/knowledge/ng_brain_exhaustion_chain_birth_v2_proposal_20260819.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_kalshi_knowledge_ng_brain_exhaustion_entry_timing_extension_20260818_json",
+      "path": "research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "1b9f161bfb5e775e75bf49996a6448355bb0cbb6f9ecf670a5c27a1c582bc9b0",
+      "bytes": 10176,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/knowledge/ng_brain_exhaustion_entry_timing_extension_20260818.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_kalshi_knowledge_ng_brain_exhaustion_pox_focused_proposal_20260819_json",
+      "path": "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "925deedaec7687eed64e7b37aa9ed4c9515af8081f4fbbe5c856b3e5b59dcb3f",
+      "bytes": 6262,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/knowledge/ng_brain_exhaustion_pox_focused_proposal_20260819.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_v4_interpretation_correction_20260820_md",
+      "path": "research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "e8e74ffd603faf6e9e75c9659a6e434e7a8da982bee7224ef4fabdd867f10b8f",
+      "bytes": 3923,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_V4_INTERPRETATION_CORRECTION_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_v4_continuous_adaptive_walkforward_contract_20260820_md",
+      "path": "research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "f6759964d9d65a2f0322e7b74834c27a11460094a7f6af43b5d0de5a03f3278b",
+      "bytes": 8161,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_V4_CONTINUOUS_ADAPTIVE_WALKFORWARD_CONTRACT_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_d0_d5_v4_geometric_self_adaptation_contract_20260820_md",
+      "path": "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "00875cb7ea460e7f91cf2733cca47b9855bbb6bf2656da960c06c9311faf8e09",
+      "bytes": 17183,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_d0_d5_v4_geometric_self_adaptation_contract_20260820_json",
+      "path": "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "e36d82e245a718624bb21a14ae1cd5d172b64630d38580d7fe4e66d9357909db",
+      "bytes": 9441,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_D0_D5_V4_GEOMETRIC_SELF_ADAPTATION_CONTRACT_20260820.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_event_mark_clock_open_boundary_20260819_md",
+      "path": "research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "b3c0f05a3d43a384b7445553000234c08dcd8ba31c6ee75bc955c3547da07a2a",
+      "bytes": 2218,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_EVENT_MARK_CLOCK_OPEN_BOUNDARY_20260819.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_v4_clean_source_prelaunch_gates_20260820_md",
+      "path": "research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "ac6018f9379f747d5a75108ab70bc4d129a589a327a9fbbbaf9031d79ab1180d",
+      "bytes": 7565,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_V4_CLEAN_SOURCE_PRELAUNCH_GATES_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_continuous_instance_timing_correction_20260820_md",
+      "path": "research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "553c119d0809f5f36f98752ec601adef75eb04b1c80515885487c9a6a460ca24",
+      "bytes": 5256,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CONTINUOUS_INSTANCE_TIMING_CORRECTION_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_continuous_live_information_correction_20260819_md",
+      "path": "research/NG_EXHAUSTION_CONTINUOUS_LIVE_INFORMATION_CORRECTION_20260819.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "b7d75c3f34e468c5a84503d80f2a964ba7a07653e16983050daf1844a9db98ce",
+      "bytes": 2942,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_CONTINUOUS_LIVE_INFORMATION_CORRECTION_20260819.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_full_causal_information_correction_20260819_md",
+      "path": "research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "fc08cbe26dd25f74f0438d218d201a370aef6448ef6da3df32647e6438c5bb16",
+      "bytes": 4639,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_FULL_CAUSAL_INFORMATION_CORRECTION_20260819.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_prior_model_price_correction_20260819_md",
+      "path": "research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "67280c2bdf3204c3ac93a52fd44df86ee951a1f17b62b3b284e7a3b4d77b7845",
+      "bytes": 4731,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_PRIOR_MODEL_PRICE_CORRECTION_20260819.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_polarity_not_primary_target_correction_20260819_md",
+      "path": "research/NG_EXHAUSTION_POLARITY_NOT_PRIMARY_TARGET_CORRECTION_20260819.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "d449ed24c0d2a6f51d11cd49fa734eef42d0d06440e50acb7bd0bc1f1b3b1cc7",
+      "bytes": 2493,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_POLARITY_NOT_PRIMARY_TARGET_CORRECTION_20260819.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_v3_nonauthoritative_results_extra_agent_v4_carryforward_20260820_md",
+      "path": "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "b3fa5af108ffac6272aec5310edcdda83c80ce558541d56c1aafbe4a2eb933c4",
+      "bytes": 6553,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_V3_NONAUTHORITATIVE_RESULTS_EXTRA_AGENT_V4_CARRYFORWARD_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_md",
+      "path": "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "a99cfaad0eab23f19b17b59a98a16481c4ae9283bd5c66ced9f7e3cdd1d6f7ad",
+      "bytes": 14357,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_ng_exhaustion_v3_extra_agent_information_findings_20260820_json",
+      "path": "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "16f894dbb4be6857b8fa4cc01add3d4c8020a7a4c97b5efcc3c3564397f6eb6b",
+      "bytes": 4332,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/NG_EXHAUSTION_V3_EXTRA_AGENT_INFORMATION_FINDINGS_20260820.json",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_kalshi_ng_exhaustion_frankie_data_feed_inventory_20260824_md",
+      "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md",
+      "revision": "b4f364f0812cd964c68faf3cef948b28d4603c90",
+      "sha256": "31ff5a9d7e5d2f22cc2740f1f8010d36f37a32d2e17bee2b6794140823bddbec",
+      "bytes": 7763,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/NG_EXHAUSTION_FRANKIE_DATA_FEED_INVENTORY_20260824.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "baseline.keep_research_kalshi_ng_exhaustion_frankie_source_file_inventory_20260824_md",
+      "path": "research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md",
+      "revision": "b4f364f0812cd964c68faf3cef948b28d4603c90",
+      "sha256": "1603a4bc329c6aabd9f62ee76c755651c1059a609c7cf8a52d21217a78cce24e",
+      "bytes": 13190,
+      "status": "HISTORICAL_BASELINE",
+      "explanation": "Exact bytes declared in retained historical knowledge. Preserve original claims and later review caveats; historical instructions do not override the current task.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "declared_original_path": "research/kalshi/NG_EXHAUSTION_FRANKIE_SOURCE_FILE_INVENTORY_20260824.md",
+        "declared_load_mode": "RETRIEVAL",
+        "identity_authority": "retained historical prompt full SHA256"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.072",
+      "path": "research/kalshi/frankie_boss/sunday_native_runtime.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "6ff672ce3f6c002233ffdec8a5091d5b0a6d616713b35a88e4967fad40635958",
+      "bytes": 11855,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "8f6841a2fa3b38c24175021ff2d5c1fbd10892d3",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.073",
+      "path": "research/kalshi/frankie_boss/dipole_classroom.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "e523372aa5ed5341c59056aafc2e786bbaf788989fccd584c1788ce4a3bbc8bb",
+      "bytes": 42995,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "a672c0c6a584a121fefc572c4b0b5dca5b48f823",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.074",
+      "path": "research/kalshi/frankie_boss/dipole_classroom_final_review.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "4d82fa6fb94669156d03e02ea030edfd353745d3f05acd34df8846d027841452",
+      "bytes": 41664,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "6d49448af8b22bef59a4c54c7446b714afc76159",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.075",
+      "path": "research/kalshi/frankie_boss/sunday_20260915_package/FB/actual-feedback-run/execution/cycle-00/principal/historical-prompt.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "8ff55bb2a5bb6a0e3549b0260d38b0e9237b26a020ab5d8fad8372e77a6d7705",
+      "bytes": 158950,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "66122c702de567461a2b43d74806d2137265f618",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.076",
+      "path": "odcore/dipole_predictor.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "4b505735a34cfdf0043f4ee46dc451320448921c1d806cc0dd00022ceac5cdf7",
+      "bytes": 7017,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "3a20eab1ecc5d136c29f275e6fda636e79352556",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.077",
+      "path": "odcore/dipole_trade.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "37ca2fcb37a4ae04bf582300cc979313f1b0d66dd9131c724e6bfff306457ebf",
+      "bytes": 6050,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "2f30220103fe07dac92ffea14c4d37cacafea772",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.078",
+      "path": "vendored_build_kit/_markets_algebraic_dipole.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "a8abb6699fdf9188c85228ee3c647a0361cc07104b369e12fa1bb08d1075b533",
+      "bytes": 7260,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "5535c0148af10fedd02cbb55ae8bb9200b541e4a",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.079",
+      "path": "SESSION_HANDOFF_2026-06-21_S33.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "d4d0f03f50d7c09fa5e6a93bc4ec04ed0dc25c9d1b0f017b39712eef74e92b77",
+      "bytes": 7352,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "2f29cb832dd126b35eca05531b575a072b5b4a6b",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.080",
+      "path": "SESSION_HANDOFF_2026-06-13_S30.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "cf86f2aec3f2c643ee06b6b10fc9dc97194481e7dcc38b3369a745e48240fdf9",
+      "bytes": 5665,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "40e7a25dfb4803120af9f0e33b9a4197e5b68a95",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.081",
+      "path": "SESSION_HANDOFF_2026-06-21_S34.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "3b9369e188ebf91bedba24fb37a77c174cfa0c9ea4465966a60d1c1b78086cbf",
+      "bytes": 6654,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "df7516498f66f7bb325bfcf720b762002e865248",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.082",
+      "path": "SESSION_HANDOFF_2026-06-21_S35.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "f602d4be4af94f8b97733889fd32ac62c8920a590512ce27ce1d2c45051b4210",
+      "bytes": 19149,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "a81b61bd5cd8f810b2e63cbd2bda7b14b37e9a6c",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.083",
+      "path": "vendored_build_kit/_markets_dipole_chunker_stack.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "e3ae4df67fe2d1c8c25b31838e428d84a8b8bbf6e21510f11aa59b0d0dbdc886",
+      "bytes": 13219,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "ec12e0853fd8ace670d5182e10ba10a93646057c",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.084",
+      "path": "vendored_build_kit/_markets_dipole_kfold.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "e764cb6cdf17c40c0ed0beeaf43a0f275b123dd181469bb1358a01b97b6e3473",
+      "bytes": 9012,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "0a5c2b3d6a7425fcb36992e0764f94b51e40e3ac",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.085",
+      "path": "vendored_build_kit/_markets_dipole_export_centroids_v2.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "c717ba9ed66c7f1fca284ded6bd07274df76b54f76b164effb283b04f539c78e",
+      "bytes": 7225,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "9dfb5cfd204f5092866caddd6201af19190e68a2",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.086",
+      "path": "CLAUDE_ARCHIVE_OD.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "fca1e604678fd82408467ab5403301b03e9dcf5ca20681c99fda943019f512da",
+      "bytes": 254468,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "b26af8b40efcc9e4eeea0c69c1be76621ef8a831",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.087",
+      "path": "odcore/operators.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "4f7ee11f9bef96999e8ec508eef8126e5b53cdfb86cdc44b855307683ff05a03",
+      "bytes": 6862,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "d298b1aa5c7cbe303c99fc696b1824521ccd57f3",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.088",
+      "path": "odcore/null_extract.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "e030ca6dfa11ffa2c3871d59a1267c25e16db42d2f1f6b9eb42ea8246747034a",
+      "bytes": 8439,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "f797e6e6b7f31ba147285fb6eafe6eb02edf1083",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.089",
+      "path": "odcore/coupling_scanner.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "e5516b01299be450fbdf280785339d84128332cd3884be9c8201b1465aebced8",
+      "bytes": 5988,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "8da51932386564e0872478735b812613731e63da",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.090",
+      "path": "research/kalshi/frankie_boss/TEACHER_MATERIAL_RECONCILIATION_20260914.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "ef75c0abefc975b47e1d1bf4dd6cc830f6324a1b40bb294ffcb01c6ae770018c",
+      "bytes": 12710,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "2373e50e480805b3715b565409ace9804583b745",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.091",
+      "path": "odcore/info_dipole.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "0fb1f3d868973fcf0ee25be30d7ffe1f7b388a9235a19d893f8495012c0df23b",
+      "bytes": 9291,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "c04751cbe5f92952e33328f6c04fcae6392e05e5",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.092",
+      "path": "_info_dipole_timing_test.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "478b04bfbe2c3932e10fee96ba0674be96901b6afb390e53cb008770a56559dd",
+      "bytes": 4980,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "073ef16bfaa10cae5ada948434963ad2f43b06fe",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.093",
+      "path": "_info_dipole_timing_test_results.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "868afae1e73f14c2f65ae20efca561e58d4ef30c8a8d6988d5a2ad0b565dc654",
+      "bytes": 1339,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "eb822e58728cb9496d33b1f2f3cfb9c74d5eee26",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.094",
+      "path": "S36_NETCOST_BACKTEST_FINDINGS.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "88c330259c10442947758e9c0a3a0df96d2daf9e74b4ec3ef9756167ac637455",
+      "bytes": 18172,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "81071ae77407a05b942f33e49dd6d57c18ba5ffb",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.095",
+      "path": "_info_dipole_harness.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "c0adfc40dcc07e2e296daa26b5da9c4e20c7d00a6b34445df5ca1687e3222dda",
+      "bytes": 9439,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "f1b2c81f823430fe12dc7f1afc62930200b51f79",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.096",
+      "path": "_info_dipole_harness_results.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "ace94a10b8bb2b35f45a37a519ef7fb364c138f10508ce5d6a72c3a8026130e8",
+      "bytes": 4816,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "4e10e9a41e430d9b28d9086aa5f8a96d675d5595",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.097",
+      "path": "_info_dipole_regime_gate.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "fea2c918c3b28dc39cf668415bec5b64c80a4305335256a2e808f2e75a10fe18",
+      "bytes": 8141,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "901228abbd0f3ee1b9230520a0dad7215c902831",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.098",
+      "path": "_info_dipole_gated_swing.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "b1cedf51c9da47a8d2c60ccce317716637680192c927c036693f9a56f177fb4d",
+      "bytes": 7691,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "44e92e60fd7cf62063e87939eaa93938d75c94d5",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.099",
+      "path": "research/ng_dipole_native_shape_audit.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "5e595b7dd89defff320273934e8893d727ee1a291efaf3f232634cb5a7d7d688",
+      "bytes": 19072,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "2b3c6772d2e7114a7f6549eef3bd616050c503a0",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.100",
+      "path": "research/ng_dipole_runway_audit.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "670794f2f783d33f49523d370db6e6fb88c15f0ed6c88de67cfe5cd6a29ea5fa",
+      "bytes": 12984,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "b5e1aaf69a66a07316a9bb65cd94c06bfd299cef",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.101",
+      "path": "_info_dipole_trailing_backtest_results.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "09740cd80f16afcb8a80b42db2219c8c18892fef85401b0aea52d931b3bb266b",
+      "bytes": 3059,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "16b876f36a05b729d716add93acf4d7521c1f0e7",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.102",
+      "path": "_info_dipole_trailing_backtest.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "eee207ba4882ac63a66a493f330ab899c834ed85858d763b06222c204107005c",
+      "bytes": 11929,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "16f32cc8d09ddaabe51203798b01cd1409517700",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.103",
+      "path": "HANDOFF_PHASE1_5.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "e8709a42c99d6e5bf86e7f6fc77a4e8f676849f3087178980fc9cdc29580cb5e",
+      "bytes": 11725,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "6ef592a10e32519d0e1a54a9055bf1c9c9d91721",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.104",
+      "path": "HANDOFF_DESKTOP.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "39aca9bacec7cd1321f65e9f8ddf14a62c1895b73e221d9d5370c6e68c3fdeee",
+      "bytes": 8424,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "65c161748e36f9ecb78c308e8bb9bfd1a7b2fcfa",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.105",
+      "path": "research/FRANKIE_NG_EXHAUSTION_BRAIN_LESSON_PROPOSAL_20260817.md",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "e78b49faa8ba19c56988dfd7ba14acbc759e8179754fc4355262768268244619",
+      "bytes": 2111,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "5c2a1ffd91e0987fd53feb209f0120e81f959569",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.106",
+      "path": "_info_dipole_fee_floor.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "7036d5da64e6c332c98b46c85098495067ae67391d6730c78603161d6b8cf947",
+      "bytes": 3693,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "20fdd62225cc08bb3e7e13ba8c2402c68ebc94b2",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.107",
+      "path": "_info_dipole_flow_detrend.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "69e8ba1ea42794aa40cddc62b7538766a356bda823958d8d7a0686968b782dfc",
+      "bytes": 4510,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "dc3209ad5d6f69dbc1455aa8f47257a9990b39dc",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.108",
+      "path": "_info_dipole_flow_probe.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "75d4215322d12bfc1815c72b3122ff669c3cb46e29760c00e13be9f735372e9a",
+      "bytes": 6477,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "c10b92d80ac9fd3db72717422a72420f5850f706",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.109",
+      "path": "_info_dipole_flow_robustness.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "92da5afe7f06e4878d2c65369affd19fec5a150f6f10017c5802202cc6b526d5",
+      "bytes": 3911,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "60667ef53103e98aa4708a5d8046f3b690e6054d",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.110",
+      "path": "_info_dipole_netcost_backtest.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "2205db0386e2f0b3675cee0f9a0ac72a31855da8ce0a665944600594a66cc2df",
+      "bytes": 11589,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "d34b909c41306dbfb59af038085abdca9af1ded9",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.111",
+      "path": "_info_dipole_swing_backtest.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "7f0f9ce36cc3feec0e1e509b190d4b6ca0c1614ffaab288b969f128b59f94964",
+      "bytes": 15919,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "bfa24b4fe18bfd4e67d3a6759ab20c7437e69bad",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.112",
+      "path": "_info_dipole_trend_flip.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "954f6699bd38483a5df1489a14b3fb71b822ed2c55b47b58b2ed2ef15b73cb35",
+      "bytes": 7407,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "930978544dbf460d0ad2c512713b9ff53279f341",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.113",
+      "path": "vendored_build_kit/_markets_dipole_export_centroids.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "a1a2f0d327806d3afa39f67ecf25c78bd3af4f71da551994954d55885841e938",
+      "bytes": 5563,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "43db3d58c13b0e060d0e3d52b8b588292ff7bc81",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.114",
+      "path": "vendored_build_kit/_markets_dipole_separation.py",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "dd1bb890b2943de19ae6c2c70eb3cea8e178733b7798e2343bb5c072e0a79e55",
+      "bytes": 4576,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "3ffe13d0c0bca39f974d2b886aef990ca2b1f130",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.115",
+      "path": "_info_dipole_flow_probe_results.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "626e671761812f9dee6a6ee5babf6da12bb16182c710f3468502289856e02f64",
+      "bytes": 7618,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "31094c8d4b16c25d5a9b003fbbe73ae9f1da06b3",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.116",
+      "path": "_info_dipole_gated_swing_results.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "f29a72d75aa8cc7706bc6f346b8b4d53834f42d17c75309035789227892218a5",
+      "bytes": 5458,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "1f723349f7217e8b4ed65b12a93e95973ed2560a",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.117",
+      "path": "_info_dipole_netcost_backtest_results.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "189a550edb40a726443f23c6c8f509e2b8c532f6e89869906c27a526e5ffa37d",
+      "bytes": 6490,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "433cae3d060d622f22b10ab69aa8c3790d16ba38",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.118",
+      "path": "_info_dipole_regime_gate_results.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "dac01c6615aa9349e2bae019a7a23be88c26ad0e1c11004c7570286c40da22a8",
+      "bytes": 3977,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "2eb930147ebc815a264a08907caf47d5ca3b7778",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.119",
+      "path": "_info_dipole_swing_backtest_results.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "353669ac8a9dc81cddd076cda83ddb01d580402e618ad154dcbb5d286a5ca73c",
+      "bytes": 10238,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "4c5e766d6b3ff541db30d7abe55987eef151f018",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.120",
+      "path": "_info_dipole_swing_backtest_results_realbins.json",
+      "revision": "bb28b35eefd3cb2dc602031800ac9b7d3d2d5175",
+      "sha256": "6dabbb69da4dc3f0f20b683901824fb21c5836895da0006d30d9004b6bf7a277",
+      "bytes": 10483,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "98fcbe8b27c92176896e269f36fa811767f8bfbc",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.121",
+      "path": "research/kalshi/frankie_boss/c15_teacher.py",
+      "revision": "ffcb2b009e72522f3791b3059b093841d2fe17b7",
+      "sha256": "cd33120fb7c4064e00bd6ee63312c91f001120bd9aadf1c99aea505d8450e0e3",
+      "bytes": 14447,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "9c265dcd65104e4a91a935b1d7b00616ae6bdd23",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.122",
+      "path": "research/kalshi/frankie_boss/c15_teacher_r3.py",
+      "revision": "ffcb2b009e72522f3791b3059b093841d2fe17b7",
+      "sha256": "e82670ca3732a7e27e0aacc2a6e4b449b57044f7380b274a5d38062eb87acd62",
+      "bytes": 19096,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "19c438b8c014ddaa59e5f019bd2fef90f5dd8ba9",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.123",
+      "path": "research/kalshi/frankie_boss/c15_dstate.py",
+      "revision": "ffcb2b009e72522f3791b3059b093841d2fe17b7",
+      "sha256": "0347563ba14884a2980a86c8aca7958068d5c9f5c54ff22d3954966c6d89e5fc",
+      "bytes": 15221,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "82ebb08af95119e1c0ba6857d5549c1ce859f2e9",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.124",
+      "path": "research/kalshi/frankie_boss/c15_normalizer.py",
+      "revision": "ffcb2b009e72522f3791b3059b093841d2fe17b7",
+      "sha256": "11fcf304e00beab7a8acc5f1b983b322c8e01e1ea1a44905a7d1da8a8cff1afc",
+      "bytes": 12529,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "ad47c415669e00fc9ae47bb109cefb6c661a5edf",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.125",
+      "path": "research/kalshi/frankie_boss/dipole_target.py",
+      "revision": "ffcb2b009e72522f3791b3059b093841d2fe17b7",
+      "sha256": "e3f89eaca9553271ba7ec1e505d21a1b07c681f9fb9ca0673fa11cc515b4ab82",
+      "bytes": 15465,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "12b381e62092c20f77300013760f4d2b824d92b6",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.126",
+      "path": "research/kalshi/frankie_boss/DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md",
+      "revision": "ffcb2b009e72522f3791b3059b093841d2fe17b7",
+      "sha256": "f3b1a9dc0e9d36ec2cfc221e78954b80768c40412034de05539638ec4fc22409",
+      "bytes": 23923,
+      "status": "REVIEWED_RESEARCH_WITH_CAVEATS",
+      "explanation": "Reviewed qualifications for K01-K10; use these alongside every historical source.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "31434f3422b2722779038c3aa1f4d8d99c278f14",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": []
+    },
+    {
+      "id": "review.127",
+      "path": "research/kalshi/agents/frankie_native_raw_mbo_oct45_realtime_mission_20260828.md",
+      "revision": "1d43c158bed2617a78a65febc0506b6b5afe0380",
+      "sha256": "429a50abbf0886d9babd791306a1e0167cc980296ce8eb479333f54718985305",
+      "bytes": 34562,
+      "status": "UPDATED_HISTORICAL_MISSION",
+      "explanation": "Retained full source supporting the reviewed gap inventory or current governed mathematics. Read with the K01-K10 qualifications; no automatic signal or curriculum promotion.",
+      "required": true,
+      "access": "SHARED_RESEARCH",
+      "provenance": {
+        "repository": "DavisAI1974/Markets",
+        "git_blob_sha": "329353276436961ae522bb7321ac553af12f215b",
+        "review": "DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md"
+      },
+      "supersedes": [
+        "baseline.native_rt_mission"
+      ]
+    }
+  ]
+}

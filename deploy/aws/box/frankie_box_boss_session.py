@@ -1647,6 +1647,16 @@ class Session:
             bound = load_json(answer_path).get('correction_request') or {}
             if bound.get('request_sha256') != correction['request_sha256'] or bound.get('post_grade_hash') != correction['post_grade_hash']:
                 self.refuse(f'correction: {answer_path.name} answers another correction request ({bound.get("request_sha256", "")[:16]} / {bound.get("post_grade_hash", "")[:16]}); move it aside with a receipt')
+        scientific_exchange = None
+        if correction.get('scientific_review_request') is not None:
+            cache_module = _box_module('frankie_box_classroom_cache')
+            visible = C.visible_of(self.request)
+            science_cache = cache_module.ClassroomCache(d / 'scientific-dialogue',
+                dict(cache_module.identity(self,visible,C),correction_request_hash=correction['request_sha256']),
+                writer=write_json)
+            scientific_exchange = _box_module('frankie_box_scientific_dialogue').run(
+                self,correction,root=ROOT,cache=science_cache,classroom_module=C,
+                staged_module=_box_module('frankie_box_staged_session'))
         if not answer_path.exists():
             text = C.correction_prompt(correction, ledgers, cycle=self.cycle)
             parsed, call = self._classroom_call('classroom-correction', text, lambda body: C.parse_correction(body, correction), 'boss')
@@ -1656,6 +1666,8 @@ class Session:
         parsed = load_json(answer_path)['parsed']
         session_id, model_identity = response['session_id'], response['model_identity_as_reported_by_session']
         reply = C.correction_response(correction, parsed, session_id=session_id, model_identity=model_identity)
+        if scientific_exchange is not None:
+            reply['dipole_scientific_exchange'] = scientific_exchange
         (self.out / 'correction-response.json').write_bytes(json.dumps(reply, indent=1, sort_keys=True, ensure_ascii=False).encode('utf-8'))
         request_sha256, response_sha256 = C.attestation_request_sha256(correction), C.adapter_digest(reply)
         engine = load_json(self.work / 'engine.json') if (self.work / 'engine.json').exists() else {}

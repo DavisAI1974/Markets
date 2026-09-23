@@ -87,9 +87,11 @@ def identity(session, visible, module):
     box = Path(module.__file__).parent
     repo = box.parents[2] / 'research' / 'kalshi' / 'frankie_boss'
     paths = [box / name for name in ('frankie_box_boss_session.py', 'frankie_box_classroom.py',
-             'frankie_box_classroom_cache.py', 'frankie_box_docs.py')]
+             'frankie_box_classroom_cache.py', 'frankie_box_docs.py', 'frankie_box_staged_reading.py',
+             'frankie_box_staged_session.py', 'frankie_box_scientific_dialogue.py')]
     paths.extend(sorted(repo.glob('dipole_classroom*.py')))
-    paths.extend([repo / 'frankie_principal_adapter.py', repo / 'c15_journal.py'])
+    paths.extend([repo / 'frankie_principal_adapter.py', repo / 'c15_journal.py',
+                  repo / 'dipole_shared_knowledge.py', repo / 'dipole_scientific_review.py'])
     engine = getattr(session, 'engine', None) or {}
     lane = getattr(session, 'serverless', None) or {}
     return dict(schema='FRANKIE_CLASSROOM_CACHE_IDENTITY_V1',

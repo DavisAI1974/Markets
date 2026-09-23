@@ -39,8 +39,14 @@ from .frankie_principal_adapter import (
 class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
     """Existing principal protocol plus a mandatory same-session classroom."""
 
-    def __init__(self, *args, classroom_package, audit_directory=None, **kwargs):
+    def __init__(self, *args, classroom_package, audit_directory=None, shared_knowledge=None, **kwargs):
         self.classroom_package = validate_package(classroom_package)
+        if shared_knowledge is not None:
+            from .dipole_shared_knowledge import validate_descriptor
+            shared_knowledge=validate_descriptor(shared_knowledge)
+            if self.classroom_package['pre_message'].get('shared_knowledge')!=shared_knowledge:
+                raise ValueError('principal and teacher research snapshots differ')
+        self.shared_knowledge=shared_knowledge
         super().__init__(*args, **kwargs)
         self.audit_directory = (Path(audit_directory) if audit_directory is not None
                                 else self.directory.parent / "classroom-audit").resolve()

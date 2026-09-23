@@ -106,6 +106,15 @@ class ClassroomActualHost(base.ActualHost):
         super().__init__(*args, **kwargs)
         self.classroom_package = None
 
+    def _shared_knowledge(self):
+        configured=self.config.get('shared_knowledge')
+        if configured is None:
+            return None
+        if type(configured) is not dict or set(configured)!={'directory','snapshot_hash'}:
+            raise ValueError('shared knowledge requires an explicit directory and immutable snapshot hash')
+        from research.kalshi.frankie_boss.dipole_shared_knowledge import load_snapshot, descriptor
+        return descriptor(load_snapshot(configured['directory'],configured['snapshot_hash']))
+
     def _classroom_paths(self, cycle_directory):
         directory = Path(cycle_directory)
         return {
@@ -186,6 +195,7 @@ class ClassroomActualHost(base.ActualHost):
             history=self._history(index),
             prior_grade=prior_grade,
             learning_history=learned,
+            shared_knowledge=self._shared_knowledge(),
         )
         if tuple(package["source"]["context_cursors"]) != tuple(
             self.cache.receipt["context_cursors"]
@@ -232,6 +242,7 @@ class ClassroomActualHost(base.ActualHost):
             receiver_commit=c["receiver_commit"],
             python=sys.executable,
             admission=c.get("principal_admission"),
+            shared_knowledge=self._shared_knowledge(),
             retained_directory=str(Path(c["retained_witnesses"]["path"]).parent),
             expected_retained_witnesses_sha256=c["retained_witnesses"]["sha256"],
             delivery_receipt=c["delivery_receipt"]["path"],
