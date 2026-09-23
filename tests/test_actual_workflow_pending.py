@@ -184,3 +184,62 @@ def test_actual_retained_preparation_refuses_changed_evidence(modules, retained,
     if change=='input':h.cache.receipt['input_hash']='foreign'
     with pytest.raises(ValueError):
         h.prepared_before_restart(binding,'same-run-cycle-00',record)
+
+
+def test_transport_attention_preserves_dispatch_job_not_spool_directory(modules, retained):
+    actual,wait=modules
+    configuration,cycle=retained
+    h=host(actual,configuration,cycle)
+    spool=cycle/'critic-spool'/('c'*64)
+    spool.mkdir(parents=True)
+    binding={'job_id':'d'*64,'body_sha256':actual.sha(cycle/'actual-critic-request.json')}
+    (spool/'dispatch.json').write_text(json.dumps({'binding':binding}))
+    with pytest.raises(wait.WorkflowPending) as pending:
+        h.transport_pending()
+    assert pending.value.result['wait_receipt']['job_id']=='d'*64
+
+
+def test_initial_execution_scope_preserves_original_authorized_roster_on_resume(modules, retained):
+    _,wait=modules
+    configuration,cycle=retained
+    wait.write_execution_scope(configuration,target_cycles=3,total_cycles=5)
+    receipt=wait.write_wait_receipt(configuration,cycle,'readiness')
+    assert 'workflow-execution-scope.json' in receipt['wait_receipt']['artifacts']
+    assert wait.resume_admission(configuration,receipt['receipt_sha256'])==3
+
+
+@pytest.mark.parametrize('target,total',[(0,5),(6,5),(True,5),(3,True)])
+def test_invalid_execution_scope_refused(modules, retained, target, total):
+    _,wait=modules
+    configuration,_=retained
+    with pytest.raises(ValueError):
+        wait.write_execution_scope(configuration,target_cycles=target,total_cycles=total)
+
+
+def test_execution_scope_cannot_expand_or_replace_after_first_authorization(modules, retained):
+    _,wait=modules
+    configuration,_=retained
+    wait.write_execution_scope(configuration,target_cycles=3,total_cycles=5)
+    wait.write_execution_scope(configuration,target_cycles=3,total_cycles=5)
+    with pytest.raises(ValueError):
+        wait.write_execution_scope(configuration,target_cycles=4,total_cycles=5)
+
+
+def test_resume_refuses_scope_changed_since_wait(modules, retained):
+    _,wait=modules
+    configuration,cycle=retained
+    wait.write_execution_scope(configuration,target_cycles=3,total_cycles=5)
+    receipt=wait.write_wait_receipt(configuration,cycle,'readiness')
+    path=Path(configuration['run_directory'])/'workflow-execution-scope.json'
+    value=json.loads(path.read_bytes())
+    value['target_cycles']=5
+    path.write_bytes(wait.canonical(value))
+    with pytest.raises(ValueError):
+        wait.resume_admission(configuration,receipt['receipt_sha256'])
+
+
+def test_legacy_wait_without_execution_scope_stays_capped(modules, retained):
+    _,wait=modules
+    configuration,cycle=retained
+    receipt=wait.write_wait_receipt(configuration,cycle,'readiness')
+    assert wait.resume_admission(configuration,receipt['receipt_sha256'])==1
