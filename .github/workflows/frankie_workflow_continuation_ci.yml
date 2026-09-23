@@ -9,6 +9,12 @@ on:
       - 'research/kalshi/frankie_boss/operations/run_actual_sunday_ec2.py'
       - 'research/kalshi/frankie_boss/operations/day_pipeline.py'
       - 'deploy/aws/host/day_cycles.ps1'
+      - 'research/kalshi/frankie_boss/operations/workflow_delivery.py'
+      - 'deploy/aws/host/build_readiness_delivery.py'
+      - 'deploy/aws/host/frankie_host_record_principal_response.ps1'
+      - '.github/workflows/frankie_deliver_readiness.yml'
+      - '.github/workflows/frankie_host_record_principal_response.yml'
+      - 'tests/test_workflow_delivery.py'
       - 'tests/test_workflow_wait_receipts.py'
       - 'tests/test_day_pipeline_wait_resume.py'
       - 'tests/test_actual_runner_pending_return.py'
@@ -35,4 +41,4 @@ jobs:
         run: command -v pwsh
       - name: Real receipt files and actual pipeline with fake process boundary
         working-directory: tests
-        run: python -B -m pytest test_workflow_wait_receipts.py test_day_pipeline_wait_resume.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider
+        run: python -B -m pytest test_workflow_wait_receipts.py test_day_pipeline_wait_resume.py test_workflow_delivery.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider
