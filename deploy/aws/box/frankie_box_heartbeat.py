@@ -19,7 +19,7 @@ import sys
 import time
 from pathlib import Path
 
-PHASES = ('downloaded', 'verified', 'reading', 'deriving', 'classroom', 'writing', 'pushing', 'correction', 'done')
+PHASES = ('downloaded', 'verified', 'reading', 'deriving', 'classroom', 'writing', 'pushing', 'correction', 'done', 'derived', 'teach')
 BUCKET = 'frankie-granite42-568968024170-us-east-1'
 REPO = 'https://github.com/DavisAI1974/Markets.git'
 
@@ -73,6 +73,7 @@ def main():
     p.add_argument('--base', default='claude/cycle-0-frankie-box-rerun-od5sxk')
     p.add_argument('--once', action='store_true')
     a = p.parse_args()
+    from frankie_box_progress import snapshot
     session = Path(a.session)
     branch = f'root/cycle-{a.cycle}-progress'
     rel = f'research/kalshi/frankie_boss/runs/{a.day}/root/progress.jsonl'
@@ -94,6 +95,7 @@ def main():
         now = int(time.time())
         beat = dict(schema='ROOT_PROGRESS_V1', cycle_index=a.cycle, request_sha256=read(session / 'request_sha256', ''),
                     phase=phase, at=now, note=read(session / 'note', '')[:400], host='frankie-box i-035994afa8bdf66a5')
+        beat['work'] = snapshot(session, beat['request_sha256'], phase)
         line = json.dumps(beat, sort_keys=True)
         if s3_ok:
             key = f'host-deliveries/{a.day}/principal-response/cycle-{a.cycle}/progress/progress-{now}-{phase}.json'

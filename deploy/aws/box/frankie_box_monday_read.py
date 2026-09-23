@@ -63,7 +63,7 @@ def open_view(output):
     return view, recovered
 
 
-def derive(view, work):
+def derive(view, work, progress=None):
     """The session's legacy derivation (frankie_box_boss_session.Session.derive), on every record of the day."""
     from research.kalshi.frankie_boss.context_session import journal_prefix
     from research.kalshi.frankie_raw_mbo_benchmark import native_roll20
@@ -80,7 +80,10 @@ def derive(view, work):
     records = legacy_count = 0
     previous_book = None
     final = view.chain.next_cursor - 1
-    for index, payload in enumerate(journal_prefix(view, final)):
+    source = journal_prefix(view, final)
+    if progress is not None:
+        source = progress.track(source, view.chain.next_cursor, 'root-legacy-records')
+    for index, payload in enumerate(source):
         record = {k: v for k, v in payload['raw_record'].items() if not isinstance(v, (bytes, bytearray))}
         records += 1
         try:
@@ -114,6 +117,8 @@ def derive(view, work):
                                        **describe_structure(frame.get('raw_actions') or [])))
             except Exception as error:
                 failures.append(dict(index=index, structure=True, error=f'{type(error).__name__}: {error}'))
+    if progress is not None:
+        progress.update('root-legacy-finalize')
     for spool in (prices, frames, structures, failures):
         spool.close()
     buys, sells, first = binner.series()
@@ -169,10 +174,13 @@ def read(commit, output_root):
     READ_PARENT.mkdir(parents=True, exist_ok=True)
     output.mkdir(mode=0o700)
     sync_directory(READ_PARENT)
+    from frankie_box_progress import Probe
+    progress = Probe(output, commit, 'monday-read')
+    progress.update('verifying-source')
     started = time.time()
     view, recovered = open_view(output)
     try:
-        layers, counts, (prices, frames, structures, roll, first, buys, sells) = derive(view, output)
+        layers, counts, (prices, frames, structures, roll, first, buys, sells) = derive(view, output, progress)
         chain = dict(count=view.chain.next_cursor, head=view.chain.prefix_hash)
     finally:
         view.journal.close()
@@ -183,14 +191,17 @@ def read(commit, output_root):
                    pin_group='none: the trading day carries no calculation pin; bedrock tables not rendered',
                    layers=layers, **counts)
     import frankie_box_digest_document as D
+    progress.update('root-digest')
     proof = D.write_digest(output / 'monday-read-digest.md', receipt, layers, prices, frames, structures,
                            roll, first, buys, sells, bedrock_entries={}, scratch_directory=output / 'digest-scratch')
+    progress.update('granite-token-count')
     slices = tokens(output / 'monday-read-digest.md')
     result = dict(receipt, digest=dict(path=proof['path'], bytes=proof['bytes'], sha256=proof['sha256'],
                                        tables=proof['tables'], verified=proof['verified']),
                   tokens=dict(tokenizer=witness(TOKENIZER), slice_bytes=1 << 20, slices=slices, total=sum(slices)),
                   seconds=round(time.time() - started, 1), model_calls=0, source_writes=0)
     save_new(output / 'monday-read-receipt.json', result)
+    progress.update('monday-read', state='complete', failed=counts['failure_count'])
     return result
 
 

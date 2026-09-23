@@ -287,7 +287,7 @@ def _move_aside(out_dir, siblings=(), schema='FRANKIE_BOX_BEDROCK_SUPERSEDE_RECE
     return str(target)
 
 
-def run(records, container, out_dir, producers, cycle, code_commit, day):
+def run(records, container, out_dir, producers, cycle, code_commit, day, *, progress=None):
     """The pinned traversal on this cycle's rows: identity -> NativeCalculationRun (the launcher's canonical arguments) ->
     NativeReplayDriver(ExchangeSessionRule, NeverInvoke, LedgerSinks) -> consume -> finalize -> reconcile (a mismatch
     raises: a ledger that does not match its counter is not evidence). Files result.json (the exact rows live in the
@@ -324,7 +324,9 @@ def run(records, container, out_dir, producers, cycle, code_commit, day):
     driver = NativeReplayDriver(identity=ident, session_rule=ExchangeSessionRule(), cadence=NeverInvoke(), run=calculation,
                                 sinks=sinks, emit_change_points=True)
     started = time.time()
-    driver.consume(stamped)
+    driver.consume(progress.track(stamped, len(records), 'root-native-records') if progress is not None else stamped)
+    if progress is not None:
+        progress.update('root-native-finalize')
     result = driver.finalize()
     result['ledger_retention'] = sinks.reconcile_all(member=calculation.member_rows_written,
                                                      lifecycle=calculation.lifecycle_rows_written,

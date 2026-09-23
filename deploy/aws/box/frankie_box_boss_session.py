@@ -183,6 +183,8 @@ class Session:
 
     # ---- phase / note (the heartbeat reads these) -------------------------------------------------------
     def phase(self, word, note=None):
+        self._probe_phase = word
+        _box_module('frankie_box_progress').for_session(self).update(word, state='complete' if word in ('done', 'derived') else 'running')
         (self.dir / 'phase').write_text(word + '\n', encoding='utf-8')
         if note is not None:
             self.note(note)
@@ -193,6 +195,7 @@ class Session:
             print(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), text, flush=True)
 
     def refuse(self, why):
+        _box_module('frankie_box_progress').for_session(self).update('refused', state='failed')
         self.note('REFUSED: ' + why)
         write_json(ROOT / 'receipts' / f'boss-session-refusal-{int(time.time())}-{uuid.uuid4().hex[:8]}.json',
                    dict(schema='FRANKIE_BOX_BOSS_SESSION_REFUSAL_V1', at=time.time(), cycle=self.cycle, reason=why))
@@ -734,7 +737,8 @@ class Session:
                                                for name in ('prices', 'frames', 'structures', 'failures')]
         legacy_count = 0
         previous_book = None
-        for index, record in enumerate(records):
+        probe = _box_module('frankie_box_progress').for_session(self)
+        for index, record in enumerate(probe.track(records, len(records), 'root-legacy-records')):
             try:
                 frame, legacy_rows = adapter.apply(record)
             except Exception as error:
@@ -766,6 +770,7 @@ class Session:
                                            **describe_structure(frame.get('raw_actions') or [])))
                 except Exception as error:
                     failures.append(dict(index=index, structure=True, error=f'{type(error).__name__}: {error}'))
+        probe.update('root-legacy-finalize')
         for rows in (prices, frames, structures, failures):
             rows.close()
         buys, sells, first = binner.series()
@@ -800,7 +805,9 @@ class Session:
         receipt['pin_identity'] = dict(sha256=pin['pins_witness']['sha256'], cycle_index=pin['cycle_index'], group=pin['group'],
                                        bedrock_layers=list(pin.get('bedrock_layers') or []))
         write_json(self.work / 'derive.json', receipt)
+        probe.update('root-digest')
         self._write_digest(receipt, layers, prices, frames, structures, roll, first, buys, sells)
+        probe.update('root-derived', state='complete', failed=len(failures))
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
         return receipt
 
@@ -874,7 +881,9 @@ class Session:
         layers = list(pin['bedrock_layers'])
         code_commit = B.producers_commit(PRODUCERS)
         self.note(f'bedrock: the pinned traversal ({code_commit[:8]}) on {len(records)} INPUT records for {len(layers)} layers')
-        run = B.run(records, container, self.work / 'bedrock', PRODUCERS, self.cycle, code_commit, self.day)
+        probe = _box_module('frankie_box_progress').for_session(self)
+        run = B.run(records, container, self.work / 'bedrock', PRODUCERS, self.cycle, code_commit, self.day, progress=probe)
+        probe.update('root-projection')
         crosswalk = B.crosswalk_records(PRODUCERS, layers)
         projected = B.project(run, self.work / 'bedrock' / 'ledgers', layers, crosswalk, derived)
         # BR-9 (Greg, 2026-09-22): sections 4.2 and 4.4 as files beside the twenty layers, from the traversal's own result and ledger

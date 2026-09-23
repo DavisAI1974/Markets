@@ -350,3 +350,36 @@ def test_measure_digest_uses_the_granite_tokenizer_when_present_and_records_a_fa
     m = s._measure_digest()
     assert m['digest']['token_basis'].startswith('estimate') and m['digest']['tokenizer_present'] is True and 'vocab file truncated' in m['digest']['tokenizer_error']
     assert any('TOKENIZER PRESENT BUT FAILED' in n for n in s._notes)
+
+
+# Work probes are telemetry only: no input filtering, calculation changes or resume cursor.
+def test_work_probe_counts_after_consumption_and_preserves_every_record(tmp_path, monkeypatch):
+    probe_module = load('frankie_box_progress')
+    monkeypatch.setattr(probe_module, 'process_token', lambda pid: 'boot:start')
+    probe = probe_module.Probe(tmp_path, 'request', 'deriving')
+    records = [object(), object(), object()]
+    iterator = probe.track(records, len(records), 'root-records')
+    assert next(iterator) is records[0]
+    first = probe_module.snapshot(tmp_path, 'request', 'deriving')
+    assert first['completed'] == 0 and first['percent'] == 0 and first['process_alive']
+    assert list(iterator) == records[1:]
+    final = probe_module.snapshot(tmp_path, 'request', 'deriving')
+    assert final['completed'] == 3 and final['percent'] == 100 and final['state'] == 'complete'
+    assert probe_module.snapshot(tmp_path, 'different', 'deriving')['status'] == 'identity_or_phase_mismatch'
+    assert probe_module.snapshot(tmp_path, 'request', 'classroom')['status'] == 'identity_or_phase_mismatch'
+    monkeypatch.setattr(probe_module, 'process_token', lambda pid: 'boot:reused')
+    assert probe_module.snapshot(tmp_path, 'request', 'deriving')['process_alive'] is False
+
+
+def test_work_probe_unknown_and_mismatched_totals_are_not_success(tmp_path):
+    module = load('frankie_box_progress')
+    probe = module.Probe(tmp_path)
+    probe.update('root-projection')
+    assert module.snapshot(tmp_path)['percent'] is None
+    assert list(probe.track([1], 2, 'root-records')) == [1]
+    result = module.snapshot(tmp_path)
+    assert result['percent'] == 50 and result['state'] == 'count_mismatch'
+    assert list(probe.track([], 0, 'empty')) == []
+    assert module.snapshot(tmp_path)['percent'] is None
+    with pytest.raises(ValueError):
+        probe.update('bad', 2, 1)
