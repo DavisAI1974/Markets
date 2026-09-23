@@ -397,3 +397,86 @@ def test_probe_highlights_are_honest_and_ignore_invalid_snapshots(tmp_path):
     assert 'worker_alive=' in text and 'in_flight=1' in text
     probe.update('root-digest')
     assert '(unknown)' in module.highlight(module.snapshot(tmp_path))
+
+
+def _two_member_mapping_fixture(tmp_path):
+    """A real hash-verified journal; the synthetic source needs no SDK or model."""
+    from dataclasses import asdict
+    from research.kalshi.frankie_boss.causal_prefix import SourceMember
+    from research.kalshi.frankie_boss.c15_journal import EvidenceJournal
+    members = [asdict(SourceMember(i, f"member-{i}.dbn", str(i + 1) * 64, 112, 2))
+               for i in range(2)]
+    directory = tmp_path / "mapping"
+    directory.mkdir()
+    journal_path = tmp_path / "source.sqlite"
+    journal = EvidenceJournal(journal_path, create=True)
+    groups, wires = [], []
+    for cursor in range(4):
+        member = cursor // 2
+        wire = bytes([cursor + 1]) * 56
+        wires.append(hashlib.sha256(wire).hexdigest())
+        record = dict(dbn_wire_bytes=wire, dbn_extraction_hash="e" * 64,
+                      ts_recv=cursor + 101, ts_event=cursor + 100,
+                      flags=128 if cursor % 2 else 0)
+        journal.append("INPUT", dict(cursor=cursor, record=record))
+        journal.append("APPLIED", dict(cursor=cursor, raw_record=record,
+            source_member_index=member, normalized=dict(source_dbn_sha256=members[member]["sha256"]),
+            terminal_prefix_hash=str(cursor + 5) * 64, receipt={} if cursor % 2 else None))
+        if cursor % 2:
+            groups.append(dict(cursor_start=cursor - 1, cursor_end=cursor,
+                source_member_index=member, plain_offset=member * 10, plain_bytes=10,
+                wire_sha256=wires[-2:]))
+    checkpoint = dict(count=journal.count, head_hash=journal.head_hash)
+    journal.close()
+    index = b"".join(json.dumps(g, sort_keys=True).encode() + b"\n" for g in groups)
+    (directory / "index.jsonl").write_bytes(index)
+    body = dict(schema="FRANKIE_SOURCE_MEMBERS_MAPPING_V2", sources=members,
+        extraction_hash="e" * 64, record_count=4, group_count=2,
+        member_ledger=dict(plain=dict(bytes=20, sha256="d" * 64)),
+        index=dict(bytes=len(index), sha256=hashlib.sha256(index).hexdigest()),
+        boss_prefix_bound=False)
+    (directory / "mapping.json").write_text(json.dumps(body))
+    source = dict(prefix_hash="8" * 64, through_cursor=3, as_of=104,
+                  source_as_of=103, arm_hash="a" * 64)
+    return dict(mapping_directory=directory,
+        expected_mapping_sha256=hashlib.sha256((directory / "mapping.json").read_bytes()).hexdigest(),
+        boss_journal_path=journal_path, journal_checkpoint=checkpoint,
+        boss_source=source, output_path=tmp_path / "binding.json")
+
+
+def test_two_member_source_binding_covers_the_whole_day_without_writing_source(tmp_path):
+    from research.kalshi.frankie_boss import frankie_source_mapping as mapping
+    args = _two_member_mapping_fixture(tmp_path)
+    before = args["boss_journal_path"].read_bytes()
+    result = mapping.bind_prefix(**args)
+    assert result["schema"] == "FRANKIE_BOSS_BYTE_PREFIX_MAPPING_V2"
+    assert result["matched_records"] == 4 and result["matched_groups"] == 2
+    assert [m["member_index"] for m in result["sources"]] == [0, 1]
+    assert result["matched_records_by_member"] == [2, 2]
+    assert args["boss_journal_path"].read_bytes() == before
+
+
+@pytest.mark.parametrize("damage", ["swapped_member", "missing_member", "wrong_count", "wrong_identity"])
+def test_two_member_mapping_rejects_invalid_member_coverage(tmp_path, damage):
+    from research.kalshi.frankie_boss import frankie_source_mapping as mapping
+    args = _two_member_mapping_fixture(tmp_path)
+    directory = args["mapping_directory"]
+    body = json.loads((directory / "mapping.json").read_bytes())
+    if damage == "swapped_member":
+        rows = [json.loads(line) for line in (directory / "index.jsonl").read_bytes().splitlines()]
+        rows[1]["source_member_index"] = 0
+        raw = b"".join(json.dumps(row).encode() + b"\n" for row in rows)
+        (directory / "index.jsonl").write_bytes(raw)
+        body["index"].update(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    elif damage == "missing_member":
+        body["sources"].pop()
+    elif damage == "wrong_count":
+        body["sources"][1]["mbo_records"] += 1
+    else:
+        body["sources"][1]["sha256"] = "f" * 64
+    raw = json.dumps(body).encode()
+    (directory / "mapping.json").write_bytes(raw)
+    args["expected_mapping_sha256"] = hashlib.sha256(raw).hexdigest()
+    with pytest.raises(ValueError):
+        mapping.bind_prefix(**args)
+    assert not args["output_path"].exists()
