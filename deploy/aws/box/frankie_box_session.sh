@@ -4,7 +4,7 @@
 # ROOT_CYCLE_00_TASK_20260920.md, box edition) from this branch's checkout on the box; the calculations are
 # Frankie's, run against the restored rows with the staged producers. The engine is the BOSS: frankie_box_boss_session.py
 # (the retained Granite vLLM on the RunPod Pod over jobs_v1); `preflight` proves the reach and starts nothing.
-# Inputs: DAY (20211003), CYCLE (00), MARKETS_REF (this branch), ACTION (start | status | preflight | verify;
+# Inputs: DAY (20211003), CYCLE (00), MARKETS_SHA (full dispatched commit), ACTION (start | status | preflight | verify;
 # default status; restart_session stops ONLY the session unit with a receipt to apply a session-code fix;
 # fetch_correction takes the host's exported classroom-correction-request.json through MAP_URL into request/;
 # correction runs the session's Dipole classroom correction turn as its own unit; derive_only = checkpoint E of the
@@ -12,9 +12,8 @@
 # the session unit untouched). Never stops a Pod, a box or the native host runner (Greg's word).
 set -u
 ROOT=/opt/frankie-box; S="$ROOT/session"
-DAY="${DAY:-20211003}"; CYCLE="${CYCLE:-00}"; MARKETS_REF="${MARKETS_REF:-claude/cycle-0-frankie-box-rerun-od5sxk}"; ACTION="${ACTION:-status}"
+DAY="${DAY:-20211003}"; CYCLE="${CYCLE:-00}"; MARKETS_SHA="${MARKETS_SHA:-}"; ACTION="${ACTION:-status}"
 UNIT="frankie-cycle-$CYCLE"
-export HOME=/root
 mkdir -p "$S/out" "$ROOT/receipts" "$ROOT/logs"
 status() {
   echo "### session status"; systemctl is-active "$UNIT.service" 2>/dev/null || echo "(no $UNIT service)"
@@ -25,17 +24,62 @@ status() {
   if [ -s "$ROOT/logs/correction-$CYCLE.log" ]; then echo "--- correction log tail ($(systemctl is-active "frankie-correction-$CYCLE.service" 2>/dev/null))"; tail -n 12 "$ROOT/logs/correction-$CYCLE.log"; fi
   systemctl is-active "frankie-heartbeat-$CYCLE.service" 2>/dev/null || echo "(no heartbeat service)"
 }
+checkout_markets() {
+  [[ "${MARKETS_SHA:-}" =~ ^[0-9a-f]{40}$ ]] || { echo "MARKETS_SHA must be the full dispatched commit"; return 2; }
+  local previous resolved running stamp intent receipt
+  previous="$(git -C "$ROOT/markets" rev-parse HEAD)" || return 2
+  git -C "$ROOT/markets" diff --quiet || { echo "markets has uncommitted source changes; preserved"; return 2; }
+  git -C "$ROOT/markets" diff --cached --quiet || { echo "markets has staged source changes; preserved"; return 2; }
+  if [ "$previous" = "$MARKETS_SHA" ]; then echo "markets HEAD $previous (already pinned)"; return 0; fi
+  running="$(systemctl list-units --type=service --state=active,activating,deactivating --no-legend --plain \
+    'frankie-cycle-*.service' 'frankie-heartbeat-*.service' 'frankie-correction-*.service')" \
+    || { echo "could not verify session units are idle; checkout unchanged"; return 2; }
+  [ -z "$running" ] || { echo "a Frankie unit is active; checkout unchanged"; return 2; }
+  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_SHA" \
+    || { echo "fetch of pinned commit failed; checkout unchanged"; return 2; }
+  resolved="$(git -C "$ROOT/markets" rev-parse FETCH_HEAD)" || return 2
+  [ "$resolved" = "$MARKETS_SHA" ] || { echo "fetched commit differs from the dispatch pin"; return 2; }
+  stamp="$(date +%s%N)"
+  intent="$ROOT/receipts/markets-checkout-intent-$stamp.json"
+  receipt="$ROOT/receipts/markets-checkout-receipt-$stamp.json"
+  "$ROOT/venv/bin/python" - "$intent" "$previous" "$MARKETS_SHA" <<'PY' || return 2
+import json, os, pathlib, sys
+path=pathlib.Path(sys.argv[1])
+body=dict(schema='FRANKIE_MARKETS_CHECKOUT_INTENT_V1',from_commit=sys.argv[2],to_commit=sys.argv[3])
+with path.open('x',encoding='utf-8') as stream:
+    stream.write(json.dumps(body,sort_keys=True)+'\n');stream.flush();os.fsync(stream.fileno())
+fd=os.open(path.parent,os.O_DIRECTORY)
+try:os.fsync(fd)
+finally:os.close(fd)
+PY
+  git -C "$ROOT/markets" checkout -q --detach "$MARKETS_SHA" || return 2
+  resolved="$(git -C "$ROOT/markets" rev-parse HEAD)" || return 2
+  [ "$resolved" = "$MARKETS_SHA" ] || { echo "checkout differs from the dispatch pin; intent retained"; return 2; }
+  "$ROOT/venv/bin/python" - "$intent" "$receipt" "$resolved" <<'PY' || return 2
+import hashlib, json, os, pathlib, sys
+intent,path=pathlib.Path(sys.argv[1]),pathlib.Path(sys.argv[2])
+body=dict(schema='FRANKIE_MARKETS_CHECKOUT_RECEIPT_V1',intent=str(intent),
+    intent_sha256=hashlib.sha256(intent.read_bytes()).hexdigest(),actual_commit=sys.argv[3])
+with path.open('x',encoding='utf-8') as stream:
+    stream.write(json.dumps(body,sort_keys=True)+'\n');stream.flush();os.fsync(stream.fileno())
+fd=os.open(path.parent,os.O_DIRECTORY)
+try:os.fsync(fd)
+finally:os.close(fd)
+PY
+  echo "markets HEAD $resolved; checkout receipt $receipt"
+}
+
 preflight() {
   # The engine is the BOSS: the retained Granite vLLM on Pod g7y3g2w1kor4l3 over jobs_v1 (frankie_box_boss_session.py).
   # Verifies the request against the authored source contract, computes the timing labels by code, reads the Pod
   # record through the SecureString /markets/frankie/granite-service (never printed) and probes /health. Starts nothing.
   echo "engine: BOSS (retained Granite vLLM, jobs_v1; frankie_box_boss_session.py --stage preflight)"
-  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
+  checkout_markets || return 2
   "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage preflight
 }
 verify() {
   echo "### verify (no session started): request digest through the adapter, the task document, the pusher's token reach"
-  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
+  checkout_markets || return 2
   TASK="$ROOT/markets/research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md"; [ -s "$TASK" ] && echo "task document: $(wc -c < "$TASK") bytes, sha256 $(sha256sum "$TASK" | cut -c1-16)" || echo "task document MISSING"
   "$ROOT/venv/bin/python" -c "
 import json,sys,time; sys.path.insert(0,'$ROOT/markets')
@@ -58,7 +102,7 @@ start_session() {
     if systemctl is-active --quiet "$UNIT.service"; then echo "$UNIT is already running; not restarting (Greg's word)"; status; return 0; fi
     [ -s "$ROOT/request/session-request.json" ] || { echo "request not on the box"; return 2; }
     [ -x "$ROOT/venv/bin/python" ] || { echo "venv not staged"; return 2; }
-    git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD
+    checkout_markets || return 2
     TASK="$ROOT/markets/research/kalshi/frankie_boss/operations/ROOT_CYCLE_00_TASK_20260920.md"; [ -s "$TASK" ] || { echo "task document missing at $TASK"; return 2; }
     preflight || return 3
     "$ROOT/venv/bin/python" -c "
@@ -66,10 +110,20 @@ import json,sys; sys.path.insert(0,'$ROOT/markets')
 from research.kalshi.frankie_boss.frankie_principal_adapter import digest
 print(digest(json.loads(open('$ROOT/request/session-request.json','rb').read())))" > "$S/request_sha256" || { echo "request digest failed"; return 2; }
     echo "request_sha256 $(cat "$S/request_sha256")"
-    echo "verified" > "$S/phase"; echo "request and data plane verified on the box; session starting" > "$S/note"; rm -f "$S/done"
+    if [ -e "$S/done" ] || [ -L "$S/done" ]; then
+      "$ROOT/venv/bin/python" - "$ROOT" "$S/done" <<'PY' || return 2
+import pathlib, sys
+root,path=pathlib.Path(sys.argv[1]),pathlib.Path(sys.argv[2])
+if path.is_symlink() or not path.is_file():raise SystemExit('completion marker must be a regular file')
+sys.path.insert(0,str(root/'markets'))
+from deploy.aws.box.frankie_box_classroom_cache import preserve
+preserve(path,'new explicitly started session retains the preceding completion marker')
+PY
+    fi
+    echo "verified" > "$S/phase"; echo "request and data plane verified on the box; session starting" > "$S/note"
     systemctl reset-failed "frankie-heartbeat-$CYCLE.service" 2>/dev/null
     systemd-run --unit "frankie-heartbeat-$CYCLE" --collect -p WorkingDirectory="$S" -p StandardOutput=append:"$ROOT/logs/heartbeat-$CYCLE.log" -p StandardError=append:"$ROOT/logs/heartbeat-$CYCLE.log" \
-      "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_heartbeat.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --base "$MARKETS_REF" >/dev/null 2>&1 || echo "heartbeat service start failed"
+      "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_heartbeat.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --base "$MARKETS_SHA" >/dev/null 2>&1 || echo "heartbeat service start failed"
     systemctl reset-failed "$UNIT.service" 2>/dev/null
     systemd-run --unit "$UNIT" --collect -p WorkingDirectory="$S" -p StandardOutput=append:"$ROOT/logs/session-$CYCLE.log" -p StandardError=append:"$ROOT/logs/session-$CYCLE.log" \
       "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage run >/dev/null 2>&1 \
@@ -84,8 +138,8 @@ derive_only() {
   for U in "$UNIT" "frankie-heartbeat-$CYCLE" "frankie-correction-$CYCLE"; do
     if systemctl is-active --quiet "$U.service"; then echo "$U is running: derive_only waits (its checkout would move the code under the running unit)"; return 2; fi
   done
-  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD || { echo "markets fetch/checkout of $MARKETS_REF failed; nothing derived"; return 2; }
-  echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD) ($MARKETS_REF)"
+  checkout_markets || return 2
+  echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD) ($MARKETS_SHA)"
   echo "producers HEAD $(git -C "$ROOT/producers" rev-parse HEAD 2>/dev/null || echo missing)"
   "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage derive_only || { echo "derive_only failed (exit $?)"; return 3; }
   M="$S/work/derive-only-measurement.json"; [ "$CYCLE" = "00" ] || M="$S/work-$CYCLE/derive-only-measurement.json"
@@ -133,7 +187,7 @@ correction() {
   if systemctl is-active --quiet "$UNIT.service"; then echo "$UNIT is running: the correction waits (its checkout would move the code under the running session)"; return 2; fi
   [ -s "$ROOT/request/classroom-correction-request.json" ] || { echo "no correction request on the box (ACTION=fetch_correction first)"; return 2; }
   [ -s "$S/out/response.json" ] || { echo "no out/response.json: the correction belongs to the session that wrote the response"; return 2; }
-  git -C "$ROOT/markets" fetch -q --depth 1 origin -- "$MARKETS_REF" && git -C "$ROOT/markets" checkout -q FETCH_HEAD && echo "markets HEAD $(git -C "$ROOT/markets" rev-parse HEAD)"
+  checkout_markets || return 2
   systemctl reset-failed "$U.service" 2>/dev/null
   systemd-run --unit "$U" --collect -p WorkingDirectory="$S" -p StandardOutput=append:"$ROOT/logs/correction-$CYCLE.log" -p StandardError=append:"$ROOT/logs/correction-$CYCLE.log" \
     "$ROOT/venv/bin/python" "$ROOT/markets/deploy/aws/box/frankie_box_boss_session.py" --session "$S" --day "$DAY" --cycle "$CYCLE" --stage correction >/dev/null 2>&1 \

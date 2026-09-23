@@ -41,7 +41,7 @@ def repo(tmp_path):
     (root/'receipts').mkdir()
     (root/'bin').mkdir()
     ctl=root/'bin'/'systemctl'
-    ctl.write_text('#!/bin/sh\n[ "$ACTIVE" = yes ]\n')
+    ctl.write_text('#!/bin/sh\nif [ "$ACTIVE" = yes ]; then echo "frankie-cycle-00.service loaded active running"; fi\nexit 0\n')
     ctl.chmod(0o755)
     return root,old,new
 
