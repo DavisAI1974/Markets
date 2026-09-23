@@ -42,7 +42,6 @@ def journal_prefix(builder, through_cursor, summary=None):
         raise ValueError('unprocessed evidence exists; builder is stopped')
     if type(through_cursor) is not int or not 0 <= through_cursor < builder.chain.next_cursor:
         raise ValueError('cutoff cursor outside applied journal')
-    summary = {} if summary is None else summary
     applied=0; pending=None
     for entry in builder.journal.entries():
         payload=entry['payload']
@@ -57,8 +56,9 @@ def journal_prefix(builder, through_cursor, summary=None):
                 raise ValueError('journal applied record differs from submitted evidence')
             applied+=1; pending=None
             if payload['cursor']<=through_cursor:
-                summary.update(journal_prefix_hash=evidence_hash(entry),
-                               journal_entries=entry['ordinal']+1)
+                if summary is not None:
+                    summary.update(journal_prefix_hash=evidence_hash(entry),
+                                   journal_entries=entry['ordinal']+1)
                 yield payload
         else:
             raise ValueError('failed or unknown journal entry cannot be mapped as complete')

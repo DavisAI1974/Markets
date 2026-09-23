@@ -85,9 +85,10 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
             or contract.get('trading_day') != launch['trading_day']
             or contract.get('cycle_count') != total or len(contract.get('cycles', [])) != total):
         raise ValueError('source_contract must cover the declared source manifest, trading day and cutoff roster')
+    from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader
     view = open_completed_schedule_view(scope, journal, checkpoint,
         checkpoint_sha256, receipt['checkpoint_state_hash'], completion,
-        reader_factory=FrankieCompactReader,
+        reader_factory=CompactConformanceReader if whole else FrankieCompactReader,
         recovery_descriptor=launch['ingestion_receipt'] if recovered is not None else None)
     try:
         if whole:

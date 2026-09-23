@@ -1,7 +1,8 @@
 """Bounded dedicated CPU workers; full row proof, small conformance-only IPC.
 
-This specialized reader is only for SourceConformanceDriver. General evidence
-consumers must use CompactReader, which returns the complete original envelope.
+This specialized reader serves source conformance and metadata-only source
+binding/scheduling. General evidence and model consumers must use CompactReader,
+which returns the complete original envelope.
 Workers open their own read-only connections; raw book objects never cross IPC.
 """
 from collections import deque

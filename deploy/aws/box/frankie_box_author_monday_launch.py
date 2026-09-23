@@ -135,13 +135,13 @@ def author(commit, output_root, preparation_root):
     descriptor_pin = witness(output/'recovered-ingestion.json')
     from research.kalshi.frankie_boss.recovered_ingestion import load_recovered_ingestion
     from research.kalshi.frankie_boss.completed_schedule_view import open_completed_schedule_view
-    from research.kalshi.frankie_boss.frankie_journal_reader import FrankieCompactReader
+    from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader
     recovered = load_recovered_ingestion(descriptor_pin)
     if recovered.container != ORIGINAL_CONTAINER:
         raise ValueError('recovered container differs from the canonical original')
     view = open_completed_schedule_view(recovered.scope, Path(recovered.container['path']),
         recovered.checkpoint_path, descriptor['checkpoint']['sha256'], recovered.receipt['checkpoint_state_hash'],
-        recovered.completion, reader_factory=FrankieCompactReader, recovery_descriptor=descriptor_pin)
+        recovered.completion, reader_factory=CompactConformanceReader, recovery_descriptor=descriptor_pin)
     try:
         lines, entity, prior_close, terminal = measure(view, recovered.completion, progress)
     finally:
