@@ -144,7 +144,15 @@ def state(tmp_path, monkeypatch):
     )
 
 
-def invoke(state, *, before=False, after=0):
+def invoke(state, *, before=False, after=0, process="benign"):
+    process_body = {
+        "benign": "[pscustomobject]@{ Name = 'svchost.exe'; CommandLine = $null; ProcessId = 1 }",
+        "alive": "[pscustomobject]@{ Name = 'python.exe'; CommandLine = 'python run_actual_sunday.py'; ProcessId = 12345 }",
+        "failed": "throw 'TEST_PROCESS_INVENTORY_FAILED'",
+        "empty": "return",
+        "python-null": "[pscustomobject]@{ Name = 'python.exe'; CommandLine = $null; ProcessId = 12345 }",
+        "launcher-blank": "[pscustomobject]@{ Name = 'py.exe'; CommandLine = '  '; ProcessId = 12345 }",
+    }[process]
     capture = state.tmp / f"move-observation-{uuid.uuid4().hex}.json"
     prelude = f"""
 $ErrorActionPreference = 'Stop'
@@ -158,6 +166,10 @@ $global:observationPath = {ps_quote(capture)}
 $global:intentDirectory = {ps_quote(state.day)}
 $global:failBeforeMove = ${str(before).lower()}
 $global:failAfterMove = {after}
+function Get-CimInstance {{
+    param($ClassName, $Filter, $ErrorAction)
+    {process_body}
+}}
 function Get-Date {{
     [DateTime]::Parse('2026-09-22T12:00:00Z').ToUniversalTime()
 }}
@@ -571,6 +583,10 @@ $RunRoot = {ps_quote(state.run_root)}
 $ToolsRoot = {ps_quote(state.tools)}
 $Python = {ps_quote(sys.executable)}
 $CycleIndex = '00'
+function Get-CimInstance {{
+    param($ClassName, $Filter, $ErrorAction)
+    [pscustomobject]@{{ Name = 'svchost.exe'; CommandLine = $null; ProcessId = 1 }}
+}}
 try {{
     . {ps_quote(SCRIPT)}
     Write-StateJson {ps_quote(target)} ([ordered]@{{ value = 'original' }})
@@ -631,4 +647,30 @@ def test_foreign_unfinished_or_bad_completion_intents_block_code_bound_moves(sta
     assert not capture.exists()
     for relative, body in state.moved.items():
         assert (state.run / relative).read_bytes() == body
+    assert_kept(state)
+
+
+@pytest.mark.parametrize("process", ["alive", "failed", "empty", "python-null", "launcher-blank"])
+def test_code_bound_process_inventory_must_prove_idle_before_any_move(state, process):
+    result, capture = invoke(state, process=process)
+    assert result.returncode != 0, result.stdout
+    assert not capture.exists(), "Unproven idle state must refuse before the first move"
+    assert not json_files(state.day, INTENT_SCHEMA)
+    assert not json_files(state.day, RECEIPT_SCHEMA)
+    for relative, body in state.moved.items():
+        assert (state.run / relative).read_bytes() == body
+    assert_kept(state)
+
+
+def test_code_bound_replay_refuses_runner_that_appeared_after_interruption(state):
+    result, _ = invoke(state, after=5)
+    assert result.returncode != 0 and "TEST_INTERRUPT_AFTER_MOVE" in result.stderr
+    intent_path = next(iter(json_files(state.day, INTENT_SCHEMA)))
+    before = {p: p.read_bytes() for p in state.day.rglob("*") if p.is_file()}
+    result, capture = invoke(state, process="alive")
+    assert result.returncode != 0, result.stdout
+    assert not capture.exists(), "Replay must re-evaluate idle state before further moves"
+    assert {p: p.read_bytes() for p in state.day.rglob("*") if p.is_file()} == before
+    assert intent_path.exists()
+    assert not json_files(state.day, RECEIPT_SCHEMA)
     assert_kept(state)

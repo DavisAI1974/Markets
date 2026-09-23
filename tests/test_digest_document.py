@@ -191,3 +191,57 @@ def test_change_after_inverse_proof_is_refused_before_publication(tmp_path, monk
                          bedrock_entries={},scratch_directory=tmp_path/'scratch')
     assert not (tmp_path/'digest.md').exists()
     assert list((tmp_path/'scratch').rglob('*'))
+
+@pytest.mark.parametrize('boundary', ['link', 'destination-sync', 'completion'])
+def test_publication_failure_keeps_verification_and_refuses_overwrite(tmp_path, monkeypatch, boundary):
+    mod=document(); target=tmp_path/'digest.md'; scratch=tmp_path/'scratch'
+    real_sync=mod._sync_directory; real_save=mod._save_new
+    if boundary=='link':
+        def failed_link(*a,**k): raise OSError('injected publication link failure')
+        monkeypatch.setattr(mod.os,'link',failed_link)
+    elif boundary=='destination-sync':
+        def failed_sync(path):
+            if Path(path)==tmp_path: raise OSError('injected destination sync failure')
+            return real_sync(path)
+        monkeypatch.setattr(mod,'_sync_directory',failed_sync)
+    else:
+        def failed_save(path,value):
+            if Path(path).name=='publication-receipt.json':
+                raise OSError('injected completion receipt failure')
+            return real_save(path,value)
+        monkeypatch.setattr(mod,'_save_new',failed_save)
+    with pytest.raises(OSError, match='injected'):
+        mod.write_digest(target,receipt(),{},[],[],[],[],0,[],[],
+                         bedrock_entries={},scratch_directory=scratch)
+    verification=json.loads((scratch/'verification-receipt.json').read_bytes())
+    stage=scratch/'digest.pending'
+    assert hashlib.sha256(stage.read_bytes()).hexdigest()==verification['sha256']
+    assert (scratch/'publication-intent.json').is_file()
+    assert not (scratch/'publication-receipt.json').exists()
+    if boundary=='link':
+        assert not target.exists()
+    else:
+        # The publication name can exist after a later durability operation fails;
+        # those bytes are already proven, with the intent retained for reconciliation.
+        original=target.read_bytes()
+        assert original==stage.read_bytes()
+        with pytest.raises(FileExistsError):
+            mod.write_digest(target,receipt(),{},[],[],[],[],0,[],[],
+                             bedrock_entries={},scratch_directory=tmp_path/'retry')
+        assert target.read_bytes()==original
+        assert not (tmp_path/'retry').exists()
+
+def test_concurrent_destination_creation_is_never_overwritten(tmp_path, monkeypatch):
+    mod=document(); target=tmp_path/'digest.md'; scratch=tmp_path/'scratch'
+    real_link=mod.os.link
+    def create_then_link(source,destination):
+        Path(destination).write_bytes(b'other writer evidence')
+        return real_link(source,destination)
+    monkeypatch.setattr(mod.os,'link',create_then_link)
+    with pytest.raises(FileExistsError):
+        mod.write_digest(target,receipt(),{},[],[],[],[],0,[],[],
+                         bedrock_entries={},scratch_directory=scratch)
+    assert target.read_bytes()==b'other writer evidence'
+    assert (scratch/'verification-receipt.json').is_file()
+    assert (scratch/'publication-intent.json').is_file()
+    assert not (scratch/'publication-receipt.json').exists()
