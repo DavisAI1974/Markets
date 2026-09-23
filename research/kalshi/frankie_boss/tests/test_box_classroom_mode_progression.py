@@ -315,3 +315,47 @@ def test_non_teach_summary_uses_model_claims_without_teacher_pair_table(index):
 
     parsed = C.parse_summary(json.dumps(SUMMARY))
     assert parsed == SUMMARY
+
+@pytest.mark.parametrize("index", [2, 4, 6])
+@pytest.mark.parametrize("position", [0, -1])
+def test_independent_pairs_reject_null_as_classroom_output(index, position):
+    package=package_at(index); public=public_of(package);name=COLUMNS[position]
+    answer=answer_objects(package)[name]
+    rights=[pair["right"] for pair in answer["pairs"]]
+    answer["pairs"].append(None)
+    with pytest.raises(C.ClassroomOutput):
+        C.parse_component(json.dumps(answer),C.component(public,name),rights,mode=public["pre_message"]["mode"])
+
+@pytest.mark.parametrize("position", [0, -1])
+@pytest.mark.parametrize("retry_valid", [True, False])
+def test_session_retries_malformed_independent_pairs_exactly_once(monkeypatch,position,retry_valid):
+    import sys
+    spec=importlib.util.spec_from_file_location("classroom_pair_retry_session_under_test",
+        ROOT/"deploy/aws/box/frankie_box_boss_session.py")
+    module=importlib.util.module_from_spec(spec)
+    monkeypatch.setitem(sys.modules,spec.name,module);spec.loader.exec_module(module)
+    monkeypatch.setattr(module,"classroom_module",lambda:C)
+    package=package_at(4);public=public_of(package);name=COLUMNS[position]
+    valid=answer_objects(package)[name];rights=[pair["right"] for pair in valid["pairs"]]
+    malformed=copy.deepcopy(valid);malformed["pairs"].append(None)
+    def parse(text):
+        return C.parse_component(text,C.component(public,name),rights,mode=public["pre_message"]["mode"])
+    attempts=[];answers=[json.dumps(malformed),json.dumps(valid if retry_valid else malformed)]
+    def reader(attempt,prompt):
+        attempts.append((attempt,prompt))
+        assert len(attempts)<=2
+        return {"text":answers[len(attempts)-1],"job_id":attempt}
+    class Refused(RuntimeError):pass
+    def refuse(reason):raise Refused(reason)
+    session=module.Session.__new__(module.Session)
+    session.reader=reader;session.boss=lambda *a,**kw:pytest.fail("reader retry used boss lane")
+    session._input_tokens=lambda text:10;session.note=lambda text:None;session.refuse=refuse
+    prompt="Independent evidence and complete canonical pair roster."
+    if retry_valid:
+        parsed,receipt=session._classroom_call("independent-pairs",prompt,parse,"reader")
+        assert parsed==parse(json.dumps(valid))
+        assert receipt["attempt"]=="independent-pairs-retry" and receipt["lane"]=="reader"
+    else:
+        with pytest.raises(Refused,match="unusable twice"):
+            session._classroom_call("independent-pairs",prompt,parse,"reader")
+    assert attempts==[("independent-pairs",prompt),("independent-pairs-retry",prompt)]

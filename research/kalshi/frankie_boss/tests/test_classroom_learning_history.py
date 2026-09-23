@@ -25,9 +25,11 @@ def learning(request='run-cycle-01', cutoff=2_000_000):
     exchange=dict(origin=origin,frankie_response=dict(observations=['ALL_PRIOR_OBSERVATIONS'],
         uncertainty='UNRESOLVED_PRIOR_QUESTION'),teacher_correction=dict(explanation='FULL_TEACHER_CORRECTION'),
         frankie_correction_response=dict(explanation='FRANKIE_REVISED_REASONING'))
+    exchange=json.loads(json.dumps(exchange,sort_keys=True))
     exchange['exchange_hash']=evidence_hash(exchange)
     value=dict(schema='FRANKIE_CLASSROOM_LEARNING_HISTORY_V1',learning_policy=CUMULATIVE,
         knowledge=knowledge,exchanges=[exchange])
+    value=json.loads(json.dumps(value,sort_keys=True))
     value['history_hash']=evidence_hash(value)
     return value
 
