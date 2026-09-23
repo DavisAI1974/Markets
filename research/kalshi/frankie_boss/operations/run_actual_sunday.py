@@ -685,7 +685,7 @@ class ActualHost:
         if phase in mapping:self.progress(mapping[phase],unit='steps')
 
     def encoding_options(self,binding):
-        if self.host['context_encoding'] != 'stacked_v1':
+        if self.host['context_encoding'] not in ('stacked_v1', 'stacked_v2'):
             return None
         if self.host.get('prefix_seeds'):
             raise ValueError('raw prefix seeds require independently verified sidecar witnesses')
@@ -918,7 +918,7 @@ class ActualHost:
         preparation=cycle_directory/'host-preparation.c15.json'
         service_record=cycle_directory/'host-service.c15.json'
         critic_knowledge=None
-        if self.host['context_encoding']=='stacked_v1':
+        if self.host['context_encoding'] in ('stacked_v1', 'stacked_v2'):
             if preparation.exists():
                 old_prepared=self.api.driver._load(preparation)
                 if 'critic_knowledge_hash' not in old_prepared['receipt']:
@@ -1037,11 +1037,11 @@ class ActualHost:
         from research.kalshi.frankie_boss.critic_knowledge import validate_learning_policy
         c=self.config;h=self.host
         policy=validate_learning_policy(c.get('learning_policy'))
-        if policy is not None and h.get('context_encoding') != 'stacked_v1':
+        if policy is not None and h.get('context_encoding') not in ('stacked_v1', 'stacked_v2'):
             raise ValueError('cumulative learning requires stacked critic route')
         priming=None
         if c.get('critic_priming') is not None:
-            if h.get('context_encoding') != 'stacked_v1':
+            if h.get('context_encoding') not in ('stacked_v1', 'stacked_v2'):
                 raise ValueError('historical priming requires stacked critic route')
             declared=c['critic_priming']
             if (type(declared) is not dict or set(declared)!={'mode','profile'} or declared['profile']!='retained_cycle00_20260921'):

@@ -14,7 +14,7 @@ def validate_configuration(value):
         'source_commit', 'context_encoding', 'service_context', 'transport_protocol', 'bootstrap_directory'}
     if (type(value) is not dict or set(value) != fields
             or value['schema'] != 'GRANITE_RETAINED_RUNTIME_CONFIGURATION_V1'
-            or value['context_encoding'] not in ('compact_v1', 'stacked_v1')
+            or value['context_encoding'] not in ('compact_v1', 'stacked_v1', 'stacked_v2')
             or type(value['service_context']) is not int or value['service_context'] != CONTEXT
             or value['transport_protocol'] not in ('direct_v1', 'jobs_v1')
             or not re.fullmatch('[0-9a-f]{40}', str(value['source_commit']))

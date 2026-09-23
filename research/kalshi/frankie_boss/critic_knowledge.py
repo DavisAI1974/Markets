@@ -158,7 +158,7 @@ def verify_prepared_knowledge(body, expected):
         prompt=messages[0]['content']
         _, separator, text=prompt.partition('\nstacked_native_context:\n')
         if not separator: raise ValueError('stacked critic body required')
-        route=context_route('stacked_v1')
+        route=context_route('stacked_v2' if json.loads(text).get('schema')=='BOSS_GRANITE_STACKED_ROUTE_V2' else 'stacked_v1')
         from .granite_context import _text
         from .granite_positive_priming import public_knowledge
         visible=json.loads(text)

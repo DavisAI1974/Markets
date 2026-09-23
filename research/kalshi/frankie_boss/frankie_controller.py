@@ -38,7 +38,7 @@ class FrankieForecastController:
         self.event = event
         from research.kalshi.frankie_boss.granite_context_route import context_route
         self.context_encoding = context_route(context_encoding).encoding
-        if context_encoding_options is not None and (self.context_encoding != 'stacked_v1' or
+        if context_encoding_options is not None and (self.context_encoding not in ('stacked_v1', 'stacked_v2') or
                 type(context_encoding_options) is not dict or set(context_encoding_options)-{'scope_public','prefix_seed'}):
             raise ValueError('explicit stacked derivation options required')
         self.context_encoding_options = unpack(pack(context_encoding_options))
@@ -206,8 +206,8 @@ class FrankieForecastController:
         if critic_knowledge is not None:
             from research.kalshi.frankie_boss.critic_knowledge import validate_knowledge
             critic_knowledge = validate_knowledge(critic_knowledge, cutoff_ns=as_of, request_id=request_id)
-            if self.context_encoding != 'stacked_v1':
-                raise ValueError('critic knowledge requires stacked_v1 route')
+            if self.context_encoding not in ('stacked_v1', 'stacked_v2'):
+                raise ValueError('critic knowledge requires a stacked route')
         if (type(request_id) is not str or not request_id.strip()
                 or type(through_cursor) is not int or through_cursor < 0
                 or type(as_of) is not int or type(source_as_of) is not int

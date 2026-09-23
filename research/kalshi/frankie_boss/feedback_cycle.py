@@ -595,9 +595,9 @@ class CycleCoordinator:
                     controller = controller_factory()
                     actual_kwargs = dict(controller_kwargs)
                     if ((self.critic_priming is not None or self.learning_policy is not None)
-                            and getattr(controller, 'context_encoding', None) != 'stacked_v1'):
+                            and getattr(controller, 'context_encoding', None) not in ('stacked_v1', 'stacked_v2')):
                         raise ValueError('historical priming requires stacked critic route')
-                    if getattr(controller, 'context_encoding', None) == 'stacked_v1':
+                    if getattr(controller, 'context_encoding', None) in ('stacked_v1', 'stacked_v2'):
                         knowledge = self.critic_knowledge(request_id, learning_kwargs['as_of'])
                         if ('critic_knowledge' in actual_kwargs and actual_kwargs['critic_knowledge'] != knowledge):
                             raise ValueError('controller knowledge differs from frozen preflight')

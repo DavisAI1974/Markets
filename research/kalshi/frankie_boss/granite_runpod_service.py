@@ -201,6 +201,9 @@ class RunpodShadowService:
     async def critique_stacked(self, snapshot, *, request_id, max_prompt_bytes=None):
         return await self._critique(snapshot, request_id, 'stacked_v1', max_prompt_bytes)
 
+    async def critique_stacked_v2(self, snapshot, *, request_id, max_prompt_bytes=None):
+        return await self._critique(snapshot, request_id, 'stacked_v2', max_prompt_bytes)
+
     async def _critique(self, snapshot, request_id, encoding, max_prompt_bytes):
         if not self.enabled:
             return None

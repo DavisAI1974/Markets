@@ -28,16 +28,19 @@ class ContextRoute:
 
     def native(self, snapshot):
         checked = self.parse(snapshot.text, expected_hash=snapshot.hash)
-        return checked.native() if self.encoding in ('compact_v1', 'stacked_v1') else checked
+        return checked.native() if self.encoding in ('compact_v1', 'stacked_v1', 'stacked_v2') else checked
 
     def encode(self, snapshot, *, scope_public=None, prefix_seed=None, knowledge=None):
         checked = native.parse_native_context(snapshot.text, expected_hash=snapshot.hash)
-        if self.encoding == 'stacked_v1':
-            from .granite_context_stacked_route import stacked_native_context
+        if self.encoding in ('stacked_v1', 'stacked_v2'):
+            if self.encoding == 'stacked_v1':
+                from .granite_context_stacked_route import stacked_native_context
+            else:
+                from .granite_context_stacked_route_v2 import stacked_native_context
             encoded = stacked_native_context(checked, scope_public=scope_public, prefix_seed=prefix_seed, knowledge=knowledge)
         else:
             if scope_public is not None or prefix_seed is not None or knowledge is not None:
-                raise ValueError('derivation options require explicit stacked_v1 route')
+                raise ValueError('derivation options require an explicit stacked route')
             encoded = compact.compact_native_context(checked) if self.encoding == 'compact_v1' else checked
         restored = self.native(encoded)
         if (restored.hash, restored.text) != (snapshot.hash, snapshot.text):
@@ -56,7 +59,11 @@ def context_route(encoding='native_v1'):
         from . import granite_context_stacked_route as stacked
         return ContextRoute(encoding, 'critique_stacked', stacked.parse_stacked_context,
             stacked.build_stacked_prompt, stacked.score_stacked, stacked.stacked_parser_code_hash, stacked.SYSTEM_TEXT)
-    raise ValueError('unknown context_encoding; expected native_v1, compact_v1 or stacked_v1')
+    if encoding == 'stacked_v2':
+        from . import granite_context_stacked_route_v2 as stacked
+        return ContextRoute(encoding, 'critique_stacked_v2', stacked.parse_stacked_context,
+            stacked.build_stacked_prompt, stacked.score_stacked, stacked.stacked_parser_code_hash, stacked.SYSTEM_TEXT)
+    raise ValueError('unknown context_encoding; expected native_v1, compact_v1, stacked_v1 or stacked_v2')
 
 
 async def serve_context(snapshot, identity, *, context_encoding, request_id,
