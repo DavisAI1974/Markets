@@ -25,7 +25,7 @@ def _prior_history(history):
             raise ValueError('prior exchange witness changed')
     if history.get('history_hash')!=evidence_hash({k:v for k,v in history.items() if k!='history_hash'}):
         raise ValueError('prior history witness changed')
-    return dict(kind='EXCHANGE_REFERENCES',header={k:v for k,v in history.items() if k!='exchanges'},
+    return dict(kind='EXCHANGE_REFERENCES',key_order=list(history),header={k:v for k,v in history.items() if k!='exchanges'},
         exchange_hashes=[x['exchange_hash'] for x in exchanges])
 
 
@@ -33,7 +33,7 @@ def _restore_prior(description,prior_exchanges):
     if description.get('kind')=='INLINE':
         if set(description)!={'kind','value'}:raise ValueError('inline prior history fields differ')
         return description['value']
-    if description.get('kind')!='EXCHANGE_REFERENCES' or set(description)!={'kind','header','exchange_hashes'}:
+    if description.get('kind')!='EXCHANGE_REFERENCES' or set(description)!={'kind','key_order','header','exchange_hashes'}:
         raise ValueError('prior history reconstruction descriptor required')
     indexed={}
     for entry in prior_exchanges:
@@ -44,7 +44,11 @@ def _restore_prior(description,prior_exchanges):
     wanted=description['exchange_hashes']
     if type(wanted) is not list or len(set(wanted))!=len(wanted) or any(key not in indexed for key in wanted):
         raise ValueError('every referenced prior exchange is required')
-    value=dict(description['header'],exchanges=[indexed[key] for key in wanted])
+    fields=dict(description['header'],exchanges=[indexed[key] for key in wanted])
+    order=description['key_order']
+    if type(order) is not list or len(order)!=len(fields) or set(order)!=set(fields):
+        raise ValueError('original prior history field order required')
+    value={key:fields[key] for key in order}
     if value.get('history_hash')!=evidence_hash({k:v for k,v in value.items() if k!='history_hash'}):
         raise ValueError('reconstructed prior history differs')
     return value
