@@ -829,7 +829,10 @@ class V4MboAdapter:
 
     def apply(self, record: Any, raw_symbol: str | None = None, source_dbn_object: str | None = None, source_dbn_sha256: str | None = None) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
         msg = self.normalize(record, raw_symbol, source_dbn_object, source_dbn_sha256)
-        book = self.books.setdefault(msg.instrument_id, InstrumentBook(msg.instrument_id))
+        book = self.books.get(msg.instrument_id)
+        if book is None:
+            book = InstrumentBook(msg.instrument_id)
+            self.books[msg.instrument_id] = book
         _, frame, legacy_rows = book.apply(msg)
         self.record_count += 1
         if frame is None:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
 from ng_exhaustion_mbo_v4_state_adapter_20260820 import (
     ACTIVITY_WINDOWS_S,
@@ -90,6 +91,30 @@ def rec(
 
 
 class TestV4MboAdapter(unittest.TestCase):
+    def test_book_is_constructed_once_per_instrument_and_state_is_retained(self) -> None:
+        rows = [
+            rec(action="A", side="B", order_id=1, price=3.0, size=10),
+            rec(action="A", side="A", order_id=2, price=3.1, size=8, instrument_id=202),
+            rec(action="C", side="B", order_id=1, price=3.0, size=3, sequence=2),
+            rec(action="M", side="A", order_id=2, price=3.1, size=12, sequence=2, instrument_id=202),
+        ]
+        adapter = V4MboAdapter()
+        with patch("ng_exhaustion_mbo_v4_state_adapter_20260820.InstrumentBook",
+                   wraps=InstrumentBook) as constructor:
+            outputs = [adapter.apply(row) for row in rows]
+        self.assertEqual(constructor.call_count, 2)
+        self.assertEqual(adapter.record_count, len(rows))
+        self.assertEqual(adapter.completed_event_group_count, len(rows))
+        self.assertEqual(adapter.books[101].orders[1].size, 7)
+        self.assertEqual(adapter.books[202].orders[2].size, 12)
+        # Check complete frames and legacy rows against directly maintained books.
+        books = {101: InstrumentBook(101), 202: InstrumentBook(202)}
+        expected = []
+        for row in rows:
+            _, frame, legacy = books[row["instrument_id"]].apply(V4MboAdapter.normalize(row))
+            expected.append((frame, legacy))
+        self.assertEqual(outputs, expected)
+
     def test_incremental_activity_matches_scan_reference(self) -> None:
         a = V4MboAdapter()
         rows = [
