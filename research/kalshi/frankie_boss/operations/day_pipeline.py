@@ -19,6 +19,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
+import re
+import uuid
 from pathlib import Path
 import subprocess
 import sys
@@ -45,7 +48,7 @@ class StageRefused(RuntimeError):
 
 
 def canonical(value):
-    return json.dumps(value, sort_keys=True, separators=(',', ':')).encode()
+    return json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()
 
 
 def subprocess_runner(argv, *, timeout):
@@ -253,7 +256,155 @@ class DayPipeline:
             raise StageRefused(f'ingest receipt reduced {count} records; {self.day} staged {expected}. '
                                'The journal job reduces the snapshot named in its pinned request, not the staged day.')
 
-    def run_stage(self, stage, *, go=None):
+
+    # Pending is evidence, never the completion gate at 04-cycles.json.
+    def _pending_mode(self):
+        enabled = self.c.get('pending_return', False)
+        if type(enabled) is not bool:
+            raise StageRefused('pending_return must be a boolean')
+        if not enabled:
+            return False
+        pins = self.c.get('workflow_run')
+        fields = {'run_id', 'run_directory', 'boss_commit', 'configuration_sha256', 'schedule_sha256'}
+        if (self.declaration is None or type(pins) is not dict or set(pins) != fields
+                or any(type(pins[k]) is not str or not pins[k] for k in fields)
+                or not re.fullmatch(r'[A-Za-z0-9_-]{1,128}', pins['run_id'])
+                or not re.fullmatch('[0-9a-f]{40}', pins['boss_commit'])
+                or any(not re.fullmatch('[0-9a-f]{64}', pins[k])
+                       for k in ('configuration_sha256', 'schedule_sha256'))):
+            raise StageRefused('pending continuation requires an explicit schedule and workflow_run pins')
+        return True
+
+    def _wait_gate(self, value, requested):
+        pins = self.c['workflow_run']
+        prepared = self._prepared_gate(self.receipt('schedule-prefixes')['gate'])
+        wait = value.get('wait_receipt')
+        digest = value.get('receipt_sha256')
+        if (value.get('status') not in ('workflow_wait', 'workflow_attention')
+                or value.get('day') != self.day
+                or value.get('requested_cycles') != requested
+                or type(value.get('requested_cycles')) is not int
+                or value.get('cycles_total') != self.cycle_count
+                or type(value.get('cycles_total')) is not int
+                or value.get('prepared_configuration_sha256') != prepared['configuration']['sha256']
+                or value.get('schedule_sha256') != prepared['schedule_sha256']
+                or any(value.get(k) != pins[k] for k in ('run_id', 'run_directory'))
+                or type(wait) is not dict
+                or type(digest) is not str or not re.fullmatch('[0-9a-f]{64}', digest)
+                or hashlib.sha256(canonical(wait)).hexdigest() != digest
+                or type(value.get('receipt_path')) is not str or not value['receipt_path']):
+            raise StageRefused('pending receipt differs from the declared run, schedule or prepared configuration')
+        fields = {'schema', 'state', 'kind', 'run_id', 'run_directory', 'cycle_index', 'request_id',
+                  'configuration_sha256', 'boss_commit', 'schedule_sha256', 'job_id', 'artifacts', 'receipt_id'}
+        if (set(wait) != fields or wait['schema'] != 'FRANKIE_WORKFLOW_WAIT_V1'
+                or wait['state'] not in ('WAIT', 'ATTENTION')
+                or value['status'] != ('workflow_wait' if wait['state'] == 'WAIT' else 'workflow_attention')
+                or wait['kind'] not in ('readiness', 'principal', 'principal_correction', 'same_job')
+                or any(wait[k] != pins[k] for k in pins)
+                or type(wait['cycle_index']) is not int or not 0 <= wait['cycle_index'] < requested
+                or wait['request_id'] != f"{pins['run_id']}-cycle-{wait['cycle_index']:02d}"
+                or (wait['job_id'] is not None and (type(wait['job_id']) is not str
+                    or not re.fullmatch('[0-9a-f]{64}', wait['job_id'])))
+                or wait['receipt_id'] != hashlib.sha256(canonical(
+                    {k: v for k, v in wait.items() if k != 'receipt_id'})).hexdigest()
+                or type(wait['artifacts']) is not dict or not wait['artifacts']):
+            raise StageRefused('pending receipt identity or retained context binding differs')
+        for name, witness in wait['artifacts'].items():
+            if (type(name) is not str or not name or name.startswith('/')
+                    or '\\' in name or any(part in ('', '.', '..') for part in name.split('/'))
+                    or type(witness) is not dict or set(witness) != {'sha256', 'bytes'}
+                    or type(witness['bytes']) is not int or witness['bytes'] < 0
+                    or type(witness['sha256']) is not str
+                    or not re.fullmatch('[0-9a-f]{64}', witness['sha256'])):
+                raise StageRefused('pending retained artifact witness is invalid')
+        return value
+
+    @staticmethod
+    def _retain(path, record):
+        """Publish flushed metadata without replacing evidence; retain interrupted scratch."""
+        raw = canonical(record)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if path.is_symlink():
+            raise StageRefused('pending metadata must not be a link')
+        if path.exists():
+            if path.read_bytes() != raw:
+                raise StageRefused('retained pending metadata differs')
+        else:
+            scratch = path.with_name(path.name + '.pending-' + uuid.uuid4().hex)
+            with scratch.open('xb') as stream:
+                stream.write(raw); stream.flush(); os.fsync(stream.fileno())
+            try:
+                os.link(scratch, path)
+            except FileExistsError:
+                if path.is_symlink() or path.read_bytes() != raw:
+                    raise StageRefused('concurrent pending metadata differs') from None
+        with path.open('rb') as stream:
+            os.fsync(stream.fileno())
+        if os.name != 'nt':
+            descriptor = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try: os.fsync(descriptor)
+            finally: os.close(descriptor)
+        return record
+
+    def pending(self):
+        """Validate the complete immutable chain, refusing ambiguous/foreign history."""
+        records = {}
+        config_hash = hashlib.sha256(canonical(self.c)).hexdigest()
+        previous_hash = hashlib.sha256(canonical(self.receipt('schedule-prefixes'))).hexdigest()
+        for path in sorted(self.directory.glob('04-cycles-wait-*.json')):
+            if path.is_symlink():
+                raise StageRefused('pending metadata must not be a link')
+            raw = path.read_bytes()
+            try: record = json.loads(raw)
+            except ValueError:
+                raise StageRefused('pending metadata is incomplete') from None
+            if (type(record) is not dict or raw != canonical(record)
+                    or set(record) != {'schema', 'day', 'stage', 'status', 'gate', 'configuration_sha256',
+                                       'previous_receipt_sha256', 'previous_wait_sha256', 'requested_cycles'}
+                    or record['schema'] != SCHEMA or record['day'] != self.day or record['stage'] != 'cycles'
+                    or record['status'] not in ('WAIT', 'ATTENTION')
+                    or record['configuration_sha256'] != config_hash
+                    or record['previous_receipt_sha256'] != previous_hash):
+                raise StageRefused('retained pending configuration or preparation changed')
+            value = self._wait_gate(record['gate'], record['requested_cycles'])
+            digest = value['receipt_sha256']
+            if (path.name != f'04-cycles-wait-{digest}.json'
+                    or record['status'] != value['wait_receipt']['state'] or digest in records):
+                raise StageRefused('pending receipt filename or state differs')
+            records[digest] = record
+        parent = None
+        visited = set()
+        last = None
+        while True:
+            children = [(key, item) for key, item in records.items()
+                        if item['previous_wait_sha256'] == parent]
+            if not children:
+                break
+            if len(children) != 1 or children[0][0] in visited:
+                raise StageRefused('pending receipt chain is ambiguous')
+            parent, last = children[0]
+            visited.add(parent)
+        if len(visited) != len(records):
+            raise StageRefused('pending receipt chain is incomplete or contradictory')
+        return last
+
+    def _write_wait(self, value, requested, prior):
+        value = self._wait_gate(value, requested)
+        digest = value['receipt_sha256']
+        if prior is not None and prior['gate']['receipt_sha256'] == digest:
+            if prior['gate'] != value:
+                raise StageRefused('replayed pending receipt wrapper changed')
+            return prior
+        record = dict(schema=SCHEMA, day=self.day, stage='cycles', status=value['wait_receipt']['state'],
+            gate=value, requested_cycles=requested,
+            configuration_sha256=hashlib.sha256(canonical(self.c)).hexdigest(),
+            previous_receipt_sha256=hashlib.sha256(canonical(self.receipt('schedule-prefixes'))).hexdigest(),
+            previous_wait_sha256=None if prior is None else prior['gate']['receipt_sha256'])
+        self._retain(self.directory / f'04-cycles-wait-{digest}.json', record)
+        self.pending()
+        return record
+
+    def run_stage(self, stage, *, go=None, resume_wait=None):
         if self.receipt(stage) is not None:
             return 'present'
         self.require(stage)
@@ -272,6 +423,23 @@ class DayPipeline:
                 return 'hold'
         if self.declaration is not None and stage in ('stage-sources', 'ingest'):
             raise StageRefused('the trading-day source manifest and completed ingestion are recorded externally; no UTC restaging or re-ingest')
+        pending_mode = stage == 'cycles' and self._pending_mode()
+        prior = None
+        requested = self.cycle_limit
+        if stage == 'cycles':
+            if pending_mode:
+                prior = self.pending()
+            elif resume_wait is not None or any(self.directory.glob('04-cycles-wait-*.json')):
+                raise StageRefused('retained pending run requires pending_return mode')
+            if prior is not None:
+                if resume_wait is None:
+                    return 'wait' if prior['status'] == 'WAIT' else 'attention'
+                if (resume_wait != prior['gate']['receipt_sha256']
+                        or prior['status'] != 'WAIT'):
+                    raise StageRefused('exact resumable WAIT receipt required; ATTENTION needs reconciliation')
+                requested = prior['gate']['wait_receipt']['cycle_index'] + 1
+            elif resume_wait is not None:
+                raise StageRefused('resume requires a retained WAIT receipt; it cannot launch a new run')
         command = self.commands()[stage]
         if command is None:
             raise StageRefused(f'the configuration declares no host script for {stage}')
@@ -282,18 +450,29 @@ class DayPipeline:
                         '--set', 'PreparedConfigurationPath=' + configuration['path'],
                         '--set', 'PreparedConfigurationSha256=' + configuration['sha256'],
                         '--set', 'ExpectedTradingDayScheduleSha256=' + prepared['schedule_sha256']]
+        if pending_mode:
+            command = [f'CycleLimit={requested}' if part == f'CycleLimit={self.cycle_limit}' else part
+                       for part in command]
+            command += ['--set', 'PendingReturn=1']
+            if resume_wait is not None:
+                command += ['--set', 'ResumeWaitSha256=' + resume_wait]
         code, output = self.run(command, timeout=self.c.get('stage_timeout', 13 * 3600))
         if code != 0:
             raise StageRefused(f'{stage} exited {code}: {output}')
         if stage == 'cycles':
             value = receipt_line(output)
+            if value.get('status') in ('workflow_wait', 'workflow_attention'):
+                if not pending_mode:
+                    raise StageRefused('pending receipt requires opt-in pending_return')
+                record = self._write_wait(value, requested, prior)
+                return 'wait' if record['status'] == 'WAIT' else 'attention'
             if value.get('status') == 'requested_cycles_complete':
                 if (value.get('day') != self.day or value.get('cycles_total') != self.cycle_count
-                        or value.get('cycles_completed') != self.cycle_limit
-                        or value.get('requested_cycles') != self.cycle_limit
-                        or self.cycle_limit == self.cycle_count):
+                        or value.get('cycles_completed') != requested
+                        or value.get('requested_cycles') != requested
+                        or requested == self.cycle_count):
                     raise StageRefused('partial cycles receipt differs from the requested batch')
-                path = self.directory / f'04-cycles-batch-{self.cycle_limit:02d}.json'
+                path = self.directory / f'04-cycles-batch-{requested:02d}.json'
                 if path.exists():
                     if json.loads(path.read_bytes())['gate'] != value:
                         raise StageRefused('retained partial cycles receipt changed')
@@ -307,12 +486,12 @@ class DayPipeline:
         self.write(stage, self.gate_of(stage, output), command=command)
         return 'done'
 
-    def resume(self, *, go=None, until=None):
+    def resume(self, *, go=None, until=None, resume_wait=None):
         """From the first stage without a receipt; stops at the first refusal or at HOLD."""
         outcome = {}
         for stage in STAGES:
-            outcome[stage] = self.run_stage(stage, go=go)
-            if outcome[stage] in ('hold', 'partial') or stage == until:
+            outcome[stage] = self.run_stage(stage, go=go, resume_wait=resume_wait if stage == 'cycles' else None)
+            if outcome[stage] in ('hold', 'partial', 'wait', 'attention') or stage == until:
                 break
         return outcome
 
@@ -436,6 +615,7 @@ def main(argv=None):
     parser.add_argument('--day', required=True)
     parser.add_argument('--go', default=None, help="the day's source manifest hash; without it the chain stops before cycles")
     parser.add_argument('--until', default=None, choices=STAGES)
+    parser.add_argument('--resume-wait', default=None, help='exact retained WAIT receipt hash; no new execution authority')
     parser.add_argument('--host-stop', action='store_true')
     parser.add_argument('--stop-compute', action='store_true')
     parser.add_argument('--ensure-host-online', action='store_true')
@@ -461,7 +641,7 @@ def main(argv=None):
         if args.record:
             print(json.dumps(dict(status='ok', day=args.day, stages={args.record: pipeline.record_external(args.record, args.receipt_from)})), flush=True)
             return 0
-        outcome = pipeline.resume(go=args.go, until=args.until)
+        outcome = pipeline.resume(go=args.go, until=args.until, resume_wait=args.resume_wait)
     except StageRefused as error:
         print(json.dumps(dict(status='stage_refused', error=str(error))), flush=True)
         return 2

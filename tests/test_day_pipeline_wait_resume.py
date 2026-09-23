@@ -178,3 +178,44 @@ def test_repeated_same_wait_preserves_receipts_without_duplicate_completion(stat
     assert reopen(state).run_stage("cycles",go="a"*64,resume_wait=state["envelope"]["receipt_sha256"]) == "wait"
     assert all(path.read_bytes()==raw for path,raw in retained.items())
     assert p.receipt("cycles") is None
+
+def test_resume_is_capped_to_waiting_cycle_and_cannot_package_or_start_next_cycle(state):
+    value=state["envelope"]
+    wait=value["wait_receipt"]
+    wait["cycle_index"]=0
+    wait["request_id"]="retained-run-cycle-00"
+    wait["artifacts"]={name.replace("cycle-02","cycle-00"):pin for name,pin in wait["artifacts"].items()}
+    wait.pop("receipt_id")
+    wait["receipt_id"]=digest(wait)
+    value["receipt_path"]=value["receipt_path"].replace("cycle-02","cycle-00")
+    value["receipt_sha256"]=hashlib.sha256(canonical(wait)).hexdigest()
+    assert state["pipeline"].run_stage("cycles",go="a"*64) == "wait"
+    state["output"][0]=dict(status="requested_cycles_complete",day="20211004",
+        cycles_completed=1,requested_cycles=1,cycles_total=3)
+    result=reopen(state).resume(go="a"*64,resume_wait=value["receipt_sha256"])
+    assert result["cycles"]=="partial"
+    assert "package-upload" not in result
+    assert "CycleLimit=1" in state["calls"][-1]
+    assert "CycleLimit=3" not in state["calls"][-1]
+    assert state["pipeline"].receipt("cycles") is None
+    assert len(state["calls"])==2
+
+def test_corrupt_retained_wait_refuses_before_resumed_process(state):
+    p=state["pipeline"]
+    assert p.run_stage("cycles",go="a"*64)=="wait"
+    waits=list(p.directory.glob("04-cycles-wait-*.json"))
+    assert len(waits)==1
+    record=json.loads(waits[0].read_bytes())
+    record["gate"]["wait_receipt"]["request_id"]="foreign-cycle-02"
+    waits[0].write_bytes(canonical(record))
+    with pytest.raises((dp.StageRefused,ValueError)):
+        reopen(state).run_stage("cycles",go="a"*64,resume_wait=state["envelope"]["receipt_sha256"])
+    assert len(state["calls"])==1
+
+def test_pending_return_requires_explicit_trading_schedule_and_native_run_pins(state):
+    for key in ("trading_day_schedule","workflow_run"):
+        config=copy.deepcopy(state["config"])
+        config.pop(key)
+        with pytest.raises((dp.StageRefused,ValueError)):
+            dp.DayPipeline(config,"20211004",runner=state["pipeline"].run,runs_root=state["tmp"])
+    assert state["calls"]==[]
