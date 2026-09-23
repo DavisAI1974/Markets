@@ -899,22 +899,25 @@ class Session:
         else the session's own bytes-per-token estimate, said so) and the parts it would take at PART_INPUT_TOKENS; filed
         and printed, reported to Greg before the rerun is dispatched (success criterion 6). No model call."""
         digest_path = self.work / 'derivation-digest-full.md'
-        raw = digest_path.read_bytes()
+        digest_identity = witness(digest_path)
+        # Only the exact tokenizer needs the complete string. Estimation and
+        # table inventory keep at most one digest row in Python.
+        with digest_path.open(encoding='utf-8', errors='replace') as source:
+            tables = [line[len('### table '):].split(' ', 1)[0] for line in source if line.startswith('### table ')]
         tokens, basis, tokenizer_error = None, None, None
         tok_path = ROOT / 'tmp' / 'granite_tokenizer.json'
         try:
             from tokenizers import Tokenizer
             if tok_path.exists() and sha256_bytes(tok_path.read_bytes()).startswith('883975314d587437'):
-                tokens, basis = len(Tokenizer.from_file(str(tok_path)).encode(raw.decode('utf-8', errors='replace')).ids), 'granite tokenizer'
+                tokens, basis = len(Tokenizer.from_file(str(tok_path)).encode(digest_path.read_text(encoding='utf-8', errors='replace')).ids), 'granite tokenizer'
         except Exception as error:
             tokens, tokenizer_error = None, f'{type(error).__name__}: {error}'   # a present tokenizer that fails is recorded, never a silent estimate
         if tokens is None:
-            tokens, basis = int(len(raw) / BYTES_PER_TOKEN), 'estimate: bytes / %s' % BYTES_PER_TOKEN
+            tokens, basis = int(digest_identity['bytes'] / BYTES_PER_TOKEN), 'estimate: bytes / %s' % BYTES_PER_TOKEN
         parts = -(-tokens // PART_INPUT_TOKENS)
         derive = load_json(self.work / 'derive.json') if (self.work / 'derive.json').exists() else {}
-        tables = [line[len('### table '):].split(' ', 1)[0] for line in raw.decode('utf-8', errors='replace').splitlines() if line.startswith('### table ')]
         measurement = dict(schema='FRANKIE_BOX_DERIVE_ONLY_MEASUREMENT_V1', at=time.time(), cycle=self.cycle,
-                           digest=dict(path=str(digest_path), bytes=len(raw), sha256=sha256_bytes(raw), tokens=tokens, token_basis=basis,
+                           digest=dict(path=str(digest_path), **digest_identity, tokens=tokens, token_basis=basis,
                                        tokenizer_present=tok_path.exists(), tokenizer_error=tokenizer_error,
                                        **{'parts_at_%d_tokens' % PART_INPUT_TOKENS: parts}, tables=tables),
                            bedrock=(derive.get('bedrock') or {}) and dict(layers=len(derive['bedrock'].get('layers') or []), derived=derive['bedrock'].get('derived'),
@@ -922,7 +925,7 @@ class Session:
                                                                            groups=derive['bedrock'].get('groups'), ledgers=derive['bedrock'].get('ledgers')),
                            legacy_reading=dict(parts=4, part_input_tokens=PART_INPUT_TOKENS, note='cycle 0 read 4 parts of 87k on DIGEST_V5 (handoff 2026-09-21)'))
         write_json(self.work / 'derive-only-measurement.json', measurement)
-        self.note(f'DERIVE_ONLY digest {len(raw)} bytes, {tokens} tokens ({basis}' + (f'; TOKENIZER PRESENT BUT FAILED: {tokenizer_error}' if tokenizer_error else '') + f'), {parts} parts at {PART_INPUT_TOKENS} tokens; {len(tables)} tables')
+        self.note(f'DERIVE_ONLY digest {digest_identity["bytes"]} bytes, {tokens} tokens ({basis}' + (f'; TOKENIZER PRESENT BUT FAILED: {tokenizer_error}' if tokenizer_error else '') + f'), {parts} parts at {PART_INPUT_TOKENS} tokens; {len(tables)} tables')
         return measurement
 
     def _derive_needed(self):
@@ -936,7 +939,9 @@ class Session:
         digest_path = self.work / 'derivation-digest-full.md'
         if not digest_path.exists():
             return True, 'no derivation digest'
-        if ('# Derivation digest ' + DG.SCHEMA + ' ') not in digest_path.read_text(encoding='utf-8', errors='replace')[:400]:
+        with digest_path.open(encoding='utf-8', errors='replace') as source:
+            digest_header = source.read(400)
+        if ('# Derivation digest ' + DG.SCHEMA + ' ') not in digest_header:
             return True, 'the digest is not ' + DG.SCHEMA
         if not (self.work / 'derive.json').exists():
             return True, 'no derive.json'

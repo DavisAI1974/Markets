@@ -177,3 +177,17 @@ def test_measurement_estimate_streams_digest_bytes_and_table_headers(tmp_path, m
     assert got['tables']==['example:']
     assert got['tokens']==int(len(raw)/session.BYTES_PER_TOKEN)
     assert got['token_basis'].startswith('estimate:')
+
+def test_change_after_inverse_proof_is_refused_before_publication(tmp_path, monkeypatch):
+    mod=document(); original=mod.TS.verify_table
+    def changed(path,name,rows,scratch,*a,**k):
+        result=original(path,name,rows,scratch,*a,**k)
+        if Path(scratch).name=='document-inverse':
+            with Path(path).open('ab') as handle: handle.write(b'CHANGED AFTER PROOF\n')
+        return result
+    monkeypatch.setattr(mod.TS,'verify_table',changed)
+    with pytest.raises(ValueError, match='changed'):
+        mod.write_digest(tmp_path/'digest.md',receipt(),{},[],[],[],[],0,[],[],
+                         bedrock_entries={},scratch_directory=tmp_path/'scratch')
+    assert not (tmp_path/'digest.md').exists()
+    assert list((tmp_path/'scratch').rglob('*'))
