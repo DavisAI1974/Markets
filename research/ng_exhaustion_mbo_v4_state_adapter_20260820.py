@@ -348,38 +348,29 @@ class InstrumentBook:
             return old_visible or new_visible, sides
         raise ValueError(f"unsupported legacy projection action {msg.action!r}")
 
-    def _legacy_level_summaries(self, side: str) -> list[tuple[float, int, int]]:
-        """Return only the three fields consumed by the legacy control row.
+    def _legacy_level_summaries(self, side: str, *, raw_price: bool = False) -> list[tuple[int | float, int, int]]:
+        """Return the exact price, size, and count consumed by legacy projection.
 
-        The full book snapshot remains the authoritative frame/checkpoint path.
-        Legacy rows do not consume its ages, quantiles, shares, or imbalance,
-        so calculating those fields for every projected row is redundant.
+        Signatures use integer prices; emitted control rows use decimal prices.
+        Full frame/checkpoint snapshots still compute every level statistic.
         """
-        return [
-            (decimal_price(price),
-             sum(self.orders[order_id].size for order_id in self.levels[side].get(price, ())
-                 if order_id in self.orders),
-             sum(1 for order_id in self.levels[side].get(price, ()) if order_id in self.orders))
-            for price in self._top10_prices(side)
-        ]
+        summaries = []
+        for price in self._top10_prices(side):
+            size = count = 0
+            for order_id in self.levels[side].get(price, ()):
+                order = self.orders.get(order_id)
+                if order is not None:
+                    size += order.size
+                    count += 1
+            summaries.append((price if raw_price else decimal_price(price), size, count))
+        return summaries
 
     def _legacy_book_signature(self, now_ns: int) -> tuple[Any, ...]:
-        book = self.book_snapshot(
-            now_ns,
-            depth_levels=10,
-            include_full_depth=False,
-            include_order_ids=False,
-        )
         signature: list[Any] = []
-        for side_key in ("bid_levels", "ask_levels"):
-            levels = book[side_key]
+        for side in ("B", "A"):
+            levels = self._legacy_level_summaries(side, raw_price=True)
             for i in range(10):
-                level = levels[i] if i < len(levels) else None
-                signature.extend((
-                    None if level is None else level["price_raw"],
-                    0 if level is None else level["size"],
-                    0 if level is None else level["order_count"],
-                ))
+                signature.extend(levels[i] if i < len(levels) else (None, 0, 0))
         return tuple(signature)
 
     def _prices(self, side: str) -> list[int]:

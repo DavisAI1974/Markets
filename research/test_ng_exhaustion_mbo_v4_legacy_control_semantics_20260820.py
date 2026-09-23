@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import unittest
+from ng_exhaustion_mbo_v4_state_adapter_20260820 import InstrumentBook
 
 from ng_exhaustion_mbo_v4_state_adapter_20260820 import F_LAST, PRICE_SCALE, V4MboAdapter
 
@@ -25,6 +26,50 @@ def r(action, side="N", order_id=0, price=3.0, size=1, flags=F_LAST, sequence=1,
 
 
 class LegacyControlSemanticWall(unittest.TestCase):
+    def test_stacked_projections_preserve_complete_frames_and_legacy_rows(self):
+        class SnapshotReferenceBook(InstrumentBook):
+            def _legacy_level_summaries(self, side, *, raw_price=False):
+                snapshot = self.book_snapshot(self.last_recv_ns or 0)
+                levels = snapshot["bid_levels" if side == "B" else "ask_levels"]
+                return [(level["price_raw" if raw_price else "price"], level["size"], level["order_count"])
+                        for level in levels]
+
+        fast, reference = InstrumentBook(101), SnapshotReferenceBook(101)
+        actions = [r("R")]
+        for side, base in (("B", 3.0), ("A", 3.1)):
+            for i in range(12):
+                actions.append(r("A", side, (100 if side == "B" else 200) + i,
+                                 base + (-i if side == "B" else i) * 0.01, i + 1))
+        actions.extend([
+            r("A", "B", 999, 3.0, 8),  # two orders at one level
+            r("C", "B", 100, 3.0, 1),  # remove front order
+            r("M", "A", 200, 3.11, 15),  # move into an existing level
+            r("T", "B", 0, 3.11, 2, flags=0),
+            r("F", "A", 200, 3.11, 2, flags=0),
+            r("C", "A", 200, 3.11, 2),
+            r("C", "B", 123456, 3.0, 1),  # missing reference
+            r("A", "B", 999, 2.8, 3),  # duplicate id, moved below top ten
+            r("R"),
+            r("N"),
+        ])
+        for index, row in enumerate(actions, 1):
+            row.update(sequence=index, ts_recv=index * 1_000_000_000, ts_event=index * 1_000_000_000 - 1000)
+            message = V4MboAdapter.normalize(row)
+            self.assertEqual(fast.apply(message), reference.apply(message))
+            # The group signature must retain integer prices, missing-level
+            # sentinels, side ordering, and every one of the ten level slots.
+            snapshot = reference.book_snapshot(message.ts_recv_ns)
+            expected = []
+            for side in ("bid_levels", "ask_levels"):
+                levels = snapshot[side]
+                for i in range(10):
+                    level = levels[i] if i < len(levels) else None
+                    expected.extend((None, 0, 0) if level is None else
+                                    (level["price_raw"], level["size"], level["order_count"]))
+            self.assertEqual(fast._legacy_book_signature(message.ts_recv_ns), tuple(expected))
+            self.assertEqual(fast.book_snapshot(message.ts_recv_ns, include_full_depth=True, include_order_ids=True),
+                             reference.book_snapshot(message.ts_recv_ns, include_full_depth=True, include_order_ids=True))
+
     def test_legacy_level_projection_matches_the_full_snapshot_fields(self):
         a = V4MboAdapter()
         a.apply(r("A", "B", 1, 3.0, 10, sequence=1, ts=1_000_000_000))
