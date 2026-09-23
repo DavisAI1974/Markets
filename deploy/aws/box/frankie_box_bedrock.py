@@ -15,7 +15,7 @@ import json
 import os
 import sys
 import time
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 
 PIN_COMMIT = '2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134'
@@ -287,7 +287,7 @@ def _move_aside(out_dir, siblings=(), schema='FRANKIE_BOX_BEDROCK_SUPERSEDE_RECE
     return str(target)
 
 
-def run(records, container, out_dir, producers, cycle, code_commit, day, *, progress=None):
+def run(records, container, out_dir, producers, cycle, code_commit, day, *, progress=None, source_manifest=None):
     """The pinned traversal on this cycle's rows: identity -> NativeCalculationRun (the launcher's canonical arguments) ->
     NativeReplayDriver(ExchangeSessionRule, NeverInvoke, LedgerSinks) -> consume -> finalize -> reconcile (a mismatch
     raises: a ledger that does not match its counter is not evidence). Files result.json (the exact rows live in the
@@ -303,12 +303,22 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     from research.kalshi.frankie_raw_mbo_benchmark.native_response import (
         FLOW_RESPONSE, FULL_BOOK_RESPONSE, PRICE_RESPONSE, QUEUE_RESPONSE, horizons_for_version)
     from research.kalshi.frankie_raw_mbo_benchmark.native_row_sink import LedgerSinks
-    modules = loaded_modules(producers, native_replay_driver, native_calculation_runner, native_row_sink, native_response)
+    from research.kalshi.frankie_raw_mbo_benchmark import native_a_arm_launch, periodic_checkpointer, native_staging
+    modules = loaded_modules(producers, native_replay_driver, native_calculation_runner, native_row_sink,
+                             native_response, native_a_arm_launch, periodic_checkpointer, native_staging)
     out_dir = Path(out_dir)
     superseded = _move_aside(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     stamped = iter_driver_records(records, container, day)
     ident = identity(producers, container, len(records), cycle, code_commit)
+    if source_manifest is not None:
+        if (source_manifest.get('total_mbo_records') != len(records)
+                or source_manifest.get('trading_day') != day):
+            raise ValueError('producer source manifest must cover the complete supplied trading day')
+        ident = replace(ident, source_manifest_hash=source_manifest['manifest_hash'],
+                        run_id=out_dir.parent.name + '-cycle-' + str(cycle))
+    gates = native_a_arm_launch.run_pre_traversal_gates(arm=ident.arm, run_id=ident.run_id, repo_root=producers)
+    write_json(out_dir / 'pre-traversal-gates.json', gates)
     sinks = LedgerSinks(out_dir / 'ledgers')
     # the launcher's canonical arguments (native_a_arm_launch.launch): 60 s replenishment horizon, the a-arm-h2 horizons,
     # the four response values the contract's inputs reach, companion keys unaliased
@@ -321,9 +331,39 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                                        response_horizons_ns=tuple(arguments['response_horizons_ns']),
                                        response_horizon_version=arguments['response_horizon_version'],
                                        response_value_names=tuple(arguments['response_value_names']))
+    checkpoint_dir = out_dir / 'checkpoints'
+
+    def checkpoint_readback(paths):
+        checkpoints = periodic_checkpointer.load_chain(checkpoint_dir)
+        latest = checkpoints[-1]
+        state = periodic_checkpointer.read_gzip_json(
+            periodic_checkpointer.adapter_state_path(checkpoint_dir, latest['sequence']))
+        if periodic_checkpointer.adapter_state_hash(state) != latest['adapter_state_hash']:
+            raise ValueError('producer checkpoint adapter-state readback differs')
+        if progress is not None:
+            progress.checkpoint('saved', paths[-1])
+            progress.checkpoint('read_verified', paths[-1])
+
+    checkpointer = periodic_checkpointer.PeriodicCheckpointer(
+        run_id=ident.run_id, controller='A_CHATGPT', memory_mode='MEMORY_ASSISTED',
+        source_manifest_hash=ident.source_manifest_hash, total_mbo_records=len(records),
+        checkpoint_dir=checkpoint_dir, phase='RT_NATIVE_TRAVERSAL', durable_sync=checkpoint_readback)
+    evidence = dict(run_id=ident.run_id, arm=ident.arm, mission_sha256=ident.mission_sha256,
+        calculation_contract_sha256=ident.calculation_contract_sha256,
+        knowledge_manifest_hash=ident.knowledge_manifest_hash, source_manifest_hash=ident.source_manifest_hash,
+        registry_sha256=gates['pre_call_receipt']['registry_sha256'],
+        pre_call_receipt_sha256=gates['pre_call_receipt']['receipt_sha256'],
+        rt_surface_inventory_hash=gates['rt_surface_inventory']['inventory_hash'])
+    evidence['result_hash'] = hashlib.sha256(json.dumps(evidence, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+    evidence['exact_ledgers'] = {name: sink.path.as_posix() for name, sink in (
+        ('exact_member_rows', sinks.member), ('exact_lifecycle_rows', sinks.lifecycle),
+        ('legacy_observable_rows', sinks.legacy))}
+    stager = native_staging.SpawnStager(out_dir=out_dir / 'spawn_requests', arm=ident.arm,
+                                        role='REAL_TIME_FRANKIE', evidence=evidence)
     driver = NativeReplayDriver(identity=ident, session_rule=ExchangeSessionRule(), cadence=NeverInvoke(), run=calculation,
-                                sinks=sinks, emit_change_points=True)
+                                sinks=sinks, emit_change_points=True, checkpointer=checkpointer, stage_spawn=stager.stage)
     started = time.time()
+    checkpointer.seal_start(driver.adapter)
     driver.consume(progress.track(stamped, len(records), 'root-native-records') if progress is not None else stamped)
     if progress is not None:
         progress.update('root-native-finalize')
@@ -331,6 +371,13 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     result['ledger_retention'] = sinks.reconcile_all(member=calculation.member_rows_written,
                                                      lifecycle=calculation.lifecycle_rows_written,
                                                      legacy=driver.counters.legacy_rows_retained)
+    checkpointer.seal_final(driver.adapter, completed_mbo_records=driver.counters.records_seen)
+    result['gates'] = {key: gates[key] for key in ('registry_gate', 'pre_call_layer_gate', 'rt_surface_gate')}
+    result['evidence_identity'] = evidence
+    result['slice'] = dict(record_source='VERIFIED_JOURNAL', records_requested=None,
+        roster_total_mbo_records=len(records), is_bounded_slice=False,
+        is_complete_source_day=source_manifest is not None, sources=[str(container['path'])])
+    result['checkpoints'] = checkpointer.saved_checkpoints
     # THE RESULT HASHES TO ITSELF AS WRITTEN (the launcher's F-feed-6): finalize() hashed the result before the
     # reconciliation was added, so the runner's hash keeps its own name and the declared hash is recomputed last
     result['runner_result_hash'] = result.pop('result_hash')
@@ -345,11 +392,10 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     receipt = dict(schema='FRANKIE_BOX_BEDROCK_RUN_RECEIPT_V1', at=time.time(), cycle=str(cycle), seconds=round(time.time() - started, 3),
                    producers=str(producers), producers_commit=str(code_commit), producers_lineage=PIN_LINEAGE,
                    driver=modules['native_replay_driver'], modules=modules,     # the modules that actually RAN, by their own __file__
-                   launcher_differences=['no PeriodicCheckpointer / seal_start (no save points; the launcher writes them for the day run)',
-                                         'no stage_spawn (moot under NeverInvoke)',
-                                         'the launcher\'s three pre-traversal gates (registry identity, pre-call layer receipt, RT surface '
-                                         'inventory) are not run, so result.json carries no gates/evidence_identity/slice of its own',
-                                         'result_hash recomputed after ledger_retention, as the launcher does (runner_result_hash kept)'],
+                   launcher_differences=['source is the verified supplied journal; no DBN ingestion is performed',
+                                         'NeverInvoke retains all calculations; BOSS calls occur in the host/session stages'],
+                   checkpoints=dict(directory=str(checkpoint_dir), count=len(checkpointer.saved_checkpoints),
+                                    final=checkpointer.saved_checkpoints[-1], readback_verified=True),
                    identity=asdict(ident), identity_inputs=dict(mission=MISSION_PATH, contract=CONTRACT_PATH, knowledge_manifest=KNOWLEDGE_MANIFEST_PATH),
                    cadence_policy='NeverInvoke', driver_arguments=arguments,
                    candidate_warmup_seconds=driver.candidate_warmup_seconds, candidate_min_observations=driver.candidate_min_observations,

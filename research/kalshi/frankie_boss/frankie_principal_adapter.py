@@ -100,6 +100,27 @@ def load_cycle_calculation_pin(cycle_index, path=None):
     if not pins_path.is_file():
         raise ValueError('cycle calculation pin required: ' + str(pins_path) + ' is absent')
     document = json.loads(pins_path.read_bytes())
+    if document.get('schema') == 'FRANKIE_WHOLE_DAY_CALCULATION_PIN_V1':
+        if cycle_index != 0 or document.get('forecast_mode') != 'whole_day_next_session':
+            raise ValueError('whole-day calculation pin requires the one terminal cycle')
+        pin = dict(document['pin'])
+        required = [layer for _, layers in REGISTRY_CALCULATION_SET for layer in layers]
+        if pin.get('registry_layers') != required or not pin.get('complete_registry'):
+            raise ValueError('whole-day pin must carry the complete calculation registry')
+        if not document.get('source_binding'):
+            raise ValueError('whole-day pin must name its independently verified source')
+        pin['bedrock_layers'] = _validate_bedrock(
+            document['pin'], document['groups'], cycle_index, historical_catalog=True)
+        if [e['group'] for e in pin.get('bedrock', [])] != [
+                'derived_geometry', 'prebirth_opportunity', 'causal_clocks']:
+            raise ValueError('whole-day pin requires all three bedrock groups')
+        pin['projection_layers'] = [layer for layer in required
+                                   if layer not in dict(REGISTRY_CALCULATION_SET)['legacy_observable_crosswalk']]
+        pin['source_binding'] = document['source_binding']
+        pin['forecast_mode'] = document['forecast_mode']
+        pin['pins_witness'] = dict(file_witness(pins_path), path=str(pins_path))
+        pin['cycle_index'] = cycle_index
+        return pin
     if document.get('schema') != CYCLE_CALCULATION_PINS_SCHEMA or type(document.get('pins')) is not list:
         raise ValueError('cycle calculation pins file is not ' + CYCLE_CALCULATION_PINS_SCHEMA)
     matches = [pin for pin in document['pins']
@@ -120,7 +141,7 @@ def load_cycle_calculation_pin(cycle_index, path=None):
     return pin
 
 
-def _validate_bedrock(pin, pins, cycle_index):
+def _validate_bedrock(pin, pins, cycle_index, *, historical_catalog=False):
     """The bedrock (Greg, 2026-09-21: "All 3"): a pin may carry `bedrock`, a non-empty list of pin-shaped entries,
     each the verbatim entry of a group some OTHER cycle pins as its own, whose layers are registry calculation
     layers. Returns the bedrock layers in order (empty when the pin carries none); malformed = refused."""
@@ -144,7 +165,7 @@ def _validate_bedrock(pin, pins, cycle_index):
             if type(receipt) is not dict or not {'path', 'sha256', 'bytes'} <= set(receipt):
                 raise ValueError('cycle calculation pin bedrock source receipt needs path, bytes and sha256')
         own = [other for other in pins if other is not pin and other.get('group') == entry['group']
-               and type(other.get('cycles')) is list and other['cycles']]
+               and (historical_catalog or type(other.get('cycles')) is list and other['cycles'])]
         if len(own) != 1:
             raise ValueError('cycle calculation pin bedrock group %s is pinned to %d cycles of its own, not one'
                              % (entry['group'], len(own)))
@@ -161,6 +182,13 @@ def calculation_pin_instruction(pin):
     """The per-cycle required set, rendered into the instruction after the standing rule. A pin that carries a
     bedrock (cycle 0, Greg 2026-09-21) renders it after the pin sentence and narrows the "not required now" clause
     to the layers outside the bedrock; a pin without one renders byte-for-byte what it always did."""
+    if pin.get('forecast_mode') == 'whole_day_next_session':
+        return ('WHOLE MONDAY CALCULATIONS: run every group and calculation in the complete registry, '
+                'including all three bedrock producer groups. Every delivered Monday record is in scope. '
+                'Historical group definitions are provenance, not additional execution cycles. '
+                'Account for every layer with its actual status, evidence and reason: '
+                + ', '.join(pin['registry_layers']) + '. Source binding: '
+                + json.dumps(pin['source_binding'], sort_keys=True) + '. ')
     receipts = '; '.join(r['path'] + ' sha256 ' + r['sha256'] for r in pin['source_receipts'])
     bedrock = pin.get('bedrock') or []
     not_required = ('layers of other cycles\' pins that are not in this cycle\'s bedrock are not required now'

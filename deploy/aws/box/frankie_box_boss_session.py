@@ -50,7 +50,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 ROOT = Path(os.environ.get('FRANKIE_BOX_ROOT', '/opt/frankie-box'))
-MARKETS = ROOT / 'markets'
+MARKETS = Path(__file__).resolve().parents[3]
 PRODUCERS = ROOT / 'producers'
 CONTEXT = 131072
 SSM_REGION = 'us-east-2'
@@ -173,6 +173,7 @@ class Session:
         # research.refrag shadowing the markets one when producers came first).
         sys.path.insert(0, str(PRODUCERS))
         sys.path.insert(0, str(MARKETS))
+        self.source_binding = load_json(self.dir / 'source-binding.json') if (self.dir / 'source-binding.json').is_file() else None
         self.request = None
         self.request_sha256 = None
         self.contract = None
@@ -731,8 +732,8 @@ class Session:
             return None
 
     # ---- derive (the pin's producers on this cycle's rows) ------------------------------------------------
-    def derive(self):
-        pin = self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
+    def derive(self, *, source=None):
+        pin = self._pin() if source is not None else self._pin_matches_request()       # refuses, with a receipt, a pin the request was not rendered under
         derived = self.work / 'derived'
         moved = _box_module('frankie_box_bedrock')._move_aside(              # an earlier derivation is moved aside with a receipt, never overwritten
             derived, siblings=[self.work / 'derive.json', self.work / 'derivation-digest-full.md', self.work / 'derive-only-measurement.json', self.work / 'digest-proof.json'],
@@ -742,8 +743,19 @@ class Session:
             self.note(f'derive: the earlier derived files moved aside to {moved} (receipted)')
         derived.mkdir(exist_ok=True)
         status = {}
-        rows_path = ROOT / 'data' / f'prefix-{self.cycle}.sqlite'
+        rows_path = Path(source.container['path']) if source is not None else (
+            Path(self.source_binding['container']['path']) if self.source_binding else ROOT / 'data' / f'prefix-{self.cycle}.sqlite')
         records, container = self._input_records(rows_path)
+        if self.source_binding:
+            expected = self.source_binding
+            if (any(container[k] != expected['container'][k] for k in ('path', 'bytes', 'sha256'))
+                    or container['count'] != expected['journal_count']
+                    or container['head'] != expected['journal_hash']
+                    or len(records) != expected['record_count']
+                    or pin.get('source_binding') != expected['source']):
+                raise ValueError('Monday calculation inputs differ from the pinned complete source')
+        if source is not None and not self.source_binding:
+            raise ValueError('source calculations require an independently pinned source binding')
         status['rows'] = container
         self.note(f'deriving: {len(records)} INPUT records from prefix-{self.cycle} ({container.get("count")} entries)')
         V4MboAdapter = self._producer_module('research/ng_exhaustion_mbo_v4_state_adapter_20260820.py',
@@ -813,7 +825,7 @@ class Session:
         for layer in pin['registry_layers']:
             layers.setdefault(layer, dict(status='could_not', reason='no producer in the pin derives this layer; NO_PRODUCER_FOUND', producer=None))
         receipt = dict(schema='FRANKIE_BOX_DERIVATION_RECEIPT_V1', at=time.time(), cycle=self.cycle, pin_group=pin['group'],
-                       rows=container, input_records=len(records), legacy_rows=legacy_count, adapter_records=adapter.record_count,
+                       source_binding=self.source_binding, rows=container, input_records=len(records), legacy_rows=legacy_count, adapter_records=adapter.record_count,
                        f_last_groups=adapter.completed_event_group_count, failures=failures, failure_count=len(failures),
                        producers=self._producer_witnesses(pin), layers={})
         for name, value in layers.items():
@@ -858,7 +870,10 @@ class Session:
 
     def _pin(self):
         from research.kalshi.frankie_boss.frankie_principal_adapter import load_cycle_calculation_pin
-        pin = load_cycle_calculation_pin(int(self.cycle))
+        pin = load_cycle_calculation_pin(int(self.cycle),
+            self.source_binding['calculation_pins']['path'] if self.source_binding else None)
+        if self.source_binding and pin['pins_witness']['sha256'] != self.source_binding['calculation_pins']['sha256']:
+            raise ValueError('Monday calculation pin file changed')
         return pin if isinstance(pin, dict) else json.loads(json.dumps(pin, default=lambda o: getattr(o, '__dict__', str(o))))
 
     @staticmethod
@@ -899,11 +914,12 @@ class Session:
     def _derive_bedrock(self, records, container, pin, derived, receipt_layers):
         """The pinned traversal, the projection and their receipts; the layer entries go into receipt_layers."""
         B = _box_module('frankie_box_bedrock')
-        layers = list(pin['bedrock_layers'])
+        layers = list(pin.get('projection_layers') or pin['bedrock_layers'])
         code_commit = B.producers_commit(PRODUCERS)
         self.note(f'bedrock: the pinned traversal ({code_commit[:8]}) on {len(records)} INPUT records for {len(layers)} layers')
         probe = _box_module('frankie_box_progress').for_session(self)
-        run = B.run(records, container, self.work / 'bedrock', PRODUCERS, self.cycle, code_commit, self.day, progress=probe)
+        run = B.run(records, container, self.work / 'bedrock', PRODUCERS, self.cycle, code_commit, self.day, progress=probe,
+                    source_manifest=self.source_binding['manifest'] if self.source_binding else None)
         probe.update('root-projection')
         crosswalk = B.crosswalk_records(PRODUCERS, layers)
         projected = B.project(run, self.work / 'bedrock' / 'ledgers', layers, crosswalk, derived)
@@ -982,7 +998,11 @@ class Session:
             return True, 'derive.json carries no pin identity'
         if identity.get('sha256') != pin['pins_witness']['sha256']:
             return True, 'the calculation pin moved since the derivation'
-        wanted = list(pin.get('bedrock_layers') or [])
+        if self.source_binding and recorded.get('source_binding') != self.source_binding:
+            raise ValueError('retained calculation work belongs to another source binding')
+        if self.source_binding and (recorded.get('failure_count') or not recorded.get('bedrock')):
+            raise ValueError('retained whole-day calculations are incomplete; inspect their existing receipts')
+        wanted = list(pin.get('projection_layers') or pin.get('bedrock_layers') or [])
         if wanted and (not recorded.get('bedrock') or list(recorded['bedrock'].get('layers') or []) != wanted):
             return True, 'the derivation does not carry this pin\'s bedrock'
         return False, 'current'
@@ -1011,7 +1031,7 @@ class Session:
         finally:
             db.close()
         container = dict(path=str(rows_path), layout=layout, format=fmt, count=count, head=head, **witness(rows_path),
-                         head_is_request_source_hash=(head == self.request['attachment']['feedback_contract']['source_hash']))
+                         head_is_request_source_hash=(head == (((self.request or {}).get('attachment') or {}).get('feedback_contract') or {}).get('source_hash')))
         B = _box_module('frankie_box_bedrock')
         records = B.RowSpool(self.work / 'derived' / '.rows' / ('input-' + uuid.uuid4().hex + '.jsonl'))
         kinds = {}
@@ -1022,9 +1042,10 @@ class Session:
             observation = self._find_observation(payload)
             if observation is not None:
                 records.append({k: v for k, v in observation.items() if not isinstance(v, (bytes, bytearray))})
+        probe = _box_module('frankie_box_progress').for_session(self)
         if layout == 'compact':
             with CompactReader(rows_path, expected_count=count, expected_head_hash=head) as reader:
-                for ordinal, kind, body, digest in reader.rows():
+                for ordinal, kind, body, digest in probe.track(reader.rows(), count, 'source-journal-records'):
                     entry = unpack(json.loads(body))
                     take(kind, entry.get('payload', entry) if isinstance(entry, dict) else entry)
         else:
