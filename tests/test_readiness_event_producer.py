@@ -155,7 +155,7 @@ def test_composite_source_authority_is_checked_before_bridge_import():
     steps = composite_steps()
     runs = "\n".join(step.get("run", "") for step in steps)
     assert "git" in runs and "diff" in runs and "source_commit" in runs
-    assert "GITHUB_SHA" in runs or "CALLER_SHA" in runs
+    assert "GITHUB_SHA" in runs or "CALLER_COMMIT" in runs
     import_at = runs.index("spec.loader.exec_module(module)")
     # The caller/source comparison must happen before code from event-selected source executes.
     diff_at = runs.index("diff")
