@@ -165,6 +165,54 @@ class CycleCoordinator:
             self.db.execute('CREATE TABLE stages (request TEXT, stage TEXT, payload BLOB, digest TEXT, PRIMARY KEY(request,stage))')
             self.lessons.execute('CREATE TABLE lessons (request TEXT PRIMARY KEY, available_ns INTEGER, payload BLOB, digest TEXT)')
             self.db.commit(); self.lessons.commit()
+        try:
+            self._claim_knowledge_lineage()
+        except Exception:
+            self.db.close(); self.lessons.close()
+            raise
+
+    LINEAGE_REQUEST = '__FRANKIE_KNOWLEDGE_LINEAGE_V1__'
+    LINEAGE_STAGE = 'knowledge_lineage'
+
+    def _lineage_value(self):
+        from .granite_positive_priming import validate_priming
+        capsule = None if self.critic_priming is None else validate_priming(self.critic_priming)
+        return dict(schema='FRANKIE_KNOWLEDGE_LINEAGE_V1', priming=capsule,
+            priming_hash=None if capsule is None else evidence_hash(capsule))
+
+    def _origin_priming_unchanged(self, request_id, complete):
+        from .granite_positive_priming import validate_priming
+        knowledge = self._load(request_id, 'critic_knowledge')
+        capsule = None if knowledge is None else knowledge.get('priming')
+        mode = complete.get('knowledge_mode')
+        digest = complete.get('priming_hash')
+        if capsule is None:
+            if mode is not None or digest is not None:
+                raise ValueError('origin replay lineage lacks retained capsule')
+            return
+        capsule = validate_priming(capsule)
+        if (capsule != self.critic_priming or mode != capsule['mode']
+                or digest != evidence_hash(capsule)):
+            raise ValueError('origin replay lineage differs from configured capsule')
+
+    def _claim_knowledge_lineage(self):
+        expected = self._lineage_value()
+        saved = self._load(self.LINEAGE_REQUEST, self.LINEAGE_STAGE)
+        if saved is not None:
+            if saved != expected:
+                raise ValueError('retained replay lineage cannot change or downgrade')
+            return
+        for (request_id,) in self.db.execute("SELECT request FROM stages WHERE stage='critic_knowledge'").fetchall():
+            value = self._load(request_id, 'critic_knowledge')
+            if value.get('priming') != self.critic_priming:
+                raise ValueError('legacy replay lineage differs from configured capsule')
+        for (request_id,) in self.db.execute("SELECT request FROM stages WHERE stage='complete'").fetchall():
+            self._origin_priming_unchanged(request_id, self._load(request_id, 'complete'))
+        self._save(self.LINEAGE_REQUEST, self.LINEAGE_STAGE, expected)
+
+    def _knowledge_lineage_unchanged(self):
+        if self._load(self.LINEAGE_REQUEST, self.LINEAGE_STAGE) != self._lineage_value():
+            raise ValueError('retained replay lineage changed or disappeared')
 
     def _memory_unchanged(self):
         if file_hash(self.memory) != self.memory_hash:
@@ -422,6 +470,7 @@ class CycleCoordinator:
 
     def critic_knowledge(self, request_id, cutoff_ns):
         """Freeze once before admission; completed origin evidence remains authoritative."""
+        self._knowledge_lineage_unchanged()
         from .critic_knowledge import build_knowledge, validate_knowledge
         saved = self._load(request_id, 'critic_knowledge')
         if saved is not None:
@@ -446,6 +495,7 @@ class CycleCoordinator:
             complete = self._load(previous, 'complete')
             if any(value is None for value in (binding, feedback, training, complete)):
                 raise ValueError('knowledge origin lacks completed verified cycle stages')
+            self._origin_priming_unchanged(previous, complete)
             fields = feedback['feedback']
             digest = evidence_hash(dict(schema='BOSS_FORECAST_CONTRACT_V1', kind='FrankieFeedback', fields=fields))
             learning = binding['learning']
@@ -501,6 +551,7 @@ class CycleCoordinator:
         source/input hashes, full context cursor and learning cutoff are explicit.
         """
         if type(request_id) is not str or not request_id: raise ValueError('request ID required')
+        if request_id == self.LINEAGE_REQUEST: raise ValueError('reserved coordinator lineage request identity')
         if 'request_id' in controller_kwargs or 'request_id' in learning_kwargs:
             raise ValueError('request ID is owned by cycle coordinator')
         for forbidden in ('feedback', 'expected_feedback_hash'):
@@ -510,6 +561,7 @@ class CycleCoordinator:
             frozen_memory_sha256=self.memory_hash)
         async with self._lock:
             with _exclusive(str(self.path)+'.lock'):
+                self._knowledge_lineage_unchanged()
                 saved = self._load(request_id, 'binding')
                 if self._cycle_supersede(request_id, saved):
                     saved = None   # declared whole-cycle rerun: every stage archived, the cycle starts over
@@ -527,6 +579,9 @@ class CycleCoordinator:
                     self._observe('boss_reasoning', request_id)
                     controller = controller_factory()
                     actual_kwargs = dict(controller_kwargs)
+                    if (self.critic_priming is not None
+                            and getattr(controller, 'context_encoding', None) != 'stacked_v1'):
+                        raise ValueError('historical priming requires stacked critic route')
                     if getattr(controller, 'context_encoding', None) == 'stacked_v1':
                         knowledge = self.critic_knowledge(request_id, learning_kwargs['as_of'])
                         if ('critic_knowledge' in actual_kwargs and actual_kwargs['critic_knowledge'] != knowledge):
@@ -598,6 +653,7 @@ class CycleCoordinator:
                     learner = learner_factory()
                     return learner.step(request_id=request_id, feedback=feedback,
                         expected_feedback_hash=feedback.digest, **learning_kwargs)
+                self._knowledge_lineage_unchanged()
                 training = checkpoint.apply_completed(request_id, controller_result_hash=result_hash,
                     training_cursor=learning_kwargs['through_cursor'], update=update)
                 self._save(request_id, 'training', training)

@@ -5,7 +5,7 @@ from pathlib import Path
 from .c15_journal import evidence_hash
 
 MODE='knowledge_primed_learning_replay'
-SCHEMA='FRANKIE_HISTORICAL_PRIMING_V1'
+SCHEMA='FRANKIE_HISTORICAL_PRIMING_V2'
 HELPFUL='FRANKIE_HELPFUL_KNOWLEDGE_V1'
 RETAINED='research/kalshi/frankie_boss/records/chat6_scratchpad_20260921'
 PINS={
@@ -44,7 +44,8 @@ def select_helpful(lessons):
     for item in lessons:
         if type(item) is not dict: continue
         if item.get('schema')==HELPFUL:
-            selected.append(_helpful(item))
+            _helpful(item)  # Preserve validation; self-labeled prose is audit-only.
+            continue
         elif item.get('ledger')=='calculation_accounting':
             harness=item.get('harness_derivation',{})
             layers=item.get('layers',[])
@@ -64,7 +65,7 @@ def select_helpful(lessons):
 
 def validate_priming(value):
     fields={'schema','mode','source_available_ns','source_request_id','response_sha256',
-        'response_canonical_sha256','derivation_sha256','host_record_sha256','lessons'}
+        'response_canonical_sha256','derivation_sha256','host_record_sha256','lessons','market_context'}
     if type(value) is not dict or set(value)!=fields or value['schema']!=SCHEMA or value['mode']!=MODE:
         raise ValueError('explicit historical learning replay priming mode required')
     if type(value['source_available_ns']) is not int or value['source_available_ns']<0:
@@ -74,19 +75,34 @@ def validate_priming(value):
     for name in ('response_sha256','response_canonical_sha256','derivation_sha256','host_record_sha256'):
         if not _hash(value[name]): raise ValueError('priming source hash required')
     if type(value['lessons']) is not list or not value['lessons']: raise ValueError('supported priming lessons required')
-    for item in value['lessons']: _helpful(item)
+    for item in value['lessons']:
+        _helpful(item)
+        if item['statement'] not in {v[1] for v in METHODS.values()}:
+            raise ValueError('unapproved historical calculation statement')
+    from .knowledge_calendar import market_calendar
+    context=value['market_context']
+    if type(context) is not dict or context!=market_calendar(context.get('observed_ns')):
+        raise ValueError('historical source market calendar differs')
+    if context['observed_ns']>value['source_available_ns']:
+        raise ValueError('source observation after knowledge availability')
     return canonical(value)
 
 def public_knowledge(audit):
     """Only this projection enters model-visible text; the source audit remains intact."""
+    from .knowledge_calendar import market_calendar
     entries=[]
+    origins={row['request_id']:row for row in audit.get('origins',[])}
     for entry in audit['entries']:
         items=select_helpful(entry['record']['lessons'])
-        if items: entries.append(dict(lesson_hash=entry['lesson_hash'],helpful_lessons=items))
+        if items:
+            origin=origins.get(entry['record']['request_id'])
+            context=(dict(status='unverified',reason='source_market_time_not_bound')
+                if origin is None else market_calendar(origin['as_of']))
+            entries.append(dict(lesson_hash=entry['lesson_hash'],helpful_lessons=items,market_context=context))
     capsule=audit.get('priming')
     if capsule is not None:
         capsule=validate_priming(capsule)
-        entries.append(dict(lesson_hash=evidence_hash(capsule),helpful_lessons=capsule['lessons']))
+        entries.append(dict(lesson_hash=evidence_hash(capsule),helpful_lessons=capsule['lessons'],market_context=capsule['market_context']))
     return canonical(dict(schema='FRANKIE_HELPFUL_MODEL_VIEW_V1',entries=entries))
 
 def load_retained_priming(repository, *, mode):
@@ -119,7 +135,11 @@ def load_retained_priming(repository, *, mode):
             if not any(v.get('status')=='derived' and v.get('sha256')==sha and
                     v.get('producer')==METHODS[name][0] for name,v in derivation['layers'].items() if name in METHODS):
                 raise ValueError('positive lesson lacks matching successful derivation receipt')
-    return validate_priming(dict(schema=SCHEMA,mode=mode,
+    from .knowledge_calendar import market_calendar
+    observed=[row['observed_through_ns'] for session in response['feedback']['sessions'] for row in session['timing']]
+    if not observed or any(type(ns) is not int for ns in observed):
+        raise ValueError('retained source market timestamps required')
+    return validate_priming(dict(schema=SCHEMA,mode=mode,market_context=market_calendar(min(observed)),
         source_available_ns=response['feedback']['available_ns'],source_request_id=response['feedback']['request_id'],
         response_sha256=PINS['response-00.json'],response_canonical_sha256=response_hash,
         derivation_sha256=PINS['cycle-00-docs/brain/cycle-00/derive.md'],

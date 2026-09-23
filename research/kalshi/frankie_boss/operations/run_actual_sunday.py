@@ -936,6 +936,8 @@ class ActualHost:
         c=self.config;h=self.host
         priming=None
         if c.get('critic_priming') is not None:
+            if h.get('context_encoding') != 'stacked_v1':
+                raise ValueError('historical priming requires stacked critic route')
             declared=c['critic_priming']
             if (set(declared)!={'mode','profile'} or declared['profile']!='retained_cycle00_20260921'):
                 raise ValueError('explicit retained historical priming profile required')

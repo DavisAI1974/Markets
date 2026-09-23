@@ -219,6 +219,8 @@ class ClassroomActualHost(base.ActualHost):
 
     async def run(self):
         c = self.config
+        if c.get('critic_priming') is not None:
+            raise ValueError('classroom host does not support historical priming; use the explicit priming-capable host')
         h = self.host
         self.coordinator = self.api.CycleCoordinator(
             self.directory / "cycles.sqlite",
