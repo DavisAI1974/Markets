@@ -89,9 +89,11 @@ def answer_wall(work):
     return dict(request_sha256=verify.get('request_sha256'), request_id=verify.get('request_id'), cycle_index=verify.get('cycle_index'),
                 as_of=verify.get('as_of'), learning_cutoff_ns=verify.get('learning_cutoff_ns'), source_hash=verify.get('source_hash'),
                 input_hash=verify.get('input_hash'), input_hash_sources=verify.get('input_hash_sources'), prompt=verify.get('prompt'),
-                session_id=verify.get('session_id'), labels=dict(count=len(marks), available_ns=labels.get('available_ns'), gap=labels.get('gap'), path=labels.get('path'),
+                session_id=verify.get('session_id'), feedback_status=labels.get('status', 'labels_available'), labels=dict(count=len(marks), available_ns=labels.get('available_ns'), gap=labels.get('gap'), path=labels.get('path'),
                                                               first=marks[:1], last=marks[-1:], all_available_at_or_before_cutoff=all(m.get('available_ns', 0) <= (verify.get('learning_cutoff_ns') or 0) for m in marks) if marks else None),
-                rule='nothing received after the learning cutoff was read; the labels come from the next authored cycle\'s marks by code, never from a later outcome')
+                rule=('target-day outcomes are pending; Monday classroom evidence is not forecast-outcome feedback'
+                      if labels.get('status') == 'pending_target_outcomes' else
+                      'nothing received after the learning cutoff was read; the labels come from the next authored cycle\'s marks by code, never from a later outcome'))
 
 
 def build(work, reading_ledger=None, exclude_prefixes=()):

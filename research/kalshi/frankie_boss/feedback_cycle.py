@@ -557,7 +557,7 @@ class CycleCoordinator:
                 raise ValueError('new request precedes learned feedback availability')
 
     async def run(self, *, request_id, controller_factory, controller_kwargs, export_kwargs,
-                  principal, checkpoint, learner_factory, learning_kwargs):
+                  principal, checkpoint, learner_factory, learning_kwargs, awaiting_target_outcomes=False):
         """Factories are lazy; export_kwargs may read final checkpoints from result.
 
         principal is FrankiePrincipalAdapter (prepare/execute/recover/verify).
@@ -574,6 +574,8 @@ class CycleCoordinator:
         binding = dict(request_id=request_id, controller=_plain(controller_kwargs),
             learning=_plain(learning_kwargs), training_identities=checkpoint.identities,
             frozen_memory_sha256=self.memory_hash)
+        if awaiting_target_outcomes:
+            binding['awaiting_target_outcomes'] = True
         async with self._lock:
             with _exclusive(str(self.path)+'.lock'):
                 self._knowledge_lineage_unchanged()
@@ -586,6 +588,9 @@ class CycleCoordinator:
                 # The lookup deliberately precedes model/controller construction.
                 completed = self._load(request_id, 'complete')
                 if completed is not None: return completed
+                pending = self._load(request_id, 'pending_feedback')
+                if pending is not None:
+                    return pending
                 self._check_chronology(request_id, learning_kwargs['as_of'])
                 self._memory_unchanged()
                 self._save(request_id, 'binding', binding)
@@ -648,9 +653,26 @@ class CycleCoordinator:
                 feedback = principal.verify(envelope, request_id=request_id,
                     input_hash=learning_kwargs['input_hash'], source_hash=learning_kwargs['source_hash'],
                     learning_cutoff_ns=learning_kwargs['learning_cutoff_ns'])
-                if not isinstance(feedback, FrankieFeedback): raise ValueError('typed principal feedback required')
                 if type(envelope.get('lessons')) not in (list, tuple):
                     raise ValueError('principal must explicitly supply separate lessons')
+                if awaiting_target_outcomes and feedback is None and learning_kwargs['learning_cutoff_ns'] is None:
+                    # Principal verification includes the complete classroom correction
+                    # exchange. Preserve its lessons without inventing an outcome or
+                    # exposing them as a completed native-training cycle.
+                    self._memory_unchanged()
+                    self._save(request_id, 'classroom_lessons', dict(
+                        lessons=envelope['lessons'], principal_receipt=envelope['principal_receipt'],
+                        controller_result_hash=result_hash, native_learning_performed=False))
+                    pending = dict(schema='FRANKIE_BOSS_PENDING_TARGET_FEEDBACK_V1',
+                        status='pending_target_outcomes', request_id=request_id,
+                        controller_result_hash=result_hash, principal_receipt=envelope['principal_receipt'],
+                        checkpoint_hash=checkpoint.checkpoint_hash,
+                        pending_feedback=envelope['pending_feedback'],
+                        classroom_complete=True, native_learning_performed=False, cycle_complete=False)
+                    self._save(request_id, 'pending_feedback', pending)
+                    self._observe('awaiting_target_outcomes', request_id)
+                    return pending
+                if not isinstance(feedback, FrankieFeedback): raise ValueError('typed principal feedback required')
                 if (feedback.request_id != request_id or feedback.input_hash != learning_kwargs['input_hash']
                         or feedback.source_hash != learning_kwargs['source_hash']
                         or not learning_kwargs['as_of'] <= feedback.available_ns <= learning_kwargs['learning_cutoff_ns']):

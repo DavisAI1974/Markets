@@ -74,7 +74,14 @@ def bind_cycle(contract_path, expected_contract_sha256, cycle_index, prefix):
         'cycles':[{'cycle_index':c['cycle_index'],'as_of':c['source_prefix']['receive_cutoff_ns'],
             'through_cursor':c['source_prefix']['source_cursor'],'learning_cutoff_ns':c['learning_cutoff_ns'],
             'learning_through_source_cursor':c['learning_through_source_cursor']} for c in contract['cycles']]}
+    pending = contract.get('forecast_mode') == 'whole_day_next_session'
+    if pending:
+        split = dict(schema='FRANKIE_WHOLE_DAY_PENDING_OUTCOMES_SPLIT_V1',
+            contract_sha256=expected_contract_sha256, forecast_target=contract['forecast_target'],
+            rule='retain forecast and classroom; native learning awaits verified target-day outcomes')
     return {'sessions':sessions,'expected_sessions_hash':session_registry_hash(sessions),
+        **({'forecast_mode':'whole_day_next_session', 'forecast_target':contract['forecast_target'],
+            'feedback_status':'pending_target_outcomes'} if pending else {}),
         **({'trading_day':contract['trading_day'], 'cycle_count':contract['cycle_count'],
             'source_manifest_hash':contract['source_manifest_hash'],
             'authored_contract_json':Path(contract_path).read_bytes().decode('utf-8')} if 'trading_day' in contract else {}),

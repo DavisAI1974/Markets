@@ -302,6 +302,14 @@ class Session:
         index = verify['cycle_index']
         cycles = self.contract['cycles']
         this = cycles[index]['forecast_session']
+        if self.contract.get('forecast_mode') == 'whole_day_next_session':
+            record = dict(schema='FRANKIE_BOX_TARGET_OUTCOMES_PENDING_V1',
+                status='pending_target_outcomes', forecast_target=self.contract['forecast_target'],
+                labels=None, gap=None, path=None, available_ns=None,
+                native_learning_performed=False)
+            write_json(self.work / 'labels.json', record)
+            self.note('target-day labels pending; Monday calculations and classroom continue')
+            return record
         if index + 1 >= len(cycles):
             self.refuse('no later authored cycle carries the confirmation marks for this cycle')
         later = cycles[index + 1]['forecast_session']
@@ -1835,7 +1843,7 @@ class Session:
     def _writing_inputs(self):
         """What the response is written from; writing runs again when any of it changed (a durable BOSS job whose prompt
         is unchanged is reused, so only the calls whose inputs moved cost anything)."""
-        names = ('merged-notes.md', 'derivation-digest-full.md') + PACKETS
+        names = ('merged-notes.md', 'derivation-digest-full.md', 'labels.json') + PACKETS
         inputs = {n: sha256_bytes((self.work / n).read_bytes()) for n in names if (self.work / n).is_file()}
         ledgers = self.work / 'classroom' / 'ledgers.json'
         if ledgers.is_file():
@@ -1947,6 +1955,12 @@ class Session:
                                       available_ns=labels['available_ns'],
                                       sessions=[dict(session_id=verify['session_id'], timing=labels['labels'], gap=labels['gap'], path=labels['path'])]),
                         lessons=[analysis_md, accounting_entry] + ledgers)
+        if labels.get('status') == 'pending_target_outcomes':
+            response['feedback'] = None
+            response['feedback_status'] = 'pending_target_outcomes'
+            response['pending_feedback'] = dict(request_id=self.request['request_id'],
+                input_hash=verify['input_hash'], source_hash=contract['source_hash'],
+                forecast_target=labels['forecast_target'])
         classroom = self.classroom_ledgers()
         response.update(classroom)                # the Dipole classroom, turn 1 (work/classroom/receipt.json has the counts and the composition)
         classroom_receipt = load_json(self.work / 'classroom' / 'receipt.json')

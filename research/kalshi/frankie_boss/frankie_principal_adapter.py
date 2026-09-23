@@ -797,7 +797,12 @@ class FrankiePrincipalAdapter:
                 'Cite every retained section hash. Supply feedback without principal_receipt_hash, '
                 'lessons, sections (section ID to retained SHA256), session_id and '
                 'model_identity_as_reported_by_session. The host attests actual session identity. '
-                + self._instruction())}
+                + self._instruction()
+                + (' Target-day outcomes are unavailable. Complete all Monday calculations, reading, classroom, '
+                   'correction and lessons, but return feedback null and feedback_status pending_target_outcomes. '
+                   'Carry request_id, input_hash, source_hash and forecast_target in pending_feedback. '
+                   'Do not substitute empty labels or claim native learning completed.'
+                   if self.feedback_contract.get('feedback_status') == 'pending_target_outcomes' else ''))}
 
     def execute(self, request_id, attachment):
         request = self._request(request_id, attachment)
@@ -880,6 +885,12 @@ class FrankiePrincipalAdapter:
             'request_sha256': digest(request), 'response_sha256': digest(response),
             'attachment_hash': attachment['attachment_hash'], 'host_attestation_hash': digest(host_attestation)}
         receipt['receipt_sha256'] = digest(receipt)
+        if (self.feedback_contract.get('feedback_status') == 'pending_target_outcomes'
+                and response.get('feedback') is None):
+            return {'feedback': None, 'feedback_status': 'pending_target_outcomes',
+                    'pending_feedback': response['pending_feedback'],
+                    'lessons': response['lessons'], 'principal_receipt': receipt,
+                    'admission': request['admission']}
         feedback = dict(response['feedback'])
         if 'principal_receipt_hash' in feedback:
             raise ValueError('principal must not mint its own host receipt hash')
@@ -892,9 +903,13 @@ class FrankiePrincipalAdapter:
         trusted = self.recover(request_id, request['attachment'])
         if trusted != envelope:
             raise ValueError('feedback envelope differs from retained session response')
-        body = envelope['feedback']
+        pending = (learning_cutoff_ns is None and envelope['feedback'] is None
+                   and self.feedback_contract.get('feedback_status') == 'pending_target_outcomes')
+        body = envelope['pending_feedback'] if pending else envelope['feedback']
         if (body['request_id'], body['input_hash'], body['source_hash']) != (request_id, input_hash, source_hash):
             raise ValueError('principal feedback request/input/source binding differs')
+        if pending:
+            return None
         if type(body['available_ns']) is not int or not 0 <= body['available_ns'] <= learning_cutoff_ns:
             raise ValueError('principal feedback is not causally available')
         sessions = tuple(SessionFeedback(session_id=s['session_id'],

@@ -78,20 +78,23 @@ def record_checked(adapter,request,response,attestation,binding,input_hash,canon
     # second classroom turn has already completed. The live host owns grading.
     initial_recover=lambda request_id,attachment: FrankiePrincipalAdapter.recover(candidate,request_id,normalize_attachment(attachment))
     envelope=initial_recover(request['request_id'],request['attachment'])
-    view=SimpleNamespace(directory=candidate.directory,recover=initial_recover)
+    view=SimpleNamespace(directory=candidate.directory,recover=initial_recover,
+        feedback_contract=getattr(adapter, 'feedback_contract', {}))
     feedback=FrankiePrincipalAdapter.verify(view,envelope,request_id=request['request_id'],input_hash=input_hash,
         source_hash=binding['source_hash'],learning_cutoff_ns=binding['learning_cutoff_ns'])
-    if (not binding['as_of']<=feedback.available_ns<=binding['learning_cutoff_ns'] or
-        tuple(s.session_id for s in feedback.sessions)!=tuple(s.session_id for _,s in binding['sessions']) or
-        type(envelope['lessons']) not in (list,tuple)):
+    if type(envelope['lessons']) not in (list,tuple):
         raise ValueError('principal feedback chronology, roster or lessons differ')
-    # Use the learner's exact pure label checks without constructing a model,
-    # optimizer, context, or source reader. In particular, a censored tail does
-    # not establish STOP; STOP requires observations through the session close.
-    from research.kalshi.frankie_boss.native_forecast_learning import NativeForecastLearner
-    validator=object.__new__(NativeForecastLearner)
-    validator.config=SimpleNamespace(session_weights=tuple((s.session_id,1.0) for _,s in binding['sessions']))
-    validator._validate(binding['sessions'],feedback,binding['as_of'],binding['learning_cutoff_ns'])
+    if feedback is not None:
+        if (not binding['as_of']<=feedback.available_ns<=binding['learning_cutoff_ns'] or
+            tuple(s.session_id for s in feedback.sessions)!=tuple(s.session_id for _,s in binding['sessions'])):
+            raise ValueError('principal feedback chronology, roster or lessons differ')
+        # Use the learner's exact pure label checks without constructing a model,
+        # optimizer, context, or source reader. In particular, a censored tail does
+        # not establish STOP; STOP requires observations through the session close.
+        from research.kalshi.frankie_boss.native_forecast_learning import NativeForecastLearner
+        validator=object.__new__(NativeForecastLearner)
+        validator.config=SimpleNamespace(session_weights=tuple((s.session_id,1.0) for _,s in binding['sessions']))
+        validator._validate(binding['sessions'],feedback,binding['as_of'],binding['learning_cutoff_ns'])
     pregrade=None if classroom_grade is None else classroom_grade(response)
     if final.exists():
         if final.read_bytes()!=canonical(expected):raise ValueError('retained final principal response differs')

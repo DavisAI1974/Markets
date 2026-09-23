@@ -210,7 +210,7 @@ class SundayExecution:
         if type(declared_count) is not int or declared_count < 1 or len(self.steps)!=declared_count or any(a['as_of']>=b['as_of'] or a['through_cursor']>=b['through_cursor']
                 for a,b in zip(self.steps,self.steps[1:])):
             raise ValueError('complete increasing declared runtime schedule required')
-        if isinstance(schedule, dict) and schedule.get('schema') == 'BOSS_TRADING_DAY_CAUSAL_CYCLE_SCHEDULE_V1':
+        if isinstance(schedule, dict) and schedule.get('schema') in ('BOSS_TRADING_DAY_CAUSAL_CYCLE_SCHEDULE_V1', 'BOSS_WHOLE_DAY_NEXT_SESSION_SCHEDULE_V1'):
             from .trading_day_schedule import verify
             from .source_contract_runtime import load_contract
             verify(schedule, expected_digest=schedule['schedule_sha256'])
@@ -220,6 +220,13 @@ class SundayExecution:
             for index, step in enumerate(self.steps):
                 bound = bind_cycle(self.contract_path, self.contract_hash, index, step)
                 feedback = step['feedback_available_through']
+                if feedback is None:
+                    if (bound.get('forecast_mode') != 'whole_day_next_session'
+                            or bound.get('forecast_target') != schedule['forecast_target']
+                            or bound['learning_cutoff_ns'] is not None
+                            or bound['learning_through_source_cursor'] is not None):
+                        raise ValueError('whole-day target or pending feedback binding differs')
+                    continue
                 if (bound['learning_cutoff_ns'] != feedback['as_of'] or
                         bound['learning_through_source_cursor'] != feedback['through_cursor']):
                     raise ValueError('source contract learning boundary differs from the schedule')
@@ -240,6 +247,8 @@ class SundayExecution:
                 # Deliberately before binding, model loading, teacher work or any factory.
                 completed=self.coordinator._load(request_id,'complete')
                 if completed is not None:return completed
+                pending=self.coordinator._load(request_id,'pending_feedback')
+                if pending is not None:return pending
                 if index and self.coordinator._load(self.request_id(index-1),'complete') is None:
                     raise ValueError('complete the preceding Sunday cycle before advancing')
                 binding=bind_cycle(self.contract_path,self.contract_hash,index,self.steps[index])
@@ -341,8 +350,12 @@ class SundayExecution:
                         checkpoint=runtime.checkpoint,
                         learner_factory=lambda:NativeForecastLearner(runtime.context,runtime.decoder,runtime.optimizer,config,
                             event=runtime.learning_event),
-                        learning_kwargs=learner_kwargs)
-                    _save(directory/'completion.c15.json',result)
+                        learning_kwargs=learner_kwargs,
+                        **({'awaiting_target_outcomes':True}
+                           if binding.get('feedback_status') == 'pending_target_outcomes' else {}))
+                    result_file = ('pending-feedback.c15.json'
+                        if result.get('status') == 'pending_target_outcomes' else 'completion.c15.json')
+                    _save(directory/result_file,result)
                     return result
                 finally:
                     if book is not None:book.close()

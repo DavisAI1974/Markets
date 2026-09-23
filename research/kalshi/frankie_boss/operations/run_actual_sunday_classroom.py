@@ -345,6 +345,12 @@ def main(host_class=ActualHost):
             host.principal_host_lock = host_lock
             try:
                 result = asyncio.run(host.run())
+                pending = [row for row in result if row.get("status") == "pending_target_outcomes"]
+                if pending:
+                    probe.advance("awaiting_target_outcomes", completed=0, total=host.cycle_limit, unit="steps")
+                    print(json.dumps(dict(status="pending_target_outcomes", classroom_complete=True,
+                        native_learning_performed=False, cycle_complete=False, requests=pending)), flush=True)
+                    return 3
                 probe.advance("complete", completed=len(result), total=host.cycle_limit, unit="steps")
                 print(
                     json.dumps(
