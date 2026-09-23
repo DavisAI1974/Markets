@@ -27,8 +27,15 @@ on:
         description: 'Day pipeline RunRoot on the host'
         required: false
         default: 'C:/Codex/Frankie-BOSS-20260919/days'
+      python:
+        description: 'Host interpreter for the read-only principal_output gate'
+        required: false
+        default: 'C:/Codex/Frankie-BOSS-20260919/actual-host-python/Scripts/python.exe'
 permissions:
   contents: read
+concurrency:
+  group: host-${{ inputs.instance }}
+  cancel-in-progress: false
 jobs:
   supersede:
     if: github.repository == 'DavisAI1974/Markets'
@@ -53,6 +60,7 @@ jobs:
           RUN_ROOT: ${{ inputs.run_root }}
           CYCLE_INDEX: ${{ inputs.cycle_index }}
           REASON: ${{ inputs.reason }}
+          HOST_PYTHON: ${{ inputs.python }}
         run: |
           python deploy/aws/ssm_run_ps1.py \
             --instance "$INSTANCE" --region us-east-2 \
@@ -61,4 +69,5 @@ jobs:
             --set "RunRoot=$RUN_ROOT" \
             --set "CycleIndex=$CYCLE_INDEX" \
             --set "Reason=$REASON" \
+            --set "Python=$HOST_PYTHON" \
             --timeout 600 --tail 0 --comment "supersede cycle $CYCLE_INDEX retained state for day $DAY"

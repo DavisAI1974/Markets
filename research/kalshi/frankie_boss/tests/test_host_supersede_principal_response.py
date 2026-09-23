@@ -32,22 +32,28 @@ def test_moves_never_deletes_and_refuses_when_a_runner_or_a_completion_exists():
     for forbidden in ('Remove-Item', 'Get-SSMParameter', 'ssm get-parameter', 'SecretString', 'Set-Content -Path $cyclesDb'):
         assert forbidden not in CODE, forbidden
     assert "CommandLine -like '*run_actual_sunday*'" in CODE and 'refusing: a runner process is alive' in CODE
-    assert "if (Test-Path (Join-Path $principal 'dipole-classroom-completion.json')) { throw" in CODE
+    assert "if (Test-Path -LiteralPath $completion) { throw" in CODE and "'dipole-classroom-completion.json'" in CODE
     assert "stage='principal_output'" in CODE and 'the runner accepted the response' in CODE
-    assert "$names = @('session-response.json', 'host-session-record.json', 'classroom-correction-request.json', 'classroom-correction-response.json'," in CODE
+    assert "$responseNames = @('session-response.json', 'host-session-record.json', 'classroom-correction-request.json', 'classroom-correction-response.json'," in CODE
     assert "$_.Name -like 'incoming-*' -or $_.Name -like 'response-check-*'" in CODE
     assert "NOTHING_RECORDED" in CODE
     assert "'-principal-response-cycle-' + $CycleIndex" in CODE
-    assert 'Move-Item -LiteralPath $source -Destination (Join-Path (Join-Path $target ' + "'principal') $name)" in CODE
-    assert "$record.sha256 = Digest $source" in CODE
-    assert "dipole-classroom-post-grade.json" in CODE and "'classroom-audit') 'dipole-classroom-post-grade.json'" in CODE
-    assert "kept            = @('session-request.json', 'prompt.md', 'historical-prompt.md', 'receiver'" in CODE
+    assert 'Move-Item -LiteralPath $source -Destination $destination' in CODE
+    assert "ComputeHash($stream)" in CODE and "sha256 = $rootEntry.sha256" in CODE
+    assert "'classroom-audit/dipole-classroom-post-grade.json'" in CODE
+    assert "$kept = @('session-request.json', 'prompt.md', 'historical-prompt.md', 'receiver'" in CODE
     assert "'FRANKIE_PRINCIPAL_RESPONSE_SUPERSEDED_V1'" in CODE and "Write-Output ('RECEIPT '" in CODE
-    writes = [line for line in CODE.splitlines() if 'Set-Content' in line]
-    assert len(writes) == 2 and '$plannedPath' in writes[0] and 'principal-response-supersede-planned-' in CODE and 'principal-response-superseded-' in CODE
-    assert CODE.index('supersede-planned-') < CODE.index('Move-Item -LiteralPath')      # the plan is receipted before anything moves
+    assert 'Write-StateJson $intentPath $intent' in CODE and 'Complete-ScopedIntent $intentPath' in CODE
+    assert CODE.index('Write-StateJson $intentPath $intent') < CODE.index('Complete-ScopedIntent $intentPath')
+    assert '[IO.FileMode]::CreateNew' in CODE and '$stream.Flush($true)' in CODE
+    assert '[IO.File]::Move($pending, $full)' in CODE
+    assert 'principal-response-superseded-' in CODE and 'FRANKIE_PRINCIPAL_RESPONSE_INTENT_V1' in CODE
+    assert 'Get-StateManifest $source' in CODE and 'Assert-StateManifest $destination $entry.manifest' in CODE
+    assert "'code-bound-state.lock'" in CODE and '[IO.FileShare]::None' in CODE
+    assert 'Assert-ForeignStateIntents $intentSchema' in CODE
+    assert 'Get-CimInstance Win32_Process -ErrorAction Stop' in CODE
     # the principal_output gate reads the coordinator's sqlite read-only through the host python; any error refuses, never passes
-    assert "?mode=ro',uri=True" in CODE and "if ($LASTEXITCODE -ne 0 -or $accepted -notmatch '^\\d+$') { throw" in CODE
+    assert "?mode=ro', uri=True" in CODE and "if ($LASTEXITCODE -ne 0 -or $accepted -notmatch '^\\d+$') { throw" in CODE
     assert "Where-Object { $_.CommandLine -like '*run_actual_sunday*' }" in CODE
 
 

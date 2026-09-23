@@ -124,6 +124,30 @@ function Assert-StateManifest([string]$Path, $Expected) {
     if ($actual -cne $expectedJson) { throw ("preserved bytes differ from intent: " + $Path) }
 }
 
+function Assert-ForeignStateIntents([string]$OwnSchema) {
+    $families = @(
+        @{ prefix = 'superseded-code-bound-state-'; intent = 'FRANKIE_CODE_BOUND_STATE_INTENT_V1'; completion = 'FRANKIE_CODE_BOUND_STATE_SUPERSEDED_V1' },
+        @{ prefix = 'principal-response-superseded-'; intent = 'FRANKIE_PRINCIPAL_RESPONSE_INTENT_V1'; completion = 'FRANKIE_PRINCIPAL_RESPONSE_SUPERSEDED_V1' },
+        @{ prefix = 'cycle-state-superseded-'; intent = 'FRANKIE_CYCLE_STATE_INTENT_V1'; completion = 'FRANKIE_CYCLE_STATE_SUPERSEDED_V1' }
+    )
+    foreach ($family in $families) {
+        if ($family.intent -eq $OwnSchema) { continue }
+        foreach ($file in @(Get-ChildItem -LiteralPath $dayDirectory -Filter ($family.prefix + '*.intent.json') -Force)) {
+            $path = Assert-StatePath $file.FullName
+            if ($file.PSIsContainer) { throw 'foreign intent is not a file' }
+            $prior = Get-Content -LiteralPath $path -Encoding UTF8 -Raw | ConvertFrom-Json
+            if ($prior.schema -cne $family.intent -or -not $prior.run_directory) { throw 'malformed foreign preservation intent' }
+            $completion = Assert-StatePath ($path.Substring(0, $path.Length - '.intent.json'.Length) + '.json')
+            if (-not (Test-Path -LiteralPath $completion)) { throw 'unfinished foreign preservation intent requires its own helper' }
+            $done = Get-Content -LiteralPath $completion -Encoding UTF8 -Raw | ConvertFrom-Json
+            if ($done.schema -cne $family.completion -or -not $done.intent_path -or
+                -not (Test-StateSame $done.intent_path $path) -or $done.intent_sha256 -cne (Get-StateHash $path)) {
+                throw 'foreign completion does not bind its retained intent'
+            }
+        }
+    }
+}
+
 function Complete-StateIntent([string]$IntentPath) {
     $null = Assert-StatePath $IntentPath
     $intent = Get-Content -LiteralPath $IntentPath -Encoding UTF8 -Raw | ConvertFrom-Json
@@ -279,6 +303,7 @@ if (-not (Test-Path (Join-Path $runDirectory 'host-instance.c15.json'))) { throw
 $lockPath = Assert-StatePath (Join-Path $dayDirectory 'code-bound-state.lock')
 $stateLock = [IO.File]::Open($lockPath, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
 try {
+Assert-ForeignStateIntents 'FRANKIE_CODE_BOUND_STATE_INTENT_V1'
 # Recovery precedes identity reads: interruption may have archived both identities.
 $unfinished = @()
 foreach ($file in @(Get-ChildItem -LiteralPath $dayDirectory -Filter 'superseded-code-bound-state-*.intent.json' -File)) {

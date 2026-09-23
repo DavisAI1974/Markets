@@ -7,6 +7,7 @@ on:
       - 'deploy/aws/box/frankie_box_boss_session.py'
       - 'tests/test_digest_sources.py'
       - 'tests/test_digest_document.py'
+      - 'tests/test_digest_document_memory.py'
       - '.github/workflows/frankie_digest_document_ci.yml'
 permissions:
   contents: read
@@ -31,4 +32,4 @@ jobs:
           git show e297553a7c96dd615879e5aa8e5c5a0118aeaff2:deploy/aws/box/frankie_box_digest_render.py > "$DIGEST_REFERENCE_PATH"
       - name: Verify streamed sources and full documents
         working-directory: tests
-        run: python -m pytest test_digest_sources.py test_digest_document.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider
+        run: python -m pytest test_digest_sources.py test_digest_document.py test_digest_document_memory.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider

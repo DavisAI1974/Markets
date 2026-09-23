@@ -45,6 +45,7 @@ jobs:
           python -B - <<'PY'
           import base64, hashlib, json, os, pathlib, subprocess
           import boto3
+          from deploy.aws.ssm_run_sh import preamble
           from botocore.config import Config
           root=pathlib.Path(os.environ['GITHUB_WORKSPACE'])
           action=os.environ['ACTION']
@@ -82,6 +83,14 @@ jobs:
               print('::add-mask::'+map_url,flush=True)
               variables.update(RUN_ID=run_id,PACK_SHA256=pin['sha256'],PACK_BYTES=str(pin['bytes']),MAP_URL=map_url)
               print(json.dumps(dict(source_pack=pin,bucket=bucket,key=key)),flush=True)
+          assignments=[name+'='+value for name,value in variables.items()]
+          script=preamble(assignments)+(root/'deploy/aws/box/frankie_box_stage_code.sh').read_text()
+          # AWS allows 64 KiB document content including runtime parameters; reserve 16 KiB.
+          parameters=dict(commands=[script],executionTimeout=['1800' if action=='stage' else '300'])
+          parameter_bytes=len(json.dumps(parameters).encode())
+          if parameter_bytes>48*1024:
+              raise SystemExit('SSM document parameter budget exceeded')
+          print(json.dumps(dict(ssm_parameter_bytes=parameter_bytes)),flush=True)
           command=['python','-B','deploy/aws/ssm_run_sh.py','--instance','i-035994afa8bdf66a5',
                    '--region','us-east-1','--script','deploy/aws/box/frankie_box_stage_code.sh',
                    '--timeout','1800' if action=='stage' else '300',

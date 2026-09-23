@@ -102,7 +102,12 @@ function Get-CimInstance {{
     param($ClassName, $Filter, $ErrorAction)
     {process_body}
 }}
-function Get-Date {{ [DateTime]::Parse('2026-09-23T12:00:00Z').ToUniversalTime() }}
+function Get-Date {{
+    param([string]$UFormat)
+    $fixed = [DateTime]::Parse('2026-09-23T12:00:00Z').ToUniversalTime()
+    if ($UFormat -eq '%s') {{ return ([DateTimeOffset]$fixed).ToUnixTimeSeconds().ToString() }}
+    return $fixed
+}}
 function Move-Item {{
     param([string]$LiteralPath, [string]$Destination)
     $global:hostMoves += 1

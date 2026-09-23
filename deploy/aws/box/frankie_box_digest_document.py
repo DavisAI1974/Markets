@@ -130,8 +130,10 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         proof = TS.write_table(path, name, rows, root, context=context)
         original = _Rows(root/'table.sqlite')
         # Re-prove the actual block to be copied, not merely a returned success flag.
-        TS.verify_table(path, name, original, root/'document-inverse', context=context)
         digest = _witness(path)
+        TS.verify_table(path, name, original, root/'document-inverse', context=context)
+        if _witness(path) != digest:
+            raise ValueError('table changed during document inverse proof')
         stages.append(dict(name=name, rows=proof['rows'], path=path, digest=digest))
         return original
 
@@ -167,7 +169,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
                   dict(schema='FRANKIE_DIGEST_PUBLICATION_INTENT_V1',source=str(stage),destination=str(destination),
                        proof=_witness(scratch/'verification-receipt.json'),**_witness(stage)))
         # Same-filesystem link creates the public name atomically and refuses an
-        # existing name. The scratch inode is retained as immutable evidence.
+        # existing name. The verified scratch inode is retained as evidence.
         os.link(stage, destination)
         _sync_directory(destination.parent)
         _save_new(scratch/'publication-receipt.json',

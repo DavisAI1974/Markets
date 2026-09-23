@@ -4,7 +4,6 @@ Git object packs contain one commit and its complete tree, without parent histor
 No application credential, provider, ingestion, service-control or active-checkout action.
 """
 import argparse
-import base64
 from contextlib import contextmanager
 import hashlib
 import json
@@ -64,14 +63,45 @@ def save_new(path, body):
 
 def git(repository, *args, check=True, **kwargs):
     repository = safe_path(repository)
-    safe_path(repository/'.git')
+    gitdir = safe_path(repository/'.git')
+    if gitdir.exists() and not gitdir.is_dir():
+        raise ValueError('standalone Git directory required; gitdir redirection refused')
+    for name in ('config','config.worktree','commondir','objects/info/alternates'):
+        path = safe_path(gitdir/name)
+        if name != 'config' and path.exists():
+            raise ValueError('external Git metadata dependency refused')
     env = {k:v for k,v in os.environ.items() if not k.startswith('GIT_')}
     env.update(GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL='/dev/null',
-               GIT_TERMINAL_PROMPT='0', GIT_OPTIONAL_LOCKS='0')
+               GIT_TERMINAL_PROMPT='0', GIT_OPTIONAL_LOCKS='0', GIT_NO_LAZY_FETCH='1')
+    command = ['git','--no-optional-locks','--no-pager',
+               '-c','core.hooksPath=/dev/null','-c','core.fsmonitor=false',
+               '-c','core.untrackedCache=false','-c','core.autocrlf=false',
+               '-c','core.attributesFile=/dev/null',
+               '-C',str(repository),'--git-dir='+str(gitdir),'--work-tree='+str(repository)]
+    # Config inspection itself runs no worktree/filter command and ignores include
+    # files. Refuse includes and worktree config; neutralize every local filter.
+    # This keeps ordinary cleanliness reads from launching fsmonitor/clean programs.
+    if (gitdir/'config').exists():
+        with regular(gitdir/'config'):
+            pass
+        settings = subprocess.run(command+['config','--local','--no-includes','--null','--list'],
+                                  stdout=subprocess.PIPE,stderr=subprocess.PIPE,env=env)
+        if settings.returncode:
+            raise ValueError('Git configuration could not be inspected')
+        for entry in settings.stdout.split(b'\0'):
+            if not entry:
+                continue
+            config_key = entry.split(b'\n',1)[0].decode('utf-8')
+            key = config_key.lower()
+            if key.startswith(('include.','includeif.')) or key=='extensions.worktreeconfig':
+                raise ValueError('external Git configuration refused')
+            if key=='extensions.partialclone' or (key.startswith('remote.') and key.endswith('.promisor')):
+                raise ValueError('partial clone dependency refused')
+            if key.startswith('filter.') and key.rsplit('.',1)[-1] in ('clean','smudge','process','required'):
+                command += ['-c',config_key+'='+('false' if key.endswith('.required') else '')]
     options = dict(stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     options.update(kwargs)
-    result = subprocess.run(['git', '--no-optional-locks', '-c', 'core.hooksPath=/dev/null',
-                             '-c', 'core.autocrlf=false', '-C', str(repository), *args], **options)
+    result = subprocess.run(command+list(args), **options)
     if check and result.returncode:
         raise ValueError('git operation refused')
     return result
@@ -92,6 +122,7 @@ def clean_checkout(repository, commit):
         raise ValueError('tracked checkout changed')
     if git(repository,'ls-files','--others').stdout:
         raise ValueError('untracked checkout files refused')
+    verify_raw_checkout(repository, commit)
 
 
 def tree_objects(repository, commit):
@@ -113,6 +144,30 @@ def tree_objects(repository, commit):
         objects.add(identity)
         count += kind == 'blob'
     return objects, count
+
+
+def verify_raw_checkout(repository, commit):
+    """Git diff may hide EOL/encoding transforms; compare raw bytes and executable modes."""
+    tree_objects(repository, commit)  # Validate names and modes before opening any tracked path.
+    raw = git(repository,'ls-tree','-r','-z','--full-tree',commit).stdout
+    for entry in raw.split(b'\0'):
+        if not entry:
+            continue
+        header, name = entry.split(b'\t',1)
+        mode, _, identity = header.decode('ascii').split()
+        with regular(Path(repository)/name.decode('utf-8')) as stream:
+            before = os.fstat(stream.fileno())
+            if bool(before.st_mode & 0o111) != (mode == '100755'):
+                raise ValueError('raw mode differs from reviewed tree')
+            blob = hashlib.sha1(b'blob '+str(before.st_size).encode('ascii')+b'\0',
+                                usedforsecurity=False)
+            for block in iter(lambda: stream.read(1024*1024), b''):
+                blob.update(block)
+            after = os.fstat(stream.fileno())
+            if ((before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns,before.st_ctime_ns) !=
+                    (after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns,after.st_ctime_ns) or
+                    blob.hexdigest() != identity):
+                raise ValueError('raw blob differs from reviewed tree')
 
 
 def create_pack(repository, commit, destination):

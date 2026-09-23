@@ -176,16 +176,17 @@ def test_launcher_inventory_checks_reviewed_helper_hash(tmp_path):
     assert result.returncode != 0
     assert 'helper hash' in result.stderr
 
-def test_inventory_disables_git_filters_and_fsmonitor(tmp_path, source, monkeypatch):
+@pytest.mark.parametrize('driver',['tripwire','TripWire'])
+def test_inventory_disables_git_filters_and_fsmonitor(tmp_path, source, monkeypatch, driver):
     import shlex
     repo, _ = source
-    (repo/'.gitattributes').write_text('tracked.txt filter=tripwire\n')
+    (repo/'.gitattributes').write_text('tracked.txt filter='+driver+'\n')
     git(repo,'add','.'); git(repo,'commit','-qm','attributes')
     marker=tmp_path/'executed'
     command='sh -c '+shlex.quote('touch '+shlex.quote(str(marker))+'; cat')
-    git(repo,'config','filter.tripwire.clean',command)
-    git(repo,'config','filter.tripwire.process',command)
-    git(repo,'config','filter.tripwire.required','true')
+    git(repo,'config','filter.'+driver+'.clean',command)
+    git(repo,'config','filter.'+driver+'.process',command)
+    git(repo,'config','filter.'+driver+'.required','true')
     git(repo,'config','core.fsmonitor',command)
     (repo/'tracked.txt').write_text('force a worktree comparison\n')
     root=tmp_path/'box'; root.mkdir(); repo.rename(root/'markets')
@@ -196,7 +197,7 @@ def test_inventory_disables_git_filters_and_fsmonitor(tmp_path, source, monkeypa
     assert result['checkout']['tracked_dirty'] is True
     assert not marker.exists()
 
-@pytest.mark.parametrize('redirect', ['gitfile','symlink','commondir','alternates','include','worktree_config'])
+@pytest.mark.parametrize('redirect', ['gitfile','symlink','commondir','alternates','include','worktree_config','partial_clone'])
 def test_git_metadata_redirection_refuses(tmp_path,source,redirect):
     repo,commit=source
     external=tmp_path/'external-git'
@@ -210,6 +211,8 @@ def test_git_metadata_redirection_refuses(tmp_path,source,redirect):
         (repo/'.git'/'objects'/'info'/'alternates').write_text(str(tmp_path)+'\n')
     elif redirect=='include':
         git(repo,'config','include.path',str(tmp_path/'private-config'))
+    elif redirect=='partial_clone':
+        git(repo,'config','remote.origin.promisor','true')
     else:
         (repo/'.git'/'config.worktree').write_text('[core]\nworktree=/outside\n')
     with pytest.raises(ValueError):
