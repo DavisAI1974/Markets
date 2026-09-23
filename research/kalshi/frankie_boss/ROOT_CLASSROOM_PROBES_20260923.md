@@ -30,6 +30,10 @@ frankie_box_monday_read.py reads the whole 23-hour Monday, both source members, 
 
 The separate existing native training/classroom launch uses prepare_trading_day and trading_day_schedule, which currently require authored pre-terminal cutoffs, a row context, a source contract and schedule. These are executable dependencies, not merely null placeholders. Do not insert rejected Sunday numbers, bypass validators or represent the legacy Monday-read job as that full native cycle.
 
+The current authorized target is the next trading day, using the complete Monday as input; see
+[the whole-day forecast specification](SPEC-monday-next-day-forecast.md). This resolves the target choice but does not make the old
+pre-terminal schedule a valid whole-day launcher. Classroom progress and pending next-day forecast feedback must remain distinct.
+
 ## Review and rollback
 
 Serial review: counters occur after consumption, failures remain failures, unknown denominators remain unknown, payloads are excluded from telemetry, and producer inputs/order are unchanged. Verification uses remote synthetic tests, not a Monday canary or comparison run. Production liveness/progress are unmeasured until an authorized matching runtime starts.
