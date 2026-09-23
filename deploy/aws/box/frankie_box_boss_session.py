@@ -1546,46 +1546,49 @@ class Session:
             visible = C.visible_of(self.request)
         except ValueError as error:
             self.refuse(f'classroom: {error}')
-        d = self._classroom_dir()
-        ledgers_path = d / 'ledgers.json'
-        if ledgers_path.exists():
+        cache_module = _box_module('frankie_box_classroom_cache')
+        cache = cache_module.ClassroomCache(self.work / 'classroom', cache_module.identity(self, visible, C), writer=write_json)
+        d = cache.directory
+        complete = cache.complete()
+        if complete is not None:
+            C.validate(visible, complete)
             self.note('classroom: ledgers already assembled; nothing to do')
-            return load_json(ledgers_path)
+            return complete
         names = [c['name'] for c in C.components(visible)]
         rid = self.request['request_id']
         self.note(f'classroom: {len(names)} component answers on the {"serverless" if self.serverless else "Pod"} lane, then the summary on the BOSS')
 
         def one(name):
             index = names.index(name)
-            path = d / f'component-{index:02d}-{name}.json'
-            if path.exists():
-                return load_json(path)
+            filename = f'component-{index:02d}-{name}.json'
             comp = C.component(visible, name)
             rights = [p['right'] for p in C.pairs_of(visible, name)]
             text = C.component_prompt(visible, name, cycle=self.cycle, request_id=rid)
+            text += '\nClassroom exchange identity: ' + cache_module.digest(cache.identity) + '\n'
+            retained = cache.load(filename, text)
+            if retained is not None:
+                return retained
             parsed, call = self._classroom_call(f'classroom-{index:02d}-{name}', text, lambda body: C.parse_component(body, comp, rights), 'reader')
-            write_json(path, dict(schema='FRANKIE_BOX_CLASSROOM_COMPONENT_V1', name=name, call=call, parsed=parsed))
-            return load_json(path)
+            return cache.save(filename, text, dict(schema='FRANKIE_BOX_CLASSROOM_COMPONENT_V1', name=name, call=call, parsed=parsed))
 
         results = self._fan_out('classroom', names, one)
         outputs = {r['name']: r['parsed'] for r in results}
-        summary_path = d / 'summary.json'
-        if not summary_path.exists():
-            text = C.summary_prompt(visible, outputs, cycle=self.cycle, request_id=rid)
+        text = C.summary_prompt(visible, outputs, cycle=self.cycle, request_id=rid)
+        text += '\nClassroom exchange identity: ' + cache_module.digest(cache.identity) + '\n'
+        summary = cache.load('summary.json', text)
+        if summary is None:
             parsed, call = self._classroom_call('classroom-summary', text, C.parse_summary, 'boss')
-            write_json(summary_path, dict(schema='FRANKIE_BOX_CLASSROOM_SUMMARY_V1', call=call, parsed=parsed))
-        summary = load_json(summary_path)
+            summary = cache.save('summary.json', text, dict(schema='FRANKIE_BOX_CLASSROOM_SUMMARY_V1', call=call, parsed=parsed))
         try:
             built = C.assemble(visible, outputs, summary['parsed'])
             report = C.validate(visible, built['ledgers'])
         except ValueError as error:
             self.refuse(f'classroom: the assembled ledgers did not validate ({str(error)[:300]}); nothing filed; the parsed answers stay under {d}')
-        write_json(ledgers_path, built['ledgers'])
-        (d / 'classroom.md').write_text(C.render_markdown(built['ledgers'], built['dropped_findings']), encoding='utf-8')
-        write_json(d / 'receipt.json', dict(schema='FRANKIE_BOX_CLASSROOM_RECEIPT_V1', at=time.time(), report=report, composition=C.COMPOSITION,
-                   dropped_findings=built['dropped_findings'], calls=[r['call'] for r in results] + [summary['call']],
-                   teacher_message_hash=visible['pre_message']['teacher_message_hash'],
-                   classroom_binding_hash=visible['binding']['classroom_binding_hash'], ledgers=witness(ledgers_path)))
+        cache.publish(built['ledgers'], C.render_markdown(built['ledgers'], built['dropped_findings']),
+            dict(schema='FRANKIE_BOX_CLASSROOM_RECEIPT_V1', at=time.time(), report=report, composition=C.COMPOSITION,
+                 dropped_findings=built['dropped_findings'], calls=[r['call'] for r in results] + [summary['call']],
+                 teacher_message_hash=visible['pre_message']['teacher_message_hash'],
+                 classroom_binding_hash=visible['binding']['classroom_binding_hash']))
         self.note(f'classroom done: {report["components"]} components, {report["observations"]} observations, {report["pairs"]} pairs, '
                   f'{report["novel_findings"]} novel findings filed, {len(built["dropped_findings"])} not filed')
         return built['ledgers']
@@ -1595,9 +1598,14 @@ class Session:
         path = self.work / 'classroom' / 'ledgers.json'
         if not path.exists():
             self.refuse('writing: the classroom ledgers are absent (work/classroom/ledgers.json); the classroom stage must complete first')
-        ledgers = load_json(path)
-        if set(ledgers) != set(CLASSROOM_KEYS):
-            self.refuse('writing: work/classroom/ledgers.json does not carry the four classroom ledgers')
+        C = classroom_module()
+        visible = C.visible_of(self.request)
+        cache_module = _box_module('frankie_box_classroom_cache')
+        cache = cache_module.ClassroomCache(path.parent, cache_module.identity(self, visible, C), writer=write_json)
+        ledgers = cache.complete()
+        if ledgers is None or set(ledgers) != set(CLASSROOM_KEYS):
+            self.refuse('writing: the classroom stage must complete first with a bound receipt and all four classroom ledgers')
+        C.validate(visible, ledgers)
         return ledgers
 
     def correction(self):
@@ -2030,10 +2038,9 @@ class Session:
             self.serverless_reach()
             self.reading()
         self.phase('classroom')
-        if not (self.work / 'classroom' / 'ledgers.json').exists():
-            if self.serverless is None:
-                self.serverless_reach()
-            self.classroom()
+        if self.serverless is None:
+            self.serverless_reach()
+        self.classroom()
         self.phase('teach')
         if not (self.work / 'teach' / 'exhaustion-teachback.json').exists():
             self.teach()
