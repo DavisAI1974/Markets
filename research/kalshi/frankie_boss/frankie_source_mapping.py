@@ -14,6 +14,7 @@ import json
 from pathlib import Path
 import re
 import stat
+import sqlite3
 import tempfile
 
 from . import mbo_source
@@ -264,10 +265,25 @@ def _build_mapping(*, sources, extraction_pin, member_ledger_path, member_ledger
     return receipt
 
 
+
+def _sealed_source_reader(path):
+    """Choose by actual read-only storage schema, never a filename or writable fallback."""
+    from .verified_journal_reader import VerifiedJournalReader
+    from .compact_journal import CompactReader
+    connection = sqlite3.connect(_plain(path).resolve().as_uri() + '?mode=ro', uri=True)
+    try:
+        tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    finally:
+        connection.close()
+    raw, compact = 'entries' in tables, {'blocks', 'seal'} <= tables
+    if raw == compact:
+        raise ValueError('one unambiguous source journal storage format required')
+    return VerifiedJournalReader if raw else CompactReader
+
+
 def _bind_members_prefix(mapping, directory, output, expected_mapping_sha256,
                          boss_journal_path, journal_checkpoint, boss_source, reader_factory):
     """Stream a complete multi-member mapping against an independently pinned journal."""
-    from .verified_journal_reader import VerifiedJournalReader
     sources = mapping.get('sources')
     if type(sources) is not list or not sources:
         raise ValueError('ordered source member roster required')
@@ -326,7 +342,7 @@ def _bind_members_prefix(mapping, directory, output, expected_mapping_sha256,
             raise ValueError('mapping index bytes or complete source coverage differs')
 
     records = indexed_records()
-    reader_factory = reader_factory or VerifiedJournalReader
+    reader_factory = reader_factory or _sealed_source_reader(boss_journal_path)
     journal = reader_factory(_plain(boss_journal_path), expected_count=journal_checkpoint['count'],
                              expected_head_hash=journal_checkpoint['head_hash'])
     count, pending, terminal = 0, None, None
@@ -478,17 +494,30 @@ def main(argv=None):
     build = sub.add_parser('build')
     for name in ('source-path', 'source-member', 'extraction-pin', 'member-ledger-path', 'member-ledger-witness', 'output-directory'):
         build.add_argument('--'+name, required=True)
+    scope = sub.add_parser('build-scope')
+    scope.add_argument('--source-path', dest='source_paths', action='append', required=True)
+    for name in ('source-manifest', 'expected-manifest-hash', 'extraction-pin',
+                 'member-ledger-path', 'member-ledger-witness', 'output-directory'):
+        scope.add_argument('--'+name, required=True)
     bind = sub.add_parser('bind')
     for name in ('mapping-directory', 'expected-mapping-sha256', 'boss-journal-path', 'journal-checkpoint', 'boss-source', 'output-path'):
         bind.add_argument('--'+name, required=True)
     args = vars(parser.parse_args(argv))
     command = args.pop('command')
-    for name in (('source_member', 'extraction_pin', 'member_ledger_witness') if command == 'build' else ('journal_checkpoint', 'boss_source')):
+    if command == 'build-scope':
+        from .block_source_scope import block_source_scope
+        args['source_scope'] = block_source_scope(_load(_plain(args.pop('source_manifest')).read_bytes()),
+            expected_manifest_hash=args.pop('expected_manifest_hash'))
+    json_fields = (('source_member', 'extraction_pin', 'member_ledger_witness') if command == 'build'
+        else ('extraction_pin', 'member_ledger_witness') if command == 'build-scope'
+        else ('journal_checkpoint', 'boss_source'))
+    for name in json_fields:
         args[name] = _load(_plain(args[name]).read_bytes())
     if command == 'build':
         args['source_member'] = SourceMember(**args['source_member'])
+    if command in ('build', 'build-scope'):
         args['extraction_pin'] = mbo_source.MboSourcePin(**args['extraction_pin'])
-    result = (build_mapping if command == 'build' else bind_prefix)(**args)
+    result = {'build': build_mapping, 'build-scope': build_scope_mapping, 'bind': bind_prefix}[command](**args)
     print(_json(result).decode())
 
 

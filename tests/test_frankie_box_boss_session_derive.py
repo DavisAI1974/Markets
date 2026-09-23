@@ -612,6 +612,46 @@ def test_multi_member_binder_reads_a_sealed_compact_container_without_replay(tmp
                         expected_head_hash=args["journal_checkpoint"]["head_hash"])
     before = compact.read_bytes()
     args["boss_journal_path"] = compact
-    result = mapping.bind_prefix(**args, reader_factory=CompactReader)
+    result = mapping.bind_prefix(**args)
     assert result["matched_records_by_member"] == [2, 2]
     assert compact.read_bytes() == before
+
+
+def test_multi_member_binder_refuses_ambiguous_storage_without_writing_a_binding(tmp_path):
+    import sqlite3
+    from research.kalshi.frankie_boss import frankie_source_mapping as mapping
+    args = _two_member_mapping_fixture(tmp_path)
+    with sqlite3.connect(args["boss_journal_path"]) as db:
+        db.execute("CREATE TABLE blocks (body BLOB)")
+        db.execute("CREATE TABLE seal (format TEXT)")
+    with pytest.raises(ValueError, match="unambiguous"):
+        mapping.bind_prefix(**args)
+    assert not args["output_path"].exists()
+
+
+def test_scope_mapping_cli_uses_the_verified_manifest_and_all_ordered_paths(tmp_path, monkeypatch, capsys):
+    from dataclasses import asdict
+    from research.kalshi.frankie_boss import frankie_source_mapping as mapping
+    from research.kalshi.frankie_boss import block_source_scope as scope_module
+    args = _scope_mapping_inputs(tmp_path, monkeypatch)
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text('{"fixture": true}')
+    def scope_check(value, *, expected_manifest_hash):
+        assert value == {"fixture": True} and expected_manifest_hash == "a" * 64
+        return args["source_scope"]
+    monkeypatch.setattr(scope_module, "block_source_scope", scope_check)
+    pin = tmp_path / "pin.json"
+    pin.write_text(json.dumps(asdict(args["extraction_pin"])))
+    witness_path = tmp_path / "ledger-witness.json"
+    witness_path.write_text(json.dumps(args["member_ledger_witness"]))
+    argv = ["build-scope", "--source-manifest", str(manifest),
+        "--expected-manifest-hash", "a" * 64, "--extraction-pin", str(pin),
+        "--member-ledger-path", str(args["member_ledger_path"]),
+        "--member-ledger-witness", str(witness_path),
+        "--output-directory", str(args["output_directory"])]
+    for path in args["source_paths"]:
+        argv.extend(["--source-path", str(path)])
+    mapping.main(argv)
+    result = json.loads(capsys.readouterr().out)
+    assert result["record_count"] == 4
+    assert [m["member_index"] for m in result["sources"]] == [0, 1]
