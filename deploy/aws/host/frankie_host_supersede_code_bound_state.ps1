@@ -24,7 +24,9 @@
 # NOTHING IS DELETED. Each item is MOVED, relative path preserved, into a sibling folder
 # <run_directory parent>/superseded/<run dir name>-<stamp>-code-<old boss_commit>/ so no stray
 # name remains inside the run directory for any glob to pick up. A receipt with every moved path
-# and its sha256 is written into the DAY directory (as the advance script keeps its backup there).
+# and its sha256 is written into the DAY directory. A flushed intent lists all selected bytes
+# before any move; retries reconcile unfinished intents before reading potentially moved identities.
+# Per-move receipts and completion retain the same intent hash. Existing evidence is never overwritten.
 # Refuses unless the tools checkout HEAD equals the configuration's boss_commit (we only supersede
 # to run at the commit the configuration names). The old commit is read from host-identity.c15.json
 # or, once that is gone, from execution/execution-identity.c15.json; when neither is present and
@@ -33,25 +35,235 @@
 #
 # $Day, $RunRoot, $ToolsRoot and $Python arrive from ssm_run_ps1.py --set; no path literal here.
 $ErrorActionPreference = 'Stop'
+
+# These functions operate only on operator-selected run evidence. A link in any
+# existing ancestor is refused before inspection, hashing, directory creation or move.
+function Test-StateWithin([string]$Path, [string]$Root) {
+    $comparison = [StringComparison]::Ordinal
+    if ([IO.Path]::DirectorySeparatorChar -eq '\') { $comparison = [StringComparison]::OrdinalIgnoreCase }
+    $base = [IO.Path]::GetFullPath($Root).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    $full = [IO.Path]::GetFullPath($Path)
+    return $full.StartsWith($base + [IO.Path]::DirectorySeparatorChar, $comparison)
+}
+
+function Assert-StatePath([string]$Path) {
+    $full = [IO.Path]::GetFullPath($Path)
+    $cursor = $full
+    while ($cursor) {
+        $item = Get-Item -LiteralPath $cursor -Force -ErrorAction SilentlyContinue
+        if ($item -and ($item.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+            throw ("refusing reparse point: " + $cursor)
+        }
+        $parent = [IO.Path]::GetDirectoryName($cursor)
+        if ($parent -eq $cursor) { break }
+        $cursor = $parent
+    }
+    return $full
+}
+
+function Get-StateHash([string]$Path) {
+    $stream = [IO.File]::OpenRead((Assert-StatePath $Path))
+    $hasher = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($hasher.ComputeHash($stream))).Replace('-', '').ToLowerInvariant() }
+    finally { $stream.Dispose(); $hasher.Dispose() }
+}
+
+function Get-StateManifest([string]$Path) {
+    $base = Assert-StatePath $Path
+    $pending = [Collections.Generic.Stack[string]]::new()
+    $pending.Push($base)
+    $entries = @()
+    while ($pending.Count -gt 0) {
+        $current = Assert-StatePath ($pending.Pop())
+        $item = Get-Item -LiteralPath $current -Force -ErrorAction Stop
+        $relative = '.'
+        if ($current -ne $base) {
+            if (-not (Test-StateWithin $current $base)) { throw 'manifest escaped selected item' }
+            $relative = $current.Substring($base.Length).TrimStart('\', '/').Replace('\', '/')
+        }
+        if ($item.PSIsContainer) {
+            $entries += [ordered]@{ relative = $relative; kind = 'directory'; sha256 = $null; bytes = $null }
+            foreach ($child in @(Get-ChildItem -LiteralPath $current -Force)) { $pending.Push($child.FullName) }
+        } else {
+            $entries += [ordered]@{ relative = $relative; kind = 'file'; sha256 = (Get-StateHash $current); bytes = $item.Length }
+        }
+    }
+    return @($entries | Sort-Object { $_.relative })
+}
+
+function Write-StateJson([string]$Path, $Value) {
+    $full = Assert-StatePath $Path
+    $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($Value | ConvertTo-Json -Depth 20 -Compress))
+    $stream = [IO.File]::Open($full, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+    try { $stream.Write($bytes, 0, $bytes.Length); $stream.Flush($true) }
+    finally { $stream.Dispose() }
+}
+
+function Assert-StateManifest([string]$Path, $Expected) {
+    $actual = @(Get-StateManifest $Path) | ConvertTo-Json -Depth 20 -Compress
+    $expectedJson = @($Expected) | ConvertTo-Json -Depth 20 -Compress
+    if ($actual -cne $expectedJson) { throw ("preserved bytes differ from intent: " + $Path) }
+}
+
+function Complete-StateIntent([string]$IntentPath) {
+    $null = Assert-StatePath $IntentPath
+    $intent = Get-Content -LiteralPath $IntentPath -Raw | ConvertFrom-Json
+    if ($intent.schema -ne 'FRANKIE_CODE_BOUND_STATE_INTENT_V1' -or
+        $intent.run_directory -cne $runDirectory -or $intent.run_id -cne $cfg.run_id -or
+        $intent.day -cne $Day -or $intent.cycle_index -cne $CycleIndex -or
+        $intent.current_boss_commit -cne $head -or
+        $intent.stored_boss_commit -notmatch '^(absent|[0-9a-f]{40})$') {
+        throw ("unfinished intent does not match this run/cycle/commit: " + $IntentPath)
+    }
+    $stem = $IntentPath.Substring(0, $IntentPath.Length - '.intent.json'.Length)
+    $receiptPath = $stem + '.json'
+    $target = Assert-StatePath $intent.superseded_root
+    $archiveRoot = Assert-StatePath (Join-Path (Split-Path $runDirectory -Parent) 'superseded')
+    if (-not (Test-StateWithin $target $archiveRoot) -or
+        (Test-StateWithin $target $runDirectory) -or $target -eq $runDirectory) {
+        throw 'intent destination escaped the sibling archive'
+    }
+    if ($null -eq $intent.items -or $intent.items -isnot [Array]) { throw 'intent items must be an array' }
+    $intentHash = Get-StateHash $IntentPath
+    $seen = @{}
+    # Validate EVERY path and manifest before the first reconciliation move.
+    foreach ($entry in $intent.items) {
+        $relative = [string]$entry.relative
+        if (-not $relative -or [IO.Path]::IsPathRooted($relative) -or
+            @($relative.Replace('\', '/').Split('/') | Where-Object { $_ -in @('', '.', '..') }).Count -gt 0 -or
+            $seen.ContainsKey($relative)) { throw 'invalid or duplicate intent relative path' }
+        $seen[$relative] = $true
+        $source = Assert-StatePath (Join-Path $runDirectory $relative)
+        $destination = Assert-StatePath (Join-Path $target $relative)
+        if (-not (Test-StateWithin $source $runDirectory) -or
+            -not (Test-StateWithin $destination $target) -or
+            $entry.destination -cne $destination) { throw 'intent path escaped its root' }
+        $parts = $relative.Replace('\', '/').Split('/')
+        $name = $parts[-1]
+        $scopeAllowed = ($parts.Count -eq 1) -or
+            ($parts.Count -eq 2 -and $parts[0] -eq 'execution') -or
+            ($parts.Count -eq 3 -and $parts[0] -eq 'execution' -and $parts[1] -eq ('cycle-' + $CycleIndex))
+        $nameAllowed = $name.EndsWith('.c15.json') -or
+            ($parts.Count -eq 1 -and $name -in @('training.sqlite', 'training-witnesses')) -or
+            ($parts.Count -eq 3 -and $name -eq 'actual-critic-request.json')
+        if (-not $scopeAllowed -or -not $nameAllowed -or $name -like 'verified-*' -or
+            $name -eq 'genesis.c15.json' -or $name -like 'append-*') { throw 'intent selects unapproved evidence' }
+        if ($relative -in @('host-instance.c15.json', 'native-host-runtime.json') -or
+            ($relative -like 'execution/cycle-*/*' -and -not $relative.StartsWith('execution/cycle-' + $CycleIndex + '/'))) {
+            throw 'intent selects kept or other-cycle evidence'
+        }
+        if ($null -eq $entry.manifest -or $entry.manifest -isnot [Array] -or $entry.manifest.Count -eq 0) {
+            throw 'intent lacks a complete manifest'
+        }
+        $atSource = Test-Path -LiteralPath $source
+        $atDestination = Test-Path -LiteralPath $destination
+        if ($atSource -eq $atDestination) { throw ("ambiguous or missing preserved item: " + $relative) }
+        if ($atSource) { Assert-StateManifest $source $entry.manifest }
+        else { Assert-StateManifest $destination $entry.manifest }
+    }
+    $moved = @()
+    $index = 0
+    foreach ($entry in $intent.items) {
+        $source = Assert-StatePath (Join-Path $runDirectory $entry.relative)
+        $destination = Assert-StatePath (Join-Path $target $entry.relative)
+        $moveReceiptPath = $stem + '.move-' + $index + '.json'
+        if (Test-Path -LiteralPath $source) {
+            if (Test-Path -LiteralPath $destination) { throw 'destination already exists' }
+            if (Test-Path -LiteralPath $moveReceiptPath) { throw 'move receipt exists but source is present' }
+            Assert-StateManifest $source $entry.manifest
+            $parent = Assert-StatePath (Split-Path $destination -Parent)
+            New-Item -ItemType Directory -Force -Path $parent | Out-Null
+            $null = Assert-StatePath $destination
+            Move-Item -LiteralPath $source -Destination $destination
+        }
+        if (Test-Path -LiteralPath $source) { throw ("move left the source in place: " + $entry.relative) }
+        if (-not (Test-Path -LiteralPath $destination)) { throw ("move lost the item: " + $entry.relative) }
+        Assert-StateManifest $destination $entry.manifest
+        $moveReceipt = [ordered]@{ schema = 'FRANKIE_CODE_BOUND_STATE_MOVE_V1'; intent_sha256 = $intentHash; item = $entry }
+        if (Test-Path -LiteralPath $moveReceiptPath) {
+            $retained = Get-Content -LiteralPath (Assert-StatePath $moveReceiptPath) -Raw | ConvertFrom-Json
+            if (($retained | ConvertTo-Json -Depth 20 -Compress) -cne ($moveReceipt | ConvertTo-Json -Depth 20 -Compress)) {
+                throw 'move receipt differs from intent'
+            }
+        } else { Write-StateJson $moveReceiptPath $moveReceipt }
+        $moved += $entry
+        $index += 1
+        Write-Output ("  preserved: " + $entry.relative)
+    }
+    $receipt = [ordered]@{
+        schema              = 'FRANKIE_CODE_BOUND_STATE_SUPERSEDED_V1'
+        day                 = $Day
+        run_id              = $cfg.run_id
+        run_directory       = $runDirectory
+        stored_boss_commit  = $intent.stored_boss_commit
+        current_boss_commit = $head
+        stale               = ($intent.stored_boss_commit -ne 'absent' -and $intent.stored_boss_commit -ne $head)
+        superseded_root     = $(if ($moved.Count -gt 0) { $target } else { $null })
+        kept                = @('host-instance.c15.json', 'native-host-runtime.json')
+        moved               = $moved
+        at                  = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+        intent_path         = $IntentPath
+        intent_sha256       = $intentHash
+    }
+    Write-StateJson $receiptPath $receipt
+    Write-Output ("receipt: " + $receiptPath)
+    Write-Output ('RECEIPT ' + ($receipt | ConvertTo-Json -Depth 20 -Compress))
+}
+
 foreach ($required in 'Day', 'RunRoot', 'ToolsRoot', 'Python') {
     $value = Get-Variable -Name $required -ValueOnly -ErrorAction SilentlyContinue
     if (-not $value -or $value -like 'HOST_*') { throw "$required was not supplied by ssm_run_ps1.py --set (value: '$value')" }
 }
 if (-not (Get-Variable CycleIndex -ErrorAction SilentlyContinue)) { $CycleIndex = '00' }
 if ($CycleIndex -notmatch '^\d{2}$') { throw "CycleIndex must be two digits (value: '$CycleIndex')" }
+if ($Day -notmatch '^\d{8}$') { throw 'Day must be an eight-digit trading date' }
+if ($ToolsRoot -match "[\x27\x22\r\n]") { throw 'ToolsRoot carries a quote or newline' }
 $dayDirectory = Join-Path $RunRoot $Day
+$dayDirectory = Assert-StatePath $dayDirectory
 $cfgPath = Join-Path $dayDirectory 'actual-host-configuration.json'
-if (-not (Test-Path $cfgPath)) { throw "no run configuration for $Day at $cfgPath" }
-$cfg = Get-Content $cfgPath -Raw | ConvertFrom-Json
+$null = Assert-StatePath $cfgPath
+if (-not (Test-Path -LiteralPath $cfgPath)) { throw "no run configuration for $Day at $cfgPath" }
+$cfg = Get-Content -LiteralPath $cfgPath -Raw | ConvertFrom-Json
 $runDirectory = $cfg.run_directory
+if (-not $runDirectory -or -not [IO.Path]::IsPathRooted($runDirectory)) { throw 'run_directory must be absolute' }
+$runDirectory = Assert-StatePath $runDirectory
+if ($dayDirectory -eq $runDirectory -or (Test-StateWithin $dayDirectory $runDirectory)) { throw 'day evidence directory must be outside the run' }
 if (-not $runDirectory -or -not (Test-Path $runDirectory)) { throw "run_directory absent: $runDirectory" }
 # run_directory is interpolated into a raw Python literal below; a quote or newline would end it.
 if ($runDirectory -match "[\x27\x22\r\n]") { throw 'refusing: run_directory carries a quote or newline' }
+$null = Assert-StatePath $ToolsRoot
+$null = Assert-StatePath (Join-Path $runDirectory 'host-instance.c15.json')
 $git = (Get-Command git -ErrorAction Stop).Source
 $head = (& $git -C $ToolsRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or $head -notmatch '^[0-9a-f]{40}$') { throw 'could not resolve tools HEAD' }
 if ($head -ne $cfg.host_runtime.boss_commit) { throw ("refusing: tools HEAD " + $head + " is not the configuration's boss_commit " + $cfg.host_runtime.boss_commit) }
 if (-not (Test-Path (Join-Path $runDirectory 'host-instance.c15.json'))) { throw 'refusing: host-instance.c15.json absent; the delivered readiness is bound to it' }
 
+$lockPath = Assert-StatePath (Join-Path $dayDirectory 'code-bound-state.lock')
+$stateLock = [IO.File]::Open($lockPath, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+try {
+# Recovery precedes identity reads: interruption may have archived both identities.
+$unfinished = @()
+foreach ($file in @(Get-ChildItem -LiteralPath $dayDirectory -Filter 'superseded-code-bound-state-*.intent.json' -File)) {
+    $null = Assert-StatePath $file.FullName
+    $prior = Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json
+    if ($prior.run_directory -cne $runDirectory) { continue }
+    $completion = $file.FullName.Substring(0, $file.FullName.Length - '.intent.json'.Length) + '.json'
+    $null = Assert-StatePath $completion
+    if (Test-Path -LiteralPath $completion) {
+        $done = Get-Content -LiteralPath $completion -Raw | ConvertFrom-Json
+        if ($done.schema -ne 'FRANKIE_CODE_BOUND_STATE_SUPERSEDED_V1' -or
+            $done.intent_path -cne $file.FullName -or $done.intent_sha256 -cne (Get-StateHash $file.FullName)) {
+            throw 'completion receipt does not bind the retained intent'
+        }
+    } else { $unfinished += $file.FullName }
+}
+if ($unfinished.Count -gt 1) { throw 'multiple unfinished preservation intents require reconciliation' }
+if ($unfinished.Count -eq 1) { Complete-StateIntent $unfinished[0]; return }
+
+foreach ($identityRelative in @('host-identity.c15.json', 'execution/execution-identity.c15.json')) {
+    $null = Assert-StatePath (Join-Path $runDirectory $identityRelative)
+}
 # The stored (old) boss_commit, read through the host's own unpack so the c15 shape is honoured.
 $env:PYTHONDONTWRITEBYTECODE = '1'; $env:PYTHONPATH = $ToolsRoot
 $code = @"
@@ -67,7 +279,7 @@ for path, pick in ((run / 'host-identity.c15.json', lambda v: v['configuration']
     print(pick(unpack(json.loads(path.read_bytes()))) if path.exists() else 'absent')
 "@
 $identities = @(& $Python -c $code 2>&1 | Select-Object -Last 2 | ForEach-Object { $_.ToString().Trim() })
-if ($identities.Count -ne 2) { throw ("could not read the identity records: " + ($identities -join ' | ')) }
+if ($LASTEXITCODE -ne 0 -or $identities.Count -ne 2) { throw ("could not read the identity records: " + ($identities -join ' | ')) }
 $hostIdentity = $identities[0]; $executionIdentity = $identities[1]
 foreach ($value in $identities) { if ($value -ne 'absent' -and $value -notmatch '^[0-9a-f]{40}$') { throw ("could not read a stored boss_commit: " + $value) } }
 Write-Output ("host-identity boss_commit:      " + $hostIdentity)
@@ -105,23 +317,24 @@ if ($stored -ne 'absent' -and $stored -ne $head) {
         ($cycleRelative + '/request-plan.c15.json'),
         ($cycleRelative + '/actual-critic-request.json'))
     if (Test-Path $cycle) {
-        Get-ChildItem $cycle -Filter 'host-ready-*.c15.json' | ForEach-Object { $candidates += ($cycleRelative + '/' + $_.Name) }
+        Get-ChildItem -LiteralPath (Assert-StatePath $cycle) -Filter 'host-ready-*.c15.json' | ForEach-Object { $candidates += ($cycleRelative + '/' + $_.Name) }
     }
     # Catch-all for an unenumerated record carrying the OLD commit literal, scoped to this run's root,
     # the execution root and THIS cycle only: another cycle's completion.c15.json carries boss_commit
     # lawfully and must stay. Kept records and chained journals (genesis/append-*) are never moved;
     # reparse points are never followed; nothing outside the resolved run root is touched.
-    $root = (Resolve-Path $runDirectory).Path
+    $root = Assert-StatePath $runDirectory
     $reparse = [IO.FileAttributes]::ReparsePoint
     foreach ($scanRoot in @($runDirectory, (Join-Path $runDirectory 'execution'), $cycle)) {
-        if (-not (Test-Path $scanRoot)) { continue }
-        Get-ChildItem $scanRoot -File -Filter '*.c15.json' | Where-Object { -not ($_.Attributes -band $reparse) } | ForEach-Object {
-            if (-not $_.FullName.StartsWith($root)) { return }
+        $null = Assert-StatePath $scanRoot
+        if (-not (Test-Path -LiteralPath $scanRoot)) { continue }
+        Get-ChildItem -LiteralPath $scanRoot -File -Filter '*.c15.json' | Where-Object { -not ($_.Attributes -band $reparse) } | ForEach-Object {
+            if (-not (Test-StateWithin $_.FullName $root)) { throw 'scan escaped run directory' }
             $name = $_.Name
             if ($name -eq 'host-instance.c15.json' -or $name -like 'verified-*' -or $name -eq 'genesis.c15.json' -or $name -like 'append-*') { return }
             $relative = $_.FullName.Substring($root.Length).TrimStart('\', '/').Replace('\', '/')
             if ($candidates -notcontains $relative) {
-                if (Select-String -Path $_.FullName -SimpleMatch $stored -Quiet) {
+                if (Select-String -LiteralPath $_.FullName -SimpleMatch $stored -Quiet) {
                     Write-Output ("  scan hit (old commit literal): " + $relative)
                     $candidates += $relative
                 }
@@ -142,42 +355,39 @@ if ($stored -ne 'absent' -and $stored -ne $head) {
     Write-Output 'nothing is stale'
 }
 
-$stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')
+
+$stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ') + '-' + [Guid]::NewGuid().ToString('N')
 $runName = Split-Path $runDirectory -Leaf
 $target = Join-Path (Join-Path (Split-Path $runDirectory -Parent) 'superseded') ($runName + '-' + $stamp + '-code-' + $stored)
-$sha = [System.Security.Cryptography.SHA256]::Create()
+$target = Assert-StatePath $target
+if ($target -eq $runDirectory -or (Test-StateWithin $target $runDirectory)) { throw 'archive must be outside run directory' }
+if (Test-Path -LiteralPath $target) { throw 'archive destination already exists' }
+$plan = @()
 foreach ($relative in $candidates) {
-    $source = Join-Path $runDirectory $relative
-    if (-not (Test-Path $source)) { Write-Output ("  absent, skipped: " + $relative); continue }
-    $destination = Join-Path $target $relative
-    New-Item -ItemType Directory -Force -Path (Split-Path $destination -Parent) | Out-Null
-    $item = Get-Item $source
-    $mtime = $item.LastWriteTimeUtc.ToString('s') + 'Z'   # read BEFORE the move: a directory (training-witnesses) recorded 1601 when read after it
-    $digest = $null; $bytes = $null
-    if (-not $item.PSIsContainer) {
-        $digest = ([BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes($source)))).Replace('-', '').ToLower()
-        $bytes = $item.Length
-    }
-    Move-Item -LiteralPath $source -Destination $destination
-    if (Test-Path $source) { throw ("move left the source in place: " + $relative) }
-    if (-not (Test-Path $destination)) { throw ("move lost the item: " + $relative) }
-    $moved += [ordered]@{ relative = $relative; destination = $destination; sha256 = $digest; bytes = $bytes; mtime_utc = $mtime }
-    Write-Output ("  moved: " + $relative + "  sha256=" + $digest)
+    $source = Assert-StatePath (Join-Path $runDirectory $relative)
+    if (-not (Test-StateWithin $source $runDirectory)) { throw 'candidate escaped run directory' }
+    if (-not (Test-Path -LiteralPath $source)) { Write-Output ("  absent, skipped: " + $relative); continue }
+    $destination = Assert-StatePath (Join-Path $target $relative)
+    if (-not (Test-StateWithin $destination $target)) { throw 'candidate destination escaped archive' }
+    $item = Get-Item -LiteralPath $source -Force
+    $mtime = $item.LastWriteTimeUtc.ToString('o')
+    $manifest = @(Get-StateManifest $source)
+    $rootEntry = @($manifest | Where-Object { $_.relative -eq '.' })[0]
+    $plan += [ordered]@{ relative = $relative; destination = $destination; sha256 = $rootEntry.sha256;
+        bytes = $rootEntry.bytes; mtime_utc = $mtime; manifest = $manifest }
 }
-$receipt = [ordered]@{
-    schema              = 'FRANKIE_CODE_BOUND_STATE_SUPERSEDED_V1'
-    day                 = $Day
-    run_id              = $cfg.run_id
-    run_directory       = $runDirectory
-    stored_boss_commit  = $stored
+$intentPath = Join-Path $dayDirectory ('superseded-code-bound-state-' + $stamp + '.intent.json')
+$intent = [ordered]@{
+    schema = 'FRANKIE_CODE_BOUND_STATE_INTENT_V1'
+    day = $Day
+    run_id = $cfg.run_id
+    run_directory = $runDirectory
+    cycle_index = $CycleIndex
+    stored_boss_commit = $stored
     current_boss_commit = $head
-    stale               = ($stored -ne 'absent' -and $stored -ne $head)
-    superseded_root     = $(if ($moved.Count -gt 0) { $target } else { $null })
-    kept                = @('host-instance.c15.json', 'native-host-runtime.json')
-    moved               = $moved
-    at                  = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+    superseded_root = $target
+    items = @($plan)
 }
-$receiptPath = Join-Path $dayDirectory ('superseded-code-bound-state-' + $stamp + '.json')
-Set-Content -Path $receiptPath -Value ($receipt | ConvertTo-Json -Depth 6) -NoNewline -Encoding UTF8
-Write-Output ("receipt: " + $receiptPath)
-Write-Output ('RECEIPT ' + ($receipt | ConvertTo-Json -Depth 6 -Compress))
+Write-StateJson $intentPath $intent
+Complete-StateIntent $intentPath
+} finally { $stateLock.Dispose() }

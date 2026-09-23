@@ -1,21 +1,9 @@
-"""The supersede-code-bound-state host script, checked as text (there is no PowerShell here).
+"""Static delivery and scope contracts for durable host-state preservation.
 
-This script is the one launch-day action that touches the retained state of a live run directory:
-it moves the code/checkpoint-bound items aside so the runner re-mints them at the advanced host
-commit. It is sent verbatim to the native host, so what matters and cannot be allowed to drift is
-the contract: it refuses unsupplied variables, carries no path literal and no credential, DELETES
-NOTHING (one Move-Item, by literal path, verified after the move), enumerates the code-bound items
-and leaves host-instance.c15.json / native-host-runtime.json in place, sends everything to a sibling
-of the run directory (never inside it), refuses unless the tools HEAD is the configuration's
-boss_commit, moves nothing when nothing is stale, and writes one receipt into the DAY directory.
-
-Pinned against the hardened revision of 2026-09-20 (after the /ship reviews). It grew past the
-original eight items after pipeline run 35511984264 refused on execution/execution-identity.c15.json:
-the original eight are asserted as a subset, the three additions, the stale-only identity moves, the
-scoped non-recursive commit-literal scan with its kept/journal exclusions and reparse-point filter,
-the run_directory quote check, the OldCommit override and the leftover refusal are pinned by name. The one piece executed for real is the embedded Python that
-reads the two identity records: it runs in a subprocess against records packed by the real
-c15_journal, because a c15 file is a tagged list and that shape broke the probe's first run.
+The real PowerShell behavior runs in tests/test_host_state_preservation.py.
+These tests preserve the existing host variable, stale selection, identity,
+kept evidence and dispatch workflow restrictions while checking the durable
+intent/manifest/receipt protocol carried verbatim to the host.
 """
 import importlib.util
 import json
@@ -39,7 +27,10 @@ LINES = TEXT.splitlines()
 # Comments explain the why; the tests pin the code, so drop comment lines before looking for verbs.
 CODE = '\n'.join(line for line in LINES if not line.lstrip().startswith('#'))
 STALE_BLOCK = CODE.split("if ($stored -ne 'absent' -and $stored -ne $head) {\n", 1)[1].split('\n} elseif', 1)[0]
-RECEIPT = TEXT.split('$receipt = [ordered]@{', 1)[1].split('\n}', 1)[0]
+RECEIPT = re.search(r'\$receipt = \[ordered\]@\{(.*?)^\s*\}', TEXT, re.S | re.M).group(1)
+INTENT = re.search(r'\$intent = \[ordered\]@\{(.*?)^\s*\}', TEXT, re.S | re.M).group(1)
+RUNTIME = CODE[CODE.index("foreach ($required in "):]
+COMPLETION = CODE.split('function Complete-StateIntent', 1)[1].split("foreach ($required in ", 1)[0]
 EMBEDDED_PYTHON = TEXT.split('$code = @"\n', 1)[1].split('\n"@', 1)[0]
 
 # The eight items the 2026-09-20 brief named (the first revision of the script).
@@ -79,8 +70,9 @@ def test_the_script_refuses_a_variable_the_sender_did_not_supply():
 def test_cycle_index_defaults_to_the_first_cycle_and_is_refused_unless_two_digits():
     assert "if (-not (Get-Variable CycleIndex -ErrorAction SilentlyContinue)) { $CycleIndex = '00' }" in CODE
     assert """if ($CycleIndex -notmatch '^\\d{2}$') { throw "CycleIndex must be two digits""" in CODE
-    # The validation precedes every use, so a stray value can never shape a path.
-    assert _index("-notmatch '^\\d{2}$'") < _index("'execution/cycle-' + $CycleIndex")
+    # Validate before either recovery or the fresh selection path can run.
+    assert _index("-notmatch '^\\d{2}$'", RUNTIME) < _index('Complete-StateIntent $unfinished[0]', RUNTIME)
+    assert _index("-notmatch '^\\d{2}$'", RUNTIME) < _index("'execution/cycle-' + $CycleIndex", RUNTIME)
 
 
 def test_every_error_stops_the_script_so_a_failed_move_never_continues_to_the_next_item():
@@ -128,29 +120,41 @@ def test_no_delete_command_word_appears_anywhere_in_the_script(word):
     assert not re.search(rf'\b{word}\b', TEXT, re.I), f'{word} in the supersede script'
 
 
+
 def test_exactly_one_move_item_by_literal_path_and_the_move_is_verified_both_ways():
     moves = [line for line in LINES if 'Move-Item' in line]
     assert len(moves) == 1, moves
     assert moves[0].strip() == 'Move-Item -LiteralPath $source -Destination $destination'
-    assert '-Force' not in moves[0]          # never overwrite an item already at the destination
-    after = CODE[_index('Move-Item'):]
-    assert 'if (Test-Path $source) { throw ("move left the source in place: "' in after
-    assert 'if (-not (Test-Path $destination)) { throw ("move lost the item: "' in after
-    # The sha256 and size are read BEFORE the move so the receipt describes the bytes that left.
-    assert _index('[IO.File]::ReadAllBytes($source)') < _index('Move-Item')
-    assert _index('$bytes = $item.Length') < _index('Move-Item')
+    assert '-Force' not in moves[0]
+    before, after = COMPLETION.split('Move-Item -LiteralPath $source -Destination $destination')
+    assert 'Assert-StateManifest $source $entry.manifest' in before
+    assert "if (Test-Path -LiteralPath $destination) { throw 'destination already exists' }" in before
+    assert 'if (Test-Path -LiteralPath $source) { throw ("move left the source in place: "' in after
+    assert 'if (-not (Test-Path -LiteralPath $destination)) { throw ("move lost the item: "' in after
+    assert _index('Assert-StateManifest $destination $entry.manifest', after) < _index('Write-StateJson $moveReceiptPath', after)
+    # Stream hashes and complete manifests precede the durable intent and execution.
+    assert '[IO.File]::OpenRead((Assert-StatePath $Path))' in CODE
+    assert '$hasher.ComputeHash($stream)' in CODE
+    assert _index('$manifest = @(Get-StateManifest $source)', RUNTIME) < _index('Write-StateJson $intentPath $intent', RUNTIME)
+    assert _index('Write-StateJson $intentPath $intent', RUNTIME) < _index('Complete-StateIntent $intentPath', RUNTIME)
 
 
 def test_the_only_other_writes_are_the_destination_directory_and_the_receipt():
     creates = [line for line in LINES if 'New-Item' in line]
     assert len(creates) == 1 and '-ItemType Directory' in creates[0], creates
-    assert '-Path (Split-Path $destination -Parent)' in creates[0]
-    writes = [line for line in LINES if 'Set-Content' in line]
-    assert len(writes) == 1, writes
-    assert '-Path $receiptPath' in writes[0]
-    # The only '>' in code is the stderr merge on the Python call; no redirection writes a file.
+    assert '-Path $parent' in creates[0]
+    assert '$parent = Assert-StatePath (Split-Path $destination -Parent)' in COMPLETION
+    assert 'Set-Content' not in CODE
+    writer = CODE.split('function Write-StateJson', 1)[1].split('function Assert-StateManifest', 1)[0]
+    assert '[IO.FileMode]::CreateNew' in writer
+    assert '[IO.FileShare]::None' in writer
+    assert '$stream.Write($bytes, 0, $bytes.Length); $stream.Flush($true)' in writer
+    assert 'finally { $stream.Dispose() }' in writer
+    calls = [line.strip() for line in CODE.splitlines() if 'Write-StateJson ' in line and not line.startswith('function ')]
+    assert len(calls) == 3, calls
+    for path in ('$intentPath $intent', '$moveReceiptPath $moveReceipt', '$receiptPath $receipt'):
+        assert any('Write-StateJson ' + path in line for line in calls), path
     assert '>' not in CODE.replace('2>&1', ''), 'a redirection writes a file'
-
 
 # --- the code-bound items and the two kept -----------------------------------------------------
 
@@ -160,7 +164,7 @@ def test_the_enumerated_candidates_are_the_original_eight_plus_the_three_named_a
     identities = re.findall(r"^\s*if \(\$(\w+) -ne 'absent' -and \$\1 -ne \$head\) \{ \$candidates \+= '([a-z0-9\-./]+)' \}$",
                             STALE_BLOCK, re.M)
     cycle_level = re.findall(r"\(\$cycleRelative \+ '/([a-z0-9\-.]+)'\)", STALE_BLOCK)
-    globbed = re.findall(r"Get-ChildItem \$cycle -Filter '([a-z0-9\-*.]+)' \| ForEach-Object \{ \$candidates \+= "
+    globbed = re.findall(r"Get-ChildItem -LiteralPath \(Assert-StatePath \$cycle\) -Filter '([a-z0-9\-*.]+)' \| ForEach-Object \{ \$candidates \+= "
                          r"\(\$cycleRelative \+ '/' \+ \$_\.Name\) \}", STALE_BLOCK)
     assert base == ['initialization.c15.json', 'training.sqlite', 'training-witnesses'], base
     assert identities == [('hostIdentity', 'host-identity.c15.json'),
@@ -194,18 +198,19 @@ def test_the_catch_all_scan_only_moves_c15_records_that_carry_the_old_commit_lit
     # Scoped, never recursive: another cycle's completion.c15.json carries boss_commit lawfully.
     assert '-Recurse' not in CODE
     assert "foreach ($scanRoot in @($runDirectory, (Join-Path $runDirectory 'execution'), $cycle)) {" in STALE_BLOCK
-    assert ("Get-ChildItem $scanRoot -File -Filter '*.c15.json' | Where-Object { -not ($_.Attributes -band $reparse) } "
+    assert ("Get-ChildItem -LiteralPath $scanRoot -File -Filter '*.c15.json' | Where-Object { -not ($_.Attributes -band $reparse) } "
             "| ForEach-Object {") in STALE_BLOCK
     assert '$reparse = [IO.FileAttributes]::ReparsePoint' in STALE_BLOCK
-    assert 'if (-not $_.FullName.StartsWith($root)) { return }' in STALE_BLOCK
+    assert "if (-not (Test-StateWithin $_.FullName $root)) { throw 'scan escaped run directory' }" in STALE_BLOCK
+    assert '$null = Assert-StatePath $scanRoot' in STALE_BLOCK
     # Kept records and chained journals are excluded by name before the literal is even looked for.
     assert ("if ($name -eq 'host-instance.c15.json' -or $name -like 'verified-*' -or $name -eq 'genesis.c15.json' "
             "-or $name -like 'append-*') { return }") in STALE_BLOCK
     assert _index("$name -eq 'host-instance.c15.json'", STALE_BLOCK) < _index('-SimpleMatch $stored', STALE_BLOCK)
-    assert 'if (Select-String -Path $_.FullName -SimpleMatch $stored -Quiet) {' in STALE_BLOCK
+    assert 'if (Select-String -LiteralPath $_.FullName -SimpleMatch $stored -Quiet) {' in STALE_BLOCK
     assert 'if ($candidates -notcontains $relative) {' in STALE_BLOCK
     assert "$relative = $_.FullName.Substring($root.Length).TrimStart('\\', '/').Replace('\\', '/')" in STALE_BLOCK
-    assert '$root = (Resolve-Path $runDirectory).Path' in STALE_BLOCK
+    assert '$root = Assert-StatePath $runDirectory' in STALE_BLOCK
     # Inside the stale branch the literal is a 40-hex OLD commit, never 'absent' nor the current one
     # (Select-String on either of those would sweep live records).
     assert _index('$candidates = @(\'initialization', STALE_BLOCK) < _index('-SimpleMatch $stored', STALE_BLOCK)
@@ -217,7 +222,8 @@ def test_the_cycle_bound_items_live_under_the_requested_cycle_only():
     assert '$cycle = Join-Path $runDirectory $cycleRelative' in STALE_BLOCK
     assert 'if (Test-Path $cycle) {' in STALE_BLOCK
     assert STALE_BLOCK.count("($cycleRelative + '/") == 6          # five names + the host-ready glob
-    assert 'cycle-*' not in TEXT and 'cycle-0' not in CODE    # no other cycle is ever swept by name
+    assert 'cycle-*' not in STALE_BLOCK and 'cycle-0' not in STALE_BLOCK
+    assert "throw 'intent selects kept or other-cycle evidence'" in COMPLETION
 
 
 @pytest.mark.parametrize('kept', KEPT_ITEMS)
@@ -232,33 +238,40 @@ def test_the_data_bound_items_are_never_enumerated_and_the_receipt_says_they_wer
     assert not re.fullmatch(r'host-ready-.*\.c15\.json', kept)
 
 
+
 def test_host_instance_must_be_present_and_is_only_ever_tested_never_moved():
     guard = "if (-not (Test-Path (Join-Path $runDirectory 'host-instance.c15.json'))) { throw 'refusing: host-instance.c15.json absent"
-    assert guard in CODE
+    assert guard in RUNTIME
+    assert "$null = Assert-StatePath (Join-Path $runDirectory 'host-instance.c15.json')" in RUNTIME
     mentions = [line for line in CODE.splitlines() if 'host-instance.c15.json' in line]
-    assert len(mentions) == 3, mentions            # the guard, the scan exclusion, the receipt's kept list
     assert any('kept' in line for line in mentions)
     assert any('{ return }' in line for line in mentions)
     assert not any('$candidates' in line or 'Move-Item' in line for line in mentions)
-    assert _index(guard) < _index("$candidates = @('initialization")
-
+    assert _index(guard, RUNTIME) < _index('Complete-StateIntent $unfinished[0]', RUNTIME)
+    assert "$relative -in @('host-instance.c15.json', 'native-host-runtime.json')" in COMPLETION
 
 # --- the destination is a sibling of the run directory -----------------------------------------
 
+
 def test_the_destination_is_built_from_the_run_directory_parent_never_inside_the_run_directory():
     assert ("$target = Join-Path (Join-Path (Split-Path $runDirectory -Parent) 'superseded') "
-            "($runName + '-' + $stamp + '-code-' + $stored)") in CODE
-    assert '$runName = Split-Path $runDirectory -Leaf' in CODE
-    assert '$destination = Join-Path $target $relative' in CODE
+            "($runName + '-' + $stamp + '-code-' + $stored)") in RUNTIME
+    assert '$runName = Split-Path $runDirectory -Leaf' in RUNTIME
+    assert '$destination = Assert-StatePath (Join-Path $target $relative)' in RUNTIME
     assert "Join-Path $runDirectory 'superseded'" not in TEXT
-    # $runDirectory is only ever joined to build a SOURCE (or the guard / cycle / scan / leftover lookups),
-    # never a destination.
-    joins = re.findall(r"Join-Path \$runDirectory ('[^']*'|\$\w+)", CODE)
-    assert sorted(joins) == ['$_', '$cycleRelative', '$relative', "'execution'", "'host-instance.c15.json'"], joins
-
+    assert "throw 'archive must be outside run directory'" in RUNTIME
+    assert "throw 'candidate escaped run directory'" in RUNTIME
+    assert "throw 'candidate destination escaped archive'" in RUNTIME
+    assert "throw 'intent destination escaped the sibling archive'" in COMPLETION
+    assert "throw 'intent path escaped its root'" in COMPLETION
+    boundary = CODE.split('function Test-StateWithin', 1)[1].split('function Assert-StatePath', 1)[0]
+    assert '$base + [IO.Path]::DirectorySeparatorChar' in boundary
+    assert '[StringComparison]::Ordinal' in boundary
+    assert '[StringComparison]::OrdinalIgnoreCase' in boundary
 
 def test_the_superseded_folder_is_stamped_with_the_stale_commit_so_two_supersedes_never_collide():
-    assert "$stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ')" in CODE
+    assert "$stamp = (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ') + '-' + [Guid]::NewGuid().ToString('N')" in RUNTIME
+    assert "if (Test-Path -LiteralPath $target) { throw 'archive destination already exists' }" in RUNTIME
     assert "'-code-' + $stored" in CODE
     # $stored is a 40-hex commit or the literal 'absent' (both safe folder-name fragments), never free text.
     assert "$stored = 'absent'" in CODE
@@ -283,7 +296,7 @@ def test_nothing_moves_when_the_stored_commit_equals_head_or_no_identity_is_stor
     assert 'throw' not in CODE.split("} elseif ($stored -eq $head) {", 1)[1].split('} else {', 1)[0]
     # No identity at all: leftover checkpoint-bound records cannot be judged, so the script refuses
     # to report success while they remain (code review, Important) unless OldCommit names them stale.
-    absent = CODE.split('} else {\n', 1)[1].split('$stamp =', 1)[0]
+    absent = RUNTIME.split("} else {\n    Write-Output 'no stored identity found'", 1)[1].split('$stamp =', 1)[0]
     assert 'throw ("refusing: no identity record to judge by, but checkpoint-bound records are present: "' in absent
     assert "Write-Output 'nothing is stale'" in absent
     assert "if ($stored -eq 'absent' -and ($hostIdentity -eq $head -or $executionIdentity -eq $head)) { $stored = $head }" in CODE
@@ -293,17 +306,26 @@ def test_nothing_moves_when_the_stored_commit_equals_head_or_no_identity_is_stor
     assert "if ($stored -ne 'absent' -and $stored -ne $OldCommit) { throw" in CODE
 
 
+
 def test_every_refusal_fires_before_anything_is_moved():
-    first_move = _index('Move-Item')
+    # Helpers are defined before the main program; execution order is determined
+    # by their calls, not the lexical position of the Move-Item function body.
+    recovery = _index('Complete-StateIntent $unfinished[0]', RUNTIME)
     for guard in ('throw "$required was not supplied', 'throw "CycleIndex must be two digits',
                   'throw "no run configuration for $Day', 'throw "run_directory absent',
                   "throw 'refusing: run_directory carries a quote or newline'",
-                  'throw ("refusing: tools HEAD', "throw 'refusing: host-instance.c15.json absent",
-                  'throw ("could not read the identity records', 'throw ("could not read a stored boss_commit',
-                  "throw 'OldCommit must be a full 40-hex commit'"):
-        assert _index(guard) < first_move, guard
-    assert _index("$candidates = @('initialization") < first_move
-
+                  'throw ("refusing: tools HEAD', "throw 'refusing: host-instance.c15.json absent"):
+        assert _index(guard, RUNTIME) < recovery, guard
+    intent_write = _index('Write-StateJson $intentPath $intent', RUNTIME)
+    for guard in ('throw ("could not read the identity records', 'throw ("could not read a stored boss_commit',
+                  "throw 'OldCommit must be a full 40-hex commit'",
+                  'throw ("refusing: no identity record to judge by'):
+        assert _index(guard, RUNTIME) < intent_write, guard
+    assert _index("$candidates = @('initialization", RUNTIME) < intent_write
+    for guard in ("throw 'invalid or duplicate intent relative path'",
+                  "throw 'intent selects unapproved evidence'", "throw 'intent lacks a complete manifest'",
+                  'throw ("ambiguous or missing preserved item: '):
+        assert _index(guard, COMPLETION) < _index('Move-Item', COMPLETION), guard
 
 # --- the embedded identity reader --------------------------------------------------------------
 
@@ -320,7 +342,7 @@ def test_the_embedded_python_only_reads_and_prints_one_line_per_identity_record(
     assert "(run / 'execution' / 'execution-identity.c15.json', lambda v: v['boss_commit'])" in rendered
     # PowerShell keeps exactly the last two lines, one per record, in that order.
     assert '$identities = @(& $Python -c $code 2>&1 | Select-Object -Last 2 | ForEach-Object { $_.ToString().Trim() })' in CODE
-    assert 'if ($identities.Count -ne 2) { throw' in CODE
+    assert 'if ($LASTEXITCODE -ne 0 -or $identities.Count -ne 2) { throw' in CODE
     assert '$hostIdentity = $identities[0]; $executionIdentity = $identities[1]' in CODE
     assert "$env:PYTHONDONTWRITEBYTECODE = '1'; $env:PYTHONPATH = $ToolsRoot" in CODE
 
@@ -364,29 +386,66 @@ def test_the_identity_reader_reports_each_record_on_its_own_line_through_the_rea
 
 # --- the receipt -------------------------------------------------------------------------------
 
+
 def test_the_receipt_carries_the_schema_and_every_field_a_reader_needs_to_undo_the_move():
     assert re.search(rf"^\s*schema\s*=\s*'{SCHEMA}'$", RECEIPT, re.M)
-    declared = re.findall(r'^\s*([a-z_]+)\s*=', RECEIPT, re.M)
+    declared = re.findall(r'^\s*([a-z_0-9]+)\s*=', RECEIPT, re.M)
     assert declared == ['schema', 'day', 'run_id', 'run_directory', 'stored_boss_commit', 'current_boss_commit',
-                        'stale', 'superseded_root', 'kept', 'moved', 'at'], declared
-    # superseded_root names a folder only when something was moved into it.
+                        'stale', 'superseded_root', 'kept', 'moved', 'at', 'intent_path', 'intent_sha256'], declared
     assert 'superseded_root     = $(if ($moved.Count -gt 0) { $target } else { $null })' in RECEIPT
-    per_item = TEXT.split('$moved += [ordered]@{', 1)[1].split('}', 1)[0]
-    assert re.findall(r'([a-z_0-9]+) =', per_item) == ['relative', 'destination', 'sha256', 'bytes', 'mtime_utc']
+    per_item = TEXT.split('$plan += [ordered]@{', 1)[1].split('}', 1)[0]
+    assert re.findall(r'([a-z_0-9]+) =', per_item) == [
+        'relative', 'destination', 'sha256', 'bytes', 'mtime_utc', 'manifest']
+    assert '$moved += $entry' in COMPLETION
+    assert 'intent_sha256 = $intentHash; item = $entry' in COMPLETION
+    assert "schema = 'FRANKIE_CODE_BOUND_STATE_MOVE_V1'" in COMPLETION
 
 
 def test_the_receipt_is_written_into_the_day_directory_and_echoed_last():
-    assert "$receiptPath = Join-Path $dayDirectory ('superseded-code-bound-state-' + $stamp + '.json')" in CODE
-    assert 'Set-Content -Path $receiptPath -Value ($receipt | ConvertTo-Json -Depth 6) -NoNewline -Encoding UTF8' in CODE
-    assert 'Join-Path $runDirectory' not in CODE.split('$receiptPath =', 1)[1]   # never lands in the run dir
-    nonblank = [line for line in LINES if line.strip()]
-    assert nonblank[-1] == "Write-Output ('RECEIPT ' + ($receipt | ConvertTo-Json -Depth 6 -Compress))"
-    assert sum('RECEIPT ' in line for line in nonblank) == 1
-
+    assert "$intentPath = Join-Path $dayDirectory ('superseded-code-bound-state-' + $stamp + '.intent.json')" in RUNTIME
+    assert "$stem = $IntentPath.Substring(0, $IntentPath.Length - '.intent.json'.Length)" in COMPLETION
+    assert "$receiptPath = $stem + '.json'" in COMPLETION
+    assert "$moveReceiptPath = $stem + '.move-' + $index + '.json'" in COMPLETION
+    assert 'Write-StateJson $receiptPath $receipt' in COMPLETION
+    assert _index('Write-StateJson $receiptPath $receipt', COMPLETION) < _index("Write-Output ('RECEIPT '", COMPLETION)
+    assert sum('RECEIPT ' in line for line in LINES) == 1
 
 def test_a_rerun_skips_absent_items_instead_of_failing():
-    assert 'if (-not (Test-Path $source)) { Write-Output ("  absent, skipped: " + $relative); continue }' in CODE
+    assert 'if (-not (Test-Path -LiteralPath $source)) { Write-Output ("  absent, skipped: " + $relative); continue }' in CODE
     assert '$moved = @()' in CODE
+
+
+
+def test_durable_intent_contains_the_complete_plan_and_recovery_precedes_identity_reads():
+    for field in ('schema', 'day', 'run_id', 'run_directory', 'cycle_index',
+                  'stored_boss_commit', 'current_boss_commit', 'superseded_root', 'items'):
+        assert re.search(rf'^\s*{field}\s*=', INTENT, re.M), field
+    assert "schema = 'FRANKIE_CODE_BOUND_STATE_INTENT_V1'" in INTENT
+    assert 'items = @($plan)' in INTENT
+    assert _index('Complete-StateIntent $unfinished[0]', RUNTIME) < _index('$identities =', RUNTIME)
+    assert "throw 'multiple unfinished preservation intents require reconciliation'" in RUNTIME
+    assert '$done.intent_sha256 -cne (Get-StateHash $file.FullName)' in RUNTIME
+    assert "throw 'completion receipt does not bind the retained intent'" in RUNTIME
+
+
+def test_manifests_walk_every_child_and_each_operation_refuses_linked_ancestors():
+    path_guard = CODE.split('function Assert-StatePath', 1)[1].split('function Get-StateHash', 1)[0]
+    assert 'while ($cursor)' in path_guard
+    assert '[IO.FileAttributes]::ReparsePoint' in path_guard
+    assert '$parent = [IO.Path]::GetDirectoryName($cursor)' in path_guard
+    manifest = CODE.split('function Get-StateManifest', 1)[1].split('function Write-StateJson', 1)[0]
+    assert '$current = Assert-StatePath ($pending.Pop())' in manifest
+    assert 'Get-ChildItem -LiteralPath $current -Force' in manifest
+    assert "kind = 'directory'" in manifest and "kind = 'file'" in manifest
+    assert 'sha256 = (Get-StateHash $current); bytes = $item.Length' in manifest
+    assert "manifest escaped selected item" in manifest
+
+
+def test_run_lock_serializes_recovery_and_new_intent_creation():
+    assert "$lockPath = Assert-StatePath (Join-Path $dayDirectory 'code-bound-state.lock')" in RUNTIME
+    assert '$stateLock = [IO.File]::Open($lockPath, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)' in RUNTIME
+    assert _index('$stateLock =', RUNTIME) < _index('$unfinished = @()', RUNTIME)
+    assert RUNTIME.rstrip().endswith('} finally { $stateLock.Dispose() }')
 
 
 # --- the workflow ------------------------------------------------------------------------------
