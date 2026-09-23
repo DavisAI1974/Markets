@@ -1070,7 +1070,8 @@ class ActualHost:
             schedule_path=h['schedule']['path'],expected_schedule_sha256=h['schedule']['sha256'],runtime_factory=self.runtime,
             principal_configuration=principal,boss_commit=h['boss_commit'],agent_commit=c['receiver_commit'],
             state_defects_and_gaps_reported=h['state_defects_and_gaps_reported'])
-        result=await runner.run_remaining(cycles=getattr(self,'cycle_limit',None))
+        result=(await runner.run_remaining(cycles=getattr(self,'cycle_limit',None))
+                if getattr(self,'pending_return',False) else await runner.run_remaining())
         self.workflow_resolved('principal')
         self.workflow_resolved('principal_correction')
         return result

@@ -260,3 +260,101 @@ def test_archive_event_cannot_substitute_target_or_request(api,fixture,field,val
     seal(event)
     with pytest.raises(ValueError):
         api.validate_event(event,fixture["pipeline"])
+
+@pytest.fixture
+def retained_pipeline(api,fixture):
+    module=api.load_module("real_event_pipeline_fixture",ROOT/"research/kalshi/frankie_boss/operations/day_pipeline.py")
+    p=module.DayPipeline(fixture["configuration"],"20211004",runs_root="runs")
+    p.write("stage-sources",dict(manifest="manifest.json",manifest_hash="b"*64,records=17),command=[])
+    p.write("host-start",dict(ssm_online=True),command=[])
+    p.write("ingest",dict(journal_count=17,journal_hash="5"*64,compact_sha256="6"*64),command=[])
+    prepared=fixture["pipeline"].receipt("schedule-prefixes")["gate"]
+    p.write("schedule-prefixes",prepared,command=[])
+    p._write_wait(fixture["pending"]["gate"],3,None)
+    fixture["pipeline"]=p
+    return fixture
+
+def fake_git(api,monkeypatch,files=None,head="d"*40,modes=None):
+    files={} if files is None else files
+    modes={} if modes is None else modes
+    calls=[]
+    def run(argv,**kwargs):
+        calls.append(list(argv))
+        assert argv[0]=="git" and "fetch" in argv,"only isolated Git metadata may run"
+        return SimpleNamespace(returncode=0)
+    def output(argv,**kwargs):
+        calls.append(list(argv))
+        assert argv[0]=="git","test cannot invoke a host runner"
+        if "rev-parse" in argv:
+            result=head+"\n"
+        elif "ls-tree" in argv:
+            names=sorted(files)
+            if "--name-only" in argv:
+                result="\n".join(names)+("\n" if names else "")
+            else:
+                separator="\0" if "-z" in argv or "-rz" in argv else "\n"
+                result=separator.join(modes.get(name,"100644")+" blob "+"9"*40+"\t"+name for name in names)
+                if names:result+=separator
+        elif "show" in argv:
+            name=argv[-1].split(":",1)[1]
+            result=files[name]
+        else:
+            raise AssertionError("unexpected metadata request "+repr(argv))
+        if kwargs.get("text"):
+            return result.decode() if isinstance(result,bytes) else result
+        return result.encode() if isinstance(result,str) else result
+    monkeypatch.setattr(api.subprocess,"run",run)
+    monkeypatch.setattr(api.subprocess,"check_output",output)
+    return calls
+
+def test_actual_loader_reconstructs_real_pipeline_from_exact_retained_receipts(api,retained_pipeline,monkeypatch):
+    f=retained_pipeline
+    calls=fake_git(api,monkeypatch)
+    loaded=api.load_pipeline(f["event"],overlay=False)
+    assert loaded.pending()["gate"]["receipt_sha256"]==f["event"]["context"]["wait_receipt_sha256"]
+    assert loaded.receipt("cycles") is None
+    assert all(command[0]=="git" for command in calls)
+
+def test_actual_loader_rejects_source_checkout_drift_before_receipt_overlay(api,retained_pipeline,monkeypatch):
+    f=retained_pipeline
+    calls=fake_git(api,monkeypatch,head="0"*40)
+    with pytest.raises(ValueError):
+        api.load_pipeline(f["event"])
+    assert not any("fetch" in command for command in calls)
+
+def test_receipt_commit_cannot_supply_missing_pipeline_configuration_authority(api,retained_pipeline,monkeypatch):
+    f=retained_pipeline
+    event=copy.deepcopy(f["event"])
+    malicious="runs/20211004/injected-configuration.json"
+    raw=canonical(f["configuration"])
+    event["pipeline_configuration"]=dict(path=malicious,sha256=sha(raw))
+    seal(event)
+    fake_git(api,monkeypatch,files={malicious:raw})
+    with pytest.raises((ValueError,FileNotFoundError)):
+        api.load_pipeline(event)
+    assert not Path(malicious).exists()
+
+def test_receipt_commit_cannot_supply_owner_release_authority(api,retained_pipeline,monkeypatch):
+    f=retained_pipeline
+    release_path=release(f)
+    raw=release_path.read_bytes()
+    target="runs/20211004/owner-release.json"
+    f["configuration"]["owner_release"]=dict(path=target,sha256=sha(raw))
+    Path("pipeline.json").write_bytes(canonical(f["configuration"]))
+    event=copy.deepcopy(f["event"])
+    event["pipeline_configuration"]["sha256"]=sha(Path("pipeline.json").read_bytes())
+    seal(event)
+    fake_git(api,monkeypatch,files={target:raw})
+    try:
+        api.load_pipeline(event)
+    except (ValueError,RuntimeError):
+        pass
+    assert not Path(target).exists(),"receipt transport must never manufacture owner release authority"
+
+def test_symlink_git_object_is_not_admitted_as_regular_receipt_bytes(api,retained_pipeline,monkeypatch):
+    f=retained_pipeline
+    path=next(Path("runs/20211004").glob("04-cycles-wait-*.json"))
+    name=path.as_posix()
+    fake_git(api,monkeypatch,files={name:path.read_bytes()},modes={name:"120000"})
+    with pytest.raises(ValueError):
+        api.load_pipeline(f["event"])
