@@ -115,11 +115,24 @@ def completed_history(host, *, request_id, cutoff_ns, cycle_index):
             correction_without_history['scientific_review_request']['initial_response_hash'] = evidence_hash(response)
             correction_without_history['scientific_review_request']['earlier_learning_history_hash'] = (
                 None if earlier is None else earlier['history_hash'])
+        correction_response_for_learning = corrected['response']
+        scientific_delivery_artifact = None
+        if scientific is not None:
+            from .dipole_scientific_history import project
+            from .frankie_principal_adapter import file_witness
+            correction_response_for_learning = dict(corrected['response'],
+                dipole_scientific_exchange=project(scientific,corrected['response']['dipole_scientific_exchange']))
+            raw_path = principal/'classroom-correction-response.json'
+            scientific_delivery_artifact = dict(path=str(raw_path),**file_witness(raw_path),
+                response_sha256=digest(corrected['response']),
+                purpose='Immutable full source-delivery and provider exchanges; the learning view is exactly reconstructable.')
         # Earlier exchanges already occur once in this ordered bundle; avoid recursive duplication.
         entry = json_form(dict(origin=origin, teacher_message_without_repeated_history=teacher_message,
             earlier_learning_history_hash=None if earlier is None else validate_history(earlier)['history_hash'],
             frankie_response=response, teacher_grade=grade, teacher_correction_without_repeated_history=correction_without_history,
-            frankie_correction_response=corrected['response'], completion=completion))
+            frankie_correction_response=correction_response_for_learning, completion=completion))
+        if scientific_delivery_artifact is not None:
+            entry['scientific_delivery_artifact'] = scientific_delivery_artifact
         entry['exchange_hash'] = evidence_hash(entry)
         exchanges.append(entry)
     body = json_form(dict(schema=SCHEMA,learning_policy=CUMULATIVE,knowledge=knowledge,exchanges=exchanges))

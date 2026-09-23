@@ -93,7 +93,7 @@ def identity(session, visible, module):
     paths.extend(sorted(repo.glob('dipole_classroom*.py')))
     paths.extend([repo / 'frankie_principal_adapter.py', repo / 'c15_journal.py',
                   repo / 'dipole_shared_knowledge.py', repo / 'dipole_scientific_review.py',
-                  repo / 'dipole_teacher_discussion.py'])
+                  repo / 'dipole_teacher_discussion.py', repo / 'dipole_scientific_history.py'])
     engine = getattr(session, 'engine', None) or {}
     lane = getattr(session, 'serverless', None) or {}
     return dict(schema='FRANKIE_CLASSROOM_CACHE_IDENTITY_V1',
