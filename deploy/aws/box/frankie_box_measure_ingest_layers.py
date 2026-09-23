@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from frankie_box_digest_render import SCHEMA as DIGEST_SCHEMA, parse_table, render_table  # noqa: E402
 from frankie_box_measure_ingest_stack import CONTAINER, decode, encode, reorder  # noqa: E402
 from research.kalshi.frankie_boss.c15_journal import pack, unpack  # noqa: E402
-from research.kalshi.frankie_boss.compact_journal import MAX_ROWS, _orders, decode_block, encode_block  # noqa: E402
+from research.kalshi.frankie_boss.compact_journal import MAX_BYTES, MAX_ROWS, _orders, decode_block, encode_block  # noqa: E402
 from research.kalshi.frankie_boss.verified_journal_reader import DIGEST_PREFIX, canonical_tagged_bytes  # noqa: E402
 
 OUTPUT_PARENT = Path('/opt/frankie-box/work/ingest-stack-measure')
@@ -38,7 +38,16 @@ def gz(raw):
 
 
 def chunks(rows):
-    return [rows[i:i + MAX_ROWS] for i in range(0, len(rows), MAX_ROWS)]
+    """The format's real bound: up to 256 entries AND up to 32 MB of bodies per block, whichever comes first
+    (run 35834234159: 256 Monday entries can exceed the byte bound)."""
+    out, current, size = [], [], 0
+    for row in rows:
+        if current and (len(current) == MAX_ROWS or size + len(row[2]) > MAX_BYTES):
+            out.append(current)
+            current, size = [], 0
+        current.append(row)
+        size += len(row[2])
+    return out + ([current] if current else [])
 
 
 def split(rows, lookup, dictionary):
@@ -143,7 +152,11 @@ def measure(output, segments, entries):
                 exact, error = rebuild(texts, templates, rows), None
             except Exception as err:  # L4 reported per segment, never scored; L1-L3 still recorded
                 error, exact = '%s: %s' % (type(err).__name__, str(err)[:200]), False
-                sizes, orders = lower_layers(rows)
+                try:
+                    sizes, orders = lower_layers(rows)
+                except Exception as lower:  # recorded, never scored; the run continues
+                    sizes, orders = {}, None
+                    error += ' | lower layers: %s: %s' % (type(lower).__name__, str(lower)[:200])
                 sizes.update(L0=stored, L4=None)
             item = dict(first_block=first, first_entry=blocks[first][0], stored_blocks=i - first, entries=len(rows),
                         plain_bytes=sum(len(r[2]) for r in rows), distinct_orders=orders, exact=exact, error=error,
