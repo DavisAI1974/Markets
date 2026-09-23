@@ -75,3 +75,46 @@ def test_complete_teach_path_keeps_all_sources_and_uses_original_grader(tmp_path
     assert grade['mastered'] is True and grade['correction_ids']==()
     assert published[0][2]['report']['observations']==19*len(CURSORS)
     assert published[0][2]['report']['pairs']==171
+
+
+def test_correction_pages_retain_all_ids_history_and_scientific_disagreement(tmp_path,monkeypatch):
+    import json
+    from types import SimpleNamespace
+    from deploy.aws.box import frankie_box_classroom_staged as staged
+    from test_frankie_box_classroom import C
+    ids=['correction-'+str(i) for i in range(137)]
+    correction=dict(request_sha256='a'*64,post_grade_hash='b'*64,correction_ids=ids,
+        instruction='Resolve factual errors with evidence.',learning_history={'earlier':'negative finding retained'},
+        data_review_items=[dict(correction_id=x,evidence='exact original evidence') for x in ids],
+        scientific_review_request={'shared_knowledge':{'snapshot_hash':'c'*64}})
+    exchange={'reviews':[{'frankie_reply':{'position':'DISAGREE','reasoning':'unresolved science'}}]}
+    monkeypatch.setattr(staged,'ensure_snapshot',lambda descriptor,root:
+        [dict(source_id='original-teacher',content=b'governed original duty')])
+    sources_seen=[]
+    def consume(session,sources,*args):
+        sources_seen.extend(sources)
+        return dict(plan_hash='d'*64,parts=[])
+    tasks=[]
+    def task(session,cache,**kwargs):
+        tasks.append(kwargs['task_id'])
+        assert b'negative finding retained' in kwargs['sources']['learning-history']
+        assert b'DISAGREE' in kwargs['sources']['scientific-dialogue']
+        instruction=kwargs['task_instruction']({})
+        if kwargs['task_id'].startswith('correction-page:'):
+            page=json.loads(instruction.split('Correction IDs: ',1)[1].split('\n',1)[0])
+            text=json.dumps({'correction_resolutions':[
+                dict(correction_id=x,corrected_understanding='My corrected understanding for '+x) for x in page]})
+        else:
+            assert len([x for x in kwargs['sources'] if x.startswith('resolved-page:')])==3
+            text=json.dumps(dict(what_i_will_change='Use the original governed evidence.',
+                remaining_disagreements=[]))
+        return dict(parsed=kwargs['parse_final'](text),call={},context_calls=[])
+    cache=SimpleNamespace(save=lambda *args:None)
+    parsed,witness=staged.run_correction(SimpleNamespace(cycle='00'),C,cache,
+        correction=correction,ledgers={'full_original_ledgers':'retained'},scientific_exchange=exchange,
+        root=tmp_path,staged=SimpleNamespace(consume_sources=consume),dialogue=SimpleNamespace(run_task=task))
+    assert [x['correction_id'] for x in parsed['correction_resolutions']]==ids
+    assert parsed['remaining_disagreements']==[]
+    assert len(tasks)==4
+    assert witness['staged_reading_plan_hash']=='d'*64
+    assert next(x for x in sources_seen if x['source_id']=='principal-ledgers')['content']==staged.canonical({'full_original_ledgers':'retained'})
