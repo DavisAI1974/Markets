@@ -83,6 +83,15 @@ def host_class(actual, tools_root=None, base=None):
                 witness_sha256=actual.sha(witness_path),files=value))
             snapshot=actual.verified(value['snapshot']);receipt=actual.verified_json(value['receipt'])
             origin=Path(receipt['original_journal']).resolve()
+            if receipt.get('schema') == 'C15_SEALED_FULL_DAY_REFERENCE_V1':
+                if (self.schedule.get('schema') != 'BOSS_WHOLE_DAY_NEXT_SESSION_SCHEDULE_V1'
+                        or binding['cycle_index'] != 0
+                        or value['snapshot'] != self.host['compact_journal']
+                        or receipt.get('snapshot_sha256') != value['snapshot']['sha256']
+                        or origin != snapshot.resolve()
+                        or receipt.get('journal_count') != self.full_source_completion['journal_count']
+                        or receipt.get('ingestion_receipt') != self.host['ingestion_receipt']):
+                    raise ValueError('whole-day reference must be the independently pinned complete sealed source')
             if receipt.get('schema') in ('C15_JOURNAL_PREFIX_SNAPSHOT_V1','C15_COMPACT_JOURNAL_PREFIX_SNAPSHOT_V1'):
                 if (receipt['snapshot_sha256']!=value['snapshot']['sha256'] or
                     receipt['through_cursor']!=binding['through_cursor']):
@@ -110,7 +119,7 @@ def host_class(actual, tools_root=None, base=None):
                 raise ValueError('prefix record denominator differs')
             reader = self.api.VerifiedJournalReader
             reader_options = {}
-            if receipt.get('schema') == 'C15_COMPACT_JOURNAL_PREFIX_SNAPSHOT_V1':
+            if receipt.get('schema') in ('C15_COMPACT_JOURNAL_PREFIX_SNAPSHOT_V1', 'C15_SEALED_FULL_DAY_REFERENCE_V1'):
                 reader = self.api.FrankieCompactReader
                 reader_options = dict(workers=self.host.get('data_workers', 1),
                     emit=None if self.probe is None else self.probe.data)

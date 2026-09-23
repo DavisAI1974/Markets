@@ -453,7 +453,8 @@ class ActualHost:
         self.schedule=verified_schedule(json.loads(actual_schedule.read_bytes()), expected_digest=outer['schedule_sha256'])
         manifest=verified_json(self.config['source_manifest'])
         scope=self.api.source_scope(manifest,expected_manifest_hash=manifest['manifest_hash'])
-        if self.schedule.get('schema') == 'BOSS_TRADING_DAY_CAUSAL_CYCLE_SCHEDULE_V1':
+        if self.schedule.get('schema') in ('BOSS_TRADING_DAY_CAUSAL_CYCLE_SCHEDULE_V1',
+                                           'BOSS_WHOLE_DAY_NEXT_SESSION_SCHEDULE_V1'):
             from research.kalshi.frankie_boss.source_contract_runtime import load_contract
             contract = load_contract(self.config['contract']['path'], self.config['contract']['sha256'])
             if (self.config.get('trading_day') != self.schedule['trading_day']
@@ -471,6 +472,10 @@ class ActualHost:
                     or contract.get('source_manifest_hash') != manifest['manifest_hash']
                     or contract.get('cycle_count') != len(self.schedule['steps'])):
                 raise ValueError('trading-day source, schedule, contract and compact identity disagree')
+            if self.schedule.get('schema') == 'BOSS_WHOLE_DAY_NEXT_SESSION_SCHEDULE_V1':
+                if (contract.get('forecast_mode') != 'whole_day_next_session'
+                        or contract.get('forecast_target') != self.schedule['forecast_target']):
+                    raise ValueError('whole-day contract target differs from verified schedule')
             if not hasattr(self, 'compact_source'):
                 raise ValueError('trading-day compact source requires the compact-source host')
         if (state['scope_genesis_hash']!=scope.genesis_hash() or completion['scope_hash']!=scope.genesis_hash()):
@@ -691,6 +696,13 @@ class ActualHost:
             raise ValueError('raw prefix seeds require independently verified sidecar witnesses')
         index=binding['cycle_index'];seed=None
         # The original first request began at genesis. Preserve its exact options.
+        if index == 0 and self.schedule.get('schema') == 'BOSS_WHOLE_DAY_NEXT_SESSION_SCHEDULE_V1':
+            if (self.context.t_ctx != self.full_source_completion['record_count']
+                    or binding['through_cursor'] + 1 != self.full_source_completion['record_count']
+                    or self.source_checkpoint['count'] != self.full_source_completion['journal_count']
+                    or Path(self.source_journal_path).resolve() != Path(self.host['compact_journal']['path']).resolve()):
+                raise ValueError('whole-day context must begin at genesis and cover the sealed source')
+            return dict(scope_public=self.scope.public_dict(), prefix_seed=None)
         if index==0 and self.schedule.get('schema') == 'BOSS_SUNDAY_CAUSAL_CYCLE_SCHEDULE_V1':
             return dict(scope_public=self.scope.public_dict(),prefix_seed=None)
         manifest=verified_json(self.host['prefix_manifest'])
