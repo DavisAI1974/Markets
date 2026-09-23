@@ -45,8 +45,16 @@ def _cost(node):
 
 def _packed(values):
     lo = min(values)
-    width = max(1, len(str(max(values) - lo)))
-    return ['P', lo, width, ''.join(str(v - lo).zfill(width) for v in values)]
+    natural = max(1, len(str(max(values) - lo)))
+    # Keep the existing P grammar, but choose the field width by the pinned
+    # tokenizer.  Zero padding is lossless and can change how Granite groups
+    # a digit run, so the character-shortest spelling is not always the
+    # token-shortest spelling.
+    candidates = []
+    for width in range(1, natural + 1):
+        digits = ''.join(str(v - lo).zfill(width) for v in values)
+        candidates.append(['P', lo, width, digits])
+    return min(candidates, key=_cost)
 
 
 def _outliers(values):

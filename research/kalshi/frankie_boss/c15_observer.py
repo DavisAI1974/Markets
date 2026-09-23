@@ -72,6 +72,13 @@ class IncrementalObservation:
         self.order_bytes = [self.order_frag[oid][1] for oid in self.sorted_oids]      # aligned with sorted_oids: the join runs in C
         self.level_frag = {(side, price): _level_fragment(price, ids)
                            for side in ("B", "A") for price, ids in book.levels[side].items() if ids is not None}
+        # The adapter normally changes one order and therefore at most two
+        # levels per message.  Retain the exact output order required by
+        # observe_book while avoiding a full price-key sort on every close.
+        self.sorted_prices = {
+            side: sorted(book.levels[side], reverse=side == 'B')
+            for side in ('B', 'A')
+        }
 
     def note(self, order_id, before, after, side=None, price_raw=None):
         """After the adapter applied one message: `before` = the order's fields before (a mapping or None), `after` = the
@@ -111,8 +118,16 @@ class IncrementalObservation:
             ids = book.levels[side_].get(price) if side_ in book.levels else None
             if ids:
                 self.level_frag[(side_, price)] = _level_fragment(price, ids)
+                prices = self.sorted_prices[side_]
+                if price not in prices:
+                    index = (bisect.bisect_left([-value for value in prices], -price)
+                             if side_ == 'B' else bisect.bisect_left(prices, price))
+                    prices.insert(index, price)
             else:
                 self.level_frag.pop((side_, price), None)
+                prices = self.sorted_prices[side_]
+                if price in prices:
+                    prices.remove(price)
 
     def canonical(self):
         book = self.book
@@ -120,7 +135,7 @@ class IncrementalObservation:
         parts = [b'["dict",[["instrument_id",', canonical_tagged_bytes(pack(book.instrument_id)),
                  b'],["orders",["list",[', b','.join(self.order_bytes), b']]],["levels",["dict",[']
         for side in ("B", "A"):
-            prices = sorted(book.levels[side], reverse=side == "B")
+            prices = self.sorted_prices[side]
             parts.append(b'["' + side.encode() + b'",["list",[')
             parts.append(b','.join([levels[(side, price)] for price in prices]))
             parts.append(b']]]' + (b',' if side == "B" else b''))

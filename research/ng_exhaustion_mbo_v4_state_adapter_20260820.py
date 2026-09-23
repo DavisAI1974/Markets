@@ -348,6 +348,21 @@ class InstrumentBook:
             return old_visible or new_visible, sides
         raise ValueError(f"unsupported legacy projection action {msg.action!r}")
 
+    def _legacy_level_summaries(self, side: str) -> list[tuple[float, int, int]]:
+        """Return only the three fields consumed by the legacy control row.
+
+        The full book snapshot remains the authoritative frame/checkpoint path.
+        Legacy rows do not consume its ages, quantiles, shares, or imbalance,
+        so calculating those fields for every projected row is redundant.
+        """
+        return [
+            (decimal_price(price),
+             sum(self.orders[order_id].size for order_id in self.levels[side].get(price, ())
+                 if order_id in self.orders),
+             sum(1 for order_id in self.levels[side].get(price, ()) if order_id in self.orders))
+            for price in self._top10_prices(side)
+        ]
+
     def _legacy_book_signature(self, now_ns: int) -> tuple[Any, ...]:
         book = self.book_snapshot(
             now_ns,
@@ -748,14 +763,8 @@ class InstrumentBook:
         projection_at_group_end: bool = False,
     ) -> dict[str, Any]:
         """Project one MBP-10-emitting MBO action with its immediate post-action book."""
-        book = self.book_snapshot(
-            msg.ts_recv_ns,
-            depth_levels=10,
-            include_full_depth=False,
-            include_order_ids=False,
-        )
-        bids = book["bid_levels"]
-        asks = book["ask_levels"]
+        bids = self._legacy_level_summaries("B")
+        asks = self._legacy_level_summaries("A")
         rec: dict[str, Any] = {
             "adapter_revision": ADAPTER_REVISION,
             "census_view": "LEGACY_CONTROL",
@@ -775,14 +784,10 @@ class InstrumentBook:
             "projection_at_f_last": bool(msg.is_last or projection_at_group_end),
         }
         for i in range(10):
-            bid = bids[i] if i < len(bids) else None
-            ask = asks[i] if i < len(asks) else None
-            rec[f"bid_px_{i:02d}"] = 0.0 if bid is None else bid["price"]
-            rec[f"bid_sz_{i:02d}"] = 0 if bid is None else bid["size"]
-            rec[f"bid_ct_{i:02d}"] = 0 if bid is None else bid["order_count"]
-            rec[f"ask_px_{i:02d}"] = 0.0 if ask is None else ask["price"]
-            rec[f"ask_sz_{i:02d}"] = 0 if ask is None else ask["size"]
-            rec[f"ask_ct_{i:02d}"] = 0 if ask is None else ask["order_count"]
+            bid = bids[i] if i < len(bids) else (0.0, 0, 0)
+            ask = asks[i] if i < len(asks) else (0.0, 0, 0)
+            rec[f"bid_px_{i:02d}"], rec[f"bid_sz_{i:02d}"], rec[f"bid_ct_{i:02d}"] = bid
+            rec[f"ask_px_{i:02d}"], rec[f"ask_sz_{i:02d}"], rec[f"ask_ct_{i:02d}"] = ask
         return rec
 
 

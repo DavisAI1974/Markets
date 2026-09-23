@@ -25,6 +25,17 @@ def r(action, side="N", order_id=0, price=3.0, size=1, flags=F_LAST, sequence=1,
 
 
 class LegacyControlSemanticWall(unittest.TestCase):
+    def test_legacy_level_projection_matches_the_full_snapshot_fields(self):
+        a = V4MboAdapter()
+        a.apply(r("A", "B", 1, 3.0, 10, sequence=1, ts=1_000_000_000))
+        a.apply(r("A", "B", 2, 2.9, 4, sequence=2, ts=2_000_000_000))
+        book = a.books[101]
+        snapshot = book.book_snapshot(2_000_000_001)
+        projected = book._legacy_level_summaries("B")
+        expected = [(level["price"], level["size"], level["order_count"])
+                    for level in snapshot["bid_levels"]]
+        self.assertEqual(projected, expected)
+
     def test_mbo_only_fill_and_none_stay_out_of_legacy_control(self):
         a = V4MboAdapter()
         a.apply(r("A", "B", 1, 3.0, 10, sequence=1))

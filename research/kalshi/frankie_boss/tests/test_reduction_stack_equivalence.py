@@ -16,7 +16,7 @@ from c15_journal import EvidenceJournal, FrozenList, pack, unpack
 from compact_build_journal import CompactBuildJournal
 from compact_journal import CompactReader, encode_block
 from verified_journal_reader import canonical_tagged_bytes
-from c15_observer import observe_book
+from c15_observer import IncrementalObservation, observe_book
 from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import RestingOrder
 
 
@@ -73,6 +73,33 @@ def test_observe_book_flat_copy_equals_asdict():
     assert observed['orders'] == [asdict(Book.orders[1]), asdict(Book.orders[2])]
     observed['orders'][0]['size'] = 99                       # a copy, never the live order
     assert Book.orders[1].size == 1
+
+
+def test_incremental_observation_keeps_exact_level_order_without_resorting():
+    order_a = RestingOrder(1, 2, 'B', 3, 4, 5, 6, 7)
+    order_b = RestingOrder(1, 3, 'B', 5, 4, 5, 6, 8)
+
+    class Book:
+        instrument_id = 1
+        orders = {2: order_a, 3: order_b}
+        levels = {'B': {3: [2], 5: [3]}, 'A': {}}
+        integrity = {'ok': True}
+        last_sequence = 8; last_recv_ns = 6; last_event_ns = 5
+
+    composer = IncrementalObservation(Book())
+    assert composer.sorted_prices == {'B': [5, 3], 'A': []}
+    before = composer.reference()
+    order_a.size = 9
+    composer.note(2, dict(vars(order_a), size=4), order_a, 'B', 3)
+    assert composer.canonical() == composer.reference()
+    assert composer.canonical() != before
+    assert composer.sorted_prices == {'B': [5, 3], 'A': []}
+
+    del composer.book.orders[3]
+    composer.book.levels['B'].pop(5)
+    composer.note(3, dict(vars(order_b)), None, 'B', 5)
+    assert composer.sorted_prices == {'B': [3], 'A': []}
+    assert composer.canonical() == composer.reference()
 
 
 def test_encode_block_repr_keys_emit_identical_bytes(tmp_path):

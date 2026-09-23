@@ -53,6 +53,14 @@ def test_v2_packed_forms_refuse_malformed_digits():
             v2._ints(bad, v1._Budget(v1.DEFAULT_LIMITS))
 
 
+def test_v2_packed_width_is_selected_by_the_token_cost(monkeypatch):
+    costs = {1: 9, 2: 3}
+    monkeypatch.setattr(v2, '_cost', lambda node: costs[node[2]])
+    packed = v2._packed([100, 101, 110])
+    assert packed == ['P', 100, 2, '000110']
+    assert v2._ints(packed, v1._Budget(v1.DEFAULT_LIMITS)) == [100, 101, 110]
+
+
 def test_v2_controller_readback(tmp_path):
     from research.kalshi.frankie_boss.controller_journal import _critic_context
     source = snapshot(tmp_path)
