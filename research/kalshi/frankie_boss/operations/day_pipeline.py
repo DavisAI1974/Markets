@@ -332,6 +332,21 @@ class DayPipeline:
                 raise StageRefused('source manifest differs from the declared trading day')
             gate = dict(manifest=str(receipt_path), manifest_hash=value['manifest_hash'],
                         records=value['total_mbo_records'], receipt_sha256=hashlib.sha256(raw).hexdigest())
+        elif (stage == 'ingest' and self.declaration is not None
+                and value.get('schema') == 'FRANKIE_VERIFIED_RECOVERED_INGESTION_V1'):
+            from research.kalshi.frankie_boss.recovered_ingestion import load_recovered_ingestion
+            pin=dict(path=str(Path(receipt_path).resolve()),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest())
+            try:
+                recovered=load_recovered_ingestion(pin)
+            except (ValueError,KeyError,OSError) as error:
+                raise StageRefused('independent recovery admission failed: '+str(error)) from error
+            value=recovered.receipt
+            if (value['trading_day']!=self.day or value['manifest_hash']!=self.declaration['source_manifest_hash']
+                    or value['record_count']!=self.declaration['source_record_count']):
+                raise StageRefused('verified recovery differs from declared trading day')
+            gate=dict(journal_count=value['record_count'],journal_entries=value['journal_count'],
+                journal_hash=value['journal_hash'],compact_sha256=recovered.container['sha256'],
+                receipt_sha256=pin['sha256'],recovered_ingestion=recovered.provenance)
         elif stage == 'ingest' and self.declaration is not None:
             if (value.get('schema') != 'BOSS_BLOCK_INGESTION_RECEIPT_V1'
                     or value.get('writer') != 'compact' or value.get('session_policy') != 'cme_trading_day'

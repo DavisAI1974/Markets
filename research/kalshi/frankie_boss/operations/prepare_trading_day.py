@@ -33,10 +33,31 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
         raise ValueError('source_manifest differs from the trading-day launch declaration')
     scope = block_source_scope(manifest, expected_manifest_hash=launch['source_manifest']['manifest_hash'])
     receipt_path = pinned(launch['ingestion_receipt'])
-    source = receipt_path.parent
     receipt = read_pinned(launch['ingestion_receipt'])
-    completion = json.loads((source / 'completion.json').read_bytes())
-    if (receipt.get('writer') != 'compact' or receipt.get('session_policy') != 'cme_trading_day'
+    recovered = None
+    if receipt.get('schema') == 'FRANKIE_VERIFIED_RECOVERED_INGESTION_V1':
+        from research.kalshi.frankie_boss.recovered_ingestion import load_recovered_ingestion
+        recovered = load_recovered_ingestion(launch['ingestion_receipt'])
+        if recovered.descriptor['source_manifest'] != configuration['source_manifest']:
+            raise ValueError('recovered source manifest pin differs from configuration')
+        receipt = recovered.receipt
+        completion = recovered.completion
+        source = recovered.checkpoint_path.parent
+        checkpoint = recovered.checkpoint_path
+        checkpoint_sha256 = recovered.descriptor['checkpoint']['sha256']
+        container = recovered.container
+        journal = Path(container['path'])
+    else:
+        source = receipt_path.parent
+        completion = json.loads((source / 'completion.json').read_bytes())
+        if receipt.get('writer') != 'compact' or receipt.get('journal_file') != 'journal.compact.sqlite':
+            raise ValueError('ingestion_receipt journal_file differs from the compact writer')
+        journal = source / receipt['journal_file']
+        container = dict(path=str(journal.resolve()), sha256=receipt['journal_sha256'], bytes=receipt['journal_bytes'])
+        pinned(container)
+        checkpoint = source / 'builder-checkpoint.c15.json'
+        checkpoint_sha256 = receipt['checkpoint_sha256']
+    if (receipt.get('session_policy') != 'cme_trading_day'
             or receipt.get('trading_day') != launch['trading_day']
             or receipt.get('manifest_hash') != scope.scope_id
             or receipt.get('record_count') != manifest['total_mbo_records']
@@ -45,12 +66,6 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
         raise ValueError('ingestion_receipt is not the completed declared trading day')
     if [s['session_id'] for s in receipt['sessions']] != [launch['trading_day']]:
         raise ValueError('ingestion_receipt sessions differ from one trading day')
-    journal_name = receipt['journal_file']
-    if journal_name != 'journal.compact.sqlite':
-        raise ValueError('ingestion_receipt journal_file differs from the compact writer')
-    journal = source / journal_name
-    container = dict(path=str(journal.resolve()), sha256=receipt['journal_sha256'], bytes=receipt['journal_bytes'])
-    pinned(container)
     if any(receipt[k] != completion[k] for k in ('record_count', 'journal_count', 'journal_hash', 'group_count', 'source_prefix_hash')):
         raise ValueError('ingestion receipt and conformance completion disagree')
     cutoffs_path = pinned(launch['cutoffs'])
@@ -69,9 +84,10 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
             or contract.get('trading_day') != launch['trading_day']
             or contract.get('cycle_count') != total or len(contract.get('cycles', [])) != total):
         raise ValueError('source_contract must cover the declared source manifest, trading day and cutoff roster')
-    view = open_completed_schedule_view(scope, journal, source / 'builder-checkpoint.c15.json',
-        receipt['checkpoint_sha256'], receipt['checkpoint_state_hash'], completion,
-        reader_factory=FrankieCompactReader)
+    view = open_completed_schedule_view(scope, journal, checkpoint,
+        checkpoint_sha256, receipt['checkpoint_state_hash'], completion,
+        reader_factory=FrankieCompactReader,
+        recovery_descriptor=launch['ingestion_receipt'] if recovered is not None else None)
     try:
         schedule = build_schedule(view, mapping_path, expected_index_sha256=launch['mapping']['sha256'],
             cutoffs_path=cutoffs_path, expected_cutoffs_sha256=launch['cutoffs']['sha256'],
@@ -79,7 +95,7 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
             trading_day=dict(trading_day=launch['trading_day'], source_manifest_hash=manifest['manifest_hash'],
                 source_partitions=[m.member_key for m in scope.members],
                 source_record_count=receipt['record_count'], journal_count=receipt['journal_count'],
-                journal_hash=receipt['journal_hash'], journal_sha256=receipt['journal_sha256'],
+                journal_hash=receipt['journal_hash'], journal_sha256=container['sha256'],
                 step_count=total, cutoff_rule=launch['cutoff_rule']))
     finally:
         view.journal.close()
@@ -110,15 +126,17 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
     save_new(schedule_dir / 'schedule.json', schedule)
     outer = dict(schema='FRANKIE_TRADING_DAY_SCHEDULE_RECEIPT_V1', trading_day=launch['trading_day'],
         source_records=receipt['record_count'], steps=total, source_completion=completion,
-        source_checkpoint_sha256=receipt['checkpoint_sha256'],
+        source_checkpoint_sha256=checkpoint_sha256,
         source_checkpoint_state_hash=receipt['checkpoint_state_hash'],
         schedule_sha256=schedule['schedule_sha256'], schedule_file_sha256=sha(schedule_dir / 'schedule.json'),
         ingestion_receipt=launch['ingestion_receipt'], launch=configuration['trading_day_launch'], model_calls=0)
+    if recovered is not None:
+        outer['recovered_ingestion'] = recovered.provenance
     save_new(schedule_dir / 'receipt.json', outer)
     binding = dict(schema='FRANKIE_TRADING_DAY_PREFIXES_V1',
         ingestion_receipt=launch['ingestion_receipt'], schedule_receipt=witness(schedule_dir / 'receipt.json'),
         schedule=witness(schedule_dir / 'schedule.json'), compact_journal=container,
-        source_journal_sha256=receipt['journal_sha256'], source_count=completion['journal_count'],
+        source_journal_sha256=container['sha256'], source_count=completion['journal_count'],
         source_head_hash=completion['journal_hash'], script_sha256=sha(__file__),
         copier_sha256=sha(compact_journal_snapshot.__file__), original_configuration=witness(configuration_path),
         context_selection=dict(entity=list(entity), t_ctx=launch['model_context_rows'],
@@ -127,7 +145,7 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
     binding_path = prefixes / 'trading-day-prefix-binding.json'
     save_new(binding_path, binding)
     copier = partial(compact_journal_snapshot.snapshot_compact_prefix,
-        compact_path=journal, compact_sha256=receipt['journal_sha256'], workers=h.get('data_workers', 1))
+        compact_path=journal, compact_sha256=container['sha256'], workers=h.get('data_workers', 1))
     results = materialize(journal, prefixes, schedule['steps'][:cycles],
         parent_count=completion['journal_count'], parent_head_hash=completion['journal_hash'],
         binding_sha256=sha(binding_path), first_cycle=0, copier=copier,

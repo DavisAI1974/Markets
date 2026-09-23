@@ -39,7 +39,7 @@ class _CompletedJournal:
 
 
 def open_completed_schedule_view(scope,journal_path,state_path,expected_state_sha256,
-                                 expected_state_hash,completion, *, reader_factory=VerifiedJournalReader):
+                                 expected_state_hash,completion, *, reader_factory=VerifiedJournalReader, recovery_descriptor=None):
     raw=Path(state_path).read_bytes()
     if hashlib.sha256(raw).hexdigest()!=expected_state_sha256:
         raise ValueError('completed state bytes differ from independent witness')
@@ -51,8 +51,19 @@ def open_completed_schedule_view(scope,journal_path,state_path,expected_state_sh
     if (state['state_hash']!=expected_state_hash or
             evidence_hash({k:v for k,v in state.items() if k!='state_hash'})!=expected_state_hash):
         raise ValueError('completed state hash mismatch')
+    expected_implementation=implementation_identity()
+    if recovery_descriptor is not None:
+        from .recovered_ingestion import load_recovered_ingestion
+        recovered=load_recovered_ingestion(recovery_descriptor)
+        if (Path(journal_path).resolve()!=Path(recovered.container['path']).resolve()
+                or Path(state_path).resolve()!=recovered.checkpoint_path.resolve()
+                or expected_state_sha256!=recovered.descriptor['checkpoint']['sha256']
+                or expected_state_hash!=recovered.state['state_hash']
+                or completion!=recovered.completion or scope.genesis_hash()!=recovered.scope.genesis_hash()):
+            raise ValueError('completed view differs from independently verified recovery')
+        expected_implementation=recovered.state['implementation']
     if (state['schema']!=SCHEMA or state['scope_genesis_hash']!=scope.genesis_hash()
-            or state['implementation']!=implementation_identity()):
+            or state['implementation']!=expected_implementation):
         raise ValueError('completed state source implementation identity mismatch')
     chain=RecordPrefixChain.restore(scope,state['prefix'])
     if chain.next_cursor!=sum(member.mbo_records for member in scope.members):

@@ -354,12 +354,29 @@ class ActualHost:
         for key in ('memory','contract','mapping','retained_witnesses','delivery_receipt','calculation_result','source_manifest'):
             verified(self.config[key])
         source=Path(self.config['source_directory']);schedule=Path(self.config['schedule_directory'])
-        if (source/'failure.json').exists() or (schedule/'failure.json').exists():
-            raise ValueError('source or schedule failure evidence requires explicit recovery')
         receipt=verified_json(self.host['ingestion_receipt']);outer=verified_json(self.host['schedule_receipt'])
-        if verified(self.host['ingestion_receipt']).resolve()!= (source/'ingestion-receipt.json').resolve():
-            raise ValueError('source receipt outside declared execution')
-        completion=json.loads((source/'completion.json').read_bytes())
+        recovered=None
+        if receipt.get('schema') == 'FRANKIE_VERIFIED_RECOVERED_INGESTION_V1':
+            from research.kalshi.frankie_boss.recovered_ingestion import load_recovered_ingestion
+            recovered=load_recovered_ingestion(self.host['ingestion_receipt'])
+            if (source.resolve()!=recovered.checkpoint_path.parent.resolve()
+                    or self.host.get('compact_journal')!=recovered.container
+                    or outer.get('recovered_ingestion')!=recovered.provenance
+                    or self.config['source_manifest']!=recovered.descriptor['source_manifest']):
+                raise ValueError('runtime source differs from verified recovered ingestion')
+            # Local compatibility view only; never published as a normal-ingestion receipt.
+            receipt=dict(recovered.receipt,journal_sha256=recovered.container['sha256'],
+                journal_bytes=recovered.container['bytes'],
+                checkpoint_sha256=recovered.descriptor['checkpoint']['sha256'])
+            completion=recovered.completion
+        else:
+            if (source/'failure.json').exists():
+                raise ValueError('source failure evidence requires explicit recovery')
+            if verified(self.host['ingestion_receipt']).resolve()!= (source/'ingestion-receipt.json').resolve():
+                raise ValueError('source receipt outside declared execution')
+            completion=json.loads((source/'completion.json').read_bytes())
+        if (schedule/'failure.json').exists():
+            raise ValueError('schedule failure evidence requires explicit recovery')
         from research.kalshi.frankie_boss.verified_sunday_schedule import verified_schedule
         declared = verified_schedule(verified_json(self.host['schedule']), expected_digest=outer['schedule_sha256'])
         expected_records = declared['terminal_delivery']['records_delivered']
@@ -367,7 +384,7 @@ class ActualHost:
         if (receipt['record_count'] != expected_records or completion['record_count'] != expected_records or
             outer['source_records'] != expected_records or outer['steps'] != expected_steps or outer['source_completion'] != completion):
             raise ValueError('complete source and declared trading-day schedule required')
-        checkpoint=source/'builder-checkpoint.c15.json'
+        checkpoint=source/'builder-checkpoint.c15.json' if recovered is None else recovered.checkpoint_path
         if sha(checkpoint)!=receipt['checkpoint_sha256'] or outer['source_checkpoint_sha256']!=receipt['checkpoint_sha256']:
             raise ValueError('complete source checkpoint bytes changed')
         state=self.api.journal.unpack(json.loads(checkpoint.read_bytes()))
@@ -409,8 +426,11 @@ class ActualHost:
         self.scope=scope
         self.full_source_completion=completion
         self.ingestion_receipt_sha256=self.host['ingestion_receipt']['sha256']
-        self.completion_sha256=sha(source/'completion.json')
-        self.source_origins={str((source/receipt.get('journal_file', 'source.sqlite')).resolve()):completion['journal_count']}
+        self.completion_sha256=sha(source/'completion.json' if recovered is None else recovered.completion_path)
+        origin=(source/receipt.get('journal_file', 'source.sqlite')) if recovered is None else Path(recovered.container['path'])
+        self.source_origins={str(origin.resolve()):completion['journal_count']}
+        if recovered is not None:
+            self.save('verified-recovered-ingestion.c15.json',recovered.provenance)
         recovery_path=source/'recovery-receipt.json'
         if 'source_lineage' in self.host:
             self.source_lineage(source,receipt)
