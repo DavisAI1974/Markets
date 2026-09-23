@@ -228,3 +228,25 @@ def test_stale_host_variables_cannot_supply_an_unrequested_resume_event(state):
     command=state["calls"][-1]
     assert not any(part.startswith("ResumeWaitSha256=") for part in command)
     assert [part for part in command if part.startswith("PendingReturn=")]==["PendingReturn=1"]
+
+def test_original_retained_scope_resumes_requested_roster(state):
+    value=state["envelope"];wait=value["wait_receipt"]
+    wait["cycle_index"]=0;wait["request_id"]="retained-run-cycle-00"
+    wait["artifacts"]={name.replace("cycle-02","cycle-00"):pin for name,pin in wait["artifacts"].items()}
+    wait["artifacts"]["workflow-execution-scope.json"]=dict(sha256="7"*64,bytes=200)
+    wait.pop("receipt_id");wait["receipt_id"]=digest(wait)
+    value["receipt_path"]=value["receipt_path"].replace("cycle-02","cycle-00")
+    value["receipt_sha256"]=digest(wait)
+    assert state["pipeline"].run_stage("cycles",go="a"*64)=="wait"
+    state["output"][0]=complete()
+    assert reopen(state).run_stage("cycles",go="a"*64,resume_wait=value["receipt_sha256"])=="done"
+    assert "CycleLimit=3" in state["calls"][-1]
+    assert len(state["calls"])==2
+
+def test_changed_cycle_limit_cannot_expand_retained_pending_roster(state):
+    p=state["pipeline"]
+    assert p.run_stage("cycles",go="a"*64)=="wait"
+    other=dp.DayPipeline(state["config"],"20211004",runner=p.run,runs_root=state["tmp"],cycle_limit=1)
+    with pytest.raises((dp.StageRefused,ValueError)):
+        other.run_stage("cycles",go="a"*64,resume_wait=state["envelope"]["receipt_sha256"])
+    assert len(state["calls"])==1
