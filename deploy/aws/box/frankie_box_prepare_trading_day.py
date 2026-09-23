@@ -5,6 +5,7 @@ The existing prepare_trading_day operation owns all schedule/science semantics.
 """
 import argparse
 import base64
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -36,17 +37,31 @@ def safe_path(value):
     return path
 
 
+@contextmanager
+def open_regular(path):
+    path = safe_path(path)
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(descriptor, 'rb') as stream:
+        if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+            raise ValueError('regular artifact required')
+        yield stream
+
+
 def digest(path):
-    with Path(path).open('rb') as stream:
+    with open_regular(path) as stream:
         return hashlib.file_digest(stream, 'sha256').hexdigest()
 
 
 def witness(path):
-    path = safe_path(path)
-    info = path.stat()
-    if not stat.S_ISREG(info.st_mode):
-        raise ValueError('regular artifact required')
-    return dict(path=str(path), bytes=info.st_size, sha256=digest(path))
+    with open_regular(path) as stream:
+        info = os.fstat(stream.fileno())
+        return dict(path=str(path), bytes=info.st_size,
+                    sha256=hashlib.file_digest(stream, 'sha256').hexdigest())
+
+
+def read_raw(path):
+    with open_regular(path) as stream:
+        return stream.read()
 
 
 def read_pin(pin):
@@ -56,7 +71,7 @@ def read_pin(pin):
     path = safe_path(pin['path'])
     if not path.is_file():
         raise ValueError('regular pinned artifact required')
-    raw = path.read_bytes()
+    raw = read_raw(path)
     if len(raw) != pin['bytes'] or hashlib.sha256(raw).hexdigest() != pin['sha256']:
         raise ValueError('pinned file bytes differ')
     return json.loads(raw)
@@ -92,6 +107,9 @@ def require_checkout(commit):
         raise ValueError('tracked checkout changes refused')
     if git('ls-files', '--error-unmatch', 'deploy/aws/box/frankie_box_prepare_trading_day.py').returncode:
         raise ValueError('preparation adapter must be tracked at reviewed commit')
+    untracked = git('ls-files', '--others')
+    if untracked.returncode or untracked.stdout.strip():
+        raise ValueError('untracked checkout files refused')
 
 
 def reject_credentials(value):
@@ -126,7 +144,7 @@ def prepare_bundle(configuration, *, configuration_sha256, commit, output_root):
         raise ValueError('Linux preparation only')
     require_checkout(commit)
     configuration = safe_path(configuration)
-    raw = configuration.read_bytes()
+    raw = read_raw(configuration)
     pin = dict(path=str(configuration), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
     if pin['sha256'] != configuration_sha256:
         raise ValueError('configuration sha256 differs')
@@ -159,7 +177,7 @@ def prepare_bundle(configuration, *, configuration_sha256, commit, output_root):
     if configuration.is_relative_to(root):
         raise ValueError('configuration must precede the fresh output root')
     root.parent.mkdir(parents=True, exist_ok=True)
-    root.mkdir()
+    root.mkdir(mode=0o700)
     sync_directory(root.parent)
     intent = dict(schema='FRANKIE_LINUX_PREPARATION_INTENT_V1', commit=commit,
                   configuration=pin, source_container=ORIGINAL_CONTAINER,
@@ -192,10 +210,13 @@ def prepare_bundle(configuration, *, configuration_sha256, commit, output_root):
                    result=result, files=files, model_calls=0, source_replays=0)
     save_new(root/'preparation-receipt.json', receipt)
     members = [item['name'] for item in files] + ['preparation-intent.json', 'preparation-receipt.json']
+    expected = {item['name']: item for item in files}
+    for name in ('preparation-intent.json', 'preparation-receipt.json'):
+        expected[name] = witness(root/name)
     with (root/'artifacts.tar').open('xb') as stream:
         with tarfile.open(fileobj=stream, mode='w|') as archive:
             for name in members:
-                archive.add(root/name, arcname=name, recursive=False)
+                archive_file(archive, root/name, name, expected[name])
         stream.flush()
         os.fsync(stream.fileno())
     for item in files:
@@ -212,6 +233,32 @@ def prepare_bundle(configuration, *, configuration_sha256, commit, output_root):
                 model_calls=0, source_replays=0)
 
 
+def archive_file(archive, path, name, expected):
+    # Tar members are always regular files with explicit relative names. Never
+    # let tarfile resolve a mutable pathname or infer symlink/hardlink members.
+    if (not name or name.startswith('/') or '\\' in name
+            or any(part in ('', '.', '..') for part in name.split('/'))):
+        raise ValueError('archive member traversal refused')
+    with open_regular(path) as stream:
+        before = os.fstat(stream.fileno())
+        if before.st_nlink != 1 or before.st_size != expected['bytes']:
+            raise ValueError('archive artifact link or size differs')
+        hashed = hashlib.sha256()
+        class Reader:
+            def read(self, size):
+                data = stream.read(size)
+                hashed.update(data)
+                return data
+        info = tarfile.TarInfo(name)
+        info.size, info.mode, info.mtime = before.st_size, 0o600, int(before.st_mtime)
+        archive.addfile(info, Reader())
+        after = os.fstat(stream.fileno())
+        if (hashed.hexdigest() != expected['sha256']
+                or (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) !=
+                   (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)):
+            raise ValueError('archived bytes differ from pinned artifact')
+
+
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         raise ValueError('publication redirect refused')
@@ -219,9 +266,9 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 def put_file(path, url, sha256):
     checksum = base64.b64encode(bytes.fromhex(sha256)).decode('ascii')
-    with Path(path).open('rb') as stream:
+    with open_regular(path) as stream:
         request = urllib.request.Request(url, data=stream, method='PUT',
-            headers={'Content-Length': str(Path(path).stat().st_size),
+            headers={'Content-Length': str(os.fstat(stream.fileno()).st_size),
                      'If-None-Match': '*', 'x-amz-checksum-sha256': checksum})
         with urllib.request.build_opener(NoRedirect()).open(request, timeout=900):
             pass
@@ -237,7 +284,7 @@ def publish(output_root, upload_map):
     names = ('artifacts.tar', 'publication-receipt.json')
     if set(upload_map.get('files', {})) != set(names):
         raise ValueError('archive and completion receipt capabilities required')
-    publication = json.loads(safe_path(root/names[1]).read_bytes())
+    publication = json.loads(read_raw(root/names[1]))
     if (publication.get('schema') != 'FRANKIE_PREPARATION_PUBLICATION_V1'
             or publication.get('archive') != witness(root/names[0])
             or publication.get('preparation_receipt') != witness(root/'preparation-receipt.json')):
@@ -271,6 +318,7 @@ def main():
     prep.add_argument('--output-root', required=True)
     publication = sub.add_parser('publish')
     publication.add_argument('--output-root', required=True)
+    publication.add_argument('--commit', required=True)
     publication.add_argument('--upload-map', required=True)
     publication.add_argument('--upload-map-sha256', required=True)
     args = parser.parse_args()
@@ -279,10 +327,11 @@ def main():
             result = prepare_bundle(args.configuration, configuration_sha256=args.configuration_sha256,
                                     commit=args.commit, output_root=args.output_root)
         else:
-            path = safe_path(args.upload_map)
-            if digest(path) != args.upload_map_sha256:
+            require_checkout(args.commit)
+            raw = read_raw(args.upload_map)
+            if hashlib.sha256(raw).hexdigest() != args.upload_map_sha256:
                 raise ValueError('upload map bytes differ')
-            result = publish(args.output_root, json.loads(path.read_bytes()))
+            result = publish(args.output_root, json.loads(raw))
     except Exception as error:
         # Exception messages from HTTP clients can contain signed capabilities.
         print(json.dumps(dict(status='refused', error_type=type(error).__name__)), flush=True)

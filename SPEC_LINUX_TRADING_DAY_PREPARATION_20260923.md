@@ -4,12 +4,12 @@ Objective: run the existing prepare_trading_day operation against the independen
 
 Assumptions and scope: the caller supplies the reviewed clean checkout and a complete, hash-pinned configuration already staged through the established S3 helper route. No context rows, cutoff rule, roster, host path, or forecast anchor is inferred. This adapter does not create or change schedule semantics, relocate host configuration, install dependencies, or start any runtime.
 
-Files: deploy/aws/box/frankie_box_prepare_trading_day.py and research/kalshi/frankie_boss/tests/test_box_trading_day_preparation.py. Existing source, host, digest, bootstrap and workflows remain unchanged.
+Files: deploy/aws/box/frankie_box_prepare_trading_day.py, its thin frankie_box_prepare_trading_day.sh launcher and tests/test_box_trading_day_preparation.py. Existing source, host, digest, bootstrap and workflows remain unchanged.
 
 Commands:
 - Prepare: python -B deploy/aws/box/frankie_box_prepare_trading_day.py prepare --configuration ABSOLUTE_FILE --configuration-sha256 SHA256 --commit FULL_COMMIT --output-root /opt/frankie-box/work/trading-day-preparation/UNIQUE_RUN
-- Publish separately after signing the returned archive/receipt hashes: python -B deploy/aws/box/frankie_box_prepare_trading_day.py publish --output-root SAME_ROOT --upload-map PRIVATE_MAP --upload-map-sha256 SHA256
-- Test in isolated remote Linux CI: python -m pytest -q research/kalshi/frankie_boss/tests/test_box_trading_day_preparation.py
+- Publish separately after signing the returned archive/receipt hashes: python -B deploy/aws/box/frankie_box_prepare_trading_day.py publish --commit FULL_COMMIT --output-root SAME_ROOT --upload-map PRIVATE_MAP --upload-map-sha256 SHA256
+- Test in isolated remote Linux CI: PYTHONPATH=.:research/kalshi/frankie_boss:research/kalshi/frankie_boss/tests python -m pytest -q tests/test_box_trading_day_preparation.py --noconftest -p no:cacheprovider
 
 Behavior:
 1. Require Linux, exact clean tracked code at the explicit commit, input byte hash, absolute paths without symlink ancestors, and no literal credentials in configuration.
@@ -22,3 +22,9 @@ Behavior:
 Verification: real tiny recovered-journal fixture proves preparation does not mutate source and preserves exact timestamp integers. Negative tests cover null launch fields, wrong config bytes, copied source pin, existing outputs, path escape/symlinks, code mismatch and credential presence. Publication tests fake only the network boundary and prove ordering, checksum bindings, no overwrite headers and failure behavior.
 
 Plan/tasks: first land this spec and the tests for a failing remote CI result; then add the adapter; root reviews and runs focused CI. Only root integrates commits/refs and authors an execution workflow once actual configuration and all launch gates are satisfied.
+
+Execution route: dispatch the existing frankie_box_run.yml with script=deploy/aws/box/frankie_box_prepare_trading_day.sh. It already supplies MARKETS_SHA from the dispatched commit. Explicit variables are ACTION=prepare CONFIGURATION=ABSOLUTE_FILE CONFIGURATION_SHA256=SHA256 OUTPUT_ROOT=FRESH_ROOT, or ACTION=publish UPLOAD_MAP=PRIVATE_MAP UPLOAD_MAP_SHA256=SHA256 OUTPUT_ROOT=SAME_ROOT. CODE_ROOT optionally selects an already-staged clean checkout beneath /opt/frankie-box; default is the existing /opt/frankie-box/markets. The launcher never moves that checkout. The exact reviewed commit check must pass before work; all untracked files, including ignored caches/imports, refuse. Stage into a fresh checkout if the retained checkout is not clean; do not delete evidence to pass this gate. Box Python is fixed at /opt/frankie-box/venv/bin/python. This is compatible with the existing workflow's shell-file validation and literal --set assignments.
+
+Failure boundaries: file creation is exclusive and fsynced on success, but a crash can leave a partial metadata file. The entire fresh root is retained and subsequent preparation refuses it. This is preservation, not an atomic metadata-publication claim. Archive members are explicit regular files read through no-follow descriptors; bytes are hashed during archival and checked against the original member manifest, so restored-after-read mutations cannot publish a mismatching archive. Existing preparation still reads independently pinned upstream artifacts by their existing APIs; those inputs must remain immutable during preparation. There is no claim of isolation against another privileged process changing the filesystem.
+
+Reviewable staging is authorized; this source is not a new run authorization. Existing native-host supersession helpers remain separately gated on durable recovery guarantees. No old Sunday stage is dispatched and step 1b is not bypassed.

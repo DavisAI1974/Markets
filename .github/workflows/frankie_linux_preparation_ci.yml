@@ -4,6 +4,7 @@ on:
     branches: ['codex/trading-day-readiness-20260922']
     paths:
       - 'deploy/aws/box/frankie_box_prepare_trading_day.py'
+      - 'deploy/aws/box/frankie_box_prepare_trading_day.sh'
       - 'tests/test_box_trading_day_preparation.py'
       - '.github/workflows/frankie_linux_preparation_ci.yml'
 permissions:

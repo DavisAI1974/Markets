@@ -2,6 +2,8 @@
 import base64
 import hashlib
 import json
+import os
+import subprocess
 from pathlib import Path
 import tarfile
 from types import SimpleNamespace
@@ -206,3 +208,82 @@ def test_put_uses_conditional_checksum_bound_stream_not_a_memory_copy(tmp_path, 
     assert headers['if-none-match'] == '*'
     assert headers['content-length'] == str(path.stat().st_size)
     assert headers['x-amz-checksum-sha256'] == base64.b64encode(bytes.fromhex(sha(path))).decode()
+
+
+def test_checkout_refuses_ignored_or_untracked_imports(monkeypatch):
+    def git(args, **kwargs):
+        text = 'injected_module.py\n' if '--others' in args else (COMMIT+'\n' if 'rev-parse' in args else '')
+        return SimpleNamespace(returncode=0, stdout=text)
+    monkeypatch.setattr(adapter.subprocess, 'run', git)
+    with pytest.raises(ValueError, match='untracked'):
+        adapter.require_checkout(COMMIT)
+
+@pytest.mark.parametrize('name', ['../outside','/absolute','directory/../outside','directory\\outside'])
+def test_archive_refuses_member_traversal(tmp_path, name):
+    payload = tmp_path/'data'
+    payload.write_bytes(b'original')
+    with tarfile.open(tmp_path/'bundle.tar', 'w') as archive:
+        with pytest.raises(ValueError, match='traversal'):
+            adapter.archive_file(archive, payload, name, witness(payload))
+
+def test_archive_hashes_bytes_as_read_even_when_file_is_restored_afterward(tmp_path, monkeypatch):
+    payload = tmp_path/'data'
+    original_bytes = b'original'
+    payload.write_bytes(original_bytes)
+    pin = witness(payload)
+    before = payload.stat()
+    copy = tarfile.copyfileobj
+    def changed_read(src, dst, length=None, exception=OSError, bufsize=None):
+        payload.write_bytes(b'mutated!')
+        try:
+            return copy(src, dst, length, exception, bufsize)
+        finally:
+            payload.write_bytes(original_bytes)
+            os.utime(payload, ns=(before.st_atime_ns, before.st_mtime_ns))
+    monkeypatch.setattr(tarfile, 'copyfileobj', changed_read)
+    with tarfile.open(tmp_path/'bundle.tar', 'w') as archive:
+        with pytest.raises(ValueError, match='archived bytes'):
+            adapter.archive_file(archive, payload, 'data', pin)
+    assert witness(payload) == pin
+
+@pytest.mark.parametrize('kind', ['symlink','hardlink'])
+def test_archive_refuses_linked_file(tmp_path, kind):
+    original = tmp_path/'original'
+    original.write_bytes(b'original')
+    pin = witness(original)
+    linked = tmp_path/'linked'
+    if kind == 'symlink':
+        linked.symlink_to(original)
+    else:
+        os.link(original, linked)
+    with tarfile.open(tmp_path/'bundle.tar', 'w') as archive:
+        with pytest.raises(ValueError):
+            adapter.archive_file(archive, linked, 'data', pin)
+
+def test_publish_main_parses_only_the_bytes_whose_hash_was_checked(tmp_path, monkeypatch):
+    path = tmp_path/'private-map.json'
+    original = b'{"safe":true}'
+    path.write_bytes(original)
+    calls = []
+    def read(p):
+        raw = Path(p).read_bytes()
+        path.write_bytes(b'{"different":true}')
+        calls.append(p)
+        return raw
+    monkeypatch.setattr(adapter, 'read_raw', read)
+    monkeypatch.setattr(adapter, 'require_checkout', lambda commit: None)
+    def checked_publish(root, value):
+        assert value == {'safe': True}
+        return dict(status='checked')
+    monkeypatch.setattr(adapter, 'publish', checked_publish)
+    monkeypatch.setattr(adapter.sys, 'argv', ['adapter','publish','--output-root',str(tmp_path),
+        '--commit',COMMIT,'--upload-map',str(path),'--upload-map-sha256',hashlib.sha256(original).hexdigest()])
+    assert adapter.main() == 0
+    assert len(calls) == 1
+
+def test_thin_launcher_has_valid_shell_syntax_and_refuses_missing_dispatch_pin():
+    script = Path(__file__).resolve().parents[1]/'deploy/aws/box/frankie_box_prepare_trading_day.sh'
+    subprocess.run(['sh','-n',str(script)], check=True)
+    result = subprocess.run(['sh',str(script)], env={'PATH':os.environ['PATH']},
+                            capture_output=True, text=True)
+    assert result.returncode != 0 and 'MARKETS_SHA' in result.stderr
