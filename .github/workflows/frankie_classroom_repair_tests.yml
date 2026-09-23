@@ -5,6 +5,7 @@ on:
     paths:
       - 'deploy/aws/box/frankie_box_classroom*.py'
       - 'deploy/aws/box/frankie_box_boss_session.py'
+      - 'deploy/aws/box/frankie_box_session.sh'
       - 'deploy/aws/box/frankie_box_staged*.py'
       - 'deploy/aws/box/frankie_box_scientific_dialogue.py'
       - 'deploy/aws/box/frankie_box_teacher_discussion.py'
@@ -26,7 +27,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install --no-cache-dir pytest==9.1.1 numpy==2.3.5
-      - run: python -m pytest -q tests/test_frankie_box_scientific_dialogue.py tests/test_frankie_box_classroom_staged.py tests/test_frankie_box_staged_session.py tests/test_frankie_box_staged_reading.py tests/test_frankie_box_classroom_cache.py tests/test_frankie_box_classroom.py tests/test_frankie_box_boss_session_classroom.py
+      - run: python -m pytest -q tests/test_frankie_box_session_pin.py tests/test_frankie_box_scientific_dialogue.py tests/test_frankie_box_classroom_staged.py tests/test_frankie_box_staged_session.py tests/test_frankie_box_staged_reading.py tests/test_frankie_box_classroom_cache.py tests/test_frankie_box_classroom.py tests/test_frankie_box_boss_session_classroom.py
   host:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
