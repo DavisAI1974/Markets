@@ -358,6 +358,7 @@ def test_staged_classroom_probe_counts_all_components_and_summary(tmp_path, monk
     probe_module = session._box_module('frankie_box_progress')
     visible = build_visible()
     visible['pre_message']['shared_knowledge'] = {'snapshot_hash': 'snapshot'}
+    visible['pre_message']['observation_cursor_roster'] = [p['cursor'] for p in C.components(visible)[0]['observations']]
     s = types.SimpleNamespace(work=tmp_path, request={}, request_sha256='request', cycle='00')
     s.request['request_id'] = 'request'
     fields = ('components', 'pairs_of', '_states_present', 'NARRATIVE', 'STATES', 'parse_component',
