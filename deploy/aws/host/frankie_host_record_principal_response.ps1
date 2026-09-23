@@ -1,3 +1,39 @@
+# Explicit workflow automation uses the pinned receipt-bound route. The legacy recorder body
+# below remains available to historical manual scripts; workflow callers always supply this context.
+if (Get-Variable WorkflowDeliveryContext -ErrorAction SilentlyContinue) {
+    $ErrorActionPreference = 'Stop'
+    $context = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($WorkflowDeliveryContext)) | ConvertFrom-Json
+    $deliveryTool = Join-Path $context.tools_root 'research/kalshi/frankie_boss/operations/workflow_delivery.py'
+    $env:PYTHONPATH = $context.tools_root
+    $env:PYTHONDONTWRITEBYTECODE = '1'
+    $verifiedLines = & $context.python $deliveryTool --context-base64 $WorkflowDeliveryContext --kind validate --turn $Turn
+    if ($LASTEXITCODE -ne 0) { throw 'principal context refused before delivery' }
+    $verified = ($verifiedLines | Select-Object -Last 1) | ConvertFrom-Json
+    if ($verified.status -ne 'delivery_context_verified') { throw 'exact delivery validation result required' }
+    $incoming = Join-Path $verified.run_directory ('workflow-deliveries/incoming-principal-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $incoming | Out-Null
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    foreach ($entry in @(
+        @{name='response.json';url=$ResponseUrl;sha=$ResponseSha256;bytes=$ResponseBytes},
+        @{name='host-attestation.json';url=$AttestationUrl;sha=$AttestationSha256;bytes=$AttestationBytes},
+        @{name='host-session-record.json';url=$RecordUrl;sha=$RecordSha256;bytes=$RecordBytes}
+    )) {
+        if ($entry.sha -notmatch '^[0-9a-f]{64}$' -or $entry.bytes -notmatch '^\d+$') { throw 'exact payload witness required' }
+        $target = Join-Path $incoming $entry.name
+        $previous = $ProgressPreference; $ProgressPreference = 'SilentlyContinue'
+        try { Invoke-WebRequest -Uri $entry.url -OutFile $target -UseBasicParsing }
+        catch { throw 'principal payload transport failed; retained for reconciliation' }
+        finally { $ProgressPreference = $previous }
+        if ((Get-Item -LiteralPath $target).Length -ne [int64]$entry.bytes -or
+            (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLower() -ne $entry.sha) {
+            throw 'principal payload differs from exact witness'
+        }
+    }
+    & $context.python $deliveryTool --context-base64 $WorkflowDeliveryContext --kind principal --payload $incoming --turn $Turn
+    if ($LASTEXITCODE -ne 0) { throw 'principal delivery refused; exact incoming bytes retained' }
+    exit 0
+}
+
 # Record Root's actual Frankie response on the native host (2026-09-20 20:55Z).
 #
 # Why: Root ran operations/record_actual_frankie_response.py on his own machine, but the recorder

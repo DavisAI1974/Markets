@@ -1,60 +1,67 @@
-name: Frankie record the principal response on the native host
-# Root ran the recorder on his own machine (2026-09-20 20:53Z); the record must be made on the host,
-# where the retained run directory and its lock live. This takes Root's three files from a git ref
-# (the response, the host attestation, the host session record the attestation pins), verifies them
-# here (shape, the attestation's binding to the record, sha256 and bytes), stages them to the granite
-# bucket and hands the host three presigned GETs (signed SigV4, masked, never printed), and the host
-# script runs operations/record_actual_frankie_response.py from the tools checkout and writes one
-# receipt. Nothing deleted or written over on the host. Dispatch only.
+name: Record an exact retained principal response
 on:
   workflow_dispatch:
     inputs:
       source_ref:
-        description: 'Git ref (branch, tag or sha) holding the three files'
+        description: Exact commit holding the three response witnesses
         required: true
+        type: string
       response_path:
-        description: 'Repo-relative path of the response JSON on that ref'
         required: true
+        type: string
       attestation_path:
-        description: 'Repo-relative path of the host attestation JSON on that ref'
         required: true
+        type: string
       record_path:
-        description: 'Repo-relative path of the host session record JSON the attestation pins'
         required: true
-      cycle_index:
-        description: 'Zero-padded cycle index'
-        required: false
-        default: '00'
+        type: string
+      context_json:
+        required: true
+        type: string
+      instance:
+        required: true
+        type: string
+      bucket:
+        required: true
+        type: string
       turn:
-        description: 'initial = the principal response (turn 1); correction = the same session answer to the retained classroom correction request (turn 2)'
-        required: false
-        default: 'initial'
+        required: true
         type: choice
         options: ['initial', 'correction']
+  workflow_call:
+    inputs:
+      source_ref:
+        description: Exact commit holding the three response witnesses
+        required: true
+        type: string
+      response_path:
+        required: true
+        type: string
+      attestation_path:
+        required: true
+        type: string
+      record_path:
+        required: true
+        type: string
+      context_json:
+        required: true
+        type: string
       instance:
-        description: 'Native host instance id'
-        required: false
-        default: 'i-0e90ee6110ef609aa'
-      day:
-        description: 'Day whose run directory holds the cycle'
-        required: false
-        default: '20211003'
-      run_root:
-        description: 'Day pipeline RunRoot on the host'
-        required: false
-        default: 'C:/Codex/Frankie-BOSS-20260919/days'
-      tools_root:
-        description: 'Host tools checkout'
-        required: false
-        default: 'C:/tools/Frankie-20260919/Markets'
-      python:
-        description: 'Host actual-run interpreter'
-        required: false
-        default: 'C:/Codex/Frankie-BOSS-20260919/actual-host-python/Scripts/python.exe'
+        required: true
+        type: string
       bucket:
-        description: 'Staging bucket (host-deliveries/<day>/principal-response/), presigned GETs'
+        required: true
+        type: string
+      turn:
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_SESSION_TOKEN:
         required: false
-        default: 'frankie-granite42-568968024170-us-east-1'
 permissions:
   contents: read
 jobs:
@@ -62,14 +69,11 @@ jobs:
     if: github.repository == 'DavisAI1974/Markets'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-      AWS_DEFAULT_REGION: us-east-2
-      AWS_EC2_METADATA_DISABLED: 'true'
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
@@ -82,10 +86,34 @@ jobs:
           ATTESTATION_PATH: ${{ inputs.attestation_path }}
           RECORD_PATH: ${{ inputs.record_path }}
           TURN: ${{ inputs.turn }}
+          CONTEXT_JSON: ${{ inputs.context_json }}
+          INSTANCE: ${{ inputs.instance }}
+          BUCKET: ${{ inputs.bucket }}
         run: |
           set -euo pipefail
           [[ "$TURN" =~ ^(initial|correction)$ ]] || { echo "turn must be initial or correction"; exit 1; }
+          python - <<'PY'
+          import base64, json, os, re
+          from pathlib import Path
+          import importlib.util
+          spec=importlib.util.spec_from_file_location('workflow_delivery','research/kalshi/frankie_boss/operations/workflow_delivery.py')
+          delivery=importlib.util.module_from_spec(spec);spec.loader.exec_module(delivery)
+          validate_context=delivery.validate_context
+          context = validate_context(json.loads(os.environ['CONTEXT_JSON']))
+          if not re.fullmatch('[0-9a-f]{40}',os.environ['SOURCE_REF']):
+              raise SystemExit('exact response source commit required')
+          if os.environ['INSTANCE']!='i-0e90ee6110ef609aa' or os.environ['BUCKET']!='frankie-granite42-568968024170-us-east-1':
+              raise SystemExit('explicit supported delivery target required')
+          for name in ('RESPONSE_PATH','ATTESTATION_PATH','RECORD_PATH'):
+              path=os.environ[name]
+              if not re.fullmatch(r'[A-Za-z0-9_./-]+',path) or any(p in ('','.','..') for p in path.split('/')):
+                  raise SystemExit('repo-relative response witness required')
+          encoded=base64.b64encode(os.environ['CONTEXT_JSON'].encode()).decode()
+          with open(os.environ['GITHUB_OUTPUT'],'a') as out:
+              out.write('context_base64='+encoded+'\n')
+          PY
           git fetch --depth 1 origin "$SOURCE_REF"
+          test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_REF"
           mkdir -p "$RUNNER_TEMP/delivery"
           git show "FETCH_HEAD:$RESPONSE_PATH" > "$RUNNER_TEMP/delivery/response.json"
           git show "FETCH_HEAD:$ATTESTATION_PATH" > "$RUNNER_TEMP/delivery/host-attestation.json"
@@ -131,9 +159,11 @@ jobs:
           PY
       - name: Stage the files and sign three presigned GETs (masked, never printed)
         env:
-          DAY: ${{ inputs.day }}
-          CYCLE_INDEX: ${{ inputs.cycle_index }}
           BUCKET: ${{ inputs.bucket }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_EC2_METADATA_DISABLED: 'true'
         run: |
           python - <<'PY'
           import os
@@ -143,7 +173,7 @@ jobs:
           s3 = boto3.client('s3', region_name='us-east-1', config=Config(signature_version='s3v4'))
           d = Path(os.environ['RUNNER_TEMP'], 'delivery')
           for name in ('response.json', 'host-attestation.json', 'host-session-record.json'):
-              key = f"host-deliveries/{os.environ['DAY']}/principal-response/cycle-{os.environ['CYCLE_INDEX']}/{os.environ['GITHUB_RUN_ID']}/{name}"
+              key = f"host-deliveries/workflow-principal/{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}/{name}"
               s3.put_object(Bucket=os.environ['BUCKET'], Key=key, Body=(d / name).read_bytes())
               url = s3.generate_presigned_url('get_object', Params={'Bucket': os.environ['BUCKET'], 'Key': key}, ExpiresIn=3600)
               if "'" in url or '\n' in url:
@@ -152,33 +182,29 @@ jobs:
               (d / (name + '.url')).write_text(url)
               print('staged s3://' + os.environ['BUCKET'] + '/' + key)
           PY
-      - name: Record on the host over SSM
+      - name: Record on the exact waiting host over SSM
         env:
           INSTANCE: ${{ inputs.instance }}
-          DAY: ${{ inputs.day }}
-          RUN_ROOT: ${{ inputs.run_root }}
-          TOOLS_ROOT: ${{ inputs.tools_root }}
-          HOST_PYTHON: ${{ inputs.python }}
-          CYCLE_INDEX: ${{ inputs.cycle_index }}
           TURN: ${{ inputs.turn }}
-          SOURCE_REF: ${{ inputs.source_ref }}
+          WORKFLOW_DELIVERY_CONTEXT: ${{ steps.files.outputs.context_base64 }}
           RESPONSE_SHA256: ${{ steps.files.outputs.response_sha256 }}
           RESPONSE_BYTES: ${{ steps.files.outputs.response_bytes }}
           ATTESTATION_SHA256: ${{ steps.files.outputs.attestation_sha256 }}
           ATTESTATION_BYTES: ${{ steps.files.outputs.attestation_bytes }}
           RECORD_SHA256: ${{ steps.files.outputs.record_sha256 }}
           RECORD_BYTES: ${{ steps.files.outputs.record_bytes }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_DEFAULT_REGION: us-east-2
+          AWS_EC2_METADATA_DISABLED: 'true'
         run: |
+          set -euo pipefail
           python deploy/aws/ssm_run_ps1.py \
             --instance "$INSTANCE" --region us-east-2 \
             --script deploy/aws/host/frankie_host_record_principal_response.ps1 \
-            --set "Day=$DAY" \
-            --set "RunRoot=$RUN_ROOT" \
-            --set "ToolsRoot=$TOOLS_ROOT" \
-            --set "Python=$HOST_PYTHON" \
-            --set "CycleIndex=$CYCLE_INDEX" \
+            --set "WorkflowDeliveryContext=$WORKFLOW_DELIVERY_CONTEXT" \
             --set "Turn=$TURN" \
-            --set "SourceRef=$SOURCE_REF" \
             --set "ResponseUrl=$(cat "$RUNNER_TEMP/delivery/response.json.url")" \
             --set "ResponseSha256=$RESPONSE_SHA256" \
             --set "ResponseBytes=$RESPONSE_BYTES" \
@@ -188,4 +214,12 @@ jobs:
             --set "RecordUrl=$(cat "$RUNNER_TEMP/delivery/host-session-record.json.url")" \
             --set "RecordSha256=$RECORD_SHA256" \
             --set "RecordBytes=$RECORD_BYTES" \
-            --timeout 900 --tail 0 --comment "record the cycle $CYCLE_INDEX principal $TURN turn for day $DAY"
+            --timeout 900 --tail 0 --comment "receipt-bound principal response" | tee delivery.log
+      - name: Retain delivery receipt evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: workflow-principal-delivery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: delivery.log
+          retention-days: 30
+          if-no-files-found: warn
