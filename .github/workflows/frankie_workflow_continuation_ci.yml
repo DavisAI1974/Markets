@@ -14,6 +14,8 @@ on:
       - 'deploy/aws/host/frankie_host_record_principal_response.ps1'
       - '.github/workflows/frankie_deliver_readiness.yml'
       - '.github/workflows/frankie_host_record_principal_response.yml'
+      - 'tests/test_principal_recorder_schedule_guard.py'
+      - 'research/kalshi/frankie_boss/operations/record_actual_frankie_response.py'
       - 'tests/test_workflow_event_bridge.py'
       - 'research/kalshi/frankie_boss/operations/workflow_event_bridge.py'
       - '.github/workflows/frankie_workflow_continue.yml'
@@ -45,4 +47,4 @@ jobs:
         run: command -v pwsh
       - name: Real receipt files and actual pipeline with fake process boundary
         working-directory: tests
-        run: python -B -m pytest test_workflow_wait_receipts.py test_day_pipeline_wait_resume.py test_workflow_delivery.py test_workflow_event_bridge.py test_day_cycles_pending_return.py test_actual_workflow_pending.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider
+        run: python -B -m pytest test_workflow_wait_receipts.py test_day_pipeline_wait_resume.py test_workflow_delivery.py test_workflow_event_bridge.py test_principal_recorder_schedule_guard.py test_day_cycles_pending_return.py test_actual_workflow_pending.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider
