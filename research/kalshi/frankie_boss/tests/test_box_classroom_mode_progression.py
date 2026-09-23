@@ -359,3 +359,76 @@ def test_session_retries_malformed_independent_pairs_exactly_once(monkeypatch,po
         with pytest.raises(Refused,match="unusable twice"):
             session._classroom_call("independent-pairs",prompt,parse,"reader")
     assert attempts==[("independent-pairs",prompt),("independent-pairs-retry",prompt)]
+
+import hashlib
+import sys
+sys.path.insert(0,str(ROOT/"tests"))
+from test_frankie_box_classroom_cache import Active, contents
+EVIDENCE_FILES=("merged-notes.md","derivation-digest-full.md")
+
+def evidence_marker(active):
+    joined="\n".join((active.work/name).read_text(encoding="utf-8") for name in EVIDENCE_FILES)
+    return "MODEL_EVIDENCE_"+hashlib.sha256(joined.encode()).hexdigest()
+
+def install_mode_lanes(active,package):
+    answers=answer_objects(package);marker=evidence_marker(active)
+    active._calls=[];active._prompts=[]
+    def reader(name,text):
+        active._calls.append(("reader",name));active._prompts.append(text)
+        for filename in EVIDENCE_FILES:
+            assert (active.work/filename).read_text(encoding="utf-8") in text
+        assert package["binding"]["request_id"] in text and '"teacher_key":' not in text
+        component=name.split("-",2)[2].removesuffix("-retry")
+        answer=copy.deepcopy(answers[component]);answer["explanation"]=marker
+        return dict(text=json.dumps(answer),incomplete=False,job_id="synthetic-"+name)
+    def boss(name,text):
+        active._calls.append(("boss",name));active._prompts.append(text)
+        assert name=="classroom-summary" and marker in text
+        return dict(text=json.dumps(dict(SUMMARY,cycle_summary=marker)),incomplete=False,job_id="synthetic-summary")
+    active.reader=reader;active.boss=boss
+
+def mode_session(directory,index):
+    package=package_at(index);active=Active(directory);active.cycle=f"{index:02d}"
+    active.request=dict(request_id=package["binding"]["request_id"],
+        attachment=dict(dipole_classroom=public_of(package)))
+    active.request_sha256=C.adapter_digest(active.request)
+    for filename in EVIDENCE_FILES:
+        (active.work/filename).write_text(f"COMPLETE_SYNTHETIC_{filename}_A\n",encoding="utf-8")
+    install_mode_lanes(active,package)
+    return active,package
+
+def assert_mode_result(active,package,result):
+    expected=evidence_marker(active)
+    assert result["dipole_teachback"]["cycle_summary"]==expected
+    assert all(c["explanation"]==expected for c in result["dipole_teachback"]["components"])
+    _,grade=grade_initial_response(package,result)
+    grade=apply_relationship_view_crosscheck(grade,result)
+    assert grade["mastered"] is True and grade["correction_ids"]==()
+    assert active.classroom_ledgers()==result
+
+@pytest.mark.parametrize("index",[2,4,6])
+def test_full_non_teach_session_routes_evidence_and_reopens_without_calls(tmp_path,index):
+    active,package=mode_session(tmp_path,index);result=active.classroom()
+    assert_mode_result(active,package,result)
+    assert active._calls==[("reader",f"classroom-{i:02d}-{name}") for i,name in enumerate(COLUMNS)]+[("boss","classroom-summary")]
+    receipt=json.loads((active.work/"classroom"/"receipt.json").read_text())
+    assert set(receipt["identity"]["evidence"])>=set(EVIDENCE_FILES)
+    assert receipt["report"]["observations"]==19*3 and receipt["report"]["pairs"]==171
+    reopened=copy.copy(active);reopened._calls=[]
+    def forbidden(name,text):pytest.fail("durable restart made a model call: "+name)
+    reopened.reader=forbidden;reopened.boss=forbidden
+    assert reopened.classroom()==result and reopened.classroom_ledgers()==result and reopened._calls==[]
+
+@pytest.mark.parametrize("index",[2,4,6])
+@pytest.mark.parametrize("changed",EVIDENCE_FILES)
+def test_changed_non_teach_evidence_rebuilds_and_preserves_prior_classroom(tmp_path,index,changed):
+    active,package=mode_session(tmp_path,index);original=active.classroom()
+    old_marker=evidence_marker(active);retained_bytes=contents(active.work/"classroom")
+    (active.work/changed).write_text(f"COMPLETE_SYNTHETIC_{changed}_B\n",encoding="utf-8")
+    assert evidence_marker(active)!=old_marker
+    reopened=copy.copy(active);install_mode_lanes(reopened,package)
+    replacement=reopened.classroom();assert_mode_result(reopened,package,replacement)
+    assert replacement!=original
+    assert reopened._calls==[("reader",f"classroom-{i:02d}-{name}") for i,name in enumerate(COLUMNS)]+[("boss","classroom-summary")]
+    assert retained_bytes<=contents(active.work)
+    assert list(active.work.glob("classroom.superseded-*/superseded.json"))

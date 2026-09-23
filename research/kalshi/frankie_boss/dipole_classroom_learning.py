@@ -7,7 +7,7 @@ from .frankie_principal_adapter import FrankiePrincipalAdapter, digest, json_for
 from .dipole_classroom_session import grade_initial_response, validate_correction_response, finish
 from .dipole_classroom_resolution import validate_correction_resolutions
 from .dipole_classroom_final_review import (
-    apply_relationship_view_crosscheck, validate_novel_findings, investigate_novel_findings,
+    apply_relationship_view_crosscheck, validate_novel_findings, investigate_novel_findings, final_model_visible_classroom,
     bind_final_resolution_requirement, build_final_correction_request)
 
 SCHEMA = 'FRANKIE_CLASSROOM_LEARNING_HISTORY_V1'
@@ -32,9 +32,9 @@ def validate_history(value):
     for exchange, origin in zip(value['exchanges'], origins):
         if exchange.get('origin') != origin:
             raise ValueError('classroom exchange origin differs')
-        if exchange.get('exchange_hash') != evidence_hash({k:v for k,v in exchange.items() if k != 'exchange_hash'}):
+        if exchange.get('exchange_hash') != evidence_hash(json_form({k:v for k,v in exchange.items() if k != 'exchange_hash'})):
             raise ValueError('classroom exchange changed')
-    if value['history_hash'] != evidence_hash({k:v for k,v in value.items() if k != 'history_hash'}):
+    if value['history_hash'] != evidence_hash(json_form({k:v for k,v in value.items() if k != 'history_hash'})):
         raise ValueError('classroom learning history changed')
     return json_form(value)
 
@@ -57,6 +57,15 @@ def completed_history(host, *, request_id, cutoff_ns, cycle_index):
         package = host._load_classroom_package(directory)
         if package is None: raise ValueError('prior classroom package missing')
         request = read('session-request.json')
+        _same(request['attachment'].get('dipole_classroom'), final_model_visible_classroom(package), 'frozen teacher message')
+        for field in ('request_id','source_hash','as_of','through_cursor'):
+            if package['source'].get(field) != origin[field] or package['binding'].get(field) != origin[field]:
+                raise ValueError('prior classroom source differs from completed origin')
+        for name, hash_field in (('source','source_snapshot_hash'),('teacher_key','teacher_key_hash'),
+                ('pre_message','teacher_message_hash'),('binding','classroom_binding_hash')):
+            value=package[name]
+            if value.get(hash_field) != evidence_hash({k:v for k,v in value.items() if k != hash_field}):
+                raise ValueError('prior classroom package content hash changed')
         initial = read('session-response.json')
         response = initial['response']
         if request['request_id'] != expected_id or response['request_sha256'] != digest(request):

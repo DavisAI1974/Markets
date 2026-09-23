@@ -45,6 +45,7 @@ def test_governed_attachment_to_exact_runtime_and_lazy_adapter(tmp_path, monkeyp
     schedule.write_bytes(canonical([binding]))
     host = object.__new__(classroom.ClassroomActualHost)
     host.config = dict(run_id='synthetic')
+    host.coordinator = SimpleNamespace(learning_policy=None)
     host.host = dict(schedule=dict(path=str(schedule), sha256=file_witness(schedule)['sha256']))
     host.api = SimpleNamespace(driver=execution)
     host.classroom_package = None

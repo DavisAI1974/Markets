@@ -1,16 +1,12 @@
-"""The Dipole classroom exchange on Frankie's box (Greg, 2026-09-21: option 1, built before anything runs).
+"""Four-stage Dipole classroom exchange on Frankie's box.
 
-Cycle 0's response carried no classroom ledgers and the host runner stopped on it. The cycle's classroom mode is TEACH:
-the model-visible pre-message (attachment.dipole_classroom.pre_message of the session request) states every fact the host
-grades: each component's observations (every retained cursor: state, value, teacher reason), state counts, terminal state,
-first-to-last PRESENT direction, and the full 171-pair relationship review. This module transcribes those facts and lets
-the BOSS supply the interpretation, then assembles and validates the four ledgers the host's classroom adapter grades
-(dipole_teachback, dipole_observation_review, dipole_relationship_scan, dipole_novel_findings) and, on the second turn,
-the acknowledgement of the host's correction request. Every sentence in the ledgers is either the pre-message's fact or
-the BOSS's own text; the composition is declared (COMPOSITION) in the host record and the receipt.
+TEACH transcribes visible teacher facts and asks Frankie to interpret them.
+GUIDED, SOCRATIC and VERIFY preserve Frankie's evidence-based claims for independent
+host grading. Every stage covers all components, observations and relationships and
+retains the same-session correction conversation.
 
-Pure functions; the session (frankie_box_boss_session.py) owns the model calls, durability and files. The validators are
-the repo's own (research/kalshi/frankie_boss/dipole_classroom*.py), loaded without the package's torch import.
+The session owns model calls and durable files; these helpers build prompts, parse
+claims, assemble ledgers and invoke the repository's classroom validators.
 """
 from __future__ import annotations
 
@@ -143,7 +139,7 @@ def parse_repairs(text):
 
 # ---- the model-visible classroom -----------------------------------------------------------------------------------
 def visible_of(request):
-    """attachment.dipole_classroom of the session request; refuses a request without the classroom or outside TEACH."""
+    """Return the explicitly supported model-visible classroom from the request."""
     visible = (request.get('attachment') or {}).get('dipole_classroom')
     if not isinstance(visible, dict) or 'pre_message' not in visible or 'binding' not in visible:
         raise ValueError('the session request carries no model-visible Dipole classroom')
@@ -357,7 +353,8 @@ def parse_independent_component(text, comp, rights):
         raise ClassroomOutput('state_explanations must be an object')
     result['state_explanations'] = {state:_text(given.get(state), 'state explanation') for state in states}
     pairs = answer.get('pairs')
-    if type(pairs) is not list or [p.get('right') for p in pairs if type(p) is dict] != rights:
+    if (type(pairs) is not list or any(type(p) is not dict for p in pairs)
+            or [p.get('right') for p in pairs] != rights):
         raise ClassroomOutput('complete canonical claimed pair roster required')
     parsed = []
     for item in pairs:

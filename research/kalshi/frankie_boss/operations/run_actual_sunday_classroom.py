@@ -1,6 +1,6 @@
 """Integrated Dipole classroom host around the lawful actual Sunday host.
 
-The lawful host implementation remains untouched. This composition layer only:
+The base host owns shared validated knowledge initialization. This composition layer:
 - reuses the already prepared governed teacher attachment from PreparedContextCache;
 - builds and retains the per-cycle Dipole classroom package without rerunning teacher math;
 - feeds the reviewed final classroom adapter explicitly through SundayRuntime;

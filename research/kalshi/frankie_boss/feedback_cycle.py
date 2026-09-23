@@ -478,9 +478,9 @@ class CycleCoordinator:
         if self.learning_policy is not None:
             completed = [row[0] for row in self.db.execute("SELECT request FROM stages WHERE stage='complete' ORDER BY rowid")]
             by_request = {row['request_id']: row for row in result}
-            if set(by_request) - set(completed):
+            if set(by_request) != set(completed):
                 raise ValueError('knowledge origin lacks completed verified cycle stages')
-            result = [by_request[request] for request in completed if request in by_request]
+            result = [by_request[request] for request in completed]
         return result
 
     def critic_knowledge(self, request_id, cutoff_ns):
