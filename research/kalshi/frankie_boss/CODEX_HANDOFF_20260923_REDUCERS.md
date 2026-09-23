@@ -54,6 +54,28 @@ Totals and anchor:
 - Friday anchor 5.544.
 - Compact container: 37,934 blocks, 4,064,406 entries, 23,628,634,795 block bytes.
 
+## The stacked design for the 23-hour Monday (Greg, 2026-09-23)
+
+The reductions hit different areas, so each one is stacked where it applies. Derived values (estimates,
+projections, per-minute aggregates) are deliberately left out; only measured counts appear.
+
+| Area | Reductions stacked | For the 23 hours |
+|---|---|---|
+| Storage and native model | boxes + order dedup + gzip (already applied at ingest) | the model trains on all 2,032,203 rows; no tokens involved |
+| Granite critic packet | groups + stacked_v2 + dropped static nodes | the packet over the most recent window; tokens to be measured on the Monday run |
+| Frankie's read of the day | the full digest stack (V6 + L8-L10 + stacks 4-7) + dedup | the whole 23 hours in one compact read; tokens to be measured on the Monday run |
+
+**The Monday read step is built but NOT started (Greg: "Do not start the run").**
+- The script is `deploy/aws/box/frankie_box_monday_read.py/.sh`, commit `d469c965`.
+- It covers the whole trading day: every record of the recovered journal, both members, no cutoff, no window.
+- Each record goes through the session's pinned legacy producers.
+- The output is the DIGEST_V6 document, with every table inverse-proven, written under
+  `/opt/frankie-box/work/monday-read/`.
+- The receipt records the document's bytes and its pinned-tokenizer count.
+- Bedrock tables are not rendered: no calculation pin exists for the trading day.
+- The code was staged inactive on the box by run 35845370802 (`ACTION=stage`); the staging activates nothing.
+- The read itself is dispatched only on Greg's word.
+
 ## The reducers, by the area each one hits
 
 | Area | Reducer | State |
