@@ -46,8 +46,19 @@ function Test-StateWithin([string]$Path, [string]$Root) {
     return $full.StartsWith($base + [IO.Path]::DirectorySeparatorChar, $comparison)
 }
 
+function Test-StateSame([string]$Left, [string]$Right) {
+    $comparison = [StringComparison]::Ordinal
+    if ([IO.Path]::DirectorySeparatorChar -eq '\') { $comparison = [StringComparison]::OrdinalIgnoreCase }
+    $a = [IO.Path]::GetFullPath($Left).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    $b = [IO.Path]::GetFullPath($Right).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    return [string]::Equals($a, $b, $comparison)
+}
+
 function Assert-StatePath([string]$Path) {
     $full = [IO.Path]::GetFullPath($Path)
+    if ($full.Length -gt [IO.Path]::GetPathRoot($full).Length) {
+        $full = $full.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+    }
     $cursor = $full
     while ($cursor) {
         $item = Get-Item -LiteralPath $cursor -Force -ErrorAction SilentlyContinue
@@ -117,7 +128,7 @@ function Complete-StateIntent([string]$IntentPath) {
     $null = Assert-StatePath $IntentPath
     $intent = Get-Content -LiteralPath $IntentPath -Encoding UTF8 -Raw | ConvertFrom-Json
     if ($intent.schema -ne 'FRANKIE_CODE_BOUND_STATE_INTENT_V1' -or
-        $intent.run_directory -cne $runDirectory -or $intent.run_id -cne $cfg.run_id -or
+        -not (Test-StateSame $intent.run_directory $runDirectory) -or $intent.run_id -cne $cfg.run_id -or
         $intent.day -cne $Day -or $intent.cycle_index -cne $CycleIndex -or
         $intent.current_boss_commit -cne $head -or
         $intent.stored_boss_commit -notmatch '^(absent|[0-9a-f]{40})$') {
@@ -128,7 +139,7 @@ function Complete-StateIntent([string]$IntentPath) {
     $target = Assert-StatePath $intent.superseded_root
     $archiveRoot = Assert-StatePath (Join-Path (Split-Path $runDirectory -Parent) 'superseded')
     if (-not (Test-StateWithin $target $archiveRoot) -or
-        (Test-StateWithin $target $runDirectory) -or $target -eq $runDirectory) {
+        (Test-StateWithin $target $runDirectory) -or (Test-StateSame $target $runDirectory)) {
         throw 'intent destination escaped the sibling archive'
     }
     if ($null -eq $intent.items -or $intent.items -isnot [Array]) { throw 'intent items must be an array' }
@@ -147,7 +158,7 @@ function Complete-StateIntent([string]$IntentPath) {
         $destination = Assert-StatePath (Join-Path $target $relative)
         if (-not (Test-StateWithin $source $runDirectory) -or
             -not (Test-StateWithin $destination $target) -or
-            $entry.destination -cne $destination) { throw 'intent path escaped its root' }
+            -not (Test-StateSame $entry.destination $destination)) { throw 'intent path escaped its root' }
         $parts = $relative.Replace('\', '/').Split('/')
         $name = $parts[-1]
         $scopeAllowed = ($parts.Count -eq 1) -or
@@ -253,7 +264,7 @@ $cfg = Get-Content -LiteralPath $cfgPath -Encoding UTF8 -Raw | ConvertFrom-Json
 $runDirectory = $cfg.run_directory
 if (-not $runDirectory -or -not [IO.Path]::IsPathRooted($runDirectory)) { throw 'run_directory must be absolute' }
 $runDirectory = Assert-StatePath $runDirectory
-if ($dayDirectory -eq $runDirectory -or (Test-StateWithin $dayDirectory $runDirectory)) { throw 'day evidence directory must be outside the run' }
+if ((Test-StateSame $dayDirectory $runDirectory) -or (Test-StateWithin $dayDirectory $runDirectory)) { throw 'day evidence directory must be outside the run' }
 if (-not $runDirectory -or -not (Test-Path $runDirectory)) { throw "run_directory absent: $runDirectory" }
 # run_directory is interpolated into a raw Python literal below; a quote or newline would end it.
 if ($runDirectory -match "[\x27\x22\r\n]") { throw 'refusing: run_directory carries a quote or newline' }
@@ -273,13 +284,13 @@ $unfinished = @()
 foreach ($file in @(Get-ChildItem -LiteralPath $dayDirectory -Filter 'superseded-code-bound-state-*.intent.json' -File)) {
     $null = Assert-StatePath $file.FullName
     $prior = Get-Content -LiteralPath $file.FullName -Encoding UTF8 -Raw | ConvertFrom-Json
-    if ($prior.run_directory -cne $runDirectory) { continue }
+    if (-not (Test-StateSame $prior.run_directory $runDirectory)) { continue }
     $completion = $file.FullName.Substring(0, $file.FullName.Length - '.intent.json'.Length) + '.json'
     $null = Assert-StatePath $completion
     if (Test-Path -LiteralPath $completion) {
         $done = Get-Content -LiteralPath $completion -Encoding UTF8 -Raw | ConvertFrom-Json
         if ($done.schema -ne 'FRANKIE_CODE_BOUND_STATE_SUPERSEDED_V1' -or
-            $done.intent_path -cne $file.FullName -or $done.intent_sha256 -cne (Get-StateHash $file.FullName)) {
+            -not (Test-StateSame $done.intent_path $file.FullName) -or $done.intent_sha256 -cne (Get-StateHash $file.FullName)) {
             throw 'completion receipt does not bind the retained intent'
         }
     } else { $unfinished += $file.FullName }
