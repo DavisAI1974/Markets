@@ -382,3 +382,106 @@ def test_same_second_generations_never_overwrite_receipts_or_preserved_bytes(sta
         assert_preserved(state, receipt)
         intent_path = Path(receipt["intent_path"])
         assert receipt["intent_sha256"] == digest(intent_path.read_bytes())
+
+
+@pytest.mark.parametrize("index", [4, 10])
+def test_conflicting_future_move_receipt_refuses_before_any_recovery_move(state, index):
+    result, _ = invoke(state, after=1)
+    assert result.returncode != 0
+    assert "TEST_INTERRUPT_AFTER_MOVE" in result.stderr
+    intent_path, intent = next(iter(json_files(state.day, INTENT_SCHEMA).items()))
+    assert (state.run / intent["items"][index]["relative"]).exists()
+    conflicting_receipt = intent_path.with_name(
+        intent_path.name.removesuffix(".intent.json") + f".move-{index}.json"
+    )
+    conflicting_receipt.write_bytes(b'{"interrupted_or_conflicting":true}')
+    before = {
+        relative: (state.run / relative).read_bytes()
+        for relative in state.moved if (state.run / relative).exists()
+    }
+
+    result, capture = invoke(state)
+    assert result.returncode != 0
+    assert not capture.exists(), "Known contradictory receipt must be checked before further moves"
+    assert conflicting_receipt.read_bytes() == b'{"interrupted_or_conflicting":true}'
+    assert {
+        relative: (state.run / relative).read_bytes()
+        for relative in state.moved if (state.run / relative).exists()
+    } == before
+    assert_kept(state)
+
+
+@pytest.mark.parametrize("change", ["source", "destination", "both_present"])
+def test_changed_or_ambiguous_bytes_refuse_before_any_recovery_move(state, change):
+    result, _ = invoke(state, after=1)
+    assert result.returncode != 0
+    intent_path, intent = next(iter(json_files(state.day, INTENT_SCHEMA).items()))
+    archived = intent["items"][0]
+    pending = intent["items"][1]
+    if change == "source":
+        changed = state.run / pending["relative"]
+        changed.write_bytes(b"changed source after interrupted preservation")
+    elif change == "destination":
+        changed = Path(archived["destination"])
+        changed.write_bytes(b"changed archive after interrupted preservation")
+    else:
+        changed = state.run / archived["relative"]
+        changed.write_bytes(Path(archived["destination"]).read_bytes())
+    changed_bytes = changed.read_bytes()
+    before = {
+        relative: (state.run / relative).read_bytes()
+        for relative in state.moved if (state.run / relative).exists()
+    }
+
+    result, capture = invoke(state)
+    assert result.returncode != 0
+    assert not capture.exists(), "Byte or location mismatch must refuse before recovery moves"
+    assert changed.read_bytes() == changed_bytes
+    assert {
+        relative: (state.run / relative).read_bytes()
+        for relative in state.moved if (state.run / relative).exists()
+    } == before
+    assert not json_files(state.day, RECEIPT_SCHEMA)
+    assert_kept(state)
+
+
+def test_exclusive_lock_refuses_second_writer_and_is_released_after_holder_exits(state):
+    import time
+
+    ready = state.tmp / "lock-holder-ready"
+    prelude = f"""
+$ErrorActionPreference = 'Stop'
+$lock = [IO.File]::Open(
+    {ps_quote(state.day / 'code-bound-state.lock')},
+    [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
+try {{
+    [IO.File]::WriteAllText({ps_quote(ready)}, 'ready')
+    $null = [Console]::In.ReadLine()
+}} finally {{ $lock.Dispose() }}
+"""
+    holder = subprocess.Popen(
+        [state.pwsh, "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", prelude],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+    )
+    try:
+        deadline = time.monotonic() + 10
+        while not ready.exists() and holder.poll() is None and time.monotonic() < deadline:
+            time.sleep(0.02)
+        assert ready.exists(), "The competing writer did not acquire its lock"
+        result, capture = invoke(state)
+        assert result.returncode != 0
+        assert not capture.exists()
+        assert not json_files(state.day, INTENT_SCHEMA)
+        for relative, body in state.moved.items():
+            assert (state.run / relative).read_bytes() == body
+        assert_kept(state)
+    finally:
+        try:
+            holder.communicate("\n", timeout=10)
+        except subprocess.TimeoutExpired:
+            holder.kill()
+            holder.communicate(timeout=10)
+    assert holder.returncode == 0
+    result, _ = invoke(state)
+    assert_success(result)
+    assert_preserved(state, next(iter(json_files(state.day, RECEIPT_SCHEMA).values())))
