@@ -49,8 +49,47 @@ concurrency:
   group: box-run-${{ inputs.instance }}
   cancel-in-progress: false
 jobs:
+  validate-staging-route:
+    if: github.repository == 'DavisAI1974/Markets' && inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    outputs:
+      action: ${{ steps.validate.outputs.action }}
+    steps:
+      - name: Validate the inactive staging route without credentials
+        id: validate
+        env:
+          SCRIPT: ${{ inputs.script }}
+          VARIABLES: ${{ inputs.variables }}
+          INSTANCE: ${{ inputs.instance }}
+          REGION: ${{ inputs.region }}
+          PRESIGN: ${{ inputs.presign }}
+          GITHUB_TOKEN_TO_SSM: ${{ inputs.github_token_to_ssm }}
+        run: |
+          python3 -I -S -B - <<'PY'
+          import os
+          if os.environ['SCRIPT'] != 'deploy/aws/box/frankie_box_stage_code.sh':
+              raise SystemExit('inactive staging script required')
+          variables=os.environ['VARIABLES']
+          if variables not in ('ACTION=inventory','ACTION=stage'):
+              raise SystemExit('inactive staging accepts exactly ACTION=inventory or ACTION=stage')
+          if os.environ['INSTANCE'] != 'i-035994afa8bdf66a5' or os.environ['REGION'] != 'us-east-1':
+              raise SystemExit('inactive staging requires the canonical Linux box and region')
+          if os.environ['PRESIGN'] != '' or os.environ['GITHUB_TOKEN_TO_SSM'] != 'false':
+              raise SystemExit('inactive staging refuses caller presigning and GitHub token copying')
+          with open(os.environ['GITHUB_OUTPUT'],'a',encoding='utf-8') as output:
+              output.write('action='+variables.split('=',1)[1]+'\n')
+          PY
+  stage-code:
+    needs: validate-staging-route
+    if: github.repository == 'DavisAI1974/Markets' && inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh'
+    uses: ./.github/workflows/frankie_stage_code.yml
+    with:
+      action: ${{ needs.validate-staging-route.outputs.action }}
+    secrets: inherit
   run:
-    if: github.repository == 'DavisAI1974/Markets'
+    if: github.repository == 'DavisAI1974/Markets' && inputs.script != 'deploy/aws/box/frankie_box_stage_code.sh'
     runs-on: ubuntu-24.04
     timeout-minutes: 1440
     env:

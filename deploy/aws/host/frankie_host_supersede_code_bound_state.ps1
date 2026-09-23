@@ -148,6 +148,25 @@ function Assert-ForeignStateIntents([string]$OwnSchema) {
     }
 }
 
+function Assert-RunnerIdle {
+    # The helper lock serializes helpers, not runtime creation. Refuse any
+    # inventory that cannot establish an idle runner; never stop a process.
+    $inventory = @(Get-CimInstance Win32_Process -ErrorAction Stop)
+    if ($inventory.Count -eq 0) { throw 'refusing: process inventory is empty' }
+    foreach ($process in $inventory) {
+        if ($process.Name -isnot [string] -or [string]::IsNullOrWhiteSpace($process.Name)) {
+            throw 'refusing: process inventory has no evaluable process name'
+        }
+        if ($process.Name -match '^(?:python[^/\\]*|pyw?)(?:\.exe)?$' -and
+            ($process.CommandLine -isnot [string] -or [string]::IsNullOrWhiteSpace($process.CommandLine))) {
+            throw 'refusing: Python process command line is unavailable'
+        }
+        if ($process.CommandLine -like '*run_actual_sunday*') {
+            throw ('refusing: a runner process is alive (pid ' + $process.ProcessId + ')')
+        }
+    }
+}
+
 function Complete-StateIntent([string]$IntentPath) {
     $null = Assert-StatePath $IntentPath
     $intent = Get-Content -LiteralPath $IntentPath -Encoding UTF8 -Raw | ConvertFrom-Json
@@ -222,6 +241,7 @@ function Complete-StateIntent([string]$IntentPath) {
         $retainedPath = Assert-StatePath $retainedFile.FullName
         if (-not $expectedMoveReceiptPaths.ContainsKey($retainedPath)) { throw 'unexpected move receipt outside intent' }
     }
+    Assert-RunnerIdle
     $moved = @()
     $index = 0
     foreach ($entry in $intent.items) {
@@ -303,6 +323,7 @@ if (-not (Test-Path (Join-Path $runDirectory 'host-instance.c15.json'))) { throw
 $lockPath = Assert-StatePath (Join-Path $dayDirectory 'code-bound-state.lock')
 $stateLock = [IO.File]::Open($lockPath, [IO.FileMode]::OpenOrCreate, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)
 try {
+Assert-RunnerIdle
 Assert-ForeignStateIntents 'FRANKIE_CODE_BOUND_STATE_INTENT_V1'
 # Recovery precedes identity reads: interruption may have archived both identities.
 $unfinished = @()

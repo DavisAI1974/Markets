@@ -1,5 +1,17 @@
 name: Inactive reviewed code staging on Frankie Linux box
 on:
+  workflow_call:
+    inputs:
+      action:
+        type: string
+        required: true
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_SESSION_TOKEN:
+        required: false
   workflow_dispatch:
     inputs:
       action:

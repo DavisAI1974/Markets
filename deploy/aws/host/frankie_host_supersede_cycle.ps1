@@ -139,8 +139,20 @@ $kept = @('cycles.sqlite (stages superseded by the declared cycle supersede)', '
 
 function Assert-ScopedGates([string[]]$CycleLocations) {
     # An unavailable process inventory cannot establish an idle runner.
-    $alive = @(Get-CimInstance Win32_Process -ErrorAction Stop |
-        Where-Object { $_.CommandLine -like '*run_actual_sunday*' })
+    $inventory = @(Get-CimInstance Win32_Process -ErrorAction Stop)
+    if ($inventory.Count -eq 0) { throw 'refusing: process inventory is empty; runner absence is unevaluable' }
+    foreach ($process in $inventory) {
+        if ($process.Name -isnot [string] -or [string]::IsNullOrWhiteSpace($process.Name)) {
+            throw 'refusing: process inventory contains an unevaluable name'
+        }
+        # Include pythonw, versioned/free-threaded/debug Python names and py/pyw
+        # launchers. Missing command lines cannot establish runner absence.
+        if ($process.Name -match '^(?:python[^/\\]*|pyw?)(?:\.exe)?$' -and
+            ($process.CommandLine -isnot [string] -or [string]::IsNullOrWhiteSpace($process.CommandLine))) {
+            throw 'refusing: a Python process has an unevaluable command line'
+        }
+    }
+    $alive = @($inventory | Where-Object { $_.CommandLine -like '*run_actual_sunday*' })
     if ($alive.Count -gt 0) { throw ("refusing: a runner process is alive (pid " + ($alive | ForEach-Object { $_.ProcessId }) + ")") }
     foreach ($location in $CycleLocations) {
         $principal = Assert-StatePath (Join-Path $location 'principal')
