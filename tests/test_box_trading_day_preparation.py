@@ -287,3 +287,121 @@ def test_thin_launcher_has_valid_shell_syntax_and_refuses_missing_dispatch_pin()
     result = subprocess.run(['sh',str(script)], env={'PATH':os.environ['PATH']},
                             capture_output=True, text=True)
     assert result.returncode != 0 and 'MARKETS_SHA' in result.stderr
+
+
+@pytest.mark.parametrize('action', ['prepare', 'publish'])
+def test_thin_launcher_passes_pinned_arguments_and_environment_in_isolated_fixture(tmp_path, action):
+    import sys
+    # Only this test copy substitutes the fixed box prefix. The real box and its
+    # interpreter are never touched; the executable captures the CLI contract.
+    original = Path(__file__).resolve().parents[1]/'deploy/aws/box/frankie_box_prepare_trading_day.sh'
+    box = tmp_path/'fixture-box'
+    code = box/'markets'
+    adapter_path = code/'deploy/aws/box/frankie_box_prepare_trading_day.py'
+    adapter_path.parent.mkdir(parents=True)
+    adapter_path.write_text('# fixture presence only\n')
+    interpreter = box/'venv/bin/python'
+    interpreter.parent.mkdir(parents=True)
+    interpreter.write_text('#!/bin/sh\nexec "$TEST_PYTHON" "$TEST_CAPTURE" "$@"\n')
+    interpreter.chmod(0o700)
+    launcher = tmp_path/'launcher.sh'
+    launcher.write_text(original.read_text().replace('/opt/frankie-box', str(box)))
+    capture = tmp_path/'capture.py'
+    capture.write_text(
+        'import json, os, sys\n'
+        'from pathlib import Path\n'
+        'names = ("MARKETS_SHA", "PYTHONDONTWRITEBYTECODE", "PYTHONNOUSERSITE", "PYTHONPATH")\n'
+        'Path(os.environ["TEST_RESULT"]).write_text(json.dumps({"args": sys.argv[1:], '
+        '"env": {key: os.environ.get(key) for key in names}}))\n'
+    )
+    result_path = tmp_path/'captured.json'
+    output_root = box/'work/trading-day-preparation/fixture-run'
+    # Spaces make shell quoting part of the contract.
+    configuration = tmp_path/'pinned configuration.json'
+    upload = tmp_path/'private upload map.json'
+    configuration_hash, upload_hash = 'b'*64, 'c'*64
+    environment = {
+        'PATH': os.environ['PATH'], 'TEST_PYTHON': sys.executable,
+        'TEST_CAPTURE': str(capture), 'TEST_RESULT': str(result_path),
+        'MARKETS_SHA': COMMIT, 'ACTION': action, 'OUTPUT_ROOT': str(output_root),
+        'CONFIGURATION': str(configuration), 'CONFIGURATION_SHA256': configuration_hash,
+        'UPLOAD_MAP': str(upload), 'UPLOAD_MAP_SHA256': upload_hash,
+        'PYTHONPATH': '/fixture-untrusted-import-path',
+    }
+    result = subprocess.run(['sh', str(launcher)], env=environment,
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    captured = json.loads(result_path.read_text())
+    arguments = ['-B', str(adapter_path), action]
+    if action == 'prepare':
+        arguments += ['--configuration', str(configuration),
+                      '--configuration-sha256', configuration_hash,
+                      '--commit', COMMIT, '--output-root', str(output_root)]
+    else:
+        arguments += ['--commit', COMMIT, '--output-root', str(output_root),
+                      '--upload-map', str(upload), '--upload-map-sha256', upload_hash]
+    assert captured['args'] == arguments
+    assert captured['env'] == {
+        'MARKETS_SHA': COMMIT, 'PYTHONDONTWRITEBYTECODE': '1',
+        'PYTHONNOUSERSITE': '1', 'PYTHONPATH': str(code),
+    }
+    assert not output_root.exists(), 'Launcher fixture must not perform preparation'
+
+
+def test_receipt_upload_failure_after_archive_success_preserves_all_local_evidence(tmp_path, monkeypatch):
+    f, root = fixture(tmp_path, monkeypatch)
+    prepare(f, root)
+    before = {str(path.relative_to(root)): sha(path)
+              for path in root.rglob('*') if path.is_file()}
+    uploaded = []
+    def put(path, url, digest):
+        name = Path(path).name
+        uploaded.append(name)
+        if name == 'publication-receipt.json':
+            raise OSError('fixture receipt PUT failure')
+    monkeypatch.setattr(adapter, 'put_file', put)
+    with pytest.raises(OSError, match='receipt PUT failure'):
+        adapter.publish(root, upload_map(root))
+    assert uploaded == ['artifacts.tar', 'publication-receipt.json']
+    assert {str(path.relative_to(root)): sha(path)
+            for path in root.rglob('*') if path.is_file()} == before
+    assert {str(path): sha(path) for path in f.source.iterdir() if path.is_file()} == f.before
+
+
+def test_conditional_put_http_412_propagates_without_retry_or_local_change(tmp_path, monkeypatch):
+    from email.message import Message
+    from io import BytesIO
+    from urllib.error import HTTPError
+    from urllib.response import addinfourl
+    payload = tmp_path/'payload'
+    payload.write_bytes(b'preserved conditional upload')
+    before = payload.read_bytes()
+    requests = []
+    def rejected_https(handler, request):
+        requests.append(request)
+        response = addinfourl(BytesIO(b'fixture existing object'), Message(),
+                             request.full_url, code=412)
+        response.msg = 'Precondition Failed'
+        return response
+    # Keep the real opener/error processor; substitute only HTTPS transport.
+    monkeypatch.setattr(adapter.urllib.request.HTTPSHandler, 'https_open', rejected_https)
+    with pytest.raises(HTTPError) as raised:
+        adapter.put_file(payload, 'https://unused.example/fixture', sha(payload))
+    assert raised.value.code == 412
+    raised.value.close()
+    assert len(requests) == 1
+    assert {k.lower(): v for k, v in requests[0].header_items()}['if-none-match'] == '*'
+    assert payload.read_bytes() == before
+
+
+def test_redirect_handler_refuses_actual_http_302_location_response():
+    from email.message import Message
+    from io import BytesIO
+    headers = Message()
+    headers['Location'] = 'https://other.example/redirected'
+    request = adapter.urllib.request.Request(
+        'https://original.example/fixture', data=b'fixture', method='PUT')
+    handler = adapter.NoRedirect()
+    handler.add_parent(SimpleNamespace(open=lambda *a, **k: pytest.fail('redirect was followed')))
+    with pytest.raises(ValueError, match='publication redirect refused'):
+        handler.http_error_302(request, BytesIO(b'fixture redirect'), 302, 'Found', headers)
