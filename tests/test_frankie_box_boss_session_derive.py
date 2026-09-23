@@ -231,7 +231,10 @@ def test_derive_only_is_a_stage_that_derives_and_measures_without_the_engine():
     sh = (BOX / 'frankie_box_session.sh').read_text()
     assert 'derive_only) derive_only ;;' in sh and '--stage derive_only' in sh and 'derive_only()' in sh
     assert 'ACTION must be start, status, preflight, verify, restart_session, fetch_correction, correction or derive_only' in sh
-    assert 'markets fetch/checkout of $MARKETS_REF failed; nothing derived' in sh and '"frankie-heartbeat-$CYCLE" "frankie-correction-$CYCLE"' in sh
+    derive = sh.split('derive_only() {', 1)[1].split('fetch_correction() {', 1)[0]
+    assert 'checkout_markets || return 2' in derive
+    assert derive.index('checkout_markets || return 2') < derive.index('--stage derive_only')
+    assert '"frankie-heartbeat-$CYCLE" "frankie-correction-$CYCLE"' in derive
     assert 'M="$S/work-$CYCLE/derive-only-measurement.json"' in sh and 'git worktree' not in sh
 
 
