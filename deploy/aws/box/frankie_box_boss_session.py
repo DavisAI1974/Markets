@@ -1662,8 +1662,15 @@ class Session:
                 self,correction,root=ROOT,cache=science_cache,classroom_module=C,
                 staged_module=_box_module('frankie_box_staged_session'))
         if not answer_path.exists():
-            text = C.correction_prompt(correction, ledgers, cycle=self.cycle)
-            parsed, call = self._classroom_call('classroom-correction', text, lambda body: C.parse_correction(body, correction), 'boss')
+            if scientific_exchange is not None:
+                parsed, call = _box_module('frankie_box_classroom_staged').run_correction(
+                    self,C,science_cache,correction=correction,ledgers=ledgers,
+                    scientific_exchange=scientific_exchange,root=ROOT,
+                    staged=_box_module('frankie_box_staged_session'),
+                    dialogue=_box_module('frankie_box_scientific_dialogue'))
+            else:
+                text = C.correction_prompt(correction, ledgers, cycle=self.cycle)
+                parsed, call = self._classroom_call('classroom-correction', text, lambda body: C.parse_correction(body, correction), 'boss')
             write_json(answer_path, dict(schema='FRANKIE_BOX_CLASSROOM_CORRECTION_V1', call=call, parsed=parsed,
                        correction_request=dict(witness(path), request_sha256=correction['request_sha256'], post_grade_hash=correction['post_grade_hash'],
                                                correction_ids=correction['correction_ids'])))

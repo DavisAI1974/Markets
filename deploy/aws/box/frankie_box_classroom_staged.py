@@ -161,3 +161,78 @@ def run(session,C,cache,*,root,staged,dialogue):
             dropped_findings=built['dropped_findings'],calls=calls,staged_reading_plan_hash=reading['plan_hash'],
             teacher_message_hash=pre['teacher_message_hash'],classroom_binding_hash=visible['binding']['classroom_binding_hash']))
     return built['ledgers']
+
+
+def run_correction(session,C,cache,*,correction,ledgers,scientific_exchange,root,staged,dialogue):
+    """Resolve every factual correction with complete prior evidence available.
+
+    Scientific disagreements stay in the scientific exchange. They do not
+    silently become factual acknowledgements or replacements for teacher rules.
+    """
+    request=correction['scientific_review_request']
+    descriptor=request['shared_knowledge']
+    sources=ensure_snapshot(descriptor,root)
+    context={k:v for k,v in correction.items() if k not in ('learning_history','scientific_review_request')}
+    sources.extend([
+        dict(source_id='correction-request',content=canonical(context)),
+        dict(source_id='learning-history',content=canonical(correction.get('learning_history'))),
+        dict(source_id='principal-ledgers',content=canonical(ledgers)),
+        dict(source_id='scientific-dialogue',content=canonical(scientific_exchange))])
+    reading=staged.consume_sources(session,sources,'principal','classroom-factual-correction',
+        descriptor['snapshot_hash'],correction['request_sha256'],cache,
+        'Read all factual correction evidence, prior learning and the complete scientific discussion. '
+        'Preserve original BOSS teacher duties, mathematics, masks and training targets. Shared research adds '
+        'scientific understanding; it never silently changes governed targets. Keep scientific disagreements '
+        'available for research, separately from factual correction acknowledgements.')
+    cache.save('correction-staged-reading.json',reading['plan_hash'],dict(receipt=reading))
+    retained={x['source_id']:x['content'] for x in sources}
+    for part in reading['parts']:
+        retained['reading-assessment:'+part['part_id']]=part['assessment'].encode()
+    calls=[]
+    def task(name,instruction,parse):
+        result=dialogue.run_task(session,cache,role='principal',phase='factual-correction',
+            sources=retained,reading_receipt=reading,request_hash=correction['request_sha256'],
+            task_id=name,classroom_module=C,staged_module=staged,
+            task_instruction=lambda nav:(
+                'You are Frankie in the SAME principal session, cycle '+session.cycle+
+                '. Post-grade: '+correction['post_grade_hash']+'\n'+instruction+
+                '\nFull-source navigation: '+canonical(nav).decode()),
+            parse_final=parse)
+        calls.extend(result['context_calls']+[result['call']])
+        return result['parsed']
+    resolutions=[]
+    ids=list(correction['correction_ids'])
+    for number,start in enumerate(range(0,len(ids),64)):
+        page=ids[start:start+64]
+        instruction=('Correction IDs: '+canonical(page).decode()+'\n'
+            'Read correction-request, principal-ledgers and the relevant full evidence for every listed id. '
+            'Prior history and all scientific exchanges remain available. Give your corrected understanding '
+            'in your own words. Return exactly {"correction_resolutions":[{"correction_id":"<listed id>",'
+            '"corrected_understanding":"<your explanation>"}]} with every listed id in that order.')
+        def parse(text,page=page):
+            value=json.loads(text)
+            if type(value) is not dict or set(value)!={'correction_resolutions'}:
+                raise C.ClassroomOutput('correction resolution page required')
+            records=value['correction_resolutions']
+            if (type(records) is not list or any(type(x) is not dict for x in records)
+                    or [x.get('correction_id') for x in records]!=page):
+                raise C.ClassroomOutput('exact complete ordered correction page required')
+            checked=C.parse_correction(json.dumps(dict(value,what_i_will_change='Page validation.',
+                remaining_disagreements=[])),dict(correction_ids=page))
+            return checked['correction_resolutions']
+        parsed=task('correction-page:'+str(number),instruction,parse)
+        retained['resolved-page:'+str(number)]=canonical(parsed)
+        resolutions.extend(parsed)
+    def parse_summary(text):
+        value=json.loads(text)
+        if type(value) is not dict or set(value)!={'what_i_will_change','remaining_disagreements'}:
+            raise C.ClassroomOutput('correction summary fields required')
+        return C.parse_correction(json.dumps(dict(value,correction_resolutions=resolutions)),correction)
+    result=task('correction-summary',
+        'Read correction-request, all resolved-page sources, prior learning and scientific-dialogue. '
+        'Explain what you will change and explicitly retain any remaining factual disagreement. The scientific '
+        'exchange already retains scientific disagreements independently; do not erase them or confuse them '
+        'with a factual correction. Return exactly {"what_i_will_change":"<your explanation>",'
+        '"remaining_disagreements":["<each remaining factual disagreement>"]}. Use an empty list only if none.',
+        parse_summary)
+    return result,dict(staged_reading_plan_hash=reading['plan_hash'],calls=calls)

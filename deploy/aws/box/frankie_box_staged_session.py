@@ -51,6 +51,8 @@ def retained_exchange(session, call, prompt, *, role, request_hash):
     response = outcome.get("text")
     if not isinstance(response, str) or not response.strip():
         raise ValueError("retained provider response is empty")
+    if choices[0].get("message", {}).get("content") != response:
+        raise ValueError("retained provider response differs from the raw result")
     # The established transport extracts final_text; its saved outcome is the
     # response consumed by the classroom parser. Keep both witnesses.
     return dict(prompt=dict(S.witness(retained_prompt), content=retained_prompt),
