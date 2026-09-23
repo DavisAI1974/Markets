@@ -1,0 +1,98 @@
+name: Retain and dispatch an exact Frankie workflow event
+description: Durable nonsecret outbox before an explicitly configured continuation dispatch
+inputs:
+  event_json:
+    required: true
+    description: Exact receipt-bound event or archive template for a readiness producer
+  ready_run_id:
+    required: false
+    default: ''
+    description: Exact authenticated readiness producer run, supplied only after successful upload
+  ready_source_commit:
+    required: false
+    default: ''
+    description: Readiness producer checkout
+  request_sha256:
+    required: false
+    default: ''
+    description: Producer request bytes when deriving a readiness event
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        ref: ${{ fromJSON(inputs.event_json).source_commit }}
+        path: workflow-event-transport
+        persist-credentials: true
+    - name: Verify caller executable revision before loading event source
+      shell: bash
+      working-directory: workflow-event-transport
+      env:
+        EVENT_JSON: ${{ inputs.event_json }}
+        CALLER_COMMIT: ${{ github.sha }}
+      run: |
+        python -I -S - <<'PY'
+        import json,os,re,subprocess
+        e=json.loads(os.environ['EVENT_JSON']);source=e['source_commit'];root=e['runs_root'];day=e['day']
+        caller=os.environ['CALLER_COMMIT']
+        if (not re.fullmatch('[0-9a-f]{40}',source) or not re.fullmatch('[0-9a-f]{40}',caller)
+            or not re.fullmatch('[0-9]{8}',day) or not re.fullmatch('[A-Za-z0-9_./-]+',root)
+            or any(p in ('','.','..') for p in root.split('/'))):
+            raise SystemExit('exact producer source and receipt paths required')
+        if subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()!=source:
+            raise SystemExit('producer source checkout differs')
+        subprocess.run(['git','fetch','--no-tags','--depth=1','origin',caller],check=True)
+        allowed=(root+'/'+day+'/','research/kalshi/frankie_boss/runs/request-archives/')
+        for line in subprocess.check_output(['git','diff','--name-status',source,caller],text=True).splitlines():
+            status,path=line.split('\t',1)
+            if status!='A' or not path.startswith(allowed):
+                raise SystemExit('producer caller executable source differs')
+        PY
+    - name: Retain exact event dispatch intent
+      shell: bash
+      working-directory: workflow-event-transport
+      env:
+        EVENT_JSON: ${{ inputs.event_json }}
+        READY_RUN_ID: ${{ inputs.ready_run_id }}
+        READY_SOURCE_COMMIT: ${{ inputs.ready_source_commit }}
+        REQUEST_SHA256: ${{ inputs.request_sha256 }}
+      run: |
+        python -I -S - <<'PY'
+        import importlib.util,json,os
+        from pathlib import Path
+        path=Path('research/kalshi/frankie_boss/operations/workflow_event_bridge.py')
+        spec=importlib.util.spec_from_file_location('event_bridge',path)
+        module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
+        event=module.validate_shape(json.loads(os.environ['EVENT_JSON']))
+        if os.environ['READY_RUN_ID']:
+            if event['context']['request_sha256']!=os.environ['REQUEST_SHA256']:
+                raise SystemExit('producer request differs from retained WAIT')
+            event=module.seal(dict(event,action='readiness',payload=dict(
+                ready_run_id=os.environ['READY_RUN_ID'],ready_source_commit=os.environ['READY_SOURCE_COMMIT'],
+                instance=event['payload']['instance'])))
+        Path('continuation-event.json').write_bytes(module.canonical(event))
+        PY
+        python -I -S research/kalshi/frankie_boss/operations/workflow_event_bridge.py prepare-outbox --event continuation-event.json
+    - name: Publish durable event intent before network dispatch
+      id: outbox
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: workflow-event-outbox-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+        path: workflow-event-transport/workflow-event-outbox/
+        retention-days: 30
+        if-no-files-found: error
+    - name: Dispatch only after confirmed artifact publication
+      shell: bash
+      working-directory: workflow-event-transport
+      env:
+        GH_TOKEN: ${{ github.token }}
+        WORKFLOW_OUTBOX_ARTIFACT_CONFIRMED: 'true'
+      run: python -I -S research/kalshi/frankie_boss/operations/workflow_event_bridge.py dispatch --event continuation-event.json
+    - name: Preserve dispatch acknowledgement or uncertainty
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: workflow-event-attempt-${{ github.run_id }}-${{ github.run_attempt }}-${{ github.job }}
+        path: workflow-event-transport/workflow-event-outbox/
+        retention-days: 30
+        if-no-files-found: warn

@@ -2,6 +2,11 @@ name: Record an exact retained principal response
 on:
   workflow_dispatch:
     inputs:
+      continuation_event:
+        description: Optional exact event to dispatch after this response is durably recorded
+        required: false
+        type: string
+        default: ''
       source_ref:
         description: Exact commit holding the three response witnesses
         required: true
@@ -30,6 +35,11 @@ on:
         options: ['initial', 'correction']
   workflow_call:
     inputs:
+      continuation_event:
+        description: Optional exact event to dispatch after this response is durably recorded
+        required: false
+        type: string
+        default: ''
       source_ref:
         description: Exact commit holding the three response witnesses
         required: true
@@ -64,6 +74,7 @@ on:
         required: false
 permissions:
   contents: read
+  actions: write
 jobs:
   record:
     if: github.repository == 'DavisAI1974/Markets'
@@ -215,6 +226,32 @@ jobs:
             --set "RecordSha256=$RECORD_SHA256" \
             --set "RecordBytes=$RECORD_BYTES" \
             --timeout 900 --tail 0 --comment "receipt-bound principal response" | tee delivery.log
+      - name: Bind optional continuation to the response just recorded
+        if: inputs.continuation_event != ''
+        env:
+          EVENT_JSON: ${{ inputs.continuation_event }}
+          CONTEXT_JSON: ${{ inputs.context_json }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          RESPONSE_PATH: ${{ inputs.response_path }}
+          ATTESTATION_PATH: ${{ inputs.attestation_path }}
+          RECORD_PATH: ${{ inputs.record_path }}
+          TURN: ${{ inputs.turn }}
+          INSTANCE: ${{ inputs.instance }}
+          BUCKET: ${{ inputs.bucket }}
+        run: |
+          python -I -S - <<'PY'
+          import json,os
+          e=json.loads(os.environ['EVENT_JSON'])
+          payload={name:os.environ[name.upper()] for name in
+                   ('source_ref','response_path','attestation_path','record_path','turn','instance','bucket')}
+          if e.get('action')!='principal' or e.get('payload')!=payload or e.get('context')!=json.loads(os.environ['CONTEXT_JSON']):
+              raise SystemExit('continuation must name the exact response just recorded')
+          PY
+      - name: Retain and dispatch principal availability
+        if: inputs.continuation_event != ''
+        uses: ./.github/actions/frankie-workflow-event
+        with:
+          event_json: ${{ inputs.continuation_event }}
       - name: Retain delivery receipt evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

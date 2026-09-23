@@ -628,3 +628,24 @@ def test_completed_pipeline_cannot_emit_archive_for_its_historical_wait(api,reta
     assert api.archive_event(f["pipeline"],source_commit=event["source_commit"],
         receipts_commit=event["receipts_commit"],configuration_path=event["pipeline_configuration"]["path"],
         runs_root=event["runs_root"],go=event["go"]) is None
+
+
+def test_completed_requested_batch_cannot_emit_archive_for_historical_wait(api,retained_pipeline):
+    f=retained_pipeline
+    original=f["pipeline"]
+    module=api.load_module("partial_event_pipeline_fixture",ROOT/"research/kalshi/frankie_boss/operations/day_pipeline.py")
+    pipeline=module.DayPipeline(f["configuration"],"20211004",runs_root="partial-runs",cycle_limit=2)
+    for stage in ("stage-sources","host-start","ingest","schedule-prefixes"):
+        pipeline.write(stage,original.receipt(stage)["gate"],command=[])
+    gate=copy.deepcopy(f["pending"]["gate"])
+    gate["requested_cycles"]=2
+    pipeline._write_wait(gate,2,None)
+    batch=dict(schema="FRANKIE_DAY_PIPELINE_RECEIPT_V1",day="20211004",stage="cycles",status="PARTIAL",
+        gate=dict(status="requested_cycles_complete",day="20211004",cycles_completed=2,
+                  requested_cycles=2,cycles_total=3),
+        previous_receipt_sha256=sha(canonical(pipeline.receipt("schedule-prefixes"))))
+    (pipeline.directory/"04-cycles-batch-02.json").write_bytes(canonical(batch))
+    event=f["event"]
+    assert api.archive_event(pipeline,source_commit=event["source_commit"],
+        receipts_commit=event["receipts_commit"],configuration_path=event["pipeline_configuration"]["path"],
+        runs_root="partial-runs",go=event["go"]) is None

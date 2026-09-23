@@ -99,7 +99,18 @@ try {
     $code = $LASTEXITCODE
 } finally { Pop-Location }
 if (Test-Path $log) {
-    Get-Content -LiteralPath $log
+    if ($pendingReturnEnabled) {
+        # The native log remains complete on the host. SSM is only the receipt transport;
+        # streaming model output here can hide its final receipt in the SSM response limit.
+        $nativeLog = [ordered]@{
+            path = $log
+            bytes = (Get-Item -LiteralPath $log).Length
+            sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $log).Hash.ToLower()
+        }
+        Write-Output ('NATIVE_LOG ' + ($nativeLog | ConvertTo-Json -Compress))
+    } else {
+        Get-Content -LiteralPath $log
+    }
 }
 
 # The runner states its own outcome on its last JSON line. This script never infers a completion

@@ -1,0 +1,235 @@
+name: Resume one receipt-bound existing Frankie WAIT
+on:
+  workflow_call:
+    inputs:
+      continuation_event:
+        type: string
+        required: true
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_SESSION_TOKEN:
+        required: false
+permissions:
+  contents: read
+  actions: read
+env:
+  BRIDGE: research/kalshi/frankie_boss/operations/workflow_event_bridge.py
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    if: github.repository == 'DavisAI1974/Markets'
+    outputs:
+      event: ${{ steps.bound.outputs.event }}
+      released: ${{ steps.bound.outputs.released }}
+      consumed: ${{ steps.bound.outputs.consumed }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+      - name: Require unchanged executable caller revision before checkout
+        env:
+          EVENT_JSON: ${{ inputs.continuation_event }}
+          CALLER_COMMIT: ${{ github.sha }}
+        run: |
+          python -I -S - <<'PY'
+          import json,os,re,subprocess
+          from pathlib import Path
+          e=json.loads(os.environ['EVENT_JSON'])
+          source=e['source_commit'];root=e['runs_root'];day=e['day']
+          if (not re.fullmatch('[0-9a-f]{40}',source) or not re.fullmatch('[0-9]{8}',day)
+              or not re.fullmatch('[A-Za-z0-9_./-]+',root)
+              or any(p in ('','.','..') for p in root.split('/'))):
+              raise SystemExit('explicit source and retained receipt path required')
+          subprocess.run(['git','fetch','--no-tags','--depth=1','origin',source],check=True)
+          changes=subprocess.check_output(['git','diff','--name-status',source,os.environ['CALLER_COMMIT']],text=True)
+          allowed=(root+'/'+day+'/','research/kalshi/frankie_boss/runs/request-archives/')
+          for line in changes.splitlines():
+              status,path=line.split('\t',1)
+              if status!='A' or not path.startswith(allowed):
+                  raise SystemExit('caller workflow/source differs from pinned execution revision')
+          subprocess.run(['git','checkout','--detach',source],check=True)
+          Path('continuation-event.json').write_text(os.environ['EVENT_JSON'])
+          PY
+      - name: Bind retained pipeline, current WAIT and owner release
+        id: bound
+        run: python -I -S "$BRIDGE" validate --event continuation-event.json
+      - name: Record held or previously consumed event
+        env:
+          RELEASED: ${{ steps.bound.outputs.released }}
+          CONSUMED: ${{ steps.bound.outputs.consumed }}
+        run: |
+          printf 'Owner release: %s\nPreviously consumed: %s\n' "$RELEASED" "$CONSUMED" >> "$GITHUB_STEP_SUMMARY"
+  archive:
+    needs: validate
+    if: needs.validate.outputs.released == 'true' && needs.validate.outputs.consumed != 'true' && fromJSON(needs.validate.outputs.event).action == 'archive'
+    uses: ./.github/workflows/frankie_host_stage_critic_request.yml
+    with:
+      request_sha256: ${{ fromJSON(needs.validate.outputs.event).payload.request_sha256 }}
+      cycle_index: ${{ fromJSON(needs.validate.outputs.event).payload.cycle_index }}
+      instance: ${{ fromJSON(needs.validate.outputs.event).payload.instance }}
+      day: ${{ fromJSON(needs.validate.outputs.event).payload.day }}
+      run_root: ${{ fromJSON(needs.validate.outputs.event).payload.run_root }}
+      bucket: ${{ fromJSON(needs.validate.outputs.event).payload.bucket }}
+      key_parameter: ${{ fromJSON(needs.validate.outputs.event).payload.key_parameter }}
+    secrets: inherit
+    permissions:
+      contents: write
+  readiness:
+    needs: validate
+    if: needs.validate.outputs.released == 'true' && needs.validate.outputs.consumed != 'true' && fromJSON(needs.validate.outputs.event).action == 'readiness'
+    uses: ./.github/workflows/frankie_deliver_readiness.yml
+    with:
+      ready_run_id: ${{ fromJSON(needs.validate.outputs.event).payload.ready_run_id }}
+      ready_source_commit: ${{ fromJSON(needs.validate.outputs.event).payload.ready_source_commit }}
+      context_json: ${{ toJSON(fromJSON(needs.validate.outputs.event).context) }}
+      instance: ${{ fromJSON(needs.validate.outputs.event).payload.instance }}
+    secrets: inherit
+  principal:
+    permissions:
+      contents: read
+      actions: write
+    needs: validate
+    if: needs.validate.outputs.released == 'true' && needs.validate.outputs.consumed != 'true' && fromJSON(needs.validate.outputs.event).action == 'principal'
+    uses: ./.github/workflows/frankie_host_record_principal_response.yml
+    with:
+      source_ref: ${{ fromJSON(needs.validate.outputs.event).payload.source_ref }}
+      response_path: ${{ fromJSON(needs.validate.outputs.event).payload.response_path }}
+      attestation_path: ${{ fromJSON(needs.validate.outputs.event).payload.attestation_path }}
+      record_path: ${{ fromJSON(needs.validate.outputs.event).payload.record_path }}
+      context_json: ${{ toJSON(fromJSON(needs.validate.outputs.event).context) }}
+      instance: ${{ fromJSON(needs.validate.outputs.event).payload.instance }}
+      bucket: ${{ fromJSON(needs.validate.outputs.event).payload.bucket }}
+      turn: ${{ fromJSON(needs.validate.outputs.event).payload.turn }}
+    secrets: inherit
+  resume:
+    needs: [validate, readiness, principal]
+    if: >-
+      !cancelled() && needs.validate.result == 'success' &&
+      needs.validate.outputs.released == 'true' && needs.validate.outputs.consumed != 'true' &&
+      (needs.readiness.result == 'success' || needs.principal.result == 'success')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1380
+    outputs:
+      resumed: ${{ steps.resume.outputs.resumed }}
+      resume_artifact: continuation-resume-${{ github.run_id }}-${{ github.run_attempt }}
+      next_archive_event: ${{ steps.resume.outputs.next_archive_event }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ fromJSON(needs.validate.outputs.event).source_commit }}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - run: python -m pip install --no-cache-dir boto3==1.42.23 botocore==1.42.97
+      - name: Retain validated event
+        env:
+          EVENT_JSON: ${{ needs.validate.outputs.event }}
+        run: |
+          python -I -S - <<'PY'
+          import os
+          from pathlib import Path
+          Path('continuation-event.json').write_text(os.environ['EVENT_JSON'])
+          PY
+      - name: Resume only the existing cycle stage
+        id: resume
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+          AWS_DEFAULT_REGION: us-east-2
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: python "$BRIDGE" resume --event continuation-event.json
+      - name: Retain complete native result and immutable receipt chain
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: continuation-resume-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            workflow-event-outbox/
+            ${{ fromJSON(needs.validate.outputs.event).runs_root }}/${{ fromJSON(needs.validate.outputs.event).day }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+  next_archive:
+    needs: [validate, resume]
+    if: needs.resume.outputs.resumed == 'true' && needs.resume.outputs.next_archive_event != ''
+    uses: ./.github/workflows/frankie_host_stage_critic_request.yml
+    with:
+      request_sha256: ${{ fromJSON(needs.resume.outputs.next_archive_event).payload.request_sha256 }}
+      cycle_index: ${{ fromJSON(needs.resume.outputs.next_archive_event).payload.cycle_index }}
+      instance: ${{ fromJSON(needs.resume.outputs.next_archive_event).payload.instance }}
+      day: ${{ fromJSON(needs.resume.outputs.next_archive_event).payload.day }}
+      run_root: ${{ fromJSON(needs.resume.outputs.next_archive_event).payload.run_root }}
+      bucket: ${{ fromJSON(needs.resume.outputs.next_archive_event).payload.bucket }}
+      key_parameter: ${{ fromJSON(needs.resume.outputs.next_archive_event).payload.key_parameter }}
+    secrets: inherit
+    permissions:
+      contents: write
+  finalize:
+    needs: [validate, resume, next_archive]
+    if: >-
+      !cancelled() && needs.resume.result == 'success' && needs.resume.outputs.resumed == 'true' &&
+      (needs.next_archive.result == 'success' || needs.next_archive.result == 'skipped')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ fromJSON(needs.validate.outputs.event).source_commit }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.resume.outputs.resume_artifact }}
+          path: resume-evidence
+      - name: Retain validated event
+        env:
+          EVENT_JSON: ${{ needs.validate.outputs.event }}
+        run: |
+          python -I -S - <<'PY'
+          import os
+          from pathlib import Path
+          Path('continuation-event.json').write_text(os.environ['EVENT_JSON'])
+          PY
+      - name: Append receipts with exact parent comparison
+        run: python -I -S "$BRIDGE" finalize --event continuation-event.json --resume-directory resume-evidence
+      - name: Retain publication evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: continuation-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: workflow-event-outbox/
+          if-no-files-found: error
+          retention-days: 30
+  finalize_archive:
+    needs: [validate, archive]
+    if: needs.archive.result == 'success'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ fromJSON(needs.validate.outputs.event).source_commit }}
+      - name: Retain validated archive event
+        env:
+          EVENT_JSON: ${{ needs.validate.outputs.event }}
+        run: |
+          python -I -S - <<'PY'
+          import os
+          from pathlib import Path
+          Path('continuation-event.json').write_text(os.environ['EVENT_JSON'])
+          PY
+      - name: Record archive consumption after confirmed publication
+        env:
+          ARCHIVE_COMMIT: ${{ needs.archive.outputs.archive_commit }}
+        run: python -I -S "$BRIDGE" finalize-archive --event continuation-event.json --archive-commit "$ARCHIVE_COMMIT"
+      - name: Retain archive completion evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: continuation-archive-publication-${{ github.run_id }}-${{ github.run_attempt }}
+          path: workflow-event-outbox/
+          if-no-files-found: error
+          retention-days: 30

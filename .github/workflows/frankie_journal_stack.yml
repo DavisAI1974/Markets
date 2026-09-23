@@ -5,6 +5,11 @@ name: Frankie day pipeline (beginning to end; the actual combined Sunday journal
 on:
   workflow_dispatch:
     inputs:
+      continuation_event:
+        description: 'Exact retained WAIT continuation event; all original pipeline jobs are bypassed.'
+        type: string
+        required: false
+        default: ''
       day:
         description: 'Trading day YYYYMMDD'
         required: true
@@ -46,16 +51,25 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: frankie-day-${{ inputs.day || github.sha }}
+  group: frankie-day-${{ inputs.continuation_event != '' && fromJSON(inputs.continuation_event).event_id || inputs.day || github.sha }}
   cancel-in-progress: false
 env:
   PIPELINE: research/kalshi/frankie_boss/operations/day_pipeline.py
   PIPELINE_CONFIGURATION: research/kalshi/frankie_boss/operations/day_pipeline.configuration.json
   RUNS_ROOT: research/kalshi/frankie_boss/runs
 jobs:
+  continuation:
+    if: github.repository == 'DavisAI1974/Markets' && github.event_name == 'workflow_dispatch' && inputs.continuation_event != ''
+    uses: ./.github/workflows/frankie_workflow_continuation.yml
+    with:
+      continuation_event: ${{ inputs.continuation_event }}
+    secrets: inherit
+    permissions:
+      contents: write
+      actions: write
   sources:
     # Stage 1 on the runner: the day's source files pinned into S3 with a manifest (receipt 00).
-    if: github.repository == 'DavisAI1974/Markets' && inputs.day != '' && !inputs.checks_only
+    if: (github.repository == 'DavisAI1974/Markets' && inputs.day != '' && !inputs.checks_only) && inputs.continuation_event == ''
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     outputs:
@@ -114,7 +128,7 @@ jobs:
   journal:
     # Runs after `sources` on a dispatch; on the original push trigger `sources` is skipped (no day
     # input) and this job must still run exactly as before, so a skipped need is not a failure here.
-    if: github.repository == 'DavisAI1974/Markets' && !cancelled() && needs.sources.result != 'failure' && inputs.ingest_on != 'host' && !inputs.checks_only && needs.sources.outputs.ingest_present != 'true'
+    if: (github.repository == 'DavisAI1974/Markets' && !cancelled() && needs.sources.result != 'failure' && inputs.ingest_on != 'host' && !inputs.checks_only && needs.sources.outputs.ingest_present != 'true') && inputs.continuation_event == ''
     needs: [sources]
     runs-on: ${{ inputs.runner || 'ubuntu-24.04' }}
     timeout-minutes: 360
@@ -194,9 +208,11 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
   host:
+    outputs:
+      receipts_commit: ${{ steps.publish.outputs.receipts_commit }}
     # Stages 3/4-7 on the native host over SSM (receipts 02/03-06). Cycles runs only under `go` = the source manifest hash.
     # With ingest_on=host the journal job is skipped and this job runs the stack over SSM on the host's CPUs.
-    if: github.repository == 'DavisAI1974/Markets' && inputs.day != '' && !cancelled() && needs.sources.result == 'success' && (needs.journal.result == 'success' || needs.journal.result == 'skipped') && (inputs.go == '' || needs.checks.result == 'success')
+    if: (github.repository == 'DavisAI1974/Markets' && inputs.day != '' && !cancelled() && needs.sources.result == 'success' && (needs.journal.result == 'success' || needs.journal.result == 'skipped') && (inputs.go == '' || needs.checks.result == 'success')) && inputs.continuation_event == ''
     needs: [sources, journal, checks]
     runs-on: ubuntu-24.04
     timeout-minutes: 1380
@@ -233,12 +249,17 @@ jobs:
           [ -z "$UNTIL_STAGE" ] || arguments+=(--until "$UNTIL_STAGE")
           python "$PIPELINE" "${arguments[@]}"
       - name: Commit the receipts (always)
+        id: publish
         if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$RUNS_ROOT/${{ inputs.day }}"
           git diff --staged --quiet || (git commit -m "runs/${{ inputs.day }}: day pipeline receipts (run ${{ github.run_id }}) [skip ci]" && git fetch --no-tags origin "${{ github.ref_name }}" && git rebase FETCH_HEAD && git push origin "HEAD:${{ github.ref_name }}")
+          published="$(git rev-parse HEAD)"
+          remote="$(git ls-remote --heads origin "refs/heads/${{ github.ref_name }}" | cut -f1)"
+          [ "$remote" = "$published" ] || { echo 'Exact receipt publication not confirmed'; exit 1; }
+          echo "receipts_commit=$published" >> "$GITHUB_OUTPUT"
       - name: Job summary = the receipts
         if: always()
         run: |
@@ -247,9 +268,36 @@ jobs:
             echo "### $(basename "$f")" >> "$GITHUB_STEP_SUMMARY"; echo '```json' >> "$GITHUB_STEP_SUMMARY"
             cat "$f" >> "$GITHUB_STEP_SUMMARY"; echo '```' >> "$GITHUB_STEP_SUMMARY"
           done
+  emit_archive:
+    needs: host
+    if: github.repository == 'DavisAI1974/Markets' && inputs.continuation_event == '' && needs.host.result == 'success' && needs.host.outputs.receipts_commit != '' && inputs.go != ''
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.sha }}
+      - name: Derive archive event only from confirmed retained WAIT receipts
+        id: emit
+        env:
+          SOURCE_COMMIT: ${{ github.sha }}
+          RECEIPTS_COMMIT: ${{ needs.host.outputs.receipts_commit }}
+          TRADING_DAY: ${{ inputs.day }}
+          SOURCE_GO: ${{ inputs.go }}
+        run: |
+          python -I -S research/kalshi/frankie_boss/operations/workflow_event_bridge.py emit-archive \
+            --configuration "$PIPELINE_CONFIGURATION" --day "$TRADING_DAY" --source-commit "$SOURCE_COMMIT" \
+            --receipts-commit "$RECEIPTS_COMMIT" --runs-root "$RUNS_ROOT" --go "$SOURCE_GO"
+      - name: Retain and dispatch request archive event
+        if: steps.emit.outputs.event != ''
+        uses: ./.github/actions/frankie-workflow-event
+        with:
+          event_json: ${{ steps.emit.outputs.event }}
   cleanup:
     # Also runs when a failed journal prevents the native job from starting.
-    if: always() && github.repository == 'DavisAI1974/Markets' && inputs.day == '20211003' && !inputs.checks_only && !inputs.keep_compute
+    if: (always() && github.repository == 'DavisAI1974/Markets' && inputs.day == '20211003' && !inputs.checks_only && !inputs.keep_compute) && inputs.continuation_event == ''
     needs: [sources, journal, host]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
@@ -278,7 +326,7 @@ jobs:
           path: ${{ env.RUNS_ROOT }}/${{ inputs.day }}/*stop.json
           if-no-files-found: error
   checks:
-    if: github.repository == 'DavisAI1974/Markets' && inputs.day == '20211003' && (inputs.checks_only || inputs.go != '')
+    if: (github.repository == 'DavisAI1974/Markets' && inputs.day == '20211003' && (inputs.checks_only || inputs.go != '')) && inputs.continuation_event == ''
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     env:

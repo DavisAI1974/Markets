@@ -3,6 +3,10 @@ name: Retained Granite progress observer
 on:
   workflow_dispatch:
     inputs:
+      continuation_event:
+        description: Optional exact retained WAIT event for automatic readiness delivery and same-run resume
+        required: false
+        type: string
       request_sha256:
         description: SHA256 of the exact admitted request stored in its authenticated Git archive or the retained S3 request prefix
         required: true
@@ -33,6 +37,9 @@ jobs:
     if: github.repository == 'DavisAI1974/Markets'
     runs-on: ubuntu-24.04
     timeout-minutes: 360
+    permissions:
+      contents: read
+      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -70,6 +77,15 @@ jobs:
           path: work/retained-granite/
           retention-days: 30
           if-no-files-found: error
+      - name: Notify the receipt-bound continuation after readiness publication
+        if: matrix.role == 'prepare' && inputs.continuation_event != ''
+        continue-on-error: true
+        uses: ./.github/actions/frankie-workflow-event
+        with:
+          event_json: ${{ inputs.continuation_event }}
+          ready_run_id: ${{ github.run_id }}
+          ready_source_commit: ${{ github.sha }}
+          request_sha256: ${{ inputs.request_sha256 }}
       - name: Observe until local stop or observer handoff
         if: matrix.role == 'prepare'
         run: python -m research.kalshi.frankie_boss.granite_retained_host hold
