@@ -297,7 +297,7 @@ def fake_git(api,monkeypatch,files=None,head="d"*40,modes=None):
                 if names:result+=separator
         elif "show" in argv:
             name=argv[-1].split(":",1)[1]
-            result=files[name]
+            result=Path(name).read_bytes() if argv[-1].startswith("HEAD:") else files[name]
         else:
             raise AssertionError("unexpected metadata request "+repr(argv))
         if kwargs.get("text"):
@@ -358,3 +358,26 @@ def test_symlink_git_object_is_not_admitted_as_regular_receipt_bytes(api,retaine
     fake_git(api,monkeypatch,files={name:path.read_bytes()},modes={name:"120000"})
     with pytest.raises(ValueError):
         api.load_pipeline(f["event"])
+
+@pytest.mark.parametrize("stage,field,value",[
+    ("stage-sources","records",18),("ingest","journal_count",18),
+    ("ingest","compact_sha256","0"*64),
+])
+def test_actual_loader_refuses_changed_earlier_receipt_chain(api,retained_pipeline,monkeypatch,stage,field,value):
+    f=retained_pipeline
+    path=f["pipeline"].path(stage)
+    record=json.loads(path.read_bytes())
+    record["gate"][field]=value
+    path.write_bytes(canonical(record))
+    fake_git(api,monkeypatch)
+    with pytest.raises((ValueError,RuntimeError)):
+        api.load_pipeline(f["event"],overlay=False)
+
+@pytest.mark.parametrize("stage",["stage-sources","host-start","ingest"])
+def test_actual_loader_refuses_missing_earlier_receipt(api,retained_pipeline,monkeypatch,stage):
+    f=retained_pipeline
+    path=f["pipeline"].path(stage)
+    path.rename(path.with_suffix(".fixture-retained"))
+    fake_git(api,monkeypatch)
+    with pytest.raises((ValueError,RuntimeError)):
+        api.load_pipeline(f["event"],overlay=False)
