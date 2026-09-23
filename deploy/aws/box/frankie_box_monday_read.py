@@ -68,7 +68,7 @@ def derive(view, work):
     from research.kalshi.frankie_boss.context_session import journal_prefix
     from research.kalshi.frankie_raw_mbo_benchmark import native_roll20
     from research.kalshi.frankie_raw_mbo_benchmark.a_memory_member_first_recalculation_20260828 import (
-        describe_structure, book_values, book_transition, BOOK_FIELDS)
+        describe_structure, book_transition, BOOK_FIELDS)
     import frankie_box_bedrock as B
     V4MboAdapter = producer_module('research/ng_exhaustion_mbo_v4_state_adapter_20260820.py',
                                    'research.ng_exhaustion_mbo_v4_state_adapter_20260820').V4MboAdapter
@@ -102,8 +102,9 @@ def derive(view, work):
             try:
                 record_book = dict(ts_recv_ns=frame.get('ts_recv_ns'), ts_event_ns=frame.get('ts_event_ns'))
                 record_book.update({k: book.get(k) for k in ('best_bid', 'best_ask', 'mid', 'depth_imbalance_n')})
-                record_book.update(book_values(book))
-                record_book['transition'] = book_transition(previous_book, book)['sign_signature']
+                transition = book_transition(previous_book, book)
+                record_book.update(transition['after'])  # exact producer-returned full-depth fields
+                record_book['transition'] = transition['sign_signature']
                 frames.append(record_book)
             except Exception as error:
                 failures.append(dict(index=index, book=True, error=f'{type(error).__name__}: {error}'))
