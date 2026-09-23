@@ -1,7 +1,8 @@
 """Author the Monday 20211004 cycle-0 launch bindings from the recovered journal.
 
-Frankie principal authorship (Greg, 2026-09-23: "act as Frankie principal and author it"). Cycle 0 is the first
-window of the Monday trading day, as large as fits the 131,072 context under stacked_v2 (~15.6 tokens/row). One read-only pass over the sealed original
+Frankie principal authorship (Greg, 2026-09-23). ONE cycle for the whole Monday trading day (Sunday 18:00 ET to
+Monday 17:00 ET): the cutoff is the last complete group before 16:00 ET, the final hour to the halt is the learning
+feedback, and the model window is the latest 6,500 rows at the cutoff under stacked_v2. One read-only pass over the sealed original
 container through the existing verified view; every output is new under one fresh root. No model call,
 ingestion, replay, runtime control or source write. The existing preparation operation stays the
 authority for the schedule and prefixes; this only writes the launch inputs it requires.
@@ -24,15 +25,16 @@ from frankie_box_prepare_trading_day import (  # noqa: E402
 RECOVERY = Path('/opt/frankie-box/work/sealed-recovery-35796793428')
 AUTHOR_PARENT = Path('/opt/frankie-box/work/monday-launch')
 MODEL_CONTEXT_ROWS = 6500
+CUTOFF_BEFORE_NS = 1633377600000000000   # 2021-10-04T20:00:00Z = 16:00 ET, one hour before the halt
 INSTRUMENT = 111313
 OPEN_NS = 1633298400000000000    # 2021-10-03T22:00:00Z, the declared CME trading-day open
 CLOSE_NS = 1633381200000000000   # 2021-10-04T21:00:00Z, the declared halt
 PRICE_SCALE = 10**9
 SENTINEL = 2**63 - 1
-CUTOFF_RULE = ('Frankie principal, one-cycle roster: cycle 0 cuts at the first complete F_LAST group, in source '
-               'order, whose inclusive prefix holds at least model_context_rows (6500) rows of the roster entity '
-               '(its publisher, instrument 111313); availability is the maximum receive clock of that prefix. The '
-               'single retained cutoff learns through the terminal delivery of the trading day.')
+CUTOFF_RULE = ('One cycle per trading day: cycle 0 cuts at the last complete F_LAST group whose receive clock is '
+               'before 2021-10-04T20:00:00Z (16:00 ET, one hour before the halt); availability is the maximum receive '
+               'clock of that prefix; the model window is the latest model_context_rows (6500) rows at the cutoff; '
+               'the cycle learns through the terminal delivery of the trading day.')
 
 
 def canonical(value):
@@ -94,7 +96,7 @@ def measure(view, completion):
             entity_rows += 1
         else:
             other_rows += 1
-        if (cutoff is None and record.get('action') == 'T' and record['instrument_id'] == INSTRUMENT
+        if (normal['ts_recv_ns'] < CUTOFF_BEFORE_NS and record.get('action') == 'T' and record['instrument_id'] == INSTRUMENT
                 and type(record.get('price')) is int and 0 < record['price'] < SENTINEL
                 and normal['ts_event_ns'] >= OPEN_NS):
             mark = dict(event_ns=normal['ts_event_ns'], receive_ns=None, price=price(record['price']),
@@ -107,7 +109,7 @@ def measure(view, completion):
                 last_event = mark['event_ns']
                 pending.append(mark)
         if record['flags'] & 128:
-            if cutoff is None and entity_rows >= MODEL_CONTEXT_ROWS:
+            if normal['ts_recv_ns'] < CUTOFF_BEFORE_NS:   # the latest complete group before the cutoff clock wins
                 cutoff = dict(group_index=len(lines), through_cursor=cursor, recv_ns=normal['ts_recv_ns'],
                               as_of=as_of, source_as_of=source_as_of, source_hash=row['terminal_prefix_hash'],
                               entity_rows=entity_rows, other_entity_rows=other_rows)
