@@ -188,24 +188,50 @@ def dispatch_event(directory,event,dispatch):
 
 def load_pipeline(event,*,overlay=True):
     validate_shape(event)
+    current=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+    if current!=event['source_commit']:
+        raise ValueError('workflow implementation differs from exact source commit')
+    pin=event['pipeline_configuration']
+    raw=WAIT._read(pin['path'])
+    if sha(raw)!=pin['sha256'] or subprocess.check_output(['git','show','HEAD:'+pin['path']])!=raw:
+        raise ValueError('pipeline configuration must be pinned in the source checkout')
+    configuration=json.loads(raw)
+    release=configuration.get('owner_release')
+    if release is not None:
+        release_path=relative(release['path'])
+        if Path(release_path).exists():
+            source_release=subprocess.check_output(['git','show','HEAD:'+release_path])
+            if source_release!=WAIT._read(release_path) or sha(source_release)!=release['sha256']:
+                raise ValueError('owner release must be pinned by the source checkout')
     if overlay:
         subprocess.run(['git','fetch','--no-tags','--depth=1','origin',event['receipts_commit']],check=True,
                        stdout=subprocess.DEVNULL)
         folder=event['runs_root']+'/'+event['day']
-        names=subprocess.check_output(['git','ls-tree','-r','--name-only',event['receipts_commit'],'--',folder],text=True).splitlines()
-        for name in names:
+        entries=subprocess.check_output(['git','ls-tree','-r',event['receipts_commit'],'--',folder],text=True).splitlines()
+        stage_names={'00-stage-sources.json':'stage-sources','01-host-start.json':'host-start',
+                     '02-ingest.json':'ingest','03-schedule-prefixes.json':'schedule-prefixes',
+                     '04-cycles.json':'cycles','05-package-upload.json':'package-upload',
+                     '06-snapshot-stop.json':'snapshot-stop'}
+        for entry in entries:
+            metadata,name=entry.split('\t',1); mode,kind,blob=metadata.split()
             relative(name)
-            if Path(name).parent.as_posix()!=folder or not name.endswith('.json'):continue
+            base=Path(name).name
+            if Path(name).parent.as_posix()!=folder:continue
+            stage=stage_names.get(base)
+            if re.fullmatch(r'04-cycles-wait-[0-9a-f]{64}\.json',base):stage='cycles'
+            if re.fullmatch(r'04-cycles-batch-[0-9]+\.json',base):stage='cycles'
+            if stage is None:continue
+            if name==pin['path'] or (release is not None and name==release['path']) or mode!='100644' or kind!='blob':
+                raise ValueError('receipt overlay cannot substitute source or linked evidence')
             raw=subprocess.check_output(['git','show',event['receipts_commit']+':'+name])
-            # Only receipt JSON is transported; no source or executable file is overlaid.
-            json.loads(raw)
+            value=json.loads(raw)
+            if (type(value) is not dict or value.get('schema')!='FRANKIE_DAY_PIPELINE_RECEIPT_V1'
+                    or value.get('day')!=event['day'] or value.get('stage')!=stage):
+                raise ValueError('only exact day-pipeline receipt schemas may be overlaid')
             path=DELIVERY.checked_path(name)
             if path.exists():
                 if WAIT._read(path)!=raw:raise ValueError('immutable receipt overlay differs')
             else:DELIVERY.publish_bytes(path,raw)
-    pin=event['pipeline_configuration']; raw=WAIT._read(pin['path'])
-    if sha(raw)!=pin['sha256']:raise ValueError('pipeline configuration bytes changed')
-    configuration=json.loads(raw)
     module=load_module('_workflow_event_pipeline',HERE/'day_pipeline.py')
     pipeline=module.DayPipeline(configuration,event['day'],runs_root=event['runs_root'])
     validate_event(event,pipeline)

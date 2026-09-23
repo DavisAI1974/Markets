@@ -359,8 +359,38 @@ class DayPipeline:
             raise StageRefused('retained pending metadata publication refused: ' + str(error)) from error
         return record
 
+    def _pending_prefix(self):
+        """Authenticate every prior stage against the immutable declared source."""
+        previous = None
+        retained = {}
+        for stage in STAGES[:STAGES.index('cycles')]:
+            try:
+                record = json.loads(self._metadata()._read(self.path(stage)))
+            except (ValueError, OSError) as error:
+                raise StageRefused('pending run requires intact preceding receipts') from error
+            if (type(record) is not dict or record.get('schema') != SCHEMA
+                    or record.get('day') != self.day or record.get('stage') != stage
+                    or type(record.get('gate')) is not dict
+                    or any(record['gate'].get(name) is None for name in GATES[stage])
+                    or record.get('previous_receipt_sha256') !=
+                       (hashlib.sha256(canonical(previous)).hexdigest() if previous else None)):
+                raise StageRefused('pending prior-stage receipt chain differs')
+            retained[stage] = record
+            previous = record
+        source = retained['stage-sources']['gate']
+        ingestion = retained['ingest']['gate']
+        if (source['manifest_hash'] != self.declaration['source_manifest_hash']
+                or type(source['records']) is not int
+                or source['records'] != self.declaration['source_record_count']
+                or type(ingestion['journal_count']) is not int
+                or ingestion['journal_count'] != source['records']
+                or retained['host-start']['gate']['ssm_online'] is not True):
+            raise StageRefused('pending source or ingestion differs from the declared day')
+        self._prepared_gate(retained['schedule-prefixes']['gate'])
+
     def pending(self):
         """Validate the complete immutable chain, refusing ambiguous/foreign history."""
+        self._pending_prefix()
         records = {}
         config_hash = hashlib.sha256(canonical(self.c)).hexdigest()
         previous_hash = hashlib.sha256(canonical(self.receipt('schedule-prefixes'))).hexdigest()
