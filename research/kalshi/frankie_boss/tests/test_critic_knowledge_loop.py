@@ -347,3 +347,26 @@ def test_real_controller_exchange_and_exact_replay(tmp_path,monkeypatch,acknowle
         with pytest.raises(ValueError):asyncio.run(active.refresh(**dict(request,critic_knowledge=changed)))
         assert critic.calls==1
     finally:journal.close();bridge.book.close()
+
+def helpful(statement='SUPPORTED_MECHANISM_SENTINEL'):
+    return dict(schema='FRANKIE_HELPFUL_KNOWLEDGE_V1',statement=statement,evidence_hashes=['a'*64])
+
+def test_positive_only_model_view_preserves_full_audit(tmp_path):
+    source=snapshot(tmp_path);cutoff=native.unpack(json.loads(source.text)['receipt'])['as_of']
+    original=record('PRIOR_AUDIT_ID_SENTINEL',cutoff)
+    original['lessons']=[helpful(),{'text':'FAILED_APPROACH_SENTINEL'},{'text':'MISSING_DATA_SENTINEL'},
+        {'text':'Helpful successful positive WITHOUT_EVIDENCE_SENTINEL'}]
+    diagnostic='CRITIC_DIAGNOSTIC_SENTINEL'
+    original['critic_exchange']=dict(schema='FRANKIE_CRITIC_EXCHANGE_V1',status='rejected',verdict='L3',
+        request_hash='e'*64,snapshot_hash='f'*64,response_text=diagnostic,
+        response_hash=hashlib.sha256(diagnostic.encode()).hexdigest(),available_ns=cutoff)
+    before=json.dumps(original,sort_keys=True)
+    audit=build([original],cutoff=cutoff);route=context_route('stacked_v1')
+    encoded=route.encode(source,knowledge=audit);prompt=route.build_prompt(encoded).text
+    assert 'SUPPORTED_MECHANISM_SENTINEL' in prompt
+    for marker in ('FAILED_APPROACH_SENTINEL','MISSING_DATA_SENTINEL','WITHOUT_EVIDENCE_SENTINEL',
+            'CRITIC_DIAGNOSTIC_SENTINEL','PRIOR_AUDIT_ID_SENTINEL'):
+        assert marker not in prompt
+    assert json.loads(encoded.text)['knowledge']==audit
+    assert route.native(encoded).text==source.text
+    assert json.dumps(original,sort_keys=True)==before

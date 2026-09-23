@@ -32,3 +32,10 @@ Remote CI runs pytest against new attachment, route, controller, coordinator, du
 
 ## Status
 Specification accepted by the user's explicit instruction above. Implementation and production evidence pending.
+
+## User refinement — positive, time-neutral historical priming
+Greg subsequently directed priming from the prior six-hour run using only positive/helpful supported knowledge, excluding failed approaches and missing-data notes. He explicitly raised that these lessons may be future knowledge for earlier cycle cutoffs and that later cycles can carry such knowledge.
+
+The chosen mode is knowledge_primed_learning_replay. The full audit retains truthful source availability, source request and receipt hashes. The model-visible projection contains only selected supported statements and opaque lesson/evidence hashes; it omits source dates, future prices/outcomes, failed approaches, missing-data commentary and critique diagnostics. Results under this mode are marked as a learning replay and cannot be reported as blind forecast results. Ordinary causal lessons still obey availability <= as_of.
+
+Historical priming is a separate explicit capsule, independently bound to the retained response, host attestation/record and derivation receipt. It does not fabricate a completed training receipt. Successful verified calculation methods may enter; unstructured positive-sounding prose alone is insufficient. This selection preserves the full original history and must be carried through preflight and exact retry.
