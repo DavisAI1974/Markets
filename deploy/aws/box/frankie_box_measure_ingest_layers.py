@@ -80,6 +80,18 @@ def layers(rows):
     return out, texts, all_templates, len(dictionary)
 
 
+def lower_layers(rows):
+    """L1-L3 only; recorded even when the L4 table layer cannot render a segment."""
+    out = dict(L1=sum(len(encode_block(c)) for c in chunks(rows)))
+    lookup, dictionary, l2, l3 = {}, [], 0, 0
+    for chunk in chunks(rows):
+        records, new, _ = split(chunk, lookup, dictionary)
+        l2 += gz(canonical_tagged_bytes([new, [list(r) for r in records]]))
+        l3 += gz(canonical_tagged_bytes([new, [[o, k, t, refs, size] for o, k, t, refs, _, size in records]]))
+    out.update(L2=l2, L3=l3)
+    return out, len(dictionary)
+
+
 def rebuild(texts, templates, rows):
     """Decode L4 in order (the carried dictionary grows block by block); every body and digest must match."""
     dictionary, index = [], 0
@@ -129,23 +141,28 @@ def measure(output, segments, entries):
                 sizes, texts, templates, orders = layers(rows)
                 sizes['L0'] = stored
                 exact, error = rebuild(texts, templates, rows), None
-            except Exception as err:  # reported per segment, never scored
-                sizes, orders, exact, error = dict(L0=stored), None, False, '%s: %s' % (type(err).__name__, str(err)[:200])
+            except Exception as err:  # L4 reported per segment, never scored; L1-L3 still recorded
+                error, exact = '%s: %s' % (type(err).__name__, str(err)[:200]), False
+                sizes, orders = lower_layers(rows)
+                sizes.update(L0=stored, L4=None)
             item = dict(first_block=first, first_entry=blocks[first][0], stored_blocks=i - first, entries=len(rows),
                         plain_bytes=sum(len(r[2]) for r in rows), distinct_orders=orders, exact=exact, error=error,
                         **sizes)
             sink.write(json.dumps(item, sort_keys=True) + '\n')
             results.append(item)
     good = [r for r in results if r['exact']]
+    lower = [r for r in results if r.get('L3')]
     totals = {k: sum(r[k] for r in good) for k in ('plain_bytes', 'L0', 'L1', 'L2', 'L3', 'L4')}
+    lower_totals = {k: sum(r[k] for r in lower) for k in ('plain_bytes', 'L0', 'L1', 'L2', 'L3')}
     def dist(key):
-        values = sorted(r['L0'] / r[key] for r in good)
+        pool = good if key == 'L4' else lower
+        values = sorted(r['L0'] / r[key] for r in pool)
         return dict(min=round(values[0], 3), p50=round(values[len(values)//2], 3), max=round(values[-1], 3)) if values else None
     summary = dict(schema='FRANKIE_INGEST_LAYERS_MEASURE_V1', digest_schema=DIGEST_SCHEMA, container=CONTAINER,
         container_blocks=len(blocks), container_entries=total_entries, container_block_bytes=total_bytes,
         mean_entries_per_stored_block=round(total_entries / len(blocks), 2),
         segments=len(results), exact_segments=len(good), entries_measured=sum(r['entries'] for r in good),
-        sampled_totals=totals, gain_over_L0_per_segment={k: dist(k) for k in ('L1', 'L2', 'L3', 'L4')},
+        sampled_totals=totals, lower_layer_segments=len(lower), lower_layer_totals=lower_totals, gain_over_L0_per_segment={k: dist(k) for k in ('L1', 'L2', 'L3', 'L4')},
         first_errors=[r['error'] for r in results if r['error']][:5],
         seconds=round(time.time() - started, 1), source_writes=0, model_calls=0)
     (output/'summary.json').open('x').write(json.dumps(summary, sort_keys=True))

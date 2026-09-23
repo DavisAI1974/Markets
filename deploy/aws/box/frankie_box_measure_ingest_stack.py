@@ -27,17 +27,18 @@ from research.kalshi.frankie_boss.verified_journal_reader import DIGEST_PREFIX, 
 
 CONTAINER = '/opt/frankie-box/work/ingest-20211004-ingest-1790057801/journal.compact.sqlite'
 OUTPUT_PARENT = Path('/opt/frankie-box/work/ingest-stack-measure')
-BYTES, TUPLE = '$b', '$t'
+BYTES, TUPLE, EMPTY = '$b', '$t', '$e'
 
 
 def encode(value):
-    """Table-safe exact form: bytes -> {'$b': hex}; every tuple -> {'$t': [...]}; the rest unchanged."""
+    """Table-safe exact form: bytes -> {'$b': hex}; every tuple -> {'$t': [...]}; an empty dict (a flat table
+    has no column for it) -> {'$e': True}; the rest unchanged."""
     if type(value) is bytes:
         return {BYTES: value.hex()}
     if type(value) is dict:
-        if BYTES in value or TUPLE in value:
+        if BYTES in value or TUPLE in value or EMPTY in value:
             raise ValueError('reserved marker key present in data')
-        return {k: encode(v) for k, v in value.items()}
+        return {k: encode(v) for k, v in value.items()} if value else {EMPTY: True}
     if type(value) is tuple:
         return {TUPLE: [encode(v) for v in value]}
     if type(value) is list:
@@ -51,6 +52,8 @@ def decode(value):
             return bytes.fromhex(value[BYTES])
         if set(value) == {TUPLE}:
             return tuple(decode(v) for v in value[TUPLE])
+        if set(value) == {EMPTY}:
+            return {}
         return {k: decode(v) for k, v in value.items()}
     if type(value) is list:
         return [decode(v) for v in value]
