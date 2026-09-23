@@ -152,3 +152,28 @@ def test_session_witness_hashes_without_whole_file_read(tmp_path,monkeypatch):
     expected=hashlib.sha256(path.read_bytes()).hexdigest()
     monkeypatch.setattr(Path,'read_bytes',lambda *a,**k: (_ for _ in ()).throw(AssertionError('whole read')))
     assert session.witness(path)==dict(bytes=300000,sha256=expected)
+
+def test_session_reuse_gate_reads_only_the_digest_header(tmp_path, monkeypatch):
+    session=session_module()
+    obj=session.Session.__new__(session.Session); obj.work=tmp_path
+    obj._pin_matches_request=lambda: {}
+    path=tmp_path/'derivation-digest-full.md'
+    path.write_text('# Derivation digest '+FX.DG.SCHEMA+' (fixture)\n'+'x'*10000)
+    monkeypatch.setattr(Path,'read_text',lambda *a,**k: (_ for _ in ()).throw(AssertionError('whole text read')))
+    assert obj._derive_needed()==(True,'no derive.json')
+
+def test_measurement_estimate_streams_digest_bytes_and_table_headers(tmp_path, monkeypatch):
+    import types
+    session=session_module()
+    obj=session.Session.__new__(session.Session); obj.work=tmp_path; obj.cycle='00'; obj.note=lambda text: None
+    monkeypatch.setattr(session,'ROOT',tmp_path/'box')
+    monkeypatch.setitem(sys.modules,'tokenizers',types.SimpleNamespace(Tokenizer=object))
+    raw=b'# fixture\n### table example: 1 rows\n'+b'x'*100000+b'\n'
+    path=tmp_path/'derivation-digest-full.md'; path.write_bytes(raw)
+    monkeypatch.setattr(Path,'read_bytes',lambda *a,**k: (_ for _ in ()).throw(AssertionError('whole bytes read')))
+    monkeypatch.setattr(Path,'read_text',lambda *a,**k: (_ for _ in ()).throw(AssertionError('whole text read')))
+    got=obj._measure_digest()['digest']
+    assert got['bytes']==len(raw) and got['sha256']==hashlib.sha256(raw).hexdigest()
+    assert got['tables']==['example:']
+    assert got['tokens']==int(len(raw)/session.BYTES_PER_TOKEN)
+    assert got['token_basis'].startswith('estimate:')
