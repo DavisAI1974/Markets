@@ -1556,6 +1556,14 @@ class Session:
             return complete
         names = [c['name'] for c in C.components(visible)]
         rid = self.request['request_id']
+        mode = visible['pre_message']['mode']
+        evidence_text = None
+        if mode != 'TEACH':
+            evidence_paths = [self.work / n for n in ('merged-notes.md','derivation-digest-full.md')]
+            evidence_text = '\n'.join('----- ' + p.name + ' -----\n' + p.read_text(encoding='utf-8')
+                for p in evidence_paths if p.is_file())
+            if not evidence_text.strip():
+                self.refuse('classroom: independent current evidence is missing')
         self.note(f'classroom: {len(names)} component answers on the {"serverless" if self.serverless else "Pod"} lane, then the summary on the BOSS')
 
         def one(name):
@@ -1563,12 +1571,12 @@ class Session:
             filename = f'component-{index:02d}-{name}.json'
             comp = C.component(visible, name)
             rights = [p['right'] for p in C.pairs_of(visible, name)]
-            text = C.component_prompt(visible, name, cycle=self.cycle, request_id=rid)
+            text = C.component_prompt(visible, name, cycle=self.cycle, request_id=rid, evidence_text=evidence_text)
             text += '\nClassroom exchange identity: ' + cache_module.digest(cache.identity) + '\n'
             retained = cache.load(filename, text)
             if retained is not None:
                 return retained
-            parsed, call = self._classroom_call(f'classroom-{index:02d}-{name}', text, lambda body: C.parse_component(body, comp, rights), 'reader')
+            parsed, call = self._classroom_call(f'classroom-{index:02d}-{name}', text, lambda body: C.parse_component(body, comp, rights, mode=mode), 'reader')
             return cache.save(filename, text, dict(schema='FRANKIE_BOX_CLASSROOM_COMPONENT_V1', name=name, call=call, parsed=parsed))
 
         results = self._fan_out('classroom', names, one)

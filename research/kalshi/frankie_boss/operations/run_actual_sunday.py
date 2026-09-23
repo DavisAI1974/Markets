@@ -240,6 +240,19 @@ def incomplete_output_alert(error):
         artifact_path=error.artifact_path,cleanup_pending=details.get('cleanup_pending'))
 
 
+
+def training_configuration(development, lineage):
+    """Preserve existing identities; explicitly bind cumulative learned state."""
+    from research.kalshi.frankie_boss.critic_knowledge import CUMULATIVE, validate_learning_policy
+    policy=validate_learning_policy(lineage.get('learning_policy'))
+    if policy == CUMULATIVE:
+        return dict(schema='FRANKIE_CUMULATIVE_TRAINING_CONFIGURATION_V1',
+            development=development,knowledge_lineage=lineage)
+    if lineage['priming'] is not None:
+        return dict(schema='FRANKIE_PRIMED_TRAINING_CONFIGURATION_V1',
+            development=development,knowledge_lineage=lineage)
+    return development
+
 class ActualHost:
     def __init__(self,configuration,*,prepare_only=False,probe=None):
         self.probe=probe
@@ -503,13 +516,12 @@ class ActualHost:
         if self.schedule is None: raise ValueError('the verified schedule (model_context_rows) is required before training; verify the sources first')
         self.coordinator._knowledge_lineage_unchanged()
         lineage=self.coordinator._lineage_value()
-        training_config=self.api.native.DEVELOPMENT
-        if lineage['priming'] is not None:
-            training_config=dict(schema='FRANKIE_PRIMED_TRAINING_CONFIGURATION_V1',
-                development=self.api.native.DEVELOPMENT,knowledge_lineage=lineage)
+        training_config=training_configuration(self.api.native.DEVELOPMENT,lineage)
+        if lineage['priming'] is not None or lineage.get('learning_policy') is not None:
             self.save('training-knowledge-lineage.c15.json',dict(
                 schema='FRANKIE_TRAINING_KNOWLEDGE_BINDING_V1',
-                knowledge_mode=lineage['priming']['mode'],knowledge_lineage=lineage,
+                knowledge_mode=(lineage['priming']['mode'] if lineage['priming'] is not None
+                    else 'knowledge_primed_learning_replay'),knowledge_lineage=lineage,
                 training_config_hash=j.evidence_hash(training_config)))
         self.context,self.decoder,self.optimizer,identity=self.api.native.initialize(self.builder,context_rows=self.schedule['model_context_rows'])
         self.identity=identity
@@ -942,21 +954,29 @@ class ActualHost:
             context_encoding=self.host['context_encoding'],context_encoding_options=self.encoding_options(binding),
             critic_knowledge=critic_knowledge)
 
-    async def run(self):
+    def _initialize_coordinator(self):
+        from research.kalshi.frankie_boss.critic_knowledge import validate_learning_policy
         c=self.config;h=self.host
+        policy=validate_learning_policy(c.get('learning_policy'))
+        if policy is not None and h.get('context_encoding') != 'stacked_v1':
+            raise ValueError('cumulative learning requires stacked critic route')
         priming=None
         if c.get('critic_priming') is not None:
             if h.get('context_encoding') != 'stacked_v1':
                 raise ValueError('historical priming requires stacked critic route')
             declared=c['critic_priming']
-            if (set(declared)!={'mode','profile'} or declared['profile']!='retained_cycle00_20260921'):
+            if (type(declared) is not dict or set(declared)!={'mode','profile'} or declared['profile']!='retained_cycle00_20260921'):
                 raise ValueError('explicit retained historical priming profile required')
             from research.kalshi.frankie_boss.granite_positive_priming import load_retained_priming
             priming=load_retained_priming(h['repository'],mode=declared['mode'])
             self.save('historical-priming-provenance.c15.json',priming)
         self.coordinator=self.api.CycleCoordinator(self.directory/'cycles.sqlite',lessons_path=self.directory/'lessons.sqlite',
             frozen_memory_path=c['memory']['path'],frozen_memory_sha256=c['memory']['sha256'],
-            create=not (self.directory/'cycles.sqlite').exists(),phase_callback=self.phase,critic_priming=priming)
+            create=not (self.directory/'cycles.sqlite').exists(),phase_callback=self.phase,critic_priming=priming,learning_policy=policy)
+
+    async def run(self):
+        c=self.config;h=self.host
+        self._initialize_coordinator()
         principal=dict(mapping_directory=str(Path(c['mapping']['path']).parent),expected_mapping_sha256=c['mapping']['sha256'],
             receiver_root=c['receiver_root'],receiver_commit=c['receiver_commit'],python=sys.executable,
             admission=c.get('principal_admission'),  # audit finding 4: declared per run; undeclared refuses at use

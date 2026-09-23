@@ -104,6 +104,7 @@ def prepare_integrated_cycle(
     previous_snapshot: Mapping[str, Any] | None = None,
     history: Sequence[Mapping[str, Any]] = (),
     prior_grade: Mapping[str, Any] | None = None,
+    learning_history: Mapping[str, Any] | None = None,
 ) -> dict:
     """Build the final reviewed classroom package without the intermediate hardening layer."""
     snapshot = classroom.snapshot_teacher_attachment(
@@ -132,6 +133,16 @@ def prepare_integrated_cycle(
         "not a classroom error merely because Dipole did not teach it. Cite the causal evidence "
         "that led you to it and keep future outcomes outside the wall."
     )
+    if learning_history is not None:
+        from .dipole_classroom_learning import validate_history
+        learned = validate_history(learning_history)
+        if (learned['knowledge']['request_id'] != request_id or learned['knowledge']['cutoff_ns'] != as_of
+                or len(learned['exchanges']) != cycle_index):
+            raise ValueError('classroom learning history belongs to another request or cycle')
+        message['learning_history'] = learned
+        message['future_wall'] = ('All completed earlier learning is available in this learning replay, '
+            'including knowledge acquired after the current market cutoff. Preserve its origin and status. '
+            'Do not claim an unseen future outcome or relabel prior learning as a new observation.')
     message["teacher_message_hash"] = evidence_hash(message)
     binding = {
         "request_id": request_id,
@@ -150,6 +161,9 @@ def prepare_integrated_cycle(
         "coverage_count": len(COLUMNS),
         "relationship_pairs_required": classroom.PAIR_COUNT,
     }
+    if learning_history is not None:
+        binding.update(learning_policy=learned['learning_policy'], learning_history_hash=learned['history_hash'],
+            learning_measurement='CUMULATIVE_LEARNING_REPLAY', independent_discovery_eligible=False)
     binding["classroom_binding_hash"] = evidence_hash(binding)
     return {
         "source": snapshot,

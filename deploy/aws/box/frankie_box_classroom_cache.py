@@ -1,6 +1,7 @@
 """Request-bound classroom artifacts; interrupted publications retain their source answers."""
 import hashlib
 import json
+import os
 import time
 from pathlib import Path
 
@@ -17,17 +18,70 @@ def read(path):
 def write(path, value):
     Path(path).write_text(json.dumps(value, sort_keys=True, indent=1, allow_nan=False) + '\n', encoding='utf-8')
 
-def preserve(path, reason):
-    path = Path(path)
-    destination = path.with_name(path.name + '.superseded-' + str(time.time_ns()))
-    receipt = dict(schema='FRANKIE_CLASSROOM_SUPERSEDE_V1', original=str(path),
-                   retained=str(destination), reason=reason)
-    if path.is_file():
-        receipt['original_witness'] = witness(path)
-    path.rename(destination)
-    receipt_path = destination / 'superseded.json' if destination.is_dir() else destination.with_name(destination.name + '.receipt.json')
-    write(receipt_path, receipt)
+def _durable_json(path, value):
+    """Create immutable intent before its recorded move."""
+    raw = json.dumps(value, sort_keys=True, indent=1, allow_nan=False) + '\n'
+    with Path(path).open('x', encoding='utf-8') as stream:
+        stream.write(raw)
+        stream.flush()
+        os.fsync(stream.fileno())
+
+def _preservation_receipt_path(destination, kind):
+    if kind == 'directory': return destination / 'superseded.json'
+    return destination.with_name(destination.name + '.receipt.json')
+
+def _finish_preservation(intent_path, intent):
+    if (type(intent) is not dict or intent.get('schema') != 'FRANKIE_CLASSROOM_SUPERSEDE_INTENT_V1'
+            or intent.get('kind') not in ('file','directory') or type(intent.get('receipt')) is not dict):
+        raise ValueError('invalid classroom preservation intent')
+    receipt = intent['receipt']
+    source, destination = Path(receipt['original']), Path(receipt['retained'])
+    parent = Path(intent_path).parent.absolute()
+    if (source.parent != parent or destination.parent != parent
+            or not destination.name.startswith(source.name + '.superseded-')
+            or receipt.get('schema') != 'FRANKIE_CLASSROOM_SUPERSEDE_V1'):
+        raise ValueError('classroom preservation paths differ')
+    receipt_path = _preservation_receipt_path(destination,intent['kind'])
+    if receipt_path.exists():
+        if read(receipt_path) != receipt: raise ValueError('classroom preservation receipt differs')
+        return destination
+    if destination.exists():
+        if source.exists(): raise ValueError('both pending classroom preservation paths exist')
+    else:
+        if not source.exists(): raise ValueError('pending classroom preservation source is absent')
+        if source.is_dir() != (intent['kind'] == 'directory'):
+            raise ValueError('classroom preservation source kind differs')
+        if intent['kind'] == 'file' and witness(source) != receipt['original_witness']:
+            raise ValueError('classroom preservation source bytes changed')
+        source.rename(destination)
+    if destination.is_dir() != (intent['kind'] == 'directory'):
+        raise ValueError('classroom preservation destination kind differs')
+    if intent['kind'] == 'file' and witness(destination) != receipt['original_witness']:
+        raise ValueError('classroom preservation retained bytes changed')
+    temporary = receipt_path.with_name(receipt_path.name + '.pending-' + str(time.time_ns()))
+    _durable_json(temporary,receipt)
+    temporary.rename(receipt_path)
     return destination
+
+def recover_preservations(directory):
+    directory = Path(directory).absolute()
+    if not directory.exists(): return
+    for intent_path in sorted(directory.glob('*.supersede-intent-*.json')):
+        _finish_preservation(intent_path,read(intent_path))
+
+def preserve(path, reason):
+    path = Path(path).absolute()
+    recover_preservations(path.parent)
+    token = str(time.time_ns())
+    destination = path.with_name(path.name + '.superseded-' + token)
+    receipt = dict(schema='FRANKIE_CLASSROOM_SUPERSEDE_V1',original=str(path),
+        retained=str(destination),reason=reason)
+    kind = 'directory' if path.is_dir() else 'file'
+    if kind == 'file': receipt['original_witness'] = witness(path)
+    intent = dict(schema='FRANKIE_CLASSROOM_SUPERSEDE_INTENT_V1',kind=kind,receipt=receipt)
+    intent_path = path.with_name(path.name + '.supersede-intent-' + token + '.json')
+    _durable_json(intent_path,intent)
+    return _finish_preservation(intent_path,intent)
 
 def identity(session, visible, module):
     box = Path(module.__file__).parent
@@ -53,6 +107,8 @@ class ClassroomCache:
         self.writer = writer
         self.directory = Path(directory)
         self.identity = expected
+        recover_preservations(self.directory.parent)
+        recover_preservations(self.directory)
         manifest = self.directory / 'identity.json'
         if self.directory.exists() and any(self.directory.iterdir()):
             try:
@@ -92,7 +148,7 @@ class ClassroomCache:
     def complete(self):
         try:
             receipt = read(self.directory / 'receipt.json')
-            if receipt.get('identity') != self.identity:
+            if type(receipt) is not dict or receipt.get('identity') != self.identity:
                 return None
             for name in ('ledgers.json', 'classroom.md'):
                 if receipt['artifacts'][name] != witness(self.directory / name):

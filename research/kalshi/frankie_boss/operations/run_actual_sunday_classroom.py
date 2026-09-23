@@ -170,6 +170,10 @@ class ClassroomActualHost(base.ActualHost):
         index = binding["cycle_index"]
         request_id = f"{self.config['run_id']}-cycle-{index:02d}"
         previous, prior_grade = self._previous_source_and_grade(index)
+        learned = None
+        if self.coordinator.learning_policy is not None:
+            from research.kalshi.frankie_boss.dipole_classroom_learning import completed_history
+            learned = completed_history(self, request_id=request_id, cutoff_ns=binding['as_of'], cycle_index=index)
         package = prepare_integrated_cycle(
             teacher,
             request_id=request_id,
@@ -181,6 +185,7 @@ class ClassroomActualHost(base.ActualHost):
             previous_snapshot=previous,
             history=self._history(index),
             prior_grade=prior_grade,
+            learning_history=learned,
         )
         if tuple(package["source"]["context_cursors"]) != tuple(
             self.cache.receipt["context_cursors"]
@@ -218,18 +223,8 @@ class ClassroomActualHost(base.ActualHost):
         return runtime
 
     async def run(self):
-        c = self.config
-        if c.get('critic_priming') is not None:
-            raise ValueError('classroom host does not support historical priming; use the explicit priming-capable host')
-        h = self.host
-        self.coordinator = self.api.CycleCoordinator(
-            self.directory / "cycles.sqlite",
-            lessons_path=self.directory / "lessons.sqlite",
-            frozen_memory_path=c["memory"]["path"],
-            frozen_memory_sha256=c["memory"]["sha256"],
-            create=not (self.directory / "cycles.sqlite").exists(),
-            phase_callback=self.phase,
-        )
+        c, h = self.config, self.host
+        self._initialize_coordinator()
         principal = dict(
             mapping_directory=str(Path(c["mapping"]["path"]).parent),
             expected_mapping_sha256=c["mapping"]["sha256"],

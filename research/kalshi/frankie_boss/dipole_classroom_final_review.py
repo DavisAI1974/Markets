@@ -69,8 +69,9 @@ def prepare_final_cycle(teacher: Mapping[str, Any], *, request_id: str, cycle_in
 def final_model_visible_classroom(package: Mapping[str, Any]) -> dict:
     package = validate_package(package)
     mode = package['binding']['mode']
-    independent = _independent_discovery_eligible(mode)
-    value = {'binding': package['binding'], 'pre_message': package['pre_message'], 'audit_key_object_withheld': True, 'independent_discovery_eligible': independent, 'learning_measurement': _learning_measurement(mode), 'coverage_invariant': 'ALL_19_DIPOLE_DIMENSIONS_EVERY_CYCLE', 'required_response_ledgers': {'dipole_observation_review': 'EVERY_RETAINED_OBSERVATION_FOR_ALL_19_DIMENSIONS', 'dipole_relationship_scan': classroom.PAIR_COUNT, 'dipole_novel_findings': 'ZERO_OR_MORE_STRUCTURED_CANDIDATES_AFTER_REQUIRED_COVERAGE'}}
+    independent = package['binding'].get('independent_discovery_eligible', _independent_discovery_eligible(mode))
+    measurement = package['binding'].get('learning_measurement', _learning_measurement(mode))
+    value = {'binding': package['binding'], 'pre_message': package['pre_message'], 'audit_key_object_withheld': True, 'independent_discovery_eligible': independent, 'learning_measurement': measurement, 'coverage_invariant': 'ALL_19_DIPOLE_DIMENSIONS_EVERY_CYCLE', 'required_response_ledgers': {'dipole_observation_review': 'EVERY_RETAINED_OBSERVATION_FOR_ALL_19_DIMENSIONS', 'dipole_relationship_scan': classroom.PAIR_COUNT, 'dipole_novel_findings': 'ZERO_OR_MORE_STRUCTURED_CANDIDATES_AFTER_REQUIRED_COVERAGE'}}
     value['model_visible_hash'] = evidence_hash(value)
     return value
 
@@ -147,7 +148,9 @@ def _teacher_pairs(key: Mapping[str, Any]) -> tuple[dict[tuple[str, str], Mappin
     result = {(item['left'], item['right']): item for item in key['relationship_scan']}
     return result, order
 
-def investigate_novel_findings(key: Mapping[str, Any], findings: Sequence[Mapping[str, Any]], *, mode: str) -> dict:
+def investigate_novel_findings(key: Mapping[str, Any], findings: Sequence[Mapping[str, Any]], *, mode: str, learning_policy=None) -> dict:
+    from .critic_knowledge import validate_learning_policy
+    validate_learning_policy(learning_policy)
     observations = _teacher_observations(key)
     pairs, order = _teacher_pairs(key)
     investigations = []
@@ -199,11 +202,12 @@ def investigate_novel_findings(key: Mapping[str, Any], findings: Sequence[Mappin
             status = 'PARTIALLY_TESTABLE_NOVEL_HYPOTHESIS'
         else:
             status = 'CURRENT_CAUSAL_REFERENCES_MATCH'
-        independent = _independent_discovery_eligible(mode)
-        item = {'schema': NOVELTY_INVESTIGATION_SCHEMA, 'finding_id': finding['finding_id'], 'finding_hash': finding['finding_hash'], 'premise': finding['premise'], 'status': status, 'premise_disposition': 'RETAIN_AS_NOVEL_HYPOTHESIS', 'independent_discovery_eligible': independent, 'teacher_exposure_context': 'INDEPENDENT_DISCOVERY_ATTRIBUTION_ELIGIBLE' if independent else 'INSTRUCTIONAL_PHASE_DISCOVERY_CANDIDATE', 'inspected_evidence': tuple(inspected), 'specific_data_differences': tuple(differences), 'not_yet_testable': tuple(not_testable), 'teacher_response': 'I investigated the causal references you cited. ' + ('The specific differences listed below are places where the data is showing something else. I am not rejecting your whole premise; keep the broader idea as a hypothesis and revise only the contradicted subclaims.' if differences else 'I found no contradiction in the Dipole facts I can test here. That does not prove the broader premise; retain it as a hypothesis and look for reproduction in later causal windows.'), 'scored_for_classroom_mastery': False, 'promotion_rule': 'Do not promote this to Dipole curriculum merely because it appeared once. Track reproduction and later causally available evidence separately.'}
+        independent = learning_policy is None and _independent_discovery_eligible(mode)
+        item = {'schema': NOVELTY_INVESTIGATION_SCHEMA, 'finding_id': finding['finding_id'], 'finding_hash': finding['finding_hash'], 'premise': finding['premise'], 'status': status, 'premise_disposition': 'RETAIN_AS_NOVEL_HYPOTHESIS', 'independent_discovery_eligible': independent, 'teacher_exposure_context': ('CUMULATIVE_LEARNING_REPLAY' if learning_policy is not None else 'INDEPENDENT_DISCOVERY_ATTRIBUTION_ELIGIBLE' if independent else 'INSTRUCTIONAL_PHASE_DISCOVERY_CANDIDATE'), 'inspected_evidence': tuple(inspected), 'specific_data_differences': tuple(differences), 'not_yet_testable': tuple(not_testable), 'teacher_response': 'I investigated the causal references you cited. ' + ('The specific differences listed below are places where the data is showing something else. I am not rejecting your whole premise; keep the broader idea as a hypothesis and revise only the contradicted subclaims.' if differences else 'I found no contradiction in the Dipole facts I can test here. That does not prove the broader premise; retain it as a hypothesis and look for reproduction in later causal windows.'), 'scored_for_classroom_mastery': False, 'promotion_rule': 'Do not promote this to Dipole curriculum merely because it appeared once. Track reproduction and later causally available evidence separately.'}
         item['investigation_hash'] = evidence_hash(item)
         investigations.append(item)
     body = {'schema': NOVELTY_INVESTIGATION_SCHEMA, 'mode': mode, 'findings': tuple(investigations), 'finding_count': len(investigations), 'scored_for_classroom_mastery': False}
+    if learning_policy is not None: body['learning_policy'] = learning_policy
     body['investigation_bundle_hash'] = evidence_hash(body)
     return body
 
@@ -324,7 +328,7 @@ def group_review_items(items: Sequence[Mapping[str, Any]]) -> tuple[dict, ...]:
         groups.setdefault(root, []).append(correction_id)
     return tuple(({'root_cause_id': root, 'member_review_ids': tuple(members)} for root, members in groups.items()))
 
-def build_final_correction_request(*, original_request_sha256: str, response: Mapping[str, Any], grade: Mapping[str, Any], key: Mapping[str, Any], teachback: Mapping[str, Any], novelty_investigation: Mapping[str, Any]) -> dict:
+def build_final_correction_request(*, original_request_sha256: str, response: Mapping[str, Any], grade: Mapping[str, Any], key: Mapping[str, Any], teachback: Mapping[str, Any], novelty_investigation: Mapping[str, Any], learning_history: Mapping[str, Any] | None = None) -> dict:
     if type(original_request_sha256) is not str or len(original_request_sha256) != 64:
         raise ValueError('original principal request sha256 required')
     if type(response) is not dict or not isinstance(response.get('session_id'), str) or not response['session_id'].strip():
@@ -336,6 +340,10 @@ def build_final_correction_request(*, original_request_sha256: str, response: Ma
     if tuple((item['correction_id'] for item in items)) != ids:
         raise ValueError('learner evidence-review order differs from host grade')
     body = {'schema': CORRECTION_REQUEST_SCHEMA, 'original_request_sha256': original_request_sha256, 'session_id': response['session_id'], 'model_identity_as_reported_by_session': response['model_identity_as_reported_by_session'], 'post_grade_hash': grade['post_grade_hash'], 'correction_ids': ids, 'data_review_items': items, 'root_cause_groups': group_review_items(items), 'novelty_investigation': novelty_investigation, 'instruction': "Dipole investigated the specific causal evidence before responding. Review each data_review_item locally. Where a claim differs, the wording is 'the data is showing this instead'; do not infer that Frankie's whole premise is rejected. Novel findings are not scored as errors merely for being new. Stay in this exact session, resolve every correction_id in your own words, and state any remaining disagreement explicitly."}
+    if learning_history is not None:
+        from .dipole_classroom_learning import validate_history
+        body['learning_history'] = validate_history(learning_history)
+        body['instruction'] += ' Build on the complete retained learning history, preserving source identities, uncertainty and corrections.'
     body['request_sha256'] = evidence_hash(body)
     return body
 
@@ -355,7 +363,8 @@ def _render_final_pre(message: Mapping[str, Any]) -> str:
     extras = ['# Classroom interpretation notes', '', f"Direction definition: {message['direction_definition']}", '', f"Novelty invitation: {message['novelty_invitation']}", '']
     if prior is not None:
         extras += ['## Prior-cycle correction summary', '', prior['guidance'], '', f"Prior correction IDs: `{prior['correction_ids']}`", f"Prior-cycle mastery: `{prior['prior_cycle_mastered']}`", '']
-    return rendered + '\n\n' + '\n'.join(extras)
+    from .dipole_classroom_learning import learning_text
+    return rendered + '\n\n' + '\n'.join(extras) + learning_text(message.get('learning_history'))
 
 def _render_novel_findings(findings: Sequence[Mapping[str, Any]]) -> str:
     parts = ["# Frankie's novel findings", '']
@@ -439,12 +448,12 @@ class FinalDipoleClassroomPrincipalAdapter(hardened.HardenedDipoleClassroomPrinc
         teachback, grade = grade_initial_response(self.classroom_package, initial_response)
         grade = apply_relationship_view_crosscheck(grade, initial_response)
         novel_findings = validate_novel_findings(initial_response.get('dipole_novel_findings'), self.classroom_package['pre_message'])
-        novelty = investigate_novel_findings(self.classroom_package['teacher_key'], novel_findings, mode=self.classroom_package['binding']['mode'])
+        novelty = investigate_novel_findings(self.classroom_package['teacher_key'], novel_findings, mode=self.classroom_package['binding']['mode'], learning_policy=self.classroom_package['binding'].get('learning_policy'))
         self._retain('dipole-classroom-teachback.json', teachback)
         self._retain_audit('dipole-classroom-post-grade.json', grade)
         self._retain('dipole-classroom-novel-findings.json', novel_findings)
         self._retain('dipole-classroom-novelty-investigation.json', novelty)
-        correction = bind_final_resolution_requirement(build_final_correction_request(original_request_sha256=digest(request), response=initial_response, grade=grade, key=self.classroom_package['teacher_key'], teachback=teachback, novelty_investigation=novelty))
+        correction = bind_final_resolution_requirement(build_final_correction_request(original_request_sha256=digest(request), response=initial_response, grade=grade, key=self.classroom_package['teacher_key'], teachback=teachback, novelty_investigation=novelty, learning_history=self.classroom_package['pre_message'].get('learning_history')))
         correction_path = self.directory / 'classroom-correction-request.json'
         created = False
         if correction_path.exists():
