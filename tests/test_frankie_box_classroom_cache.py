@@ -116,3 +116,92 @@ def test_interrupted_publication_recovers_without_model_calls(tmp_path, monkeypa
     assert receipt['ledgers'] == session.witness(directory / 'ledgers.json')
     assert receipt['report']['consistent'] is True
     assert active.classroom_ledgers() == result
+
+
+@pytest.mark.parametrize("malformed", [None, [], 23, "not a receipt"])
+def test_malformed_receipt_recovers_from_answers_without_model_calls(
+    tmp_path, malformed
+):
+    active = Active(tmp_path)
+    active.classroom()
+    receipt = active.work / "classroom" / "receipt.json"
+    receipt.write_text(json.dumps(malformed), encoding="utf-8")
+    before = contents(active.work)
+    calls = list(active._calls)
+
+    result = active.classroom()
+
+    current(active, result, "A")
+    assert active._calls == calls
+    assert before <= contents(active.work)
+    assert active.classroom_ledgers() == result
+    repaired = json.loads(receipt.read_bytes())
+    assert repaired["ledgers"] == session.witness(
+        active.work / "classroom" / "ledgers.json"
+    )
+
+
+class PreserveInterrupted(RuntimeError):
+    pass
+
+
+@pytest.mark.parametrize("kind", ["file", "directory"])
+@pytest.mark.parametrize("boundary", ["before_rename", "after_rename"])
+def test_preservation_has_intent_before_move_and_completes_on_resume(
+    tmp_path, monkeypatch, kind, boundary
+):
+    module = session._box_module("frankie_box_classroom_cache")
+    directory = tmp_path / "classroom"
+    expected = {"schema": "TEST_CACHE_IDENTITY", "request": "one"}
+    module.ClassroomCache(directory, expected)
+    answer = directory / "answer.json"
+    original = b'{"retained":"original model answer"}\n'
+    answer.write_bytes(original)
+    source = answer if kind == "file" else directory
+    rename = Path.rename
+    observed = []
+
+    def interrupt(path, destination):
+        if path != source:
+            return rename(path, destination)
+        # Observe state before any source artifact moves.
+        observed.extend(
+            path.parent.glob(path.name + ".supersede-intent-*.json")
+        )
+        if boundary == "before_rename":
+            raise PreserveInterrupted("before rename")
+        rename(path, destination)
+        raise PreserveInterrupted("after rename")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "rename", interrupt)
+        with pytest.raises(PreserveInterrupted):
+            module.preserve(source, "synthetic interrupted replacement")
+
+    assert len(observed) == 1, "No durable move intent existed before rename"
+    intent_path = observed[0]
+    intent_bytes = intent_path.read_bytes()
+    intent = json.loads(intent_bytes)
+    assert intent["schema"] == "FRANKIE_CLASSROOM_SUPERSEDE_INTENT_V1"
+    receipt = intent["receipt"]
+    assert Path(receipt["original"]) == source
+    destination = Path(receipt["retained"])
+
+    # Construction must reconcile pending file and directory moves.
+    module.ClassroomCache(directory, expected)
+
+    retained_answer = destination if kind == "file" else destination / "answer.json"
+    assert retained_answer.read_bytes() == original
+    receipt_path = (
+        destination / "superseded.json"
+        if kind == "directory"
+        else destination.with_name(destination.name + ".receipt.json")
+    )
+    assert module.read(receipt_path) == receipt
+    assert intent_path.read_bytes() == intent_bytes
+
+    # A subsequent reconstruction must neither repeat nor lose the completed move.
+    before = contents(tmp_path)
+    module.ClassroomCache(directory, expected)
+    assert contents(tmp_path) == before
+    assert retained_answer.read_bytes() == original
