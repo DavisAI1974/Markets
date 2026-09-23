@@ -54,11 +54,19 @@ def test_v2_packed_forms_refuse_malformed_digits():
 
 
 def test_v2_packed_width_is_selected_by_the_token_cost(monkeypatch):
-    costs = {1: 9, 2: 3}
-    monkeypatch.setattr(v2, '_cost', lambda node: costs[node[2]])
+    monkeypatch.setattr(v2, '_cost', lambda node: 0 if node[2] == 3 else 9)
     packed = v2._packed([100, 101, 110])
-    assert packed == ['P', 100, 2, '000110']
+    assert packed == ['P', 100, 3, '000001010']
     assert v2._ints(packed, v1._Budget(v1.DEFAULT_LIMITS)) == [100, 101, 110]
+
+
+@pytest.mark.parametrize('values', ([100, 101, 110], [-999, 0, 999], [0, 10**18], [7, 7]))
+def test_v2_every_packed_candidate_round_trips(values, monkeypatch):
+    def checked_cost(node):
+        assert v2._ints(node, v1._Budget(v1.DEFAULT_LIMITS)) == values
+        return node[2]  # Prefer the narrowest valid spelling.
+    monkeypatch.setattr(v2, '_cost', checked_cost)
+    assert v2._ints(v2._packed(values), v1._Budget(v1.DEFAULT_LIMITS)) == values
 
 
 def test_v2_controller_readback(tmp_path):

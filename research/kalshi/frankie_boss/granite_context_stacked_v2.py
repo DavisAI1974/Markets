@@ -51,7 +51,9 @@ def _packed(values):
     # a digit run, so the character-shortest spelling is not always the
     # token-shortest spelling.
     candidates = []
-    for width in range(1, natural + 1):
+    # Widths below natural cannot delimit the largest value. Try the minimum
+    # and two padding widths, covering all three decimal alignment residues.
+    for width in range(natural, natural + 3):
         digits = ''.join(str(v - lo).zfill(width) for v in values)
         candidates.append(['P', lo, width, digits])
     return min(candidates, key=_cost)
