@@ -46,7 +46,7 @@ def attest(adapter, request, response, turn):
 
 
 @pytest.fixture
-def completed_run(tmp_path, monkeypatch):
+def completed_run(tmp_path, monkeypatch, request):
     ordinary, checkpoint, arguments, calls = coordinator_fixture(tmp_path, monkeypatch)
     ordinary.close()
 
@@ -68,6 +68,14 @@ def completed_run(tmp_path, monkeypatch):
     host.coordinator = store
     host.api = SimpleNamespace(driver=driver)
     dispatched = []
+    shared = None
+    research_bytes = None
+    if getattr(request, 'param', None) == 'science':
+        import test_dipole_teacher_discussion as discussion_fixture
+        scientific_fixture = discussion_fixture.DiscussionTests()
+        scientific_fixture.setUp()
+        shared = scientific_fixture.request['shared_knowledge']
+        research_bytes = scientific_fixture.fixture.research
 
     class Controller:
         context_encoding = "stacked_v1"
@@ -101,7 +109,7 @@ def completed_run(tmp_path, monkeypatch):
             request_id=request_id, cycle_index=index, cycle_count=8,
             source_hash="c" * 64, as_of=as_of, through_cursor=6 + index,
             previous_snapshot=None if not packages else packages[-1]["source"],
-            history=tuple(completions), learning_history=learned,
+            history=tuple(completions), learning_history=learned, shared_knowledge=shared,
         )
         for key, filename in (
             ("source", "source"), ("teacher_key", "teacher-key"),
@@ -170,6 +178,21 @@ def completed_run(tmp_path, monkeypatch):
                     request, parsed, session_id=request["session_id"],
                     model_identity=request["model_identity_as_reported_by_session"],
                 )
+            if not initial and shared is not None:
+                import test_dipole_teacher_discussion as discussion_fixture
+                from research.kalshi.frankie_boss import dipole_scientific_review as science
+                scientific_fixture = discussion_fixture.DiscussionTests()
+                scientific_fixture.setUp()
+                scientific_fixture.request = request['scientific_review_request']
+                scientific_fixture.fixture.request = scientific_fixture.request
+                scientific_fixture.fixture.descriptor = shared
+                scientific_fixture.fixture.research = research_bytes
+                scientific_fixture.base = scientific_fixture.fixture.complete()
+                scientific_fixture.sources = [dict(source_id='research',content=research_bytes)]
+                scientific_fixture.sources += [dict(source_id=key,content=science.canonical(scientific_fixture.request[field]))
+                    for key,field in [('initial-response','initial_response'),('fact-review','fact_review'),
+                                      ('learning-history','learning_history')]]
+                response['dipole_scientific_exchange'] = scientific_fixture.complete()
             return dict(response=response,
                         host_attestation=attest(adapter, request, response, turn))
 
@@ -193,7 +216,7 @@ def completed_run(tmp_path, monkeypatch):
         complete(1)
         yield SimpleNamespace(
             host=host, store=store, checkpoint=checkpoint, calls=dispatched,
-            packages=packages, adapters=adapters, reopen=reopen,
+            packages=packages, adapters=adapters, reopen=reopen, research_bytes=research_bytes,
         )
     finally:
         host.coordinator.close()
@@ -283,3 +306,31 @@ def test_completed_loader_refuses_an_omitted_completed_origin(completed_run):
         )
     with pytest.raises(ValueError):
         load_next(run)
+
+
+@pytest.mark.parametrize("completed_run",["science"],indirect=True)
+def test_completed_scientific_history_restores_all_attested_conversations_without_dispatch(completed_run):
+    from research.kalshi.frankie_boss import dipole_scientific_history as scientific_history
+    run=completed_run
+    before=list(run.calls)
+    value=load_next(run)
+    for index,entry in enumerate(value['exchanges']):
+        view=entry['frankie_correction_response']['dipole_scientific_exchange']
+        assert view['schema']==scientific_history.SCHEMA
+        original=json.loads((run.adapters[index].directory/'classroom-correction-response.json').read_bytes())
+        restored=scientific_history.restore(view,
+            request_fields=entry['teacher_correction_without_repeated_history']['scientific_review_request'],
+            initial_response=entry['frankie_response'],prior_exchanges=value['exchanges'][:index],
+            resolve_source=lambda source_id:run.research_bytes)
+        assert restored==original['response']['dipole_scientific_exchange']
+        assert entry['scientific_delivery_artifact']['response_sha256']==digest(original['response'])
+        assert 'FAILED_IDEA_'+str(index) in json.dumps(entry)
+        discussion=restored['teacher_discussion']['entries'][0]
+        assert discussion['boss_teacher']['parsed']['position']=='DISAGREE'
+        assert discussion['classroom_teacher']['parsed']['position']=='AGREE'
+        assert discussion['frankie']['parsed']['position']=='UNRESOLVED'
+        assert entry['completion']['teacher_complete'] is True
+    run.store.close()
+    run.host.coordinator=run.reopen()
+    assert load_next(run)==value
+    assert run.calls==before
