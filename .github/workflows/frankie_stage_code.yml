@@ -49,8 +49,18 @@ jobs:
         if: inputs.action == 'stage'
         run: |
           set -euo pipefail
+          # The runner checkout carries git metadata the helper refuses (run 35830466946:
+          # "external Git metadata dependency refused"). Pack from a standalone file://
+          # fetch of the exact commit instead; the helper's checks stay unchanged.
+          for name in config.worktree commondir objects/info/alternates; do
+            test ! -e "$GITHUB_WORKSPACE/.git/$name" || echo "runner checkout has .git/$name"
+          done
+          SOURCE="$RUNNER_TEMP/standalone-source"
+          git init --quiet --template= "$SOURCE"
+          git -C "$SOURCE" fetch --quiet --no-tags --depth=1 "file://$GITHUB_WORKSPACE" "$GITHUB_SHA"
+          git -C "$SOURCE" -c advice.detachedHead=false checkout --quiet --detach "$GITHUB_SHA"
           python -I -S -B deploy/aws/box/frankie_box_stage_code.py pack \
-            --repository "$GITHUB_WORKSPACE" --commit "$GITHUB_SHA" \
+            --repository "$SOURCE" --commit "$GITHUB_SHA" \
             --output "$RUNNER_TEMP/source.pack" > "$RUNNER_TEMP/source-pin.json"
       - name: Inventory or stage inactive source through reviewed SSM script
         run: |
