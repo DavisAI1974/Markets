@@ -41,12 +41,12 @@ manifests. No configuration, mathematical targets or market records change.
 
 ## Plan and verification
 
-- [ ] Commit isolated behavioral regressions and observe the intended failures.
-- [ ] Implement path validation, full pre-move plans, interruption reconciliation,
+- [x] Commit isolated behavioral regressions and observe the intended failures.
+- [x] Implement path validation, full pre-move plans, interruption reconciliation,
       exclusive execution and durable receipts; update obsolete text-only assertions.
-- [ ] Run behavioral tests and existing host-script contracts remotely.
-- [ ] Run parallel code, security and test /ship reviews; resolve required findings.
-- [ ] Record exact source revision, CI results, limitations and remaining launch gates.
+- [x] Run behavioral tests and existing host-script contracts remotely.
+- [x] Run parallel code, security and test /ship reviews; resolve required findings.
+- [x] Record exact source revision, CI results, limitations and remaining launch gates.
 
 Behavioral test command, from tests:
 python -m pytest test_host_state_preservation.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider
