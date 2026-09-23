@@ -268,8 +268,8 @@ def validate_correction_response(*, correction: Mapping[str, Any], response: Map
     if response.get("request_sha256") != correction.get("request_sha256"):
         raise ValueError("Frankie correction response belongs to a different correction request")
     if correction.get('scientific_review_request') is not None:
-        from .dipole_scientific_review import validate_exchange
-        validate_exchange(correction['scientific_review_request'], response.get('dipole_scientific_exchange'))
+        from .dipole_teacher_discussion import validate
+        validate(correction['scientific_review_request'], response.get('dipole_scientific_exchange'))
     return validate_acknowledgement(response.get("dipole_acknowledgement"), grade,
         session_id=initial_response["session_id"])
 

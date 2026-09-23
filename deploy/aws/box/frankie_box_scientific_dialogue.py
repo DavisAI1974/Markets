@@ -169,4 +169,7 @@ def run(session, correction, *, root, cache, classroom_module, staged_module):
     # Rebind additional retained retrieval turns before attaching the replies.
     result['reviews']=reviews
     result['exchange_hash']=science.digest({k:v for k,v in result.items() if k!='exchange_hash'})
-    return science.attach_reply(request,result,replies)
+    base=science.attach_reply(request,result,replies)
+    discussion=importlib.import_module('deploy.aws.box.frankie_box_teacher_discussion')
+    return discussion.run(session,request,base,sources,cache=cache,
+        classroom_module=C,staged_module=staged_module,run_task=run_task)
