@@ -84,7 +84,9 @@ function cmd.exe {{
     result=subprocess.run([state["pwsh"],"-NoLogo","-NoProfile","-NonInteractive","-File",str(wrapper)],
         capture_output=True,text=True,timeout=30)
     lines=[line[len("PIPELINE_RECEIPT "):] for line in result.stdout.splitlines() if line.startswith("PIPELINE_RECEIPT ")]
-    return dict(result=result,marker=marker,receipt=json.loads(lines[-1]) if lines else None)
+    logs=[line[len("NATIVE_LOG "):] for line in result.stdout.splitlines() if line.startswith("NATIVE_LOG ")]
+    return dict(result=result,marker=marker,receipt=json.loads(lines[-1]) if lines else None,
+                native_log=json.loads(logs[-1]) if logs else None)
 
 def test_valid_pending_return_emits_bound_wait_without_claiming_completion(state):
     got=invoke(state)
@@ -163,7 +165,7 @@ def test_large_native_log_is_retained_exactly_while_control_receipt_remains_visi
     assert got["result"].returncode==0,got["result"].stderr
     assert got["receipt"] is not None
     expected=(prefix+json.dumps(outcome)+"\n").encode()
-    log=got["receipt"]["native_log"]
+    log=got["native_log"]
     retained=Path(log["path"]).read_bytes()
     assert retained==expected
     assert log["bytes"]==len(expected)>32768
