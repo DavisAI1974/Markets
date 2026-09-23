@@ -35,13 +35,18 @@ ORIGINAL_CODE_BLOBS = {
 CODE_ORDER = tuple(ORIGINAL_CODE_BLOBS)
 
 
-def original_identity(code_blobs):
+def original_identity(code_blobs, *, require_adapter_semantics=True):
     current = implementation_identity()['code_blobs']
     if code_blobs != ORIGINAL_CODE_BLOBS and code_blobs != current:
         raise ValueError('unsupported original implementation')
-    # The reconstruction depends on these unchanged scientific state semantics.
+    # Reconstruction restores adapter state and must retain its exact semantics.
+    # A completed-evidence reader never restores or calls an adapter: it still
+    # requires the original identity and unchanged journal/prefix codecs.
+    unused = {'c15_builder.py', 'c15_observer.py'}
+    if not require_adapter_semantics:
+        unused.add('ng_exhaustion_mbo_v4_state_adapter_20260820.py')
     for name in CODE_ORDER:
-        if name not in ('c15_builder.py', 'c15_observer.py') and code_blobs[name] != current[name]:
+        if name not in unused and code_blobs[name] != current[name]:
             raise ValueError('recovery state semantics differ: ' + name)
     return dict(schema=SCHEMA, code_blobs={name: code_blobs[name] for name in CODE_ORDER},
                 contract_hash=evidence_hash(dict(schema=SCHEMA, retention='all supplied evidence',

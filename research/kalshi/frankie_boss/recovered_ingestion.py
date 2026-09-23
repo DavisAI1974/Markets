@@ -72,7 +72,7 @@ def load_recovered_ingestion(pin):
             or verification.get('source_manifest_hash')!=manifest['manifest_hash']
             or [x.get('session_id') for x in receipt.get('sessions',[])]!=['20211004']):
         raise ValueError('recovered source manifest or session differs')
-    original=original_identity(ORIGINAL_CODE_BLOBS)
+    original=original_identity(ORIGINAL_CODE_BLOBS, require_adapter_semantics=False)
     state_hash=c15_journal.evidence_hash({k:v for k,v in state.items() if k!='state_hash'})
     if (state.get('implementation')!=original or receipt.get('original_implementation')!=original
             or state.get('state_hash')!=state_hash or receipt.get('checkpoint_state_hash')!=state_hash
