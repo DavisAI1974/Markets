@@ -113,4 +113,4 @@ def test_workflow_fetches_checks_stages_masks_and_passes_every_variable():
     for legacy in ('Day', 'RunRoot', 'ToolsRoot', 'Python', 'CycleIndex'):
         assert f'--set "{legacy}=' not in ssm
     assert 'echo' not in ssm.replace('--comment', '')
-    assert workflow['permissions'] == {'contents': 'read'}
+    assert workflow['permissions'] == {'contents': 'read', 'actions': 'write'}  # explicit callback dispatch
