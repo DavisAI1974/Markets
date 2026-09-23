@@ -78,3 +78,44 @@ def test_whole_day_schedule_refuses_cutoffs_truncation_and_lookahead(schedules, 
         body["terminal_delivery"]["source_as_of"] = body["terminal_delivery"]["as_of"] + 1
     with pytest.raises(ValueError):
         schedules.seal(body)
+
+
+def test_whole_day_builder_reads_the_sealed_source_without_cutoffs_or_replay(tmp_path, schedules):
+    import hashlib
+    import json
+    from types import SimpleNamespace
+    from research.kalshi.frankie_boss.c15_journal import EvidenceJournal
+    from research.kalshi.frankie_boss.verified_journal_reader import VerifiedJournalReader
+    journal_path = tmp_path / "source.sqlite"
+    journal = EvidenceJournal(journal_path, create=True)
+    for cursor in range(4):
+        record = dict(ts_recv=101 + cursor, ts_event=100 + cursor,
+                      flags=128 if cursor % 2 else 0)
+        journal.append("INPUT", dict(cursor=cursor, record=record))
+        journal.append("APPLIED", dict(cursor=cursor, raw_record=record,
+            terminal_prefix_hash="e" * 64, receipt={} if cursor % 2 else None))
+    checkpoint = dict(count=journal.count, head_hash=journal.head_hash)
+    journal.close()
+    before = journal_path.read_bytes()
+    index = tmp_path / "index.jsonl"
+    raw = b"".join(json.dumps(dict(cursor_start=i, cursor_end=i + 1)).encode() + b"\n"
+                   for i in (0, 2))
+    index.write_bytes(raw)
+    body = whole_day_body()
+    identity = {key: body[key] for key in schedules.WHOLE_DAY_IDENTITY}
+    identity.update(journal_hash=checkpoint["head_hash"],
+                    journal_sha256=hashlib.sha256(before).hexdigest())
+    reader = VerifiedJournalReader(journal_path, expected_count=checkpoint["count"],
+                                   expected_head_hash=checkpoint["head_hash"])
+    view = SimpleNamespace(journal=reader, chain=SimpleNamespace(next_cursor=4, prefix_hash="e" * 64))
+    try:
+        result = schedules.build_whole_day_schedule(view, index,
+            expected_index_sha256=hashlib.sha256(raw).hexdigest(),
+            source_identity=identity, forecast_target=body["forecast_target"])
+        assert result["terminal_delivery"] == dict(groups_delivered=2, records_delivered=4,
+            through_cursor=3, as_of=104, source_as_of=103, source_hash="e" * 64)
+        assert result["model_context_rows"] == 4
+        assert result["steps"][0]["feedback_available_through"] is None
+    finally:
+        reader.close()
+    assert journal_path.read_bytes() == before

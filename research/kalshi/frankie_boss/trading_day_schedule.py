@@ -1,9 +1,12 @@
 """Trading-day declarations and exact schedule identities; no inferred modelling values."""
+from datetime import datetime
 import hashlib
 import json
 import re
+from pathlib import Path
 
 SCHEMA = 'BOSS_TRADING_DAY_CAUSAL_CYCLE_SCHEDULE_V1'
+WHOLE_DAY_SCHEMA = 'BOSS_WHOLE_DAY_NEXT_SESSION_SCHEDULE_V1'
 LAUNCH_SCHEMA = 'FRANKIE_TRADING_DAY_LAUNCH_V1'
 LAUNCH_FIELDS = ('model_context_rows', 'cutoff_rule', 'cutoffs', 'ingestion_receipt',
                  'mapping', 'source_contract', 'publish_route')
@@ -72,7 +75,126 @@ def _prefix(row, keys, name):
         raise ValueError(name + ' group denominator differs')
 
 
+
+WHOLE_DAY_IDENTITY = ('trading_day', 'source_manifest_hash', 'source_partitions',
+                      'source_record_count', 'journal_count', 'journal_hash', 'journal_sha256')
+WHOLE_DAY_FIELDS = (*WHOLE_DAY_IDENTITY, 'schema', 'mapping_index_sha256', 'steps',
+                    'terminal_delivery', 'model_context_rows', 'source_dates_required',
+                    'feedback_lag', 'context_selection', 'forecast_target', 'step_count')
+
+
+def _day(value):
+    if not isinstance(value, str) or re.fullmatch('20[0-9]{6}', value) is None:
+        raise ValueError('trading_day must be YYYYMMDD')
+    return datetime.strptime(value, '%Y%m%d').date()
+
+
+def _validate_whole_day(body):
+    """A terminal source delivery is not a same-day feedback boundary."""
+    if set(body) != set(WHOLE_DAY_FIELDS):
+        raise ValueError('whole-day schedule fields differ')
+    for name in ('model_context_rows', 'source_record_count', 'journal_count',
+                 'step_count', 'source_dates_required'):
+        _positive(body[name], name)
+    for name in ('source_manifest_hash', 'journal_hash', 'journal_sha256', 'mapping_index_sha256'):
+        _hash(body[name], name)
+    day = _day(body['trading_day'])
+    members = body['source_partitions']
+    if (type(members) is not list or not members
+            or any(type(m) is not str or not m for m in members)
+            or len(set(members)) != len(members) or len(members) != body['source_dates_required']):
+        raise ValueError('complete ordered source partitions required')
+    if (body['journal_count'] != 2 * body['source_record_count']
+            or body['model_context_rows'] != body['source_record_count']
+            or body['context_selection'] != 'all_source_records'):
+        raise ValueError('whole-day source and context must include every record')
+    terminal = body['terminal_delivery']
+    _prefix(terminal, TERMINAL, 'terminal_delivery')
+    if (terminal['records_delivered'] != body['source_record_count']
+            or terminal['groups_delivered'] > terminal['records_delivered']
+            or terminal['source_as_of'] > terminal['as_of']):
+        raise ValueError('whole-day terminal coverage or causal clocks differ')
+    expected_step = dict(terminal, group_index=terminal['groups_delivered'] - 1,
+                         feedback_available_through=None)
+    if (body['step_count'] != 1 or type(body['steps']) is not list
+            or body['steps'] != [expected_step]):
+        raise ValueError('whole-day delivery requires one complete terminal step and pending feedback')
+    if body['feedback_lag'] != 'verified target-day outcomes pending':
+        raise ValueError('target-day outcome feedback must remain explicitly pending')
+    target = body['forecast_target']
+    if type(target) is not dict or set(target) != {'trading_day', 'open_ns', 'close_ns', 'calendar_hash'}:
+        raise ValueError('explicit next-session forecast target required')
+    _hash(target['calendar_hash'], 'forecast_target.calendar_hash')
+    _positive(target['open_ns'], 'forecast_target.open_ns')
+    _positive(target['close_ns'], 'forecast_target.close_ns')
+    if (_day(target['trading_day']) <= day
+            or not terminal['as_of'] < target['open_ns'] < target['close_ns']):
+        raise ValueError('forecast target must be a future unopened trading session')
+    return body
+
+
+def build_whole_day_schedule(builder, mapping_index, *, expected_index_sha256,
+                            source_identity, forecast_target):
+    """Read a verified sealed source once, retaining every record and no future labels.
+
+    The caller supplies the independently verified source view and source identity.
+    This reads existing evidence, never ingests, computes a market result or writes
+    the source. The target/calendar are explicit, not inferred from a cutoff.
+    """
+    if type(source_identity) is not dict or set(source_identity) != set(WHOLE_DAY_IDENTITY):
+        raise ValueError('complete independently verified source identity required')
+    _hash(expected_index_sha256, 'mapping_index_sha256')
+    total = _positive(source_identity['source_record_count'], 'source_record_count')
+    if (builder.chain.next_cursor != total
+            or builder.journal.count != source_identity['journal_count']
+            or builder.journal.head_hash != source_identity['journal_hash']):
+        raise ValueError('verified journal differs from declared source identity')
+    digest, cursor, groups = hashlib.sha256(), 0, 0
+    with Path(mapping_index).open('rb') as stream:
+        for line in stream:
+            digest.update(line)
+            row = json.loads(line)
+            start, end = row.get('cursor_start'), row.get('cursor_end')
+            if (type(start) is not int or type(end) is not int
+                    or start != cursor or end < start or end >= total):
+                raise ValueError('mapping cursor coverage differs')
+            cursor, groups = end + 1, groups + 1
+    if digest.hexdigest() != expected_index_sha256 or cursor != total or not groups:
+        raise ValueError('full mapping identity or coverage differs')
+    count = closed_groups = as_of = source_as_of = 0
+    terminal = None
+    for entry in builder.journal.entries():
+        if entry['kind'] == 'INPUT':
+            continue
+        if entry['kind'] != 'APPLIED':
+            raise ValueError('failed or unknown sealed source entry')
+        row = entry['payload']
+        if type(row.get('cursor')) is not int or row['cursor'] != count:
+            raise ValueError('applied source cursor continuity differs')
+        record = row['raw_record']
+        as_of = max(as_of, record['ts_recv'])
+        source_as_of = max(source_as_of, record['ts_event'])
+        closed_groups += bool(record['flags'] & 128)
+        count += 1
+        terminal = row
+    if (count != total or closed_groups != groups or terminal is None
+            or terminal.get('receipt') is None or not terminal['raw_record']['flags'] & 128
+            or terminal['terminal_prefix_hash'] != builder.chain.prefix_hash):
+        raise ValueError('sealed source terminal or complete group coverage differs')
+    delivery = dict(groups_delivered=groups, records_delivered=count, through_cursor=count - 1,
+                    as_of=as_of, source_as_of=source_as_of, source_hash=builder.chain.prefix_hash)
+    return seal(dict(source_identity, schema=WHOLE_DAY_SCHEMA,
+        mapping_index_sha256=expected_index_sha256,
+        steps=[dict(delivery, group_index=groups - 1, feedback_available_through=None)],
+        terminal_delivery=delivery, model_context_rows=count,
+        source_dates_required=len(source_identity['source_partitions']),
+        context_selection='all_source_records', feedback_lag='verified target-day outcomes pending',
+        forecast_target=dict(forecast_target), step_count=1))
+
+
 def validate_body(body):
+    if type(body) is dict and body.get('schema') == WHOLE_DAY_SCHEMA:
+        return _validate_whole_day(body)
     if type(body) is not dict or set(body) != set(BASE + IDENTITY):
         raise ValueError('trading-day schedule fields differ')
     if body['schema'] != SCHEMA:
