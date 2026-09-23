@@ -19,9 +19,9 @@ def stub(tmp_path):
 
 def test_merge_keep_uses_a_complete_merge_and_writes_it_as_markdown(tmp_path):
     s = stub(tmp_path)
-    kept = session.Session._merge_keep(s, 'merge-0-0000', [f'n1 {H1}', f'n2 {H2}'], dict(text=f'merged {H1} {H2}', incomplete=False))
-    assert kept == f'merged {H1} {H2}'
-    assert (tmp_path / 'merges' / 'merge-0-0000.md').read_text().startswith('## merge-0-0000\n\nmerged ')
+    kept = session.Session._merge_keep(s, 'merge-0-0000', [f'n1 {H1}', f'n2 {H2}'], dict(text=f'n2 {H2}\nn1 {H1}', incomplete=False))
+    assert kept == f'n2 {H2}\nn1 {H1}'
+    assert (tmp_path / 'merges' / 'merge-0-0000.md').read_text().startswith('## merge-0-0000\n\nn2 ')
     assert not (tmp_path / 'merges' / 'merge-0-0000.model-output.md').exists() and s._notes == []
 
 
@@ -132,10 +132,49 @@ def test_nonshrinking_guarded_merge_stops_without_discarding_notes(tmp_path,monk
     inputs=['A'*80,'B'*80]
     def reader(name,text):
         calls.append(name);return dict(text='I cannot complete this request.')
-    s.reader=reader;s._merge_prompt=session.Session._merge_prompt.__get__(s)
+    s.reader=reader;s._merge_prompt=lambda joined,label:joined
     s._merge_keep=session.Session._merge_keep.__get__(s)
     s._fan_out=lambda label,items,work:[work(item) for item in items]
     s._merge=lambda *args:pytest.fail('a nonshrinking merge must not recurse')
     kept=session.Session._merge(s,inputs,0)
     assert all(note in kept for note in inputs) and len(calls)==2
     assert 'MERGE KEPT VERBATIM' in kept
+
+def merge_stub(tmp_path,monkeypatch,*,budget,transform,max_calls):
+    s=stub(tmp_path);calls=[]
+    monkeypatch.setattr(session,'CHUNK_BYTES',4000+budget)
+    s._merge_prompt=lambda joined,label:joined
+    s._fan_out=lambda label,items,fn:[fn(item) for item in items]
+    s._merge_keep=lambda name,inputs,outcome:session.Session._merge_keep(s,name,inputs,outcome)
+    s._merge=lambda notes,level:session.Session._merge(s,notes,level)
+    def reader(name,prompt):
+        calls.append(name)
+        if len(calls)>max_calls:pytest.fail('merge recurred without progress')
+        return dict(text=transform(prompt))
+    s.reader=reader
+    return s,calls
+
+@pytest.mark.parametrize('mode',['unchanged','expanded','lossy'])
+def test_no_progress_merge_stops_after_first_group_pass(tmp_path,monkeypatch,mode):
+    def transform(text):
+        if mode=='unchanged':return text
+        if mode=='expanded':return text+'\nExtra commentary.'
+        return 'A pleasant short summary.'
+    s,calls=merge_stub(tmp_path,monkeypatch,budget=12,transform=transform,max_calls=2)
+    inputs=['alpha fact','bravo fact'];kept=session.Session._merge(s,inputs,0)
+    assert all(line in kept.splitlines() for line in inputs) and len(calls)==2
+    if mode=='lossy':
+        assert 'MERGE KEPT VERBATIM' in kept
+        assert len(list((tmp_path/'merges').glob('*.model-output.md')))==2
+
+def test_depth_limit_preserves_oversized_groups_without_provider_call(tmp_path,monkeypatch):
+    s,calls=merge_stub(tmp_path,monkeypatch,budget=12,transform=lambda text:text,max_calls=0)
+    inputs=['alpha fact','bravo fact']
+    assert session.Session._merge(s,inputs,8)=='\n'.join(inputs) and calls==[]
+
+def test_real_size_reduction_can_finish_with_verbatim_deduplication(tmp_path,monkeypatch):
+    s,calls=merge_stub(tmp_path,monkeypatch,budget=32,
+        transform=lambda text:'\n'.join(sorted(set(text.splitlines()))),max_calls=3)
+    inputs=['a\nshared\nshared']*3
+    assert session.Session._merge(s,inputs,0)=='a\nshared' and len(calls)==3
+    assert not list((tmp_path/'merges').glob('*.model-output.md'))

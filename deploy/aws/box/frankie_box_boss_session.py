@@ -1354,10 +1354,12 @@ class Session:
         return chunks
 
     def _merge(self, notes, level):
+        if level >= 8:
+            return '\n'.join(notes)
         budget = CHUNK_BYTES - 4000
         if sum(len(n.encode('utf-8')) for n in notes) <= budget or len(notes) == 1:
             joined = '\n'.join(notes)
-            if len(notes) == 1 or level >= 8:
+            if len(notes) == 1:
                 return joined
             outcome = self.reader(f'merge-{level}-final', self._merge_prompt(joined, 'all remaining note groups'))
             return self._merge_keep(f'merge-{level}-final', notes, outcome)
@@ -1376,11 +1378,14 @@ class Session:
             outcome = self.reader(f'merge-{level}-{g:04d}', self._merge_prompt('\n'.join(group), f'note group {g + 1} of {len(groups)} at level {level}'))
             return self._merge_keep(f'merge-{level}-{g:04d}', group, outcome)
         merged = self._fan_out(f'merging level {level}', list(enumerate(groups)), merge_group)
+        if sum(len(n.encode('utf-8')) for n in merged) >= sum(len(n.encode('utf-8')) for n in notes):
+            self.note('merge made no byte reduction; retaining verified note groups without another merge')
+            return '\n'.join(merged)
         return self._merge(merged, level + 1)
 
     def _merge_keep(self, name, inputs, outcome):
         """The merge guard (chat 6, cycle 0: the final merge discarded a whole note group as 'hallucinated', so the merged
-        notes covered three of four parts). A merge output that loses ANY sha256 value its inputs carried, or is empty,
+        notes covered three of four parts). An output that loses any hash or nonblank input line, or is unusable,
         is replaced by the inputs verbatim with a marker; every merge output is kept as Markdown under work/merges/."""
         text = (outcome.get('text') or '') + (' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else '')
         docs = docs_module()
@@ -1419,8 +1424,8 @@ class Session:
             self.note(f'docs: not built ({type(error).__name__}: {error}); the session continues')
 
     def _read_part_guarded(self, i, s, e, n, data, header, notes_dir):
-        """One part's notes, guarded (chat 6, cycle 0: part 4's note was a refusal with an output-incomplete mark and the
-        merge dropped it). A note that is empty, a refusal, an error or output-incomplete is retried ONCE; if the retry
+        """One part's notes, guarded (chat 6, cycle 0: part 4 had a retained note, but later merges ran away, refused and
+        dropped the group). A note that is empty, a refusal, an error or output-incomplete is retried ONCE; if the retry
         is unusable too, the part is split in two halves on a line boundary and each half is read (no further split);
         every attempt is kept beside the note (attempt-NNNN-*.md, never matched by the note-*.md glob)."""
         docs = docs_module()
@@ -1487,7 +1492,7 @@ class Session:
                 'number, hash or section id, removes duplicates, keeps the pin-layer material together, and keeps observed facts separate '
                 'from inference. Every note group below is genuinely yours: never judge a group to be foreign, hallucinated or malformed, '
                 'never drop or summarise a group, and if a group looks odd keep it verbatim under its own heading. Never write about the '
-                'merge itself; write only the merged notes. Markdown; no length limit.\n\n----- NOTES BEGIN -----\n' + joined + '\n----- NOTES END -----\n')
+                'merge itself; write only the merged notes. Preserve every nonblank input line verbatim; you may reorder lines and remove exact duplicate lines. Markdown; no length limit.\n\n----- NOTES BEGIN -----\n' + joined + '\n----- NOTES END -----\n')
 
     # ---- the Dipole classroom (turn 1 inside the response; turn 2 = the correction stage) ------------------
     def _classroom_dir(self):

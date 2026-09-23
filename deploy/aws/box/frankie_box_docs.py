@@ -32,9 +32,9 @@ def sha256_bytes(data):
 
 def keep_if_lossy(inputs, output):
     """The merge guard. inputs: the note texts a merge was given; output: what the model returned.
-    Returns (text, note): the output when it carries every sha256 value the inputs carried, else the inputs joined
-    verbatim with a marker naming what was lost. A merge that dedups keeps every hash at least once, so set
-    containment is exactly the rule 'loses no observed fact, number, hash or section id' applied to the hashes."""
+    Returns (text, note): output only when it preserves every hash and every nonblank input line
+    (outside whitespace ignored). Reordering and exact-line deduplication are permitted.
+    Otherwise retain all inputs verbatim: echoed hashes or headings alone do not prove coverage."""
     joined = '\n'.join(inputs)
     have = set(SHA_RE.findall(joined))
     got = set(SHA_RE.findall(output or ''))
@@ -44,6 +44,12 @@ def keep_if_lossy(inputs, output):
     if lost:
         note = f'the merge output lost {len(lost)} of {len(have)} sha256 values'
         return joined + f'\n\n[MERGE KEPT VERBATIM: {note}; the inputs are kept unchanged; first lost: {lost[0][:16]}]\n', note
+    retained_lines = {line.strip() for line in output.splitlines() if line.strip()}
+    missing_parts = [i for i, text in enumerate(inputs)
+        if any(line.strip() not in retained_lines for line in text.splitlines() if line.strip())]
+    if missing_parts:
+        note = f'the merge output lost verbatim lines from {len(missing_parts)} of {len(inputs)} input groups'
+        return joined + '\n\n[MERGE KEPT VERBATIM: ' + note + '; the inputs are kept unchanged]\n', note
     return output, None
 
 

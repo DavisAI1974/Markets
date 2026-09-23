@@ -16,9 +16,9 @@ H2 = 'b' * 64
 H3 = 'c' * 64
 
 
-def test_keep_if_lossy_accepts_a_merge_that_keeps_every_hash():
-    text, note = docs.keep_if_lossy([f'x {H1}\n', f'y {H2} and {H1}\n'], f'merged: {H2} {H1}')
-    assert note is None and text == f'merged: {H2} {H1}'
+def test_keep_if_lossy_accepts_reordered_verbatim_lines():
+    text, note = docs.keep_if_lossy([f'x {H1}\n', f'y {H2} and {H1}\n'], f'y {H2} and {H1}\nx {H1}')
+    assert note is None and text == f'y {H2} and {H1}\nx {H1}'
 
 
 def test_keep_if_lossy_keeps_the_inputs_when_a_hash_is_lost():
