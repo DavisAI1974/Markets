@@ -1043,7 +1043,14 @@ class Session:
             if observation is not None:
                 records.append({k: v for k, v in observation.items() if not isinstance(v, (bytes, bytearray))})
         probe = _box_module('frankie_box_progress').for_session(self)
-        if layout == 'compact':
+        if layout == 'compact' and self.source_binding:
+            # Metadata-only extraction after every canonical row is verified. The
+            # complete INPUT wire observation is passed to all producer stages.
+            from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader
+            with CompactConformanceReader(rows_path, expected_count=count, expected_head_hash=head, workers=1) as reader:
+                for entry in probe.track(reader.entries(), count, 'source-journal-records'):
+                    take(entry['kind'], entry['payload'])
+        elif layout == 'compact':
             with CompactReader(rows_path, expected_count=count, expected_head_hash=head) as reader:
                 for ordinal, kind, body, digest in probe.track(reader.rows(), count, 'source-journal-records'):
                     entry = unpack(json.loads(body))

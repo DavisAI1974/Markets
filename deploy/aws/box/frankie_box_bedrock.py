@@ -316,7 +316,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                 or source_manifest.get('trading_day') != day):
             raise ValueError('producer source manifest must cover the complete supplied trading day')
         ident = replace(ident, source_manifest_hash=source_manifest['manifest_hash'],
-                        run_id=out_dir.parent.name + '-cycle-' + str(cycle))
+                        run_id=out_dir.parent.parent.name + '-cycle-' + str(cycle))
     gates = native_a_arm_launch.run_pre_traversal_gates(arm=ident.arm, run_id=ident.run_id, repo_root=producers)
     write_json(out_dir / 'pre-traversal-gates.json', gates)
     sinks = LedgerSinks(out_dir / 'ledgers')
