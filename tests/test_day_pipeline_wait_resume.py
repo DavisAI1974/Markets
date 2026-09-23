@@ -307,3 +307,24 @@ def test_changed_cycle_limit_cannot_expand_retained_pending_roster(state):
     with pytest.raises((dp.StageRefused,ValueError)):
         other.run_stage("cycles",go="a"*64,resume_wait=state["envelope"]["receipt_sha256"])
     assert len(state["calls"])==1
+
+def test_resume_event_never_advances_beyond_already_completed_cycles(state):
+    p=state["pipeline"]
+    p.write("cycles",dict(cycles_completed=3,cycles_total=3),command=[])
+    assert p.resume(go="a"*64,resume_wait="9"*64)=={"cycles":"present"}
+    assert state["calls"]==[]
+
+def test_resume_event_requires_preexisting_preparation_without_running_any_stage(state):
+    p=state["pipeline"]
+    p.path("schedule-prefixes").unlink()
+    with pytest.raises((dp.StageRefused,ValueError)):
+        p.resume(go="a"*64,resume_wait="9"*64)
+    assert state["calls"]==[]
+
+def test_declared_cycles_ignore_stale_day_and_cycle_limit_variables(state):
+    state["config"]["host_variables"]=dict(dAy="20211003",cYCLElIMIT="19")
+    p=reopen(state)
+    assert p.run_stage("cycles",go="a"*64)=="wait"
+    command=state["calls"][-1]
+    assert [part for part in command if part.lower().startswith("day=")]==["Day=20211004"]
+    assert [part for part in command if part.lower().startswith("cyclelimit=")]==["CycleLimit=3"]
