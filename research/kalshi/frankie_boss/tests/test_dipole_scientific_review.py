@@ -137,3 +137,12 @@ class ScientificReviewTest(unittest.TestCase):
         value['scientific_request_hash']=self.request['scientific_request_hash']
         value['exchange_hash']=science.digest({k:v for k,v in value.items() if k!='exchange_hash'})
         with self.assertRaises(ValueError):validate_exchange(self.request,value)
+
+    def test_scientific_evidence_must_name_a_delivered_source(self):
+        item=request_items(self.request)[0]
+        answer=self.review(item)
+        answer['evidence_checks'][0]['source_id']='unavailable-or-invented-source'
+        with self.assertRaisesRegex(ValueError,'source'):
+            parse_review(json.dumps(answer),self.request,item)
+        answer['evidence_checks'][0]['source_id']='research'
+        self.assertEqual(parse_review(json.dumps(answer),self.request,item),answer)
