@@ -107,11 +107,25 @@ def decode_block(blob):
         raise ValueError('invalid compressed journal block') from exc
 
 
-def verified_partition(rows, start, previous):
+def verified_partition(rows, start, previous, *, payload_fields=None):
     count = start
     for ordinal, kind, body, digest in rows:
         tree = json.loads(body)
-        envelope = decode_tagged(tree)
+        decoded_tree = tree
+        if payload_fields is not None:
+            # Only conformance consumers request a field projection. Retain the
+            # ORIGINAL complete tree/body for canonical and digest checks below;
+            # avoid constructing Python book/order objects that they never read.
+            if type(tree) is not list or len(tree) != 2 or tree[0] != 'dict':
+                raise ValueError('evidence envelope must be a tagged mapping')
+            payload = _field(tree, 'payload')
+            if type(payload) is not list or len(payload) != 2 or payload[0] != 'dict':
+                raise ValueError('evidence payload must be a tagged mapping')
+            fields = payload_fields[kind]
+            projected = ['dict', [item for item in payload[1] if item[0] in fields]]
+            decoded_tree = ['dict', [[key, projected if key == 'payload' else value]
+                                     for key, value in tree[1]]]
+        envelope = decode_tagged(decoded_tree)
         if (canonical_tagged_bytes(tree) != body or type(envelope) is not dict
                 or ordinal != count or envelope.get('ordinal') != ordinal
                 or envelope.get('schema') != SCHEMA or envelope.get('kind') != kind

@@ -21,19 +21,22 @@ except ImportError:
     from verified_journal_reader import GENESIS_HASH
 
 
+SOURCE_FIELDS = {
+    'INPUT': ('cursor', 'scope_genesis_hash', 'record', 'source_member_index',
+              'session_id', 'raw_symbol', 'source_dbn_object'),
+    'APPLIED': ('input_ordinal', 'raw_record', 'cursor', 'source_member_index',
+                'session_id', 'normalized', 'terminal_prefix_hash', 'record_count',
+                'group_count', 'receipt'),
+}
+
+
 def project_entries(envelopes):
     projected = []
     for envelope in envelopes:
         payload = envelope['payload']
-        if envelope['kind'] == 'INPUT':
-            keys = ('cursor', 'scope_genesis_hash', 'record', 'source_member_index',
-                    'session_id', 'raw_symbol', 'source_dbn_object')
-        elif envelope['kind'] == 'APPLIED':
-            keys = ('input_ordinal', 'raw_record', 'cursor', 'source_member_index',
-                    'session_id', 'normalized', 'terminal_prefix_hash', 'record_count',
-                    'group_count', 'receipt')
-        else:
+        if envelope['kind'] not in SOURCE_FIELDS:
             raise ValueError('failed or unknown source evidence')
+        keys = SOURCE_FIELDS[envelope['kind']]
         projected.append(dict(ordinal=envelope['ordinal'], kind=envelope['kind'],
                               payload={key: payload[key] for key in keys}))
     return projected
@@ -56,7 +59,7 @@ def _verify_partition(path, start, previous):
         from .compact_journal import verified_partition
     except ImportError:
         from compact_journal import verified_partition
-    projected = project_entries(verified_partition(rows, start, previous))
+    projected = project_entries(verified_partition(rows, start, previous, payload_fields=SOURCE_FIELDS))
     return projected, rows[-1][3], time.process_time()-cpu
 
 
