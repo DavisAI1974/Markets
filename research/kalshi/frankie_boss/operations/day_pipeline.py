@@ -265,6 +265,8 @@ class DayPipeline:
         if type(enabled) is not bool:
             raise StageRefused('pending_return must be a boolean')
         if not enabled:
+            if self.c.get('workflow_automation') is not None:
+                raise StageRefused('workflow automation requires pending_return mode')
             return False
         pins = self.c.get('workflow_run')
         fields = {'run_id', 'run_directory', 'boss_commit', 'configuration_sha256', 'schedule_sha256'}
