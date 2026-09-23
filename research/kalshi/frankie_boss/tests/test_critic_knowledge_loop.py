@@ -442,3 +442,47 @@ def test_pinned_priming_source_tamper_refuses(tmp_path):
     path.write_bytes(path.read_bytes()+b' ')
     with pytest.raises(ValueError,match='hash changed'):
         priming.load_retained_priming(tmp_path,mode=priming.MODE)
+
+@pytest.mark.parametrize('iso,offset,open_utc,changed',[
+    ('2021-03-14T22:00:00+00:00',-240,'2021-03-14T22:00:00+00:00',True),
+    ('2021-11-07T23:00:00+00:00',-300,'2021-11-07T23:00:00+00:00',True),
+    ('2021-10-03T22:00:00+00:00',-240,'2021-10-03T22:00:00+00:00',False)])
+def test_market_calendar_dst_and_monday(iso,offset,open_utc,changed):
+    from datetime import datetime
+    from research.kalshi.frankie_boss.knowledge_calendar import market_calendar
+    ns=int(datetime.fromisoformat(iso).timestamp())*10**9+123456789
+    context=market_calendar(ns)
+    assert context['session_weekday']=='Monday'
+    assert context['civil_weekday']=='Sunday'
+    assert context['new_york']['utc_offset_minutes']==offset
+    assert context['regular_session_open_utc']==open_utc
+    assert context['us_offset_changed_since_prior_friday']==changed
+    assert context['elapsed_from_regular_open_ns']==123456789
+    assert context['regular_session_duration_seconds']==23*3600
+    assert context['holiday_context']['status']=='unverified'
+    assert context['exchange_trade_date'] is None
+
+def test_market_calendar_london_mismatch_and_repeated_hour():
+    from datetime import datetime
+    from research.kalshi.frankie_boss.knowledge_calendar import market_calendar
+    def at(iso):return market_calendar(int(datetime.fromisoformat(iso).timestamp())*10**9)
+    assert at('2021-03-15T12:00:00+00:00')['london_new_york_offset_minutes']==240
+    assert at('2021-04-05T12:00:00+00:00')['london_new_york_offset_minutes']==300
+    early=at('2021-11-07T05:30:00+00:00');late=at('2021-11-07T06:30:00+00:00')
+    assert early['new_york']['fold']==0 and late['new_york']['fold']==1
+    assert early['new_york']['local_time']!=late['new_york']['local_time']
+    assert early['regular_session_phase']=='weekend_closed'
+    assert late['regular_session_phase']=='weekend_closed'
+
+def test_historical_public_knowledge_retains_market_calendar():
+    from pathlib import Path
+    from research.kalshi.frankie_boss.granite_positive_priming import load_retained_priming,MODE,public_knowledge
+    capsule=load_retained_priming(Path(__file__).resolve().parents[4],mode=MODE)
+    audit=build([]);audit['priming']=capsule
+    context=public_knowledge(audit)['entries'][0]['market_context']
+    assert context['session_date']=='2021-10-04'
+    assert context['session_weekday']=='Monday'
+    assert context['civil_weekday']=='Sunday'
+    assert context['new_york']['utc_offset_minutes']==-240
+    assert context['holiday_context']['status']=='unverified'
+    assert 'source_available_ns' not in json.dumps(context)
