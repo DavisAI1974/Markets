@@ -197,3 +197,27 @@ def test_delivery_workflows_are_explicit_reusable_and_no_old_defaults():
         assert "default: '20211003'" not in source
     readiness = (ROOT/'.github/workflows/frankie_deliver_readiness.yml').read_text()
     assert 'head_sha' in readiness and 'conclusion' in readiness and 'workflow_id' in readiness
+
+
+def test_delivery_import_and_builder_are_stdlib_only_in_fresh_interpreter(tmp_path):
+    import subprocess
+    code = """import importlib.util,sys
+spec=importlib.util.spec_from_file_location('delivery',sys.argv[1])
+module=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+assert 'torch' not in sys.modules
+"""
+    subprocess.run([sys.executable, '-S', '-B', '-c', code,
+                    str(ROOT/'research/kalshi/frankie_boss/operations/workflow_delivery.py')], check=True)
+    result = subprocess.run([sys.executable, '-S', '-B', str(ROOT/'deploy/aws/host/build_readiness_delivery.py'), '--help'],
+                            capture_output=True, text=True)
+    assert result.returncode == 0, result.stderr
+    assert '--context-json' in result.stdout
+
+
+def test_native_payload_placement_uses_verified_run_not_reread_configuration():
+    builder = (ROOT/'deploy/aws/host/build_readiness_delivery.py').read_text()
+    script = (ROOT/'deploy/aws/host/frankie_host_record_principal_response.ps1').read_text().split('# Record Root')[0]
+    assert '$verified.run_directory' in builder and '$verified.run_directory' in script
+    assert 'Get-Content' not in builder
+    assert 'Get-Content' not in script

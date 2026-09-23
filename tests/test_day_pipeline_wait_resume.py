@@ -124,6 +124,7 @@ def test_attention_is_retained_and_never_automatically_resumed(state):
     value["status"] = "workflow_attention"
     value["wait_receipt"]["state"] = "ATTENTION"
     value["wait_receipt"]["kind"] = "same_job"
+    value["receipt_path"] = value["receipt_path"].replace("readiness.json","same_job.json")
     value["wait_receipt"]["job_id"] = "4"*64
     value["wait_receipt"].pop("receipt_id")
     value["wait_receipt"]["receipt_id"] = digest(value["wait_receipt"])
@@ -219,3 +220,90 @@ def test_pending_return_requires_explicit_trading_schedule_and_native_run_pins(s
         with pytest.raises((dp.StageRefused,ValueError)):
             dp.DayPipeline(config,"20211004",runner=state["pipeline"].run,runs_root=state["tmp"])
     assert state["calls"]==[]
+
+def test_stale_host_variables_cannot_supply_an_unrequested_resume_event(state):
+    state["config"]["host_variables"]=dict(ResumeWaitSha256="0"*64,PendingReturn="0")
+    p=reopen(state)
+    assert p.run_stage("cycles",go="a"*64)=="wait"
+    command=state["calls"][-1]
+    assert not any(part.startswith("ResumeWaitSha256=") for part in command)
+    assert [part for part in command if part.startswith("PendingReturn=")]==["PendingReturn=1"]
+
+def rebind_pending(value):
+    wait=value["wait_receipt"]
+    wait.pop("receipt_id",None)
+    wait["receipt_id"]=digest(wait)
+    value["receipt_sha256"]=hashlib.sha256(canonical(wait)).hexdigest()
+
+@pytest.mark.parametrize("change",[
+    {"kind":"same_job","job_id":"7"*64},
+    {"state":"ATTENTION","kind":"readiness"},
+    {"state":"ATTENTION","kind":"same_job","job_id":None},
+])
+def test_inconsistent_wait_kind_state_or_job_refuses_admission(state,change):
+    value=state["envelope"]
+    value["wait_receipt"].update(change)
+    value["status"]="workflow_wait" if value["wait_receipt"]["state"]=="WAIT" else "workflow_attention"
+    value["receipt_path"]=value["receipt_path"].replace("readiness.json",value["wait_receipt"]["kind"]+".json")
+    rebind_pending(value)
+    with pytest.raises((dp.StageRefused,ValueError)):
+        state["pipeline"].run_stage("cycles",go="a"*64)
+    assert state["pipeline"].receipt("cycles") is None
+
+@pytest.mark.parametrize("name",[
+    "host-identity.c15.json","execution/cycle-02/host-preparation.c15.json",
+    "execution/cycle-02/actual-critic-request.json",
+])
+def test_wait_missing_required_retained_context_is_rejected(state,name):
+    value=state["envelope"]
+    value["wait_receipt"]["artifacts"].pop(name)
+    rebind_pending(value)
+    with pytest.raises((dp.StageRefused,ValueError)):
+        state["pipeline"].run_stage("cycles",go="a"*64)
+    assert state["pipeline"].receipt("cycles") is None
+
+@pytest.mark.parametrize("path",[
+    "/another/run/execution/cycle-02/workflow-wait/readiness.json",
+    "/retained/run/execution/cycle-01/workflow-wait/readiness.json",
+    "/retained/run/execution/cycle-02/workflow-wait/principal.json",
+    "../retained/run/execution/cycle-02/workflow-wait/readiness.json",
+])
+def test_pending_receipt_location_is_exactly_run_cycle_and_kind(state,path):
+    state["envelope"]["receipt_path"]=path
+    with pytest.raises((dp.StageRefused,ValueError)):
+        state["pipeline"].run_stage("cycles",go="a"*64)
+    assert state["pipeline"].receipt("cycles") is None
+
+def test_retained_pending_requested_count_cannot_exceed_original_roster(state):
+    p=state["pipeline"]
+    assert p.run_stage("cycles",go="a"*64)=="wait"
+    path=next(p.directory.glob("04-cycles-wait-*.json"))
+    record=json.loads(path.read_bytes())
+    record["requested_cycles"]=4
+    record["gate"]["requested_cycles"]=4
+    path.write_bytes(canonical(record))
+    with pytest.raises((dp.StageRefused,ValueError)):
+        reopen(state).run_stage("cycles",go="a"*64,resume_wait=state["envelope"]["receipt_sha256"])
+    assert len(state["calls"])==1
+
+def test_original_retained_scope_resumes_requested_roster(state):
+    value=state["envelope"];wait=value["wait_receipt"]
+    wait["cycle_index"]=0;wait["request_id"]="retained-run-cycle-00"
+    wait["artifacts"]={name.replace("cycle-02","cycle-00"):pin for name,pin in wait["artifacts"].items()}
+    wait["artifacts"]["workflow-execution-scope.json"]=dict(sha256="7"*64,bytes=200)
+    wait.pop("receipt_id");wait["receipt_id"]=digest(wait)
+    value["receipt_path"]=value["receipt_path"].replace("cycle-02","cycle-00")
+    value["receipt_sha256"]=digest(wait)
+    assert state["pipeline"].run_stage("cycles",go="a"*64)=="wait"
+    state["output"][0]=complete()
+    assert reopen(state).run_stage("cycles",go="a"*64,resume_wait=value["receipt_sha256"])=="done"
+    assert "CycleLimit=3" in state["calls"][-1]
+    assert len(state["calls"])==2
+
+def test_changed_cycle_limit_cannot_expand_retained_pending_roster(state):
+    p=state["pipeline"]
+    assert p.run_stage("cycles",go="a"*64)=="wait"
+    other=dp.DayPipeline(state["config"],"20211004",runner=p.run,runs_root=state["tmp"],cycle_limit=1)
+    with pytest.raises((dp.StageRefused,ValueError)):
+        other.run_stage("cycles",go="a"*64,resume_wait=state["envelope"]["receipt_sha256"])
+    assert len(state["calls"])==1

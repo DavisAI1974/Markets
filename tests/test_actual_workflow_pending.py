@@ -243,3 +243,81 @@ def test_legacy_wait_without_execution_scope_stays_capped(modules, retained):
     configuration,cycle=retained
     receipt=wait.write_wait_receipt(configuration,cycle,'readiness')
     assert wait.resume_admission(configuration,receipt['receipt_sha256'])==1
+
+
+def test_actual_ec2_delegated_entrypoint_returns_wait_before_runtime_imports(modules, retained, monkeypatch):
+    actual,wait=modules
+    configuration,cycle=retained
+    wait.write_wait_receipt(configuration,cycle,'readiness')
+    config_path=cycle/'config.json'
+    config_path.write_text(json.dumps(configuration))
+    prefix='research.kalshi.frankie_boss.'
+    monkeypatch.setitem(sys.modules,prefix+'dipole_classroom_integration',
+        SimpleNamespace(IntegratedDipoleClassroomPrincipalAdapter=object,
+                        prepare_integrated_cycle=lambda **kw:pytest.fail('no classroom work')))
+    monkeypatch.setitem(sys.modules,prefix+'dipole_classroom_session',
+        SimpleNamespace(CORRECTION_REQUEST_SCHEMA='CORRECTION'))
+    monkeypatch.setitem(sys.modules,prefix+'frankie_principal_adapter',
+        SimpleNamespace(json_form=lambda value:json.loads(json.dumps(value))))
+    monkeypatch.setitem(sys.modules,prefix+'operations.run_actual_sunday',actual)
+    classroom=load('actual_entry_boundary',OPS/'run_actual_sunday_classroom.py')
+    monkeypatch.setattr(classroom,'imports',lambda *_:pytest.fail('unapproved reentry must not load runtime'))
+    monkeypatch.setattr(sys,'argv',['runner','--configuration',str(config_path),'--pending-return'])
+    assert classroom.main(host_class=lambda *a,**k:pytest.fail('host must not be created'))==3
+
+
+def test_base_main_reports_capped_resume_as_requested_not_entire_schedule(modules, retained, monkeypatch, capsys):
+    from contextlib import nullcontext
+    actual,wait=modules
+    configuration,cycle=retained
+    pending=wait.write_wait_receipt(configuration,cycle,'readiness')
+    config_path=cycle/'config.json'
+    config_path.write_text(json.dumps(configuration))
+    monkeypatch.setattr(sys,'argv',['runner','--configuration',str(config_path),'--pending-return',
+                                  '--resume-wait-sha256',pending['receipt_sha256']])
+    async def run():return [{}]
+    h=SimpleNamespace(source=lambda:None,schedule={'steps':[{}, {}, {}]},run=run,close=lambda:None)
+    api=SimpleNamespace(_exclusive=lambda *a:nullcontext(),RunProbe=lambda *a,**kw:None)
+    monkeypatch.setattr(actual,'imports',lambda *_:api)
+    monkeypatch.setattr(actual,'ActualHost',lambda *a,**kw:h)
+    monkeypatch.setattr(actual,'HostProbe',lambda *_:nullcontext(SimpleNamespace(advance=lambda *a,**kw:None)))
+    assert actual.main()==0
+    assert json.loads(capsys.readouterr().out.strip())['status']=='requested_cycles_complete'
+
+
+def test_advancing_authorized_roster_resolves_prior_admitted_principal_wait(modules, retained):
+    actual,wait=modules
+    configuration,cycle=retained
+    principal=cycle/'principal'
+    principal.mkdir()
+    (principal/'session-request.json').write_bytes(b'{"request":"same"}')
+    (principal/'session-response.json').write_bytes(b'{"attested":"same"}')
+    (cycle/'request-plan.c15.json').write_bytes(b'{"plan":"same"}')
+    pending=wait.write_wait_receipt(configuration,cycle,'principal')
+    h=host(actual,configuration,cycle)
+    h._workflow_resuming=[pending]
+    h.coordinator=SimpleNamespace(_load=lambda request,phase: {'complete':True}
+                                 if request=='same-run-cycle-00' and phase=='complete' else None)
+    next_cycle=cycle.with_name('cycle-01')
+    next_cycle.mkdir()
+    h.workflow_reentry(next_cycle)
+    assert wait.pending_receipts(configuration,cycle)==[]
+
+
+def test_uncompleted_prior_cycle_cannot_resolve_wait_or_advance(modules, retained):
+    actual,wait=modules
+    configuration,cycle=retained
+    principal=cycle/'principal'
+    principal.mkdir()
+    (principal/'session-request.json').write_bytes(b'{"request":"same"}')
+    (principal/'session-response.json').write_bytes(b'{"attested":"same"}')
+    (cycle/'request-plan.c15.json').write_bytes(b'{"plan":"same"}')
+    pending=wait.write_wait_receipt(configuration,cycle,'principal')
+    h=host(actual,configuration,cycle)
+    h._workflow_resuming=[pending]
+    h.coordinator=SimpleNamespace(_load=lambda *a:None)
+    next_cycle=cycle.with_name('cycle-01')
+    next_cycle.mkdir()
+    with pytest.raises(ValueError):
+        h.workflow_reentry(next_cycle)
+    assert wait.pending_receipts(configuration,cycle)

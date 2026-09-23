@@ -27,7 +27,14 @@ def test_workflows_load_and_carry_the_turn_input():
     for name in ('frankie_box_fetch_response.yml', 'frankie_host_export_principal_request.yml', 'frankie_host_record_principal_response.yml'):
         doc = yaml.safe_load((WF / name).read_text())
         turn = doc[True]['workflow_dispatch']['inputs']['turn']            # yaml reads the `on` key as True
-        assert turn['options'] == ['initial', 'correction'] and turn['default'] == 'initial'
+        assert turn['options'] == ['initial', 'correction']
+        if name == 'frankie_host_record_principal_response.yml':
+            assert turn['required'] is True and 'default' not in turn
+            reusable = doc[True]['workflow_call']['inputs']
+            assert reusable['turn']['required'] is True and 'default' not in reusable['turn']
+            assert reusable['context_json']['required'] is True
+        else:
+            assert turn['default'] == 'initial'
     fetch = (WF / 'frankie_box_fetch_response.yml').read_text()
     assert '--set "TURN=$TURN"' in fetch and all(f in fetch for f in CORRECTION_FILES) and "'/correction'" in fetch
     assert 'dipole_teachback' in fetch and '171' in fetch

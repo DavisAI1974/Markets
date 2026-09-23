@@ -101,7 +101,16 @@ def test_workflow_fetches_checks_stages_masks_and_passes_every_variable():
     assert "Config(signature_version='s3v4')" in stage and "print('::add-mask::' + url)" in stage and "'get_object'" in stage
     ssm = next(s for s in steps if 'python deploy/aws/ssm_run_ps1.py' in s.get('run', ''))['run']
     assert '--script deploy/aws/host/frankie_host_record_principal_response.ps1' in ssm and '--tail 0' in ssm
-    for name in REQUIRED:
+    # The reusable workflow uses the receipt-bound route; legacy script variables
+    # remain covered above, while the new context owns run/day/cycle/configuration.
+    assert inputs['context_json']['required'] is True
+    assert '--set "WorkflowDeliveryContext=$WORKFLOW_DELIVERY_CONTEXT"' in ssm
+    assert 'validate_context(json.loads(os.environ[\'CONTEXT_JSON\']))' in fetch
+    for name in ('Turn', 'ResponseUrl', 'ResponseSha256', 'ResponseBytes',
+                 'AttestationUrl', 'AttestationSha256', 'AttestationBytes',
+                 'RecordUrl', 'RecordSha256', 'RecordBytes'):
         assert f'--set "{name}=' in ssm, name
+    for legacy in ('Day', 'RunRoot', 'ToolsRoot', 'Python', 'CycleIndex'):
+        assert f'--set "{legacy}=' not in ssm
     assert 'echo' not in ssm.replace('--comment', '')
     assert workflow['permissions'] == {'contents': 'read'}
