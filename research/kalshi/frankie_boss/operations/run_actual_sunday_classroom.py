@@ -250,9 +250,11 @@ class ClassroomActualHost(base.ActualHost):
             delivery_receipt=c["delivery_receipt"]["path"],
             expected_delivery_file_sha256=c["delivery_receipt"]["sha256"],
             result_path=c["calculation_result"]["path"],
-            session_executor=lambda request: await_recorded_principal(
-                request, self.directory, self.principal_host_lock, self.probe,
-                pending=(lambda: self.principal_pending()) if getattr(self,'pending_return',False) else None
+            session_executor=lambda request: (
+                await_recorded_principal(request, self.directory, self.principal_host_lock, self.probe,
+                                         pending=self.principal_pending)
+                if getattr(self, 'pending_return', False) else
+                await_recorded_principal(request, self.directory, self.principal_host_lock, self.probe)
             ),
         )
         runner = self.api.driver.SundayExecution(
@@ -302,7 +304,7 @@ def main(host_class=ActualHost):
         raise ValueError("host configuration must contain no service credentials")
     host = None
     try:
-        from research.kalshi.frankie_boss.operations.workflow_wait import resume_admission, WorkflowPending
+        from research.kalshi.frankie_boss.operations.workflow_wait import resume_admission, write_execution_scope, WorkflowPending
         if args.resume_wait_sha256 and not args.pending_return:
             raise ValueError('pending return required for receipt resume')
         try:
@@ -311,7 +313,7 @@ def main(host_class=ActualHost):
             print(json.dumps(pending.result), flush=True)
             return pending.exit_code
         if resume_limit is not None and args.cycles is not None and args.cycles != resume_limit:
-            raise ValueError('receipt resume must remain within its retained cycle')
+            raise ValueError('receipt resume must match its retained authorized scope')
         repo = Path(configuration["host_runtime"]["repository"])
         api = imports(repo)
         Path(configuration["run_directory"]).mkdir(parents=True, exist_ok=True)
@@ -338,6 +340,8 @@ def main(host_class=ActualHost):
             host.resume_wait_sha256 = args.resume_wait_sha256
             if type(host.cycle_limit) is not int or not 1 <= host.cycle_limit <= total_cycles:
                 raise ValueError('cycles must be within the verified schedule')
+            if args.pending_return and not args.resume_wait_sha256:
+                write_execution_scope(configuration, target_cycles=host.cycle_limit, total_cycles=total_cycles)
             host.principal_host_lock = host_lock
             try:
                 result = asyncio.run(host.run())

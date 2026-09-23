@@ -347,6 +347,14 @@ class ActualHost:
 
     def workflow_reentry(self,cycle_directory):
         from research.kalshi.frankie_boss.operations.workflow_wait import pending_receipts,WorkflowPending
+        previous=getattr(self,'_workflow_cycle',None)
+        if (getattr(self,'pending_return',False) and previous is not None and
+                previous!=Path(cycle_directory) and getattr(self,'_workflow_resuming',[])):
+            prior=self._workflow_resuming[0]['wait_receipt']['request_id']
+            if self.coordinator._load(prior,'complete') is None:
+                raise ValueError('prior pending cycle must complete before advancing')
+            self.workflow_resolved('principal')
+            self.workflow_resolved('principal_correction')
         self._workflow_cycle=Path(cycle_directory)
         if not getattr(self,'pending_return',False):return
         self._workflow_resuming=pending_receipts(self.config,self._workflow_cycle)
@@ -1054,8 +1062,9 @@ class ActualHost:
             retained_directory=str(Path(c['retained_witnesses']['path']).parent),expected_retained_witnesses_sha256=c['retained_witnesses']['sha256'],
             delivery_receipt=c['delivery_receipt']['path'],expected_delivery_file_sha256=c['delivery_receipt']['sha256'],
             result_path=c['calculation_result']['path'],
-            session_executor=lambda request:await_recorded_principal(request,self.directory,self.principal_host_lock,self.probe,
-                pending=(lambda:self.principal_pending()) if getattr(self,'pending_return',False) else None))
+            session_executor=lambda request:(await_recorded_principal(request,self.directory,self.principal_host_lock,self.probe,
+                pending=self.principal_pending) if getattr(self,'pending_return',False) else
+                await_recorded_principal(request,self.directory,self.principal_host_lock,self.probe)))
         runner=self.api.driver.SundayExecution(directory=self.directory/'execution',run_id=c['run_id'],coordinator=self.coordinator,
             contract_path=c['contract']['path'],expected_contract_sha256=c['contract']['sha256'],
             schedule_path=h['schedule']['path'],expected_schedule_sha256=h['schedule']['sha256'],runtime_factory=self.runtime,
@@ -1105,7 +1114,7 @@ def main():
         raise ValueError('host configuration must contain no service credentials')
     host=None
     try:
-        from research.kalshi.frankie_boss.operations.workflow_wait import resume_admission,WorkflowPending
+        from research.kalshi.frankie_boss.operations.workflow_wait import resume_admission,write_execution_scope,WorkflowPending
         if args.resume_wait_sha256 and not args.pending_return:raise ValueError('pending return required for receipt resume')
         try:cycle_limit=resume_admission(configuration,args.resume_wait_sha256)
         except WorkflowPending as pending:
@@ -1120,10 +1129,16 @@ def main():
             host.principal_host_lock=host_lock
             host.pending_return=args.pending_return;host.resume_wait_sha256=args.resume_wait_sha256
             host.cycle_limit=cycle_limit
+            host.source()
+            total_cycles=len(host.schedule['steps'])
+            if host.cycle_limit is None:host.cycle_limit=total_cycles
+            if args.pending_return and not args.resume_wait_sha256:
+                write_execution_scope(configuration,target_cycles=host.cycle_limit,total_cycles=total_cycles)
             try:
                 result=asyncio.run(host.run())
-                probe.advance('complete',completed=len(result),total=19,unit='steps')
-                print(json.dumps(dict(status='all_nineteen_cycles_complete',cycles=len(result))),flush=True)
+                probe.advance('complete',completed=len(result),total=host.cycle_limit,unit='steps')
+                print(json.dumps(dict(status=('all_scheduled_cycles_complete' if host.cycle_limit==total_cycles
+                    else 'requested_cycles_complete'),cycles=len(result))),flush=True)
                 return 0
             except PreparationComplete:return 0
             except WorkflowPending as pending:

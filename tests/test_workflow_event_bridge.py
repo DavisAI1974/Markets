@@ -45,7 +45,12 @@ def fixture(tmp_path,monkeypatch):
         receipt_sha256=sha(canonical(wait)),receipt_path=run+"/execution/cycle-00/workflow-wait/readiness.json",
         prepared_configuration_sha256="f"*64,requested_cycles=3,cycles_total=3,day="20211004",
         run_id="fixture-run",run_directory=run,schedule_sha256="a"*64,status="workflow_wait"))
-    configuration=dict(pending_return=True,workflow_run={k:wait[k] for k in (
+    configuration=dict(pending_return=True,instance="i-0e90ee6110ef609aa",
+        workflow_automation=dict(context=dict(tools_root="/tools/Markets",tools_commit="d"*40,
+            python="/native/python",configuration_path="/native/configuration.json"),
+            archive=dict(instance="i-0e90ee6110ef609aa",run_root="/native/days",
+                bucket="frankie-granite42-568968024170-us-east-1",key_parameter="/markets/frankie/request-transport/test"),
+            workflow_ref="codex/trading-day-readiness-20260922"),workflow_run={k:wait[k] for k in (
         "run_id","run_directory","configuration_sha256","boss_commit","schedule_sha256")},
         trading_day_schedule=dict(trading_day="20211004",step_count=3,source_record_count=17,
             schedule_sha256="a"*64,source_manifest_hash="b"*64))
@@ -233,3 +238,25 @@ def test_changed_event_cannot_reuse_dispatch_identity(api,fixture):
     with pytest.raises(ValueError):
         api.dispatch_event(directory,changed,dispatch)
     assert len(seen)==1
+
+@pytest.mark.parametrize("field,value",[
+    ("tools_root","/foreign/tools"),("tools_commit","0"*40),("python","/foreign/python"),
+    ("configuration_path","/foreign/configuration.json")
+])
+def test_event_cannot_select_different_native_tools_or_configuration(api,fixture,field,value):
+    event=copy.deepcopy(fixture["event"])
+    event["context"][field]=value
+    seal(event)
+    with pytest.raises(ValueError):
+        api.validate_event(event,fixture["pipeline"])
+
+@pytest.mark.parametrize("field,value",[
+    ("instance","i-other"),("bucket","other"),("run_root","/other/days"),
+    ("key_parameter","/foreign/key"),("cycle_index","01"),("request_sha256","0"*64)
+])
+def test_archive_event_cannot_substitute_target_or_request(api,fixture,field,value):
+    event=copy.deepcopy(fixture["event"])
+    event["payload"][field]=value
+    seal(event)
+    with pytest.raises(ValueError):
+        api.validate_event(event,fixture["pipeline"])

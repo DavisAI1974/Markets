@@ -21,8 +21,8 @@ import hashlib
 import json
 import os
 import re
-import uuid
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
+import importlib.util
 import subprocess
 import sys
 import time
@@ -152,7 +152,8 @@ class DayPipeline:
         for name, value in sorted((self.c.get('host_variables') or {}).items()):
             if (self.declaration is not None and script_key == 'cycles' and name.lower() in
                     ('preparedconfigurationpath', 'preparedconfigurationsha256',
-                     'requirepreparedconfiguration', 'expectedtradingdayschedulesha256')):
+                     'requirepreparedconfiguration', 'expectedtradingdayschedulesha256',
+                     'pendingreturn', 'resumewaitsha256', 'day', 'cyclelimit')):
                 continue
             command += ['--set', f'{name}={value}']
         if script_key in ('cycles', 'schedule_prefixes'):
@@ -283,6 +284,7 @@ class DayPipeline:
         digest = value.get('receipt_sha256')
         if (value.get('status') not in ('workflow_wait', 'workflow_attention')
                 or value.get('day') != self.day
+                or type(requested) is not int or not 1 <= requested <= self.cycle_limit
                 or value.get('requested_cycles') != requested
                 or type(value.get('requested_cycles')) is not int
                 or value.get('cycles_total') != self.cycle_count
@@ -301,6 +303,8 @@ class DayPipeline:
                 or wait['state'] not in ('WAIT', 'ATTENTION')
                 or value['status'] != ('workflow_wait' if wait['state'] == 'WAIT' else 'workflow_attention')
                 or wait['kind'] not in ('readiness', 'service_resume', 'principal', 'principal_correction', 'same_job')
+                or (wait['kind'] == 'same_job') != (wait['state'] == 'ATTENTION')
+                or (wait['kind'] == 'same_job' and wait['job_id'] is None)
                 or any(wait[k] != pins[k] for k in pins)
                 or type(wait['cycle_index']) is not int or not 0 <= wait['cycle_index'] < requested
                 or wait['request_id'] != f"{pins['run_id']}-cycle-{wait['cycle_index']:02d}"
@@ -310,6 +314,22 @@ class DayPipeline:
                     {k: v for k, v in wait.items() if k != 'receipt_id'})).hexdigest()
                 or type(wait['artifacts']) is not dict or not wait['artifacts']):
             raise StageRefused('pending receipt identity or retained context binding differs')
+        relative = f"execution/cycle-{wait['cycle_index']:02d}"
+        required = {'host-identity.c15.json', relative + '/host-preparation.c15.json',
+                    relative + '/actual-critic-request.json'}
+        if wait['kind'] in ('principal', 'principal_correction'):
+            required |= {relative + '/request-plan.c15.json', relative + '/principal/session-request.json'}
+        if wait['kind'] == 'principal_correction':
+            required.add(relative + '/principal/classroom-correction-request.json')
+        if wait['kind'] == 'service_resume':
+            required.add(relative + '/host-service.c15.json')
+        path_type = PureWindowsPath if PureWindowsPath(pins['run_directory']).drive else PurePosixPath
+        root = path_type(pins['run_directory'])
+        receipt_path = path_type(value['receipt_path'])
+        if (not required <= wait['artifacts'].keys() or not root.is_absolute()
+                or '..' in root.parts or '..' in receipt_path.parts
+                or receipt_path != root / relative / 'workflow-wait' / (wait['kind'] + '.json')):
+            raise StageRefused('pending receipt path or required retained artifacts differ')
         for name, witness in wait['artifacts'].items():
             if (type(name) is not str or not name or name.startswith('/')
                     or '\\' in name or any(part in ('', '.', '..') for part in name.split('/'))
@@ -321,30 +341,20 @@ class DayPipeline:
         return value
 
     @staticmethod
-    def _retain(path, record):
-        """Publish flushed metadata without replacing evidence; retain interrupted scratch."""
-        raw = canonical(record)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if path.is_symlink():
-            raise StageRefused('pending metadata must not be a link')
-        if path.exists():
-            if path.read_bytes() != raw:
-                raise StageRefused('retained pending metadata differs')
-        else:
-            scratch = path.with_name(path.name + '.pending-' + uuid.uuid4().hex)
-            with scratch.open('xb') as stream:
-                stream.write(raw); stream.flush(); os.fsync(stream.fileno())
-            try:
-                os.link(scratch, path)
-            except FileExistsError:
-                if path.is_symlink() or path.read_bytes() != raw:
-                    raise StageRefused('concurrent pending metadata differs') from None
-        with path.open('rb') as stream:
-            os.fsync(stream.fileno())
-        if os.name != 'nt':
-            descriptor = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
-            try: os.fsync(descriptor)
-            finally: os.close(descriptor)
+    def _metadata():
+        # The sibling is stdlib-only; importing the package would load model code.
+        spec = importlib.util.spec_from_file_location('pipeline_wait_metadata',
+                    Path(__file__).with_name('workflow_wait.py'))
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    @classmethod
+    def _retain(cls, path, record):
+        try:
+            cls._metadata()._publish(path, record)
+        except (ValueError, OSError) as error:
+            raise StageRefused('retained pending metadata publication refused: ' + str(error)) from error
         return record
 
     def pending(self):
@@ -355,7 +365,9 @@ class DayPipeline:
         for path in sorted(self.directory.glob('04-cycles-wait-*.json')):
             if path.is_symlink():
                 raise StageRefused('pending metadata must not be a link')
-            raw = path.read_bytes()
+            try: raw = self._metadata()._read(path)
+            except (ValueError, OSError) as error:
+                raise StageRefused('retained pending metadata read refused') from error
             try: record = json.loads(raw)
             except ValueError:
                 raise StageRefused('pending metadata is incomplete') from None
@@ -438,9 +450,20 @@ class DayPipeline:
                 if (resume_wait != prior['gate']['receipt_sha256']
                         or prior['status'] != 'WAIT'):
                     raise StageRefused('exact resumable WAIT receipt required; ATTENTION needs reconciliation')
-                requested = prior['gate']['wait_receipt']['cycle_index'] + 1
+                waiting = prior['gate']['wait_receipt']
+                requested = (prior['requested_cycles']
+                             if 'workflow-execution-scope.json' in waiting['artifacts']
+                             else waiting['cycle_index'] + 1)
             elif resume_wait is not None:
                 raise StageRefused('resume requires a retained WAIT receipt; it cannot launch a new run')
+        if pending_mode and self.c.get('workflow_automation') is not None:
+            # Automated events cannot create a run or supply the owner's release.
+            bridge_spec = importlib.util.spec_from_file_location('pipeline_event_release',
+                                Path(__file__).with_name('workflow_event_bridge.py'))
+            bridge = importlib.util.module_from_spec(bridge_spec)
+            bridge_spec.loader.exec_module(bridge)
+            if prior is None or not bridge.verify_release(self, prior['gate']['wait_receipt']):
+                return 'hold'
         command = self.commands()[stage]
         if command is None:
             raise StageRefused(f'the configuration declares no host script for {stage}')
@@ -468,7 +491,8 @@ class DayPipeline:
                 record = self._write_wait(value, requested, prior)
                 return 'wait' if record['status'] == 'WAIT' else 'attention'
             if value.get('status') == 'requested_cycles_complete':
-                if (value.get('day') != self.day or value.get('cycles_total') != self.cycle_count
+                if (any(type(value.get(k)) is not int for k in ('cycles_total', 'cycles_completed', 'requested_cycles'))
+                        or value.get('day') != self.day or value.get('cycles_total') != self.cycle_count
                         or value.get('cycles_completed') != requested
                         or value.get('requested_cycles') != requested
                         or requested == self.cycle_count):
@@ -489,6 +513,14 @@ class DayPipeline:
 
     def resume(self, *, go=None, until=None, resume_wait=None):
         """From the first stage without a receipt; stops at the first refusal or at HOLD."""
+        if resume_wait is not None:
+            # A receipt event carries authority only for the waiting cycle stage.
+            # Earlier stages must already exist; later stages remain separate actions.
+            for previous in STAGES[:STAGES.index('cycles')]:
+                if self.receipt(previous) is None:
+                    raise StageRefused('same-run resume requires all preceding receipts')
+                self.require(previous)
+            return {'cycles': self.run_stage('cycles', go=go, resume_wait=resume_wait)}
         outcome = {}
         for stage in STAGES:
             outcome[stage] = self.run_stage(stage, go=go, resume_wait=resume_wait if stage == 'cycles' else None)

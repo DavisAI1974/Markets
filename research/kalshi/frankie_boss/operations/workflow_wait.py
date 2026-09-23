@@ -123,7 +123,7 @@ def _artifacts(configuration, cycle, kind):
         required.append(cycle / 'principal/classroom-correction-request.json')
     if kind == 'service_resume':required.append(cycle / 'host-service.c15.json')
     paths = set(required)
-    for member in ('host-instance.c15.json','native-host-runtime.json','execution/execution-identity.c15.json'):
+    for member in ('host-instance.c15.json','native-host-runtime.json','execution/execution-identity.c15.json','workflow-execution-scope.json'):
         if (root / member).exists():paths.add(root / member)
     for pattern in ('host-prefix*.c15.json', 'host-service.c15.json', 'request-plan.c15.json',
                     'principal/*request.json', 'critic-spool/*/dispatch.json'):
@@ -289,8 +289,41 @@ def resolve_wait(result, admitted_paths):
     _publish(path.with_name(path.stem + '.resolved.json'),
              dict(wait_sha256=result['receipt_sha256'], admitted_artifacts=artifacts))
 
+def write_execution_scope(configuration, *, target_cycles, total_cycles):
+    """Retain the initial owner's exact roster; an event cannot create this scope."""
+    if (type(target_cycles) is not int or type(total_cycles) is not int or
+            not 1 <= target_cycles <= total_cycles):
+        raise ValueError('explicit authorized cycle scope required')
+    value = dict(schema='FRANKIE_WORKFLOW_EXECUTION_SCOPE_V1',run_id=configuration['run_id'],
+        configuration_sha256=digest(configuration),boss_commit=configuration['host_runtime']['boss_commit'],
+        schedule_sha256=configuration['host_runtime']['schedule']['sha256'],
+        target_cycles=target_cycles,total_cycles=total_cycles)
+    path = Path(configuration['run_directory']) / 'workflow-execution-scope.json'
+    _publish(path,value)
+    return value
+
+
+def _resume_scope(configuration, receipt):
+    relative = 'workflow-execution-scope.json'
+    if relative not in receipt['artifacts']:
+        return receipt['cycle_index'] + 1
+    path = Path(receipt['run_directory']) / relative
+    raw = _read(path)
+    if {'sha256':hashlib.sha256(raw).hexdigest(),'bytes':len(raw)} != receipt['artifacts'][relative]:
+        raise ValueError('retained execution scope changed')
+    scope = json.loads(raw)
+    expected = {'schema','run_id','configuration_sha256','boss_commit','schedule_sha256','target_cycles','total_cycles'}
+    if (type(scope) is not dict or set(scope)!=expected or canonical(scope)!=raw or
+            scope['schema']!='FRANKIE_WORKFLOW_EXECUTION_SCOPE_V1' or
+            any(scope[name]!=receipt[name] for name in ('run_id','configuration_sha256','boss_commit','schedule_sha256')) or
+            type(scope['target_cycles']) is not int or type(scope['total_cycles']) is not int or
+            not receipt['cycle_index'] < scope['target_cycles'] <= scope['total_cycles']):
+        raise ValueError('retained authorized execution scope differs')
+    return scope['target_cycles']
+
+
 def resume_admission(configuration, expected_sha256=None):
-    """An event may resume exactly its retained cycle, never authorize a new one."""
+    """Resume only the retained owner scope, or the one legacy pending cycle."""
     root = Path(configuration['run_directory'])
     paths = sorted(root.glob('execution/cycle-*/workflow-wait/*.json'))
     paths = [p for p in paths if not p.name.endswith('.resolved.json')]
@@ -309,7 +342,7 @@ def resume_admission(configuration, expected_sha256=None):
             pending.extend(pending_receipts(configuration, directory))
         if pending and any(p['receipt_sha256'] != expected_sha256 for p in pending):
             raise WorkflowPending(pending[-1])
-        return receipt['cycle_index'] + 1
+        return _resume_scope(configuration,receipt)
     for directory in sorted({p.parent.parent for p in paths}):
         pending = pending_receipts(configuration, directory)
         if pending:
