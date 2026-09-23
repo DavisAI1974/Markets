@@ -120,3 +120,102 @@ def test_existing_destination_and_scratch_are_never_overwritten(tmp_path):
     with pytest.raises(FileExistsError):
         mod.write_table(path, 'x', [dict(x=1)], tmp_path / 'scratch')
     assert path.read_text(encoding='utf-8') == 'retained evidence'
+
+
+@pytest.mark.parametrize('context_size', [0, 2, 5])
+def test_cross_context_length_mismatch_keeps_literal_timestamps(tmp_path, context_size):
+    tables = FX._tables()
+    context_rows = tables['legacy_book_imbalance'][:context_size]
+    if context_size == 5:
+        context_rows = tables['legacy_book_imbalance'] + [dict(ts_recv_ns=1, ts_event_ns=2)]
+    assert_table(tmp_path, 'legacy_structure_observables', tables['legacy_structure_observables'],
+                 {'legacy_book_imbalance': context_rows})
+
+
+def test_missing_cross_column_and_nested_source_fields_preserve_fallback(tmp_path):
+    tables = FX._tables()
+    context_rows = [dict(row, unrelated=dict(nested='discard')) for row in tables['legacy_book_imbalance']]
+    context_rows[-1].pop('ts_event_ns')
+    assert_table(tmp_path, 'legacy_structure_observables', tables['legacy_structure_observables'],
+                 {'legacy_book_imbalance': context_rows})
+
+
+def test_empty_table_with_nonempty_context_is_exact(tmp_path):
+    assert_table(tmp_path, 'legacy_structure_observables', [],
+                 {'legacy_book_imbalance': FX._tables()['legacy_book_imbalance']})
+
+
+def test_existing_scratch_is_retained_on_failure(tmp_path):
+    mod = stream()
+    scratch = tmp_path / 'scratch'
+    scratch.mkdir()
+    retained = scratch / 'proof.txt'
+    retained.write_text('previous attempt', encoding='utf-8')
+    with pytest.raises(FileExistsError):
+        mod.write_table(tmp_path / 'table.txt', 'x', [dict(x=1)], scratch)
+    assert retained.read_text(encoding='utf-8') == 'previous attempt'
+
+
+def test_write_failure_keeps_partial_output_and_source(tmp_path, monkeypatch):
+    mod = stream()
+    original = mod._emit
+
+    def interrupted(handle, *args):
+        handle.write('interrupted evidence\n')
+        handle.flush()
+        raise OSError('simulated full disk')
+
+    monkeypatch.setattr(mod, '_emit', interrupted)
+    path = tmp_path / 'table.txt'
+    with pytest.raises(OSError, match='full disk'):
+        mod.write_table(path, 'x', [dict(x=1)], tmp_path / 'scratch')
+    assert path.read_bytes() == b'interrupted evidence\n'
+    with sqlite3.connect(tmp_path / 'scratch' / 'table.sqlite') as db:
+        assert db.execute('SELECT count(*) FROM source').fetchone()[0] == 1
+
+
+def test_private_spool_refuses_type_loss_before_verification(tmp_path):
+    class DistinctInt(int):
+        pass
+    path = tmp_path / 'table.txt'
+    with pytest.raises(ValueError, match='input type'):
+        stream().write_table(path, 'typed', [dict(x=DistinctInt(5))], tmp_path / 'scratch')
+    assert path.exists()
+
+
+@pytest.mark.skipif(sys.platform != 'linux', reason='ru_maxrss byte conversion below is Linux-specific')
+def test_fresh_process_row_and_dictionary_growth_has_bounded_codec_memory(tmp_path, capsys):
+    # Regression tolerances, NOT production capacity limits or a Monday run proof.
+    # Both row count and distinct dictionary size grow 10x at fixed row width.
+    import json
+    import subprocess
+    code = r'''
+import json, pathlib, resource, sys, tracemalloc
+sys.path.insert(0, sys.argv[1])
+import frankie_box_digest_stream as stream
+n = int(sys.argv[2])
+root = pathlib.Path(sys.argv[3])
+tracemalloc.start()
+rows = (dict(index=i, word='entry-%08d' % (i % (n // 2)),
+             ts_recv_ns=1633298400000000000 + i * 1000000) for i in range(n))
+receipt = stream.write_table(root / 'table.txt', 'resource', rows, root / 'scratch')
+_, peak = tracemalloc.get_traced_memory()
+assert receipt['verified'] and receipt['rows'] == n
+print(json.dumps(dict(rows=n, distinct=n//2, python_peak_bytes=peak,
+                     rss_peak_bytes=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024,
+                     output_bytes=(root / 'table.txt').stat().st_size)))
+'''
+    records = []
+    for n in (4000, 40000):
+        result = subprocess.run([sys.executable, '-c', code, str(MODULE.parent), str(n),
+                                 str(tmp_path / str(n))],
+                                check=True, capture_output=True, text=True, timeout=180)
+        records.append(json.loads(result.stdout))
+    small, large = records
+    with capsys.disabled():
+        print('\nDIGEST_TABLE_MEMORY_REGRESSION ' + json.dumps(records), flush=True)
+    assert large['output_bytes'] > small['output_bytes'] * 5
+    # Fixed page caches/buffers plus interpreter/allocator variation. A retained
+    # row/dictionary Python collection of this size exceeds the Python tolerance.
+    assert large['python_peak_bytes'] <= small['python_peak_bytes'] + 2 * 1024 * 1024
+    assert large['rss_peak_bytes'] <= small['rss_peak_bytes'] + 16 * 1024 * 1024

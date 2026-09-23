@@ -62,8 +62,9 @@ Remote GitHub APIs and authorized isolated Linux CI only. No local filesystem or
 shell, no ingestion restart/source replay, no canary, no native runner/Pod/EC2 stop,
 no pinned Pod bootstrap edits, no evidence deletion, no key exposure or output
 truncation. Preserve market JSON bytes and exact integers.
-Classroom remains complete; exclude this unrelated host-contract test file from
-its broad push path so focused host repairs do not reopen settled Classroom tests.
+Classroom remains complete. Existing broad workflow paths remain unchanged;
+automatic checks may run when a host contract changes, but no Classroom changes
+or manual retesting are part of this repair.
 Existing tasks/plan.md and tasks/todo.md contain historical unfinished work and
 remain intact; this dated document follows CHAT14's instruction to preserve root
 planning documents and use dated additions.

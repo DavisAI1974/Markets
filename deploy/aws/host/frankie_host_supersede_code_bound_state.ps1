@@ -94,9 +94,17 @@ function Get-StateManifest([string]$Path) {
 function Write-StateJson([string]$Path, $Value) {
     $full = Assert-StatePath $Path
     $bytes = [Text.UTF8Encoding]::new($false).GetBytes(($Value | ConvertTo-Json -Depth 20 -Compress))
-    $stream = [IO.File]::Open($full, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
+    # A crash while writing leaves only a pending sibling. Discovery considers
+    # published JSON names, so retained partial bytes cannot masquerade as a receipt.
+    $pending = Assert-StatePath ($full + '.pending-' + [Guid]::NewGuid().ToString('N'))
+    $stream = [IO.File]::Open($pending, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::None)
     try { $stream.Write($bytes, 0, $bytes.Length); $stream.Flush($true) }
     finally { $stream.Dispose() }
+    $null = Assert-StatePath $full
+    $null = Assert-StatePath $pending
+    # Same-directory publish is atomic; the two-argument API refuses any existing final name.
+    # Orphan pending files remain intact for inspection after a refused publish.
+    [IO.File]::Move($pending, $full)
 }
 
 function Assert-StateManifest([string]$Path, $Expected) {
@@ -107,7 +115,7 @@ function Assert-StateManifest([string]$Path, $Expected) {
 
 function Complete-StateIntent([string]$IntentPath) {
     $null = Assert-StatePath $IntentPath
-    $intent = Get-Content -LiteralPath $IntentPath -Raw | ConvertFrom-Json
+    $intent = Get-Content -LiteralPath $IntentPath -Encoding UTF8 -Raw | ConvertFrom-Json
     if ($intent.schema -ne 'FRANKIE_CODE_BOUND_STATE_INTENT_V1' -or
         $intent.run_directory -cne $runDirectory -or $intent.run_id -cne $cfg.run_id -or
         $intent.day -cne $Day -or $intent.cycle_index -cne $CycleIndex -or
@@ -126,7 +134,9 @@ function Complete-StateIntent([string]$IntentPath) {
     if ($null -eq $intent.items -or $intent.items -isnot [Array]) { throw 'intent items must be an array' }
     $intentHash = Get-StateHash $IntentPath
     $seen = @{}
-    # Validate EVERY path and manifest before the first reconciliation move.
+    $expectedMoveReceiptPaths = @{}
+    $preflightIndex = 0
+    # Validate EVERY path, manifest and retained receipt before the first reconciliation move.
     foreach ($entry in $intent.items) {
         $relative = [string]$entry.relative
         if (-not $relative -or [IO.Path]::IsPathRooted($relative) -or
@@ -160,6 +170,22 @@ function Complete-StateIntent([string]$IntentPath) {
         if ($atSource -eq $atDestination) { throw ("ambiguous or missing preserved item: " + $relative) }
         if ($atSource) { Assert-StateManifest $source $entry.manifest }
         else { Assert-StateManifest $destination $entry.manifest }
+        $preflightReceiptPath = Assert-StatePath ($stem + '.move-' + $preflightIndex + '.json')
+        $expectedMoveReceiptPaths[$preflightReceiptPath] = $true
+        if (Test-Path -LiteralPath $preflightReceiptPath) {
+            if ($atSource) { throw 'move receipt exists but source is present' }
+            $retainedReceipt = Get-Content -LiteralPath $preflightReceiptPath -Encoding UTF8 -Raw | ConvertFrom-Json
+            $expectedReceipt = [ordered]@{ schema = 'FRANKIE_CODE_BOUND_STATE_MOVE_V1'; intent_sha256 = $intentHash; item = $entry }
+            if (($retainedReceipt | ConvertTo-Json -Depth 20 -Compress) -cne ($expectedReceipt | ConvertTo-Json -Depth 20 -Compress)) {
+                throw 'move receipt differs from intent'
+            }
+        }
+        $preflightIndex += 1
+    }
+    $receiptFilter = (Split-Path $stem -Leaf) + '.move-*.json'
+    foreach ($retainedFile in @(Get-ChildItem -LiteralPath (Split-Path $stem -Parent) -Filter $receiptFilter -Force)) {
+        $retainedPath = Assert-StatePath $retainedFile.FullName
+        if (-not $expectedMoveReceiptPaths.ContainsKey($retainedPath)) { throw 'unexpected move receipt outside intent' }
     }
     $moved = @()
     $index = 0
@@ -181,7 +207,7 @@ function Complete-StateIntent([string]$IntentPath) {
         Assert-StateManifest $destination $entry.manifest
         $moveReceipt = [ordered]@{ schema = 'FRANKIE_CODE_BOUND_STATE_MOVE_V1'; intent_sha256 = $intentHash; item = $entry }
         if (Test-Path -LiteralPath $moveReceiptPath) {
-            $retained = Get-Content -LiteralPath (Assert-StatePath $moveReceiptPath) -Raw | ConvertFrom-Json
+            $retained = Get-Content -LiteralPath (Assert-StatePath $moveReceiptPath) -Encoding UTF8 -Raw | ConvertFrom-Json
             if (($retained | ConvertTo-Json -Depth 20 -Compress) -cne ($moveReceipt | ConvertTo-Json -Depth 20 -Compress)) {
                 throw 'move receipt differs from intent'
             }
@@ -223,7 +249,7 @@ $dayDirectory = Assert-StatePath $dayDirectory
 $cfgPath = Join-Path $dayDirectory 'actual-host-configuration.json'
 $null = Assert-StatePath $cfgPath
 if (-not (Test-Path -LiteralPath $cfgPath)) { throw "no run configuration for $Day at $cfgPath" }
-$cfg = Get-Content -LiteralPath $cfgPath -Raw | ConvertFrom-Json
+$cfg = Get-Content -LiteralPath $cfgPath -Encoding UTF8 -Raw | ConvertFrom-Json
 $runDirectory = $cfg.run_directory
 if (-not $runDirectory -or -not [IO.Path]::IsPathRooted($runDirectory)) { throw 'run_directory must be absolute' }
 $runDirectory = Assert-StatePath $runDirectory
@@ -246,12 +272,12 @@ try {
 $unfinished = @()
 foreach ($file in @(Get-ChildItem -LiteralPath $dayDirectory -Filter 'superseded-code-bound-state-*.intent.json' -File)) {
     $null = Assert-StatePath $file.FullName
-    $prior = Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json
+    $prior = Get-Content -LiteralPath $file.FullName -Encoding UTF8 -Raw | ConvertFrom-Json
     if ($prior.run_directory -cne $runDirectory) { continue }
     $completion = $file.FullName.Substring(0, $file.FullName.Length - '.intent.json'.Length) + '.json'
     $null = Assert-StatePath $completion
     if (Test-Path -LiteralPath $completion) {
-        $done = Get-Content -LiteralPath $completion -Raw | ConvertFrom-Json
+        $done = Get-Content -LiteralPath $completion -Encoding UTF8 -Raw | ConvertFrom-Json
         if ($done.schema -ne 'FRANKIE_CODE_BOUND_STATE_SUPERSEDED_V1' -or
             $done.intent_path -cne $file.FullName -or $done.intent_sha256 -cne (Get-StateHash $file.FullName)) {
             throw 'completion receipt does not bind the retained intent'

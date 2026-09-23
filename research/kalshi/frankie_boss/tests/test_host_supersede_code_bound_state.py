@@ -475,3 +475,31 @@ def test_the_workflow_is_dispatch_only_read_only_and_pinned_to_the_one_repositor
     for step in workflow['jobs']['supersede']['steps']:
         if 'uses' in step:
             assert re.fullmatch(r'[\w.-]+/[\w.-]+@[0-9a-f]{40}', step['uses']), step['uses']   # actions pinned by sha
+
+
+def test_json_publication_is_flushed_then_atomically_published_without_overwrite():
+    writer = CODE.split('function Write-StateJson', 1)[1].split('function Assert-StateManifest', 1)[0]
+    assert "$full + '.pending-' + [Guid]::NewGuid().ToString('N')" in writer
+    assert '[IO.File]::Open($pending, [IO.FileMode]::CreateNew' in writer
+    assert _index('$stream.Flush($true)', writer) < _index('$stream.Dispose()', writer)
+    assert _index('$stream.Dispose()', writer) < _index('[IO.File]::Move($pending, $full)', writer)
+    # Two arguments use the no-overwrite overload on both Windows PowerShell and pwsh.
+    assert '[IO.File]::Move($pending, $full)' in writer
+    assert '[IO.File]::Replace' not in writer
+
+
+def test_json_reads_explicitly_decode_the_utf8_publication_format():
+    reads = [line for line in CODE.splitlines() if 'Get-Content ' in line]
+    assert reads
+    assert all('-Encoding UTF8' in line for line in reads), reads
+
+
+def test_all_retained_move_receipts_are_validated_before_reconciliation_starts():
+    preflight = COMPLETION.split('$moved = @()', 1)[0]
+    assert '$expectedMoveReceiptPaths = @{}' in preflight
+    assert '$preflightReceiptPath = Assert-StatePath' in preflight
+    assert "if ($atSource) { throw 'move receipt exists but source is present' }" in preflight
+    assert '$expectedReceipt = [ordered]@{' in preflight
+    assert "throw 'move receipt differs from intent'" in preflight
+    assert "throw 'unexpected move receipt outside intent'" in preflight
+    assert 'Move-Item' not in preflight

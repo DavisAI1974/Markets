@@ -485,3 +485,113 @@ try {{
     result, _ = invoke(state)
     assert_success(result)
     assert_preserved(state, next(iter(json_files(state.day, RECEIPT_SCHEMA).values())))
+
+
+@pytest.mark.parametrize("phase", ["intent", "move", "completion"])
+def test_partial_pending_publication_is_retained_and_does_not_block_recovery(state, phase):
+    if phase == "intent":
+        pending = state.day / "superseded-code-bound-state-interrupted.intent.json.pending-test"
+        intent_path = None
+    else:
+        count = 1 if phase == "move" else len(state.expected_items)
+        result, _ = invoke(state, after=count)
+        assert result.returncode != 0
+        assert "TEST_INTERRUPT_AFTER_MOVE" in result.stderr
+        intent_path = next(iter(json_files(state.day, INTENT_SCHEMA)))
+        suffix = ".move-0.json" if phase == "move" else ".json"
+        pending = intent_path.with_name(
+            intent_path.name.removesuffix(".intent.json") + suffix + ".pending-test"
+        )
+    # Exact disk state of interruption during a write before atomic publication.
+    # This deliberately models a truncated pending write, not an invalid published receipt.
+    pending.write_bytes(b'{"partial":')
+    result, _ = invoke(state)
+    assert_success(result)
+    assert pending.read_bytes() == b'{"partial":'
+    receipts = json_files(state.day, RECEIPT_SCHEMA)
+    assert len(receipts) == 1
+    receipt = next(iter(receipts.values()))
+    if intent_path is not None:
+        assert receipt["intent_path"] == str(intent_path)
+    assert_preserved(state, receipt)
+
+
+def test_unexpected_receipt_index_refuses_before_recovery_moves(state):
+    result, _ = invoke(state, after=1)
+    assert result.returncode != 0
+    intent_path = next(iter(json_files(state.day, INTENT_SCHEMA)))
+    unexpected = intent_path.with_name(
+        intent_path.name.removesuffix(".intent.json") + ".move-999.json"
+    )
+    unexpected.write_bytes(b'{"unexpected":true}')
+    before = {
+        relative: (state.run / relative).read_bytes()
+        for relative in state.moved if (state.run / relative).exists()
+    }
+    result, capture = invoke(state)
+    assert result.returncode != 0
+    assert not capture.exists()
+    assert unexpected.read_bytes() == b'{"unexpected":true}'
+    assert {
+        relative: (state.run / relative).read_bytes()
+        for relative in state.moved if (state.run / relative).exists()
+    } == before
+
+
+def test_unicode_run_identity_paths_and_manifest_round_trip_across_recovery(state):
+    new_run = state.run.with_name("run-caf\u00e9-\u8bc1\u636e")
+    state.run.rename(new_run)
+    state.run = new_run
+    config_path = state.day / "actual-host-configuration.json"
+    config = read_json(config_path)
+    config["run_directory"] = str(new_run)
+    config["run_id"] = "run-\u8bc1\u636e-\u00e9"
+    config_path.write_text(json.dumps(config, ensure_ascii=False), encoding="utf-8")
+    relative = "training-witnesses/\u8bc1\u636e-\u00e9.c15.json"
+    state.moved[relative] = b"unicode-named evidence"
+    write(state.run / relative, state.moved[relative])
+
+    result, _ = invoke(state, after=5)
+    assert result.returncode != 0
+    assert "TEST_INTERRUPT_AFTER_MOVE" in result.stderr
+    result, _ = invoke(state)
+    assert_success(result)
+    receipt = next(iter(json_files(state.day, RECEIPT_SCHEMA).values()))
+    assert receipt["run_id"] == config["run_id"]
+    assert receipt["run_directory"] == str(new_run)
+    assert_preserved(state, receipt)
+
+
+def test_atomic_publication_cannot_overwrite_existing_evidence_and_retains_pending_bytes(state):
+    target = state.day / "publication-proof.json"
+    prelude = f"""
+$ErrorActionPreference = 'Stop'
+$Day = '20211003'
+$RunRoot = {ps_quote(state.run_root)}
+$ToolsRoot = {ps_quote(state.tools)}
+$Python = {ps_quote(sys.executable)}
+$CycleIndex = '00'
+try {{
+    . {ps_quote(SCRIPT)}
+    Write-StateJson {ps_quote(target)} ([ordered]@{{ value = 'original' }})
+    try {{
+        Write-StateJson {ps_quote(target)} ([ordered]@{{ value = 'replacement' }})
+        throw 'TEST_PUBLISH_DID_NOT_REFUSE'
+    }} catch {{
+        if ($_.ToString() -like '*TEST_PUBLISH_DID_NOT_REFUSE*') {{ throw }}
+    }}
+}} catch {{
+    [Console]::Error.WriteLine($_.ToString())
+    exit 37
+}}
+"""
+    result = subprocess.run(
+        [state.pwsh, "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", prelude],
+        capture_output=True, text=True, timeout=60,
+    )
+    assert_success(result)
+    assert read_json(target) == {"value": "original"}
+    pending = list(state.day.glob("publication-proof.json.pending-*"))
+    assert len(pending) == 1
+    assert read_json(pending[0]) == {"value": "replacement"}
+    assert_preserved(state, next(iter(json_files(state.day, RECEIPT_SCHEMA).values())))

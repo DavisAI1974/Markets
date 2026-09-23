@@ -38,7 +38,10 @@ def _unpack(value):
 
 
 def _dump(value):
-    return json.dumps(_pack(value), separators=(',', ':'))
+    text = json.dumps(_pack(value), separators=(',', ':'))
+    if not DG._same(_unpack(json.loads(text)), value):
+        raise ValueError('private row spool cannot preserve the input type')
+    return text
 
 
 def _load(value):
