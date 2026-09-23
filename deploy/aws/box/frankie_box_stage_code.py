@@ -403,6 +403,10 @@ def main():
                                   args.pack_bytes,os.environ['MAP_URL'])
     except Exception as error:
         print(json.dumps(dict(status='refused',error_type=type(error).__name__)),flush=True)
+        if args.action=='pack':
+            # CI redirects pack stdout into the pin file; the reason must reach the log.
+            # Pack handles no capability URL, so its refusal text is safe to print.
+            print('pack refused: '+type(error).__name__+': '+str(error),file=sys.stderr,flush=True)
         return 1
     print(json.dumps(result,sort_keys=True),flush=True)
     return 0
