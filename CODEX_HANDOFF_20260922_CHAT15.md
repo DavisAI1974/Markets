@@ -2,6 +2,10 @@
 
 Branch: codex/trading-day-readiness-20260922. Read this with CHAT12, CHAT13 and CHAT14; all operational restrictions remain.
 
+## Final workflow prerequisite before the new run
+
+The owner has added one final workflow task after the current repairs are complete and before the new run begins. Its details have not yet been supplied. Continue current classroom/repair work, then carry the exact remote state into a new chat for that workflow work. Do not start cycle 0 or the new run until this workflow prerequisite is completed. This newer instruction constrains the earlier authorization to run after classroom completion. Preparing code and reviewable deployment material remains authorized.
+
 ## Owner clarification
 
 The owner means the original BOSS teacher. Its original purpose, representation supervision, mathematical targets, masks, controls and training responsibilities must remain. Shared Dipole research, scientific assessment and collaboration are additions to that teaching system. Do not repurpose it solely as a classroom reviewer. Both teaching functions should benefit from validated discoveries and full prior learning. Teacher-to-teacher discussion remains required; the existing scientific teacher/Frankie exchange alone must not be described as proof that two teachers have conversed.
