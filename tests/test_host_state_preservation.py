@@ -584,6 +584,7 @@ try {{
     [Console]::Error.WriteLine($_.ToString())
     exit 37
 }}
+exit 0
 """
     result = subprocess.run(
         [state.pwsh, "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", prelude],
@@ -595,3 +596,20 @@ try {{
     assert len(pending) == 1
     assert read_json(pending[0]) == {"value": "replacement"}
     assert_preserved(state, next(iter(json_files(state.day, RECEIPT_SCHEMA).values())))
+
+
+def test_equivalent_run_path_spelling_resumes_the_retained_intent(state):
+    result, _ = invoke(state, after=5)
+    assert result.returncode != 0 and "TEST_INTERRUPT_AFTER_MOVE" in result.stderr
+    intents_before = json_files(state.day, INTENT_SCHEMA)
+    assert len(intents_before) == 1
+    config_path = state.day / "actual-host-configuration.json"
+    config = read_json(config_path)
+    config["run_directory"] = str(state.run) + "/"
+    config_path.write_text(json.dumps(config), encoding="utf-8")
+    result, _ = invoke(state)
+    assert_success(result)
+    assert set(json_files(state.day, INTENT_SCHEMA)) == set(intents_before)
+    receipts = json_files(state.day, RECEIPT_SCHEMA)
+    assert len(receipts) == 1
+    assert_preserved(state, next(iter(receipts.values())))
