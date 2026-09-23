@@ -25,6 +25,7 @@ class Probe:
         self.token = process_token(self.pid)
         self.lock = threading.RLock()
         self.last = 0.0
+        self.checkpoints = {}
 
     def update(self, stage, completed=0, total=None, *, in_flight=0, failed=0,
                state='running', force=True):
@@ -46,6 +47,18 @@ class Probe:
             temporary.write_text(json.dumps(value, sort_keys=True) + '\n', encoding='utf-8')
             os.replace(temporary, path)
             self.last = now
+
+    def checkpoint(self, event, name):
+        """Observe existing cache validation, never expose prompts or answer payloads."""
+        with self.lock:
+            self.checkpoints[event] = self.checkpoints.get(event, 0) + 1
+            value = dict(request_sha256=self.request_sha256, pid=self.pid, process_token=self.token,
+                         counts=dict(self.checkpoints), last_event=event, name=Path(name).name, at=time.time())
+            self.directory.mkdir(parents=True, exist_ok=True)
+            path = self.directory / 'checkpoints.json'
+            temporary = path.with_suffix('.pending')
+            temporary.write_text(json.dumps(value, sort_keys=True) + '\n', encoding='utf-8')
+            os.replace(temporary, path)
 
     def track(self, records, total, stage):
         """Yield every input unchanged; count only after its consumer returns."""
@@ -83,6 +96,12 @@ def snapshot(directory, request_sha256=None, phase=None):
         current = process_token(pid)
         value['process_alive'] = current == value['process_token'] if value.get('process_token') else None
         value['progress_age_seconds'] = max(0, round(time.time() - value['at'], 1))
+        try:
+            saved = json.loads((Path(directory) / 'checkpoints.json').read_text(encoding='utf-8'))
+            if all(saved.get(k) == value.get(k) for k in ('request_sha256', 'pid', 'process_token')):
+                value['checkpoints'] = saved
+        except (OSError, ValueError, TypeError):
+            pass
         return value
     except (OSError, ValueError, TypeError, KeyError):
         return dict(status='unavailable')

@@ -98,7 +98,13 @@ def run(session,C,cache,*,root,staged,dialogue):
     thin=dict(visible,pre_message={k:v for k,v in pre.items() if k!='learning_history'})
     head=C._head(thin,session.cycle,session.request['request_id'])
     calls=[]
+    progress=getattr(cache,'progress',None)
+    total=len(C.components(visible))*(1+(len(cursor_pages(list(pre['observation_cursor_roster']))) if pre['mode']!='TEACH' else 0))+1
+    done=0
+    if progress is not None:progress.update('classroom-tasks',done,total)
     def task(name,instruction,parse):
+        nonlocal done
+        if progress is not None:progress.update('classroom-tasks',done,total,in_flight=1)
         result=dialogue.run_task(session,cache,role='principal',phase='classroom',
             sources=retained,reading_receipt=reading,task_instruction=lambda nav:(
                 head+'\n'+instruction+'\nSource navigation: '+canonical(nav).decode()),
@@ -106,6 +112,8 @@ def run(session,C,cache,*,root,staged,dialogue):
             classroom_module=C,staged_module=staged)
         calls.extend(result['context_calls']+[result['call']])
         retained['classroom-answer:'+name]=canonical(result['parsed'])
+        done+=1
+        if progress is not None:progress.update('classroom-tasks',done,total)
         return result['parsed']
     outputs={}
     roster=list(pre['observation_cursor_roster'])
@@ -154,12 +162,14 @@ def run(session,C,cache,*,root,staged,dialogue):
         outputs[name]=task('component:'+name,instruction,parse)
     instruction=C.summary_prompt(thin,outputs,cycle=session.cycle,request_id=session.request['request_id']).split('----- TASK -----\n',1)[1]
     summary=task('summary','Review the complete component answers and all 171 pair interpretations in classroom-answer sources. '+instruction,C.parse_summary)
+    if progress is not None:progress.update('classroom-publish')
     built=C.assemble(visible,outputs,summary)
     report=C.validate(visible,built['ledgers'])
     cache.publish(built['ledgers'],C.render_markdown(built['ledgers'],built['dropped_findings']),
         dict(schema='FRANKIE_BOX_CLASSROOM_RECEIPT_V1',report=report,composition=C.COMPOSITION,
             dropped_findings=built['dropped_findings'],calls=calls,staged_reading_plan_hash=reading['plan_hash'],
             teacher_message_hash=pre['teacher_message_hash'],classroom_binding_hash=visible['binding']['classroom_binding_hash']))
+    if progress is not None:progress.update('classroom-published',1,1,state='complete')
     return built['ledgers']
 
 

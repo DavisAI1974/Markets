@@ -308,3 +308,86 @@ def test_a_finding_that_claims_a_future_outcome_is_dropped_not_rewritten(tmp_pat
 def test_markdown_cells_are_escaped():
     C_ = session.classroom_module()
     assert C_._cell('a | b') == 'a \\| b' and '\n' not in C_._cell('a\nb') and '```' not in C_._cell('```python')
+
+
+def test_classroom_probe_never_counts_a_failed_task_as_done(tmp_path):
+    s = session.Session.__new__(session.Session)
+    s.dir = s.work = tmp_path
+    s.request_sha256 = 'test-request'
+    s.serverless = None
+    s._lock = threading.RLock()
+    s.note = lambda message: None
+    seen = []
+    def work(item):
+        seen.append(item)
+        if item == 2:
+            raise ValueError('synthetic failure')
+        return item * 2
+    with pytest.raises(ValueError, match='synthetic failure'):
+        s._fan_out('classroom', [1, 2, 3], work)
+    progress = json.loads((tmp_path / 'progress.json').read_text())
+    assert seen == [1, 2]
+    assert progress['completed'] == 1 and progress['failed'] == 1
+    assert progress['total'] == 3 and progress['in_flight'] == 0
+    assert progress['state'] == 'failed' and progress['percent'] == 33.33
+    assert s._fan_out('classroom', [1, 3], lambda item: item * 2) == [2, 6]
+    assert json.loads((tmp_path / 'progress.json').read_text())['percent'] == 100
+
+
+def test_checkpoint_probe_reports_verified_reuse_and_rejects_changed_payload(tmp_path):
+    module = session._box_module('frankie_box_classroom_cache')
+    progress_module = session._box_module('frankie_box_progress')
+    probe = progress_module.Probe(tmp_path, 'test-request', 'classroom')
+    probe.update('classroom-tasks', 0, 1)
+    cache = module.ClassroomCache(tmp_path / 'cache', {'request': 'test'}, progress=probe)
+    assert cache.load('part.json', 'prompt') is None
+    cache.save('part.json', 'prompt', {'answer': 1})
+    assert cache.load('part.json', 'prompt')['answer'] == 1
+    changed = json.loads((cache.directory / 'part.json').read_text())
+    changed['answer'] = 2
+    (cache.directory / 'part.json').write_text(json.dumps(changed))
+    assert cache.load('part.json', 'prompt') is None
+    stats = progress_module.snapshot(tmp_path, 'test-request', 'classroom')['checkpoints']
+    assert stats['counts'] == {'read_miss': 1, 'saved': 1, 'read_verified': 1, 'read_rejected': 1}
+    assert list(cache.directory.glob('part.json.superseded-*'))
+    assert 'answer' not in stats and 'prompt' not in stats
+
+
+def test_staged_classroom_probe_counts_all_components_and_summary(tmp_path, monkeypatch):
+    staged_class = session._box_module('frankie_box_classroom_staged')
+    probe_module = session._box_module('frankie_box_progress')
+    visible = build_visible()
+    visible['pre_message']['shared_knowledge'] = {'snapshot_hash': 'snapshot'}
+    s = types.SimpleNamespace(work=tmp_path, request={}, request_sha256='request', cycle='00')
+    s.request['request_id'] = 'request'
+    fields = ('components', 'pairs_of', '_states_present', 'NARRATIVE', 'STATES', 'parse_component',
+              'parse_summary', 'assemble', 'validate', 'render_markdown', 'COMPOSITION')
+    classroom = types.SimpleNamespace(**{name: getattr(C, name) for name in fields})
+    classroom.visible_of = lambda request: visible
+    classroom._head = lambda *args: 'head'
+    classroom.summary_prompt = lambda *args, **kwargs: '----- TASK -----\nsummary'
+    probe = probe_module.Probe(tmp_path, 'request', 'classroom')
+    published = []
+    cache = types.SimpleNamespace(progress=probe, save=lambda *args: None,
+                                  publish=lambda *args: published.append(args))
+    staged = types.SimpleNamespace(consume_sources=lambda *args: {'plan_hash': 'plan', 'parts': []})
+    monkeypatch.setattr(staged_class, 'ensure_snapshot', lambda *args: [])
+    by_name = {comp['name']: comp for comp in C.components(visible)}
+    observed = []
+    def task(*args, **kwargs):
+        live = probe_module.snapshot(tmp_path)
+        observed.append((live['completed'], live['total'], live['in_flight']))
+        name = kwargs['task_id']
+        if name == 'summary':
+            answer = boss_summary_answer()
+        else:
+            cname = name.split(':', 1)[1]
+            answer = boss_component_answer(by_name[cname], [p['right'] for p in C.pairs_of(visible, cname)])
+        return dict(parsed=kwargs['parse_final'](answer), context_calls=[], call={})
+    result = staged_class.run(s, classroom, cache, root=tmp_path, staged=staged,
+                             dialogue=types.SimpleNamespace(run_task=task))
+    total = len(by_name) + 1
+    assert observed == [(done, total, 1) for done in range(total)]
+    assert published and result
+    assert probe_module.snapshot(tmp_path)['stage'] == 'classroom-published'
+    assert probe_module.snapshot(tmp_path)['state'] == 'complete'

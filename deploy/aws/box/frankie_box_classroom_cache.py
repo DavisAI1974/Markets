@@ -107,8 +107,9 @@ def identity(session, visible, module):
                   if (session.work / n).is_file()})
 
 class ClassroomCache:
-    def __init__(self, directory, expected, writer=write):
+    def __init__(self, directory, expected, writer=write, progress=None):
         self.writer = writer
+        self.progress = progress
         self.directory = Path(directory)
         self.identity = expected
         recover_preservations(self.directory.parent)
@@ -125,9 +126,14 @@ class ClassroomCache:
         if not manifest.exists():
             write(manifest, expected)
 
+    def _probe(self, event, name):
+        if self.progress is not None:
+            self.progress.checkpoint(event, name)
+
     def load(self, name, prompt):
         path = self.directory / name
         if not path.exists():
+            self._probe('read_miss', name)
             return None
         try:
             value = read(path)
@@ -135,8 +141,10 @@ class ClassroomCache:
             payload = {k: v for k, v in value.items() if k != 'cache_binding'}
             if binding != dict(identity_hash=digest(self.identity), prompt_hash=digest(prompt), payload_hash=digest(payload)):
                 raise ValueError('classroom answer binding differs')
+            self._probe('read_verified', name)
             return value
         except (OSError, ValueError, KeyError, TypeError):
+            self._probe('read_rejected', name)
             preserve(path, 'classroom answer identity or content changed')
             return None
 
@@ -147,6 +155,7 @@ class ClassroomCache:
         if path.exists():
             preserve(path, 'classroom answer replaced after validation')
         self.writer(path, value)
+        self._probe('saved', name)
         return value
 
     def complete(self):
@@ -157,7 +166,9 @@ class ClassroomCache:
             for name in ('ledgers.json', 'classroom.md'):
                 if receipt['artifacts'][name] != witness(self.directory / name):
                     return None
-            return read(self.directory / 'ledgers.json')
+            value = read(self.directory / 'ledgers.json')
+            self._probe('publication_verified', 'receipt.json')
+            return value
         except (OSError, ValueError, KeyError, TypeError):
             return None
 
@@ -174,3 +185,4 @@ class ClassroomCache:
                     artifacts={n: witness(self.directory / n) for n in ('ledgers.json', 'classroom.md')}))
             else:
                 self.writer(path, value)
+        self._probe('published', 'receipt.json')

@@ -564,26 +564,34 @@ class Session:
         """The reading lane: the serverless endpoint when configured, else the Pod (the BOSS itself)."""
         return self.serverless_job(name, text) if self.serverless is not None else self.boss(name, text)
 
-    def _progress_note(self, label, done, total, in_flight):
+    def _progress_note(self, label, done, total, in_flight, failed=0):
         with self._lock:
+            state = 'failed' if failed else ('complete' if done == total and not in_flight else 'running')
+            _box_module('frankie_box_progress').for_session(self).update(
+                label, done, total, in_flight=in_flight, failed=failed, state=state)
             lane = f'serverless x{self.serverless["workers"]}' if self.serverless else 'Pod x1'
-            self.note(f'{label}: {done}/{total} done, {in_flight} in flight ({lane})')
+            self.note(f'{label}: {done}/{total} done, {in_flight} in flight, {failed} failed ({lane})')
 
     def _fan_out(self, label, items, work):
-        """Run work(item) over items with the lane's concurrency (1 on the Pod), in submission order, progress noted."""
+        """Retain submission order and count only successful work as completed."""
         workers = self.serverless['workers'] if self.serverless else 1
-        done, in_flight, results = 0, 0, [None] * len(items)
+        done, in_flight, failed, results = 0, 0, 0, [None] * len(items)
+        self._progress_note(label, done, len(items), in_flight, failed)
         def one(index):
-            nonlocal done, in_flight
+            nonlocal done, in_flight, failed
             with self._lock:
                 in_flight += 1
+                self._progress_note(label, done, len(items), in_flight, failed)
+            succeeded = False
             try:
                 results[index] = work(items[index])
+                succeeded = True
             finally:
                 with self._lock:
                     in_flight -= 1
-                    done += 1
-                self._progress_note(label, done, len(items), in_flight)
+                    done += int(succeeded)
+                    failed += int(not succeeded)
+                    self._progress_note(label, done, len(items), in_flight, failed)
         if workers == 1:
             for index in range(len(items)):
                 one(index)
@@ -1579,7 +1587,8 @@ class Session:
         except ValueError as error:
             self.refuse(f'classroom: {error}')
         cache_module = _box_module('frankie_box_classroom_cache')
-        cache = cache_module.ClassroomCache(self.work / 'classroom', cache_module.identity(self, visible, C), writer=write_json)
+        cache = cache_module.ClassroomCache(self.work / 'classroom', cache_module.identity(self, visible, C), writer=write_json,
+                                            progress=_box_module('frankie_box_progress').for_session(self))
         d = cache.directory
         complete = cache.complete()
         if complete is not None:
@@ -1619,6 +1628,7 @@ class Session:
         outputs = {r['name']: r['parsed'] for r in results}
         text = C.summary_prompt(visible, outputs, cycle=self.cycle, request_id=rid)
         text += '\nClassroom exchange identity: ' + cache_module.digest(cache.identity) + '\n'
+        _box_module('frankie_box_progress').for_session(self).update('classroom-summary', total=1, in_flight=1)
         summary = cache.load('summary.json', text)
         if summary is None:
             parsed, call = self._classroom_call('classroom-summary', text, C.parse_summary, 'boss')
@@ -1633,6 +1643,7 @@ class Session:
                  dropped_findings=built['dropped_findings'], calls=[r['call'] for r in results] + [summary['call']],
                  teacher_message_hash=visible['pre_message']['teacher_message_hash'],
                  classroom_binding_hash=visible['binding']['classroom_binding_hash']))
+        _box_module('frankie_box_progress').for_session(self).update('classroom-published', 1, 1, state='complete')
         self.note(f'classroom done: {report["components"]} components, {report["observations"]} observations, {report["pairs"]} pairs, '
                   f'{report["novel_findings"]} novel findings filed, {len(built["dropped_findings"])} not filed')
         return built['ledgers']
