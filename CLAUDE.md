@@ -1170,6 +1170,9 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
   is a real deliverable.
 - **No tent-widening on outliers.** When something lands outside the pattern, find the specific reason —
   don't loosen the test or wave it off as transient.
+- **MEASUREMENTS ARE 1-2 MINUTE CANARIES, THEN EXTRAPOLATE (Greg, 2026-09-23, standing).** Never run a long job
+  only to estimate something (a 40-minute layered size measurement was stopped for this). Sample a slice that
+  finishes in one or two minutes, extrapolate, and spend the long compute on the actual work.
 - **Incremental validation.** Canary run (short) before any long/compute-heavy run; break long runs into
   chunks with stop gates.
 - **git is the source of truth.** Commit + push working code/docs regularly. Large data stays LOCAL /
