@@ -303,3 +303,137 @@ def test_ssm_payload_fits_reserved_document_budget():
     assert len(payload)<=48*1024
     workflow=(SOURCE.parents[3]/'.github/workflows/frankie_stage_code.yml').read_text()
     assert '48*1024' in workflow and 'ssm_parameter_bytes' in workflow
+
+
+@pytest.fixture
+def transfer_case(tmp_path,source,monkeypatch):
+    pack,checksum,commit=packed(tmp_path,source)
+    parent=tmp_path/'code'
+    monkeypatch.setattr(stage_code,'CODE_PARENT',parent)
+    origin='https://'+stage_code.BUCKET+'.s3.us-east-1.amazonaws.com/readiness/code/'
+    pack_url=origin+'source.pack?X-Amz-Signature=fixture'
+    map_url=origin+'map.json?X-Amz-Signature=fixture'
+    run_id='transport-1'
+    payload=pack.read_bytes()
+    pin=dict(url=pack_url,bytes=len(payload),sha256=checksum,commit=commit)
+    return dict(parent=parent,commit=commit,checksum=checksum,size=len(payload),payload=payload,
+                pin=pin,map_url=map_url,pack_url=pack_url,run_id=run_id,
+                transfer=parent/('transfer-'+commit+'-'+run_id),
+                stage=parent/(commit+'-'+run_id),source=source[0])
+
+def mock_transport_http(monkeypatch,case,map_bytes=None,pack_body=None):
+    """Only the HTTP boundary is mocked; URL validation, files and Git are real."""
+    calls=[]
+    if map_bytes is None:
+        map_bytes=json.dumps({'source.pack':case['pin']}).encode()
+    def remote_open(opener,url,timeout):
+        assert timeout==120
+        calls.append(url)
+        if url==case['map_url']:
+            return io.BytesIO(map_bytes)
+        assert url==case['pack_url'],'unexpected HTTP request'
+        # The real download must not open HTTP until its durable intent exists.
+        intent=json.loads((case['transfer']/'transfer-intent.json').read_bytes())
+        assert intent['schema']=='FRANKIE_SOURCE_TRANSFER_INTENT_V1'
+        assert (intent['commit'],intent['sha256'],intent['bytes'])==(
+            case['commit'],case['checksum'],case['size'])
+        assert not (case['stage']/'staging-receipt.json').exists()
+        body=case['payload'] if pack_body is None else pack_body
+        return body() if callable(body) else io.BytesIO(body)
+    monkeypatch.setattr(stage_code.urllib.request.OpenerDirector,'open',remote_open)
+    return calls
+
+def run_transfer(case):
+    return stage_code.stage_from_map(case['commit'],case['run_id'],case['checksum'],
+                                     case['size'],case['map_url'])
+
+def assert_failed_transfer_retained(case):
+    assert (case['transfer']/'transfer-intent.json').is_file()
+    assert (case['transfer']/'source.pack').is_file()
+    assert not (case['stage']/'staging-receipt.json').exists()
+    assert not (case['stage']/'markets').exists()
+    assert not list(case['parent'].rglob('staging-receipt.json'))
+
+def test_map_transport_stages_real_git_pack_and_preserves_original_checkout(transfer_case,monkeypatch):
+    case=transfer_case
+    calls=mock_transport_http(monkeypatch,case)
+    before={p.relative_to(case['source']).as_posix():p.read_bytes()
+            for p in case['source'].rglob('*') if p.is_file() and '.git' not in p.parts}
+    result=run_transfer(case)
+    assert calls==[case['map_url'],case['pack_url']]
+    target=Path(result['code_root'])
+    assert target==case['stage']/'markets'
+    assert result['status']=='staged' and result['commit']==case['commit']
+    assert git(target,'rev-parse','HEAD')==case['commit']
+    assert git(target,'status','--porcelain','--untracked-files=all')==''
+    assert before=={p.relative_to(target).as_posix():p.read_bytes()
+                    for p in target.rglob('*') if p.is_file() and '.git' not in p.parts}
+    assert before=={p.relative_to(case['source']).as_posix():p.read_bytes()
+                    for p in case['source'].rglob('*') if p.is_file() and '.git' not in p.parts}
+    assert git(case['source'],'rev-parse','HEAD')==case['commit']
+    assert (case['transfer']/'source.pack').read_bytes()==case['payload']
+    receipt=json.loads((case['stage']/'staging-receipt.json').read_bytes())
+    assert receipt['pack_sha256']==case['checksum']
+    retained={p.relative_to(case['parent']).as_posix():p.read_bytes()
+              for p in case['parent'].rglob('*') if p.is_file()}
+    with pytest.raises(FileExistsError):
+        run_transfer(case)
+    assert retained=={p.relative_to(case['parent']).as_posix():p.read_bytes()
+                      for p in case['parent'].rglob('*') if p.is_file()}
+    assert calls==[case['map_url'],case['pack_url'],case['map_url']]
+
+@pytest.mark.parametrize('field',['commit','sha256','bytes'])
+def test_map_transport_mismatched_pin_refuses_before_intent_or_pack_http(transfer_case,monkeypatch,field):
+    case=transfer_case
+    case['pin'][field]={'commit':'0'*40,'sha256':'0'*64,'bytes':case['size']+1}[field]
+    calls=mock_transport_http(monkeypatch,case)
+    with pytest.raises(ValueError,match='dispatched pin'):
+        run_transfer(case)
+    assert calls==[case['map_url']]
+    assert not case['parent'].exists()
+
+@pytest.mark.parametrize('kind',['oversized','truncated'])
+def test_map_transport_refuses_oversized_or_truncated_map_before_writes(transfer_case,monkeypatch,kind):
+    case=transfer_case
+    body=b' '*(1<<20)+b'x' if kind=='oversized' else b'{"source.pack":'
+    calls=mock_transport_http(monkeypatch,case,map_bytes=body)
+    with pytest.raises(ValueError):
+        run_transfer(case)
+    assert calls==[case['map_url']]
+    assert not case['parent'].exists()
+
+@pytest.mark.parametrize('kind',['oversized','truncated'])
+def test_map_transport_refuses_wrong_pack_size_and_retains_transfer_evidence(transfer_case,monkeypatch,kind):
+    case=transfer_case
+    body=case['payload']+b'x' if kind=='oversized' else case['payload'][:-1]
+    calls=mock_transport_http(monkeypatch,case,pack_body=body)
+    with pytest.raises(ValueError,match='pinned size|bytes or hash'):
+        run_transfer(case)
+    assert calls==[case['map_url'],case['pack_url']]
+    assert_failed_transfer_retained(case)
+    assert (case['transfer']/'source.pack').read_bytes()==body
+
+def test_map_transport_interruption_keeps_partial_bytes_and_no_completion(transfer_case,monkeypatch):
+    case=transfer_case
+    class Interrupted(io.BytesIO):
+        def read(self,size=-1):
+            if self.tell():
+                raise ConnectionResetError('fixture transfer interruption')
+            return super().read(min(size,32))
+    calls=mock_transport_http(monkeypatch,case,pack_body=lambda:Interrupted(case['payload']))
+    with pytest.raises(ConnectionResetError):
+        run_transfer(case)
+    assert calls==[case['map_url'],case['pack_url']]
+    assert_failed_transfer_retained(case)
+    assert (case['transfer']/'source.pack').read_bytes()==case['payload'][:32]
+
+def test_http_redirect_handler_refuses_even_an_allowed_origin():
+    origin='https://'+stage_code.BUCKET+'.s3.us-east-1.amazonaws.com/readiness/source.pack'
+    request=stage_code.urllib.request.Request(origin)
+    with pytest.raises(ValueError,match='redirect refused'):
+        stage_code.NoRedirect().redirect_request(request,None,302,'Found',{},origin+'?other=1')
+
+def test_focused_ci_tracks_transport_workflow_and_ssm_runner():
+    body=(SOURCE.parents[3]/'.github/workflows/frankie_code_staging_ci.yml').read_text()
+    assert "      - '.github/workflows/frankie_stage_code.yml'" in body
+    assert "      - 'deploy/aws/ssm_run_sh.py'" in body

@@ -7,6 +7,8 @@ on:
       - 'deploy/aws/box/frankie_box_stage_code.sh'
       - 'tests/test_box_code_staging.py'
       - '.github/workflows/frankie_code_staging_ci.yml'
+      - '.github/workflows/frankie_stage_code.yml'
+      - 'deploy/aws/ssm_run_sh.py'
 permissions:
   contents: read
 jobs:
