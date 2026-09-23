@@ -30,7 +30,10 @@ def missing_launch_fields(value):
         elif isinstance(v, dict):
             for key, child in v.items():
                 walk(child, name + '.' + key)
-    for name in LAUNCH_FIELDS:
+    fields = LAUNCH_FIELDS
+    if value.get('forecast_mode') == 'whole_day_next_session':
+        fields = tuple(n for n in fields if n not in ('cutoff_rule', 'cutoffs')) + ('forecast_target',)
+    for name in fields:
         walk(value.get(name), name)
     return missing
 
@@ -42,6 +45,11 @@ def require_launch_fields(value):
     if missing:
         raise ValueError('missing launch values: ' + ', '.join(missing))
     _positive(value['model_context_rows'], 'model_context_rows')
+    if value.get('forecast_mode') == 'whole_day_next_session':
+        if (value['model_context_rows'] != value.get('declared_record_count')
+                or value.get('cutoffs') is not None or value.get('cutoff_rule') is not None):
+            raise ValueError('whole-day launch requires all records and no intraday cutoff roster')
+        return value
     if not isinstance(value['cutoff_rule'], str) or not value['cutoff_rule'].strip():
         raise ValueError('cutoff_rule must be explicitly authored')
     return value

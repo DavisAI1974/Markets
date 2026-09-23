@@ -12,7 +12,7 @@ import sys
 REPO = Path(__file__).resolve().parents[4]
 sys.path.insert(0, str(REPO))
 
-from research.kalshi.frankie_boss.trading_day_schedule import require_launch_fields
+from research.kalshi.frankie_boss.trading_day_schedule import require_launch_fields, build_whole_day_schedule
 from research.kalshi.frankie_boss.block_source_scope import block_source_scope
 from research.kalshi.frankie_boss.completed_schedule_view import open_completed_schedule_view
 from research.kalshi.frankie_boss.frankie_journal_reader import FrankieCompactReader
@@ -68,12 +68,13 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
         raise ValueError('ingestion_receipt sessions differ from one trading day')
     if any(receipt[k] != completion[k] for k in ('record_count', 'journal_count', 'journal_hash', 'group_count', 'source_prefix_hash')):
         raise ValueError('ingestion receipt and conformance completion disagree')
-    cutoffs_path = pinned(launch['cutoffs'])
+    whole = launch.get('forecast_mode') == 'whole_day_next_session'
+    cutoffs_path = None if whole else pinned(launch['cutoffs'])
     mapping_path = pinned(launch['mapping'])
-    cutoffs = json.loads(cutoffs_path.read_bytes())['invocation_cutoffs']
-    if type(cutoffs) is not list or not cutoffs:
+    cutoffs = None if whole else json.loads(cutoffs_path.read_bytes())['invocation_cutoffs']
+    if not whole and (type(cutoffs) is not list or not cutoffs):
         raise ValueError('cutoffs must be an explicitly authored nonempty roster')
-    total = len(cutoffs)
+    total = 1 if whole else len(cutoffs)
     if cycles is None:
         cycles = total
     if type(cycles) is not int or not 1 <= cycles <= total:
@@ -89,14 +90,27 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
         reader_factory=FrankieCompactReader,
         recovery_descriptor=launch['ingestion_receipt'] if recovered is not None else None)
     try:
-        schedule = build_schedule(view, mapping_path, expected_index_sha256=launch['mapping']['sha256'],
-            cutoffs_path=cutoffs_path, expected_cutoffs_sha256=launch['cutoffs']['sha256'],
-            model_context_rows=launch['model_context_rows'],
-            trading_day=dict(trading_day=launch['trading_day'], source_manifest_hash=manifest['manifest_hash'],
-                source_partitions=[m.member_key for m in scope.members],
-                source_record_count=receipt['record_count'], journal_count=receipt['journal_count'],
-                journal_hash=receipt['journal_hash'], journal_sha256=container['sha256'],
-                step_count=total, cutoff_rule=launch['cutoff_rule']))
+        if whole:
+            if (contract.get('forecast_mode') != 'whole_day_next_session'
+                    or contract.get('forecast_target') != launch['forecast_target']):
+                raise ValueError('whole-day contract target differs from launch')
+            schedule = build_whole_day_schedule(view, mapping_path,
+                expected_index_sha256=launch['mapping']['sha256'],
+                source_identity=dict(trading_day=launch['trading_day'],
+                    source_manifest_hash=manifest['manifest_hash'],
+                    source_partitions=[m.member_key for m in scope.members],
+                    source_record_count=receipt['record_count'], journal_count=receipt['journal_count'],
+                    journal_hash=receipt['journal_hash'], journal_sha256=container['sha256']),
+                forecast_target=launch['forecast_target'])
+        else:
+            schedule = build_schedule(view, mapping_path, expected_index_sha256=launch['mapping']['sha256'],
+                cutoffs_path=cutoffs_path, expected_cutoffs_sha256=launch['cutoffs']['sha256'],
+                model_context_rows=launch['model_context_rows'],
+                trading_day=dict(trading_day=launch['trading_day'], source_manifest_hash=manifest['manifest_hash'],
+                    source_partitions=[m.member_key for m in scope.members],
+                    source_record_count=receipt['record_count'], journal_count=receipt['journal_count'],
+                    journal_hash=receipt['journal_hash'], journal_sha256=container['sha256'],
+                    step_count=total, cutoff_rule=launch['cutoff_rule']))
     finally:
         view.journal.close()
     # Verify the authored contract against every derived cutoff before creating files.
@@ -104,6 +118,12 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
     for index, step in enumerate(schedule['steps']):
         bound = bind_cycle(launch['source_contract']['path'], launch['source_contract']['sha256'], index, step)
         feedback = step['feedback_available_through']
+        if whole:
+            if (feedback is not None or bound['learning_cutoff_ns'] is not None
+                    or bound['learning_through_source_cursor'] is not None
+                    or bound.get('feedback_status') != 'pending_target_outcomes'):
+                raise ValueError('whole-day target outcomes must remain pending')
+            continue
         if (bound['learning_cutoff_ns'] != feedback['as_of']
                 or bound['learning_through_source_cursor'] != feedback['through_cursor']):
             raise ValueError('source_contract learning boundary differs from schedule feedback')
@@ -144,17 +164,33 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
         model_calls=0, source_replays=0)
     binding_path = prefixes / 'trading-day-prefix-binding.json'
     save_new(binding_path, binding)
-    copier = partial(compact_journal_snapshot.snapshot_compact_prefix,
-        compact_path=journal, compact_sha256=container['sha256'], workers=h.get('data_workers', 1))
-    results = materialize(journal, prefixes, schedule['steps'][:cycles],
-        parent_count=completion['journal_count'], parent_head_hash=completion['journal_hash'],
-        binding_sha256=sha(binding_path), first_cycle=0, copier=copier,
-        scope=scope, entity=entity, t_ctx=launch['model_context_rows'])
+    if whole:
+        step = schedule['steps'][0]
+        full_receipt = dict(schema='C15_SEALED_FULL_DAY_REFERENCE_V1',
+            original_journal=str(journal.resolve()), snapshot_journal=str(journal.resolve()),
+            snapshot_sha256=container['sha256'], through_cursor=step['through_cursor'],
+            journal_count=completion['journal_count'], journal_head_hash=completion['journal_hash'],
+            records_in_prefix=receipt['record_count'], source_prefix_hash=step['source_hash'],
+            as_of=step['as_of'], source_as_of=step['source_as_of'],
+            source_scope_hash=scope.genesis_hash(), source_records_expected=receipt['record_count'],
+            ingestion_receipt=launch['ingestion_receipt'], source_replays=0, source_copies=0)
+        reference = prefixes / 'prefix-00-receipt.json'
+        save_new(reference, full_receipt)
+        files = prefixes / 'prefix-00-witness.json'
+        save_new(files, dict(snapshot=container, receipt=witness(reference)))
+        results = [witness(files)]
+    else:
+        copier = partial(compact_journal_snapshot.snapshot_compact_prefix,
+            compact_path=journal, compact_sha256=container['sha256'], workers=h.get('data_workers', 1))
+        results = materialize(journal, prefixes, schedule['steps'][:cycles],
+            parent_count=completion['journal_count'], parent_head_hash=completion['journal_hash'],
+            binding_sha256=sha(binding_path), first_cycle=0, copier=copier,
+            scope=scope, entity=entity, t_ctx=launch['model_context_rows'])
     manifest_path = prefixes / 'trading-day-prefix-witnesses.json'
     save_new(manifest_path, dict(schema='FRANKIE_TRADING_DAY_PREFIX_WITNESSES_V1',
         trading_day=launch['trading_day'], binding=witness(binding_path), witnesses=results, prefixes=cycles,
         scheduled_cycles=total, schedule_sha256=schedule['schedule_sha256'], source_records=receipt['record_count'],
-        prefix_seed_witnesses={str(i): witness(prefixes / ('prefix-%02d-packet-seed.json' % i)) for i in range(cycles)},
+        prefix_seed_witnesses={} if whole else {str(i): witness(prefixes / ('prefix-%02d-packet-seed.json' % i)) for i in range(cycles)},
         model_calls=0, source_replays=0))
     # A separate configuration selects the new evidence; do not rewrite old bindings.
     host = {k: v for k, v in h.items() if k not in ('source_lineage', 'source_progress', 'prefix_seeds')}

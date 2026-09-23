@@ -154,9 +154,10 @@ def prepare_bundle(configuration, *, configuration_sha256, commit, output_root):
     launch = require_launch_fields(read_pin(config['trading_day_launch']))
     if launch.get('trading_day') != '20211004':
         raise ValueError('explicit Monday trading day required')
-    roster = read_pin(launch['cutoffs']).get('invocation_cutoffs')
-    if type(roster) is not list or not roster:
-        raise ValueError('explicit nonempty cutoff roster required')
+    if launch.get('forecast_mode') != 'whole_day_next_session':
+        roster = read_pin(launch['cutoffs']).get('invocation_cutoffs')
+        if type(roster) is not list or not roster:
+            raise ValueError('explicit nonempty cutoff roster required')
     descriptor = read_pin(launch['ingestion_receipt'])
     if descriptor.get('schema') != 'FRANKIE_VERIFIED_RECOVERED_INGESTION_V1':
         raise ValueError('verified recovered ingestion descriptor required')
