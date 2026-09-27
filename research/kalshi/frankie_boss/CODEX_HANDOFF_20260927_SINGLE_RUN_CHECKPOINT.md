@@ -1,5 +1,10 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Combined runtime continuation dispatched — 2026-09-27 09:20Z
+
+Fresh checkpoint000004 in recovery-03a70711353a433c989b18074d7baacd at1,215,705records is verified; PID56172 and14owned workers exited (pause36308640458). Runtime293113435a8fdf7bd5566f2652e1a1f7a1734c35 staged successfully (36308610841). One canonical resume is active in https://github.com/DavisAI1974/Markets/actions/runs/36309059667 on codex/frankie-shared-ledger-runtime-2931134. CODE_ROOT=/opt/frankie-box/code/293113435a8fdf7bd5566f2652e1a1f7a1734c35-36308610841-1/markets. Restored-state/worker activation/throughput receipts remain pending. Do NOT launch another resume. See audits/ROOT_COMBINED_TRANSPORT_20260927.md for exact parent ledger and full-state hashes. Granite prime delivery remains pending actual Monday sequence.
+
+
 ## Combined source package reviewed — 2026-09-27 09:11Z
 
 ROOT remains on phase-one runtime68f2311, PID56172, workflow36305497169. Latest observed1,166,757/2,032,203 (57.41%), failed=0, alive at09:09Z; checkpoint000003 saved/read_verified. The18.8-minute interval averaged109.84records/s including checkpoints. The shared member freeze, shared-memory encoded output, and frozen ledger segments with background I/O workers are now implemented and statically reviewed, but NOT activated. See [ROOT_COMBINED_TRANSPORT_20260927.md](audits/ROOT_COMBINED_TRANSPORT_20260927.md). Stage the immutable reviewed source first, then use a fresh verified checkpoint and the existing identified pause/resume route; no duplicate ROOT. No further pause/resume has yet been issued. Granite actual priming delivery and acknowledgement remain pending.

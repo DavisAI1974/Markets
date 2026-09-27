@@ -32,3 +32,12 @@ Only the exact phase-one checkpoint serializer/policies are accepted as predeces
 - [ ] Actual combined throughput measurement.
 
 No extra scientific test, canary, comparison calculation, model inference, ingestion replay, infrastructure stop, bootstrap change, agent delegation or orchestration was introduced. Granite's retained priming binding remains configured but actual package delivery and acknowledgement are pending in the real Monday sequence. All historical sections/hashes, slots and producer groups remain required.
+
+## Actual checkpoint handoff — 09:20Z
+
+- [x] Pause workflow36308640458 saved/read-verified checkpoint000004 at1,215,705records (59.82%); identified PID56172 and all14owned native workers exited. Pause receipt1270bytes SHA256208f43b0066159483c36b1a138c58e78c8679b81085f67254e4cbf4e13058150. All files/tails preserved.
+- [x] Full descriptor read36308965747:10525bytes SHA256fb78159f28f2cafcb88c94276bf0f04007900789fdb3bafda4529e6adbd32a73. Driver state293255540bytes SHA256171d6984a06f5b636a0431504c8cb99e52939a2495c8885751c319ce6c5a6967; finalized=false; Python/cloudpickle and exact predecessor serializer match.
+- [x] Frozen ledger prefixes: member312183215696bytes/906982rows SHA256786f05de4b8a57375e1bfc461350ca0211562587d453464d2729f33e8ae3166e; lifecycle6071380890bytes/6568550rows SHA2569f3979ee62fa0f29c71e98681a78fc98e4cf8129b741765d0cc00d597ef3218d; legacy766552961bytes/583556rows SHA2562896256c1b69d7c3cb0d524a6840071f08f85c65a1486d7c01e10bd3d1bb4ff0.
+- [x] Immutable runtime293113435a8fdf7bd5566f2652e1a1f7a1734c35 staged by36308610841; source pack589523154bytes/3676files SHA25629eab7876dbc38c6db3857a02aeabbda1e0d87f564ab48f7c5a79234cbf44a80; intent85e793aba0f28c823071c93360b0ab9deec91234c959c18249eb7ec9522f51c0. CODE_ROOT=/opt/frankie-box/code/293113435a8fdf7bd5566f2652e1a1f7a1734c35-36308610841-1/markets. Existing workflow serial lock required pause before staging; staging did not overlap the active calculation.
+- [x] One resume dispatched in36309059667 on codex/frankie-shared-ledger-runtime-2931134, from recovery-03a70711353a433c989b18074d7baacd/checkpoints/checkpoint-000004.json, same root/authorship/binding/48readers. No reconstruction flag.
+- [ ] Restored-state and activated worker receipts still pending; do not launch another resume. First probe36309073512 read the old exited process status during startup, not a newly activated worker receipt.
