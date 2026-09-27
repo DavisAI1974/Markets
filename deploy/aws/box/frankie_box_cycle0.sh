@@ -4,7 +4,7 @@
 set -eu
 : "${MARKETS_SHA:?full dispatched commit required}"
 : "${CODE_ROOT:?staged clean checkout required}"
-: "${ACTION:?config, launch, principal or correction}"
+: "${ACTION:?config, launch, principal, correction or record}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
 PYTHON=/opt/frankie-box/venv/bin/python
@@ -40,5 +40,26 @@ case "$ACTION" in
       --session "$CALCULATIONS" --request-directory "$REQUEST_DIRECTORY" --day 20211004 --cycle 00 \
       --require-retained-derivation --stage "$STAGE"
     ;;
-  *) echo "ACTION must be config, launch, principal or correction" >&2; exit 2;;
+  record)
+    : "${CONFIGURATION:?actual host configuration}"
+    : "${CALCULATIONS:?Monday calculation and principal session root}"
+    : "${TURN:?initial or correction}"
+    "$PYTHON" -B - "$CODE_ROOT" "$CONFIGURATION" "$CALCULATIONS/out" "$TURN" <<'PY'
+import hashlib, pathlib, subprocess, sys
+code, configuration, output = map(pathlib.Path, sys.argv[1:4])
+turn = sys.argv[4]
+if turn not in ('initial', 'correction'):
+    raise SystemExit('TURN must be initial or correction')
+names = ('response.json', 'host-attestation.json') if turn == 'initial' else (
+    'correction-response.json', 'host-correction-attestation.json')
+command = [sys.executable, '-B', str(code / 'research/kalshi/frankie_boss/operations/record_actual_frankie_response.py'),
+           '--cycle-index', '0', '--turn', turn]
+for name, path in (('configuration', configuration), ('response', output / names[0]),
+                   ('host-attestation', output / names[1])):
+    command.extend(['--' + name, str(path), '--' + name + '-sha256',
+                    hashlib.sha256(path.read_bytes()).hexdigest()])
+raise SystemExit(subprocess.run(command, check=False).returncode)
+PY
+    ;;
+  *) echo "ACTION must be config, launch, principal, correction or record" >&2; exit 2;;
 esac

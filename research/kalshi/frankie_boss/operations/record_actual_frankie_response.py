@@ -182,6 +182,11 @@ def main():
         from research.kalshi.frankie_boss.frankie_principal_adapter import json_form
         print('attachment dipole_classroom: '+live_classroom(request,classroom_package,final_model_visible_classroom,json_form))
         normalize=classroom_normalizer(classroom_package,final_model_visible_classroom,json_form)
+        shared_knowledge=None
+        if config.get('shared_knowledge') is not None:
+            from research.kalshi.frankie_boss.dipole_shared_knowledge import load_snapshot, descriptor
+            shared=config['shared_knowledge']
+            shared_knowledge=descriptor(load_snapshot(shared['directory'],shared['snapshot_hash']))
         adapter=make_principal_adapter(binding=binding,handoff_directory=export['directory'],
             expected_manifest_sha256=export['manifest_sha256'],boss_journal_path=plan['source_journal_path'],
             source_journal_checkpoint=plan['source_journal_checkpoint'],mapping_directory=str(Path(config['mapping']['path']).parent),
@@ -191,7 +196,8 @@ def main():
             expected_retained_witnesses_sha256=config['retained_witnesses']['sha256'],
             delivery_receipt=config['delivery_receipt']['path'],expected_delivery_file_sha256=config['delivery_receipt']['sha256'],
             result_path=config['calculation_result']['path'],calculation_pins=config.get('calculation_pins'),session_executor=None,
-            classroom_package=classroom_package,adapter_class=IntegratedDipoleClassroomPrincipalAdapter)
+            classroom_package=classroom_package,adapter_class=IntegratedDipoleClassroomPrincipalAdapter,
+            shared_knowledge=shared_knowledge)
         response=verified_json(args.response,args.response_sha256)
         attestation=verified_json(args.host_attestation,args.host_attestation_sha256)
         if args.turn=='correction':
