@@ -25,12 +25,12 @@ pid = int(sys.argv[3])
 expected = sys.argv[4]
 binding_hash = sys.argv[5]
 mode = sys.argv[6]
-terminal = mode in ('terminal-finalize', 'terminal-projection')
-terminal_stage = 'root-projection' if mode == 'terminal-projection' else 'root-native-finalize'
+terminal = mode in ('terminal-finalize', 'terminal-projection', 'terminal-digest')
+terminal_stage = {'terminal-projection': 'root-projection', 'terminal-digest': 'root-digest'}.get(mode, 'root-native-finalize')
 target = 464000
 if (not root.is_relative_to(Path('/opt/frankie-box/work/monday-calculations'))
         or not checkpoint_dir.is_relative_to(root / 'work' / 'bedrock') or pid <= 0
-        or mode not in ('parallel-boundary', 'native-workers', 'terminal-finalize', 'terminal-projection')):
+        or mode not in ('parallel-boundary', 'native-workers', 'terminal-finalize', 'terminal-projection', 'terminal-digest')):
     raise SystemExit('explicit existing Monday root, checkpoint generation and handoff mode required')
 binding_raw = (root / 'source-binding.json').read_bytes()
 if hashlib.sha256(binding_raw).hexdigest() != binding_hash:
@@ -61,7 +61,7 @@ while True:
     time.sleep(5)
 if (progress.get('pid') != pid or progress.get('process_token') != expected
         or progress.get('failed') != 0
-        or progress.get('stage') != {'parallel-boundary':'root-native-reconstruct', 'native-workers':'root-native-records', 'terminal-finalize':'root-native-finalize', 'terminal-projection':'root-projection'}[mode]
+        or progress.get('stage') != {'parallel-boundary':'root-native-reconstruct', 'native-workers':'root-native-records', 'terminal-finalize':'root-native-finalize', 'terminal-projection':'root-projection', 'terminal-digest':'root-digest'}[mode]
         or (mode == 'parallel-boundary' and progress.get('completed', target) >= target)
         or saved.get('pid') != pid or saved.get('process_token') != expected
         or saved.get('last_event') != 'read_verified'):
@@ -114,8 +114,8 @@ if terminal:
             or descriptor['driver_identity']['run_id'] != checkpoint['run_id']
             or descriptor['driver_identity']['source_manifest_hash'] != checkpoint['source_manifest_hash']
             or runtime['python'] != sys.version or runtime['cloudpickle'] != '3.1.2'
-            or runtime['serializer_sha256'] != ('e2ff73c9d6e6a76fb6ae1e3d712c337adf72c2845dbc15d41e94dc2d957f3cac' if mode == 'terminal-projection' else '629b1355de7539e84fb8142343b182dc06cfe5033aaa3f6bf837962317a5cf76')
-            or (mode == 'terminal-projection' and runtime.get('finalization_sha256') != '15164b4521f1bacbdf678354780fe24ca75f0aab4030b00b6b7815411054dc34')
+            or runtime['serializer_sha256'] != ('e2ff73c9d6e6a76fb6ae1e3d712c337adf72c2845dbc15d41e94dc2d957f3cac' if mode in ('terminal-projection', 'terminal-digest') else '629b1355de7539e84fb8142343b182dc06cfe5033aaa3f6bf837962317a5cf76')
+            or (mode in ('terminal-projection', 'terminal-digest') and runtime.get('finalization_sha256') != '15164b4521f1bacbdf678354780fe24ca75f0aab4030b00b6b7815411054dc34')
             or runtime['ledger_storage_sha256'] != 'b66361659495d787329a6097384df10bf4f27fc3056b511ee46f53bb7119c760'):
         raise SystemExit('terminal full-state descriptor or deployed runtime differs')
     if set(descriptor['ledgers']) != {'member','lifecycle','legacy'} or any(

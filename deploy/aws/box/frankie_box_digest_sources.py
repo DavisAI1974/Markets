@@ -266,6 +266,7 @@ def _published_layout(path, name, receipts):
     metadata members are decompressed; each row array is located fragment by fragment from the range receipts.
     Returns (metadata object with each fragment array as [], {key: [(offset, bytes, sha256, rows), ...]})."""
     separator = len(gzip.compress(b',\n', compresslevel=1, mtime=0))
+    closing = gzip.compress(b']', compresslevel=1, mtime=0)
     size, parts, arrays = path.stat().st_size, [], {}
     with path.open('rb') as handle:
         text, offset = _member_read(handle, 0)
@@ -287,9 +288,11 @@ def _published_layout(path, name, receipts):
             kind = {'member_rows': 'member', 'lifecycle_rows': 'lifecycle'}.get(key)
             if kind is None:
                 raise ValueError('unexpected projected row array ' + str(key))
+            handle.seek(offset)
+            empty = handle.read(len(closing)) == closing      # '[' then ']': the publisher wrote no fragment
             fragment = name if any(name in r['fragments'] for r in receipts[kind]) else '__section_mirror'
             located = []
-            for r in receipts[kind]:
+            for r in ([] if empty else receipts[kind]):
                 item = r['fragments'].get(fragment)
                 if item is None:
                     continue
@@ -410,6 +413,7 @@ def _prepare_published(index, name, pin, root, receipts, workers):
                 counts[key] = count
             elif key in META_FIELDS:
                 metadata[key] = value
+        db.execute('CREATE INDEX member_shard ON member_keys(shard, ordinal)')
         db.commit()
     finally:
         db.close()
