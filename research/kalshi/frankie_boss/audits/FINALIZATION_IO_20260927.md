@@ -110,3 +110,41 @@ continues; consider a changeover only after a fresh verified checkpoint and a
 safe route that reuses sealed ledgers. This is a recommendation, not user approval
 to stop ROOT, implemented source, or a claim of measured improvement. The original
 no-hot-patch/no-restart restrictions remain in force.
+
+## Source preparation after the user's elapsed-time correction
+
+At 12:07:49Z workflow36317931214 reported root-native-finalize, original
+PID/token alive, failed=0, ten saved/read_verified checkpoints and latest000009.
+Elapsed stage time was45minutes33seconds, NOT100minutes. The approximately100
+minutes above refers only to extrapolated future duplicate passes. Already
+elapsed work is a sunk cost and is not evidence that continuing is faster.
+
+This commit prepares a narrow wrapper change to reuse the actual disk
+reconciliation's rows/bytes/SHA256 in the ledger inventory. The producer's
+reconcile_all remains unchanged and still reads every ledger independently.
+Before reconciliation the wrapper closes/fsyncs each sink and records regular-file
+device/inode/size/mtime_ns/ctime_ns. Reuse requires that identity to remain the
+same and the disk receipt to match the closed sink and expected count. Any
+mismatch raises instead of returning a completed receipt. No writer counters
+alone substitute for disk verification.
+
+Static review followed the complete producer reconcile/close/receipt path and
+wrapper checkpoint path. In-memory Python syntax compilation passed without
+imports, workload execution, pycache or local artifacts. No scientific tests,
+canaries, comparison runs or additional validators were run. The change removes
+two complete scans by inspection; elapsed-time improvement is not yet measured.
+
+This is SOURCE ONLY. It does not alter running runtime2931134 or queued classroom
+runtimea80990d. No ROOT stop/restart, hot patch, affinity change or stage dispatch
+was issued. Read-ahead helpers and sealed-ledger recovery are still design work,
+not implemented by this commit. The current recovery route would verify/copy
+large prefixes and would redo53,414records from000009; its cost must be included
+in any changeover estimate. A fresh verified checkpoint is still required for
+a runtime transition under the user's standing instruction.
+
+Remaining source inspection: projection already fans out to all required layers
+in ONE member-ledger pass. project_sections rereads the smaller lifecycle ledger.
+frankie_box_digest_document.py includes repeated table proofs and document hash
+passes; their actual output sizes and time costs have not been measured. They
+are not included in the100-minute estimate, and no change to exact digest proofs
+was prepared. Unknown later costs justify investigation, not an invented saving.

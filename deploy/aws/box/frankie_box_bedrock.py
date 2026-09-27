@@ -53,6 +53,33 @@ def witness(path):
     return dict(bytes=path.stat().st_size, sha256=sha256_file(path))
 
 
+def ledger_file_identity(path):
+    """Bind a same-process reconciliation to its unchanged regular file."""
+    import stat
+    from frankie_box_prepare_trading_day import safe_path
+    observed = safe_path(path).stat()
+    if not stat.S_ISREG(observed.st_mode):
+        raise ValueError('ledger evidence must be a regular file')
+    return (observed.st_dev, observed.st_ino, observed.st_size,
+            observed.st_mtime_ns, observed.st_ctime_ns)
+
+
+def reconciled_ledger_witness(sink, receipt, observed):
+    """Reuse actual disk readback, never a checkpoint's unverified counters."""
+    if (not sink._closed or not sink._handle.closed
+            or ledger_file_identity(sink.path) != observed
+            or receipt['path'] != str(sink.path)
+            or receipt['bytes'] != observed[2]
+            or receipt['bytes'] != sink._bytes
+            or receipt['sha256'] != sink._digest.hexdigest()
+            or receipt['row_count'] != sink.rows_written
+            or receipt['rows_read_back_from_disk'] != sink.rows_written
+            or receipt['reconciled_against_counter'] != sink.rows_written):
+        raise ValueError('ledger changed after its completed disk reconciliation')
+    return dict(bytes=receipt['bytes'], sha256=receipt['sha256'],
+                path=str(sink.path), rows=receipt['rows_read_back_from_disk'])
+
+
 class RowSpool(list):
     """Append-only, replayable rows on the AWS box; no row collection in RAM.
 
@@ -438,6 +465,12 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     from frankie_box_segmented_ledger import materialize_all
     materialize_all(sinks)
     result = dict(driver._frankie_final_result) if descriptor and descriptor['finalized'] else driver.finalize()
+    # Finalize has emitted its terminal rows. Close/fsync before observing file
+    # identity; reconcile_all still independently reads every byte from disk.
+    finalized_sinks = [getattr(sinks, name) for name in ('member', 'lifecycle', 'legacy')]
+    for sink in finalized_sinks:
+        sink.close()
+    ledger_identities = {sink.ledger: ledger_file_identity(sink.path) for sink in finalized_sinks}
     result['ledger_retention'] = sinks.reconcile_all(member=calculation.member_rows_written,
                                                      lifecycle=calculation.lifecycle_rows_written,
                                                      legacy=driver.counters.legacy_rows_retained)
@@ -457,12 +490,16 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     result['runner_result_hash'] = result.pop('result_hash')
     result['result_hash'] = canonical_hash(result)
     result_witness = write_json(out_dir / 'result.json', result)
-    ledgers = {}
-    for name in LEDGER_FILES:
-        path = out_dir / 'ledgers' / name
-        with open(path, 'rb') as handle:
-            rows = sum(1 for _ in handle)
-        ledgers[name] = dict(witness(path), path=str(path), rows=rows)
+    # The unchanged reconciliation already measured all three fields from disk.
+    # The full-state checkpoint writes elsewhere; refuse reuse if any ledger's
+    # inode, extent or write timestamps changed in the meantime.
+    ledgers = {
+        sink.path.name: reconciled_ledger_witness(
+            sink, result['ledger_retention'][sink.ledger], ledger_identities[sink.ledger])
+        for sink in finalized_sinks
+    }
+    if set(ledgers) != set(LEDGER_FILES):
+        raise ValueError('final receipt does not cover every exact ledger')
     receipt = dict(schema='FRANKIE_BOX_BEDROCK_RUN_RECEIPT_V1', at=time.time(), cycle=str(cycle), seconds=round(time.time() - started, 3),
                    producers=str(producers), producers_commit=str(code_commit), producers_lineage=PIN_LINEAGE,
                    driver=modules['native_replay_driver'], modules=modules,     # the modules that actually RAN, by their own __file__
