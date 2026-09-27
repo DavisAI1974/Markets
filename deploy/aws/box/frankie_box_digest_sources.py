@@ -591,7 +591,7 @@ class BedrockSources:
             prepared = _prepare_layers(entries,self.root)
             # Keyed (projected) layers merge their member rows by group-key shard on the helpers; the member rows
             # themselves are never read from sources.sqlite, only the merged groups/members.
-            keyed, sharded = all(p.get('keyed') for p in prepared), []
+            keyed, sharded, shard_identity = all(p.get('keyed') for p in prepared), [], []
             first_verdict = False
             for index, (name, pin) in enumerate(entries.items()):
                 saved = prepared[index]
@@ -618,10 +618,11 @@ class BedrockSources:
                 if meta.get('status') == 'derived':
                     if keyed:
                         sharded.append((index, name, saved['path']))
+                        shard_identity.append([index, name, pin.get('sha256')])
                     else:
                         self._merge(index, name)
             if sharded:
-                self._merge_sharded(sharded)
+                self._merge_sharded(sharded, shard_identity)
             if first_verdict:
                 v = self.verdict
                 row = dict(verdict=v.get('verdict'), failed_gates=' '.join(v.get('failed_gates') or []),
@@ -737,12 +738,41 @@ class BedrockSources:
                 raise ValueError('projected layer changed during consumption')
         return metadata, counts
 
-    def _merge_sharded(self, layers):
+    def _merge_sharded(self, layers, identity):
+        """identity: [[index, name, pinned layer sha256], ...]; with the merge code's source it keys each shard's save
+        point, so a rerun of this calculation root reuses shards an earlier digest attempt completed."""
+        import inspect
         from frankie_box_projection import Workers
+        key = dict(schema='FRANKIE_MERGE_SHARD_SAVE_V1', shards=SHARDS, layers=json.loads(json.dumps(identity)),
+                   code=hashlib.sha256(inspect.getsource(_merge_shard).encode()).hexdigest())
+        planned = []
+        for shard in range(SHARDS):
+            saved = None
+            for receipt in sorted(self.root.parent.parent.glob('.digest-*/calculation-layers/merge-%02d.save.json' % shard)):
+                if receipt.parent == self.root:
+                    continue
+                try:
+                    value = json.loads(receipt.read_bytes())
+                except (OSError, ValueError):
+                    continue
+                output = Path(value.get('output') or '')
+                if (value.get('key') == key and output.parent == receipt.parent and output.is_file()
+                        and output.stat().st_size == value.get('bytes')):
+                    saved = str(output)
+                    break
+            planned.append(saved)
         workers = Workers()
         try:
-            jobs = [(shard, layers, str(self.root/('merge-%02d.sqlite' % shard))) for shard in range(SHARDS)]
-            for output in workers.ordered(_merge_shard, jobs):
+            jobs = [(shard, layers, str(self.root/('merge-%02d.sqlite' % shard)))
+                    for shard in range(SHARDS) if planned[shard] is None]
+            done = workers.ordered(_merge_shard, jobs)
+            for shard in range(SHARDS):
+                output = planned[shard]
+                if output is None:
+                    output = next(done)
+                    with (self.root/('merge-%02d.save.json' % shard)).open('x') as receipt:
+                        json.dump(dict(key=key, shard=shard, output=output, bytes=Path(output).stat().st_size), receipt, sort_keys=True)
+                        receipt.flush(); os.fsync(receipt.fileno())
                 self.db.execute('ATTACH DATABASE ? AS shard', (output,))
                 self.db.execute('INSERT INTO groups SELECT * FROM shard.groups')
                 self.db.execute('INSERT INTO members SELECT * FROM shard.members')

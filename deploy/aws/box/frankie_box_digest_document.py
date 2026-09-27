@@ -81,6 +81,43 @@ def per_second_rows(first, buys, sells, roll, window=20):
         yield dict(second=first+t, buy=buys[t], sell=sells[t], roll20=frac)
 
 
+TABLE_SAVE_SCHEMA = 'FRANKIE_DIGEST_TABLE_SAVE_V1'
+
+
+def _code_identity():
+    """The serializer and renderer bytes a saved table was written by; any change there refuses reuse."""
+    return {Path(m.__file__).name: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest() for m in (TS, DG)}
+
+
+def _canonical(value):
+    return json.loads(json.dumps(value, sort_keys=True))
+
+
+def _saved_table(scratch, ordinal, key):
+    """Save point for reruns: the table at this ordinal that an earlier digest attempt of this calculation root wrote,
+    proved and receipted with exactly this key (name, inputs, serializer code). Its bytes are hashed again while the
+    document is assembled (_copy_verified), so a changed file refuses there."""
+    for receipt in sorted(scratch.parent.glob('.digest-*/table-%04d.save.json' % ordinal)):
+        if receipt.parent == scratch:
+            continue
+        try:
+            value = json.loads(receipt.read_bytes())
+        except (OSError, ValueError):
+            continue
+        path = Path(value.get('path') or '')
+        if (value.get('schema') == TABLE_SAVE_SCHEMA and value.get('key') == key
+                and path.parent == receipt.parent and path.name == 'table-%04d.txt' % ordinal and path.is_file()
+                and path.stat().st_size == (value.get('digest') or {}).get('bytes')):
+            return dict(name=value['name'], rows=value['rows'], path=path, digest=value['digest'], saved=str(receipt))
+    return None
+
+
+def _save_table(scratch, ordinal, key, entry):
+    _save_new(scratch/('table-%04d.save.json' % ordinal),
+              dict(schema=TABLE_SAVE_SCHEMA, key=key, name=entry['name'], rows=entry['rows'],
+                   path=str(entry['path']), digest=entry['digest']))
+
+
 def _copy_verified(path, output, expected):
     hashed, size = hashlib.sha256(), 0
     with Path(path).open('rb') as source:
@@ -138,6 +175,8 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
     db.execute('CREATE TABLE families (name TEXT PRIMARY KEY, count INTEGER, first_ordinal INTEGER)')
     stages = []
 
+    counted = {}
+
     def counted_structures():
         for i, row in enumerate(structures):
             key = row['action_string']
@@ -146,15 +185,30 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
             db.execute('INSERT INTO families VALUES (?,1,?) ON CONFLICT(name) DO UPDATE SET count=count+1', (key,i))
             yield row
         db.commit()
+        counted['done'] = True
 
     def family_rows():
+        # the families come from the structures pass; when that table was reused from a save point, count them here
+        if not counted.get('done'):
+            for _ in counted_structures():
+                pass
         for key, count in db.execute('SELECT name,count FROM families ORDER BY count DESC,first_ordinal'):
             yield dict(action_string=key,count=count)
+
+    code = _code_identity()
+    reusing = {'legacy': True}
 
     def table(name, rows, context=None):
         ordinal = len(stages)
         root = scratch/('table-%04d' % ordinal)
         path = scratch/('table-%04d.txt' % ordinal)
+        key = _canonical(dict(kind='legacy', name=name, context=sorted(context or {}), code=code))
+        # Legacy tables are reused only as an unbroken prefix, so a context table is always the one actually used.
+        saved = _saved_table(scratch, ordinal, key) if reusing['legacy'] else None
+        if saved is not None and (Path(saved['path']).parent/('table-%04d' % ordinal)/'table.sqlite').is_file():
+            stages.append(dict(name=saved['name'], rows=saved['rows'], path=Path(saved['path']), digest=saved['digest']))
+            return _Rows(Path(saved['path']).parent/('table-%04d' % ordinal)/'table.sqlite')
+        reusing['legacy'] = False
         proof = TS.write_table(path, name, rows, root, context=context)
         original = _Rows(root/'table.sqlite')
         # Bind write_table's actual inverse proof to unchanged bytes; assembly
@@ -163,6 +217,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         if TS._identity(path) != proof['verified_identity']:
             raise ValueError('proved table changed before its byte witness')
         stages.append(dict(name=name, rows=proof['rows'], path=path, digest=digest))
+        _save_table(scratch, ordinal, key, stages[-1])
         return original
 
     # The bedrock sources (layer preparation and member merge, on the pinned helpers) are independent of the five
@@ -198,7 +253,9 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
                 workers = Workers()
                 try:
                     save(scratch/'table-workers.json',workers.receipt())
-                    jobs=[]
+                    # A bedrock table's inputs are the pinned layer files (by sha256) and its query over them.
+                    layers_identity = {n: {k: e.get(k) for k in ('bytes', 'sha256')} for n, e in bedrock_entries.items()}
+                    jobs,planned=[],[]
                     for name,rows in sources.tables.items():
                         if type(rows).__name__=='_Members':
                             spec=dict(kind='members',database=str(sources.root/'sources.sqlite'))
@@ -206,10 +263,22 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
                             spec=dict(kind='rows',database=str(sources.root/'sources.sqlite'),
                                       query=rows.query,parameters=rows.parameters,
                                       excluded=getattr(rows,'excluded',None))
-                        jobs.append((len(stages)+len(jobs),name,spec,str(scratch)))
-                    for entry in workers.ordered(_bedrock_table_job,jobs):
+                        ordinal=len(stages)+len(planned)
+                        key=_canonical(dict(kind='bedrock',name=name,code=code,layers=layers_identity,
+                                            spec={k:v for k,v in spec.items() if k!='database'}))
+                        saved=_saved_table(scratch,ordinal,key)
+                        planned.append((ordinal,key,saved))
+                        if saved is None:
+                            jobs.append((ordinal,name,spec,str(scratch)))
+                    done=workers.ordered(_bedrock_table_job,jobs)
+                    for ordinal,key,saved in planned:
+                        if saved is not None:
+                            stages.append(dict(name=saved['name'],rows=saved['rows'],path=Path(saved['path']),digest=saved['digest']))
+                            continue
+                        entry=next(done)
                         entry['path']=Path(entry['path'])
                         stages.append(entry)
+                        _save_table(scratch,ordinal,key,entry)
                 finally:
                     workers.close()
         stage = scratch/'digest.pending'
