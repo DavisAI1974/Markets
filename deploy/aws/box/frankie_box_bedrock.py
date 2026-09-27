@@ -363,16 +363,21 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
 
     from frankie_box_native_checkpoint import (FullCheckpointer, read_checkpoint,
         restore_driver, consume_recovery)
-    from frankie_box_native_parallel import ParallelSections, bind_policy, consume_after_reconstruction
+    from frankie_box_native_parallel import bind_policy, consume_after_reconstruction
+    from frankie_box_parallel_evidence import RuntimeSections
+    from contextlib import ExitStack
 
     class ParallelCheckpointer(FullCheckpointer):
         parallel = None
+        encoding = None
 
         def _write(self, adapter, **kwargs):
-            if self.parallel is not None and self.parallel.active:
-                with self.parallel.materialized():
-                    return super()._write(adapter, **kwargs)
-            return super()._write(adapter, **kwargs)
+            with ExitStack() as stack:
+                if self.encoding is not None and self.encoding.active:
+                    stack.enter_context(self.encoding.materialized())
+                if self.parallel is not None and self.parallel.active:
+                    stack.enter_context(self.parallel.materialized())
+                return super()._write(adapter, **kwargs)
 
     checkpoint = descriptor = None
     if resume_checkpoint:
@@ -417,7 +422,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         checkpointer._write(driver.adapter, completed_mbo_records=driver.counters.records_seen,
                             event_group_open=False, controller_state=None, locked=False)
     if not (descriptor and descriptor['finalized']):
-        parallel = ParallelSections(driver, producers)
+        parallel = RuntimeSections(driver, producers)
         checkpointer.parallel = parallel
         try:
             consume_after_reconstruction(consume_recovery, driver, stamped, len(records),
@@ -468,6 +473,9 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                    execution=dict(
                        policy=getattr(driver, '_frankie_parallel_policy', {'calculation_processes': 1}),
                        metrics=getattr(driver, '_frankie_parallel_metrics', {}),
+                       auxiliary_policy=getattr(driver, '_frankie_auxiliary_policy', None),
+                       evidence_policy=getattr(driver, '_frankie_evidence_policy', None),
+                       evidence_metrics=getattr(driver, '_frankie_evidence_metrics', {}),
                        reconstruction_boundary=getattr(driver, '_frankie_parallel_boundary', None),
                        timings_are_per_process=True, speedup_verified=False),
                    cadence_policy='NeverInvoke', driver_arguments=arguments,

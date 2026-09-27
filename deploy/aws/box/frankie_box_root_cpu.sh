@@ -44,8 +44,8 @@ for child in children:
     item = identity(child)
     if item['parent_pid'] == pid and b'multiprocessing.spawn' in command and b'spawn_main' in command:
         workers.append(item)
-if len(workers) != 2:
-    raise SystemExit('exactly two direct native spawn workers required; found ' + str(len(workers)))
+if len(workers) < 2:
+    raise SystemExit('at least two direct native spawn workers required; found ' + str(len(workers)))
 workers.sort(key=lambda x: x['pid'])
 processes = [parent] + workers
 common = set.intersection(*(set(os.sched_getaffinity(x['pid'])) for x in processes))
@@ -72,7 +72,7 @@ for item in processes:
 report = dict(schema='FRANKIE_ROOT_CPU_ASSIGNMENT_V1', at=time.time(), action=action,
               source_binding_sha256=binding_sha, root=root.as_posix(), processes=before,
               topology=topology, progress=progress,
-              worker_role_note='Two native workers identified by direct parent and spawn entry; role names not inferred from PID order')
+              worker_role_note='Native workers identified by direct parent and spawn entry; role names come from runtime receipt, not PID order')
 if action == 'profile':
     import collections, io, subprocess, urllib.request, zipfile
     out = root / 'work' / 'performance'
@@ -169,13 +169,13 @@ if action == 'profile':
 if action == 'inspect':
     print(json.dumps(report, sort_keys=True))
     raise SystemExit(0)
-if len(unique) < 4:
-    raise SystemExit('four available physical cores required including one left unassigned')
+if len(unique) < len(processes) + 1:
+    raise SystemExit('one distinct physical core per process plus an unassigned core required')
 # Leave the first physical core out; allocate three different physical cores.
 assignments = [{'pid':item['pid'], 'token':item['token'], 'cpu':core['cpu'],
                 'physical_package':core['package'], 'physical_core':core['core'],
                 'role':'ROOT' if i == 0 else 'native-worker-' + str(i)}
-               for i, (item, core) in enumerate(zip(processes, unique[1:4]))]
+               for i, (item, core) in enumerate(zip(processes, unique[1:1+len(processes)]))]
 fds = {item['pid']:os.pidfd_open(item['pid']) for item in processes}
 changes = []
 try:

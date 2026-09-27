@@ -1,5 +1,22 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## CPU assignment and measured ROOT acceleration — deployment pending
+
+User authorized explicit CPU assignments and implementation of the measured performance plan, then directed use of more than four workers wherever useful. User also requested the same performance attention for classroom; measure its actual ROOT/host/Granite workload when that stage starts, then assign CPUs and parallelize independent work while retaining dialogue/grading/correction order. Do not launch a separate classroom or inference run for profiling.
+
+- [x] Observe CPU topology and live native workers: workflow 36300718246. ROOT has 16 physical cores / 32 logical CPUs; sibling pairs are 0/16 through 15/31.
+- [x] Assign live PID 54610 to CPU 1, queue PID 54968 to CPU 2, replenishment PID 54969 to CPU 3, each on a separate physical core. Workflow 36300795524 read back every thread mask; no calculation restart. Receipt work/performance/cpu-affinity-54610-1790491259262703853.json is 24171 bytes, SHA256 1c9360bbd7d8f8df61f1cfbbc95c550ff5d5f8411daa1979ac2090f8d37d7a83. Role names are corroborated by the subsequent profiles.
+- [x] Profile the existing three processes for 30 seconds without pausing them, using standalone py-spy 0.4.2 pinned by wheel digest, outside the runtime environment. Workflow 36300830635. Profile receipt is 29870 bytes, SHA256 2d9bdf52180d0696e1526a0500a2914596a5ff5a01a6198f814a15dd061c5a15. ROOT used 28.40 CPU seconds; queue 0.43; replenishment 1.76. ROOT active Python samples include JSON encoding 28.4%, full-capture enrichment 32.2% inclusive, and field-census walking among other costs. These are short nonblocking samples, not a speedup measurement. Progress at 06:42:12Z: 634897, failed=0.
+- [x] Implement a measured-work runtime using the unchanged pinned RowSink.write, MboFieldCensus.observe, InstrumentBook._level and book_snapshot assembly. On this topology it assigns ROOT, queue, replenishment, census, two encoders and nine book-level workers to CPUs 1–15, leaving physical core 0 unassigned. All price-level results join before the next event; census observations remain ordered; ROOT commits exact encoded bytes in original order.
+- [x] Review immutable worker payloads, object aliasing, native census state, exact RowSink accounting, worker cleanup, and the full-state barrier. Python syntax compilation passed. No extra scientific tests, canaries, comparison runs or validators were run.
+- [ ] Stage the new runtime after a fresh verified checkpoint handoff; do not duplicate the live calculation.
+- [ ] Witness the resumed cursor, runtime-workers-receipt.json, first new full-state checkpoint and actual forward progress.
+- [ ] Measure actual throughput and CPU attribution after deployment before claiming a speedup.
+
+The original calculation parallel helper and full-state serializer remain byte-identical, allowing existing complete snapshots to restore. New auxiliary/evidence policy hashes are retained in driver state. Every checkpoint drains encoded rows, materializes the original census and calculation objects, and restores the original book method for snapshotting. The original scientific producers and checkpoint format are unchanged. The worker handoff retains every ledger tail and kills only the identified ROOT/native children after recording its verified checkpoint. The pause control waits up to twelve minutes for a read-verified checkpoint no older than ninety seconds, otherwise leaves ROOT running. A new generation retains the old evidence. Rollback uses the retained complete pre-change checkpoint and staged 0c38808 runtime; do not resume two generations concurrently.
+
+Raw profiling receipt and CPU assignments are recorded in audits/ROOT_CPU_PROFILE_20260927.json. Classroom allocation is a follow-up during the actual classroom stage, not an assertion that classroom has begun.
+
 ## Verified reconstruction-boundary transition — active parallel calculations (2026-09-27)
 
 Latest user decision: switch to parallel calculations after reconstruction verification but before any new calculations. The live runner had no pause-at-boundary control. User explicitly approved stopping before the boundary and resuming the latest full-state checkpoint, with possible repetition of its unsaved tail. This supersedes the earlier instruction to leave the serial process uninterrupted for this specific checkpoint handoff.

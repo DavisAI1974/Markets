@@ -20,7 +20,7 @@ for path in sorted(root.glob('recovery-*')):
     if path.is_dir() and not path.is_symlink():
         checkpoints = sorted((path / 'checkpoints').glob('checkpoint-[0-9][0-9][0-9][0-9][0-9][0-9].json'))
         items.append(dict(path=str(path), latest_checkpoint=str(checkpoints[-1]) if checkpoints else None,
-                          receipts=[name for name in ('reconstruction-receipt.json', 'parallel-transition-receipt.json')
+                          receipts=[name for name in ('reconstruction-receipt.json', 'parallel-transition-receipt.json', 'runtime-workers-receipt.json')
                                     if (path / name).is_file()]))
 print(json.dumps(dict(recovery_generations=items), sort_keys=True))
 PY
@@ -28,7 +28,7 @@ PY
 fi
 [ -f "$P" ] || { echo "no such file: $P"; ls -la "$(dirname "$P")" 2>/dev/null; exit 2; }
 if [ "$MODE" = receipt ]; then
-  case "$FILE" in */authorship-receipt.json|*/preparation-receipt.json|*/publication-receipt.json|*/calculations-receipt.json|*/reconstruction-receipt.json|*/parallel-transition-receipt.json|*/pause-for-parallel-[0-9]*.json|*/checkpoints/checkpoint-[0-9][0-9][0-9][0-9][0-9][0-9].json|*/checkpoints/controller-state-[0-9][0-9][0-9][0-9][0-9][0-9].json) ;;
+  case "$FILE" in */authorship-receipt.json|*/preparation-receipt.json|*/publication-receipt.json|*/calculations-receipt.json|*/reconstruction-receipt.json|*/parallel-transition-receipt.json|*/runtime-workers-receipt.json|*/pause-for-parallel-[0-9]*.json|*/pause-for-native-workers-[0-9]*.json|*/checkpoints/checkpoint-[0-9][0-9][0-9][0-9][0-9][0-9].json|*/checkpoints/controller-state-[0-9][0-9][0-9][0-9][0-9][0-9].json) ;;
     *) echo "receipt mode requires a pipeline or checkpoint receipt"; exit 2;; esac
   /opt/frankie-box/venv/bin/python -B - "$P" <<'PY'
 import hashlib, json, pathlib, sys

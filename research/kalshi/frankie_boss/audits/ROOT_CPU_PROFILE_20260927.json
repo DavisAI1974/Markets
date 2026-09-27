@@ -1,0 +1,946 @@
+{
+  "schema": "FRANKIE_ROOT_CPU_AND_PROFILE_OBSERVATION_V1",
+  "cpu_assignment_workflow": "https://github.com/DavisAI1974/Markets/actions/runs/36300795524",
+  "cpu_assignment": {
+    "assignments": [
+      {
+        "cpu": 1,
+        "physical_core": 1,
+        "physical_package": 0,
+        "pid": 54610,
+        "role": "ROOT",
+        "token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567"
+      },
+      {
+        "cpu": 2,
+        "physical_core": 2,
+        "physical_package": 0,
+        "pid": 54968,
+        "role": "native-worker-1",
+        "token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51287252"
+      },
+      {
+        "cpu": 3,
+        "physical_core": 3,
+        "physical_package": 0,
+        "pid": 54969,
+        "role": "native-worker-2",
+        "token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51287303"
+      }
+    ],
+    "bytes": 24171,
+    "calculations_restarted": false,
+    "readback_verified": true,
+    "receipt_path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/performance/cpu-affinity-54610-1790491259262703853.json",
+    "sha256": "1c9360bbd7d8f8df61f1cfbbc95c550ff5d5f8411daa1979ac2090f8d37d7a83"
+  },
+  "profile_workflow": "https://github.com/DavisAI1974/Markets/actions/runs/36300830635",
+  "profile": {
+    "bytes": 29870,
+    "receipt": {
+      "at": 1790491335.3404877,
+      "clock_ticks": 100,
+      "limitations": [
+        "Sampling observation, not a comparison calculation run",
+        "Nonblocking Python frames may be incomplete; no native C stack attribution"
+      ],
+      "nonblocking": true,
+      "profiler_binary_sha256": "9b4d1f39b2a47ae44f4c6a46f615dcc0287d7755beba5065f32391951e07d594",
+      "profiler_version": "0.4.2",
+      "profiler_wheel_sha256": "aeb0323409199c785f730645e9f4bb7a7b9ca2c481f2c331a55642b5d13fa52f",
+      "profiles": [
+        {
+          "bytes": 111424,
+          "cpu_ticks_delta": 2840,
+          "inclusive": [
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_native_checkpoint.py",
+                "line": 256,
+                "name": "consume_recovery"
+              },
+              "percent": 97.78729478943612,
+              "weight": 27.399999999999505
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_native_parallel.py",
+                "line": 348,
+                "name": "consume_after_reconstruction"
+              },
+              "percent": 97.78729478943612,
+              "weight": 27.399999999999505
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_bedrock.py",
+                "line": 424,
+                "name": "run"
+              },
+              "percent": 97.78729478943612,
+              "weight": 27.399999999999505
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_boss_session.py",
+                "line": 922,
+                "name": "_derive_bedrock"
+              },
+              "percent": 97.78729478943612,
+              "weight": 27.399999999999505
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_monday_calculations.py",
+                "line": 97,
+                "name": "resume_legacy"
+              },
+              "percent": 97.78729478943612,
+              "weight": 27.399999999999505
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_monday_calculations.py",
+                "line": 185,
+                "name": "calculate"
+              },
+              "percent": 97.78729478943612,
+              "weight": 27.399999999999505
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_monday_calculations.py",
+                "line": 221,
+                "name": "main"
+              },
+              "percent": 97.78729478943612,
+              "weight": 27.399999999999505
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_monday_calculations.py",
+                "line": 225,
+                "name": "<module>"
+              },
+              "percent": 97.78729478943612,
+              "weight": 27.399999999999505
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+                "line": 1001,
+                "name": "consume"
+              },
+              "percent": 57.81584582441127,
+              "weight": 16.199999999999743
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+                "line": 1174,
+                "name": "_on_group"
+              },
+              "percent": 45.610278372591175,
+              "weight": 12.779999999999816
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+                "line": 971,
+                "name": "consume"
+              },
+              "percent": 39.685938615275,
+              "weight": 11.119999999999852
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_full_capture_adapter.py",
+                "line": 465,
+                "name": "apply"
+              },
+              "percent": 32.690935046395644,
+              "weight": 9.159999999999894
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_full_capture_adapter.py",
+                "line": 633,
+                "name": "_enrich"
+              },
+              "percent": 32.19129193433283,
+              "weight": 9.019999999999897
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_calculation_runner.py",
+                "line": 436,
+                "name": "note_member_row"
+              },
+              "percent": 29.33618843683106,
+              "weight": 8.219999999999914
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/json/encoder.py",
+                "line": 263,
+                "name": "iterencode"
+              },
+              "percent": 28.408279800142978,
+              "weight": 7.959999999999918
+            }
+          ],
+          "leaf": [
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/json/encoder.py",
+                "line": 263,
+                "name": "iterencode"
+              },
+              "percent": 28.408279800142978,
+              "weight": 7.959999999999918
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+                "line": 612,
+                "name": "<genexpr>"
+              },
+              "percent": 15.774446823697623,
+              "weight": 4.419999999999994
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_mbo_field_census.py",
+                "line": 244,
+                "name": "_walk"
+              },
+              "percent": 4.354032833690303,
+              "weight": 1.2200000000000006
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+                "line": 97,
+                "name": "_ratio"
+              },
+              "percent": 4.21127765881521,
+              "weight": 1.1800000000000006
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+                "line": 622,
+                "name": "_level"
+              },
+              "percent": 3.0692362598144753,
+              "weight": 0.8600000000000004
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+                "line": 623,
+                "name": "_level"
+              },
+              "percent": 2.2127052105639238,
+              "weight": 0.6200000000000002
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_mbo_field_census.py",
+                "line": 237,
+                "name": "_walk"
+              },
+              "percent": 2.141327623126378,
+              "weight": 0.6000000000000002
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 400,
+                "name": "_recv"
+              },
+              "percent": 2.069950035688832,
+              "weight": 0.5800000000000002
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replay_driver.py",
+                "line": 971,
+                "name": "consume"
+              },
+              "percent": 1.9985724482512859,
+              "weight": 0.5600000000000002
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_mbo_field_census.py",
+                "line": 106,
+                "name": "observe_column"
+              },
+              "percent": 1.3561741613133724,
+              "weight": 0.38000000000000006
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_row_sink.py",
+                "line": 91,
+                "name": "write"
+              },
+              "percent": 1.3561741613133724,
+              "weight": 0.38000000000000006
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_mbo_field_census.py",
+                "line": 249,
+                "name": "_walk"
+              },
+              "percent": 1.3561741613133724,
+              "weight": 0.38000000000000006
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/ng_exhaustion_mbo_v4_state_adapter_20260820.py",
+                "line": 613,
+                "name": "_level"
+              },
+              "percent": 1.2847965738758265,
+              "weight": 0.36000000000000004
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_mbo_field_census.py",
+                "line": 83,
+                "name": "observe_column"
+              },
+              "percent": 1.2134189864382805,
+              "weight": 0.34
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_mbo_field_census.py",
+                "line": 107,
+                "name": "observe_column"
+              },
+              "percent": 1.0706638115631886,
+              "weight": 0.3
+            }
+          ],
+          "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/performance/profile-1790491305687438265/pid-54610.json",
+          "pid": 54610,
+          "sha256": "0817b3ca880f21c0272ddcaa395f94dee393003fc12d34fa7b80ae4abf734a12",
+          "token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+          "total_weight": 28.01999999999949
+        },
+        {
+          "bytes": 4025,
+          "cpu_ticks_delta": 43,
+          "inclusive": [
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/process.py",
+                "line": 108,
+                "name": "run"
+              },
+              "percent": 100,
+              "weight": 0.6600000000000003
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/process.py",
+                "line": 313,
+                "name": "_bootstrap"
+              },
+              "percent": 100,
+              "weight": 0.6600000000000003
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/spawn.py",
+                "line": 135,
+                "name": "_main"
+              },
+              "percent": 100,
+              "weight": 0.6600000000000003
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/spawn.py",
+                "line": 122,
+                "name": "spawn_main"
+              },
+              "percent": 100,
+              "weight": 0.6600000000000003
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "<string>",
+                "line": 1,
+                "name": "<module>"
+              },
+              "percent": 100,
+              "weight": 0.6600000000000003
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_native_parallel.py",
+                "line": 51,
+                "name": "_worker"
+              },
+              "percent": 90.9090909090909,
+              "weight": 0.6000000000000002
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 221,
+                "name": "recv_bytes"
+              },
+              "percent": 81.81818181818181,
+              "weight": 0.5400000000000001
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 400,
+                "name": "_recv"
+              },
+              "percent": 78.78787878787878,
+              "weight": 0.5200000000000001
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 435,
+                "name": "_recv_bytes"
+              },
+              "percent": 75.75757575757575,
+              "weight": 0.5000000000000001
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_native_parallel.py",
+                "line": 82,
+                "name": "_worker"
+              },
+              "percent": 6.060606060606058,
+              "weight": 0.04
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/venv/lib/python3.13/site-packages/cloudpickle/cloudpickle.py",
+                "line": 1313,
+                "name": "dump"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 205,
+                "name": "send_bytes"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_queue_adapter.py",
+                "line": 237,
+                "name": "_int"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_queue_adapter.py",
+                "line": 533,
+                "name": "_row"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_queue_adapter.py",
+                "line": 377,
+                "name": "feed_group"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            }
+          ],
+          "leaf": [
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 400,
+                "name": "_recv"
+              },
+              "percent": 78.78787878787878,
+              "weight": 0.5200000000000001
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/venv/lib/python3.13/site-packages/cloudpickle/cloudpickle.py",
+                "line": 1313,
+                "name": "dump"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_native_parallel.py",
+                "line": 82,
+                "name": "_worker"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_queue_adapter.py",
+                "line": 237,
+                "name": "_int"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_native_parallel.py",
+                "line": 51,
+                "name": "_worker"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/venv/lib/python3.13/site-packages/cloudpickle/cloudpickle.py",
+                "line": 1543,
+                "name": "dumps"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 435,
+                "name": "_recv_bytes"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 432,
+                "name": "_send_bytes"
+              },
+              "percent": 3.030303030303029,
+              "weight": 0.02
+            }
+          ],
+          "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/performance/profile-1790491305687438265/pid-54968.json",
+          "pid": 54968,
+          "sha256": "5854ac28f1d998c27fac1810ff2112a9c5a871f9c47b5db7ab5f39001608f9a7",
+          "token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51287252",
+          "total_weight": 0.6600000000000003
+        },
+        {
+          "bytes": 10924,
+          "cpu_ticks_delta": 176,
+          "inclusive": [
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/process.py",
+                "line": 108,
+                "name": "run"
+              },
+              "percent": 99.06542056074767,
+              "weight": 2.1200000000000014
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/process.py",
+                "line": 313,
+                "name": "_bootstrap"
+              },
+              "percent": 99.06542056074767,
+              "weight": 2.1200000000000014
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/spawn.py",
+                "line": 135,
+                "name": "_main"
+              },
+              "percent": 99.06542056074767,
+              "weight": 2.1200000000000014
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/spawn.py",
+                "line": 122,
+                "name": "spawn_main"
+              },
+              "percent": 99.06542056074767,
+              "weight": 2.1200000000000014
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "<string>",
+                "line": 1,
+                "name": "<module>"
+              },
+              "percent": 99.06542056074767,
+              "weight": 2.1200000000000014
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_native_parallel.py",
+                "line": 63,
+                "name": "_worker"
+              },
+              "percent": 44.85981308411215,
+              "weight": 0.9600000000000005
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 221,
+                "name": "recv_bytes"
+              },
+              "percent": 35.514018691588774,
+              "weight": 0.7600000000000003
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_native_parallel.py",
+                "line": 51,
+                "name": "_worker"
+              },
+              "percent": 35.514018691588774,
+              "weight": 0.7600000000000003
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 400,
+                "name": "_recv"
+              },
+              "percent": 34.579439252336435,
+              "weight": 0.7400000000000003
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 435,
+                "name": "_recv_bytes"
+              },
+              "percent": 34.579439252336435,
+              "weight": 0.7400000000000003
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment_adapter.py",
+                "line": 740,
+                "name": "observe_group"
+              },
+              "percent": 21.49532710280373,
+              "weight": 0.46000000000000013
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment.py",
+                "line": 474,
+                "name": "pending_at"
+              },
+              "percent": 19.626168224299054,
+              "weight": 0.4200000000000001
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment_adapter.py",
+                "line": 850,
+                "name": "_attribute_refill"
+              },
+              "percent": 16.822429906542048,
+              "weight": 0.36000000000000004
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/code/0c38808e3f71960a2826f78ee1f6c8516d66b985-36297587249-1/markets/deploy/aws/box/frankie_box_native_parallel.py",
+                "line": 74,
+                "name": "_worker"
+              },
+              "percent": 15.88785046728971,
+              "weight": 0.34
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment.py",
+                "line": 520,
+                "name": "advance"
+              },
+              "percent": 14.018691588785037,
+              "weight": 0.3
+            }
+          ],
+          "leaf": [
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 400,
+                "name": "_recv"
+              },
+              "percent": 34.579439252336435,
+              "weight": 0.7400000000000003
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment.py",
+                "line": 474,
+                "name": "pending_at"
+              },
+              "percent": 18.69158878504672,
+              "weight": 0.4000000000000001
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment.py",
+                "line": 520,
+                "name": "advance"
+              },
+              "percent": 14.018691588785037,
+              "weight": 0.3
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment.py",
+                "line": 473,
+                "name": "pending_at"
+              },
+              "percent": 6.542056074766352,
+              "weight": 0.14
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_rt_book.py",
+                "line": 197,
+                "name": "touch_price"
+              },
+              "percent": 3.738317757009343,
+              "weight": 0.08
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment_adapter.py",
+                "line": 1004,
+                "name": "_prune_watches"
+              },
+              "percent": 1.8691588785046716,
+              "weight": 0.04
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment_adapter.py",
+                "line": 1005,
+                "name": "_prune_watches"
+              },
+              "percent": 1.8691588785046716,
+              "weight": 0.04
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_rt_book.py",
+                "line": 200,
+                "name": "touch_price"
+              },
+              "percent": 1.8691588785046716,
+              "weight": 0.04
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/hostedtoolcache/Python/3.13.15/x64/lib/python3.13/multiprocessing/connection.py",
+                "line": 407,
+                "name": "_recv"
+              },
+              "percent": 1.8691588785046716,
+              "weight": 0.04
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment.py",
+                "line": 245,
+                "name": "add_refill"
+              },
+              "percent": 0.9345794392523358,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment_adapter.py",
+                "line": 383,
+                "name": "price_relation_basis"
+              },
+              "percent": 0.9345794392523358,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_rt_book.py",
+                "line": 238,
+                "name": "apply"
+              },
+              "percent": 0.9345794392523358,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment_adapter.py",
+                "line": 868,
+                "name": "_attribute_refill"
+              },
+              "percent": 0.9345794392523358,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment_adapter.py",
+                "line": 606,
+                "name": "level_observations"
+              },
+              "percent": 0.9345794392523358,
+              "weight": 0.02
+            },
+            {
+              "frame": {
+                "col": null,
+                "file": "/opt/frankie-box/producers/research/kalshi/frankie_raw_mbo_benchmark/native_replenishment_adapter.py",
+                "line": 870,
+                "name": "_attribute_refill"
+              },
+              "percent": 0.9345794392523358,
+              "weight": 0.02
+            }
+          ],
+          "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/performance/profile-1790491305687438265/pid-54969.json",
+          "pid": 54969,
+          "sha256": "2fddcd3f0b1d4601ba949b7f4aca2b4e6b2aef0819c13155d9fed4fa09bf6206",
+          "token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51287303",
+          "total_weight": 2.1400000000000015
+        }
+      ],
+      "progress": {
+        "at": 1790491332.194173,
+        "completed": 634897,
+        "failed": 0,
+        "in_flight": 0,
+        "percent": 31.24,
+        "phase": "deriving",
+        "pid": 54610,
+        "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+        "request_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a",
+        "schema": "FRANKIE_WORK_PROBE_V1",
+        "stage": "root-native-records",
+        "state": "running",
+        "total": 2032203
+      },
+      "root": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48",
+      "samples_per_second": 50,
+      "schema": "FRANKIE_NATIVE_LIVE_PROFILE_V1",
+      "seconds": 30,
+      "source_binding_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a"
+    },
+    "receipt_path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/performance/profile-1790491305687438265/profile-receipt.json",
+    "sha256": "2d9bdf52180d0696e1526a0500a2914596a5ff5a01a6198f814a15dd061c5a15"
+  }
+}
