@@ -1,5 +1,27 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Recovery finding — latest checkpoint is adapter-only (2026-09-27T03:56:59Z)
+
+User authorized starting at the latest checkpoint and changing the launcher.
+Read-only checkpoint inspection: https://github.com/DavisAI1974/Markets/actions/runs/36292860652.
+Actual checkpoint `work/bedrock/checkpoints/checkpoint-000008.json`:
+- completed_mbo_records: 464000 (not the last progress counter 475822).
+- checkpoint_hash: 4c2c2c2b845f3de9fe14e8bf58741fd4a4763acdd350fa7e9d18999e7b8b213a.
+- adapter_state_hash: f15d6086e5d44c5f3057d0c5d266b652f472ed6939991aba415f1dc6d0f5e941.
+- controller_state_hash: null; event_group_open: false; locked: false.
+
+The pinned native_replay_driver calls maybe_save with only the adapter and record count.
+periodic_checkpointer.resume_from_latest restores only V4MboAdapter. It does not restore
+NativeCalculationRun calculators, pending horizons, candidate/response/lineage state or ledger offsets.
+The current Monday launcher requires a fresh root and Session.derive restarts the legacy and native
+passes; rerunning it unchanged is not checkpoint recovery. Skipping to record 464000 with new
+calculators would omit required evidence and is forbidden.
+
+A request is pending for a narrow exception to the user's no-duplicate-work restriction:
+reconstruct missing calculation state from the sealed records through the checkpoint, then continue.
+This is not permission to restart ingestion. No calculation restart, reconstruction, source write,
+checkpoint deletion or launcher bypass has been performed. A complete recovery route is not implemented.
+
 ## Current blocker — ROOT process stopped (probe 2026-09-27T03:51:30Z)
 
 Read-only probe https://github.com/DavisAI1974/Markets/actions/runs/36292594746 succeeded.
@@ -36,6 +58,7 @@ Use using-agent-skills and context-engineering. Existing session also used shipp
 - [x] Implement the authorized single-run admission/input path; separate A-arm, historical S3 delivery and output-before-execution prerequisites removed from Monday's route. Code reviewed and syntax-compiled; deployment/live verification awaits current ROOT.
 - [x] Implement the existing brain/shared-snapshot connection for Frankie and scientific teacher, retaining all required research and historical section sources. Actual snapshot assembly awaits completed ROOT receipt.
 - [x] Connect final corrected knowledge publication through the existing cycle wrapper and brain/pusher; require the host's final classroom and pending-outcomes receipts. Actual publication is pending.
+- [ ] Recover the stopped native calculation with complete calculator state; current adapter-only checkpoint is insufficient.
 - [ ] After ROOT completion, stage the completed current code through the existing GitHub staging workflow and build the actual Monday host configuration.
 - [ ] Run existing host/Granite, Frankie full reading and writing, initial recording/grading, correction, final recording/grading, and final knowledge retention manually in order.
 - [ ] Retain Monday findings for the next cycle. Missing Tuesday outcomes remain explicitly pending; no fabricated labels, native learning, or cycle-completion claim.
