@@ -182,6 +182,8 @@ class Session:
         self.serverless = None            # the reading lane (RunPod serverless), when configured; else the Pod
         self._lock = threading.RLock()     # re-entrant: note() takes it and _progress_note() calls note() while holding it
         self._progress = {}
+        self._preparation_workers = None
+        self._tokenizer_state = threading.local()
 
     # ---- phase / note (the heartbeat reads these) -------------------------------------------------------
     def phase(self, word, note=None):
@@ -1389,15 +1391,42 @@ class Session:
         return int(len(text.encode('utf-8')) / BYTES_PER_TOKEN) + 64
 
     def _tokenizer(self):
-        """The pinned Granite tokenizer when it is on the box (tmp/granite_tokenizer.json, sha 883975314d587437...)."""
+        """Reuse one pinned tokenizer per thread; invalidate on any file identity change."""
+        local = getattr(self, '_tokenizer_state', None)
+        if local is None:
+            local = self.__dict__.setdefault('_tokenizer_state', threading.local())
         try:
             from tokenizers import Tokenizer
             path = ROOT / 'tmp' / 'granite_tokenizer.json'
-            if path.exists() and sha256_bytes(path.read_bytes()).startswith('883975314d587437'):
-                return Tokenizer.from_file(str(path))
+            stat = path.stat()
+            stamp = (str(path), stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+            cached = getattr(local, 'loaded', None)
+            if cached is not None and cached[0] == stamp:
+                return cached[1]
+            raw = path.read_bytes()
+            if not sha256_bytes(raw).startswith('883975314d587437'):
+                local.loaded = None
+                return None
+            # Construct from the very bytes that passed the existing pin check.
+            tokenizer = Tokenizer.from_str(raw.decode('utf-8'))
+            after = path.stat()
+            if (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns) != stamp[1:]:
+                local.loaded = None
+                return None
+            local.loaded = (stamp, tokenizer)
+            return tokenizer
         except Exception:
-            pass
-        return None
+            local.loaded = None
+            return None
+
+    def _prepare_sources(self, items, work):
+        """Independent CPU preparation only; provider calls retain their existing lanes."""
+        if getattr(self, '_preparation_workers', None) is None:
+            self._preparation_workers = _box_module('frankie_box_classroom_workers').PreparationWorkers()
+            write_json(self.work / 'classroom-preparation-workers.json', self._preparation_workers.receipt())
+        result = self._preparation_workers.ordered(items, work)
+        write_json(self.work / 'classroom-preparation-workers.json', self._preparation_workers.receipt())
+        return result
 
     def _chunks(self, data):
         """Parts of the corpus. With the tokenizer on the box the parts are sized by EXACT tokens (reading.json
@@ -2087,6 +2116,11 @@ class Session:
             import traceback
             traceback.print_exc()
             self.refuse(f'{stage}: {type(err).__name__}: {str(err)[:300]}')
+        finally:
+            preparation = getattr(self, '_preparation_workers', None)
+            if preparation is not None:
+                preparation.close()
+                self._preparation_workers = None
 
     def brain_ready(self):
         """Every earlier cycle's calculation findings must be in Frankie's brain before this cycle reads (Greg, 2026-09-21:

@@ -89,7 +89,7 @@ def identity(session, visible, module):
     paths = [box / name for name in ('frankie_box_boss_session.py', 'frankie_box_classroom.py',
              'frankie_box_classroom_cache.py', 'frankie_box_docs.py', 'frankie_box_staged_reading.py',
              'frankie_box_staged_session.py', 'frankie_box_scientific_dialogue.py', 'frankie_box_classroom_staged.py',
-             'frankie_box_teacher_discussion.py')]
+             'frankie_box_teacher_discussion.py', 'frankie_box_classroom_workers.py')]
     paths.extend(sorted(repo.glob('dipole_classroom*.py')))
     paths.extend([repo / 'frankie_principal_adapter.py', repo / 'c15_journal.py',
                   repo / 'dipole_shared_knowledge.py', repo / 'dipole_scientific_review.py',

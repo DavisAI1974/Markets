@@ -87,7 +87,8 @@ def consume_sources(session, sources, role, phase, snapshot_hash, request_hash,
         "Other ranges are separate completed exchanges; do not claim to have them "
         "in this call or replace their exact evidence with an invented summary.")
     manifest, prompts = S.plan_sources(sources, header, session._input_tokens,
-                                      input_budget, binding=binding)
+                                      input_budget, binding=binding,
+                                      prepare_map=getattr(session, '_prepare_sources', None))
 
     def one(part):
         part_id = part["part_id"]

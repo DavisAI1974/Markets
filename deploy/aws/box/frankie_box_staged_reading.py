@@ -81,7 +81,7 @@ def _render(meta, binding, text, header_factory):
     return prompt, len(prefix.encode("utf-8"))
 
 
-def plan_sources(sources, header_factory, token_counter, input_budget, *, binding=None):
+def plan_sources(sources, header_factory, token_counter, input_budget, *, binding=None, prepare_map=None):
     """Return (JSON manifest, {part_id: full_prompt}).
 
     sources: nonempty iterable of {source_id (or id), content: str|UTF8 bytes}.
@@ -97,7 +97,7 @@ def plan_sources(sources, header_factory, token_counter, input_budget, *, bindin
     binding = _binding(binding if binding is not None else sources[0].get("binding"))
     manifest = dict(schema=PLAN_SCHEMA, policy=POLICY, binding=binding,
                     input_budget=input_budget, sources=[], parts=[])
-    prompts, seen = {}, set()
+    seen = set()
     for item in sources:
         source_id = item.get("source_id", item.get("id"))
         if not isinstance(source_id, str) or not source_id or source_id in seen:
@@ -105,12 +105,15 @@ def plan_sources(sources, header_factory, token_counter, input_budget, *, bindin
         seen.add(source_id)
         if "binding" in item and _binding(item["binding"]) != binding:
             raise ValueError("source execution bindings differ")
+
+    def plan_one(item):
+        source_id = item.get("source_id", item.get("id"))
         raw = _raw(item.get("content"))
         source = dict(source_id=source_id, **witness(raw))
         for key in ("sha256", "bytes"):
             if key in item and item[key] != source[key]:
                 raise ValueError("source declaration differs: " + key)
-        manifest["sources"].append(source)
+        parts, prompts = [], {}
         remaining, start, emitted = raw.decode("utf-8"), 0, False
         while remaining or not emitted:
             # Binary search finds a fitting character-prefix, not necessarily the
@@ -134,12 +137,22 @@ def plan_sources(sources, header_factory, token_counter, input_budget, *, bindin
             if best is None:
                 raise ValueError("prompt wrapper and one source character exceed input budget")
             take, piece, meta, prompt, offset, count = best
-            manifest["parts"].append(dict(meta, source_offset=offset,
+            parts.append(dict(meta, source_offset=offset,
                 prompt=witness(prompt), input_tokens=count))
             prompts[meta["part_id"]] = prompt
             start += len(piece)
             remaining = remaining[take:]
             emitted = True
+        return source, parts, prompts
+
+    # Each source has its own frozen bytes and local plan. Join in the same
+    # source/part order before any existing model-call fan-out is allowed.
+    planned = prepare_map(sources, plan_one) if prepare_map is not None else map(plan_one, sources)
+    prompts = {}
+    for source, parts, source_prompts in planned:
+        manifest["sources"].append(source)
+        manifest["parts"].extend(parts)
+        prompts.update(source_prompts)
     manifest["plan_hash"] = digest(manifest)
     _validate_manifest(manifest)
     return manifest, prompts

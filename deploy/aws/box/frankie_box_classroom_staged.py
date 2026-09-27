@@ -92,7 +92,8 @@ def run(session,C,cache,*,root,staged,dialogue):
         'lesson, correction, failure and uncertainty. Earlier learning remains usable in this knowledge-primed replay. '
         'The original governed teacher role and mathematics remain in place; scientific dialogue is additive.')
     cache.save('staged-reading.json',reading['plan_hash'],dict(receipt=reading))
-    retained={x['source_id']:x['content'] for x in sources}
+    workers=importlib.import_module('deploy.aws.box.frankie_box_classroom_workers')
+    retained=workers.inventory(session,{x['source_id']:x['content'] for x in sources})
     for part in reading['parts']:
         retained['reading-assessment:'+part['part_id']]=part['assessment'].encode()
     thin=dict(visible,pre_message={k:v for k,v in pre.items() if k!='learning_history'})
@@ -195,7 +196,8 @@ def run_correction(session,C,cache,*,correction,ledgers,scientific_exchange,root
         'scientific understanding; it never silently changes governed targets. Keep scientific disagreements '
         'available for research, separately from factual correction acknowledgements.')
     cache.save('correction-staged-reading.json',reading['plan_hash'],dict(receipt=reading))
-    retained={x['source_id']:x['content'] for x in sources}
+    workers=importlib.import_module('deploy.aws.box.frankie_box_classroom_workers')
+    retained=workers.inventory(session,{x['source_id']:x['content'] for x in sources})
     for part in reading['parts']:
         retained['reading-assessment:'+part['part_id']]=part['assessment'].encode()
     calls=[]

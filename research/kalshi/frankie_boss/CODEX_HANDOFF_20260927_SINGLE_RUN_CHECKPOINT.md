@@ -1,5 +1,14 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Classroom helper package prepared — 2026-09-27 10:00Z
+
+Source implementation: coordinatorCPU1 +14 preparation helper threadsCPUs2–15; CPU0 reserved for I/O. Immutable byte sharing, persistent source hashes/indexes and per-thread pinned tokenizer reuse reduce repeated host preparation. Ordered source planning and existing teacher/model/grade dependencies remain unchanged. Eight exact candidate Python files syntax-compiled in memory; no scientific tests or inference. See audits/CLASSROOM_PREPARATION_WORKERS_20260927.md. Inactive staging and actual worker/throughput receipts remain PENDING. Do not restart ROOT to activate downstream code; use the existing serial inactive staging route.
+
+Latest ROOT read36311053493:1,440,016/2,032,203 (70.86%), failed=0, alive at1790503138.6401565;3checkpoints saved/read_verified, latest000002. Runtime2931134/PID56833/token52429441 and canonical workflow36309059667 unchanged. Let it continue.
+
+Granite Pod fhiwwlouzyx6l2 is RUNNING on live09:59Z read. The five-lesson prime package is already available and bound in source; actual delivery/acknowledgement must come from the first real Monday request. A package upload alone would not create learned model memory. No extra inference was submitted. All manual downstream stages remain pending.
+
+
 ## Combined worker/ledger fixes active and checkpoint-verified — 2026-09-27 09:43Z
 
 Canonical ROOT: runtime293113435a8fdf7bd5566f2652e1a1f7a1734c35; immutable ref codex/frankie-shared-ledger-runtime-2931134; workflow https://github.com/DavisAI1974/Markets/actions/runs/36309059667; PID56833; process token099d4eb6-a46d-4b94-a888-f15e55c1ee7e:52429441. CODE_ROOT=/opt/frankie-box/code/293113435a8fdf7bd5566f2652e1a1f7a1734c35-36308610841-1/markets. Generation recovery-9defa3169f7d46679491da2b1bfbbce2 in the unchanged calculation root. Do NOT launch a duplicate resume or hot-patch.

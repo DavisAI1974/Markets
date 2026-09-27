@@ -14,7 +14,8 @@ def run(session,request,base,sources,*,cache,classroom_module,staged_module,run_
         'supervision, mathematical targets, masks, controls and training responsibilities. Assess mechanisms '
         'and evidence, including ordinary and failed findings. A second occurrence is not the only scientific '
         'validation route. Retain uncertainty and disagreement; do not equate agreement with trading value.')
-    retained={x['source_id']:x['content'] for x in shared}
+    workers=importlib.import_module('deploy.aws.box.frankie_box_classroom_workers')
+    retained=workers.inventory(session,{x['source_id']:x['content'] for x in shared})
     for part in reading['parts']:
         retained['boss-reading-assessment:'+part['part_id']]=part['assessment'].encode()
     entries=[]

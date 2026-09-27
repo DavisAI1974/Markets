@@ -9,7 +9,8 @@ def run_task(session, cache, *, role, phase, sources, reading_receipt,
     C=classroom_module
     science=importlib.import_module('research.kalshi.frankie_boss.dipole_scientific_review')
     request={'scientific_request_hash':request_hash}
-    retained=dict(sources)
+    workers=importlib.import_module('deploy.aws.box.frankie_box_classroom_workers')
+    retained=workers.inventory(session,sources)
     reading=reading_receipt
     def call(name, prompt, parser, role):
         filename = 'science-call-' + science.digest(dict(name=name,prompt=prompt)) + '.json'
@@ -34,14 +35,14 @@ def run_task(session, cache, *, role, phase, sources, reading_receipt,
         return parsed,record
 
     def interact(item, role, base_prompt, parse_final, extra_sources):
-        available = dict(retained, **extra_sources)
-        catalog=[dict(source_id=key, bytes=len(raw),sha256=science.hashlib.sha256(raw).hexdigest())
-                 for key,raw in available.items()]
+        catalog = retained.fork()
+        for key, raw in extra_sources.items():
+            catalog[key] = raw
+        available = dict(catalog)
         index_id='source-index'
-        available[index_id]=b''.join(science.canonical(item)+b'\n' for item in catalog)
+        available[index_id], index_witness = catalog.index()
         navigation={'reading_plan_hash':reading['plan_hash'],
-            'source_index':dict(source_id=index_id,bytes=len(available[index_id]),
-                               sha256=science.hashlib.sha256(available[index_id]).hexdigest()),
+            'source_index':index_witness,
             'source_count':len(catalog),
             'instruction':'Read source-index to locate all full sources, staged assessments and completed exchanges. Exact byte ranges remain available; this index is navigation, not replacement knowledge.'}
         current = dict(navigation=navigation)
@@ -99,11 +100,9 @@ def run_task(session, cache, *, role, phase, sources, reading_receipt,
             current=next_context
             turn_id='dialogue:'+role+':'+item['item_id']+':'+str(len(turns))
             available[turn_id]=science.canonical(record)
-            catalog.append(dict(source_id=turn_id,bytes=len(available[turn_id]),
-                sha256=science.hashlib.sha256(available[turn_id]).hexdigest()))
-            available[index_id]=b''.join(science.canonical(item)+b'\n' for item in catalog)
-            navigation['source_index'].update(bytes=len(available[index_id]),
-                sha256=science.hashlib.sha256(available[index_id]).hexdigest())
+            catalog[turn_id]=available[turn_id]
+            available[index_id], index_witness = catalog.index()
+            navigation['source_index'].update(index_witness)
             navigation['source_count']=len(catalog)
 
 
@@ -141,7 +140,8 @@ def run(session, correction, *, root, cache, classroom_module, staged_module):
         sources.append(dict(source_id=source_id, content=science.canonical(body)))
     reading = staged_module.consume_sources(session, sources, 'scientific_teacher', 'full-run-scientific-review',
         descriptor['snapshot_hash'], request['scientific_request_hash'], cache, request['instruction'])
-    retained = {x['source_id']: x['content'] for x in sources}
+    workers=importlib.import_module('deploy.aws.box.frankie_box_classroom_workers')
+    retained = workers.inventory(session, {x['source_id']: x['content'] for x in sources})
     for part in reading['parts']:
         retained['reading-assessment:' + part['part_id']] = part['assessment'].encode('utf-8')
 
