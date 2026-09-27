@@ -1,5 +1,21 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Authorized calculation concurrency (2026-09-27)
+
+User: "As long as all 19 are in root, let's make that change. Otherwise a trade day could take a day to run all 19."
+
+- [x] Confirm historical coverage statically against CYCLE_CALCULATION_PINS.json: 19 slots numbered 0–18, seven distinct groups, union of all 49 registry layers equals the complete-registry selection. All three repository producer groups remain included. Selection does not mean completed results.
+- [x] Implement independent queue (4.6) and replenishment (4.7) calculation processes alongside the causal ROOT driver in frankie_box_native_parallel.py; connect through frankie_box_bedrock.run. This is three calculation processes within ONE traversal, not 19 full-day passes or separate cycle runs.
+- [x] Review pinned call dependencies, shared adapter/calculator object references, segment-close order, exact row retention order, worker cleanup and checkpoint barriers. In-memory Python 3.13 syntax compilation passed for the new module and modified run function. No calculation tests, canaries, comparison runs or new validator jobs were executed.
+- [ ] Stage the committed change in an inactive checkout using the existing staging workflow.
+- [ ] First authorized production execution of the parallel version and its actual checkpoint/final receipts. Runtime correctness and speedup remain unmeasured; static review and syntax compilation are not execution evidence.
+
+Each branch receives one closed event group at a time in original stream order. The pinned driver still performs every retention call in its original order, and ROOT alone writes the ledgers. Replenishment horizons advance only at the original call site. Before a checkpoint, both branches return their entire native state; each calculator, observer/adapter and book graph travels together to preserve aliases. The existing full-state serializer remains byte-for-byte unchanged. Finalization uses the original native objects and gates in ROOT. A checkpoint records the parallel helper hash and rejects a changed parallel policy on restoration. Worker compute/wait measurements are retained as per-process timings, never as a claimed speedup.
+
+No pinned producer source, historical section or hash changed. Source readers remain separate from calculation processes. No active ROOT interruption, duplicate calculation, ingestion replay, separate orchestration or infrastructure change was requested or performed. Keep the currently running recovery on its existing checkout. New code takes effect only when that checkout is explicitly used for a future production invocation or lawful continuation after the current process has ended; never launch it alongside PID 54056.
+
+Latest real probe: https://github.com/DavisAI1974/Markets/actions/runs/36296219388, output at 2026-09-27T05:06:39.5275810Z: completed=253869, stage=root-native-reconstruct, total=2032203, PID 54056 alive, failed=0, progress age 1.1 seconds. Five checkpoints saved/read_verified, latest checkpoint-000004.json. Still reconstruction toward 464000, not new progress beyond the retained cursor. Reconstruction verification, complete calculations, classroom/retention and Tuesday outcomes remain pending.
+
 ## Continuation execution setup (2026-09-27T04:51Z)
 
 User reaffirmed: do whatever remains unfinished, then proceed. Configuration coverage is not completion; all unchecked calculation, classroom and retention milestones remain unchecked.

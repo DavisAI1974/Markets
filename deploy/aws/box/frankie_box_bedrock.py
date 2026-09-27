@@ -363,6 +363,17 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
 
     from frankie_box_native_checkpoint import (FullCheckpointer, read_checkpoint,
         restore_driver, consume_recovery)
+    from frankie_box_native_parallel import ParallelSections, bind_policy
+
+    class ParallelCheckpointer(FullCheckpointer):
+        parallel = None
+
+        def _write(self, adapter, **kwargs):
+            if self.parallel is not None and self.parallel.active:
+                with self.parallel.materialized():
+                    return super()._write(adapter, **kwargs)
+            return super()._write(adapter, **kwargs)
+
     checkpoint = descriptor = None
     if resume_checkpoint:
         checkpoint, descriptor = read_checkpoint(resume_checkpoint, asdict(ident))
@@ -371,7 +382,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         if checkpoint['total_mbo_records'] != len(records):
             raise ValueError('checkpoint full-source denominator differs')
         checkpoint['_directory'] = str(Path(resume_checkpoint).parent)
-    checkpointer = FullCheckpointer(
+    checkpointer = ParallelCheckpointer(
         run_id=ident.run_id, controller='A_CHATGPT', memory_mode='MEMORY_ASSISTED',
         source_manifest_hash=ident.source_manifest_hash, total_mbo_records=len(records),
         checkpoint_dir=checkpoint_dir, phase='RT_NATIVE_TRAVERSAL',
@@ -397,6 +408,8 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     checkpointer.driver = driver
     if checkpoint and descriptor is None:
         driver._frankie_reconstruction_checkpoint = checkpoint
+    if not (descriptor and descriptor['finalized']):
+        bind_policy(driver)
     started = time.time()
     if descriptor is None:
         checkpointer.seal_start(driver.adapter)
@@ -404,7 +417,15 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         checkpointer._write(driver.adapter, completed_mbo_records=driver.counters.records_seen,
                             event_group_open=False, controller_state=None, locked=False)
     if not (descriptor and descriptor['finalized']):
-        consume_recovery(driver, stamped, len(records), progress, checkpoint, descriptor)
+        parallel = ParallelSections(driver, producers)
+        checkpointer.parallel = parallel
+        try:
+            parallel.start()
+            consume_recovery(driver, stamped, len(records), progress, checkpoint, descriptor)
+            parallel.finish()
+        finally:
+            parallel.close()
+            checkpointer.parallel = None
     if progress is not None:
         progress.update('root-native-finalize')
     result = dict(driver._frankie_final_result) if descriptor and descriptor['finalized'] else driver.finalize()
@@ -444,6 +465,10 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                    recovery=dict(parent_checkpoint=str(resume_checkpoint) if resume_checkpoint else None,
                        restored_state_records=checkpoint['completed_mbo_records'] if descriptor else 0,
                        authorized_reconstruction_records=checkpoint['completed_mbo_records'] if checkpoint and descriptor is None else 0),
+                   execution=dict(
+                       policy=getattr(driver, '_frankie_parallel_policy', {'calculation_processes': 1}),
+                       metrics=getattr(driver, '_frankie_parallel_metrics', {}),
+                       timings_are_per_process=True, speedup_verified=False),
                    cadence_policy='NeverInvoke', driver_arguments=arguments,
                    candidate_warmup_seconds=driver.candidate_warmup_seconds, candidate_min_observations=driver.candidate_min_observations,
                    candidate_selection=driver.candidate_selection,
