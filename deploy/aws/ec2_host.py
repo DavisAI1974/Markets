@@ -121,6 +121,105 @@ def report_frankie_access(ec2, ssm, instance):
             emit('ACCESS_ERROR', {'operation': label, 'code': exc.response['Error']['Code']})
 
 
+def inspect_frankie_over_ssh(ec2, instance, region):
+    """One read-only host command; remove this operation's temporary access on exit."""
+    import base64
+    import hashlib
+    import ipaddress
+    import json
+    import pathlib
+    import subprocess
+    import tempfile
+    import urllib.request
+    import uuid
+    import boto3
+    if instance != 'i-035994afa8bdf66a5' or region != 'us-east-1':
+        raise SystemExit('canonical Frankie box required')
+    def emit(kind, value):
+        print(kind + ' ' + json.dumps(value, sort_keys=True), flush=True)
+    host=ec2.describe_instances(InstanceIds=[instance])['Reservations'][0]['Instances'][0]
+    if host['State']['Name'] != 'running':
+        raise SystemExit('running box required; no start or restart performed')
+    address=str(ipaddress.IPv4Address(host['PublicIpAddress']))
+    console=ec2.get_console_output(InstanceId=instance,Latest=True).get('Output','')
+    host_keys=re.findall(r'(ssh-ed25519|ecdsa-sha2-nistp256|ssh-rsa) ([A-Za-z0-9+/]+={0,3})(?:\s|$)',console)
+    if not host_keys:
+        try:
+            decoded=base64.b64decode(console,validate=True).decode('utf-8',errors='replace')
+            host_keys=re.findall(r'(ssh-ed25519|ecdsa-sha2-nistp256|ssh-rsa) ([A-Za-z0-9+/]+={0,3})(?:\s|$)',decoded)
+        except (ValueError, UnicodeError):
+            pass
+    if not host_keys:
+        raise SystemExit('No authenticated EC2 console host key available; refusing unverified SSH')
+    runner_ip=str(ipaddress.IPv4Address(urllib.request.urlopen(
+        'https://checkip.amazonaws.com',timeout=15).read().decode().strip()))
+    nic=next(x for x in host['NetworkInterfaces'] if x['Attachment']['DeviceIndex']==0)['NetworkInterfaceId']
+    original=sorted(x['GroupId'] for x in ec2.describe_network_interfaces(
+        NetworkInterfaceIds=[nic])['NetworkInterfaces'][0]['Groups'])
+    group=None
+    operation='frankie-recovery-'+uuid.uuid4().hex
+    with tempfile.TemporaryDirectory(prefix=operation+'-') as temp:
+        key=pathlib.Path(temp)/'access'
+        subprocess.run(['ssh-keygen','-q','-t','ed25519','-N','','-f',str(key)],check=True)
+        known=pathlib.Path(temp)/'known_hosts'
+        known.write_text(''.join(address+' '+kind+' '+value+'\n' for kind,value in host_keys))
+        emit('SSH_HOST_KEYS', [hashlib.sha256(base64.b64decode(value)).hexdigest() for kind,value in host_keys])
+        eic=boto3.client('ec2-instance-connect',region_name=region)
+        def push_key():
+            response=eic.send_ssh_public_key(InstanceId=instance,InstanceOSUser='ubuntu',
+                AvailabilityZone=host['Placement']['AvailabilityZone'],
+                SSHPublicKey=key.with_suffix('.pub').read_text())
+            if response.get('Success') is not True:
+                raise RuntimeError('Instance Connect key not accepted')
+        push_key()
+        try:
+            group=ec2.create_security_group(GroupName=operation,Description='Temporary exact-runner Frankie recovery SSH',
+                                           VpcId=host['VpcId'])['GroupId']
+            emit('TEMPORARY_ACCESS_CREATED',dict(group=group,interface=nic,source=runner_ip+'/32',port=22))
+            ec2.authorize_security_group_ingress(GroupId=group,IpPermissions=[
+                dict(IpProtocol='tcp',FromPort=22,ToPort=22,
+                     IpRanges=[dict(CidrIp=runner_ip+'/32',Description=operation)])])
+            before=sorted(x['GroupId'] for x in ec2.describe_network_interfaces(
+                NetworkInterfaceIds=[nic])['NetworkInterfaces'][0]['Groups'])
+            if before!=original:
+                raise RuntimeError('network groups changed concurrently; refusing attachment')
+            ec2.modify_network_interface_attribute(NetworkInterfaceId=nic,Groups=original+[group])
+            actual=sorted(x['GroupId'] for x in ec2.describe_network_interfaces(
+                NetworkInterfaceIds=[nic])['NetworkInterfaces'][0]['Groups'])
+            if actual!=sorted(original+[group]):
+                raise RuntimeError('temporary network access readback differs')
+            push_key()
+            command=['ssh','-T','-i',str(key),'-o','IdentitiesOnly=yes','-o','BatchMode=yes',
+                     '-o','StrictHostKeyChecking=yes','-o','UserKnownHostsFile='+str(known),
+                     '-o','ConnectTimeout=20','-o','ServerAliveInterval=15','-o','ServerAliveCountMax=2',
+                     'ubuntu@'+address,'sudo -n /opt/frankie-box/venv/bin/python -I -S -B -']
+            completed=subprocess.run(command,input="\nimport hashlib,json,os,pathlib,stat,time\nroot=pathlib.Path('/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48')\nassert root.resolve(strict=True)==root\ndef pin(path):\n    raw=path.read_bytes()\n    return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest(),value=json.loads(raw))\nspace=os.statvfs(root)\nout=dict(at=time.time(),available_bytes=space.f_bavail*space.f_frsize,\n         free_including_reserved_bytes=space.f_bfree*space.f_frsize)\nproc=pathlib.Path('/proc/59092')\nout['pid59092_exists']=proc.exists()\nif proc.exists():\n    fields=(proc/'stat').read_text().rsplit(')',1)[1].split()\n    out['pid59092_state']=fields[0]\n    out['pid59092_token']=pathlib.Path('/proc/sys/kernel/random/boot_id').read_text().strip()+':'+fields[19]\nout['progress']=pin(root/'progress.json')\ncp=root/'work/bedrock/recovery-8c03f629f01747158535f3cfa4f01f2d/checkpoints'\nout['checkpoint']=pin(cp/'checkpoint-000000.json')\nout['descriptor']=pin(cp/'controller-state-000000.json')\nout['targets']=[]\nfor relative in [\"work/bedrock/recovery-03a70711353a433c989b18074d7baacd/ledgers/exact_member_rows.jsonl\",\"work/bedrock/recovery-d4b20c8f7e834d7abb1a435ff8199442/ledgers/exact_member_rows.jsonl\",\"work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6/ledgers/exact_member_rows.jsonl\",\"work/bedrock/ledgers/exact_member_rows.jsonl\",\"work/bedrock/recovery-f13de5640bf549feaae493d8861bfae1/ledgers/exact_member_rows.jsonl\"]:\n    path=root/relative\n    row=dict(path=str(path),exists=path.exists(),symlink=path.is_symlink())\n    if path.exists():\n        info=path.lstat()\n        row.update(bytes=info.st_size,mtime_ns=info.st_mtime_ns,links=info.st_nlink,\n                   allocated_bytes=info.st_blocks*512,regular=stat.S_ISREG(info.st_mode))\n    out['targets'].append(row)\nout['retention']=[]\nfor directory in sorted((root/'work/retention').glob('superseded-members-*')):\n    row=dict(path=str(directory),files=[])\n    if directory.is_symlink():\n        raise RuntimeError('linked retention directory')\n    for path in sorted(directory.iterdir()):\n        if path.suffix=='.json':\n            row['files'].append(pin(path))\n    out['retention'].append(row)\nprint('RECOVERY_INSPECTION '+json.dumps(out,sort_keys=True),flush=True)\n",text=True,check=False,timeout=180)
+            emit('SSH_INSPECTION_EXIT',dict(returncode=completed.returncode))
+            if completed.returncode:
+                raise SystemExit(completed.returncode)
+        finally:
+            if group:
+                current=sorted(x['GroupId'] for x in ec2.describe_network_interfaces(
+                    NetworkInterfaceIds=[nic])['NetworkInterfaces'][0]['Groups'])
+                if group in current:
+                    ec2.modify_network_interface_attribute(NetworkInterfaceId=nic,
+                        Groups=[value for value in current if value!=group])
+                after=sorted(x['GroupId'] for x in ec2.describe_network_interfaces(
+                    NetworkInterfaceIds=[nic])['NetworkInterfaces'][0]['Groups'])
+                if group in after:
+                    raise RuntimeError('temporary recovery group still attached')
+                from botocore.exceptions import ClientError
+                for attempt in range(6):
+                    try:
+                        ec2.delete_security_group(GroupId=group)
+                        break
+                    except ClientError as exc:
+                        if exc.response['Error']['Code']!='DependencyViolation' or attempt==5:
+                            raise
+                        time.sleep(2)
+                emit('TEMPORARY_ACCESS_REMOVED',dict(group=group,interface=nic,remaining_groups=after))
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--instance', required=True)
@@ -130,7 +229,7 @@ def main():
     parser.add_argument('--label', default='', help='snapshot: short label written into the Name tag')
     parser.add_argument('--device', default='xvdf', help='snapshot: block device of the data volume (E:), default xvdf')
     parser.add_argument('--type', default='', help='resize: the new instance type (r7i.8xlarge = 32 vCPU/256 GiB, r7i.12xlarge = 48 vCPU/384 GiB)')
-    parser.add_argument('action', choices=('status', 'start', 'stop', 'snapshot', 'snapshots', 'resize'))
+    parser.add_argument('action', choices=('status', 'start', 'stop', 'snapshot', 'snapshots', 'resize', 'recovery-inspect'))
     args = parser.parse_args()
     if args.env_file:
         load_env_file(args.env_file)
@@ -141,6 +240,8 @@ def main():
     report(info, args.hourly)
     if args.action == 'status' and args.instance == 'i-035994afa8bdf66a5' and args.region == 'us-east-1':
         report_frankie_access(ec2, ssm, args.instance)
+    if args.action == 'recovery-inspect':
+        inspect_frankie_over_ssh(ec2, args.instance, args.region)
     if args.action == 'start':
         if info['state'] == 'stopping':
             wait_state(ec2, args.instance, 'stopped')
