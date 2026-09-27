@@ -85,10 +85,25 @@ def prepare(configuration_path, *, output_configuration, cycles=None, progress=N
             or contract.get('trading_day') != launch['trading_day']
             or contract.get('cycle_count') != total or len(contract.get('cycles', [])) != total):
         raise ValueError('source_contract must cover the declared source manifest, trading day and cutoff roster')
+    completed_binding = configuration.get('completed_source_binding')
+    completed_terminal = None
+    if completed_binding is not None:
+        authored = read_pinned(completed_binding)
+        authored_config = read_pinned(authored['configuration'])
+        if (not whole or authored.get('schema') != 'FRANKIE_MONDAY_LAUNCH_AUTHORSHIP_V1'
+                or authored['launch'] != configuration['trading_day_launch']
+                or authored['mapping'] != launch['mapping']
+                or authored['forecast_target'] != launch['forecast_target']
+                or authored_config['source_manifest'] != configuration['source_manifest']
+                or authored_config['host_runtime']['source_entity'] != configuration['host_runtime']['source_entity']
+                or any(authored[k] != 0 for k in ('model_calls', 'source_replays', 'source_writes'))):
+            raise ValueError('completed source-binding receipt differs from preparation inputs')
+        completed_terminal = authored['terminal']
+    workers = configuration['host_runtime'].get('data_workers', 1)
     from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader
     view = open_completed_schedule_view(scope, journal, checkpoint,
         checkpoint_sha256, receipt['checkpoint_state_hash'], completion,
-        reader_factory=CompactConformanceReader if whole else FrankieCompactReader,
+        reader_factory=partial(CompactConformanceReader if whole else FrankieCompactReader, workers=workers),
         recovery_descriptor=launch['ingestion_receipt'] if recovered is not None else None)
     try:
         if whole:
@@ -102,7 +117,7 @@ def prepare(configuration_path, *, output_configuration, cycles=None, progress=N
                     source_partitions=[m.member_key for m in scope.members],
                     source_record_count=receipt['record_count'], journal_count=receipt['journal_count'],
                     journal_hash=receipt['journal_hash'], journal_sha256=container['sha256']),
-                forecast_target=launch['forecast_target'], progress=progress)
+                forecast_target=launch['forecast_target'], progress=progress, completed_terminal=completed_terminal)
         else:
             schedule = build_schedule(view, mapping_path, expected_index_sha256=launch['mapping']['sha256'],
                 cutoffs_path=cutoffs_path, expected_cutoffs_sha256=launch['cutoffs']['sha256'],
@@ -153,6 +168,8 @@ def prepare(configuration_path, *, output_configuration, cycles=None, progress=N
         ingestion_receipt=launch['ingestion_receipt'], launch=configuration['trading_day_launch'], model_calls=0)
     if recovered is not None:
         outer['recovered_ingestion'] = recovered.provenance
+    if completed_binding is not None:
+        outer.update(completed_source_binding=completed_binding, source_journal_traversals=0)
     save_new(schedule_dir / 'receipt.json', outer)
     binding = dict(schema='FRANKIE_TRADING_DAY_PREFIXES_V1',
         ingestion_receipt=launch['ingestion_receipt'], schedule_receipt=witness(schedule_dir / 'receipt.json'),
@@ -205,7 +222,8 @@ def prepare(configuration_path, *, output_configuration, cycles=None, progress=N
     save_new(output_configuration, result)
     return dict(prefix_count=cycles, prefixes_sha256=sha(manifest_path),
         schedule_sha256=schedule['schedule_sha256'], configuration=witness(output_configuration),
-        source_records=receipt['record_count'], day=launch['trading_day'])
+        source_records=receipt['record_count'], day=launch['trading_day'],
+        source_journal_traversals=0 if completed_binding is not None else 1, data_workers=workers)
 
 
 def main():

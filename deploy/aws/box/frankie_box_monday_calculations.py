@@ -19,8 +19,11 @@ from frankie_box_author_monday_launch import fresh, sync_directory
 PARENT = Path('/opt/frankie-box/work/monday-calculations')
 
 
-def calculate(commit, authorship_path, authorship_sha256, output_root):
+def calculate(commit, authorship_path, authorship_sha256, output_root, data_workers=1):
     require_checkout(commit)
+    from research.kalshi.frankie_boss.frankie_journal_reader import worker_budget
+    if len(worker_budget(data_workers)) != data_workers:
+        raise ValueError('requested reader workers exceed available dedicated CPUs')
     authorship_pin = witness(Path(authorship_path))
     if authorship_pin['sha256'] != authorship_sha256:
         raise ValueError('Monday authorship receipt differs')
@@ -54,7 +57,7 @@ def calculate(commit, authorship_path, authorship_sha256, output_root):
         historical_definition_file=witness(historical_path),
         rule='One complete Monday delivery; all registry groups and all three bedrock groups. Historical definitions carry no execution-cycle roster.')
     save_new(output / 'calculation-pins.json', document)
-    binding = dict(schema='FRANKIE_MONDAY_CALCULATION_SOURCE_V1', source=source,
+    binding = dict(schema='FRANKIE_MONDAY_CALCULATION_SOURCE_V1', source=source, data_workers=data_workers,
         authorship=authorship_pin, ingestion_receipt=launch['ingestion_receipt'],
         calculation_pins=witness(output / 'calculation-pins.json'),
         container=recovered.container, manifest=recovered.manifest,
@@ -93,8 +96,9 @@ def main():
     parser.add_argument('--authorship', required=True)
     parser.add_argument('--authorship-sha256', required=True)
     parser.add_argument('--output-root', required=True)
+    parser.add_argument('--data-workers', type=int, default=1)
     args = parser.parse_args()
-    print(json.dumps(calculate(args.commit, args.authorship, args.authorship_sha256, args.output_root), sort_keys=True), flush=True)
+    print(json.dumps(calculate(args.commit, args.authorship, args.authorship_sha256, args.output_root, args.data_workers), sort_keys=True), flush=True)
 
 
 if __name__ == '__main__':

@@ -139,7 +139,8 @@ def run_preparation(configuration, output_configuration, progress=None):
     return prepare(configuration, output_configuration=output_configuration, progress=progress)
 
 
-def prepare_bundle(configuration, *, configuration_sha256, commit, output_root):
+def prepare_bundle(configuration, *, configuration_sha256, commit, output_root,
+                   data_workers=None, authorship=None, authorship_sha256=None):
     if not sys.platform.startswith('linux'):
         raise ValueError('Linux preparation only')
     require_checkout(commit)
@@ -170,24 +171,46 @@ def prepare_bundle(configuration, *, configuration_sha256, commit, output_root):
     if not stat.S_ISREG(before.st_mode):
         raise ValueError('original container is not regular')
     root = output_root_path(output_root)
+    configured_root = output_root_path(safe_path(config['schedule_directory']).parent)
+    if data_workers is not None:
+        from research.kalshi.frankie_boss.frankie_journal_reader import worker_budget
+        if len(worker_budget(data_workers)) != data_workers:
+            raise ValueError('requested reader workers exceed available dedicated CPUs')
+    if (authorship is None) != (authorship_sha256 is None):
+        raise ValueError('complete source-binding receipt pin required')
+    if authorship is not None:
+        authored_pin = witness(safe_path(authorship))
+        authored = read_pin(authored_pin)
+        if (authored_pin['sha256'] != authorship_sha256 or authored['configuration'] != pin
+                or authored['preparation_root'] != str(configured_root)):
+            raise ValueError('authorship differs from original configuration')
+        config['completed_source_binding'] = authored_pin
     if root.exists():
         raise FileExistsError('existing preparation evidence preserved')
-    if (safe_path(config['schedule_directory']) != root/'schedule'
-            or safe_path(config['host_runtime']['prefixes_directory']) != root/'prefixes'):
+    if (safe_path(config['schedule_directory']) != configured_root/'schedule'
+            or safe_path(config['host_runtime']['prefixes_directory']) != configured_root/'prefixes'
+            or root != configured_root and data_workers is None and authorship is None):
         raise ValueError('configured output paths escape preparation root')
+    config['schedule_directory'] = str(root/'schedule')
+    config['host_runtime']['prefixes_directory'] = str(root/'prefixes')
+    if data_workers is not None:
+        config['host_runtime']['data_workers'] = data_workers
     if configuration.is_relative_to(root):
         raise ValueError('configuration must precede the fresh output root')
     root.parent.mkdir(parents=True, exist_ok=True)
     root.mkdir(mode=0o700)
     sync_directory(root.parent)
+    execution_configuration = root/'execution-configuration.json'
+    save_new(execution_configuration, config)
     intent = dict(schema='FRANKIE_LINUX_PREPARATION_INTENT_V1', commit=commit,
-                  configuration=pin, source_container=ORIGINAL_CONTAINER,
+                  configuration=pin, execution_configuration=witness(execution_configuration),
+                  source_container=ORIGINAL_CONTAINER,
                   output_root=str(root), model_calls=0, source_replays=0)
     save_new(root/'preparation-intent.json', intent)
     from frankie_box_progress import Probe
     progress = Probe(root, pin['sha256'], 'monday-preparation')
     progress.update('opening-sealed-source')
-    result = run_preparation(configuration, root/'prepared-configuration.json', progress=progress)
+    result = run_preparation(execution_configuration, root/'prepared-configuration.json', progress=progress)
     progress.update('retaining-preparation', result['source_records'], result['source_records'])
     after = source.stat()
     if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
@@ -196,7 +219,7 @@ def prepare_bundle(configuration, *, configuration_sha256, commit, output_root):
     if witness(configuration) != pin:
         raise ValueError('configuration changed during preparation')
     files = []
-    for top in (root/'schedule', root/'prefixes', root/'prepared-configuration.json'):
+    for top in (root/'schedule', root/'prefixes', root/'prepared-configuration.json', execution_configuration):
         paths = sorted(top.rglob('*')) if top.is_dir() else [top]
         for path in paths:
             safe_path(path)
@@ -328,6 +351,9 @@ def main():
     prep.add_argument('--configuration-sha256', required=True)
     prep.add_argument('--commit', required=True)
     prep.add_argument('--output-root', required=True)
+    prep.add_argument('--data-workers', type=int)
+    prep.add_argument('--authorship')
+    prep.add_argument('--authorship-sha256')
     publication = sub.add_parser('publish')
     publication.add_argument('--output-root', required=True)
     publication.add_argument('--commit', required=True)
@@ -337,7 +363,9 @@ def main():
     try:
         if args.mode == 'prepare':
             result = prepare_bundle(args.configuration, configuration_sha256=args.configuration_sha256,
-                                    commit=args.commit, output_root=args.output_root)
+                                    commit=args.commit, output_root=args.output_root,
+                                    data_workers=args.data_workers, authorship=args.authorship,
+                                    authorship_sha256=args.authorship_sha256)
         else:
             require_checkout(args.commit)
             raw = read_raw(args.upload_map)

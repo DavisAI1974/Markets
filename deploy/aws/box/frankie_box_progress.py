@@ -41,6 +41,8 @@ class Probe:
                          percent=round(100 * completed / total, 2) if total else None,
                          in_flight=in_flight, failed=failed, state=state, at=time.time(),
                          pid=self.pid, process_token=self.token)
+            if hasattr(self, 'reader_workers'):
+                value['reader_workers'] = self.reader_workers
             self.directory.mkdir(parents=True, exist_ok=True)
             path = self.directory / 'progress.json'
             temporary = path.with_suffix('.pending')

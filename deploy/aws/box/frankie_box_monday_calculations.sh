@@ -8,4 +8,5 @@ set -eu
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "inactive staged checkout required" >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1
 exec /opt/frankie-box/venv/bin/python -B "$CODE_ROOT/deploy/aws/box/frankie_box_monday_calculations.py" \
-  --commit "$MARKETS_SHA" --authorship "$AUTHORSHIP" --authorship-sha256 "$AUTHORSHIP_SHA256" --output-root "$OUTPUT_ROOT"
+  --commit "$MARKETS_SHA" --authorship "$AUTHORSHIP" --authorship-sha256 "$AUTHORSHIP_SHA256" --output-root "$OUTPUT_ROOT" \
+  --data-workers "${DATA_WORKERS:-1}"

@@ -1047,7 +1047,10 @@ class Session:
             # Metadata-only extraction after every canonical row is verified. The
             # complete INPUT wire observation is passed to all producer stages.
             from research.kalshi.frankie_boss.compact_conformance_reader import CompactConformanceReader
-            with CompactConformanceReader(rows_path, expected_count=count, expected_head_hash=head, workers=1) as reader:
+            with CompactConformanceReader(rows_path, expected_count=count, expected_head_hash=head,
+                    workers=self.source_binding.get('data_workers', 1)) as reader:
+                probe.reader_workers = dict(requested=self.source_binding.get('data_workers', 1),
+                                            effective=len(reader.worker_cpus))
                 for entry in probe.track(reader.entries(), count, 'source-journal-records'):
                     take(entry['kind'], entry['payload'])
         elif layout == 'compact':

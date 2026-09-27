@@ -142,12 +142,13 @@ def _validate_whole_day(body):
 
 
 def build_whole_day_schedule(builder, mapping_index, *, expected_index_sha256,
-                            source_identity, forecast_target, progress=None):
-    """Read a verified sealed source once, retaining every record and no future labels.
+                            source_identity, forecast_target, progress=None, completed_terminal=None):
+    """Build whole-day coverage from a full source read or its pinned completed receipt.
 
     The caller supplies the independently verified source view and source identity.
-    This reads existing evidence, never ingests, computes a market result or writes
-    the source. The target/calendar are explicit, not inferred from a cutoff.
+    A completed terminal is supplied only after the caller verifies its authorship
+    receipt and source pins. Mapping coverage and sealed-source identity are still
+    checked here. Neither route ingests, calculates a market result or writes source.
     """
     if type(source_identity) is not dict or set(source_identity) != set(WHOLE_DAY_IDENTITY):
         raise ValueError('complete independently verified source identity required')
@@ -169,30 +170,44 @@ def build_whole_day_schedule(builder, mapping_index, *, expected_index_sha256,
             cursor, groups = end + 1, groups + 1
     if digest.hexdigest() != expected_index_sha256 or cursor != total or not groups:
         raise ValueError('full mapping identity or coverage differs')
-    count = closed_groups = as_of = source_as_of = 0
-    terminal = None
-    if progress is not None:
-        progress.update('whole-monday-schedule', 0, total)
-    for entry in builder.journal.entries():
-        if entry['kind'] == 'INPUT':
-            continue
-        if entry['kind'] != 'APPLIED':
-            raise ValueError('failed or unknown sealed source entry')
-        row = entry['payload']
-        if type(row.get('cursor')) is not int or row['cursor'] != count:
-            raise ValueError('applied source cursor continuity differs')
-        record = row['raw_record']
-        as_of = max(as_of, record['ts_recv'])
-        source_as_of = max(source_as_of, record['ts_event'])
-        closed_groups += bool(record['flags'] & 128)
-        count += 1
-        terminal = row
+    if completed_terminal is not None:
+        # Supplied only with the byte-pinned completed authorship receipt. Its
+        # journal_prefix pass already verified every pair and the terminal chain.
+        terminal = completed_terminal
+        if (terminal['through_cursor'] != total - 1
+                or terminal['groups'] != groups or terminal['group_index'] != groups - 1
+                or terminal['source_hash'] != builder.chain.prefix_hash
+                or terminal['entity_rows'] + terminal['other_entity_rows'] != total
+                or builder.chain.next_global_group_ordinal != groups):
+            raise ValueError('completed authorship terminal differs from sealed source or mapping')
+        count, as_of, source_as_of = total, terminal['as_of'], terminal['source_as_of']
         if progress is not None:
-            progress.update('whole-monday-schedule', count, total, force=False)
-    if (count != total or closed_groups != groups or terminal is None
-            or terminal.get('receipt') is None or not terminal['raw_record']['flags'] & 128
-            or terminal['terminal_prefix_hash'] != builder.chain.prefix_hash):
-        raise ValueError('sealed source terminal or complete group coverage differs')
+            progress.update('reusing-completed-source-binding', count, total)
+    else:
+        count = closed_groups = as_of = source_as_of = 0
+        terminal = None
+        if progress is not None:
+            progress.update('whole-monday-schedule', 0, total)
+        for entry in builder.journal.entries():
+            if entry['kind'] == 'INPUT':
+                continue
+            if entry['kind'] != 'APPLIED':
+                raise ValueError('failed or unknown sealed source entry')
+            row = entry['payload']
+            if type(row.get('cursor')) is not int or row['cursor'] != count:
+                raise ValueError('applied source cursor continuity differs')
+            record = row['raw_record']
+            as_of = max(as_of, record['ts_recv'])
+            source_as_of = max(source_as_of, record['ts_event'])
+            closed_groups += bool(record['flags'] & 128)
+            count += 1
+            terminal = row
+            if progress is not None:
+                progress.update('whole-monday-schedule', count, total, force=False)
+        if (count != total or closed_groups != groups or terminal is None
+                or terminal.get('receipt') is None or not terminal['raw_record']['flags'] & 128
+                or terminal['terminal_prefix_hash'] != builder.chain.prefix_hash):
+            raise ValueError('sealed source terminal or complete group coverage differs')
     delivery = dict(groups_delivered=groups, records_delivered=count, through_cursor=count - 1,
                     as_of=as_of, source_as_of=source_as_of, source_hash=builder.chain.prefix_hash)
     return seal(dict(source_identity, schema=WHOLE_DAY_SCHEMA,

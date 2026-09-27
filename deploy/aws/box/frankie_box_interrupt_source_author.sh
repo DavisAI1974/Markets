@@ -1,21 +1,30 @@
-# Interrupt only an identified read-only source-authoring process. Preserve every file.
+# Interrupt only an identified read-only source author/preparation process. Preserve every file.
 set -eu
 : "${DIRECTORY:?source authoring directory required}"
 : "${AUTHOR_CODE_ROOT:?exact authoring checkout required}"
 : "${AUTHOR_COMMIT:?exact authoring commit required}"
-export DIRECTORY AUTHOR_CODE_ROOT AUTHOR_COMMIT
+STAGE="${STAGE:-author}"
+CONFIGURATION="${CONFIGURATION:-}"
+CONFIGURATION_SHA256="${CONFIGURATION_SHA256:-}"
+export DIRECTORY AUTHOR_CODE_ROOT AUTHOR_COMMIT STAGE CONFIGURATION CONFIGURATION_SHA256
 exec /opt/frankie-box/venv/bin/python -B - <<'PY'
 import json, os, signal, time
 from pathlib import Path
 root = Path(os.environ['DIRECTORY'])
 code = Path(os.environ['AUTHOR_CODE_ROOT'])
-if (root.parent != Path('/opt/frankie-box/work/monday-launch')
+stage = os.environ['STAGE']
+if stage not in ('author', 'preparation'):
+    raise SystemExit('source author or preparation stage required')
+parent = 'monday-launch' if stage == 'author' else 'trading-day-preparation'
+if (root.parent != Path('/opt/frankie-box/work')/parent
         or not str(code).startswith('/opt/frankie-box/code/') or code.name != 'markets'
         or '..' in root.parts or '..' in code.parts):
     raise SystemExit('explicit source-authoring paths required')
 probe = json.loads((root/'progress.json').read_bytes())
 pid = probe['pid']
-if type(pid) is not int or pid <= 1 or probe['request_sha256'] != os.environ['AUTHOR_COMMIT']:
+request_hash = os.environ['AUTHOR_COMMIT'] if stage == 'author' else os.environ['CONFIGURATION_SHA256']
+if (type(pid) is not int or pid <= 1 or probe['request_sha256'] != request_hash
+        or probe['phase'] != ('monday-authorship' if stage == 'author' else 'monday-preparation')):
     raise SystemExit('authoring process identity differs')
 def identity(n):
     try:
@@ -33,9 +42,14 @@ if probe['process_token'] != boot + ':' + observed[1]:
 argv = (Path('/proc')/str(pid)/'cmdline').read_bytes().split(b'\0')
 expected = [str(code/'deploy/aws/box/frankie_box_author_monday_launch.py'),
             '--commit', os.environ['AUTHOR_COMMIT'], '--output-root', str(root)]
+if stage == 'preparation':
+    expected = [str(code/'deploy/aws/box/frankie_box_prepare_trading_day.py'), 'prepare',
+                '--configuration', os.environ['CONFIGURATION'],
+                '--configuration-sha256', os.environ['CONFIGURATION_SHA256'],
+                '--commit', os.environ['AUTHOR_COMMIT'], '--output-root', str(root)]
 joined = [v.decode() for v in argv if v]
 if not any(joined[i:i+len(expected)] == expected for i in range(len(joined))):
-    raise SystemExit('process is not the declared read-only author; no signal sent')
+    raise SystemExit('process is not the declared read-only source worker; no signal sent')
 known = {}
 for item in Path('/proc').glob('[0-9]*'):
     value = identity(int(item.name))
@@ -47,10 +61,10 @@ while True:
     if not found:
         break
     targets.update(found)
-receipt = dict(schema='FRANKIE_SOURCE_AUTHOR_INTERRUPTION_V1', at=time.time(), pid=pid,
+receipt = dict(schema='FRANKIE_SOURCE_AUTHOR_INTERRUPTION_V1' if stage == 'author' else 'FRANKIE_SOURCE_PREPARATION_INTERRUPTION_V1', at=time.time(), pid=pid,
     process_token=probe['process_token'], progress=probe,
-    reason='Replace redundant full-book source-metadata reads with the existing verified conformance projection.',
-    scope='this read-only author and its workers only; no ingestion, service or infrastructure action',
+    reason='Apply requested source-reader configuration and reuse completed source binding; preserve interrupted evidence.',
+    scope='this read-only source worker and its children only; no ingestion, service or infrastructure action',
     files_deleted=0, signals=[])
 path = root / ('interruption-' + str(time.time_ns()) + '.json')
 for n, expected_identity in targets.items():

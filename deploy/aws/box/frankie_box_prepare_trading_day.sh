@@ -20,8 +20,14 @@ case "$ACTION" in
   prepare)
     : "${CONFIGURATION:?pinned configuration path required}"
     : "${CONFIGURATION_SHA256:?configuration byte hash required}"
-    exec "$PYTHON" -B "$ADAPTER" prepare --configuration "$CONFIGURATION" \
+    set -- prepare --configuration "$CONFIGURATION" \
       --configuration-sha256 "$CONFIGURATION_SHA256" --commit "$MARKETS_SHA" --output-root "$OUTPUT_ROOT"
+    if [ -n "${DATA_WORKERS:-}" ]; then set -- "$@" --data-workers "$DATA_WORKERS"; fi
+    if [ -n "${AUTHORSHIP:-}" ]; then
+      : "${AUTHORSHIP_SHA256:?authorship byte hash required}"
+      set -- "$@" --authorship "$AUTHORSHIP" --authorship-sha256 "$AUTHORSHIP_SHA256"
+    fi
+    exec "$PYTHON" -B "$ADAPTER" "$@"
     ;;
   publish)
     : "${UPLOAD_MAP:?private upload map required}"
