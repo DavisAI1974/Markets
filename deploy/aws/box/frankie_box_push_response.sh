@@ -6,7 +6,10 @@
 # Inputs: DAY (20211003), CYCLE (00), BASE (this branch); MAP_URL (optional, set by frankie_box_fetch_response.yml) selects
 # the token-free route: the files are uploaded through presigned PUTs and that workflow commits them.
 set -u
-ROOT=/opt/frankie-box; OUT="$ROOT/session/out"
+ROOT=/opt/frankie-box
+SESSION_DIR="${SESSION_DIR:-$ROOT/session}"; OUT="$SESSION_DIR/out"
+REQUEST_DIRECTORY="${REQUEST_DIRECTORY:-$ROOT/request}"; CODE_ROOT="${CODE_ROOT:-$ROOT/markets}"
+export SESSION_DIR REQUEST_DIRECTORY CODE_ROOT
 DAY="${DAY:-20211003}"; CYCLE="${CYCLE:-00}"; BASE="${BASE:-claude/cycle-0-frankie-box-rerun-od5sxk}"
 export HOME=/root GIT_TERMINAL_PROMPT=0
 TURN="${TURN:-initial}"      # initial = the four cycle files; correction = the three Dipole classroom correction files (turn 2, 2026-09-21)
@@ -17,7 +20,7 @@ if [ "$DOCS_ONLY" = "1" ] && [ -n "${MAP_URL:-}" ]; then echo "DOCS_ONLY publish
 if [ "$DOCS_ONLY" = "1" ]; then
   # The docs module comes from BASE by a fetch (FETCH_HEAD only): the box's checkout, which a running session may be
   # using, is never moved by this mode. Reads the session work directory; writes only out/docs.
-  WORKDIR="$ROOT/session/$([ "$CYCLE" = "00" ] && echo work || echo "work-$CYCLE")"
+  WORKDIR="$SESSION_DIR/$([ "$CYCLE" = "00" ] && echo work || echo "work-$CYCLE")"
   mkdir -p "$ROOT/tmp"
   git -C "$ROOT/markets" fetch -q --depth 1 origin "$BASE" && git -C "$ROOT/markets" show FETCH_HEAD:deploy/aws/box/frankie_box_docs.py > "$ROOT/tmp/frankie_box_docs.py" || { echo "cannot fetch frankie_box_docs.py from $BASE"; exit 2; }
   echo "docs module from $BASE $(git -C "$ROOT/markets" rev-parse --short FETCH_HEAD), sha256 $(sha256sum "$ROOT/tmp/frankie_box_docs.py" | cut -c1-16); work $WORKDIR"
@@ -42,7 +45,7 @@ for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session
 ack = r['dipole_acknowledgement']
 if ack.get('acknowledged') is not True or not isinstance(ack.get('correction_resolutions'), list): sys.exit('the acknowledgement must carry acknowledged true and correction_resolutions')
 def digest(value): return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
-correction = json.loads(open(os.path.join(os.environ['ROOT'], 'request', 'classroom-correction-request.json'), 'rb').read())
+correction = json.loads(open(os.path.join(os.environ['REQUEST_DIRECTORY'], 'classroom-correction-request.json'), 'rb').read())
 if r['request_sha256'] != correction.get('request_sha256'): sys.exit("correction-response.request_sha256 is not the correction request's request_sha256 on this box")
 if rec.get('request_sha256') != digest(correction): sys.exit('host-correction-record.request_sha256 is not the adapter digest of the whole correction request')
 if rec.get('response_sha256') != digest(r): sys.exit('host-correction-record.response_sha256 is not digest(correction-response)')
@@ -56,7 +59,7 @@ for k in ('schema', 'mechanism', 'request_sha256', 'response_sha256', 'session_i
     if a.get(k) != rec.get(k): sys.exit(f'attestation.{k} differs from the record')
 hr = a.get('host_record') or {}
 if set(hr) != {'path', 'bytes', 'sha256'} or hr['sha256'] != hashlib.sha256(raw['host-correction-record.json']).hexdigest() or int(hr['bytes']) != len(raw['host-correction-record.json']): sys.exit('attestation.host_record must pin the record file {path, bytes, sha256}')
-if not hr['path'].endswith('/principal/host-correction-record.json'): sys.exit('attestation.host_record.path must name principal/host-correction-record.json on the host')
+if os.path.realpath(hr['path']) != os.path.realpath(os.path.join(out, 'host-correction-record.json')): sys.exit('attestation.host_record.path must name the actual local correction record')
 print('correction shape and binding checks: OK'); print({n: (len(b), hashlib.sha256(b).hexdigest()) for n, b in raw.items()})
 PY
 fi
@@ -70,9 +73,9 @@ for k in ('request_sha256', 'session_id', 'model_identity_as_reported_by_session
 if len(r['sections']) != 18: sys.exit('response.sections must carry the 18 section ids')
 if 'principal_receipt_hash' in json.dumps(r['feedback']): sys.exit('feedback must carry NO principal_receipt_hash')
 if not isinstance(r['lessons'], list) or not r['lessons']: sys.exit('lessons must be a nonempty list')
-sys.path.insert(0, os.path.join(os.environ['ROOT'], 'markets'))
+sys.path.insert(0, os.environ['CODE_ROOT'])
 from research.kalshi.frankie_boss.frankie_principal_adapter import digest
-req = json.loads(open(os.path.join(os.environ['ROOT'], 'request', 'session-request.json'), 'rb').read())
+req = json.loads(open(os.path.join(os.environ['REQUEST_DIRECTORY'], 'session-request.json'), 'rb').read())
 if r['request_sha256'] != digest(req): sys.exit('response.request_sha256 is not the adapter digest of the request on this box')
 if rec.get('schema') != 'FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1' or rec.get('mechanism') != 'AGENT_SESSION': sys.exit('host-session-record schema/mechanism')
 if rec.get('response_sha256') != digest(r): sys.exit('host-session-record.response_sha256 is not digest(response)')
@@ -120,7 +123,7 @@ fi
 TOKEN=$("$ROOT/venv/bin/python" -c "import boto3;print(boto3.client('ssm',region_name='us-east-2').get_parameter(Name='/markets/frankie/github-token',WithDecryption=True)['Parameter']['Value'])" 2>/dev/null) || { echo "no push token readable at /markets/frankie/github-token (us-east-2); files are ready in $OUT, push refused"; exit 3; }
 export FRANKIE_GIT_TOKEN="$TOKEN"; unset TOKEN
 HELPER='!f() { echo username=x-access-token; echo "password=$FRANKIE_GIT_TOKEN"; }; f'
-W="$ROOT/session/response-clone"; BR="root/cycle-$CYCLE-response"; DEST="research/kalshi/frankie_boss/runs/$DAY/root"
+W="$SESSION_DIR/response-clone"; BR="root/cycle-$CYCLE-response"; DEST="research/kalshi/frankie_boss/runs/$DAY/root"
 [ -d "$W/.git" ] || git clone -q --depth 1 --branch "$BASE" https://github.com/DavisAI1974/Markets.git "$W" || exit 2
 cd "$W" || exit 2
 git fetch -q origin "$BR" 2>/dev/null && git checkout -q -B "$BR" FETCH_HEAD || git checkout -q -B "$BR"

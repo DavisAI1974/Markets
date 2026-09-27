@@ -4,7 +4,7 @@
 set -eu
 : "${MARKETS_SHA:?full dispatched commit required}"
 : "${CODE_ROOT:?staged clean checkout required}"
-: "${ACTION:?config or launch}"
+: "${ACTION:?config, launch, principal or correction}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
 PYTHON=/opt/frankie-box/venv/bin/python
@@ -29,5 +29,16 @@ case "$ACTION" in
     echo "CYCLE0_EXIT $code"
     exit $code
     ;;
-  *) echo "ACTION must be config or launch" >&2; exit 2;;
+  principal|correction)
+    : "${CALCULATIONS:?completed Monday calculation output root}"
+    : "${REQUEST_DIRECTORY:?actual host principal request directory}"
+    case "$CALCULATIONS" in /opt/frankie-box/work/monday-calculations/*) ;;
+      *) echo "retained Monday calculation output root required" >&2; exit 2;; esac
+    [ -s "$CALCULATIONS/calculations-receipt.json" ] || { echo "Monday calculations are not complete"; exit 3; }
+    STAGE=run; [ "$ACTION" = correction ] && STAGE=correction
+    exec "$PYTHON" -B "$CODE_ROOT/deploy/aws/box/frankie_box_boss_session.py" \
+      --session "$CALCULATIONS" --request-directory "$REQUEST_DIRECTORY" --day 20211004 --cycle 00 \
+      --require-retained-derivation --stage "$STAGE"
+    ;;
+  *) echo "ACTION must be config, launch, principal or correction" >&2; exit 2;;
 esac

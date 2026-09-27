@@ -67,7 +67,6 @@ POD_ID_DEFAULT = 'g7y3g2w1kor4l3'
 SERVED_MODEL_DEFAULT = 'granite42-smoke'   # the retained identity's served model name (granite_retained_lifecycle)
 CONTRACT_PATH = 'research/kalshi/frankie_boss/sunday_20260915_package/FB/principal-source-contract/source-contract.json'
 REGISTRY_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json'
-HOST_RECORD_PATH = 'C:/Codex/Frankie-BOSS-20260919/actual-feedback-run/execution/cycle-{cycle}/principal/host-session-record.json'
 BYTES_PER_TOKEN = 1.6      # conservative for dense JSON evidence: the proven packet was 151 KB = 92,439 tokens
 CHUNK_BYTES = 140_000      # about 87k tokens at that rate, leaving the rest of the context to the BOSS's answer
 POLL_SECONDS = 10
@@ -118,7 +117,6 @@ def receipts_module():
 
 
 PACKETS = ('comparison.md', 'session-receipts.md')   # written by the session code into the writing base (Frankie's cycle-0 asks)
-HOST_CORRECTION_RECORD_PATH = 'C:/Codex/Frankie-BOSS-20260919/actual-feedback-run/execution/cycle-{cycle}/principal/host-correction-record.json'
 CORRECTION_REQUEST_SCHEMA = 'FRANKIE_DIPOLE_CLASSROOM_CORRECTION_REQUEST_V1'
 RECEIPT_LEDGERS = ('output_provider_invocation_response_receipts', 'output_knowledge_retrieval_receipts', 'output_answer_wall_access_receipts')
 CLASSROOM_KEYS = ('dipole_teachback', 'dipole_observation_review', 'dipole_relationship_scan', 'dipole_novel_findings')
@@ -158,8 +156,11 @@ def pin_groups(pin):
 
 
 class Session:
-    def __init__(self, session, day, cycle, pod_id, served_model=SERVED_MODEL_DEFAULT):
-        self.dir = Path(session)
+    def __init__(self, session, day, cycle, pod_id, served_model=SERVED_MODEL_DEFAULT, *,
+                 request_directory=None, require_retained_derivation=False):
+        self.dir = Path(session).resolve()
+        self.request_directory = Path(request_directory or ROOT / 'request').resolve()
+        self.require_retained_derivation = require_retained_derivation
         self.day, self.cycle, self.pod_id, self.served_model = day, cycle, pod_id, served_model
         self.work = self.dir / ('work' if cycle == '00' else f'work-{cycle}')   # per cycle; cycle 00 keeps 'work' (its receipts already live there)
         self.out = self.dir / 'out'
@@ -210,7 +211,7 @@ class Session:
     # ---- verify ------------------------------------------------------------------------------------------
     def verify(self):
         from research.kalshi.frankie_boss.frankie_principal_adapter import digest
-        self.request = load_json(ROOT / 'request' / 'session-request.json')
+        self.request = load_json(self.request_directory / 'session-request.json')
         self.request_sha256 = digest(self.request)
         (self.dir / 'request_sha256').write_text(self.request_sha256 + '\n', encoding='utf-8')
         contract = self.request['attachment']['feedback_contract']
@@ -245,7 +246,7 @@ class Session:
             self.refuse('the delivered session differs from the authored forecast_session of this cycle')
         if len(contract['sessions']) != 1:
             self.refuse('one-session roster expected')
-        prompt = ROOT / 'request' / 'prompt.md'
+        prompt = self.request_directory / 'prompt.md'
         found = self._input_hash(prompt)
         record = dict(schema='FRANKIE_BOX_BOSS_SESSION_VERIFY_V1', at=time.time(), request_sha256=self.request_sha256,
                       request_id=self.request['request_id'], cycle_index=index, contract_sha256=contract['contract_sha256'],
@@ -1148,7 +1149,7 @@ class Session:
         (bytes that are not text) is witnessed (bytes, sha256) because it has no text to read. Then Frankie's own
         derivation digest, whole. The raw payload stays in prompt.md on the box; the plan records every member."""
         import base64
-        prompt = ROOT / 'request' / 'prompt.md'
+        prompt = self.request_directory / 'prompt.md'
         corpus_path = self.work / 'reading-corpus-full.md'
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import frankie_box_reading_render as R
@@ -1708,7 +1709,7 @@ class Session:
         the three correction files are written to out/ for the pusher (TURN=correction). Durable: the parsed answer is
         kept, a re-run makes no model call."""
         C = classroom_module()
-        path = ROOT / 'request' / 'classroom-correction-request.json'
+        path = self.request_directory / 'classroom-correction-request.json'
         if not path.exists():
             self.refuse(f'correction: no correction request at {path}; fetch it first (frankie_box_session.sh ACTION=fetch_correction)')
         correction = load_json(path)
@@ -1776,7 +1777,7 @@ class Session:
         (self.out / 'host-correction-record.json').write_bytes(json.dumps(record, indent=1, sort_keys=True).encode('utf-8'))
         attestation = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=request_sha256,
                            response_sha256=response_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
-                           host_record=dict(witness(self.out / 'host-correction-record.json'), path=HOST_CORRECTION_RECORD_PATH.format(cycle=self.cycle)),
+                           host_record=dict(witness(self.out / 'host-correction-record.json'), path=str((self.out / 'host-correction-record.json').resolve())),
                            turn='classroom-correction', classroom_composition=C.COMPOSITION)
         (self.out / 'host-correction-attestation.json').write_bytes(json.dumps(attestation, indent=1, sort_keys=True).encode('utf-8'))
         self.docs()
@@ -2009,7 +2010,7 @@ class Session:
         (self.out / 'host-session-record.json').write_bytes(json.dumps(record, indent=1, sort_keys=True).encode('utf-8'))
         attestation = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=self.request_sha256,
                            response_sha256=response_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
-                           host_record=dict(witness(self.out / 'host-session-record.json'), path=HOST_RECORD_PATH.format(cycle=self.cycle)),
+                           host_record=dict(witness(self.out / 'host-session-record.json'), path=str((self.out / 'host-session-record.json').resolve())),
                            classroom_composition=classroom_receipt['composition'])
         (self.out / 'host-attestation.json').write_bytes(json.dumps(attestation, indent=1, sort_keys=True).encode('utf-8'))
         print(analysis_md, flush=True)
@@ -2062,7 +2063,9 @@ class Session:
         files = 'the four files' if turn == 'initial' else 'the three correction files'
         self.phase('pushing', f'pushing {files} to root/cycle-{self.cycle}-response')
         result = subprocess.run(['bash', str(MARKETS / 'deploy' / 'aws' / 'box' / 'frankie_box_push_response.sh')],
-                                env=dict(os.environ, DAY=self.day, CYCLE=self.cycle, TURN=turn, HOME='/root'), capture_output=True, text=True)
+                                env=dict(os.environ, DAY=self.day, CYCLE=self.cycle, TURN=turn, HOME='/root',
+                                         SESSION_DIR=str(self.dir), REQUEST_DIRECTORY=str(self.request_directory),
+                                         CODE_ROOT=str(MARKETS), BASE='claude/agent-skills-execution-tzh7sw'), capture_output=True, text=True)
         print(result.stdout, result.stderr, flush=True)
         if result.returncode:
             self.note(f'push refused or failed (exit {result.returncode}); {files} are safe in {self.out}')
@@ -2087,14 +2090,14 @@ class Session:
         the brain docs must be available for the rest of the cycles). A missing entry is restored from its published
         branch (root/cycle-NN-response, a fetch only); still missing = refuse with a receipt."""
         brain = brain_module()
-        prompt = ROOT / 'request' / 'historical-prompt.md'
+        prompt = self.request_directory / 'historical-prompt.md'
         if prompt.is_file():
             fm = brain.write_frozen_entry(prompt, MARKETS, BRAIN_DIR)
             inc = sum(1 for e in fm['entries'] if e.get('include'))
             self.note(f'brain: frozen learned structure {inc} of {len(fm["entries"])} files from the checkout match the delivered digests '
                       f'({len(fm["layers"])} layers); excluded: ' + (', '.join(e['source'] for e in fm['entries'] if not e.get('include')) or 'none'))
         else:
-            self.note(f'brain: no historical prompt at {prompt}; the frozen learned structure is not carried')
+            self.note(f'brain: no historical prompt import at {prompt}; existing retained brain knowledge remains available')
         missing = brain.check(BRAIN_DIR, self.cycle)
         if missing:
             restored = brain.restore_from_git(BRAIN_DIR, missing, MARKETS, self.day)
@@ -2115,6 +2118,9 @@ class Session:
     def _run(self, stage):
         self.verify()
         self._pin_matches_request()       # before any engine reach: a request rendered under another calculation pin is refused here, receipted
+        retained_derivation = self._derive_needed() if self.require_retained_derivation else None
+        if retained_derivation is not None and retained_derivation[0]:
+            self.refuse('retained Monday derivation required; no recalculation launched: ' + retained_derivation[1])
         self.brain_ready()
         if stage == 'preflight':
             self.labels()
@@ -2134,7 +2140,7 @@ class Session:
             # measurement; no engine reach, no reading lane, no model call; the session unit is not started
             self.labels()
             self.phase('deriving', 'derive_only: the legacy five and the bedrock on this cycle\'s rows; no model call')
-            needed, why = self._derive_needed()
+            needed, why = retained_derivation or self._derive_needed()
             if needed:
                 self.note('deriving: ' + why)
                 self.derive()
@@ -2147,7 +2153,7 @@ class Session:
         self.labels()
         self.engine_reach()
         self.phase('deriving')
-        needed, why = self._derive_needed()     # whole and dense at the current schema, under the request's pin, bedrock included
+        needed, why = retained_derivation or self._derive_needed()     # whole and dense at the current schema, under the request's pin, bedrock included
         if needed:
             self.note('deriving: ' + why)
             self.derive()
@@ -2176,13 +2182,17 @@ class Session:
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--session', default=str(ROOT / 'session'))
+    parser.add_argument('--request-directory', default=str(ROOT / 'request'))
+    parser.add_argument('--require-retained-derivation', action='store_true')
     parser.add_argument('--day', default='20211003')
     parser.add_argument('--cycle', default='00')
     parser.add_argument('--pod', default=POD_ID_DEFAULT)
     parser.add_argument('--served-model', default=SERVED_MODEL_DEFAULT)
     parser.add_argument('--stage', default='run', choices=('run', 'preflight', 'correction', 'derive_only'))
     args = parser.parse_args()
-    Session(args.session, args.day, args.cycle, args.pod, args.served_model).run(args.stage)
+    Session(args.session, args.day, args.cycle, args.pod, args.served_model,
+            request_directory=args.request_directory,
+            require_retained_derivation=args.require_retained_derivation).run(args.stage)
 
 
 if __name__ == '__main__':
