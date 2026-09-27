@@ -47,8 +47,10 @@ for profile in data['profiles']:
         total += weight
         leaf = frames[stack[-1]]
         if 'cloudpickle' in leaf.get('file', '') and leaf.get('name') == 'dump':
-            callers = tuple((frames[i].get('file', ''), frames[i].get('name'), frames[i].get('line'))
-                            for i in stack if '/deploy/aws/box/' in frames[i].get('file', ''))
+            callers = tuple((pathlib.Path(frames[i].get('file', '')).name, frames[i].get('name'), frames[i].get('line'))
+                            for i in stack if pathlib.Path(frames[i].get('file', '')).name in
+                            ('frankie_box_native_auxiliary.py', 'frankie_box_parallel_evidence.py',
+                             'frankie_box_native_parallel.py') and frames[i].get('name') != 'consume_after_reconstruction')
             paths[callers] += weight
 print(json.dumps(dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest(),
     total_active_weight=total, serialization_leaf_weight=sum(paths.values()),
