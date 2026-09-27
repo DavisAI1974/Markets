@@ -1,12 +1,13 @@
 """Parallel exact-ledger encoding around the unchanged native producers.
 
 Two encoders execute the pinned RowSink.write against an in-memory capture.
-ROOT commits the returned bytes and accounting in original order. At most two
-immutable row payloads are outstanding, and checkpoints drain both first.
+ROOT commits the returned bytes and accounting in original order. Rows are frozen
+at submission, transported in bounded batches, and drained at every state barrier.
 """
 from collections import deque
 from contextlib import contextmanager, ExitStack
 import hashlib
+import io
 import multiprocessing
 import os
 from pathlib import Path
@@ -18,6 +19,23 @@ from frankie_box_native_parallel import ParallelSections
 from frankie_box_prepare_trading_day import save_new
 
 NAMES = ('member', 'lifecycle', 'legacy')
+BATCH_ROWS = 32
+BATCH_BYTES = 1 << 20  # Flush threshold, never a row or scientific-output cap.
+
+
+def bind_transport_policy(driver, attribute, policy, predecessor):
+    previous = getattr(driver, attribute, None)
+    if previous is not None and previous != policy:
+        if (previous != predecessor or not driver.checkpointer.parent_checkpoint
+                or getattr(driver, '_frankie_reconstruction_checkpoint', None) is not None):
+            raise ValueError('saved transport policy requires its verified full-state predecessor')
+        driver.adapter.assert_groups_closed()
+        history = getattr(driver, '_frankie_transport_transitions', [])
+        history.append(dict(attribute=attribute, previous=previous, current=policy,
+            completed_mbo_records=driver.counters.records_seen,
+            parent_checkpoint=driver.checkpointer.parent_checkpoint))
+        driver._frankie_transport_transitions = history
+    setattr(driver, attribute, policy)
 
 
 def pin_threads(pid, cpu):
@@ -66,27 +84,29 @@ def _encoder(connection, producers, cpu):
         from research.kalshi.frankie_raw_mbo_benchmark.native_row_sink import RowSink
         connection.send_bytes(cloudpickle.dumps(('ok', dict(pid=os.getpid(), cpu=cpu))))
         while True:
-            message = cloudpickle.loads(connection.recv_bytes())
-            if message is None:
+            message = connection.recv_bytes()
+            if not message:
                 break
-            ledger, ordinal, row = message
-            capture = _Capture()
-            sink = object.__new__(RowSink)
-            sink.ledger = ledger
-            sink._handle = sink._digest = capture
-            sink._closed = False
-            sink._rows, sink._bytes = ordinal - 1, 0
-            sink._rows_by_section, sink._bytes_by_section = {}, {}
-            sink._key_bytes, sink._key_sampled_rows = {}, 0
-            started = time.perf_counter()
-            # Use the original producer's exact JSON options and accounting.
-            RowSink.write(sink, row)
-            elapsed = time.perf_counter() - started
-            if capture.encoded is None or sink._rows != ordinal:
-                raise ValueError('pinned row sink capture differs')
-            value = (capture.encoded, sink._rows_by_section, sink._bytes_by_section,
-                     sink._key_bytes, sink._key_sampled_rows, elapsed)
-            connection.send_bytes(cloudpickle.dumps(('ok', value), protocol=5))
+            stream, values = io.BytesIO(message), []
+            while stream.tell() < len(message):
+                ledger, ordinal, row = cloudpickle.load(stream)
+                capture = _Capture()
+                sink = object.__new__(RowSink)
+                sink.ledger = ledger
+                sink._handle = sink._digest = capture
+                sink._closed = False
+                sink._rows, sink._bytes = ordinal - 1, 0
+                sink._rows_by_section, sink._bytes_by_section = {}, {}
+                sink._key_bytes, sink._key_sampled_rows = {}, 0
+                started = time.perf_counter()
+                # Original formatting and global ledger sample ordinal, per row.
+                RowSink.write(sink, row)
+                elapsed = time.perf_counter() - started
+                if capture.encoded is None or sink._rows != ordinal:
+                    raise ValueError('pinned row sink capture differs')
+                values.append((ledger, ordinal, capture.encoded, sink._rows_by_section,
+                    sink._bytes_by_section, sink._key_bytes, sink._key_sampled_rows, elapsed))
+            connection.send_bytes(cloudpickle.dumps(('ok', values), protocol=5))
     except BaseException:
         try:
             connection.send_bytes(cloudpickle.dumps(('error', traceback.format_exc()), protocol=5))
@@ -126,7 +146,7 @@ class _Encoder:
         if self.process.is_alive():
             if not self.pending:
                 try:
-                    self.connection.send_bytes(cloudpickle.dumps(None))
+                    self.connection.send_bytes(b'')
                 except (EOFError, OSError):
                     pass
                 self.process.join(timeout=5)
@@ -159,19 +179,25 @@ class ParallelEvidence:
         self.proxies = {name:_Sink(self, name) for name in NAMES}
         self.ordinals = {name:sink._rows for name,sink in self.originals.items()}
         self.workers, self.pending = [], deque()
+        self.buffer, self.buffer_rows = io.BytesIO(), []
         self.active = False
-        policy = dict(schema='FRANKIE_PARALLEL_EVIDENCE_V1', encoders=2,
-                      maximum_pending_rows=2, writer='ROOT', serializer='pinned RowSink.write',
-                      checkpoint_barrier='drain then materialize original sinks',
-                      helper_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
-        old = getattr(driver, '_frankie_evidence_policy', None)
-        if old is not None and old != policy:
-            raise ValueError('saved evidence worker policy differs')
-        driver._frankie_evidence_policy = policy
+        predecessor = dict(schema='FRANKIE_PARALLEL_EVIDENCE_V1', encoders=2,
+            maximum_pending_rows=2, writer='ROOT', serializer='pinned RowSink.write',
+            checkpoint_barrier='drain then materialize original sinks',
+            helper_sha256='480215a2185aef554662848ae6dd087b8bf5c68f53a62435853481b250c93aa2')
+        policy = dict(schema='FRANKIE_PARALLEL_EVIDENCE_V2', encoders=2,
+            maximum_pending_batches=2, batch_rows=BATCH_ROWS, batch_flush_bytes=BATCH_BYTES,
+            row_freeze='independent protocol-5 pickle at write; no cross-row memo',
+            writer='ROOT', serializer='pinned RowSink.write',
+            checkpoint_barrier='flush batches then materialize original sinks',
+            helper_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+        bind_transport_policy(driver, '_frankie_evidence_policy', policy, predecessor)
         if not hasattr(driver, '_frankie_evidence_metrics'):
             driver._frankie_evidence_metrics = dict(rows=0, encode_seconds=0.0,
                 submit_seconds=0.0, receive_seconds=0.0, commit_seconds=0.0)
         self.metrics = driver._frankie_evidence_metrics
+        self.metrics.setdefault('batches', 0)
+        self.metrics.setdefault('transport_bytes', 0)
         try:
             for role in ('encoder-1', 'encoder-2'):
                 self.workers.append(_Encoder(producers, plan[role]['cpu']))
@@ -193,43 +219,62 @@ class ParallelEvidence:
         sink = self.originals[name]
         if sink._closed:
             raise ValueError('closed exact ledger received a row')
-        if len(self.pending) == len(self.workers):
-            self.commit_one()
-        worker = next(worker for worker in self.workers if not worker.pending)
         self.ordinals[name] += 1
         ordinal = self.ordinals[name]
         started = time.perf_counter()
-        # Serialization takes the immutable copy before the caller can mutate a row.
-        payload = cloudpickle.dumps((sink.ledger, ordinal, row), protocol=5)
+        # Freeze now, before any caller mutation. Each row has its own memo.
+        cloudpickle.dump((sink.ledger, ordinal, row), self.buffer, protocol=5)
+        self.buffer_rows.append((name, ordinal))
+        self.metrics['submit_seconds'] += time.perf_counter() - started
+        if len(self.buffer_rows) >= BATCH_ROWS or self.buffer.tell() >= BATCH_BYTES:
+            self.flush_batch()
+
+    def flush_batch(self):
+        if not self.buffer_rows:
+            return
+        if len(self.pending) == len(self.workers):
+            self.commit_one()
+        worker = next(worker for worker in self.workers if not worker.pending)
+        started = time.perf_counter()
+        payload = self.buffer.getvalue()
         worker.connection.send_bytes(payload)
         worker.pending = True
-        self.pending.append((name, ordinal, worker))
+        self.pending.append((self.buffer_rows, worker))
+        self.metrics['batches'] += 1
+        self.metrics['transport_bytes'] += len(payload)
         self.metrics['submit_seconds'] += time.perf_counter() - started
+        self.buffer, self.buffer_rows = io.BytesIO(), []
 
     def commit_one(self):
-        name, ordinal, worker = self.pending[0]
+        offered, worker = self.pending[0]
         started = time.perf_counter()
-        encoded, rows, widths, keys, sampled, elapsed = worker.receive()
+        values = worker.receive()
         self.metrics['receive_seconds'] += time.perf_counter() - started
-        sink = self.originals[name]
-        if sink._rows + 1 != ordinal or sum(rows.values()) != 1 or sum(widths.values()) != len(encoded):
-            raise ValueError('encoded evidence order or byte accounting differs')
-        started = time.perf_counter()
-        sink._handle.write(encoded)
-        sink._digest.update(encoded)
-        sink._rows += 1
-        sink._bytes += len(encoded)
-        for attr, values in (('_rows_by_section', rows), ('_bytes_by_section', widths), ('_key_bytes', keys)):
-            target = getattr(sink, attr)
-            for key, value in values.items():
-                target[key] = target.get(key, 0) + value
-        sink._key_sampled_rows += sampled
+        if len(values) != len(offered):
+            raise ValueError('encoded evidence batch row count differs')
+        for (name, ordinal), value in zip(offered, values):
+            ledger, actual_ordinal, encoded, rows, widths, keys, sampled, elapsed = value
+            sink = self.originals[name]
+            if (ledger != sink.ledger or actual_ordinal != ordinal or sink._rows + 1 != ordinal
+                    or sum(rows.values()) != 1 or sum(widths.values()) != len(encoded)):
+                raise ValueError('encoded evidence order or byte accounting differs')
+            started = time.perf_counter()
+            sink._handle.write(encoded)
+            sink._digest.update(encoded)
+            sink._rows += 1
+            sink._bytes += len(encoded)
+            for attr, counts in (('_rows_by_section', rows), ('_bytes_by_section', widths), ('_key_bytes', keys)):
+                target = getattr(sink, attr)
+                for key, count in counts.items():
+                    target[key] = target.get(key, 0) + count
+            sink._key_sampled_rows += sampled
+            self.metrics['rows'] += 1
+            self.metrics['encode_seconds'] += elapsed
+            self.metrics['commit_seconds'] += time.perf_counter() - started
         self.pending.popleft()
-        self.metrics['rows'] += 1
-        self.metrics['encode_seconds'] += elapsed
-        self.metrics['commit_seconds'] += time.perf_counter() - started
 
     def drain(self):
+        self.flush_batch()
         while self.pending:
             self.commit_one()
 
