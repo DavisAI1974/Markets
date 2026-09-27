@@ -90,3 +90,24 @@ Immediate continuation:
 5. Report actual receipts; Monday completion, actual classroom delivery/acknowledgement, Tuesday and learning outcomes remain pending.
 
 No new resume was dispatched before handing off. This fresh chat owns the next execution.
+
+
+## Corrected runtime resumed — 2026-09-27 14:09Z
+
+The continuation owns one existing-root resume: [36324470881](https://github.com/DavisAI1974/Markets/actions/runs/36324470881), dispatched at14:02:12Z on immutable ref `codex/frankie-projection-runtime-2d3e6bb`. Runtime/CODE_ROOT are the corrected2d3e6bb package below. No duplicate staging or new calculation root was created; original authorship/binding and DATA_WORKERS=48 remain unchanged, with no reconstruction flag.
+
+Fresh progress [36324313108](https://github.com/DavisAI1974/Markets/actions/runs/36324313108) confirmed oldPID58711/process-token53962300 inactive. Terminal checkpoint000000 in recovery-fa8af7ed06354468bc526346f90c2291 was retrieved:
+- Checkpoint file712bytes SHA256a4bde7bd1fb75bb7162da4000f6f379bc97ef554aa036c42e4893533d4294bf3; checkpoint hash9c2ae2c0873e7803e09ebffbaec719cdcc2caa3502e4540136c635d5adaedba1.
+- Descriptor12885bytes SHA256983e73528383a5d53eea6517cbda3a2e29ef21f18a02b1f00b32ab3a430a0a2c, independently read in36324379542.
+- Full driver167213128bytes SHA2562d80a0b739983b5349a91ed077adea69f3e60d5514855958f7c974a9429b167f.
+- Locked/finalized,2032203records, all three original closed/materialized ledger paths and hashes retained.
+- Full producer receipt30104bytes/937lines retrieved through36324588283 plus36324690302 (SSM truncates the first read). It reports checkpoint readback_verified=true, restored_state_records=2032203, authorized_reconstruction_records=0. Its scientific verdict is REJECTED, failed_gates=[cross_section_agreement]; preserve this result for analysis, not a successful scientific verdict.
+
+The existing resume reader freshly verifies checkpoint chain, adapter, descriptor/runtime and full driver bytes before restore_closed. Live progress36324667483 reached root-ledger-verify-member, proving those required reads passed. NewPID59092, process token099d4eb6-a46d-4b94-a888-f15e55c1ee7e:54118158, original binding99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a.
+
+Resource observation36324844551 at14:09:18Z: retained member verification311905222656/537182189410bytes, failed0, coordinatorCPU1,223811674112bytes free. It is still recovering finalized state, not replaying scientific records. Checkpoints.json still names oldPID58711 until the new terminal checkpoint is saved; do not mistake that old event for a new checkpoint.
+
+Projection observation36324486562 at14:02:53Z: preserved plan370208809bytes SHA2563ef241ac435253142680040976ab6f548b3119b1d73f26e6ca95bb9f78cb73b2; no completed ranges, archives or worker receipt yet. Actual corrected projection startup/helpers, range progress, new terminal checkpoint, digest and calculations receipt remain pending. Keep the active resume running; do not dispatch another.
+
+All downstream Monday stages, actual Granite lesson delivery/acknowledgement, Tuesday and learning outcomes remain pending. Orchestrator stays PLAN ONLY. Existing preservation and scope restrictions below remain in force.
+
