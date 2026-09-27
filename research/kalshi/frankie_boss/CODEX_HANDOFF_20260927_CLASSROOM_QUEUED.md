@@ -1,5 +1,15 @@
 # Frankie/BOSS Monday — fresh-chat handoff, 2026-09-27 10:29Z
 
+## Finalization helper assessment - 2026-09-27 11:47Z
+
+User observed that finalization probably needs CPUs and helpers. Read
+[audits/FINALIZATION_IO_20260927.md](audits/FINALIZATION_IO_20260927.md) for
+two actual I/O observations, the three serial ledger scans found in exact source,
+and the unimplemented helper/shared-verification candidate. ROOT remains alive
+in finalization; no runtime change, restart, affinity change or additional
+calculation was made. Completion and downstream stages remain pending.
+
+
 ## Continuation observation - 2026-09-27 11:24Z
 
 ROOT remains the same runtime, PID and process token. Read-only workflow
