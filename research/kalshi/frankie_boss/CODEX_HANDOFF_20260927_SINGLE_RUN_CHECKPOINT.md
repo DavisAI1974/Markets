@@ -1,5 +1,10 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Downstream immutable package queued — 2026-09-27 10:01Z
+
+Classroom helper source a80990d42161c3020c21363137439da7dd6ba527 is pushed and pinned by codex/frankie-classroom-runtime-a80990d. Existing inactive staging workflow https://github.com/DavisAI1974/Markets/actions/runs/36311196131 is PENDING behind canonical ROOT's serial lock. Do not duplicate the staging dispatch or pause ROOT. Read its actual stage/source-pack/CODE_ROOT receipt when it completes, then use this immutable package for the manual Monday downstream sequence. No actual classroom initialization or Granite priming inference has occurred. See audits/CLASSROOM_PREPARATION_WORKERS_20260927.md.
+
+
 ## Classroom helper package prepared — 2026-09-27 10:00Z
 
 Source implementation: coordinatorCPU1 +14 preparation helper threadsCPUs2–15; CPU0 reserved for I/O. Immutable byte sharing, persistent source hashes/indexes and per-thread pinned tokenizer reuse reduce repeated host preparation. Ordered source planning and existing teacher/model/grade dependencies remain unchanged. Eight exact candidate Python files syntax-compiled in memory; no scientific tests or inference. See audits/CLASSROOM_PREPARATION_WORKERS_20260927.md. Inactive staging and actual worker/throughput receipts remain PENDING. Do not restart ROOT to activate downstream code; use the existing serial inactive staging route.

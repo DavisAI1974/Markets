@@ -33,3 +33,12 @@ Granite's retained five-lesson capsule is available now. Sending it with the fir
 ## Remaining evidence
 
 After calculation completion, use one immutable downstream source ref and its matching staged CODE_ROOT for inputs/configuration and the existing manual sequence. Obtain the actual knowledge hash, request/delivery witness and response acknowledgement from that sequence; configuration is not acknowledgement or learning. The GPU service is ready by retained evidence, but no further GPU tuning gain is claimed before measuring the actual workload.
+
+## Inactive staging queued — 2026-09-27 10:01Z
+
+- [x] Reviewed source atomically pushed in a80990d42161c3020c21363137439da7dd6ba527.
+- [x] Immutable downstream ref codex/frankie-classroom-runtime-a80990d created at that exact commit.
+- [x] One existing staging workflow dispatched: https://github.com/DavisAI1974/Markets/actions/runs/36311196131, ACTION=stage. Observed status=pending at10:01Z, behind ROOT workflow36309059667 on the existing serial lock.
+- [ ] Staging success, source-pack witness and CODE_ROOT receipt. Do not dispatch another staging run or pause ROOT for this queue.
+
+The source package includes the already-adopted Granite Pod bindings and retained five-lesson priming configuration. No classroom worker or Granite inference has started from this package.
