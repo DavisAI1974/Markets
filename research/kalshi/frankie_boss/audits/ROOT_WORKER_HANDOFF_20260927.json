@@ -461,5 +461,141 @@
       "min": 0,
       "max": 8
     }
-  }
+  },
+  "runtime_worker_receipt": {
+    "pin": {
+      "bytes": 1734,
+      "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-d4b20c8f7e834d7abb1a435ff8199442/runtime-workers-receipt.json",
+      "sha256": "2756e8225c437ea117c890a1aec3b88f074f7f01095419c73ad7d5414cc877cf"
+    },
+    "receipt": {
+      "at": 1790493920.448853,
+      "auxiliary_calculation_processes": 10,
+      "auxiliary_policy": {
+        "book_rule": "pinned per-level math and snapshot assembly; join every full snapshot",
+        "book_workers": 9,
+        "census_rule": "pinned census; ordered observe; materialize at checkpoint",
+        "census_workers": 1,
+        "helper_sha256": "6b9c57f03a9a9595cab5094615348368bc8ad0be369789237cad3964d83e0ee2",
+        "schema": "FRANKIE_NATIVE_AUXILIARY_V1"
+      },
+      "base_calculation_processes": 3,
+      "completed_mbo_records": 747083,
+      "cpu_affinity_readback_verified": true,
+      "encoding_processes": 2,
+      "exact_evidence_policy": {
+        "checkpoint_barrier": "drain then materialize original sinks",
+        "encoders": 2,
+        "helper_sha256": "480215a2185aef554662848ae6dd087b8bf5c68f53a62435853481b250c93aa2",
+        "maximum_pending_rows": 2,
+        "schema": "FRANKIE_PARALLEL_EVIDENCE_V1",
+        "serializer": "pinned RowSink.write",
+        "writer": "ROOT"
+      },
+      "numerical_thread_counts_changed": false,
+      "schema": "FRANKIE_RUNTIME_WORKERS_V1",
+      "total_processes": 15,
+      "workers": {
+        "ROOT": {
+          "core": 1,
+          "cpu": 1,
+          "package": 0,
+          "pid": 55501
+        },
+        "book-1": {
+          "core": 7,
+          "cpu": 7,
+          "package": 0,
+          "pid": 55695
+        },
+        "book-2": {
+          "core": 8,
+          "cpu": 8,
+          "package": 0,
+          "pid": 55696
+        },
+        "book-3": {
+          "core": 9,
+          "cpu": 9,
+          "package": 0,
+          "pid": 55697
+        },
+        "book-4": {
+          "core": 10,
+          "cpu": 10,
+          "package": 0,
+          "pid": 55698
+        },
+        "book-5": {
+          "core": 11,
+          "cpu": 11,
+          "package": 0,
+          "pid": 55699
+        },
+        "book-6": {
+          "core": 12,
+          "cpu": 12,
+          "package": 0,
+          "pid": 55700
+        },
+        "book-7": {
+          "core": 13,
+          "cpu": 13,
+          "package": 0,
+          "pid": 55701
+        },
+        "book-8": {
+          "core": 14,
+          "cpu": 14,
+          "package": 0,
+          "pid": 55702
+        },
+        "book-9": {
+          "core": 15,
+          "cpu": 15,
+          "package": 0,
+          "pid": 55703
+        },
+        "census": {
+          "core": 4,
+          "cpu": 4,
+          "package": 0,
+          "pid": 55694
+        },
+        "encoder-1": {
+          "core": 5,
+          "cpu": 5,
+          "package": 0,
+          "pid": 55704
+        },
+        "encoder-2": {
+          "core": 6,
+          "cpu": 6,
+          "package": 0,
+          "pid": 55705
+        },
+        "queue": {
+          "core": 2,
+          "cpu": 2,
+          "package": 0,
+          "pid": 55692
+        },
+        "replenishment": {
+          "core": 3,
+          "cpu": 3,
+          "package": 0,
+          "pid": 55693
+        }
+      }
+    }
+  },
+  "worker_receipt_workflow": 36303167180,
+  "worker_startup_probe_workflow": 36303090828,
+  "worker_startup_progress": {
+    "completed": 752815,
+    "failed": 0,
+    "at": 1790494001.9469976
+  },
+  "post_start_checkpoint_verified": false,
+  "granite_start_authorization": "User explicitly directed on 2026-09-27: Granite should run when Frankie needs to talk to it. Start the retained Pod g7y3g2w1kor4l3 before the first actual downstream Granite-dependent host critic/readiness or principal reading step after ROOT calculations/input preparation, verify service health and existing durable job state, then use existing workflow. No duplicate inference; no automatic infrastructure shutdown. Do not start it merely to wait through current native calculations."
 }
