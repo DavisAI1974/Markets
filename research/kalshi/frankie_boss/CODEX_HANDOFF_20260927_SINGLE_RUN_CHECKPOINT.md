@@ -1,5 +1,11 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Current restoration and priming binding — 2026-09-27 08:24Z
+
+ROOT remains the single process PID 56172 on runtime 68f2311e3071f24fd63b65134b81861b3246400f, workflow 36305497169. New generation: recovery-03a70711353a433c989b18074d7baacd. Read-only I/O receipt 36305982145 observed 120,535,908,352 member-ledger bytes restored at 1790497373.0830061, of checkpoint prefix 231,001,441,265 bytes. No new records or post-fix processing rate yet; the preserved calculation cursor is 917,118 / 2,032,203 (45.13%). Do not launch another resume.
+
+Granite readiness and operational binding migration committed in 72339c69dbcceb63062be043a98a279ab2c1e8ad. Monday host configuration priming binding committed in f4569cb578af02a79990d660221db352f3ffd793. This only configures the retained five-lesson capsule for the actual downstream sequence: Granite has NOT received it yet, and there is no acknowledgement. Stage downstream code at an immutable ref after ROOT completes; do not restart ROOT for these downstream changes.
+
 ## Worker transport continuation dispatched — 2026-09-27 08:14Z
 
 - [x] Source runtime68f2311e3071f24fd63b65134b81861b3246400f implements the worker data-exchange changes below.
