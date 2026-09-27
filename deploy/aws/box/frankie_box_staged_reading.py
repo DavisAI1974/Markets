@@ -114,34 +114,64 @@ def plan_sources(sources, header_factory, token_counter, input_budget, *, bindin
             if key in item and item[key] != source[key]:
                 raise ValueError("source declaration differs: " + key)
         parts, prompts = [], {}
-        remaining, start, emitted = raw.decode("utf-8"), 0, False
-        while remaining or not emitted:
-            # Binary search finds a fitting character-prefix, not necessarily the
-            # largest under a nonmonotonic tokenizer. Every accepted candidate
-            # is measured directly with its actual metadata and wrapper.
-            low, high, best = (1 if remaining else 0), len(remaining), None
-            while low <= high:
-                take = (low + high) // 2
-                text = remaining[:take]
-                piece = text.encode("utf-8")
-                meta = _meta(source, start, piece, binding)
-                prompt, offset = _render(meta, binding, text, header_factory)
-                count = token_counter(prompt)
-                if type(count) is not int or count < 0:
-                    raise ValueError("token_counter must return a nonnegative integer")
-                if count <= input_budget:
-                    best = (take, piece, meta, prompt, offset, count)
-                    low = take + 1
-                else:
-                    high = take - 1
-            if best is None:
+        text_all = raw.decode("utf-8")
+        total, position, start, emitted, guess = len(text_all), 0, 0, False, 1
+        while position < total or not emitted:
+            rest, measured = total - position, {}
+
+            def measure(take):
+                # Every accepted candidate is measured directly with its actual
+                # metadata and wrapper; a non-fitting one is None.
+                if take not in measured:
+                    text = text_all[position:position + take]
+                    piece = text.encode("utf-8")
+                    meta = _meta(source, start, piece, binding)
+                    prompt, offset = _render(meta, binding, text, header_factory)
+                    count = token_counter(prompt)
+                    if type(count) is not int or count < 0:
+                        raise ValueError("token_counter must return a nonnegative integer")
+                    measured[take] = (take, piece, meta, prompt, offset, count) if count <= input_budget else None
+                return measured[take]
+
+            # Bracket a fitting character-prefix by doubling/halving from the
+            # previous part's length, then binary-search the bracket: probes stay
+            # near one part's size, never the whole remaining source. Under a
+            # nonmonotonic tokenizer this finds a fitting prefix, not necessarily
+            # the largest.
+            if rest == 0:
+                fit = 0 if measure(0) else None
+            else:
+                take = max(1, min(guess, rest))
+                fit, fail = (take, None) if measure(take) else (None, take)
+                while fit is not None and fail is None and fit < rest:
+                    take = min(fit * 2, rest)
+                    if measure(take):
+                        fit = take
+                    else:
+                        fail = take
+                while fit is None and fail > 1:
+                    take = fail // 2
+                    if measure(take):
+                        fit = take
+                    else:
+                        fail = take
+                if fit is not None and fail is not None:
+                    low, high = fit + 1, fail - 1
+                    while low <= high:
+                        take = (low + high) // 2
+                        if measure(take):
+                            fit, low = take, take + 1
+                        else:
+                            high = take - 1
+            if fit is None:
                 raise ValueError("prompt wrapper and one source character exceed input budget")
-            take, piece, meta, prompt, offset, count = best
+            take, piece, meta, prompt, offset, count = measure(fit)
             parts.append(dict(meta, source_offset=offset,
                 prompt=witness(prompt), input_tokens=count))
             prompts[meta["part_id"]] = prompt
             start += len(piece)
-            remaining = remaining[take:]
+            position += take
+            guess = max(1, take)
             emitted = True
         return source, parts, prompts
 
