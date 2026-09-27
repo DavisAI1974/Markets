@@ -54,6 +54,60 @@ def wait_ssm(ssm, instance, seconds=600):
     raise SystemExit(f'SSM agent not Online within {seconds}s')
 
 
+def report_frankie_access(ec2, ssm, instance):
+    """Read control-plane recovery evidence without dispatching a host command."""
+    import json
+    from botocore.exceptions import ClientError
+    def emit(kind, value):
+        print(kind + ' ' + json.dumps(value, default=str, sort_keys=True), flush=True)
+    host = ec2.describe_instances(InstanceIds=[instance])['Reservations'][0]['Instances'][0]
+    emit('ACCESS_HOST', {key: host.get(key) for key in (
+        'InstanceId', 'State', 'PublicIpAddress', 'PrivateIpAddress', 'SubnetId',
+        'VpcId', 'KeyName', 'SecurityGroups', 'BlockDeviceMappings')})
+    emit('SSM_AGENT', [{key: row.get(key) for key in (
+        'InstanceId', 'PingStatus', 'LastPingDateTime', 'AgentVersion', 'PlatformName')}
+        for row in ssm.describe_instance_information(
+            Filters=[{'Key': 'InstanceIds', 'Values': [instance]}])['InstanceInformationList']])
+    for command in ('00d2cb24-815f-4aeb-8d91-2048ba862098',
+                    'c5b13e53-0db5-4d68-8049-9994e3e0ce16',
+                    '45ee9699-936c-4872-998e-12465406c9ea'):
+        try:
+            inv = ssm.get_command_invocation(CommandId=command, InstanceId=instance)
+            fields = {key: inv.get(key) for key in (
+                'CommandId', 'Status', 'StatusDetails', 'ResponseCode',
+                'ExecutionStartDateTime', 'ExecutionEndDateTime')}
+            fields['stdout_chars'] = len(inv.get('StandardOutputContent', ''))
+            fields['stderr_chars'] = len(inv.get('StandardErrorContent', ''))
+            emit('SSM_INVOCATION', fields)
+            rows = ssm.list_command_invocations(CommandId=command, InstanceId=instance, Details=True)
+            for row in rows['CommandInvocations']:
+                emit('SSM_DETAIL', {key: row.get(key) for key in (
+                    'CommandId', 'Status', 'StatusDetails', 'TraceOutput')})
+                for plugin in row.get('CommandPlugins', []):
+                    emit('SSM_PLUGIN', {key: plugin.get(key) for key in (
+                        'Name', 'Status', 'StatusDetails', 'ResponseCode',
+                        'ResponseStartDateTime', 'ResponseFinishDateTime')})
+        except ClientError as exc:
+            emit('ACCESS_ERROR', {'command': command, 'code': exc.response['Error']['Code']})
+    groups = ec2.describe_security_groups(GroupIds=[x['GroupId'] for x in host['SecurityGroups']])
+    emit('ACCESS_INGRESS', [{'id': x['GroupId'], 'rules': x['IpPermissions']}
+                            for x in groups['SecurityGroups']])
+    for label, call, kwargs in (
+        ('SERIAL_ACCESS', ec2.get_serial_console_access_status, {}),
+        ('EIC_ENDPOINTS', ec2.describe_instance_connect_endpoints,
+         {'Filters': [{'Name': 'vpc-id', 'Values': [host['VpcId']]}]})):
+        try:
+            result = call(**kwargs)
+            if label == 'SERIAL_ACCESS':
+                emit(label, {'enabled': result.get('SerialConsoleAccessEnabled')})
+            else:
+                emit(label, [{key: x.get(key) for key in (
+                    'InstanceConnectEndpointId', 'State', 'SubnetId', 'SecurityGroupIds')}
+                    for x in result.get('InstanceConnectEndpoints', [])])
+        except ClientError as exc:
+            emit('ACCESS_ERROR', {'operation': label, 'code': exc.response['Error']['Code']})
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--instance', required=True)
@@ -72,6 +126,8 @@ def main():
     ssm = boto3.client('ssm', region_name=args.region)
     info = describe(ec2, args.instance)
     report(info, args.hourly)
+    if args.action == 'status' and args.instance == 'i-035994afa8bdf66a5' and args.region == 'us-east-1':
+        report_frankie_access(ec2, ssm, args.instance)
     if args.action == 'start':
         if info['state'] == 'stopping':
             wait_state(ec2, args.instance, 'stopped')
