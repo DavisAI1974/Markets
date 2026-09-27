@@ -7,6 +7,44 @@ ROOT=/opt/frankie-box
 FILE="${FILE:-logs/producer-tests.log}"; MODE="${MODE:-tail}"; LINES="${LINES:-120}"; PATTERN="${PATTERN:-}"
 case "$FILE" in *..*|/*) echo "FILE must be relative to $ROOT without .."; exit 2;; esac
 P="$ROOT/$FILE"
+# Read-only: every Python process on the box (pid, parent, state, elapsed, CPU seconds, affinity, whether it is a
+# multiprocessing spawn helper, how many of its open files lie under FILE's directory, command). No signals.
+if [ "$MODE" = processes ]; then
+  /opt/frankie-box/venv/bin/python -I -S -B - "$P" <<'PY'
+import json, os, sys, time
+from pathlib import Path
+under = str(Path(sys.argv[1]).parent)
+tick, uptime = os.sysconf('SC_CLK_TCK'), float(Path('/proc/uptime').read_text().split()[0])
+rows = []
+for proc in Path('/proc').iterdir():
+    if not proc.name.isdigit():
+        continue
+    try:
+        command = (proc / 'cmdline').read_bytes().replace(b'\0', b' ').decode(errors='replace').strip()
+        if 'python' not in command:
+            continue
+        fields = (proc / 'stat').read_text().rsplit(')', 1)[1].split()
+        files = 0
+        try:
+            for fd in (proc / 'fd').iterdir():
+                try:
+                    files += os.readlink(fd).startswith(under)
+                except OSError:
+                    pass
+        except OSError:
+            pass
+        rows.append(dict(pid=int(proc.name), parent=int(fields[1]), state=fields[0],
+                         elapsed_seconds=round(uptime - int(fields[19]) / tick),
+                         cpu_seconds=round((int(fields[11]) + int(fields[12])) / tick),
+                         affinity=sorted(os.sched_getaffinity(int(proc.name))),
+                         spawn_helper='multiprocessing.spawn' in command and 'spawn_main' in command,
+                         open_files_under=files, command=command[:160]))
+    except (OSError, IndexError):
+        continue
+print(json.dumps(dict(at=time.time(), under=under, processes=sorted(rows, key=lambda r: r['pid'])), sort_keys=True))
+PY
+  exit $?
+fi
 # Locate immutable recovery generations so subsequent receipt reads use observed paths.
 if [ "$MODE" = generations ]; then
   /opt/frankie-box/venv/bin/python -I -S -B - "$P" <<'PY'
