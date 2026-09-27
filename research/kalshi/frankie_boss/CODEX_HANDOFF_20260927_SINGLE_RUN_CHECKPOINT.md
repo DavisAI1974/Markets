@@ -1,5 +1,11 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Worker transport source changes — 2026-09-27, continuation after dd25e040
+
+Latest user direction: finish worker fixes first. Evidence batching is committed in197edf9ae61df770fd19290c6a7dce725fc308e2; persistent book partitions, ordered census batches and exact predecessor policy migration are included with this update. See [ROOT_WORKER_TRANSPORT_20260927.md](audits/ROOT_WORKER_TRANSPORT_20260927.md) for the retained-profile attribution, precise semantics and actual checklist.
+
+**Source implementation is complete; deployment and speedup are not yet established.** ROOT55501 on runtime dc5e756 remains the canonical process until a fresh verified checkpoint handoff. Do not infer that this source update changed its interpreter. Current progress read36304704078:875270/2032203, failed=0, alive, at1790495819.4585981. All older evidence and restrictions below remain; statements below that transport changes are unimplemented are superseded only for source implementation, not deployment.
+
 ## Start here — current live work (2026-09-27 07:51Z)
 
 ROOT workflow https://github.com/DavisAI1974/Markets/actions/runs/36302240110 remains the one calculation run. Do not launch a duplicate. Runtime dc5e7560e7d784c18f00405748fcde83a90cc67f; source ref codex/frankie-cpu-runtime-dc5e756. CODE_ROOT=/opt/frankie-box/code/dc5e7560e7d784c18f00405748fcde83a90cc67f-36301649833-1/markets. Calculation root=/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48. PID55501, process token099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51642038. Generation recovery-d4b20c8f7e834d7abb1a435ff8199442.

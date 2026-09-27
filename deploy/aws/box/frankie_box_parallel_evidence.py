@@ -320,17 +320,22 @@ class RuntimeSections(ParallelSections):
             book_roles = [role for role in self.plan if role.startswith('book-')]
             if not book_roles:
                 raise ValueError('at least one full-book worker core required')
-            policy = dict(schema='FRANKIE_NATIVE_AUXILIARY_V1',
+            predecessor = dict(schema='FRANKIE_NATIVE_AUXILIARY_V1',
                 book_workers=len(book_roles), census_workers=1,
                 book_rule='pinned per-level math and snapshot assembly; join every full snapshot',
                 census_rule='pinned census; ordered observe; materialize at checkpoint',
+                helper_sha256='6b9c57f03a9a9595cab5094615348368bc8ad0be369789237cad3964d83e0ee2')
+            policy = dict(schema='FRANKIE_NATIVE_AUXILIARY_V2',
+                book_workers=len(book_roles), census_workers=1,
+                book_rule='persistent fixed partitions; ordered snapshot deltas; pinned math; join before next event',
+                census_rule='immutable ordered batches; drain and materialize at checkpoint',
                 helper_sha256=hashlib.sha256(Path(auxiliary.__file__).read_bytes()).hexdigest())
-            previous = getattr(self.driver, '_frankie_auxiliary_policy', None)
-            if previous is not None and previous != policy:
-                raise ValueError('saved auxiliary worker policy differs')
-            self.driver._frankie_auxiliary_policy = policy
-            self.census = ParallelCensus(self.driver,self.producers,self.plan['census']['cpu'])
-            self.books = ParallelBook(self.producers,[self.plan[role]['cpu'] for role in book_roles])
+            bind_transport_policy(self.driver, '_frankie_auxiliary_policy', policy, predecessor)
+            if not hasattr(self.driver, '_frankie_auxiliary_metrics'):
+                self.driver._frankie_auxiliary_metrics = dict(census={}, books={})
+            metrics = self.driver._frankie_auxiliary_metrics
+            self.census = ParallelCensus(self.driver,self.producers,self.plan['census']['cpu'],metrics['census'])
+            self.books = ParallelBook(self.producers,[self.plan[role]['cpu'] for role in book_roles],metrics['books'])
             self.encoding = ParallelEvidence(self.driver, self.producers, self.plan)
             self.driver.checkpointer.encoding = self.encoding
             pin_threads(os.getpid(), self.plan['ROOT']['cpu'])
@@ -348,6 +353,7 @@ class RuntimeSections(ParallelSections):
                 auxiliary_policy=policy,
                 completed_mbo_records=self.driver.counters.records_seen,
                 exact_evidence_policy=self.driver._frankie_evidence_policy,
+                transport_transitions=getattr(self.driver, '_frankie_transport_transitions', []),
                 numerical_thread_counts_changed=False, cpu_affinity_readback_verified=True)
             save_new(self.driver.checkpointer.checkpoint_dir.parent / 'runtime-workers-receipt.json', receipt)
         except BaseException:

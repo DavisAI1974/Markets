@@ -1,10 +1,12 @@
 """Independent native census and read-only price-level calculations."""
 from contextlib import contextmanager
 import copy
+import io
 import multiprocessing
 import os
 import time
 import traceback
+import weakref
 from types import SimpleNamespace
 
 import cloudpickle
@@ -18,6 +20,7 @@ def _worker(connection, producers, cpu, kind, state):
         load_producers(producers)
         from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import InstrumentBook
         census = cloudpickle.loads(state) if state is not None else None
+        books = {}
         connection.send_bytes(cloudpickle.dumps(('ok', dict(pid=os.getpid(), cpu=cpu))))
         while True:
             command, payload = cloudpickle.loads(connection.recv_bytes())
@@ -25,13 +28,44 @@ def _worker(connection, producers, cpu, kind, state):
                 break
             started = time.perf_counter()
             if kind == 'book' and command == 'levels':
-                levels, orders, items, now_ns, include_ids = payload
-                view = SimpleNamespace(levels=levels, orders=orders)
-                result = [(side,price,InstrumentBook._level(view, side, price, now_ns, include_ids))
+                token, generation, reset, changes, items, now_ns, include_ids, dropped = payload
+                for old_token in dropped:
+                    books.pop(old_token, None)
+                previous = books.get(token)
+                if previous is None:
+                    if not reset or generation != 1:
+                        raise ValueError('book worker requires an initial complete partition')
+                    view, last_generation = SimpleNamespace(levels={'B':{},'A':{}}, orders={}), 0
+                else:
+                    view, last_generation = previous
+                if generation != last_generation + 1:
+                    raise ValueError('book worker snapshot generation differs')
+                if reset:
+                    view = SimpleNamespace(levels={'B':{},'A':{}}, orders={})
+                # Remove all old affected levels first: a moved order may be in
+                # another changed level in this same partition.
+                for side, price, ids, orders in changes:
+                    for oid in view.levels[side].pop(price, ()):
+                        view.orders.pop(oid, None)
+                for side, price, ids, orders in changes:
+                    if ids:
+                        view.levels[side][price] = ids
+                        view.orders.update(orders)
+                books[token] = view, generation
+                actual = {(side,price) for side in ('B','A')
+                          for price,ids in view.levels[side].items() if ids}
+                if actual != set(items):
+                    raise ValueError('persistent book partition coverage differs')
+                levels = [(side,price,InstrumentBook._level(view, side, price, now_ns, include_ids))
                           for side,price in items]
-            elif kind == 'census' and command == 'observe':
-                census.observe(payload)
-                result = None
+                result = token, generation, levels
+            elif kind == 'census' and command == 'observe_batch':
+                stream = io.BytesIO(payload)
+                observed = 0
+                while stream.tell() < len(payload):
+                    census.observe(cloudpickle.load(stream))
+                    observed += 1
+                result = observed
             elif kind == 'census' and command == 'state':
                 result = census
             else:
@@ -48,7 +82,7 @@ def _worker(connection, producers, cpu, kind, state):
 
 
 class NativeWorker:
-    def __init__(self, producers, cpu, kind, state=None):
+    def __init__(self, producers, cpu, kind, state=None, metrics=None):
         context = multiprocessing.get_context('spawn')
         self.connection, child = context.Pipe()
         self.process = context.Process(target=_worker,
@@ -57,6 +91,9 @@ class NativeWorker:
             name='frankie-native-'+kind, daemon=True)
         self.pending = False
         self.compute_seconds = 0.0
+        self.metrics = metrics if metrics is not None else {}
+        for key in ('messages', 'sent_bytes', 'submit_seconds', 'receive_seconds', 'compute_seconds'):
+            self.metrics.setdefault(key, 0)
         try:
             self.process.start()
             child.close()
@@ -69,21 +106,29 @@ class NativeWorker:
     def send(self, command, value=None):
         if self.pending:
             raise RuntimeError('native auxiliary work is already pending')
-        self.connection.send_bytes(cloudpickle.dumps((command,value),protocol=5))
+        started = time.perf_counter()
+        payload = cloudpickle.dumps((command,value),protocol=5)
+        self.connection.send_bytes(payload)
         self.pending = True
+        self.metrics['messages'] += 1
+        self.metrics['sent_bytes'] += len(payload)
+        self.metrics['submit_seconds'] += time.perf_counter() - started
 
     def receive(self, ready=False):
+        started = time.perf_counter()
         try:
             status,value = cloudpickle.loads(self.connection.recv_bytes())
         except (EOFError,OSError) as error:
             raise RuntimeError('native auxiliary worker disconnected') from error
         self.pending = False
+        self.metrics['receive_seconds'] += time.perf_counter() - started
         if status != 'ok':
             raise RuntimeError('native auxiliary worker failed:\n'+value)
         if ready:
             return value
         result,elapsed = value
         self.compute_seconds += elapsed
+        self.metrics['compute_seconds'] += elapsed
         return result
 
     def close(self):
@@ -104,21 +149,36 @@ class NativeWorker:
 
 
 class ParallelCensus:
-    def __init__(self, driver, producers, cpu):
+    def __init__(self, driver, producers, cpu, metrics=None):
         self.driver = driver
-        self.worker = NativeWorker(producers,cpu,'census',driver.run.field_census)
+        self.worker = NativeWorker(producers,cpu,'census',driver.run.field_census,metrics)
         self.active = True
         driver.run.field_census = self
+        self.buffer, self.buffer_rows, self.pending_rows = io.BytesIO(), 0, 0
 
     def observe(self,row):
-        # One immutable row in flight; observe order remains the source order.
+        # Immutable at submission; no mutable row reference crosses calls.
+        cloudpickle.dump(row, self.buffer, protocol=5)
+        self.buffer_rows += 1
+        if self.buffer_rows >= 32 or self.buffer.tell() >= 1 << 20:
+            self.flush()
+
+    def receive(self):
         if self.worker.pending:
-            self.worker.receive()
-        self.worker.send('observe',row)
+            if self.worker.receive() != self.pending_rows:
+                raise ValueError('census batch observation count differs')
+            self.pending_rows = 0
+
+    def flush(self):
+        if self.buffer_rows:
+            self.receive()
+            self.worker.send('observe_batch', self.buffer.getvalue())
+            self.pending_rows = self.buffer_rows
+            self.buffer, self.buffer_rows = io.BytesIO(), 0
 
     def state(self):
-        if self.worker.pending:
-            self.worker.receive()
+        self.flush()
+        self.receive()
         self.worker.send('state')
         return self.worker.receive()
 
@@ -161,16 +221,20 @@ class _BookView:
 
 
 class ParallelBook:
-    def __init__(self,producers,cpus):
+    def __init__(self,producers,cpus,metrics=None):
         from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import InstrumentBook
         self.book_class = InstrumentBook
         self.original = InstrumentBook.book_snapshot
+        self.original_effect = InstrumentBook._book_effect
+        self.states = weakref.WeakKeyDictionary()
+        self.next_token, self.dropped, self.references = 0, [], {}
         self.workers = []
         self.active = False
         self.calls, self.levels, self.seconds = 0,0,0.0
+        metrics = metrics if metrics is not None else {}
         try:
             for cpu in cpus:
-                self.workers.append(NativeWorker(producers,cpu,'book'))
+                self.workers.append(NativeWorker(producers,cpu,'book',metrics=metrics.setdefault(str(cpu),{})))
         except BaseException:
             self.close()
             raise
@@ -179,32 +243,74 @@ class ParallelBook:
             if not include_full_depth:
                 return owner.original(book,now_ns,depth_levels,include_full_depth,include_order_ids)
             return owner.snapshot(book,now_ns,depth_levels,include_order_ids)
-        self.wrapper = snapshot
+        def effect(book, msg):
+            state = owner.states.get(book)
+            if state is not None:
+                # R and top-of-book side clearing may delete many order IDs.
+                # Re-seed on the next full snapshot; ordinary updates touch at
+                # most the old and new level, including FIFO priority changes.
+                if msg.action == 'R' or (msg.action == 'A' and msg.flags & F_TOB
+                                        and abs(msg.price_raw) >= UNDEF_PRICE):
+                    state['reset'] = True
+                elif msg.action in ('A', 'C', 'M'):
+                    old = book.orders.get(msg.order_id)
+                    if old is not None:
+                        state['dirty'].add((old.side, old.price_raw))
+                    if msg.side in ('B', 'A'):
+                        state['dirty'].add((msg.side, msg.price_raw))
+            result = owner.original_effect(book, msg)
+            if state is not None and msg.action in ('A', 'C', 'M'):
+                current = book.orders.get(msg.order_id)
+                if current is not None:
+                    state['dirty'].add((current.side, current.price_raw))
+            return result
+        from research.ng_exhaustion_mbo_v4_state_adapter_20260820 import F_TOB, UNDEF_PRICE
+        self.wrapper, self.effect_wrapper = snapshot, effect
         InstrumentBook.book_snapshot = snapshot
+        InstrumentBook._book_effect = effect
         self.active = True
 
     def snapshot(self,book,now_ns,depth_levels,include_order_ids):
         started = time.perf_counter()
         items = [(side,price) for side in ('B','A') for price in book._prices(side)]
-        if not items:
-            return self.original(book,now_ns,depth_levels,True,include_order_ids)
-        count = min(len(items),len(self.workers))
-        batches = [[] for _ in range(count)]
-        for index,item in enumerate(items):
-            batches[index % count].append(item)
-        submitted = []
-        for worker,batch in zip(self.workers,batches):
-            levels,orders = {'B':{},'A':{}},{}
-            for side,price in batch:
-                ids = list(book.levels[side].get(price,()))
-                levels[side][price] = ids
-                orders.update((oid,book.orders[oid]) for oid in ids if oid in book.orders)
-            worker.send('levels',(levels,orders,batch,now_ns,include_order_ids))
-            submitted.append(worker)
+        state = self.states.get(book)
+        if state is None:
+            self.next_token += 1
+            token = self.next_token
+            state = dict(token=token, generation=0, reset=True, dirty=set())
+            # Worker mirrors are released after the native book becomes unreachable.
+            def release(ref, token=token):
+                self.dropped.append(token)
+                self.references.pop(token, None)
+            self.references[token] = weakref.ref(book, release)
+            self.states[book] = state
+        generation = state['generation'] + 1
+        count = len(self.workers)
+        batches, changes = [[] for _ in range(count)], [[] for _ in range(count)]
+        def partition(side, price):
+            return (price + (side == 'A')) % count
+        for side, price in items:
+            batches[partition(side, price)].append((side, price))
+        changed = items if state['reset'] else sorted(state['dirty'])
+        for side, price in changed:
+            ids = list(book.levels[side].get(price, ()))
+            orders = {oid:book.orders[oid] for oid in ids if oid in book.orders}
+            changes[partition(side, price)].append((side, price, ids, orders))
+        dropped, self.dropped = self.dropped, []
+        for worker, delta, batch in zip(self.workers, changes, batches):
+            worker.send('levels', (state['token'], generation, state['reset'], delta,
+                                  batch, now_ns, include_order_ids, dropped))
         results = {}
-        for worker in submitted:
-            for side,price,result in worker.receive():
+        for worker in self.workers:
+            token, actual_generation, levels = worker.receive()
+            if token != state['token'] or actual_generation != generation:
+                raise ValueError('book result belongs to another snapshot')
+            for side, price, result in levels:
+                if (side, price) in results:
+                    raise ValueError('book worker partitions overlap')
                 results[(side,price)] = result
+        state['generation'], state['reset'] = generation, False
+        state['dirty'].clear()
         if set(results) != set(items):
             raise ValueError('parallel full-book level coverage differs')
         # Execute the original pinned assembly and arithmetic using the exact
@@ -220,16 +326,21 @@ class ParallelBook:
         if any(worker.pending for worker in self.workers):
             raise RuntimeError('book checkpoint requires joined levels')
         self.book_class.book_snapshot = self.original
+        self.book_class._book_effect = self.original_effect
         try:
             yield
         finally:
             if self.active:
                 self.book_class.book_snapshot = self.wrapper
+                self.book_class._book_effect = self.effect_wrapper
 
     def close(self):
         if self.active:
             self.book_class.book_snapshot = self.original
+            self.book_class._book_effect = self.original_effect
             self.active = False
         for worker in self.workers:
             worker.close()
         self.workers.clear()
+        self.states.clear()
+        self.references.clear()
