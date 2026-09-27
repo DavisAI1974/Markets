@@ -41,20 +41,45 @@ def _load(path):
     return json.loads(Path(path).read_bytes())
 
 
-_FILES = {}
-
-
-def _layer_file(derive, name):
+def _stream_layer(derive, name, wanted):
+    """Read one layer file's top-level object ONCE, streamed (Monday's layers are gzip-json and many GB; the member
+    ledger they project is 537 GB): wanted maps a key to a row consumer (each array element is passed to it, never
+    collected) or to None (the value is decoded and returned). Stops as soon as every wanted key is read; other keys are
+    skipped without materializing them. None when the layer file is absent. Same values json.loads would have given."""
     entry = (derive.get('layers') or {}).get(name)
     if not entry or not entry.get('path') or not Path(entry['path']).is_file():
         return None
-    stat = Path(entry['path']).stat()
-    key = (entry['path'], stat.st_mtime_ns, stat.st_size)
-    if key not in _FILES:
-        if len(_FILES) > 64:
-            _FILES.clear()
-        _FILES[key] = _load(entry['path'])
-    return _FILES[key]
+    box = str(Path(__file__).resolve().parent)
+    if box not in sys.path:
+        sys.path.insert(0, box)
+    import gzip
+    from frankie_box_digest_sources import _JSON
+    if entry.get('encoding') not in (None, 'gzip-json'):
+        raise ValueError(f'unknown layer encoding for {name}: {entry.get("encoding")!r}')
+    opener = gzip.open if entry.get('encoding') == 'gzip-json' else open
+    found, remaining = {}, set(wanted)
+    with opener(entry['path'], mode='rt', encoding='utf-8') as handle:
+        parser = _JSON(handle)
+        parser.expect('{')
+        while remaining and parser.peek() != '}':
+            key = parser.value()
+            parser.expect(':')
+            if key in remaining:
+                consume = wanted[key]
+                if consume is None:
+                    found[key] = parser.value()
+                elif parser.peek() == '[':
+                    for row in parser.array():
+                        consume(row)
+                else:
+                    for row in (parser.value() or []):
+                        consume(row)
+                remaining.discard(key)
+            else:
+                parser.skip()
+            if remaining and parser.peek() != '}':
+                parser.expect(',')
+    return found
 
 
 def lineage_vocabulary(producers):
@@ -69,19 +94,23 @@ def lineage_vocabulary(producers):
 
 
 def _section_rows(derive, bedrock_layers, section):
-    """The rows of one lifecycle section, from the first derived bedrock layer file that carries them (identical copies)."""
+    """The rows of one lifecycle section, from the first derived bedrock layer file that carries them (identical copies).
+    lifecycle_rows sort before lifecycle_sections in the projected layers, so matching rows are kept while streaming and
+    returned only when the file declares the section."""
     for name in bedrock_layers:
-        f = _layer_file(derive, name)
-        if f and section in (f.get('lifecycle_sections') or []):
-            rows = [r for r in (f.get('lifecycle_rows') or []) if r.get('emitting_section') == section]
-            if rows:
-                return rows
+        rows = []
+        def keep(row, rows=rows):
+            if row.get('emitting_section') == section:
+                rows.append(row)
+        found = _stream_layer(derive, name, {'lifecycle_rows': keep, 'lifecycle_sections': None})
+        if found is not None and section in (found.get('lifecycle_sections') or []) and rows:
+            return rows
     return []
 
 
-def _members(derive, name):
-    f = _layer_file(derive, name)
-    return list((f or {}).get('member_rows') or [])
+def _each_member(derive, name, consume):
+    """Pass each member row of one layer to consume, in file order; nothing when the layer file is absent."""
+    _stream_layer(derive, name, {'member_rows': consume})
 
 
 def facts(work, brain, producers):
@@ -126,11 +155,13 @@ def facts(work, brain, producers):
                     smallest_ns=min((g['gap_ns'] for g in every), default=None), largest_ns=max((g['gap_ns'] for g in every), default=None))
     derived_clocks = {name: layers.get(name, {}).get('status') == 'derived'
                       for name in ('clock_event_known_by', 'clock_feature_availability', 'clock_model_evaluation')}
-    known = {r.get('group_index'): r.get('clocks.first_lawful_availability_ns') for r in _members(derive, 'clock_event_known_by')}
-    avail = {r.get('group_index'): r.get('clocks.first_lawful_availability_ns') for r in _members(derive, 'clock_feature_availability')}
-    evaluation = _members(derive, 'clock_model_evaluation')
-    decided = {r.get('group_index'): r.get('clocks.decision_ts_recv_ns') for r in evaluation}
-    basis = Counter(str(r.get('decision_basis')) for r in evaluation)
+    known, avail, decided, basis = {}, {}, {}, Counter()
+    _each_member(derive, 'clock_event_known_by', lambda r: known.__setitem__(r.get('group_index'), r.get('clocks.first_lawful_availability_ns')))
+    _each_member(derive, 'clock_feature_availability', lambda r: avail.__setitem__(r.get('group_index'), r.get('clocks.first_lawful_availability_ns')))
+    def evaluated(r):
+        decided[r.get('group_index')] = r.get('clocks.decision_ts_recv_ns')
+        basis[str(r.get('decision_basis'))] += 1
+    _each_member(derive, 'clock_model_evaluation', evaluated)
     ordered, unknown, violations = 0, 0, []
     groups = sorted(set(known) | set(avail) | set(decided), key=lambda g: (g is None, g))
     for g in groups:
@@ -143,11 +174,17 @@ def facts(work, brain, producers):
             violations.append(dict(group_index=g, known_by_ns=k, availability_ns=a, evaluation_ns=e))
     clocks = dict(groups=len(groups), ordered=ordered, unknown=unknown, violations=violations, derived_clocks=derived_clocks,
                   rule=CLOCK_RULE, decision_basis=dict(sorted(basis.items())))
-    geometry = _members(derive, 'derived_d_family_geometry')
-    family_ids = Counter(str(r.get('structure.candidate_family_id')) for r in geometry if r.get('structure.candidate_family_id') is not None)
-    sides = Counter(str(r.get('structure.side_string')) for r in geometry if r.get('structure.side_string') is not None)
-    legacy = _layer_file(derive, 'legacy_structure_observables') or {}
-    actions = Counter(str(g.get('action_string')) for g in (legacy.get('groups') or []) if g.get('action_string') is not None)
+    family_ids, sides, actions = Counter(), Counter(), Counter()
+    def described(r):
+        if r.get('structure.candidate_family_id') is not None:
+            family_ids[str(r.get('structure.candidate_family_id'))] += 1
+        if r.get('structure.side_string') is not None:
+            sides[str(r.get('structure.side_string'))] += 1
+    _each_member(derive, 'derived_d_family_geometry', described)
+    def acted(g):
+        if g.get('action_string') is not None:
+            actions[str(g.get('action_string'))] += 1
+    _stream_layer(derive, 'legacy_structure_observables', {'groups': acted})
     families = dict(distinct_family_ids=len(family_ids), family_id_counts=dict(sorted(family_ids.items())), side_strings=dict(sorted(sides.items())),
                     action_strings=[dict(action_string=k, count=v) for k, v in sorted(actions.items(), key=lambda kv: (-kv[1], kv[0]))])
     fed = bedrock.get('sections_fed') or {}
