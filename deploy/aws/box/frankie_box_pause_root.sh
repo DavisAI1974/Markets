@@ -147,7 +147,15 @@ elif (checkpoint.get('controller_state_hash') is None or checkpoint.get('locked'
 proc = Path('/proc') / str(pid)
 handle = os.pidfd_open(pid)
 owned = []
-for child in (proc / 'task' / str(pid) / 'children').read_text().split():
+# Children of EVERY thread: the digest's helper pools are started from worker threads (bedrock-sources, the table
+# jobs), and /proc lists a child only under the thread that created it.
+children = set()
+for task in (proc / 'task').iterdir():
+    try:
+        children.update((task / 'children').read_text().split())
+    except FileNotFoundError:
+        pass
+for child in sorted(children, key=int):
     child_pid = int(child)
     child_proc = Path('/proc') / child
     try:
