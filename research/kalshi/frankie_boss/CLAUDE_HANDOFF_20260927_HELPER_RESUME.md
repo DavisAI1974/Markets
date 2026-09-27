@@ -84,3 +84,13 @@ Expect to see:
 Tuesday stays pending.
 
 Every box action still needs Greg's go. Keys are not rotated until the build is done.
+
+## Startup probe (run 36346342291, 19:59:46-20:00:06Z)
+
+- ROOT pid 61435, token `099d4eb6-...:56246455`, state R, coordinator affinity [1], RSS 0.6 GB.
+- Stage `root-ledger-verify-member`: sha re-read of the frozen retained ledger
+  `recovery-9defa316.../ledgers/exact_member_rows.jsonl` (537,182,189,410 bytes). It had read 78.8 GB at
+  about 1.05 GB/s (about 8 min in all). Read-only, no write; the ledger is not rebuilt.
+- Free disk 762.7 GB; no swap; memory pressure 0.
+- Next check: after the verify, the digest should reuse publication e6ff and put the helpers on
+  `full_bid_ask_depth`.
