@@ -1,5 +1,31 @@
 # Frankie/BOSS Monday — fresh-chat handoff, 2026-09-27 10:29Z
 
+## Continuation observation - 2026-09-27 11:24Z
+
+ROOT remains the same runtime, PID and process token. Read-only workflow
+https://github.com/DavisAI1974/Markets/actions/runs/36315534005 succeeded and
+observed stage=root-native-finalize, state=running, process_alive=true, failed=0.
+The stage began at 1790508126.1633193 (11:22:06Z). Its completed=0/total=null
+is the new stage-local counter, not loss of the prior record cursor. This is
+NOT completed calculations; ledger publication/reconciliation, terminal full
+checkpoint, projection/digest and calculations-receipt.json remain pending.
+The earlier 11:17:09Z progress read (36315224296) observed 1,993,697/2,032,203
+records (98.11%) and ten checkpoints saved/read_verified, latest000009.
+
+Read-only inspection36314616646 at11:06:10Z found all18 expected processes
+alive on their assigned CPUs and350,640,939,008bytes free. This is a historical
+capacity observation, not a new deletion authorization. No cleanup occurred.
+Granite fhiwwlouzyx6l2 was freshly observed RUNNING during this continuation;
+no inference or duplicate priming was submitted.
+
+Existing classroom staging36311196131 remains pending at11:24Z. Do not duplicate
+it or interrupt ROOT. The manual downstream scripts and their immutable source
+were read; inputs/configuration/host/principal/classroom/grading/corrections/
+retention have not started. No runtime changes, local artifacts, extra tests,
+new orchestration or parallel agents were introduced. Tuesday and learning
+outcomes remain pending. Original handoff and exact identities follow.
+
+
 ## Read first and current intent
 
 Repository DavisAI1974/Markets, working branch claude/agent-skills-execution-tzh7sw. Read this handoff first, then CODEX_HANDOFF_20260927_SINGLE_RUN_CHECKPOINT.md and its referenced handoffs, CLAUDE.md, and the audit documents below. Latest user decisions supersede older instructions.
