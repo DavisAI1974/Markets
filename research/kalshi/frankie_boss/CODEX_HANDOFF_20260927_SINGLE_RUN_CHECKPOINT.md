@@ -1,5 +1,19 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Continuation execution setup (2026-09-27T04:51Z)
+
+User reaffirmed: do whatever remains unfinished, then proceed. Configuration coverage is not completion; all unchecked calculation, classroom and retention milestones remain unchecked.
+
+Latest read-only probe https://github.com/DavisAI1974/Markets/actions/runs/36295476197 succeeded at 2026-09-27T04:51:06.0066176Z: root-native-reconstruct, completed=174963, total=2032203, PID 54056 alive, failed=0, progress age 1.6 seconds. Three checkpoints saved/read_verified; latest checkpoint-000002.json. This is still reconstruction toward 464000, not new progress beyond the old cursor.
+
+- [x] Prepare the existing downstream workflow dispatch identity without restaging: GitHub branch `codex/frankie-monday-runtime-763d1d5` was created and read back at exactly `763d1d5c0f1979bad7ad3462620795e5354bfb37`.
+
+Use that runtime ref for `frankie_box_principal_inputs.sh` and `frankie_box_cycle0.sh` dispatches. Both require MARKETS_SHA (set by frankie_box_run.yml to the dispatched commit) to equal the staged checkout HEAD. Dispatching those scripts from the documentation-ahead working branch would fail that existing gate. Continue repository edits and handoff updates on `claude/agent-skills-execution-tzh7sw`; keep downstream COMPLETION_REF on that working branch. The runtime ref introduces no workflow or new orchestration and does not restart or restage ROOT.
+
+Next executable downstream action remains principal-input assembly with the actual completed `calculations-receipt.json` and its independently read SHA256. Its wrapper requires both CALCULATIONS_RECEIPT and CALCULATIONS_SHA256; do not dispatch with guessed pins or incomplete calculations. Then use the existing config, launch, principal, record, same-host resume, correction, record, same-host final resume and retain sequence below.
+
+Calculation numbering clarification: the historical catalog has 19 slots numbered 0–18 and seven distinct registry groups; later slots repeat the complete registry. The Monday launcher selects the complete registry and all three producer groups in the one current run. All 44 non-legacy registry layers are projected by the current traversal after completion; the five legacy layers are retained/reused. Inclusion in that pin is not a result receipt and no unfinished work was marked complete. No separate cycle-2-to-19 runs were launched.
+
 ## Latest continuation — first nonzero full-state snapshot witnessed (2026-09-27)
 
 The existing recovery workflow remains https://github.com/DavisAI1974/Markets/actions/runs/36294078724.
