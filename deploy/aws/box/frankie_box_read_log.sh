@@ -24,12 +24,17 @@ for proc in Path('/proc').iterdir():
         if 'python' not in command:
             continue
         fields = (proc / 'stat').read_text().rsplit(')', 1)[1].split()
-        files = 0
+        files, positions = 0, []
         try:
             for fd in (proc / 'fd').iterdir():
                 try:
-                    files += os.readlink(fd).startswith(under)
-                except OSError:
+                    target = os.readlink(fd)
+                    if target.startswith(under):
+                        files += 1
+                        pos = next(int(line.split()[1]) for line in (proc / 'fdinfo' / fd.name).read_text().splitlines()
+                                   if line.startswith('pos:'))
+                        positions.append(dict(path=target[len(under) + 1:], position=pos))
+                except (OSError, StopIteration, ValueError):
                     pass
         except OSError:
             pass
@@ -38,7 +43,7 @@ for proc in Path('/proc').iterdir():
                          cpu_seconds=round((int(fields[11]) + int(fields[12])) / tick),
                          affinity=sorted(os.sched_getaffinity(int(proc.name))),
                          spawn_helper='multiprocessing.spawn' in command and 'spawn_main' in command,
-                         open_files_under=files, command=command[:160]))
+                         open_files_under=files, positions=positions, command=command[:160]))
     except (OSError, IndexError):
         continue
 print(json.dumps(dict(at=time.time(), under=under, processes=sorted(rows, key=lambda r: r['pid'])), sort_keys=True))
