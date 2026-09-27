@@ -480,6 +480,8 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                        auxiliary_policy=getattr(driver, '_frankie_auxiliary_policy', None),
                        evidence_policy=getattr(driver, '_frankie_evidence_policy', None),
                        evidence_metrics=getattr(driver, '_frankie_evidence_metrics', {}),
+                       ledger_materialization={name:getattr(getattr(sinks, name), '_frankie_ledger_transfer', None)
+                           for name in ('member', 'lifecycle', 'legacy')},
                        reconstruction_boundary=getattr(driver, '_frankie_parallel_boundary', None),
                        timings_are_per_process=True, speedup_verified=False),
                    cadence_policy='NeverInvoke', driver_arguments=arguments,

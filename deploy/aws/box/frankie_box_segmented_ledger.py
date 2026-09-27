@@ -216,6 +216,9 @@ class _Materializer:
             if self.process.is_alive():
                 self.process.terminate()
                 self.process.join(timeout=5)
+            if self.process.is_alive():
+                self.process.kill()
+                self.process.join(timeout=5)
         self.connection.close()
 
 
