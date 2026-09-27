@@ -141,14 +141,21 @@ def inspect_frankie_over_ssh(ec2, instance, region):
     if host['State']['Name'] != 'running':
         raise SystemExit('running box required; no start or restart performed')
     address=str(ipaddress.IPv4Address(host['PublicIpAddress']))
-    console=ec2.get_console_output(InstanceId=instance,Latest=True).get('Output','')
-    host_keys=re.findall(r'(ssh-ed25519|ecdsa-sha2-nistp256|ssh-rsa) ([A-Za-z0-9+/]+={0,3})(?:\s|$)',console)
-    if not host_keys:
+    host_keys=[]
+    for latest in (True,False):
+        console=ec2.get_console_output(InstanceId=instance,Latest=latest).get('Output','')
+        candidates=[console]
         try:
-            decoded=base64.b64decode(console,validate=True).decode('utf-8',errors='replace')
-            host_keys=re.findall(r'(ssh-ed25519|ecdsa-sha2-nistp256|ssh-rsa) ([A-Za-z0-9+/]+={0,3})(?:\s|$)',decoded)
+            candidates.append(base64.b64decode(console).decode('utf-8',errors='replace'))
         except (ValueError, UnicodeError):
             pass
+        for value in candidates:
+            host_keys.extend(re.findall(r'(ssh-ed25519|ecdsa-sha2-nistp256|ssh-rsa) ([A-Za-z0-9+/]+={0,3})(?:\s|$)',value))
+        emit('CONSOLE_KEY_EVIDENCE',dict(latest=latest,characters=len(console),
+             key_count=len(host_keys),
+             fingerprints=sorted(set(re.findall(r'SHA256:[A-Za-z0-9+/]{43}', '\n'.join(candidates))))))
+        if host_keys:
+            break
     if not host_keys:
         raise SystemExit('No authenticated EC2 console host key available; refusing unverified SSH')
     runner_ip=str(ipaddress.IPv4Address(urllib.request.urlopen(
