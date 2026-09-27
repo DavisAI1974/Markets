@@ -44,6 +44,16 @@ At 2026-09-27T03:12:55Z: native ROOT 393,825 / 2,032,203 (19.38%), process alive
 Final corrected knowledge publication is connected via existing `frankie_box_cycle0.sh ACTION=retain`, with `CALCULATIONS=<current calculation root>` and `REQUEST_DIRECTORY=<actual host principal directory>`. Run it only after the final host resume writes `execution/cycle-00/pending-feedback.c15.json`. It retains the original response, same-session correction, host grade, acknowledgement, completion, transcript, attestations and pending-outcomes receipt in the brain, archives earlier entries, and publishes using the existing pusher. It refuses an ungraded or mismatched session. Its manifest explicitly records `classroom_final_pending_target_outcomes`, native_learning_performed=false and cycle_complete=false. No final publication has run.
 Syntax-only compilation of the brain module and shell parsing of both changed wrappers passed; no tests or model calls. The older gap description below records the original checkpoint and is superseded only for the implementation described here.
 
+## Deployment request queued (2026-09-27T03:28:14Z)
+
+User requested deployment. Existing `frankie_box_run.yml` staging dispatch:
+https://github.com/DavisAI1974/Markets/actions/runs/36291494244
+Pinned head: `f94288d5dca96f77d37d1c8a9cf91320af07f078`.
+Inputs: script=`deploy/aws/box/frankie_box_stage_code.sh`, variables=`ACTION=stage`, timeout=1800.
+Observed status: pending behind active ROOT's existing serial concurrency lock. No staging completion receipt yet; do not cross off deployment or dispatch a duplicate.
+Direct dispatch of `frankie_stage_code.yml` was unavailable (not registered on the default branch); no run was created by that attempt.
+Next: inspect run 36291494244 after ROOT releases the lock and use its actual staged checkout/receipt for downstream execution. The queued run stages f94288d, not this later documentation commit. ROOT remains on cdeb2026; no calculation restart or active checkout change.
+
 ## Active calculation and evidence
 
 ROOT workflow: https://github.com/DavisAI1974/Markets/actions/runs/36284909445
