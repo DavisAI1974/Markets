@@ -1,5 +1,10 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## NEW ENTRY POINT — 2026-09-27 10:29Z
+
+Read [CODEX_HANDOFF_20260927_CLASSROOM_QUEUED.md](CODEX_HANDOFF_20260927_CLASSROOM_QUEUED.md) first. It consolidates the current ROOT/runtime identity, latest80.53% progress, safe-cleanup decision, already-queued classroom deployment and exact remaining manual Monday route. All earlier history below remains preserved. No files were deleted; no ROOT restart or duplicate staging/inference was launched.
+
+
 ## Downstream immutable package queued — 2026-09-27 10:01Z
 
 Classroom helper source a80990d42161c3020c21363137439da7dd6ba527 is pushed and pinned by codex/frankie-classroom-runtime-a80990d. Existing inactive staging workflow https://github.com/DavisAI1974/Markets/actions/runs/36311196131 is PENDING behind canonical ROOT's serial lock. Do not duplicate the staging dispatch or pause ROOT. Read its actual stage/source-pack/CODE_ROOT receipt when it completes, then use this immutable package for the manual Monday downstream sequence. No actual classroom initialization or Granite priming inference has occurred. See audits/CLASSROOM_PREPARATION_WORKERS_20260927.md.
