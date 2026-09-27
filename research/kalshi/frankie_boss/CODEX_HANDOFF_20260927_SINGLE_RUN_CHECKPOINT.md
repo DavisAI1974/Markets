@@ -1,5 +1,10 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Combined source package reviewed — 2026-09-27 09:15Z
+
+ROOT remains on phase-one runtime68f2311, PID56172, workflow36305497169. Latest observed1,166,757/2,032,203 (57.41%), failed=0, alive at09:09Z; checkpoint000003 saved/read_verified. The18.8-minute interval averaged109.84records/s including checkpoints. The shared member freeze, shared-memory encoded output, and frozen ledger segments with background I/O workers are now implemented and statically reviewed, but NOT activated. See [ROOT_COMBINED_TRANSPORT_20260927.md](audits/ROOT_COMBINED_TRANSPORT_20260927.md). Stage the immutable reviewed source first, then use a fresh verified checkpoint and the existing identified pause/resume route; no duplicate ROOT. No further pause/resume has yet been issued. Granite actual priming delivery and acknowledgement remain pending.
+
+
 ## Active worker fixes verified — 2026-09-27 08:46Z
 
 ROOT PID56172 is processing new records on runtime68f2311e3071f24fd63b65134b81861b3246400f, workflow36305497169, generation recovery-03a70711353a433c989b18074d7baacd. Worker receipt verifies both V2 policies, predecessor lineage and15processes on CPUs1–15. Complete post-activation checkpoint000001 read at989940records; latest direct progress1010109/2032203 (49.71%), failed=0. Observed post-fix interval120.265records/s vs earlier64.74; not a controlled same-workload benchmark. See audits/ROOT_WORKER_TRANSPORT_ACTIVATION_20260927.md for actual hashes and all profile receipts.
