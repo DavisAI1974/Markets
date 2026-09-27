@@ -1,6 +1,6 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
-## Latest execution — corrected recovery launcher dispatched (2026-09-27T04:22Z)
+## Latest execution — recovery running (probe 2026-09-27T04:29:25Z)
 
 Final deployed runtime commit: `763d1d5c0f1979bad7ad3462620795e5354bfb37`.
 Staging workflow https://github.com/DavisAI1974/Markets/actions/runs/36293923132 succeeded at 04:21:14Z.
@@ -10,19 +10,36 @@ Staging intent hash: ebc1789523414201d69e9bfce971dd76839292279a1b65100268b5e6ce0
 Source pack hash: f6d04603b111f744c31eb462b81d4ea3be3600e8455c15bc550fa0f66cbae978.
 All prior single-run admission, shared knowledge, classroom/recording and final retention code is included.
 
-Recovery workflow https://github.com/DavisAI1974/Markets/actions/runs/36294078724 is dispatched at that commit.
+Recovery workflow https://github.com/DavisAI1974/Markets/actions/runs/36294078724 is in progress at that deployed commit.
 Use the original calculation root/source-binding/authorship/data_workers=48 and
 RESUME_CHECKPOINT=<calculation root>/work/bedrock/checkpoints/checkpoint-000008.json,
 BINDING_SHA256=99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a,
 RECONSTRUCT_MISSING=1, timeout=172800.
-Live calculation/checkpoint receipt is not yet confirmed in this update. Do not dispatch a duplicate.
+Live probe https://github.com/DavisAI1974/Markets/actions/runs/36294419976 succeeded at 2026-09-27T04:29:25.0708241Z:
+- Stage root-native-reconstruct; PID 54056 alive; failed=0; progress age 11.7 seconds.
+- 44,873 records reconstructed toward the old 464,000-record checkpoint. The probe reports 2.21% of 2,032,203; this is reconstruction, not new progress beyond the old cursor or overall completion.
+- Process token 099d4eb6-a46d-4b94-a888-f15e55c1ee7e:50634948.
+- One checkpoint saved and read_verified: checkpoint-000000.json.
+- Completed legacy calculation layers and the retained INPUT spool were reused. Native traversal now projects 44 layers.
+
+New native generation:
+`/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-f13de5640bf549feaae493d8861bfae1`
+Full-state descriptor read https://github.com/DavisAI1974/Markets/actions/runs/36294360659 succeeded at 04:27:59Z.
+Inside that generation's checkpoints directory:
+- controller-state-000000.json: 2623 bytes, SHA256 96cc718ea9cdff36df13194d08376b4318038cecbd977d84d33e84e8bd584dd8.
+- driver-state-000000.pkl.gz: 19135 bytes, SHA256 cfcdb34d0c3741b49d745114ba6567f923f32fcbbde7f5584946472a45876b7c.
+- Descriptor schema FRANKIE_NATIVE_FULL_STATE_V1; completed_mbo_records=0; ledger bytes=0.
+- Serializer SHA256 d5487c5444055cac5a91bc60bb8cb796924f10126fe02ba1384addbde43fd2d1.
+
+Only the initial ZERO-record full-state snapshot is witnessed. First nonzero full-state checkpoint, reconstruction verification at 464000, and actual interrupted full-state restoration remain pending. Do not dispatch a duplicate.
+Read-helper commit 1551590ab79c7a86b4fbe8a365bbd879677950d5 allows existing read_log MODE=receipt to emit complete checkpoint/controller-state JSON and FILE_PIN; it is supplied from the workflow ref and does not change the active runtime.
 
 Earlier attempt 36293846539 failed before Python/calculations: SSM uses POSIX sh and the new wrapper used Bash arrays.
 763d1d fixes argument handling with POSIX positional parameters. This was our launcher code error, separate from
 the original full-disk/SSM interruption. The read-only probe 36293892226 succeeded after the failed attempt.
 
-Next essential action: read actual progress using the existing progress workflow and new CODE_ROOT above.
-If live, distinguish root-legacy-reuse and root-native-reconstruct from new native work beyond the old cursor.
+Next essential action: use the existing progress/read workflows to observe the first nonzero full-state checkpoint and later reconstruction verification, without duplicate dispatches or repeated unchanged polling. Use the deployed CODE_ROOT above, not a path inferred from later documentation commits.
+Distinguish root-native-reconstruct from new native work beyond the old cursor.
 Only call reconstruction verified after the new recovery generation's reconstruction-receipt.json confirms
 adapter hash and exact ledger prefixes at 464000. Full-state snapshot descriptors are controller-state-NNNNNN.json
 with schema FRANKIE_NATIVE_FULL_STATE_V1 and driver-state-NNNNNN.pkl.gz pins in the same checkpoint directory.
@@ -36,8 +53,10 @@ No native completion, classroom execution, final retention or Tuesday outcomes a
 - [x] Implement full native driver/calculator snapshots, pending horizons, candidate/response/lineage state, source/run identity and exact ledger byte offsets/hashes. Checkpoints flush ledgers, atomically retain compressed state, hash-chain the controller descriptor, and read back hashes. Future full-state recovery copies exact ledger prefixes and restores the object graph with pinned producer/Python/serializer identity. No checkpoint or ledger is deleted.
 - [x] Stage current recovery code together with all earlier single-run/classroom/brain wiring. Final staged commit 763d1d5c0f1979bad7ad3462620795e5354bfb37, workflow 36293923132.
 - [x] Clean disposable pip cache and redundant source-transfer packs after verifying successful installed checkouts. Workflow 36293753576 reclaimed 11,779,919,359 bytes in 20 transfer packs and pip reported 406 cache files / 403.3 MB. Per-pack cache-removal-receipt.json retained. Transfer/staging receipts, failed packs, checkouts, source, work, brain and all evidence preserved.
-- [ ] Launch the authorized reconstruction from checkpoint 000008 (464000 records), verify adapter hash and exact ledger prefixes at that cursor, then continue to 2032203.
-- [ ] Observe live full-state checkpoint receipts. Syntax checks do not establish live checkpoint restoration.
+- [x] Launch authorized reconstruction from checkpoint 000008; live process and advancing reconstruction confirmed by probe 36294419976.
+- [x] Observe initial zero-record full-state snapshot and its serialized-driver pins; read receipt 36294360659.
+- [ ] Observe first nonzero full-state checkpoint. Actual interrupted full-state restoration is not yet demonstrated.
+- [ ] Verify adapter hash and exact ledger prefixes at 464000, then continue to 2032203 and retain the completed calculations receipt.
 
 Read-only box inventory https://github.com/DavisAI1974/Markets/actions/runs/36292903952 found /dev/root full: 193G used, 3.4M free; memory available about 244GiB. Disk exhaustion is a concrete resource failure supporting the ROOT/staging interruption; the original SSM IPC message alone did not establish that cause.
 
@@ -62,16 +81,15 @@ Actual checkpoint `work/bedrock/checkpoints/checkpoint-000008.json`:
 The pinned native_replay_driver calls maybe_save with only the adapter and record count.
 periodic_checkpointer.resume_from_latest restores only V4MboAdapter. It does not restore
 NativeCalculationRun calculators, pending horizons, candidate/response/lineage state or ledger offsets.
-The current Monday launcher requires a fresh root and Session.derive restarts the legacy and native
+The original Monday launcher required a fresh root and Session.derive restarted the legacy and native
 passes; rerunning it unchanged is not checkpoint recovery. Skipping to record 464000 with new
 calculators would omit required evidence and is forbidden.
 
 Superseded by the explicit authorization above: a request was made for a narrow exception to the user's no-duplicate-work restriction:
 reconstruct missing calculation state from the sealed records through the checkpoint, then continue.
-This is not permission to restart ingestion. No calculation restart, reconstruction, source write,
-checkpoint deletion or launcher bypass has been performed. A complete recovery route is not implemented.
+This is not permission to restart ingestion. The recovery implementation and authorized reconstruction are now running as recorded above; this finding describes the original adapter-only checkpoint limitation.
 
-## Current blocker — ROOT process stopped (probe 2026-09-27T03:51:30Z)
+## Historical interruption — original ROOT stopped (probe 2026-09-27T03:51:30Z)
 
 Read-only probe https://github.com/DavisAI1974/Markets/actions/runs/36292594746 succeeded.
 It found process_alive=false for PID 51611 with the original process token.
@@ -81,13 +99,13 @@ Progress age was 1370.7 seconds. The retained state=running and failed=0 fields 
 ROOT workflow 36284909445 failed at 03:30:02Z: SSM document worker reported an IPC messaging timeout. The underlying calculation failure cause is not established by that message alone.
 Queued deployment 36291494244 subsequently failed at 03:32:00Z with SSM status Failed and no useful stderr. No staging completion receipt has been observed.
 No ROOT restart, calculation replay, deployment retry, infrastructure stop or evidence deletion was performed.
-Preserve existing work and checkpoints. Next work is essential diagnosis of the stopped process and actual checkpoint recovery capability; do not blindly rerun calculations. Downstream execution remains pending.
+This original stopped process is superseded by the authorized recovery at the top. Preserve its work and checkpoints. Downstream execution remains pending.
 
 ## Start here
 
 Repository: DavisAI1974/Markets. Continue branch `claude/agent-skills-execution-tzh7sw`.
 Original handoff commit: `d9b9ee2c88bd8667ad84ec00617357d170050f60`.
-Continuation resumed on 2026-09-27. Single-run admission/shared-brain wiring is pushed at `e11bab1ce4f4dbdb81a110c9aa38403a8c20f8ff`; final corrected-knowledge publication is included in the commit carrying this update. Neither increment has a confirmed successful deployment. ROOT stopped on its original executing commit; see the current blocker above.
+Continuation resumed on 2026-09-27. Single-run admission/shared-brain wiring at `e11bab1ce4f4dbdb81a110c9aa38403a8c20f8ff` and final corrected-knowledge publication at `f94288d5dca96f77d37d1c8a9cf91320af07f078` are included in the successfully staged runtime `763d1d5c0f1979bad7ad3462620795e5354bfb37`. Recovery is running; downstream execution remains pending.
 
 Use using-agent-skills and context-engineering. Existing session also used shipping, Git workflow, incremental implementation and review skills. User restrictions below override generic skill suggestions for tests, parallel agents, canaries or extra approval.
 
@@ -104,15 +122,17 @@ Use using-agent-skills and context-engineering. Existing session also used shipp
 - [x] Wire the Monday calculation pin into principal request creation.
 - [x] Wire actual Linux request/output paths and forbid re-derivation when continuing completed Monday calculations.
 - [x] Wire initial/correction response recording and the same shared knowledge into the recorder.
-- [x] Implement the authorized single-run admission/input path; separate A-arm, historical S3 delivery and output-before-execution prerequisites removed from Monday's route. Code reviewed and syntax-compiled; deployment/live verification awaits current ROOT.
+- [x] Implement the authorized single-run admission/input path; separate A-arm, historical S3 delivery and output-before-execution prerequisites removed from Monday's route. Code reviewed, syntax-compiled and deployed in 763d1d; downstream live execution awaits completed ROOT.
 - [x] Implement the existing brain/shared-snapshot connection for Frankie and scientific teacher, retaining all required research and historical section sources. Actual snapshot assembly awaits completed ROOT receipt.
 - [x] Connect final corrected knowledge publication through the existing cycle wrapper and brain/pusher; require the host's final classroom and pending-outcomes receipts. Actual publication is pending.
-- [ ] Recover the stopped native calculation with complete calculator state; current adapter-only checkpoint is insufficient.
-- [ ] After ROOT completion, stage the completed current code through the existing GitHub staging workflow and build the actual Monday host configuration.
+- [x] Deploy combined recovery, single-run, classroom and retention code through the existing staging workflow (36293923132).
+- [x] Restart the authorized native reconstruction while reusing completed legacy calculations and retained source spool (36294078724).
+- [ ] Complete reconstruction verification and the remaining native calculations; capture completed calculations-receipt.json.
+- [ ] After ROOT completion, build the actual Monday principal inputs, shared snapshot and host configuration using the deployed code.
 - [ ] Run existing host/Granite, Frankie full reading and writing, initial recording/grading, correction, final recording/grading, and final knowledge retention manually in order.
 - [ ] Retain Monday findings for the next cycle. Missing Tuesday outcomes remain explicitly pending; no fabricated labels, native learning, or cycle-completion claim.
 
-Do not restart completed stages. The new code is committed but NOT staged or deployed onto the active calculation process.
+Do not restart completed stages or duplicate the active recovery. Combined runtime 763d1d is deployed; subsequent documentation/read-helper commits do not change the active calculation process.
 
 ## Continuation implementation (2026-09-27)
 
@@ -120,7 +140,7 @@ The single-run route is now implemented in the existing input assembler, princip
 
 The existing assembler now takes `--calculations-receipt` and `--calculations-sha256`; its existing shell workflow uses `CALCULATIONS_RECEIPT` and `CALCULATIONS_SHA256`. It preserves the complete shared research catalog, adds all included retained brain entries and exact sections, and publishes through existing build_snapshot at `/opt/frankie-box/request/shared-knowledge/<snapshot_hash>`. The session consumes the same pinned brain base as that snapshot, including during correction.
 
-Verification: syntax-only compilation of all eight changed Python files and bash -n of the existing assembler wrapper. No tests, canaries, comparison runs, producer reruns or model calls. Changes are NOT staged or deployed; no active calculation code changed.
+Verification: syntax-only compilation of all eight changed Python files and bash -n of the existing assembler wrapper. No tests, canaries, comparison runs, producer reruns or model calls. These changes were subsequently staged in combined runtime 763d1d; downstream execution still awaits completed ROOT.
 
 Read-only probe: https://github.com/DavisAI1974/Markets/actions/runs/36290742694
 At 2026-09-27T03:12:55Z: native ROOT 393,825 / 2,032,203 (19.38%), process alive, failed=0, seven checkpoints saved/read_verified, latest checkpoint-000006.json, readers 48 requested / 31 effective. This is stage progress only.
@@ -128,20 +148,20 @@ At 2026-09-27T03:12:55Z: native ROOT 393,825 / 2,032,203 (19.38%), process alive
 Final corrected knowledge publication is connected via existing `frankie_box_cycle0.sh ACTION=retain`, with `CALCULATIONS=<current calculation root>` and `REQUEST_DIRECTORY=<actual host principal directory>`. Run it only after the final host resume writes `execution/cycle-00/pending-feedback.c15.json`. It retains the original response, same-session correction, host grade, acknowledgement, completion, transcript, attestations and pending-outcomes receipt in the brain, archives earlier entries, and publishes using the existing pusher. It refuses an ungraded or mismatched session. Its manifest explicitly records `classroom_final_pending_target_outcomes`, native_learning_performed=false and cycle_complete=false. No final publication has run.
 Syntax-only compilation of the brain module and shell parsing of both changed wrappers passed; no tests or model calls. The older gap description below records the original checkpoint and is superseded only for the implementation described here.
 
-## Deployment request queued (2026-09-27T03:28:14Z)
+## Historical deployment request (2026-09-27T03:28:14Z; later failed)
 
 User requested deployment. Existing `frankie_box_run.yml` staging dispatch:
 https://github.com/DavisAI1974/Markets/actions/runs/36291494244
 Pinned head: `f94288d5dca96f77d37d1c8a9cf91320af07f078`.
 Inputs: script=`deploy/aws/box/frankie_box_stage_code.sh`, variables=`ACTION=stage`, timeout=1800.
-Observed status: pending behind active ROOT's existing serial concurrency lock. No staging completion receipt yet; do not cross off deployment or dispatch a duplicate.
+At dispatch it was pending behind ROOT's serial concurrency lock; it later failed at 03:32Z. Successful replacement staging is recorded at the top.
 Direct dispatch of `frankie_stage_code.yml` was unavailable (not registered on the default branch); no run was created by that attempt.
-Next: inspect run 36291494244 after ROOT releases the lock and use its actual staged checkout/receipt for downstream execution. The queued run stages f94288d, not this later documentation commit. ROOT remains on cdeb2026; no calculation restart or active checkout change.
+The queued run targeted f94288d and failed. Use the successful 36293923132 staging receipt and 763d1d checkout above.
 
-## Active calculation and evidence
+## Original calculation and retained evidence (superseded execution)
 
 ROOT workflow: https://github.com/DavisAI1974/Markets/actions/runs/36284909445
-Started 2026-09-27T01:14:06Z. Still in_progress in the latest Actions status check.
+Started 2026-09-27T01:14:06Z; failed at 03:30:02Z. Current recovery is 36294078724 above.
 
 Executing commit: `cdeb202645e522d7da7903bcd0b4dd587cf2aa42`.
 Staged checkout:
@@ -206,7 +226,7 @@ Protected compact evidence:
 Protected recovery directory:
 `/opt/frankie-box/work/sealed-recovery-35796793428`.
 
-## Changes already pushed, not deployed
+## Earlier changes now included in deployed runtime 763d1d
 
 1. `3f89936f5ffc9eb4ee35bc2ab5d42335ce3c46b9`: Memory A prerequisite removal and exact-first instructions. Adapter preserves the exact 18-section set and cited hashes. Legacy explicitly supplied memory protection still works; new configs omit Memory A. Two existing obsolete assertions were adjusted, no new tests added or run.
 2. `e5264e2a59f513347243a0d20f996d70775bce07`: Monday calculation pin carried through host, classroom and recorder; the pin sidecar exists before request assembly. Whole-day mode refuses a missing pin rather than falling back to Sunday.
@@ -229,7 +249,7 @@ Monday's current calculation entry deliberately uses NeverInvoke, produces resul
 
 Use the actual completed calculations-receipt.json, source-binding.json, calculation-pins.json, existing retained brain, and genuine controller/native export. Do not fabricate old receiver receipts or mark a new prompt as a historical exemption. Preserve native forecast/Granite critic and mandatory IntegratedDipoleClassroomPrincipalAdapter. Check actual required outputs after execution through the existing recording/grading boundary. Keep source bindings already established; do not rerun source-proof traversals to satisfy the retired arm.
 
-Relevant existing connection points:
+Historical connection points below describe the pre-implementation gaps; the single-run route is now implemented and deployed as recorded above. Do not reimplement them:
 - `source_contract_runtime.make_principal_adapter`: currently binds full receiver wire mapping, historical retained knowledge and legacy delivery before constructing adapter. Needs an explicit single-run route.
 - `FrankiePrincipalAdapter`: constructor/prepare/_check_preparation/_admission_record still assume legacy receiver delivery for Monday. Keep durable request/response identities, exact 18-section hashes and actual host attestations.
 - `frankie_box_principal_inputs.py/.sh`: still a legacy assembler fetching the old Sunday index and A-memory result. Do not run it unchanged for Monday.
@@ -254,10 +274,10 @@ Existing brain write_entry archives earlier cycle00 material rather than deletin
 
 Mandatory classroom remains: every retained observation across all 19 dimensions, all 171 pairs, scientific dialogue, actual grading, same-session correction and acknowledgement. A missing target-day outcome does not waive these.
 
-## Manual continuation after the missing connections are committed
+## Manual continuation after ROOT completion
 
 1. Read actual ROOT progress and eventual calculations-receipt.json. Reuse work/derive.json and the complete digest; no second producer run.
-2. Finish and atomically commit the input/admission/shared-knowledge connections via GitHub. Stage into an inactive checkout using the existing workflow after the active mutating run releases its lock; never edit the pinned bootstrap.
+2. Reuse the deployed input/admission/shared-knowledge connections. Stage again only if genuinely required code changes are committed; use existing workflows and never edit the pinned bootstrap.
 3. Assemble current principal inputs and shared snapshot; create current Monday configuration from prepared r6 and completed calculations.
 4. Launch existing actual host with mandatory classroom; retain full native/Granite evidence and its WAIT receipt when principal input is ready.
 5. Run principal action on the retained calculation root and actual host principal directory; require-retained-derivation.
@@ -281,3 +301,8 @@ Claude's separate-arm decision is now resolved by the user; do not ask it again.
 All repository changes through GitHub. No C:/E: artifacts. No ingestion restart/replay, infrastructure stop, pinned-bootstrap change, evidence deletion, Amazon Bedrock, BOSS output caps, extra tests/canaries/comparison runs/new validators, parallel agents, or new orchestrator. The three repository “bedrock” producer groups are required and are not Amazon Bedrock.
 
 User wants a short essential checklist crossed off as actual work finishes, real progress probes/checkpoint receipts, and concise highlights and real blockers. Do not turn continuation into another audit.
+
+## Worker count and earlier smaller run
+
+Requested 48 / effective 31 are source reader/verification workers on the 32-logical-CPU box. The pinned NativeCalculationRun / NativeReplayDriver scientific traversal is ordered and serial; recovery reuses the retained INPUT spool and completed legacy calculations. Do not report 31 native calculator workers.
+The recorded earlier full smaller job used the same core NativeCalculationRun / NativeReplayDriver with 57,027 records; Monday has 35.64 times as many records. The separate early cycle-00 entry with 3,262 records / 13 seconds / 2,282 groups / five legacy layers is not the whole smaller run. No measured per-record regression or precise six-hour elapsed comparison was established. References: SPEC_CYCLE0_BEDROCK_20260921.md and records/chat6_scratchpad_20260921/cycle-00-docs/brain/cycle-00/derive.md in this directory.
