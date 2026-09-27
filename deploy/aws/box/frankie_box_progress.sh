@@ -56,6 +56,24 @@ def optional_counters(path, selected=None):
     except OSError:
         return None
 
+def projection_files():
+    """Metadata only: no source contents, hashes, mutation or tracing."""
+    opened = []
+    for descriptor in sorted((proc / 'fd').iterdir(), key=lambda p: int(p.name)):
+        try:
+            target = descriptor.resolve(strict=True)
+            if not target.is_relative_to(directory) or not target.is_file():
+                continue
+            st = target.stat()
+            opened.append(dict(fd=int(descriptor.name), path=str(target.relative_to(directory)),
+                               bytes=st.st_size,
+                               position=counters(proc / 'fdinfo' / descriptor.name, {'pos'}).get('pos')))
+        except OSError:
+            continue
+    statv = os.statvfs(directory)
+    return dict(open_files=opened, free_bytes=statv.f_bavail * statv.f_frsize,
+                affinity=sorted(os.sched_getaffinity(pid)))
+
 def snapshot():
     fields = (proc / 'stat').read_text().rsplit(')', 1)[1].split()
     token = boot + ':' + fields[19]
@@ -91,6 +109,7 @@ def snapshot():
     return dict(
         at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         monotonic=time.monotonic(), pid=pid, process_token=token,
+        projection_files=projection_files(),
         process=dict(state=fields[0], user_ticks=int(fields[11]), system_ticks=int(fields[12]),
                      major_faults=int(fields[9]), threads=int(fields[17]),
                      io=optional_counters(proc / 'io'),
