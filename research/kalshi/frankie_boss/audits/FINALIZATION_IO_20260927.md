@@ -252,3 +252,46 @@ completion, actual classroom delivery/acknowledgment, learning or Tuesday outcom
 is claimed. All original evidence is retained. Continue the original manual
 Monday inputs/config/host/Granite/principal/classroom/initial grade/same-session
 correction/final grade/retention sequence only after actual calculation completion.
+
+## Finalization completed; projection running — 2026-09-27 12:47Z
+
+The authorized optimization is active and its required disk verification finished.
+Actual execution receipts read in workflow36320047534 from
+work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-c3dd011764ac4d3f945800e2012a321a/receipt.json
+(30104bytes,937lines) report:
+- Member537182189410bytes,1535939rows:504.727seconds.
+- Lifecycle14424155424bytes,13402454rows:14.717seconds.
+- Legacy1323153203bytes,1006873rows:1.409seconds.
+- Total552929498037bytes verified in520.853seconds (8minutes40.853seconds).
+- Every ledger reports ledger_copy_bytes=0, ordered_sha256=true,
+  affinity_readback_verified=true, coordinatorCPU1, reservedCPU0 and14 actual
+  helper thread IDs assigned CPUs2–15;28 pending8MiB chunks maximum.
+These are real run timings, not a benchmark or a controlled comparison. The earlier
+100-minute figure was a conditional estimate of two redundant future scans, not
+an observed duration or a proven net saving. Both duplicate scans are removed.
+
+Restored generation: recovery-c3dd011764ac4d3f945800e2012a321a.
+Its full finalized checkpoint000000 is locked,2032203/2032203records, and
+readback_verified=true. Checkpoint hash:
+ec90d96d7114dc021cbeb129f5ab91d0756b960e6a81c126a5640f20e1234fff.
+Descriptor read36319947258:12885bytes,
+SHA256c494d8c035296767685b9cb7b5123f2344f10d7c1a6141673e5226623624af6d.
+Driver-state000000:167213056bytes,
+SHA2564410f3d8898b34c8d9bf5800d440b62329c6840981663baf00255ee6b4b63f37.
+Parent checkpoint000010 file:775bytes,
+SHA25658749f8dd9a35b2af70d5182b9c8ce315a809169ac4dbe9a9ece0de238a76c4b.
+All three retained ledger paths, exact byte counts and SHA256 hashes match the
+original completed generation; no ledger copy or scientific record replay.
+
+Probe36320137399 at12:47:36Z confirms PID58168 alive, original new process token,
+failed=0, stage=root-projection. New checkpoint saved/read_verified12:43:13.017Z;
+projection started12:43:56.259Z. Its0/unknown count is a stage-local counter,
+not missing scientific records. ROOT resume36319242284 remains in_progress.
+Runtime01caae9 and all existing evidence remain unchanged. Do not restart it.
+
+Finalization completion is NOT the final calculations receipt. Projection,
+digest generation/publication and calculations-receipt.json remain pending;
+classroom staging36311196131 already succeeded. Continue the original full
+manual Monday sequence after the calculations receipt. Actual Monday model
+delivery/acknowledgment, classroom/grades/corrections/retention and Tuesday
+learning outcomes remain pending until their receipts prove them.
