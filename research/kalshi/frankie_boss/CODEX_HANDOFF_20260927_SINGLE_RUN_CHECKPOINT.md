@@ -1,5 +1,20 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Live ROOT performance measurement — actual receipt (2026-09-27T05:22:50Z–05:23:10Z)
+
+User authorized read-only CPU, memory and disk measurements to identify further speed improvements without changing the science.
+
+- [x] Add opt-in RESOURCE_METRICS=1 to the existing frankie_box_progress.sh route, commit `7c237d54bcdaa5939a6c77ac1fef21e017639f4f`. Default progress behavior remains unchanged. Python syntax compilation and the existing workflow's shell syntax check passed.
+- [x] Observe the same live ROOT PID 54056 and process token over two 10-second intervals. Workflow https://github.com/DavisAI1974/Markets/actions/runs/36297019309 succeeded; job 108557634399. Exact raw samples, units, formulas and limitations: [ROOT_RESOURCE_OBSERVATION_20260927_052250.json](audits/ROOT_RESOURCE_OBSERVATION_20260927_052250.json).
+- [ ] Attribute the remaining serial CPU cost before choosing further calculation branches or evidence-serialization work to parallelize. This observation establishes a resource bottleneck during its window, not the cost of individual functions or a proven speedup.
+
+Measured over 20.002 seconds: ROOT CPU 99.94% of one logical CPU (99.24% user time); 32 logical CPUs allowed; host idle 96.75%, host I/O wait 0.080%. ROOT RSS 4.558 GiB, host available memory 239.940 GiB, ROOT swap 0, zero new ROOT major faults and zero physical source-read bytes. ROOT write accounting advanced at 24.643 MiB/s; shared disk writes averaged 37.803 MiB/s with 2.310% disk busy time and 0.487 average I/Os in flight. Buffered writeback was bursty: 75.586 then 0.020 MiB/s across the two intervals. These host disk figures are not exclusive ROOT traffic, and disk busy percentage alone is not a saturation proof.
+
+Conclusion limited to this window: ROOT is constrained by serial CPU work; the host has substantial unused CPU and memory capacity, and the sample does not support storage or memory as the primary constraint. Adding reader workers, RAM or machines is not supported by this evidence. Additional independent calculation processes or CPU-side evidence serialization/bookkeeping optimization are the relevant candidates; preserve causal ordering, exact rows, hashes, full-state checkpoint barriers and all required Frankie derivation, analysis, classroom and attribution. First use the already-committed parallel version only at a lawful future transition and measure its real effect. Its staging run 36296350689 was still pending at the observation dispatch; it has not accelerated this running serial process.
+
+Latest observed progress at 05:23:10Z: 343743 reconstructed records toward the old 464000 checkpoint, total 2032203, failed=0, same live PID/token. Six checkpoints saved/read_verified, latest checkpoint-000005.json. No reconstruction verification or full-day completion claim.
+
+
 ## User-authorized follow-ups — after Monday is completely through (2026-09-27)
 
 User: "Ok. We can do that once we get completely through Mon. Update the next handoff doc with that now so we don't forget it. We also need to make an orchestrator that connects all of our separate workflows that we're running manually so that we don't have to do that anymore"

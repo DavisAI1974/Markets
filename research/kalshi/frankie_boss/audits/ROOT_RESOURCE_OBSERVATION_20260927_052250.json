@@ -1,0 +1,550 @@
+{
+  "schema": "FRANKIE_ROOT_RESOURCE_OBSERVATION_RECEIPT_V1",
+  "workflow_run": "https://github.com/DavisAI1974/Markets/actions/runs/36297019309",
+  "job_id": 108557634399,
+  "observer_commit": "7c237d54bcdaa5939a6c77ac1fef21e017639f4f",
+  "active_runtime_commit": "763d1d5c0f1979bad7ad3462620795e5354bfb37",
+  "metadata": {
+    "schema": "FRANKIE_ROOT_RESOURCE_OBSERVATION_V1",
+    "clock_ticks": 100,
+    "logical_cpus": 32,
+    "allowed_cpus": 32,
+    "cpu_model": "Intel(R) Xeon(R) Platinum 8488C",
+    "filesystem_device": "nvme0n1p1",
+    "parent_disk": "nvme0n1",
+    "interval_seconds": 10,
+    "intervals": 2,
+    "scope": "Recorded ROOT process; host memory/pressure and shared filesystem disk; read-only counters"
+  },
+  "samples": [
+    {
+      "schema": "FRANKIE_ROOT_RESOURCE_SAMPLE_V1",
+      "sample": 0,
+      "at": "2026-09-27T05:22:50.474834+00:00",
+      "monotonic": 509994.348814312,
+      "pid": 54056,
+      "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:50634948",
+      "process": {
+        "state": "R",
+        "user_ticks": 360552,
+        "system_ticks": 3962,
+        "major_faults": 0,
+        "threads": 32,
+        "io": {
+          "rchar": 65553516207,
+          "wchar": 83474344035,
+          "syscr": 1395309,
+          "syscw": 775527,
+          "read_bytes": 0,
+          "write_bytes": 83476951040,
+          "cancelled_write_bytes": 0
+        },
+        "status_kib": {
+          "VmSize": 6412572,
+          "VmRSS": 4765236,
+          "VmSwap": 0
+        }
+      },
+      "host_cpu_ticks": [
+        33909287,
+        2404,
+        459998,
+        1597241778,
+        110916,
+        0,
+        880,
+        35912
+      ],
+      "memory_kib": {
+        "MemTotal": 259751792,
+        "MemAvailable": 251603572,
+        "SwapTotal": 0,
+        "SwapFree": 0,
+        "Dirty": 695004,
+        "Writeback": 0
+      },
+      "vm": {
+        "pswpin": 0,
+        "pswpout": 0,
+        "pgmajfault": 2967
+      },
+      "pressure": {
+        "cpu": {
+          "some": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "14232815382"
+          },
+          "full": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "0"
+          }
+        },
+        "memory": {
+          "some": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "104752"
+          },
+          "full": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "104537"
+          }
+        },
+        "io": {
+          "some": {
+            "avg10": "0.06",
+            "avg60": "0.22",
+            "avg300": "0.21",
+            "total": "318909680"
+          },
+          "full": {
+            "avg10": "0.06",
+            "avg60": "0.22",
+            "avg300": "0.21",
+            "total": "318825442"
+          }
+        }
+      },
+      "cgroup": {
+        "cpu": {
+          "usage_usec": 343274906769,
+          "user_usec": 338829110191,
+          "system_usec": 4445796578,
+          "nice_usec": 2165980,
+          "core_sched.force_idle_usec": 0
+        },
+        "cpu_max": null
+      },
+      "diskstats": {
+        "nvme0n1": [
+          65346,
+          13876,
+          2038727,
+          45704,
+          2320087,
+          1179725,
+          737231140,
+          5501275,
+          0,
+          1061266,
+          5546979,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "nvme0n1p1": [
+          57626,
+          13232,
+          1917265,
+          40551,
+          2319663,
+          1179641,
+          737048840,
+          5500048,
+          0,
+          1609860,
+          5540599,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "progress": {
+        "stage": "root-native-reconstruct",
+        "completed": 342291,
+        "total": 2032203,
+        "failed": 0,
+        "at": 1790486569.9306004
+      },
+      "checkpoints": {
+        "at": 1790486102.8227773,
+        "counts": {
+          "read_verified": 6,
+          "saved": 6
+        },
+        "last_event": "read_verified",
+        "name": "checkpoint-000005.json",
+        "pid": 54056,
+        "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:50634948",
+        "request_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a"
+      }
+    },
+    {
+      "schema": "FRANKIE_ROOT_RESOURCE_SAMPLE_V1",
+      "sample": 1,
+      "at": "2026-09-27T05:23:00.475986+00:00",
+      "monotonic": 510004.34996999,
+      "pid": 54056,
+      "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:50634948",
+      "process": {
+        "state": "R",
+        "user_ticks": 361545,
+        "system_ticks": 3969,
+        "major_faults": 0,
+        "threads": 32,
+        "io": {
+          "rchar": 65554040495,
+          "wchar": 83733432923,
+          "syscr": 1395373,
+          "syscw": 777480,
+          "read_bytes": 0,
+          "write_bytes": 83736047616,
+          "cancelled_write_bytes": 0
+        },
+        "status_kib": {
+          "VmSize": 6419740,
+          "VmRSS": 4772928,
+          "VmSwap": 0
+        }
+      },
+      "host_cpu_ticks": [
+        33910281,
+        2404,
+        460019,
+        1597272712,
+        110966,
+        0,
+        880,
+        35912
+      ],
+      "memory_kib": {
+        "MemTotal": 259751792,
+        "MemAvailable": 251611116,
+        "SwapTotal": 0,
+        "SwapFree": 0,
+        "Dirty": 173872,
+        "Writeback": 0
+      },
+      "vm": {
+        "pswpin": 0,
+        "pswpout": 0,
+        "pgmajfault": 2967
+      },
+      "pressure": {
+        "cpu": {
+          "some": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "14232818041"
+          },
+          "full": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "0"
+          }
+        },
+        "memory": {
+          "some": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "111813"
+          },
+          "full": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "111598"
+          }
+        },
+        "io": {
+          "some": {
+            "avg10": "0.38",
+            "avg60": "0.28",
+            "avg300": "0.22",
+            "total": "318988124"
+          },
+          "full": {
+            "avg10": "0.38",
+            "avg60": "0.28",
+            "avg300": "0.22",
+            "total": "318903864"
+          }
+        }
+      },
+      "cgroup": {
+        "cpu": {
+          "usage_usec": 343284925580,
+          "user_usec": 338839050021,
+          "system_usec": 4445875558,
+          "nice_usec": 2165980,
+          "core_sched.force_idle_usec": 0
+        },
+        "cpu_max": null
+      },
+      "diskstats": {
+        "nvme0n1": [
+          65346,
+          13876,
+          2038727,
+          45704,
+          2323118,
+          1179725,
+          738779316,
+          5511020,
+          0,
+          1061723,
+          5556725,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "nvme0n1p1": [
+          57626,
+          13232,
+          1917265,
+          40551,
+          2322694,
+          1179641,
+          738597016,
+          5509793,
+          0,
+          1610407,
+          5550345,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "progress": {
+        "stage": "root-native-reconstruct",
+        "completed": 342291,
+        "total": 2032203,
+        "failed": 0,
+        "at": 1790486569.9306004
+      },
+      "checkpoints": {
+        "at": 1790486102.8227773,
+        "counts": {
+          "read_verified": 6,
+          "saved": 6
+        },
+        "last_event": "read_verified",
+        "name": "checkpoint-000005.json",
+        "pid": 54056,
+        "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:50634948",
+        "request_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a"
+      }
+    },
+    {
+      "schema": "FRANKIE_ROOT_RESOURCE_SAMPLE_V1",
+      "sample": 2,
+      "at": "2026-09-27T05:23:10.477193+00:00",
+      "monotonic": 510014.351177149,
+      "pid": 54056,
+      "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:50634948",
+      "process": {
+        "state": "R",
+        "user_ticks": 362537,
+        "system_ticks": 3976,
+        "major_faults": 0,
+        "threads": 32,
+        "io": {
+          "rchar": 65554581167,
+          "wchar": 83991179706,
+          "syscr": 1395439,
+          "syscw": 779516,
+          "read_bytes": 0,
+          "write_bytes": 83993804800,
+          "cancelled_write_bytes": 0
+        },
+        "status_kib": {
+          "VmSize": 6426908,
+          "VmRSS": 4779456,
+          "VmSwap": 0
+        }
+      },
+      "host_cpu_ticks": [
+        33911274,
+        2404,
+        460037,
+        1597303702,
+        110967,
+        0,
+        880,
+        35913
+      ],
+      "memory_kib": {
+        "MemTotal": 259751792,
+        "MemAvailable": 251595504,
+        "SwapTotal": 0,
+        "SwapFree": 0,
+        "Dirty": 426600,
+        "Writeback": 0
+      },
+      "vm": {
+        "pswpin": 0,
+        "pswpout": 0,
+        "pgmajfault": 2967
+      },
+      "pressure": {
+        "cpu": {
+          "some": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "14232819685"
+          },
+          "full": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "0"
+          }
+        },
+        "memory": {
+          "some": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "111813"
+          },
+          "full": {
+            "avg10": "0.00",
+            "avg60": "0.00",
+            "avg300": "0.00",
+            "total": "111598"
+          }
+        },
+        "io": {
+          "some": {
+            "avg10": "0.14",
+            "avg60": "0.24",
+            "avg300": "0.21",
+            "total": "318990645"
+          },
+          "full": {
+            "avg10": "0.14",
+            "avg60": "0.24",
+            "avg300": "0.21",
+            "total": "318906384"
+          }
+        }
+      },
+      "cgroup": {
+        "cpu": {
+          "usage_usec": 343294934584,
+          "user_usec": 338848982045,
+          "system_usec": 4445952539,
+          "nice_usec": 2165980,
+          "core_sched.force_idle_usec": 0
+        },
+        "cpu_max": null
+      },
+      "diskstats": {
+        "nvme0n1": [
+          65346,
+          13876,
+          2038727,
+          45704,
+          2323121,
+          1179773,
+          738779724,
+          5511026,
+          0,
+          1061728,
+          5556730,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "nvme0n1p1": [
+          57626,
+          13232,
+          1917265,
+          40551,
+          2322697,
+          1179689,
+          738597424,
+          5509799,
+          0,
+          1610412,
+          5550351,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "progress": {
+        "stage": "root-native-reconstruct",
+        "completed": 343743,
+        "total": 2032203,
+        "failed": 0,
+        "at": 1790486584.934628
+      },
+      "checkpoints": {
+        "at": 1790486102.8227773,
+        "counts": {
+          "read_verified": 6,
+          "saved": 6
+        },
+        "last_event": "read_verified",
+        "name": "checkpoint-000005.json",
+        "pid": 54056,
+        "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:50634948",
+        "request_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a"
+      }
+    }
+  ],
+  "derived": {
+    "seconds": 20.002362836967222,
+    "root_cpu_percent_one_core": 99.93819311714327,
+    "root_user_percent_one_core": 99.23827580666803,
+    "host_idle_percent": 96.75322646167307,
+    "host_iowait_percent": 0.07968500984344239,
+    "root_rss_gib": 4.55804443359375,
+    "host_available_gib": 239.94017028808594,
+    "root_write_mib_s": 24.642596490602184,
+    "disk_write_mib_s": 37.80276047450439,
+    "disk_busy_percent": 2.3097271245682935,
+    "disk_average_inflight": 0.487492406746005,
+    "memory_stall_some_percent": 0.03530082949475481,
+    "io_stall_some_percent": 0.4047771788759132,
+    "root_major_faults_delta": 0,
+    "root_physical_read_bytes_delta": 0
+  },
+  "formulas": {
+    "root_cpu_percent_one_core": "100 * delta(utime + stime) / CLK_TCK / elapsed_monotonic_seconds",
+    "host_idle_percent": "100 * delta(idle_ticks) / sum(delta(first eight aggregate /proc/stat CPU fields)); guest fields excluded to avoid double counting",
+    "disk_write_mib_s": "delta(sectors_written) * 512 / elapsed_seconds / 1048576",
+    "disk_busy_percent": "100 * delta(io_ticks_ms) / (elapsed_seconds * 1000)",
+    "disk_average_inflight": "delta(weighted_io_ms) / (elapsed_seconds * 1000)",
+    "pressure_percent": "100 * delta(PSI total microseconds) / (elapsed_seconds * 1000000)",
+    "rss_gib": "VmRSS KiB / 1048576"
+  },
+  "limits": [
+    "Two 10-second intervals during reconstruction, not a whole-day profile or speedup benchmark.",
+    "Host memory, pressure and disk counters include other host activity and buffered writeback.",
+    "This sample does not attribute CPU time to individual calculation functions or JSON serialization.",
+    "ROOT has 32 reported OS threads but consumed approximately one CPU; this is not 32 active calculation workers.",
+    "cgroup cpu.max was unavailable; do not interpret missing data as a measured zero quota or zero throttling.",
+    "No active producer changes, restart, ingestion replay, extra calculation run, tracing attachment or package installation."
+  ]
+}
