@@ -315,8 +315,31 @@ def _published_layout(path, name, receipts):
 
 
 def _prepare_fragments(job):
+    """Consecutive fragments of one published layer, decoded on a helper and written by the helper into its own part
+    database (rows with their final ordinals from `start`, and each member row's group key and shard), so no row
+    crosses the process boundary; the coordinator copies the part in with one INSERT ... SELECT. Returns (part, rows)."""
+    path, field, fragments, index, start, part = job
+    rows = _fragment_rows(path, field, fragments)
+    db = sqlite3.connect(part)
+    try:
+        db.execute('PRAGMA journal_mode=OFF')
+        db.execute('PRAGMA synchronous=OFF')
+        db.execute('CREATE TABLE rows (layer INTEGER, field TEXT, ordinal INTEGER, section TEXT, payload TEXT)')
+        db.execute('CREATE TABLE member_keys (ordinal INTEGER, group_key TEXT, shard INTEGER)')
+        db.executemany('INSERT INTO rows VALUES (?,?,?,?,?)',
+                       [(index, field, start + i, section, payload) for i, (section, payload, _) in enumerate(rows)])
+        if field == 'member_rows':
+            db.executemany('INSERT INTO member_keys VALUES (?,?,?)',
+                           [(start + i, group, zlib.crc32(group.encode()) % SHARDS if group is not None else 0)
+                            for i, (_, _, group) in enumerate(rows)])
+        db.commit()
+    finally:
+        db.close()
+    return part, len(rows)
+
+
+def _fragment_rows(path, field, fragments):
     """Rows of consecutive fragments of one published layer, in order: (section, payload, group key)."""
-    path, field, fragments = job
     out = []
     with open(path, 'rb') as handle:
         for offset, width, digest, rows in fragments:
@@ -349,6 +372,8 @@ def _prepare_fragments(job):
 
 def _prepared_database(path):
     db = sqlite3.connect(path)
+    # scratch: reused only through the receipt written after it is complete, so no per-commit fsync is needed
+    db.execute('PRAGMA synchronous=OFF')
     db.execute('PRAGMA cache_size=-2048')
     db.execute('PRAGMA temp_store=FILE')
     db.execute('CREATE TABLE rows (layer INTEGER, field TEXT, ordinal INTEGER, section TEXT, payload TEXT, PRIMARY KEY(layer,field,ordinal))')
@@ -384,16 +409,28 @@ def _prepare_published(index, name, pin, root, receipts, workers):
             value = document[key]
             if key in arrays:
                 count, expected = 0, sum(f[3] for f in arrays[key])
-                jobs = [(str(path), key, arrays[key][i:i + FRAGMENTS_PER_JOB])
-                        for i in range(0, len(arrays[key]), FRAGMENTS_PER_JOB)]
-                for rows in workers.ordered(_prepare_fragments, jobs):
-                    db.executemany('INSERT INTO rows VALUES (?,?,?,?,?)',
-                                   [(index, key, count + i, section, payload) for i, (section, payload, _) in enumerate(rows)])
-                    if key == 'member_rows':
-                        db.executemany('INSERT INTO member_keys VALUES (?,?,?)',
-                                       [(count + i, group, zlib.crc32(group.encode()) % SHARDS if group is not None else 0)
-                                        for i, (_, _, group) in enumerate(rows)])
-                    count += len(rows)
+                parts = obj.root/'parts'
+                parts.mkdir(exist_ok=True)
+                jobs, start = [], 0
+                for i in range(0, len(arrays[key]), FRAGMENTS_PER_JOB):
+                    fragments = arrays[key][i:i + FRAGMENTS_PER_JOB]
+                    jobs.append((str(path), key, fragments, index, start, str(parts/('%s-%06d.sqlite' % (key, i)))))
+                    start += sum(f[3] for f in fragments)
+                for part, rows in workers.ordered(_prepare_fragments, jobs):
+                    # the copy runs inside SQLite (the interpreter lock is released for the statement)
+                    db.commit()
+                    db.execute('ATTACH DATABASE ? AS part', (part,))
+                    try:
+                        copied = db.execute('INSERT INTO rows SELECT * FROM part.rows ORDER BY ordinal').rowcount
+                        if key == 'member_rows':
+                            db.execute('INSERT INTO member_keys SELECT * FROM part.member_keys ORDER BY ordinal')
+                        db.commit()
+                    finally:
+                        db.execute('DETACH DATABASE part')
+                    if copied != rows:
+                        raise ValueError('published layer part rows differ from the helper count')
+                    os.unlink(part)
+                    count += rows
                 if count != expected:
                     raise ValueError('published layer rows differ from the range receipts')
                 counts[key] = count
