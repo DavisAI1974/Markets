@@ -1,5 +1,17 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Worker transport continuation dispatched — 2026-09-27 08:14Z
+
+- [x] Source runtime68f2311e3071f24fd63b65134b81861b3246400f implements the worker data-exchange changes below.
+- [x] Fresh verified checkpoint pause36305210399:917118records, checkpoint-000004.json in recovery-d4b20c8f7e834d7abb1a435ff8199442. PID55501 and all14owned workers exited. Pause receipt1268bytes SHA256d2f5c12a580f93b672e6e69e1d9ce8519237153d820a9b6fa33f459cefb6cb1d; every file/tail preserved.
+- [x] Full descriptor read36305384051:controller-state-000004.json10483bytes SHA25662ca615979edbc252566e173dcbc3578ce5dbe405b188534e081530957d1fb95; driver-state247983673bytes SHA256bbb61730d4a23a4043c4f11b13de4fe36cd847e1dd84e42a73d17edd765e3007. Completed917118, finalized=false.
+- [x] Staging36305212151:CODE_ROOT=/opt/frankie-box/code/68f2311e3071f24fd63b65134b81861b3246400f-36305212151-1/markets; source pack589529949bytes/3666files SHA2561bad133b4786102e9ca69af8b1753464227be0105d22a5bc643134beca06e4af; intentdb8405d290dd4040ef9117315cc8965aaaa2a500690c170f9afc7c17b169ded1. No source replay/model calls/active-checkout mutation.
+- [x] Single resume dispatched https://github.com/DavisAI1974/Markets/actions/runs/36305497169 on exact ref codex/frankie-transport-runtime-68f2311, same root/authorship/binding and48readers.
+- [x] Probe36305526403 at08:14Z:PID56172, token099d4eb6-a46d-4b94-a888-f15e55c1ee7e:52022690, alive, failed=0, root-legacy-reuse. Its completed=0 is setup/restoration, not loss of the917118-record checkpoint.
+- [ ] Witness restored native cursor, new worker receipt and a full-state checkpoint after transport activation. No speedup established.
+
+Granite watcher36304223443 completed with authenticated health200 and verified startup. The replacement identity/defaults and exact INFO hash are adopted in this source update; see audits/GRANITE_ADOPTION_20260927.md. Actual downstream staging/priming/model sequence remains pending. Do not restart ROOT for these downstream-only bindings.
+
 ## Worker transport source changes — 2026-09-27, continuation after dd25e040
 
 Latest user direction: finish worker fixes first. Evidence batching is committed in197edf9ae61df770fd19290c6a7dce725fc308e2; persistent book partitions, ordered census batches and exact predecessor policy migration are included with this update. See [ROOT_WORKER_TRANSPORT_20260927.md](audits/ROOT_WORKER_TRANSPORT_20260927.md) for the retained-profile attribution, precise semantics and actual checklist.

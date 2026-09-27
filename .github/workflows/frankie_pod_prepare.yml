@@ -9,7 +9,7 @@ on:
       source_pod:
         description: 'Retained Pod whose environment and identity are copied'
         required: false
-        default: 'ycf4v6lmave6xw'
+        default: 'fhiwwlouzyx6l2'
       data_centers:
         description: 'Comma-separated data center ids; empty = every data center reporting L40S stock'
         required: false

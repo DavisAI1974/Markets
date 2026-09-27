@@ -39,7 +39,8 @@ import time
 CONTROL = 'api.runpod.io'
 SENSITIVE = ('key', 'secret', 'token', 'password', 'env')
 HOST_BUSY = 'not enough free GPUs on the host machine'
-RETAINED_POD = 'g7y3g2w1kor4l3'   # never terminated here: it holds the retained model
+RETAINED_POD = 'fhiwwlouzyx6l2'
+PRESERVED_PODS = {RETAINED_POD, 'g7y3g2w1kor4l3'}  # Both retained Pod/storage generations stay protected.
 RETRY_INTERVAL = 60
 
 
@@ -139,7 +140,7 @@ def main():
                                           transitions=transitions, final_status=last)))
         return
     if args.action == 'terminate':
-        if args.pod == RETAINED_POD:
+        if args.pod in PRESERVED_PODS:
             raise SystemExit('refusing to terminate the retained Pod')
         if pod.get('status') != 'EXITED' or not str(pod.get('name', '')).endswith('-migration'):
             raise SystemExit('terminate requires an EXITED replacement Pod; status=%r name=%r' % (pod.get('status'), pod.get('name')))

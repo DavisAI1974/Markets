@@ -63,7 +63,7 @@ READING_LEDGER = ROOT / 'reading-ledger.json'   # L6: every value digest read so
 PART_INPUT_TOKENS = 87_000                      # exact tokens per part when the tokenizer is present; reading.json part_input_tokens
 READING_CONFIG = ROOT / 'reading.json'    # {"tensor_mode": "values" | "identity"} (frankie_box_serverless_config.sh ACTION=reading)
 SERVERLESS_MAX_RESPONSE = 8 * 1024 * 1024
-POD_ID_DEFAULT = 'g7y3g2w1kor4l3'
+POD_ID_DEFAULT = 'fhiwwlouzyx6l2'
 SERVED_MODEL_DEFAULT = 'granite42-smoke'   # the retained identity's served model name (granite_retained_lifecycle)
 CONTRACT_PATH = 'research/kalshi/frankie_boss/sunday_20260915_package/FB/principal-source-contract/source-contract.json'
 REGISTRY_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json'
