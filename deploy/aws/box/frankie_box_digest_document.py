@@ -6,6 +6,7 @@ import math
 import os
 from pathlib import Path
 import sqlite3
+import sys
 
 import frankie_box_digest_render as DG
 import frankie_box_digest_stream as TS
@@ -81,41 +82,52 @@ def per_second_rows(first, buys, sells, roll, window=20):
         yield dict(second=first+t, buy=buys[t], sell=sells[t], roll20=frac)
 
 
-TABLE_SAVE_SCHEMA = 'FRANKIE_DIGEST_TABLE_SAVE_V1'
+TABLE_SAVE_SCHEMA = 'FRANKIE_DIGEST_TABLE_SAVE_V2'   # V2: every module that shapes a table, the inputs, sha256-checked reuse
 
 
 def _code_identity():
-    """The serializer and renderer bytes a saved table was written by; any change there refuses reuse."""
-    return {Path(m.__file__).name: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest() for m in (TS, DG)}
+    """Every module whose bytes shape a table (serializer, renderer, this writer, the bedrock sources); any change
+    there refuses reuse. The merge shards have their own narrower key (frankie_box_digest_sources.merge_shard_key)."""
+    import frankie_box_digest_sources as S
+    return {Path(m.__file__).name: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
+            for m in (TS, DG, S, sys.modules[__name__])}
 
 
 def _canonical(value):
     return json.loads(json.dumps(value, sort_keys=True))
 
 
-def _saved_table(scratch, ordinal, key):
+def _saved_table(scratch, ordinal, key, context=False):
     """Save point for reruns: the table at this ordinal that an earlier digest attempt of this calculation root wrote,
-    proved and receipted with exactly this key (name, inputs, serializer code). Its bytes are hashed again while the
-    document is assembled (_copy_verified), so a changed file refuses there."""
+    proved and receipted with exactly this key (name, inputs, code). A candidate is used only if its bytes (and, for a
+    legacy table, its context database) hash to the receipt; otherwise the next candidate is tried or the table is
+    rebuilt. Assembly hashes the reused bytes once more (_copy_verified)."""
     for receipt in sorted(scratch.parent.glob('.digest-*/table-%04d.save.json' % ordinal)):
         if receipt.parent == scratch:
             continue
         try:
             value = json.loads(receipt.read_bytes())
-        except (OSError, ValueError):
+            if value.get('schema') != TABLE_SAVE_SCHEMA or value.get('key') != key:
+                continue
+            path = _safe(value.get('path') or '')
+            if path.parent != _safe(receipt.parent) or path.name != 'table-%04d.txt' % ordinal or not path.is_file():
+                continue
+            if _witness(path) != value.get('digest'):
+                continue
+            if context:
+                database = path.parent/('table-%04d' % ordinal)/'table.sqlite'
+                if not database.is_file() or _witness(database) != value.get('context'):
+                    continue
+        except (OSError, ValueError, TypeError, AttributeError):
             continue
-        path = Path(value.get('path') or '')
-        if (value.get('schema') == TABLE_SAVE_SCHEMA and value.get('key') == key
-                and path.parent == receipt.parent and path.name == 'table-%04d.txt' % ordinal and path.is_file()
-                and path.stat().st_size == (value.get('digest') or {}).get('bytes')):
-            return dict(name=value['name'], rows=value['rows'], path=path, digest=value['digest'], saved=str(receipt))
+        return dict(name=value['name'], rows=value['rows'], path=path, digest=value['digest'], saved=str(receipt))
     return None
 
 
-def _save_table(scratch, ordinal, key, entry):
+def _save_table(scratch, ordinal, key, entry, context=None):
     _save_new(scratch/('table-%04d.save.json' % ordinal),
               dict(schema=TABLE_SAVE_SCHEMA, key=key, name=entry['name'], rows=entry['rows'],
-                   path=str(entry['path']), digest=entry['digest']))
+                   path=str(entry['path']), digest=entry['digest'], context=context))
 
 
 def _copy_verified(path, output, expected):
@@ -196,16 +208,20 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
             yield dict(action_string=key,count=count)
 
     code = _code_identity()
+    # The legacy tables' inputs are the legacy layer files the derivation receipt witnessed (prices, frames, structures
+    # and the per-second series are read from them), so their sha256s key every legacy table.
+    legacy_inputs = {name: entry.get('sha256') for name, entry in sorted((receipt.get('layers') or {}).items())
+                     if not entry.get('bedrock')}
     reusing = {'legacy': True}
 
     def table(name, rows, context=None):
         ordinal = len(stages)
         root = scratch/('table-%04d' % ordinal)
         path = scratch/('table-%04d.txt' % ordinal)
-        key = _canonical(dict(kind='legacy', name=name, context=sorted(context or {}), code=code))
+        key = _canonical(dict(kind='legacy', name=name, context=sorted(context or {}), code=code, inputs=legacy_inputs))
         # Legacy tables are reused only as an unbroken prefix, so a context table is always the one actually used.
-        saved = _saved_table(scratch, ordinal, key) if reusing['legacy'] else None
-        if saved is not None and (Path(saved['path']).parent/('table-%04d' % ordinal)/'table.sqlite').is_file():
+        saved = _saved_table(scratch, ordinal, key, context=True) if reusing['legacy'] else None
+        if saved is not None:
             stages.append(dict(name=saved['name'], rows=saved['rows'], path=Path(saved['path']), digest=saved['digest']))
             return _Rows(Path(saved['path']).parent/('table-%04d' % ordinal)/'table.sqlite')
         reusing['legacy'] = False
@@ -217,7 +233,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         if TS._identity(path) != proof['verified_identity']:
             raise ValueError('proved table changed before its byte witness')
         stages.append(dict(name=name, rows=proof['rows'], path=path, digest=digest))
-        _save_table(scratch, ordinal, key, stages[-1])
+        _save_table(scratch, ordinal, key, stages[-1], context=_witness(root/'table.sqlite'))
         return original
 
     # The bedrock sources (layer preparation and member merge, on the pinned helpers) are independent of the five

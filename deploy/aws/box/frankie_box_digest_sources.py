@@ -554,6 +554,68 @@ def _merge_shard(job):
     return output
 
 
+# The code a merge shard's bytes depend on: the shard merge, the helpers it calls, and the layer preparation that
+# writes the rows and the group-key shard assignment it reads. The bedrock TABLE code is deliberately not here, so a
+# table change reuses the merge; any change here rebuilds it.
+MERGE_CODE = {'_merge_shard': _merge_shard, '_decoded': _decoded, '_payload': _payload, '_dump': _dump,
+              '_group_key': _group_key, '_member_row': _member_row, '_prepare_layer': _prepare_layer,
+              '_prepare_fragments': _prepare_fragments, '_fragment_rows': _fragment_rows,
+              '_prepared_database': _prepared_database, '_prepare_published': _prepare_published,
+              'DG._same': DG._same, 'DG._leaf_count': DG._leaf_count}
+MERGE_SAVE_SCHEMA = 'FRANKIE_MERGE_SHARD_SAVE_V2'   # V2: narrow code key, sha256 recorded and checked before reuse
+
+
+def merge_shard_key(identity):
+    """identity: [[index, name, pinned layer sha256], ...] of the keyed derived layers, in merge order."""
+    import inspect
+    code = {name: hashlib.sha256(inspect.getsource(function).encode()).hexdigest()
+            for name, function in sorted(MERGE_CODE.items())}
+    return dict(schema=MERGE_SAVE_SCHEMA, shards=SHARDS, layers=json.loads(json.dumps(identity)), code=code)
+
+
+def _file_sha256(path):
+    hashed = hashlib.sha256()
+    with Path(path).open('rb') as source:
+        for block in iter(lambda: source.read(8 * 1024 * 1024), b''):
+            hashed.update(block)
+    return hashed.hexdigest()
+
+
+def _saved_shard(root, shard, key):
+    """A merge shard an earlier digest attempt of this calculation root completed under exactly this key, whose bytes
+    still hash to its receipt; None otherwise (the shard is then merged again)."""
+    for receipt in sorted(Path(root).parent.parent.glob('.digest-*/calculation-layers/merge-%02d.save.json' % shard)):
+        if receipt.parent == Path(root):
+            continue
+        try:
+            value = json.loads(receipt.read_bytes())
+            output = Path(value.get('output') or '')
+            if (value.get('key') != key or output.parent != receipt.parent or output.name != 'merge-%02d.sqlite' % shard
+                    or not output.is_file() or output.is_symlink() or output.stat().st_size != value.get('bytes')
+                    or (output.parent / (output.name + '-journal')).exists()):
+                continue
+            if _file_sha256(output) != value.get('sha256'):
+                continue
+        except (OSError, ValueError, TypeError, AttributeError):
+            continue
+        return str(output)
+    return None
+
+
+def _save_shard(root, shard, key, output, **evidence):
+    receipt = Path(root)/('merge-%02d.save.json' % shard)
+    with receipt.open('x') as handle:
+        json.dump(dict(key=key, shard=shard, output=str(output), bytes=Path(output).stat().st_size,
+                       sha256=_file_sha256(output), **evidence), handle, sort_keys=True)
+        handle.flush()
+        os.fsync(handle.fileno())
+    descriptor = os.open(receipt.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
 class BedrockSources:
     """Pinned layer entries -> ordered replayable table iterables.
 
@@ -739,28 +801,13 @@ class BedrockSources:
         return metadata, counts
 
     def _merge_sharded(self, layers, identity):
-        """identity: [[index, name, pinned layer sha256], ...]; with the merge code's source it keys each shard's save
-        point, so a rerun of this calculation root reuses shards an earlier digest attempt completed."""
-        import inspect
+        """identity: [[index, name, pinned layer sha256], ...]; with the merge code (MERGE_CODE) it keys each shard's
+        save point, so a rerun of this calculation root reuses shards an earlier digest attempt completed."""
+        from concurrent.futures import ThreadPoolExecutor
         from frankie_box_projection import Workers
-        key = dict(schema='FRANKIE_MERGE_SHARD_SAVE_V1', shards=SHARDS, layers=json.loads(json.dumps(identity)),
-                   code=hashlib.sha256(inspect.getsource(_merge_shard).encode()).hexdigest())
-        planned = []
-        for shard in range(SHARDS):
-            saved = None
-            for receipt in sorted(self.root.parent.parent.glob('.digest-*/calculation-layers/merge-%02d.save.json' % shard)):
-                if receipt.parent == self.root:
-                    continue
-                try:
-                    value = json.loads(receipt.read_bytes())
-                except (OSError, ValueError):
-                    continue
-                output = Path(value.get('output') or '')
-                if (value.get('key') == key and output.parent == receipt.parent and output.is_file()
-                        and output.stat().st_size == value.get('bytes')):
-                    saved = str(output)
-                    break
-            planned.append(saved)
+        key = merge_shard_key(identity)
+        with ThreadPoolExecutor(SHARDS) as pool:      # hashing the candidates releases the GIL
+            planned = list(pool.map(lambda shard: _saved_shard(self.root, shard, key), range(SHARDS)))
         workers = Workers()
         try:
             jobs = [(shard, layers, str(self.root/('merge-%02d.sqlite' % shard)))
@@ -770,9 +817,7 @@ class BedrockSources:
                 output = planned[shard]
                 if output is None:
                     output = next(done)
-                    with (self.root/('merge-%02d.save.json' % shard)).open('x') as receipt:
-                        json.dump(dict(key=key, shard=shard, output=output, bytes=Path(output).stat().st_size), receipt, sort_keys=True)
-                        receipt.flush(); os.fsync(receipt.fileno())
+                    _save_shard(self.root, shard, key, output)
                 self.db.execute('ATTACH DATABASE ? AS shard', (output,))
                 self.db.execute('INSERT INTO groups SELECT * FROM shard.groups')
                 self.db.execute('INSERT INTO members SELECT * FROM shard.members')
