@@ -111,3 +111,17 @@ Projection observation36324486562 at14:02:53Z: preserved plan370208809bytes SHA2
 
 All downstream Monday stages, actual Granite lesson delivery/acknowledgement, Tuesday and learning outcomes remain pending. Orchestrator stays PLAN ONLY. Existing preservation and scope restrictions below remain in force.
 
+
+## Projection startup verified — 2026-09-27 14:18Z
+
+Corrected runtime2d3e6bb is now executing projection in the same resume36324470881/PID59092; no second resume was dispatched. Observer [36325294818](https://github.com/DavisAI1974/Markets/actions/runs/36325294818) at14:16:38Z confirms the canonical-import correction passed actual worker startup:
+- workers-59092.json:420bytes SHA2563ac171970a3279739cb833dbb0d1147c49399799aec9b3083a652d5e6bf638b4.
+- CoordinatorCPU1, CPU0reserved;14 helper processes with readback-verified affinities: CPU2/PID59344,3/59345,4/59346,5/59347,6/59349,7/59341,8/59351,9/59348,10/59352,11/59353,12/59355,13/59354,14/59356,15/59350.28pending ranges maximum.
+-238completed member ranges and238archives,3153776593compressed archive bytes,219921956864bytes free. Lifecycle had0ranges at that observation.
+-First range000000:489rows,0–67175604actual input bytes, archive9968295bytes SHAd3abd506b95124c87557cd15b6032f5053a83a3bc2560689f2f9c7afa178de13; receipt SHA4b4a86ee4a91c0e066d5cfbf9015c295cb0c49ff8b443e9f746a1034bd208fe5, readback_verified=true.
+-Plan remains SHA3ef241ac435253142680040976ab6f548b3119b1d73f26e6ca95bb9f78cb73b2. Highest range is not an ordered frontier; use progress.json.
+
+New terminal recovery generation is recovery-8c03f629f01747158535f3cfa4f01f2d. Progress36325217520 reported checkpoint000000 saved/read_verified at14:14:41Z forPID59092. Receipt read [36325379332](https://github.com/DavisAI1974/Markets/actions/runs/36325379332) confirms712bytes SHA2562d61559ca9f5c650cdb22fa9aff29b8f0a366a648983493d435c26a3387943e6; checkpoint hashc3281f870a457f9ccf0827ca54a88adc99712cfb6dd3492f7a02a94019bfbecb, locked,2032203/2032203records, same adapter/source/run identity.
+
+Projection completion, publication, digest and calculations-receipt.json remain pending. Continue this single process and retain all evidence. Do not interpret successful helper startup as full Monday completion or a measured net speedup. Downstream manual Monday and Granite delivery/acknowledgement remain pending.
+
