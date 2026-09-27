@@ -24,7 +24,7 @@ The exact candidate code in 19e2da01e6b3804d29550e0aa054a2cf66ba3a94 passed Pyth
 Only the exact phase-one checkpoint serializer/policies are accepted as predecessors; current Python/cloudpickle and complete producer/source identity must match. New checkpoints include the ledger-storage implementation hash. Complete driver, census and book state remain checkpointed; incomplete background assemblies contain no unique state and are not checkpoint dependencies.
 
 - [x] Implementation source and manual static review.
-- [x] Candidate syntax compilation; repeat compilation of final changed bytes before staging.
+- [x] Candidate syntax compilation; final changed bytes also compiled successfully at fdc6328f97632a27f273ce1cd82481479697ab24.
 - [ ] Immutable inactive staging receipt.
 - [ ] Fresh read-verified full checkpoint and identified old ROOT/worker exit.
 - [ ] One canonical resume and restored ledger/cursor receipt.
