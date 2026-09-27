@@ -4,7 +4,7 @@
 set -eu
 : "${MARKETS_SHA:?full dispatched commit required}"
 : "${CODE_ROOT:?staged clean checkout required}"
-: "${ACTION:?config, launch, principal, correction or record}"
+: "${ACTION:?config, launch, principal, correction, record or retain}"
 case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under /opt/frankie-box/code required" >&2; exit 2;; esac
 [ "$(git -C "$CODE_ROOT" rev-parse HEAD)" = "$MARKETS_SHA" ] || { echo "staged checkout differs from MARKETS_SHA" >&2; exit 2; }
 PYTHON=/opt/frankie-box/venv/bin/python
@@ -61,5 +61,12 @@ for name, path in (('configuration', configuration), ('response', output / names
 raise SystemExit(subprocess.run(command, check=False).returncode)
 PY
     ;;
-  *) echo "ACTION must be config, launch, principal, correction or record" >&2; exit 2;;
+  retain)
+    : "${CALCULATIONS:?Monday calculation and principal session root}"
+    : "${REQUEST_DIRECTORY:?actual host principal request directory}"
+    export SESSION_DIR="$CALCULATIONS" DAY=20211004 CYCLE=00 BRAIN_ONLY=1
+    export FINAL_PRINCIPAL="$REQUEST_DIRECTORY" BASE=claude/agent-skills-execution-tzh7sw
+    exec bash "$CODE_ROOT/deploy/aws/box/frankie_box_push_response.sh"
+    ;;
+  *) echo "ACTION must be config, launch, principal, correction, record or retain" >&2; exit 2;;
 esac

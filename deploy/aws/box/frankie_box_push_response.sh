@@ -22,13 +22,20 @@ if [ "$DOCS_ONLY" = "1" ]; then
   # using, is never moved by this mode. Reads the session work directory; writes only out/docs.
   WORKDIR="$SESSION_DIR/$([ "$CYCLE" = "00" ] && echo work || echo "work-$CYCLE")"
   mkdir -p "$ROOT/tmp"
+  if [ "$BRAIN_ONLY" = "1" ] && [ -n "${FINAL_PRINCIPAL:-}" ]; then
+    "$ROOT/venv/bin/python" -B "$CODE_ROOT/deploy/aws/box/frankie_box_brain.py" --work "$WORKDIR" \
+      --out "$OUT" --brain "$ROOT/brain" --cycle "$CYCLE" --principal-directory "$FINAL_PRINCIPAL" || exit 2
+  else
   git -C "$ROOT/markets" fetch -q --depth 1 origin "$BASE" && git -C "$ROOT/markets" show FETCH_HEAD:deploy/aws/box/frankie_box_docs.py > "$ROOT/tmp/frankie_box_docs.py" || { echo "cannot fetch frankie_box_docs.py from $BASE"; exit 2; }
   echo "docs module from $BASE $(git -C "$ROOT/markets" rev-parse --short FETCH_HEAD), sha256 $(sha256sum "$ROOT/tmp/frankie_box_docs.py" | cut -c1-16); work $WORKDIR"
   if [ "$BRAIN_ONLY" = "1" ]; then
     git -C "$ROOT/markets" show FETCH_HEAD:deploy/aws/box/frankie_box_brain.py > "$ROOT/tmp/frankie_box_brain.py" || { echo "cannot fetch frankie_box_brain.py from $BASE"; exit 2; }
-    "$ROOT/venv/bin/python" "$ROOT/tmp/frankie_box_brain.py" --work "$WORKDIR" --out "$OUT" --brain "$ROOT/brain" --cycle "$CYCLE" || { echo "brain entry failed"; exit 2; }
+    set -- --work "$WORKDIR" --out "$OUT" --brain "$ROOT/brain" --cycle "$CYCLE"
+    [ -z "${FINAL_PRINCIPAL:-}" ] || set -- "$@" --principal-directory "$FINAL_PRINCIPAL"
+    "$ROOT/venv/bin/python" "$ROOT/tmp/frankie_box_brain.py" "$@" || { echo "brain entry failed"; exit 2; }
   else
     "$ROOT/venv/bin/python" "$ROOT/tmp/frankie_box_docs.py" --work "$WORKDIR" --out "$OUT/docs" --cycle "$CYCLE" || { echo "docs build failed"; exit 2; }
+  fi
   fi
 else
   case "$TURN" in initial) FILES="response.json analysis.md host-session-record.json host-attestation.json" ;; correction) FILES="correction-response.json host-correction-record.json host-correction-attestation.json" ;; *) echo "TURN must be initial or correction"; exit 2 ;; esac

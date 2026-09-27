@@ -3,8 +3,8 @@
 ## Start here
 
 Repository: DavisAI1974/Markets. Continue branch `claude/agent-skills-execution-tzh7sw`.
-Runtime/code head before this documentation checkpoint: `a609e049217a78811e23071f927837d6ddc9f966`.
-The user asked to hold further implementation for the next chat because this conversation was slowing down. This is an intentional work checkpoint, not completion.
+Original handoff commit: `d9b9ee2c88bd8667ad84ec00617357d170050f60`.
+Continuation resumed on 2026-09-27. Single-run admission/shared-brain wiring is pushed at `e11bab1ce4f4dbdb81a110c9aa38403a8c20f8ff`; final corrected-knowledge publication is included in the commit carrying this update. Neither increment is deployed. ROOT continues on its original executing commit.
 
 Use using-agent-skills and context-engineering. Existing session also used shipping, Git workflow, incremental implementation and review skills. User restrictions below override generic skill suggestions for tests, parallel agents, canaries or extra approval.
 
@@ -23,6 +23,7 @@ Use using-agent-skills and context-engineering. Existing session also used shipp
 - [x] Wire initial/correction response recording and the same shared knowledge into the recorder.
 - [x] Implement the authorized single-run admission/input path; separate A-arm, historical S3 delivery and output-before-execution prerequisites removed from Monday's route. Code reviewed and syntax-compiled; deployment/live verification awaits current ROOT.
 - [x] Implement the existing brain/shared-snapshot connection for Frankie and scientific teacher, retaining all required research and historical section sources. Actual snapshot assembly awaits completed ROOT receipt.
+- [x] Connect final corrected knowledge publication through the existing cycle wrapper and brain/pusher; require the host's final classroom and pending-outcomes receipts. Actual publication is pending.
 - [ ] After ROOT completion, stage the completed current code through the existing GitHub staging workflow and build the actual Monday host configuration.
 - [ ] Run existing host/Granite, Frankie full reading and writing, initial recording/grading, correction, final recording/grading, and final knowledge retention manually in order.
 - [ ] Retain Monday findings for the next cycle. Missing Tuesday outcomes remain explicitly pending; no fabricated labels, native learning, or cycle-completion claim.
@@ -40,7 +41,8 @@ Verification: syntax-only compilation of all eight changed Python files and bash
 Read-only probe: https://github.com/DavisAI1974/Markets/actions/runs/36290742694
 At 2026-09-27T03:12:55Z: native ROOT 393,825 / 2,032,203 (19.38%), process alive, failed=0, seven checkpoints saved/read_verified, latest checkpoint-000006.json, readers 48 requested / 31 effective. This is stage progress only.
 
-Final corrected knowledge publication remains to be connected after the host's final grading; subsequent checklist items stay pending. The older gap description below records the original checkpoint and is superseded only for the implementation described here.
+Final corrected knowledge publication is connected via existing `frankie_box_cycle0.sh ACTION=retain`, with `CALCULATIONS=<current calculation root>` and `REQUEST_DIRECTORY=<actual host principal directory>`. Run it only after the final host resume writes `execution/cycle-00/pending-feedback.c15.json`. It retains the original response, same-session correction, host grade, acknowledgement, completion, transcript, attestations and pending-outcomes receipt in the brain, archives earlier entries, and publishes using the existing pusher. It refuses an ungraded or mismatched session. Its manifest explicitly records `classroom_final_pending_target_outcomes`, native_learning_performed=false and cycle_complete=false. No final publication has run.
+Syntax-only compilation of the brain module and shell parsing of both changed wrappers passed; no tests or model calls. The older gap description below records the original checkpoint and is superseded only for the implementation described here.
 
 ## Active calculation and evidence
 
@@ -59,13 +61,12 @@ Source-binding file SHA256:
 
 Expected producer run ID: `full-20211004-20260927-r1-48-cycle-00`.
 
-Probe at 2026-09-27T03:06:22Z:
-https://github.com/DavisAI1974/Markets/actions/runs/36290426470
-(job 108539317912).
+Latest probe at 2026-09-27T03:22:29Z:
+https://github.com/DavisAI1974/Markets/actions/runs/36291210359
 - Stage root-native-records, running, process_alive=true.
-- 358,227 / 2,032,203 records = 17.63%.
-- Failed=0; progress age 3.9 seconds.
-- Seven checkpoints saved and seven read_verified; latest checkpoint-000006.json.
+- 444,948 / 2,032,203 records = 21.89%.
+- Failed=0; progress age 12.7 seconds.
+- Eight checkpoints saved and eight read_verified; latest checkpoint-000007.json.
 - PID 51611; process token `099d4eb6-a46d-4b94-a888-f15e55c1ee7e:49511812`.
 - Readers requested 48, effective 31.
 No completed calculations-receipt has been observed.
@@ -123,7 +124,7 @@ Syntax-only compilation completed for changed Python and shell files, including 
 
 An in-memory single-run adapter sketch was started after authorization, then discarded at the user's request to checkpoint. **It is not committed, deployed or an implementation to rely on.** Start from the committed code above.
 
-## Why single-run admission remains unfinished
+## Historical reason single-run admission needed replacement
 
 The old pinned receiver at `2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134` assumes:
 - a separate invoking A-arm result with invocation_cutoffs identifying a source day;
@@ -155,7 +156,7 @@ The retained entry includes the full derivation digest, accounting/output-ledger
 
 Use existing `frankie_box_brain.capture_base/pin_session_base` and `dipole_shared_knowledge.build_snapshot/load_snapshot/descriptor`. Both principal and scientific teacher must consume the same actual accumulated sources. No invented replacement Memory A bundle. Preserve original 18-section files and hashes.
 
-Existing brain write_entry archives earlier cycle00 material rather than deleting it. It retains calculation findings, analysis, classroom and teaching. **Final correction response, final host grade/completion and transcript still need to be carried into the retained knowledge publication.** Do not publish only the initial response as the completed cycle's learning. Avoid modifying the base between pinning shared teacher knowledge and pinning the session base.
+Existing brain write_entry archives earlier cycle00 material rather than deleting it. It retains calculation findings, analysis, classroom and teaching. **Final correction response, final host grade/completion and transcript are now wired into ACTION=retain; execution remains pending.** Do not publish only the initial response as the completed cycle's learning. Avoid modifying the base between pinning shared teacher knowledge and pinning the session base.
 
 Mandatory classroom remains: every retained observation across all 19 dimensions, all 171 pairs, scientific dialogue, actual grading, same-session correction and acknowledgement. A missing target-day outcome does not waive these.
 

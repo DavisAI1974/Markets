@@ -181,11 +181,52 @@ def pin_session_base(brain, request_identity, receipt_path):
     return snapshot
 
 
-def write_entry(work, out, brain, cycle, include_analysis=True):
+def write_entry(work, out, brain, cycle, include_analysis=True, principal_directory=None):
     """Write <brain>/cycle-<cycle>/ from the session's work and out directories. Returns the manifest."""
     work, out, entry_dir = Path(work), Path(out), Path(brain) / f'cycle-{cycle}'
     if not (work / 'derivation-digest-full.md').is_file():
         raise FileNotFoundError('the brain entry needs the calculation findings')
+    final_files = {}
+    if principal_directory is not None:
+        from research.kalshi.frankie_boss.frankie_principal_adapter import digest, file_witness
+        from research.kalshi.frankie_boss.c15_journal import unpack
+        principal = Path(principal_directory).resolve()
+        request = json.loads((principal / 'session-request.json').read_bytes())
+        initial = json.loads((principal / 'session-response.json').read_bytes())
+        correction = json.loads((principal / 'classroom-correction-response.json').read_bytes())
+        completion = json.loads((principal / 'dipole-classroom-completion.json').read_bytes())
+        receipt = json.loads((principal / 'dipole-classroom-receipt.json').read_bytes())
+        pending_path = principal.parent / 'pending-feedback.c15.json'
+        pending = unpack(json.loads(pending_path.read_bytes()))
+        if (request['attachment']['feedback_contract'].get('feedback_status') != 'pending_target_outcomes'
+                or pending.get('status') != 'pending_target_outcomes'
+                or pending.get('request_id') != request['request_id']
+                or pending.get('classroom_complete') is not True
+                or pending.get('native_learning_performed') is not False
+                or pending.get('cycle_complete') is not False
+                or pending['principal_receipt']['request_sha256'] != digest(request)
+                or pending['principal_receipt']['response_sha256'] != digest(initial['response'])
+                or initial['response'] != json.loads((out / 'response.json').read_bytes())
+                or correction['response'] != json.loads((out / 'correction-response.json').read_bytes())
+                or receipt.get('teacher_complete') is not True
+                or receipt['completion_hash'] != completion['completion_hash']
+                or receipt['initial_session_id'] != receipt['correction_session_id']
+                or receipt['initial_session_id'] != initial['response']['session_id']
+                or receipt['transcript'] != file_witness(principal / 'dipole-classroom-transcript.md')):
+            raise ValueError('final knowledge requires this session corrected and graded by the host')
+        for name in ('session-request.json', 'session-response.json', 'classroom-correction-request.json',
+                     'classroom-correction-response.json', 'dipole-classroom-acknowledgement.json',
+                     'dipole-classroom-completion.json', 'dipole-classroom-receipt.json',
+                     'dipole-classroom-transcript.md'):
+            path = principal / name
+            final_files['final-' + name] = (path.read_bytes(), path)
+        grade = principal.parent / 'classroom-audit' / 'dipole-classroom-post-grade.json'
+        final_files['final-host-grade.json'] = (grade.read_bytes(), grade)
+        final_files['pending-target-outcomes.c15.json'] = (pending_path.read_bytes(), pending_path)
+        for name in ('host-session-record.json', 'host-attestation.json',
+                     'host-correction-record.json', 'host-correction-attestation.json'):
+            path = out / name
+            final_files['final-' + name] = (path.read_bytes(), path)
     _archive_entry(brain, entry_dir)
     entry_dir.mkdir(parents=True, exist_ok=False)
     entries = []
@@ -242,7 +283,12 @@ def write_entry(work, out, brain, cycle, include_analysis=True):
         for path in sorted(docs.glob('*.md')):
             put('session-doc-' + path.name, path.read_bytes(), path,
                 'session document: retained whole for subsequent runs')
+    for name, (data, source) in final_files.items():
+        put(name, data, source, 'host-recorded final correction, grading and retained exchange; target outcomes remain pending')
     manifest = dict(schema=SCHEMA, cycle=cycle, at=time.time(), entries=entries,
+                    knowledge_status=('classroom_final_pending_target_outcomes' if final_files else 'session_findings'),
+                    native_learning_performed=False if final_files else None,
+                    cycle_complete=False if final_files else None,
                     note='Greg, 2026-09-21: the calculation findings of cycles 0 and 1 are in the brain without a doubt; other documents '
                          'case by case: set include to false to keep an entry out of the next corpus, add a file with include true to bring one in.')
     (entry_dir / 'MANIFEST.json').write_text(json.dumps(manifest, indent=1, sort_keys=True) + '\n', encoding='utf-8')
@@ -474,8 +520,9 @@ def main():
     p.add_argument('--out', required=True)
     p.add_argument('--brain', required=True)
     p.add_argument('--cycle', required=True)
+    p.add_argument('--principal-directory')
     a = p.parse_args()
-    m = write_entry(a.work, a.out, a.brain, a.cycle)
+    m = write_entry(a.work, a.out, a.brain, a.cycle, principal_directory=a.principal_directory)
     print(f"brain entry cycle {a.cycle}: {len(m['entries'])} documents in {Path(a.brain) / ('cycle-' + a.cycle)}")
     for e in m['entries']:
         print(f"  {e['name']}: {e['bytes']} bytes, include {e['include']}")
