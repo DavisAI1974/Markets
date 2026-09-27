@@ -1,10 +1,22 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Current blocker — ROOT process stopped (probe 2026-09-27T03:51:30Z)
+
+Read-only probe https://github.com/DavisAI1974/Markets/actions/runs/36292594746 succeeded.
+It found process_alive=false for PID 51611 with the original process token.
+Last recorded native ROOT progress: 475,822 / 2,032,203 (23.41%).
+Nine checkpoints saved and nine read_verified; latest checkpoint-000008.json.
+Progress age was 1370.7 seconds. The retained state=running and failed=0 fields are stale and must not be reported as current health.
+ROOT workflow 36284909445 failed at 03:30:02Z: SSM document worker reported an IPC messaging timeout. The underlying calculation failure cause is not established by that message alone.
+Queued deployment 36291494244 subsequently failed at 03:32:00Z with SSM status Failed and no useful stderr. No staging completion receipt has been observed.
+No ROOT restart, calculation replay, deployment retry, infrastructure stop or evidence deletion was performed.
+Preserve existing work and checkpoints. Next work is essential diagnosis of the stopped process and actual checkpoint recovery capability; do not blindly rerun calculations. Downstream execution remains pending.
+
 ## Start here
 
 Repository: DavisAI1974/Markets. Continue branch `claude/agent-skills-execution-tzh7sw`.
 Original handoff commit: `d9b9ee2c88bd8667ad84ec00617357d170050f60`.
-Continuation resumed on 2026-09-27. Single-run admission/shared-brain wiring is pushed at `e11bab1ce4f4dbdb81a110c9aa38403a8c20f8ff`; final corrected-knowledge publication is included in the commit carrying this update. Neither increment is deployed. ROOT continues on its original executing commit.
+Continuation resumed on 2026-09-27. Single-run admission/shared-brain wiring is pushed at `e11bab1ce4f4dbdb81a110c9aa38403a8c20f8ff`; final corrected-knowledge publication is included in the commit carrying this update. Neither increment has a confirmed successful deployment. ROOT stopped on its original executing commit; see the current blocker above.
 
 Use using-agent-skills and context-engineering. Existing session also used shipping, Git workflow, incremental implementation and review skills. User restrictions below override generic skill suggestions for tests, parallel agents, canaries or extra approval.
 
