@@ -6,7 +6,27 @@ set -u
 ROOT=/opt/frankie-box
 FILE="${FILE:-logs/producer-tests.log}"; MODE="${MODE:-tail}"; LINES="${LINES:-120}"; PATTERN="${PATTERN:-}"
 case "$FILE" in *..*|/*) echo "FILE must be relative to $ROOT without .."; exit 2;; esac
-P="$ROOT/$FILE"; [ -f "$P" ] || { echo "no such file: $P"; ls -la "$(dirname "$P")" 2>/dev/null; exit 2; }
+P="$ROOT/$FILE"
+# Locate immutable recovery generations so subsequent receipt reads use observed paths.
+if [ "$MODE" = generations ]; then
+  /opt/frankie-box/venv/bin/python -I -S -B - "$P" <<'PY'
+import json, pathlib, sys
+root = pathlib.Path(sys.argv[1]).resolve(strict=True)
+allowed = pathlib.Path('/opt/frankie-box/work/monday-calculations').resolve(strict=True)
+if not root.is_relative_to(allowed) or root.name != 'bedrock' or root.parent.name != 'work':
+    raise SystemExit('existing Monday bedrock directory required')
+items = []
+for path in sorted(root.glob('recovery-*')):
+    if path.is_dir() and not path.is_symlink():
+        checkpoints = sorted((path / 'checkpoints').glob('checkpoint-[0-9][0-9][0-9][0-9][0-9][0-9].json'))
+        items.append(dict(path=str(path), latest_checkpoint=str(checkpoints[-1]) if checkpoints else None,
+                          receipts=[name for name in ('reconstruction-receipt.json', 'parallel-transition-receipt.json')
+                                    if (path / name).is_file()]))
+print(json.dumps(dict(recovery_generations=items), sort_keys=True))
+PY
+  exit $?
+fi
+[ -f "$P" ] || { echo "no such file: $P"; ls -la "$(dirname "$P")" 2>/dev/null; exit 2; }
 if [ "$MODE" = receipt ]; then
   case "$FILE" in */authorship-receipt.json|*/preparation-receipt.json|*/publication-receipt.json|*/calculations-receipt.json|*/reconstruction-receipt.json|*/parallel-transition-receipt.json|*/pause-for-parallel-[0-9]*.json|*/checkpoints/checkpoint-[0-9][0-9][0-9][0-9][0-9][0-9].json|*/checkpoints/controller-state-[0-9][0-9][0-9][0-9][0-9][0-9].json) ;;
     *) echo "receipt mode requires a pipeline or checkpoint receipt"; exit 2;; esac
