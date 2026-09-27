@@ -169,7 +169,13 @@ if action == 'profile':
     raise SystemExit(0)
 
 if action == 'inspect':
-    import shutil
+    import shutil, subprocess
+    try:
+        report['storage'] = json.loads(subprocess.check_output(
+            ['findmnt', '--json', '--target', str(root), '--output', 'TARGET,SOURCE,FSTYPE,OPTIONS'],
+            text=True))
+    except (OSError, subprocess.CalledProcessError, ValueError) as error:
+        report['storage'] = dict(unavailable=type(error).__name__)
     def restoration_snapshot():
         actual = identity(pid)
         if actual['token'] != expected_token:
