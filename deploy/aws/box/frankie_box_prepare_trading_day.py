@@ -134,9 +134,9 @@ def output_root_path(value):
     return root
 
 
-def run_preparation(configuration, output_configuration):
+def run_preparation(configuration, output_configuration, progress=None):
     from research.kalshi.frankie_boss.operations.prepare_trading_day import prepare
-    return prepare(configuration, output_configuration=output_configuration)
+    return prepare(configuration, output_configuration=output_configuration, progress=progress)
 
 
 def prepare_bundle(configuration, *, configuration_sha256, commit, output_root):
@@ -184,7 +184,11 @@ def prepare_bundle(configuration, *, configuration_sha256, commit, output_root):
                   configuration=pin, source_container=ORIGINAL_CONTAINER,
                   output_root=str(root), model_calls=0, source_replays=0)
     save_new(root/'preparation-intent.json', intent)
-    result = run_preparation(configuration, root/'prepared-configuration.json')
+    from frankie_box_progress import Probe
+    progress = Probe(root, pin['sha256'], 'monday-preparation')
+    progress.update('opening-sealed-source')
+    result = run_preparation(configuration, root/'prepared-configuration.json', progress=progress)
+    progress.update('retaining-preparation', result['source_records'], result['source_records'])
     after = source.stat()
     if (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns) != (
             after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns):
@@ -230,6 +234,13 @@ def prepare_bundle(configuration, *, configuration_sha256, commit, output_root):
                        source_container=ORIGINAL_CONTAINER, commit=commit,
                        model_calls=0, source_replays=0)
     save_new(root/'publication-receipt.json', publication)
+    for name, expected_receipt in (('preparation-receipt.json', receipt),
+                                   ('publication-receipt.json', publication)):
+        progress.checkpoint('saved', name)
+        if read_pin(witness(root/name)) != expected_receipt:
+            raise ValueError('preparation receipt readback differs: ' + name)
+        progress.checkpoint('read_verified', name)
+    progress.update('monday-preparation', result['source_records'], result['source_records'], state='complete')
     return dict(archive=publication['archive'], publication_receipt=witness(root/'publication-receipt.json'),
                 model_calls=0, source_replays=0)
 

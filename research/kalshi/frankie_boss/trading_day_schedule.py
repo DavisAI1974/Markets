@@ -142,7 +142,7 @@ def _validate_whole_day(body):
 
 
 def build_whole_day_schedule(builder, mapping_index, *, expected_index_sha256,
-                            source_identity, forecast_target):
+                            source_identity, forecast_target, progress=None):
     """Read a verified sealed source once, retaining every record and no future labels.
 
     The caller supplies the independently verified source view and source identity.
@@ -171,6 +171,8 @@ def build_whole_day_schedule(builder, mapping_index, *, expected_index_sha256,
         raise ValueError('full mapping identity or coverage differs')
     count = closed_groups = as_of = source_as_of = 0
     terminal = None
+    if progress is not None:
+        progress.update('whole-monday-schedule', 0, total)
     for entry in builder.journal.entries():
         if entry['kind'] == 'INPUT':
             continue
@@ -185,6 +187,8 @@ def build_whole_day_schedule(builder, mapping_index, *, expected_index_sha256,
         closed_groups += bool(record['flags'] & 128)
         count += 1
         terminal = row
+        if progress is not None:
+            progress.update('whole-monday-schedule', count, total, force=False)
     if (count != total or closed_groups != groups or terminal is None
             or terminal.get('receipt') is None or not terminal['raw_record']['flags'] & 128
             or terminal['terminal_prefix_hash'] != builder.chain.prefix_hash):

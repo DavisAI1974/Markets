@@ -22,7 +22,7 @@ from research.kalshi.frankie_boss.operations.build_remaining_sunday_prefixes imp
     read_pinned, pinned, sha, save_new, witness, materialize)
 
 
-def prepare(configuration_path, *, output_configuration, cycles=None):
+def prepare(configuration_path, *, output_configuration, cycles=None, progress=None):
     configuration_path = Path(configuration_path)
     configuration = json.loads(configuration_path.read_bytes())
     launch = require_launch_fields(read_pinned(configuration['trading_day_launch']))
@@ -102,7 +102,7 @@ def prepare(configuration_path, *, output_configuration, cycles=None):
                     source_partitions=[m.member_key for m in scope.members],
                     source_record_count=receipt['record_count'], journal_count=receipt['journal_count'],
                     journal_hash=receipt['journal_hash'], journal_sha256=container['sha256']),
-                forecast_target=launch['forecast_target'])
+                forecast_target=launch['forecast_target'], progress=progress)
         else:
             schedule = build_schedule(view, mapping_path, expected_index_sha256=launch['mapping']['sha256'],
                 cutoffs_path=cutoffs_path, expected_cutoffs_sha256=launch['cutoffs']['sha256'],
