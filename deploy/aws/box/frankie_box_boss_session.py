@@ -91,6 +91,44 @@ def _box_module(stem):
     return _MODULES[stem]
 
 
+def _reusable_projection(projection, receipt, layers, crosswalk, out_dir, section_names):
+    """Save point for reruns: the published layers of a completed earlier publication of exactly this projection plan,
+    or None (then projection.project runs and decides). Kept OUT of frankie_box_projection.py on purpose: the plan pins
+    that module's own bytes (code_sha256), so any edit there makes the retained plan differ and refuses the root. The
+    plan below is built exactly as project() builds it and must equal the retained plan.json; every published file must
+    be present at its recorded size. Consumers still verify fragments against the range receipts before reading."""
+    root = Path(out_dir) / '.projection-v2'
+    manifest = root / 'plan.json'
+    if not manifest.is_file():
+        return None
+    pins = {kind: receipt['ledgers'][name] for kind, name in
+            (('member', 'exact_member_rows.jsonl'), ('lifecycle', 'exact_lifecycle_rows.jsonl'))}
+    result = json.loads(Path(receipt['result']['path']).read_bytes())
+    spec = dict(schema='FRANKIE_COMPRESSED_PROJECTION_V1', chunk_bytes=projection.CHUNK,
+                layers=layers, crosswalk=crosswalk, code_sha256=projection.sha(projection.__file__),
+                ledgers={k: {x: v[x] for x in ('path', 'bytes', 'sha256')} for k, v in pins.items()},
+                sections=result['layers']['exact_lifecycle_and_runway_ledger']['section_summaries'],
+                averages=result['layers']['averaged_companions'])
+    if json.loads(manifest.read_bytes()) != spec:
+        return None
+    plan = projection.sha(manifest)
+    names = sorted(list(layers) + list(section_names))
+    for published_receipt in sorted(root.glob('published-*/receipt.json')):
+        try:
+            value = json.loads(published_receipt.read_bytes())
+        except (OSError, ValueError):
+            continue
+        published = value.get('layers') if isinstance(value, dict) else None
+        if value.get('plan') != plan or not isinstance(published, dict) or sorted(published) != names:
+            continue
+        if all(Path(item.get('path') or '').parent == published_receipt.parent
+               and Path(item['path']).name == name + '.json.gz' and Path(item['path']).is_file()
+               and Path(item['path']).stat().st_size == item.get('bytes') and item.get('encoding') == 'gzip-json'
+               for name, item in published.items()):
+            return {n: published[n] for n in layers}, {n: published[n] for n in section_names}
+    return None
+
+
 def docs_module():
     """deploy/aws/box/frankie_box_docs.py (the session documents; tolerant JSON; the refusal pattern)."""
     return _box_module('frankie_box_docs')
@@ -930,7 +968,13 @@ class Session:
         crosswalk = B.crosswalk_records(PRODUCERS, layers)
         native_directory = Path(run['result']['path']).parent
         import frankie_box_projection as projection
-        projected, sections = projection.project(run, layers, crosswalk, derived, probe)
+        reused = _reusable_projection(projection, run, layers, crosswalk, derived, list(B.SECTION_FILES))
+        if reused is not None:
+            projected, sections = reused
+            probe.update('root-projection-publication', len(projected) + len(sections), len(projected) + len(sections))
+            self.note(f'bedrock: projection publication reused ({len(projected)} layers, {len(sections)} sections); plan identical')
+        else:
+            projected, sections = projection.project(run, layers, crosswalk, derived, probe)
         for name, entry in list(projected.items()) + list(sections.items()):
             receipt_layers[name] = dict(status=entry['status'], producer=entry['producer'], reason=entry['reason'], sha256=entry['sha256'],
                                         bytes=entry['bytes'], path=entry['path'], count=entry['count'], partial=entry['partial'], bedrock=True,

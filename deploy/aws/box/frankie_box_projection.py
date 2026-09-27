@@ -261,32 +261,6 @@ def _publish(job):
                 **{k:metadata[k] for k in ('status','producer','reason','count','partial')})
 
 
-def _reusable_publication(root,plan,outputs):
-    """A completed earlier publication of the same plan (save point for reruns): its receipt names exactly these
-    layers with the same fields and status/producer/reason/count/partial, and every layer file is present at its
-    recorded size. Consumers still verify each file's sha256 against its pin before reading it."""
-    names = [name for name,_,_ in outputs]
-    for receipt in sorted(root.glob('published-*/receipt.json')):
-        try:
-            value = json.loads(receipt.read_bytes())
-        except (OSError, ValueError):
-            continue
-        published = value.get('layers') if isinstance(value, dict) else None
-        if value.get('plan') != plan or not isinstance(published, dict) or sorted(published) != sorted(names):
-            continue
-        for name,entry,arrays in outputs:
-            item = published[name]
-            path = Path(item.get('path') or '')
-            if (path.parent != receipt.parent or path.name != name+'.json.gz' or not path.is_file()
-                    or path.stat().st_size != item.get('bytes') or item.get('encoding') != 'gzip-json'
-                    or item.get('fields') != sorted(entry.keys() | arrays.keys())
-                    or any(item.get(k) != entry.get(k) for k in ('status','producer','reason','count','partial'))):
-                break
-        else:
-            return published
-    return None
-
-
 def project(receipt,layers,crosswalk,out_dir,progress):
     root = Path(out_dir) / '.projection-v2'
     root.mkdir(exist_ok=True)
@@ -403,10 +377,6 @@ def project(receipt,layers,crosswalk,out_dir,progress):
                 entry['matching_rule']=(summary or {}).get('matching_rule')
             entry['status'],entry['reason']=B.status_of(entry['count'],False,span,warmup,minimum)
             outputs.append((name,entry,arrays))
-        reused=_reusable_publication(root,plan,outputs)
-        if reused is not None:
-            progress.update('root-projection-publication',len(reused),len(reused))
-            return {n:reused[n] for n in layers},{n:reused[n] for n in B.SECTION_FILES}
         published={}
         # Publication attempts are isolated; completed range archives remain reusable.
         import uuid
