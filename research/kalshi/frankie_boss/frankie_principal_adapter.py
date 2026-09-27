@@ -238,8 +238,13 @@ RUN_ANALYSIS_INSTRUCTION = (
     'current run evidence. Distinguish observed results from your interpretation; name '
     'failures, unavailable observations, uncertainties, and useful next lessons. Do not '
     'claim later cycles or learning steps have completed before their evidence exists. '
+    'EXACT EVIDENCE FIRST: complete and retain every required exact calculation and its member-level evidence. '
+    'An averaged companion is an additional view only; it never satisfies a section by itself and never replaces '
+    'exact records, event paths, distributions, or calculation results. Do not reduce a section to averages. '
+    'For any added average, name its population, numerator, denominator, formula, conditions, causal cutoff, '
+    'and missing-data or censoring rules; keep all underlying exact evidence available. '
     'Cite the retained eighteen sections with their original hashes as provenance. Keep this new '
-    'analysis separate from frozen Memory A and the eighteen historical sections. '
+    'analysis separate from the eighteen historical sections. '
     + 'THE CALCULATIONS ARE YOURS, NOT THE RUNNER\'S (Greg Davis, standing rule, restated 2026-09-20): '
     'on this cycle\'s delivered rows, derive yourself the exhaustion chains with their extensions, '
     'reappearances and ancestry, the D structures and families, the dipoles and geometry, the pair and '
@@ -360,7 +365,7 @@ def rebind_delivery_receipt(original, expected_original_sha256, local_directory,
 
 
 def retained_knowledge(receipt_path, receipt_sha256, bundle_path, bundle_sha256):
-    """Verify historical bytes directly; never rebuild from post-Sunday checkout."""
+    """Verify the pinned knowledge bytes; no particular Memory A seed is required."""
     if file_witness(receipt_path)['sha256'] != receipt_sha256:
         raise ValueError('retained knowledge receipt bytes differ')
     receipt = _checked_receipt(receipt_path)
@@ -368,17 +373,6 @@ def retained_knowledge(receipt_path, receipt_sha256, bundle_path, bundle_sha256)
     if witness != {'bytes': receipt['model_visible_context_bytes'],
                    'sha256': receipt['model_visible_context_sha256']} or witness['sha256'] != bundle_sha256:
         raise ValueError('retained knowledge bundle bytes differ')
-    seeds = [a for a in receipt['artifacts'] if a['id'] == 'seed_a_memory_20260902']
-    if len(seeds) != 1 or seeds[0]['sha256'] != FROZEN_MEMORY_SHA256 or seeds[0]['bytes'] != 166700:
-        raise ValueError('only the frozen pre-Sunday Memory A is admissible')
-    bundle = Path(bundle_path).read_bytes()
-    marker = ('===== BEGIN KNOWLEDGE seed_a_memory_20260902 ' + FROZEN_MEMORY_SHA256 + ' =====\n').encode()
-    if bundle.count(marker) != 1:
-        raise ValueError('frozen prior memory missing from retained bundle')
-    seed = bundle.split(marker, 1)[1].split(b'===== END KNOWLEDGE seed_a_memory_20260902 =====', 1)[0]
-    if not any(len(raw) == 166700 and hashlib.sha256(raw).hexdigest() == FROZEN_MEMORY_SHA256
-               for raw in (seed, seed[:-1])):
-        raise ValueError('embedded frozen Memory A bytes differ')
     return receipt
 
 
@@ -450,7 +444,7 @@ class FrankiePrincipalAdapter:
 
     preparation: kwargs accepted by frozen prepare_boss_attachment CLI (except
     directory/output_directory, supplied here). render: explicit emitter CLI
-    arguments including pinned pre-Sunday knowledge-receipt. protected_files and
+    arguments including a pinned knowledge-receipt. protected_files and
     section_evidence map names to {path, bytes, sha256} independently trusted by
     the host. session_executor(request) may dispatch a host agent and return its
     response, or be None for an outbox consumed by the host's session tools.
@@ -471,7 +465,7 @@ class FrankiePrincipalAdapter:
         self.preparation, self.render = dict(preparation), dict(render)
         for key in ('knowledge-receipt', 'knowledge-receipt-sha256', 'knowledge-bundle-sha256'):
             if not self.render.get(key):
-                raise ValueError('explicit pinned pre-Sunday knowledge receipt and bundle required')
+                raise ValueError('explicit pinned knowledge receipt and bundle required')
         common_render = {'knowledge-receipt', 'knowledge-receipt-sha256', 'knowledge-bundle-sha256'}
         if self.render.get('retained-prompt'):
             if set(self.render) - common_render - {'retained-prompt', 'retained-prompt-sha256'}:
@@ -489,8 +483,8 @@ class FrankiePrincipalAdapter:
                 if Path(supplied).resolve() != Path(self.preparation[preparation_key]).resolve():
                     raise ValueError('emitter paths differ from receiver preparation')
                 self.render[render_key] = str(Path(supplied).resolve())
-        if set(section_evidence) != set(SECTIONS) or not protected_files:
-            raise ValueError('all 18 preserved sections and frozen memory witnesses required')
+        if set(section_evidence) != set(SECTIONS):
+            raise ValueError('all 18 preserved sections required')
         self.protected_files = protected_files
         self.section_evidence = section_evidence
         self.feedback_contract = json.loads(canonical(feedback_contract))
@@ -566,7 +560,9 @@ class FrankiePrincipalAdapter:
             raise ValueError(f'the declared receiver policy requires all {expected} output ledgers validated')
 
     def _memory_witness(self):
-        """Finding 5: BOSS's own receipt over the frozen Memory A files it serves.
+        """Optional legacy witness when a caller explicitly protects historical memory.
+
+        Finding 5: BOSS's own receipt over the frozen Memory A files it serves.
 
         Produced by BOSS from the served bytes, independently of the seed's self-hashes, so its
         file identity is never the subject's own; binding it into the knowledge receipt's
@@ -597,17 +593,20 @@ class FrankiePrincipalAdapter:
             if proof.exists(): args['verify_existing'] = True
             self._run('native_sealed_absence', args)
             sealed = str(proof)
-        witness = self._memory_witness()
-        path = self.directory / 'memory-a-witness.json'
-        if path.exists():
-            if json.loads(path.read_bytes()) != witness:
-                raise ValueError('retained Memory A witness differs from the served frozen memory')
-        else:
-            _write(path, witness)
-        return {'output_bundle_policy': OUTPUT_BUNDLE_GATE_NOT_PRESENTED
+        record = {'output_bundle_policy': OUTPUT_BUNDLE_GATE_NOT_PRESENTED
                     if declared['output_bundle'] == OUTPUT_BUNDLE_GATE_NOT_PRESENTED else OUTPUT_BUNDLE_GATE_VALIDATED,
-                'sealed_absence': sealed_absence(sealed),
-                'memory_a_witness_sha256': witness['receipt_sha256']}
+                  'sealed_absence': sealed_absence(sealed)}
+        # Preserve explicit legacy protection; new Monday inputs need no Memory A witness.
+        if self.protected_files:
+            witness = self._memory_witness()
+            path = self.directory / 'memory-a-witness.json'
+            if path.exists():
+                if json.loads(path.read_bytes()) != witness:
+                    raise ValueError('retained Memory A witness differs from the served frozen memory')
+            else:
+                _write(path, witness)
+            record['memory_a_witness_sha256'] = witness['receipt_sha256']
+        return record
 
     def prepare(self, handoff_directory):
         self._files()
@@ -706,10 +705,10 @@ class FrankiePrincipalAdapter:
             "Sunday 2021-10-03 is the sole source and run day. No separate source day or October 1 prerequisite applies. ")
         prefix = ("# Current authorized continuation\n" + source_instruction +
             "Reuse completed principal-authored sections with their original "
-            "authorship; author the new source convention, BOSS feedback and run analysis. Preserve frozen "
-            "pre-Sunday Memory A; store new lessons separately. The original historical prompt follows "
+            "authorship; author the new source convention, BOSS feedback and run analysis. Use your "
+            "retained brain knowledge; Memory A is not required. Store new lessons separately. The original historical prompt follows "
             "unchanged for provenance, followed by the newly verified BOSS attributed input. Its "
-            "multi-day sequencing is overridden by this current single-day instruction.\n"
+            "multi-day sequencing and Memory A requirements are overridden by this current single-day instruction.\n"
             "Actual local delivery: " + str(self.preparation['delivery_receipt']) + "\n"
             "Feedback contract: " + canonical(self.feedback_contract).decode() + "\n\n"
             + self._instruction() + "\n\n").encode()
@@ -814,13 +813,13 @@ class FrankiePrincipalAdapter:
             raise ValueError('principal knowledge bundle changed')
         self._check_preparation(attachment['preparation_receipt'])
         if attachment.get('admission') != self._admission_record():
-            raise ValueError('principal admission (output bundle, sealed absence, Memory A witness) changed since preparation')
+            raise ValueError('principal admission changed since preparation')
         return {'schema': 'FRANKIE_BOSS_SESSION_REQUEST_V1', 'request_id': request_id,
             'attachment': attachment, 'mechanism': 'AGENT_SESSION', 'admission': attachment['admission'],
             'instruction': ('Read the full delivered causal evidence and actual BOSS attributed input. '
                 'Reuse the preserved Frankie-authored 18-section evidence with its original authorship as '
                 'provenance; never substitute runner findings for your own calculations. This authorized run '
-                'uses the source session declared in feedback_contract. Preserve Memory A. Author new '
+                'uses the source session declared in feedback_contract and your retained brain knowledge. Memory A is not required. Author new '
                 'feedback and lessons against feedback_contract; use null for unavailable values. '
                 'Cite every retained section hash. Supply feedback without principal_receipt_hash, '
                 'lessons, sections (section ID to retained SHA256), session_id and '

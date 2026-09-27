@@ -180,14 +180,20 @@ def test_retained_prompt_keeps_original_bytes_and_exact_receiver_block(tmp_path,
     assert b'No separate source day' in output.read_bytes()
 
 
-def test_retained_prompt_rejects_post_sunday_memory_even_with_valid_self_hash(tmp_path, monkeypatch):
+def test_retained_knowledge_requires_pinned_bytes_without_a_memory_a_seed(tmp_path, monkeypatch):
     module, receipt, bundle = retained_case(tmp_path, monkeypatch)
+    bundle.write_text('Retained brain knowledge, including prior run findings.\n')
     body = json.loads(receipt.read_bytes())
-    body['artifacts'][0]['sha256'] = 'b'*64
+    body['artifacts'] = []
+    body['model_visible_context_bytes'] = file_witness(bundle)['bytes']
+    body['model_visible_context_sha256'] = file_witness(bundle)['sha256']
     body['receipt_sha256'] = digest({k:v for k,v in body.items() if k != 'receipt_sha256'})
     receipt.write_bytes(canonical(body))
-    with pytest.raises(ValueError, match='pre-Sunday Memory'):
-        module.retained_knowledge(receipt, file_witness(receipt)['sha256'], bundle, file_witness(bundle)['sha256'])
+    expected = file_witness(bundle)['sha256']
+    assert module.retained_knowledge(receipt, file_witness(receipt)['sha256'], bundle, expected) == body
+    bundle.write_text('changed brain knowledge')
+    with pytest.raises(ValueError, match='knowledge bundle bytes differ'):
+        module.retained_knowledge(receipt, file_witness(receipt)['sha256'], bundle, expected)
 
 
 def test_recovery_distinguishes_undispatched_from_pending(tmp_path):
@@ -236,11 +242,11 @@ def test_partial_receiver_output_is_retained_before_new_preparation(tmp_path):
     assert next(adapter.directory.glob('receiver.partial-*')).joinpath('source-binding.json').read_text()=='partial bytes'
 
 
-def test_constructor_enforces_pinned_memory_and_emitter_path_identity(tmp_path):
+def test_constructor_enforces_pinned_knowledge_sections_and_emitter_path_identity(tmp_path):
     adapter,_=case(tmp_path)
     args=dict(receiver_root=adapter.receiver_root,receiver_commit=adapter.receiver_commit,
         python=adapter.python,directory=tmp_path/'other',preparation={'result_path':str(tmp_path/'result.json'),
-            'delivery_receipt':str(tmp_path/'delivery.json')},protected_files=adapter.protected_files,
+            'delivery_receipt':str(tmp_path/'delivery.json')},protected_files={},
         section_evidence=adapter.section_evidence,feedback_contract={},
         admission={'output_bundle':{'principal_artifact':str(tmp_path/'artifact.json'),'outputs_dir':str(tmp_path/'outputs')},
                    'sealed_proof':str(tmp_path/'sealed.json')})
@@ -248,7 +254,9 @@ def test_constructor_enforces_pinned_memory_and_emitter_path_identity(tmp_path):
         'knowledge-bundle-sha256':'b'*64}
     created=FrankiePrincipalAdapter(**args,render=render)
     assert created.render['result']==str((tmp_path/'result.json').resolve())
-    with pytest.raises(ValueError,match='pinned pre-Sunday'):
+    assert set(created.section_evidence) == set(SECTIONS)
+    assert created.protected_files == {}
+    with pytest.raises(ValueError,match='pinned knowledge'):
         FrankiePrincipalAdapter(**args,render={'knowledge-receipt':'unpinned'})
     with pytest.raises(ValueError,match='emitter paths differ'):
         FrankiePrincipalAdapter(**args,render=dict(render,result='wrong.json'))

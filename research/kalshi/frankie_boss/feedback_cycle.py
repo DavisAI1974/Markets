@@ -137,18 +137,23 @@ def _export_verified(directory, export_args, result, learning, superseded=None):
 
 
 class CycleCoordinator:
-    def __init__(self, path, *, lessons_path, frozen_memory_path, frozen_memory_sha256,
+    def __init__(self, path, *, lessons_path, frozen_memory_path=None, frozen_memory_sha256=None,
                  create=False, phase_callback=None, critic_priming=None, learning_policy=None):
         from .critic_knowledge import validate_learning_policy
         self.learning_policy = validate_learning_policy(learning_policy)
         from .granite_positive_priming import validate_priming
         self.critic_priming = None if critic_priming is None else validate_priming(critic_priming)
         self.path = Path(path)
-        self.memory = Path(frozen_memory_path)
+        if (frozen_memory_path is None) != (frozen_memory_sha256 is None):
+            raise ValueError('optional historical memory requires both path and hash')
+        self.memory = None if frozen_memory_path is None else Path(frozen_memory_path)
         self.memory_hash = frozen_memory_sha256
         self.lessons_path = Path(lessons_path)
-        if len({self.path.resolve(), self.lessons_path.resolve(), self.memory.resolve()}) != 3:
-            raise ValueError('cycle, new lessons and frozen Memory A must be separate')
+        paths = [self.path.resolve(), self.lessons_path.resolve()]
+        if self.memory is not None:
+            paths.append(self.memory.resolve())
+        if len(set(paths)) != len(paths):
+            raise ValueError('cycle, new lessons and any protected historical memory must be separate')
         self._memory_unchanged()
         self.phase_callback = phase_callback
         self._lock = asyncio.Lock()
@@ -224,7 +229,7 @@ class CycleCoordinator:
             raise ValueError('retained replay lineage changed or disappeared')
 
     def _memory_unchanged(self):
-        if file_hash(self.memory) != self.memory_hash:
+        if self.memory is not None and file_hash(self.memory) != self.memory_hash:
             raise ValueError('frozen Memory A identity changed')
 
     def _load(self, request_id, stage):

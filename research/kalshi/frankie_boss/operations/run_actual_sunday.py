@@ -405,7 +405,7 @@ class ActualHost:
 
     def source(self):
         if self.scope is not None:return
-        for key in ('memory','contract','mapping','retained_witnesses','delivery_receipt','calculation_result','source_manifest'):
+        for key in ('contract','mapping','retained_witnesses','delivery_receipt','calculation_result','source_manifest'):
             verified(self.config[key])
         source=Path(self.config['source_directory']);schedule=Path(self.config['schedule_directory'])
         receipt=verified_json(self.host['ingestion_receipt']);outer=verified_json(self.host['schedule_receipt'])
@@ -1062,7 +1062,7 @@ class ActualHost:
             priming=load_retained_priming(h['repository'],mode=declared['mode'])
             self.save('historical-priming-provenance.c15.json',priming)
         self.coordinator=self.api.CycleCoordinator(self.directory/'cycles.sqlite',lessons_path=self.directory/'lessons.sqlite',
-            frozen_memory_path=c['memory']['path'],frozen_memory_sha256=c['memory']['sha256'],
+            frozen_memory_path=c.get('memory',{}).get('path'),frozen_memory_sha256=c.get('memory',{}).get('sha256'),
             create=not (self.directory/'cycles.sqlite').exists(),phase_callback=self.phase,critic_priming=priming,learning_policy=policy)
 
     async def run(self):

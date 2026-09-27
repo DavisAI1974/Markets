@@ -52,9 +52,10 @@ def build(prepared_path, principal_path, commit, run_id, output_root, completion
                 completion_workflow_ref=completion_ref, state_defects_and_gaps_reported=[])
     config = {k: v for k, v in base.items() if k != 'host_runtime'}
     config.update({k: v for k, v in prepared.items() if k != 'host_runtime'})
+    config.pop('memory', None)  # Do not inherit the retired Memory A requirement from BASE.
     config.update(schema='FRANKIE_BOSS_ACTUAL_HOST_CONFIGURATION_V1', run_id=run_id, run_directory=str(RUNS / run_id),
                   model_calls_performed=False, training_updates_performed=False, host_runtime=host,
-                  memory=principal['memory'], mapping=principal['mapping'],
+                  mapping=principal['mapping'],
                   retained_witnesses=principal['retained_witnesses'], delivery_receipt=principal['delivery_receipt'],
                   calculation_result=principal['calculation_result'],
                   receiver_root=str(RECEIVER), receiver_commit=receiver_commit,

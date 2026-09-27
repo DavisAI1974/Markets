@@ -3,6 +3,14 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
+- **2026-09-27, Greg: remove the Memory A requirement; keep all 18 calculation sections and their historical evidence/hash citations.**
+  Frankie's existing brain is the knowledge source; the prior six-hour run document should already be retained there.
+  That document's presence on the box has not been checked in this change. Do not rebuild or re-ingest it by default.
+  The old "Memory A is VALID" statements below are historical and do not impose a Memory A prerequisite on Monday.
+  Preserve historical files. Removing Memory A does not waive section coverage, source/delivery evidence, fresh-principal
+  admission, Granite reading/critic, classroom correction, or pending Tuesday outcomes.
+  **Exact evidence remains primary. Averages may supplement it; they must never replace exact records or calculations.**
+
 - **THE TRADING DAY IS THE STANDARD (Greg, 2026-09-22, verbatim): "A Monday trading day (the new standard) starts at 6 pm
   on Sun and ends at 5 pm on Mon for 23 hrs. There is no more 'Sunday'. Monday and every trading day starts at 6pm the day
   prior."** Every day is named by its trade date; it opens 18:00 ET the prior calendar day and halts 17:00 ET (21:00Z

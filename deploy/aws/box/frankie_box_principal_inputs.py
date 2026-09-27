@@ -1,9 +1,10 @@
 """Assemble Frankie's retained principal inputs for the Monday cycle-0 run on the Linux box (Greg, 2026-09-23).
 
-Memory A is valid (Greg, 2026-09-17): the retained principal files are the frozen Memory A run, committed at
-research/kalshi/frankie_boss/monday_20211004_principal/retained (byte-exact copies of the receiver-commit git blobs).
-This writes one fresh directory holding: the retained-witnesses file re-pointed at those staged files, the frozen
-memory, the delivery receipt, the member mapping (mapping.json + its index.jsonl) and the calculation result, the
+Historical principal files remain committed at research/kalshi/frankie_boss/monday_20211004_principal/retained.
+Memory A is no longer a required input; all 18 historical section files remain required by the principal adapter.
+This legacy assembler still uses the historical delivery, mapping and result; it is not the new Monday input route.
+It writes a fresh retained-witnesses file re-pointed at those staged files, the delivery receipt,
+the member mapping (mapping.json + its index.jsonl) and the calculation result, the
 last two fetched through the workflow's presigned map. Every byte is checked against its pinned hash; nothing is
 recomputed. No model call, ingestion or source write.
 """
@@ -75,17 +76,17 @@ def assemble(output):
     mapping = checked(output / 'mapping/mapping.json', 1063, '55cccc238a15b76528d60220e8a236204bf244ef4e33948e9ef6b74a03656e21')
     shutil.copyfile(FB / 'delivery-plain/local_delivery_receipt.json', output / 'local_delivery_receipt.json')
     delivery = checked(output / 'local_delivery_receipt.json', 4853, 'db773478c80f28619bdf16abb76ccf6ebedbacc6a65894ba624ed6d82fad0f11')
-    memory = checked(RETAINED / 'FROZEN_MEMORY_A_20211003.json', 166700,
-                     '4a47b09d5b19a9165c570f9432d2f3190a657843009536d5dad9a6bd99d83f4a')
     # The retained witnesses, re-pointed from the Windows paths to the staged byte-exact copies.
     original = json.loads((FB / 'retained-principal/retained-witnesses.json').read_bytes())
     files = {}
     for name, entry in original['files'].items():
+        if name == 'FROZEN_MEMORY_A_20211003.json':
+            continue
         files[name] = dict(checked(RETAINED / name, entry['bytes'], entry['sha256']))
     retained = write(output / 'retained-witnesses.json', dict(original, files=files,
         relocated=dict(from_sha256='d4c03cee0524961813daf7f223425236a7edbb03c68468cc42defedec1dc008b',
                        reason='Windows retained paths re-pointed to the staged byte-exact copies on the Linux box')))
-    result = dict(schema='FRANKIE_MONDAY_PRINCIPAL_INPUTS_V1', output=str(output), memory=memory, mapping=mapping,
+    result = dict(schema='FRANKIE_MONDAY_PRINCIPAL_INPUTS_V1', output=str(output), mapping=mapping,
                   mapping_index=fetched['index.jsonl'], retained_witnesses=retained, delivery_receipt=delivery,
                   calculation_result=fetched['calculation_result.json'], model_calls=0, source_writes=0)
     write(output / 'principal-inputs-receipt.json', result)

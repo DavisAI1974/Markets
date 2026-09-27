@@ -140,7 +140,8 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
     witness_path=retained/'retained-witnesses.json'
     if file_witness(witness_path)['sha256']!=expected_retained_witnesses_sha256:
         raise ValueError('retained evidence witness file differs from host pin')
-    witnesses=json.loads(witness_path.read_bytes())['files']
+    witnesses={name: witness for name, witness in json.loads(witness_path.read_bytes())['files'].items()
+        if name != 'FROZEN_MEMORY_A_20211003.json'}
     for witness in witnesses.values():
         if file_witness(witness['path'])!={k:witness[k] for k in ('bytes','sha256')}:
             raise ValueError('historical principal evidence changed')
@@ -187,7 +188,7 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
             'knowledge-receipt':witnesses['KNOWLEDGE_RECEIPT.json']['path'],
             'knowledge-receipt-sha256':witnesses['KNOWLEDGE_RECEIPT.json']['sha256'],
             'knowledge-bundle-sha256':witnesses['KNOWLEDGE_BUNDLE.md']['sha256']},
-        protected_files={'Memory A':witnesses['FROZEN_MEMORY_A_20211003.json']},
+        protected_files={},
         section_evidence=sections,feedback_contract=feedback_contract,
         classroom_package=classroom_package,session_executor=session_executor,
         **({'shared_knowledge':shared_knowledge} if shared_knowledge is not None else {}))
@@ -206,7 +207,7 @@ def metadata_for_binding(binding, *, state_defects_and_gaps_reported):
         value={'specialist':'REAL_TIME_FRANKIE','group':'A_MEMORY','date':close.strftime('%Y%m%d'),
             'reasoning':('Native BOSS development forecast under Frankie source contract '+binding['contract_sha256']+
                 '. Same-source analytical anchors and explicit 1.0 development numeraire; not exchange contract P&L. '
-                'Frozen Memory A retained. No broker action or calibrated performance claim.'),
+                'Historical 18-section evidence retained; Memory A is not required. No broker action or calibrated performance claim.'),
             'plays_fired':[],'plays_stood_down':[],
             'state_defects_and_gaps_reported':list(state_defects_and_gaps_reported),'disposition':'ABSTAIN'}
         for field in BLD1_FIELDS:
