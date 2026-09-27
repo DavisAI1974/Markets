@@ -1,5 +1,16 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Combined worker/ledger fixes active and checkpoint-verified — 2026-09-27 09:43Z
+
+Canonical ROOT: runtime293113435a8fdf7bd5566f2652e1a1f7a1734c35; immutable ref codex/frankie-shared-ledger-runtime-2931134; workflow https://github.com/DavisAI1974/Markets/actions/runs/36309059667; PID56833; process token099d4eb6-a46d-4b94-a888-f15e55c1ee7e:52429441. CODE_ROOT=/opt/frankie-box/code/293113435a8fdf7bd5566f2652e1a1f7a1734c35-36308610841-1/markets. Generation recovery-9defa3169f7d46679491da2b1bfbbce2 in the unchanged calculation root. Do NOT launch a duplicate resume or hot-patch.
+
+Latest actual progress1,303,120/2,032,203 (64.12%), failed=0, alive at09:41:52Z (probe36310178874). Two checkpoints saved/read_verified; latest000001 at1,296,294records, read_verified09:41:06Z. Descriptor11958bytes SHA256cf3ef0a75463556dd184c2451738d9d6ae536c22f4ba6a3fb229ad5793898ded; complete driver308388512bytes SHA25606f8ff56c4a1654899e34294071a49139f10f4c33f1cf1f8b1d54380d685e141. All original frozen extents remain unchanged and new suffixes are explicitly retained. Full-file final publication remains pending calculation finalization.
+
+Worker receipt verifies V3 shared member freeze/shared-memory encoded output,15native+encoding processes CPUs1–15,3ledger I/Oworkers CPU0. Previously deployed batching/persistent book partitions remain active. Actual intervals135.678 and138.786records/s; earlier phase-one120.265 and initial64.74 are observations on different real records, not controlled benchmarks. ROOT largest serialization leaf16.34% in latest retained normal-running profile. See audits/ROOT_COMBINED_TRANSPORT_20260927.md for exact receipts, profiles, code and preservation semantics. Worker-fix job has reached its verified checkpoint; let the single ROOT continue.
+
+Granite replacement bindings and five-lesson priming configuration are included in runtime2931134. Actual prime delivery/acknowledgement has NOT occurred; it must run in the actual downstream Monday sequence. Continue all manual stages after the complete calculations receipt; classroom/grades/corrections/retention and Tuesday outcomes remain pending. All user restrictions and historical section/slot/producer requirements still apply.
+
+
 ## Combined runtime continuation dispatched — 2026-09-27 09:20Z
 
 Fresh checkpoint000004 in recovery-03a70711353a433c989b18074d7baacd at1,215,705records is verified; PID56172 and14owned workers exited (pause36308640458). Runtime293113435a8fdf7bd5566f2652e1a1f7a1734c35 staged successfully (36308610841). One canonical resume is active in https://github.com/DavisAI1974/Markets/actions/runs/36309059667 on codex/frankie-shared-ledger-runtime-2931134. CODE_ROOT=/opt/frankie-box/code/293113435a8fdf7bd5566f2652e1a1f7a1734c35-36308610841-1/markets. Restored-state/worker activation/throughput receipts remain pending. Do NOT launch another resume. See audits/ROOT_COMBINED_TRANSPORT_20260927.md for exact parent ledger and full-state hashes. Granite prime delivery remains pending actual Monday sequence.
