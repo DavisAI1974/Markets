@@ -94,3 +94,20 @@ Every box action still needs Greg's go. Keys are not rotated until the build is 
 - Free disk 762.7 GB; no swap; memory pressure 0.
 - Next check: after the verify, the digest should reuse publication e6ff and put the helpers on
   `full_bid_ask_depth`.
+
+## Resume 36346193733 refused at the projection plan (20:10Z) -- my defect, fixed in 5b1eaffd
+
+- The resume ran the ledger checks, loaded the 8c03 state, reused the 44 retained legacy layers and ran the
+  pinned traversal. Then `projection.project` raised `ValueError: retained projection plan differs`
+  (frankie_box_projection.py:304). Nothing was written.
+- Cause: the projection plan pins `code_sha256 = sha256(frankie_box_projection.py)`. The publication save point
+  (3e89b860) had been added to that file, so its bytes changed and the retained plan no longer matched. The
+  refusal is correct behaviour.
+- Fix 5b1eaffd:
+  - frankie_box_projection.py restored to its exact 2d3e6bb bytes (sha256 `2cedd8c9...1ab7d`).
+  - The save point moved to `frankie_box_boss_session._reusable_projection`. It rebuilds the plan exactly as
+    project() does and requires it to equal the retained plan.json. It reuses a published-*/receipt.json of that
+    plan only when every layer file is present at its recorded size; otherwise project() runs.
+- Rule for later edits: never edit frankie_box_projection.py while a retained plan is meant to be reused.
+- Also in this branch: 6275f4e4. The response pusher zips any published file of 90 MB or more to `<name>.gz`
+  before the git push (Greg's rule). restore_from_git reads the .gz form.
