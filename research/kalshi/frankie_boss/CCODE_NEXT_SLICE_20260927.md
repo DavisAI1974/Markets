@@ -23,6 +23,25 @@ Require all of these actual receipts:
 
 If any precondition is missing, stop and report the exact missing receipt.
 
+## Cleanup receipt already completed
+
+Use the completed retirement receipt; do not rerun cleanup:
+
+- Retirement workflow: 36338877506
+- SSM command: 4ad6118d-f846-4283-b4da-87678b15a200
+- Receipt: /opt/frankie-box/work/retention/superseded-members-dbcbaaf8689f4648822b59748d3d895c/receipt.json
+- Exactly five approved files removed.
+- Claimed reclaimed: 945,839,562,752 bytes.
+- Actual freed: 945,839,427,584 bytes.
+- Available bytes after: 945,841,012,736.
+- Available bytes before: 1,585,152.
+- Current generation recovery-9defa3169f7d46679491da2b1bfbbce2: all three ledgers re-verified intact.
+- Retained checkpoint was SHA256-verified before deletion.
+- ROOT restarted: no.
+- Scientific records replayed: 0.
+
+Treat this as completed cleanup evidence. Do not dispatch the retirement script again.
+
 ## Resume identity
 
 Use the existing calculation root:
@@ -51,6 +70,19 @@ Do not rebuild records, replay ingestion, create a new root, duplicate staging o
 ## Dispatch and first verification
 
 Use the existing `frankie_box_run.yml` and committed `frankie_box_monday_calculations.sh` route. Pass the exact values from the verified receipts. Do not invent shell paths or substitute a mutable branch.
+
+Use these exact dispatch values from the prior resume identity:
+
+- `CODE_ROOT=/opt/frankie-box/code/2d3e6bbf61f8f7be0568107abb618ba2d8c62b6a-36323776583-1/markets`
+- `OUTPUT_ROOT=/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48`
+- `AUTHORSHIP=/opt/frankie-box/work/monday-launch/full-20211004-20260923-r4/authorship-receipt.json`
+- `AUTHORSHIP_SHA256=ade460dede20a4557b6369ca45f653fdae24a958fd52d1f1e449da53fe8e2ec6`
+- `BINDING_SHA256=99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a`
+- `DATA_WORKERS=48`
+- `RECONSTRUCT_MISSING=0`
+- `RESUME_CHECKPOINT=/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-8c03f629f01747158535f3cfa4f01f2d/checkpoints/checkpoint-000000.json`
+
+The existing workflow appends `MARKETS_SHA` from the dispatched commit. Keep the runtime ref immutable and use the existing staged corrected checkout.
 
 Immediately retrieve:
 
