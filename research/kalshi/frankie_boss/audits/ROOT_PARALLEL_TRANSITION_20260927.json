@@ -1,0 +1,1061 @@
+{
+  "schema": "FRANKIE_RECONSTRUCTION_PARALLEL_TRANSITION_OBSERVATION_V1",
+  "runtime_commit": "0c38808e3f71960a2826f78ee1f6c8516d66b985",
+  "production_workflow_run": "https://github.com/DavisAI1974/Markets/actions/runs/36297781442",
+  "generation": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6",
+  "reconstruction": {
+    "read_workflow_run": "https://github.com/DavisAI1974/Markets/actions/runs/36299436737",
+    "file_pin": {
+      "bytes": 178,
+      "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6/reconstruction-receipt.json",
+      "sha256": "1d4c024ce25945b3cf48248d318395419a8dc1216a8e1447ebd02a975bd570e3"
+    },
+    "receipt": {
+      "adapter_and_exact_ledger_prefixes_verified": true,
+      "parent_checkpoint_hash": "4c2c2c2b845f3de9fe14e8bf58741fd4a4763acdd350fa7e9d18999e7b8b213a",
+      "records": 464000,
+      "source_writes": 0
+    }
+  },
+  "transition": {
+    "read_workflow_run": "https://github.com/DavisAI1974/Markets/actions/runs/36299385032",
+    "file_pin": {
+      "bytes": 875,
+      "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6/parallel-transition-receipt.json",
+      "sha256": "2d25db38cfd538dca3bbf5936276e1cb2feeebb2f673e48eb42ae8ad288f0a19"
+    },
+    "receipt": {
+      "checkpoint_hash": "857534dffb9584a1b07cdd0287bd55e6eefdce069fd1fb0688c0073fa2f6ebca",
+      "completed_mbo_records": 464000,
+      "execution_policy": {
+        "calculation_processes": 3,
+        "groups_in_flight": 1,
+        "helper_sha256": "120e1a8ef9cb44d85d9ae1344dca5a4a060c21fcddec01e757c5ec0ba317b70f",
+        "ledger_writer": "ROOT",
+        "schema": "FRANKIE_NATIVE_PARALLEL_V1",
+        "start_method": "spawn",
+        "worker_sections": [
+          "queue",
+          "replenishment"
+        ]
+      },
+      "new_records_processed_at_transition": 0,
+      "reconstruction_receipt": {
+        "bytes": 178,
+        "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6/reconstruction-receipt.json",
+        "sha256": "1d4c024ce25945b3cf48248d318395419a8dc1216a8e1447ebd02a975bd570e3"
+      },
+      "rule": "serial reconstruction verified before any parallel group or new source record",
+      "schema": "FRANKIE_PARALLEL_BOUNDARY_TRANSITION_V1",
+      "workers_started": true
+    }
+  },
+  "first_new_record_observation": {
+    "read_workflow_run": "https://github.com/DavisAI1974/Markets/actions/runs/36299327948",
+    "progress": {
+      "at": 1790489464.6899097,
+      "checkpoints": {
+        "at": 1790489448.5682788,
+        "counts": {
+          "read_verified": 3,
+          "saved": 3
+        },
+        "last_event": "read_verified",
+        "name": "checkpoint-000002.json",
+        "pid": 54610,
+        "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+        "request_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a"
+      },
+      "completed": 465267,
+      "failed": 0,
+      "in_flight": 0,
+      "percent": 22.89,
+      "phase": "deriving",
+      "pid": 54610,
+      "process_alive": true,
+      "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+      "progress_age_seconds": 0.2,
+      "request_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a",
+      "schema": "FRANKIE_WORK_PROBE_V1",
+      "stage": "root-native-records",
+      "state": "running",
+      "total": 2032203
+    }
+  },
+  "verification_activity": {
+    "schema": "FRANKIE_RECONSTRUCTION_BOUNDARY_RESOURCE_OBSERVATION_V1",
+    "workflow_run": "https://github.com/DavisAI1974/Markets/actions/runs/36299126203",
+    "purpose": "Read-only resource observation while reconstruction heartbeat paused near old cursor; no calculation rerun or extra validator",
+    "samples": [
+      {
+        "schema": "FRANKIE_ROOT_RESOURCE_SAMPLE_V1",
+        "sample": 0,
+        "at": "2026-09-27T06:06:50.714107+00:00",
+        "monotonic": 512634.588089936,
+        "pid": 54610,
+        "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+        "process": {
+          "state": "D",
+          "user_ticks": 141230,
+          "system_ticks": 6944,
+          "major_faults": 21,
+          "threads": 32,
+          "io": {
+            "rchar": 213759660582,
+            "wchar": 117397263337,
+            "syscr": 1423109,
+            "syscw": 263653,
+            "read_bytes": 68511268864,
+            "write_bytes": 117398290432,
+            "cancelled_write_bytes": 0
+          },
+          "status_kib": {
+            "VmSize": 8409580,
+            "VmRSS": 6617084,
+            "VmSwap": 0
+          }
+        },
+        "host_cpu_ticks": [
+          34125058,
+          2404,
+          470740,
+          1605430637,
+          142789,
+          0,
+          884,
+          36041
+        ],
+        "memory_kib": {
+          "MemTotal": 259751792,
+          "MemAvailable": 249835948,
+          "SwapTotal": 0,
+          "SwapFree": 0,
+          "Dirty": 12,
+          "Writeback": 0
+        },
+        "vm": {
+          "pswpin": 0,
+          "pswpout": 0,
+          "pgmajfault": 2995
+        },
+        "pressure": {
+          "cpu": {
+            "some": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "14234789106"
+            },
+            "full": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "0"
+            }
+          },
+          "memory": {
+            "some": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "488797"
+            },
+            "full": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "488560"
+            }
+          },
+          "io": {
+            "some": {
+              "avg10": "66.45",
+              "avg60": "67.45",
+              "avg300": "37.31",
+              "total": "543559494"
+            },
+            "full": {
+              "avg10": "66.45",
+              "avg60": "67.44",
+              "avg300": "37.30",
+              "total": "543439309"
+            }
+          }
+        },
+        "cgroup": {
+          "cpu": {
+            "usage_usec": 345511773557,
+            "user_usec": 340987034191,
+            "system_usec": 4524739366,
+            "nice_usec": 2165980,
+            "core_sched.force_idle_usec": 0
+          },
+          "cpu_max": null
+        },
+        "diskstats": {
+          "nvme0n1": [
+            353713,
+            13877,
+            135849983,
+            449108,
+            2856677,
+            1196303,
+            1005126228,
+            7983303,
+            0,
+            1376004,
+            8432411,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "nvme0n1p1": [
+            345993,
+            13233,
+            135728521,
+            443955,
+            2856253,
+            1196219,
+            1004943928,
+            7982076,
+            2,
+            1954213,
+            8426032,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "progress": {
+          "stage": "root-native-reconstruct",
+          "completed": 462817,
+          "total": 2032203,
+          "failed": 0,
+          "at": 1790488978.3140967
+        },
+        "checkpoints": {
+          "at": 1790488406.7857313,
+          "counts": {
+            "read_verified": 2,
+            "saved": 2
+          },
+          "last_event": "read_verified",
+          "name": "checkpoint-000001.json",
+          "pid": 54610,
+          "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+          "request_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a"
+        }
+      },
+      {
+        "schema": "FRANKIE_ROOT_RESOURCE_SAMPLE_V1",
+        "sample": 1,
+        "at": "2026-09-27T06:07:00.715286+00:00",
+        "monotonic": 512644.589275627,
+        "pid": 54610,
+        "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+        "process": {
+          "state": "D",
+          "user_ticks": 141398,
+          "system_ticks": 7005,
+          "major_faults": 21,
+          "threads": 32,
+          "io": {
+            "rchar": 216578232870,
+            "wchar": 117397263337,
+            "syscr": 1423445,
+            "syscw": 263653,
+            "read_bytes": 71332724736,
+            "write_bytes": 117398290432,
+            "cancelled_write_bytes": 0
+          },
+          "status_kib": {
+            "VmSize": 8409580,
+            "VmRSS": 6617084,
+            "VmSwap": 0
+          }
+        },
+        "host_cpu_ticks": [
+          34125225,
+          2404,
+          470882,
+          1605461549,
+          143547,
+          0,
+          884,
+          36042
+        ],
+        "memory_kib": {
+          "MemTotal": 259751792,
+          "MemAvailable": 249859456,
+          "SwapTotal": 0,
+          "SwapFree": 0,
+          "Dirty": 60,
+          "Writeback": 0
+        },
+        "vm": {
+          "pswpin": 0,
+          "pswpout": 0,
+          "pgmajfault": 2995
+        },
+        "pressure": {
+          "cpu": {
+            "some": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "14234821436"
+            },
+            "full": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "0"
+            }
+          },
+          "memory": {
+            "some": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "499387"
+            },
+            "full": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "499150"
+            }
+          },
+          "io": {
+            "some": {
+              "avg10": "69.06",
+              "avg60": "67.90",
+              "avg300": "38.42",
+              "total": "550682884"
+            },
+            "full": {
+              "avg10": "69.06",
+              "avg60": "67.90",
+              "avg300": "38.41",
+              "total": "550561997"
+            }
+          }
+        },
+        "cgroup": {
+          "cpu": {
+            "usage_usec": 345514073636,
+            "user_usec": 340988720847,
+            "system_usec": 4525352788,
+            "nice_usec": 2165980,
+            "core_sched.force_idle_usec": 0
+          },
+          "cpu_max": null
+        },
+        "diskstats": {
+          "nvme0n1": [
+            364475,
+            13877,
+            141360127,
+            464933,
+            2856677,
+            1196303,
+            1005126228,
+            7983303,
+            0,
+            1383839,
+            8448236,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "nvme0n1p1": [
+            356755,
+            13233,
+            141238665,
+            459781,
+            2856253,
+            1196219,
+            1004943928,
+            7982076,
+            2,
+            1962434,
+            8441857,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "progress": {
+          "stage": "root-native-reconstruct",
+          "completed": 462817,
+          "total": 2032203,
+          "failed": 0,
+          "at": 1790488978.3140967
+        },
+        "checkpoints": {
+          "at": 1790488406.7857313,
+          "counts": {
+            "read_verified": 2,
+            "saved": 2
+          },
+          "last_event": "read_verified",
+          "name": "checkpoint-000001.json",
+          "pid": 54610,
+          "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+          "request_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a"
+        }
+      },
+      {
+        "schema": "FRANKIE_ROOT_RESOURCE_SAMPLE_V1",
+        "sample": 2,
+        "at": "2026-09-27T06:07:10.716576+00:00",
+        "monotonic": 512654.590564296,
+        "pid": 54610,
+        "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+        "process": {
+          "state": "D",
+          "user_ticks": 141570,
+          "system_ticks": 7064,
+          "major_faults": 21,
+          "threads": 32,
+          "io": {
+            "rchar": 219405193766,
+            "wchar": 117397263337,
+            "syscr": 1423782,
+            "syscw": 263653,
+            "read_bytes": 74161778688,
+            "write_bytes": 117398290432,
+            "cancelled_write_bytes": 0
+          },
+          "status_kib": {
+            "VmSize": 8409580,
+            "VmRSS": 6617084,
+            "VmSwap": 0
+          }
+        },
+        "host_cpu_ticks": [
+          34125393,
+          2404,
+          471022,
+          1605492461,
+          144305,
+          0,
+          884,
+          36042
+        ],
+        "memory_kib": {
+          "MemTotal": 259751792,
+          "MemAvailable": 249859752,
+          "SwapTotal": 0,
+          "SwapFree": 0,
+          "Dirty": 808,
+          "Writeback": 0
+        },
+        "vm": {
+          "pswpin": 0,
+          "pswpout": 0,
+          "pgmajfault": 2995
+        },
+        "pressure": {
+          "cpu": {
+            "some": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "14234851515"
+            },
+            "full": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "0"
+            }
+          },
+          "memory": {
+            "some": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "509093"
+            },
+            "full": {
+              "avg10": "0.00",
+              "avg60": "0.00",
+              "avg300": "0.00",
+              "total": "508856"
+            }
+          },
+          "io": {
+            "some": {
+              "avg10": "65.93",
+              "avg60": "67.28",
+              "avg300": "39.28",
+              "total": "557105876"
+            },
+            "full": {
+              "avg10": "65.93",
+              "avg60": "67.27",
+              "avg300": "39.27",
+              "total": "556984019"
+            }
+          }
+        },
+        "cgroup": {
+          "cpu": {
+            "usage_usec": 345516375076,
+            "user_usec": 340990437535,
+            "system_usec": 4525937540,
+            "nice_usec": 2165980,
+            "core_sched.force_idle_usec": 0
+          },
+          "cpu_max": null
+        },
+        "diskstats": {
+          "nvme0n1": [
+            375269,
+            13877,
+            146886135,
+            480773,
+            2856677,
+            1196303,
+            1005126228,
+            7983303,
+            0,
+            1391750,
+            8464077,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "nvme0n1p1": [
+            367549,
+            13233,
+            146764673,
+            475621,
+            2856253,
+            1196219,
+            1004943928,
+            7982076,
+            1,
+            1970710,
+            8457697,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        "progress": {
+          "stage": "root-native-reconstruct",
+          "completed": 462817,
+          "total": 2032203,
+          "failed": 0,
+          "at": 1790488978.3140967
+        },
+        "checkpoints": {
+          "at": 1790488406.7857313,
+          "counts": {
+            "read_verified": 2,
+            "saved": 2
+          },
+          "last_event": "read_verified",
+          "name": "checkpoint-000001.json",
+          "pid": 54610,
+          "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+          "request_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a"
+        }
+      }
+    ],
+    "summary": {
+      "elapsed_seconds": 20.002474359993357,
+      "physical_read_MiB_per_second": 269.40397456666403,
+      "root_user_cpu_percent_of_one_cpu": 16.997897054177898,
+      "root_system_cpu_percent_of_one_cpu": 5.999257783827493
+    },
+    "interpretation": "ROOT was actively reading retained evidence; the sample supports ongoing prefix verification but does not establish that verification or parallel activation completed.",
+    "limitations": [
+      "ROOT process only; not function-level attribution",
+      "No scientific result or performance speedup claim"
+    ]
+  },
+  "limits": [
+    "Not full-day calculation completion",
+    "No measured parallel speedup",
+    "No extra calculation test, comparison run, ingestion replay or model call"
+  ],
+  "boundary_full_state": {
+    "read_workflow_run": "https://github.com/DavisAI1974/Markets/actions/runs/36299497370",
+    "file_pin": {
+      "bytes": 10387,
+      "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6/checkpoints/controller-state-000002.json",
+      "sha256": "34f0196b4c3e475136f7aecab1e2cf64a250bf969d9dcf6e0741ac5707947256"
+    },
+    "receipt": {
+      "completed_mbo_records": 464000,
+      "driver_identity": {
+        "arm": "A_MEMORY",
+        "calculation_contract_sha256": "822d2cfdf8e78bfde0566f1a67929cc81a02611193167cf94a2171364b897865",
+        "code_commit": "2ebb8ce8ef4834545ad99a4ecdff50c18c5b3134",
+        "knowledge_manifest_hash": "e302103e4b0e62b07e615fc5d93ef3a9d9ae80dacdb812c95917da7633472017",
+        "mission_sha256": "ff2b8103e2e0f7475db72d9f9b146f7f5196b7841a94af3190537e8016733e85",
+        "run_id": "full-20211004-20260927-r1-48-cycle-00",
+        "source_manifest_hash": "a399377b5b005d989daa467048438437c47b8597dc8cfb5861c3706c6f92a355",
+        "total_mbo_records": 2032203
+      },
+      "driver_state": {
+        "bytes": 168313965,
+        "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6/checkpoints/driver-state-000002.pkl.gz",
+        "sha256": "67deeec5babe6a914acd6d1343a5a68b77ae972009d6b28b016e0b5370a9f259"
+      },
+      "finalized": false,
+      "ledgers": {
+        "legacy": {
+          "attributes": {
+            "_bytes": 225810223,
+            "_bytes_by_section": {
+              "legacy_observable_rows": 225810223
+            },
+            "_closed": false,
+            "_key_bytes": {
+              "action": 24836,
+              "adapter_revision": 122406,
+              "ask_ct_00": 26611,
+              "ask_ct_01": 26612,
+              "ask_ct_02": 26612,
+              "ask_ct_03": 26611,
+              "ask_ct_04": 26610,
+              "ask_ct_05": 26612,
+              "ask_ct_06": 26612,
+              "ask_ct_07": 26612,
+              "ask_ct_08": 26613,
+              "ask_ct_09": 26613,
+              "ask_px_00": 33463,
+              "ask_px_01": 33464,
+              "ask_px_02": 33490,
+              "ask_px_03": 33506,
+              "ask_px_04": 33492,
+              "ask_px_05": 33491,
+              "ask_px_06": 33479,
+              "ask_px_07": 33504,
+              "ask_px_08": 33491,
+              "ask_px_09": 33465,
+              "ask_sz_00": 26643,
+              "ask_sz_01": 26666,
+              "ask_sz_02": 26672,
+              "ask_sz_03": 26668,
+              "ask_sz_04": 26672,
+              "ask_sz_05": 26691,
+              "ask_sz_06": 26703,
+              "ask_sz_07": 26731,
+              "ask_sz_08": 26760,
+              "ask_sz_09": 26814,
+              "bid_ct_00": 26611,
+              "bid_ct_01": 26610,
+              "bid_ct_02": 26610,
+              "bid_ct_03": 26610,
+              "bid_ct_04": 26610,
+              "bid_ct_05": 26610,
+              "bid_ct_06": 26610,
+              "bid_ct_07": 26610,
+              "bid_ct_08": 26610,
+              "bid_ct_09": 26610,
+              "bid_px_00": 33495,
+              "bid_px_01": 33517,
+              "bid_px_02": 33484,
+              "bid_px_03": 33500,
+              "bid_px_04": 33498,
+              "bid_px_05": 33474,
+              "bid_px_06": 33507,
+              "bid_px_07": 33502,
+              "bid_px_08": 33497,
+              "bid_px_09": 33499,
+              "bid_sz_00": 26635,
+              "bid_sz_01": 26643,
+              "bid_sz_02": 26656,
+              "bid_sz_03": 26643,
+              "bid_sz_04": 26658,
+              "bid_sz_05": 26641,
+              "bid_sz_06": 26648,
+              "bid_sz_07": 26654,
+              "bid_sz_08": 26667,
+              "bid_sz_09": 26672,
+              "census_view": 56768,
+              "channel_id": 30158,
+              "flags": 21694,
+              "instrument_id": 42576,
+              "price": 26403,
+              "projection_after_mbo_action": 64398,
+              "projection_at_event_group_end": 67562,
+              "projection_at_f_last": 51596,
+              "raw_symbol": 33706,
+              "sequence": 34660,
+              "side": 21288,
+              "size": 17757,
+              "ts_event": 54510,
+              "ts_recv": 52749
+            },
+            "_key_sampled_rows": 1774,
+            "_rows": 172120,
+            "_rows_by_section": {
+              "legacy_observable_rows": 172120
+            },
+            "ledger": "legacy_observable_rows"
+          },
+          "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6/ledgers/legacy_observable_rows.jsonl",
+          "sha256": "41a08fd980f620741e399dca931c490536933c5097f6dd27cae9418d15c80c4b"
+        },
+        "lifecycle": {
+          "attributes": {
+            "_bytes": 2170817312,
+            "_bytes_by_section": {
+              "absorption": 313095311,
+              "candidate": 599647,
+              "episode": 17053252,
+              "flow_substrate": 46101300,
+              "ladder": 470352303,
+              "mirror": 96598673,
+              "queue": 265189688,
+              "recurrence": 127629040,
+              "replenishment": 832072182,
+              "response": 2125916
+            },
+            "_closed": false,
+            "_key_bytes": {
+              "action": 58212,
+              "at_mid_trades": 12179,
+              "attributed_to_episode_ids": 317831,
+              "attribution_rule": 126300,
+              "availability_note": 2090,
+              "available_second": 310,
+              "baseline": 191,
+              "best_price_after": 162690,
+              "best_price_before": 170085,
+              "best_price_moved": 192270,
+              "binning_clock": 17307,
+              "birth_family_id": 75015,
+              "birth_group_index": 46151,
+              "birth_recv_ns": 62012,
+              "birth_sequence": 42545,
+              "birth_session_phase": 66674,
+              "buy_trades": 10257,
+              "buy_volume": 11541,
+              "candidate": 6485,
+              "candidate_id": 1053,
+              "causing_order_ids": 225257,
+              "censored": 67896,
+              "classification": 20620,
+              "clock": 342430,
+              "closed_recv_ns": 222756,
+              "continuity_segment": 345464,
+              "counterparts_considered": 112056,
+              "depth_after": 71130,
+              "depth_at_open": 111775,
+              "depth_before": 75297,
+              "depth_concentration_after": 353029,
+              "depth_migration": 157022,
+              "detection_lag_seconds": 532,
+              "dipole": 195117,
+              "dipole_path_withheld": 240,
+              "direction_note": 1770,
+              "displayed_depletion": 93979,
+              "disposition": 233233,
+              "elapsed_ns": 62462,
+              "emitted_at_recv_ns": 1150212,
+              "emitted_on": 778088,
+              "emitting_section": 871587,
+              "episode_count": 31680,
+              "episode_id": 86193,
+              "episodes": 991367,
+              "event_second": 270,
+              "exit_family_id": 73348,
+              "exit_session_phase": 65013,
+              "exit_stratum_available": 51677,
+              "family_id": 455793,
+              "gap_count": 56050,
+              "gaps": 143538,
+              "group_index": 90219,
+              "horizon_ns": 55605,
+              "instrument_id": 280488,
+              "ladder_scope": 288405,
+              "last_quote": 14835,
+              "level_birth_count": 170085,
+              "level_births": 140505,
+              "level_death_count": 170085,
+              "level_deaths": 140505,
+              "level_event_key": 128405,
+              "level_event_key_at_exit": 115023,
+              "lifetime_ns": 42749,
+              "liquidity_kind": 113606,
+              "liquidity_kind_basis": 178423,
+              "magnitude": 170,
+              "max_price_gap_after": 185273,
+              "member_count": 67636,
+              "member_id": 134071,
+              "mirror_pair_key": 98498,
+              "modify_count": 30007,
+              "nearest_candidate_distance": 135240,
+              "neighborhood_arrival_quantity": 75475,
+              "neighborhood_arrival_ratio": 74642,
+              "neighborhood_arrival_ratio_formula": 675705,
+              "neighboring_price_refill_quantity": 83186,
+              "neighbour_offset_ticks": 145800,
+              "neighbourhood_ticks": 103950,
+              "net_volume": 11575,
+              "new_id_add_count": 47338,
+              "new_id_add_quantity": 54194,
+              "no_direction_reason": 22741,
+              "no_quote_trades": 13461,
+              "observation": 115262,
+              "observations_behind_threshold": 385,
+              "occupied_levels_after": 199665,
+              "occupied_levels_before": 207060,
+              "opened_recv_ns": 222756,
+              "opposite_side_retreat_quantity": 135252,
+              "order_count_delta": 97719,
+              "order_id": 145625,
+              "order_id_turnover": 86412,
+              "order_ids_at_close": 90168,
+              "order_ids_at_open": 86412,
+              "order_ids_persisting": 97682,
+              "orientation": 98654,
+              "outcome": 47072,
+              "overshoot_quantity": 52222,
+              "own_fill_count": 33343,
+              "own_fill_size": 31677,
+              "peak_restored_quantity": 60740,
+              "polarity": 9289,
+              "precursor_recv_ns": 234,
+              "price_at_close_raw": 123981,
+              "price_at_open_raw": 120224,
+              "price_gaps_after": 222544,
+              "price_is_sentinel": 112266,
+              "price_moved": 78882,
+              "price_raw": 150312,
+              "price_relation_basis": 332640,
+              "price_relations": 694110,
+              "price_response_raw": 90266,
+              "priority_loss_count": 41681,
+              "prominence": 210,
+              "quantity": 58319,
+              "queue_scope": 61679,
+              "recognition": 5334,
+              "recognition_label": 1350,
+              "recognition_outcome": 261,
+              "recognized_recv_ns": 378,
+              "recognized_recv_ns_basis": 459,
+              "recv_ns": 358143,
+              "refill_attribution": 261954,
+              "refill_attributions": 53813,
+              "removal_during_pending_episode": 72657,
+              "removed_order_count": 52625,
+              "removed_quantity": 46379,
+              "resolved": 64124,
+              "roll20_defined": 15022,
+              "roll20_value": 15090,
+              "row_index": 62424,
+              "rows": 6468,
+              "run_count": 56044,
+              "runs": 675509,
+              "runway_id": 130357,
+              "same_id_modify_count": 55081,
+              "same_id_modify_quantity": 61714,
+              "same_price_refill_quantity": 68613,
+              "same_side_replacement_quantity": 135286,
+              "searched_span_seconds": 305,
+              "second": 13461,
+              "section": 70686,
+              "segment_by_rule": 16025,
+              "selection_rule": 470,
+              "self_restoration_policy": 237006,
+              "sell_trades": 10897,
+              "sell_volume": 12181,
+              "session_phase": 418438,
+              "shared_with_episode_count": 64568,
+              "side": 231288,
+              "source_day": 308200,
+              "source_role": 456136,
+              "stage_count": 143,
+              "status": 13461,
+              "stratum_basis": 55011,
+              "structure_id": 1404,
+              "surviving_depth": 78931,
+              "terminal_basis": 84342,
+              "terminal_group_index": 51159,
+              "terminal_phase": 232,
+              "terminal_recv_ns": 66680,
+              "terminal_status": 51002,
+              "threshold": 170,
+              "threshold_rule": 450,
+              "tick_raw": 83160,
+              "time_to_restoration_ns": 74925,
+              "total_depth_after": 191239,
+              "total_depth_before": 198637,
+              "touch_disposition": 93657,
+              "touch_migration_raw": 184875,
+              "touch_price_after": 133056,
+              "touch_price_at_open": 71570,
+              "touch_price_before": 137214,
+              "touch_restoration_ns": 61774,
+              "touch_state": 322083,
+              "touch_state_at_open": 78330,
+              "traded_quantity": 78906,
+              "trades": 7695,
+              "unattributed_reason": 8235,
+              "unusable_trades": 13461,
+              "window_direction": 19884,
+              "window_seconds": 13461,
+              "window_signed_flow": 15605,
+              "window_truncated": 260,
+              "withdrawn_quantity": 90209
+            },
+            "_key_sampled_rows": 27386,
+            "_rows": 2656516,
+            "_rows_by_section": {
+              "absorption": 362226,
+              "candidate": 661,
+              "episode": 1322,
+              "flow_substrate": 63987,
+              "ladder": 724452,
+              "mirror": 362226,
+              "queue": 163512,
+              "recurrence": 362226,
+              "replenishment": 611938,
+              "response": 3966
+            },
+            "ledger": "exact_lifecycle_and_runway_ledger"
+          },
+          "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6/ledgers/exact_lifecycle_rows.jsonl",
+          "sha256": "ab613e8237882cf0089ad45896ba077858a5651fbd7e5405d46ffcc997728c79"
+        },
+        "member": {
+          "attributes": {
+            "_bytes": 114717710811,
+            "_bytes_by_section": {
+              "exact_member_ledger": 114717710811
+            },
+            "_closed": false,
+            "_key_bytes": {
+              "activity_since": 17317697,
+              "adapter_revision": 257646,
+              "book": 18372573,
+              "book_full": 1125154963,
+              "book_regime": 892864,
+              "capture_observations": 579690,
+              "causal_availability_clock": 156828,
+              "causal_clocks": 3908113,
+              "census_view": 119488,
+              "channel_count": 70946,
+              "channel_id": 63478,
+              "channels": 63478,
+              "clocks": 911096,
+              "component_count": 78426,
+              "continuity_segment": 104552,
+              "decision_basis": 209104,
+              "event_group_complete_f_last": 134424,
+              "event_to_receive_latency_ns": 157118,
+              "f_last_to_decision_delay_ns": 123222,
+              "family_id": 145626,
+              "fifo_priority_reconstructed": 134424,
+              "formation_latency_ns": 99458,
+              "group_index": 81004,
+              "instrument_id": 89616,
+              "integrity": 59744,
+              "integrity_delta": 82148,
+              "interpretation_domain": 171764,
+              "max_within_group_receive_gap_ns": 140515,
+              "native_priority_id_exposed": 134424,
+              "publisher_id": 67212,
+              "raw_actions": 7147161,
+              "raw_symbol": 70946,
+              "schema": 164296,
+              "sequence": 72854,
+              "sequence_contiguous": 105031,
+              "sequence_first": 95258,
+              "sequence_last": 91524,
+              "sequence_span": 70946,
+              "session_phase": 126944,
+              "side_orientation": 91944,
+              "single_channel_group": 108286,
+              "snapshot_bootstrap_only": 123222,
+              "source_day": 93350,
+              "source_role": 138158,
+              "structure": 4037203,
+              "ts_event_ns": 130690,
+              "ts_in_delta_ns": 89616,
+              "ts_recv_ns": 126956,
+              "within_group_receive_gaps_ns": 135091
+            },
+            "_key_sampled_rows": 3734,
+            "_rows": 362226,
+            "_rows_by_section": {
+              "exact_member_ledger": 362226
+            },
+            "ledger": "exact_member_ledger"
+          },
+          "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6/ledgers/exact_member_rows.jsonl",
+          "sha256": "300911bf50307325235e04bede9210d9ca2aa4169cf2cb659df5c95a03bcf5d9"
+        }
+      },
+      "parent_checkpoint": {
+        "bytes": 781,
+        "path": "/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-f13de5640bf549feaae493d8861bfae1/checkpoints/checkpoint-000006.json",
+        "sha256": "e2ba48a2146a58924d1da582a7d36dc6f19fbab9c558500ceac2b7b31b3e129d"
+      },
+      "runtime": {
+        "cloudpickle": "3.1.2",
+        "python": "3.13.15 (main, Aug  6 2026, 02:15:18) [GCC 13.3.0]",
+        "serializer_sha256": "d5487c5444055cac5a91bc60bb8cb796924f10126fe02ba1384addbde43fd2d1"
+      },
+      "schema": "FRANKIE_NATIVE_FULL_STATE_V1"
+    }
+  },
+  "latest_progress": {
+    "read_workflow_run": "https://github.com/DavisAI1974/Markets/actions/runs/36299574999",
+    "progress": {
+      "at": 1790489764.9526827,
+      "checkpoints": {
+        "at": 1790489448.5682788,
+        "counts": {
+          "read_verified": 3,
+          "saved": 3
+        },
+        "last_event": "read_verified",
+        "name": "checkpoint-000002.json",
+        "pid": 54610,
+        "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+        "request_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a"
+      },
+      "completed": 492954,
+      "failed": 0,
+      "in_flight": 0,
+      "percent": 24.26,
+      "phase": "deriving",
+      "pid": 54610,
+      "process_alive": true,
+      "process_token": "099d4eb6-a46d-4b94-a888-f15e55c1ee7e:51094567",
+      "progress_age_seconds": 5.9,
+      "request_sha256": "99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a",
+      "schema": "FRANKIE_WORK_PROBE_V1",
+      "stage": "root-native-records",
+      "state": "running",
+      "total": 2032203
+    }
+  }
+}
