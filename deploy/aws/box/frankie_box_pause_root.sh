@@ -7,6 +7,64 @@ set -eu
 : "${EXPECTED_PROCESS_TOKEN:?recorded boot and process-start identity required}"
 : "${BINDING_SHA256:?original source binding hash required}"
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1
+# HANDOFF=reap-orphans: terminate exactly the listed helper processes a paused ROOT left behind (its pause receipt
+# must record the exit). Each listed PID must be orphaned (parent 1), a multiprocessing spawn helper or resource
+# tracker of the Frankie venv, and started after the paused ROOT; anything else refuses before any signal.
+if [ "${HANDOFF:-}" = reap-orphans ]; then
+  : "${EXPECTED_ORPHANS:?comma-separated orphan PIDs required}"
+  exec /opt/frankie-box/venv/bin/python -I -S -B - "$DIRECTORY" "$EXPECTED_PID" "$EXPECTED_PROCESS_TOKEN" \
+    "$BINDING_SHA256" "$EXPECTED_ORPHANS" <<'PY'
+import glob, hashlib, json, os, select, signal, sys, time
+from pathlib import Path
+root = Path(sys.argv[1]).resolve(strict=True)
+pid, token, binding = int(sys.argv[2]), sys.argv[3], sys.argv[4]
+listed = sorted({int(p) for p in sys.argv[5].split(',') if p})
+if not root.is_relative_to(Path('/opt/frankie-box/work/monday-calculations')) or not listed:
+    raise SystemExit('existing Monday root and orphan PIDs required')
+if hashlib.sha256((root / 'source-binding.json').read_bytes()).hexdigest() != binding:
+    raise SystemExit('original source binding hash differs')
+receipts = [json.loads(Path(p).read_bytes()) for p in glob.glob(str(root / ('pause-for-*-%d.json' % pid)))]
+if not any(r.get('pid') == pid and r.get('process_token') == token and r.get('process_exited') for r in receipts):
+    raise SystemExit('no pause receipt records this ROOT exited')
+if Path('/proc/%d' % pid).exists():
+    raise SystemExit('paused ROOT PID is alive again; refuse')
+boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+if not token.startswith(boot + ':'):
+    raise SystemExit('ROOT token is from another boot')
+root_start = int(token.rsplit(':', 1)[1])
+handles = []
+try:
+    for child in listed:
+        proc = Path('/proc/%d' % child)
+        fields = (proc / 'stat').read_text().rsplit(')', 1)[1].split()
+        command = (proc / 'cmdline').read_bytes()
+        exe = os.readlink(proc / 'exe')
+        if (int(fields[1]) != 1 or fields[0] in ('Z', 'X') or int(fields[19]) < root_start
+                or not exe.startswith('/opt/frankie-box/venv/') and not command.startswith(b'/opt/frankie-box/venv/bin/python')
+                or not ((b'multiprocessing.spawn' in command and b'spawn_main' in command)
+                        or b'multiprocessing.resource_tracker' in command)):
+            raise SystemExit('PID %d is not an orphaned Frankie helper of the paused ROOT; no signal sent' % child)
+        handles.append((child, os.pidfd_open(child)))
+    for child, handle in handles:
+        signal.pidfd_send_signal(handle, signal.SIGTERM)
+    remaining = [child for child, handle in handles if not select.select([handle], [], [], 15)[0]]
+    for child, handle in handles:
+        if child in remaining:
+            signal.pidfd_send_signal(handle, signal.SIGKILL)
+    still = [child for child, handle in handles if not select.select([handle], [], [], 10)[0]]
+finally:
+    for _, handle in handles:
+        os.close(handle)
+receipt = dict(schema='FRANKIE_ROOT_ORPHAN_REAP_V1', at=time.time(), root_pid=pid, root_process_token=token,
+               reaped=listed, needed_sigkill=remaining, still_alive=still)
+path = root / ('reap-orphans-%d-%d.json' % (pid, int(time.time())))
+with path.open('x') as output:
+    json.dump(receipt, output, sort_keys=True)
+print(json.dumps(dict(receipt=receipt, receipt_path=str(path)), sort_keys=True))
+if still:
+    raise SystemExit('orphans remain alive; do not resume')
+PY
+fi
 exec /opt/frankie-box/venv/bin/python -I -S -B - "$DIRECTORY" "$CHECKPOINT_DIR" \
   "$EXPECTED_PID" "$EXPECTED_PROCESS_TOKEN" "$BINDING_SHA256" "${HANDOFF:-parallel-boundary}" <<'PY'
 import gzip
