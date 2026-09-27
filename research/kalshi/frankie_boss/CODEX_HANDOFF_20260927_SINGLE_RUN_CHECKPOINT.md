@@ -1,6 +1,36 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
-## Latest execution — recovery running (probe 2026-09-27T04:29:25Z)
+## Latest continuation — first nonzero full-state snapshot witnessed (2026-09-27)
+
+The existing recovery workflow remains https://github.com/DavisAI1974/Markets/actions/runs/36294078724.
+No duplicate calculation, staging, restart or producer traversal was dispatched in this continuation.
+Deployed runtime and CODE_ROOT remain 763d1d5c0f1979bad7ad3462620795e5354bfb37 and the checkout recorded below.
+
+Live read-only probe https://github.com/DavisAI1974/Markets/actions/runs/36295002812 succeeded; output at 2026-09-27T04:41:13.4111510Z:
+- root-native-reconstruct; PID 54056 alive with the same process token; failed=0; progress age 9.7 seconds.
+- 118,168 records reconstructed toward the old 464,000 checkpoint. This is reconstruction, not progress beyond the old cursor or overall completion.
+- Two checkpoints saved and read_verified; latest checkpoint-000001.json.
+
+First nonzero descriptor read https://github.com/DavisAI1974/Markets/actions/runs/36294885533 succeeded at 2026-09-27T04:38:52Z:
+- completed_mbo_records=74966; schema FRANKIE_NATIVE_FULL_STATE_V1; finalized=false.
+- controller-state-000001.json: 10,085 bytes, SHA256 ea7a5b9a4c2edf6e9ea627634606d7d3e64a1a100d342079c577e2031c187394.
+- driver-state-000001.pkl.gz: 11086035 bytes, SHA256 49833dfdbf78e54127c03a3f471642d4ae8c964b48749c0a50dccd141f1e711d.
+- Same recovery-f13de5640bf549feaae493d8861bfae1 generation, original run identity, source manifest and 2,032,203-record total.
+- Exact ledger pins in the descriptor:
+  - legacy: 37,388,970 bytes / 28,526 rows; SHA256 2ecead6b0e2679a8fb842fbe79936e950265de606b772fbe06baf76097c075b3.
+  - lifecycle: 348,104,809 bytes / 429,597 rows; SHA256 7bd00759558b4dfc7631d36217c33989e60b7f6d4aa8f9475a3187f507b33408.
+  - member: 14,552,647,313 bytes / 56,979 rows; SHA256 1f14ba151556d2362c3b96aa9e14f39dc740523313d05f5e17f40a37c2b641fd.
+
+Checkpoint envelope read https://github.com/DavisAI1974/Markets/actions/runs/36294945707 succeeded at 2026-09-27T04:40:40Z:
+- checkpoint-000001.json: 779 bytes, file SHA256 9b851bf2fe21b02ed8b862dc7c7ee71c84095e267b38decb8c30e546c951f455.
+- completed_mbo_records=74966; event_group_open=false; locked=false.
+- checkpoint_hash=94ee14005b8bac435dcbe63c2f706ceefd363d2fc0eca7630274f97f7152dd70.
+- controller_state_hash=52c865e97e9c06ce1e8ce1f2ec3d791f23b83d40e95d402d85cf97f8f351cc84 (checkpoint identity hash, distinct from the descriptor file-byte SHA256 above).
+
+Actual interrupted full-state restoration is still unexercised. No interruption is requested to demonstrate it.
+Next essential milestone is reconstruction-receipt.json confirming adapter hash and exact ledger prefixes at 464000, then completion at 2032203 and calculations-receipt.json. Downstream host/Granite, principal reading/writing, classroom, final retention and Tuesday outcomes remain pending. Use the existing read workflows at meaningful milestones; do not repeatedly poll unchanged state.
+
+## Earlier execution — recovery running (probe 2026-09-27T04:29:25Z)
 
 Final deployed runtime commit: `763d1d5c0f1979bad7ad3462620795e5354bfb37`.
 Staging workflow https://github.com/DavisAI1974/Markets/actions/runs/36293923132 succeeded at 04:21:14Z.
@@ -31,14 +61,14 @@ Inside that generation's checkpoints directory:
 - Descriptor schema FRANKIE_NATIVE_FULL_STATE_V1; completed_mbo_records=0; ledger bytes=0.
 - Serializer SHA256 d5487c5444055cac5a91bc60bb8cb796924f10126fe02ba1384addbde43fd2d1.
 
-Only the initial ZERO-record full-state snapshot is witnessed. First nonzero full-state checkpoint, reconstruction verification at 464000, and actual interrupted full-state restoration remain pending. Do not dispatch a duplicate.
+At this earlier probe, only the initial ZERO-record full-state snapshot was witnessed. The first nonzero snapshot is now witnessed above; reconstruction verification at 464000 and actual interrupted full-state restoration remain pending. Do not dispatch a duplicate.
 Read-helper commit 1551590ab79c7a86b4fbe8a365bbd879677950d5 allows existing read_log MODE=receipt to emit complete checkpoint/controller-state JSON and FILE_PIN; it is supplied from the workflow ref and does not change the active runtime.
 
 Earlier attempt 36293846539 failed before Python/calculations: SSM uses POSIX sh and the new wrapper used Bash arrays.
 763d1d fixes argument handling with POSIX positional parameters. This was our launcher code error, separate from
 the original full-disk/SSM interruption. The read-only probe 36293892226 succeeded after the failed attempt.
 
-Next essential action: use the existing progress/read workflows to observe the first nonzero full-state checkpoint and later reconstruction verification, without duplicate dispatches or repeated unchanged polling. Use the deployed CODE_ROOT above, not a path inferred from later documentation commits.
+Next essential action: use the existing progress/read workflows to observe reconstruction verification at 464000 and subsequent native progress, without duplicate dispatches or repeated unchanged polling. The first nonzero full-state checkpoint is witnessed above. Use the deployed CODE_ROOT above, not a path inferred from later documentation commits.
 Distinguish root-native-reconstruct from new native work beyond the old cursor.
 Only call reconstruction verified after the new recovery generation's reconstruction-receipt.json confirms
 adapter hash and exact ledger prefixes at 464000. Full-state snapshot descriptors are controller-state-NNNNNN.json
@@ -55,7 +85,7 @@ No native completion, classroom execution, final retention or Tuesday outcomes a
 - [x] Clean disposable pip cache and redundant source-transfer packs after verifying successful installed checkouts. Workflow 36293753576 reclaimed 11,779,919,359 bytes in 20 transfer packs and pip reported 406 cache files / 403.3 MB. Per-pack cache-removal-receipt.json retained. Transfer/staging receipts, failed packs, checkouts, source, work, brain and all evidence preserved.
 - [x] Launch authorized reconstruction from checkpoint 000008; live process and advancing reconstruction confirmed by probe 36294419976.
 - [x] Observe initial zero-record full-state snapshot and its serialized-driver pins; read receipt 36294360659.
-- [ ] Observe first nonzero full-state checkpoint. Actual interrupted full-state restoration is not yet demonstrated.
+- [x] Observe first nonzero full-state checkpoint at 74966 records: descriptor read 36294885533 and checkpoint read 36294945707; saved/read_verified observed in probes 36294815357 and 36295002812. Actual interrupted full-state restoration is not yet demonstrated.
 - [ ] Verify adapter hash and exact ledger prefixes at 464000, then continue to 2032203 and retain the completed calculations receipt.
 
 Read-only box inventory https://github.com/DavisAI1974/Markets/actions/runs/36292903952 found /dev/root full: 193G used, 3.4M free; memory available about 244GiB. Disk exhaustion is a concrete resource failure supporting the ROOT/staging interruption; the original SSM IPC message alone did not establish that cause.
