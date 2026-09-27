@@ -1,5 +1,11 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Active worker fixes verified — 2026-09-27 08:46Z
+
+ROOT PID56172 is processing new records on runtime68f2311e3071f24fd63b65134b81861b3246400f, workflow36305497169, generation recovery-03a70711353a433c989b18074d7baacd. Worker receipt verifies both V2 policies, predecessor lineage and15processes on CPUs1–15. Complete post-activation checkpoint000001 read at989940records; latest direct progress1010109/2032203 (49.71%), failed=0. Observed post-fix interval120.265records/s vs earlier64.74; not a controlled same-workload benchmark. See audits/ROOT_WORKER_TRANSPORT_ACTIVATION_20260927.md for actual hashes and all profile receipts.
+
+Latest user requests: investigate remaining combined gains, and freeze the ledger prefix to avoid rebuilding200+GB, or use workers for required transfer. Read-only storage inspection found ext4. Combined row-freezing/shared-memory evidence and frozen ledger segments/materialization are being designed, NOT implemented or deployed. Keep current ROOT running; no further pause/resume issued. Any next runtime transition still requires a fresh verified checkpoint. Granite configuration binds the retained prime package, but actual delivery and acknowledgement remain pending.
+
 ## Current restoration and priming binding — 2026-09-27 08:24Z
 
 ROOT remains the single process PID 56172 on runtime 68f2311e3071f24fd63b65134b81861b3246400f, workflow 36305497169. New generation: recovery-03a70711353a433c989b18074d7baacd. Read-only I/O receipt 36305982145 observed 120,535,908,352 member-ledger bytes restored at 1790497373.0830061, of checkpoint prefix 231,001,441,265 bytes. No new records or post-fix processing rate yet; the preserved calculation cursor is 917,118 / 2,032,203 (45.13%). Do not launch another resume.
