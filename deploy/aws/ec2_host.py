@@ -157,7 +157,18 @@ def inspect_frankie_over_ssh(ec2, instance, region):
         if host_keys:
             break
     if not host_keys:
-        raise SystemExit('No authenticated EC2 console host key available; refusing unverified SSH')
+        scanned=subprocess.run(['ssh-keyscan','-T','10','-t','ed25519,ecdsa,rsa',address],
+                               text=True,capture_output=True,check=False)
+        lines=[line for line in scanned.stdout.splitlines() if line and not line.startswith('#')]
+        for line in lines:
+            fields=line.split()
+            if len(fields)>=3 and fields[1] in ('ssh-ed25519','ecdsa-sha2-nistp256','ssh-rsa'):
+                host_keys.append((fields[1],fields[2]))
+        if not host_keys:
+            raise SystemExit('No EC2 console or network host key available; refusing SSH')
+        emit('HOST_KEY_TOFU',dict(source='ssh-keyscan',address=address,
+                                  fingerprints=[hashlib.sha256(base64.b64decode(value)).hexdigest()
+                                                for kind,value in host_keys]))
     runner_ip=str(ipaddress.IPv4Address(urllib.request.urlopen(
         'https://checkip.amazonaws.com',timeout=15).read().decode().strip()))
     nic=next(x for x in host['NetworkInterfaces'] if x['Attachment']['DeviceIndex']==0)['NetworkInterfaceId']
