@@ -156,19 +156,7 @@ def inspect_frankie_over_ssh(ec2, instance, region):
              fingerprints=sorted(set(re.findall(r'SHA256:[A-Za-z0-9+/]{43}', '\n'.join(candidates))))))
         if host_keys:
             break
-    if not host_keys:
-        scanned=subprocess.run(['ssh-keyscan','-T','10','-t','ed25519,ecdsa,rsa',address],
-                               text=True,capture_output=True,check=False)
-        lines=[line for line in scanned.stdout.splitlines() if line and not line.startswith('#')]
-        for line in lines:
-            fields=line.split()
-            if len(fields)>=3 and fields[1] in ('ssh-ed25519','ecdsa-sha2-nistp256','ssh-rsa'):
-                host_keys.append((fields[1],fields[2]))
-        if not host_keys:
-            raise SystemExit('No EC2 console or network host key available; refusing SSH')
-        emit('HOST_KEY_TOFU',dict(source='ssh-keyscan',address=address,
-                                  fingerprints=[hashlib.sha256(base64.b64decode(value)).hexdigest()
-                                                for kind,value in host_keys]))
+    # If console evidence lacks host keys, capture only after temporary ingress is attached.
     runner_ip=str(ipaddress.IPv4Address(urllib.request.urlopen(
         'https://checkip.amazonaws.com',timeout=15).read().decode().strip()))
     nic=next(x for x in host['NetworkInterfaces'] if x['Attachment']['DeviceIndex']==0)['NetworkInterfaceId']
@@ -180,8 +168,6 @@ def inspect_frankie_over_ssh(ec2, instance, region):
         key=pathlib.Path(temp)/'access'
         subprocess.run(['ssh-keygen','-q','-t','ed25519','-N','','-f',str(key)],check=True)
         known=pathlib.Path(temp)/'known_hosts'
-        known.write_text(''.join(address+' '+kind+' '+value+'\n' for kind,value in host_keys))
-        emit('SSH_HOST_KEYS', [hashlib.sha256(base64.b64decode(value)).hexdigest() for kind,value in host_keys])
         eic=boto3.client('ec2-instance-connect',region_name=region)
         def push_key():
             response=eic.send_ssh_public_key(InstanceId=instance,InstanceOSUser='ubuntu',
@@ -206,6 +192,20 @@ def inspect_frankie_over_ssh(ec2, instance, region):
                 NetworkInterfaceIds=[nic])['NetworkInterfaces'][0]['Groups'])
             if actual!=sorted(original+[group]):
                 raise RuntimeError('temporary network access readback differs')
+            if not host_keys:
+                scanned=subprocess.run(['ssh-keyscan','-T','10','-t','ed25519,ecdsa,rsa',address],
+                                       text=True,capture_output=True,check=False)
+                for line in scanned.stdout.splitlines():
+                    fields=line.split()
+                    if len(fields)>=3 and fields[1] in ('ssh-ed25519','ecdsa-sha2-nistp256','ssh-rsa'):
+                        host_keys.append((fields[1],fields[2]))
+                if not host_keys:
+                    raise SystemExit('No network host key after temporary ingress; refusing SSH')
+                emit('HOST_KEY_TOFU',dict(source='ssh-keyscan',address=address,
+                                          fingerprints=[hashlib.sha256(base64.b64decode(value)).hexdigest()
+                                                        for kind,value in host_keys]))
+            known.write_text(''.join(address+' '+kind+' '+value+'\n' for kind,value in host_keys))
+            emit('SSH_HOST_KEYS', [hashlib.sha256(base64.b64decode(value)).hexdigest() for kind,value in host_keys])
             push_key()
             command=['ssh','-T','-i',str(key),'-o','IdentitiesOnly=yes','-o','BatchMode=yes',
                      '-o','StrictHostKeyChecking=yes','-o','UserKnownHostsFile='+str(known),
