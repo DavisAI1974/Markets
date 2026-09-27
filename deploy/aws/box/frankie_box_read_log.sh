@@ -27,6 +27,39 @@ PY
   exit $?
 fi
 [ -f "$P" ] || { echo "no such file: $P"; ls -la "$(dirname "$P")" 2>/dev/null; exit 2; }
+# Summarize an already-retained speedscope profile; never attach to a process.
+if [ "$MODE" = profile ]; then
+  /opt/frankie-box/venv/bin/python -I -S -B - "$P" <<'PY'
+import collections, hashlib, json, pathlib, sys
+path = pathlib.Path(sys.argv[1]).resolve(strict=True)
+allowed = pathlib.Path('/opt/frankie-box/work/monday-calculations').resolve(strict=True)
+if not path.is_relative_to(allowed) or path.parent.parent.name != 'performance' or not path.name.startswith('pid-'):
+    raise SystemExit('retained Monday process profile required')
+raw = path.read_bytes()
+data = json.loads(raw)
+frames = data['shared']['frames']
+paths = collections.Counter()
+total = 0.0
+for profile in data['profiles']:
+    for stack, weight in zip(profile['samples'], profile.get('weights', [1] * len(profile['samples']))):
+        if not stack:
+            continue
+        total += weight
+        leaf = frames[stack[-1]]
+        if 'cloudpickle' in leaf.get('file', '') and leaf.get('name') == 'dump':
+            callers = tuple((frames[i].get('file', ''), frames[i].get('name'), frames[i].get('line'))
+                            for i in stack if '/deploy/aws/box/' in frames[i].get('file', ''))
+            paths[callers] += weight
+print(json.dumps(dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest(),
+    total_active_weight=total, serialization_leaf_weight=sum(paths.values()),
+    send_paths=[dict(callers=[dict(file=f, name=n, line=l) for f,n,l in callers],
+                     weight=weight, percent_active=100*weight/total)
+                for callers,weight in paths.most_common()],
+    limitations=['Retained nonblocking Python samples; not wall-clock shares or a speedup measurement']),
+    sort_keys=True, indent=2))
+PY
+  exit $?
+fi
 if [ "$MODE" = receipt ]; then
   case "$FILE" in */authorship-receipt.json|*/preparation-receipt.json|*/publication-receipt.json|*/calculations-receipt.json|*/reconstruction-receipt.json|*/parallel-transition-receipt.json|*/runtime-workers-receipt.json|*/pause-for-parallel-[0-9]*.json|*/pause-for-native-workers-[0-9]*.json|*/checkpoints/checkpoint-[0-9][0-9][0-9][0-9][0-9][0-9].json|*/checkpoints/controller-state-[0-9][0-9][0-9][0-9][0-9][0-9].json) ;;
     *) echo "receipt mode requires a pipeline or checkpoint receipt"; exit 2;; esac
