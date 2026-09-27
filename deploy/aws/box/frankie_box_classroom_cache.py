@@ -5,6 +5,19 @@ import os
 import time
 from pathlib import Path
 
+
+def _durable():
+    # This file is also loaded directly by path by the session.
+    import importlib.util
+    import sys
+    name = 'frankie_box_durable'
+    if name not in sys.modules:
+        spec = importlib.util.spec_from_file_location(name, Path(__file__).with_name(name + '.py'))
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[name] = module
+        spec.loader.exec_module(module)
+    return sys.modules[name]
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
@@ -16,7 +29,7 @@ def read(path):
     return json.loads(Path(path).read_bytes())
 
 def write(path, value):
-    Path(path).write_text(json.dumps(value, sort_keys=True, indent=1, allow_nan=False) + '\n', encoding='utf-8')
+    _durable().write_text(path, json.dumps(value, sort_keys=True, indent=1, allow_nan=False) + '\n')
 
 def _durable_json(path, value):
     """Create immutable intent before its recorded move."""
@@ -25,6 +38,7 @@ def _durable_json(path, value):
         stream.write(raw)
         stream.flush()
         os.fsync(stream.fileno())
+    _durable().sync_directory(Path(path).parent)
 
 def _preservation_receipt_path(destination, kind):
     if kind == 'directory': return destination / 'superseded.json'
@@ -54,6 +68,7 @@ def _finish_preservation(intent_path, intent):
         if intent['kind'] == 'file' and witness(source) != receipt['original_witness']:
             raise ValueError('classroom preservation source bytes changed')
         source.rename(destination)
+        _durable().sync_directory(parent)
     if destination.is_dir() != (intent['kind'] == 'directory'):
         raise ValueError('classroom preservation destination kind differs')
     if intent['kind'] == 'file' and witness(destination) != receipt['original_witness']:
@@ -61,6 +76,7 @@ def _finish_preservation(intent_path, intent):
     temporary = receipt_path.with_name(receipt_path.name + '.pending-' + str(time.time_ns()))
     _durable_json(temporary,receipt)
     temporary.rename(receipt_path)
+    _durable().sync_directory(receipt_path.parent)
     return destination
 
 def recover_preservations(directory):
@@ -87,7 +103,7 @@ def identity(session, visible, module):
     box = Path(module.__file__).parent
     repo = box.parents[2] / 'research' / 'kalshi' / 'frankie_boss'
     paths = [box / name for name in ('frankie_box_boss_session.py', 'frankie_box_classroom.py',
-             'frankie_box_classroom_cache.py', 'frankie_box_docs.py', 'frankie_box_staged_reading.py',
+             'frankie_box_classroom_cache.py', 'frankie_box_durable.py', 'frankie_box_docs.py', 'frankie_box_staged_reading.py',
              'frankie_box_staged_session.py', 'frankie_box_scientific_dialogue.py', 'frankie_box_classroom_staged.py',
              'frankie_box_teacher_discussion.py', 'frankie_box_classroom_workers.py')]
     paths.extend(sorted(repo.glob('dipole_classroom*.py')))
@@ -155,6 +171,8 @@ class ClassroomCache:
         if path.exists():
             preserve(path, 'classroom answer replaced after validation')
         self.writer(path, value)
+        if self.load(name, prompt) != value:
+            raise ValueError('classroom save did not read back identically')
         self._probe('saved', name)
         return value
 
@@ -178,11 +196,13 @@ class ClassroomCache:
             if path.exists():
                 preserve(path, 'recovering incomplete classroom publication')
             if name == 'classroom.md':
-                path.write_text(value, encoding='utf-8')
+                _durable().write_text(path, value)
             elif name == 'receipt.json':
                 self.writer(path, dict(value, identity=self.identity,
                     ledgers=witness(self.directory / 'ledgers.json'),
                     artifacts={n: witness(self.directory / n) for n in ('ledgers.json', 'classroom.md')}))
             else:
                 self.writer(path, value)
+        if self.complete() != ledgers:
+            raise ValueError('classroom publication did not read back identically')
         self._probe('published', 'receipt.json')

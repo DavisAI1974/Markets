@@ -137,14 +137,15 @@ def witness(path):
 
 
 def write_json(path, value):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    # The pure streaming encoder honors disk-backed row sequences without a full JSON string.
-    encoder = json.JSONEncoder(indent=1, sort_keys=True, default=str)
-    with path.open('w', encoding='utf-8', newline='\n') as handle:
-        for chunk in encoder.iterencode(value):
-            handle.write(chunk)
-        handle.write('\n')
+    return _box_module('frankie_box_durable').write_json(path, value)
+
+
+def write_bytes(path, data):
+    return _box_module('frankie_box_durable').write_bytes(path, data)
+
+
+def write_text(path, text):
+    return _box_module('frankie_box_durable').write_text(path, text)
 
 
 def load_json(path):
@@ -215,7 +216,7 @@ class Session:
         from research.kalshi.frankie_boss.frankie_principal_adapter import digest
         self.request = load_json(self.request_directory / 'session-request.json')
         self.request_sha256 = digest(self.request)
-        (self.dir / 'request_sha256').write_text(self.request_sha256 + '\n', encoding='utf-8')
+        write_text(self.dir / 'request_sha256', self.request_sha256 + '\n')
         contract = self.request['attachment']['feedback_contract']
         path = MARKETS / CONTRACT_PATH
         if contract.get('trading_day'):
@@ -507,7 +508,7 @@ class Session:
         write_json(directory / 'request.json', dict(schema='FRANKIE_BOX_SERVERLESS_JOB_V1', name=name, endpoint_id=lane['endpoint_id'],
                    body_sha256=body_hash, body_bytes=len(_json(chat)), estimated_input_tokens=estimate, max_tokens=int(max_tokens),
                    served_model_name=self.served_model, config_hash=lane['config_hash']))
-        (directory / 'prompt.txt').write_text(text, encoding='utf-8')
+        write_text(directory / 'prompt.txt', text)
         key, endpoint = lane['key'], lane['endpoint_id']
         started = time.time()
         job_path = directory / 'runpod-job.json'
@@ -554,7 +555,7 @@ class Session:
                                        text=None, incomplete=False, model=None, raw_output=state.get('output'))
                     else:
                         result = json.dumps(output, sort_keys=True).encode()
-                        (directory / 'result.json').write_bytes(result)
+                        write_bytes(directory / 'result.json', result)
                         outcome = self._parse(name, result, 200, directory, _final_text, IncompleteModelOutput)
                         outcome['schema'] = 'FRANKIE_BOX_SERVERLESS_JOB_OUTCOME_V1'
                     outcome.update(runpod_job_id=job['id'], endpoint_id=endpoint, worker_id=state.get('workerId'),
@@ -646,7 +647,7 @@ class Session:
         write_json(directory / 'request.json', dict(schema='FRANKIE_BOX_BOSS_JOB_V1', name=name, attempt=attempt, job_id=job_id,
                    body_sha256=body_hash, body_bytes=len(body), estimated_input_tokens=estimate, max_tokens=int(max_tokens),
                    served_model_name=self.engine['served_model_name'], pod_id=self.pod_id))
-        (directory / 'prompt.txt').write_text(text, encoding='utf-8')
+        write_text(directory / 'prompt.txt', text)
         key = self.engine['key']
         path = '/v1/jobs/' + job_id
         last = None
@@ -679,7 +680,7 @@ class Session:
                         raise ConnectionError('result bytes differ or short; re-fetching the same durable result')
                     if key in result.decode('utf-8', errors='replace'):
                         raise ValueError('credential echo rejected')
-                    (directory / 'result.json').write_bytes(result)
+                    write_bytes(directory / 'result.json', result)
                     outcome = self._parse(name, result, state.get('result_status'), directory, _final_text, IncompleteModelOutput)
                     outcome.update(job_id=job_id, body_sha256=body_hash, seconds=time.time() - started,
                                    estimated_input_tokens=estimate, max_tokens=int(max_tokens))
@@ -1280,7 +1281,7 @@ class Session:
             parts.append('\n\n## Frankie\'s own derivation of this cycle (the session code ran the pin producers on the cycle rows; whole)\n\n'
                          + digest.decode('utf-8', errors='replace') + '\n')
             members.append(dict(name='derivation-digest-full.md', bytes=len(digest), sha256=sha256_bytes(digest), treatment='text: rendered whole'))
-        corpus_path.write_text(''.join(parts), encoding='utf-8')
+        write_text(corpus_path, ''.join(parts))
         write_json(self.work / 'reading-corpus.json', dict(schema='FRANKIE_BOX_READING_CORPUS_V4', identity=identity, render=render_report, at=time.time(), limits='none',
                    prompt=dict(witness(prompt), path=str(prompt)), head_bytes=len(head), corpus=dict(witness(corpus_path), path=str(corpus_path)),
                    members=members))
@@ -1368,7 +1369,7 @@ class Session:
             self.refuse('reading contains unusable parts after retry and split; preserved, no merge or advancement')
         merged = self._merge([(notes_dir / f'note-{i:04d}.md').read_text(encoding='utf-8')
                               for i in range(len(chunks))], level=0)
-        (self.work / 'merged-notes.md').write_text(merged, encoding='utf-8')
+        write_text(self.work / 'merged-notes.md', merged)
         write_json(self.work / 'reading.json', dict(schema='FRANKIE_BOX_READING_RECEIPT_V2', status='complete', at=time.time(), parts=len(chunks),
                    corpus_sha256=corpus_sha, notes_dir=str(notes_dir), outcomes=outcomes, new_outcomes=new_outcomes, merged=witness(self.work / 'merged-notes.md'),
                    lane=dict(serverless=self.serverless['endpoint_id'], workers=self.serverless['workers']) if self.serverless else dict(pod=self.pod_id)))
@@ -1513,9 +1514,9 @@ class Session:
         merges = self.work / 'merges'
         merges.mkdir(exist_ok=True)
         Session._preserve_reading_paths(self, [merges / f'{name}.md', merges / f'{name}.model-output.md'])
-        (merges / f'{name}.md').write_text(f'## {name}\n\n' + kept + '\n', encoding='utf-8')
+        write_text(merges / f'{name}.md', f'## {name}\n\n' + kept + '\n')
         if note:
-            (merges / f'{name}.model-output.md').write_text(f'## {name}: the model output that was NOT used ({note})\n\n' + text + '\n', encoding='utf-8')
+            write_text(merges / f'{name}.model-output.md', f'## {name}: the model output that was NOT used ({note})\n\n' + text + '\n')
             self.note(f'{name}: {note}; inputs kept verbatim')
         return kept
 
@@ -1570,8 +1571,8 @@ class Session:
                     attempts.append((f'{label}-{tag}', o, b, v))
                     halves.append((tag, hs, he, o, b, v))
         for name, o, b, v in attempts:
-            (notes_dir / f'attempt-{i:04d}-{name.split("-", 2)[-1] if name.count("-") > 1 else "first"}.md').write_text(
-                f'## {name} (bytes {s}-{e}) verdict {v or "usable"}\n\n{b or no_output(o)}\n', encoding='utf-8')
+            write_text(notes_dir / f'attempt-{i:04d}-{name.split("-", 2)[-1] if name.count("-") > 1 else "first"}.md',
+                f'## {name} (bytes {s}-{e}) verdict {v or "usable"}\n\n{b or no_output(o)}\n')
         def kept_text(b, v):
             """What the note carries for the merge when an answer is kept as returned: a runaway tail is removed with a
             marker (the full text stays in the attempt file); anything else is kept whole."""
@@ -1591,7 +1592,7 @@ class Session:
             note = f'## Notes on part {i + 1}/{n} (bytes {s}-{e}){flag}\n\n{kept_text(body, verdict) or no_output(outcome)}\n'
             final = outcome
             unusable = [verdict] if verdict else []
-        (notes_dir / f'note-{i:04d}.md').write_text(note, encoding='utf-8')
+        write_text(notes_dir / f'note-{i:04d}.md', note)
         if unusable:
             self.note(f'{label}: still unusable after retry and split ({", ".join(unusable)}); kept as returned, marked')
         return dict(part=i, job_id=final.get('job_id') or final.get('runpod_job_id'), lane='serverless' if self.serverless else 'pod',
@@ -1794,7 +1795,7 @@ class Session:
         reply = C.correction_response(correction, parsed, session_id=session_id, model_identity=model_identity)
         if scientific_exchange is not None:
             reply['dipole_scientific_exchange'] = scientific_exchange
-        (self.out / 'correction-response.json').write_bytes(json.dumps(reply, indent=1, sort_keys=True, ensure_ascii=False).encode('utf-8'))
+        write_bytes(self.out / 'correction-response.json', json.dumps(reply, indent=1, sort_keys=True, ensure_ascii=False).encode('utf-8'))
         request_sha256, response_sha256 = C.attestation_request_sha256(correction), C.adapter_digest(reply)
         engine = load_json(self.work / 'engine.json') if (self.work / 'engine.json').exists() else {}
         record = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=request_sha256,
@@ -1806,12 +1807,12 @@ class Session:
                       turn='classroom-correction', correction_request_sha256=correction['request_sha256'], post_grade_hash=correction['post_grade_hash'],
                       response=dict(witness(self.out / 'correction-response.json'), path=str(self.out / 'correction-response.json')),
                       classroom_composition=C.COMPOSITION)
-        (self.out / 'host-correction-record.json').write_bytes(json.dumps(record, indent=1, sort_keys=True).encode('utf-8'))
+        write_bytes(self.out / 'host-correction-record.json', json.dumps(record, indent=1, sort_keys=True).encode('utf-8'))
         attestation = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=request_sha256,
                            response_sha256=response_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
                            host_record=dict(witness(self.out / 'host-correction-record.json'), path=str((self.out / 'host-correction-record.json').resolve())),
                            turn='classroom-correction', classroom_composition=C.COMPOSITION)
-        (self.out / 'host-correction-attestation.json').write_bytes(json.dumps(attestation, indent=1, sort_keys=True).encode('utf-8'))
+        write_bytes(self.out / 'host-correction-attestation.json', json.dumps(attestation, indent=1, sort_keys=True).encode('utf-8'))
         self.docs()
         write_json(d / 'correction-receipt.json', dict(schema='FRANKIE_BOX_CORRECTION_RECEIPT_V1', at=time.time(), request_sha256=request_sha256,
                    response_sha256=response_sha256, correction_ids=len(correction['correction_ids']), resolutions=len(parsed['correction_resolutions']),
@@ -1841,7 +1842,7 @@ class Session:
             self.refuse(f'teach: the facts could not be computed from this session\'s files ({type(error).__name__}: {error})')
         text = T.facts_text(f)
         ask = T.prompt(text, cycle=self.cycle, request_id=self.request['request_id'])
-        (d / 'prompt.txt').write_text(ask, encoding='utf-8')
+        write_text(d / 'prompt.txt', ask)
         self.note(f'teach: the exhaustion/D teach-back on the BOSS ({len(ask.encode("utf-8"))} bytes of facts and frozen structure)')
         parsed, call = self._classroom_call('teach-exhaustion', ask, lambda body: T.parse_answer(body, text, C.ClassroomOutput), 'boss')
         record = dict(schema=T.SCHEMA, at=time.time(), cycle=self.cycle, request_id=self.request['request_id'],
@@ -1849,7 +1850,7 @@ class Session:
                       frozen=[dict(layer=x['layer'], name=x['name'], source=x['source'], bytes=x['bytes'], sha256=x['sha256']) for x in f['frozen']],
                       answer=parsed, call=call)
         write_json(path, record)
-        (d / 'exhaustion-teachback.md').write_text(T.markdown(record), encoding='utf-8')
+        write_text(d / 'exhaustion-teachback.md', T.markdown(record))
         self.note(f'teach: filed ({len(parsed.get("questions", []))} questions); {d / "exhaustion-teachback.md"}')
         return load_json(path)
 
@@ -2028,8 +2029,8 @@ class Session:
         classroom = self.classroom_ledgers()
         response.update(classroom)                # the Dipole classroom, turn 1 (work/classroom/receipt.json has the counts and the composition)
         classroom_receipt = load_json(self.work / 'classroom' / 'receipt.json')
-        (self.out / 'response.json').write_bytes(json.dumps(response, indent=1, sort_keys=True, ensure_ascii=False).encode('utf-8'))
-        (self.out / 'analysis.md').write_text(analysis_md, encoding='utf-8')
+        write_bytes(self.out / 'response.json', json.dumps(response, indent=1, sort_keys=True, ensure_ascii=False).encode('utf-8'))
+        write_text(self.out / 'analysis.md', analysis_md)
         response_sha256 = digest(response)
         record = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=self.request_sha256,
                       response_sha256=response_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
@@ -2039,12 +2040,12 @@ class Session:
                       response=dict(witness(self.out / 'response.json'), path=str(self.out / 'response.json')),
                       analysis=dict(witness(self.out / 'analysis.md'), path=str(self.out / 'analysis.md')),
                       classroom=dict(classroom_receipt['report'], composition=classroom_receipt['composition']))
-        (self.out / 'host-session-record.json').write_bytes(json.dumps(record, indent=1, sort_keys=True).encode('utf-8'))
+        write_bytes(self.out / 'host-session-record.json', json.dumps(record, indent=1, sort_keys=True).encode('utf-8'))
         attestation = dict(schema='FRANKIE_HOST_AGENT_SESSION_ATTESTATION_V1', mechanism='AGENT_SESSION', request_sha256=self.request_sha256,
                            response_sha256=response_sha256, session_id=session_id, model_identity_as_reported_by_session=model_identity,
                            host_record=dict(witness(self.out / 'host-session-record.json'), path=str((self.out / 'host-session-record.json').resolve())),
                            classroom_composition=classroom_receipt['composition'])
-        (self.out / 'host-attestation.json').write_bytes(json.dumps(attestation, indent=1, sort_keys=True).encode('utf-8'))
+        write_bytes(self.out / 'host-attestation.json', json.dumps(attestation, indent=1, sort_keys=True).encode('utf-8'))
         print(analysis_md, flush=True)
         write_json(self.work / 'writing.json', dict(schema='FRANKIE_BOX_WRITING_RECEIPT_V1', at=time.time(), response_sha256=response_sha256,
                    files={n: witness(self.out / n) for n in ('response.json', 'analysis.md', 'host-session-record.json', 'host-attestation.json')},
@@ -2218,7 +2219,10 @@ class Session:
         response_path = self.out / 'response.json'
         written = load_json(self.work / 'writing.json') if (self.work / 'writing.json').exists() else {}
         if (not written or not response_path.exists() or any(k not in load_json(response_path) for k in CLASSROOM_KEYS)
-                or written.get('inputs') != self._writing_inputs()):
+                or written.get('inputs') != self._writing_inputs()
+                or any(not (self.out / name).is_file() or witness(self.out / name) != expected
+                       for name, expected in written.get('files', {}).items())
+                or set(written.get('files', {})) != {'response.json', 'analysis.md', 'host-session-record.json', 'host-attestation.json'}):
             self.writing()          # durable BOSS jobs: a call whose prompt is unchanged is reused; the calls whose inputs moved run again
         self.push()
 
