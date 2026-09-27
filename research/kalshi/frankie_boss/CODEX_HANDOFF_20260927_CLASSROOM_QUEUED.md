@@ -1,5 +1,19 @@
 # Superseding continuation — 2026-09-27 after 13:52Z
 
+## Latest direction and downstream save files — 2026-09-27 14:36Z
+
+Greg explicitly authorized deploying save points to eligible downstream stages without rebuilding current ledgers, and then said to leave ROOT alone and let it finish. ROOT stays on corrected runtime 2d3e6bb, run 36324470881/PID 59092. No pause, restart, hotpatch, reconstruction or second calculation is authorized by the downstream deployment.
+
+Save-file commit `f98122fd71d41bc8ced7c36457b63ad91c54393d` is an actual descendant of corrected runtime 2d3e6bb. Immutable deployment ref: `codex/frankie-downstream-savepoints-f98122f`. All three changed Python files passed exact-commit syntax compilation in memory with bytecode writing disabled; source diff reviewed. No scientific tests or inference were run.
+
+Existing staging run [36326457453](https://github.com/DavisAI1974/Markets/actions/runs/36326457453) is **QUEUED**, not staged or activated. The established box workflow shares its execution lock with ROOT, so this new downstream package waits for ROOT to release it. Do not dispatch duplicate staging. A direct invocation of the reusable staging workflow was refused before any run existed because it is not registered on the default branch; the established box dispatch was then used. No workflow or bootstrap was changed.
+
+After the staging receipt is retrieved and ROOT has a completed calculations receipt, use that new staged CODE_ROOT and its immutable ref for principal inputs, host configuration, principal/classroom/correction and retention. Keep original calculation root, authorship, source binding and actual receipts. Never point the active ROOT at the downstream package. The new package implements atomic/readback-verified principal and classroom saves; it does not retroactively upgrade ROOT checkpoints. See [process save-point audit](audits/PROCESS_SAVE_POINTS_20260927.md) for coverage and remaining gaps.
+
+Latest retrieved projection observation [36326242700](https://github.com/DavisAI1974/Markets/actions/runs/36326242700), 14:32Z: 3,709 completed member ranges; 65,912,865,600 archive bytes (including in-flight archive), 157,126,574,080 free bytes. Last observed range extends to 248,974,015,733 source bytes; this is not the contiguous ordered progress frontier. Scientific ledgers were already finalized for all 2,032,203 records. Projection, publication, digest and final calculations receipt remain pending.
+
+
+
 Read [CODEX_HANDOFF_20260927_PROJECTION_RUNTIME.md](CODEX_HANDOFF_20260927_PROJECTION_RUNTIME.md) FIRST. ROOT attempt 36322971264 failed on worker-module pickling. Corrected runtime 2d3e6bb is committed and staged successfully in 36323776583, but activation and runtime verification remain pending. Obtain a fresh verified terminal checkpoint before resuming the same calculation root. The following material is preserved history.
 
 # Frankie/BOSS Monday — fresh-chat handoff, 2026-09-27 10:29Z

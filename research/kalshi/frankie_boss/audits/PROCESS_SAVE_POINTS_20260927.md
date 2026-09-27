@@ -2,7 +2,7 @@
 
 User direction: principal, classroom and other processes must save completed work and ledgers so an interruption does not require rebuilding them. This is recovery work within the existing manual Monday sequence, not new orchestration.
 
-## First implementation slice — not activated
+## First implementation slice — committed; staging queued
 
 The new `frankie_box_durable.py` writer creates a unique pending file, flushes and fsyncs it, reads back its full size/hash, preserves any previous target under a content-hash name, atomically publishes the new file, fsyncs its directory and verifies the published bytes. Failed pending writes remain available. It is used under the existing single-session writer ownership; it is not a multiwriter transaction manager.
 
@@ -46,4 +46,4 @@ The earlier scientific producer verdict remains REJECTED with `cross_section_agr
 
 ## Validation and activation
 
-Only exact-source syntax compilation and source review are intended for this save-file slice before activation. No extra scientific test, validator, canary, comparison, ingestion replay or duplicate inference is authorized. Actual save/readback receipts must be collected during the existing downstream execution before claiming runtime verification. Stage a new immutable downstream package only after the remaining recovery gaps are addressed; never hotpatch the running ROOT.
+Exact-commit syntax compilation passed for all three changed Python files, and the source diff was reviewed. Commit f98122fd71d41bc8ced7c36457b63ad91c54393d is queued for existing staging in run 36326457453, behind ROOT's execution lock. No staging receipt or runtime save receipt is available yet. No extra scientific test, validator, canary, comparison, ingestion replay or duplicate inference is authorized. Actual save/readback receipts must be collected during the existing downstream execution before claiming runtime verification. Latest user direction authorizes deploying the eligible downstream save-file improvements now while leaving ROOT untouched. The immutable package is queued; remaining ROOT/digest gaps are deferred so the running calculation can finish.
