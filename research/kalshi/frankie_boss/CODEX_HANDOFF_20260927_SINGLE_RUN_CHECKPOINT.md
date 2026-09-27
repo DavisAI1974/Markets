@@ -1,5 +1,16 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## User-authorized follow-ups — after Monday is completely through (2026-09-27)
+
+User: "Ok. We can do that once we get completely through Mon. Update the next handoff doc with that now so we don't forget it. We also need to make an orchestrator that connects all of our separate workflows that we're running manually so that we don't have to do that anymore"
+
+Record now; implement after the current Monday workflow is fully through calculations, principal execution, mandatory classroom, same-session correction, final grading and retention, with actual receipts. Finishing ROOT calculations alone does not satisfy this gate. Keep unavailable Tuesday outcomes explicitly pending; never invent learning or completion to clear a gate.
+
+- [ ] Generalize trading-day selection. Replace the Monday-specific launcher/configuration assumptions with an explicit trading day and its independently verified source binding, coverage window and record count. Every day must automatically select the same complete committed catalog: all 19 historical slots (0–18), seven registry groups / 49 layers, and all three repository producer groups. Reuse the saved definitions and historical evidence without manually bringing groups over each day. Create separate day-specific calculation roots, results, exact ledgers and full-state checkpoints; do not reuse another day's results as that day's calculation evidence. Preserve historical section files and hashes.
+- [ ] Build an orchestrator connecting the existing separate workflows so operators no longer dispatch each stage manually. Use the proven Monday sequence as the integration contract: source preparation/admission and complete calculations; receipt-bound principal-input/shared-knowledge assembly and configuration; actual host/Granite launch; principal execution and initial recording; same-host grading and correction request; same-session correction and recording; final host grading; final knowledge/transcript/receipt retention. Reuse the existing stage implementations and pass their actual output receipts, hashes, runtime commit and paths to the next stage. Provide one entry point with explicit progress/failure status and resumable continuation; reuse already completed work, preserve execution locks, prevent duplicate ROOT/cycle runs, and require successful prerequisite receipts before advancing. Do not turn workflow retries into source ingestion replays or repeated completed calculations.
+
+Authorization clarification: this new user request explicitly authorizes the post-Monday orchestrator, superseding the earlier "no new orchestration/orchestrator" restriction for that follow-up only. Monday's current continuation still uses the existing workflows manually. Both follow-ups remain unimplemented and unchecked; this handoff update does not change any running process or dispatch additional work.
+
 ## Authorized calculation concurrency (2026-09-27)
 
 User: "As long as all 19 are in root, let's make that change. Otherwise a trade day could take a day to run all 19."
@@ -360,7 +371,7 @@ branch `codex/frankie-monday-workflow-plan-20260927`,
 `research/kalshi/frankie_boss/MONDAY_WORKFLOW_CONNECTION_PLAN_20260927.md`.
 Claude's separate-arm decision is now resolved by the user; do not ask it again.
 
-All repository changes through GitHub. No C:/E: artifacts. No ingestion restart/replay, infrastructure stop, pinned-bootstrap change, evidence deletion, Amazon Bedrock, BOSS output caps, extra tests/canaries/comparison runs/new validators, parallel agents, or new orchestrator. The three repository “bedrock” producer groups are required and are not Amazon Bedrock.
+All repository changes through GitHub. No C:/E: artifacts. No ingestion restart/replay, infrastructure stop, pinned-bootstrap change, evidence deletion, Amazon Bedrock, BOSS output caps, extra tests/canaries/comparison runs/new validators, parallel agents, or new orchestrator during the current Monday continuation (see the explicit post-Monday authorization above). The three repository “bedrock” producer groups are required and are not Amazon Bedrock.
 
 User wants a short essential checklist crossed off as actual work finishes, real progress probes/checkpoint receipts, and concise highlights and real blockers. Do not turn continuation into another audit.
 
