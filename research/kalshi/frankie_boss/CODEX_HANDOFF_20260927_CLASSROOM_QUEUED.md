@@ -1,3 +1,7 @@
+# Superseding continuation — 2026-09-27 after 13:52Z
+
+Read [CODEX_HANDOFF_20260927_PROJECTION_RUNTIME.md](CODEX_HANDOFF_20260927_PROJECTION_RUNTIME.md) FIRST. ROOT attempt 36322971264 failed on worker-module pickling. Corrected runtime 2d3e6bb is committed and staged successfully in 36323776583, but activation and runtime verification remain pending. Obtain a fresh verified terminal checkpoint before resuming the same calculation root. The following material is preserved history.
+
 # Frankie/BOSS Monday — fresh-chat handoff, 2026-09-27 10:29Z
 
 ## Projection bottleneck and capacity assessment — 2026-09-27 13:14Z

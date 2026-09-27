@@ -1,0 +1,103 @@
+# Frankie/BOSS Monday — projection runtime continuation
+
+Latest user direction: finish the CPU/storage fixes, then create this handoff, print a drop-in and start a fresh chat. Continue essential Monday work from actual receipts. Latest decisions override older handoffs and CLAUDE.md.
+
+## Read first
+Read this file, audits/PROJECTION_ANALYSIS_IO_20260927.md, then CODEX_HANDOFF_20260927_CLASSROOM_QUEUED.md and its referenced handoffs, and CLAUDE.md. Use using-agent-skills, context-engineering and shipping-and-launch. Do not interpret archived RUNNING/PENDING blocks as current.
+
+## Current state — updated after 13:52Z on 2026-09-27
+
+ROOT attempt [36322971264](https://github.com/DavisAI1974/Markets/actions/runs/36322971264) FAILED at 13:49:43Z when starting projection helpers:
+`_pickle.PicklingError: Can't pickle ... _initialize ... it's not the same object as frankie_box_projection._initialize`.
+The dynamically loaded worker module was not the canonical imported module object. No projection performance result is established.
+
+The correction is committed at **2d3e6bbf61f8f7be0568107abb618ba2d8c62b6a**, ref **codex/frankie-projection-runtime-2d3e6bb**. Both projection and digest-document entry points now use normal canonical imports. Exact GitHub source syntax compilation and import-site assertions passed; actual execution remains pending.
+
+Corrected staging [36323776583](https://github.com/DavisAI1974/Markets/actions/runs/36323776583) SUCCEEDED at 13:52:40Z:
+- CODE_ROOT=/opt/frankie-box/code/2d3e6bbf61f8f7be0568107abb618ba2d8c62b6a-36323776583-1/markets
+- Pack: 589571847 bytes, 3683 files, SHA256 73144f751c74e960264f0a20a3ad0a3f47f24133fdb9590e29374c29a823200a.
+- Intent SHA256 6e1f95f4ccf78a2520fdc4cf1d8b65d5937c2dabfd9bf76cf33238a637325443.
+- active_checkout_changed=false; model_calls=0; source_replays=0.
+Do not duplicate staging. The corrected runtime has NOT been activated/resumed.
+
+Immediate continuation:
+1. Confirm failed PID 58711 is no longer active and inspect latest terminal checkpoint under recovery-fa8af7ed06354468bc526346f90c2291. At 13:48:21Z the generation existed but latest_checkpoint was null while writing; its final saved/read-verified receipt has NOT yet been retrieved. Obtain and freshly verify the complete checkpoint before a runtime transition. Do not infer checkpoint success from workflow failure location.
+2. Resume the SAME canonical calculation root using corrected CODE_ROOT and its immutable ref, original authorship/binding, DATA_WORKERS=48, and the actual verified terminal checkpoint. No RECONSTRUCT_MISSING flag, no source replay, no duplicate calculation. The last independently verified parent checkpoint is recorded below.
+3. Observe actual 14 helper PIDs/affinities, completed compressed range receipts, free disk and progress; diagnose genuine failures. .projection-v2/plan.json may already exist from the failed attempt; projection code itself is unchanged by the import correction, so valid same-plan ranges can be reused. Verify what actually exists.
+4. Continue through calculations receipt and the existing Monday manual sequence. Use corrected 2d3e6bb runtime for downstream digest/principal/classroom.
+5. Report actual receipts; Monday completion, actual classroom delivery/acknowledgement, Tuesday and learning outcomes remain pending.
+
+No new resume was dispatched before handing off. This fresh chat owns the next execution.
+
+## Failed attempt identity (historical; use corrected runtime above)
+- Repository DavisAI1974/Markets; working branch claude/agent-skills-execution-tzh7sw.
+- ROOT workflow https://github.com/DavisAI1974/Markets/actions/runs/36322971264.
+- Immutable runtime49c246f8670c0c0fec8b63374df9f037e3995eec.
+- Ref codex/frankie-projection-runtime-49c246f.
+- CODE_ROOT=/opt/frankie-box/code/49c246f8670c0c0fec8b63374df9f037e3995eec-36322799022-1/markets.
+- Calculation root /opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48.
+- PID58711; token099d4eb6-a46d-4b94-a888-f15e55c1ee7e:53962300.
+- Original bindingSHA25699440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a.
+- Authorship /opt/frankie-box/work/monday-launch/full-20211004-20260923-r4/authorship-receipt.json; SHA256ade460dede20a4557b6369ca45f653fdae24a958fd52d1f1e449da53fe8e2ec6.
+- DATA_WORKERS48 is the unchanged original source-reader identity, not the new projection helper count.
+- Parent terminal checkpoint /opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-c3dd011764ac4d3f945800e2012a321a/checkpoints/checkpoint-000000.json.
+- No reconstruction flag; all2032203scientific records were already finalized. Do not launch another calculation or hot-patch the live checkout.
+
+Staging36322799022 SUCCESS:589581340bytes3683files; packSHAf661387d434398866cd9288c57a349176ba40e45836baba27d5aa69b764c5d84; intentSHA6418c3a88275ad6a6dc2ab1e74a49cbcc31670142aa3f374db6a5ca252514796.
+
+## Why this transition was necessary
+Old projection was serial, measured0.964CPUcore,~9.51MB/s input and~22.99MB/s expanded output. At13:13:40Z it had read16787587072/537182189410member-ledgerbytes (3.12512%), generated40652336829bytes of intermediate spools, and had240395096064bytes free. Conditional extrapolations were~15.2hours for the remaining member scan and~1.30TB of member spools. These were not ETAs or proven speedups.
+
+On explicit "Proceed with fixes", pause workflow36322127147 freshly verified the complete chain, adapter and167213056-byte driver state before stopping exact PID58168 on SIGINT. Pause receipt1693bytes SHA239ca57cf41f3e64493f1a55d4edbf93e9714a7b0aaa1de9274a67d6d2cda4c5:
+ /opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/pause-for-terminal-projection-58168.json.
+Checkpoint hash ec90d96d7114dc021cbeb129f5ab91d0756b960e6a81c126a5640f20e1234fff; full-stateSHA4410f3d8898b34c8d9bf5800d440b62329c6840981663baf00255ee6b4b63f37.
+Previous ROOT36319242284 ended failure due to this authorized pause. Its outputs and checkpoints remain preserved.
+
+## Fixes included in the corrected immutable runtime
+- CPU1 coordinates14processes on designated physicalCPUs2–15, CPU0reserved. Each process affinity is read back;28pending64MiB source ranges maximum.
+- Exact existing crosswalk/select_path logic runs per independent ledger range; all rows join in original order. Completed compressed archives and verified receipts persist under work/derived/.projection-v2/member and lifecycle.
+- Each completed range has a durable range-XXXXXX.json pointing at a unique retained .blocks archive. Same-plan ranges can resume. Original partial type-tagged spools stay untouched. Root progress counts ordered source BYTES, not scientific record replay.
+- Generated projected layers use compact JSON inside gzip, declared encoding=gzip-json. Publication copies compressed fragments with hash checks rather than expanding and re-encoding them. New layer byte hashes differ from pretty JSON; original ledgers, historical section hashes and scientific values do not change.
+- Consumers read compressed layers directly. Independent digest layer preparation and independent bedrock table encoding use the14CPUworkers. Existing [] leaf-count reducers run before private SQLite storage; exact arrays remain in pinned compressed layer artifacts. Group/column conflict checks and original column ordering remain.
+- Private SQLite row payloads use lossless zlib; member merge queries are batched. Each emitted digest table retains its inverse proof, tied to file identity and copy-time hash, removing the duplicate inverse pass.
+- Projection refuses more work below20GiB free. Preserve every archive, partial publication and source. No cleanup or capacity purchase was performed.
+- Static source review and in-memory syntax compilation of exact GitHub bytes passed. No extra scientific tests, canaries, comparison runs, validators or model calls.
+
+## Observations
+- Runtime 49c246f resumed saved scientific state; no record reconstruction. At 13:40:25Z member ledger verification was 145307467776/537182189410 bytes; at 13:43:51Z it was 379509014528 bytes. At 13:46:55Z member verification had passed and lifecycle verification was 13857980416/14424155424 bytes (96.07%), failed=0.
+- At 13:44:11Z free disk was 226848448512 bytes.
+- At 13:48:21Z new recovery generation recovery-fa8af7ed06354468bc526346f90c2291 existed but latest_checkpoint was null. Retrieve actual terminal receipt.
+- At 13:49:43Z projection worker startup failed with the confirmed PicklingError documented above. Corrected runtime staging succeeded at 13:52:40Z; it is inactive.
+
+The prior12:43 finalization receipt verified552929498037ledgerbytes in520.853seconds with zero ledger-copy bytes. This was finalization, not projection or full Monday completion. Do not carry its timing into a projection speedup claim.
+
+## Read-only observation routes
+Use existing frankie_box_run.yml. Execution/staging share the serial lock; progress/read_log use the separate observation lock.
+- Progress script deploy/aws/box/frankie_box_progress.sh, variables CODE_ROOT=<above> DIRECTORY=<calculation root>, timeout120. Optional RESOURCE_METRICS=1 samples20seconds; its process CPU counters cover the coordinator, not child worker totals. Host counters include other host work.
+- Compressed projection receipt summary: deploy/aws/box/frankie_box_read_log.sh, variables FILE=work/monday-calculations/full-20211004-20260927-r1-48/work/derived/.projection-v2 MODE=projection, timeout120. Dispatch this observer from current working branch (observercommitcb3baa949aa5183da3221876fe4253e7963b15b8 or later); it does not modify the running interpreter.
+- Projection observer prints plan hash, actual helper PIDs/affinity, completed-range count, first/last receipts with hashes, compressed archive sizes and free disk. Worker completion can be out of order; the highest saved range is NOT the contiguous frontier. progress.json supplies the ordered joined-byte frontier.
+- Scientific checkpoint directory discovery: same read_log script, FILE=work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock MODE=generations.
+- Final calculations receipt: same read_log script, FILE=work/monday-calculations/full-20211004-20260927-r1-48/calculations-receipt.json MODE=receipt. Require actual receipt hash and status calculations_retained, not a100% stage counter.
+
+## Remaining Monday route
+Use the corrected 2d3e6bb runtime/ref/CODE_ROOT for all downstream scripts. It includes the already-prepared classroom/Granite improvements and supports compressed layers. Do NOT switch back to a80990d even though its staging36311196131 succeeded.
+1. Complete the corrected runtime activation above, then wait for actual projection, digest and calculations-receipt.json; inspect genuine failures and storage evidence, no duplicate runs.
+2. Existing frankie_box_principal_inputs.sh takes fresh OUTPUT_ROOT under /opt/frankie-box/work/principal-inputs plus CODE_ROOT, CALCULATIONS_RECEIPT and its independent CALCULATIONS_SHA256. Reuse completed calculations and retained knowledge; all18historical section hashes remain required.
+3. Existing frankie_box_cycle0.sh ACTION=config uses PREPARED, PRINCIPAL, freshRUN_ID, OUTPUT_ROOT under /opt/frankie-box/work/monday-run-config, CODE_ROOT and COMPLETION_REF=codex/frankie-projection-runtime-2d3e6bb.
+Prepared root /opt/frankie-box/work/trading-day-preparation/full-20211004-20260927-r6-48.
+Prepared configurationSHAd90601c01def652b44466c69dcfab4f4769c27dd5a9cc86a71b097b4501ceb23; receiptSHA062c6f7b947f526dc70a94171a903fa8b05aeef3a0d199269adfae119f5b1d73.
+4. ACTION=launch runs the one real host cycle with pending-return. Honor WAIT/ATTENTION; continue same run with RESUME=1 and exact WAIT_SHA256. No new cycle for a pending state.
+5. ACTION=principal uses CALCULATIONS and actual REQUEST_DIRECTORY with require-retained-derivation, then reading, mandatory classroom, teachback and writing. Obtain actual helper and provider receipts.
+6. ACTION=record TURN=initial, existing host grading, ACTION=correction in the same session, record TURN=correction, final grading, then ACTION=retain. Use exact generated paths and independent hashes.
+7. Tuesday and learning outcomes remain pending until proven. Orchestrator stays PLAN ONLY through Monday.
+
+## Granite/classroom
+GranitePod fhiwwlouzyx6l2, endpoint https://fhiwwlouzyx6l2-8081.proxy.runpod.net/v1. Last live metadata read in this chat: RUNNING, one NVIDIA L40S. Existing authenticated readiness/migration workflow36304223443 succeeded; INFOsha78176a906a606bce15de3c1b7cb109ff1f2b396a07232a1f1c202d93c6917e09.
+Five retained lessons are configured for the first actual Monday request. Actual delivery and acknowledgement are still pending; no separate priming inference. CPU helpers are not added GPU inference workers. Classroom preparation hasCPU1+14helpersCPUs2–15, cached tokenizers/source hashes and retained valid answers; its actual Monday receipt remains pending.
+Never dump Pod env, credentials or presigned URLs. No Pod restart/stop/delete, bootstrap change or new model job was performed.
+
+## Scope/prohibitions
+Preserve all2032203records, both source members, all23hours, all18historical sections/hashes, required historical slots, all3producer groups and applicable exact reducers.
+No duplicate calculations, source replay, extra scientific tests/canaries/comparison runs/validators, parallel agents, new orchestration, C:/E: artifacts, ingestion restart, infrastructure stop/automatic shutdown, pinned-bootstrap changes, protected evidence deletion, Amazon Bedrock or BOSS output caps.
+Any ROOT runtime transition requires a fresh verified checkpoint. The old terminal-projection pause implementation accepts the prior exact runtime only; do not blindly reuse it against this new run.
+Commit/push atomically through GitHub; preserve concurrent changes. Keep old recovery generations, .rows spools, checkpoints, compressed ranges and all active evidence.

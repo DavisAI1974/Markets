@@ -65,3 +65,28 @@ The new path is confined to transport/preparation:
 -The downstream comparison packet consumes current generated layer metadata; it does not load giant compressed layers into RAM. The final principal runtime MUST use this new immutable checkout, including its classroom improvements, rather than the older a80990d checkout.
 
 Verification at preparation: Python syntax compilation in memory and static review of byte-range boundaries, gzip-member joining, resume identity, exact coverage/counts, conflict handling, ordered table joining, inverse-proof binding and cleanup. No extra scientific test, canary, comparison run, validator or model call. Deployment and measured speed/storage results remain pending until actual runtime receipts below.
+
+
+## Current state — updated after 13:52Z on 2026-09-27
+
+ROOT attempt [36322971264](https://github.com/DavisAI1974/Markets/actions/runs/36322971264) FAILED at 13:49:43Z when starting projection helpers:
+`_pickle.PicklingError: Can't pickle ... _initialize ... it's not the same object as frankie_box_projection._initialize`.
+The dynamically loaded worker module was not the canonical imported module object. No projection performance result is established.
+
+The correction is committed at **2d3e6bbf61f8f7be0568107abb618ba2d8c62b6a**, ref **codex/frankie-projection-runtime-2d3e6bb**. Both projection and digest-document entry points now use normal canonical imports. Exact GitHub source syntax compilation and import-site assertions passed; actual execution remains pending.
+
+Corrected staging [36323776583](https://github.com/DavisAI1974/Markets/actions/runs/36323776583) SUCCEEDED at 13:52:40Z:
+- CODE_ROOT=/opt/frankie-box/code/2d3e6bbf61f8f7be0568107abb618ba2d8c62b6a-36323776583-1/markets
+- Pack: 589571847 bytes, 3683 files, SHA256 73144f751c74e960264f0a20a3ad0a3f47f24133fdb9590e29374c29a823200a.
+- Intent SHA256 6e1f95f4ccf78a2520fdc4cf1d8b65d5937c2dabfd9bf76cf33238a637325443.
+- active_checkout_changed=false; model_calls=0; source_replays=0.
+Do not duplicate staging. The corrected runtime has NOT been activated/resumed.
+
+Immediate continuation:
+1. Confirm failed PID 58711 is no longer active and inspect latest terminal checkpoint under recovery-fa8af7ed06354468bc526346f90c2291. At 13:48:21Z the generation existed but latest_checkpoint was null while writing; its final saved/read-verified receipt has NOT yet been retrieved. Obtain and freshly verify the complete checkpoint before a runtime transition. Do not infer checkpoint success from workflow failure location.
+2. Resume the SAME canonical calculation root using corrected CODE_ROOT and its immutable ref, original authorship/binding, DATA_WORKERS=48, and the actual verified terminal checkpoint. No RECONSTRUCT_MISSING flag, no source replay, no duplicate calculation. The last independently verified parent checkpoint is recorded below.
+3. Observe actual 14 helper PIDs/affinities, completed compressed range receipts, free disk and progress; diagnose genuine failures. .projection-v2/plan.json may already exist from the failed attempt; projection code itself is unchanged by the import correction, so valid same-plan ranges can be reused. Verify what actually exists.
+4. Continue through calculations receipt and the existing Monday manual sequence. Use corrected 2d3e6bb runtime for downstream digest/principal/classroom.
+5. Report actual receipts; Monday completion, actual classroom delivery/acknowledgement, Tuesday and learning outcomes remain pending.
+
+No new resume was dispatched before handing off. This fresh chat owns the next execution.
