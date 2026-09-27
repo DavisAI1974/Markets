@@ -33,10 +33,28 @@ if [ "$MODE" = profile ]; then
 import collections, hashlib, json, pathlib, sys
 path = pathlib.Path(sys.argv[1]).resolve(strict=True)
 allowed = pathlib.Path('/opt/frankie-box/work/monday-calculations').resolve(strict=True)
-if not path.is_relative_to(allowed) or path.parent.parent.name != 'performance' or not path.name.startswith('pid-'):
+if (not path.is_relative_to(allowed) or path.parent.parent.name != 'performance'
+        or not (path.name.startswith('pid-') or path.name == 'profile-receipt.json')):
     raise SystemExit('retained Monday process profile required')
 raw = path.read_bytes()
 data = json.loads(raw)
+if path.name == 'profile-receipt.json':
+    if data.get('schema') != 'FRANKIE_NATIVE_LIVE_PROFILE_V1':
+        raise SystemExit('retained native profile receipt required')
+    def compact(rows, count):
+        return [dict(file=pathlib.Path(row['frame'].get('file', '')).name,
+                     function=row['frame'].get('name'), line=row['frame'].get('line'),
+                     percent=row['percent'], weight=row['weight']) for row in rows[:count]]
+    print(json.dumps(dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest(),
+        at=data['at'], seconds=data['seconds'], progress=data['progress'],
+        total_cpu_seconds=sum(p['cpu_ticks_delta'] for p in data['profiles'])/data['clock_ticks'],
+        profiles=[dict(pid=p['pid'], path=p['path'], sha256=p['sha256'],
+            cpu_seconds=p['cpu_ticks_delta']/data['clock_ticks'], active_weight=p['total_weight'],
+            leaf=compact(p['leaf'], 10 if i == 0 else 3),
+            inclusive=compact(p['inclusive'], 10 if i == 0 else 3))
+            for i,p in enumerate(data['profiles'])],
+        limitations=data['limitations']), sort_keys=True))
+    raise SystemExit(0)
 frames = data['shared']['frames']
 paths = collections.Counter()
 total = 0.0
