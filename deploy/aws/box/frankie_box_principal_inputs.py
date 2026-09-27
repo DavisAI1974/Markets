@@ -60,10 +60,12 @@ def assemble(output, calculations_path, calculations_sha256):
     if (source['source'] != calculation_pin['source_binding']
             or source['source']['trading_day'] != '20211004'):
         raise ValueError('calculation source and pin differ')
+    # Staggered (Greg, 2026-09-27): ROOT's evidence files (the digest dominates) are hashed on background threads while
+    # the sections, the brain base and the shared-knowledge snapshot are assembled; they are checked before the receipt.
     keys = ('calculation_pins', 'derivation', 'result', 'digest', 'digest_proof')
-    for key, measured in zip(keys, pins(calculations[key]['path'] for key in keys)):
-        if measured != calculations[key]:
-            raise ValueError('retained calculation evidence changed: ' + key)
+    evidence_pool = ThreadPoolExecutor(len(keys))
+    evidence = [evidence_pool.submit(pin, calculations[key]['path']) for key in keys]
+    evidence_pool.shutdown(wait=False)
     if json.loads(Path(calculations['derivation']['path']).read_bytes()).get('failure_count') != 0:
         raise ValueError('calculation failures remain')
     output = Path(output)
@@ -128,6 +130,9 @@ def assemble(output, calculations_path, calculations_sha256):
         calculation_pins=calculations['calculation_pins'], shared_knowledge=shared, single_run=single,
         principal_admission={'mode': 'single_run', 'output_validation': 'after_execution'},
         model_calls=0, source_writes=0, source_traversals=0)
+    for key, measured in zip(keys, evidence):
+        if measured.result() != calculations[key]:
+            raise ValueError('retained calculation evidence changed: ' + key)
     write(output / 'principal-inputs-receipt.json', result)
     return result
 
