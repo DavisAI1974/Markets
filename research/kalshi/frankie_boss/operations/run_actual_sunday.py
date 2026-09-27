@@ -407,6 +407,8 @@ class ActualHost:
         if self.scope is not None:return
         for key in ('contract','mapping','retained_witnesses','delivery_receipt','calculation_result','source_manifest'):
             verified(self.config[key])
+        if 'calculation_pins' in self.config:
+            verified(self.config['calculation_pins'])
         source=Path(self.config['source_directory']);schedule=Path(self.config['schedule_directory'])
         receipt=verified_json(self.host['ingestion_receipt']);outer=verified_json(self.host['schedule_receipt'])
         recovered=None
@@ -1073,7 +1075,7 @@ class ActualHost:
             admission=c.get('principal_admission'),  # audit finding 4: declared per run; undeclared refuses at use
             retained_directory=str(Path(c['retained_witnesses']['path']).parent),expected_retained_witnesses_sha256=c['retained_witnesses']['sha256'],
             delivery_receipt=c['delivery_receipt']['path'],expected_delivery_file_sha256=c['delivery_receipt']['sha256'],
-            result_path=c['calculation_result']['path'],
+            result_path=c['calculation_result']['path'],calculation_pins=c.get('calculation_pins'),
             session_executor=lambda request:(await_recorded_principal(request,self.directory,self.principal_host_lock,self.probe,
                 pending=self.principal_pending) if getattr(self,'pending_return',False) else
                 await_recorded_principal(request,self.directory,self.principal_host_lock,self.probe)))

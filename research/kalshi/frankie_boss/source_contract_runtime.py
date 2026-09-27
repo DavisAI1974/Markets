@@ -97,7 +97,8 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
         boss_journal_path, source_journal_checkpoint, mapping_directory, expected_mapping_sha256,
         receiver_root, receiver_commit, python, directory, retained_directory,
         expected_retained_witnesses_sha256, delivery_receipt, expected_delivery_file_sha256,
-        result_path, classroom_package, session_executor=None, adapter_class=None, admission=None, shared_knowledge=None):
+        result_path, classroom_package, session_executor=None, adapter_class=None, admission=None, shared_knowledge=None,
+        calculation_pins=None):
     """Build the per-prefix receiver pins plus mandatory Dipole classroom.
 
     Each cycle gets its own directory. All expected hashes/checkpoints are supplied
@@ -115,6 +116,15 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
             raise ValueError('principal and classroom shared knowledge differ')
     elif classroom_package['pre_message'].get('shared_knowledge') is not None:
         raise ValueError('shared classroom knowledge requires an explicit principal binding')
+    if calculation_pins is None:
+        if binding.get('forecast_mode') == 'whole_day_next_session':
+            raise ValueError('whole-day principal requires its retained calculation pin')
+        pin_render={}
+    else:
+        if (type(calculation_pins) is not dict or set(calculation_pins)!={'path','bytes','sha256'}
+                or file_witness(calculation_pins['path'])!={k:calculation_pins[k] for k in ('bytes','sha256')}):
+            raise ValueError('principal calculation pin differs from the host witness')
+        pin_render={'calculation-pins':calculation_pins['path']}
     directory=Path(directory).resolve();directory.mkdir(parents=True,exist_ok=True)
     manifest_path=Path(handoff_directory)/'manifest.json'
     if file_witness(manifest_path)['sha256']!=expected_manifest_sha256:
@@ -187,7 +197,7 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
             'retained-prompt-sha256':witnesses['sunday_spawn_prompt.md']['sha256'],
             'knowledge-receipt':witnesses['KNOWLEDGE_RECEIPT.json']['path'],
             'knowledge-receipt-sha256':witnesses['KNOWLEDGE_RECEIPT.json']['sha256'],
-            'knowledge-bundle-sha256':witnesses['KNOWLEDGE_BUNDLE.md']['sha256']},
+            'knowledge-bundle-sha256':witnesses['KNOWLEDGE_BUNDLE.md']['sha256'], **pin_render},
         protected_files={},
         section_evidence=sections,feedback_contract=feedback_contract,
         classroom_package=classroom_package,session_executor=session_executor,

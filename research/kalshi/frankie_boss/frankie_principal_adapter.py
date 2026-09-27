@@ -466,7 +466,8 @@ class FrankiePrincipalAdapter:
         for key in ('knowledge-receipt', 'knowledge-receipt-sha256', 'knowledge-bundle-sha256'):
             if not self.render.get(key):
                 raise ValueError('explicit pinned knowledge receipt and bundle required')
-        common_render = {'knowledge-receipt', 'knowledge-receipt-sha256', 'knowledge-bundle-sha256'}
+        common_render = {'knowledge-receipt', 'knowledge-receipt-sha256', 'knowledge-bundle-sha256',
+                         'calculation-pins'}
         if self.render.get('retained-prompt'):
             if set(self.render) - common_render - {'retained-prompt', 'retained-prompt-sha256'}:
                 raise ValueError('unexpected retained-prompt configuration')
@@ -635,6 +636,7 @@ class FrankiePrincipalAdapter:
         if receipt['input_paths']['directory'] != handoff_directory:
             raise ValueError('retained receiver receipt belongs to another handoff')
         self._check_preparation(receipt)
+        self._instruction()  # Materialize the declared pin witness before either prompt route and attachment.
         bundle = Path(self.render['knowledge-receipt']).parent / 'KNOWLEDGE_BUNDLE.md'
         retained_knowledge(self.render['knowledge-receipt'], self.render['knowledge-receipt-sha256'],
                            bundle, self.render['knowledge-bundle-sha256'])
@@ -643,7 +645,7 @@ class FrankiePrincipalAdapter:
             if self.render.get('retained-prompt'):
                 self._render_retained(prompt, prepared)
             else:
-                self._run('emit_frankie_spawn', dict({k:v for k,v in self.render.items() if k not in ('knowledge-receipt-sha256', 'knowledge-bundle-sha256')}, output=prompt,
+                self._run('emit_frankie_spawn', dict({k:v for k,v in self.render.items() if k not in ('knowledge-receipt-sha256', 'knowledge-bundle-sha256', 'calculation-pins')}, output=prompt,
                     **{'boss-attachment-request': prepared / 'attachment-request.json'}))
         knowledge_bundle = Path(self.render['knowledge-receipt']).parent / 'KNOWLEDGE_BUNDLE.md'
         if admission is None:

@@ -64,6 +64,8 @@ def build(prepared_path, principal_path, commit, run_id, output_root, completion
                       torch_version=str(torch.__version__), numpy_version=numpy.__version__,
                       torch_intraop_threads=8, torch_interop_threads=1, deterministic_algorithms=True,
                       minimum_logical_cpus=os.cpu_count(), minimum_memory_bytes=memory_total))
+    if 'calculation_pins' in principal:
+        config['calculation_pins'] = principal['calculation_pins']
     output.parent.mkdir(parents=True, exist_ok=True)
     output.mkdir(mode=0o700)
     path = output / 'actual-host-configuration.json'

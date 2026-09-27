@@ -250,6 +250,7 @@ class ClassroomActualHost(base.ActualHost):
             delivery_receipt=c["delivery_receipt"]["path"],
             expected_delivery_file_sha256=c["delivery_receipt"]["sha256"],
             result_path=c["calculation_result"]["path"],
+            calculation_pins=c.get("calculation_pins"),
             session_executor=lambda request: (
                 await_recorded_principal(request, self.directory, self.principal_host_lock, self.probe,
                                          pending=self.principal_pending)

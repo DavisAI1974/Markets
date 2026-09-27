@@ -190,7 +190,7 @@ def main():
             retained_directory=str(Path(config['retained_witnesses']['path']).parent),
             expected_retained_witnesses_sha256=config['retained_witnesses']['sha256'],
             delivery_receipt=config['delivery_receipt']['path'],expected_delivery_file_sha256=config['delivery_receipt']['sha256'],
-            result_path=config['calculation_result']['path'],session_executor=None,
+            result_path=config['calculation_result']['path'],calculation_pins=config.get('calculation_pins'),session_executor=None,
             classroom_package=classroom_package,adapter_class=IntegratedDipoleClassroomPrincipalAdapter)
         response=verified_json(args.response,args.response_sha256)
         attestation=verified_json(args.host_attestation,args.host_attestation_sha256)
