@@ -189,6 +189,38 @@ jobs:
               env.write(f'MAP_URL={murl}\n')
           print(f'map: s3://{mb}/{mk} ({len(out)} objects)')
           PY
+      - name: Expand the canonical root EBS volume only on explicit storage dispatch
+        if: inputs.script == 'deploy/aws/box/frankie_box_grow_disk.sh'
+        run: |
+          python - <<'PY'
+          import boto3, os, time
+          if (os.environ['INSTANCE'] != 'i-035994afa8bdf66a5' or
+              os.environ['REGION'] != 'us-east-1' or os.environ['VARIABLES'] != 'DISK_GIB=2048'):
+              raise SystemExit('canonical box and DISK_GIB=2048 required')
+          ec2 = boto3.client('ec2', region_name=os.environ['REGION'])
+          instance = ec2.describe_instances(InstanceIds=[os.environ['INSTANCE']])['Reservations'][0]['Instances'][0]
+          root = instance['RootDeviceName']
+          volume_id = next(x['Ebs']['VolumeId'] for x in instance['BlockDeviceMappings'] if x['DeviceName'] == root)
+          volume = ec2.describe_volumes(VolumeIds=[volume_id])['Volumes'][0]
+          if len(volume['Attachments']) != 1 or volume['Attachments'][0]['InstanceId'] != os.environ['INSTANCE']:
+              raise SystemExit('root volume attachment differs')
+          print('Root volume:', volume_id, 'current GiB:', volume['Size'], 'requested GiB: 2048', flush=True)
+          if volume['Size'] < 2048:
+              result = ec2.modify_volume(VolumeId=volume_id, Size=2048)['VolumeModification']
+              print('Modification:', result['ModificationState'], flush=True)
+          for attempt in range(120):
+              volume = ec2.describe_volumes(VolumeIds=[volume_id])['Volumes'][0]
+              mods = ec2.describe_volumes_modifications(VolumeIds=[volume_id])['VolumesModifications']
+              state = mods[0]['ModificationState'] if mods else 'completed'
+              if state == 'failed':
+                  raise SystemExit('EBS modification failed: ' + str(mods[0].get('StatusMessage')))
+              if volume['Size'] >= 2048 and state in ('optimizing', 'completed'):
+                  print('EBS capacity ready:', volume_id, volume['Size'], state, flush=True)
+                  break
+              time.sleep(5)
+          else:
+              raise SystemExit('EBS modification still pending; no filesystem change attempted')
+          PY
       - name: Run the committed script on the box
         run: |
           set -euo pipefail
