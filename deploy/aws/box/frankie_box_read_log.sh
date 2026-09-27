@@ -8,8 +8,8 @@ FILE="${FILE:-logs/producer-tests.log}"; MODE="${MODE:-tail}"; LINES="${LINES:-1
 case "$FILE" in *..*|/*) echo "FILE must be relative to $ROOT without .."; exit 2;; esac
 P="$ROOT/$FILE"; [ -f "$P" ] || { echo "no such file: $P"; ls -la "$(dirname "$P")" 2>/dev/null; exit 2; }
 if [ "$MODE" = receipt ]; then
-  case "$FILE" in */authorship-receipt.json|*/preparation-receipt.json|*/publication-receipt.json|*/calculations-receipt.json) ;;
-    *) echo "receipt mode requires a pipeline receipt"; exit 2;; esac
+  case "$FILE" in */authorship-receipt.json|*/preparation-receipt.json|*/publication-receipt.json|*/calculations-receipt.json|*/checkpoints/checkpoint-[0-9][0-9][0-9][0-9][0-9][0-9].json|*/checkpoints/controller-state-[0-9][0-9][0-9][0-9][0-9][0-9].json) ;;
+    *) echo "receipt mode requires a pipeline or checkpoint receipt"; exit 2;; esac
   /opt/frankie-box/venv/bin/python -B - "$P" <<'PY'
 import hashlib, json, pathlib, sys
 path = pathlib.Path(sys.argv[1])
