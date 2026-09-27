@@ -71,7 +71,12 @@ def projection_files():
         except OSError:
             continue
     statv = os.statvfs(directory)
-    return dict(open_files=opened, free_bytes=statv.f_bavail * statv.f_frsize,
+    spools = [entry for entry in opened if '/.rows/' in entry['path']]
+    other = [entry for entry in opened if '/.rows/' not in entry['path']]
+    return dict(open_files=other, spool_count=len(spools),
+                spool_bytes=sum(entry['bytes'] for entry in spools),
+                largest_spools=sorted(spools, key=lambda entry: entry['bytes'], reverse=True)[:5],
+                free_bytes=statv.f_bavail * statv.f_frsize,
                 affinity=sorted(os.sched_getaffinity(pid)))
 
 def snapshot():

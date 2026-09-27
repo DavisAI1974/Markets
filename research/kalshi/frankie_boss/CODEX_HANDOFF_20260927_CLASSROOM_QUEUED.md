@@ -1,5 +1,24 @@
 # Frankie/BOSS Monday — fresh-chat handoff, 2026-09-27 10:29Z
 
+## Projection bottleneck and capacity assessment — 2026-09-27 13:14Z
+
+Read audits/PROJECTION_ANALYSIS_IO_20260927.md before considering another transition.
+ROOT36319242284/PID58168 remains alive on01caae9, root-projection, failed0.
+Workflow36321527916 measured0.964CPU core at~9.51MB/s input and~22.99MB/s output.
+Workflow36321642052 at13:13:40Z observed16787587072/537182189410member-ledger
+bytes read (3.12512%),40652336829bytes of open projection spools, and
+240395096064bytes free. Linear extrapolation suggests~15.2hours remaining for
+this member scan and~1.30TB total member spools; these are conditional, not ETAs.
+The demonstrated bottleneck is serial parse/project/type-pack work, with material
+storage expansion. Fourteen finalization/classroom helpers do not cover this path.
+Digest also has serial SQLite/encoding/inverse-proof and repeated byte scans.
+No pause, runtime change, source replay, deletion, inference or new calculation
+was performed. Existing terminal-finalize pause mode refuses root-projection.
+A fix must address CPU AND storage, preserve exact values/order/historical hashes,
+and establish a fresh verified checkpoint plus a preserved-output resume path.
+The final calculations receipt and all subsequent Monday outcomes remain pending.
+
+
 
 ## Finalization completed; projection running — 2026-09-27 12:47Z
 
