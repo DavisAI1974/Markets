@@ -15,4 +15,21 @@ echo "### markets checkouts / venvs"; ls -la /opt 2>/dev/null; ls -la /opt/marke
 echo "### env files (names only)"; ls -la /etc/markets 2>/dev/null || echo "(no /etc/markets)"
 echo "### processes (top cpu)"; ps -eo pid,ppid,pcpu,pmem,etime,comm --sort=-pcpu | head -12
 echo "### ssm agent"; systemctl is-active snap.amazon-ssm-agent.amazon-ssm-agent.service amazon-ssm-agent 2>/dev/null | tr '\n' ' '; echo
+echo "### approved retirement targets"
+ROOT=/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48
+for f in \
+  work/bedrock/recovery-03a70711353a433c989b18074d7baacd/ledgers/exact_member_rows.jsonl \
+  work/bedrock/recovery-d4b20c8f7e834d7abb1a435ff8199442/ledgers/exact_member_rows.jsonl \
+  work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6/ledgers/exact_member_rows.jsonl \
+  work/bedrock/ledgers/exact_member_rows.jsonl \
+  work/bedrock/recovery-f13de5640bf549feaae493d8861bfae1/ledgers/exact_member_rows.jsonl
+do
+  p="$ROOT/$f"
+  if [ -e "$p" ] || [ -L "$p" ]; then
+    stat --printf='TARGET_PRESENT path=%n bytes=%s blocks=%b mtime_ns=%Y\n' "$p"
+  else
+    echo "TARGET_ABSENT path=$p"
+  fi
+done
+df -B1 --output=source,size,used,avail,target /opt/frankie-box/work/monday-calculations 2>/dev/null || true
 echo "### done (read-only)"
