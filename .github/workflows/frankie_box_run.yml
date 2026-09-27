@@ -48,8 +48,8 @@ permissions:
 concurrency:
   # Existing read-only progress and retained-file reads remain available during a long stage.
   # Execution and staging share the serial lock. The explicit identity-bound pause
-  # and CPU-affinity controls share a separate lock; neither can launch calculations.
-  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh') && format('box-pause-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
+  # and CPU-affinity controls plus exact-list retirement share a separate maintenance lock; none can launch calculations.
+  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_retire_superseded_ledgers.sh') && format('box-pause-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
   cancel-in-progress: false
 jobs:
   validate-staging-route:
