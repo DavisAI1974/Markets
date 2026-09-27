@@ -13,6 +13,7 @@ import cloudpickle
 from research.kalshi.frankie_raw_mbo_benchmark import periodic_checkpointer as P
 from frankie_box_prepare_trading_day import safe_path, save_new, sync_directory, witness
 import frankie_box_segmented_ledger as ledger_storage
+import frankie_box_finalization as finalization
 
 SCHEMA = 'FRANKIE_NATIVE_FULL_STATE_V1'
 
@@ -20,7 +21,8 @@ SCHEMA = 'FRANKIE_NATIVE_FULL_STATE_V1'
 def runtime_identity():
     return dict(python=sys.version, cloudpickle=cloudpickle.__version__,
                 serializer_sha256=witness(Path(__file__).resolve())['sha256'],
-                ledger_storage_sha256=witness(Path(ledger_storage.__file__).resolve())['sha256'])
+                ledger_storage_sha256=witness(Path(ledger_storage.__file__).resolve())['sha256'],
+                finalization_sha256=witness(Path(finalization.__file__).resolve())['sha256'])
 
 
 def sink_items(sinks):
@@ -158,10 +160,15 @@ def read_checkpoint(path, identity):
         current_runtime = runtime_identity()
         predecessor_runtime = dict(current_runtime)
         predecessor_runtime.pop('ledger_storage_sha256')
+        predecessor_runtime.pop('finalization_sha256')
         predecessor_runtime['serializer_sha256'] = 'd5487c5444055cac5a91bc60bb8cb796924f10126fe02ba1384addbde43fd2d1'
         # Exact known V1 predecessor only. Python/cloudpickle and the complete
         # scientific driver identity must still match, and the old bytes verify.
-        accepted_runtime = descriptor['runtime'] in (current_runtime, predecessor_runtime)
+        deployed_runtime = dict(current_runtime)
+        deployed_runtime.pop('finalization_sha256')
+        deployed_runtime['serializer_sha256'] = '629b1355de7539e84fb8142343b182dc06cfe5033aaa3f6bf837962317a5cf76'
+        deployed_runtime['ledger_storage_sha256'] = 'b66361659495d787329a6097384df10bf4f27fc3056b511ee46f53bb7119c760'
+        accepted_runtime = descriptor['runtime'] in (current_runtime, predecessor_runtime, deployed_runtime)
         if (descriptor.get('schema') != SCHEMA or descriptor['driver_identity'] != identity or
                 not accepted_runtime or descriptor['finalized'] != latest['locked']):
             raise ValueError('full checkpoint runtime or producer identity differs')
@@ -173,7 +180,10 @@ def read_checkpoint(path, identity):
 
 
 def restore_driver(descriptor, checkpointer, sinks, stage_spawn):
-    copy_ledger_prefixes(descriptor['ledgers'], sinks)
+    if descriptor['finalized']:
+        finalization.restore_closed(descriptor['ledgers'], sinks, checkpointer.progress)
+    else:
+        copy_ledger_prefixes(descriptor['ledgers'], sinks)
     externals = dict(sinks=sinks, checkpointer=checkpointer, stage_spawn=stage_spawn)
     with gzip.open(safe_path(descriptor['driver_state']['path']), 'rb') as stream:
         driver = StateUnpickler(stream, externals).load()

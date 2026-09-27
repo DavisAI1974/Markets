@@ -1,5 +1,22 @@
 # Frankie/BOSS Monday — fresh-chat handoff, 2026-09-27 10:29Z
 
+
+## Latest direction: proceed with checkpointed finalization optimization
+
+The user authorized proceeding after duplicate-scan removal commitb4626c9 and the
+restart-cost discussion. This source commit prepares bounded CPU read helpers,
+sealed-ledger reuse without copying, and a freshly verified terminal-checkpoint
+pause route. See audits/FINALIZATION_IO_20260927.md for exact scope and review.
+ROOT36309059667 is still the original runtime/PID at source preparation time.
+Read-only36318605580 observed checkpoint000010 saved/read_verified at12:20:11Z;
+descriptor inspection and fresh complete checkpoint validation precede any signal.
+No pause, runtime activation or calculation completion is claimed by this commit.
+Existing classroom staging36311196131 must finish without duplication. The
+new distinct finalization runtime is staged only after the authorized ROOT
+transition releases the serial lock. Original evidence and all Monday invariants
+remain protected. Continue the full manual downstream sequence after actual
+calculation and staging receipts.
+
 ## Finalization helper assessment - 2026-09-27 11:47Z
 
 User observed that finalization probably needs CPUs and helpers. Read

@@ -148,3 +148,53 @@ frankie_box_digest_document.py includes repeated table proofs and document hash
 passes; their actual output sizes and time costs have not been measured. They
 are not included in the100-minute estimate, and no change to exact digest proofs
 was prepared. Unknown later costs justify investigation, not an invented saving.
+
+## Authorized finalized-state transition preparation
+
+The user said "Proceed" after the source-only scan removal and recovery-cost
+discussion. This authorizes completing the optimization and its checkpointed
+transition; the fresh verified checkpoint requirement and all conservation,
+no-extra-science, no-hot-patch, evidence-retention and manual-sequence rules remain.
+
+Read-only workflow36318605580 at12:20:11Z reports checkpoint000010 as the eleventh
+saved/read_verified checkpoint, original PID/token alive, failed=0 and stage
+root-native-finalize. Its reported verification time is1790511419.4061108.
+The terminal descriptor must still be inspected and freshly verified before
+any process signal. No completed calculations receipt is established by this.
+
+Prepared implementation:
+- A bounded disk scan uses coordinatorCPU1 and14 helper threads CPUs2-15,
+  CPU0 reserved. Helpers read up to28 pending8MiB chunks and count newlines.
+  Coordinator hashes bytes in original order. All three ledgers remain required.
+  Exact rows/bytes/SHA256 and stable device/inode/extent/mtime/ctime are checked.
+- Finalized recovery references the existing closed materialized files in place.
+  It performs one independent disk verification and reuses that observation for
+  final reconciliation and receipts. No ledger copy, hardlink, deletion or
+  scientific replay occurs. Fresh empty sink placeholders remain retained.
+- Projection follows the exact paths in the verified run receipt. Producer math,
+  all sections, source records and reducer semantics are unchanged.
+- Full-state runtime compatibility permits only the exact deployed serializer
+  629b1355... and ledger storage b6636165... plus previously permitted lineage;
+  Python, cloudpickle and complete driver identity must still agree.
+- Existing identity-bound pause script adds terminal-finalize mode. It requires
+  all2032203records, locked/finalized state, closed materialized ledgers and the
+  original source/run/runtime identity. It freshly verifies the checkpoint chain,
+  adapter and serialized full-state bytes before signaling the exact ROOT pidfd.
+  It refuses if ROOT has advanced beyond finalization or calculations are retained.
+
+Review covered byte ordering, final-line counting, bounded memory, read descriptor
+lifetime, closed-sink refusal, unchanged-file checks, exact runtime compatibility,
+terminal recovery bindings and existing projection consumers. In-memory Python
+syntax compilation passed for modified Python and the pause script's Python body.
+No scientific tests, canaries, comparison runs, extra validators or parallel
+agents were run. Workflow bash syntax validation remains required before execution.
+No speedup or deployment is claimed in this source commit.
+
+Activation sequence: inspect terminal descriptor; dispatch the existing pause
+route at this immutable source; verify actual pause receipt and exited PID;
+allow existing classroom staging36311196131 to finish; stage this distinct
+finalization runtime using the existing staging route; resume the same calculation
+root from the exact terminal checkpoint. This is a runtime transition of the same
+completed scientific calculation, not a duplicate calculation or classroom stage.
+Any failure leaves all checkpoint/ledger evidence retained. Do not fall back to a
+nonterminal checkpoint or silently replay scientific work.

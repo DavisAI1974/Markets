@@ -437,6 +437,9 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     if descriptor is not None:
         driver = restore_driver(descriptor, checkpointer, sinks, stager.stage)
         calculation = driver.run
+        evidence['exact_ledgers'] = {name: sink.path.as_posix() for name, sink in (
+            ('exact_member_rows', sinks.member), ('exact_lifecycle_rows', sinks.lifecycle),
+            ('legacy_observable_rows', sinks.legacy))}
     checkpointer.driver = driver
     if checkpoint and descriptor is None:
         driver._frankie_reconstruction_checkpoint = checkpoint
@@ -466,14 +469,15 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     materialize_all(sinks)
     result = dict(driver._frankie_final_result) if descriptor and descriptor['finalized'] else driver.finalize()
     # Finalize has emitted its terminal rows. Close/fsync before observing file
-    # identity; reconcile_all still independently reads every byte from disk.
+    # identity; reconciliation independently reads each unchanged file once.
     finalized_sinks = [getattr(sinks, name) for name in ('member', 'lifecycle', 'legacy')]
     for sink in finalized_sinks:
         sink.close()
     ledger_identities = {sink.ledger: ledger_file_identity(sink.path) for sink in finalized_sinks}
-    result['ledger_retention'] = sinks.reconcile_all(member=calculation.member_rows_written,
-                                                     lifecycle=calculation.lifecycle_rows_written,
-                                                     legacy=driver.counters.legacy_rows_retained)
+    import frankie_box_finalization as finalization
+    result['ledger_retention'] = finalization.reconcile_all(
+        sinks, member=calculation.member_rows_written, lifecycle=calculation.lifecycle_rows_written,
+        legacy=driver.counters.legacy_rows_retained, progress=progress)
     if driver.counters.records_seen != len(records):
         raise ValueError('final native state is not complete')
     driver._frankie_final_result = result
@@ -517,6 +521,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                        auxiliary_policy=getattr(driver, '_frankie_auxiliary_policy', None),
                        evidence_policy=getattr(driver, '_frankie_evidence_policy', None),
                        evidence_metrics=getattr(driver, '_frankie_evidence_metrics', {}),
+                       ledger_verification=finalization.execution_receipt(sinks),
                        ledger_materialization={name:getattr(getattr(sinks, name), '_frankie_ledger_transfer', None)
                            for name in ('member', 'lifecycle', 'legacy')},
                        reconstruction_boundary=getattr(driver, '_frankie_parallel_boundary', None),
@@ -638,7 +643,7 @@ def project_sections(receipt, result_path, ledgers_dir, out_dir):
     traversal = dict(verdict=receipt.get('verdict'), failed_gates=list(receipt.get('failed_gates') or []), groups=receipt.get('groups'),
                      records=receipt.get('records'), span_seconds=span, candidate_warmup_seconds=warmup, candidate_min_observations=minimum)
     mirror_rows = RowSpool(out_dir / '.rows' / 'section-mirror.jsonl')
-    for row in _rows(ledgers_dir / 'exact_lifecycle_rows.jsonl'):
+    for row in _rows(ledger_path(receipt, 'exact_lifecycle_rows.jsonl')):
         if row.get('emitting_section') == 'mirror':
             mirror_rows.append(row)
     mirror_rows.close()
@@ -676,6 +681,16 @@ def project_sections(receipt, result_path, ledgers_dir, out_dir):
     return out
 
 
+def ledger_path(receipt, name):
+    from frankie_box_prepare_trading_day import safe_path
+    if name not in LEDGER_FILES:
+        raise ValueError('known exact ledger required')
+    path = safe_path(receipt['ledgers'][name]['path'])
+    if path.name != name:
+        raise ValueError('retained ledger name differs')
+    return path
+
+
 def _rows(path):
     with open(path, 'r', encoding='utf-8') as handle:
         for line in handle:
@@ -708,7 +723,7 @@ def project(receipt, ledgers_dir, layers, crosswalk, out_dir):
                             section_counts={s: 0 for s in (record.get('lifecycle_sections') or [])}, absent_paths={})
     member_layers = [l for l in layers if files[l]['member_paths']]
     if member_layers:
-        for row in _rows(ledgers_dir / 'exact_member_rows.jsonl'):
+        for row in _rows(ledger_path(receipt, 'exact_member_rows.jsonl')):
             key = dict(group_index=row.get('group_index'), ts_recv_ns=row.get('ts_recv_ns'),
                        f_last_ts_recv_ns=(row.get('clocks') or {}).get('f_last_ts_recv_ns'))
             for layer in member_layers:
@@ -725,7 +740,7 @@ def project(receipt, ledgers_dir, layers, crosswalk, out_dir):
         for section in files[layer]['lifecycle_sections']:
             section_layers.setdefault(section, []).append(layer)
     if section_layers:
-        for row in _rows(ledgers_dir / 'exact_lifecycle_rows.jsonl'):
+        for row in _rows(ledger_path(receipt, 'exact_lifecycle_rows.jsonl')):
             section = row.get('emitting_section')
             for layer in section_layers.get(section, ()):
                 files[layer]['lifecycle_rows'].append(row)

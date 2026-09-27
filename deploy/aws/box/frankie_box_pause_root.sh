@@ -9,6 +9,7 @@ set -eu
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1
 exec /opt/frankie-box/venv/bin/python -I -S -B - "$DIRECTORY" "$CHECKPOINT_DIR" \
   "$EXPECTED_PID" "$EXPECTED_PROCESS_TOKEN" "$BINDING_SHA256" "${HANDOFF:-parallel-boundary}" <<'PY'
+import gzip
 import hashlib
 import json
 import os
@@ -27,7 +28,7 @@ mode = sys.argv[6]
 target = 464000
 if (not root.is_relative_to(Path('/opt/frankie-box/work/monday-calculations'))
         or not checkpoint_dir.is_relative_to(root / 'work' / 'bedrock') or pid <= 0
-        or mode not in ('parallel-boundary', 'native-workers')):
+        or mode not in ('parallel-boundary', 'native-workers', 'terminal-finalize')):
     raise SystemExit('explicit existing Monday root, checkpoint generation and handoff mode required')
 binding_raw = (root / 'source-binding.json').read_bytes()
 if hashlib.sha256(binding_raw).hexdigest() != binding_hash:
@@ -39,17 +40,26 @@ deadline = time.monotonic() + 720
 while True:
     progress = json.loads((root / 'progress.json').read_text())
     saved = json.loads((root / 'checkpoints.json').read_text())
-    if mode != 'native-workers' or (
+    if mode == 'terminal-finalize':
+        if (saved.get('pid') != pid or saved.get('process_token') != expected
+                or saved.get('last_event') != 'read_verified'):
+            raise SystemExit('verified checkpoint must belong to the live ROOT')
+        candidate = checkpoint_dir / saved['name']
+        if candidate.parent != checkpoint_dir:
+            raise SystemExit('checkpoint path differs')
+        if json.loads(candidate.read_bytes()).get('locked') is True:
+            break
+    elif mode != 'native-workers' or (
             saved.get('last_event') == 'read_verified' and time.time()-saved.get('at',0) <= 90):
         break
     if (progress.get('pid') != pid or progress.get('process_token') != expected
-            or progress.get('failed') != 0 or progress.get('stage') != 'root-native-records'
+            or progress.get('failed') != 0 or progress.get('stage') != ('root-native-finalize' if mode == 'terminal-finalize' else 'root-native-records')
             or time.monotonic() >= deadline):
         raise SystemExit('fresh checkpoint unavailable; ROOT remains running')
     time.sleep(5)
 if (progress.get('pid') != pid or progress.get('process_token') != expected
         or progress.get('failed') != 0
-        or progress.get('stage') != ('root-native-reconstruct' if mode == 'parallel-boundary' else 'root-native-records')
+        or progress.get('stage') != {'parallel-boundary':'root-native-reconstruct', 'native-workers':'root-native-records', 'terminal-finalize':'root-native-finalize'}[mode]
         or (mode == 'parallel-boundary' and progress.get('completed', target) >= target)
         or saved.get('pid') != pid or saved.get('process_token') != expected
         or saved.get('last_event') != 'read_verified'):
@@ -60,7 +70,74 @@ checkpoint_path = checkpoint_dir / saved['name']
 if checkpoint_path.parent != checkpoint_dir or not checkpoint_path.name.startswith('checkpoint-'):
     raise SystemExit('checkpoint path differs')
 checkpoint = json.loads(checkpoint_path.read_bytes())
-if (checkpoint.get('controller_state_hash') is None or checkpoint.get('locked')
+terminal_verification = None
+if mode == 'terminal-finalize':
+    def canonical(value):
+        return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'),
+                                         ensure_ascii=True, allow_nan=False).encode()).hexdigest()
+    def checked_path(value):
+        path = Path(value)
+        if (not path.is_absolute() or '..' in path.parts
+                or not path.is_relative_to(checkpoint_dir)
+                or any(p.is_symlink() for p in (path, *path.parents))):
+            raise SystemExit('terminal checkpoint path escapes retained generation')
+        return path
+    chain = [json.loads(checked_path(p).read_bytes()) for p in sorted(
+        checkpoint_dir.glob('checkpoint-[0-9][0-9][0-9][0-9][0-9][0-9].json'))]
+    previous = None
+    for sequence, item in enumerate(chain):
+        if (item['sequence'] != sequence or item['event_group_open']
+                or item['previous_checkpoint_hash'] != (previous['checkpoint_hash'] if previous else None)
+                or item['checkpoint_hash'] != canonical({k:v for k,v in item.items() if k != 'checkpoint_hash'})):
+            raise SystemExit('terminal checkpoint chain verification failed')
+        if previous and (previous['locked'] or item['completed_mbo_records'] < previous['completed_mbo_records']
+                or any(item[k] != previous[k] for k in (
+                    'run_id','controller','memory_mode','source_manifest_hash','total_mbo_records'))):
+            raise SystemExit('terminal checkpoint chain identity or cursor differs')
+        previous = item
+    binding = json.loads(binding_raw)
+    if (not chain or chain[-1] != checkpoint or checkpoint.get('locked') is not True
+            or checkpoint['completed_mbo_records'] != 2032203
+            or checkpoint['total_mbo_records'] != 2032203
+            or checkpoint['source_manifest_hash'] != binding['source']['manifest_hash']
+            or checkpoint['run_id'] != root.name + '-cycle-00'):
+        raise SystemExit('complete terminal Monday checkpoint required')
+    sequence = checkpoint['sequence']
+    descriptor = json.loads(checked_path(checkpoint_dir / ('controller-state-%06d.json' % sequence)).read_bytes())
+    runtime = descriptor['runtime']
+    if (canonical(descriptor) != checkpoint['controller_state_hash']
+            or descriptor.get('schema') != 'FRANKIE_NATIVE_FULL_STATE_V1'
+            or descriptor.get('finalized') is not True
+            or descriptor['completed_mbo_records'] != 2032203
+            or descriptor['driver_identity']['run_id'] != checkpoint['run_id']
+            or descriptor['driver_identity']['source_manifest_hash'] != checkpoint['source_manifest_hash']
+            or runtime['python'] != sys.version or runtime['cloudpickle'] != '3.1.2'
+            or runtime['serializer_sha256'] != '629b1355de7539e84fb8142343b182dc06cfe5033aaa3f6bf837962317a5cf76'
+            or runtime['ledger_storage_sha256'] != 'b66361659495d787329a6097384df10bf4f27fc3056b511ee46f53bb7119c760'):
+        raise SystemExit('terminal full-state descriptor or deployed runtime differs')
+    if set(descriptor['ledgers']) != {'member','lifecycle','legacy'} or any(
+            entry['attributes'].get('_closed') is not True or 'storage_schema' in entry
+            for entry in descriptor['ledgers'].values()):
+        raise SystemExit('all terminal ledgers must be closed and materialized')
+    with gzip.open(checked_path(checkpoint_dir / ('adapter-state-%06d.json.gz' % sequence)), 'rb') as stream:
+        adapter = json.load(stream)
+    if canonical({k:v for k,v in adapter.items() if k != 'state_hash'}) != checkpoint['adapter_state_hash']:
+        raise SystemExit('terminal adapter readback differs')
+    state = descriptor['driver_state']
+    state_path = checked_path(state['path'])
+    with state_path.open('rb') as stream:
+        before = os.fstat(stream.fileno())
+        actual_hash = hashlib.file_digest(stream, 'sha256').hexdigest()
+        after = os.fstat(stream.fileno())
+    def identity(info):
+        return info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+    if (before.st_size != state['bytes'] or actual_hash != state['sha256']
+            or identity(before) != identity(after) or identity(after) != identity(state_path.stat())):
+        raise SystemExit('terminal full-state bytes failed fresh readback')
+    terminal_verification = dict(at=time.time(), checkpoint_hash=checkpoint['checkpoint_hash'],
+                                 driver_state=state, completed_mbo_records=2032203,
+                                 chain_and_adapter_verified=True, full_state_readback_verified=True)
+elif (checkpoint.get('controller_state_hash') is None or checkpoint.get('locked')
         or (mode == 'parallel-boundary' and checkpoint.get('completed_mbo_records', target) >= target)
         or checkpoint.get('completed_mbo_records', -1) > progress.get('completed', -1)):
     raise SystemExit('nonterminal full-state checkpoint at or before live cursor required')
@@ -82,6 +159,12 @@ try:
     actual = Path('/proc/sys/kernel/random/boot_id').read_text().strip() + ':' + fields[19]
     if actual != expected or fields[0] in ('Z', 'X'):
         raise SystemExit('PID no longer identifies the authorized ROOT process')
+    if mode == 'terminal-finalize':
+        fresh = json.loads((root / 'progress.json').read_bytes())
+        if (fresh.get('pid') != pid or fresh.get('process_token') != expected
+                or fresh.get('stage') != 'root-native-finalize' or fresh.get('failed') != 0
+                or (root / 'calculations-receipt.json').exists()):
+            raise SystemExit('ROOT advanced; terminal handoff refused without process control')
     signal.pidfd_send_signal(handle, signal.SIGINT)
     signals = ['SIGINT']
     stopped = bool(select.select([handle], [], [], 15)[0])
@@ -114,7 +197,8 @@ receipt = dict(
     previously_read_verified_completed=checkpoint['completed_mbo_records'],
     latest_checkpoint_candidate=str(candidates[-1]) if candidates else None,
     checkpoint_validation='required before resume', preserved_existing_evidence=True,
-    unsaved_tail_may_require_reconstruction=True)
+    terminal_verification=terminal_verification,
+    unsaved_tail_may_require_reconstruction=mode != 'terminal-finalize')
 raw = (json.dumps(receipt, sort_keys=True, indent=2) + '\n').encode()
 with control_receipt.open('xb') as stream:
     stream.write(raw)
