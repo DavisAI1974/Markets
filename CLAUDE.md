@@ -3,6 +3,12 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
+- **STATE 2026-09-27 23:1xZ: READ FIRST `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260927_DIGEST_SAVEPOINTS.md`.**
+  Branch `claude/agent-skills-kalshi-research-f1hr0c`. ROOT run 36351808435 (b35e79b7, pid 62338) is in the digest
+  on the same root from checkpoint 8c03. Preparation and the legacy tables are done; the sharded merge was running
+  at 23:03Z; the single-core `bedrock.members` table is still ahead. c65688d5 adds save points after every digest
+  step (not in the running ROOT). Stage and dispatch the SAME commit; never edit frankie_box_projection.py.
+
 - **2026-09-27, Greg: remove the Memory A requirement; keep all 18 calculation sections and their historical evidence/hash citations.**
   Frankie's existing brain is the knowledge source; the prior six-hour run document should already be retained there.
   That document's presence on the box has not been checked in this change. Do not rebuild or re-ingest it by default.
