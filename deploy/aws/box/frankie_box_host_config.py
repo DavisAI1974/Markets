@@ -19,6 +19,7 @@ BASE = REPOSITORY / ('research/kalshi/frankie_boss/sunday_20260915_package/FB/su
                      'actual-host-final-configuration.json')
 TOKENIZER_DIR = REPOSITORY / ('research/kalshi/frankie_boss/sunday_20260915_package/C_Codex/2026-09-14/'
                               'if-you-mean-claude-code-a/work/verified-tokenizer')
+PRIMING = REPOSITORY / 'research/kalshi/frankie_boss/blocks/GRANITE_PRIMING_CONFIGURATION_20260922.json'
 RECEIVER = Path('/opt/frankie-box/producers')
 PARENT = Path('/opt/frankie-box/work/monday-run-config')
 RUNS = Path('/opt/frankie-box/work/runs')
@@ -53,6 +54,9 @@ def build(prepared_path, principal_path, commit, run_id, output_root, completion
     config = {k: v for k, v in base.items() if k != 'host_runtime'}
     config.update({k: v for k, v in prepared.items() if k != 'host_runtime'})
     config.pop('memory', None)  # Do not inherit the retired Memory A requirement from BASE.
+    # Bind the retained lessons into the actual stacked request, whose existing
+    # coordinator verifies their provenance and retains delivery independently.
+    config['critic_priming'] = json.loads(PRIMING.read_bytes())['critic_priming']
     config.update(schema='FRANKIE_BOSS_ACTUAL_HOST_CONFIGURATION_V1', run_id=run_id, run_directory=str(RUNS / run_id),
                   model_calls_performed=False, training_updates_performed=False, host_runtime=host,
                   retained_witnesses=principal['retained_witnesses'],
