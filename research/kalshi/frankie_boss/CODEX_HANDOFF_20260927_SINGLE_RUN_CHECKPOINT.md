@@ -1,13 +1,41 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Latest execution — corrected recovery launcher dispatched (2026-09-27T04:22Z)
+
+Final deployed runtime commit: `763d1d5c0f1979bad7ad3462620795e5354bfb37`.
+Staging workflow https://github.com/DavisAI1974/Markets/actions/runs/36293923132 succeeded at 04:21:14Z.
+Staged checkout:
+`/opt/frankie-box/code/763d1d5c0f1979bad7ad3462620795e5354bfb37-36293923132-1/markets`
+Staging intent hash: ebc1789523414201d69e9bfce971dd76839292279a1b65100268b5e6ce07d510.
+Source pack hash: f6d04603b111f744c31eb462b81d4ea3be3600e8455c15bc550fa0f66cbae978.
+All prior single-run admission, shared knowledge, classroom/recording and final retention code is included.
+
+Recovery workflow https://github.com/DavisAI1974/Markets/actions/runs/36294078724 is dispatched at that commit.
+Use the original calculation root/source-binding/authorship/data_workers=48 and
+RESUME_CHECKPOINT=<calculation root>/work/bedrock/checkpoints/checkpoint-000008.json,
+BINDING_SHA256=99440a65fe5ad6fa93fbeebdfda3391d9dfcbf58abb3251661e6f76adea2d90a,
+RECONSTRUCT_MISSING=1, timeout=172800.
+Live calculation/checkpoint receipt is not yet confirmed in this update. Do not dispatch a duplicate.
+
+Earlier attempt 36293846539 failed before Python/calculations: SSM uses POSIX sh and the new wrapper used Bash arrays.
+763d1d fixes argument handling with POSIX positional parameters. This was our launcher code error, separate from
+the original full-disk/SSM interruption. The read-only probe 36293892226 succeeded after the failed attempt.
+
+Next essential action: read actual progress using the existing progress workflow and new CODE_ROOT above.
+If live, distinguish root-legacy-reuse and root-native-reconstruct from new native work beyond the old cursor.
+Only call reconstruction verified after the new recovery generation's reconstruction-receipt.json confirms
+adapter hash and exact ledger prefixes at 464000. Full-state snapshot descriptors are controller-state-NNNNNN.json
+with schema FRANKIE_NATIVE_FULL_STATE_V1 and driver-state-NNNNNN.pkl.gz pins in the same checkpoint directory.
+No native completion, classroom execution, final retention or Tuesday outcomes are claimed.
+
 ## Authorized recovery implementation and disk expansion (2026-09-27)
 
 - [x] User authorized reconstructing missing native calculation state through checkpoint 000008, changing the launcher, and saving all completed state in future checkpoints.
 - [x] Expanded root EBS volume vol-0d36715924f03b86c from 200 to 2048 GiB online. Workflow https://github.com/DavisAI1974/Markets/actions/runs/36293023294 succeeded; filesystem 2,129,040,207,872 bytes, free 1,922,134,876,160 bytes at 04:01:04Z. No instance stop or evidence deletion.
 - [x] Implement explicit same-root checkpoint recovery in the Monday launcher. Reuse completed legacy layers and INPUT spool; reconstruct only missing native state when explicitly requested. New ledger generations preserve failed-attempt bytes.
 - [x] Implement full native driver/calculator snapshots, pending horizons, candidate/response/lineage state, source/run identity and exact ledger byte offsets/hashes. Checkpoints flush ledgers, atomically retain compressed state, hash-chain the controller descriptor, and read back hashes. Future full-state recovery copies exact ledger prefixes and restores the object graph with pinned producer/Python/serializer identity. No checkpoint or ledger is deleted.
-- [ ] Stage current recovery code together with all earlier single-run/classroom/brain wiring.
-- [ ] Clean disposable pip cache and redundant source-transfer packs only after their successful installed checkout is verified. Keep transfer/staging receipts, failed packs, checkouts, source, work, brain and all evidence.
+- [x] Stage current recovery code together with all earlier single-run/classroom/brain wiring. Final staged commit 763d1d5c0f1979bad7ad3462620795e5354bfb37, workflow 36293923132.
+- [x] Clean disposable pip cache and redundant source-transfer packs after verifying successful installed checkouts. Workflow 36293753576 reclaimed 11,779,919,359 bytes in 20 transfer packs and pip reported 406 cache files / 403.3 MB. Per-pack cache-removal-receipt.json retained. Transfer/staging receipts, failed packs, checkouts, source, work, brain and all evidence preserved.
 - [ ] Launch the authorized reconstruction from checkpoint 000008 (464000 records), verify adapter hash and exact ledger prefixes at that cursor, then continue to 2032203.
 - [ ] Observe live full-state checkpoint receipts. Syntax checks do not establish live checkpoint restoration.
 
