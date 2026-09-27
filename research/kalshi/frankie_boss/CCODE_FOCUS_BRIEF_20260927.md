@@ -48,10 +48,10 @@ Corrected ROOT runtime:
 - commit: 2d3e6bbf61f8f7be0568107abb618ba2d8c62b6a
 - ref: codex/frankie-projection-runtime-2d3e6bb
 - successful staging run: 36323776583
-- CODE_ROOT: /opt/frankie-box/code/2d3e6bbf61f8f7be0568107abb618ba2d3e6bb-36323776583-1/markets
+- CODE_ROOT: /opt/frankie-box/code/2d3e6bbf61f8f7be0568107abb618ba2d8c62b6a-36323776583-1/markets
 
 Correction: the CODE_ROOT string above must use the exact staged path recorded by the successful staging receipt:
-`/opt/frankie-box/code/2d3e6bbf61f8f7be0568107abb618ba2d3c62b6a-36323776583-1/markets`
+`/opt/frankie-box/code/2d3e6bbf61f8f7be0568107abb618ba2d8c62b6a-36323776583-1/markets`
 Verify the actual receipt before using it. Never invent a path from memory.
 
 Calculation root:
