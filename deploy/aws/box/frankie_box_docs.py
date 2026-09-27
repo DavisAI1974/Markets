@@ -30,6 +30,22 @@ def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def sha256_file(path):
+    """The same sha256 as sha256_bytes(path.read_bytes()), streamed: the member ledger alone exceeds the box's RAM."""
+    with Path(path).open('rb') as handle:
+        return hashlib.file_digest(handle, 'sha256').hexdigest()
+
+
+def sha256_files(paths):
+    """sha256_file for each path, in the given order; hashlib releases the GIL, so threads overlap the reads."""
+    from concurrent.futures import ThreadPoolExecutor
+    paths = list(paths)
+    if len(paths) < 2:
+        return [sha256_file(p) for p in paths]
+    with ThreadPoolExecutor(min(14, len(paths))) as pool:
+        return list(pool.map(sha256_file, paths))
+
+
 def keep_if_lossy(inputs, output):
     """The merge guard. inputs: the note texts a merge was given; output: what the model returned.
     Returns (text, note): output only when it preserves every hash and every nonblank input line
@@ -315,11 +331,11 @@ def build_docs(work, out, cycle):
         # the three exact ledgers STAY ON THE BOX (git = code, S3 = data; the day's ledgers are about 1 GiB; the pusher ships
         # docs/*.md and the index): witnessed here by name, bytes and sha256 so the published index matches the published tree
         for p in sorted(ledgers.glob('*.jsonl')):
-            referenced.append(dict(name=f'bedrock/ledgers/{p.name}', bytes=p.stat().st_size, sha256=sha256_bytes(p.read_bytes()), source=str(p),
+            referenced.append(dict(name=f'bedrock/ledgers/{p.name}', bytes=p.stat().st_size, sha256=p, source=str(p),
                                    what='one exact ledger of the bedrock traversal, whole, in emission order (JSONL, sorted keys), reconciled against its counter on the box; kept on the box under the session work directory (not published: data, not code)'))
     corpus = work / 'reading-corpus-full.md'
     if corpus.is_file():
-        referenced.append(dict(name='reading-corpus-full.md', bytes=corpus.stat().st_size, sha256=sha256_bytes(corpus.read_bytes()),
+        referenced.append(dict(name='reading-corpus-full.md', bytes=corpus.stat().st_size, sha256=corpus,
                                source=str(corpus), what='the rendered reading corpus; referenced by digest, not copied (size; derivable from the request on the box)'))
     derive = work / 'derive.json'
     if derive.is_file():
@@ -331,8 +347,11 @@ def build_docs(work, out, cycle):
         for name, entry in sorted(layers.items()):
             path = Path(entry.get('path') or '')
             if entry.get('bedrock') and path.is_file():
-                referenced.append(dict(name=f'derived/{path.name}', bytes=path.stat().st_size, sha256=sha256_bytes(path.read_bytes()), source=str(path),
+                referenced.append(dict(name=f'derived/{path.name}', bytes=path.stat().st_size, sha256=path, source=str(path),
                                        what=f'the bedrock layer file for {name} ({entry.get("status")}); referenced by digest, not copied: its rows are in the DIGEST_V6 bedrock tables of derivation-digest-full.md and in bedrock/ledgers/'))
+    # Each 'sha256' above holds its path until here; the files are hashed together, streamed, results in list order.
+    for item, digest in zip(referenced, sha256_files([item['sha256'] for item in referenced])):
+        item['sha256'] = digest
     index = dict(schema=SCHEMA, at=time.time(), cycle=cycle, work=str(work), docs=entries, referenced=referenced)
     (out / 'docs-index.json').write_text(json.dumps(index, indent=1, sort_keys=True) + '\n', encoding='utf-8')
     lines = [f'# Frankie cycle {cycle}: the session documents', '',

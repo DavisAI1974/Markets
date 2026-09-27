@@ -25,6 +25,20 @@ def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def sha256_files(paths):
+    """sha256_bytes(path.read_bytes()) for each path, in order, streamed (derived layers run to many GB) and hashed on
+    threads (hashlib releases the GIL)."""
+    from concurrent.futures import ThreadPoolExecutor
+    def one(path):
+        with Path(path).open('rb') as handle:
+            return hashlib.file_digest(handle, 'sha256').hexdigest()
+    paths = list(paths)
+    if len(paths) < 2:
+        return [one(p) for p in paths]
+    with ThreadPoolExecutor(min(14, len(paths))) as pool:
+        return list(pool.map(one, paths))
+
+
 def _lessons_doc(response):
     """The accounting entry and the output ledgers (every JSON lesson of the response) as one Markdown document."""
     lessons = response.get('lessons') or []
@@ -274,7 +288,8 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
             entries.append(dict(name='bedrock.md', error=f'{type(error).__name__}: {error}', source=str(bedrock), include=False))
     derived = work / 'derived'
     if derived.is_dir():
-        files = [dict(name=f.name, bytes=f.stat().st_size, sha256=sha256_bytes(f.read_bytes())) for f in sorted(derived.iterdir()) if f.is_file()]
+        paths = [f for f in sorted(derived.iterdir()) if f.is_file()]
+        files = [dict(name=f.name, bytes=f.stat().st_size, sha256=digest) for f, digest in zip(paths, sha256_files(paths))]
         doc = ('# Derived files of this cycle (witnessed by name, bytes, sha256; the derivation digest renders their content losslessly)\n\n'
                '| file | bytes | sha256 |\n|---|---:|---|\n' + '\n'.join(f"| {f['name']} | {f['bytes']} | {f['sha256']} |" for f in files) + '\n')
         put('derived-files.md', doc.encode('utf-8'), derived, 'witness of the derived files (their content is in the digest)', False)
