@@ -363,7 +363,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
 
     from frankie_box_native_checkpoint import (FullCheckpointer, read_checkpoint,
         restore_driver, consume_recovery)
-    from frankie_box_native_parallel import ParallelSections, bind_policy
+    from frankie_box_native_parallel import ParallelSections, bind_policy, consume_after_reconstruction
 
     class ParallelCheckpointer(FullCheckpointer):
         parallel = None
@@ -420,8 +420,8 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
         parallel = ParallelSections(driver, producers)
         checkpointer.parallel = parallel
         try:
-            parallel.start()
-            consume_recovery(driver, stamped, len(records), progress, checkpoint, descriptor)
+            consume_after_reconstruction(consume_recovery, driver, stamped, len(records),
+                                         progress, checkpoint, descriptor, parallel)
             parallel.finish()
         finally:
             parallel.close()
@@ -468,6 +468,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                    execution=dict(
                        policy=getattr(driver, '_frankie_parallel_policy', {'calculation_processes': 1}),
                        metrics=getattr(driver, '_frankie_parallel_metrics', {}),
+                       reconstruction_boundary=getattr(driver, '_frankie_parallel_boundary', None),
                        timings_are_per_process=True, speedup_verified=False),
                    cadence_policy='NeverInvoke', driver_arguments=arguments,
                    candidate_warmup_seconds=driver.candidate_warmup_seconds, candidate_min_observations=driver.candidate_min_observations,

@@ -292,3 +292,59 @@ class ParallelSections:
             branch.close()
         self.branches.clear()
 
+
+class _ReconstructionBoundary:
+    """Switch only after consume_recovery has verified the retained prefix."""
+    def __init__(self, progress, driver, parallel, target):
+        self.progress, self.driver, self.parallel, self.target = progress, driver, parallel, target
+
+    def update(self, stage, completed=0, total=None, **kwargs):
+        if not self.parallel.active and stage == 'root-native-records':
+            driver = self.driver
+            if (completed != self.target or driver.counters.records_seen != self.target
+                    or getattr(driver, '_frankie_reconstruction_checkpoint', None) is not None):
+                raise ValueError('parallel activation requires the exact verified reconstruction boundary')
+            from frankie_box_prepare_trading_day import save_new, witness
+            checkpointer = driver.checkpointer
+            receipt_path = checkpointer.checkpoint_dir.parent / 'reconstruction-receipt.json'
+            import json
+            receipt = json.loads(receipt_path.read_bytes())
+            if (receipt.get('records') != self.target
+                    or receipt.get('adapter_and_exact_ledger_prefixes_verified') is not True):
+                raise ValueError('verified reconstruction receipt required before parallel calculations')
+            driver.adapter.assert_groups_closed()
+            driver._frankie_parallel_boundary = dict(
+                completed_mbo_records=self.target,
+                reconstruction_receipt=witness(receipt_path),
+                rule='serial reconstruction verified before any parallel group or new source record')
+            # This is an explicit interval save outside NativeReplayDriver.maybe_save:
+            # match the continuation counter that FullCheckpointer serializes.
+            advances_save_counter = self.target > 0 and checkpointer.sequence >= 0
+            checkpoint = checkpointer._write(
+                driver.adapter, completed_mbo_records=self.target,
+                event_group_open=False, controller_state=None, locked=False)
+            if advances_save_counter:
+                driver.counters.save_points += 1
+            self.parallel.start()
+            transition = dict(
+                schema='FRANKIE_PARALLEL_BOUNDARY_TRANSITION_V1',
+                **driver._frankie_parallel_boundary,
+                checkpoint_hash=checkpoint['checkpoint_hash'],
+                execution_policy=driver._frankie_parallel_policy,
+                workers_started=True, new_records_processed_at_transition=0)
+            save_new(checkpointer.checkpoint_dir.parent / 'parallel-transition-receipt.json', transition)
+        if self.progress is not None:
+            return self.progress.update(stage, completed, total, **kwargs)
+
+
+def consume_after_reconstruction(consume, driver, records, total, progress, checkpoint, descriptor, parallel):
+    reconstruction = getattr(driver, '_frankie_reconstruction_checkpoint', None)
+    if reconstruction is None:
+        parallel.start()
+        consume(driver, records, total, progress, checkpoint, descriptor)
+        return
+    target = reconstruction['completed_mbo_records']
+    boundary = _ReconstructionBoundary(progress, driver, parallel, target)
+    consume(driver, records, total, boundary, checkpoint, descriptor)
+    if not parallel.active:
+        raise ValueError('source ended before the verified parallel activation boundary')
