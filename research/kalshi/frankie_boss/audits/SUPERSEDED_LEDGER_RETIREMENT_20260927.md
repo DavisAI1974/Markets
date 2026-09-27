@@ -1,6 +1,6 @@
 # Superseded member-ledger retirement proposal
 
-Prepared from storage inventory 36327160928 and current terminal descriptor read 36327307198 on 2026-09-27. This is a proposal; no deletion or compression has occurred.
+Prepared from storage inventory 36327160928 and current terminal descriptor read 36327307198 on 2026-09-27. Greg explicitly approved this exact proposal after ROOT failed from disk exhaustion. Cleanup run 36327746090 has been dispatched; no deletion result or recovered-space receipt has yet been retrieved. Compression has not occurred.
 
 The five explicitly listed files total 945,839,361,320 logical bytes (about 946 GB). These are superseded partial-pass outputs, not claims of whole-file byte identity. Retain all other files in those directories, including checkpoints, state, receipts and errors.
 
@@ -18,6 +18,6 @@ The committed manual maintenance script requires an explicit confirmation litera
 
 The existing workflow's separate maintenance lock admits this one committed script while ROOT holds the execution lock; no new workflow or automated orchestrator is introduced. This is necessary to reclaim space before the pending publication copy. It does not cancel or replace queued downstream staging 36326457453.
 
-Approval is required for this concrete destructive change because the user's original instruction explicitly protected every ledger and checkpoint. The latest discussion requests cleanup of duplicate work; this proposal identifies the exact obsolete bulk files and loss of earlier partial-checkpoint rollback before deletion.
+Approval was obtained for this concrete destructive change because the user's original instruction explicitly protected every ledger and checkpoint. The latest discussion requests cleanup of duplicate work; this proposal identifies the exact obsolete bulk files and loss of earlier partial-checkpoint rollback before deletion.
 
 Compression is deferred for these superseded files: preserving them as compressed bulk would consume additional space and I/O while ROOT needs room to publish. Retained final evidence may be archived later after its readers finish, with exact restore verification.

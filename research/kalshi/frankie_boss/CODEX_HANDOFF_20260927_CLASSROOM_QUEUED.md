@@ -1,5 +1,31 @@
 # Superseding continuation — 2026-09-27 after 13:52Z
 
+## Immediate recovery — 2026-09-27 14:57Z
+
+ROOT run **36324470881 FAILED at 14:54:19Z** during `frankie_box_projection._publish -> _copy_fragment -> output.write`, with `OSError: [Errno 28] No space left on device`. It was not paused or restarted by this session. Both range loops reached publication, but their completion receipts still need retrieval; do not claim full calculation completion. The finalized scientific ledgers and full terminal checkpoint remain the recovery base. No source record reconstruction is needed or authorized.
+
+Read-only observer 36327598526 then failed because the SSM document worker could not write its temporary file on the full filesystem. This can also prevent the cleanup command from starting; report its actual result rather than assuming success.
+
+Greg approved the exact five-file retirement proposal. Immutable commit/ref:
+`ab7a0c4fd55c679ea73ca954b751e8ab867312e7` /
+`codex/frankie-retire-superseded-ab7a0c4`.
+Cleanup run **36327746090** was dispatched once with the required confirmation literal; receipt/outcome is pending.
+The approved files are the five superseded `exact_member_rows.jsonl` files in the [retirement proposal](audits/SUPERSEDED_LEDGER_RETIREMENT_20260927.md), 945,839,361,320 bytes total. Do not broaden deletion to other files or directories. This approval supersedes the original preservation rule only for those exact files. Keep all current complete ledgers, checkpoints, driver/adapter states, historical sections/hashes and projection archives/partial outputs. No compression or storage purchase has occurred.
+
+Current terminal descriptor was freshly retrieved in **36327307198**:
+`recovery-8c03f629f01747158535f3cfa4f01f2d/checkpoints/controller-state-000000.json`,
+12,885 bytes, SHA256 `3cc7e16ce0cfa3e2c5297d98d860c5231e09c747e5f82c2de698d7f41ed26ab4`.
+It is finalized at 2,032,203 records and points only to the three complete closed ledgers in `recovery-9defa3169f7d46679491da2b1bfbbce2`.
+Its full driver file is 167,213,132 bytes, SHA256 `22af7701a34803fe6c815e41f796cd6fe97d96b9595b83ead1ba5482a97f78ee`.
+Checkpoint file SHA256 remains `2d61559ca9f5c650cdb22fa9aff29b8f0a366a648983493d435c26a3387943e6`;
+logical checkpoint hash `c3281f870a457f9ccf0827ca54a88adc99712cfb6dd3492f7a02a94019bfbecb`.
+
+Next: retrieve cleanup result; verify free space and PID59092 inactivity; retrieve compressed member/lifecycle coverage and retained range receipts. Only after capacity is restored, resume the SAME root from that full terminal checkpoint using corrected immutable runtime 2d3e6bb, original authorship and binding, no reconstruction. It should reuse completed compressed ranges and retain incomplete publication evidence. Do not rebuild scientific records or switch ROOT to the downstream save-file package.
+
+Downstream staging **36326457453** was released from its queue after ROOT failed and became in progress at 14:54:30Z. Its outcome and staging receipt still require retrieval; do not dispatch duplicate staging. If disk exhaustion prevented staging, restore access and use a genuine retry only after inspecting its result. Principal/classroom remain unlaunched; Granite priming must not repeat. Orchestrator remains PLAN ONLY; Tuesday and learning outcomes remain pending.
+
+
+
 ## Latest direction and downstream save files — 2026-09-27 14:36Z
 
 Greg explicitly authorized deploying save points to eligible downstream stages without rebuilding current ledgers, and then said to leave ROOT alone and let it finish. ROOT stays on corrected runtime 2d3e6bb, run 36324470881/PID 59092. No pause, restart, hotpatch, reconstruction or second calculation is authorized by the downstream deployment.
