@@ -224,14 +224,293 @@ def _prepare_layer(job):
         obj.db.close()
 
 
+PREPARED_SCHEMA = 'FRANKIE_PREPARED_CALCULATION_LAYER_V2'
+FRAGMENTS_PER_JOB = 4
+SHARDS = 14
+
+
+def _member_read(handle, offset):
+    """Decompress exactly one gzip member at offset: (bytes, compressed length)."""
+    handle.seek(offset)
+    decoder, out, consumed = zlib.decompressobj(31), [], 0
+    while not decoder.eof:
+        chunk = handle.read(1 << 16)
+        if not chunk:
+            raise ValueError('truncated projected layer member')
+        out.append(decoder.decompress(chunk))
+        consumed += len(chunk)
+    return b''.join(out), consumed - len(decoder.unused_data)
+
+
+def _range_receipts(projection_root):
+    """The retained plan's completed range receipts, in range order, per ledger kind."""
+    with (projection_root / 'plan.json').open('rb') as stream:
+        plan = hashlib.file_digest(stream, 'sha256').hexdigest()
+    receipts = {}
+    for kind in ('member', 'lifecycle'):
+        values, position = [], 0
+        for path in sorted((projection_root / kind).glob('range-[0-9][0-9][0-9][0-9][0-9][0-9].json')):
+            value = json.loads(path.read_bytes())
+            binding = value.get('binding') or {}
+            if (binding.get('plan') != plan or binding.get('kind') != kind or binding.get('index') != len(values)
+                    or value.get('actual_start') != position or value.get('readback_verified') is not True):
+                raise ValueError('retained projection range receipts differ from the ordered plan')
+            position = value['actual_end']
+            values.append(value)
+        receipts[kind] = values
+    return receipts
+
+
+def _published_layout(path, name, receipts):
+    """Walk one published gzip-json layer (projection._publish layout) without inflating its row arrays: the small
+    metadata members are decompressed; each row array is located fragment by fragment from the range receipts.
+    Returns (metadata object with each fragment array as [], {key: [(offset, bytes, sha256, rows), ...]})."""
+    separator = len(gzip.compress(b',\n', compresslevel=1, mtime=0))
+    size, parts, arrays = path.stat().st_size, [], {}
+    with path.open('rb') as handle:
+        text, offset = _member_read(handle, 0)
+        if text != b'{':
+            raise ValueError('projected layer does not open an object')
+        parts.append(text)
+        while True:
+            text, width = _member_read(handle, offset)
+            offset += width
+            parts.append(text)
+            if text == b'}\n':
+                break
+            key = json.loads(text[1:-1] if text.startswith(b',') else text[:-1])
+            value, width = _member_read(handle, offset)
+            offset += width
+            if value != b'[':
+                parts.append(value)
+                continue
+            kind = {'member_rows': 'member', 'lifecycle_rows': 'lifecycle'}.get(key)
+            if kind is None:
+                raise ValueError('unexpected projected row array ' + str(key))
+            fragment = name if any(name in r['fragments'] for r in receipts[kind]) else '__section_mirror'
+            located = []
+            for r in receipts[kind]:
+                item = r['fragments'].get(fragment)
+                if item is None:
+                    continue
+                if located:
+                    handle.seek(offset)
+                    if zlib.decompress(handle.read(separator), 31) != b',\n':
+                        raise ValueError('projected layer fragment separator differs')
+                    offset += separator
+                located.append((offset, item['bytes'], item['sha256'], item['rows']))
+                offset += item['bytes']
+            close, width = _member_read(handle, offset)
+            if close != b']':
+                raise ValueError('projected layer fragments do not match the range receipts')
+            offset += width
+            parts.append(b'[]')
+            arrays[key] = located
+    if offset != size:
+        raise ValueError('projected layer length differs from its located members')
+    return json.loads(b''.join(parts)), arrays
+
+
+def _prepare_fragments(job):
+    """Rows of consecutive fragments of one published layer, in order: (section, payload, group key)."""
+    path, field, fragments = job
+    out = []
+    with open(path, 'rb') as handle:
+        for offset, width, digest, rows in fragments:
+            handle.seek(offset)
+            raw = handle.read(width)
+            if len(raw) != width or hashlib.sha256(raw).hexdigest() != digest:
+                raise ValueError('published layer fragment differs from its range receipt')
+            decoder = zlib.decompressobj(31)
+            text = decoder.decompress(raw) + decoder.flush()
+            if not decoder.eof or decoder.unused_data:
+                raise ValueError('published layer fragment is not one gzip member')
+            lines = text.split(b'\n') if text else []
+            if len(lines) != rows:
+                raise ValueError('published layer fragment row count differs from its range receipt')
+            for i, line in enumerate(lines):
+                if i + 1 < len(lines):
+                    if not line.endswith(b','):
+                        raise ValueError('published layer fragment row separator differs')
+                    line = line[:-1]
+                row = json.loads(line)
+                section = _dump(row.get('emitting_section')) if isinstance(row, dict) else None
+                if field == 'member_rows':
+                    reduced = _member_row(row)
+                    key = _group_key(reduced['group_index']) if 'group_index' in reduced else None
+                    out.append((section, _payload(reduced), key))
+                else:
+                    out.append((section, _payload(row), None))
+    return out
+
+
+def _prepared_database(path):
+    db = sqlite3.connect(path)
+    db.execute('PRAGMA cache_size=-2048')
+    db.execute('PRAGMA temp_store=FILE')
+    db.execute('CREATE TABLE rows (layer INTEGER, field TEXT, ordinal INTEGER, section TEXT, payload TEXT, PRIMARY KEY(layer,field,ordinal))')
+    db.execute('CREATE TABLE member_keys (ordinal INTEGER PRIMARY KEY, group_key TEXT, shard INTEGER)')
+    return db
+
+
+def _prepare_published(index, name, pin, root, receipts, workers):
+    """One gzip-json projected layer, its row fragments spread over the pinned helpers; same rows.sqlite contents
+    as _prepare_layer, plus each member row's group key and shard for the sharded merge."""
+    import threading
+    obj = BedrockSources.__new__(BedrockSources)
+    obj.root = Path(root)/('prepare-%06d' % index)
+    obj.root.mkdir()
+    obj._references = {}
+    snapshot, failure = [], []
+    def pinned():
+        try:
+            snapshot.append(obj._snapshot(index, pin))
+        except BaseException as error:
+            failure.append(error)
+    checker = threading.Thread(target=pinned)
+    checker.start()
+    path = Path(pin['path'])
+    from frankie_box_finalization import file_identity
+    before = file_identity(path)
+    database = obj.root/'rows.sqlite'
+    db = _prepared_database(database)
+    try:
+        document, arrays = _published_layout(path, name, receipts)
+        metadata, counts = {}, {}
+        for key in sorted(document):
+            value = document[key]
+            if key in arrays:
+                count, expected = 0, sum(f[3] for f in arrays[key])
+                jobs = [(str(path), key, arrays[key][i:i + FRAGMENTS_PER_JOB])
+                        for i in range(0, len(arrays[key]), FRAGMENTS_PER_JOB)]
+                for rows in workers.ordered(_prepare_fragments, jobs):
+                    db.executemany('INSERT INTO rows VALUES (?,?,?,?,?)',
+                                   [(index, key, count + i, section, payload) for i, (section, payload, _) in enumerate(rows)])
+                    if key == 'member_rows':
+                        db.executemany('INSERT INTO member_keys VALUES (?,?,?)',
+                                       [(count + i, group, zlib.crc32(group.encode()) % SHARDS if group is not None else 0)
+                                        for i, (_, _, group) in enumerate(rows)])
+                    count += len(rows)
+                if count != expected:
+                    raise ValueError('published layer rows differ from the range receipts')
+                counts[key] = count
+            elif key in ROW_FIELDS:
+                count = 0
+                if isinstance(value, list):
+                    for count, row in enumerate(value, 1):
+                        section = _dump(row.get('emitting_section')) if isinstance(row, dict) else None
+                        reduced = _member_row(row) if key == 'member_rows' else row
+                        db.execute('INSERT INTO rows VALUES (?,?,?,?,?)', (index, key, count-1, section, _payload(reduced)))
+                        if key == 'member_rows':
+                            group = _group_key(reduced['group_index']) if 'group_index' in reduced else None
+                            db.execute('INSERT INTO member_keys VALUES (?,?,?)',
+                                       (count-1, group, zlib.crc32(group.encode()) % SHARDS if group is not None else 0))
+                elif value:
+                    raise ValueError('layer rows must be an array or null')
+                counts[key] = count
+            elif key in META_FIELDS:
+                metadata[key] = value
+        db.commit()
+    finally:
+        db.close()
+        checker.join()
+    if failure:
+        raise failure[0]
+    if file_identity(path) != before:
+        raise ValueError('projected layer changed during consumption')
+    receipt = dict(schema=PREPARED_SCHEMA, index=index, pin={k: pin.get(k) for k in ('path', 'bytes', 'sha256', 'encoding')},
+                   meta=metadata, counts=counts, database=str(database), database_bytes=database.stat().st_size)
+    with (obj.root/'receipt.json').open('x') as output:
+        json.dump(receipt, output, sort_keys=True)
+        output.flush(); os.fsync(output.fileno())
+    return dict(path=str(database), meta=metadata, counts=counts, keyed=True)
+
+
+def _reusable_prepared(index, pin, root):
+    """A prepared layer from an earlier digest attempt of this calculation root with the same layer pin, if its
+    receipt and database are intact (save point for reruns)."""
+    derived = Path(root).parent.parent
+    for receipt in sorted(derived.glob('.digest-*/calculation-layers/prepare-*/receipt.json')):
+        try:
+            value = json.loads(receipt.read_bytes())
+        except (OSError, ValueError):
+            continue
+        database = Path(value.get('database') or '')
+        if (value.get('schema') == PREPARED_SCHEMA and value.get('index') == index
+                and value.get('pin') == {k: pin.get(k) for k in ('path', 'bytes', 'sha256', 'encoding')}
+                and database.parent == receipt.parent and database.is_file()
+                and database.stat().st_size == value.get('database_bytes')):
+            return dict(path=str(database), meta=value['meta'], counts=value['counts'], keyed=True, reused=str(receipt))
+    return None
+
+
 def _prepare_layers(entries,root):
     from frankie_box_projection import Workers,save
     workers = Workers()
     try:
         save(Path(root)/'preparation-workers.json',workers.receipt())
-        return list(workers.ordered(_prepare_layer,[(i,pin,str(root)) for i,pin in enumerate(entries.values())]))
+        prepared, receipts = [], {}
+        for i,(name,pin) in enumerate(entries.items()):
+            if pin.get('encoding') != 'gzip-json':
+                prepared.append(next(workers.ordered(_prepare_layer,[(i,pin,str(root))])))
+                continue
+            reused = _reusable_prepared(i, pin, root)
+            if reused is not None:
+                prepared.append(reused)
+                continue
+            projection = Path(pin['path']).resolve().parent.parent
+            if projection not in receipts:
+                receipts[projection] = _range_receipts(projection)
+            prepared.append(_prepare_published(i, name, pin, root, receipts[projection], workers))
+        return prepared
     finally:
         workers.close()
+
+
+def _merge_shard(job):
+    """One group-key shard of the member merge: every derived layer in order, each row in ordinal order, exactly
+    the _merge rules (first group value kept, first column ordinal kept, typed conflict check)."""
+    shard, layers, output = job
+    db = sqlite3.connect(output)
+    db.execute('PRAGMA cache_size=-65536')
+    db.execute('PRAGMA temp_store=FILE')
+    db.executescript('''
+        CREATE TABLE groups (key TEXT PRIMARY KEY, value TEXT);
+        CREATE TABLE members (group_key TEXT, column_name TEXT, ordinal INTEGER, payload TEXT,
+                              PRIMARY KEY(group_key,column_name));
+    ''')
+    try:
+        for index, name, database in layers:
+            source = sqlite3.connect(Path(database).resolve().as_uri() + '?mode=ro', uri=True)
+            try:
+                for payload, key in source.execute(
+                        'SELECT r.payload, k.group_key FROM rows r JOIN member_keys k ON k.ordinal = r.ordinal '
+                        'WHERE r.layer=? AND r.field=? AND k.shard=? ORDER BY r.ordinal', (index, 'member_rows', shard)):
+                    row = _decoded(payload)
+                    if 'group_index' not in row:
+                        raise ValueError('bedrock member projection of %s carries a row without the group key group_index' % name)
+                    db.execute('INSERT OR IGNORE INTO groups VALUES (?,?)', (key, _dump(row['group_index'])))
+                    retained = {column:(ordinal,_decoded(value)) for column,ordinal,value in db.execute(
+                        'SELECT column_name,ordinal,payload FROM members WHERE group_key=? ORDER BY ordinal',(key,))}
+                    ordinal, additions = len(retained), []
+                    for column,value in row.items():
+                        if '[]' in column and not column.endswith('#count'):
+                            column,value = column+'#count',DG._leaf_count(value)
+                        if column in retained:
+                            if not DG._same(retained[column][1],value):
+                                raise ValueError('bedrock member projection conflict: group %s column %s differs between layers (%s)' %
+                                                 (row['group_index'],column,name))
+                            continue
+                        retained[column]=(ordinal,value)
+                        additions.append((key,column,ordinal,_payload(value)))
+                        ordinal += 1
+                    db.executemany('INSERT INTO members VALUES (?,?,?,?)',additions)
+            finally:
+                source.close()
+        db.commit()
+    finally:
+        db.close()
+    return output
 
 
 class BedrockSources:
@@ -268,11 +547,17 @@ class BedrockSources:
         try:
             metadata = []
             prepared = _prepare_layers(entries,self.root)
+            # Keyed (projected) layers merge their member rows by group-key shard on the helpers; the member rows
+            # themselves are never read from sources.sqlite, only the merged groups/members.
+            keyed, sharded = all(p.get('keyed') for p in prepared), []
             first_verdict = False
             for index, (name, pin) in enumerate(entries.items()):
                 saved = prepared[index]
                 self.db.execute('ATTACH DATABASE ? AS prepared',(saved['path'],))
-                self.db.execute('INSERT INTO rows SELECT * FROM prepared.rows')
+                if keyed:
+                    self.db.execute("INSERT INTO rows SELECT * FROM prepared.rows WHERE field != 'member_rows'")
+                else:
+                    self.db.execute('INSERT INTO rows SELECT * FROM prepared.rows')
                 self.db.commit()
                 self.db.execute('DETACH DATABASE prepared')
                 meta,counts = saved['meta'],saved['counts']
@@ -289,7 +574,12 @@ class BedrockSources:
                     count=meta.get('count'), partial=' '.join(p['section'] for p in (meta.get('partial') or [])))
                 self.db.execute('INSERT INTO layer_index VALUES (?,?)', (index, _payload(row)))
                 if meta.get('status') == 'derived':
-                    self._merge(index, name)
+                    if keyed:
+                        sharded.append((index, name, saved['path']))
+                    else:
+                        self._merge(index, name)
+            if sharded:
+                self._merge_sharded(sharded)
             if first_verdict:
                 v = self.verdict
                 row = dict(verdict=v.get('verdict'), failed_gates=' '.join(v.get('failed_gates') or []),
@@ -404,6 +694,20 @@ class BedrockSources:
             if file_identity(path) != self._references[str(path)]:
                 raise ValueError('projected layer changed during consumption')
         return metadata, counts
+
+    def _merge_sharded(self, layers):
+        from frankie_box_projection import Workers
+        workers = Workers()
+        try:
+            jobs = [(shard, layers, str(self.root/('merge-%02d.sqlite' % shard))) for shard in range(SHARDS)]
+            for output in workers.ordered(_merge_shard, jobs):
+                self.db.execute('ATTACH DATABASE ? AS shard', (output,))
+                self.db.execute('INSERT INTO groups SELECT * FROM shard.groups')
+                self.db.execute('INSERT INTO members SELECT * FROM shard.members')
+                self.db.commit()
+                self.db.execute('DETACH DATABASE shard')
+        finally:
+            workers.close()
 
     def _merge(self, index, name):
         for (payload,) in self.db.execute(
