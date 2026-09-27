@@ -153,12 +153,16 @@ class ParallelCensus:
         self.driver = driver
         self.worker = NativeWorker(producers,cpu,'census',driver.run.field_census,metrics)
         self.active = True
+        self.bridge = None
         driver.run.field_census = self
         self.buffer, self.buffer_rows, self.pending_rows = io.BytesIO(), 0, 0
 
     def observe(self,row):
         # Immutable at submission; no mutable row reference crosses calls.
-        cloudpickle.dump(row, self.buffer, protocol=5)
+        frozen = cloudpickle.dumps(row, protocol=5)
+        self.buffer.write(frozen)
+        if self.bridge is not None:
+            self.bridge.offer(row, frozen)
         self.buffer_rows += 1
         if self.buffer_rows >= 32 or self.buffer.tell() >= 1 << 20:
             self.flush()

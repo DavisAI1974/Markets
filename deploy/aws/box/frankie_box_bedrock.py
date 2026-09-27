@@ -433,6 +433,10 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
             checkpointer.parallel = None
     if progress is not None:
         progress.update('root-native-finalize')
+    # All old prefix/append files stay retained. Publish the complete canonical
+    # JSONL files before the unchanged finalizer and existing file reconciliations.
+    from frankie_box_segmented_ledger import materialize_all
+    materialize_all(sinks)
     result = dict(driver._frankie_final_result) if descriptor and descriptor['finalized'] else driver.finalize()
     result['ledger_retention'] = sinks.reconcile_all(member=calculation.member_rows_written,
                                                      lifecycle=calculation.lifecycle_rows_written,

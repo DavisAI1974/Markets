@@ -9,6 +9,7 @@ from contextlib import contextmanager, ExitStack
 import hashlib
 import io
 import multiprocessing
+from multiprocessing import shared_memory
 import os
 from pathlib import Path
 import time
@@ -77,6 +78,7 @@ class _Capture:
 
 
 def _encoder(connection, producers, cpu):
+    shared = None
     try:
         pin_threads(os.getpid(), cpu)
         from frankie_box_bedrock import load_producers
@@ -89,7 +91,14 @@ def _encoder(connection, producers, cpu):
                 break
             stream, values = io.BytesIO(message), []
             while stream.tell() < len(message):
-                ledger, ordinal, row = cloudpickle.load(stream)
+                item = cloudpickle.load(stream)
+                if item[0] == 'frozen-member':
+                    _, ledger, ordinal = item
+                    row = cloudpickle.load(stream)
+                else:
+                    tag, ledger, ordinal, row = item
+                    if tag != 'row':
+                        raise ValueError('unknown exact evidence row envelope')
                 capture = _Capture()
                 sink = object.__new__(RowSink)
                 sink.ledger = ledger
@@ -106,18 +115,40 @@ def _encoder(connection, producers, cpu):
                     raise ValueError('pinned row sink capture differs')
                 values.append((ledger, ordinal, capture.encoded, sink._rows_by_section,
                     sink._bytes_by_section, sink._key_bytes, sink._key_sampled_rows, elapsed))
-            connection.send_bytes(cloudpickle.dumps(('ok', values), protocol=5))
+            required = sum(len(value[2]) for value in values)
+            if shared is None or shared.size < required:
+                if shared is not None:
+                    shared.close()
+                    shared.unlink()
+                capacity = max(1 << 20, 1 << max(0, required-1).bit_length())
+                shared = shared_memory.SharedMemory(create=True, size=capacity)
+            metadata, offset = [], 0
+            for ledger, ordinal, encoded, rows, widths, keys, sampled, elapsed in values:
+                width = len(encoded)
+                shared.buf[offset:offset+width] = encoded
+                metadata.append((ledger, ordinal, offset, width, rows, widths, keys, sampled, elapsed))
+                offset += width
+            values = None
+            # Receiving the next batch acknowledges that ROOT finished these
+            # views. This slot is not reused while the current batch is pending.
+            connection.send_bytes(cloudpickle.dumps(('ok', dict(
+                schema='FRANKIE_ENCODED_BATCH_SHM_V1', name=shared.name,
+                bytes=required, values=metadata)), protocol=5))
     except BaseException:
         try:
             connection.send_bytes(cloudpickle.dumps(('error', traceback.format_exc()), protocol=5))
         except (EOFError, OSError):
             pass
     finally:
+        if shared is not None:
+            shared.close()
+            shared.unlink()
         connection.close()
 
 
 class _Encoder:
     def __init__(self, producers, cpu):
+        self.shared = None
         context = multiprocessing.get_context('spawn')
         self.connection, child = context.Pipe()
         self.process = context.Process(target=_encoder, args=(child, str(producers), cpu),
@@ -142,6 +173,18 @@ class _Encoder:
             raise RuntimeError('evidence encoder failed:\n' + value)
         return value
 
+    def encoded_batch(self, value):
+        if value.get('schema') != 'FRANKIE_ENCODED_BATCH_SHM_V1':
+            raise ValueError('exact shared evidence batch required')
+        if self.shared is None or self.shared.name != value['name']:
+            if self.shared is not None:
+                self.shared.close()
+            # The producer owns unlink; attaching must not register another owner.
+            self.shared = shared_memory.SharedMemory(name=value['name'], track=False)
+        if type(value['bytes']) is not int or not 0 <= value['bytes'] <= self.shared.size:
+            raise ValueError('shared evidence extent differs')
+        return value['values']
+
     def close(self):
         if self.process.is_alive():
             if not self.pending:
@@ -157,6 +200,9 @@ class _Encoder:
                 self.process.kill()
                 self.process.join(timeout=5)
         self.connection.close()
+        if self.shared is not None:
+            self.shared.close()
+            self.shared = None
 
 
 class _Sink:
@@ -181,13 +227,17 @@ class ParallelEvidence:
         self.workers, self.pending = [], deque()
         self.buffer, self.buffer_rows = io.BytesIO(), []
         self.active = False
-        predecessor = dict(schema='FRANKIE_PARALLEL_EVIDENCE_V1', encoders=2,
-            maximum_pending_rows=2, writer='ROOT', serializer='pinned RowSink.write',
-            checkpoint_barrier='drain then materialize original sinks',
-            helper_sha256='480215a2185aef554662848ae6dd087b8bf5c68f53a62435853481b250c93aa2')
-        policy = dict(schema='FRANKIE_PARALLEL_EVIDENCE_V2', encoders=2,
+        self.bridge = None
+        predecessor = dict(schema='FRANKIE_PARALLEL_EVIDENCE_V2', encoders=2,
             maximum_pending_batches=2, batch_rows=BATCH_ROWS, batch_flush_bytes=BATCH_BYTES,
             row_freeze='independent protocol-5 pickle at write; no cross-row memo',
+            writer='ROOT', serializer='pinned RowSink.write',
+            checkpoint_barrier='flush batches then materialize original sinks',
+            helper_sha256='98f7450ed0669802bd12643831d44b259bdefd2654ef638496045390990a71ad')
+        policy = dict(schema='FRANKIE_PARALLEL_EVIDENCE_V3', encoders=2,
+            maximum_pending_batches=2, batch_rows=BATCH_ROWS, batch_flush_bytes=BATCH_BYTES,
+            row_freeze='one immutable member pickle inside pinned note_member_row; independent other rows',
+            output_transport='producer-owned shared bytes; ROOT ordered write/hash; reuse after commit',
             writer='ROOT', serializer='pinned RowSink.write',
             checkpoint_barrier='flush batches then materialize original sinks',
             helper_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
@@ -198,6 +248,8 @@ class ParallelEvidence:
         self.metrics = driver._frankie_evidence_metrics
         self.metrics.setdefault('batches', 0)
         self.metrics.setdefault('transport_bytes', 0)
+        self.metrics.setdefault('shared_output_bytes', 0)
+        self.metrics.setdefault('reused_member_freezes', 0)
         try:
             for role in ('encoder-1', 'encoder-2'):
                 self.workers.append(_Encoder(producers, plan[role]['cpu']))
@@ -223,7 +275,13 @@ class ParallelEvidence:
         ordinal = self.ordinals[name]
         started = time.perf_counter()
         # Freeze now, before any caller mutation. Each row has its own memo.
-        cloudpickle.dump((sink.ledger, ordinal, row), self.buffer, protocol=5)
+        frozen = self.bridge.take(row) if name == 'member' and self.bridge is not None else None
+        if frozen is None:
+            cloudpickle.dump(('row', sink.ledger, ordinal, row), self.buffer, protocol=5)
+        else:
+            cloudpickle.dump(('frozen-member', sink.ledger, ordinal), self.buffer, protocol=5)
+            self.buffer.write(frozen)
+            self.metrics['reused_member_freezes'] += 1
         self.buffer_rows.append((name, ordinal))
         self.metrics['submit_seconds'] += time.perf_counter() - started
         if len(self.buffer_rows) >= BATCH_ROWS or self.buffer.tell() >= BATCH_BYTES:
@@ -248,21 +306,30 @@ class ParallelEvidence:
     def commit_one(self):
         offered, worker = self.pending[0]
         started = time.perf_counter()
-        values = worker.receive()
+        batch = worker.receive()
+        values = worker.encoded_batch(batch)
         self.metrics['receive_seconds'] += time.perf_counter() - started
         if len(values) != len(offered):
             raise ValueError('encoded evidence batch row count differs')
+        cursor = 0
         for (name, ordinal), value in zip(offered, values):
-            ledger, actual_ordinal, encoded, rows, widths, keys, sampled, elapsed = value
+            ledger, actual_ordinal, offset, width, rows, widths, keys, sampled, elapsed = value
+            if offset != cursor or type(width) is not int or width < 0 or offset+width > batch['bytes']:
+                raise ValueError('shared evidence row extent differs')
+            cursor += width
             sink = self.originals[name]
             if (ledger != sink.ledger or actual_ordinal != ordinal or sink._rows + 1 != ordinal
-                    or sum(rows.values()) != 1 or sum(widths.values()) != len(encoded)):
+                    or sum(rows.values()) != 1 or sum(widths.values()) != width):
                 raise ValueError('encoded evidence order or byte accounting differs')
             started = time.perf_counter()
-            sink._handle.write(encoded)
-            sink._digest.update(encoded)
+            encoded = worker.shared.buf[offset:offset+width]
+            try:
+                sink._handle.write(encoded)
+                sink._digest.update(encoded)
+            finally:
+                encoded.release()
             sink._rows += 1
-            sink._bytes += len(encoded)
+            sink._bytes += width
             for attr, counts in (('_rows_by_section', rows), ('_bytes_by_section', widths), ('_key_bytes', keys)):
                 target = getattr(sink, attr)
                 for key, count in counts.items():
@@ -271,6 +338,9 @@ class ParallelEvidence:
             self.metrics['rows'] += 1
             self.metrics['encode_seconds'] += elapsed
             self.metrics['commit_seconds'] += time.perf_counter() - started
+        if cursor != batch['bytes']:
+            raise ValueError('shared evidence batch has unclaimed bytes')
+        self.metrics['shared_output_bytes'] += cursor
         self.pending.popleft()
 
     def drain(self):
@@ -302,6 +372,63 @@ class ParallelEvidence:
         self.originals_only()
 
 
+class FrozenMemberBridge:
+    """Share one freeze only inside the pinned, mutation-free member call."""
+    def __init__(self, run, census, encoding):
+        if 'note_member_row' in vars(run) or run.sinks is not encoding.sinks:
+            raise ValueError('unwrapped pinned member method and identical sinks required')
+        self.run, self.census, self.encoding = run, census, encoding
+        self.original, self.context, self.active = run.note_member_row, None, True
+        owner = self
+        def note_member_row(count=1, *, row=None):
+            if owner.context is not None:
+                raise RuntimeError('member freeze scope must not nest')
+            owner.context = dict(row=row, frozen=None, used=False)
+            try:
+                result = owner.original(count, row=row)
+                if row is not None and not owner.context['used']:
+                    raise ValueError('pinned member census/evidence sequence differs')
+                return result
+            finally:
+                owner.context = None
+        self.wrapper = note_member_row
+        run.note_member_row = self.wrapper
+        census.bridge = encoding.bridge = self
+
+    def offer(self, row, frozen):
+        if self.context is None:
+            return
+        if row is not self.context['row'] or self.context['frozen'] is not None:
+            raise ValueError('member freeze source differs or was repeated')
+        self.context['frozen'] = frozen
+
+    def take(self, row):
+        if self.context is None:
+            return None
+        value = self.context
+        if row is not value['row'] or value['frozen'] is None or value['used']:
+            raise ValueError('member evidence does not match its scoped census freeze')
+        value['used'] = True
+        return value['frozen']
+
+    @contextmanager
+    def materialized(self):
+        if self.context is not None:
+            raise RuntimeError('checkpoint cannot bisect a member freeze scope')
+        del self.run.note_member_row
+        try:
+            yield
+        finally:
+            if self.active:
+                self.run.note_member_row = self.wrapper
+
+    def close(self):
+        if self.active:
+            del self.run.note_member_row
+            self.census.bridge = self.encoding.bridge = None
+            self.active = False
+
+
 class RuntimeSections(ParallelSections):
     def __init__(self, driver, producers):
         super().__init__(driver, producers)
@@ -309,6 +436,7 @@ class RuntimeSections(ParallelSections):
         self.encoding = None
         self.census = None
         self.books = None
+        self.member_bridge = None
 
     def start(self):
         super().start()
@@ -320,15 +448,15 @@ class RuntimeSections(ParallelSections):
             book_roles = [role for role in self.plan if role.startswith('book-')]
             if not book_roles:
                 raise ValueError('at least one full-book worker core required')
-            predecessor = dict(schema='FRANKIE_NATIVE_AUXILIARY_V1',
-                book_workers=len(book_roles), census_workers=1,
-                book_rule='pinned per-level math and snapshot assembly; join every full snapshot',
-                census_rule='pinned census; ordered observe; materialize at checkpoint',
-                helper_sha256='6b9c57f03a9a9595cab5094615348368bc8ad0be369789237cad3964d83e0ee2')
-            policy = dict(schema='FRANKIE_NATIVE_AUXILIARY_V2',
+            predecessor = dict(schema='FRANKIE_NATIVE_AUXILIARY_V2',
                 book_workers=len(book_roles), census_workers=1,
                 book_rule='persistent fixed partitions; ordered snapshot deltas; pinned math; join before next event',
                 census_rule='immutable ordered batches; drain and materialize at checkpoint',
+                helper_sha256='5cc07cb1289f0b89facf5a93b7287a6f4fed2be6f785eee79329e0a8e09f1343')
+            policy = dict(schema='FRANKIE_NATIVE_AUXILIARY_V3',
+                book_workers=len(book_roles), census_workers=1,
+                book_rule='persistent fixed partitions; ordered snapshot deltas; pinned math; join before next event',
+                census_rule='scoped shared member freeze; ordered batches; drain and materialize at checkpoint',
                 helper_sha256=hashlib.sha256(Path(auxiliary.__file__).read_bytes()).hexdigest())
             bind_transport_policy(self.driver, '_frankie_auxiliary_policy', policy, predecessor)
             if not hasattr(self.driver, '_frankie_auxiliary_metrics'):
@@ -336,7 +464,10 @@ class RuntimeSections(ParallelSections):
             metrics = self.driver._frankie_auxiliary_metrics
             self.census = ParallelCensus(self.driver,self.producers,self.plan['census']['cpu'],metrics['census'])
             self.books = ParallelBook(self.producers,[self.plan[role]['cpu'] for role in book_roles],metrics['books'])
+            from frankie_box_segmented_ledger import io_workers
+            storage_workers = io_workers(self.driver.sinks)
             self.encoding = ParallelEvidence(self.driver, self.producers, self.plan)
+            self.member_bridge = FrozenMemberBridge(self.driver.run, self.census, self.encoding)
             self.driver.checkpointer.encoding = self.encoding
             pin_threads(os.getpid(), self.plan['ROOT']['cpu'])
             workers = {kind:dict(pid=branch.process.pid, **self.plan[kind])
@@ -349,7 +480,8 @@ class RuntimeSections(ParallelSections):
             workers['ROOT'] = dict(pid=os.getpid(), **self.plan['ROOT'])
             receipt = dict(schema='FRANKIE_RUNTIME_WORKERS_V1', at=time.time(), workers=workers,
                 base_calculation_processes=3, auxiliary_calculation_processes=1+len(book_roles),
-                encoding_processes=2, total_processes=len(workers),
+                encoding_processes=2, ledger_io_processes=len(storage_workers),
+                total_processes=len(workers)+len(storage_workers), ledger_io_workers=storage_workers,
                 auxiliary_policy=policy,
                 completed_mbo_records=self.driver.counters.records_seen,
                 exact_evidence_policy=self.driver._frankie_evidence_policy,
@@ -364,6 +496,8 @@ class RuntimeSections(ParallelSections):
     @contextmanager
     def materialized(self):
         with ExitStack() as stack:
+            if self.member_bridge is not None:
+                stack.enter_context(self.member_bridge.materialized())
             if self.books is not None:
                 stack.enter_context(self.books.materialized())
             if self.census is not None:
@@ -372,6 +506,9 @@ class RuntimeSections(ParallelSections):
             yield
 
     def finish(self):
+        if self.member_bridge is not None:
+            self.member_bridge.close()
+            self.member_bridge = None
         if self.encoding is not None:
             self.encoding.finish()
             self.driver.checkpointer.encoding = None
@@ -384,6 +521,9 @@ class RuntimeSections(ParallelSections):
         super().finish()
 
     def close(self):
+        if self.member_bridge is not None:
+            self.member_bridge.close()
+            self.member_bridge = None
         if self.encoding is not None:
             self.encoding.close()
             self.driver.checkpointer.encoding = None

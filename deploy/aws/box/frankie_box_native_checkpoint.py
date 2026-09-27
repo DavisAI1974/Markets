@@ -12,13 +12,15 @@ import time
 import cloudpickle
 from research.kalshi.frankie_raw_mbo_benchmark import periodic_checkpointer as P
 from frankie_box_prepare_trading_day import safe_path, save_new, sync_directory, witness
+import frankie_box_segmented_ledger as ledger_storage
 
 SCHEMA = 'FRANKIE_NATIVE_FULL_STATE_V1'
 
 
 def runtime_identity():
     return dict(python=sys.version, cloudpickle=cloudpickle.__version__,
-                serializer_sha256=witness(Path(__file__).resolve())['sha256'])
+                serializer_sha256=witness(Path(__file__).resolve())['sha256'],
+                ledger_storage_sha256=witness(Path(ledger_storage.__file__).resolve())['sha256'])
 
 
 def sink_items(sinks):
@@ -31,34 +33,16 @@ def ledger_state(sinks):
         if not sink._closed:
             sink._handle.flush()
             os.fsync(sink._handle.fileno())
-        attrs = {k: v for k, v in vars(sink).items() if k not in ('_handle', '_digest', 'path')}
-        result[name] = dict(path=str(sink.path), attributes=attrs, sha256=sink._digest.hexdigest())
+        attrs = ledger_storage.checkpoint_attributes(sink)
+        result[name] = dict(path=str(sink.path), attributes=attrs, sha256=sink._digest.hexdigest(),
+                           **ledger_storage.checkpoint_storage(sink))
     return result
 
 
 def copy_ledger_prefixes(saved, sinks):
-    # New generation files only. The old files, including any post-checkpoint tail,
-    # remain intact. Rebuild hashes from the exact bytes before opening continuation.
-    for name, sink in sink_items(sinks):
-        entry = saved[name]
-        source = safe_path(entry['path'])
-        remaining = entry['attributes']['_bytes']
-        digest = hashlib.sha256()
-        with source.open('rb') as stream:
-            while remaining:
-                chunk = stream.read(min(8 << 20, remaining))
-                if not chunk:
-                    raise ValueError('saved ledger is shorter than checkpoint')
-                sink._handle.write(chunk)
-                digest.update(chunk)
-                remaining -= len(chunk)
-        if digest.hexdigest() != entry['sha256']:
-            raise ValueError('saved ledger prefix hash differs')
-        sink._handle.flush()
-        os.fsync(sink._handle.fileno())
-        sink.__dict__.update(entry['attributes'])
-        sink._closed = False
-        sink._digest = digest
+    # Frozen original extents remain untouched; verify and continue into new
+    # append segments. I/O workers build the ordinary final files in parallel.
+    ledger_storage.restore_prefixes(saved, sinks)
 
 
 class StatePickler(cloudpickle.CloudPickler):
@@ -171,8 +155,15 @@ def read_checkpoint(path, identity):
         descriptor = json.loads(P.controller_state_path(path.parent, latest['sequence']).read_bytes())
         if P.canonical_hash(descriptor) != latest['controller_state_hash']:
             raise ValueError('checkpoint controller state is corrupt')
+        current_runtime = runtime_identity()
+        predecessor_runtime = dict(current_runtime)
+        predecessor_runtime.pop('ledger_storage_sha256')
+        predecessor_runtime['serializer_sha256'] = 'd5487c5444055cac5a91bc60bb8cb796924f10126fe02ba1384addbde43fd2d1'
+        # Exact known V1 predecessor only. Python/cloudpickle and the complete
+        # scientific driver identity must still match, and the old bytes verify.
+        accepted_runtime = descriptor['runtime'] in (current_runtime, predecessor_runtime)
         if (descriptor.get('schema') != SCHEMA or descriptor['driver_identity'] != identity or
-                descriptor['runtime'] != runtime_identity() or descriptor['finalized'] != latest['locked']):
+                not accepted_runtime or descriptor['finalized'] != latest['locked']):
             raise ValueError('full checkpoint runtime or producer identity differs')
         if witness(safe_path(descriptor['driver_state']['path'])) != descriptor['driver_state']:
             raise ValueError('full checkpoint bytes differ')
