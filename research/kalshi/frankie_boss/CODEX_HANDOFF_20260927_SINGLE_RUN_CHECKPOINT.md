@@ -1,5 +1,25 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Authorized reconstruction-boundary transition — in progress (2026-09-27)
+
+Latest user decision: switch to parallel calculations after reconstruction verification but before any new calculations. The live runner had no pause-at-boundary control. User explicitly approved stopping before the boundary and resuming the latest full-state checkpoint, with possible repetition of its unsaved tail. This supersedes the earlier instruction to leave the serial process uninterrupted for this specific checkpoint handoff.
+
+Boundary-aware runtime commit: `0c38808e3f71960a2826f78ee1f6c8516d66b985`; exact dispatch ref `codex/frankie-boundary-runtime-0c38808`.
+The resumed runner reconstructs serially, verifies the adapter and retained ledger prefixes at exactly 464000, writes a full-state checkpoint at that boundary, then starts the independent calculation workers before processing record 464001. The original checkpoint serializer and pinned scientific producers remain unchanged. No source ingestion is restarted.
+
+- [x] Commit the boundary-aware transition and explicit PID/token-bound pause control. Syntax checks passed; production boundary execution remains pending.
+- [x] Cancel obsolete queued staging 36296350689 (old runtime 9c9eaa2).
+- [x] Pause authorized ROOT PID 54056 before the boundary. Workflow https://github.com/DavisAI1974/Markets/actions/runs/36297597463 succeeded at 05:35:13Z. PID exited after SIGINT then SIGTERM. Pause receipt: pause-for-parallel-54056.json, 1010 bytes, SHA256 28aa875eb933a165b5f5ea4fbbc4745a65d87a4c0958dbd1b39ed37c875176fb. Last reported count 403113; latest verified checkpoint 354465. At least 48648 unsaved reconstructed records need repeating. All previous evidence/tails remain retained.
+- [x] Read the retained full-state descriptor using https://github.com/DavisAI1974/Markets/actions/runs/36297655931 at 05:36:20Z. Generation recovery-f13de5640bf549feaae493d8861bfae1; controller-state-000006.json is 10319 bytes, SHA256 c0794c95ea2de0281912dfc5191b55d2801ef40a82bad9a876af61d106eeb709. It reports completed_mbo_records=354465, finalized=false; driver-state-000006.pkl.gz is 132382042 bytes, SHA256 6978117517a3c5a8af233c2e6f246d5b9c8326914e2f7c268ea9913ac02bfdba. Runtime serializer SHA256 d5487c5444055cac5a91bc60bb8cb796924f10126fe02ba1384addbde43fd2d1.
+- [ ] Finish new staging https://github.com/DavisAI1974/Markets/actions/runs/36297587249 and record its actual CODE_ROOT/receipt.
+- [ ] Resume from the latest full-state checkpoint using the same root, original source binding/authorship and data_workers=48; read the actual restoration result. No duplicate process.
+- [ ] Witness reconstruction-receipt.json and parallel-transition-receipt.json at exactly 464000, then actual forward progress beyond that cursor with the new runtime. Do not claim the parallel transition happened until those receipts exist.
+
+Resume checkpoint candidate:
+`/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-f13de5640bf549feaae493d8861bfae1/checkpoints/checkpoint-000006.json`.
+The existing resume reader must validate the latest checkpoint chain, full state and exact retained ledger prefixes before continuation. Monday's calculations, classroom, final retention and lawful target outcomes remain unfinished.
+
+
 ## Live ROOT performance measurement — actual receipt (2026-09-27T05:22:50Z–05:23:10Z)
 
 User authorized read-only CPU, memory and disk measurements to identify further speed improvements without changing the science.
