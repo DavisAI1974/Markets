@@ -77,6 +77,9 @@ def projection_files():
                 spool_bytes=sum(entry['bytes'] for entry in spools),
                 largest_spools=sorted(spools, key=lambda entry: entry['bytes'], reverse=True)[:5],
                 free_bytes=statv.f_bavail * statv.f_frsize,
+                filesystem_bytes=statv.f_blocks * statv.f_frsize,
+                free_including_reserved_bytes=statv.f_bfree * statv.f_frsize,
+                reserved_free_bytes=(statv.f_bfree - statv.f_bavail) * statv.f_frsize,
                 affinity=sorted(os.sched_getaffinity(pid)))
 
 def snapshot():
@@ -115,7 +118,7 @@ def snapshot():
         at=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         monotonic=time.monotonic(), pid=pid, process_token=token,
         projection_files=projection_files(),
-        process=dict(state=fields[0], user_ticks=int(fields[11]), system_ticks=int(fields[12]),
+        process=dict(uid=counters(proc / 'status', {'Uid'}).get('Uid'), state=fields[0], user_ticks=int(fields[11]), system_ticks=int(fields[12]),
                      major_faults=int(fields[9]), threads=int(fields[17]),
                      io=optional_counters(proc / 'io'),
                      status_kib=counters(proc / 'status', {'VmRSS', 'VmSwap', 'VmSize'})),
