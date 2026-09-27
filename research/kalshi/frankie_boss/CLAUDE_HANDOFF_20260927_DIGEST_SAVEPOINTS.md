@@ -109,19 +109,38 @@ Greg: "Put saves in after every process so we don't have to rebuild anything."
 3. The publication verification slice, Option 3 (receipt-level evidence, unverified hash checks listed), once
    `calculations-receipt.json` exists.
 
-## Order after ROOT
+## Order after ROOT (corrected 2026-09-27 23:4xZ; the 12-line list above it dropped steps)
 
-1. calculations receipt
-2. publication slice (Option 3)
-3. principal inputs
-4. cycle0 config
-5. launch
-6. principal
-7. record
-8. grading
-9. correction
-10. record
-11. final grading
-12. retain
+The earlier list said only "principal" and listed "grading" as its own steps. Checked against the scripts on this
+branch, the Monday sequence is as below. Nothing was missing from the code; the steps were missing from the plan.
+
+1. `calculations-receipt.json`: read with `frankie_box_read_log.sh MODE=receipt`; keep its sha256. Completed status,
+   2,032,203 records, 0 failures.
+2. Publication slice, Option 3 (receipt-level evidence, the unverified hash checks listed). No script exists yet.
+3. Stage ONE commit (`frankie_box_stage_code.sh ACTION=stage`) after ROOT frees the box-run queue. Every step below is
+   dispatched from that same commit (MARKETS_SHA must equal the staged checkout HEAD). The commit must carry the
+   calculation pin the request was rendered under, or ACTION=principal refuses (`_pin_matches_request`). The tip carries
+   the classroom runtime a80990d (fourteen classroom preparation helpers); its lines are all intact at 1524dfee.
+4. `frankie_box_principal_inputs.sh`: fresh OUTPUT_ROOT under work/principal-inputs, CALCULATIONS_RECEIPT and its sha256.
+5. `frankie_box_cycle0.sh ACTION=config`: PREPARED = the existing
+   /opt/frankie-box/work/trading-day-preparation/full-20211004-20260927-r6-48 (do not reprepare), PRINCIPAL receipt, fresh
+   RUN_ID and OUTPUT_ROOT. The config binds the five-lesson Granite priming
+   (`blocks/GRANITE_PRIMING_CONFIGURATION_20260922.json`, host_config.py). COMPLETION_REF defaults to
+   claude/agent-skills-execution-tzh7sw.
+6. `ACTION=launch`: one cycle, pending-return. Exit 3/4 with a WAIT is pending, not failure. The Granite Pod
+   (fhiwwlouzyx6l2) must be up. The priming is delivered in this first request; verify the request's knowledge hash and
+   the model's acknowledgement from the actual receipts.
+7. `ACTION=principal` (CALCULATIONS, REQUEST_DIRECTORY): verify -> reading -> **CLASSROOM** (the Dipole classroom,
+   mandatory) -> **TEACH** (exhaustion teach-back, `work/teach/exhaustion-teachback.json`) -> writing
+   (frankie_box_boss_session.py `_run`). No output caps.
+8. `ACTION=record TURN=initial`: records the response and host attestation; the classroom pre-grade runs here.
+9. `ACTION=launch RESUME=1 WAIT_SHA256=<retained WAIT>`: the runner grades the initial response (teachback, post-grade,
+   novel findings, novelty investigation) and writes `classroom-correction-request.json`, then waits
+   (dipole_classroom_final_review.py, "same Frankie session must consume Dipole classroom correction").
+10. `ACTION=correction`: the same BOSS session answers the classroom correction.
+11. `ACTION=record TURN=correction`.
+12. `ACTION=launch RESUME=1`: the runner validates the correction, writes the acknowledgement, completion, transcript
+    and `dipole-classroom-receipt.json` (final grading); the cycle completes.
+13. `ACTION=retain`: pushes the response and brain; files of 90 MB or more are gzipped (6275f4e4).
 
 Tuesday stays pending. Every box action needs Greg's go. Keys are not rotated until the build is done.
