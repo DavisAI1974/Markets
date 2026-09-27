@@ -2,6 +2,8 @@
 
 Detail of each step: `CLAUDE_HANDOFF_20260927_DIGEST_SAVEPOINTS.md`, "Order after ROOT (corrected)".
 Downstream dispatches go from ONE fixed ref cut at the staged commit (so edits here never move it).
+Standing rule (Greg, 2026-09-27): before each step is dispatched, a quick READ-ONLY scan of its code for heavy CPU
+work left on a single core; findings noted on the step's line before it runs.
 
 ## ROOT (run 36351808435, b35e79b7)
 - [x] Preparation + prepared layers (reused 0-7, prepared 8-45)
@@ -21,8 +23,11 @@ Downstream dispatches go from ONE fixed ref cut at the staged commit (so edits h
       claude/frankie-monday-run-39f64acf. CODE_ROOT:
       /opt/frankie-box/code/39f64acff739543dd59557db7f0918c55a530cdc-36359220114-1/markets
       (pack sha256 6ac06b03..., 3,693 files, active checkout unchanged)
-- [ ] Principal inputs (frankie_box_principal_inputs.sh)
-- [ ] Cycle 0 config (ACTION=config; existing prepared root r6-48; binds the five-lesson Granite priming)
+- [ ] Principal inputs (frankie_box_principal_inputs.sh). Scan: one heavy single-core step, the streamed sha256
+      re-check of ROOT's evidence files (digest, derivation, result, pins, proof), about 1 GB/s; the digest dominates.
+      One file's hash cannot be split; accepted. Everything else is small JSON and knowledge-snapshot assembly.
+- [ ] Cycle 0 config (ACTION=config; existing prepared root r6-48; binds the five-lesson Granite priming).
+      Scan: no heavy work (JSON reads, torch/numpy import for version readback, one git rev-parse, one file write).
 - [ ] Granite Pod up (fhiwwlouzyx6l2)
 - [ ] Launch (ACTION=launch; priming delivered in the first request; WAIT recorded)
 - [ ] Principal: reading
