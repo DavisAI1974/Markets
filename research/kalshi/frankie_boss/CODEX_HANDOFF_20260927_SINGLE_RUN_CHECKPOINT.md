@@ -510,3 +510,21 @@ User wants a short essential checklist crossed off as actual work finishes, real
 
 Requested 48 / effective 31 are source reader/verification workers on the 32-logical-CPU box. The pinned NativeCalculationRun / NativeReplayDriver scientific traversal is ordered and serial; recovery reuses the retained INPUT spool and completed legacy calculations. Do not report 31 native calculator workers.
 The recorded earlier full smaller job used the same core NativeCalculationRun / NativeReplayDriver with 57,027 records; Monday has 35.64 times as many records. The separate early cycle-00 entry with 3,262 records / 13 seconds / 2,282 groups / five legacy layers is not the whole smaller run. No measured per-record regression or precise six-hour elapsed comparison was established. References: SPEC_CYCLE0_BEDROCK_20260921.md and records/chat6_scratchpad_20260921/cycle-00-docs/brain/cycle-00/derive.md in this directory.
+
+## Worker data exchange: next performance target (user question, 2026-09-27)
+
+Observed runtime, not a claimed improvement: the live ROOT profile put 34.31% of its sampled active Python leaf weight in cloudpickle.dump, and the ParallelBook.snapshot path held 45.53% inclusive. Fifteen assigned processes consumed only52.14 CPU-seconds in a30-second observation. Do not convert sampled active-time shares into promised wall-clock speedups.
+
+Current code sends copied level/order dictionaries on every full-depth book snapshot; each of nine workers receives its partition and ROOT waits for all results before the next event. Evidence encoding pickles a whole immutable row per message and keeps two outstanding rows. A census worker receives another whole row. This transport/copying overhead is a concrete target; adding worker count alone will not remove it.
+
+Proposed engineering order, not implemented:
+1. Attribute retained serialization samples to book, encoder and census send paths before choosing the first change. Reuse retained profile files and normal-run timing counters; no new calculation/comparison/test/canary.
+2. Batch evidence rows into messages to amortize fixed costs, retaining global ledger/row order, pinned RowSink.write formatting/sample ordinals, immutable submission payloads and exact commit accounting. Flush on every existing checkpoint/materialization/inspection boundary. Bound in-flight memory, not scientific output.
+3. Retain each book worker's assigned state and transmit only changed orders/levels. Each snapshot must use the exact same event generation; apply ordered deltas, remove deleted/moved orders correctly, and join all required levels before advancing the causal record. Continue original pinned per-level math and snapshot assembly. Checkpoints must still materialize the complete original native graph, not references to live workers.
+4. For remaining large payloads, consider shared-memory buffers or retained-file offsets only where the representation avoids repeated serialization. Shared memory by itself does not make Python dictionaries zero-copy; sending an already-pickled blob through it still pays the serialization cost. Require explicit buffer ownership, acknowledgements and safe reuse.
+5. Preserve independent queue/replenishment/census ordering and all exact evidence, historical sections, scientific producer pins and full-state restore compatibility. Account for policy hashes before any change. No hot patch of the running interpreter; any authorized runtime transition uses a fresh read-verified checkpoint and a single generation. Restoring about190GB of ledger prefixes previously took roughly15minutes, so another restart has a real cost.
+6. Judge any change by actual forward records/time and CPU attribution on normal Monday work, with record-density/checkpoint limitations stated. No promised multiplier and no automatic scientific rerun.
+
+Python's primary documentation supports minimizing interprocess data movement and sharing raw buffers where suitable:
+https://docs.python.org/3.13/library/multiprocessing.html#programming-guidelines
+https://docs.python.org/3.13/library/multiprocessing.shared_memory.html
