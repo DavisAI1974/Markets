@@ -1,6 +1,61 @@
 # Frankie/BOSS Monday — fresh-chat handoff, 2026-09-27 10:29Z
 
 
+## Actual transition and live resume — 2026-09-27 12:34Z
+
+User's "Proceed" was carried out using the terminal checkpoint; no record replay.
+Runtime is now01caae9d3a0e7ccdb165c734fe25ecf130c5c0f5, immutable ref
+codex/frankie-finalization-runtime-01caae9. Active resume workflow:
+https://github.com/DavisAI1974/Markets/actions/runs/36319242284
+CODE_ROOT=/opt/frankie-box/code/01caae9d3a0e7ccdb165c734fe25ecf130c5c0f5-36319063424-1/markets
+Same calculation root, original source binding/authorship, data_workers=48.
+New PID58168, token099d4eb6-a46d-4b94-a888-f15e55c1ee7e:53570313.
+Do not start another process, replay calculations or hot-patch this runtime.
+
+Terminal descriptor read36318732685 confirms checkpoint000010:
+completed2032203, finalized=true, all three ledgers closed/materialized.
+Full driver165849388bytes SHA2567d305c7086faaddaeef6357e47dac6022eaff9b4983fe4c61a44dec0d62ddf20.
+Checkpoint hashf0dc28f2d67292cf69e8023c5a7f618e477b7488a5f1cfbbca059a0da4aa6945.
+Member537182189410bytes/1535939rows SHA2560ebc951a6e3d7b936aba15be1d3aac5cbee076de373e6e77bc442654b0e6e598;
+lifecycle14424155424bytes/13402454rows SHA256d3db0c628eef377e136d0e1809b69babd942e621b314c6893b062327dbb4752a;
+legacy1323153203bytes/1006873rows SHA2560c1043b78ea029ea46f256c12002fdd13ab8c5e09839400e9915e899150b1635.
+
+Pause36318825831 succeeded: fresh chain/adapter/full-state readback at
+1790511834.0294225, exact old PID56833 exited at1790511849.5112448 after
+SIGINT then SIGTERM; no owned native child remained, no unsaved reconstruction.
+Receipt /opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/pause-for-terminal-finalize-56833.json:
+1706bytes SHA256a2077f99a7a5ee1fb6cbe67059b8a5705329918bd9284b2449b39538af15e1a5.
+Old ROOT36309059667 concluded failure due to this intentional verified handoff.
+
+Existing classroom staging36311196131 SUCCESS, without duplication:
+CODE_ROOT=/opt/frankie-box/code/a80990d42161c3020c21363137439da7dd6ba527-36311196131-1/markets
+intent76a7dc5ae9542e32a11591ab259e78f2084bd6aeb509f854b78108895ca5d2d8;
+pack509c57700dd5e395cb11f044a2afda76bbfae8ebd1313818d5244ae011dce0f8.
+Finalization staging36319063424 SUCCESS at12:30:07Z:
+intentf2f6f90fd5d72f3c98eec447ee6deefa778529124c9955ac69a2f46d0bba823a;
+packe0f54aa5f9cbcd9110e7cbfe38de60160eb639d180e4109a1df95248223927ea,
+589553625bytes,3681files. Neither stage changed the active checkout; model_calls=0,
+source_replays=0. The resume explicitly selects the staged finalization checkout.
+
+Live probe36319263275 at12:31:51Z: new PID alive, root-legacy-reuse, failed=0.
+Resource observation36319354416 at12:33:23–12:33:43Z confirms
+root-ledger-verify-member. Latest sample's stage counter:
+59684945920/537182189410 BYTES, failed=0 (counter timestamp12:33:33.958Z).
+Entering this scan requires the CPU1 coordinator and14 CPU2–15 reader helpers to
+pass affinity readback and startup barrier. Full helper execution receipts remain
+pending successful complete scans. RSS582056KiB, swap0, process threads46
+(includes library threads; not46 ledger workers). During20.002575seconds rchar
+advanced26633830400bytes while physical read_bytes was unchanged: this interval
+was cache-backed, NOT a sustained-storage throughput or controlled speedup result.
+
+The new full-state unpickle, final reconciliation receipt/checkpoint, projection,
+digest and completed calculations receipt remain pending. No calculation
+completion, actual classroom delivery/acknowledgment, learning or Tuesday outcome
+is claimed. All original evidence is retained. Continue the original manual
+Monday inputs/config/host/Granite/principal/classroom/initial grade/same-session
+correction/final grade/retention sequence only after actual calculation completion.
+
+
 ## Latest direction: proceed with checkpointed finalization optimization
 
 The user authorized proceeding after duplicate-scan removal commitb4626c9 and the
