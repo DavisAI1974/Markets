@@ -75,6 +75,9 @@ def _stream_layer(derive, name, wanted):
                     for row in (parser.value() or []):
                         consume(row)
                 remaining.discard(key)
+            elif parser.peek() == '[':
+                for _ in parser.array():     # an unwanted row array: C-decoded one element at a time, never collected
+                    pass
             else:
                 parser.skip()
             if remaining and parser.peek() != '}':
@@ -93,19 +96,29 @@ def lineage_vocabulary(producers):
     return dict(terminated=L.TERMINATED, censored=sorted(L.CENSORED_STATUSES), open=L.OPEN, statuses=sorted(L.LINEAGE_STATUSES))
 
 
-def _section_rows(derive, bedrock_layers, section):
-    """The rows of one lifecycle section, from the first derived bedrock layer file that carries them (identical copies).
-    lifecycle_rows sort before lifecycle_sections in the projected layers, so matching rows are kept while streaming and
-    returned only when the file declares the section."""
+def _sections_rows(derive, bedrock_layers, sections):
+    """{section: rows} for each lifecycle section, each from the first derived bedrock layer file that declares it and
+    carries rows for it (identical copies), all sections gathered in one streamed pass per layer. lifecycle_rows sort
+    before lifecycle_sections in the projected layers, so matching rows are kept while streaming and kept only when the
+    file declares the section."""
+    result, pending = {}, list(sections)
     for name in bedrock_layers:
-        rows = []
+        if not pending:
+            break
+        rows = {section: [] for section in pending}
         def keep(row, rows=rows):
-            if row.get('emitting_section') == section:
-                rows.append(row)
+            bucket = rows.get(row.get('emitting_section'))
+            if bucket is not None:
+                bucket.append(row)
         found = _stream_layer(derive, name, {'lifecycle_rows': keep, 'lifecycle_sections': None})
-        if found is not None and section in (found.get('lifecycle_sections') or []) and rows:
-            return rows
-    return []
+        if found is None:
+            continue
+        declared = found.get('lifecycle_sections') or []
+        for section in list(pending):
+            if section in declared and rows[section]:
+                result[section] = rows[section]
+                pending.remove(section)
+    return {section: result.get(section, []) for section in sections}
 
 
 def _each_member(derive, name, consume):
@@ -130,7 +143,8 @@ def facts(work, brain, producers):
     for name in names:
         entry = (derive.get('layers') or {}).get(name) or {}
         layers[name] = dict(status=entry.get('status'), count=entry.get('count', 0), reason=entry.get('reason'))
-    lineage_rows = _section_rows(derive, names, 'lineage')
+    section_rows = _sections_rows(derive, names, ('lineage', 'recurrence'))
+    lineage_rows = section_rows['lineage']
     depth = Counter(int(r.get('depth')) for r in lineage_rows if r.get('depth') is not None)
     status = Counter(str(r.get('status')) for r in lineage_rows)
     unknown_status = sorted(k for k in status if k not in vocabulary['statuses'])
@@ -139,7 +153,7 @@ def facts(work, brain, producers):
     lineage = dict(nodes=len(lineage_rows), depth_histogram={str(k): depth[k] for k in sorted(depth)}, status_counts=dict(sorted(status.items())),
                    terminated=status.get(vocabulary['terminated'], 0), censored=sum(status.get(s, 0) for s in vocabulary['censored']),
                    open=status.get(vocabulary['open'], 0), vocabulary=vocabulary)
-    recurrence_rows = _section_rows(derive, names, 'recurrence')
+    recurrence_rows = section_rows['recurrence']
     per_event, every = [], []
     for i, row in enumerate(recurrence_rows):
         gaps = []

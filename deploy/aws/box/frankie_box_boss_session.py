@@ -1476,8 +1476,13 @@ class Session:
     def _line_tokens(tokenizer, lines, batch=8192):
         """Exact token count of each line + newline, in order: the same encode per item, run by encode_batch on the
         tokenizer's own native threads (the full-day corpus has millions of lines; one Python encode per line is one core)."""
+        padded = getattr(tokenizer, 'padding', None) is not None     # batch padding would add pad ids: count one by one
         for i in range(0, len(lines), batch):
             pieces = [(line + b'\n').decode('utf-8', 'replace') for line in lines[i:i + batch]]
+            if padded:
+                for piece in pieces:
+                    yield len(tokenizer.encode(piece, add_special_tokens=False).ids)
+                continue
             for encoding in tokenizer.encode_batch(pieces, add_special_tokens=False):
                 yield len(encoding.ids)
 

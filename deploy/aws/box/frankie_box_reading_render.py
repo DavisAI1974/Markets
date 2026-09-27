@@ -735,7 +735,10 @@ def _tokens(tokenizer, text, batch=32):
     slices = range(0, len(text), 1 << 20)
     for b in range(0, len(slices), batch):
         pieces = [text[i:i + (1 << 20)] for i in slices[b:b + batch]]
-        n += sum(len(e.ids) for e in tokenizer.encode_batch(pieces, add_special_tokens=False))
+        if getattr(tokenizer, 'padding', None) is not None:     # batch padding would add pad ids: count one by one
+            n += sum(len(tokenizer.encode(p, add_special_tokens=False).ids) for p in pieces)
+        else:
+            n += sum(len(e.ids) for e in tokenizer.encode_batch(pieces, add_special_tokens=False))
     return n
 
 
