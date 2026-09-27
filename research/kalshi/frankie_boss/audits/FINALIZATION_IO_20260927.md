@@ -75,3 +75,38 @@ digest, calculations-receipt.json, existing classroom staging36311196131,
 inputs/configuration/host/Granite/principal/classroom/grading/correction/retention.
 Tuesday and learning outcomes remain pending. Continue the original manual
 sequence after actual calculation completion and staging success.
+
+## User's stop/change tradeoff question
+
+Read-only checkpoint workflow36317133363 obtained descriptor000009:
+12,036bytes SHA256c932ff5c0b8ef67344ab71c4b428b18afa6f0b3b003bc375ad40808efdd8b42f.
+It records1,978,789completed records, finalized=false. Complete driver state is
+489,263,908bytes SHA256daf2a325910d9098cda2a92d57c68d17192d4a3d0bc6ca244c74b195b7f1a429.
+Ledger bytes at that checkpoint: member523,315,776,595;
+lifecycle9,880,382,546; legacy1,291,044,396; total534,487,203,537.
+This is53,414records short of the complete source, not a safe completed-run
+restart point. Final ledgers can be larger than these checkpoint extents.
+
+Timing EXTRAPOLATION requested by the user, not an observed remaining duration:
+at the second sample's178.983MB/s, one pass over that checkpoint size would take
+49.77minutes; two passes99.54minutes. The later buffered hash pass may run faster.
+This does not establish the current scan offset, remaining finalization time,
+or net savings from a code transition.
+
+Existing frankie_box_pause_root.sh only accepts a fresh read_verified nonterminal
+checkpoint during root-native-records (or the older reconstruction boundary).
+It neither requests a new checkpoint on demand nor accepts root-native-finalize
+or a locked terminal checkpoint. A finalized-state handoff would need a reviewed
+change; no such change has been implemented or executed.
+
+Existing restore_prefixes verifies old bytes and creates a new append/materialized
+ledger generation even for the wrapper's finalized resume. A new full copy would
+exceed the350.64GB free observed11:06Z, against534.49GB already checkpointed. That
+capacity observation is historical, not a fresh disk read. Reusing sealed files
+safely would need a reviewed restore change; deleting evidence is not authorized.
+
+Recommendation communicated: prepare the candidate while required verification
+continues; consider a changeover only after a fresh verified checkpoint and a
+safe route that reuses sealed ledgers. This is a recommendation, not user approval
+to stop ROOT, implemented source, or a claim of measured improvement. The original
+no-hot-patch/no-restart restrictions remain in force.
