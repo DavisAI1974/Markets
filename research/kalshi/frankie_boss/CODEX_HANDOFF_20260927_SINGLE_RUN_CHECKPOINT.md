@@ -1,5 +1,26 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
+## Authorized recovery implementation and disk expansion (2026-09-27)
+
+- [x] User authorized reconstructing missing native calculation state through checkpoint 000008, changing the launcher, and saving all completed state in future checkpoints.
+- [x] Expanded root EBS volume vol-0d36715924f03b86c from 200 to 2048 GiB online. Workflow https://github.com/DavisAI1974/Markets/actions/runs/36293023294 succeeded; filesystem 2,129,040,207,872 bytes, free 1,922,134,876,160 bytes at 04:01:04Z. No instance stop or evidence deletion.
+- [x] Implement explicit same-root checkpoint recovery in the Monday launcher. Reuse completed legacy layers and INPUT spool; reconstruct only missing native state when explicitly requested. New ledger generations preserve failed-attempt bytes.
+- [x] Implement full native driver/calculator snapshots, pending horizons, candidate/response/lineage state, source/run identity and exact ledger byte offsets/hashes. Checkpoints flush ledgers, atomically retain compressed state, hash-chain the controller descriptor, and read back hashes. Future full-state recovery copies exact ledger prefixes and restores the object graph with pinned producer/Python/serializer identity. No checkpoint or ledger is deleted.
+- [ ] Stage current recovery code together with all earlier single-run/classroom/brain wiring.
+- [ ] Clean disposable pip cache and redundant source-transfer packs only after their successful installed checkout is verified. Keep transfer/staging receipts, failed packs, checkouts, source, work, brain and all evidence.
+- [ ] Launch the authorized reconstruction from checkpoint 000008 (464000 records), verify adapter hash and exact ledger prefixes at that cursor, then continue to 2032203.
+- [ ] Observe live full-state checkpoint receipts. Syntax checks do not establish live checkpoint restoration.
+
+Read-only box inventory https://github.com/DavisAI1974/Markets/actions/runs/36292903952 found /dev/root full: 193G used, 3.4M free; memory available about 244GiB. Disk exhaustion is a concrete resource failure supporting the ROOT/staging interruption; the original SSM IPC message alone did not establish that cause.
+
+The launcher now accepts RESUME_CHECKPOINT, BINDING_SHA256 and RECONSTRUCT_MISSING=1.
+It retains the original source-binding hash and run identity. New native output uses a fresh
+work/bedrock/recovery-<id> generation. The old checkpoint is adapter-only; state reconstruction
+is explicitly authorized and must be reported as reconstruction, not new source progress.
+cloudpickle==3.1.2 is pinned for runtime snapshots (local factories are not supported by plain pickle).
+This changes the existing launcher/runtime only; no pinned producer/bootstrap change, new orchestration layer,
+model call, ingestion restart, extra test, canary or comparison run. Syntax-only checks passed.
+
 ## Recovery finding — latest checkpoint is adapter-only (2026-09-27T03:56:59Z)
 
 User authorized starting at the latest checkpoint and changing the launcher.
@@ -17,7 +38,7 @@ The current Monday launcher requires a fresh root and Session.derive restarts th
 passes; rerunning it unchanged is not checkpoint recovery. Skipping to record 464000 with new
 calculators would omit required evidence and is forbidden.
 
-A request is pending for a narrow exception to the user's no-duplicate-work restriction:
+Superseded by the explicit authorization above: a request was made for a narrow exception to the user's no-duplicate-work restriction:
 reconstruct missing calculation state from the sealed records through the checkpoint, then continue.
 This is not permission to restart ingestion. No calculation restart, reconstruction, source write,
 checkpoint deletion or launcher bypass has been performed. A complete recovery route is not implemented.

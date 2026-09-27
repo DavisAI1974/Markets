@@ -15,6 +15,7 @@ import json
 import os
 import sys
 import time
+import uuid
 from dataclasses import asdict, replace
 from pathlib import Path
 
@@ -65,6 +66,27 @@ class RowSpool(list):
         self._writer = self.path.open('x', encoding='utf-8', newline='\n')
         self._count = 0
         self._ends = []
+
+    @classmethod
+    def reopen(cls, path):
+        """Read a completed retained spool without creating or rewriting it."""
+        from research.kalshi.frankie_boss.c15_journal import unpack
+        obj = cls.__new__(cls)
+        obj.path = Path(path)
+        obj._count, obj._ends = 0, []
+        with obj.path.open('rb') as stream:
+            first = last = None
+            for line in stream:
+                if not line.endswith(b'\n'):
+                    raise ValueError('retained row spool has a partial final record')
+                obj._count += 1
+                if first is None:
+                    first = line
+                last = line
+            if first is not None:
+                obj._ends = [unpack(json.loads(first)), unpack(json.loads(last))]
+            obj._writer = stream  # closed handle; existing list interface remains read-only
+        return obj
 
     def __len__(self):
         return self._count
@@ -287,7 +309,7 @@ def _move_aside(out_dir, siblings=(), schema='FRANKIE_BOX_BEDROCK_SUPERSEDE_RECE
     return str(target)
 
 
-def run(records, container, out_dir, producers, cycle, code_commit, day, *, progress=None, source_manifest=None):
+def run(records, container, out_dir, producers, cycle, code_commit, day, *, progress=None, source_manifest=None, resume_checkpoint=None, reconstruct_missing=False):
     """The pinned traversal on this cycle's rows: identity -> NativeCalculationRun (the launcher's canonical arguments) ->
     NativeReplayDriver(ExchangeSessionRule, NeverInvoke, LedgerSinks) -> consume -> finalize -> reconcile (a mismatch
     raises: a ledger that does not match its counter is not evidence). Files result.json (the exact rows live in the
@@ -307,7 +329,13 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
     modules = loaded_modules(producers, native_replay_driver, native_calculation_runner, native_row_sink,
                              native_response, native_a_arm_launch, periodic_checkpointer, native_staging)
     out_dir = Path(out_dir)
-    superseded = _move_aside(out_dir)
+    original_out_dir = out_dir
+    if resume_checkpoint:
+        # A new ledger generation preserves every byte of the failed attempt.
+        out_dir = out_dir / ('recovery-' + uuid.uuid4().hex)
+        superseded = None
+    else:
+        superseded = _move_aside(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     stamped = iter_driver_records(records, container, day)
     ident = identity(producers, container, len(records), cycle, code_commit)
@@ -316,7 +344,7 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                 or source_manifest.get('trading_day') != day):
             raise ValueError('producer source manifest must cover the complete supplied trading day')
         ident = replace(ident, source_manifest_hash=source_manifest['manifest_hash'],
-                        run_id=out_dir.parent.parent.name + '-cycle-' + str(cycle))
+                        run_id=original_out_dir.parent.parent.name + '-cycle-' + str(cycle))
     gates = native_a_arm_launch.run_pre_traversal_gates(arm=ident.arm, run_id=ident.run_id, repo_root=producers)
     write_json(out_dir / 'pre-traversal-gates.json', gates)
     sinks = LedgerSinks(out_dir / 'ledgers')
@@ -333,21 +361,22 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                                        response_value_names=tuple(arguments['response_value_names']))
     checkpoint_dir = out_dir / 'checkpoints'
 
-    def checkpoint_readback(paths):
-        checkpoints = periodic_checkpointer.load_chain(checkpoint_dir)
-        latest = checkpoints[-1]
-        state = periodic_checkpointer.read_gzip_json(
-            periodic_checkpointer.adapter_state_path(checkpoint_dir, latest['sequence']))
-        if periodic_checkpointer.adapter_state_hash(state) != latest['adapter_state_hash']:
-            raise ValueError('producer checkpoint adapter-state readback differs')
-        if progress is not None:
-            progress.checkpoint('saved', paths[-1])
-            progress.checkpoint('read_verified', paths[-1])
-
-    checkpointer = periodic_checkpointer.PeriodicCheckpointer(
+    from frankie_box_native_checkpoint import (FullCheckpointer, read_checkpoint,
+        restore_driver, consume_recovery)
+    checkpoint = descriptor = None
+    if resume_checkpoint:
+        checkpoint, descriptor = read_checkpoint(resume_checkpoint, asdict(ident))
+        if descriptor is None and not reconstruct_missing:
+            raise ValueError('adapter-only checkpoint requires explicit reconstruction authorization')
+        if checkpoint['total_mbo_records'] != len(records):
+            raise ValueError('checkpoint full-source denominator differs')
+        checkpoint['_directory'] = str(Path(resume_checkpoint).parent)
+    checkpointer = FullCheckpointer(
         run_id=ident.run_id, controller='A_CHATGPT', memory_mode='MEMORY_ASSISTED',
         source_manifest_hash=ident.source_manifest_hash, total_mbo_records=len(records),
-        checkpoint_dir=checkpoint_dir, phase='RT_NATIVE_TRAVERSAL', durable_sync=checkpoint_readback)
+        checkpoint_dir=checkpoint_dir, phase='RT_NATIVE_TRAVERSAL',
+        driver_identity=asdict(ident), progress=progress,
+        parent_checkpoint=witness(Path(resume_checkpoint)) | {'path': str(resume_checkpoint)} if resume_checkpoint else None)
     evidence = dict(run_id=ident.run_id, arm=ident.arm, mission_sha256=ident.mission_sha256,
         calculation_contract_sha256=ident.calculation_contract_sha256,
         knowledge_manifest_hash=ident.knowledge_manifest_hash, source_manifest_hash=ident.source_manifest_hash,
@@ -362,16 +391,31 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                                         role='REAL_TIME_FRANKIE', evidence=evidence)
     driver = NativeReplayDriver(identity=ident, session_rule=ExchangeSessionRule(), cadence=NeverInvoke(), run=calculation,
                                 sinks=sinks, emit_change_points=True, checkpointer=checkpointer, stage_spawn=stager.stage)
+    if descriptor is not None:
+        driver = restore_driver(descriptor, checkpointer, sinks, stager.stage)
+        calculation = driver.run
+    checkpointer.driver = driver
+    if checkpoint and descriptor is None:
+        driver._frankie_reconstruction_checkpoint = checkpoint
     started = time.time()
-    checkpointer.seal_start(driver.adapter)
-    driver.consume(progress.track(stamped, len(records), 'root-native-records') if progress is not None else stamped)
+    if descriptor is None:
+        checkpointer.seal_start(driver.adapter)
+    elif not descriptor['finalized']:
+        checkpointer._write(driver.adapter, completed_mbo_records=driver.counters.records_seen,
+                            event_group_open=False, controller_state=None, locked=False)
+    if not (descriptor and descriptor['finalized']):
+        consume_recovery(driver, stamped, len(records), progress, checkpoint, descriptor)
     if progress is not None:
         progress.update('root-native-finalize')
-    result = driver.finalize()
+    result = dict(driver._frankie_final_result) if descriptor and descriptor['finalized'] else driver.finalize()
     result['ledger_retention'] = sinks.reconcile_all(member=calculation.member_rows_written,
                                                      lifecycle=calculation.lifecycle_rows_written,
                                                      legacy=driver.counters.legacy_rows_retained)
-    checkpointer.seal_final(driver.adapter, completed_mbo_records=driver.counters.records_seen)
+    if driver.counters.records_seen != len(records):
+        raise ValueError('final native state is not complete')
+    driver._frankie_final_result = result
+    checkpointer._write(driver.adapter, completed_mbo_records=driver.counters.records_seen,
+                        event_group_open=False, controller_state=None, locked=True)
     result['gates'] = {key: gates[key] for key in ('registry_gate', 'pre_call_layer_gate', 'rt_surface_gate')}
     result['evidence_identity'] = evidence
     result['slice'] = dict(record_source='VERIFIED_JOURNAL', records_requested=None,
@@ -397,6 +441,9 @@ def run(records, container, out_dir, producers, cycle, code_commit, day, *, prog
                    checkpoints=dict(directory=str(checkpoint_dir), count=len(checkpointer.saved_checkpoints),
                                     final=checkpointer.saved_checkpoints[-1], readback_verified=True),
                    identity=asdict(ident), identity_inputs=dict(mission=MISSION_PATH, contract=CONTRACT_PATH, knowledge_manifest=KNOWLEDGE_MANIFEST_PATH),
+                   recovery=dict(parent_checkpoint=str(resume_checkpoint) if resume_checkpoint else None,
+                       restored_state_records=checkpoint['completed_mbo_records'] if descriptor else 0,
+                       authorized_reconstruction_records=checkpoint['completed_mbo_records'] if checkpoint and descriptor is None else 0),
                    cadence_policy='NeverInvoke', driver_arguments=arguments,
                    candidate_warmup_seconds=driver.candidate_warmup_seconds, candidate_min_observations=driver.candidate_min_observations,
                    candidate_selection=driver.candidate_selection,
