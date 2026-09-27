@@ -57,6 +57,65 @@ print(json.dumps(result,sort_keys=True))
 PY
   exit $?
 fi
+# Metadata-only storage inventory for the retained Monday calculation root.
+if [ "$MODE" = storage ]; then
+  /opt/frankie-box/venv/bin/python -I -S -B - "$P" <<'PY'
+import collections, heapq, json, os, pathlib, stat, sys, time
+root = pathlib.Path(sys.argv[1]).resolve(strict=True)
+allowed = pathlib.Path('/opt/frankie-box/work/monday-calculations').resolve(strict=True)
+if root.parent != allowed or not root.is_dir():
+    raise SystemExit('one existing Monday calculation root required')
+seen, groups, largest, errors = set(), {}, [], []
+files, logical, allocated, hardlinks = 0, 0, 0, 0
+for parent, directories, names in os.walk(root, followlinks=False):
+    directories[:] = [n for n in directories if not pathlib.Path(parent, n).is_symlink()]
+    for name in names:
+        path = pathlib.Path(parent, name)
+        try:
+            info = path.lstat()
+        except OSError as error:
+            errors.append(dict(path=str(path.relative_to(root)), error=type(error).__name__))
+            continue
+        if not stat.S_ISREG(info.st_mode):
+            continue
+        relative = str(path.relative_to(root))
+        key = (info.st_dev, info.st_ino)
+        if key in seen:
+            hardlinks += 1
+            continue
+        seen.add(key)
+        files += 1
+        logical += info.st_size
+        size = info.st_blocks * 512
+        allocated += size
+        parts = pathlib.Path(relative).parts
+        group = '/'.join(parts[:3] if len(parts) > 3 else parts[:-1]) or '.'
+        row = groups.setdefault(group, dict(files=0, bytes=0, allocated_bytes=0))
+        row['files'] += 1
+        row['bytes'] += info.st_size
+        row['allocated_bytes'] += size
+        item = (size, relative, info.st_size, info.st_mtime_ns, info.st_nlink)
+        if len(largest) < 25:
+            heapq.heappush(largest, item)
+        elif item > largest[0]:
+            heapq.heapreplace(largest, item)
+statv = os.statvfs(root)
+print(json.dumps(dict(schema='FRANKIE_CALCULATION_STORAGE_INVENTORY_V1',
+    at=time.time(), root=str(root), files=files, unique_inode_bytes=logical,
+    allocated_bytes=allocated, duplicate_hardlink_names=hardlinks,
+    filesystem_bytes=statv.f_blocks*statv.f_frsize,
+    available_bytes=statv.f_bavail*statv.f_frsize,
+    free_including_reserved_bytes=statv.f_bfree*statv.f_frsize,
+    largest_groups=[dict(path=k, **v) for k,v in sorted(groups.items(),
+        key=lambda item:item[1]['allocated_bytes'], reverse=True)[:20]],
+    largest_files=[dict(path=p, allocated_bytes=a, bytes=b, mtime_ns=m, links=n)
+        for a,p,b,m,n in sorted(largest, reverse=True)],
+    read_errors=errors[:10], read_error_count=len(errors),
+    limitation='Live metadata inventory only; not a deletion authorization or a proof of redundant contents.'),
+    sort_keys=True))
+PY
+  exit $?
+fi
 [ -f "$P" ] || { echo "no such file: $P"; ls -la "$(dirname "$P")" 2>/dev/null; exit 2; }
 # Summarize an already-retained speedscope profile; never attach to a process.
 if [ "$MODE" = profile ]; then
