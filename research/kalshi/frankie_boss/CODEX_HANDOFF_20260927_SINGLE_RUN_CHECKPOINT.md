@@ -1,6 +1,6 @@
 # Frankie/BOSS Monday — next-chat checkpoint, 2026-09-27
 
-## CPU assignment and measured ROOT acceleration — deployment pending
+## CPU assignment and measured ROOT acceleration — restoration in progress
 
 User authorized explicit CPU assignments and implementation of the measured performance plan, then directed use of more than four workers wherever useful. User also requested the same performance attention for classroom; measure its actual ROOT/host/Granite workload when that stage starts, then assign CPUs and parallelize independent work while retaining dialogue/grading/correction order. Do not launch a separate classroom or inference run for profiling.
 
@@ -9,13 +9,35 @@ User authorized explicit CPU assignments and implementation of the measured perf
 - [x] Profile the existing three processes for 30 seconds without pausing them, using standalone py-spy 0.4.2 pinned by wheel digest, outside the runtime environment. Workflow 36300830635. Profile receipt is 29870 bytes, SHA256 2d9bdf52180d0696e1526a0500a2914596a5ff5a01a6198f814a15dd061c5a15. ROOT used 28.40 CPU seconds; queue 0.43; replenishment 1.76. ROOT active Python samples include JSON encoding 28.4%, full-capture enrichment 32.2% inclusive, and field-census walking among other costs. These are short nonblocking samples, not a speedup measurement. Progress at 06:42:12Z: 634897, failed=0.
 - [x] Implement a measured-work runtime using the unchanged pinned RowSink.write, MboFieldCensus.observe, InstrumentBook._level and book_snapshot assembly. On this topology it assigns ROOT, queue, replenishment, census, two encoders and nine book-level workers to CPUs 1–15, leaving physical core 0 unassigned. All price-level results join before the next event; census observations remain ordered; ROOT commits exact encoded bytes in original order.
 - [x] Review immutable worker payloads, object aliasing, native census state, exact RowSink accounting, worker cleanup, and the full-state barrier. Python syntax compilation passed. No extra scientific tests, canaries, comparison runs or validators were run.
-- [ ] Stage the new runtime after a fresh verified checkpoint handoff; do not duplicate the live calculation.
+- [x] Stage runtime dc5e7560e7d784c18f00405748fcde83a90cc67f after a fresh verified checkpoint handoff. Pause workflow https://github.com/DavisAI1974/Markets/actions/runs/36301642679 succeeded at 07:05:46Z: full-state checkpoint-000007.json completed_mbo_records=747083, matching last reported cursor. PID 54610 and owned children 54968/54969 exited; SIGINT then SIGTERM. Pause receipt is 1136 bytes, SHA256 7f5de7d57d4cd53b5388f0facf0c648cc91902f6776aea53cabe6ff80650a2c8. Every old file/tail retained.
+- [x] Staging workflow https://github.com/DavisAI1974/Markets/actions/runs/36301649833 succeeded at 07:08:29Z: CODE_ROOT=/opt/frankie-box/code/dc5e7560e7d784c18f00405748fcde83a90cc67f-36301649833-1/markets; source pack 589504214 bytes / 3664 files, SHA256 3bad28206ce00bb527a1b7a4583eb92a273138f344e46d101dbd3dd4964ddbd5; intent SHA256 6b45482eaa9dd93d959aea55687fc0affddd77b54edd0bbcdd10902375275502. source_replays=0, model_calls=0, active_checkout_changed=false.
+- Resume workflow https://github.com/DavisAI1974/Markets/actions/runs/36302240110 dispatched at 07:09:34Z using exact ref codex/frankie-cpu-runtime-dc5e756 and retained checkpoint /opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/work/bedrock/recovery-7bd18d968a384248b02e58c74f5456c6/checkpoints/checkpoint-000007.json. Same calculation root, original source binding/authorship, data_workers=48. Restoration and actual worker startup remain unverified until receipts below; old calculation workflow 36297781442 has ended due to the authorized handoff.
 - [ ] Witness the resumed cursor, runtime-workers-receipt.json, first new full-state checkpoint and actual forward progress.
 - [ ] Measure actual throughput and CPU attribution after deployment before claiming a speedup.
 
 The original calculation parallel helper and full-state serializer remain byte-identical, allowing existing complete snapshots to restore. New auxiliary/evidence policy hashes are retained in driver state. Every checkpoint drains encoded rows, materializes the original census and calculation objects, and restores the original book method for snapshotting. The original scientific producers and checkpoint format are unchanged. The worker handoff retains every ledger tail and kills only the identified ROOT/native children after recording its verified checkpoint. The pause control waits up to twelve minutes for a read-verified checkpoint no older than ninety seconds, otherwise leaves ROOT running. A new generation retains the old evidence. Rollback uses the retained complete pre-change checkpoint and staged 0c38808 runtime; do not resume two generations concurrently.
 
 Raw profiling receipt and CPU assignments are recorded in audits/ROOT_CPU_PROFILE_20260927.json. Classroom allocation is a follow-up during the actual classroom stage, not an assertion that classroom has begun.
+
+## Prior reduction and organization recovered from history (2026-09-27)
+
+User recalled the earlier retained run's reduction/organization work and requested a review. Read the 12:2xZ and 13:5xZ 2026-09-21 sections of DROP_IN_CLAUDE_20260921.md, SHIP_REVIEW_20260921_CHAT5.md, and the current reading/digest/session/classroom code at dc5e756.
+
+Historical measured reading results, not a native-calculation speedup or a new measurement of Monday:
+- Delivered members: 10,128,476 tokens -> 151,705 after initial decoding/deduplication/derivable-vector stack; later stacks -> 106,248.
+- Digest: 559,796 -> 146,765 -> 75,562 tokens.
+- Head: 68,506 -> 66,301 tokens.
+- Final recorded corpus: 248,111 tokens; actual reading plan four parts, previously 163.
+- Organization: decode nested envelopes; content-address duplicates; exact table headers/columns, timestamp deltas, repeated cells, dictionaries, scales and exact fractions; proven derivable vectors; known files by immutable hash; prior-read ledger and notes; token-count complete prompts with the pinned tokenizer. Existing tensor identity mode retains the exact original bytes by digest; it is not a claim that every tensor scalar is printed. Original source/section/hash evidence remains authoritative.
+
+Current source findings:
+- Session._reading_corpus still calls frankie_box_reading_render, HEAD_TEXT_V1 and DIGEST_V6, checks all_exact, and records render/member/token receipts.
+- The shared-knowledge classroom route calls frankie_box_staged_session.consume_sources -> frankie_box_staged_reading.plan_sources. Those extra sources are delivered as exact raw UTF-8 ranges; this route does not apply the reading render stack itself. A derivation digest supplied to it is already rendered. Do not claim all classroom sources currently receive all old reducers.
+- Initial staged reading already uses Session._fan_out; shared-source fetch uses eight threads. The later observation/component task loop is sequential and adds completed answers to the retained source navigation. Identify actual dependencies before parallelizing it; blindly freezing or omitting earlier answers would change the information available.
+- [ ] Before actual classroom execution, inspect its actual source sizes/token counts and applicable lossless transforms; preserve original hashes, complete coverage, full original retrieval, and proof binding between original and rendered representations.
+- [ ] During actual classroom execution, measure CPU preparation and provider/Granite work separately, assign physical CPU cores to useful local workers, and scale independently executable work against available capacity. Preserve dialogue, grading and same-session correction dependencies. No extra inference/profiling run, no semantic summary substituted for exact observations, no output cap.
+
+The current ROOT worker change targets native calculation/encoding costs. The historical 163-to-four result concerns evidence reading; do not promise that reduction factor for ROOT calculations or Monday/classroom.
 
 ## Verified reconstruction-boundary transition — active parallel calculations (2026-09-27)
 
