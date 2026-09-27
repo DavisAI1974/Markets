@@ -3,6 +3,7 @@
 Reuses retained source bindings; no A-arm, source traversal or historical S3 delivery.
 """
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
 import re
@@ -20,6 +21,14 @@ BRAIN = Path('/opt/frankie-box/brain')
 def pin(path):
     from research.kalshi.frankie_boss.frankie_principal_adapter import file_witness
     return dict(path=str(Path(path).resolve()), **file_witness(path))
+
+
+def pins(paths):
+    """Hash several files at once, one thread each (hashlib releases the GIL on the 1 MB blocks), so the wall time is
+    the largest file's hash, not the sum. A single file's sha256 cannot be split."""
+    paths = list(paths)
+    with ThreadPoolExecutor(max(1, min(16, len(paths)))) as pool:
+        return list(pool.map(pin, paths))
 
 
 def checked(witness):
@@ -51,11 +60,11 @@ def assemble(output, calculations_path, calculations_sha256):
     if (source['source'] != calculation_pin['source_binding']
             or source['source']['trading_day'] != '20211004'):
         raise ValueError('calculation source and pin differ')
-    for key in ('calculation_pins', 'derivation', 'result', 'digest', 'digest_proof'):
-        witness = calculations[key]
-        if pin(witness['path']) != witness:
+    keys = ('calculation_pins', 'derivation', 'result', 'digest', 'digest_proof')
+    for key, measured in zip(keys, pins(calculations[key]['path'] for key in keys)):
+        if measured != calculations[key]:
             raise ValueError('retained calculation evidence changed: ' + key)
-    if json.loads(checked(calculations['derivation'])).get('failure_count') != 0:
+    if json.loads(Path(calculations['derivation']['path']).read_bytes()).get('failure_count') != 0:
         raise ValueError('calculation failures remain')
     output = Path(output)
     if output.parent != PARENT or not re.fullmatch('[A-Za-z0-9_-]{1,96}', output.name) or output.exists():
@@ -63,10 +72,9 @@ def assemble(output, calculations_path, calculations_sha256):
     output.mkdir(parents=True, mode=0o700)
     original = json.loads((FB / 'retained-principal/retained-witnesses.json').read_bytes())
     files = {}
-    for name, entry in original['files'].items():
-        if '/contract_section_' not in name:
-            continue
-        witness = pin(RETAINED / name)
+    names = [name for name in original['files'] if '/contract_section_' in name]
+    for name, witness in zip(names, pins(RETAINED / name for name in names)):
+        entry = original['files'][name]
         if any(witness[k] != entry[k] for k in ('bytes', 'sha256')):
             raise ValueError('historical section changed: ' + name)
         files[name] = witness
