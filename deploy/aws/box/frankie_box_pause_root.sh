@@ -25,10 +25,12 @@ pid = int(sys.argv[3])
 expected = sys.argv[4]
 binding_hash = sys.argv[5]
 mode = sys.argv[6]
+terminal = mode in ('terminal-finalize', 'terminal-projection')
+terminal_stage = 'root-projection' if mode == 'terminal-projection' else 'root-native-finalize'
 target = 464000
 if (not root.is_relative_to(Path('/opt/frankie-box/work/monday-calculations'))
         or not checkpoint_dir.is_relative_to(root / 'work' / 'bedrock') or pid <= 0
-        or mode not in ('parallel-boundary', 'native-workers', 'terminal-finalize')):
+        or mode not in ('parallel-boundary', 'native-workers', 'terminal-finalize', 'terminal-projection')):
     raise SystemExit('explicit existing Monday root, checkpoint generation and handoff mode required')
 binding_raw = (root / 'source-binding.json').read_bytes()
 if hashlib.sha256(binding_raw).hexdigest() != binding_hash:
@@ -40,7 +42,7 @@ deadline = time.monotonic() + 720
 while True:
     progress = json.loads((root / 'progress.json').read_text())
     saved = json.loads((root / 'checkpoints.json').read_text())
-    if mode == 'terminal-finalize':
+    if terminal:
         if (saved.get('pid') != pid or saved.get('process_token') != expected
                 or saved.get('last_event') != 'read_verified'):
             raise SystemExit('verified checkpoint must belong to the live ROOT')
@@ -53,13 +55,13 @@ while True:
             saved.get('last_event') == 'read_verified' and time.time()-saved.get('at',0) <= 90):
         break
     if (progress.get('pid') != pid or progress.get('process_token') != expected
-            or progress.get('failed') != 0 or progress.get('stage') != ('root-native-finalize' if mode == 'terminal-finalize' else 'root-native-records')
+            or progress.get('failed') != 0 or progress.get('stage') != (terminal_stage if terminal else 'root-native-records')
             or time.monotonic() >= deadline):
         raise SystemExit('fresh checkpoint unavailable; ROOT remains running')
     time.sleep(5)
 if (progress.get('pid') != pid or progress.get('process_token') != expected
         or progress.get('failed') != 0
-        or progress.get('stage') != {'parallel-boundary':'root-native-reconstruct', 'native-workers':'root-native-records', 'terminal-finalize':'root-native-finalize'}[mode]
+        or progress.get('stage') != {'parallel-boundary':'root-native-reconstruct', 'native-workers':'root-native-records', 'terminal-finalize':'root-native-finalize', 'terminal-projection':'root-projection'}[mode]
         or (mode == 'parallel-boundary' and progress.get('completed', target) >= target)
         or saved.get('pid') != pid or saved.get('process_token') != expected
         or saved.get('last_event') != 'read_verified'):
@@ -71,7 +73,7 @@ if checkpoint_path.parent != checkpoint_dir or not checkpoint_path.name.startswi
     raise SystemExit('checkpoint path differs')
 checkpoint = json.loads(checkpoint_path.read_bytes())
 terminal_verification = None
-if mode == 'terminal-finalize':
+if terminal:
     def canonical(value):
         return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'),
                                          ensure_ascii=True, allow_nan=False).encode()).hexdigest()
@@ -112,7 +114,8 @@ if mode == 'terminal-finalize':
             or descriptor['driver_identity']['run_id'] != checkpoint['run_id']
             or descriptor['driver_identity']['source_manifest_hash'] != checkpoint['source_manifest_hash']
             or runtime['python'] != sys.version or runtime['cloudpickle'] != '3.1.2'
-            or runtime['serializer_sha256'] != '629b1355de7539e84fb8142343b182dc06cfe5033aaa3f6bf837962317a5cf76'
+            or runtime['serializer_sha256'] != ('e2ff73c9d6e6a76fb6ae1e3d712c337adf72c2845dbc15d41e94dc2d957f3cac' if mode == 'terminal-projection' else '629b1355de7539e84fb8142343b182dc06cfe5033aaa3f6bf837962317a5cf76')
+            or (mode == 'terminal-projection' and runtime.get('finalization_sha256') != '15164b4521f1bacbdf678354780fe24ca75f0aab4030b00b6b7815411054dc34')
             or runtime['ledger_storage_sha256'] != 'b66361659495d787329a6097384df10bf4f27fc3056b511ee46f53bb7119c760'):
         raise SystemExit('terminal full-state descriptor or deployed runtime differs')
     if set(descriptor['ledgers']) != {'member','lifecycle','legacy'} or any(
@@ -159,10 +162,10 @@ try:
     actual = Path('/proc/sys/kernel/random/boot_id').read_text().strip() + ':' + fields[19]
     if actual != expected or fields[0] in ('Z', 'X'):
         raise SystemExit('PID no longer identifies the authorized ROOT process')
-    if mode == 'terminal-finalize':
+    if terminal:
         fresh = json.loads((root / 'progress.json').read_bytes())
         if (fresh.get('pid') != pid or fresh.get('process_token') != expected
-                or fresh.get('stage') != 'root-native-finalize' or fresh.get('failed') != 0
+                or fresh.get('stage') != terminal_stage or fresh.get('failed') != 0
                 or (root / 'calculations-receipt.json').exists()):
             raise SystemExit('ROOT advanced; terminal handoff refused without process control')
     signal.pidfd_send_signal(handle, signal.SIGINT)
@@ -198,7 +201,7 @@ receipt = dict(
     latest_checkpoint_candidate=str(candidates[-1]) if candidates else None,
     checkpoint_validation='required before resume', preserved_existing_evidence=True,
     terminal_verification=terminal_verification,
-    unsaved_tail_may_require_reconstruction=mode != 'terminal-finalize')
+    unsaved_tail_may_require_reconstruction=not terminal)
 raw = (json.dumps(receipt, sort_keys=True, indent=2) + '\n').encode()
 with control_receipt.open('xb') as stream:
     stream.write(raw)
