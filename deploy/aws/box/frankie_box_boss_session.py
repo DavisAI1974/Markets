@@ -850,7 +850,7 @@ class Session:
     def _write_digest(self, receipt, layers, prices, frames, structures, roll, first, buys, sells):
         """Publish a file from pinned layer snapshots only after exact table proofs."""
         sys.path.insert(0, str(Path(__file__).resolve().parent))
-        writer = _box_module('frankie_box_digest_document')
+        import frankie_box_digest_document as writer
         proof = writer.write_digest(
             self.work / 'derivation-digest-full.md', receipt, layers, prices, frames, structures,
             roll, first, buys, sells,
@@ -928,8 +928,8 @@ class Session:
         probe.update('root-projection')
         crosswalk = B.crosswalk_records(PRODUCERS, layers)
         native_directory = Path(run['result']['path']).parent
-        projected, sections = _box_module('frankie_box_projection').project(
-            run, layers, crosswalk, derived, probe)
+        import frankie_box_projection as projection
+        projected, sections = projection.project(run, layers, crosswalk, derived, probe)
         for name, entry in list(projected.items()) + list(sections.items()):
             receipt_layers[name] = dict(status=entry['status'], producer=entry['producer'], reason=entry['reason'], sha256=entry['sha256'],
                                         bytes=entry['bytes'], path=entry['path'], count=entry['count'], partial=entry['partial'], bedrock=True,
