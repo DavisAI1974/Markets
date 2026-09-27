@@ -712,9 +712,7 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
         for name in order:
             per[name]['delivered_tokens'] = _tokens(tokenizer, members[name].decode('utf-8', 'replace'))
         # rendered tokens per member from the member section
-        for name in order:
-            start = text.find(f'\n### member {name} (')
-            end = min([text.find(f'\n### member {m} (', start + 1) for m in order if text.find(f'\n### member {m} (', start + 1) > 0] or [len(text)])
+        for name, (start, end) in _member_sections(text, order).items():
             per[name]['rendered_tokens'] = _tokens(tokenizer, text[start:end])
     proof = reconstruct_proof(members, plan, decoded)
     report = RenderReport(members=per, dictionary_entries=len(dictionary.entries), refs=dictionary.refs, saved_bytes=dictionary.saved,
@@ -730,11 +728,35 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
     return text, report
 
 
-def _tokens(tokenizer, text):
+def _tokens(tokenizer, text, batch=32):
+    """Exact tokens of text in 1 MiB slices (the same slices and encode as always), the slices of a batch encoded
+    together on the tokenizer's native threads."""
     n = 0
-    for i in range(0, len(text), 1 << 20):
-        n += len(tokenizer.encode(text[i:i + (1 << 20)], add_special_tokens=False).ids)
+    slices = range(0, len(text), 1 << 20)
+    for b in range(0, len(slices), batch):
+        pieces = [text[i:i + (1 << 20)] for i in slices[b:b + batch]]
+        n += sum(len(e.ids) for e in tokenizer.encode_batch(pieces, add_special_tokens=False))
     return n
+
+
+def _member_sections(text, order):
+    """{name: (start, end)} of each member section, exactly as start = text.find(header(name)) and end = the nearest
+    later position (> start, > 0) where any member header begins, else len(text): one scan of the text rather than a
+    find per member pair."""
+    import bisect
+    headers = {name: f'\n### member {name} (' for name in order}
+    begins = []
+    position = text.find('\n### member ')
+    while position >= 0:
+        if any(text.startswith(h, position) for h in headers.values()):
+            begins.append(position)
+        position = text.find('\n### member ', position + 1)
+    sections = {}
+    for name in order:
+        start = text.find(headers[name])
+        k = bisect.bisect_right(begins, max(start, 0))
+        sections[name] = (start, begins[k] if k < len(begins) else len(text))
+    return sections
 
 
 def reconstruct_proof(members, plan, decoded):
