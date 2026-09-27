@@ -165,16 +165,34 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         stages.append(dict(name=name, rows=proof['rows'], path=path, digest=digest))
         return original
 
+    # The bedrock sources (layer preparation and member merge, on the pinned helpers) are independent of the five
+    # sequential legacy tables: build them on a thread while the legacy tables are written, then join.
+    import threading
+    built = {}
+    def build_sources():
+        try:
+            built['sources'] = BedrockSources(bedrock_entries, scratch/'calculation-layers')
+        except BaseException as error:
+            built['error'] = error
+    builder = threading.Thread(target=build_sources, name='bedrock-sources') if bedrock_entries else None
+    if builder is not None:
+        builder.start()
     try:
-        table('legacy_price', prices)
-        table('per_second_flow_and_roll20', per_second_rows(first,buys,sells,roll))
-        book = table('legacy_book_imbalance', frames)
-        table('legacy_structure_observables', counted_structures(), {'legacy_book_imbalance':book})
-        table('structure_families', family_rows())
+        try:
+            table('legacy_price', prices)
+            table('per_second_flow_and_roll20', per_second_rows(first,buys,sells,roll))
+            book = table('legacy_book_imbalance', frames)
+            table('legacy_structure_observables', counted_structures(), {'legacy_book_imbalance':book})
+            table('structure_families', family_rows())
+        finally:
+            if builder is not None:
+                builder.join()
+                if 'error' in built:
+                    raise built['error']
         legacy_count = len(stages)
         layer_header = None
         if bedrock_entries:
-            with BedrockSources(bedrock_entries, scratch/'calculation-layers') as sources:
+            with built.pop('sources') as sources:
                 layer_header = DG.bedrock_header(sources.derived, sources.layer_count, sources.verdict or {})
                 from frankie_box_projection import Workers,save
                 workers = Workers()
@@ -221,4 +239,6 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
                        intent=_witness(scratch/'publication-intent.json'),**_witness(destination)))
         return result
     finally:
+        if built.get('sources') is not None:
+            built.pop('sources').close()
         db.close()

@@ -524,7 +524,8 @@ class BedrockSources:
     def __init__(self, entries, scratch_directory):
         self.root = Path(scratch_directory)
         self.root.mkdir(parents=True, exist_ok=False)
-        self.db = sqlite3.connect(self.root/'sources.sqlite')
+        # Built on a helper thread while the legacy tables are written; used sequentially afterwards.
+        self.db = sqlite3.connect(self.root/'sources.sqlite', check_same_thread=False)
         self.db.execute('PRAGMA cache_size=-2048')
         self.db.execute('PRAGMA temp_store=FILE')
         self.db.execute('PRAGMA mmap_size=0')
