@@ -89,6 +89,19 @@ def report_frankie_access(ec2, ssm, instance):
                         'ResponseStartDateTime', 'ResponseFinishDateTime')})
         except ClientError as exc:
             emit('ACCESS_ERROR', {'command': command, 'code': exc.response['Error']['Code']})
+    peers = ec2.describe_instances(Filters=[
+        {'Name': 'vpc-id', 'Values': [host['VpcId']]},
+        {'Name': 'instance-state-name', 'Values': ['running']}])
+    emit('ACCESS_PEERS', [{key: row.get(key) for key in (
+        'InstanceId', 'PrivateIpAddress', 'SecurityGroups', 'PlatformDetails')}
+        for reservation in peers['Reservations'] for row in reservation['Instances']])
+    emit('SSM_MANAGED', [{key: row.get(key) for key in (
+        'InstanceId', 'PingStatus', 'PlatformName')}
+        for row in ssm.describe_instance_information()['InstanceInformationList']])
+    volumes = ec2.describe_volumes(VolumeIds=[x['Ebs']['VolumeId']
+                                            for x in host['BlockDeviceMappings']])
+    emit('ACCESS_VOLUMES', [{key: row.get(key) for key in (
+        'VolumeId', 'Size', 'VolumeType', 'State')} for row in volumes['Volumes']])
     groups = ec2.describe_security_groups(GroupIds=[x['GroupId'] for x in host['SecurityGroups']])
     emit('ACCESS_INGRESS', [{'id': x['GroupId'], 'rules': x['IpPermissions']}
                             for x in groups['SecurityGroups']])
