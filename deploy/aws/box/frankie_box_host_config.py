@@ -55,8 +55,7 @@ def build(prepared_path, principal_path, commit, run_id, output_root, completion
     config.pop('memory', None)  # Do not inherit the retired Memory A requirement from BASE.
     config.update(schema='FRANKIE_BOSS_ACTUAL_HOST_CONFIGURATION_V1', run_id=run_id, run_directory=str(RUNS / run_id),
                   model_calls_performed=False, training_updates_performed=False, host_runtime=host,
-                  mapping=principal['mapping'],
-                  retained_witnesses=principal['retained_witnesses'], delivery_receipt=principal['delivery_receipt'],
+                  retained_witnesses=principal['retained_witnesses'],
                   calculation_result=principal['calculation_result'],
                   receiver_root=str(RECEIVER), receiver_commit=receiver_commit,
                   native_host_runtime=dict(schema='FRANKIE_NATIVE_HOST_POLICY_V1', parent_run_id=base['run_id'],
@@ -64,6 +63,10 @@ def build(prepared_path, principal_path, commit, run_id, output_root, completion
                       torch_version=str(torch.__version__), numpy_version=numpy.__version__,
                       torch_intraop_threads=8, torch_interop_threads=1, deterministic_algorithms=True,
                       minimum_logical_cpus=os.cpu_count(), minimum_memory_bytes=memory_total))
+    for key in ('mapping', 'delivery_receipt', 'single_run'):
+        config.pop(key, None)
+        if key in principal:
+            config[key] = principal[key]
     for key in ('calculation_pins', 'shared_knowledge', 'principal_admission'):
         if key in principal:
             config[key] = principal[key]

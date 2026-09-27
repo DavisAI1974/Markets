@@ -1,94 +1,125 @@
-"""Assemble Frankie's retained principal inputs for the Monday cycle-0 run on the Linux box (Greg, 2026-09-23).
+"""Assemble one Monday run from completed calculations and accumulated knowledge.
 
-Historical principal files remain committed at research/kalshi/frankie_boss/monday_20211004_principal/retained.
-Memory A is no longer a required input; all 18 historical section files remain required by the principal adapter.
-This legacy assembler still uses the historical delivery, mapping and result; it is not the new Monday input route.
-It writes a fresh retained-witnesses file re-pointed at those staged files, the delivery receipt,
-the member mapping (mapping.json + its index.jsonl) and the calculation result, the
-last two fetched through the workflow's presigned map. Every byte is checked against its pinned hash; nothing is
-recomputed. No model call, ingestion or source write.
+Reuses retained source bindings; no A-arm, source traversal or historical S3 delivery.
 """
 import argparse
-import hashlib
 import json
-import os
 from pathlib import Path
 import re
-import shutil
+import sys
 import urllib.request
 
 REPOSITORY = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPOSITORY))
 FB = REPOSITORY / 'research/kalshi/frankie_boss/sunday_20260915_package/FB'
 RETAINED = REPOSITORY / 'research/kalshi/frankie_boss/monday_20211004_principal/retained'
 PARENT = Path('/opt/frankie-box/work/principal-inputs')
-FETCHED = {  # name -> (presigned-map key, bytes, sha256)
-    'index.jsonl': ('host-deliveries/20211003/mapping/index.jsonl', 16121079,
-                    'f62c522dcc00a4d3e1caeac7a8e1e4e534a437ef53be200e991508236c027ca6'),
-    'calculation_result.json': ('nymex/ng_mbo_5y_v0/frankie/raw_mbo_benchmark/a-memory/full/'
-                                '7d0068d8ae720772415bf84c8c0689e84408d642/33746436209-1/calculation_result.json',
-                                29089413, '91e47d0d1533b6745888bcc17e4231f998ed78dc9735c7e2f0dcab8bd65971a9'),
-}
-
-
-def sha(path):
-    h = hashlib.sha256()
-    with open(path, 'rb') as f:
-        for block in iter(lambda: f.read(1 << 20), b''):
-            h.update(block)
-    return h.hexdigest()
+BRAIN = Path('/opt/frankie-box/brain')
 
 
 def pin(path):
-    path = Path(path)
-    return dict(path=str(path), bytes=path.stat().st_size, sha256=sha(path))
+    from research.kalshi.frankie_boss.frankie_principal_adapter import file_witness
+    return dict(path=str(Path(path).resolve()), **file_witness(path))
 
 
-def checked(path, size, digest):
-    got = pin(path)
-    if (got['bytes'], got['sha256']) != (size, digest):
-        raise ValueError('%s differs from its pin: %s' % (path, got))
-    return got
+def checked(witness):
+    if pin(witness['path']) != witness:
+        raise ValueError('retained input differs: ' + witness['path'])
+    return Path(witness['path']).read_bytes()
 
 
 def write(path, value):
-    raw = json.dumps(value, sort_keys=True, separators=(',', ':')).encode()
-    with open(path, 'xb') as f:
-        f.write(raw)
+    from research.kalshi.frankie_boss.frankie_principal_adapter import canonical
+    with Path(path).open('xb') as handle:
+        handle.write(canonical(value))
     return pin(path)
 
 
-def assemble(output):
+def assemble(output, calculations_path, calculations_sha256):
+    from research.kalshi.frankie_boss.dipole_shared_knowledge import build_snapshot, _body, _hash
+    from research.kalshi.frankie_boss.frankie_principal_adapter import load_cycle_calculation_pin, SECTIONS
+    import frankie_box_brain as brain
+    calculation_witness = pin(calculations_path)
+    if calculation_witness['sha256'] != calculations_sha256:
+        raise ValueError('independent completed-calculations receipt hash required')
+    calculations = json.loads(checked(calculation_witness))
+    if (calculations.get('schema') != 'FRANKIE_MONDAY_CALCULATIONS_V1'
+            or calculations.get('status') != 'calculations_retained'):
+        raise ValueError('completed Monday calculations required')
+    source = json.loads(checked(calculations['source_binding']))
+    calculation_pin = load_cycle_calculation_pin(0, calculations['calculation_pins']['path'])
+    if (source['source'] != calculation_pin['source_binding']
+            or source['source']['trading_day'] != '20211004'):
+        raise ValueError('calculation source and pin differ')
+    for key in ('calculation_pins', 'derivation', 'result', 'digest', 'digest_proof'):
+        witness = calculations[key]
+        if pin(witness['path']) != witness:
+            raise ValueError('retained calculation evidence changed: ' + key)
+    if json.loads(checked(calculations['derivation'])).get('failure_count') != 0:
+        raise ValueError('calculation failures remain')
     output = Path(output)
     if output.parent != PARENT or not re.fullmatch('[A-Za-z0-9_-]{1,96}', output.name) or output.exists():
         raise ValueError('fresh named output under ' + str(PARENT))
-    PARENT.mkdir(parents=True, exist_ok=True)
-    output.mkdir(mode=0o700)
-    (output / 'mapping').mkdir()
-    # The two bulk files, through the workflow's private presigned map (URLs never printed).
-    mapping_urls = json.loads(urllib.request.urlopen(os.environ['MAP_URL'], timeout=120).read())
-    fetched = {}
-    for name, (key, size, digest) in FETCHED.items():
-        target = output / ('mapping' if name == 'index.jsonl' else '.') / name
-        with urllib.request.urlopen(mapping_urls[key]['url'], timeout=600) as response, open(target, 'xb') as out:
-            shutil.copyfileobj(response, out, 1 << 20)
-        fetched[name] = checked(target, size, digest)
-    shutil.copyfile(FB / 'source-execution-20260915/mapping/mapping.json', output / 'mapping/mapping.json')
-    mapping = checked(output / 'mapping/mapping.json', 1063, '55cccc238a15b76528d60220e8a236204bf244ef4e33948e9ef6b74a03656e21')
-    shutil.copyfile(FB / 'delivery-plain/local_delivery_receipt.json', output / 'local_delivery_receipt.json')
-    delivery = checked(output / 'local_delivery_receipt.json', 4853, 'db773478c80f28619bdf16abb76ccf6ebedbacc6a65894ba624ed6d82fad0f11')
-    # The retained witnesses, re-pointed from the Windows paths to the staged byte-exact copies.
+    output.mkdir(parents=True, mode=0o700)
     original = json.loads((FB / 'retained-principal/retained-witnesses.json').read_bytes())
     files = {}
     for name, entry in original['files'].items():
-        if name == 'FROZEN_MEMORY_A_20211003.json':
+        if '/contract_section_' not in name:
             continue
-        files[name] = dict(checked(RETAINED / name, entry['bytes'], entry['sha256']))
-    retained = write(output / 'retained-witnesses.json', dict(original, files=files,
-        relocated=dict(from_sha256='d4c03cee0524961813daf7f223425236a7edbb03c68468cc42defedec1dc008b',
-                       reason='Windows retained paths re-pointed to the staged byte-exact copies on the Linux box')))
-    result = dict(schema='FRANKIE_MONDAY_PRINCIPAL_INPUTS_V1', output=str(output), mapping=mapping,
-                  mapping_index=fetched['index.jsonl'], retained_witnesses=retained, delivery_receipt=delivery,
-                  calculation_result=fetched['calculation_result.json'], model_calls=0, source_writes=0)
+        witness = pin(RETAINED / name)
+        if any(witness[k] != entry[k] for k in ('bytes', 'sha256')):
+            raise ValueError('historical section changed: ' + name)
+        files[name] = witness
+    if {n.split('contract_section_')[1].removesuffix('.json') for n in files} != set(SECTIONS):
+        raise ValueError('all 18 historical sections required')
+    retained = write(output / 'retained-witnesses.json', dict(files=files))
+    base = brain.pin_session_base(BRAIN, calculations['source_binding']['sha256'],
+                                  output / 'knowledge-base-receipt.json')
+    catalog = json.loads((REPOSITORY / 'research/kalshi/frankie_boss/knowledge/DIPOLE_SHARED_CATALOG_20260922.json').read_bytes())
+    catalog['version'] += '-accumulated-' + pin(base)['sha256']
+    local = {}
+    for label, manifest, directory in brain.snapshot_entries(BRAIN, base):
+        for entry in manifest['entries']:
+            if not entry.get('include'):
+                continue
+            source_id = label + ':' + entry['name']
+            local[source_id] = directory / entry['name']
+            catalog['sources'].append(dict(id=source_id, path='brain/' + label + '/' + entry['name'],
+                revision=pin(base)['sha256'], sha256=entry['sha256'], bytes=entry['bytes'],
+                status='RETAINED_PRIOR_KNOWLEDGE', required=True, access='SHARED_RESEARCH',
+                explanation='Complete retained prior findings, including uncertainty and corrections; historical claims keep their provenance.',
+                provenance={'brain_base': pin(base), 'entry_manifest': pin(directory / 'MANIFEST.json')},
+                supersedes=[]))
+    for name, witness in files.items():
+        source_id = 'preserved-section:' + name.split('contract_section_')[1].removesuffix('.json')
+        local[source_id] = Path(witness['path'])
+        catalog['sources'].append(dict(id=source_id, path='preserved/' + name,
+            revision=witness['sha256'], sha256=witness['sha256'], bytes=witness['bytes'],
+            status='HISTORICAL_SECTION', required=True, access='SHARED_RESEARCH',
+            explanation='Exact original section evidence, retained with its historical hash.',
+            provenance={'retained_witnesses': retained}, supersedes=[]))
+    destination = Path('/opt/frankie-box/request/shared-knowledge') / _hash(_body(catalog))
+    def resolve(entry):
+        if entry['id'] in local:
+            return local[entry['id']].read_bytes()
+        current = REPOSITORY / entry['path']
+        if current.is_file() and pin(current)['sha256'] == entry['sha256']:
+            return current.read_bytes()
+        if (entry['provenance'].get('repository') != 'DavisAI1974/Markets'
+                or not re.fullmatch('[0-9a-f]{40}', entry['revision'])):
+            raise ValueError('immutable repository research source required')
+        url = 'https://raw.githubusercontent.com/DavisAI1974/Markets/' + entry['revision'] + '/' + entry['path']
+        with urllib.request.urlopen(url, timeout=120) as response:
+            return response.read()
+    snapshot = build_snapshot(catalog, resolve, destination)
+    shared = dict(directory=str(snapshot.directory), snapshot_hash=snapshot.snapshot_hash)
+    single = dict(calculations_receipt=calculation_witness, source_binding=calculations['source_binding'],
+                  knowledge_base=pin(base), shared_knowledge=shared)
+    result = dict(schema='FRANKIE_MONDAY_SINGLE_RUN_INPUTS_V1', output=str(output),
+        retained_witnesses=retained, calculation_result=calculations['result'],
+        calculation_pins=calculations['calculation_pins'], shared_knowledge=shared, single_run=single,
+        principal_admission={'mode': 'single_run', 'output_validation': 'after_execution'},
+        model_calls=0, source_writes=0, source_traversals=0)
     write(output / 'principal-inputs-receipt.json', result)
     return result
 
@@ -96,7 +127,11 @@ def assemble(output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-root', required=True)
-    print(json.dumps(assemble(parser.parse_args().output_root), sort_keys=True), flush=True)
+    parser.add_argument('--calculations-receipt', required=True)
+    parser.add_argument('--calculations-sha256', required=True)
+    args = parser.parse_args()
+    print(json.dumps(assemble(args.output_root, args.calculations_receipt, args.calculations_sha256),
+                     sort_keys=True), flush=True)
 
 
 if __name__ == '__main__':

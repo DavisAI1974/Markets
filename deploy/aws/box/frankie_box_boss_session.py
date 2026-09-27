@@ -2109,9 +2109,16 @@ class Session:
             self.refuse(f'brain: no calculation findings entry for cycle(s) {", ".join(missing)}; cycle {self.cycle} must read them first '
                         f'(Greg, 2026-09-21). Publish them: frankie_box_push_response.sh BRAIN_ONLY=1 CYCLE=<NN>, or restore {BRAIN_DIR}')
 
-        self.knowledge_base = brain.pin_session_base(
-            BRAIN_DIR, self.request_sha256,
-            self.work / ('knowledge-base-' + self.request_sha256 + '.json'))
+        supplied = self.request['attachment'].get('knowledge_base')
+        if supplied is not None:
+            if witness(Path(supplied['path'])) != {k: supplied[k] for k in ('bytes', 'sha256')}:
+                self.refuse('shared teacher/principal brain base changed')
+            self.knowledge_base = Path(supplied['path'])
+            list(brain.snapshot_entries(BRAIN_DIR, self.knowledge_base))
+        else:
+            self.knowledge_base = brain.pin_session_base(
+                BRAIN_DIR, self.request_sha256,
+                self.work / ('knowledge-base-' + self.request_sha256 + '.json'))
         base = load_json(self.knowledge_base)
         self.note(f'brain: pinned {len(base["entries"])} accumulated entries for this request, including prior cycle-zero runs')
 

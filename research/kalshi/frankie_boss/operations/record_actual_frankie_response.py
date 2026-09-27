@@ -187,15 +187,11 @@ def main():
             from research.kalshi.frankie_boss.dipole_shared_knowledge import load_snapshot, descriptor
             shared=config['shared_knowledge']
             shared_knowledge=descriptor(load_snapshot(shared['directory'],shared['snapshot_hash']))
+        from research.kalshi.frankie_boss.source_contract_runtime import principal_inputs
         adapter=make_principal_adapter(binding=binding,handoff_directory=export['directory'],
             expected_manifest_sha256=export['manifest_sha256'],boss_journal_path=plan['source_journal_path'],
-            source_journal_checkpoint=plan['source_journal_checkpoint'],mapping_directory=str(Path(config['mapping']['path']).parent),
-            expected_mapping_sha256=config['mapping']['sha256'],receiver_root=config['receiver_root'],
-            receiver_commit=config['receiver_commit'],python=sys.executable,directory=principal,admission=config.get('principal_admission'),
-            retained_directory=str(Path(config['retained_witnesses']['path']).parent),
-            expected_retained_witnesses_sha256=config['retained_witnesses']['sha256'],
-            delivery_receipt=config['delivery_receipt']['path'],expected_delivery_file_sha256=config['delivery_receipt']['sha256'],
-            result_path=config['calculation_result']['path'],calculation_pins=config.get('calculation_pins'),session_executor=None,
+            source_journal_checkpoint=plan['source_journal_checkpoint'],
+            **principal_inputs(config), python=sys.executable, directory=principal, session_executor=None,
             classroom_package=classroom_package,adapter_class=IntegratedDipoleClassroomPrincipalAdapter,
             shared_knowledge=shared_knowledge)
         response=verified_json(args.response,args.response_sha256)

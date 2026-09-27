@@ -405,7 +405,10 @@ class ActualHost:
 
     def source(self):
         if self.scope is not None:return
-        for key in ('contract','mapping','retained_witnesses','delivery_receipt','calculation_result','source_manifest'):
+        principal_keys = ('retained_witnesses', 'calculation_result')
+        if self.config.get('single_run') is None:
+            principal_keys += ('mapping', 'delivery_receipt')
+        for key in ('contract', 'source_manifest') + principal_keys:
             verified(self.config[key])
         if 'calculation_pins' in self.config:
             verified(self.config['calculation_pins'])
@@ -1070,12 +1073,8 @@ class ActualHost:
     async def run(self):
         c=self.config;h=self.host
         self._initialize_coordinator()
-        principal=dict(mapping_directory=str(Path(c['mapping']['path']).parent),expected_mapping_sha256=c['mapping']['sha256'],
-            receiver_root=c['receiver_root'],receiver_commit=c['receiver_commit'],python=sys.executable,
-            admission=c.get('principal_admission'),  # audit finding 4: declared per run; undeclared refuses at use
-            retained_directory=str(Path(c['retained_witnesses']['path']).parent),expected_retained_witnesses_sha256=c['retained_witnesses']['sha256'],
-            delivery_receipt=c['delivery_receipt']['path'],expected_delivery_file_sha256=c['delivery_receipt']['sha256'],
-            result_path=c['calculation_result']['path'],calculation_pins=c.get('calculation_pins'),
+        from research.kalshi.frankie_boss.source_contract_runtime import principal_inputs
+        principal=dict(**principal_inputs(c), python=sys.executable,
             session_executor=lambda request:(await_recorded_principal(request,self.directory,self.principal_host_lock,self.probe,
                 pending=self.principal_pending) if getattr(self,'pending_return',False) else
                 await_recorded_principal(request,self.directory,self.principal_host_lock,self.probe)))

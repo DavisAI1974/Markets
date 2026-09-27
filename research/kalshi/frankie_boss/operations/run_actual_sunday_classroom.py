@@ -237,20 +237,10 @@ class ClassroomActualHost(base.ActualHost):
     async def run(self):
         c, h = self.config, self.host
         self._initialize_coordinator()
+        from research.kalshi.frankie_boss.source_contract_runtime import principal_inputs
         principal = dict(
-            mapping_directory=str(Path(c["mapping"]["path"]).parent),
-            expected_mapping_sha256=c["mapping"]["sha256"],
-            receiver_root=c["receiver_root"],
-            receiver_commit=c["receiver_commit"],
-            python=sys.executable,
-            admission=c.get("principal_admission"),
+            **principal_inputs(c), python=sys.executable,
             shared_knowledge=self._shared_knowledge(),
-            retained_directory=str(Path(c["retained_witnesses"]["path"]).parent),
-            expected_retained_witnesses_sha256=c["retained_witnesses"]["sha256"],
-            delivery_receipt=c["delivery_receipt"]["path"],
-            expected_delivery_file_sha256=c["delivery_receipt"]["sha256"],
-            result_path=c["calculation_result"]["path"],
-            calculation_pins=c.get("calculation_pins"),
             session_executor=lambda request: (
                 await_recorded_principal(request, self.directory, self.principal_host_lock, self.probe,
                                          pending=self.principal_pending)

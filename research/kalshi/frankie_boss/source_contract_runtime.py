@@ -93,12 +93,30 @@ def bind_cycle(contract_path, expected_contract_sha256, cycle_index, prefix):
         'development_units':contract['convention']['usd_basis']}
 
 
+def principal_inputs(config):
+    """The same explicit admission inputs for host construction and response recording."""
+    single = config.get('single_run')
+    mapping = config.get('mapping') if single is None else None
+    delivery = config.get('delivery_receipt') if single is None else None
+    return dict(
+        mapping_directory=str(Path(mapping['path']).parent) if mapping else None,
+        expected_mapping_sha256=mapping['sha256'] if mapping else None,
+        receiver_root=config['receiver_root'], receiver_commit=config['receiver_commit'],
+        admission=config.get('principal_admission'),
+        retained_directory=str(Path(config['retained_witnesses']['path']).parent),
+        expected_retained_witnesses_sha256=config['retained_witnesses']['sha256'],
+        delivery_receipt=delivery['path'] if delivery else None,
+        expected_delivery_file_sha256=delivery['sha256'] if delivery else None,
+        result_path=config['calculation_result']['path'],
+        calculation_pins=config.get('calculation_pins'), single_run=single)
+
+
 def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha256,
         boss_journal_path, source_journal_checkpoint, mapping_directory, expected_mapping_sha256,
         receiver_root, receiver_commit, python, directory, retained_directory,
         expected_retained_witnesses_sha256, delivery_receipt, expected_delivery_file_sha256,
         result_path, classroom_package, session_executor=None, adapter_class=None, admission=None, shared_knowledge=None,
-        calculation_pins=None):
+        calculation_pins=None, single_run=None):
     """Build the per-prefix receiver pins plus mandatory Dipole classroom.
 
     Each cycle gets its own directory. All expected hashes/checkpoints are supplied
@@ -136,6 +154,87 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
         raise ValueError('controller export differs from authored runtime cycle')
     if manifest['agent_commit']!=receiver_commit:
         raise ValueError('export names a different receiver commit')
+    if single_run is not None:
+        if (binding.get('forecast_mode') != 'whole_day_next_session'
+                or admission != {'mode': 'single_run', 'output_validation': 'after_execution'}
+                or shared_knowledge is None):
+            raise ValueError('single-run needs explicit admission and the shared research snapshot')
+        from .frankie_principal_adapter import load_cycle_calculation_pin
+        def read(witness):
+            if file_witness(witness['path']) != {k: witness[k] for k in ('bytes', 'sha256')}:
+                raise ValueError('single-run input differs from its retained witness')
+            return json.loads(Path(witness['path']).read_bytes())
+        calculations = read(single_run['calculations_receipt'])
+        source_binding = read(single_run['source_binding'])
+        source_pin = load_cycle_calculation_pin(binding['cycle_index'], calculation_pins['path'])['source_binding']
+        if (calculations.get('schema') != 'FRANKIE_MONDAY_CALCULATIONS_V1'
+                or calculations.get('status') != 'calculations_retained'
+                or calculations['source_binding'] != single_run['source_binding']
+                or calculations['calculation_pins'] != calculation_pins
+                or source_binding['source'] != source_pin
+                or source_pin['trading_day'] != binding['trading_day']
+                or source_pin['manifest_hash'] != binding['source_manifest_hash']
+                or source_pin['source_prefix_hash'] != binding['source_hash']
+                or source_pin['record_count'] != binding['through_cursor'] + 1):
+            raise ValueError('completed calculations do not cover this entire bound source')
+        derivation = read(calculations['derivation'])
+        bedrock = derivation.get('bedrock') or {}
+        producer_receipt = read(bedrock['receipt'])
+        if (derivation.get('failure_count') != 0
+                or derivation.get('source_binding') != source_binding
+                or derivation.get('input_records') != source_pin['record_count']
+                or bedrock.get('records') != source_pin['record_count']
+                or bedrock.get('result') != calculations['result']
+                or bedrock.get('ledgers') != calculations['ledgers']
+                or producer_receipt.get('identity', {}).get('run_id') !=
+                   Path(single_run['calculations_receipt']['path']).parent.name + '-cycle-00'):
+            raise ValueError('single-run calculation identity, coverage or failures differ')
+        retained = Path(retained_directory)
+        witness_path = retained / 'retained-witnesses.json'
+        if file_witness(witness_path)['sha256'] != expected_retained_witnesses_sha256:
+            raise ValueError('retained section witness changed')
+        sections = {name.split('contract_section_')[1].removesuffix('.json'): witness
+            for name, witness in json.loads(witness_path.read_bytes())['files'].items()
+            if '/contract_section_' in name}
+        read(single_run['knowledge_base'])
+        from .dipole_shared_knowledge import load_snapshot, descriptor
+        shared = single_run['shared_knowledge']
+        snapshot = load_snapshot(shared['directory'], shared['snapshot_hash'])
+        if descriptor(snapshot) != shared_knowledge:
+            raise ValueError('single-run principal and teacher sources differ')
+        retained_inputs = dict(calculations_receipt=single_run['calculations_receipt'],
+            source_binding=single_run['source_binding'], calculation_pins=calculation_pins,
+            derivation=calculations['derivation'], producer_receipt=bedrock['receipt'], result=calculations['result'],
+            digest=calculations['digest'], digest_proof=calculations['digest_proof'],
+            knowledge_base=single_run['knowledge_base'],
+            knowledge_manifest=dict(path=str(snapshot.directory / 'MANIFEST.json'),
+                                    **file_witness(snapshot.directory / 'MANIFEST.json')))
+        for name, witness in calculations['ledgers'].items():
+            retained_inputs['ledger:' + name] = {k: witness[k] for k in ('path', 'bytes', 'sha256')}
+        pins = dict(schema='FRANKIE_SINGLE_RUN_PREPARATION_PINS_V1',
+            expected_manifest_sha256=expected_manifest_sha256, boss_source=source,
+            contract_sha256=binding['contract_sha256'], retained_inputs=retained_inputs,
+            source_journal_checkpoint=source_journal_checkpoint)
+        pins_path = directory / 'preparation-pins.json'
+        if pins_path.exists():
+            if pins_path.read_bytes() != canonical(pins):
+                raise ValueError('retained single-run preparation pins differ')
+        else:
+            _write(pins_path, pins)
+        feedback_contract = {k: v for k, v in binding.items() if k != 'sessions'}
+        feedback_contract['sessions'] = [{'target': asdict(t), 'session': asdict(s)}
+                                         for t, s in binding['sessions']]
+        from .dipole_classroom_integration import IntegratedDipoleClassroomPrincipalAdapter
+        if adapter_class is not IntegratedDipoleClassroomPrincipalAdapter:
+            raise ValueError('single-run requires the integrated mandatory classroom')
+        return adapter_class(receiver_root=receiver_root, receiver_commit=receiver_commit, python=python,
+            admission=admission, cycle_index=binding['cycle_index'], directory=directory,
+            preparation={'pins_path': str(pins_path), 'expected_pins_sha256': digest(pins)},
+            render={'knowledge-manifest': str(snapshot.directory / 'MANIFEST.json'),
+                    'calculation-pins': calculation_pins['path']},
+            protected_files={}, section_evidence=sections, feedback_contract=feedback_contract,
+            classroom_package=classroom_package, session_executor=session_executor,
+            shared_knowledge=shared_knowledge)
     mapping_file=directory/'bound-mapping.json'
     if mapping_file.exists():
         bound=json.loads(mapping_file.read_bytes())

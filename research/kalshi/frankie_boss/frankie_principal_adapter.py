@@ -398,6 +398,8 @@ def admission_policy(admission, *, retained_prompt):
     every use (prepare, request, recover) refuses; it exists so a retained configuration that
     predates the policy fails at use with the exact missing declaration named.
     """
+    if admission == {'mode': 'single_run', 'output_validation': 'after_execution'}:
+        return dict(admission)
     if admission is None:
         return ADMISSION_UNDECLARED
     if type(admission) is not dict or set(admission) != {'output_bundle', 'sealed_proof'}:
@@ -463,12 +465,19 @@ class FrankiePrincipalAdapter:
         if self.directory.is_relative_to(self.receiver_root):
             raise ValueError('principal evidence must be outside frozen receiver checkout')
         self.preparation, self.render = dict(preparation), dict(render)
-        for key in ('knowledge-receipt', 'knowledge-receipt-sha256', 'knowledge-bundle-sha256'):
+        self.single_run = admission == {'mode': 'single_run', 'output_validation': 'after_execution'}
+        if self.single_run:
+            if (feedback_contract.get('forecast_mode') != 'whole_day_next_session'
+                    or set(self.render) != {'knowledge-manifest', 'calculation-pins'}):
+                raise ValueError('single-run requires whole-day source and actual shared knowledge')
+        for key in (() if self.single_run else ('knowledge-receipt', 'knowledge-receipt-sha256', 'knowledge-bundle-sha256')):
             if not self.render.get(key):
                 raise ValueError('explicit pinned knowledge receipt and bundle required')
         common_render = {'knowledge-receipt', 'knowledge-receipt-sha256', 'knowledge-bundle-sha256',
                          'calculation-pins'}
-        if self.render.get('retained-prompt'):
+        if self.single_run:
+            pass
+        elif self.render.get('retained-prompt'):
             if set(self.render) - common_render - {'retained-prompt', 'retained-prompt-sha256'}:
                 raise ValueError('unexpected retained-prompt configuration')
             if not self.render.get('retained-prompt-sha256'):
@@ -491,7 +500,7 @@ class FrankiePrincipalAdapter:
         self.feedback_contract = json.loads(canonical(feedback_contract))
         self.session_executor = session_executor
         self.admission = admission_policy(admission, retained_prompt=bool(self.render.get('retained-prompt')))
-        if self.admission != ADMISSION_UNDECLARED and self.admission['sealed_proof'] != SEALED_UNPROVEN \
+        if not self.single_run and self.admission != ADMISSION_UNDECLARED and self.admission['sealed_proof'] != SEALED_UNPROVEN \
                 and not self.render.get('retained-prompt'):
             # The emitter receives the same proof the attachment witnesses (emit_frankie_spawn --sealed-proof).
             supplied = self.render.get('sealed-proof', self.admission['sealed_proof'])
@@ -581,6 +590,8 @@ class FrankiePrincipalAdapter:
 
     def _admission_record(self):
         declared = self._declared()
+        if self.single_run:
+            return dict(declared)
         sealed = declared['sealed_proof']
         if type(sealed) is dict:
             proof = self.directory / 'sealed-proof.json'
@@ -611,6 +622,8 @@ class FrankiePrincipalAdapter:
 
     def prepare(self, handoff_directory):
         self._files()
+        if self.single_run:
+            return self._prepare_single_run(handoff_directory)
         admission = None if type(self._declared()['sealed_proof']) is dict else self._admission_record()
         config = {'config_hash': self._config_hash()}
         config_path = self.directory / 'adapter-config.json'
@@ -664,6 +677,77 @@ class FrankiePrincipalAdapter:
         pin_sidecar = self.directory / CYCLE_CALCULATION_PIN_SIDECAR
         if pin_sidecar.exists():
             attachment['calculation_pin_witness'] = json.loads(pin_sidecar.read_bytes())
+        attachment['attachment_hash'] = digest(attachment)
+        return attachment
+
+    def _prepare_single_run(self, handoff_directory):
+        """Use this run's calculation receipts and genuine controller export."""
+        import base64
+        self._code()
+        pins_path = Path(self.preparation['pins_path'])
+        if file_witness(pins_path)['sha256'] != self.preparation['expected_pins_sha256']:
+            raise ValueError('single-run preparation pins changed')
+        pins = json.loads(pins_path.read_bytes())
+        handoff = Path(handoff_directory).resolve()
+        manifest_path = handoff / 'manifest.json'
+        if file_witness(manifest_path)['sha256'] != pins['expected_manifest_sha256']:
+            raise ValueError('single-run controller export changed')
+        manifest = json.loads(manifest_path.read_bytes())
+        files = {}
+        for item in manifest['files']:
+            member = handoff / item['path']
+            if member.resolve().parent != handoff or file_witness(member) != {
+                    'bytes': item['bytes'], 'sha256': item['sha256']}:
+                raise ValueError('single-run controller member changed')
+            files[item['path']] = base64.b64encode(member.read_bytes()).decode()
+        prepared = self.directory / 'receiver'
+        prepared.mkdir(exist_ok=True)
+        receipt = dict(schema='FRANKIE_SINGLE_RUN_PREPARATION_V1',
+            executing_agent_commit=self.receiver_commit, pins_file=file_witness(pins_path),
+            input_paths={'directory': str(handoff)},
+            inputs={'manifest': file_witness(manifest_path)}, outputs={},
+            retained_inputs=pins['retained_inputs'])
+        receipt['receipt_sha256'] = digest(receipt)
+        receipt_path = prepared / 'preparation-receipt.json'
+        if receipt_path.exists():
+            if _checked_receipt(receipt_path) != receipt:
+                raise ValueError('single-run preparation identity changed')
+        else:
+            _write(receipt_path, receipt)
+        self._check_preparation(receipt)
+        instruction = self._instruction()
+        prompt = self.directory / 'prompt.md'
+        if not prompt.exists():
+            payload = dict(attachment_receipt=receipt,
+                manifest_base64=base64.b64encode(manifest_path.read_bytes()).decode(),
+                source_binding_base64=base64.b64encode(
+                    Path(pins['retained_inputs']['source_binding']['path']).read_bytes()).decode(),
+                files_base64=files)
+            sections = b''.join(
+                ('\n# Preserved section ' + name + ' SHA256 ' + w['sha256'] + '\n').encode()
+                + Path(w['path']).read_bytes() for name, w in self.section_evidence.items())
+            head = ('# Frankie: one run for the complete trading day\n'
+                'Reuse the completed calculations bound below. No separate A-arm or Memory A input is required. '
+                'Historical instructions are provenance; this current single-run instruction governs. '
+                'Read all shared research and retained brain sources, all current calculations and controller/Granite evidence. '
+                'Complete analysis, all output ledgers, teaching, grading and same-session correction.\n'
+                'Feedback contract: ' + canonical(self.feedback_contract).decode() + '\n'
+                + instruction + '\n').encode()
+            with prompt.open('xb') as handle:
+                handle.write(head + self._run_findings_block() + sections
+                    + b'\n## BOSS/Granite producer evidence\n' + canonical(payload))
+                handle.flush()
+                os.fsync(handle.fileno())
+        knowledge = Path(self.render['knowledge-manifest'])
+        attachment = dict(config_hash=self._config_hash(), preparation_receipt=receipt,
+            prompt=str(prompt), prompt_witness=file_witness(prompt),
+            knowledge_bundle=str(knowledge), knowledge_bundle_witness=file_witness(knowledge),
+            section_evidence=self.section_evidence, protected_files=self.protected_files,
+            feedback_contract=self.feedback_contract, admission=self._admission_record(),
+            knowledge_base=pins['retained_inputs']['knowledge_base'])
+        for key, name in (('run_findings_witness', RUN_FINDINGS_SIDECAR),
+                          ('calculation_pin_witness', CYCLE_CALCULATION_PIN_SIDECAR)):
+            attachment[key] = json.loads((self.directory / name).read_bytes())
         attachment['attachment_hash'] = digest(attachment)
         return attachment
 
@@ -784,9 +868,16 @@ class FrankiePrincipalAdapter:
             raise ValueError('independent preparation pins changed')
         if receipt['pins_file'] != file_witness(pins):
             raise ValueError('retained preparation belongs to different pins')
-        for name, path in (('result', self.preparation['result_path']),
+        if self.single_run:
+            pins_body = json.loads(pins.read_bytes())
+            if receipt.get('retained_inputs') != pins_body['retained_inputs']:
+                raise ValueError('single-run retained inputs differ')
+            for witness in receipt['retained_inputs'].values():
+                if file_witness(witness['path']) != {k: witness[k] for k in ('bytes', 'sha256')}:
+                    raise ValueError('single-run retained evidence changed')
+        for name, path in (() if self.single_run else (('result', self.preparation['result_path']),
                            ('delivery_receipt', self.preparation['delivery_receipt']),
-                           ('mapping', self.preparation['mapping_artifact'])):
+                           ('mapping', self.preparation['mapping_artifact']))):
             if file_witness(path) != receipt['inputs'][name]:
                 raise ValueError('prepared input file changed')
         handoff = Path(receipt['input_paths']['directory'])
@@ -801,7 +892,8 @@ class FrankiePrincipalAdapter:
         for name, witness in receipt['outputs'].items():
             if file_witness(self.directory / 'receiver' / name) != witness:
                 raise ValueError('receiver preparation output changed')
-        self._check_output_bundle_gate(receipt)
+        if not self.single_run:
+            self._check_output_bundle_gate(receipt)
 
     def _request(self, request_id, attachment):
         self._files()
@@ -908,6 +1000,24 @@ class FrankiePrincipalAdapter:
             raise ValueError('session response does not attest this exact request')
         if response.get('sections') != {k: v['sha256'] for k, v in self.section_evidence.items()}:
             raise ValueError('all 18 preserved section hashes must be cited exactly')
+        if self.single_run:
+            lessons = response.get('lessons')
+            if not isinstance(lessons, (list, tuple)) or not any(isinstance(x, str) and x.strip() for x in lessons):
+                raise ValueError('single-run analysis must be recorded')
+            ledgers = [x.get('ledger') for x in lessons if isinstance(x, dict)]
+            if any(ledgers.count(name) != 1 for name in (*OUTPUT_LEDGERS, CALCULATION_ACCOUNTING_LEDGER)):
+                raise ValueError('single-run requires accounting and all ten output ledgers after execution')
+            accounting = next(x for x in lessons if isinstance(x, dict) and x.get('ledger') == CALCULATION_ACCOUNTING_LEDGER)
+            pin = self._calculation_pin()
+            pins = json.loads(Path(self.preparation['pins_path']).read_bytes())
+            derivation = json.loads(Path(pins['retained_inputs']['derivation']['path']).read_bytes())
+            required = set(pin['registry_layers']) | set(pin['bedrock_layers']) | set(derivation['layers'])
+            layers = accounting.get('layers', [])
+            if (not isinstance(layers, list) or any(not isinstance(x, dict) for x in layers)
+                    or len({x.get('layer') for x in layers}) != len(layers)
+                    or not required <= {x.get('layer') for x in layers}
+                    or any(x.get('status') not in ('derived', 'compared', 'could_not') for x in layers)):
+                raise ValueError('single-run accounting must cover every required calculation layer')
         receipt = {'schema': 'FRANKIE_BOSS_SESSION_RECEIPT_V1', 'mechanism': 'AGENT_SESSION',
             'session_id': response['session_id'],
             'model_identity_as_reported_by_session': response['model_identity_as_reported_by_session'],

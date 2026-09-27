@@ -21,13 +21,26 @@ Use using-agent-skills and context-engineering. Existing session also used shipp
 - [x] Wire the Monday calculation pin into principal request creation.
 - [x] Wire actual Linux request/output paths and forbid re-derivation when continuing completed Monday calculations.
 - [x] Wire initial/correction response recording and the same shared knowledge into the recorder.
-- [ ] Finish the authorized single-run admission/input path; remove the separate A-arm, historical S3 delivery and output-before-execution requirements from Monday's route.
-- [ ] Connect the existing brain to the existing shared-knowledge snapshot for both Frankie and scientific teacher; retain all required sources.
+- [x] Implement the authorized single-run admission/input path; separate A-arm, historical S3 delivery and output-before-execution prerequisites removed from Monday's route. Code reviewed and syntax-compiled; deployment/live verification awaits current ROOT.
+- [x] Implement the existing brain/shared-snapshot connection for Frankie and scientific teacher, retaining all required research and historical section sources. Actual snapshot assembly awaits completed ROOT receipt.
 - [ ] After ROOT completion, stage the completed current code through the existing GitHub staging workflow and build the actual Monday host configuration.
 - [ ] Run existing host/Granite, Frankie full reading and writing, initial recording/grading, correction, final recording/grading, and final knowledge retention manually in order.
 - [ ] Retain Monday findings for the next cycle. Missing Tuesday outcomes remain explicitly pending; no fabricated labels, native learning, or cycle-completion claim.
 
 Do not restart completed stages. The new code is committed but NOT staged or deployed onto the active calculation process.
+
+## Continuation implementation (2026-09-27)
+
+The single-run route is now implemented in the existing input assembler, principal adapter, host configuration and recorder. It binds the actual completed calculations receipt, source binding, pin, derivation, producer receipt, exact ledgers and genuine controller/native/Granite export. It does not call the old A-arm receiver preparation or invent S3 delivery. All 18 historical section files and hashes remain required. Analysis, every accounting layer (including section projections), and all ten output ledgers are checked after execution through the existing response boundary. IntegratedDipoleClassroomPrincipalAdapter remains mandatory.
+
+The existing assembler now takes `--calculations-receipt` and `--calculations-sha256`; its existing shell workflow uses `CALCULATIONS_RECEIPT` and `CALCULATIONS_SHA256`. It preserves the complete shared research catalog, adds all included retained brain entries and exact sections, and publishes through existing build_snapshot at `/opt/frankie-box/request/shared-knowledge/<snapshot_hash>`. The session consumes the same pinned brain base as that snapshot, including during correction.
+
+Verification: syntax-only compilation of all eight changed Python files and bash -n of the existing assembler wrapper. No tests, canaries, comparison runs, producer reruns or model calls. Changes are NOT staged or deployed; no active calculation code changed.
+
+Read-only probe: https://github.com/DavisAI1974/Markets/actions/runs/36290742694
+At 2026-09-27T03:12:55Z: native ROOT 393,825 / 2,032,203 (19.38%), process alive, failed=0, seven checkpoints saved/read_verified, latest checkpoint-000006.json, readers 48 requested / 31 effective. This is stage progress only.
+
+Final corrected knowledge publication remains to be connected after the host's final grading; subsequent checklist items stay pending. The older gap description below records the original checkpoint and is superseded only for the implementation described here.
 
 ## Active calculation and evidence
 
