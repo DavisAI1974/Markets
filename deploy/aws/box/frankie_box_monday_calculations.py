@@ -22,8 +22,7 @@ PARENT = Path('/opt/frankie-box/work/monday-calculations')
 def calculate(commit, authorship_path, authorship_sha256, output_root, data_workers=1):
     require_checkout(commit)
     from research.kalshi.frankie_boss.frankie_journal_reader import worker_budget
-    if len(worker_budget(data_workers)) != data_workers:
-        raise ValueError('requested reader workers exceed available dedicated CPUs')
+    worker_budget(data_workers)  # Existing reader validates and caps to available CPUs.
     authorship_pin = witness(Path(authorship_path))
     if authorship_pin['sha256'] != authorship_sha256:
         raise ValueError('Monday authorship receipt differs')

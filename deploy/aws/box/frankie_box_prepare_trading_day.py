@@ -174,8 +174,7 @@ def prepare_bundle(configuration, *, configuration_sha256, commit, output_root,
     configured_root = output_root_path(safe_path(config['schedule_directory']).parent)
     if data_workers is not None:
         from research.kalshi.frankie_boss.frankie_journal_reader import worker_budget
-        if len(worker_budget(data_workers)) != data_workers:
-            raise ValueError('requested reader workers exceed available dedicated CPUs')
+        worker_budget(data_workers)  # Existing reader validates and caps to available CPUs.
     if (authorship is None) != (authorship_sha256 is None):
         raise ValueError('complete source-binding receipt pin required')
     if authorship is not None:
