@@ -16,8 +16,11 @@ Downstream dispatches go from ONE fixed ref cut at the staged commit (so edits h
 - [ ] (only if ROOT must restart) adopt the finished merge shards: frankie_box_adopt_merge.sh
 
 ## Downstream Monday
-- [ ] Publication slice, Option 3 (receipt-level evidence; unverified hash checks listed)
-- [ ] Stage ONE commit; fixed dispatch ref cut at it; CODE_ROOT recorded
+- [x] Publication slice, Option 3: DROPPED (Greg, 2026-09-27: no validations, straight to staging)
+- [x] Staged 39f64acf (run 36359220114, 23:38Z, beside ROOT on its own lock). Dispatch ref:
+      claude/frankie-monday-run-39f64acf. CODE_ROOT:
+      /opt/frankie-box/code/39f64acff739543dd59557db7f0918c55a530cdc-36359220114-1/markets
+      (pack sha256 6ac06b03..., 3,693 files, active checkout unchanged)
 - [ ] Principal inputs (frankie_box_principal_inputs.sh)
 - [ ] Cycle 0 config (ACTION=config; existing prepared root r6-48; binds the five-lesson Granite priming)
 - [ ] Granite Pod up (fhiwwlouzyx6l2)
