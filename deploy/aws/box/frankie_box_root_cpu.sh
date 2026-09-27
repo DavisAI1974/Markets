@@ -1,4 +1,4 @@
-# Assign the identified live ROOT and its two native children to separate physical cores.
+# Inspect restoration or assign identified native processes to physical cores.
 # CPU scheduling only: no signals, ingestion, calculation launch or pinned code changes.
 set -eu
 : "${DIRECTORY:?existing calculation root required}"
@@ -20,7 +20,9 @@ if hashlib.sha256((root / 'source-binding.json').read_bytes()).hexdigest() != bi
     raise SystemExit('source binding differs')
 progress = json.loads((root / 'progress.json').read_bytes())
 if (progress.get('pid') != pid or progress.get('process_token') != expected_token
-        or progress.get('stage') != 'root-native-records' or progress.get('failed') != 0):
+        or (progress.get('stage') != 'root-native-records'
+            and not (action == 'inspect' and progress.get('stage') == 'root-legacy-reuse'))
+        or progress.get('failed') != 0):
     raise SystemExit('identified healthy forward ROOT required')
 boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
 
@@ -44,7 +46,7 @@ for child in children:
     item = identity(child)
     if item['parent_pid'] == pid and b'multiprocessing.spawn' in command and b'spawn_main' in command:
         workers.append(item)
-if len(workers) < 2:
+if len(workers) < 2 and action != 'inspect':
     raise SystemExit('at least two direct native spawn workers required; found ' + str(len(workers)))
 workers.sort(key=lambda x: x['pid'])
 processes = [parent] + workers
@@ -167,6 +169,28 @@ if action == 'profile':
     raise SystemExit(0)
 
 if action == 'inspect':
+    import shutil
+    def restoration_snapshot():
+        actual = identity(pid)
+        if actual['token'] != expected_token:
+            raise ValueError('ROOT identity changed during inspection')
+        io_counts = {}
+        for line in (Path('/proc') / str(pid) / 'io').read_text().splitlines():
+            name,value = line.split(':',1)
+            io_counts[name] = int(value)
+        generations = []
+        for generation in sorted((root / 'work' / 'bedrock').glob('recovery-*')):
+            if generation.is_symlink():
+                continue
+            ledgers = generation / 'ledgers'
+            generations.append(dict(path=str(generation), ledgers={
+                path.name:path.stat().st_size for path in ledgers.glob('*.jsonl') if not path.is_symlink()}))
+        return dict(at=time.time(),process=actual,io=io_counts,
+                    generations=generations,disk_free_bytes=shutil.disk_usage(root).free)
+    first = restoration_snapshot()
+    time.sleep(10)
+    report['resource_observations'] = [first,restoration_snapshot()]
+    report['latest_progress'] = json.loads((root/'progress.json').read_bytes())
     print(json.dumps(report, sort_keys=True))
     raise SystemExit(0)
 if len(unique) < len(processes) + 1:

@@ -19,6 +19,15 @@ The original calculation parallel helper and full-state serializer remain byte-i
 
 Raw profiling receipt and CPU assignments are recorded in audits/ROOT_CPU_PROFILE_20260927.json. Classroom allocation is a follow-up during the actual classroom stage, not an assertion that classroom has begun.
 
+## Granite priming reminder and source findings (2026-09-27)
+
+User asked whether the earlier "priming the pump" work had actually happened. Source implementation exists: granite_positive_priming.py, blocks/GRANITE_PRIMING_CONFIGURATION_20260922.json, and blocks/GRANITE_POSITIVE_PRIMING_VERIFIED_20260922.json. The retained capsule has five supported calculation-method lessons tied to independent response/host-record/derivation hashes, in knowledge_primed_learning_replay mode. Its VERIFIED filename certifies retained source construction, not an actual Granite call or acknowledgement.
+
+CODEX_HANDOFF_20260922_CHAT15.md says classroom initialization is implemented and tested, but production priming and acknowledgement remain unverified. CODEX_HANDOFF_20260923_ROOT_GRANITE_PRESERVATION.md and CLAUDE_CYCLE0_EXECUTION_HANDOFF_20260923.md retain that outstanding receipt requirement. No later execution acknowledgement was established in this review; current Monday host/Granite execution is still downstream of ROOT calculations.
+- [ ] At actual Monday configuration/admission, inspect the effective critic_priming binding and retained provider request/response to verify the intended capsule is delivered and acknowledged. Reuse any existing valid receipt; do not issue a duplicate priming/model run to settle ambiguity.
+- Keep positive-only Granite priming distinct from the classroom's complete accumulated research and learning record. Preserve replay lineage and original availability/source hashes; never describe knowledge-primed results as blind results.
+- The older Question's Gambit retrieval warm-start was recorded separately as an unimplemented option on 2026-09-22; it is not evidence that the historical priming capsule ran.
+
 ## Prior reduction and organization recovered from history (2026-09-27)
 
 User recalled the earlier retained run's reduction/organization work and requested a review. Read the 12:2xZ and 13:5xZ 2026-09-21 sections of DROP_IN_CLAUDE_20260921.md, SHIP_REVIEW_20260921_CHAT5.md, and the current reading/digest/session/classroom code at dc5e756.
