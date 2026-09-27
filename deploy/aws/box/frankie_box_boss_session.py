@@ -1450,10 +1450,15 @@ class Session:
             return chunks
         if not 8_000 <= target <= CONTEXT - 8_192:
             self.refuse(f'part_input_tokens {target} leaves no room for the answer or none for the part')
+        # reading() and the completion check both chunk the same corpus: reuse the first result for identical bytes.
+        key = (sha256_bytes(data), target, id(tokenizer))
+        cached = getattr(self, '_chunk_cache', None)
+        if cached is not None and cached[0] == key:
+            self._part_tokens = target
+            return list(cached[1])
         lines, chunks, start, offset, count = data.split(b'\n'), [], 0, 0, 0
-        for line in lines:
+        for line, n in zip(lines, self._line_tokens(tokenizer, lines)):
             piece = line + b'\n'
-            n = len(tokenizer.encode(piece.decode('utf-8', 'replace'), add_special_tokens=False).ids)
             if count and count + n > target:
                 chunks.append((start, offset))
                 start, count = offset, 0
@@ -1464,7 +1469,17 @@ class Session:
         if start < len(data):
             chunks.append((start, len(data)))
         self._part_tokens = target
+        self._chunk_cache = (key, tuple(chunks))
         return chunks
+
+    @staticmethod
+    def _line_tokens(tokenizer, lines, batch=8192):
+        """Exact token count of each line + newline, in order: the same encode per item, run by encode_batch on the
+        tokenizer's own native threads (the full-day corpus has millions of lines; one Python encode per line is one core)."""
+        for i in range(0, len(lines), batch):
+            pieces = [(line + b'\n').decode('utf-8', 'replace') for line in lines[i:i + batch]]
+            for encoding in tokenizer.encode_batch(pieces, add_special_tokens=False):
+                yield len(encoding.ids)
 
     def _merge(self, notes, level):
         if level >= 8:
