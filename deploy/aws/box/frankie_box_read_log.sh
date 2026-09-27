@@ -26,6 +26,37 @@ print(json.dumps(dict(recovery_generations=items), sort_keys=True))
 PY
   exit $?
 fi
+# Read actual compressed-projection receipts and sizes without scanning payloads.
+if [ "$MODE" = projection ]; then
+  /opt/frankie-box/venv/bin/python -I -S -B - "$P" <<'PY'
+import hashlib,json,os,pathlib,sys,time
+root=pathlib.Path(sys.argv[1]).resolve(strict=True)
+allowed=pathlib.Path('/opt/frankie-box/work/monday-calculations').resolve(strict=True)
+if not root.is_relative_to(allowed) or root.name!='.projection-v2':
+    raise SystemExit('existing compressed projection root required')
+def read(path):
+    raw=path.read_bytes()
+    return dict(path=str(path),bytes=len(raw),sha256=hashlib.sha256(raw).hexdigest()),json.loads(raw)
+plan_pin,plan=read(root/'plan.json')
+workers=sorted(root.glob('workers-*.json'),key=lambda p:p.stat().st_mtime_ns)
+result=dict(at=time.time(),plan=plan_pin,workers=read(workers[-1]) if workers else None,kinds={})
+for kind in ('member','lifecycle'):
+    files=sorted((root/kind).glob('range-*.json'))
+    archives=list((root/kind).glob('*.blocks'))
+    item=dict(completed_ranges=len(files),archive_files=len(archives),
+              archive_bytes=sum(p.stat().st_size for p in archives),first=None,last=None)
+    for key,path in [('first',files[0]),('last',files[-1])] if files else []:
+        pin,value=read(path)
+        item[key]=dict(pin=pin,binding=value['binding'],actual_start=value['actual_start'],
+                       actual_end=value['actual_end'],rows=value['rows'],archive=value['archive'],
+                       worker=value['worker'],readback_verified=value['readback_verified'])
+    result['kinds'][kind]=item
+stat=os.statvfs(root)
+result['free_bytes']=stat.f_bavail*stat.f_frsize
+print(json.dumps(result,sort_keys=True))
+PY
+  exit $?
+fi
 [ -f "$P" ] || { echo "no such file: $P"; ls -la "$(dirname "$P")" 2>/dev/null; exit 2; }
 # Summarize an already-retained speedscope profile; never attach to a process.
 if [ "$MODE" = profile ]; then
