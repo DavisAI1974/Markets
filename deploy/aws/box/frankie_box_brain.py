@@ -359,6 +359,12 @@ def restore_from_git(brain, cycles, repo, day, remote='origin', branch_format='r
         bad = None
         for e in manifest.get('entries', []):
             got = subprocess.run(['git', '-C', str(repo), 'show', f'FETCH_HEAD:{prefix}/{e["name"]}'], capture_output=True)
+            if got.returncode:
+                # the pusher commits a file of 90 MB or more as <name>.gz; the plain bytes must still match the manifest
+                zipped = subprocess.run(['git', '-C', str(repo), 'show', f'FETCH_HEAD:{prefix}/{e["name"]}.gz'], capture_output=True)
+                if not zipped.returncode:
+                    import gzip
+                    got = subprocess.CompletedProcess(zipped.args, 0, gzip.decompress(zipped.stdout), b'')
             if got.returncode or sha256_bytes(got.stdout) != e.get('sha256'):
                 bad = e['name']
                 break
