@@ -111,3 +111,37 @@ Every box action still needs Greg's go. Keys are not rotated until the build is 
 - Rule for later edits: never edit frankie_box_projection.py while a retained plan is meant to be reused.
 - Also in this branch: 6275f4e4. The response pusher zips any published file of 90 MB or more to `<name>.gz`
   before the git push (Greg's rule). restore_from_git reads the .gz form.
+
+## Resume 36347691133 (5b1eaffd): publication reused, preparation too slow; stopped and fixed (20:34-21:11Z)
+
+- The 5b1eaffd resume passed the plan check and reused publication e6ff. The digest started at 20:34:12Z.
+- Published layers total 147 GB compressed:
+  - full_bid_ask_depth 89.5 GB
+  - derived_v4_mechanics_fifo_features 30.4 GB
+  - queue_age_and_survival 11.5 GB
+  - fifo_queues 11.4 GB
+  - the rest under 5 GB
+- Measured preparation rate: about 1.4-4.3 MB/s compressed, so 10-29 h for preparation alone. The host showed
+  about 2 busy cores, and each helper was about 27% busy.
+  - Cause: every decoded row went back to one coordinator thread, which unpickled and inserted it from Python and
+    shared the interpreter lock with the legacy tables. This came from my 106ca918 split.
+- Fix 7485d648: helpers write their rows, with final ordinals from the range receipts, into part databases. The
+  coordinator copies each part with INSERT ... SELECT inside SQLite. rows.sqlite content is identical (old and new
+  checked on synthetic fragments), so prepared layers 0-7 (receipts written) stay reusable.
+- Greg: "stop and fix root".
+  - Pause 36350219973 (terminal-digest) of ROOT 61709: receipt `pause-for-terminal-digest-61709.json`, sha256
+    `8e782d87...077f`; state re-verified at 2,032,203 records.
+  - That pause missed the helpers: it read only the main thread's /proc children, and the digest helpers are
+    started from the bedrock-sources thread.
+    - A read-only listing (read_log MODE=processes, 08d2ac40) found 14 orphaned helpers plus the resource tracker
+      (parent 1, CPUs 2-15). They were holding the SSM pipe, so the ROOT run stayed open.
+    - Fixes:
+      - 87f16198: the pause scans every thread's children.
+      - a7e1b34a: HANDOFF=reap-orphans terminates exactly the listed PIDs after identity checks.
+    - Reap 36350696475: all 15 exited on SIGTERM; receipt `reap-orphans-61709-1790543422.json`.
+    - The ROOT run then closed at 21:10:35Z. The box is idle.
+- Still single-core in the digest:
+  - The 5 legacy tables (about 33 min). They run concurrently with preparation.
+  - The one `bedrock.members` table job. Splitting it changes the digest table format, so measure it first.
+- Next: stage a7e1b34a and resume the same root from 8c03 ON GREG'S GO. Then probe once: part files flowing, all
+  14 helpers busy, the rate, and disk.
