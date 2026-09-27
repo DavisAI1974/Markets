@@ -928,12 +928,12 @@ class Session:
         probe.update('root-projection')
         crosswalk = B.crosswalk_records(PRODUCERS, layers)
         native_directory = Path(run['result']['path']).parent
-        projected = B.project(run, native_directory / 'ledgers', layers, crosswalk, derived)
-        # BR-9 (Greg, 2026-09-22): sections 4.2 and 4.4 as files beside the twenty layers, from the traversal's own result and ledger
-        sections = B.project_sections(run, native_directory / 'result.json', native_directory / 'ledgers', derived)
+        projected, sections = _box_module('frankie_box_projection').project(
+            run, layers, crosswalk, derived, probe)
         for name, entry in list(projected.items()) + list(sections.items()):
             receipt_layers[name] = dict(status=entry['status'], producer=entry['producer'], reason=entry['reason'], sha256=entry['sha256'],
-                                        bytes=entry['bytes'], path=entry['path'], count=entry['count'], partial=entry['partial'], bedrock=True)
+                                        bytes=entry['bytes'], path=entry['path'], count=entry['count'], partial=entry['partial'], bedrock=True,
+                                        encoding=entry['encoding'], fields=entry['fields'])
         derived_count = sum(1 for e in projected.values() if e['status'] == 'derived')
         self.note(f'bedrock: {derived_count}/{len(layers)} layers derived by the pinned traversal on {run["groups"]} groups '
                   f'({run["span_seconds"]:.1f} s of rows; the candidate lane needs {run["candidate_warmup_seconds"]} s); sections '

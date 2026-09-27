@@ -50,3 +50,18 @@ Do not silently activate a new format, apply output caps, reduce records/layers,
 -e14e679: committed/pushed metadata-only observer; no active ROOT source mutation.
 -No model calls, validators, scientific tests, benchmark/comparison runs or parallel agents.
 -No new claim about classroom speedup, Granite learning or Tuesday.
+
+## Authorized fixes — prepared after fresh checkpoint pause
+
+User: "Proceed with fixes". Workflow36322127147 succeeded. At1790515329.6302185 the complete chain, adapter and167213056-byte driver state were freshly read and verified against checkpoint ec90d96d7114dc021cbeb129f5ab91d0756b960e6a81c126a5640f20e1234fff. PID58168 exited on SIGINT at1790515329.8960128; no child remained and no reconstruction is required. Pause receipt1693bytes SHA256239ca57cf41f3e64493f1a55d4edbf93e9714a7b0aaa1de9274a67d6d2cda4c5. Every old projection file remains in place.
+
+The new path is confined to transport/preparation:
+-CPU1 coordinator,14processes on physicalCPUs2–15, CPU0reserved. Startup barrier and process-affinity readback precede real work;28pending64MiB ledger ranges maximum. Inputs are immutable sealed ledgers, not source records or calculator replay.
+-Each range uses the existing exact crosswalk/select_path and original row ordering, then emits compact JSON inside independently hashed gzip members. One archive and durable read-verified range receipt retain completed work. Adjacent byte coverage and full native ledger row counts are required at completion. Partial archives remain on failure; same-plan completed ranges can be reused.
+-Final layer JSON is assembled by joining compressed members in range order. No type-tag spool expansion or serial parse/re-encode pass. New artifacts declare encoding=gzip-json and retain all values. Their byte hashes necessarily differ from old pretty JSON; no historical section or original native ledger hash changes.
+-Existing legacy spools and partial original projections are preserved. New output lives under work/derived/.projection-v2. A20GiB reserve refuses additional projection work; no deletion or storage purchase is performed.
+-Digest source readers verify and stream the compressed layers, retaining source-reference witnesses rather than another uncompressed copy. Independent layers parse on14CPUhelpers. The already-existing [] leaf-count reducer runs before private SQLite storage; full values remain in pinned compressed layers. Typed group conflicts, original column order and exact reducer semantics remain enforced. Per-cell SQL queries are replaced by one existing-column fetch per group and batched inserts.
+-Private SQLite row payloads use lossless zlib; old plain payloads remain readable. Independent bedrock digest tables use14CPUhelpers and publish in their original order. Each table retains its actual inverse proof; file identity and copy-time hash bind that proof to publication, eliminating the duplicate inverse pass.
+-The downstream comparison packet consumes current generated layer metadata; it does not load giant compressed layers into RAM. The final principal runtime MUST use this new immutable checkout, including its classroom improvements, rather than the older a80990d checkout.
+
+Verification at preparation: Python syntax compilation in memory and static review of byte-range boundaries, gzip-member joining, resume identity, exact coverage/counts, conflict handling, ordered table joining, inverse-proof binding and cleanup. No extra scientific test, canary, comparison run, validator or model call. Deployment and measured speed/storage results remain pending until actual runtime receipts below.

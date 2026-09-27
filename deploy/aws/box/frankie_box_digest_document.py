@@ -90,6 +90,34 @@ def _copy_verified(path, output, expected):
         raise ValueError('verified table changed during document assembly')
 
 
+def _bedrock_table_job(job):
+    ordinal,name,spec,scratch = job
+    import frankie_box_digest_sources as S
+    scratch = Path(scratch)
+    root,path = scratch/('table-%04d' % ordinal),scratch/('table-%04d.txt' % ordinal)
+    db = sqlite3.connect(Path(spec['database']).resolve().as_uri()+'?mode=ro',uri=True)
+    db.execute('PRAGMA cache_size=-2048')
+    db.execute('PRAGMA temp_store=FILE')
+    db.create_collation('group_order',S._compare_groups)
+    try:
+        if spec['kind']=='members':
+            rows = S._Members(db)
+        else:
+            transform = None
+            if spec['excluded'] is not None:
+                transform = lambda row:{c:DG._spell(v) for c,v in row.items() if c not in spec['excluded']}
+            rows = S._Rows(db,spec['query'],spec['parameters'],transform)
+        proof = TS.write_table(path,name,rows,root)
+        # write_table inverse-proves the actual emitted bytes. Copy-time hashing
+        # below binds that proof to the same unmodified table; no second inverse.
+        digest = _witness(path)
+        if TS._identity(path) != proof['verified_identity']:
+            raise ValueError('proved table changed before its byte witness')
+        return dict(name=name,rows=proof['rows'],path=str(path),digest=digest)
+    finally:
+        db.close()
+
+
 def write_digest(destination, receipt, layers, prices, frames, structures, roll, first, buys, sells,
                  *, bedrock_entries, scratch_directory):
     """Fresh destination only; all scratch retained, even after publication failure.
@@ -129,11 +157,11 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         path = scratch/('table-%04d.txt' % ordinal)
         proof = TS.write_table(path, name, rows, root, context=context)
         original = _Rows(root/'table.sqlite')
-        # Re-prove the actual block to be copied, not merely a returned success flag.
+        # Bind write_table's actual inverse proof to unchanged bytes; assembly
+        # independently hashes those bytes while copying.
         digest = _witness(path)
-        TS.verify_table(path, name, original, root/'document-inverse', context=context)
-        if _witness(path) != digest:
-            raise ValueError('table changed during document inverse proof')
+        if TS._identity(path) != proof['verified_identity']:
+            raise ValueError('proved table changed before its byte witness')
         stages.append(dict(name=name, rows=proof['rows'], path=path, digest=digest))
         return original
 
@@ -148,8 +176,24 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         if bedrock_entries:
             with BedrockSources(bedrock_entries, scratch/'calculation-layers') as sources:
                 layer_header = DG.bedrock_header(sources.derived, sources.layer_count, sources.verdict or {})
-                for name, rows in sources.tables.items():
-                    table(name, rows)
+                from frankie_box_projection import Workers,save
+                workers = Workers()
+                try:
+                    save(scratch/'table-workers.json',workers.receipt())
+                    jobs=[]
+                    for name,rows in sources.tables.items():
+                        if type(rows).__name__=='_Members':
+                            spec=dict(kind='members',database=str(sources.root/'sources.sqlite'))
+                        else:
+                            spec=dict(kind='rows',database=str(sources.root/'sources.sqlite'),
+                                      query=rows.query,parameters=rows.parameters,
+                                      excluded=getattr(rows,'excluded',None))
+                        jobs.append((len(stages)+len(jobs),name,spec,str(scratch)))
+                    for entry in workers.ordered(_bedrock_table_job,jobs):
+                        entry['path']=Path(entry['path'])
+                        stages.append(entry)
+                finally:
+                    workers.close()
         stage = scratch/'digest.pending'
         with stage.open('xb') as output:
             output.write(DG.digest_header(receipt).encode('utf-8'))

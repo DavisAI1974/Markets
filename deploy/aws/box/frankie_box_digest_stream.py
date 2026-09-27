@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import re
 import sqlite3
+import zlib
 
 import frankie_box_digest_render as DG
 
@@ -41,11 +42,11 @@ def _dump(value):
     text = json.dumps(_pack(value), separators=(',', ':'))
     if not DG._same(_unpack(json.loads(text)), value):
         raise ValueError('private row spool cannot preserve the input type')
-    return text
+    return zlib.compress(text.encode(),1) if len(text) >= 256 else text
 
 
 def _load(value):
-    return _unpack(json.loads(value))
+    return _unpack(json.loads(zlib.decompress(value) if isinstance(value,bytes) else value))
 
 
 def _database(directory):
@@ -398,6 +399,11 @@ def verify_table(path, name, rows, scratch_directory, context=None):
         db.close()
 
 
+def _identity(path):
+    info = Path(path).stat()
+    return [info.st_dev,info.st_ino,info.st_size,info.st_mtime_ns,info.st_ctime_ns]
+
+
 def write_table(destination, name, rows, scratch_directory, context=None):
     """Write and verify a fresh scratch block; never replace existing evidence.
 
@@ -416,11 +422,15 @@ def write_table(destination, name, rows, scratch_directory, context=None):
             _emit(handle, db, name, columns, n, whole, scales, first, sep)
             handle.flush()
             os.fsync(handle.fileno())
+            before = _identity(destination)
             verified = verify_table(destination, name, _rows(db, 'source'),
                                     Path(scratch_directory) / 'inverse',
                                     {source: _rows(db, 'cross_source')} if source is not None else None)
+            if _identity(destination) != before:
+                raise ValueError('table changed during inverse proof')
             if verified != n:
                 raise ValueError('verified table count mismatch')
-            return dict(path=str(destination), rows=n, verified=True, scratch_directory=str(scratch_directory))
+            return dict(path=str(destination), rows=n, verified=True, verified_identity=before,
+                        scratch_directory=str(scratch_directory))
         finally:
             db.close()

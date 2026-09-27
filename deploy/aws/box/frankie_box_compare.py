@@ -57,6 +57,11 @@ def derived_layers(work):
     layers = {}
     for name, entry in receipt['layers'].items():
         item = dict(status=entry.get('status'), producer=entry.get('producer'), reason=entry.get('reason'), sha256=entry.get('sha256'), bytes=entry.get('bytes'))
+        if entry.get('encoding') == 'gzip-json':
+            item['count'] = entry['count']
+            item['fields'] = [k for k in entry['fields'] if k not in ('status','producer','reason')][:30]
+            layers[name] = item
+            continue
         path = work / 'derived' / f'{name}.json'
         if path.is_file():
             try:
