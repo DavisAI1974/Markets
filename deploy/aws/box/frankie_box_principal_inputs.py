@@ -83,8 +83,17 @@ def assemble(output, calculations_path, calculations_sha256):
     if {n.split('contract_section_')[1].removesuffix('.json') for n in files} != set(SECTIONS):
         raise ValueError('all 18 historical sections required')
     retained = write(output / 'retained-witnesses.json', dict(files=files))
-    base = brain.pin_session_base(BRAIN, calculations['source_binding']['sha256'],
-                                  output / 'knowledge-base-receipt.json')
+    identity = calculations['source_binding']['sha256']
+    # The request's knowledge base is pinned once (the first principal-inputs root of this request keeps its receipt).
+    # A later root (a re-rendered digest, same request) carries that receipt forward; pin_session_base re-checks it
+    # against the snapshot's bytes and sha256, so a changed base is still refused.
+    if (BRAIN / 'bases' / identity / 'MANIFEST.json').exists():
+        earlier = sorted(p for p in PARENT.glob('*/knowledge-base-receipt.json')
+                         if p.parent != output and json.loads(p.read_bytes()).get('request_identity') == identity)
+        if earlier:
+            (output / 'knowledge-base-receipt.json').write_bytes(earlier[0].read_bytes())
+            print('knowledge base receipt carried from ' + str(earlier[0]), file=sys.stderr, flush=True)
+    base = brain.pin_session_base(BRAIN, identity, output / 'knowledge-base-receipt.json')
     catalog = json.loads((REPOSITORY / 'research/kalshi/frankie_boss/knowledge/DIPOLE_SHARED_CATALOG_20260922.json').read_bytes())
     catalog['version'] += '-accumulated-' + pin(base)['sha256']
     local = {}
