@@ -106,7 +106,7 @@ def _read_block_fast(path, index):
     rows = _decode_block_trees(row[1])
     if len(rows) != length or rows[-1][4] != head:
         raise ValueError('compact block coverage differs')
-    entries, trees, digests, count = [], [], [], start
+    entries, trees, digests, bodies, count = [], [], [], [], start
     for ordinal, kind, tree, body, digest in rows:
         envelope = decode_tagged(tree)
         if (type(envelope) is not dict or ordinal != count or envelope.get('ordinal') != ordinal
@@ -114,8 +114,28 @@ def _read_block_fast(path, index):
                 or envelope.get('previous_hash') != previous):
             raise ValueError('evidence journal continuity or hash mismatch')
         previous, count = digest, count + 1
-        entries.append(envelope); trees.append(tree); digests.append(digest)
+        entries.append(envelope); trees.append(tree); digests.append(digest); bodies.append(body)
+    _BODIES[0] = bodies        # the teacher selection slices each payload's canonical bytes out of its body
     return entries, trees, digests, time.process_time() - started
+
+
+_BODIES = [None]
+
+
+def _payload_bytes(tree, body):
+    """canonical_tagged_bytes(payload node) sliced out of the envelope's canonical body instead of encoding it again (r9
+    profile, 2026-09-28: 54% of each walk worker in json encoding). The body is compact JSON of ['dict', [[k, v], ...]], so
+    the payload value sits between the encoded fields before it and after it; the slice is checked by its bounds and by
+    the fields around it, and falls back to encoding when the layout differs."""
+    items = tree[1] if type(tree) is list and len(tree) == 2 and tree[0] == 'dict' else None
+    at = next((i for i, (name, _) in enumerate(items or ()) if name == 'payload'), None)
+    if at is None:
+        return canonical_tagged_bytes(_field(tree, 'payload'))
+    head = b'["dict",[' + b''.join(canonical_tagged_bytes(item) + b',' for item in items[:at]) + b'["payload",'
+    tail = b']' + b''.join(b',' + canonical_tagged_bytes(item) for item in items[at + 1:]) + b']]'
+    if not (body.startswith(head) and body.endswith(tail)) or len(body) <= len(head) + len(tail):
+        return canonical_tagged_bytes(items[at][1])
+    return body[len(head):len(body) - len(tail)]
 
 
 def _tagged_hash(node):
@@ -134,10 +154,11 @@ def _guard(path, index, entries, trees, digests):
     original, _ = _read_block(path, index)
     if original != entries:
         raise ValueError('fast block reader differs from the pinned reader; run stopped')
-    for entry, tree, digest in zip(entries, trees, digests):
+    for entry, tree, digest, body in zip(entries, trees, digests, _BODIES[0]):
         payload, node = entry['payload'], _field(tree, 'payload')
         if (evidence_hash(entry) != digest or pack(payload) != node
-                or canonical_bytes(pack(payload)) != canonical_tagged_bytes(node)):
+                or canonical_bytes(pack(payload)) != canonical_tagged_bytes(node)
+                or _payload_bytes(tree, body) != canonical_tagged_bytes(node)):
             raise ValueError('fast journal hashes differ from the original computation; run stopped')
         if entry['kind'] == 'APPLIED' and (evidence_hash({k: payload[k] for k in CONTEXT_FIELDS})
                                            != _tagged_hash(_context_node(node))):
@@ -156,14 +177,95 @@ CONTEXT_FIELDS = ('cursor', 'raw_record', 'normalized', 'source_member_index', '
                   'terminal_prefix_hash')
 
 
+# ---- the walk's saved blocks (Greg, 2026-09-28: "Preserve the data with the save code ... and rerun from there";
+# "whatever we stop to fix, save the progress so we can start right back up"; "fix ... the slow walk") ----------------
+# Each block's selected part is saved as it is produced, keyed by the block's identity in the journal (start, count,
+# previous and head: the chain hash binds the content), the cutoff, the mode, the entity and CACHE_VERSION. The FIRST walk
+# (context) also saves the block's teacher part from the same decode, so the second walk (teacher) of the same launch
+# reads saved blocks instead of decoding the journal again, a rerun reads both walks from them, and a stopped walk
+# resumes from the blocks already saved. A saved block is compressed pickle, written atomically, checked on load
+# (key and sha256); anything missing, corrupt or from another key is decoded again from the journal. The parent keeps
+# every ordered seam, terminal and seal check. Writing stops (the walk goes on, decoding) when the disk's free space
+# falls under CACHE_MIN_FREE_BYTES; the directory is FRANKIE_WALK_CACHE or <journal dir>/walk-cache.
+CACHE_VERSION = 'walk-cache-v1'
+CACHE_MIN_FREE_BYTES = 30 * (1 << 30)      # FRANKIE_WALK_CACHE_MIN_FREE_GB overrides (read in each worker)
+
+
+def _cache_dir(path):
+    import os
+    root = os.environ.get('FRANKIE_WALK_CACHE') or str(Path(path).resolve().parent / 'walk-cache')
+    return Path(root)
+
+
+def _cache_file(path, index, through_cursor, mode, entity):
+    start, length, previous, head = index
+    key = json.dumps([CACHE_VERSION, str(Path(path).resolve()), start, length, previous, head, through_cursor, mode,
+                      list(entity) if entity is not None else None])
+    return _cache_dir(path) / ('block-%012d-%s-%s.pkz' % (start, mode, hashlib.sha256(key.encode()).hexdigest()[:24])), key
+
+
+def _cache_load(path, index, through_cursor, mode, entity):
+    import pickle
+    file, key = _cache_file(path, index, through_cursor, mode, entity)
+    try:
+        blob = file.read_bytes()
+    except OSError:
+        return None
+    try:
+        digest, body = blob[:64].decode(), blob[64:]
+        if hashlib.sha256(body).hexdigest() != digest:
+            return None
+        saved_key, part = pickle.loads(zlib.decompress(body))
+        return part if saved_key == key else None
+    except Exception:           # noqa: BLE001  -- a damaged saved block is decoded again from the journal
+        return None
+
+
+def _cache_save(path, index, through_cursor, mode, entity, part):
+    import os
+    import pickle
+    file, key = _cache_file(path, index, through_cursor, mode, entity)
+    try:
+        file.parent.mkdir(parents=True, exist_ok=True)
+        stat = os.statvfs(file.parent)
+        floor = int(float(os.environ.get('FRANKIE_WALK_CACHE_MIN_FREE_GB', CACHE_MIN_FREE_BYTES / (1 << 30))) * (1 << 30))
+        if stat.f_bavail * stat.f_frsize < floor:
+            return False
+        body = zlib.compress(pickle.dumps((key, part), protocol=pickle.HIGHEST_PROTOCOL), 1)
+        temporary = file.with_name(file.name + '.tmp-%d' % os.getpid())
+        temporary.write_bytes(hashlib.sha256(body).hexdigest().encode() + body)
+        os.replace(temporary, file)
+        return True
+    except OSError:
+        return False
+
+
 def _prefix_block(path, index, through_cursor, mode='full', entity=None):
-    """Decode and verify one block (the reader's task), then pair and select exactly as journal_prefix does.
-    mode 'context': ship only CONTEXT_FIELDS; mode 'teacher': ship the full payload and its canonical bytes; both also
-    ship the entity's 7-field row hash."""
+    """One block's selected part: a saved block when one matches, else decode and verify (the reader's task), pair and
+    select exactly as journal_prefix does, and save it. mode 'context': ship only CONTEXT_FIELDS; mode 'teacher': ship the
+    full payload and its canonical bytes; both also ship the entity's 7-field row hash. The context walk also saves the
+    block's teacher part from the same decode (the second walk then reads it)."""
+    started = time.process_time()
+    saved = _cache_load(path, index, through_cursor, mode, entity) if mode != 'full' else None
+    if saved is not None:
+        return dict(saved, cpu=time.process_time() - started, saved_block=True)
     entries, trees, digests, cpu = _read_block_fast(path, index)
     if not _GUARDED[0]:
         _GUARDED[0] = True
         _guard(path, index, entries, trees, digests)
+    part = _select_block(entries, trees, digests, through_cursor, mode, entity, cpu)
+    saved = None
+    if mode != 'full':
+        saved = _cache_save(path, index, through_cursor, mode, entity, part)
+        if mode == 'context' and _cache_load(path, index, through_cursor, 'teacher', entity) is None:
+            saved = _cache_save(path, index, through_cursor, 'teacher', entity,
+                                _select_block(entries, trees, digests, through_cursor, 'teacher', entity, 0.0)) and saved
+    return dict(part, cpu=time.process_time() - started, saved_block=False, saved_now=bool(saved))
+
+
+def _select_block(entries, trees, digests, through_cursor, mode, entity, cpu):
+    """Pair and select one decoded block exactly as journal_prefix does (unchanged from the pinned-equivalent walk)."""
+    bodies = _BODIES[0]
     lead, tail, pending, first_input, expected, applied = None, None, None, None, None, 0
     payloads, last, pending_node = [], None, None
 
@@ -186,7 +288,7 @@ def _prefix_block(path, index, through_cursor, mode='full', entity=None):
                 if position != 0:
                     raise ValueError('journal applied record differs from submitted evidence')
                 lead = dict(payload=payload, envelope_hash=digest, entries=entry['ordinal'] + 1,
-                            canonical=canonical_tagged_bytes(node) if mode == 'teacher' else None,
+                            canonical=_payload_bytes(tree, bodies[position]) if mode == 'teacher' else None,
                             subset=subset(payload, node) if mode != 'full' else None)
                 expected = payload['cursor'] + 1
                 continue
@@ -205,7 +307,7 @@ def _prefix_block(path, index, through_cursor, mode='full', entity=None):
                 if mode == 'context':
                     payloads.append(({k: payload[k] for k in CONTEXT_FIELDS}, subset(payload, node)))
                 elif mode == 'teacher':
-                    payloads.append((payload, canonical_tagged_bytes(node), subset(payload, node)))
+                    payloads.append((payload, _payload_bytes(tree, bodies[position]), subset(payload, node)))
                 else:
                     payloads.append(payload)
                 last = (entry, digest)
@@ -236,6 +338,7 @@ def parallel_journal_prefix(builder, through_cursor, summary=None):
         assignments.put(cpu)
     index = iter(journal.db.execute('SELECT start,count,previous,head FROM blocks ORDER BY start').fetchall())
     count, head, applied, pending = 0, journal_genesis(), 0, None
+    blocks_read = blocks_reused = blocks_saved = 0
     try:
         with ProcessPoolExecutor(max_workers=len(journal.worker_cpus), mp_context=context,
                                  initializer=_assign_cpu, initargs=(assignments,)) as pool:
@@ -276,7 +379,12 @@ def parallel_journal_prefix(builder, through_cursor, summary=None):
                     pending = part['tail']
                 count, head = count + length, terminal
                 journal.worker_cpu_seconds += part['cpu']
+                blocks_read += 1
+                blocks_reused += bool(part.get('saved_block'))
+                blocks_saved += bool(part.get('saved_now'))
                 submit()
+        print('walk %s: %d blocks, %d read from saved blocks, %d saved now (%s)' % (
+            mode, blocks_read, blocks_reused, blocks_saved, _cache_dir(journal.path)), file=sys.stderr, flush=True)
         if (count, head) != (journal.count, journal.head_hash):
             raise ValueError('compact terminal identity differs')
         journal._check_seal()
