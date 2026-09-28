@@ -29,7 +29,7 @@ import math
 import re
 from fractions import Fraction
 
-SCHEMA = 'DIGEST_V9'   # V9: `L` lists with `*k` runs, `*k` runs in `I` lists, dictionary entries spelled as cells, `"k` ditto cells, `$d` trailing-number deltas of strings (Greg, 2026-09-28, the reducer stacks on top of the 6-hour run's); V8: the table grammar below (Greg, 2026-09-28, every token stack that works, all additive); V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
+SCHEMA = 'DIGEST_V9'   # V9: `L` lists with `*k` runs, `*k` runs in `I` lists, dictionary entries spelled as cells, `"k` ditto cells, `$d` trailing-number deltas of strings, `~d` integer deltas inside keys-once objects, `O` packed digits with outliers apart (Greg, 2026-09-28, the reducer stacks on top of the 6-hour run's); V8: the table grammar below (Greg, 2026-09-28, every token stack that works, all additive); V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
 TABLE_GRAMMAR = 'DIGEST_V9'   # the table block grammar. V9: `L` lists, `*k` item runs, dictionary entries as cells. V7: `?k` runs of absent cells; deltas on every integer column whose name ends in
                               # recv_ns / event_ns and on group_index. V8 on top: keys-once objects (`shapes:`, `R` cells), packed digit
                               # lists (`P`), same-row integer references (`<i`), count columns derived as list lengths (`lengths:`), columns
@@ -514,6 +514,10 @@ def _objects(v, shape, prev_value):
                 text = '%+d' % (y - ref[k])
             else:
                 text = _inner_literal(y)
+                if ref is not None and _is_int(y) and _is_int(ref.get(k)):       # V9 `~d`: any integer key, when cheaper
+                    moved = '~%+d' % (y - ref[k])
+                    if _cost(moved) < _cost(text):
+                        text = moved
             if _is_int(y):
                 at = seen.get(y)
                 if at is None:
@@ -565,6 +569,10 @@ def _read_objects(body, shape, prev_value):
                 y = x[shape[int(text[1:])]]
             elif text[0] in '+-' and len(text) > 1 and text[1:].isdigit() and k.endswith(DELTA_KEYS) and ref is not None and _is_int(ref.get(k)):
                 y = ref[k] + int(text)
+            elif text.startswith('~'):
+                if ref is None or not _is_int(ref.get(k)) or not re.fullmatch(r'~[+-]\d+', text):
+                    raise ValueError('keys-once cell: `~` without a previous integer')
+                y = ref[k] + int(text[1:])
             else:
                 y = _scalar(text)
             x[k] = y
@@ -600,11 +608,44 @@ _FRACTION = re.compile(r'-?\d+/\d+')
 
 def _packed(v, first):
     """V8 packed digits (the stacked_v2 P form): `P<first>:<lo>:<width>:<digits>`, the successive differences as one
-    run of fixed-width decimal fields, each difference = field + lo."""
+    run of fixed-width decimal fields, each difference = field + lo. V9 (stacked_v2 O, outliers): when cheaper, up to
+    eight of the largest differences are written apart, `O<first>:<lo>:<width>:<digits>:<i>=<d>;...` (their fields are
+    zeros), so they do not widen every field."""
     steps = [b - a for a, b in zip(v, v[1:])]
-    lo = min(steps)
-    width = max(1, len(str(max(steps) - lo)))
-    return 'P%s:%d:%d:%s' % (first, lo, width, ''.join(str(d - lo).zfill(width) for d in steps))
+    best = _packed_form(first, steps, {})
+    order = sorted(range(len(steps)), key=lambda i: steps[i], reverse=True)
+    for cut in range(1, min(8, len(steps) - 1) + 1):
+        text = _packed_form(first, steps, {i: steps[i] for i in order[:cut]})
+        if _cost(text) < _cost(best):
+            best = text
+    return best
+
+
+def _packed_form(first, steps, apart):
+    kept = [d for i, d in enumerate(steps) if i not in apart]
+    lo = min(kept)
+    width = max(1, len(str(max(kept) - lo)))
+    digits = ''.join('0' * width if i in apart else str(d - lo).zfill(width) for i, d in enumerate(steps))
+    if not apart:
+        return 'P%s:%d:%d:%s' % (first, lo, width, digits)
+    return 'O%s:%d:%d:%s:%s' % (first, lo, width, digits, ';'.join('%d=%d' % (i, apart[i]) for i in sorted(apart)))
+
+
+def _unpacked_apart(text, column, prev_lists):
+    first, lo, width, digits, apart = text[1:].split(':', 4)
+    lo, width = int(lo), int(width)
+    if width < 1 or not digits or len(digits) % width or not digits.isdigit() or not apart:
+        raise ValueError('packed cell %r' % text[:40])
+    steps = [int(digits[i:i + width]) + lo for i in range(0, len(digits), width)]
+    for item in apart.split(';'):
+        i, equal, d = item.partition('=')
+        if not equal or not 0 <= int(i) < len(steps):
+            raise ValueError('packed cell %r' % text[:40])
+        steps[int(i)] = int(d)
+    v = [_list_start(first, column, prev_lists)]
+    for d in steps:
+        v.append(v[-1] + d)
+    return v
 
 
 def _unpacked(text, column, prev_lists):
@@ -976,6 +1017,8 @@ class RowDecoder:
                 v = _string_stepped(prev_values.get(c), cell)
             elif cell.startswith('P'):
                 v = _unpacked(cell, c, prev_lists)
+            elif cell.startswith('O'):
+                v = _unpacked_apart(cell, c, prev_lists)
             elif cell.startswith('R'):
                 if c not in h.facts.shapes:
                     raise ValueError(f'table {h.name}: keys-once cell in column {c} without a declared shape')
@@ -1361,7 +1404,9 @@ def digest_header(receipt):
              'top: `L<item>,<item>,...` = a list of plain values, each item `-` T F an integer, a float, `S<text>` or `J<json>`, and '
              '`<item>*k` = that item k times in a row (`L` alone = the empty list); inside `I` a `<d>*k` = that difference k times in a '
              'row; a dictionary entry `@n=` is spelled like a cell (`S<text>`, `J<json>` or `L...`); `"k` = the cell just before it, k more '
-             'times; `$<d>` = the previous row\'s string in this column with its trailing number moved by d (same prefix)', '',
+             'times; `$<d>` = the previous row\'s string in this column with its trailing number moved by d (same prefix); inside a '
+             'keys-once object `~<d>` = that key\'s integer in the previous object plus d; `O<first>:<lo>:<width>:<digits>:<i>=<d>;...` '
+             '= `P` with the listed differences (0-based) given apart and their fields zeros', '',
              f'Rows: {receipt["rows"]["path"]} ({receipt["rows"]["count"]} entries, kinds {receipt["rows"]["kinds"]}, head {receipt["rows"]["head"][:16]}...; '
              f'head equals the request source_hash: {receipt["rows"]["head_is_request_source_hash"]}).',
              f'INPUT records fed to the V4 adapter: {receipt["input_records"]}; legacy control rows projected: {receipt["legacy_rows"]}; '
