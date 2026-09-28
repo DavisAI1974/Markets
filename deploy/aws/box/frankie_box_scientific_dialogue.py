@@ -138,6 +138,10 @@ def run(session, correction, *, root, cache, classroom_module, staged_module):
                             ('fact-review', request['fact_review']),
                             ('learning-history', request['learning_history'])):
         sources.append(dict(source_id=source_id, content=science.canonical(body)))
+    if request.get('joined_teacher') is not None:
+        # the joined teacher data (SPEC-joined-teachers.md), whole; the same list reaches the BOSS teacher's reading
+        joined = importlib.import_module('research.kalshi.frankie_boss.dipole_joined_teacher')
+        sources.extend(joined.sources(request['joined_teacher']))
     reading = staged_module.consume_sources(session, sources, 'scientific_teacher', 'full-run-scientific-review',
         descriptor['snapshot_hash'], request['scientific_request_hash'], cache, request['instruction'])
     workers=importlib.import_module('deploy.aws.box.frankie_box_classroom_workers')

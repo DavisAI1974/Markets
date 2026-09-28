@@ -328,7 +328,7 @@ def group_review_items(items: Sequence[Mapping[str, Any]]) -> tuple[dict, ...]:
         groups.setdefault(root, []).append(correction_id)
     return tuple(({'root_cause_id': root, 'member_review_ids': tuple(members)} for root, members in groups.items()))
 
-def build_final_correction_request(*, original_request_sha256: str, response: Mapping[str, Any], grade: Mapping[str, Any], key: Mapping[str, Any], teachback: Mapping[str, Any], novelty_investigation: Mapping[str, Any], learning_history: Mapping[str, Any] | None = None, shared_knowledge: Mapping[str, Any] | None = None) -> dict:
+def build_final_correction_request(*, original_request_sha256: str, response: Mapping[str, Any], grade: Mapping[str, Any], key: Mapping[str, Any], teachback: Mapping[str, Any], novelty_investigation: Mapping[str, Any], learning_history: Mapping[str, Any] | None = None, shared_knowledge: Mapping[str, Any] | None = None, joined_teacher: Mapping[str, Any] | None = None) -> dict:
     if type(original_request_sha256) is not str or len(original_request_sha256) != 64:
         raise ValueError('original principal request sha256 required')
     if type(response) is not dict or not isinstance(response.get('session_id'), str) or not response['session_id'].strip():
@@ -348,7 +348,7 @@ def build_final_correction_request(*, original_request_sha256: str, response: Ma
         from .dipole_scientific_review import build_request
         body['scientific_review_request'] = build_request(initial_response=response,
             original_request_sha256=original_request_sha256, fact_review=novelty_investigation,
-            shared_knowledge=shared_knowledge, learning_history=learning_history)
+            shared_knowledge=shared_knowledge, learning_history=learning_history, joined_teacher=joined_teacher)
         body['instruction'] += (' Complete the separately receipted scientific-teacher conversation about the '
             'whole run and every finding. Preserve scientific disagreement separately from factual corrections.')
     body['request_sha256'] = evidence_hash(body)
@@ -467,7 +467,7 @@ class FinalDipoleClassroomPrincipalAdapter(hardened.HardenedDipoleClassroomPrinc
         self._retain_audit('dipole-classroom-post-grade.json', grade)
         self._retain('dipole-classroom-novel-findings.json', novel_findings)
         self._retain('dipole-classroom-novelty-investigation.json', novelty)
-        correction = bind_final_resolution_requirement(build_final_correction_request(original_request_sha256=digest(request), response=initial_response, grade=grade, key=self.classroom_package['teacher_key'], teachback=teachback, novelty_investigation=novelty, learning_history=self.classroom_package['pre_message'].get('learning_history'), shared_knowledge=self.classroom_package['pre_message'].get('shared_knowledge')))
+        correction = bind_final_resolution_requirement(build_final_correction_request(original_request_sha256=digest(request), response=initial_response, grade=grade, key=self.classroom_package['teacher_key'], teachback=teachback, novelty_investigation=novelty, learning_history=self.classroom_package['pre_message'].get('learning_history'), shared_knowledge=self.classroom_package['pre_message'].get('shared_knowledge'), joined_teacher=getattr(self, 'joined_teacher', None)))
         correction_path = self.directory / 'classroom-correction-request.json'
         created = False
         if correction_path.exists():

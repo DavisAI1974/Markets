@@ -21,7 +21,7 @@ def final_turn(boss,classroom):
 
 def _sources(request):
     return {x['source_id'] for x in request['shared_knowledge']['sources']} | {
-        'initial-response','fact-review','learning-history','classroom-exchange'}
+        'initial-response','fact-review','learning-history','classroom-exchange'} | set(S.joined_sources(request))
 
 
 def teacher_prompt(request,item,role,prior,context):
@@ -47,8 +47,8 @@ def teacher_prompt(request,item,role,prior,context):
         '\nResponds-to hash: '+S.digest(prior)+'\nEvidence navigation: '+S.canonical(context).decode()+
         '\nReturn one JSON object with exactly: item_id, responds_to_hash, position (AGREE, DISAGREE or UNRESOLVED), '
         'reasoning (nonempty text), evidence_checks (nonempty list of {source_id,claim,check,result}; '
-        'result supports/contradicts/unresolved; source_id must name shared research, initial-response, fact-review, '
-        'learning-history or classroom-exchange), build_forward (text list), teaching_implications (text list), '
+        'result supports/contradicts/unresolved; source_id must name shared research, a joined-teacher source, '
+        'initial-response, fact-review, learning-history or classroom-exchange), build_forward (text list), teaching_implications (text list), '
         'proposed_training_experiments (text list), uncertainty (nonempty text list), next_tests (nonempty text list), '
         'original_duties=PRESERVED, target_changes=NONE, predictive_status=UNESTABLISHED, economic_status=UNESTABLISHED.')
 
@@ -154,6 +154,9 @@ def validate(request,value):
         if name in expected:raise ValueError('reserved teacher discussion source id')
         raw=S.canonical(body)
         expected[name]=dict(sha256=S.hashlib.sha256(raw).hexdigest(),bytes=len(raw))
+    for name,value in S.joined_sources(request).items():
+        if name in expected:raise ValueError('joined teacher source uses a delivered source id')
+        expected[name]=value
     actual={x['source_id']:{k:x[k] for k in ('sha256','bytes')} for x in receipt['sources']}
     if actual!=expected:
         raise ValueError('BOSS teacher did not receive every shared source and full conversation')

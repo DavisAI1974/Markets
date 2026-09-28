@@ -30,7 +30,7 @@ def pin(path):
     return dict(path=str(path), bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
 
 
-def build(prepared_path, principal_path, commit, run_id, output_root, completion_ref):
+def build(prepared_path, principal_path, commit, run_id, output_root, completion_ref, joined_manifest=None):
     output = Path(output_root)
     if output.parent != PARENT or not re.fullmatch('[A-Za-z0-9_-]{1,96}', output.name) or output.exists():
         raise ValueError('fresh named output under ' + str(PARENT))
@@ -74,6 +74,12 @@ def build(prepared_path, principal_path, commit, run_id, output_root, completion
     for key in ('calculation_pins', 'shared_knowledge', 'principal_admission'):
         if key in principal:
             config[key] = principal[key]
+    config.pop('joined_teacher', None)
+    if joined_manifest:
+        # the joined teacher data (SPEC-joined-teachers.md): read by both teachers through the scientific request
+        manifest = Path(joined_manifest).resolve()
+        config['joined_teacher'] = dict(directory=str(manifest.parent),
+                                        manifest_sha256=hashlib.sha256(manifest.read_bytes()).hexdigest())
     output.parent.mkdir(parents=True, exist_ok=True)
     output.mkdir(mode=0o700)
     path = output / 'actual-host-configuration.json'
@@ -87,8 +93,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ('prepared', 'principal', 'commit', 'run-id', 'output-root', 'completion-ref'):
         parser.add_argument('--' + name, required=True)
+    parser.add_argument('--joined', default=None, help='the joined teacher MANIFEST.json (optional)')
     a = parser.parse_args()
-    print(json.dumps(build(a.prepared, a.principal, a.commit, a.run_id, a.output_root, a.completion_ref),
+    print(json.dumps(build(a.prepared, a.principal, a.commit, a.run_id, a.output_root, a.completion_ref, a.joined),
                      sort_keys=True), flush=True)
 
 

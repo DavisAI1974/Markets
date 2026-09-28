@@ -1,6 +1,17 @@
 # Spec: the joined teachers (Greg, 2026-09-28)
 
-Status: SPEC for Greg's go. Nothing here is built or launched until he says go.
+Status: BUILT 2026-09-28 on Greg's go ("Go ahead and build the joined teachers"); not yet run on the box.
+- Builder: `deploy/aws/box/frankie_box_joined_teacher.py` + `.sh` (own lock `box-joined-*`). Reads the Monday root's layer
+  files in place (derive.json from the calculations receipt), joins every numeric leaf per F_LAST group, runs the
+  per-cell sign-step couplings (counts, circular-shift null), writes MANIFEST.json + sources/ (series inventory,
+  couplings beyond their null with the within-null counts per cell). Resumable; probe = frankie_box_progress.sh.
+- Delivery: `dipole_joined_teacher.py` (descriptor); `frankie_box_cycle0.sh ACTION=config JOINED=<MANIFEST.json>` puts it
+  in the host config; the adapter re-hashes it; the scientific request carries it; the classroom scientific teacher's
+  reading and the BOSS teacher's reading both take every joined source whole; the host validators require them.
+  Frankie's pre-message and model-visible binding do not carry it.
+- Not in this build: the teachers' classroom package still uses the 19 columns and the 171 pairs (the graded key; changing
+  it re-mints the grading and is a separate call); Frankie's claims arrive through the existing sources (initial-response,
+  fact-review, learning-history), labelled as his.
 
 ## Why
 

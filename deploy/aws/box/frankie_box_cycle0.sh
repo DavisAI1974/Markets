@@ -15,7 +15,7 @@ case "$ACTION" in
     : "${RUN_ID:?fresh run id}"; : "${OUTPUT_ROOT:?fresh config root}"
     exec "$PYTHON" -B "$CODE_ROOT/deploy/aws/box/frankie_box_host_config.py" --prepared "$PREPARED" \
       --principal "$PRINCIPAL" --commit "$MARKETS_SHA" --run-id "$RUN_ID" --output-root "$OUTPUT_ROOT" \
-      --completion-ref "${COMPLETION_REF:-claude/agent-skills-execution-tzh7sw}"
+      --completion-ref "${COMPLETION_REF:-claude/agent-skills-execution-tzh7sw}" ${JOINED:+--joined "$JOINED"}
     ;;
   launch)
     : "${CONFIGURATION:?actual host configuration}"

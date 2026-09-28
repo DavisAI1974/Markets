@@ -108,7 +108,8 @@ def principal_inputs(config):
         delivery_receipt=delivery['path'] if delivery else None,
         expected_delivery_file_sha256=delivery['sha256'] if delivery else None,
         result_path=config['calculation_result']['path'],
-        calculation_pins=config.get('calculation_pins'), single_run=single)
+        calculation_pins=config.get('calculation_pins'), single_run=single,
+        joined_teacher=config.get('joined_teacher'))
 
 
 def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha256,
@@ -116,7 +117,7 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
         receiver_root, receiver_commit, python, directory, retained_directory,
         expected_retained_witnesses_sha256, delivery_receipt, expected_delivery_file_sha256,
         result_path, classroom_package, session_executor=None, adapter_class=None, admission=None, shared_knowledge=None,
-        calculation_pins=None, single_run=None):
+        calculation_pins=None, single_run=None, joined_teacher=None):
     """Build the per-prefix receiver pins plus mandatory Dipole classroom.
 
     Each cycle gets its own directory. All expected hashes/checkpoints are supplied
@@ -234,7 +235,7 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
                     'calculation-pins': calculation_pins['path']},
             protected_files={}, section_evidence=sections, feedback_contract=feedback_contract,
             classroom_package=classroom_package, session_executor=session_executor,
-            shared_knowledge=shared_knowledge)
+            shared_knowledge=shared_knowledge, joined_teacher=joined_teacher)
     mapping_file=directory/'bound-mapping.json'
     if mapping_file.exists():
         bound=json.loads(mapping_file.read_bytes())
@@ -300,7 +301,8 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
         protected_files={},
         section_evidence=sections,feedback_contract=feedback_contract,
         classroom_package=classroom_package,session_executor=session_executor,
-        **({'shared_knowledge':shared_knowledge} if shared_knowledge is not None else {}))
+        **({'shared_knowledge':shared_knowledge} if shared_knowledge is not None else {}),
+        **({'joined_teacher':joined_teacher} if joined_teacher is not None else {}))
 
 
 def metadata_for_binding(binding, *, state_defects_and_gaps_reported):

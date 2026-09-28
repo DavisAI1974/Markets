@@ -42,7 +42,7 @@ def _object(text):
         raise ValueError('scientific output must be an object')
     return value
 
-def build_request(*, initial_response, original_request_sha256, fact_review, shared_knowledge, learning_history):
+def build_request(*, initial_response, original_request_sha256, fact_review, shared_knowledge, learning_history, joined_teacher=None):
     if type(initial_response) is not dict:
         raise ValueError('complete original Frankie response required')
     _text(initial_response.get('session_id'), 'Frankie session')
@@ -60,6 +60,14 @@ def build_request(*, initial_response, original_request_sha256, fact_review, sha
             'A second occurrence is not required for a scoped scientific conclusion: check the mathematics, '
             'assumptions, mechanism and cited evidence. Agreement is not predictive or economic validation. '
             'Explain what can be built forward, what is contradicted, and what remains untested.'))
+    if joined_teacher is not None:
+        # the joined teacher data (SPEC-joined-teachers.md): both teachers read it whole beside the shared research
+        from .dipole_joined_teacher import validate_descriptor as joined
+        body['joined_teacher'] = joined(joined_teacher)
+        body['instruction'] += (' The joined teacher data is also delivered: every calculation layer of this run joined '
+            'per F_LAST group, and the couplings between the Dipole series and every other series, per cell, as counts '
+            'with their circular-shift null. Use it to check Frankie\'s findings against the data and to look for '
+            'relationships, causes and couplings; his findings are his claims, never the answer.')
     request_items(body)
     body['scientific_request_hash'] = digest(body)
     return body
@@ -69,8 +77,17 @@ def validate_request(request):
         raise ValueError('scientific request schema differs')
     if digest({k:v for k,v in request.items() if k != 'scientific_request_hash'}) != request.get('scientific_request_hash'):
         raise ValueError('scientific request binding differs')
+    if 'joined_teacher' in request:
+        from .dipole_joined_teacher import validate_descriptor as joined
+        joined(request['joined_teacher'])
     request_items(request)
     return request
+
+
+def joined_sources(request):
+    """{source_id: {sha256, bytes}} of the joined teacher data this request delivers (none when it carries none)."""
+    from .dipole_joined_teacher import expected
+    return expected(request.get('joined_teacher'))
 
 def request_items(request):
     findings = request['initial_response'].get('dipole_novel_findings')
@@ -108,7 +125,7 @@ def review_prompt(request, item, reading):
         'Return ONE JSON object with exactly: item_id, disposition (SUPPORTED_SCOPED, PLAUSIBLE_UNRESOLVED, '
         'CONTRADICTED_SCOPED or INSUFFICIENT_EVIDENCE), scope (text), reasoning_steps (nonempty text list), '
         'evidence_checks (nonempty list of {source_id,claim,check,result}; result supports/contradicts/unresolved; '
-        'source_id names a full shared source, initial-response, fact-review or learning-history), '
+        'source_id names a full shared source, a joined-teacher source, initial-response, fact-review or learning-history), '
         'contradictions (text list), assumptions (text list), uncertainty (nonempty text list), next_tests '
         '(nonempty text list), build_forward (text list), replication_status (NO_SECOND_OCCURRENCE, '
         'REPLICATION_AVAILABLE or UNKNOWN), predictive_status=UNESTABLISHED, economic_status=UNESTABLISHED. '
@@ -136,7 +153,7 @@ def parse_review(text, request, item):
             raise ValueError('evidence check fields differ')
         for field in ('source_id','claim','check'): _text(check[field],field)
         allowed_sources={x['source_id'] for x in request['shared_knowledge'].get('sources',[])} | {
-            'initial-response','fact-review','learning-history'}
+            'initial-response','fact-review','learning-history'} | set(joined_sources(request))
         if check['source_id'] not in allowed_sources:
             raise ValueError('scientific evidence must cite a delivered source')
         if check['result'] not in ('supports','contradicts','unresolved'):
@@ -200,9 +217,13 @@ def validate_exchange(request, value, *, require_reply=True):
             raise ValueError('shared source uses a reserved conversation id')
         payload=canonical(body)
         expected[source_id]=dict(sha256=hashlib.sha256(payload).hexdigest(),bytes=len(payload))
+    for source_id,value in joined_sources(request).items():
+        if source_id in expected:
+            raise ValueError('joined teacher source uses a delivered source id')
+        expected[source_id]=value
     actual={x['source_id']:{k:x[k] for k in ('sha256','bytes')} for x in reading['sources']}
     if actual!=expected:
-        raise ValueError('teacher did not receive the complete shared research and full run')
+        raise ValueError('teacher did not receive the complete shared research, joined data and full run')
     reviews=value.get('reviews')
     items=request_items(request)
     if type(reviews) is not list or len(reviews)!=len(items):
