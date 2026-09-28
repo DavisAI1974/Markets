@@ -65,7 +65,7 @@ PART_INPUT_TOKENS = 87_000                      # exact tokens per part when the
 READING_CONFIG = ROOT / 'reading.json'    # {"tensor_mode": "values" | "identity"} (frankie_box_serverless_config.sh ACTION=reading)
 SERVERLESS_MAX_RESPONSE = 8 * 1024 * 1024
 POD_ID_DEFAULT = 'fhiwwlouzyx6l2'
-PODS_CONFIG = ROOT / 'pods.json'   # {"pods": [...]} written by frankie_box_pods_config.sh (Greg, 2026-09-28: several A100 Pods)
+PODS_CONFIG = ROOT / 'pods.json'   # {"pods": [...], "slots": n} written by frankie_box_pods_config.sh (Greg, 2026-09-28: several A100 Pods)
 SERVED_MODEL_DEFAULT = 'granite42-smoke'   # the retained identity's served model name (granite_retained_lifecycle)
 CONTRACT_PATH = 'research/kalshi/frankie_boss/sunday_20260915_package/FB/principal-source-contract/source-contract.json'
 REGISTRY_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json'
@@ -163,6 +163,14 @@ CLASSROOM_KEYS = ('dipole_teachback', 'dipole_observation_review', 'dipole_relat
 BRAIN_DIR = ROOT / 'brain'   # Frankie's brain on the box: <brain>/cycle-<NN>/ entries (published to git by the pusher)
 
 
+def _pin_worker(cpus):
+    """A fan-out thread takes the next CPU in turn and is pinned to it (Greg, 2026-09-28: pin workers to CPUs so none sit
+    idle); the prompt building and tokenizing each thread does before its model call run on its own CPU."""
+    cpu = cpus.get()
+    cpus.put(cpu)
+    os.sched_setaffinity(threading.get_native_id(), {cpu})
+
+
 def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
@@ -222,6 +230,7 @@ class Session:
         self.engine = None
         self.serverless = None            # the reading lane (RunPod serverless), when configured; else the Pod
         self.pods = [pod_id]               # the Pods the reading lane spreads over; pods.json replaces it, the first is the BOSS
+        self.slots = 1                     # calls in flight per Pod (pods.json "slots"); above the Pod's --max-num-seqs they only queue
         self._pod_pool = None
         self._lock = threading.RLock()     # re-entrant: note() takes it and _progress_note() calls note() while holding it
         self._progress = {}
@@ -422,6 +431,9 @@ class Session:
             if (type(pods) is not list or not pods or len(set(pods)) != len(pods)
                     or not all(type(p) is str and re.fullmatch('[a-z0-9]{6,40}', p) for p in pods)):
                 self.refuse(f'{PODS_CONFIG} must list distinct RunPod Pod ids')
+            self.slots = load_json(PODS_CONFIG).get('slots', 1)
+            if type(self.slots) is not int or not 1 <= self.slots <= 8:
+                self.refuse(f'{PODS_CONFIG} slots must be 1..8')
             self.pod_id = pods[0]
         try:
             code, body = https_exchange(self.pod_id, 'GET', '/health', b'', key, 10)
@@ -442,15 +454,16 @@ class Session:
                 self.note(f'Pod {pod} not healthy ({code}); left out of the reading lane')
         self.pods = live
         self._pod_pool = queue.Queue()
-        for pod in live:
-            self._pod_pool.put(pod)
+        for _ in range(self.slots):
+            for pod in live:
+                self._pod_pool.put(pod)
         self.engine = dict(pod_id=self.pod_id, served_model_name=served, key=key,
                            config_hash=sha256_bytes(json.dumps(dict(pod_id=self.pod_id, served_model_name=served,
                                context=CONTEXT, transport_protocol='jobs_v1'), sort_keys=True).encode()))
-        write_json(self.work / 'engine.json', dict(schema='FRANKIE_BOX_BOSS_ENGINE_V1', at=time.time(), pod_id=self.pod_id, pods=self.pods,
+        write_json(self.work / 'engine.json', dict(schema='FRANKIE_BOX_BOSS_ENGINE_V1', at=time.time(), pod_id=self.pod_id, pods=self.pods, slots=self.slots,
                    served_model_name=served, context=CONTEXT, transport_protocol='jobs_v1',
                    config_hash=self.engine['config_hash'], health='ok', credential=RUNPOD_KEY_PARAMETER + ' (in memory only, never written)'))
-        self.note(f'engine: BOSS {served} on Pod {self.pod_id} healthy (jobs_v1); reading lane over {len(self.pods)} Pod(s)')
+        self.note(f'engine: BOSS {served} on Pod {self.pod_id} healthy (jobs_v1); reading lane over {len(self.pods)} Pod(s) x {self.slots} slot(s)')
         return self.engine
 
     # ---- the reading lane: RunPod serverless workers serving the same pinned checkpoint ----------------
@@ -640,7 +653,7 @@ class Session:
         """The reading lane: the serverless endpoint when configured, else the Pods (a free one from the pool)."""
         if self.serverless is not None:
             return self.serverless_job(name, text)
-        if len(self.pods) == 1:
+        if len(self.pods) * self.slots == 1:
             return self.boss(name, text)
         pod = self._pod_pool.get()
         try:
@@ -653,12 +666,12 @@ class Session:
             state = 'failed' if failed else ('complete' if done == total and not in_flight else 'running')
             _box_module('frankie_box_progress').for_session(self).update(
                 label, done, total, in_flight=in_flight, failed=failed, state=state)
-            lane = f'serverless x{self.serverless["workers"]}' if self.serverless else f'Pod x{len(self.pods)}'
+            lane = f'serverless x{self.serverless["workers"]}' if self.serverless else f'Pod x{len(self.pods)} slots x{self.slots}'
             self.note(f'{label}: {done}/{total} done, {in_flight} in flight, {failed} failed ({lane})')
 
     def _fan_out(self, label, items, work):
         """Retain submission order and count only successful work as completed."""
-        workers = self.serverless['workers'] if self.serverless else len(self.pods)
+        workers = self.serverless['workers'] if self.serverless else len(self.pods) * self.slots
         done, in_flight, failed, results = 0, 0, 0, [None] * len(items)
         self._progress_note(label, done, len(items), in_flight, failed)
         def one(index):
@@ -680,7 +693,10 @@ class Session:
             for index in range(len(items)):
                 one(index)
         else:
-            with ThreadPoolExecutor(max_workers=workers) as pool:
+            cpus = queue.Queue()                 # every CPU but 0-1, in turn; more threads than CPUs share them round robin
+            for cpu in [c for c in sorted(os.sched_getaffinity(0)) if c >= 2] or sorted(os.sched_getaffinity(0)):
+                cpus.put(cpu)
+            with ThreadPoolExecutor(max_workers=workers, initializer=_pin_worker, initargs=(cpus,)) as pool:
                 list(pool.map(one, range(len(items))))
         return results
 
@@ -1454,7 +1470,7 @@ class Session:
         write_text(self.work / 'merged-notes.md', merged)
         write_json(self.work / 'reading.json', dict(schema='FRANKIE_BOX_READING_RECEIPT_V2', status='complete', at=time.time(), parts=len(chunks),
                    corpus_sha256=corpus_sha, notes_dir=str(notes_dir), outcomes=outcomes, new_outcomes=new_outcomes, merged=witness(self.work / 'merged-notes.md'),
-                   lane=dict(serverless=self.serverless['endpoint_id'], workers=self.serverless['workers']) if self.serverless else dict(pod=self.pod_id, pods=self.pods)))
+                   lane=dict(serverless=self.serverless['endpoint_id'], workers=self.serverless['workers']) if self.serverless else dict(pod=self.pod_id, pods=self.pods, slots=self.slots)))
         self.note(f'reading done: {len(chunks)} parts, merged notes {len(merged.encode("utf-8"))} bytes')
         self.docs()
         ledger = load_json(READING_LEDGER) if READING_LEDGER.exists() else dict(schema='FRANKIE_BOX_READING_LEDGER_V1', values={}, cycles={})
