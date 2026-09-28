@@ -370,8 +370,16 @@ def _scalar_list(v):
 def _list_item(y):
     """One `L` item: an inner literal, a string bare (`S<text>`) only when it holds none of `,` `*` `;` tab newline."""
     if isinstance(y, str):
-        return ('S' + y) if not any(ch in y for ch in ',*;\t\n') else ('J' + json.dumps(y))
+        return ('S' + y) if not any(ch in y for ch in ',*;\t\n') and _utf8(y) else ('J' + json.dumps(y))
     return _inner_literal(y)
+
+
+def _utf8(y):
+    try:
+        y.encode('utf-8')
+        return True
+    except UnicodeEncodeError:        # a lone surrogate: the file write would refuse it bare; JSON escapes it
+        return False
 
 
 def _list_cell(v):
@@ -418,15 +426,21 @@ def _read_list(body):
     return out
 
 
-_TRAILING = re.compile(r'(.*?)(\d+)', re.S)
+_TRAILING_MAX = 18       # trailing digits at most (review 2026-09-28: int() refuses very long runs; a scan stays linear)
 
 
 def _trailing(s):
-    """(prefix, number) of a string ending in a decimal number without a leading zero, else None."""
-    m = _TRAILING.fullmatch(s) if isinstance(s, str) else None
-    if m is None or (len(m.group(2)) > 1 and m.group(2)[0] == '0'):
+    """(prefix, number) of a string ending in 1..18 ASCII digits without a leading zero, else None (review 2026-09-28:
+    `\\d` also matches non-ASCII digits, which int() accepts and str() writes back as ASCII)."""
+    if not isinstance(s, str):
         return None
-    return m.group(1), int(m.group(2))
+    i = len(s)
+    while i > 0 and '0' <= s[i - 1] <= '9' and len(s) - i < _TRAILING_MAX + 1:
+        i -= 1
+    digits = s[i:]
+    if not digits or len(digits) > _TRAILING_MAX or (i > 0 and '0' <= s[i - 1] <= '9') or (len(digits) > 1 and digits[0] == '0'):
+        return None
+    return s[:i], int(digits)
 
 
 def _string_step(prev, v):
@@ -439,7 +453,7 @@ def _string_step(prev, v):
 
 def _string_stepped(prev, cell):
     a = _trailing(prev)
-    if a is None or not re.fullmatch(r'\$[+-]\d+', cell) or a[1] + int(cell[1:]) < 0:
+    if a is None or not re.fullmatch(r'\$[+-][0-9]+', cell) or a[1] + int(cell[1:]) < 0:
         raise ValueError('a `$` cell needs a previous string ending in a number')
     return a[0] + str(a[1] + int(cell[1:]))
 
@@ -488,6 +502,8 @@ def entry_value(text):
         return text[1:]
     if text.startswith('J'):
         return json.loads(text[1:])
+    if text[:1] in '"[{':               # a V8 entry (plain JSON); no V9 spelling starts so
+        return json.loads(text)
     raise ValueError('dictionary entry spelling %r' % text[:24])
 
 
@@ -1404,7 +1420,7 @@ def digest_header(receipt):
              'top: `L<item>,<item>,...` = a list of plain values, each item `-` T F an integer, a float, `S<text>` or `J<json>`, and '
              '`<item>*k` = that item k times in a row (`L` alone = the empty list); inside `I` a `<d>*k` = that difference k times in a '
              'row; a dictionary entry `@n=` is spelled like a cell (`S<text>`, `J<json>` or `L...`); `"k` = the cell just before it, k more '
-             'times; `$<d>` = the previous row\'s string in this column with its trailing number moved by d (same prefix); inside a '
+             'times; `$<d>` = the string of the last row carrying this column with its trailing number moved by d (same prefix); inside a '
              'keys-once object `~<d>` = that key\'s integer in the previous object plus d; `O<first>:<lo>:<width>:<digits>:<i>=<d>;...` '
              '= `P` with the listed differences (0-based) given apart and their fields zeros', '',
              f'Rows: {receipt["rows"]["path"]} ({receipt["rows"]["count"]} entries, kinds {receipt["rows"]["kinds"]}, head {receipt["rows"]["head"][:16]}...; '

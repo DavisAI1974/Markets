@@ -616,10 +616,11 @@ def load(brain, cycle, *, snapshot=None, carried=None):
                 if stats['digest_sha256'] != e.get('sha256'):
                     members.append(dict(name=f'brain-cycle-{cyc}-{name}', bytes=stats['digest_bytes'], treatment='brain entry bytes differ from its manifest; not in the corpus'))
                     continue
+                kept = ', bedrock retained on the box' if stats['bedrock_at'] is not None else ''
                 parts.append(f"\n\n## Frankie's brain: cycle {cyc}, {name} ({e.get('kind', 'document')}; carried forward: header, layer statuses "
-                             f"and legacy tables whole, bedrock retained on the box; sha256 {e['sha256'][:16]})\n\n" + text + '\n')
+                             f"and legacy tables whole{kept}; sha256 {e['sha256'][:16]})\n\n" + text + '\n')
                 members.append(dict(name=f'brain-cycle-{cyc}-{name}', bytes=stats['digest_bytes'], sha256=e['sha256'],
-                                    treatment='brain: prior cycle digest, header, layer statuses and legacy tables whole; bedrock retained on the box', read=stats))
+                                    treatment='brain: prior cycle digest, header, layer statuses and legacy tables whole' + kept, read=stats))
                 carried[e['sha256']] = f'brain cycle {cyc} {name}'
                 continue
             data = p.read_bytes()

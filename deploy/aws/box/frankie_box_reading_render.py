@@ -693,8 +693,9 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
                'I n v.. | D seed n deltas.. | R n (value count).. | E seed n (delta count)..; a recipe tag with *k (I*6, D*6, R*6, E*6) has every value written '
                'divided by 10^k, multiply back; I#w / D#w write the values as ONE string of n x w decimal digits, each value zero-padded to w digits (the D seed '
                'stays a separate number); X . = empty bytes), parsed back and checked equal to the envelope; '
-               '{"$table": "DIGEST_V5", "block", "rows", "columns"} = that list of rows as the named DIGEST_V5 table block below its document '
-               '(same grammar as the derivation digest: header once, ^ = the cell above, ^k = k such cells, deltas, @n dictionary, n/d exact fractions, scales), parsed back and checked equal.\n')
+               '{"$table": "<grammar>", "block", "rows", "columns"} = that list of rows as the named table block below its document '
+               '(the derivation digest\'s table grammar, its legend in the digest header: header once, ^ = the cell above, ^k = k such cells, deltas, '
+               '@n dictionary, n/d exact fractions, scales, and the V8/V9 forms R, P, O, I with *k runs, L lists, "k ditto, $d and ~d deltas), parsed back and checked equal.\n')
     for name in order:
         raw = members[name]
         out.append(f'\n### member {name} ({len(raw)} bytes, sha256 {sha(raw)}, {len(plan[name])} document(s), whole)\n')
