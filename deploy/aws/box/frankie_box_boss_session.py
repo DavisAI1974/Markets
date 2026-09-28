@@ -945,14 +945,15 @@ class Session:
         self.note(f'derived: {sum(1 for v in layers.values() if v["status"]=="derived")}/{len(layers)} pin layers on {len(records)} records, {adapter.completed_event_group_count} F_LAST groups')
         return receipt
 
-    def _write_digest(self, receipt, layers, prices, frames, structures, roll, first, buys, sells):
-        """Publish a file from pinned layer snapshots only after exact table proofs."""
+    def _write_digest(self, receipt, layers, prices, frames, structures, roll, first, buys, sells, bedrock=True):
+        """Publish a file from pinned layer snapshots only after exact table proofs. bedrock=False writes the header,
+        layer statuses and legacy tables only (what Granite reads); the bedrock layers stay whole in their layer files."""
         sys.path.insert(0, str(Path(__file__).resolve().parent))
         import frankie_box_digest_document as writer
         proof = writer.write_digest(
             self.work / 'derivation-digest-full.md', receipt, layers, prices, frames, structures,
             roll, first, buys, sells,
-            bedrock_entries={name: entry for name, entry in receipt['layers'].items() if entry.get('bedrock')},
+            bedrock_entries={name: entry for name, entry in receipt['layers'].items() if entry.get('bedrock')} if bedrock else {},
             scratch_directory=self.work / 'derived' / ('.digest-' + uuid.uuid4().hex))
         write_json(self.work / 'digest-proof.json', proof)
         return proof

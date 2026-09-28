@@ -2,7 +2,10 @@
 
 Greg, 2026-09-28: the digest is Granite's reading; the calculations under it do not change, so they are not re-run.
 The saved legacy layers and spools (load_retained_layers, no journal read) and the saved derive.json are written by the
-same assembly ROOT uses (write_retained_digest). No layer, bedrock or source recalculation, no model call.
+same assembly ROOT uses (write_retained_digest), with bedrock=False: the digest holds the header, layer statuses and
+legacy tables, which is all Granite reads (frankie_box_digest_read.legacy_read stops at the bedrock heading). The bedrock
+layers stay whole in their retained layer files, and the previous digest's bedrock tables stay in the moved-aside digest.
+No layer, bedrock or source recalculation, no model call.
 
 The previous digest, its proof and the previous calculations receipt are moved aside under
 <root>/superseded/digest-render-<stamp>/ (nothing deleted). A new calculations receipt carries the new digest witnesses,
@@ -60,9 +63,9 @@ def render(commit, output_root):
         if path.exists():
             path.rename(aside / path.name)
             moved[key] = str(aside / path.name)
-    session.phase('deriving', 'render-only: the digest in ' + DG.SCHEMA + ' from the retained layers; no recalculation')
+    session.phase('deriving', 'render-only: the digest in ' + DG.SCHEMA + ' from the retained layers (legacy tables; bedrock stays in its layer files); no recalculation')
     _, _, _, prices, frames, structures, _, layers, _ = load_retained_layers(session)
-    write_retained_digest(session, derivation, layers, prices, frames, structures)
+    write_retained_digest(session, derivation, layers, prices, frames, structures, bedrock=False)
 
     superseded = aside / 'calculations-receipt.json'
     receipt_path.rename(superseded)
@@ -72,7 +75,8 @@ def render(commit, output_root):
                    digest_render=dict(schema='FRANKIE_DIGEST_RENDER_V1', digest_schema=DG.SCHEMA, at=time.time(),
                                       supersedes=witness(superseded), previous_digest=old['digest'],
                                       previous_digest_proof=old['digest_proof'], moved_aside=moved,
-                                      recalculation=False, model_calls=0))
+                                      recalculation=False, model_calls=0,
+                                      bedrock_tables='not rendered: retained in the layer files and the moved-aside digest'))
     save_new(receipt_path, receipt)
     if read_pin(witness(receipt_path)) != receipt:
         raise ValueError('rendered calculations receipt readback differs')
