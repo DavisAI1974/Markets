@@ -337,63 +337,86 @@ def _cpus():
         return max(1, (os.cpu_count() or 2) - 1)
 
 
-def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):
-    """JournalTeacherR3.attach, the per-row normalizer, target and receipt work across the box's CPUs."""
-    import torch  # noqa: F401  (attach imports it; the workers use it)
-    T, N, R, D, SCHEMA, pack, DIGEST_PREFIX, canonical_tagged_bytes = _modules()
-    context = list(context)
+SESSION_FIELDS = frozenset({'cursor', 'raw_record', 'normalized', 'source_member_index',
+                            'session_id', 'integrity', 'terminal_prefix_hash'})
+
+
+def _candidate(self, T):
+    candidate = self.candidate_digest
+    if _changes_applied():
+        from . import teacher_changes
+        candidate = T.evidence_hash(dict(r3=candidate, changes=teacher_changes.CHANGES_SHA256))
+    return candidate
+
+
+def row_pass(self, evidence, *, as_of, source_manifest_hash):
+    """Step 1 on its own (the teacher reading the journal): the raw streams over every entry, in order, with the window
+    functions across the CPUs. Returns (rows, processed, entity row hashes): rows in cursor order, the wanted flag still
+    unset (the context is not known yet); the entity row hashes are the 7-field evidence hashes of the session's entity
+    rows, for the exact-row check against the context when it arrives."""
+    from .parallel_journal import _ENTITY, CONTEXT_FIELDS
+    T = _modules()[0]
     if type(as_of) is not int or as_of < 0:
         raise ValueError('nonnegative as_of required')
-    if not context:
+    entity = _ENTITY[0]
+    rows, processed, entity_hashes = [], 0, {}
+    with _RawStreams(T, _cpus()) as streams:
+        for e, old, six in T._paired_raw(self.control, self.raw_teacher, evidence, as_of=as_of,
+                                         source_manifest_hash=source_manifest_hash):
+            processed += 1
+            m = e['normalized']
+            if entity is None or (m['publisher_id'], m['instrument_id']) == tuple(entity):
+                entity_hashes[e['cursor']] = T.evidence_hash({k: e[k] for k in CONTEXT_FIELDS})   # the walk's fast path
+            combined = [dict(v) for v in old]
+            combined[7:13] = [{k: x for k, x in v.items() if k != 'mask'} for v in six['columns']]   # every carried key kept
+            rows.append((False, e['receipt'] is not None, m['instrument_id'], combined, m['ts_recv_ns'],
+                         e['terminal_prefix_hash'], e['cursor'], six['evidence_content_hash']))
+            streams.place(rows, len(rows) - 1)
+        streams.finish()
+    if any(type(v['reason']) is str and v['reason'].startswith(RAW_MARK) for row in rows for v in row[3]):
+        raise ValueError('parallel teacher raw placeholder left unresolved; run stopped')
+    return rows, processed, entity_hashes
+
+
+def context_spec(context):
+    """What the finish needs of the context: each row's cursor, whether it is the 7-field session row, and its hash."""
+    T = _modules()[0]
+    context = list(context)
+    return [(item['cursor'], set(item) == SESSION_FIELDS, T.evidence_hash(item)) for item in context]
+
+
+def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash):
+    """Steps 2-5: the exact-row check of the context against the rows the teacher read, then the normalizer, targets and
+    receipts across the CPUs, exactly as before."""
+    import torch  # noqa: F401  (attach imports it; the workers use it)
+    T, N, R, D, SCHEMA, pack, DIGEST_PREFIX, canonical_tagged_bytes = _modules()
+    if not spec:
         raise ValueError('nonempty complete prefix and context required')
-    selected = tuple(e['cursor'] for e in context)
+    selected = tuple(cursor for cursor, _, _ in spec)
     if (any(type(cursor) is not int or cursor < 0 for cursor in selected)
             or tuple(sorted(set(selected))) != selected):
         raise ValueError('ordered unique context cursors required')
-    session_fields = {'cursor', 'raw_record', 'normalized', 'source_member_index',
-                      'session_id', 'integrity', 'terminal_prefix_hash'}
-    selected_rows = {item['cursor']: item for item in context}
+    for cursor, session_row, item_hash in spec:
+        if (not session_row or cursor >= len(rows) or rows[cursor][6] != cursor
+                or entity_hashes.get(cursor) != item_hash):
+            raise ValueError('context must match exact verified prefix row')
+        rows[cursor] = (True,) + rows[cursor][1:]
     identity = isinstance(self.normalizer, R.IdentityNormalizerR3)
     code = Path(T.__file__).read_bytes()
     builder_sha = hashlib.sha1(b'blob ' + str(len(code)).encode() + b'\0' + code).hexdigest()
     units = (('log_seconds', 'log_seconds', 'share', 'log_quantity', 'log_quantity', 'share', 'share',
               'share', 'share', 'share', 'share', 'share', 'share', 'log_groups', 'log_count', 'log_ratio',
               'log_ticks', 'log_groups', 'log_ticks') if identity else ('z_score',) * 19)
-    wanted = set(selected)
-    candidate = self.candidate_digest
-    if _changes_applied():
-        from . import teacher_changes
-        candidate = T.evidence_hash(dict(r3=candidate, changes=teacher_changes.CHANGES_SHA256))
-    # 1. the pinned raw streams, in order, with the exact-row check (attach's own loop minus the normalizer); the window
-    #    functions across the CPUs (_RawStreams)
-    rows, processed = [], 0
+    candidate = _candidate(self, T)
     cpus = _cpus()
-    with _RawStreams(T, cpus) as streams:
-        for e, old, six in T._paired_raw(self.control, self.raw_teacher, evidence, as_of=as_of,
-                                         source_manifest_hash=source_manifest_hash):
-            processed += 1
-            if e['cursor'] in wanted:
-                item = selected_rows[e['cursor']]
-                if (set(item) not in (session_fields, set(e))
-                        or T.evidence_hash(item) != T.evidence_hash({k: e[k] for k in item})):
-                    raise ValueError('context must match exact verified prefix row')
-            combined = [dict(v) for v in old]
-            combined[7:13] = [{k: x for k, x in v.items() if k != 'mask'} for v in six['columns']]   # every carried key kept
-            rows.append((e['cursor'] in wanted, e['receipt'] is not None, e['normalized']['instrument_id'], combined,
-                         e['normalized']['ts_recv_ns'], e['terminal_prefix_hash'], e['cursor'],
-                         six['evidence_content_hash']))
-            streams.place(rows, len(rows) - 1)
-        streams.finish()
-    if any(type(v['reason']) is str and v['reason'].startswith(RAW_MARK) for row in rows for v in row[3]):
-        raise ValueError('parallel teacher raw placeholder left unresolved; run stopped')
     # 2. chunk-start states: attach's own restored copy, update() only
     config = self.normalizer.config
     instrument_ids = self.normalizer.config.instrument_ids
     base = (R.IdentityNormalizerR3(instrument_ids) if identity else
             R.NormalizerR3.restore(config, self.normalizer.export(), self.normalizer.state_hash))
     size = max(1, -(-len(rows) // (cpus * 2)))
-    spec = dict(registry_id=f'boss/teacher/{T.CANDIDATE}:{candidate}', target_names=T.CONTROL_COLUMNS,
-                target_units=units, builder_code_sha=builder_sha)
+    target_spec = dict(registry_id=f'boss/teacher/{T.CANDIDATE}:{candidate}', target_names=T.CONTROL_COLUMNS,
+                       target_units=units, builder_code_sha=builder_sha)
     jobs = []
     for start in range(0, len(rows), size):
         chunk = rows[start:start + size]
@@ -404,7 +427,7 @@ def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):
                 if has_receipt:
                     for c, v in zip(T.CONTROL_COLUMNS, combined):
                         base.update(iid, c, v['value'], N.State(v['state']))
-        jobs.append((identity, instrument_ids, config, payload, state, chunk, spec, source_manifest_hash))
+        jobs.append((identity, instrument_ids, config, payload, state, chunk, target_spec, source_manifest_hash))
     # 3-4. the chunks across the CPUs, joined in order
     targets, receipts, fragments = [], [], []
     context_mp = multiprocessing.get_context('spawn')
@@ -416,7 +439,7 @@ def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):
                 receipts.append(receipt)
                 fragments.append(fragment)
     raw_rows = [row[3] for row in rows if row[0]]
-    if not processed or len(targets) != len(context):
+    if not processed or len(targets) != len(spec):
         raise ValueError('context cursor absent from complete prefix')
     # 5. evidence_hash(receipts) == sha256(prefix + canonical(pack(list))); pack(list) = ["list", [pack(r)...]]
     attachment = hashlib.sha256(DIGEST_PREFIX + b'["list",[' + b','.join(fragments) + b']]').hexdigest()
@@ -425,3 +448,16 @@ def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):
     return dict(targets=tuple(targets), raw=raw_rows, processed_records=processed,
                 context_cursors=selected, step_receipts=tuple(receipts),
                 attachment_hash=attachment, candidate_digest=candidate)
+
+
+def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):
+    """JournalTeacherR3.attach across the box's CPUs. When the concurrent teacher (concurrent_teacher.py) has been reading
+    the journal since the first walk began, the context is handed to it and its result returned: the journal is NOT
+    walked a second time (the evidence generator given here is never started). Otherwise the row pass runs here."""
+    from . import concurrent_teacher
+    context = list(context)
+    running = concurrent_teacher.current(as_of=as_of, source_manifest_hash=source_manifest_hash)
+    if running is not None:
+        return running.result(context_spec(context))
+    rows, processed, entity_hashes = row_pass(self, evidence, as_of=as_of, source_manifest_hash=source_manifest_hash)
+    return finish(self, rows, processed, entity_hashes, context_spec(context), source_manifest_hash=source_manifest_hash)

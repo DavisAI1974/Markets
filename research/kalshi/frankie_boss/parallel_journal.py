@@ -26,6 +26,7 @@ import sys
 
 import hashlib
 import json
+import os
 import re
 import sqlite3
 import time
@@ -191,8 +192,20 @@ CACHE_VERSION = 'walk-cache-v1'
 CACHE_MIN_FREE_BYTES = 30 * (1 << 30)      # FRANKIE_WALK_CACHE_MIN_FREE_GB overrides (read in each worker)
 
 
+def _progress_file(path, through_cursor, entity):
+    key = json.dumps([CACHE_VERSION, str(Path(path).resolve()), through_cursor, list(entity) if entity is not None else None])
+    return _cache_dir(path) / ('progress-context-%s.txt' % hashlib.sha256(key.encode()).hexdigest()[:24])
+
+
+def _context_passed(path, index, through_cursor, entity):
+    """True once the first (context) walk has taken this block from its workers."""
+    try:
+        return int(_progress_file(path, through_cursor, entity).read_text()) >= index[0] + index[1]
+    except (OSError, ValueError):
+        return False
+
+
 def _cache_dir(path):
-    import os
     root = os.environ.get('FRANKIE_WALK_CACHE') or str(Path(path).resolve().parent / 'walk-cache')
     return Path(root)
 
@@ -247,6 +260,12 @@ def _prefix_block(path, index, through_cursor, mode='full', entity=None):
     block's teacher part from the same decode (the second walk then reads it)."""
     started = time.process_time()
     saved = _cache_load(path, index, through_cursor, mode, entity) if mode != 'full' else None
+    if saved is None and mode == 'teacher' and os.environ.get('FRANKIE_WALK_FOLLOW') == '1':
+        # the concurrent teacher: wait for the first walk to save this block; if the first walk passed it without
+        # saving (disk short), decode it here instead, never skip it
+        while saved is None and not _context_passed(path, index, through_cursor, entity):
+            time.sleep(0.2)
+            saved = _cache_load(path, index, through_cursor, mode, entity)
     if saved is not None:
         return dict(saved, cpu=time.process_time() - started, saved_block=True)
     entries, trees, digests, cpu = _read_block_fast(path, index)
@@ -383,6 +402,14 @@ def parallel_journal_prefix(builder, through_cursor, summary=None):
                 if part['tail'] is not None:
                     pending = part['tail']
                 count, head = count + length, terminal
+                if mode == 'context':           # the concurrent teacher follows this walk block by block
+                    marker = _progress_file(journal.path, through_cursor, entity)
+                    try:
+                        marker.parent.mkdir(parents=True, exist_ok=True)
+                        marker.with_suffix('.tmp').write_text(str(count))
+                        os.replace(marker.with_suffix('.tmp'), marker)
+                    except OSError:
+                        pass
                 journal.worker_cpu_seconds += part['cpu']
                 blocks_read += 1
                 blocks_reused += bool(part.get('saved_block'))
@@ -486,7 +513,7 @@ _SERIAL = None
 
 
 @contextmanager
-def parallel_walk(context):
+def parallel_walk(context, as_of=None, through_cursor=None):
     """For the duration of one preparation, the pinned _prepare walks the journal in parallel, and its per-row context
     encoding, reconstruction check and packet hashes run in parallel (parallel_context.py)."""
     global _SERIAL
@@ -523,9 +550,15 @@ def parallel_walk(context):
             sha = teacher_changes.apply()
             changed = True
             teacher_class.binding = property(lambda self: evidence_hash(dict(r3=teacher_binding.fget(self), changes=sha)))
+    # the teacher reads what Frankie ingests, once, beside the first walk (concurrent_teacher.py)
+    if teacher_class is not None and as_of is not None and encoder is not None:
+        from . import concurrent_teacher
+        concurrent_teacher.start(context, as_of, through_cursor)
     try:
         yield
     finally:
+        from . import concurrent_teacher
+        concurrent_teacher.stop()
         if changed:
             from . import teacher_changes
             teacher_changes.restore()
@@ -544,5 +577,5 @@ def parallel_walk(context):
 
 def prepare_parallel(context, as_of, through_cursor):
     """context._prepare with the journal walked across the box's CPUs; the pinned _prepare body is unchanged."""
-    with parallel_walk(context):
+    with parallel_walk(context, as_of, through_cursor):
         return type(context)._prepare(context, as_of, through_cursor)
