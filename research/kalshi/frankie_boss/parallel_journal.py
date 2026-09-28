@@ -339,6 +339,7 @@ def parallel_journal_prefix(builder, through_cursor, summary=None):
     index = iter(journal.db.execute('SELECT start,count,previous,head FROM blocks ORDER BY start').fetchall())
     count, head, applied, pending = 0, journal_genesis(), 0, None
     blocks_read = blocks_reused = blocks_saved = 0
+    seen = {} if mode == 'context' else None          # the first walk checks every record once for duplicates
     try:
         with ProcessPoolExecutor(max_workers=len(journal.worker_cpus), mp_context=context,
                                  initializer=_assign_cpu, initargs=(assignments,)) as pool:
@@ -367,6 +368,8 @@ def parallel_journal_prefix(builder, through_cursor, summary=None):
                         if summary is not None:
                             summary.update(journal_prefix_hash=part['lead']['envelope_hash'],
                                            journal_entries=part['lead']['entries'])
+                        if seen is not None:
+                            _unique(seen, lead)
                         yield _emit(lead, part['lead']['canonical'], mode, part['lead']['subset'])
                 if part['first_input'] is not None and (pending is not None or part['first_input'] != applied):
                     raise ValueError('journal input cursor gap or unprocessed submission')
@@ -374,6 +377,8 @@ def parallel_journal_prefix(builder, through_cursor, summary=None):
                 if part['summary'] is not None and summary is not None:
                     summary.update(journal_prefix_hash=part['summary'][0], journal_entries=part['summary'][1])
                 for item in part['payloads']:
+                    if seen is not None:
+                        _unique(seen, item[0])
                     yield _emit(item[0], item[1] if mode == 'teacher' else None, mode, item[-1])
                 if part['tail'] is not None:
                     pending = part['tail']
@@ -393,6 +398,18 @@ def parallel_journal_prefix(builder, through_cursor, summary=None):
         assignments.join_thread()
     if pending is not None or applied != builder.chain.next_cursor:
         raise ValueError('journal does not account for every source record')
+
+
+def _unique(seen, payload):
+    """Decline the run at the first duplicated source record, naming both cursors and the record."""
+    key = _record_key(payload['raw_record'])
+    first = seen.setdefault(key, payload['cursor'])
+    if first != payload['cursor']:
+        raise DuplicateData('RUN DECLINED: duplicated data. The source record at journal cursor %d is identical to the '
+                            'one at cursor %d (%s); a record submitted twice would be counted twice by the context, the '
+                            'teacher and every calculation after them. Remove the duplicate from the source (or show it '
+                            'is a distinct event) and launch again.' % (payload['cursor'], first,
+                                                                         json.dumps(payload['raw_record'], sort_keys=True, default=str)))
 
 
 _CANONICAL = {}          # id(payload) -> (payload, canonical bytes), filled as the teacher's walk yields, popped on use
@@ -449,6 +466,15 @@ def _chain_hash_factory(original):
                     return entry[0]
         return original(payload)
     return chained
+
+
+class DuplicateData(ValueError):
+    """The run is declined: the journal carries the same source record twice (Greg, 2026-09-28: "decline a run if data
+    is duplicated and state why")."""
+
+
+def _record_key(record):
+    return hashlib.sha256(json.dumps(record, sort_keys=True, separators=(',', ':'), default=str).encode()).digest()
 
 
 def journal_genesis():

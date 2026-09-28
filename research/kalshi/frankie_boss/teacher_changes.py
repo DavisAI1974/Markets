@@ -14,17 +14,22 @@ one preparation (parallel_journal.parallel_walk) and restore() puts the pinned o
                 unavailable, left-censored origin, level integrity, scope boundary, fills exceeding removals, ...), so the
                 gaps can be filled in later. An event whose side is unknown cannot be put on a side's tally: it is counted
                 under UNKNOWN_SIDE (with its quantity) instead of on a side, never dropped and never fatal. MISSING remains
-                only where no number exists at all (too few groups yet, no flow, no modifies, no removals, an empty cohort,
-                a zero denominator): nothing is dropped there, the value simply has not come into being.
+                only where no number exists at all (no flow, no modifies, no removals, an empty cohort, a zero quantity):
+                nothing is dropped there, the value simply has not come into being.
+  NO MINIMUM    (Greg: "We removed the output limits too. Make both of those changes now") there is no 64- or 1,024-group
+                minimum: the anchor, the short window (the last 64 groups, or every group while fewer exist) and the
+                whole-day totals are computed from the first group on; the cohorts start from the day's first book.
   ALL LEVELS    The cohorts take every level of the anchor side (not the top three); the dynamics and absorption count
                 an order at any rank; R3's history view keeps every level and every order of each observation.
   WHOLE DAY     The long horizon (control columns 4 and 6, R3 columns 8, 10 and 12) covers every group of the day so far
-                (Frankie's context is the whole day), as running totals per side, one group's work per row. It is
-                WINDOW_SHORT (MISSING) until 1,024 groups exist, as the pinned rule. Nothing restarts it.
+                (Frankie's context is the whole day), as running totals per side, one group's work per row, from the
+                first group. Nothing restarts it.
   UNKNOWN       Unknown-side trades never invalidate a window: the anchor comes from the known-side trades and the unknown
                 trades' count and volume are carried on every column (unknown_side_trades, unknown_side_volume).
-  D             The D machine is fed the book as it is (its integrity flags listed, not used to freeze it); any D value the
-                pinned machine still cannot form is MISSING with its reason, listed, never INVALID.
+  D             The D machine is fed the book as it is (its integrity flags listed, not used to freeze it). Where the pinned
+                machine still returns INVALID (no far price, unknown tick, a zero previous step), the six D columns are
+                computed from the chain's own current state (the pinned column rule) and the reason is listed; a zero
+                previous step gives the ratio as log1p(m_last) - log1p(m_prev), listed DEGENERATE_STEP. No INVALID.
 
 The provenance says so: parallel_teacher adds this file's sha256 to the candidate digest and the teacher binding while
 the changes are applied, so these targets are never labelled as the pinned R3's.
@@ -36,7 +41,6 @@ from pathlib import Path
 
 CHANGES_SHA256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 _SAVED = []
-LONG = 1024          # the pinned long horizon: the long columns are WINDOW_SHORT until this many groups exist
 
 
 def _modules():
@@ -171,7 +175,7 @@ def control_columns(self, e, history, origins, key, machines, ordinal):
     window = list(history)
     anchor = None; reason = 'WINDOW_SHORT'
     unknown_count = unknown_volume = 0
-    if len(window) >= C.K_SHORT:
+    if window:                                                   # no minimum: the last 64 groups, or every group so far
         trades = [x['normalized'] for g in window[-C.K_SHORT:] for x in g if x['normalized']['action'] == 'T']
         buy, sell, unknown_count, unknown_volume = _flow(trades)
         reason = 'NO_FLOW' if buy + sell == 0 else 'SIDE_UNDEFINED'
@@ -213,8 +217,7 @@ def control_columns(self, e, history, origins, key, machines, ordinal):
             raw[2] = _with(value(sum((o['size'] / total) ** 2 for o in cohort)), book)
     long = _control_long(key, history)
     if anchor is not None:
-        if len(window) >= 64:
-            raw[3], raw[5] = self._dynamics(window[-64:], side)
+        raw[3], raw[5] = self._dynamics(window[-64:], side)
         raw[4], raw[6] = long.values(side)
         for i in (3, 4, 5, 6):
             if book:
@@ -223,11 +226,33 @@ def control_columns(self, e, history, origins, key, machines, ordinal):
     far = levels[0]['price_raw'] if levels else None
     dout = machine.advance_synthetic(C.DObservation(ordinal, e['source_member_index'], e['session_id'],
         anchor, far, True))                                          # the book as it is; its flags listed below
-    for i, d in enumerate(dout.columns, 13):
-        state = State.MISSING if d.state == 'INVALID' else State[d.state]      # no INVALID: no value formed, reason kept
-        raw[i] = _with(value(d.value, state, d.reason or ''), book)
+    columns, listed = dout.columns, Counter(book)
+    if any(d.state == 'INVALID' for d in columns):
+        listed.update(d.reason for d in columns if d.state == 'INVALID' and d.reason)
+        columns = _d_columns(machine._state, listed)
+    for i, d in enumerate(columns, 13):
+        raw[i] = _with(value(d.value, State[d.state], d.reason or ''), listed)
     raw[0] = dict(raw[0], unknown_side_trades=unknown_count, unknown_side_volume=unknown_volume)
     return raw
+
+
+def _d_columns(s, listed):
+    """The six D columns from the chain's own state, exactly the pinned c15_dstate._columns rule, except that a zero
+    previous step gives the ratio as log1p(m_last) - log1p(m_prev) (listed DEGENERATE_STEP) instead of INVALID."""
+    from .c15_dstate import DValue
+    present = lambda v: DValue(float(v), 'PRESENT')
+    missing = DValue(0.0, 'MISSING', 'CHAIN_BROKEN' if s.broken else 'NO_COMPLETED_STEP')
+    ratio = missing
+    if s.n_ext >= 2:
+        if s.m_prev == 0:
+            listed['DEGENERATE_STEP'] += 1
+            ratio = present(math.log1p(s.m_last) - math.log1p(s.m_prev))
+        else:
+            ratio = present(math.log(s.m_last / s.m_prev))
+    return (present(math.log1p(s.age)), present(math.log1p(s.n_ext)), ratio,
+            present(math.log1p(s.p_last)) if s.n_ext >= 1 else missing,
+            present(math.log1p(s.duration_last)) if s.n_ext >= 1 else missing,
+            present(math.log1p(s.p_prev)) if s.n_ext >= 2 else missing)
 
 
 # ---- WHOLE DAY: running totals per side ----------------------------------------------------------------------------
@@ -262,16 +287,11 @@ class _Long:
     def values(self, side):
         C, _ = _modules()
         t = self.sides[side]
-        if t.groups < LONG:
-            short = C.value(state=C.State.MISSING, reason='WINDOW_SHORT')
-            return short, dict(short)
         return _dynamics_values(t.added, t.removed, t.modifies, t.lost, t.incomplete)
 
     def absorption(self, side):
         _, T = _modules()
         t = self.sides[side]
-        if t.groups < LONG:
-            return T._missing('WINDOW_SHORT')
         return _absorption_value(t.abs_removed, t.abs_fills, t.incomplete)
 
 
@@ -296,9 +316,7 @@ def _control_long(key, history):
 # ---- R3 (c15_teacher_r3) --------------------------------------------------------------------------------------------
 def r3_anchor(groups):
     _, T = _modules()
-    if len(groups) < 64:
-        return None, T._missing('WINDOW_SHORT')
-    trades = [e['normalized'] for g in groups[-64:] for e in g if e['normalized']['action'] == 'T']
+    trades = [e['normalized'] for g in groups[-64:] for e in g if e['normalized']['action'] == 'T']   # no minimum
     buy, sell, _, _ = _flow(trades)
     if not buy + sell:
         return None, T._missing('NO_FLOW')
@@ -362,10 +380,8 @@ class _Cohort:
             self.incomplete['UNRECONCILED_FILL'] += len(pending)
         self.groups += 1
 
-    def values(self, minimum):
+    def values(self):
         _, T = _modules()
-        if self.groups < minimum:
-            return (T._missing('WINDOW_SHORT'),) * 2
         total = sum(self.cohort.values())
         if not total:
             return (_with(T._missing('COHORT_EMPTY'), self.incomplete),) * 2
@@ -377,7 +393,7 @@ def r3_cohort(start, groups, side):
     cohort = _Cohort(start, side)
     for group in groups:
         cohort.add(group)
-    return cohort.values(0)
+    return cohort.values()
 
 
 def r3_history_row(e):
@@ -401,10 +417,12 @@ class _R3Long:
         self.totals.feed(group)
         for side in ('A', 'B'):
             if self.cohorts[side] is None:
-                if previous is not None and previous[-1].get('observation') is not None:
-                    self.cohorts[side] = _Cohort(previous[-1], side)     # the day's first book, followed from here on
-                else:
+                start = previous if previous is not None else group
+                if start[-1].get('observation') is None:
                     continue
+                self.cohorts[side] = _Cohort(start[-1], side)           # the day's first book, followed from here on
+                if start is group:
+                    continue                                             # the first group is the start itself
             self.cohorts[side].add(group)
 
 
@@ -461,12 +479,13 @@ def r3_iter_raw(self, evidence, *, as_of, source_manifest_hash):
             if missing is not None:
                 values = [dict(missing) for _ in T.COLUMNS]
             else:
-                values[0] = T._absorption(groups[-64:], side) if len(groups) >= 64 else T._missing('WINDOW_SHORT')
-                values[2], values[4] = (T._cohort(groups[-65][-1], groups[-64:], side)
-                                        if len(groups) > 64 else (T._missing('WINDOW_SHORT'),) * 2)
+                values[0] = T._absorption(groups[-64:], side)                       # no minimum: up to the last 64
+                start, followed = ((groups[-65][-1], groups[-64:]) if len(groups) > 64 else (groups[0][-1], groups[1:]))
+                values[2], values[4] = T._cohort(start, followed, side)
                 values[1] = longs[key].totals.absorption(side)                                      # WHOLE DAY
                 cohort = longs[key].cohorts[side]
-                values[3], values[5] = cohort.values(LONG) if cohort is not None else (T._missing('WINDOW_SHORT'),) * 2
+                values[3], values[5] = (cohort.values() if cohort is not None else
+                                        (T._missing('NO_BOOK_YET'),) * 2)
                 if book:
                     values = [_with(v, Counter(v.get('incomplete', {})) + book) for v in values]
         values = [dict(v, unknown_side_trades=unknown[0], unknown_side_volume=unknown[1]) for v in values]
