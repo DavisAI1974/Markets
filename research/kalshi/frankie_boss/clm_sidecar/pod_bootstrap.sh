@@ -51,13 +51,17 @@ python3 - <<'PY' || finish failed-download
 import os, urllib.request
 urllib.request.urlretrieve(os.environ['LEARN_URL'], '/tmp/learn.py')
 urllib.request.urlretrieve(os.environ['DATASET_URL'], '/tmp/dataset.jsonl.gz')
+if os.environ.get('SIT_IN') == '1':
+    urllib.request.urlretrieve(os.environ['SIT_IN_URL'], '/tmp/sit_in.py')
 print('downloaded learn.py and dataset')
 PY
 stage install
 pip install --no-cache-dir contrastive-lm numpy || echo "contrastive-lm install failed; head-only run"
 stage encoder
+# sit-in (Greg 2026-09-28: Jev sits in with Frankie): a second Qwen3-8B, the chat model Jev talks with, shares the GPU
+POOL_UTIL=0.9; [ "${SIT_IN:-0}" = 1 ] && POOL_UTIL=0.40
 vllm serve Qwen/Qwen3-8B --served-model-name qwen3-8b --runner pooling --port 8090 --max-model-len 8192 \
-  > /tmp/vllm.log 2>&1 &
+  --gpu-memory-utilization $POOL_UTIL > /tmp/vllm.log 2>&1 &
 for i in $(seq 1 180); do
   python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/v1/models', timeout=5)" 2>/dev/null && break
   sleep 10
@@ -73,5 +77,19 @@ if command -v clm-serve >/dev/null; then
   done
   tail -20 /tmp/clm.log
 fi
+if [ "${SIT_IN:-0}" != 1 ]; then
+  stage learn
+  python3 /tmp/learn.py --dataset /tmp/dataset.jsonl.gz --out /tmp/out --stamp "${STAMP:-}" && finish done || finish failed-learn
+fi
 stage learn
-python3 /tmp/learn.py --dataset /tmp/dataset.jsonl.gz --out /tmp/out --stamp "${STAMP:-}" && finish done || finish failed-learn
+python3 /tmp/learn.py --dataset /tmp/dataset.jsonl.gz --out /tmp/out --stamp "${STAMP:-}" || echo "learn failed; the sit-in still runs"
+stage chat
+vllm serve Qwen/Qwen3-8B --served-model-name jev --port 8091 --max-model-len 32768 --gpu-memory-utilization 0.45 \
+  > /tmp/vllm-chat.log 2>&1 &
+for i in $(seq 1 180); do
+  python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8091/v1/models', timeout=5)" 2>/dev/null && break
+  sleep 10
+done
+python3 -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8091/v1/models', timeout=5)" || { tail -50 /tmp/vllm-chat.log; finish failed-chat; }
+stage sit-in
+python3 /tmp/sit_in.py && finish done || finish failed-sit-in

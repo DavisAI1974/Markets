@@ -117,6 +117,10 @@ def main():
     parser.add_argument('--checkpoint-minutes', type=int, default=30)
     parser.add_argument('--start-minutes', type=int, default=30,
                         help='delete the Pod if it has never started by then (the 150-minute None run, 2026-09-28)')
+    parser.add_argument('--sit-in-pods', default='',
+                        help='comma list of Frankie reading Pods (never the BOSS) Jev may question: turns on the sit-in')
+    parser.add_argument('--feed-slots', type=int, default=240)
+    parser.add_argument('--report-slots', type=int, default=48)
     args = parser.parse_args()
     s3 = boto3.client('s3', region_name=REGION)
     base = 'clm-sidecar/%s' % args.stamp
@@ -129,6 +133,21 @@ def main():
     env = dict(BOOTSTRAP_URL=get('%s/code/pod_bootstrap.sh' % base), LEARN_URL=get('%s/code/learn.py' % base),
                DATASET_URL=get(args.dataset_key), STAMP=args.stamp, CHECKPOINT_MINUTES=str(args.checkpoint_minutes))
     env.update({var: put('%s/out/%s' % (base, name)) for var, name in OUTPUTS.items()})
+    pods = [p for p in args.sit_in_pods.split(',') if p]
+    if pods:        # Greg, 2026-09-28: Jev sits in with Frankie (sit_in.py); the box relay writes the feed slots
+        s3.upload_file(str(HERE / 'sit_in.py'), BUCKET, '%s/code/sit_in.py' % base)
+        config = dict(feed=[get('%s/feed/%04d.json' % (base, i)) for i in range(args.feed_slots)],
+                      reports=[put('%s/sit-in/report-%04d.md' % (base, i)) for i in range(args.report_slots)],
+                      transcript=put('%s/sit-in/transcript.jsonl.gz' % base))
+        s3.put_object(Bucket=BUCKET, Key='%s/sit-in/config.json' % base, Body=json.dumps(config).encode(),
+                      ServerSideEncryption='AES256')
+        code, info = api('GET', '/v2/pods/' + pods[0])
+        granite_key = (json.loads(info).get('env') or {}).get('RUNPOD_GRANITE_API_KEY') if code == 200 else None
+        if not granite_key:
+            raise SystemExit('Granite service credential not readable from Pod %s (HTTP %d)' % (pods[0], code))
+        env.update(SIT_IN='1', SIT_IN_URL=get('%s/code/sit_in.py' % base), CONFIG_URL=get('%s/sit-in/config.json' % base),
+                   GRANITE_PODS=','.join(pods), GRANITE_KEY=granite_key)
+        print('SIT-IN with Frankie reading Pods %s; feed %d slots, %d report slots' % (pods, args.feed_slots, args.report_slots), flush=True)
     gpu, centers = pick_gpu()
     body = dict(name='clm-sidecar-' + args.stamp, image=IMAGE, cloud='SECURE', gpu=dict(id=gpu, count=1), disk=80,
                 env=env, entrypoint=['python3', '-c', ENTRY], startSsh=False, startJupyter=False)
@@ -182,6 +201,9 @@ def main():
             s3.download_file(BUCKET, '%s/out/%s' % (base, name), str(local / name))
         except Exception as error:  # noqa: BLE001
             print('no %s: %s' % (name, str(error)[:120]))
+    for item in s3.list_objects_v2(Bucket=BUCKET, Prefix='%s/sit-in/' % base).get('Contents', []):
+        if not item['Key'].endswith('config.json'):
+            s3.download_file(BUCKET, item['Key'], str(local / item['Key'].rsplit('/', 1)[1]))
     print('OUTCOME %s; outputs in s3://%s/%s/out/' % (outcome, BUCKET, base), flush=True)
     sys.exit(0 if outcome == 'done' else 1)
 

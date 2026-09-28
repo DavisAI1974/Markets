@@ -56,9 +56,11 @@ concurrency:
   # read-only and writes only its own .digest-side-* scratch on idle cores.
   # The CLM sidecar (Jev) Pod runs on the runner and a Runpod GPU, never on the box: its own lock, so a 150-minute
   # Pod run never holds the box-run lock (Greg, 2026-09-28).
+  # Jev's relay (Greg, 2026-09-28: Jev sits in with Frankie) reads the running session's files read-only and uploads
+  # them through presigned slots: its own lock, so it runs beside the principal that holds box-run.
   # Principal inputs (one single-core read of ROOT's retained evidence into a fresh root) has its own lock so it can
   # run beside the read-only CLM extract (Greg, 2026-09-28: run in parallel).
-  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh' || inputs.script == 'deploy/aws/box/frankie_box_console.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_cycle.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && format('clm-pod-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_principal_inputs.sh' && format('box-inputs-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_upload.sh' && format('clm-upload-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_digest_canary.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_composition.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_stacks.sh') && format('box-canary-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
+  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh' || inputs.script == 'deploy/aws/box/frankie_box_console.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_cycle.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && format('clm-pod-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_principal_inputs.sh' && format('box-inputs-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_upload.sh' && format('clm-upload-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_jev_relay.sh' && format('jev-relay-{0}', inputs.instance)) || ((inputs.script == 'deploy/aws/box/frankie_box_digest_canary.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_composition.sh' || inputs.script == 'deploy/aws/box/frankie_box_digest_stacks.sh') && format('box-canary-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
   cancel-in-progress: false
 jobs:
   validate-staging-route:
@@ -172,7 +174,16 @@ jobs:
           import json, os, re
           import boto3
           from botocore.config import Config
-          items = os.environ['PRESIGN'].split()
+          items = []
+          for item in os.environ['PRESIGN'].split():
+              # putrange:<bucket>/<prefix>:<N> = N one-object upload slots <prefix>/0000.json.. (Jev's feed, Greg 2026-09-28)
+              if item.startswith('putrange:'):
+                  target, _, count = item[len('putrange:'):].rpartition(':')
+                  if not re.fullmatch(r'[0-9]{1,4}', count) or not 0 < int(count) <= 2000:
+                      raise SystemExit('putrange count must be 1..2000')
+                  items += ['put:%s/%04d.json' % (target, i) for i in range(int(count))]
+              else:
+                  items.append(item)
           expires = int(float(os.environ['PRESIGN_HOURS']) * 3600)
           def client(bucket):
               region = 'us-east-1' if bucket.endswith('us-east-1') else 'us-east-2'
@@ -353,8 +364,9 @@ jobs:
           [[ "${v[DATASET_KEY]:-}" =~ ^(host-deliveries|clm-sidecar)/[A-Za-z0-9_./-]+$ ]] || { echo "DATASET_KEY required"; exit 1; }
           [[ "${v[MAX_MINUTES]:-150}" =~ ^[0-9]+$ ]] || { echo "MAX_MINUTES must be an integer"; exit 1; }
           [[ "${v[CHECKPOINT_MINUTES]:-30}" =~ ^[0-9]+$ ]] || { echo "CHECKPOINT_MINUTES must be an integer"; exit 1; }
+          [[ "${v[SIT_IN_PODS]:-}" =~ ^([a-z0-9]{6,40}(,[a-z0-9]{6,40})*)?$ ]] || { echo "SIT_IN_PODS must be comma-separated Pod ids"; exit 1; }
           python research/kalshi/frankie_boss/clm_sidecar/launch.py --dataset-key "${v[DATASET_KEY]}" --stamp "${v[STAMP]}" \
-            --max-minutes "${v[MAX_MINUTES]:-150}" --checkpoint-minutes "${v[CHECKPOINT_MINUTES]:-30}" 2>&1 | tee box-run-output.txt
+            --max-minutes "${v[MAX_MINUTES]:-150}" --checkpoint-minutes "${v[CHECKPOINT_MINUTES]:-30}" --sit-in-pods "${v[SIT_IN_PODS]:-}" 2>&1 | tee box-run-output.txt
           { echo '### CLM sidecar report'; cat clm-sidecar-out/report.md 2>/dev/null || echo '(no report)'; } >> "$GITHUB_STEP_SUMMARY"
       - name: CLM sidecar Pod cleanup (always delete the Pod)
         if: always() && inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'

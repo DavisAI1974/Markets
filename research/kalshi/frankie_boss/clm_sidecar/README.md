@@ -60,3 +60,25 @@ rest" tables.
   `zero_shot_raw_examples.json`, so the parser can be fixed after the first run. If `clm-serve` does not come up,
   the run finishes head-only and says so.
 - `vllm/vllm-openai:latest` is not pinned. The status marker records the vLLM version that ran.
+
+## Sit-in with Frankie (Greg, 2026-09-28)
+Jev sits in with Frankie through the principal's reading and classroom, in two roles, and they talk every few
+minutes. Jev writes a report every 30 minutes, so each run leaves something to evaluate.
+- **Feed out of the box:** `deploy/aws/box/frankie_box_jev_relay.sh` has its own `jev-relay` lock and runs beside the
+  principal. It is read-only on the session.
+  - Every `RELAY_SECONDS` (120) it bundles the session's phase, note, progress, `work/classroom/*.json` and each finished
+    model call's answer text.
+  - Each bundle goes to the next presigned slot, `clm-sidecar/<STAMP>/feed/NNNN.json`. The first bundle also carries the
+    request's `dipole_classroom` material.
+  - Dispatch with `presign="putrange:frankie-granite42-568968024170-us-east-1/clm-sidecar/<STAMP>/feed:240"`,
+    `presign_hours=12`, variables `STAMP=<STAMP> REQUEST_DIRECTORY=<principal request dir>`.
+- **Jev's Pod:** dispatch `frankie_box_clm_sidecar_pod.sh` with `SIT_IN_PODS=<reading Pods 2-4>` and a long
+  `MAX_MINUTES`. `sit_in.py` runs after learn.py, using Qwen3-8B chat on the Pod. Each turn:
+  - the **student** answers Frankie's topic from the dipole material alone;
+  - the **observer** compares the two against the material (JSON: agree, disagreements, evidence, question);
+  - **Frankie** (Granite on a reading Pod, never the BOSS, jobs_v1) answers the question;
+  - the observer closes the turn as settled or open.
+- **Reports:** `clm-sidecar/<STAMP>/sit-in/report-NNNN.md` every 30 min, listing every turn individually (never
+  averaged), plus `sit-in/transcript.jsonl.gz`.
+- **Isolation:** nothing Jev writes goes into Frankie's session. Frankie's replies to Jev are extra Granite calls on the
+  reading Pods, which share the slots with the principal's reading.
