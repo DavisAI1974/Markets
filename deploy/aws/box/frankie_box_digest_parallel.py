@@ -588,6 +588,21 @@ def _published_meta(name, pin, receipts, witness):
     return {key: document[key] for key in sorted(document) if key in S.META_FIELDS}
 
 
+def recorded_order(entries, database):
+    """The bedrock entries in the order the finished sources.sqlite numbered its layers (layer_index). work/derive.json
+    is written with sorted keys, while ROOT numbered the layers in its in-memory order, so a reader of derive.json must
+    take the order from here: layer indexes, the sources key and the table ordinals all follow it."""
+    db = sqlite3.connect(Path(database).resolve().as_uri() + '?mode=ro', uri=True)
+    try:
+        rows = db.execute('SELECT ordinal, payload FROM layer_index ORDER BY ordinal').fetchall()
+    finally:
+        db.close()
+    names = [json.loads(zlib.decompress(p) if isinstance(p, bytes) else p)['layer'] for _, p in rows]
+    if [o for o, _ in rows] != list(range(len(rows))) or sorted(names) != sorted(entries):
+        raise ValueError('the finished sources layer_index does not number exactly these bedrock layers')
+    return {name: entries[name] for name in names}
+
+
 def _plain_meta(pin):
     """The metadata fields of a plain (not gzip-json) pinned layer, streamed (row arrays skipped), bytes and sha256
     checked against the pin: the same fields BedrockSources._read keeps (last duplicate key wins)."""

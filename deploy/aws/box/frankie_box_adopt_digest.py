@@ -84,6 +84,7 @@ def adopt(directory, digest, old_code_root):
         receipt = json.loads((work / 'derive.json').read_bytes())
         entries = {name: entry for name, entry in receipt['layers'].items() if entry.get('bedrock')}
         sources = layers / 'sources.sqlite'
+        entries = P.recorded_order(entries, sources)   # ROOT's in-memory layer order, not derive.json's sorted keys
         target = layers / 'sources.save.json'
         if not target.exists():
             info = sources.stat()

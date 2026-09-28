@@ -55,6 +55,7 @@ def main():
     side.mkdir()
     receipt = json.loads((work / 'derive.json').read_bytes())
     entries = {name: entry for name, entry in receipt['layers'].items() if entry.get('bedrock')}
+    entries = P.recorded_order(entries, layers_root / 'sources.sqlite')   # derive.json keys are sorted
     code = D._code_identity()
     layers_identity = D.layers_identity_of(entries)
     progress = side / 'progress.jsonl'
