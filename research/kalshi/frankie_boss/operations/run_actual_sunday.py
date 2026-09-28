@@ -670,6 +670,13 @@ class ActualHost:
                 return self.api.recover_retained_preparation(self.context,witness,as_of=as_of,through_cursor=through_cursor,
                     progress=self.recovery_progress)
             self.context._prepare=recover
+        else:
+            # Greg, 2026-09-28 ("We have to fix that 1 cpu problem"): the pinned _prepare runs unchanged; only its journal
+            # walk (context_session.journal_prefix, both passes) runs across the box's CPUs. Same payloads, order,
+            # checks and summary (parallel_journal.py); context_session.py and c15_journal.py are untouched.
+            from research.kalshi.frankie_boss.parallel_journal import prepare_parallel
+            context=self.context
+            self.context._prepare=lambda as_of,through_cursor:prepare_parallel(context,as_of,through_cursor)
         try:
             cache=self.api.prepare_context_cache(self.context,as_of=binding['as_of'],through_cursor=binding['through_cursor'],
                 expected_source_checkpoint=self.source_checkpoint,expected_model_hash=self.context._model_hash(),
