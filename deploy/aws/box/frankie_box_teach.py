@@ -25,9 +25,9 @@ FROZEN_LAYERS = ('learned_d_structures_and_families', 'learned_dipoles_and_geome
                  'learned_chains_extensions_reappearances_ancestry', 'predecessor_ancestry_unresolved_chain_state')
 FROZEN_DIR = 'frozen-learned-structure'
 CLOCK_RULE = 'event_known_by <= feature_availability <= model_evaluation'
-LARGEST_GAPS = 20
-PRINTED_VIOLATIONS = 20
-MAX_QUESTIONS, MAX_QUESTION_CHARS = 20, 500
+# no caps (Greg, 2026-09-28: the caps on groups, families and D's count were removed because we expect to learn things
+# we have not before): every gap is named in size order, every clock violation is printed, and Frankie's questions are
+# kept whatever their number or length
 _NUMBER = re.compile(r'(?:(?<![\d.])-)?\d+(?:\.\d+)?')   # a minus stays with its number; a hyphen after a digit is a range or a date
 _THOUSANDS = re.compile(r'(?<=\d),(?=\d{3}(?!\d))')
 _HEX = re.compile(r'\b(?=[0-9]*[a-f])[0-9a-f]{8,}\b')    # sha256 values and their prefixes (8+ hex chars with a letter among them) never license a number; a 19-digit ns clock is a NUMBER
@@ -230,7 +230,7 @@ def facts(work, brain, producers):
                              continuity_segment=g.get('continuity_segment')))
         per_event.append(dict(event=i, gap_count=row.get('gap_count', len(gaps)), gaps=gaps))
         every.extend(dict(event=i, **g) for g in gaps)
-    largest = sorted(every, key=lambda g: (-g['gap_ns'], g['event'], g['recv_ns'] or 0))[:LARGEST_GAPS]
+    largest = sorted(every, key=lambda g: (-g['gap_ns'], g['event'], g['recv_ns'] or 0))
     ancestry = dict(events=len(recurrence_rows), count=len(every), per_event=per_event, largest=largest,
                     smallest_ns=min((g['gap_ns'] for g in every), default=None), largest_ns=max((g['gap_ns'] for g in every), default=None))
     derived_clocks = {name: layers.get(name, {}).get('status') == 'derived'
@@ -309,10 +309,8 @@ def facts_text(f):
               'not derived), ' + f'{len(C["violations"])} violations; derived clock layers: '
               + ', '.join(f'{k}: {"yes" if v else "no"}' for k, v in C['derived_clocks'].items()) + '; decision basis: '
               + ', '.join(f'{k}: {v}' for k, v in C['decision_basis'].items())]
-    for v in C['violations'][:PRINTED_VIOLATIONS]:
+    for v in C['violations']:
         lines.append(f'- violation at group {v["group_index"]}: known_by {v["known_by_ns"]}, availability {v["availability_ns"]}, evaluation {v["evaluation_ns"]}')
-    if len(C['violations']) > PRINTED_VIOLATIONS:
-        lines.append(f'- ... {len(C["violations"]) - PRINTED_VIOLATIONS} more violations in the teach-back file')
     F = f['families']
     lines += ['', f'## Families: {F["distinct_family_ids"]} distinct candidate_family_id values; counts: '
               + ', '.join(f'{k}: {v}' for k, v in F['family_id_counts'].items()) + '; side strings: ' + ', '.join(f'{k}: {v}' for k, v in F['side_strings'].items()),
@@ -403,8 +401,6 @@ def parse_answer(body, facts_text_, error=ValueError):
     questions = answer.get('questions', [])
     if not isinstance(questions, list) or not all(isinstance(q, str) for q in questions):
         raise error('answer unusable: questions must be a list of strings')
-    if len(questions) > MAX_QUESTIONS or any(len(q) > MAX_QUESTION_CHARS for q in questions):
-        raise error(f'answer unusable: at most {MAX_QUESTIONS} questions of {MAX_QUESTION_CHARS} characters')
     out['questions'] = questions
     cited.extend(questions)
     foreign = missing_numbers('\n'.join(cited), facts_text_)
