@@ -80,7 +80,12 @@ def resume_legacy(session, source):
         db.close()
     if count != session.source_binding['journal_count'] or head != session.source_binding['journal_hash']:
         raise ValueError('sealed source metadata differs')
-    container.update(layout='compact', format=fmt, count=count, head=head,
+    # The resume never re-reads the journal, so the entry kinds come from the sealed relation (every record is one
+    # INPUT and one APPLIED entry; the same kinds frankie_box_monday_read writes), checked against the sealed count
+    # (2026-09-28: the digest header reads rows.kinds; the resume receipt lacked it and ROOT stopped at assembly).
+    if count != 2 * len(records):
+        raise ValueError('sealed journal count is not two entries per input record')
+    container.update(layout='compact', format=fmt, count=count, head=head, kinds=dict(INPUT=len(records), APPLIED=len(records)),
                      record_spool=witness(records.path), head_is_request_source_hash=False)
     receipt = dict(schema='FRANKIE_BOX_DERIVATION_RECEIPT_V1', at=time.time(), cycle=session.cycle,
         pin_group=pin['group'], source_binding=session.source_binding, rows=container,
