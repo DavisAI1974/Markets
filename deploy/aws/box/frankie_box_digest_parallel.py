@@ -97,11 +97,13 @@ def _fold(state, flat):
             last_lists[c] = v[0]
 
 
-def _part_db(directory):
+def _part_db(directory, stage):
     # Part databases are scratch (a failed table is rebuilt from scratch), so no journal and no fsync per commit; a
     # 1 GiB page cache per helper keeps the per-cell dictionary upserts off the disk (profile 2026-09-28: the count
-    # pass sat at 37% CPU in disk wait with the default 2 MB cache on 28 helpers).
-    db = sqlite3.connect(Path(directory) / 'part.sqlite')
+    # pass sat at 37% CPU in disk wait with the default 2 MB cache on 28 helpers). One file per stage (plans, freq,
+    # final), each deleted as soon as its last reader is done: the whole-table scratch never holds more than about
+    # two stages at once (2026-09-28: bedrock.members filled the 2 TB disk holding source, plans and counts).
+    db = sqlite3.connect(Path(directory) / (stage + '.sqlite'))
     db.execute('PRAGMA journal_mode=OFF')
     db.execute('PRAGMA synchronous=OFF')
     db.execute('PRAGMA temp_store=MEMORY')
@@ -120,16 +122,10 @@ def _lookup_db(path):
 # ---- phase 1: snapshot ---------------------------------------------------------------------------------------------
 
 def _snapshot(job):
+    # No copy of the source rows is kept: the plan and verify passes read them again from the same read-only source
+    # (the finished sources.sqlite), in the same order.
     spec, directory = job
     Path(directory).mkdir(parents=True, exist_ok=False)
-    db = _part_db(directory)
-    db.execute('PRAGMA cache_size=-65536')
-    db.executescript('''
-        CREATE TABLE source (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL);
-        CREATE TABLE plans (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL);
-        CREATE TABLE final (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL);
-        CREATE TABLE frequency (key TEXT PRIMARY KEY, count INTEGER NOT NULL, first INTEGER NOT NULL);
-    ''')
     columns, n, first, last = {}, 0, None, None
     state = ({}, {}, {})
     for n, row in enumerate(_source_rows(spec), 1):
@@ -139,26 +135,25 @@ def _snapshot(job):
             if not column or column[0] in '=^' or any(c in column for c in ('\t', '\n', '=', ' ')):
                 raise ValueError(f'column name {column!r} cannot be spelled in a table header')
             columns.setdefault(column, None)
-        db.execute('INSERT INTO source VALUES (?, ?)', (n - 1, TS._dump(row)))
+        TS._dump(row)      # the same type-preservation check the stored copy made
         if first is None:
             first = flat
         last = flat
         _fold(state, flat)
-    db.commit()
-    db.close()
     return dict(columns=list(columns), n=n, first=first, last=last, state=state)
 
 
 # ---- phase 2: plan cells, derived and constant flags ---------------------------------------------------------------
 
 def _plan(job):
-    directory, columns, seed, first = job
+    spec, directory, columns, seed, first = job
     prev, values, integers, lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
     derived = {c: True for c in columns}
     constant = {c: True for c in columns}
-    db = _part_db(directory)
-    for i, row in enumerate(TS._rows(db, 'source')):
-        flat = DG._flatten(row)
+    db = _part_db(directory, 'plans')
+    db.execute('CREATE TABLE plans (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL)')
+    for i, row in enumerate(_source_rows(spec)):
+        flat = DG._flatten(dict(row))
         cells = DG._plan_row(flat, columns, prev, values, integers, lists)
         db.execute('INSERT INTO plans VALUES (?, ?)', (i, TS._dump(cells)))
         for j, c in enumerate(columns):
@@ -175,7 +170,9 @@ def _plan(job):
 def _count(job):
     directory, kept = job
     scale_state = {j: [DG.SCALE_MAX, False] for j in kept}
-    db = _part_db(directory)
+    plans = _part_db(directory, 'plans')
+    db = _part_db(directory, 'freq')
+    db.execute('CREATE TABLE frequency (key TEXT PRIMARY KEY, count INTEGER NOT NULL, first INTEGER NOT NULL)')
     position = 0
     # Counts are gathered in memory and upserted in batches: a key already in the table keeps its first position
     # (an earlier batch saw it first), a new key gets its first position within the batch; same table as one upsert
@@ -188,7 +185,7 @@ def _count(job):
                        ((k, v[0], v[1]) for k, v in sorted(batch.items())))
         batch.clear()
 
-    for cells in TS._rows(db, 'plans'):
+    for cells in TS._rows(plans, 'plans'):
         for j in kept:
             kind, text = cells[j]
             if kind != 'lit':
@@ -214,6 +211,7 @@ def _count(job):
         flush()
     db.commit()
     db.close()
+    plans.close()
     return scale_state
 
 
@@ -221,10 +219,12 @@ def _count(job):
 
 def _final(job):
     directory, kept, columns, scales, dictionary = job
-    db = _part_db(directory)
+    plans = _part_db(directory, 'plans')
+    db = _part_db(directory, 'final')
+    db.execute('CREATE TABLE final (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL)')
     lookup = _lookup_db(dictionary)
     has_space = False
-    for i, cells in enumerate(TS._rows(db, 'plans')):
+    for i, cells in enumerate(TS._rows(plans, 'plans')):
         out = []
         for j in kept:
             kind, text = cells[j]
@@ -246,12 +246,14 @@ def _final(job):
     db.commit()
     db.close()
     lookup.close()
+    plans.close()
+    (Path(directory) / 'plans.sqlite').unlink()
     return has_space
 
 
 def _emit(job):
     directory, sep = job
-    db = _part_db(directory)
+    db = _part_db(directory, 'final')
     path = Path(directory) / 'rows.txt'
     with path.open('x', encoding='utf-8', newline='\n') as handle:
         for cells in TS._rows(db, 'final'):
@@ -259,18 +261,18 @@ def _emit(job):
         handle.flush()
         os.fsync(handle.fileno())
     db.close()
+    (Path(directory) / 'final.sqlite').unlink()
     return path.stat().st_size
 
 
 # ---- phase 5: inverse verification, per part ------------------------------------------------------------------------
 
 def _verify(job):
-    (path, offset, length, count, directory, header, dictionary, seed) = job
+    (path, offset, length, count, spec, header, dictionary, seed) = job
     name, columns, whole, kept, constants, scales, sep = header
-    db = _part_db(directory)
     lookup = _lookup_db(dictionary)
     prev_row, prev_values, prev_ints, prev_lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
-    expected = TS._rows(db, 'source')
+    expected = iter(_source_rows(spec))
     with Path(path).open('rb') as handle:
         handle.seek(offset)
         segment = handle.read(length).decode('utf-8')
@@ -358,7 +360,6 @@ def _verify(job):
         prev_row = row
     if next(expected, None) is not None:
         raise ValueError('source rows longer than table part')
-    db.close()
     lookup.close()
     return count
 
@@ -389,7 +390,7 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
                 state[0].update(s['state'][0]); state[1].update(s['state'][1]); state[2].update(s['state'][2])
                 prev = s['last']
         note(name, 'plan')
-        flags = list(pool.map(_plan, [(str(p), columns, seed, first) for p, seed in zip(parts, seeds)]))
+        flags = list(pool.map(_plan, [(spec, str(p), columns, seed, first) for spec, p, seed in zip(specs, parts, seeds)]))
         derived = {c: all(f[0][c] for f in flags) for c in columns}
         constant = {c: all(f[1][c] for f in flags) for c in columns}
         whole = {c: '=' if derived[c] else '^' for c in columns if n and (derived[c] or constant[c])}
@@ -405,14 +406,14 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
             g.execute('PRAGMA ' + pragma)
         g.execute('CREATE TABLE frequency (key TEXT PRIMARY KEY, count INTEGER NOT NULL, number INTEGER UNIQUE)')
         for p in parts:
-            g.execute('ATTACH DATABASE ? AS part', (str(p / 'part.sqlite'),))
+            g.execute('ATTACH DATABASE ? AS part', (str(p / 'freq.sqlite'),))
             g.execute('INSERT INTO frequency(key, count) SELECT key, count FROM part.frequency WHERE true '
                       'ON CONFLICT(key) DO UPDATE SET count=count+excluded.count')
             g.commit()
             g.execute('DETACH DATABASE part')
         number = 0
         for p in parts:   # numbering in first-occurrence order over the whole table, as the serial pass assigns it
-            g.execute('ATTACH DATABASE ? AS part', (str(p / 'part.sqlite'),))
+            g.execute('ATTACH DATABASE ? AS part', (str(p / 'freq.sqlite'),))
             g.execute('CREATE TEMP TABLE fresh (seq INTEGER PRIMARY KEY, key TEXT NOT NULL)')
             g.execute('INSERT INTO fresh(key) SELECT q.key FROM part.frequency q JOIN frequency f ON f.key=q.key '
                       'WHERE f.count >= 2 AND f.number IS NULL ORDER BY q.first')
@@ -423,6 +424,7 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
             g.execute('DROP TABLE fresh')
             g.commit()
             g.execute('DETACH DATABASE part')
+            (p / 'freq.sqlite').unlink()        # numbered: this part's counts are no longer needed
         g.close()
         note(name, 'final')
         spaces = list(pool.map(_final, [(str(p), kept, columns, scales, str(dictionary)) for p in parts]))
@@ -458,6 +460,8 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
             with (p / 'rows.txt').open('rb') as chunk:
                 handle.flush()
                 shutil.copyfileobj(chunk, handle.buffer, 1 << 22)
+            handle.flush()
+            (p / 'rows.txt').unlink()          # copied into the table: the part's rows are the table's bytes now
         handle.flush()
         os.fsync(handle.fileno())
     before = TS._identity(destination)
@@ -513,13 +517,14 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     total = destination.stat().st_size
     if offsets and offsets[0] + sum(sizes) != total:
         raise ValueError('table parts do not end the file')
-    jobs = [(str(destination), off, size, s['n'], str(p), header, str(inverse / 'table.sqlite'), seed)
-            for off, size, s, p, seed in zip(offsets, sizes, snaps, parts, seeds)]
+    jobs = [(str(destination), off, size, s['n'], spec, header, str(inverse / 'table.sqlite'), seed)
+            for off, size, s, spec, seed in zip(offsets, sizes, snaps, specs, seeds)]
     verified = sum(pool_map_verify(jobs, cpus))
     if TS._identity(destination) != before:
         raise ValueError('table changed during inverse proof')
     if verified != n:
         raise ValueError('verified table count mismatch')
+    shutil.rmtree(scratch)       # proved: the scratch (dictionary, inverse, part directories) is no longer needed
     return dict(path=str(destination), rows=n, verified=True, verified_identity=before,
                 scratch_directory=str(scratch), parts=len(specs))
 
