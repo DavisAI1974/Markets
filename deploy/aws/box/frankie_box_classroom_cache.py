@@ -124,8 +124,20 @@ def identity(session, visible, module):
         engine={k: engine.get(k) for k in ('pod_id', 'served_model_name', 'config_hash')},
         declared_model=getattr(session, 'served_model', None), pod_id=session.pod_id,
         reader={k: lane.get(k) for k in ('endpoint_id', 'config_hash')},
-        evidence={n: witness(session.work / n) for n in ('merged-notes.md', 'reading.json', 'derivation-digest-full.md')
-                  if (session.work / n).is_file()})
+        evidence={n: (reading_witness if n == 'reading.json' else witness)(session.work / n)
+                  for n in ('merged-notes.md', 'reading.json', 'derivation-digest-full.md') if (session.work / n).is_file()})
+
+
+READING_SCIENCE = ('schema', 'status', 'parts', 'corpus_sha256', 'merged')
+
+
+def reading_witness(path):
+    """What the reading receipt says about the science: its status, parts, the corpus it read and the merged notes it
+    produced. Not its `at` or this run's outcomes (2026-09-28: a reading re-run over the same corpus rewrote `at`, which
+    changed this identity and forced a second full staged read of the digest)."""
+    value = json.loads(Path(path).read_bytes())
+    science = json.dumps({k: value.get(k) for k in READING_SCIENCE}, sort_keys=True, separators=(',', ':')).encode()
+    return dict(science=READING_SCIENCE, sha256=hashlib.sha256(science).hexdigest())
 
 # Stop-fix-restart (Greg, 2026-09-27): what decides reuse is the SCIENCE of an exchange (request, teacher message,
 # classroom binding, evidence, the serving and reading model identity), not the code bytes or the Pod id. A saved

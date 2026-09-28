@@ -86,7 +86,20 @@ def run(session,C,cache,*,root,staged,dialogue):
         if path.is_file():sources.append(dict(source_id=name,content=path.read_bytes()))
     if pre['mode'] in ('SOCRATIC','VERIFY') and not any(x['source_id']=='derivation-digest-full.md' for x in sources):
         raise ValueError('independent classroom requires complete current evidence')
-    reading=staged.consume_sources(session,sources,'principal','classroom-all-sources',
+    # Greg, 2026-09-28 (remove every pass that is not necessary): the principal reading already read the whole digest and
+    # the merged notes carry it, so the staged read takes the digest BY REFERENCE (its bytes, sha256 and the principal
+    # reading it was read in) instead of a second full read; the digest stays whole in the navigable sources below, so
+    # every classroom task can still fetch any exact range of it on demand.
+    staged_sources=[x for x in sources if x['source_id']!='derivation-digest-full.md']
+    if len(staged_sources)!=len(sources):
+        digest=next(x for x in sources if x['source_id']=='derivation-digest-full.md')
+        principal=json.loads((session.work/'reading.json').read_bytes()) if (session.work/'reading.json').is_file() else {}
+        staged_sources.append(dict(source_id='derivation-digest-reference',content=canonical(dict(
+            source_id='derivation-digest-full.md',bytes=len(digest['content']),sha256=hashlib.sha256(digest['content']).hexdigest(),
+            read_whole_in=dict(phase='principal reading',status=principal.get('status'),parts=principal.get('parts'),
+                               corpus_sha256=principal.get('corpus_sha256'),merged_notes=principal.get('merged')),
+            access='navigable by exact byte range from every classroom task (source navigation)'))))
+    reading=staged.consume_sources(session,staged_sources,'principal','classroom-all-sources',
         descriptor['snapshot_hash'],session.request_sha256,cache,
         'Read the complete Dipole research and current classroom evidence. Preserve every source, observation, prior '
         'lesson, correction, failure and uncertainty. Earlier learning remains usable in this knowledge-primed replay. '

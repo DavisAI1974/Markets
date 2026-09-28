@@ -1474,6 +1474,23 @@ class Session:
         write_json(self.work / 'classroom-preparation-workers.json', self._preparation_workers.receipt())
         return result
 
+    def _saved_plan(self, corpus_sha, target, size):
+        """The parts work/reading-plan.json recorded for this exact corpus and part token target (2026-09-28: every start
+        re-tokenized the whole corpus to rebuild the same plan). Used only when its parts tile the corpus exactly."""
+        path = self.work / 'reading-plan.json'
+        try:
+            plan = load_json(path)
+            if (plan.get('schema') != 'FRANKIE_BOX_READING_PLAN_V1' or plan.get('corpus', {}).get('sha256') != corpus_sha
+                    or plan.get('part_input_tokens') != target):
+                return None
+            chunks = [(c['start'], c['end']) for c in plan['chunks']]
+        except (OSError, ValueError, KeyError, TypeError, AttributeError):
+            return None
+        if not chunks or chunks[0][0] != 0 or chunks[-1][1] != size or any(a[1] != b[0] or a[0] >= a[1] for a, b in zip(chunks, chunks[1:])):
+            return None
+        self.note(f'reading plan reused: {len(chunks)} parts at {target} tokens for corpus {corpus_sha[:12]}')
+        return chunks
+
     def _chunks(self, data):
         """Parts of the corpus. With the tokenizer on the box the parts are sized by EXACT tokens (reading.json
         `part_input_tokens`, default PART_INPUT_TOKENS) on line boundaries, so the output room per part is what the policy
@@ -1501,6 +1518,11 @@ class Session:
         if cached is not None and cached[0] == key:
             self._part_tokens = target
             return list(cached[1])
+        saved = self._saved_plan(key[0], target, len(data))
+        if saved is not None:
+            self._part_tokens = target
+            self._chunk_cache = (key, tuple(saved))
+            return saved
         lines, chunks, start, offset, count = data.split(b'\n'), [], 0, 0, 0
         for line, n in zip(lines, self._line_tokens(tokenizer, lines)):
             piece = line + b'\n'
@@ -1553,6 +1575,8 @@ class Session:
             groups.append(current)
         def merge_group(item):
             g, group = item
+            if len(group) == 1:
+                return group[0]          # a one-note group has nothing to merge: passed through, never sent to the model again
             outcome = self.reader(f'merge-{level}-{g:04d}', self._merge_prompt('\n'.join(group), f'note group {g + 1} of {len(groups)} at level {level}'))
             return self._merge_keep(f'merge-{level}-{g:04d}', group, outcome)
         merged = self._fan_out(f'merging level {level}', list(enumerate(groups)), merge_group)
@@ -2006,7 +2030,7 @@ class Session:
         verify = load_json(self.work / 'verify.json')
         labels = load_json(self.work / 'labels.json')
         derive = load_json(self.work / 'derive.json')
-        digest_md = (self.work / 'derivation-digest-full.md').read_text(encoding='utf-8')
+        digest_path = self.work / 'derivation-digest-full.md'
         notes = (self.work / 'merged-notes.md').read_text(encoding='utf-8')
         instruction = self.request['instruction']
         packets = self._packets_text()
@@ -2021,11 +2045,20 @@ class Session:
         # The only limit is the service context (131,072 tokens): the digest fills what the context leaves after the
         # notes and the instruction, from its start, and the receipt records how much of it that was.
         room = max(0, CHUNK_BYTES - len(head.encode('utf-8')) - 2000)
-        digest_bytes = digest_md.encode('utf-8')
-        included = digest_bytes if len(digest_bytes) <= room else digest_bytes[:room]
-        base = head + included.decode('utf-8', errors='ignore') + ('' if len(included) == len(digest_bytes) else
-               f'\n[... the digest continues; {len(digest_bytes) - len(included)} more bytes did not fit this call\'s context; you read them whole in the reading parts ...]') + '\n----- END -----\n\n'
-        digest_included = dict(bytes_total=len(digest_bytes), bytes_in_writing_calls=len(included))
+        digest_total = digest_path.stat().st_size
+        with digest_path.open('rb') as source:              # only the bytes a call carries (the digest runs to GBs)
+            included = source.read(room)
+        status_end = included.find(b'\n### table ')
+        status = included if status_end < 0 else included[:status_end + 1]   # the digest header and layer statuses
+        base = head + included.decode('utf-8', errors='ignore') + ('' if len(included) == digest_total else
+               f'\n[... the digest continues; {digest_total - len(included)} more bytes did not fit this call\'s context; you read them whole in the reading parts ...]') + '\n----- END -----\n\n'
+        # Greg, 2026-09-28 (remove every pass that is not necessary): the digest head goes ONCE, with the analysis; the
+        # accounting and every ledger call carry the digest's header and layer statuses and refer to the rest, which the
+        # reading parts read whole and the merged notes above carry.
+        brief = head + status.decode('utf-8', errors='ignore') + (
+            f'\n[... the digest tables follow ({digest_total - len(status)} more bytes): you read them whole in the reading parts and '
+            'your merged notes above carry them; the analysis call carried the digest\'s first tables ...]\n----- END -----\n\n')
+        digest_included = dict(bytes_total=digest_total, bytes_in_analysis_call=len(included), bytes_in_other_writing_calls=len(status))
         self.note('writing: the analysis')
         analysis = self.boss('write-analysis', base + 'TASK: write your run analysis now as the instruction asks (Markdown, no limit on length; '
                              'cite the retained section hashes from your notes exactly; separate observed results from interpretation; '
@@ -2041,7 +2074,7 @@ class Session:
             ('\n\n[OUTPUT INCOMPLETE: the BOSS reached its output bound; kept as produced]\n' if analysis.get('incomplete') else '\n')
         analysis_md = analysis_md.rstrip('\n') + self._teach_section() + '\n'     # a section of the analysis text; response.json gains no key
         self.note('writing: the calculation accounting')
-        accounting = self.boss('write-accounting', base + f'TASK: write the ONE accounting entry: a JSON object whose "ledger" field is '
+        accounting = self.boss('write-accounting', brief + f'TASK: write the ONE accounting entry: a JSON object whose "ledger" field is '
                                f'"{CALCULATION_ACCOUNTING_LEDGER}", with a "layers" list carrying EVERY layer of this cycle\'s pin '
                                f'({", ".join(derive["layers"])}) as {{"layer", "status": derived|compared|could_not, "where" (the derivation '
                                'file), "compared_with" (retained sections or frozen learned-structure layers and what differed), "reason"}}; '
@@ -2066,7 +2099,7 @@ class Session:
         for name in OUTPUT_LEDGERS:
             self.note(f'writing: ledger {name}')
             description = registry.get(name)
-            outcome = self.boss(f'write-{name}', base + f'TASK: file the append-only output ledger "{name}" of the native ingestion registry for '
+            outcome = self.boss(f'write-{name}', brief + f'TASK: file the append-only output ledger "{name}" of the native ingestion registry for '
                                 f'this cycle as ONE JSON object whose "ledger" field is "{name}"' +
                                 (f'. The registry describes it as: {json.dumps(description)[:3000]}' if description else '') +
                                 '. Fill it from your notes, the derivation digest and the packets above only' +
