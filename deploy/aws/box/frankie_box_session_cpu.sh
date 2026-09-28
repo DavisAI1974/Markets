@@ -1,7 +1,9 @@
 # Read-only CPU probe of the running principal session (classroom, teach, reading): which threads and which Python
 # functions are the biggest CPU loads. MODE=threads samples /proc per thread for WINDOW seconds (default 10), labels each
 # thread from the classroom helper receipt; MODE=profile adds a nonblocking py-spy sample (same pinned py-spy 0.4.2 as
-# frankie_box_root_cpu.sh) with the heaviest functions per thread. No signals, no pinning, no writes except the
+# frankie_box_root_cpu.sh) with the heaviest functions per thread. EVERY process of the session is covered (Greg,
+# 2026-09-28: "it doesn't just have to be one stack ... make sure we get every sub process"): all descendants of every
+# thread, recursively (spawn workers, their helpers, shells, git), and py-spy --subprocesses, reported per process. No signals, no pinning, no writes except the
 # profile output under /opt/frankie-box/work/performance-session/.
 set -eu
 MODE="${MODE:-threads}"; SECONDS_WINDOW="${WINDOW:-10}"; TARGET_PID="${PID:-0}"
@@ -41,17 +43,33 @@ for proc in ([] if target else Path('/proc').iterdir()):
         command = (proc / 'cmdline').read_bytes().replace(b'\0', b' ').decode(errors='replace')
     except OSError:
         continue
-    if 'frankie_box_boss_session.py' in command and 'python' in command:
-        sessions.append((int(proc.name), command))
+    if ('frankie_box_boss_session.py' in command or 'run_actual_sunday_ec2.py' in command) and 'python' in command:
+        sessions.append((int(proc.name), command))     # the principal session or the cycle launch
 if not sessions:
     print(json.dumps(dict(schema='FRANKIE_SESSION_CPU_V1', session=None, note='no principal session process is running')))
     raise SystemExit(0)
-pids = [pid for pid, _ in sessions]
-for pid in list(pids):
-    try:
-        pids += [int(x) for x in (Path('/proc') / str(pid) / 'task' / str(pid) / 'children').read_text().split()]
-    except OSError:
-        pass
+def descendants(root):
+    """root and every process below it: children of every thread, recursively."""
+    seen, queue = [], [root]
+    while queue:
+        pid = queue.pop(0)
+        if pid in seen:
+            continue
+        seen.append(pid)
+        try:
+            tasks = list((Path('/proc') / str(pid) / 'task').iterdir())
+        except OSError:
+            continue
+        for task in tasks:
+            try:
+                queue += [int(x) for x in (task / 'children').read_text().split()]
+            except OSError:
+                pass
+    return seen
+
+pids = []
+for pid, _ in sessions:
+    pids += [p for p in descendants(pid) if p not in pids]
 
 def session_dir(command):
     parts = command.split()
@@ -120,8 +138,12 @@ for pid, command in sessions:
                     pass
         recent = [dict(path=str(p.relative_to(root)), age_seconds=round(time.time() - m, 1))
                   for m, p in sorted(files, reverse=True)[:8]]
+per_process = collections.defaultdict(float)
+for r in rows:
+    per_process[r['pid']] += r['cpu_percent']
 report = dict(schema='FRANKIE_SESSION_CPU_V1', at=time.time(), seconds=round(elapsed, 2),
               sessions=[dict(pid=pid, command=command[:300]) for pid, command in sessions],
+              processes=len(pids), process_cpu_percent={str(k): round(v, 1) for k, v in sorted(per_process.items(), key=lambda kv: -kv[1])},
               threads_total=len(rows), cores_busy=round(sum(r['cpu_percent'] for r in rows) / 100, 2),
               single_core_hot=[r for r in busy if r['cpu_percent'] >= 80],
               busiest=busy[:25], recent_files=recent)
@@ -149,8 +171,8 @@ if mode == 'profile':
     for pid, _ in sessions:
         path = out / ('session-%d-%d.json' % (pid, time.time_ns()))
         result = subprocess.run([str(binary), 'record', '--pid', str(pid), '--duration', '20', '--rate', '50',
-                                 '--nonblocking', '--threads', '--format', 'speedscope', '--output', str(path)],
-                                capture_output=True, text=True, timeout=90)
+                                 '--nonblocking', '--threads', '--subprocesses', '--format', 'speedscope', '--output', str(path)],
+                                capture_output=True, text=True, timeout=120)
         if result.returncode or not path.exists():
             profiles.append(dict(pid=pid, error=(result.stderr or result.stdout)[-400:]))
             continue
@@ -174,7 +196,9 @@ if mode == 'profile':
                         for i, w in counter.most_common(8)]
             per_thread.append(dict(thread=stream.get('name'), samples=total, leaf=top(leaves), inclusive=top(inclusive)))
         per_thread.sort(key=lambda t: -t['samples'])
-        profiles.append(dict(pid=pid, path=str(path), threads=per_thread[:12]))
+        # every sampled thread of every process (py-spy names each stream 'Process <pid> Thread <tid> ...'), so the
+        # workers' stacks are read beside the main thread's
+        profiles.append(dict(pid=pid, path=str(path), streams=len(per_thread), threads=per_thread[:96]))
     report['profile'] = profiles
 print(json.dumps(report, indent=1, sort_keys=True))
 PY
