@@ -484,12 +484,26 @@ def parallel_walk(context):
     # the R3 teacher's attachment: normalizer, targets and receipts across the CPUs (parallel_teacher.py)
     teacher_class = getattr(teacher, 'JournalTeacherR3', None)
     teacher_attach = teacher_class.attach if teacher_class is not None else None
+    teacher_binding = teacher_class.__dict__.get('binding') if teacher_class is not None else None
+    changed = False
     if teacher_class is not None:
         from .parallel_teacher import parallel_attach
         teacher_class.attach = parallel_attach
+        # the teacher changes (teacher_changes.py: all book levels, unknown-side trades carried), on unless
+        # FRANKIE_TEACHER_CHANGES=0; the binding then names them, so these targets are never labelled as the pinned R3's
+        import os
+        if os.environ.get('FRANKIE_TEACHER_CHANGES', '1') != '0':
+            from . import teacher_changes
+            sha = teacher_changes.apply()
+            changed = True
+            teacher_class.binding = property(lambda self: evidence_hash(dict(r3=teacher_binding.fget(self), changes=sha)))
     try:
         yield
     finally:
+        if changed:
+            from . import teacher_changes
+            teacher_changes.restore()
+            teacher_class.binding = teacher_binding
         if teacher_class is not None:
             teacher_class.attach = teacher_attach
         module.journal_prefix = original

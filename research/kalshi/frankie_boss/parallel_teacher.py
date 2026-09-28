@@ -173,11 +173,24 @@ def _chunk(job):
     return pickle.dumps(out, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+_WORKER_CHANGED = [False]
+
+
+def _changes_applied():
+    import sys
+    module = sys.modules.get(__package__ + '.teacher_changes')
+    return bool(module is not None and module._SAVED)
+
+
 def _raw_batch(blob):
     """One batch of the raw streams' window functions, the pinned functions on the same groups, in order."""
     import pickle
     from . import c15_teacher_r3 as T
-    tables, calls = pickle.loads(blob)
+    tables, calls, changed = pickle.loads(blob)
+    if changed and not _WORKER_CHANGED[0]:
+        from . import teacher_changes
+        teacher_changes.apply()                       # the same changed functions the parent recorded
+        _WORKER_CHANGED[0] = True
     out = []
     for token, kind, family, window, side, start in calls:
         table = tables[family]
@@ -263,7 +276,7 @@ class _RawStreams:
         import pickle
         if not self.batch:
             return
-        blob = pickle.dumps((self.tables, self.batch), protocol=pickle.HIGHEST_PROTOCOL)
+        blob = pickle.dumps((self.tables, self.batch, _changes_applied()), protocol=pickle.HIGHEST_PROTOCOL)
         self.pending.append(self.pool.submit(_raw_batch, blob))
         self._new_batch()
         while len(self.pending) > 2 * self.cpus:          # bounded: never the whole day's windows in flight
@@ -347,6 +360,10 @@ def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):
               'share', 'share', 'share', 'share', 'share', 'share', 'log_groups', 'log_count', 'log_ratio',
               'log_ticks', 'log_groups', 'log_ticks') if identity else ('z_score',) * 19)
     wanted = set(selected)
+    candidate = self.candidate_digest
+    if _changes_applied():
+        from . import teacher_changes
+        candidate = T.evidence_hash(dict(r3=candidate, changes=teacher_changes.CHANGES_SHA256))
     # 1. the pinned raw streams, in order, with the exact-row check (attach's own loop minus the normalizer); the window
     #    functions across the CPUs (_RawStreams)
     rows, processed = [], 0
@@ -375,7 +392,7 @@ def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):
     base = (R.IdentityNormalizerR3(instrument_ids) if identity else
             R.NormalizerR3.restore(config, self.normalizer.export(), self.normalizer.state_hash))
     size = max(1, -(-len(rows) // (cpus * 2)))
-    spec = dict(registry_id=f'boss/teacher/{T.CANDIDATE}:{self.candidate_digest}', target_names=T.CONTROL_COLUMNS,
+    spec = dict(registry_id=f'boss/teacher/{T.CANDIDATE}:{candidate}', target_names=T.CONTROL_COLUMNS,
                 target_units=units, builder_code_sha=builder_sha)
     jobs = []
     for start in range(0, len(rows), size):
@@ -407,4 +424,4 @@ def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):
         raise ValueError('parallel teacher attachment hash differs; run stopped')
     return dict(targets=tuple(targets), raw=raw_rows, processed_records=processed,
                 context_cursors=selected, step_receipts=tuple(receipts),
-                attachment_hash=attachment, candidate_digest=self.candidate_digest)
+                attachment_hash=attachment, candidate_digest=candidate)
