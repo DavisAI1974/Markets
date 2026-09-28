@@ -549,7 +549,7 @@ def parallel_walk(context, as_of=None, through_cursor=None):
             from . import teacher_changes
             sha = teacher_changes.apply()
             changed = True
-            teacher_class.binding = property(lambda self: evidence_hash(dict(r3=teacher_binding.fget(self), changes=sha)))
+            teacher_changes.install_binding()        # process-wide, the same value before, inside and after the walk
     # the teacher reads what Frankie ingests, once, beside the first walk (concurrent_teacher.py)
     if teacher_class is not None and as_of is not None and encoder is not None:
         from . import concurrent_teacher
@@ -562,7 +562,6 @@ def parallel_walk(context, as_of=None, through_cursor=None):
         if changed:
             from . import teacher_changes
             teacher_changes.restore()
-            teacher_class.binding = teacher_binding
         if teacher_class is not None:
             teacher_class.attach = teacher_attach
         module.journal_prefix = original

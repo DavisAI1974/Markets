@@ -493,6 +493,23 @@ def r3_iter_raw(self, evidence, *, as_of, source_manifest_hash):
                       as_of_ts_recv_ns=last_recv, evidence_content_hash=content, columns=values)
 
 
+_BINDING = []
+
+
+def install_binding():
+    """Name the changes in the teacher's identity for the WHOLE process, once, before anything reads it (the launch reads
+    teacher.binding before the walk, the cache compares it inside the walk, the critic receipt after it: every reader
+    must see the same value). On unless FRANKIE_TEACHER_CHANGES=0. Idempotent."""
+    import os
+    from .c15_journal import evidence_hash
+    if _BINDING or os.environ.get('FRANKIE_TEACHER_CHANGES', '1') == '0':
+        return
+    _, T = _modules()
+    pinned = T.JournalTeacherR3.__dict__['binding']
+    _BINDING.append(pinned)
+    T.JournalTeacherR3.binding = property(lambda self: evidence_hash(dict(r3=pinned.fget(self), changes=CHANGES_SHA256)))
+
+
 def apply():
     """Swap the changed functions in; returns the sha256 recorded in the provenance."""
     C, T = _modules()

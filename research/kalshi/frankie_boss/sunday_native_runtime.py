@@ -65,6 +65,8 @@ def initialize(builder, *, context_rows):
     decoder = NativeForecastHeads(**DEVELOPMENT['decoder']).double().eval()
     # Nothing is normalized or averaged (Greg, standing; 2026-09-28): the teacher's targets are the raw values themselves,
     # whole, through the identity normalizer (no window, no warm-up, no z-score, no clip).
+    from .teacher_changes import install_binding
+    install_binding()          # the teacher's identity names the teacher changes from the start, for every reader
     teacher = JournalTeacherR3({111313: 1000000}, normalizer=IdentityNormalizerR3((111313,)))
     context = ContextSessionRunner(native, builder, entity=(1, 111313),
                                    t_ctx=context_rows, teacher=teacher)
