@@ -7,6 +7,11 @@
   Branch `claude/frankie-monday-continuation-qlkvqr`. ROOT (run 36393033592, 5fb84365) SUCCEEDED 07:56:39Z:
   `calculations_retained`, every saved layer and table reused. Next Monday step (principal inputs) needs Greg's go and
   a restage of the tip. The CLM sidecar extract runs behind it; then the Pod (go given).
+- **EVERY TOKEN STACK THAT WORKS GETS USED (Greg, 2026-09-28): "if they even reduce a little they're getting used ... this
+  isn't a best option thing but everything that works."** Frankie's read is shrunk before it is paid for: apply every
+  lossless stack that reduces tokens at all (the existing L1-L10 render layers, stacked_v1/v2, STACKED_TEXT, the digest
+  grammar, and new ones), each proven byte-exact by parse-back; ranking only orders the build. Also drop every pass that
+  is not necessary and dedupe every repeated content. Costs of $1k-5k for a read are out of bounds.
 - **ALWAYS HAVE PROBES ATTACHED DURING PROCESS RUNS (Greg, 2026-09-28).** Every long box run gets the read-only
   `frankie_box_progress.sh` probe (its own `box-progress` lock) at launch and at every check-in; never report
   "running, no output yet" without a probe reading.
