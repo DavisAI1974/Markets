@@ -108,6 +108,9 @@ class PreparationWorkers:
                 future.result()
             if len(self.workers) != 14:
                 raise ValueError('all designated classroom preparation helpers must start')
+            # The coordinator is pinned only while it prepares (ordered()); between batches the owning thread keeps
+            # its original CPUs, so pools the session creates later do not inherit a one-CPU mask (Greg, 2026-09-28).
+            os.sched_setaffinity(self.owner, self.original_affinity)
         except BaseException:
             self.close()
             raise
@@ -135,6 +138,7 @@ class PreparationWorkers:
             raise ValueError('preparation is submitted only by the owning classroom coordinator')
         source, pending, result = iter(items), deque(), []
         exhausted = False
+        os.sched_setaffinity(self.owner, {self.coordinator['cpu']})
         try:
             while not exhausted or pending:
                 while not exhausted and len(pending) < 28:
@@ -155,6 +159,8 @@ class PreparationWorkers:
                 except BaseException:
                     pass
             raise
+        finally:
+            os.sched_setaffinity(self.owner, self.original_affinity)
         self.batches += 1
         self.items += len(result)
         return result

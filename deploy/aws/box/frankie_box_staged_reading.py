@@ -133,36 +133,41 @@ def plan_sources(sources, header_factory, token_counter, input_budget, *, bindin
                     measured[take] = (take, piece, meta, prompt, offset, count) if count <= input_budget else None
                 return measured[take]
 
-            # Bracket a fitting character-prefix by doubling/halving from the
-            # previous part's length, then binary-search the bracket: probes stay
-            # near one part's size, never the whole remaining source. Under a
-            # nonmonotonic tokenizer this finds a fitting prefix, not necessarily
-            # the largest.
+            # Find a fitting character-prefix in a few encodes (Greg, 2026-09-28: the doubling/binary search encoded
+            # each part about twenty times, which on a multi-GB source is hours on one core). Each measurement gives
+            # the characters-per-token rate of this stretch; the next probe aims just under the budget at that
+            # rate. The bracket (largest fit, smallest failure) narrows until they are within 1% or the rest fits.
+            # As before, a fitting prefix is found, not necessarily the largest.
             if rest == 0:
                 fit = 0 if measure(0) else None
             else:
+                fit, fail = None, None
                 take = max(1, min(guess, rest))
-                fit, fail = (take, None) if measure(take) else (None, take)
-                while fit is not None and fail is None and fit < rest:
-                    take = min(fit * 2, rest)
-                    if measure(take):
-                        fit = take
+                for _ in range(12):
+                    result = measure(take)
+                    if result is not None:
+                        fit = take if fit is None else max(fit, take)
+                        if fit == rest:
+                            break
                     else:
-                        fail = take
-                while fit is None and fail > 1:
-                    take = fail // 2
-                    if measure(take):
-                        fit = take
+                        fail = take if fail is None else min(fail, take)
+                    if fit is not None and fail is not None and fail - fit <= max(1, fit // 100):
+                        break
+                    if result is not None:
+                        rate = take / max(1, result[5])
+                        target = int(rate * input_budget * 0.995)
                     else:
-                        fail = take
-                if fit is not None and fail is not None:
-                    low, high = fit + 1, fail - 1
-                    while low <= high:
-                        take = (low + high) // 2
-                        if measure(take):
-                            fit, low = take, take + 1
-                        else:
-                            high = take - 1
+                        target = take // 2 if fit is None else fit + (fail - fit) // 2
+                    low = fit + 1 if fit is not None else 1
+                    high = fail - 1 if fail is not None else rest
+                    if low > high:
+                        break
+                    take = min(max(target, low), high)
+                if fit is None:
+                    while fail is not None and fail > 1 and fit is None:
+                        fail = fail // 2
+                        if measure(fail):
+                            fit = fail
             if fit is None:
                 raise ValueError("prompt wrapper and one source character exceed input budget")
             take, piece, meta, prompt, offset, count = measure(fit)
@@ -188,7 +193,30 @@ def plan_sources(sources, header_factory, token_counter, input_budget, *, bindin
     return manifest, prompts
 
 
+# A manifest object is validated once per process (the checks re-digest every part, so re-running them on each
+# validate_part call made a 27,000-part plan quadratic: Greg, 2026-09-28). The memo holds the object itself and its
+# plan hash and part count; a different or changed manifest object is validated again.
+_VALIDATED = {}
+
+
+def _part_index(manifest):
+    entry = _VALIDATED.get(id(manifest))
+    if entry is None or entry[0] is not manifest:
+        return None
+    return entry[3]
+
+
 def _validate_manifest(manifest):
+    entry = _VALIDATED.get(id(manifest))
+    if (entry is not None and entry[0] is manifest and isinstance(manifest, dict)
+            and entry[1] == manifest.get("plan_hash") and entry[2] == len(manifest.get("parts") or ())):
+        return
+    _validate_manifest_full(manifest)
+    _VALIDATED[id(manifest)] = (manifest, manifest["plan_hash"], len(manifest["parts"]),
+                                {p["part_id"]: p for p in manifest["parts"]})
+
+
+def _validate_manifest_full(manifest):
     if not isinstance(manifest, dict) or manifest.get("schema") != PLAN_SCHEMA:
         raise ValueError("unknown staged plan")
     if manifest.get("policy") != POLICY:
@@ -248,7 +276,8 @@ def validate_part(manifest, part_id, receipt):
     """
     _validate_manifest(manifest)
     try:
-        part = next(p for p in manifest["parts"] if p["part_id"] == part_id)
+        index = _part_index(manifest)
+        part = index[part_id] if index is not None else next(p for p in manifest["parts"] if p["part_id"] == part_id)
         if (receipt["part_id"] != part_id or receipt["binding"] != manifest["binding"]
                 or receipt["plan_hash"] != manifest["plan_hash"]
                 or receipt["source_offset"] != part["source_offset"]):

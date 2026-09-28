@@ -297,16 +297,30 @@ def digest(value):
     return hashlib.sha256(canonical(value)).hexdigest()
 
 
+# One streamed hash per file per process (Greg, 2026-09-28: the Monday retained inputs include a 537 GB ledger, and
+# _check_preparation re-read them on every principal request). The key is the file's identity and its size and
+# modification time; a rewrite changes the key and is hashed again.
+_WITNESS_CACHE = {}
+
+
 def file_witness(path):
     path = Path(path)
     if path.is_symlink() or not path.is_file():
         raise ValueError('regular evidence file required')
+    stat = path.stat()
+    key = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
+    if key in _WITNESS_CACHE:
+        return dict(_WITNESS_CACHE[key])
     count, hashed = 0, hashlib.sha256()
     with path.open('rb') as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b''):
+        for block in iter(lambda: handle.read(8 * 1024 * 1024), b''):
             count += len(block)
             hashed.update(block)
-    return {'bytes': count, 'sha256': hashed.hexdigest()}
+    result = {'bytes': count, 'sha256': hashed.hexdigest()}
+    after = path.stat()
+    if (after.st_size, after.st_mtime_ns) == (stat.st_size, stat.st_mtime_ns):
+        _WITNESS_CACHE[key] = dict(result)
+    return result
 
 
 def _write(path, body):
