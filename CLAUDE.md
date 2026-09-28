@@ -3,7 +3,11 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
-- **STATE 2026-09-28 09:3xZ: READ FIRST `research/kalshi/frankie_boss/HANDOFF_20260928_TOKEN_STACKS.md`.** Branch
+- **STATE 2026-09-28 13:3xZ: READ FIRST `research/kalshi/frankie_boss/HANDOFF_20260928_V9_RENDER.md`.** Branch
+  `claude/frankie-monday-cycle-0-k1esd8`. DIGEST_V9 rendered on the retained Monday root (legacy-only, 94,961,846 bytes,
+  sha 6e9452cf; saved tables reused, bedrock not rebuilt). Jev failed (Pod never came up; deleted). Nothing billing.
+  Next: measure the V9 read in tokens (canary), then principal inputs, then Granite Pods -- each on Greg's go.
+- **STATE 2026-09-28 09:3xZ (superseded above): READ FIRST `research/kalshi/frankie_boss/HANDOFF_20260928_TOKEN_STACKS.md`.** Branch
   `claude/frankie-monday-continuation-qlkvqr`. DIGEST_V7 committed (additive on V1-V6), stacks canary measured ~26%
   (V7 + keys-once), brain dedupe landed; principal HELD until the digest is shrunk; launch r3 and the Jev Pod in flight.
 - **STATE 2026-09-28 08:0xZ (superseded above): READ FIRST the last update in `research/kalshi/frankie_boss/HANDOFF_20260928_SIDE_BUILDER_DISK.md`.**
