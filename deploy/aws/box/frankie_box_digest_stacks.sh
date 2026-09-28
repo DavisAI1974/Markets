@@ -142,7 +142,19 @@ for t in sorted(tables.values(), key=lambda x: -x['rows']):
     prev_int, prev_list = {}, {}
     v7_rows, jk_rows = [], []
     json_dict_entries = set()
+    examples = defaultdict(list)
+    same_row = Counter()
     for r in good:
+        longs = {}
+        for j, cell in enumerate(r):
+            if len(cell) >= 10 and cell.isdigit():
+                longs.setdefault(cell, []).append(kept[j])
+        for names in longs.values():
+            for a in names[1:]:
+                same_row['%s == %s' % (a, names[0])] += 1
+        for j, cell in enumerate(r):
+            if cell[:1] in 'JIK@' and len(examples[kept[j]]) < 2 and (cell[:1] != '@' or json_of(cell, dictionary) is not None):
+                examples[kept[j]].append((cell if cell[:1] != '@' else cell + '=' + dictionary[cell])[:420])
         v7 = list(r)
         for j, c in enumerate(kept):
             cell = r[j]
@@ -201,18 +213,25 @@ for t in sorted(tables.values(), key=lambda x: -x['rows']):
                                               keys_once_tokens=ntok(dict_jk) if dict_jk else 0),
                  census={c: dict(v) for c, v in census.items()},
                  key_shapes={c: [[list(s), n] for s, n in k.most_common(3)] for c, k in col_keys.items()},
-                 kept_columns=kept, samples=[line[:700] for line in block[:3]])
+                 kept_columns=kept, samples=[line[:700] for line in block[:3]],
+                 same_row_equal=same_row.most_common(12), examples=dict(examples),
+                 absent_every_block_row=[c for c in kept if census[c].get('absent', 0) == len(good)])
     report['tables'].append(entry)
     print('TABLE %-38s rows %9d block %5d/%5d  v6 %8d tok  v7 %8d tok (%.1f%%)  json_keys %8d tok (%.1f%%)  dictJSON %d: %d -> %d tok' % (
         t['name'], t['rows'], len(good), len(block), entry['v6']['tokens'], entry['v7']['tokens'],
         100.0 * (entry['v7']['tokens'] - entry['v6']['tokens']) / max(1, entry['v6']['tokens']),
         entry['json_keys']['tokens'], 100.0 * (entry['json_keys']['tokens'] - entry['v6']['tokens']) / max(1, entry['v6']['tokens']),
         len(used), entry['dictionary_json_entries']['v6_tokens'], entry['dictionary_json_entries']['keys_once_tokens']), flush=True)
-    print('   columns ' + ' '.join('%d:%s' % (j, c) for j, c in enumerate(kept))[:3000])
-    print('   census ' + json.dumps({c: dict(v) for c, v in census.items()})[:2500])
+    print('   columns %d' % len(kept))
+    print('   census ' + json.dumps({c: dict(v) for c, v in census.items() if set(v) - {'same', 'absent'}})[:1500])
     print('   shapes ' + json.dumps(entry['key_shapes'])[:1500])
-    for s in entry['samples']:
-        print('   row ' + s)
+    for s in entry['samples'][:1]:
+        print('   row ' + s[:300])
+    print('   same-row equal ' + json.dumps(entry['same_row_equal']))
+    print('   absent on every block row: %d of %d columns' % (len(entry['absent_every_block_row']), len(kept)))
+    for c, cells in examples.items():
+        for cell in cells:
+            print('   eg %s: %s' % (c, cell))
 out = Path('/opt/frankie-box/work/digest-canary') / ('stacks-' + time.strftime('%Y%m%dT%H%M%SZ', time.gmtime()) + '.json')
 out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(json.dumps(report, indent=1))
