@@ -17,4 +17,15 @@ after=$("$PY" -c "from importlib.metadata import version; print(version('databen
 echo "databento-dbn after: $after"; "$ROOT/venv/bin/pip" freeze 2>/dev/null | grep -i '^databento' | sed 's/^/  /'
 "$PY" -c "import databento_dbn as d; m = d.MBOMsg; print('MBOMsg constructor', 'ok' if callable(m) else 'missing')"
 [ "$after" = "0.62.0" ] || { echo "VENV_PINS_RECEIPT {\"schema\":\"FRANKIE_BOX_VENV_PINS_V1\",\"databento_dbn\":\"$after\",\"pin\":\"0.62.0\",\"held\":false}"; exit 4; }
-echo "VENV_PINS_RECEIPT {\"schema\":\"FRANKIE_BOX_VENV_PINS_V1\",\"databento_dbn\":\"$after\",\"pin\":\"0.62.0\",\"held\":true,\"before\":\"$before\"}"
+# The Granite tokenizer admission pins transformers 5.8.0 and tokenizers 0.22.2 (granite_live_controller.TOKENIZER_VERSIONS;
+# granite_runpod_tokenizer refuses others). The Monday launch 2026-09-28 stopped on PackageNotFoundError: transformers
+# was never installed in the box venv. Same idempotent pattern: repair only on a difference.
+tok_before=$("$PY" -c "from importlib.metadata import version as v; print(v('transformers'), v('tokenizers'))" 2>/dev/null || echo absent)
+echo "tokenizer pins before: $tok_before"
+if [ "$tok_before" != "5.8.0 0.22.2" ]; then
+  "$ROOT/venv/bin/pip" install -q "transformers==5.8.0" "tokenizers==0.22.2" >"$ROOT/logs/pip-tokenizer-pins.log" 2>&1 || { echo "tokenizer pin install failed"; tail -5 "$ROOT/logs/pip-tokenizer-pins.log"; exit 5; }
+fi
+tok_after=$("$PY" -c "from importlib.metadata import version as v; print(v('transformers'), v('tokenizers'))" 2>/dev/null || echo absent)
+echo "tokenizer pins after: $tok_after"
+[ "$tok_after" = "5.8.0 0.22.2" ] || { echo "VENV_PINS_RECEIPT {\"schema\":\"FRANKIE_BOX_VENV_PINS_V1\",\"tokenizer_pins\":\"$tok_after\",\"held\":false}"; exit 6; }
+echo "VENV_PINS_RECEIPT {\"schema\":\"FRANKIE_BOX_VENV_PINS_V1\",\"databento_dbn\":\"$after\",\"pin\":\"0.62.0\",\"held\":true,\"before\":\"$before\",\"tokenizer_pins\":\"$tok_after\",\"tokenizer_before\":\"$tok_before\"}"
