@@ -14,11 +14,11 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'help (read-only, first), inspect (read-only), create (Greg''s word: billable), verify (one real request)'
+        description: 'help (read-only, first), inspect (read-only), create (Greg''s word: billable), verify (one real request), idle (min workers 0 on every endpoint, or the one named)'
         required: true
         default: 'help'
         type: choice
-        options: ['help', 'inspect', 'create', 'verify']
+        options: ['help', 'inspect', 'create', 'verify', 'idle']
       endpoint:
         description: 'inspect / verify: the endpoint id'
         required: false
@@ -76,7 +76,7 @@ jobs:
       - name: Validate the inputs (shapes only; the script re-checks them)
         run: |
           set -euo pipefail
-          [[ "$ACTION" =~ ^(help|inspect|create|verify)$ ]] || { echo "action must be help, inspect, create or verify"; exit 1; }
+          [[ "$ACTION" =~ ^(help|inspect|create|verify|idle)$ ]] || { echo "action must be help, inspect, create, verify or idle"; exit 1; }
           [[ "$ENDPOINT" =~ ^[a-z0-9]{0,40}$ ]] || { echo "endpoint must be a RunPod endpoint id"; exit 1; }
           [[ "$GPU" =~ ^[A-Za-z0-9\ ,._-]+$ ]] || { echo "gpu carries a character outside [A-Za-z0-9 ,._-]"; exit 1; }
           [[ "$WORKERS_MAX" =~ ^[0-9]{1,2}$ ]] || { echo "workers_max must be a small integer"; exit 1; }
@@ -101,6 +101,7 @@ jobs:
             help)     python "$S" --action help 2>&1 | tee out.txt ;;
             inspect)  python "$S" --action inspect --endpoint "$ENDPOINT" 2>&1 | tee out.txt ;;
             verify)   python "$S" --action verify --endpoint "$ENDPOINT" 2>&1 | tee out.txt ;;
+            idle)     python "$S" --action idle --endpoint "$ENDPOINT" 2>&1 | tee out.txt ;;
             create)   python "$S" --action create --gpu "$GPU" --workers-max "$WORKERS_MAX" --seqs-per-worker "$SEQS_PER_WORKER" \
                         --network-volume "$NETWORK_VOLUME" --data-centers "$DATA_CENTERS" --confirm "$CONFIRM" \
                         --work-dir work/serverless-reading 2>&1 | tee out.txt ;;

@@ -113,8 +113,8 @@ def ctl(*args, check=True, capture=True):
     return r.returncode, ''
 
 
-def api(key, method, path, body=None, timeout=60):
-    connection = http.client.HTTPSConnection(API, timeout=timeout)
+def api(key, method, path, body=None, timeout=60, host=API):
+    connection = http.client.HTTPSConnection(host, timeout=timeout)
     try:
         raw = None if body is None else json.dumps(body, allow_nan=False).encode()
         headers = {'Authorization': 'Bearer ' + key, 'Accept': 'application/json'}
@@ -262,9 +262,38 @@ def verify(key, endpoint, wait_seconds):
     raise SystemExit(f'verify wait of {wait_seconds}s exhausted; job {job} still {last} (a cold first worker can take minutes; re-run verify)')
 
 
+REST = 'rest.runpod.io'
+
+
+def idle(key, endpoint):
+    """Greg, 2026-09-28 (Granite on a regular Pod, never the serverless lane): every endpoint (or the one named) to
+    workersMin 0, so no warm worker bills while idle; the endpoint itself is kept. Read back and printed per endpoint."""
+    status, data = api(key, 'GET', '/v1/endpoints', host=REST)
+    if status != 200:
+        raise SystemExit(f'GET {REST}/v1/endpoints HTTP {status}: {json.dumps(data)[:1000]}')
+    rows = data if isinstance(data, list) else (data or {}).get('data') or (data or {}).get('endpoints') or []
+    rows = [r for r in rows if isinstance(r, dict) and (not endpoint or r.get('id') == endpoint)]
+    if endpoint and not rows:
+        raise SystemExit(f'endpoint {endpoint} not on the account')
+    failed = 0
+    for r in rows:
+        before = r.get('workersMin')
+        print(f"ENDPOINT {r.get('id')} name={r.get('name')} workersMin={before} workersMax={r.get('workersMax')}", flush=True)
+        if before != 0:
+            status, data = api(key, 'PATCH', '/v1/endpoints/' + r['id'], {'workersMin': 0}, host=REST)
+            print(f'  PATCH workersMin=0 -> HTTP {status}: {json.dumps(scrub(data))[:600]}', flush=True)
+        status, data = api(key, 'GET', '/v1/endpoints/' + r['id'], host=REST)
+        after = (data or {}).get('workersMin') if isinstance(data, dict) else None
+        print(f'  READBACK workersMin={after}', flush=True)
+        failed += after != 0
+    print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_SERVERLESS_IDLE_RECEIPT_V1', endpoints=len(rows), not_idle=failed)))
+    if failed:
+        raise SystemExit(2)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    p.add_argument('--action', choices=('help', 'inspect', 'create', 'verify'), required=True)
+    p.add_argument('--action', choices=('help', 'inspect', 'create', 'verify', 'idle'), required=True)
     p.add_argument('--endpoint', default='')
     p.add_argument('--name', default='frankie-reading-granite42')
     p.add_argument('--gpu', default=H100_TIERS)
@@ -288,6 +317,10 @@ def main():
         if not re.fullmatch('[a-z0-9]{6,40}', args.endpoint):
             raise SystemExit('--endpoint id required')
         inspect(key, args.endpoint)
+    elif args.action == 'idle':
+        if args.endpoint and not re.fullmatch('[a-z0-9]{6,40}', args.endpoint):
+            raise SystemExit('--endpoint must be an endpoint id or empty (every endpoint)')
+        idle(key, args.endpoint)
     elif args.action == 'verify':
         if not re.fullmatch('[a-z0-9]{6,40}', args.endpoint):
             raise SystemExit('--endpoint id required')
