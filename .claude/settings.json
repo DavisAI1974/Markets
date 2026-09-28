@@ -42,7 +42,11 @@
       "Bash(uvicorn:*)",
       "Write",
       "Edit",
-      "MultiEdit"
+      "MultiEdit",
+      "mcp__github__actions_list",
+      "mcp__github__get_file_contents",
+      "mcp__github__actions_get",
+      "mcp__github__get_job_logs"
     ]
   },
   "hooks": {
