@@ -74,22 +74,26 @@ class SourceInventory(Mapping):
 
 
 class PreparationWorkers:
-    """Coordinator plus fourteen pinned helpers, used only for CPU/I/O preparation."""
+    """Coordinator plus one pinned helper on every other CPU, used only for CPU/I/O preparation (Greg, 2026-09-28:
+    "pin workers to CPUs so none sit idle"; was fourteen, one per physical core 2-15, leaving the rest of a bigger box idle)."""
     def __init__(self):
         self.owner = threading.get_native_id()
         self.original_affinity = os.sched_getaffinity(self.owner)
-        seen, cores = set(), []
+        seen, cores, logical = set(), [], []
         for cpu in sorted(self.original_affinity):
             base = Path('/sys/devices/system/cpu') / ('cpu' + str(cpu)) / 'topology'
             key = (int((base/'physical_package_id').read_text()),
                    int((base/'core_id').read_text()))
+            logical.append(dict(cpu=cpu, package=key[0], core=key[1]))
             if key not in seen:
                 seen.add(key)
-                cores.append(dict(cpu=cpu, package=key[0], core=key[1]))
+                cores.append(logical[-1])
         if len(cores) < 16:
             raise ValueError('classroom requires a reserved physical core plus fifteen compute cores')
         self.reserved, self.coordinator = cores[0], cores[1]
-        self.assignments = deque(cores[2:16])
+        # every logical CPU except the reserved and coordinator ones gets a helper (their sibling threads included)
+        self.assignments = deque(c for c in logical if c['cpu'] not in (self.reserved['cpu'], self.coordinator['cpu']))
+        self.count = len(self.assignments)
         self.workers = []
         self.lock = threading.Lock()
         self.pool = None
@@ -99,14 +103,14 @@ class PreparationWorkers:
         try:
             if os.sched_getaffinity(self.owner) != {self.coordinator['cpu']}:
                 raise ValueError('classroom coordinator affinity differs')
-            self.pool = ThreadPoolExecutor(max_workers=14, thread_name_prefix='classroom-prepare',
+            self.pool = ThreadPoolExecutor(max_workers=self.count, thread_name_prefix='classroom-prepare',
                                            initializer=self._initialize)
             # Initialization barrier starts all designated helpers, not calculations.
-            barrier = threading.Barrier(14, timeout=30)
-            starts = [self.pool.submit(barrier.wait) for _ in range(14)]
+            barrier = threading.Barrier(self.count, timeout=30)
+            starts = [self.pool.submit(barrier.wait) for _ in range(self.count)]
             for future in starts:
                 future.result()
-            if len(self.workers) != 14:
+            if len(self.workers) != self.count:
                 raise ValueError('all designated classroom preparation helpers must start')
             # The coordinator is pinned only while it prepares (ordered()); between batches the owning thread keeps
             # its original CPUs, so pools the session creates later do not inherit a one-CPU mask (Greg, 2026-09-28).
@@ -130,7 +134,7 @@ class PreparationWorkers:
             coordinator=dict(thread_id=self.owner, **self.coordinator), reserved_io=self.reserved,
             helpers=sorted(self.workers, key=lambda x:x['cpu']), helpers_started=len(self.workers),
             transport='shared immutable bytes in one process; no process pickle',
-            maximum_pending_tasks=28, prepared_batches=self.batches, prepared_items=self.items,
+            maximum_pending_tasks=2 * self.count, prepared_batches=self.batches, prepared_items=self.items,
             affinity_readback_verified=True, model_concurrency_changed=False)
 
     def ordered(self, items, work):
@@ -141,7 +145,7 @@ class PreparationWorkers:
         os.sched_setaffinity(self.owner, {self.coordinator['cpu']})
         try:
             while not exhausted or pending:
-                while not exhausted and len(pending) < 28:
+                while not exhausted and len(pending) < 2 * self.count:
                     try:
                         item = next(source)
                     except StopIteration:

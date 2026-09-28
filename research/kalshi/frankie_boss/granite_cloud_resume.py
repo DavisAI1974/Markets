@@ -15,9 +15,9 @@ INFO_FIELDS = {'schema', 'intent', 'pod_id', 'pod', 'model', 'launch_deadline',
                'runtime', 'resume_requires_status'}
 STATUSES = {'PROVISIONING', 'STARTING', 'RUNNING', 'EXITED', 'ERROR', 'TERMINATED'}
 PACKAGES = {'torch', 'transformers', 'tokenizers', 'vllm', 'model-hosting-container-standards'}
-# Greg, 2026-09-28: Granite moves to a bigger Pod (more GPU memory, CPUs, room for workers); the pod type is the only
-# change. The H100 tiers in operations/pod_prepare.py priority order; the L40S stays admitted for the existing Pods.
-GPUS = ('NVIDIA L40S', 'NVIDIA H100 80GB HBM3', 'NVIDIA H100 NVL', 'NVIDIA H100 PCIe')
+# Greg, 2026-09-28: several A100 80GB Pods ("the A100 sounds like the faster option"); the Pod type is the only Granite
+# change. The L40S stays admitted for the existing Pods.
+GPUS = ('NVIDIA L40S', 'NVIDIA A100-SXM4-80GB')
 
 
 def _refuse():

@@ -1,9 +1,10 @@
-"""Prepare a replacement retained Granite Pod on a host with free GPU stock (Greg, 2026-09-20).
+"""Prepare a replacement retained Granite Pod on a host with free L40S stock (Greg, 2026-09-20).
 
-Greg, 2026-09-28: "Granite needs bigger pod with CPUs and room for workers. Don't change anything with granite
-except the pod type." The replacement is an H100 (80 GB; one 131,072-token sequence needs about 20 GiB of KV cache)
-in the H100 tier order below, with at least 16 vCPUs and 94 GB RAM per GPU. Image, environment, bootstrap, model,
-context and served name are the source Pod's, copied verbatim as before.
+Greg, 2026-09-28: "Do several L40 if they cut clock time", then "The A100 sounds like the faster option": several
+A100 SXM 80GB Pods (about 2x the L40S decode bandwidth at 1.59/h secure). The session spreads its reading,
+merge and classroom calls over every healthy Pod listed in /opt/frankie-box/pods.json (frankie_box_pods_config.sh).
+Each dispatch prepares ONE more Pod (different data_centers inputs run in parallel), with at least 16 vCPUs and
+125 GB RAM (the A100 SXM secure listing). Everything else is the source Pod's, copied verbatim as before.
 
     python research/kalshi/frankie_boss/operations/pod_prepare.py --source-pod ycf4v6lmave6xw
         --runtime-configuration <reviewed runtime configuration json> [--data-centers US-TX-4,...]
@@ -18,7 +19,7 @@ retained observer can adopt through the existing migration receipt mechanism
 
 1. reads the source Pod and verifies its environment against the reviewed runtime configuration
    (bundle sha, supervisor command sha, open lifetime, context, transport, fresh bootstrap URLs);
-2. picks the first H100 tier with stock and its data centers from GET /v2/catalog/gpus (or takes --data-centers);
+2. picks data centers with L40S stock from GET /v2/catalog/gpus (or takes --data-centers);
 3. creates ONE Pod with the source's name, image, GPU, disk, persistent /opt/ml mount, port and its
    environment copied verbatim (the copy never leaves memory; nothing of it is printed);
 4. watches the container log for the bootstrap's GRANITE_RUNPOD_STARTUP / GRANITE_DISK evidence,
@@ -53,9 +54,9 @@ from research.kalshi.frankie_boss.granite_runpod_probe import https_exchange
 from research.kalshi.frankie_boss.granite_startup_pins import validate_configuration, validate_url_freshness
 
 CONTROL = 'api.runpod.io'
-GPUS = ('NVIDIA H100 80GB HBM3', 'NVIDIA H100 NVL', 'NVIDIA H100 PCIe')   # priority order (Greg, 2026-09-21: the H100)
-MIN_VCPU_PER_GPU = 16                 # every H100 tier's secure Pod offers at least 16 vCPUs
-MIN_RAM_PER_GPU = 94                  # GB; the smallest H100 tier's secure Pod RAM
+GPU = 'NVIDIA A100-SXM4-80GB'
+MIN_VCPU_PER_GPU = 16                 # the A100 SXM secure Pod's listed vCPUs (Greg, 2026-09-28: with CPUs)
+MIN_RAM_PER_GPU = 125                 # GB; the A100 SXM secure Pod's listed RAM
 STOCK_RANK = {'HIGH': 0, 'MEDIUM': 1, 'LOW': 2}
 DIAGNOSTIC_DELAY = 60
 PRIOR_RUN = '34928264918'            # the accepted retained receipt every migration receipt chains from
@@ -150,34 +151,26 @@ def verify_source(source, configuration, now):
 
 
 def choose_data_centers(key, requested):
-    """The first H100 tier (GPUS order) with stock in a data center (in the requested ones, when given); requested data
-    centers without reported stock are still tried as an override on the first tier the catalog carries."""
     status, data = control_call(key, 'GET', '/v2/catalog/gpus?' + urlencode(dict(include='AVAILABILITY', product='POD', count=1, cloud='SECURE')))
     if status != 200:
         raise SystemExit('catalog read -> HTTP %d: %s' % (status, data[:1000].decode('utf-8', 'replace')))
-    catalog = {g.get('id'): g for g in json.loads(data).get('gpus', [])}
-    requested = [dc for dc in requested if dc]
-    seen = {}
-    for gpu in GPUS:
-        entry = catalog.get(gpu)
-        if entry is None:
-            continue
-        stock = {dc.get('id'): dc.get('availability', 'NONE') for dc in entry.get('dataCenters', []) if dc.get('id')}
-        seen[gpu] = stock
-        print('CATALOG ' + json.dumps(dict(gpu=gpu, availability=entry.get('availability'), data_centers=stock), sort_keys=True))
-        chosen = sorted((dc for dc, level in stock.items() if level in STOCK_RANK and (not requested or dc in requested)),
-                        key=lambda dc: STOCK_RANK[stock[dc]])
-        if chosen:
-            return gpu, chosen, stock
-    if requested and seen:                     # --data-centers stays an override: the first tier the catalog carries
-        gpu = next(g for g in GPUS if g in seen)
-        return gpu, requested, seen[gpu]
-    raise SystemExit('no data center reports stock for ' + ', '.join(GPUS) + ': ' + json.dumps(seen, sort_keys=True))
+    entry = next((g for g in json.loads(data).get('gpus', []) if g.get('id') == GPU), None)
+    if entry is None:
+        raise SystemExit('catalog has no ' + GPU)
+    stock = {dc.get('id'): dc.get('availability', 'NONE') for dc in entry.get('dataCenters', []) if dc.get('id')}
+    print('CATALOG ' + json.dumps(dict(gpu=GPU, availability=entry.get('availability'), data_centers=stock), sort_keys=True))
+    if requested:
+        chosen = [dc for dc in requested if dc]
+    else:
+        chosen = sorted((dc for dc, level in stock.items() if level in STOCK_RANK), key=lambda dc: STOCK_RANK[stock[dc]])
+    if not chosen:
+        raise SystemExit('no data center reports ' + GPU + ' stock; pass --data-centers to override')
+    return chosen, stock
 
 
-def create(key, source, intent, gpu, data_centers):
+def create(key, source, intent, data_centers):
     body = {'name': intent['name'], 'image': intent['image'], 'cloud': 'SECURE',
-            'gpu': {'id': gpu, 'count': 1, 'minCudaVersion': '13.0',
+            'gpu': {'id': GPU, 'count': 1, 'minCudaVersion': '13.0',
                     'minRamPerGpu': MIN_RAM_PER_GPU, 'minVcpuCountPerGpu': MIN_VCPU_PER_GPU},
             'dataCenterIds': data_centers, 'disk': source['disk'],
             'mounts': {'persistent': {'path': source['mounts']['persistent']['path'], 'size': source['mounts']['persistent']['size']}},
@@ -230,7 +223,7 @@ def main():
     parser.add_argument('--source-pod', required=True)
     parser.add_argument('--runtime-configuration', required=True)
     parser.add_argument('--data-centers', default='')
-    parser.add_argument('--cost-ceiling', type=float, default=3.75)   # per hour; H100 secure Pods list 2.89-3.49 (2026-09-28), not the L40S's 1.25
+    parser.add_argument('--cost-ceiling', type=float, default=1.75)   # per hour; A100 SXM secure lists 1.59 (2026-09-28)
     parser.add_argument('--wait-seconds', type=int, default=1800)
     parser.add_argument('--resume-pod', default='')
     parser.add_argument('--watch-pod', default='')
@@ -276,9 +269,9 @@ def main():
         pod = api.request('GET', '/v2/pods/' + pod_id)
         print('RESUMED ' + json.dumps(facts_of(pod, intent), sort_keys=True))
     else:
-        gpu, data_centers, stock = choose_data_centers(key, [dc.strip() for dc in args.data_centers.split(',') if dc.strip()])
+        data_centers, stock = choose_data_centers(key, [dc.strip() for dc in args.data_centers.split(',') if dc.strip()])
         created_at = time.time()
-        pod = create(key, source, intent, gpu, data_centers)
+        pod = create(key, source, intent, data_centers)
         pod_id = pod['id']
     facts = facts_of(pod, intent)
     save('pod-facts.json', facts)

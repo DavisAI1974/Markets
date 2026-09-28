@@ -330,7 +330,9 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
                 import frankie_box_digest_parallel as P
                 # Every bedrock table is written by the parallel writer on the helper cores (same bytes as write_table;
                 # Greg 2026-09-28: no table runs for hours on one core). Finished tables are reused from their save points.
-                cpus = [c for c in range(2, 16) if c in os.sched_getaffinity(0)] or sorted(os.sched_getaffinity(0))
+                # every CPU but 0-1 (Greg, 2026-09-28: pin workers to CPUs so none sit idle; was 2-15 only). The bytes do
+                # not depend on the count: the parts come from the table's specs, not from the CPU list.
+                cpus = [c for c in sorted(os.sched_getaffinity(0)) if c >= 2] or sorted(os.sched_getaffinity(0))
                 layers_identity = layers_identity_of(bedrock_entries)
                 for name, rows in sources.tables.items():
                     spec = bedrock_spec(rows, sources.root)

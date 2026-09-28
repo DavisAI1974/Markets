@@ -39,6 +39,7 @@ import hashlib
 import json
 import math
 import os
+import queue
 import re
 import sqlite3
 import subprocess
@@ -64,6 +65,7 @@ PART_INPUT_TOKENS = 87_000                      # exact tokens per part when the
 READING_CONFIG = ROOT / 'reading.json'    # {"tensor_mode": "values" | "identity"} (frankie_box_serverless_config.sh ACTION=reading)
 SERVERLESS_MAX_RESPONSE = 8 * 1024 * 1024
 POD_ID_DEFAULT = 'fhiwwlouzyx6l2'
+PODS_CONFIG = ROOT / 'pods.json'   # {"pods": [...]} written by frankie_box_pods_config.sh (Greg, 2026-09-28: several A100 Pods)
 SERVED_MODEL_DEFAULT = 'granite42-smoke'   # the retained identity's served model name (granite_retained_lifecycle)
 CONTRACT_PATH = 'research/kalshi/frankie_boss/sunday_20260915_package/FB/principal-source-contract/source-contract.json'
 REGISTRY_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json'
@@ -219,6 +221,8 @@ class Session:
         self.contract = None
         self.engine = None
         self.serverless = None            # the reading lane (RunPod serverless), when configured; else the Pod
+        self.pods = [pod_id]               # the Pods the reading lane spreads over; pods.json replaces it, the first is the BOSS
+        self._pod_pool = None
         self._lock = threading.RLock()     # re-entrant: note() takes it and _progress_note() calls note() while holding it
         self._progress = {}
         self._preparation_workers = None
@@ -412,6 +416,13 @@ class Session:
         if not re.fullmatch('[A-Za-z0-9_-]{32,256}', key):
             self.refuse(f'{RUNPOD_KEY_PARAMETER} is not a service credential shape ({len(key)} chars); not printed')
         served = self.served_model
+        pods = self.pods
+        if PODS_CONFIG.is_file():
+            pods = load_json(PODS_CONFIG).get('pods')
+            if (type(pods) is not list or not pods or len(set(pods)) != len(pods)
+                    or not all(type(p) is str and re.fullmatch('[a-z0-9]{6,40}', p) for p in pods)):
+                self.refuse(f'{PODS_CONFIG} must list distinct RunPod Pod ids')
+            self.pod_id = pods[0]
         try:
             code, body = https_exchange(self.pod_id, 'GET', '/health', b'', key, 10)
         except Exception as error:
@@ -419,13 +430,27 @@ class Session:
                         'service booted; a Pod start is Greg\'s word)')
         if code != 200 or body != b'{"status":"ok"}':
             self.refuse(f'Pod {self.pod_id} health HTTP {code}: {body[:80]!r} (booting, or not the retained service)')
+        live = [self.pod_id]
+        for pod in pods[1:]:                # the extra Pods: a healthy one joins the reading lane, any other is noted and left out
+            try:
+                code, body = https_exchange(pod, 'GET', '/health', b'', key, 10)
+            except Exception as error:
+                code, body = type(error).__name__, b''
+            if code == 200 and body == b'{"status":"ok"}':
+                live.append(pod)
+            else:
+                self.note(f'Pod {pod} not healthy ({code}); left out of the reading lane')
+        self.pods = live
+        self._pod_pool = queue.Queue()
+        for pod in live:
+            self._pod_pool.put(pod)
         self.engine = dict(pod_id=self.pod_id, served_model_name=served, key=key,
                            config_hash=sha256_bytes(json.dumps(dict(pod_id=self.pod_id, served_model_name=served,
                                context=CONTEXT, transport_protocol='jobs_v1'), sort_keys=True).encode()))
-        write_json(self.work / 'engine.json', dict(schema='FRANKIE_BOX_BOSS_ENGINE_V1', at=time.time(), pod_id=self.pod_id,
+        write_json(self.work / 'engine.json', dict(schema='FRANKIE_BOX_BOSS_ENGINE_V1', at=time.time(), pod_id=self.pod_id, pods=self.pods,
                    served_model_name=served, context=CONTEXT, transport_protocol='jobs_v1',
                    config_hash=self.engine['config_hash'], health='ok', credential=RUNPOD_KEY_PARAMETER + ' (in memory only, never written)'))
-        self.note(f'engine: BOSS {served} on Pod {self.pod_id} healthy (jobs_v1)')
+        self.note(f'engine: BOSS {served} on Pod {self.pod_id} healthy (jobs_v1); reading lane over {len(self.pods)} Pod(s)')
         return self.engine
 
     # ---- the reading lane: RunPod serverless workers serving the same pinned checkpoint ----------------
@@ -612,20 +637,28 @@ class Session:
             time.sleep(SERVERLESS_POLL_SECONDS)
 
     def reader(self, name, text):
-        """The reading lane: the serverless endpoint when configured, else the Pod (the BOSS itself)."""
-        return self.serverless_job(name, text) if self.serverless is not None else self.boss(name, text)
+        """The reading lane: the serverless endpoint when configured, else the Pods (a free one from the pool)."""
+        if self.serverless is not None:
+            return self.serverless_job(name, text)
+        if len(self.pods) == 1:
+            return self.boss(name, text)
+        pod = self._pod_pool.get()
+        try:
+            return self.boss(name, text, pod=pod)
+        finally:
+            self._pod_pool.put(pod)
 
     def _progress_note(self, label, done, total, in_flight, failed=0):
         with self._lock:
             state = 'failed' if failed else ('complete' if done == total and not in_flight else 'running')
             _box_module('frankie_box_progress').for_session(self).update(
                 label, done, total, in_flight=in_flight, failed=failed, state=state)
-            lane = f'serverless x{self.serverless["workers"]}' if self.serverless else 'Pod x1'
+            lane = f'serverless x{self.serverless["workers"]}' if self.serverless else f'Pod x{len(self.pods)}'
             self.note(f'{label}: {done}/{total} done, {in_flight} in flight, {failed} failed ({lane})')
 
     def _fan_out(self, label, items, work):
         """Retain submission order and count only successful work as completed."""
-        workers = self.serverless['workers'] if self.serverless else 1
+        workers = self.serverless['workers'] if self.serverless else len(self.pods)
         done, in_flight, failed, results = 0, 0, 0, [None] * len(items)
         self._progress_note(label, done, len(items), in_flight, failed)
         def one(index):
@@ -651,7 +684,7 @@ class Session:
                 list(pool.map(one, range(len(items))))
         return results
 
-    def boss(self, name, text, *, max_tokens=None):
+    def boss(self, name, text, *, max_tokens=None, pod=None):
         """One durable job for one bounded prompt; returns dict(text, incomplete, model, usage, job_id).
         THE BOSS HAS NO OUTPUT LIMIT (Greg, 2026-09-21, again): max_tokens is always the whole remaining context
         (CONTEXT minus the input estimate); a caller cap is refused. The only alert is IncompleteModelOutput when the
@@ -682,9 +715,13 @@ class Session:
         outcome_path = directory / 'outcome.json'
         if outcome_path.exists():
             return load_json(outcome_path)
+        pod = pod or self.pod_id
+        if (directory / 'request.json').exists():       # a job already dispatched is polled on the Pod that holds it
+            held = load_json(directory / 'request.json').get('pod_id')
+            pod = held if held in self.pods else pod
         write_json(directory / 'request.json', dict(schema='FRANKIE_BOX_BOSS_JOB_V1', name=name, attempt=attempt, job_id=job_id,
                    body_sha256=body_hash, body_bytes=len(body), estimated_input_tokens=estimate, max_tokens=int(max_tokens),
-                   served_model_name=self.engine['served_model_name'], pod_id=self.pod_id))
+                   served_model_name=self.engine['served_model_name'], pod_id=pod))
         write_text(directory / 'prompt.txt', text)
         key = self.engine['key']
         path = '/v1/jobs/' + job_id
@@ -692,9 +729,9 @@ class Session:
         started = time.time()
         while True:
             try:
-                status, raw = https_exchange_jobs(self.pod_id, 'GET', path, b'', key, HTTP_TIMEOUT)
+                status, raw = https_exchange_jobs(pod, 'GET', path, b'', key, HTTP_TIMEOUT)
                 if status == 404:
-                    status, raw = https_exchange_jobs(self.pod_id, 'POST', path, body, key, HTTP_TIMEOUT)
+                    status, raw = https_exchange_jobs(pod, 'POST', path, body, key, HTTP_TIMEOUT)
                     if status != 202:
                         raise ValueError(f'job create refused: HTTP {status} {raw[:200]!r}')
                     self._observe(directory, 'accepted')
@@ -713,7 +750,7 @@ class Session:
                     last = phase
                 if phase == 'completed':
                     size, expected = state.get('result_bytes'), state.get('result_sha256')
-                    code, result = https_exchange_jobs(self.pod_id, 'GET', path + '/result', b'', key, HTTP_TIMEOUT)
+                    code, result = https_exchange_jobs(pod, 'GET', path + '/result', b'', key, HTTP_TIMEOUT)
                     if code != 200 or len(result) != size or sha256_bytes(result) != expected:
                         raise ConnectionError('result bytes differ or short; re-fetching the same durable result')
                     if key in result.decode('utf-8', errors='replace'):
@@ -731,7 +768,7 @@ class Session:
                     return outcome
                 if phase == 'not_dispatched':
                     time.sleep(POLL_SECONDS)
-                    https_exchange_jobs(self.pod_id, 'POST', path, body, key, HTTP_TIMEOUT)
+                    https_exchange_jobs(pod, 'POST', path, body, key, HTTP_TIMEOUT)
                 elif phase == 'ambiguous':
                     self.refuse(f'job {job_id[:16]} is ambiguous on the service; the same job is retained, no redispatch')
             except (ConnectionError, OSError, TimeoutError) as error:
@@ -1417,7 +1454,7 @@ class Session:
         write_text(self.work / 'merged-notes.md', merged)
         write_json(self.work / 'reading.json', dict(schema='FRANKIE_BOX_READING_RECEIPT_V2', status='complete', at=time.time(), parts=len(chunks),
                    corpus_sha256=corpus_sha, notes_dir=str(notes_dir), outcomes=outcomes, new_outcomes=new_outcomes, merged=witness(self.work / 'merged-notes.md'),
-                   lane=dict(serverless=self.serverless['endpoint_id'], workers=self.serverless['workers']) if self.serverless else dict(pod=self.pod_id)))
+                   lane=dict(serverless=self.serverless['endpoint_id'], workers=self.serverless['workers']) if self.serverless else dict(pod=self.pod_id, pods=self.pods)))
         self.note(f'reading done: {len(chunks)} parts, merged notes {len(merged.encode("utf-8"))} bytes')
         self.docs()
         ledger = load_json(READING_LEDGER) if READING_LEDGER.exists() else dict(schema='FRANKIE_BOX_READING_LEDGER_V1', values={}, cycles={})

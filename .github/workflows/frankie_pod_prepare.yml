@@ -1,7 +1,7 @@
 name: Frankie prepare a replacement retained Pod
 # Greg, 2026-09-20: "Prepare the fresh pod in parallel." Creates ONE replacement Pod with the retained
-# Pod's exact environment on a data center with free GPU stock (Greg, 2026-09-28: an H100 Pod, the pod type
-# is the only change), watches its bootstrap to an
+# Pod's exact environment on a data center with free A100 SXM 80GB stock (Greg, 2026-09-28: several A100 Pods, one per
+# dispatch; different data_centers run in parallel), watches its bootstrap to an
 # authenticated /health 200, and publishes the migration-receipt candidate + INFO_SHA256 for the
 # re-mint commit. Reads the source Pod only. Sends no inference. Prints no environment value.
 on:
@@ -12,13 +12,13 @@ on:
         required: false
         default: 'fhiwwlouzyx6l2'
       data_centers:
-        description: 'Comma-separated data center ids; empty = every data center reporting stock for the first H100 tier in stock'
+        description: 'Comma-separated data center ids; empty = every data center reporting A100 SXM 80GB stock'
         required: false
         default: ''
       cost_ceiling:
         description: 'Refuse a Pod priced above this per hour (the Pod is left as created and receipted; no stop)'
         required: false
-        default: '3.75'
+        default: '1.75'
       wait_seconds:
         description: 'Bootstrap watch horizon'
         required: false
