@@ -32,8 +32,12 @@ correlations, causations, patterns and couplings between the dipole and the othe
   book path (4.2), queue features (4.6), pre-birth states, and the seven causal clocks.
 - The cycle calculations: the legacy layers (price, signed flow, per-second roll20, book imbalance, structure).
 - The teachers' own earlier findings and exchanges.
-- Frankie's FINDINGS: the observed facts, numbers and relationships in his classroom answers and analysis, and the
-  dipole research discussions (Jev's included).
+- Frankie's FINDINGS, all of them (Greg, 2026-09-28: "what he finds independently in the classroom or from classroom
+  work or novel discoveries he makes from teacher's lessons should be available"): what he finds independently in the
+  classroom; what comes out of his classroom work; every novel discovery he makes from the teachers' lessons (the
+  grading's existing `investigate_novel_findings` output included, which today goes nowhere after resume 1); the
+  observed facts, numbers and relationships in his answers and analysis; and the dipole research discussions (Jev's
+  included). They are available to both teachers, to Jev and to the next cycle, as claims under rule 3.
 
 **Rule 1: Frankie's decision process is withheld from both teachers (and Jev).** How he makes decisions must not
 influence the teachers who are teaching him to decide better. Withheld: his forecasts and calls, locks and no-locks,
