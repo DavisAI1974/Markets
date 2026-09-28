@@ -25,11 +25,6 @@ IMAGE_IDENTITY_FILE = Path(__file__).with_name('granite_image_identity.json')
 
 
 MAX_MODEL_LEN = 131072  # the only supported runtime context; the old smoke context is retired
-# Concurrent sequences per Pod (Greg, 2026-09-28: A100 SXM 80GB Pods, "as many workers as possible"). Granite 4.2-8b
-# holds 20.0 GiB of KV per full 131,072-token sequence beside 16.4 GiB of weights: ~2.7 full-context sequences at 0.9
-# utilization on 80 GB, and 3 reading calls (~90k tokens each, ~14.5 GiB) side by side. A burst past the KV room is
-# preempted and recomputed by vLLM, never truncated. The box's pods.json SLOTS must equal this.
-MAX_NUM_SEQS = 3
 
 
 def digest_file(path):
@@ -98,7 +93,7 @@ def vllm_argv(directory, max_model_len, served_model):
     argv = ['python3', '-m', 'vllm.entrypoints.openai.api_server', '--host', '0.0.0.0', '--port', '8080',
             '--model', str(directory), '--tokenizer', str(directory), '--served-model-name', served_model,
             '--dtype', 'bfloat16', '--tensor-parallel-size', '1', '--pipeline-parallel-size', '1',
-            '--data-parallel-size', '1', '--max-num-seqs', str(MAX_NUM_SEQS), '--max-model-len', str(max_model_len),
+            '--data-parallel-size', '1', '--max-num-seqs', '1', '--max-model-len', str(max_model_len),
             '--gpu-memory-utilization', '0.9', '--generation-config', 'vllm']
     if max_model_len == MAX_MODEL_LEN:
         argv += ['--enable-chunked-prefill', '--max-num-batched-tokens', '2048']

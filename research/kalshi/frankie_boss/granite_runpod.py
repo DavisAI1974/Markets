@@ -153,7 +153,7 @@ def prepare_process(directory, manifest, environment, *, deadline, clock=time.mo
             expected_argv=['python3','-m','vllm.entrypoints.openai.api_server','--host','0.0.0.0','--port','8080',
                 '--model',str(directory),'--tokenizer',str(directory),'--served-model-name',environment['GRANITE_SERVED_MODEL'],
                 '--dtype','bfloat16','--tensor-parallel-size','1','--pipeline-parallel-size','1',
-                '--data-parallel-size','1','--max-num-seqs','3','--max-model-len',environment['GRANITE_MAX_MODEL_LEN'],
+                '--data-parallel-size','1','--max-num-seqs','1','--max-model-len',environment['GRANITE_MAX_MODEL_LEN'],
                 '--gpu-memory-utilization','0.9','--generation-config','vllm']
             if environment['GRANITE_MAX_MODEL_LEN']=='131072':
                 expected_argv += ['--enable-chunked-prefill','--max-num-batched-tokens','2048']

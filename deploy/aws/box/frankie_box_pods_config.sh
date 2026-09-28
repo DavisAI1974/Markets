@@ -2,8 +2,9 @@
 # 2026-09-28: several A100 Pods, "if they cut clock time"). The session (frankie_box_boss_session.py engine_reach) reads
 # it at its next engine reach: the FIRST Pod is the BOSS (it must be healthy; the writing and summaries run there), every
 # other healthy Pod joins the reading, merge and classroom fan-out, SLOTS calls per Pod at a time; an unhealthy one is noted
-# and left out. SLOTS (default 3, 1..8) = calls in flight per Pod: set it to the Pods' vLLM --max-num-seqs
-# (granite_startup.MAX_NUM_SEQS = 3 for the A100 SXM 80GB Pods; above it the extra calls only queue on the Pod). Without the file the session uses
+# and left out. SLOTS (default 3, 1..8) = calls in flight per Pod (Greg, 2026-09-28: 3, a box-only flag; the reviewed Pod
+# bundle is kept as built, vLLM --max-num-seqs 1): one call runs on each Pod and the other two wait queued ON the Pod
+# (the jobs backend waits without a timeout), so a Pod never idles between calls while the box builds the next prompt. Without the file the session uses
 # its --pod (POD_ID_DEFAULT). Inputs: PODS (comma-separated RunPod Pod ids, required to write), SLOTS, ACTION (show |
 # write | remove; default show). Starts, stops and bills nothing.
 set -u

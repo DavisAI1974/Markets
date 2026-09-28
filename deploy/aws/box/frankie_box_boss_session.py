@@ -236,7 +236,7 @@ class Session:
         self.engine = None
         self.serverless = None            # the reading lane (RunPod serverless), when configured; else the Pod
         self.pods = [pod_id]               # the Pods the reading lane spreads over; pods.json replaces it, the first is the BOSS
-        self.slots = 1                     # calls in flight per Pod (pods.json "slots", 3 = the bundle's --max-num-seqs); above it they only queue
+        self.slots = 1                     # calls in flight per Pod (pods.json "slots"); above the Pod's --max-num-seqs (1) they queue on the Pod
         self._pod_pool = None
         self._lock = threading.RLock()     # re-entrant: note() takes it and _progress_note() calls note() while holding it
         self._progress = {}
