@@ -20,7 +20,11 @@ import boto3
 HERE = Path(__file__).resolve().parent
 BUCKET, REGION = 'frankie-granite42-568968024170-us-east-1', 'us-east-1'
 IMAGE = 'vllm/vllm-openai:latest'
-PREFERRED = ('NVIDIA L40S', 'NVIDIA RTX A6000', 'NVIDIA A40', 'NVIDIA L40', 'NVIDIA RTX 6000 Ada Generation')
+# 48 GB tiers first (cheapest that fit Qwen3-8B plus the CLM heads); then the larger tiers in stock 2026-09-28 08:30Z,
+# when every 48 GB tier read NONE. Known-good vLLM architectures (Ampere, Hopper) before Blackwell.
+PREFERRED = ('NVIDIA L40S', 'NVIDIA RTX A6000', 'NVIDIA A40', 'NVIDIA L40', 'NVIDIA RTX 6000 Ada Generation',
+             'NVIDIA A100-SXM4-80GB', 'NVIDIA A100 80GB PCIe', 'NVIDIA H100 80GB HBM3', 'NVIDIA H100 NVL',
+             'NVIDIA RTX PRO 6000 Blackwell Server Edition', 'NVIDIA H200')
 OUTPUTS = {'PUT_REPORT': 'report.md', 'PUT_SUMMARY': 'summary.json', 'PUT_PREDICTIONS': 'predictions.jsonl.gz',
            'PUT_RAW': 'zero_shot_raw_examples.json', 'PUT_LOG': 'pod.log', 'PUT_STATUS': 'status.json'}
 ENTRY = ('import os,urllib.request;urllib.request.urlretrieve(os.environ["BOOTSTRAP_URL"],"/tmp/b.sh");'
