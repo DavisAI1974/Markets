@@ -10,7 +10,8 @@ validated signals is where a System One model STARTS, never a ceiling. Only mone
 evidence: GATE, then ADVISOR (predicts beside the incumbent, scored, never acted on), then DECIDER on the cells where it
 wins forward (out of sample, net of fee at maker and taker, paper then live). The same path applies to the
 trade-execution layer. This sidecar's forecast questions (next move at 60 s and 300 s) are the first ADVISOR-style
-scores.
+scores. One run on one day is an early result: whatever it shows is a scoped finding, and no question or method is
+dropped on it (D52). A path is set aside only after all research runs on the historical data.
 
 ## What it learns (both question sets, Greg's choice)
 All labels are computed by code from the real day's bedrock member rows (one row per F_LAST group). There is no

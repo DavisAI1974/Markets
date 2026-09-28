@@ -1187,6 +1187,11 @@ Team: **Greg Davis** (founder, sets direction, owns the weather forecaster spec)
 - **MEASUREMENTS ARE 1-2 MINUTE CANARIES, THEN EXTRAPOLATE (Greg, 2026-09-23, standing).** Never run a long job
   only to estimate something (a 40-minute layered size measurement was stopped for this). Sample a slice that
   finishes in one or two minutes, extrapolate, and spend the long compute on the actual work.
+- **NO POSSIBILITY IS DROPPED EARLY (D52, Greg 2026-09-28).** Nothing is dropped, declared dead or called
+  impossible at an early stage of research. An early negative (one window, one day, one cell, one data class) is
+  a SCOPED FINDING with its data named, and views may change either way as we learn. A path is set aside only at
+  the END of all our research runs on the historical data, recorded with the runs it rests on, never on a day or
+  two. Extends D31 (nothing we declared dead is actually dead) and D51 (a gate is a starting role, not a ceiling).
 - **Incremental validation.** Canary run (short) before any long/compute-heavy run; break long runs into
   chunks with stop gates.
 - **git is the source of truth.** Commit + push working code/docs regularly. Large data stays LOCAL /
@@ -1316,6 +1321,9 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
   (leakage gate, per cell, net of fee, provisional until live). Roles are a ladder, not a ceiling: a signal or
   model (this map, a System One model such as CLM-8B, a trade-execution gate) can start as a gate, move to
   advisor (predicts beside the incumbent, scored) and become the decider on the cells where it wins forward.
+- **The direction question is UNKNOWN, and it is a valid and EXPECTED thread of every dipole research pass (D52)**,
+  looked at every time dipole research is done, alongside every other possibility. It is not closed by S36 or by any
+  early result; only the end of all research runs on the historical data can set it aside.
 - **Net-of-cost (S36b, per cell):** the 64% does NOT clear a 10bps round-trip pooled; the flow gate
   adds ~+3bps/trade over blind trend-following and clears walk-forward-robustly only on specific cells
   (btc_bybit sell/buy). Direction is the easy part — the edge is SIZE-vs-FEE (the same finding Kalshi
