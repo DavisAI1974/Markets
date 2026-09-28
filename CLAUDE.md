@@ -3,6 +3,14 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
+- **STATE 2026-09-28 08:0xZ: READ FIRST the last update in `research/kalshi/frankie_boss/HANDOFF_20260928_SIDE_BUILDER_DISK.md`.**
+  Branch `claude/frankie-monday-continuation-qlkvqr`. ROOT (run 36393033592, 5fb84365) SUCCEEDED 07:56:39Z:
+  `calculations_retained`, every saved layer and table reused. Next Monday step (principal inputs) needs Greg's go and
+  a restage of the tip. The CLM sidecar extract runs behind it; then the Pod (go given).
+- **ALWAYS HAVE PROBES ATTACHED DURING PROCESS RUNS (Greg, 2026-09-28).** Every long box run gets the read-only
+  `frankie_box_progress.sh` probe (its own `box-progress` lock) at launch and at every check-in; never report
+  "running, no output yet" without a probe reading.
+
 - **STATE 2026-09-27 23:1xZ: READ FIRST `research/kalshi/frankie_boss/CLAUDE_HANDOFF_20260927_DIGEST_SAVEPOINTS.md`.**
   Branch `claude/agent-skills-kalshi-research-f1hr0c`. ROOT run 36351808435 (b35e79b7, pid 62338) is in the digest
   on the same root from checkpoint 8c03. Preparation and the legacy tables are done; the sharded merge was running

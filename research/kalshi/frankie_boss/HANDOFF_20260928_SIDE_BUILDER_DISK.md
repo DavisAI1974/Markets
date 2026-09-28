@@ -152,3 +152,42 @@ Order after Greg's go:
   per cell on forward evidence: gate, then advisor, then decider. It is recorded in CLAUDE.md, BUILD_PLAN.md, the
   decisions store and the signal_retest_registry policy. `odcore/info_dipole.py` is deliberately not edited: its bytes
   are pinned in `DIPOLE_SHARED_CATALOG_20260922.json`, which principal inputs reads.
+
+## UPDATE 2026-09-28 ~08:05Z: ROOT DONE (calculations retained); next chat starts here
+Branch `claude/frankie-monday-continuation-qlkvqr` (this session's branch, cut from `claude/agent-skills-kalshi-research-f1hr0c`
+6142bb60; it carries all of this session's commits). Box `i-035994afa8bdf66a5`.
+
+**STANDING RULE (Greg, 2026-09-28): ALWAYS HAVE PROBES ATTACHED DURING PROCESS RUNS.** Any long box run (ROOT, side
+builder, extract, Pod) gets a read-only progress probe dispatched alongside it and re-probed at every check-in, so the
+state is never "running, no output until it ends". The route that works while a box-run holds its lock (its own
+`box-progress` group):
+`frankie_box_run.yml`, script `deploy/aws/box/frankie_box_progress.sh`, timeout 120, variables
+`CODE_ROOT=<staged code_root> DIRECTORY=<the run's output root>` (optional `RESOURCE_METRICS=1`). Example used at 07:57Z
+(run 36394557189): `CODE_ROOT=/opt/frankie-box/code/5fb84365115e7614692cbc89e642e55ff0965d4d-36392706835-1/markets
+DIRECTORY=/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48`. Gap to close next: the run workflow
+could sample the probe itself on a timer while the SSM command runs (not built).
+
+**ROOT (run 36393033592, commit 5fb84365, staged code_root above): SUCCESS 07:56:39Z, `status: calculations_retained`.**
+- Wall time 07:41:55Z to 07:56:39Z. Every legacy layer reused; the bedrock traversal verified 2,032,203 INPUT records and
+  the projection publication was reused (44 layers, 2 sections, plan identical).
+- "43/44 layers derived by the pinned traversal on 1535939 groups ... sections 4.2 derived (28 rows), 4.4 derived
+  (3071878 rows)". **Check which layer is the 44th and why it is not counted as derived before crossing anything off.**
+- Receipt: `/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48/calculations-receipt.json` (the
+  probe shows it saved and read back). Its sha256 is not yet read: principal inputs needs it
+  (`--calculations-sha256`). Key pins from the printed receipt:
+  - calculation_pins sha256 `bce42ffe...`, derivation `6c39aeb3...`, digest `2e7b391e...` (3,837,715,264 bytes),
+    digest_proof `4da7851e...`, result `d1c43f63...`, source_binding `99440a65...`.
+  - ledgers: exact_member_rows 1,535,939 rows (537,182,189,410 bytes), exact_lifecycle_rows 13,402,454 rows,
+    legacy_observable_rows 1,006,873 rows.
+  - model_calls 0, source_writes 0, source_replays 0, principal_binding pending, reconstruction_authorized false.
+- **Next Monday step (Greg's go needed):** principal inputs and onward. The branch tip has moved past 5fb84365, so stage
+  the tip first (Stage and dispatch the SAME commit).
+
+**CLM sidecar:** the extract (run 36393047575, 5fb84365, `STAMP=monday-20260928a`) started 07:56:45Z behind ROOT. When its
+manifest prints, dispatch `deploy/aws/box/frankie_box_clm_sidecar_pod.sh` with
+`DATASET_KEY=<manifest s3.key> STAMP=monday-20260928a MAX_MINUTES=150` (Greg's go given). The Pod is always deleted.
+
+**Docs this session after the 07:45Z update:** D51 reworded and D52 added (see CLAUDE.md). Dipole direction is open
+research with no limit; no possibility is dropped early; a path is set aside only after ALL research runs on the historical
+data. Not edited because they are sha-pinned in `DIPOLE_SHARED_CATALOG_20260922.json` (read by principal inputs):
+`odcore/info_dipole.py`, `DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md`, `CLAUDE_ARCHIVE_OD.md`. Greg may ask to edit and re-pin.
