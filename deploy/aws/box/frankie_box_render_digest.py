@@ -58,11 +58,15 @@ def render(commit, output_root):
     aside = output / 'superseded' / ('digest-render-' + stamp)
     aside.mkdir(parents=True)
     moved = {}
-    for key in ('digest', 'digest_proof'):            # a rerun after a failed render finds them already moved
+    for key in ('digest', 'digest_proof'):            # a rerun after a stopped render finds them already moved
         path = Path(old[key]['path'])
         if path.exists():
             path.rename(aside / path.name)
             moved[key] = str(aside / path.name)
+        else:                                          # name where the earlier render put them (by name, not re-hashed)
+            earlier = sorted(p for p in (output / 'superseded').glob('digest-render-*/' + path.name) if p.parent != aside)
+            if earlier:
+                moved[key] = str(earlier[-1])
     session.phase('deriving', 'render-only: the digest in ' + DG.SCHEMA + ' from the retained layers (legacy tables; bedrock stays in its layer files); no recalculation')
     _, _, _, prices, frames, structures, _, layers, _ = load_retained_layers(session)
     write_retained_digest(session, derivation, layers, prices, frames, structures, bedrock=False)
