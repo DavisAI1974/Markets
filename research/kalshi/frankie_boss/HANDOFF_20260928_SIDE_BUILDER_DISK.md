@@ -28,6 +28,8 @@ Branch: `claude/agent-skills-kalshi-research-f1hr0c` (tip after this commit). Ch
   (commit 77ee2807).
 
 ## THE QUESTION (Greg): how did the plan pass write over 460 GB in about 20 minutes?
+**Answered in `REVIEW_20260928_PARALLEL_WRITER_DISK.md`.** From the run logs, the plan pass most likely finished (it
+took 18.5 min on the first run), and the COUNT pass filled the disk. The option A boothook must also delete `freq.sqlite`.
 The suspect is the plan pass in `deploy/aws/box/frankie_box_digest_parallel.py` (`_plan`, around line 148). For EVERY
 row it stores `TS._dump(cells)`: a JSON list with one `(kind, text)` pair for EVERY column in the table-wide
 column union, including `?` (absent) and `=` (derived) cells. bedrock.members is wide and sparse, so the stored size is
