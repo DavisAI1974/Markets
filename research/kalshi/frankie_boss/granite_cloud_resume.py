@@ -15,6 +15,9 @@ INFO_FIELDS = {'schema', 'intent', 'pod_id', 'pod', 'model', 'launch_deadline',
                'runtime', 'resume_requires_status'}
 STATUSES = {'PROVISIONING', 'STARTING', 'RUNNING', 'EXITED', 'ERROR', 'TERMINATED'}
 PACKAGES = {'torch', 'transformers', 'tokenizers', 'vllm', 'model-hosting-container-standards'}
+# Greg, 2026-09-28: Granite moves to a bigger Pod (more GPU memory, CPUs, room for workers); the pod type is the only
+# change. The H100 tiers in operations/pod_prepare.py priority order; the L40S stays admitted for the existing Pods.
+GPUS = ('NVIDIA L40S', 'NVIDIA H100 80GB HBM3', 'NVIDIA H100 NVL', 'NVIDIA H100 PCIe')
 
 
 def _refuse():
@@ -123,7 +126,7 @@ def _pod_info(pod, intent):
     gpu = pod.get('gpu')
     location = pod.get('dataCenterId')
     cost = pod.get('cost')
-    if (type(gpu) is not dict or gpu.get('id') != 'NVIDIA L40S'
+    if (type(gpu) is not dict or gpu.get('id') not in GPUS
             or gpu.get('count') != 1 or type(gpu.get('count')) is not int
             or not _integer(pod.get('disk'), 1, 10**6)
             or pod.get('status') not in STATUSES
@@ -207,7 +210,7 @@ def _runtime(value):
                 _refuse()
             result[name] = facts[name]
     if 'gpu' in facts:
-        if facts['gpu'] not in ('NVIDIA L40S', None):
+        if facts['gpu'] not in GPUS + (None,):
             _refuse()
         result['gpu'] = facts['gpu']
     for name in ('python', 'cuda', 'driver'):

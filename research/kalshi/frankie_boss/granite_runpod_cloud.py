@@ -350,7 +350,7 @@ def validate_runtime(records, admitted):
     if (startup['image_digest'] != control.granite_runpod.startup.IMAGE_DIGEST
             or startup['mount']['manifest_sha256'] != admitted['model_manifest_sha256']
             or any(facts['packages'].get(k) != v for k, v in admission.TOKENIZER_VERSIONS.items())
-            or facts['gpu_count'] != 1 or 'L40S' not in facts['gpu']
+            or facts['gpu_count'] != 1 or facts['gpu'] not in resume.GPUS
             or facts['gpu_total_memory'] < 45000000000
             or startup['environment']['GRANITE_MAX_MODEL_LEN'] != str(context)
             or startup['environment']['GRANITE_SERVED_MODEL'] != 'granite42-smoke'
