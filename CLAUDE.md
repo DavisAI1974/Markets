@@ -3,7 +3,11 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
-- **STATE 2026-09-28 13:3xZ: READ FIRST `research/kalshi/frankie_boss/HANDOFF_20260928_V9_RENDER.md`.** Branch
+- **STATE 2026-09-28 16:1xZ: READ FIRST `research/kalshi/frankie_boss/HANDOFF_20260928_R6_LAUNCH.md`.** Branch
+  `claude/frankie-monday-cycle-0-urozez`. Cycle 0 launch r6 RUNNING (run 36448920615, parallel context preparation;
+  r4/r5 stopped). 4 A100 Pods up (--max-num-seqs 3, SLOTS 3; first = BOSS kqp1qwzv6vo67a), billing ~$6.36/h.
+  Principal and Jev's sit-in start together at the WAIT. No canaries, no tests.
+- **STATE 2026-09-28 13:3xZ: (superseded above) `research/kalshi/frankie_boss/HANDOFF_20260928_V9_RENDER.md`.** Branch
   `claude/frankie-monday-cycle-0-k1esd8`. DIGEST_V9 rendered on the retained Monday root (legacy-only, 94,961,846 bytes,
   sha 6e9452cf; saved tables reused, bedrock not rebuilt). Jev failed (Pod never came up; deleted). Nothing billing.
   Next: measure the V9 read in tokens (canary), then principal inputs, then Granite Pods -- each on Greg's go.
