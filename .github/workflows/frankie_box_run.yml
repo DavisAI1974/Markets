@@ -242,12 +242,83 @@ jobs:
           except Exception:
               pass
           print('console timestamp:', out.get('Timestamp'), 'chars:', len(text))
-          hits = [l for l in text.splitlines() if re.search(r'(?i)out of memory|oom|killed process|no space|ext4-fs|i/o error|hung task|blocked for more', l)]
+          hits = [l for l in text.splitlines() if re.search(r'(?i)out of memory|oom|killed process|no space|ext4-fs|i/o error|hung task|blocked for more|frankie-disk-rescue', l)]
           print('### matching lines (%d)' % len(hits)); print('\n'.join(hits[-200:]))
           print('### console tail'); print(text[-30000:])
           PY
+      - name: Disk rescue (EC2 API; Greg's go only) - stop, one-time boothook beside the existing user-data, start
+        if: inputs.script == 'deploy/aws/box/frankie_box_disk_rescue.sh'
+        run: |
+          python - <<'PY' | tee box-run-output.txt
+          import base64, boto3, email, hashlib, os, re, time
+          from email.mime.multipart import MIMEMultipart
+          from email.mime.text import MIMEText
+          iid, region = os.environ['INSTANCE'], os.environ['REGION']
+          if iid != 'i-035994afa8bdf66a5' or region != 'us-east-1' or os.environ['VARIABLES'] != 'CONFIRM=GREG_GO_DISK_RESCUE_TABLE_0007':
+              raise SystemExit('canonical box and VARIABLES=CONFIRM=GREG_GO_DISK_RESCUE_TABLE_0007 required')
+          ec2 = boto3.client('ec2', region_name=region)
+          hook = open('deploy/aws/box/frankie_box_disk_rescue_boothook.sh', encoding='utf-8').read()
+          if not hook.startswith('#cloud-boothook\n'):
+              raise SystemExit('boothook must start with #cloud-boothook')
+          value = ec2.describe_instance_attribute(InstanceId=iid, Attribute='userData')['UserData'].get('Value') or ''
+          original = base64.b64decode(value) if value else b''
+          print('existing user-data: %d bytes, sha256 %s' % (len(original), hashlib.sha256(original).hexdigest()), flush=True)
+          if original.startswith(b'\x1f\x8b'):
+              raise SystemExit('existing user-data is gzip-compressed; not combined automatically')
+          part = MIMEText(hook, 'cloud-boothook', 'utf-8')
+          if not original.strip():
+              combined = hook.encode('utf-8')
+          elif original.lstrip().lower().startswith(b'content-type: multipart') or original.startswith(b'MIME-Version'):
+              message = email.message_from_bytes(original)
+              if not message.is_multipart():
+                  raise SystemExit('existing user-data claims MIME but is not multipart')
+              if 'frankie-disk-rescue' in original.decode('utf-8', 'replace'):
+                  raise SystemExit('the rescue boothook is already in the user-data')
+              message.attach(part)
+              combined = message.as_bytes()
+          else:
+              first = original.lstrip().split(b'\n', 1)[0]
+              kinds = ((b'#cloud-config', 'cloud-config'), (b'#!', 'x-shellscript'), (b'#cloud-boothook', 'cloud-boothook'),
+                       (b'#include', 'x-include-url'), (b'#upstart-job', 'upstart-job'), (b'#part-handler', 'part-handler'))
+              kind = next((k for prefix, k in kinds if first.startswith(prefix)), None)
+              if kind is None:
+                  raise SystemExit('existing user-data type not recognised from its first line; not combined automatically')
+              message = MIMEMultipart()
+              message.attach(MIMEText(original.decode('utf-8'), kind, 'utf-8'))
+              message.attach(part)
+              combined = message.as_bytes()
+              print('existing user-data kept as its own part: text/%s' % kind, flush=True)
+          if len(combined) > 16384:
+              raise SystemExit('combined user-data %d bytes exceeds the 16 KB limit' % len(combined))
+          print('combined user-data: %d bytes, sha256 %s' % (len(combined), hashlib.sha256(combined).hexdigest()), flush=True)
+          ec2.stop_instances(InstanceIds=[iid])
+          ec2.get_waiter('instance_stopped').wait(InstanceIds=[iid], WaiterConfig={'Delay': 10, 'MaxAttempts': 90})
+          print('stopped', flush=True)
+          ec2.modify_instance_attribute(InstanceId=iid, UserData={'Value': combined})
+          started = time.time()
+          ec2.start_instances(InstanceIds=[iid])
+          ec2.get_waiter('instance_running').wait(InstanceIds=[iid], WaiterConfig={'Delay': 10, 'MaxAttempts': 90})
+          print('running', flush=True)
+          ssm = boto3.client('ssm', region_name=region)
+          for attempt in range(90):
+              time.sleep(10)
+              info = ssm.describe_instance_information(Filters=[{'Key': 'InstanceIds', 'Values': [iid]}])['InstanceInformationList']
+              ping = info[0].get('LastPingDateTime') if info else None
+              if info and info[0]['PingStatus'] == 'Online' and ping is not None and ping.timestamp() > started:
+                  print('SSM Online', flush=True)
+                  break
+          else:
+              print('SSM not Online after 15 min; read the console below', flush=True)
+          text = ec2.get_console_output(InstanceId=iid, Latest=True).get('Output') or ''
+          try:
+              text = base64.b64decode(text, validate=True).decode('utf-8', 'replace')
+          except Exception:
+              pass
+          lines = [l for l in text.splitlines() if 'frankie-disk-rescue' in l]
+          print('### boothook console lines (%d)' % len(lines)); print('\n'.join(lines))
+          PY
       - name: Run the committed script on the box
-        if: inputs.script != 'deploy/aws/box/frankie_box_console.sh'
+        if: inputs.script != 'deploy/aws/box/frankie_box_console.sh' && inputs.script != 'deploy/aws/box/frankie_box_disk_rescue.sh'
         run: |
           set -euo pipefail
           sets=()

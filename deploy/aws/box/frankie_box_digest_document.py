@@ -106,6 +106,28 @@ def _canonical(value):
     return json.loads(json.dumps(value, sort_keys=True))
 
 
+# A legacy table is written by TS.write_table from the legacy layers: only the codec, the renderer and the per-second rows
+# reach its bytes. The bedrock row readers in _code_identity key the bedrock tables only (2026-09-28: the members reader
+# changed and must not rebuild the five legacy save points).
+LEGACY_CODE = ('frankie_box_digest_stream.py', 'frankie_box_digest_render.py', 'document.per_second_rows')
+
+
+def legacy_key(name, context, code, inputs):
+    return _canonical(dict(kind='legacy', name=name, context=sorted(context or {}), code={k: code[k] for k in LEGACY_CODE},
+                           inputs=inputs))
+
+
+def _key_matches(stored, key):
+    """A receipt's key equals this key. A legacy receipt written before legacy_key carries the whole code identity; it
+    matches when its legacy code entries (and everything else) do."""
+    if stored == key:
+        return True
+    if not (isinstance(stored, dict) and isinstance(key, dict) and key.get('kind') == 'legacy' and stored.get('kind') == 'legacy'
+            and isinstance(stored.get('code'), dict) and all(k in stored['code'] for k in LEGACY_CODE)):
+        return False
+    return dict(stored, code={k: stored['code'][k] for k in LEGACY_CODE}) == key
+
+
 def _saved_table(scratch, ordinal, key, context=False):
     """Save point for reruns: the table at this ordinal that an earlier digest attempt of this calculation root wrote,
     proved and receipted with exactly this key (name, inputs, code). A candidate is used only if its bytes (and, for a
@@ -116,7 +138,7 @@ def _saved_table(scratch, ordinal, key, context=False):
             continue
         try:
             value = json.loads(receipt.read_bytes())
-            if value.get('schema') != TABLE_SAVE_SCHEMA or value.get('key') != key:
+            if value.get('schema') != TABLE_SAVE_SCHEMA or not _key_matches(value.get('key'), key):
                 continue
             path = _safe(value.get('path') or '')
             if path.parent != _safe(receipt.parent) or path.name != 'table-%04d.txt' % ordinal or not path.is_file():
@@ -253,7 +275,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         ordinal = len(stages)
         root = scratch/('table-%04d' % ordinal)
         path = scratch/('table-%04d.txt' % ordinal)
-        key = _canonical(dict(kind='legacy', name=name, context=sorted(context or {}), code=code, inputs=legacy_inputs))
+        key = legacy_key(name, context, code, legacy_inputs)
         # Legacy tables are reused only as an unbroken prefix, so a context table is always the one actually used.
         saved = _saved_table(scratch, ordinal, key, context=True) if reusing['legacy'] else None
         if saved is not None:

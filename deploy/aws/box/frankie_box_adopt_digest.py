@@ -105,7 +105,7 @@ def adopt(directory, digest, old_code_root):
             m = re.fullmatch(r'### table (\S+): (\d+) rows, .*\n', header)
             if m is None or m.group(1) != name:
                 raise ValueError('legacy table %d is not %s' % (ordinal, name))
-            key = D._canonical(dict(kind='legacy', name=name, context=sorted(context), code=code, inputs=inputs))
+            key = D.legacy_key(name, context, code, inputs)
             D._save_table(scratch, ordinal, key, dict(name=name, rows=int(m.group(2)), path=path, digest=D._witness(path)),
                           context=D._witness(database))
             report['adopted'].append(path.name)

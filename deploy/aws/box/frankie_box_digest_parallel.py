@@ -1,11 +1,19 @@
 """Parallel DIGEST_V6 table writer: the same bytes as frankie_box_digest_stream.write_table, built on many cores.
 
-The serial writer runs four passes over a table on one core (snapshot, plan, emit, inverse verify). Each pass is
-split here into contiguous row ranges ("parts") on pinned helper processes. What crosses a part boundary is small and
-exact: the planner's and the verifier's row-to-row state (previous row, last value / integer / list head per column),
-and the table-wide facts (column order, derived and constant columns, scales, dictionary counts and first-occurrence
-numbering, separator). The coordinator folds those in part order, so every cell, the header and the dictionary are
-what the serial writer produces. frankie_box_digest_stream and frankie_box_digest_render are not modified.
+The serial writer runs its passes over a table on one core. Here each pass is split into contiguous row ranges
+("parts") on pinned helper processes. What crosses a part boundary is small and exact: the planner's and the
+verifier's row-to-row state (previous row, last value / integer / list head per column), and the table-wide facts
+(column order, derived and constant columns, scales, dictionary counts and first-occurrence numbering, separator). The
+coordinator folds those in part order, so every cell, the header and the dictionary are what the serial writer
+produces. frankie_box_digest_stream and frankie_box_digest_render are not modified.
+
+Lean on disk (2026-09-28: two side builds filled the 2 TB disk with per-row intermediates). Passes: snapshot (columns
+and seeds, nothing written), plan (cells planned and dictionary candidates counted in one read; no plan is stored;
+counts are keyed by the sha256 of the candidate's text, so a part's counts are a few dozen bytes per distinct key),
+merge (table-wide counts and first-occurrence numbering, on digests), final (each part planned again from its seed and
+written as row text, plus the text of the dictionary entries it numbers first), copy (the parts appended to the table,
+each part deleted as soon as it is appended), inverse proof (streamed per part). Every helper stops cleanly before the
+scratch filesystem's free space falls under DISK_RESERVE. Each pass is a save point keyed by the code it depends on.
 
 Row sources are described, not passed: ('members', database, group keys) or ('rows', database, query, parameters,
 excluded, start, count), so each helper reads its own range of a finished sources.sqlite read-only.
@@ -57,8 +65,18 @@ def _readonly(path):
     return db
 
 
+# The pinned crosswalk (frankie_box_bedrock.PIN_COMMIT) names the full-depth ask ladder `book_full.ask_levels_full`
+# without the list mark its own carrier gives it ("book_full.bid_levels_full[] / ask_levels_full[] (whole book)"), so
+# the whole ask ladder, every FIFO queue of every level, rode each group's member row while the bid ladder is carried
+# by its leaf count (Greg, 2026-09-28: not intended). The digest carries it as the bid side is carried: the list path's
+# `#count` (the same reducer frankie_box_digest_sources applies to `[]` paths). The ladder stays whole in the layer
+# file and the ledger.
+MEMBER_LIST_PATHS = {'book_full.ask_levels_full': 'book_full.ask_levels_full[]'}
+
+
 def _source_rows(spec):
-    """The rows of one part, exactly as _bedrock_table_job would produce them for the whole table."""
+    """The rows of one part, in the order of the whole table's reader (_bedrock_table_job, S._Members, S._Rows), with
+    the member path correction MEMBER_LIST_PATHS applied to member rows."""
     import frankie_box_digest_sources as S
     if spec['kind'] == 'inline':          # rows given in the spec itself (comparisons against the serial writer)
         yield from spec['rows']
@@ -70,7 +88,10 @@ def _source_rows(spec):
                 flat = {}
                 for column, payload in db.execute(
                         'SELECT column_name,payload FROM members WHERE group_key=? ORDER BY ordinal', (key,)):
-                    flat[column] = DG._spell(S._decoded(payload))
+                    value = S._decoded(payload)
+                    if column in MEMBER_LIST_PATHS:
+                        column, value = MEMBER_LIST_PATHS[column] + '#count', DG._leaf_count(value)
+                    flat[column] = DG._spell(value)
                 yield DG._nest(flat)
             return
         excluded = spec['excluded']
@@ -99,11 +120,9 @@ def _fold(state, flat):
 
 
 def _part_db(directory, stage):
-    # Part databases are scratch (a failed table is rebuilt from scratch), so no journal and no fsync per commit; a
-    # 1 GiB page cache per helper keeps the per-cell dictionary upserts off the disk (profile 2026-09-28: the count
-    # pass sat at 37% CPU in disk wait with the default 2 MB cache on 28 helpers). One file per stage (plans, freq,
-    # final), each deleted as soon as its last reader is done: the whole-table scratch never holds more than about
-    # two stages at once (2026-09-28: bedrock.members filled the 2 TB disk holding source, plans and counts).
+    # Part databases are scratch (a failed pass is redone from its inputs), so no journal and no fsync per commit; a
+    # 1 GiB page cache per helper keeps the per-candidate count upserts off the disk (profile 2026-09-28: the count
+    # pass sat at 37% CPU in disk wait with the default 2 MB cache on 28 helpers).
     db = sqlite3.connect(Path(directory) / (stage + '.sqlite'))
     db.execute('PRAGMA journal_mode=OFF')
     db.execute('PRAGMA synchronous=OFF')
@@ -120,23 +139,43 @@ def _lookup_db(path):
     return db
 
 
+# Free space every helper and the copy keep on the scratch filesystem: the SSM agent, journald and the OS need it
+# (2026-09-28: a full disk took the box's command runner down with the build).
+DISK_RESERVE = 32 << 30
+
+
+class DiskReserve(RuntimeError):
+    pass
+
+
+def _room(directory, needed=0):
+    free = shutil.disk_usage(directory).free
+    if free - needed < DISK_RESERVE:
+        raise DiskReserve('stopping before the disk fills: %d bytes free, %d more needed, %d kept free (%s)'
+                          % (free, needed, DISK_RESERVE, directory))
+
+
+def _digest(key):
+    # candidate texts are JSON spellings (ensure_ascii), so they encode as ASCII
+    return hashlib.sha256(key.encode()).digest()
+
+
 # ---- phase 1: snapshot ---------------------------------------------------------------------------------------------
 
 def _snapshot(job):
-    # No copy of the source rows is kept: the plan and verify passes read them again from the same read-only source
-    # (the finished sources.sqlite), in the same order.
+    # Nothing is written: the later passes read the rows again from the same read-only source, in the same order. The
+    # rows are JSON decoded (sources.sqlite payloads), so the serial writer's type-preservation spool check cannot fail
+    # on them and is not repeated here.
     spec, directory = job
     Path(directory).mkdir(parents=True, exist_ok=True)
     columns, n, first, last = {}, 0, None, None
     state = ({}, {}, {})
     for n, row in enumerate(_source_rows(spec), 1):
-        row = dict(row)
-        flat = DG._flatten(row)
+        flat = DG._flatten(dict(row))
         for column in flat:
             if not column or column[0] in '=^' or any(c in column for c in ('\t', '\n', '=', ' ')):
                 raise ValueError(f'column name {column!r} cannot be spelled in a table header')
             columns.setdefault(column, None)
-        TS._dump(row)      # the same type-preservation check the stored copy made
         if first is None:
             first = flat
         last = flat
@@ -144,62 +183,78 @@ def _snapshot(job):
     return dict(columns=list(columns), n=n, first=first, last=last, state=state)
 
 
-# ---- phase 2: plan cells, derived and constant flags ---------------------------------------------------------------
+# ---- phase 2: plan cells, derived and constant flags, dictionary counts and scales, in one read --------------------
 
 def _plan(job):
+    """Plans every cell and counts the dictionary candidates in the same read of the part's rows; no plan is stored.
+
+    Which columns the table keeps is known only when every part is planned, so candidates are counted for every column
+    except while a column may still be excluded here (derived '=' or constant on every row of this part so far): its
+    candidates are held apart and counted as soon as it cannot be (a column that varies in any part is kept), or left in
+    the held table for the merge to count only if the column is kept table-wide. Positions run over every candidate in
+    row-major order, so the first-occurrence order of the kept candidates is the serial one."""
     spec, directory, columns, seed, first = job
     prev, values, integers, lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
-    derived = {c: True for c in columns}
-    constant = {c: True for c in columns}
-    db = _part_db(directory, 'plans')
-    db.execute('CREATE TABLE plans (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL)')
-    for i, row in enumerate(_source_rows(spec)):
-        flat = DG._flatten(dict(row))
-        cells = DG._plan_row(flat, columns, prev, values, integers, lists)
-        db.execute('INSERT INTO plans VALUES (?, ?)', (i, TS._dump(cells)))
-        for j, c in enumerate(columns):
-            derived[c] = derived[c] and cells[j][1] == '='
-            constant[c] = constant[c] and c in flat and c in first and DG._same(flat[c], first[c])
-        prev = flat
-    db.commit()
-    db.close()
-    return derived, constant
-
-
-# ---- phase 3: dictionary counts and scales -------------------------------------------------------------------------
-
-def _count(job):
-    directory, kept = job
-    scale_state = {j: [DG.SCALE_MAX, False] for j in kept}
-    plans = _part_db(directory, 'plans')
+    width = len(columns)
+    derived, constant = [True] * width, [True] * width
+    scale_state = [[DG.SCALE_MAX, False] for _ in range(width)]
+    held = [{} for _ in range(width)]
     db = _part_db(directory, 'freq')
-    db.execute('CREATE TABLE frequency (key TEXT PRIMARY KEY, count INTEGER NOT NULL, first INTEGER NOT NULL)')
-    position = 0
-    # Counts are gathered in memory and upserted in batches: a key already in the table keeps its first position
-    # (an earlier batch saw it first), a new key gets its first position within the batch; same table as one upsert
-    # per cell.
+    db.execute('CREATE TABLE frequency (digest BLOB PRIMARY KEY, count INTEGER NOT NULL, first INTEGER NOT NULL) '
+               'WITHOUT ROWID')
+    db.execute('CREATE TABLE held (j INTEGER NOT NULL, digest BLOB NOT NULL, count INTEGER NOT NULL, '
+               'first INTEGER NOT NULL, PRIMARY KEY (j, digest)) WITHOUT ROWID')
     batch = {}
 
     def flush():
-        db.executemany('INSERT INTO frequency(key, count, first) VALUES (?, ?, ?) '
-                       'ON CONFLICT(key) DO UPDATE SET count=count+excluded.count',
+        _room(directory)
+        db.executemany('INSERT INTO frequency(digest, count, first) VALUES (?, ?, ?) ON CONFLICT(digest) DO UPDATE '
+                       'SET count=count+excluded.count, first=min(first, excluded.first)',
                        ((k, v[0], v[1]) for k, v in sorted(batch.items())))
         batch.clear()
 
-    for cells in TS._rows(plans, 'plans'):
-        for j in kept:
+    def add(key, count, position):
+        entry = batch.get(key)
+        if entry is None:
+            batch[key] = [count, position]
+            if len(batch) >= 2000000:
+                flush()
+        else:
+            entry[0] += count
+            entry[1] = min(entry[1], position)
+
+    position, bound = 0, 0
+    for row in _source_rows(spec):
+        flat = DG._flatten(dict(row))
+        cells = DG._plan_row(flat, columns, prev, values, integers, lists)
+        for j, c in enumerate(columns):
             kind, text = cells[j]
+            if derived[j] and text != '=':
+                derived[j] = False
+            if constant[j] and not (c in flat and c in first and DG._same(flat[c], first[c])):
+                constant[j] = False
+            candidate = derived[j] or constant[j]
+            if held[j] and not candidate:
+                for key, (count, at) in held[j].items():
+                    add(key, count, at)
+                held[j] = {}
             if kind != 'lit':
-                key = json.dumps(text) if kind == 'str' else text
-                entry = batch.get(key)
-                if entry is None:
-                    batch[key] = [1, position]
-                    if len(batch) >= 2000000:
-                        flush()
+                spelled = json.dumps(text) if kind == 'str' else text
+                # the final cell is `@n` (at most 12 bytes), `S` text or `J` spelling: an upper bound of the row text
+                bound += max(len(spelled) + 1, 12) + 1
+                key = _digest(spelled)
+                if candidate:
+                    entry = held[j].get(key)
+                    if entry is None:
+                        held[j][key] = [1, position]
+                    else:
+                        entry[0] += 1
                 else:
-                    entry[0] += 1
+                    add(key, 1, position)
                 position += 1
-            elif DG._INT_CELL.fullmatch(text):
+                continue
+            bound += len(text) + 1
+            if DG._INT_CELL.fullmatch(text):
                 k, _ = scale_state[j]
                 value, z = abs(int(text)), 0
                 if value:
@@ -208,63 +263,126 @@ def _count(job):
                         z += 1
                     k = min(k, z)
                 scale_state[j] = [k, True]
-    if batch:
-        flush()
+        prev = flat
+    flush()
+    db.executemany('INSERT INTO held VALUES (?, ?, ?, ?)',
+                   ((j, key, count, at) for j, h in enumerate(held) for key, (count, at) in sorted(h.items())))
     db.commit()
     db.close()
-    plans.close()
-    return scale_state
+    return dict(derived=derived, constant=constant, scales=scale_state, bound=bound)
 
 
-# ---- phase 4: final cells with the global dictionary ---------------------------------------------------------------
+# ---- phase 3: merge (coordinator, digests only) ---------------------------------------------------------------------
+
+def _merge(parts, dictionary, kept):
+    """Table-wide counts (the held counts of kept columns only) and numbering in first-occurrence order over the whole
+    table, as the serial pass assigns it: a part's newly numbered keys get consecutive numbers, in the order of their
+    first position in that part. Returns the first number of each part's range and the total."""
+    dictionary.unlink(missing_ok=True)
+    g = sqlite3.connect(dictionary)
+    for pragma in ('journal_mode=OFF', 'synchronous=OFF', 'temp_store=MEMORY', 'cache_size=-16777216'):
+        g.execute('PRAGMA ' + pragma)
+    g.execute('CREATE TABLE frequency (digest BLOB PRIMARY KEY, count INTEGER NOT NULL, number INTEGER, '
+              'part INTEGER) WITHOUT ROWID')
+    g.execute('CREATE TEMP TABLE kept (j INTEGER PRIMARY KEY)')
+    g.executemany('INSERT INTO kept VALUES (?)', ((j,) for j in kept))
+    for p in parts:
+        _room(dictionary.parent)
+        g.execute('ATTACH DATABASE ? AS part', (str(p / 'freq.sqlite'),))
+        g.execute('INSERT INTO frequency(digest, count) SELECT digest, count FROM part.frequency WHERE true '
+                  'ON CONFLICT(digest) DO UPDATE SET count=count+excluded.count')
+        g.execute('INSERT INTO frequency(digest, count) SELECT digest, sum(count) FROM part.held '
+                  'WHERE j IN (SELECT j FROM kept) GROUP BY digest '
+                  'ON CONFLICT(digest) DO UPDATE SET count=count+excluded.count')
+        g.commit()
+        g.execute('DETACH DATABASE part')
+    number, starts = 0, []
+    for index, p in enumerate(parts):
+        starts.append(number)
+        g.execute('ATTACH DATABASE ? AS part', (str(p / 'freq.sqlite'),))
+        g.execute('CREATE TEMP TABLE seen (digest BLOB PRIMARY KEY, first INTEGER NOT NULL) WITHOUT ROWID')
+        g.execute('INSERT INTO seen SELECT digest, first FROM part.frequency WHERE true')
+        g.execute('INSERT INTO seen SELECT digest, min(first) FROM part.held WHERE j IN (SELECT j FROM kept) '
+                  'GROUP BY digest ON CONFLICT(digest) DO UPDATE SET first=min(first, excluded.first)')
+        fresh = g.execute('SELECT s.digest FROM seen s JOIN frequency f ON f.digest=s.digest '
+                          'WHERE f.count >= 2 AND f.number IS NULL ORDER BY s.first').fetchall()
+        g.executemany('UPDATE frequency SET number=?, part=? WHERE digest=?',
+                      ((number + i, index, digest) for i, (digest,) in enumerate(fresh)))
+        number += len(fresh)
+        g.execute('DROP TABLE seen')
+        g.commit()
+        g.execute('DETACH DATABASE part')
+    g.close()
+    return dict(starts=starts, total=number)
+
+
+# ---- phase 4: final cells with the global dictionary, written as the part's row text --------------------------------
 
 def _final(job):
-    directory, kept, columns, scales, dictionary = job
-    plans = _part_db(directory, 'plans')
-    db = _part_db(directory, 'final')
-    db.execute('CREATE TABLE final (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL)')
+    """The part's rows planned again from its seed and written with the dictionary, cells joined by tabs (no cell holds
+    a tab or a newline, checked); the copy turns the tabs into spaces when the table's separator is a space. The text of
+    every dictionary entry this part numbers (its first occurrence is here) goes to names.txt, in number order."""
+    spec, directory, index, columns, seed, kept, scales, dictionary, start = job
+    prev, values, integers, lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
     lookup = _lookup_db(dictionary)
-    has_space = False
-    for i, cells in enumerate(TS._rows(plans, 'plans')):
-        out = []
-        for j in kept:
-            kind, text = cells[j]
-            if kind == 'lit':
-                scale = scales.get(columns[j])
-                out.append(DG._scaled(text, scale) if scale and DG._INT_CELL.fullmatch(text) else text)
-                continue
-            key = json.dumps(text) if kind == 'str' else text
-            count, number = lookup.execute('SELECT count, number FROM frequency WHERE key=?', (key,)).fetchone()
-            if count >= 2:
-                out.append('@%d' % number)
-            elif kind == 'str':
-                out.append('S' + text if '\t' not in text and '\n' not in text else 'J' + key)
-            else:
-                out.append('J' + text)
-        out = DG._collapse(out)
-        has_space = has_space or any(' ' in cell for cell in out)
-        db.execute('INSERT INTO final VALUES (?, ?)', (i, TS._dump(out)))
-    db.commit()
-    db.close()
+    has_space, named = False, start
+    directory = Path(directory)
+    with (directory / 'rows.txt').open('w', encoding='utf-8', newline='\n') as rows, \
+            (directory / 'names.txt').open('w', encoding='utf-8', newline='\n') as names:
+        for i, row in enumerate(_source_rows(spec)):
+            if i % 256 == 0:
+                _room(directory)
+            flat = DG._flatten(dict(row))
+            cells = DG._plan_row(flat, columns, prev, values, integers, lists)
+            prev = flat
+            out = []
+            for j in kept:
+                kind, text = cells[j]
+                if kind == 'lit':
+                    scale = scales.get(columns[j])
+                    out.append(DG._scaled(text, scale) if scale and DG._INT_CELL.fullmatch(text) else text)
+                    continue
+                key = json.dumps(text) if kind == 'str' else text
+                count, number, part = lookup.execute('SELECT count, number, part FROM frequency WHERE digest=?',
+                                                     (_digest(key),)).fetchone()
+                if count >= 2:
+                    if part == index and number >= named:
+                        if number != named:
+                            raise ValueError('dictionary first occurrences out of order in part %d' % index)
+                        names.write('@%d=%s\n' % (number, key))
+                        named += 1
+                    out.append('@%d' % number)
+                elif kind == 'str':
+                    out.append('S' + text if '\t' not in text and '\n' not in text else 'J' + key)
+                else:
+                    out.append('J' + text)
+            out = DG._collapse(out)
+            line = '\t'.join(out)
+            if line.count('\t') != len(out) - 1 or '\n' in line:
+                raise ValueError('a table cell holds a tab or a newline')
+            has_space = has_space or ' ' in line
+            rows.write(line + '\n')
+        for handle in (rows, names):
+            handle.flush()
+            os.fsync(handle.fileno())
     lookup.close()
-    plans.close()
-    return has_space
-
-
-def _emit(job):
-    directory, sep = job
-    db = _part_db(directory, 'final')
-    path = Path(directory) / 'rows.txt'
-    with path.open('x', encoding='utf-8', newline='\n') as handle:
-        for cells in TS._rows(db, 'final'):
-            handle.write(sep.join(cells) + '\n')
-        handle.flush()
-        os.fsync(handle.fileno())
-    db.close()
-    return path.stat().st_size
+    return dict(has_space=has_space, size=(directory / 'rows.txt').stat().st_size, named=named - start)
 
 
 # ---- phase 5: inverse verification, per part ------------------------------------------------------------------------
+
+def _segment_lines(path, offset, length):
+    """The lines of one part's byte range of the written table, read one at a time (never the whole segment)."""
+    with Path(path).open('rb') as handle:
+        handle.seek(offset)
+        remaining = length
+        while remaining:
+            raw = handle.readline(remaining)
+            if not raw.endswith(b'\n'):
+                raise ValueError('table part line count differs')
+            remaining -= len(raw)
+            yield raw[:-1].decode('utf-8')
+
 
 def _verify(job):
     (path, offset, length, count, spec, header, dictionary, seed) = job
@@ -273,13 +391,10 @@ def _verify(job):
     prev_row, prev_values, prev_ints, prev_lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
     expected = iter(_source_rows(spec))
     whole_derived = frozenset(c for c, mark in whole.items() if mark == '=')
-    with Path(path).open('rb') as handle:
-        handle.seek(offset)
-        segment = handle.read(length).decode('utf-8')
-    lines = segment.split('\n')
-    if lines[-1] != '' or len(lines) - 1 != count:
-        raise ValueError('table part line count differs')
-    for i, line in enumerate(lines[:-1]):
+    i = -1
+    for i, line in enumerate(_segment_lines(path, offset, length)):
+        if i >= count:
+            raise ValueError('table part line count differs')
         cells = TS._expanded(line, sep, kept)
         row = copy.deepcopy(constants)
         derived_cols = set(whole_derived)
@@ -353,6 +468,8 @@ def _verify(job):
             raise ValueError(f'table {name} part row {i} does not round-trip')
         _fold((prev_values, prev_ints, prev_lists), row)
         prev_row = row
+    if i + 1 != count:
+        raise ValueError('table part line count differs')
     if next(expected, None) is not None:
         raise ValueError('source rows longer than table part')
     lookup.close()
@@ -361,48 +478,147 @@ def _verify(job):
 
 # ---- coordinator ---------------------------------------------------------------------------------------------------
 
+CHECKPOINT_SCHEMA = 'FRANKIE_PARALLEL_TABLE_PASSES_V2'
+
+
+def _pass_code():
+    """What each pass's saved result depends on, cumulatively (a pass's result is reused only while its own code and
+    the code of every earlier pass are unchanged): V2 keys passes by these sources, not by the whole file's bytes, so a
+    fix in a later pass or in the orchestration keeps the passes before it."""
+    import inspect
+    import frankie_box_digest_sources as S
+    base = [hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest() for m in (TS, DG)]
+    passes = (('snapshot', (_readonly, _source_rows, _fold, _snapshot, S._decoded, S._compare_groups)),
+              ('plan', (_part_db, _digest, _plan)),
+              ('merge', (_merge,)),
+              ('final', (_lookup_db, _final)),
+              ('copy', (_copy,)))
+    digest, out = hashlib.sha256(json.dumps([base, sorted(MEMBER_LIST_PATHS.items())]).encode()), {}
+    for label, functions in passes:
+        for function in functions:
+            digest.update(inspect.getsource(function).encode())
+        out[label] = digest.copy().hexdigest()
+    return out
+
+
 def _checkpoint_key(name, specs):
-    """A pass save point belongs to exactly this table's parts and this writer's code."""
-    return dict(schema='FRANKIE_PARALLEL_TABLE_PASSES_V1', name=name,
-                specs=hashlib.sha256(pickle.dumps(specs, protocol=4)).hexdigest(),
-                code=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+    """A pass save point belongs to exactly this table's parts."""
+    return dict(schema=CHECKPOINT_SCHEMA, name=name, specs=hashlib.sha256(pickle.dumps(specs, protocol=4)).hexdigest())
 
 
-def _load_checkpoint(scratch, key):
+def _load_checkpoint(scratch, key, code):
+    """The saved passes whose code still matches, in pass order up to the first that does not (None: nothing usable)."""
     try:
         value = pickle.loads((scratch / 'passes.pkl').read_bytes())
     except (OSError, ValueError, EOFError, pickle.UnpicklingError):
         return None
-    return value['passes'] if isinstance(value, dict) and value.get('key') == key else None
+    if not isinstance(value, dict) or value.get('key') != key:
+        return None
+    passes, saved, codes = {}, value.get('passes') or {}, value.get('code') or {}
+    for label in code:
+        if label not in saved or codes.get(label) != code[label]:
+            break
+        passes[label] = saved[label]
+    return passes or None
 
 
-def _save_checkpoint(scratch, key, passes):
+def _save_checkpoint(scratch, key, code, passes):
     tmp = scratch / 'passes.pkl.tmp'
     with tmp.open('wb') as handle:
-        pickle.dump(dict(key=key, passes=passes), handle, protocol=4)
+        pickle.dump(dict(key=key, code={label: code[label] for label in passes}, passes=passes), handle, protocol=4)
         handle.flush()
         os.fsync(handle.fileno())
     os.replace(tmp, scratch / 'passes.pkl')
+
+
+def _copy(destination, name, n, columns, whole, first, scales, sep, parts, sizes):
+    """The table: header, constants, scales, the dictionary (each part's names in part order, numbers checked
+    consecutive), then every part's rows. Each part's row text is deleted as soon as it is appended (the disk holds the
+    table plus one part, never the table twice); an interrupted copy therefore reruns the final pass."""
+    destination.unlink(missing_ok=True)       # an unsaved partial table from an interrupted copy
+    with destination.open('x', encoding='utf-8', newline='\n') as handle:
+        handle.write(f'### table {name}: {n} rows, sep={"space" if sep == " " else "tab"}, columns: ')
+        handle.write('\t'.join(whole.get(c, '') + c for c in columns) + '\n')
+        constants = [c for c in columns if whole.get(c) == '^']
+        if constants:
+            handle.write('constants: ')
+            for i, c in enumerate(constants):
+                value = first[c]
+                text = ('U' + json.dumps(list(value), separators=(',', ':'), sort_keys=True)) if isinstance(value, tuple) else json.dumps(value, separators=(',', ':'), sort_keys=True)
+                handle.write(('\t' if i else '') + c + '=' + text)
+            handle.write('\n')
+        if scales:
+            handle.write('scales: ' + '\t'.join('%s=%d' % (c, k) for c, k in scales.items()) + '\n')
+        number = 0
+        for p in parts:
+            with (p / 'names.txt').open(encoding='utf-8', newline='\n') as names:
+                for line in names:
+                    if not line.startswith('@%d=' % number) or not line.endswith('\n'):
+                        raise ValueError('dictionary numbering mismatch in %s' % p)
+                    handle.write(('\t' if number else 'dictionary: ') + line[:-1])
+                    number += 1
+        if number:
+            handle.write('\n')
+        handle.flush()
+        offset = destination.stat().st_size     # header bytes; the part rows follow in order
+        offsets = []
+        for p, size in zip(parts, sizes):
+            _room(destination.parent, size)
+            offsets.append(offset)
+            offset += size
+            with (p / 'rows.txt').open('rb') as chunk:
+                while block := chunk.read(1 << 22):
+                    handle.buffer.write(block.replace(b'\t', b' ') if sep == ' ' else block)
+            handle.flush()
+            (p / 'rows.txt').unlink()
+        os.fsync(handle.fileno())
+    if destination.stat().st_size != offset:
+        raise ValueError('table %s is not its header and parts' % name)
+    return dict(offsets=offsets, identity=TS._identity(destination), numbered=number)
 
 
 def write_table_parallel(destination, name, specs, scratch_directory, cpus, progress=None):
     """specs: ordered part row sources (see _source_rows). Same bytes and proof as TS.write_table (no context).
 
     Save points per pass (Greg, 2026-09-28: stop, fix and restart without losing work): each finished pass records its
-    result in scratch/passes.pkl, keyed by the table's parts and this writer's code; a rerun with the same scratch
-    directory resumes at the first unfinished pass. A pass's files are deleted only after the next pass is saved."""
+    result in scratch/passes.pkl, keyed by the table's parts and the code the pass depends on (_pass_code); a rerun with
+    the same scratch directory resumes at the first pass not saved under the current code. A pass's files are deleted
+    only once the pass that reads them is saved."""
     destination = Path(destination)
     scratch = Path(scratch_directory)
-    key = _checkpoint_key(name, specs)
-    passes = _load_checkpoint(scratch, key) if scratch.is_dir() else None
+    key, code = _checkpoint_key(name, specs), _pass_code()
+    passes = _load_checkpoint(scratch, key, code) if scratch.is_dir() else None
     if passes is None:
         if scratch.exists():
-            shutil.rmtree(scratch)
+            shutil.rmtree(scratch)            # no usable save point: the scratch (any older layout) starts over
         scratch.mkdir(parents=True)
         passes = {}
     note = progress or (lambda *a: None)
     parts = [scratch / ('part-%04d' % i) for i in range(len(specs))]
     dictionary = scratch / 'dictionary.sqlite'
+
+    def drop(*filenames):
+        for p in parts:
+            for filename in filenames:
+                (p / filename).unlink(missing_ok=True)
+
+    order = list(code)
+
+    def resume_from(label):
+        nonlocal passes
+        passes = {k: v for k, v in passes.items() if order.index(k) < order.index(label)}
+
+    def present(filename):
+        return all((p / filename).is_file() for p in parts)
+
+    # A saved pass is kept only while the files the next unsaved pass reads are still there (an interrupted copy has
+    # deleted the parts it appended; freq.sqlite is deleted once the merge is saved), checked from the last pass back.
+    if 'final' in passes and 'copy' not in passes and not (present('rows.txt') and present('names.txt')):
+        resume_from('final')
+    if 'merge' in passes and 'final' not in passes and not dictionary.is_file():
+        resume_from('merge')
+    if 'plan' in passes and 'merge' not in passes and not present('freq.sqlite'):
+        resume_from('plan')
 
     def step(label, run):
         if label in passes:
@@ -410,14 +626,11 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
             return passes[label]
         note(name, label)
         passes[label] = run()
-        _save_checkpoint(scratch, key, passes)
+        _save_checkpoint(scratch, key, code, passes)
         return passes[label]
 
-    def drop(filename):
-        for p in parts:
-            (p / filename).unlink(missing_ok=True)
-
     with _pool(cpus) as pool:
+        _room(scratch)
         snaps = step('snapshot', lambda: list(pool.map(_snapshot, [(spec, str(p)) for spec, p in zip(specs, parts)])))
         columns = {}
         for s in snaps:
@@ -435,101 +648,31 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
                 prev = s['last']
 
         def plan():
-            drop('plans.sqlite')
+            drop('freq.sqlite')
             return list(pool.map(_plan, [(spec, str(p), columns, seed, first) for spec, p, seed in zip(specs, parts, seeds)]))
-        flags = step('plan', plan)
-        derived = {c: all(f[0][c] for f in flags) for c in columns}
-        constant = {c: all(f[1][c] for f in flags) for c in columns}
+        planned = step('plan', plan)
+        derived = {c: all(f['derived'][j] for f in planned) for j, c in enumerate(columns)}
+        constant = {c: all(f['constant'][j] for f in planned) for j, c in enumerate(columns)}
         whole = {c: '=' if derived[c] else '^' for c in columns if n and (derived[c] or constant[c])}
         kept = [j for j, c in enumerate(columns) if c not in whole]
-
-        def count():
-            drop('freq.sqlite')
-            return list(pool.map(_count, [(str(p), kept) for p in parts]))
-        scale_parts = step('count', count)
-        scale_state = {j: [min(s[j][0] for s in scale_parts), any(s[j][1] for s in scale_parts)] for j in kept}
+        scale_state = {j: [min(f['scales'][j][0] for f in planned), any(f['scales'][j][1] for f in planned)] for j in kept}
         scales = {columns[j]: 10 ** k for j, (k, seen) in scale_state.items() if seen and k >= DG.SCALE_MIN}
 
-        def merge():
-            dictionary.unlink(missing_ok=True)
-            g = sqlite3.connect(dictionary)
-            # the coordinator's merge of every part's counts runs on one core: scratch database, big cache, no journal
-            for pragma in ('journal_mode=OFF', 'synchronous=OFF', 'temp_store=MEMORY', 'cache_size=-16777216'):
-                g.execute('PRAGMA ' + pragma)
-            g.execute('CREATE TABLE frequency (key TEXT PRIMARY KEY, count INTEGER NOT NULL, number INTEGER UNIQUE)')
-            for p in parts:
-                g.execute('ATTACH DATABASE ? AS part', (str(p / 'freq.sqlite'),))
-                g.execute('INSERT INTO frequency(key, count) SELECT key, count FROM part.frequency WHERE true '
-                          'ON CONFLICT(key) DO UPDATE SET count=count+excluded.count')
-                g.commit()
-                g.execute('DETACH DATABASE part')
-            number = 0
-            for p in parts:   # numbering in first-occurrence order over the whole table, as the serial pass assigns it
-                g.execute('ATTACH DATABASE ? AS part', (str(p / 'freq.sqlite'),))
-                g.execute('CREATE TEMP TABLE fresh (seq INTEGER PRIMARY KEY, key TEXT NOT NULL)')
-                g.execute('INSERT INTO fresh(key) SELECT q.key FROM part.frequency q JOIN frequency f ON f.key=q.key '
-                          'WHERE f.count >= 2 AND f.number IS NULL ORDER BY q.first')
-                g.execute('CREATE UNIQUE INDEX temp.fresh_key ON fresh(key)')
-                g.execute('UPDATE frequency SET number = ? + (SELECT seq FROM fresh WHERE fresh.key=frequency.key) - 1 '
-                          'WHERE key IN (SELECT key FROM fresh)', (number,))
-                number += g.execute('SELECT count(*) FROM fresh').fetchone()[0]
-                g.execute('DROP TABLE fresh')
-                g.commit()
-                g.execute('DETACH DATABASE part')
-            g.close()
-            return number
-        step('merge', merge)
+        numbering = step('merge', lambda: _merge(parts, dictionary, kept))
         drop('freq.sqlite')                   # numbered and saved: the parts' counts are no longer needed
 
         def final():
-            drop('final.sqlite')
-            return list(pool.map(_final, [(str(p), kept, columns, scales, str(dictionary)) for p in parts]))
-        spaces = step('final', final)
-        drop('plans.sqlite')
-        sep = '\t' if any(spaces) else ' '
+            drop('rows.txt', 'names.txt')
+            return list(pool.map(_final, [(spec, str(p), i, columns, seed, kept, scales, str(dictionary), start)
+                                          for i, (spec, p, seed, start)
+                                          in enumerate(zip(specs, parts, seeds, numbering['starts']))]))
+        finals = step('final', final)
+        if sum(f['named'] for f in finals) != numbering['total']:
+            raise ValueError('table %s: the parts named %d dictionary entries, the merge numbered %d'
+                             % (name, sum(f['named'] for f in finals), numbering['total']))
+        sep = '\t' if any(f['has_space'] for f in finals) else ' '
+        sizes = [f['size'] for f in finals]
 
-        def emit():
-            drop('rows.txt')
-            return list(pool.map(_emit, [(str(p), sep) for p in parts]))
-        sizes = step('emit', emit)
-        drop('final.sqlite')
-
-    def copy():
-        destination.unlink(missing_ok=True)       # an unsaved partial table from an interrupted copy
-        with destination.open('x', encoding='utf-8', newline='\n') as handle:
-            handle.write(f'### table {name}: {n} rows, sep={"space" if sep == " " else "tab"}, columns: ')
-            handle.write('\t'.join(whole.get(c, '') + c for c in columns) + '\n')
-            constants = [c for c in columns if whole.get(c) == '^']
-            if constants:
-                handle.write('constants: ')
-                for i, c in enumerate(constants):
-                    value = first[c]
-                    text = ('U' + json.dumps(list(value), separators=(',', ':'), sort_keys=True)) if isinstance(value, tuple) else json.dumps(value, separators=(',', ':'), sort_keys=True)
-                    handle.write(('\t' if i else '') + c + '=' + text)
-                handle.write('\n')
-            if scales:
-                handle.write('scales: ' + '\t'.join('%s=%d' % (c, k) for c, k in scales.items()) + '\n')
-            g = sqlite3.connect(dictionary)
-            found = False
-            for number_, key_ in g.execute('SELECT number, key FROM frequency WHERE number IS NOT NULL ORDER BY number'):
-                handle.write(('\t' if found else 'dictionary: ') + '@%d=%s' % (number_, key_))
-                found = True
-            g.close()
-            if found:
-                handle.write('\n')
-            handle.flush()
-            offset = destination.stat().st_size     # header bytes; the part rows follow in order
-            offsets = []
-            for p, size in zip(parts, sizes):
-                offsets.append(offset)
-                offset += size
-                with (p / 'rows.txt').open('rb') as chunk:
-                    handle.flush()
-                    shutil.copyfileobj(chunk, handle.buffer, 1 << 22)
-                handle.flush()
-            handle.flush()
-            os.fsync(handle.fileno())
-        return dict(offsets=offsets, identity=TS._identity(destination))
     copied = passes.get('copy')
     if copied is not None:
         note(name, 'copy (saved)')
@@ -537,10 +680,14 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
             raise ValueError('table %s changed since its copy save point; remove %s to rebuild it' % (name, scratch))
     else:
         note(name, 'copy')
-        copied = passes['copy'] = copy()
-        _save_checkpoint(scratch, key, passes)
+        copied = _copy(destination, name, n, columns, whole, first, scales, sep, parts, sizes)
+        if copied['numbered'] != numbering['total']:
+            raise ValueError('table %s: %d dictionary entries copied, %d numbered' % (name, copied['numbered'], numbering['total']))
+        passes['copy'] = copied
+        _save_checkpoint(scratch, key, code, passes)
     offsets = copied['offsets']
-    drop('rows.txt')                          # copied, synced and saved: the part rows are the table's bytes now
+    drop('rows.txt', 'names.txt')
+    dictionary.unlink(missing_ok=True)        # the table carries the dictionary now; the proof parses its own
     before = TS._identity(destination)
     # Inverse proof: the header and dictionary are parsed from the written file into their own database, then every
     # part's rows are parsed back from the file at their byte offsets and compared with the part's source rows.
@@ -603,7 +750,7 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         raise ValueError('table changed during inverse proof')
     if verified != n:
         raise ValueError('verified table count mismatch')
-    shutil.rmtree(scratch)       # proved: the scratch (dictionary, inverse, part directories) is no longer needed
+    shutil.rmtree(scratch)       # proved: the scratch (inverse, part directories) is no longer needed
     return dict(path=str(destination), rows=n, verified=True, verified_identity=before,
                 scratch_directory=str(scratch), parts=len(specs))
 

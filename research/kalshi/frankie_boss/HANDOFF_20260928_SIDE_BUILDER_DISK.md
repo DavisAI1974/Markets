@@ -80,3 +80,40 @@ ROOT restart inputs:
 - DATA_WORKERS: 48
 
 Restage the code if it changes.
+
+## UPDATE 2026-09-28 (later): all review fixes built (Greg: "Do all the fixes and improvements"; ask ladder not intended)
+Review: `REVIEW_20260928_PARALLEL_WRITER_DISK.md`. Nothing staged, nothing dispatched, no box action.
+
+What changed (branch `claude/frankie-monday-continuation-qlkvqr`):
+- **Ask ladder** (`frankie_box_digest_parallel.MEMBER_LIST_PATHS`): the member column `book_full.ask_levels_full` (the whole
+  ask ladder with every FIFO queue, whole on every group row: a missing `[]` in the pinned crosswalk, whose carrier says
+  `ask_levels_full[]`) is carried as `book_full.ask_levels_full[]#count`, the way the bid ladder is. The crosswalk, the
+  layers, the ledgers and sources.sqlite are untouched. This changes bedrock.members, so its table-7 snapshot is redone
+  (~29 min); the saved V1 snapshot cannot be adopted (its columns differ).
+- **Lean writer** (`frankie_box_digest_parallel.py`): plan + counts in one read, no stored plans; counts keyed by sha256
+  in WITHOUT ROWID tables (no uncompressed key text); the merge numbers digests; the final pass re-plans from the seed
+  and writes the row text plus the text of the dictionary entries it numbers first; the copy deletes each part as it
+  appends it (peak = table + one part); the inverse proof streams each part; no final.sqlite, no emit pass; the
+  snapshot no longer repeats the unfailable spool round trip.
+- **Disk guard**: every helper and the copy stop with `DiskReserve` before free space falls under 32 GiB (SSM and
+  journald keep working); saved passes stay.
+- **Checkpoint V2**: each pass is saved with the hash of the code it and the earlier passes depend on; a rerun keeps
+  every pass whose code is unchanged and whose files the next pass needs still exist. A V1 scratch is removed whole
+  (this also clears the old plans/freq files once the builder can run).
+- **Legacy tables 0-4 stay save points**: `frankie_box_digest_document.legacy_key` keys a legacy table on the code that
+  reaches its bytes only (digest_stream, digest_render, per_second_rows); the adopted receipts (keyed on the whole
+  code identity) still match. sources.sqlite's key (S functions) is unchanged, so it is reused.
+- **Disk rescue** (the corrected option A, a box power action, Greg's go only): dispatch `frankie_box_run.yml` with
+  script `deploy/aws/box/frankie_box_disk_rescue.sh` and variables `CONFIRM=GREG_GO_DISK_RESCUE_TABLE_0007`. The
+  workflow (EC2 API, no SSM) stops the box, adds the one-time boothook `frankie_box_disk_rescue_boothook.sh` beside
+  the existing user-data (kept byte for byte; refused if it cannot be combined or exceeds 16 KB), starts it and waits
+  for a fresh SSM ping. The boothook prints every table-0007 part's plans/freq/final sizes and free disk to the console
+  (the 461 GB byte split), deletes only those stage files, and marks itself done. `frankie_box_console.sh` also shows
+  its lines.
+
+Order after Greg's go:
+1. Disk rescue (above). Then `frankie_box_disk_usage.sh` (read-only) for free disk.
+2. Stage the tip (`frankie_box_stage_code.sh ACTION=stage`), then relaunch the side builder from the SAME commit on the
+   same CPUs (`frankie_box_bedrock_side.sh CPUS=1,...,15 SIBLINGS=1`, CODE_ROOT from the staging receipt).
+3. Restart ROOT on that same staged commit with the inputs above (legacy tables and sources reused; bedrock tables
+   adopted from the side scratch).
