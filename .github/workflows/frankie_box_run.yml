@@ -317,8 +317,43 @@ jobs:
           lines = [l for l in text.splitlines() if 'frankie-disk-rescue' in l]
           print('### boothook console lines (%d)' % len(lines)); print('\n'.join(lines))
           PY
+      - name: CLM sidecar Pod (runner; standalone learner on its own GPU Pod, always deleted)
+        if: inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: |
+          set -euo pipefail
+          declare -A v=()
+          for pair in $VARIABLES; do v[${pair%%=*}]=${pair#*=}; done
+          [[ "${v[STAMP]:-}" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "STAMP required"; exit 1; }
+          [[ "${v[DATASET_KEY]:-}" =~ ^host-deliveries/[A-Za-z0-9_./-]+$ ]] || { echo "DATASET_KEY required"; exit 1; }
+          [[ "${v[MAX_MINUTES]:-150}" =~ ^[0-9]+$ ]] || { echo "MAX_MINUTES must be an integer"; exit 1; }
+          python research/kalshi/frankie_boss/clm_sidecar/launch.py --dataset-key "${v[DATASET_KEY]}" --stamp "${v[STAMP]}" \
+            --max-minutes "${v[MAX_MINUTES]:-150}" 2>&1 | tee box-run-output.txt
+          { echo '### CLM sidecar report'; cat clm-sidecar-out/report.md 2>/dev/null || echo '(no report)'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: CLM sidecar Pod cleanup (always delete the Pod)
+        if: always() && inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
+        env:
+          RUNPOD_API_KEY: ${{ secrets.RUNPOD_API_KEY }}
+        run: |
+          [ -f clm-sidecar-pod.txt ] || exit 0
+          python - <<'PY'
+          import http.client, os
+          pod = open('clm-sidecar-pod.txt').read().strip()
+          c = http.client.HTTPSConnection('api.runpod.io', timeout=30)
+          c.request('DELETE', '/v2/pods/' + pod, None, {'Authorization': 'Bearer ' + os.environ['RUNPOD_API_KEY']})
+          print('cleanup delete', pod, c.getresponse().status)
+          PY
+      - name: CLM sidecar outputs (artifact)
+        if: always() && inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: clm-sidecar-${{ github.run_id }}
+          path: clm-sidecar-out/
+          if-no-files-found: warn
+          retention-days: 30
       - name: Run the committed script on the box
-        if: inputs.script != 'deploy/aws/box/frankie_box_console.sh' && inputs.script != 'deploy/aws/box/frankie_box_disk_rescue.sh'
+        if: inputs.script != 'deploy/aws/box/frankie_box_console.sh' && inputs.script != 'deploy/aws/box/frankie_box_disk_rescue.sh' && inputs.script != 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
         run: |
           set -euo pipefail
           sets=()
