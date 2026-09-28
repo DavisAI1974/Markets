@@ -30,8 +30,10 @@ The expensive Granite setup is what must not run again by accident. The Jev (CLM
 | Pod `g7y3g2w1kor4l3` | EXITED (the older retained generation). |
 | All RunPod Pods | Only these two exist (Pod control `list`, run 36406869973). |
 | Launch r3 (run 36398770889, `frankie_box_cycle0.sh ACTION=launch`, config r3) | GitHub run cancelled. The box process `run_actual_sunday_ec2.py` (PID 4851, 79 min) was killed by `frankie_box_stop_cycle.sh` (run 36406968475, STOPPED, receipt `/opt/frankie-box/receipts/cycle-stop-*.json`). The first attempt (run 36406841877) failed: the box's `dash` builtin kill refused the process-group kill; fixed with `/bin/kill`. |
-| Jev CLM Pod run (36398106270) | **Cancelled by me in error.** Greg wanted it. Its cleanup found no Pod file, and the list shows no orphan Pod. **Re-run it** (same dispatch: `frankie_box_clm_sidecar_pod.sh`, `DATASET_KEY=clm-sidecar/monday-20260928a/dataset.jsonl.gz STAMP=monday-20260928a MAX_MINUTES=150`). |
+| Jev CLM Pod run (36398106270) | **Cancelled by me in error.** Greg wanted it. Its cleanup found no Pod file, and the list shows no orphan Pod. Do NOT re-dispatch it (Greg, 2026-09-28: do not redispatch anything); for reference only, the dispatch was ( `frankie_box_clm_sidecar_pod.sh`, `DATASET_KEY=clm-sidecar/monday-20260928a/dataset.jsonl.gz STAMP=monday-20260928a MAX_MINUTES=150`). |
 | Session unit `frankie-cycle-00` | Not running. |
+
+**Greg, 2026-09-28: do not redispatch anything. Nothing is to be dispatched without Greg's explicit go.**
 
 ## New operator controls (this session)
 - `frankie_pod_control.yml`: `action=stop` (halts billing, keeps disks) and `action=list` (every Pod, status, cost).
