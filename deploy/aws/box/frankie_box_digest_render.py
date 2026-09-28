@@ -29,14 +29,17 @@ import re
 from fractions import Fraction
 
 SCHEMA = 'DIGEST_V6'   # V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
-TABLE_GRAMMAR = 'DIGEST_V5'   # the table block grammar (cells, marks, dictionary, scales): unchanged by V6, which adds tables, not marks
+TABLE_GRAMMAR = 'DIGEST_V7'   # the table block grammar. V7 (Greg, 2026-09-28, every token stack that works): `?k` runs of absent cells;
+                              # deltas on every integer column whose name ends in recv_ns / event_ns and on group_index
 BEDROCK_GROUP_KEY = ('group_index', 'ts_recv_ns', 'f_last_ts_recv_ns')
 FRACTION_DENOMINATOR = 1_000_000   # DIGEST_V4: a float spelled n/d only when float(n)/float(d) is that float exactly and the spelling is shorter
 SCALE_MIN, SCALE_MAX = 3, 9       # DIGEST_V4: a per-column power of ten every integer literal of the column divides by (declared once, checked)
-RUN_MARKS = ('^', '=')            # DIGEST_V4: k consecutive identical mark cells collapse to `^k` / `=k` (never `-`: `-3` is an integer)
+RUN_MARKS = ('^', '=', '?')       # DIGEST_V4: k consecutive identical mark cells collapse to `^k` / `=k`; V7 adds `?k` (no other cell
+                                  # starts with `?`); never `-`: `-3` is an integer
 
 DELTA_KEYS = ('ts_recv_ns', 'ts_event_ns', 'ts_recv', 'ts_event', 'second', 'price_raw_min', 'price_raw_max',
-              'bid_depth_full', 'ask_depth_full', 'bid_order_count_full', 'ask_order_count_full')
+              'bid_depth_full', 'ask_depth_full', 'bid_order_count_full', 'ask_order_count_full',
+              'recv_ns', 'event_ns', 'group_index')   # V7: every lifecycle *_recv_ns / *_event_ns timestamp and the group index
 PAIRED = {'ts_event_ns': 'ts_recv_ns', 'ts_event': 'ts_recv'}   # written as `~<offset>` from the paired column of the SAME row
 BOOK_FIELDS = ('spread', 'depth_imbalance_full', 'bid_depth_full', 'ask_depth_full', 'bid_order_count_full', 'ask_order_count_full',
                'bid_price_level_count_full', 'ask_price_level_count_full')   # a_memory_member_first_recalculation_20260828.BOOK_FIELDS, in order
@@ -737,8 +740,9 @@ def digest_header(receipt):
              'row\'s own action/side strings, order-id lists and counts (terminal action/side, component and character counts, mirror '
              'identity, fill disposition class and signature, price span, carried family, discovery status, candidate_family_id = '
              '"ow-" + sha256 of the canonical descriptor); tables: one header line, tab-separated rows; `^` = the same value as the '
-             'previous row in this column; integer timestamp, price_raw and depth/order-count columns as signed deltas from the '
-             'previous row (first row absolute); floats as shortest round-trip decimals; `-` = none; T/F = booleans; `S...` = a string; '
+             'previous row in this column; `?` = absent (the row carries no value at this path); every integer column whose name ends in '
+             + ', '.join(DELTA_KEYS) + ' is written as a signed delta from the previous row\'s integer in that column (absolute when '
+             'there is none); floats as shortest round-trip decimals; `-` = none; T/F = booleans; `S...` = a string; '
              '`@n` = dictionary entry n (only a value that repeats in the table is in the dictionary); `J...` = JSON; `U...` = a tuple, as JSON; `I<first>,<+d>,...` = '
              'a list of integers as its first value (a signed delta from the previous row\'s first when one exists) then successive '
              'differences; `K<i>,<j>` = the list of this row\'s order_ids at those positions; `~<d>` = ts_event as an offset from this '
@@ -746,8 +750,8 @@ def digest_header(receipt):
              'value on every row (given on the `constants:` line) and is omitted too; `transition` = the sign of each book field\'s '
              'change from the previous frame, recomputed; roll20 = n/d, the exact fraction (b-s)/(b+s) of the '
              'trailing 20-second buy and sell sums, its float being that division; DIGEST_V4 on top: cells are separated by one '
-             'space when no cell of the table holds a space (`sep=space` in the header, else tabs); `^k` / `=k` = k consecutive '
-             '`^` / `=` cells; a bare `n/d` float cell is the IEEE division of those two integers, which IS the stored float exactly '
+             'space when no cell of the table holds a space (`sep=space` in the header, else tabs); `^k` / `=k` / `?k` (V7) = k consecutive '
+             '`^` / `=` / `?` cells; a bare `n/d` float cell is the IEEE division of those two integers, which IS the stored float exactly '
              '(checked; used only when shorter than its decimal); a column on the `scales:` line has every integer literal (absolute '
              'or delta) written divided by that power of ten, all of them being exact multiples (checked)); DIGEST_V6 on top: the BEDROCK '
              'tables, when this cycle\'s pin carries a bedrock (Greg, 2026-09-21): `bedrock.layers` = one row per bedrock layer (status, '
