@@ -23,11 +23,11 @@ from frankie_box_author_monday_launch import fresh, sync_directory
 PARENT = Path('/opt/frankie-box/work/monday-calculations')
 
 
-def resume_legacy(session, source):
-    """Reuse the completed legacy outputs and INPUT spool; no source re-ingestion."""
+def load_retained_layers(session):
+    """The completed legacy layers and spools as ROOT retained them; no journal read, no recalculation. Shared by
+    resume_legacy and the render-only step (frankie_box_render_digest.py)."""
     from frankie_box_digest_sources import _JSON
     import frankie_box_bedrock as B
-    session._work_probe.update('root-legacy-reuse')
     pin = session._pin()
     derived = session.work / 'derived'
     candidates = list((derived / '.rows').glob('input-*.jsonl'))
@@ -70,6 +70,24 @@ def resume_legacy(session, source):
         layers[name] = value
         entries[name] = dict(status=value['status'], producer=value.get('producer'),
                             reason=value.get('reason'), **witness(path))
+    return pin, derived, records, prices, frames, structures, failures, layers, entries
+
+
+def write_retained_digest(session, receipt, layers, prices, frames, structures):
+    """The digest from the retained layers, exactly as ROOT's assembly writes it (the roll series and per-second flow)."""
+    flow = layers['legacy_native_signed_flow']['per_second']
+    roll_layer = layers['legacy_per_second_roll20']
+    session._work_probe.update('root-digest')
+    session._write_digest(receipt, layers, prices, frames, structures,
+        [float('nan') if v is None else v for v in roll_layer['series']], roll_layer['first_second'],
+        [r['buy'] for r in flow], [r['sell'] for r in flow])
+
+
+def resume_legacy(session, source):
+    """Reuse the completed legacy outputs and INPUT spool; no source re-ingestion."""
+    import frankie_box_bedrock as B
+    session._work_probe.update('root-legacy-reuse')
+    pin, derived, records, prices, frames, structures, failures, layers, entries = load_retained_layers(session)
     container = dict(session.source_binding['container'])
     if witness(Path(container['path'])) != {k: container[k] for k in ('path', 'bytes', 'sha256')}:
         raise ValueError('sealed source container bytes differ')
@@ -103,12 +121,7 @@ def resume_legacy(session, source):
     receipt['pin_identity'] = dict(sha256=pin['pins_witness']['sha256'], cycle_index=pin['cycle_index'],
         group=pin['group'], bedrock_layers=list(pin.get('bedrock_layers') or []))
     B.write_json(session.work / 'derive.json', receipt)
-    flow = layers['legacy_native_signed_flow']['per_second']
-    roll_layer = layers['legacy_per_second_roll20']
-    session._work_probe.update('root-digest')
-    session._write_digest(receipt, layers, prices, frames, structures,
-        [float('nan') if v is None else v for v in roll_layer['series']], roll_layer['first_second'],
-        [r['buy'] for r in flow], [r['sell'] for r in flow])
+    write_retained_digest(session, receipt, layers, prices, frames, structures)
     session._work_probe.update('root-derived', state='complete', failed=0)
     return receipt
 
