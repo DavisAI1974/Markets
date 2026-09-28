@@ -19,10 +19,10 @@ work left on a single core; findings noted on the step's line before it runs.
 
 ## Downstream Monday
 - [x] Publication slice, Option 3: DROPPED (Greg, 2026-09-27: no validations, straight to staging)
-- [x] Staged 39f64acf (run 36359220114, 23:38Z, beside ROOT on its own lock). Dispatch ref:
-      claude/frankie-monday-run-39f64acf. CODE_ROOT:
-      /opt/frankie-box/code/39f64acff739543dd59557db7f0918c55a530cdc-36359220114-1/markets
-      (pack sha256 6ac06b03..., 3,693 files, active checkout unchanged)
+- [x] Staged dcef2467 (run 36360108539, 23:55Z; supersedes 39f64acf and 685155b6: principal inputs hashing
+      in parallel and staggered). Dispatch ref: claude/frankie-monday-run-dcef2467. CODE_ROOT:
+      /opt/frankie-box/code/dcef2467df14fea3d3df2c9a37c4f36317defdd8-36360108539-1/markets
+      (pack sha256 c288c5ce..., 3,693 files, active checkout unchanged)
 - [ ] Principal inputs (frankie_box_principal_inputs.sh). Scan: one heavy single-core step, the streamed sha256
       re-check of ROOT's evidence files (digest, derivation, result, pins, proof), about 1 GB/s; the digest dominates.
       One file's hash cannot be split; accepted. Everything else is small JSON and knowledge-snapshot assembly.
