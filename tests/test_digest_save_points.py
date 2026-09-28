@@ -113,10 +113,10 @@ def test_code_identity_change_rebuilds(tmp_path, written, monkeypatch):
     assert len(written) == 5
 
 
-def test_code_identity_covers_the_writer_and_the_sources_module():
+def test_code_identity_covers_the_format_and_the_row_producing_code():
     names = set(D._code_identity())
-    assert {'frankie_box_digest_document.py', 'frankie_box_digest_sources.py', 'frankie_box_digest_render.py',
-            'frankie_box_digest_stream.py'} <= names
+    assert {'frankie_box_digest_render.py', 'frankie_box_digest_stream.py', 'sources._Members', 'sources._Rows',
+            'document.per_second_rows', 'document._bedrock_table_job', 'parallel._source_rows'} <= names
 
 
 def test_a_missing_receipt_breaks_the_legacy_prefix_from_there_on(tmp_path, written):

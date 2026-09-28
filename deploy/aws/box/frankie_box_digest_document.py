@@ -86,11 +86,20 @@ TABLE_SAVE_SCHEMA = 'FRANKIE_DIGEST_TABLE_SAVE_V2'   # V2: every module that sha
 
 
 def _code_identity():
-    """Every module whose bytes shape a table (serializer, renderer, this writer, the bedrock sources); any change
-    there refuses reuse. The merge shards have their own narrower key (frankie_box_digest_sources.merge_shard_key)."""
+    """The code whose change could change a table's bytes: the serializer and renderer (the format), and the code that
+    produces the rows (the row readers over sources.sqlite, the per-second rows, the bedrock job transform, the parallel
+    row reader). Orchestration (document assembly, save lookup, the parallel coordinator's scheduling) is not keyed, so
+    a fix there reuses every finished table; the parallel writer's bytes equal write_table's by construction."""
+    import inspect
     import frankie_box_digest_sources as S
-    return {Path(m.__file__).name: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest()
-            for m in (TS, DG, S, sys.modules[__name__])}
+    import frankie_box_digest_parallel as P
+    code = {Path(m.__file__).name: hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest() for m in (TS, DG)}
+    for name, obj in (('sources._Rows', S._Rows), ('sources._Members', S._Members), ('sources._decoded', S._decoded),
+                      ('sources._compare_groups', S._compare_groups), ('sources.BedrockSources._rows', S.BedrockSources._rows),
+                      ('document.per_second_rows', per_second_rows), ('document._bedrock_table_job', _bedrock_table_job),
+                      ('parallel._source_rows', P._source_rows)):
+        code[name] = hashlib.sha256(inspect.getsource(obj).encode()).hexdigest()
+    return code
 
 
 def _canonical(value):
@@ -165,6 +174,32 @@ def _bedrock_table_job(job):
         return dict(name=name,rows=proof['rows'],path=str(path),digest=digest)
     finally:
         db.close()
+
+
+def bedrock_spec(rows, root):
+    if type(rows).__name__ == '_Members':
+        return dict(kind='members', database=str(Path(root) / 'sources.sqlite'))
+    return dict(kind='rows', database=str(Path(root) / 'sources.sqlite'), query=rows.query,
+                parameters=rows.parameters, excluded=getattr(rows, 'excluded', None))
+
+
+def bedrock_key(name, code, layers_identity, spec):
+    return _canonical(dict(kind='bedrock', name=name, code=code, layers=layers_identity,
+                           spec={k: v for k, v in spec.items() if k != 'database'}))
+
+
+def layers_identity_of(bedrock_entries):
+    return {n: {k: e.get(k) for k in ('bytes', 'sha256')} for n, e in bedrock_entries.items()}
+
+
+def open_sources(bedrock_entries, layers_root):
+    """A finished sources.sqlite a stopped attempt of this calculation root left (receipted, unchanged) is reopened
+    read-only; otherwise the sources are built."""
+    import frankie_box_digest_parallel as P
+    saved = P.saved_sources(bedrock_entries, layers_root)
+    if saved is not None:
+        return P.ReopenedSources(bedrock_entries, saved)
+    return BedrockSources(bedrock_entries, layers_root)
 
 
 def write_digest(destination, receipt, layers, prices, frames, structures, roll, first, buys, sells,
@@ -242,7 +277,7 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
     built = {}
     def build_sources():
         try:
-            built['sources'] = BedrockSources(bedrock_entries, scratch/'calculation-layers')
+            built['sources'] = open_sources(bedrock_entries, scratch/'calculation-layers')
         except BaseException as error:
             built['error'] = error
     builder = threading.Thread(target=build_sources, name='bedrock-sources') if bedrock_entries else None
@@ -265,38 +300,27 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
         if bedrock_entries:
             with built.pop('sources') as sources:
                 layer_header = DG.bedrock_header(sources.derived, sources.layer_count, sources.verdict or {})
-                from frankie_box_projection import Workers,save
-                workers = Workers()
-                try:
-                    save(scratch/'table-workers.json',workers.receipt())
-                    # A bedrock table's inputs are the pinned layer files (by sha256) and its query over them.
-                    layers_identity = {n: {k: e.get(k) for k in ('bytes', 'sha256')} for n, e in bedrock_entries.items()}
-                    jobs,planned=[],[]
-                    for name,rows in sources.tables.items():
-                        if type(rows).__name__=='_Members':
-                            spec=dict(kind='members',database=str(sources.root/'sources.sqlite'))
-                        else:
-                            spec=dict(kind='rows',database=str(sources.root/'sources.sqlite'),
-                                      query=rows.query,parameters=rows.parameters,
-                                      excluded=getattr(rows,'excluded',None))
-                        ordinal=len(stages)+len(planned)
-                        key=_canonical(dict(kind='bedrock',name=name,code=code,layers=layers_identity,
-                                            spec={k:v for k,v in spec.items() if k!='database'}))
-                        saved=_saved_table(scratch,ordinal,key)
-                        planned.append((ordinal,key,saved))
-                        if saved is None:
-                            jobs.append((ordinal,name,spec,str(scratch)))
-                    done=workers.ordered(_bedrock_table_job,jobs)
-                    for ordinal,key,saved in planned:
-                        if saved is not None:
-                            stages.append(dict(name=saved['name'],rows=saved['rows'],path=Path(saved['path']),digest=saved['digest']))
-                            continue
-                        entry=next(done)
-                        entry['path']=Path(entry['path'])
-                        stages.append(entry)
-                        _save_table(scratch,ordinal,key,entry)
-                finally:
-                    workers.close()
+                import frankie_box_digest_parallel as P
+                # Every bedrock table is written by the parallel writer on the helper cores (same bytes as write_table;
+                # Greg 2026-09-28: no table runs for hours on one core). Finished tables are reused from their save points.
+                cpus = [c for c in range(2, 16) if c in os.sched_getaffinity(0)] or sorted(os.sched_getaffinity(0))
+                layers_identity = layers_identity_of(bedrock_entries)
+                for name, rows in sources.tables.items():
+                    spec = bedrock_spec(rows, sources.root)
+                    ordinal = len(stages)
+                    key = bedrock_key(name, code, layers_identity, spec)
+                    saved = _saved_table(scratch, ordinal, key)
+                    if saved is not None:
+                        stages.append(dict(name=saved['name'], rows=saved['rows'], path=Path(saved['path']), digest=saved['digest']))
+                        continue
+                    path = scratch / ('table-%04d.txt' % ordinal)
+                    proof = P.write_table_parallel(path, name, P.split_specs(spec, len(cpus)),
+                                                   scratch / ('table-%04d' % ordinal), cpus)
+                    digest = _witness(path)
+                    if TS._identity(path) != proof['verified_identity']:
+                        raise ValueError('proved table changed before its byte witness')
+                    stages.append(dict(name=name, rows=proof['rows'], path=path, digest=digest))
+                    _save_table(scratch, ordinal, key, stages[-1])
         stage = scratch/'digest.pending'
         with stage.open('xb') as output:
             output.write(DG.digest_header(receipt).encode('utf-8'))
