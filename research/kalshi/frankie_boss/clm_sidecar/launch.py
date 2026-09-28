@@ -100,6 +100,9 @@ def pick_gpu():
         g = gpus.get(gid)
         if g and g.get('secure') and (g.get('memory') or 0) >= 40 and g.get('availability') not in (None, 'NONE'):
             centers = [dc['id'] for dc in g.get('dataCenters') or [] if dc.get('availability') not in (None, 'NONE')]
+            if not centers:     # run 36410448682: L40S LOW overall, no data center in stock, Pod never placed in 150 min
+                print('skip %s: %s overall but no data center in stock' % (gid, g.get('availability')), flush=True)
+                continue
             print('GPU %s (%s GB, %s), data centers %s' % (gid, g.get('memory'), g.get('availability'), centers), flush=True)
             return gid, centers
     raise SystemExit('no preferred GPU in stock: ' + json.dumps({k: (v.get('memory'), v.get('availability')) for k, v in gpus.items()
