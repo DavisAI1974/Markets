@@ -12,6 +12,7 @@ excluded, start, count), so each helper reads its own range of a finished source
 """
 from concurrent.futures import ProcessPoolExecutor
 import copy
+import hashlib
 import json
 import multiprocessing
 import os
@@ -20,6 +21,7 @@ import re
 import shutil
 import sqlite3
 import sys
+import zlib
 
 BOX = Path(__file__).resolve().parent
 if str(BOX) not in sys.path:
@@ -562,6 +564,37 @@ def saved_sources(entries, layers_root):
     return None
 
 
+def _plain_meta(pin):
+    """The metadata fields of a plain (not gzip-json) pinned layer, streamed (row arrays skipped), bytes and sha256
+    checked against the pin: the same fields BedrockSources._read keeps (last duplicate key wins)."""
+    import frankie_box_digest_sources as S
+    if pin.get('encoding') is not None:
+        raise ValueError('unknown projected layer encoding')
+    digest, size = hashlib.sha256(), 0
+    with open(pin['path'], 'rb') as reader:
+        while chunk := reader.read(1 << 20):
+            digest.update(chunk)
+            size += len(chunk)
+    if size != pin['bytes'] or digest.hexdigest() != pin['sha256']:
+        raise ValueError('pinned layer bytes or sha256 differ')
+    metadata = {}
+    with open(pin['path'], encoding='utf-8') as handle:
+        parser = S._JSON(handle)
+        parser.expect('{')
+        if parser.peek() != '}':
+            while True:
+                key = parser.value()
+                parser.expect(':')
+                if key in S.META_FIELDS:
+                    metadata[key] = parser.value()
+                else:
+                    parser.skip()
+                if parser.peek() == '}':
+                    break
+                parser.expect(',')
+    return metadata
+
+
 class ReopenedSources:
     """The table registry of BedrockSources over an existing finished sources.sqlite, read-only: the same table
     names, order, queries and row readers, and the same header facts (derived, layer_count, verdict)."""
@@ -575,11 +608,25 @@ class ReopenedSources:
         self.tables, self.verdict, self._references = {}, {}, {}
         self.layer_count, self.derived = len(entries), 0
         metadata, first_verdict = [], False
+        recorded = {ordinal: json.loads(zlib.decompress(p) if isinstance(p, bytes) else p)
+                    for ordinal, p in self.db.execute('SELECT ordinal, payload FROM layer_index')}
         for index, (name, pin) in enumerate(entries.items()):
-            prepared = S._reusable_prepared(index, pin, self.root)
-            if prepared is None:
-                raise ValueError('reused sources need the prepared layer receipt of layer %d (%s)' % (index, name))
-            meta = prepared['meta']
+            if pin.get('encoding') == 'gzip-json':
+                prepared = S._reusable_prepared(index, pin, self.root)
+                if prepared is None:
+                    raise ValueError('reused sources need the prepared layer receipt of layer %d (%s)' % (index, name))
+                meta = prepared['meta']
+            else:
+                # plain layers were prepared in place (no receipt); their metadata is re-read from the pinned file
+                meta = _plain_meta(pin)
+            row = recorded.get(index) or {}
+            mine = dict(layer=name, status=meta.get('status'), reason=meta.get('reason'), producer=meta.get('producer'),
+                        member_paths=' '.join(meta.get('member_paths') or []),
+                        lifecycle_sections=' '.join(meta.get('lifecycle_sections') or []),
+                        section_counts=json.dumps(meta.get('section_counts') or {}, separators=(',', ':'), sort_keys=True),
+                        count=meta.get('count'), partial=' '.join(p['section'] for p in (meta.get('partial') or [])))
+            if any(row.get(k) != v for k, v in mine.items()):
+                raise ValueError('layer %d (%s) metadata differs from the finished sources layer_index' % (index, name))
             metadata.append(meta)
             if isinstance(meta.get('traversal'), dict) and not first_verdict:
                 self.verdict = meta['traversal']
