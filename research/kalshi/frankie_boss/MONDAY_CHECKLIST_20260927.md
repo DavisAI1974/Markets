@@ -29,7 +29,8 @@ work left on a single core; findings noted on the step's line before it runs.
       (1d6018f4), per-pass save points + fixed side scratch .digest-side-work (723e5020, staged run 36372947473)
 - [ ] Side builder on CPUs 1-15 + siblings (30 threads), run 36373163230 from 723e5020, started 03:19:53Z
       (estimate ~2-2.5 h for all bedrock tables; checked every 15-20 min with free disk)
-- [ ] Restart ROOT on the staged commit, same inputs: reuses everything, assembles the document, writes
+- [x] ROOT DONE 2026-09-28 07:56:39Z (run 36393033592, 5fb84365; calculations-receipt.json sha256 694d2737...,
+      calculations_retained). Was: Restart ROOT on the staged commit, same inputs: reuses everything, assembles the document, writes
       calculations-receipt.json
 
 ## Downstream Monday
@@ -38,7 +39,9 @@ work left on a single core; findings noted on the step's line before it runs.
       in parallel and staggered). Dispatch ref: claude/frankie-monday-run-dcef2467. CODE_ROOT:
       /opt/frankie-box/code/dcef2467df14fea3d3df2c9a37c4f36317defdd8-36360108539-1/markets
       (pack sha256 c288c5ce..., 3,693 files, active checkout unchanged)
-- [ ] Principal inputs (frankie_box_principal_inputs.sh). Scan: one heavy single-core step, the streamed sha256
+- [x] Principal inputs DONE 2026-09-28 08:09:47Z (run 36395644403, 82d3911e; receipt
+      work/principal-inputs/full-20211004-20260928-r1/principal-inputs-receipt.json; snapshot e11c6b37...).
+      Was: Principal inputs (frankie_box_principal_inputs.sh). Scan: one heavy single-core step, the streamed sha256
       re-check of ROOT's evidence files (digest, derivation, result, pins, proof), about 1 GB/s; the digest dominates.
       One file's hash cannot be split; accepted. Everything else is small JSON and knowledge-snapshot assembly.
 - [ ] Cycle 0 config (ACTION=config; existing prepared root r6-48; binds the five-lesson Granite priming).

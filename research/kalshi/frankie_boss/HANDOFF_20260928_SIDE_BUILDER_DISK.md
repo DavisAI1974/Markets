@@ -191,3 +191,20 @@ manifest prints, dispatch `deploy/aws/box/frankie_box_clm_sidecar_pod.sh` with
 research with no limit; no possibility is dropped early; a path is set aside only after ALL research runs on the historical
 data. Not edited because they are sha-pinned in `DIPOLE_SHARED_CATALOG_20260922.json` (read by principal inputs):
 `odcore/info_dipole.py`, `DIPOLE_KNOWLEDGE_GAP_REVIEW_20260922.md`, `CLAUDE_ARCHIVE_OD.md`. Greg may ask to edit and re-pin.
+
+## UPDATE 2026-09-28 ~08:12Z: principal inputs DONE (Greg's go), in parallel with the CLM extract
+- `clock_lock_time` is the one of 44 bedrock layers not derived: `could_not`, `NO_PRODUCER_FOUND` by design (lock time is
+  the instant Frankie files his first lock or no-lock, i.e. his own output ledger; it cannot exist before he runs).
+- Calculations receipt sha256 (read on the box, read_log MODE=receipt, run 36395042452): `694d2737a386c94fe92fc5a1eed19fdc559accf2153d9d2d6a38b197d659a439` (2,775 bytes).
+- Locks: `frankie_box_run.yml` now gives the CLM Pod (`clm-pod-*`) and principal inputs (`box-inputs-*`) their own
+  concurrency groups (8e77bf1f, 82d3911e), so neither waits behind a box-run (Greg: run in parallel).
+- **Staged 82d3911e** (run 36395322100): code_root
+  `/opt/frankie-box/code/82d3911e997caba34bc040088b081f46c1ac96b9-36395322100-1/markets`.
+- **Principal inputs (run 36395644403, 82d3911e): SUCCESS 08:09:47Z**, 11 s on the box. Output
+  `/opt/frankie-box/work/principal-inputs/full-20211004-20260928-r1` (`principal-inputs-receipt.json`), schema
+  FRANKIE_MONDAY_SINGLE_RUN_INPUTS_V1, principal_admission single_run / output_validation after_execution, shared
+  knowledge snapshot `e11c6b37e6f6058a39b425e31348885bfd4361f41fcbf196cdce3020954b0a93`, knowledge base MANIFEST
+  sha256 `57ee8388...`, retained witnesses `41e04cb1...`; model_calls 0, source_writes 0, source_traversals 0.
+- Probe (run 36395654264, read_log MODE=processes, 08:09:46Z): principal inputs had already exited; the CLM extract
+  (pid 3709) 157 CPU s over 755 s, state D (disk wait): it is I/O-bound reading sources.sqlite.
+- **Next (Greg's go):** Cycle 0 config (ACTION=config) and the Granite Pod, per MONDAY_CHECKLIST_20260927.md.
