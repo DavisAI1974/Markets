@@ -125,7 +125,7 @@ def _snapshot(job):
     # No copy of the source rows is kept: the plan and verify passes read them again from the same read-only source
     # (the finished sources.sqlite), in the same order.
     spec, directory = job
-    Path(directory).mkdir(parents=True, exist_ok=False)
+    Path(directory).mkdir(parents=True, exist_ok=True)
     columns, n, first, last = {}, 0, None, None
     state = ({}, {}, {})
     for n, row in enumerate(_source_rows(spec), 1):
@@ -247,7 +247,6 @@ def _final(job):
     db.close()
     lookup.close()
     plans.close()
-    (Path(directory) / 'plans.sqlite').unlink()
     return has_space
 
 
@@ -261,7 +260,6 @@ def _emit(job):
         handle.flush()
         os.fsync(handle.fileno())
     db.close()
-    (Path(directory) / 'final.sqlite').unlink()
     return path.stat().st_size
 
 
@@ -366,16 +364,67 @@ def _verify(job):
 
 # ---- coordinator ---------------------------------------------------------------------------------------------------
 
+def _checkpoint_key(name, specs):
+    """A pass save point belongs to exactly this table's parts and this writer's code."""
+    import pickle
+    return dict(schema='FRANKIE_PARALLEL_TABLE_PASSES_V1', name=name,
+                specs=hashlib.sha256(pickle.dumps(specs, protocol=4)).hexdigest(),
+                code=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+
+
+def _load_checkpoint(scratch, key):
+    import pickle
+    try:
+        value = pickle.loads((scratch / 'passes.pkl').read_bytes())
+    except (OSError, ValueError, EOFError, pickle.UnpicklingError):
+        return None
+    return value['passes'] if isinstance(value, dict) and value.get('key') == key else None
+
+
+def _save_checkpoint(scratch, key, passes):
+    import pickle
+    tmp = scratch / 'passes.pkl.tmp'
+    with tmp.open('wb') as handle:
+        pickle.dump(dict(key=key, passes=passes), handle, protocol=4)
+        handle.flush()
+        os.fsync(handle.fileno())
+    os.replace(tmp, scratch / 'passes.pkl')
+
+
 def write_table_parallel(destination, name, specs, scratch_directory, cpus, progress=None):
-    """specs: ordered part row sources (see _source_rows). Same bytes and proof as TS.write_table (no context)."""
+    """specs: ordered part row sources (see _source_rows). Same bytes and proof as TS.write_table (no context).
+
+    Save points per pass (Greg, 2026-09-28: stop, fix and restart without losing work): each finished pass records its
+    result in scratch/passes.pkl, keyed by the table's parts and this writer's code; a rerun with the same scratch
+    directory resumes at the first unfinished pass. A pass's files are deleted only after the next pass is saved."""
     destination = Path(destination)
     scratch = Path(scratch_directory)
-    scratch.mkdir(parents=True, exist_ok=False)
+    key = _checkpoint_key(name, specs)
+    passes = _load_checkpoint(scratch, key) if scratch.is_dir() else None
+    if passes is None:
+        if scratch.exists():
+            shutil.rmtree(scratch)
+        scratch.mkdir(parents=True)
+        passes = {}
     note = progress or (lambda *a: None)
-    with _pool(cpus) as pool, destination.open('x', encoding='utf-8', newline='\n') as handle:
-        parts = [scratch / ('part-%04d' % i) for i in range(len(specs))]
-        note(name, 'snapshot')
-        snaps = list(pool.map(_snapshot, [(spec, str(p)) for spec, p in zip(specs, parts)]))
+    parts = [scratch / ('part-%04d' % i) for i in range(len(specs))]
+    dictionary = scratch / 'dictionary.sqlite'
+
+    def step(label, run):
+        if label in passes:
+            note(name, label + ' (saved)')
+            return passes[label]
+        note(name, label)
+        passes[label] = run()
+        _save_checkpoint(scratch, key, passes)
+        return passes[label]
+
+    def drop(filename):
+        for p in parts:
+            (p / filename).unlink(missing_ok=True)
+
+    with _pool(cpus) as pool:
+        snaps = step('snapshot', lambda: list(pool.map(_snapshot, [(spec, str(p)) for spec, p in zip(specs, parts)])))
         columns = {}
         for s in snaps:
             for c in s['columns']:
@@ -389,86 +438,121 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
             if s['n']:
                 state[0].update(s['state'][0]); state[1].update(s['state'][1]); state[2].update(s['state'][2])
                 prev = s['last']
-        note(name, 'plan')
-        flags = list(pool.map(_plan, [(spec, str(p), columns, seed, first) for spec, p, seed in zip(specs, parts, seeds)]))
+
+        def plan():
+            drop('plans.sqlite')
+            return list(pool.map(_plan, [(spec, str(p), columns, seed, first) for spec, p, seed in zip(specs, parts, seeds)]))
+        flags = step('plan', plan)
         derived = {c: all(f[0][c] for f in flags) for c in columns}
         constant = {c: all(f[1][c] for f in flags) for c in columns}
         whole = {c: '=' if derived[c] else '^' for c in columns if n and (derived[c] or constant[c])}
         kept = [j for j, c in enumerate(columns) if c not in whole]
-        note(name, 'count')
-        scale_parts = list(pool.map(_count, [(str(p), kept) for p in parts]))
+
+        def count():
+            drop('freq.sqlite')
+            return list(pool.map(_count, [(str(p), kept) for p in parts]))
+        scale_parts = step('count', count)
         scale_state = {j: [min(s[j][0] for s in scale_parts), any(s[j][1] for s in scale_parts)] for j in kept}
         scales = {columns[j]: 10 ** k for j, (k, seen) in scale_state.items() if seen and k >= DG.SCALE_MIN}
-        dictionary = scratch / 'dictionary.sqlite'
-        g = sqlite3.connect(dictionary)
-        # the coordinator's merge of every part's counts runs on one core: scratch database, big cache, no journal
-        for pragma in ('journal_mode=OFF', 'synchronous=OFF', 'temp_store=MEMORY', 'cache_size=-16777216'):
-            g.execute('PRAGMA ' + pragma)
-        g.execute('CREATE TABLE frequency (key TEXT PRIMARY KEY, count INTEGER NOT NULL, number INTEGER UNIQUE)')
-        for p in parts:
-            g.execute('ATTACH DATABASE ? AS part', (str(p / 'freq.sqlite'),))
-            g.execute('INSERT INTO frequency(key, count) SELECT key, count FROM part.frequency WHERE true '
-                      'ON CONFLICT(key) DO UPDATE SET count=count+excluded.count')
-            g.commit()
-            g.execute('DETACH DATABASE part')
-        number = 0
-        for p in parts:   # numbering in first-occurrence order over the whole table, as the serial pass assigns it
-            g.execute('ATTACH DATABASE ? AS part', (str(p / 'freq.sqlite'),))
-            g.execute('CREATE TEMP TABLE fresh (seq INTEGER PRIMARY KEY, key TEXT NOT NULL)')
-            g.execute('INSERT INTO fresh(key) SELECT q.key FROM part.frequency q JOIN frequency f ON f.key=q.key '
-                      'WHERE f.count >= 2 AND f.number IS NULL ORDER BY q.first')
-            g.execute('CREATE UNIQUE INDEX temp.fresh_key ON fresh(key)')
-            g.execute('UPDATE frequency SET number = ? + (SELECT seq FROM fresh WHERE fresh.key=frequency.key) - 1 '
-                      'WHERE key IN (SELECT key FROM fresh)', (number,))
-            number += g.execute('SELECT count(*) FROM fresh').fetchone()[0]
-            g.execute('DROP TABLE fresh')
-            g.commit()
-            g.execute('DETACH DATABASE part')
-            (p / 'freq.sqlite').unlink()        # numbered: this part's counts are no longer needed
-        g.close()
-        note(name, 'final')
-        spaces = list(pool.map(_final, [(str(p), kept, columns, scales, str(dictionary)) for p in parts]))
+
+        def merge():
+            dictionary.unlink(missing_ok=True)
+            g = sqlite3.connect(dictionary)
+            # the coordinator's merge of every part's counts runs on one core: scratch database, big cache, no journal
+            for pragma in ('journal_mode=OFF', 'synchronous=OFF', 'temp_store=MEMORY', 'cache_size=-16777216'):
+                g.execute('PRAGMA ' + pragma)
+            g.execute('CREATE TABLE frequency (key TEXT PRIMARY KEY, count INTEGER NOT NULL, number INTEGER UNIQUE)')
+            for p in parts:
+                g.execute('ATTACH DATABASE ? AS part', (str(p / 'freq.sqlite'),))
+                g.execute('INSERT INTO frequency(key, count) SELECT key, count FROM part.frequency WHERE true '
+                          'ON CONFLICT(key) DO UPDATE SET count=count+excluded.count')
+                g.commit()
+                g.execute('DETACH DATABASE part')
+            number = 0
+            for p in parts:   # numbering in first-occurrence order over the whole table, as the serial pass assigns it
+                g.execute('ATTACH DATABASE ? AS part', (str(p / 'freq.sqlite'),))
+                g.execute('CREATE TEMP TABLE fresh (seq INTEGER PRIMARY KEY, key TEXT NOT NULL)')
+                g.execute('INSERT INTO fresh(key) SELECT q.key FROM part.frequency q JOIN frequency f ON f.key=q.key '
+                          'WHERE f.count >= 2 AND f.number IS NULL ORDER BY q.first')
+                g.execute('CREATE UNIQUE INDEX temp.fresh_key ON fresh(key)')
+                g.execute('UPDATE frequency SET number = ? + (SELECT seq FROM fresh WHERE fresh.key=frequency.key) - 1 '
+                          'WHERE key IN (SELECT key FROM fresh)', (number,))
+                number += g.execute('SELECT count(*) FROM fresh').fetchone()[0]
+                g.execute('DROP TABLE fresh')
+                g.commit()
+                g.execute('DETACH DATABASE part')
+            g.close()
+            return number
+        step('merge', merge)
+        drop('freq.sqlite')                   # numbered and saved: the parts' counts are no longer needed
+
+        def final():
+            drop('final.sqlite')
+            return list(pool.map(_final, [(str(p), kept, columns, scales, str(dictionary)) for p in parts]))
+        spaces = step('final', final)
+        drop('plans.sqlite')
         sep = '\t' if any(spaces) else ' '
-        note(name, 'emit')
-        sizes = list(pool.map(_emit, [(str(p), sep) for p in parts]))
-        handle.write(f'### table {name}: {n} rows, sep={"space" if sep == " " else "tab"}, columns: ')
-        handle.write('\t'.join(whole.get(c, '') + c for c in columns) + '\n')
-        constants = [c for c in columns if whole.get(c) == '^']
-        if constants:
-            handle.write('constants: ')
-            for i, c in enumerate(constants):
-                value = first[c]
-                text = ('U' + json.dumps(list(value), separators=(',', ':'), sort_keys=True)) if isinstance(value, tuple) else json.dumps(value, separators=(',', ':'), sort_keys=True)
-                handle.write(('\t' if i else '') + c + '=' + text)
-            handle.write('\n')
-        if scales:
-            handle.write('scales: ' + '\t'.join('%s=%d' % (c, k) for c, k in scales.items()) + '\n')
-        g = sqlite3.connect(dictionary)
-        found = False
-        for number_, key in g.execute('SELECT number, key FROM frequency WHERE number IS NOT NULL ORDER BY number'):
-            handle.write(('\t' if found else 'dictionary: ') + '@%d=%s' % (number_, key))
-            found = True
-        g.close()
-        if found:
-            handle.write('\n')
-        handle.flush()
-        offset = destination.stat().st_size     # header bytes; the part rows follow in order
-        offsets = []
-        for p, size in zip(parts, sizes):
-            offsets.append(offset)
-            offset += size
-            with (p / 'rows.txt').open('rb') as chunk:
-                handle.flush()
-                shutil.copyfileobj(chunk, handle.buffer, 1 << 22)
+
+        def emit():
+            drop('rows.txt')
+            return list(pool.map(_emit, [(str(p), sep) for p in parts]))
+        sizes = step('emit', emit)
+        drop('final.sqlite')
+
+    def copy():
+        destination.unlink(missing_ok=True)       # an unsaved partial table from an interrupted copy
+        with destination.open('x', encoding='utf-8', newline='\n') as handle:
+            handle.write(f'### table {name}: {n} rows, sep={"space" if sep == " " else "tab"}, columns: ')
+            handle.write('\t'.join(whole.get(c, '') + c for c in columns) + '\n')
+            constants = [c for c in columns if whole.get(c) == '^']
+            if constants:
+                handle.write('constants: ')
+                for i, c in enumerate(constants):
+                    value = first[c]
+                    text = ('U' + json.dumps(list(value), separators=(',', ':'), sort_keys=True)) if isinstance(value, tuple) else json.dumps(value, separators=(',', ':'), sort_keys=True)
+                    handle.write(('\t' if i else '') + c + '=' + text)
+                handle.write('\n')
+            if scales:
+                handle.write('scales: ' + '\t'.join('%s=%d' % (c, k) for c, k in scales.items()) + '\n')
+            g = sqlite3.connect(dictionary)
+            found = False
+            for number_, key_ in g.execute('SELECT number, key FROM frequency WHERE number IS NOT NULL ORDER BY number'):
+                handle.write(('\t' if found else 'dictionary: ') + '@%d=%s' % (number_, key_))
+                found = True
+            g.close()
+            if found:
+                handle.write('\n')
             handle.flush()
-            (p / 'rows.txt').unlink()          # copied into the table: the part's rows are the table's bytes now
-        handle.flush()
-        os.fsync(handle.fileno())
+            offset = destination.stat().st_size     # header bytes; the part rows follow in order
+            offsets = []
+            for p, size in zip(parts, sizes):
+                offsets.append(offset)
+                offset += size
+                with (p / 'rows.txt').open('rb') as chunk:
+                    handle.flush()
+                    shutil.copyfileobj(chunk, handle.buffer, 1 << 22)
+                handle.flush()
+            handle.flush()
+            os.fsync(handle.fileno())
+        return dict(offsets=offsets, identity=TS._identity(destination))
+    copied = passes.get('copy')
+    if copied is not None:
+        note(name, 'copy (saved)')
+        if not destination.is_file() or TS._identity(destination) != copied['identity']:
+            raise ValueError('table %s changed since its copy save point; remove %s to rebuild it' % (name, scratch))
+    else:
+        note(name, 'copy')
+        copied = passes['copy'] = copy()
+        _save_checkpoint(scratch, key, passes)
+    offsets = copied['offsets']
+    drop('rows.txt')                          # copied, synced and saved: the part rows are the table's bytes now
     before = TS._identity(destination)
     # Inverse proof: the header and dictionary are parsed from the written file into their own database, then every
     # part's rows are parsed back from the file at their byte offsets and compared with the part's source rows.
     note(name, 'verify')
     inverse = scratch / 'inverse'
+    if inverse.exists():
+        shutil.rmtree(inverse)                # an interrupted proof is redone whole
     inverse.mkdir()
     vdb = sqlite3.connect(inverse / 'table.sqlite')
     with destination.open(encoding='utf-8', newline='') as reader:

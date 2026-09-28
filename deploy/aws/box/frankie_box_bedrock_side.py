@@ -31,6 +31,21 @@ def siblings(cpus):
     return sorted(out & os.sched_getaffinity(0))
 
 
+def _own_saved(side, ordinal, key):
+    """A table an earlier run of this side builder finished and receipted in the same side scratch (D._saved_table
+    looks only in other scratches)."""
+    receipt = side / ('table-%04d.save.json' % ordinal)
+    try:
+        value = json.loads(receipt.read_bytes())
+        path = Path(value['path'])
+        if (value.get('schema') == D.TABLE_SAVE_SCHEMA and value.get('key') == key and path.parent == side
+                and path.name == 'table-%04d.txt' % ordinal and path.is_file() and D._witness(path) == value.get('digest')):
+            return dict(name=value['name'], rows=value['rows'], path=path, digest=value['digest'], saved=str(receipt))
+    except (OSError, ValueError, KeyError, TypeError):
+        pass
+    return None
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--directory', required=True)
@@ -51,8 +66,10 @@ def main():
     cpus = [int(c) for c in args.cpus.split(',') if c.strip()]
     if args.with_siblings:
         cpus = siblings(cpus)
-    side = work / 'derived' / ('.digest-side-' + args.run_id)
-    side.mkdir()
+    # One fixed side scratch for this root (not one per run): a rerun after a stop or failure finds the tables already
+    # saved here and the unfinished table's saved passes (frankie_box_digest_parallel save points) and resumes.
+    side = work / 'derived' / '.digest-side-work'
+    side.mkdir(exist_ok=True)
     receipt = json.loads((work / 'derive.json').read_bytes())
     entries = {name: entry for name, entry in receipt['layers'].items() if entry.get('bedrock')}
     entries = P.recorded_order(entries, layers_root / 'sources.sqlite')   # derive.json keys are sorted
@@ -69,13 +86,13 @@ def main():
     with P.ReopenedSources(entries, layers_root) as sources:
         tables = list(sources.tables.items())
         order = sorted(range(len(tables)), key=lambda i: (tables[i][0] != 'bedrock.members', i))   # biggest first
-        note(None, 'start', cpus=cpus, tables=[name for name, _ in tables])
+        note(None, 'start', cpus=cpus, run_id=args.run_id, tables=[name for name, _ in tables])
         for i in order:
             name, rows = tables[i]
             ordinal = LEGACY_TABLES + i
             spec = D.bedrock_spec(rows, sources.root)
             key = D.bedrock_key(name, code, layers_identity, spec)
-            saved = D._saved_table(side, ordinal, key)
+            saved = _own_saved(side, ordinal, key) or D._saved_table(side, ordinal, key)
             if saved is not None:
                 note(name, 'reused', ordinal=ordinal, saved=saved['saved'])
                 continue
