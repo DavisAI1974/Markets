@@ -1,0 +1,217 @@
+diff --git a/deploy/aws/box/frankie_box_digest_parallel.py b/deploy/aws/box/frankie_box_digest_parallel.py
+index 6f932c55..66b96d4f 100644
+--- a/deploy/aws/box/frankie_box_digest_parallel.py
++++ b/deploy/aws/box/frankie_box_digest_parallel.py
+@@ -143,60 +143,73 @@ def _snapshot(job):
+     return dict(columns=list(columns), n=n, first=first, last=last, state=state)
+ 
+ 
+-# ---- phase 2: plan cells, derived and constant flags ---------------------------------------------------------------
++# ---- phase 2: plan cells, derived and constant flags, dictionary counts and scales, in one read ------------------
+ 
+ def _plan(job):
++    """Plans every cell and counts the dictionary candidates in the same read of the part's rows. No plan is stored
++    (2026-09-28: bedrock.members' stored plans passed 460 GB and filled the disk); the final pass plans the rows again
++    from the same seed, which gives the same cells.
++
++    Which columns the table keeps is known only when every part is planned, so counts are taken for every column
++    except while a column may still be excluded here (derived '=' or constant on every row of this part so far): its
++    dictionary cells are held apart and counted as soon as it cannot be (a column that varies in any part is kept in
++    the table), or recorded in the held table for the merge to count only if the column is kept table-wide. Positions
++    run over all counted cells in row-major order, so the first-occurrence order of the kept cells is the serial one."""
+     spec, directory, columns, seed, first = job
+     prev, values, integers, lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
+-    derived = {c: True for c in columns}
+-    constant = {c: True for c in columns}
+-    db = _part_db(directory, 'plans')
+-    db.execute('CREATE TABLE plans (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL)')
+-    for i, row in enumerate(_source_rows(spec)):
+-        flat = DG._flatten(dict(row))
+-        cells = DG._plan_row(flat, columns, prev, values, integers, lists)
+-        db.execute('INSERT INTO plans VALUES (?, ?)', (i, TS._dump(cells)))
+-        for j, c in enumerate(columns):
+-            derived[c] = derived[c] and cells[j][1] == '='
+-            constant[c] = constant[c] and c in flat and c in first and DG._same(flat[c], first[c])
+-        prev = flat
+-    db.commit()
+-    db.close()
+-    return derived, constant
+-
+-
+-# ---- phase 3: dictionary counts and scales -------------------------------------------------------------------------
+-
+-def _count(job):
+-    directory, kept = job
+-    scale_state = {j: [DG.SCALE_MAX, False] for j in kept}
+-    plans = _part_db(directory, 'plans')
++    width = len(columns)
++    derived, constant = [True] * width, [True] * width
++    scale_state = [[DG.SCALE_MAX, False] for _ in range(width)]
++    held = [{} for _ in range(width)]
+     db = _part_db(directory, 'freq')
+     db.execute('CREATE TABLE frequency (key TEXT PRIMARY KEY, count INTEGER NOT NULL, first INTEGER NOT NULL)')
+-    position = 0
+-    # Counts are gathered in memory and upserted in batches: a key already in the table keeps its first position
+-    # (an earlier batch saw it first), a new key gets its first position within the batch; same table as one upsert
+-    # per cell.
++    db.execute('CREATE TABLE held (j INTEGER NOT NULL, key TEXT NOT NULL, count INTEGER NOT NULL, first INTEGER NOT NULL, '
++               'PRIMARY KEY (j, key))')
++    # Counts are gathered in memory and upserted in batches; a key keeps its earliest position.
+     batch = {}
+ 
+     def flush():
+         db.executemany('INSERT INTO frequency(key, count, first) VALUES (?, ?, ?) '
+-                       'ON CONFLICT(key) DO UPDATE SET count=count+excluded.count',
++                       'ON CONFLICT(key) DO UPDATE SET count=count+excluded.count, first=min(first, excluded.first)',
+                        ((k, v[0], v[1]) for k, v in sorted(batch.items())))
+         batch.clear()
+ 
+-    for cells in TS._rows(plans, 'plans'):
+-        for j in kept:
++    def add(key, count, position):
++        entry = batch.get(key)
++        if entry is None:
++            batch[key] = [count, position]
++            if len(batch) >= 2000000:
++                flush()
++        else:
++            entry[0] += count
++            if position < entry[1]:
++                entry[1] = position
++
++    position = 0
++    for row in _source_rows(spec):
++        flat = DG._flatten(dict(row))
++        cells = DG._plan_row(flat, columns, prev, values, integers, lists)
++        for j, c in enumerate(columns):
+             kind, text = cells[j]
++            if derived[j] and text != '=':
++                derived[j] = False
++            if constant[j] and not (c in flat and c in first and DG._same(flat[c], first[c])):
++                constant[j] = False
++            candidate = derived[j] or constant[j]
++            if held[j] and not candidate:
++                for key, (count, at) in held[j].items():
++                    add(key, count, at)
++                held[j] = {}
+             if kind != 'lit':
+                 key = json.dumps(text) if kind == 'str' else text
+-                entry = batch.get(key)
+-                if entry is None:
+-                    batch[key] = [1, position]
+-                    if len(batch) >= 2000000:
+-                        flush()
++                if candidate:
++                    entry = held[j].get(key)
++                    if entry is None:
++                        held[j][key] = [1, position]
++                    else:
++                        entry[0] += 1
+                 else:
+-                    entry[0] += 1
++                    add(key, 1, position)
+                 position += 1
+             elif DG._INT_CELL.fullmatch(text):
+                 k, _ = scale_state[j]
+@@ -207,63 +220,59 @@ def _count(job):
+                         z += 1
+                     k = min(k, z)
+                 scale_state[j] = [k, True]
++        prev = flat
+     if batch:
+         flush()
++    db.executemany('INSERT INTO held VALUES (?, ?, ?, ?)',
++                   ((j, key, count, at) for j, h in enumerate(held) for key, (count, at) in sorted(h.items())))
+     db.commit()
+     db.close()
+-    plans.close()
+-    return scale_state
++    return (dict(zip(columns, derived)), dict(zip(columns, constant)), scale_state)
+ 
+ 
+-# ---- phase 4: final cells with the global dictionary ---------------------------------------------------------------
++# ---- phase 3: final cells with the global dictionary, written as the part's row text --------------------------------
+ 
+ def _final(job):
+-    directory, kept, columns, scales, dictionary = job
+-    plans = _part_db(directory, 'plans')
+-    db = _part_db(directory, 'final')
+-    db.execute('CREATE TABLE final (ordinal INTEGER PRIMARY KEY, payload TEXT NOT NULL)')
++    """The part's rows planned again from its seed and written with the dictionary, cells joined by tabs (no cell
++    holds a tab or a newline, checked); the copy turns the tabs into spaces when the table's separator is a space."""
++    spec, directory, columns, seed, kept, scales, dictionary = job
++    prev, values, integers, lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
+     lookup = _lookup_db(dictionary)
+     has_space = False
+-    for i, cells in enumerate(TS._rows(plans, 'plans')):
+-        out = []
+-        for j in kept:
+-            kind, text = cells[j]
+-            if kind == 'lit':
+-                scale = scales.get(columns[j])
+-                out.append(DG._scaled(text, scale) if scale and DG._INT_CELL.fullmatch(text) else text)
+-                continue
+-            key = json.dumps(text) if kind == 'str' else text
+-            count, number = lookup.execute('SELECT count, number FROM frequency WHERE key=?', (key,)).fetchone()
+-            if count >= 2:
+-                out.append('@%d' % number)
+-            elif kind == 'str':
+-                out.append('S' + text if '\t' not in text and '\n' not in text else 'J' + key)
+-            else:
+-                out.append('J' + text)
+-        out = DG._collapse(out)
+-        has_space = has_space or any(' ' in cell for cell in out)
+-        db.execute('INSERT INTO final VALUES (?, ?)', (i, TS._dump(out)))
+-    db.commit()
+-    db.close()
+-    lookup.close()
+-    plans.close()
+-    return has_space
+-
+-
+-def _emit(job):
+-    directory, sep = job
+-    db = _part_db(directory, 'final')
+     path = Path(directory) / 'rows.txt'
+-    with path.open('x', encoding='utf-8', newline='\n') as handle:
+-        for cells in TS._rows(db, 'final'):
+-            handle.write(sep.join(cells) + '\n')
++    with path.open('w', encoding='utf-8', newline='\n') as handle:
++        for row in _source_rows(spec):
++            flat = DG._flatten(dict(row))
++            cells = DG._plan_row(flat, columns, prev, values, integers, lists)
++            prev = flat
++            out = []
++            for j in kept:
++                kind, text = cells[j]
++                if kind == 'lit':
++                    scale = scales.get(columns[j])
++                    out.append(DG._scaled(text, scale) if scale and DG._INT_CELL.fullmatch(text) else text)
++                    continue
++                key = json.dumps(text) if kind == 'str' else text
++                count, number = lookup.execute('SELECT count, number FROM frequency WHERE key=?', (key,)).fetchone()
++                if count >= 2:
++                    out.append('@%d' % number)
++                elif kind == 'str':
++                    out.append('S' + text if '\t' not in text and '\n' not in text else 'J' + key)
++                else:
++                    out.append('J' + text)
++            out = DG._collapse(out)
++            line = '\t'.join(out)
++            if line.count('\t') != len(out) - 1 or '\n' in line:
++                raise ValueError('a table cell holds a tab or a newline')
++            has_space = has_space or ' ' in line
++            handle.write(line + '\n')
+         handle.flush()
+         os.fsync(handle.fileno())
+-    db.close()
+-    return path.stat().st_size
++    lookup.close()
++    return has_space, path.stat().st_size
+ 
+ 
+-# ---- phase 5: inverse verification, per part ------------------------------------------------------------------------
++# ---- phase 4: inverse verification, per part ------------------------------------------------------------------------
+ 
+ def _verify(job):
+     (path, offset, length, count, spec, header, dictionary, seed) = job
