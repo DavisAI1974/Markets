@@ -8,18 +8,27 @@ work left on a single core; findings noted on the step's line before it runs.
 ## ROOT (run 36351808435, b35e79b7)
 - [x] Preparation + prepared layers (reused 0-7, prepared 8-45)
 - [x] Legacy tables
-- [ ] Member merge (14 shards; 23:19Z most at layer 37 of 46, merge-09 at 31)
-- [ ] Bedrock tables (bedrock.members measured, one core)
-- [ ] Digest document + derive.json
+- [x] Member merge (14 shards) + copy-in: sources.sqlite finished
+- [ ] Bedrock tables: ROOT is writing bedrock.members on ONE core (~63 GB at ~1.75 MB/s); being replaced by the
+      side builder below
+- [ ] Digest document + derive.json (after the restart: assembly only)
 - [ ] calculations-receipt.json read, sha256 recorded (2,032,203 records, 0 failures)
 
 ## Save points
 - [x] Save code built and on f1hr0c (0d1251f0); used by any restart and by the staged downstream runtime
-- [ ] (only if ROOT must restart) adopt the finished merge shards: frankie_box_adopt_merge.sh
+- [x] Parallel bedrock table writer (same bytes as write_table), side builder, adopt-digest (0a2a5669)
+- [x] Fix: plain layers' metadata read from the pinned file, checked against layer_index (cf199fbe)
+- [ ] Stage cf199fbe (run 36362958191, running)
+- [ ] Side builder beside ROOT on idle CPUs 2,4,5,6,7,8,12,14,15 + siblings: every bedrock table, parallel,
+      with save receipts (first dispatch refused on layer 0 receipt; fixed above)
+- [ ] When side tables are done: pause ROOT (pause script, MODE=processes, reap orphans if any)
+- [ ] Adopt ROOT's finished sources.sqlite + legacy tables 0-4 (frankie_box_adopt_digest.sh)
+- [ ] Restart ROOT on the staged commit, same inputs: reuses everything, assembles the document, writes
+      calculations-receipt.json
 
 ## Downstream Monday
 - [x] Publication slice, Option 3: DROPPED (Greg, 2026-09-27: no validations, straight to staging)
-- [x] Staged dcef2467 (run 36360108539, 23:55Z; supersedes 39f64acf and 685155b6: principal inputs hashing
+- [ ] Downstream runs from the newest staged commit (cf199fbe once staged); earlier: staged dcef2467 (run 36360108539, 23:55Z; supersedes 39f64acf and 685155b6: principal inputs hashing
       in parallel and staggered). Dispatch ref: claude/frankie-monday-run-dcef2467. CODE_ROOT:
       /opt/frankie-box/code/dcef2467df14fea3d3df2c9a37c4f36317defdd8-36360108539-1/markets
       (pack sha256 c288c5ce..., 3,693 files, active checkout unchanged)
