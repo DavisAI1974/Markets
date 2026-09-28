@@ -141,8 +141,11 @@ def main():
                 print('(the API returned only the first %d characters)' % len(output))
                 print(output)
                 continue
-            print('----- report part %d/%d -----' % (number, total))
-            sys.stdout.write(text if text.endswith('\n') else text + '\n')
+            # the separator carries its own newlines and the part is written verbatim, so the parts rejoin byte-exact:
+            # split on '\n----- report part i/n -----\n' and concatenate
+            sys.stdout.write('\n----- report part %d/%d -----\n' % (number, total))
+            sys.stdout.write(text)
+        sys.stdout.write('\n----- end of report (%d parts) -----\n' % total)
     else:
         print(output[-args.tail:] if args.tail > 0 else output)
     err = inv.get('StandardErrorContent', '')
