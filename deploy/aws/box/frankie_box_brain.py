@@ -16,6 +16,7 @@ import json
 import os
 import re
 import shutil
+import sys
 import time
 from pathlib import Path
 
@@ -605,6 +606,21 @@ def load(brain, cycle, *, snapshot=None, carried=None):
                 continue
             if not p.is_file():
                 members.append(dict(name=f'brain-cycle-{cyc}-{name}', treatment='brain entry file missing; not in the corpus'))
+                continue
+            if name == 'derivation-digest-full.md':
+                # Greg, 2026-09-28 ("Do what we did on Sunday night to the full Monday"): a carried digest is read as the 6-hour
+                # run read one: up to its bedrock heading, whole (frankie_box_digest_read); sha256 of the whole file checked
+                sys.path.insert(0, str(Path(__file__).resolve().parent))
+                import frankie_box_digest_read as DR
+                text, stats = DR.legacy_read(p)
+                if stats['digest_sha256'] != e.get('sha256'):
+                    members.append(dict(name=f'brain-cycle-{cyc}-{name}', bytes=stats['digest_bytes'], treatment='brain entry bytes differ from its manifest; not in the corpus'))
+                    continue
+                parts.append(f"\n\n## Frankie's brain: cycle {cyc}, {name} ({e.get('kind', 'document')}; carried forward: header, layer statuses "
+                             f"and legacy tables whole, bedrock retained on the box; sha256 {e['sha256'][:16]})\n\n" + text + '\n')
+                members.append(dict(name=f'brain-cycle-{cyc}-{name}', bytes=stats['digest_bytes'], sha256=e['sha256'],
+                                    treatment='brain: prior cycle digest, header, layer statuses and legacy tables whole; bedrock retained on the box', read=stats))
+                carried[e['sha256']] = f'brain cycle {cyc} {name}'
                 continue
             data = p.read_bytes()
             if sha256_bytes(data) != e.get('sha256'):

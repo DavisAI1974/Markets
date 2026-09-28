@@ -1269,7 +1269,7 @@ class Session:
         # receipt and plan are moved aside under work/ (nothing deleted; its notes stay under their own notes-<sha> dir).
         identity = (f'{R.RENDER_VERSION}+{DG.SCHEMA}+{HR.SCHEMA}+tensors:{tensor_mode}'
                     f'+digest:{(sha256_bytes(digest_path.read_bytes())[:16] if digest_path.exists() else "none")}'
-                    f'+reading-policy:verified-parts-v2+brain:{brain_module().identity(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))}')
+                    f'+reading-policy:verified-parts-v2+digest-read:legacy-v1+brain:{brain_module().identity(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))}')
         receipt_path = self.work / 'reading-corpus.json'
         if corpus_path.exists() and receipt_path.exists():
             prior = load_json(receipt_path)
@@ -1366,19 +1366,29 @@ class Session:
         else:
             parts.append(data[marker:].decode('utf-8', errors='replace') if marker >= 0 else '')
             members.append(dict(name='producer-evidence block', treatment='payload not parseable; rendered raw'))
-        digest = digest_path.read_bytes() if digest_path.exists() else None
+        # Greg, 2026-09-28 ("Do what we did on Sunday night to the full Monday"): the read holds what the 6-hour run's read
+        # held, for every record of the day: the digest from its first byte up to the `## Bedrock (` heading, verbatim and
+        # whole (header, layer statuses, the legacy tables); the bedrock tables stay calculated and retained in the same
+        # unchanged file on the box (frankie_box_digest_read). One streaming pass gives the whole file's bytes and sha256.
+        import frankie_box_digest_read as DR
+        digest_text_read, digest_stats = DR.legacy_read(digest_path) if digest_path.exists() else (None, None)
         brain_text, brain_members = brain_module().load(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None),
-                                                        carried={sha256_bytes(digest): "this cycle's derivation digest (below, whole)"} if digest is not None else None)
+                                                        carried={digest_stats['digest_sha256']: "this cycle's derivation digest (below: its legacy tables, whole)"} if digest_stats else None)
         if brain_text:
-            parts.append("\n\n## Frankie's brain: the calculation findings of the earlier cycles, carried forward whole (Greg, 2026-09-21). "
+            parts.append("\n\n## Frankie's brain: the calculation findings of the earlier cycles, carried forward whole, a derivation digest as its header, layer statuses and legacy tables (Greg, 2026-09-21; 2026-09-28). "
                          'These are your own prior derivations and findings; read them as your own memory, compare this cycle\'s '
                          'derivations with them, and never mistake them for the delivered evidence.\n' + brain_text)
         members.extend(brain_members)
         self.note(f'brain: {sum(1 for m in brain_members if m["treatment"].startswith("brain: prior"))} prior-cycle documents in the corpus')
-        if digest is not None:
-            parts.append('\n\n## Frankie\'s own derivation of this cycle (the session code ran the pin producers on the cycle rows; whole)\n\n'
-                         + digest.decode('utf-8', errors='replace') + '\n')
-            members.append(dict(name='derivation-digest-full.md', bytes=len(digest), sha256=sha256_bytes(digest), treatment='text: rendered whole'))
+        if digest_stats is not None:
+            parts.append('\n\n## Frankie\'s own derivation of this cycle (the session code ran the pin producers on every row of the day): '
+                         'the header, layer statuses and legacy tables, whole, as the 6-hour run read them. '
+                         + (f'The bedrock tables ({digest_stats["bedrock_bytes"]} bytes from byte {digest_stats["bedrock_at"]}) are calculated '
+                            f'and retained in the same file (derivation-digest-full.md, {digest_stats["digest_bytes"]} bytes, sha256 '
+                            f'{digest_stats["digest_sha256"]}) on the box, not in this read.' if digest_stats['bedrock_at'] is not None else '')
+                         + '\n\n' + digest_text_read + '\n')
+            members.append(dict(name='derivation-digest-full.md', bytes=digest_stats['digest_bytes'], sha256=digest_stats['digest_sha256'],
+                                treatment='text: header, layer statuses and legacy tables whole (the 6-hour run\'s read); bedrock retained on the box', read=digest_stats))
         write_text(corpus_path, ''.join(parts))
         write_json(self.work / 'reading-corpus.json', dict(schema='FRANKIE_BOX_READING_CORPUS_V4', identity=identity, render=render_report, at=time.time(), limits='none',
                    prompt=dict(witness(prompt), path=str(prompt)), head_bytes=len(head), corpus=dict(witness(corpus_path), path=str(corpus_path)),
@@ -2089,7 +2099,8 @@ class Session:
         packets = self._packets_text()
         head = (f'You are Frankie, the BOSS: the principal session for cycle {self.cycle} of the {self.day} trading-day run, on your box '
                 f'i-035994afa8bdf66a5 (Greg Davis, 2026-09-21, option A). Request {self.request["request_id"]}, request_sha256 '
-                f'{self.request_sha256}. You have read the whole delivered evidence and your whole derivation in parts; your merged '
+                f'{self.request_sha256}. You have read the whole delivered evidence and your derivation (its header, layer statuses and legacy '
+                'tables, whole; the bedrock tables are retained on the box) in parts; your merged '
                 'notes follow, then the request instruction, then the packets the session code wrote for you (the comparison packet: '
                 'your derived layers beside the frozen learned-structure files; the session receipts packet: your own provider '
                 'invocations, what you read, the wall you kept), then your derivation digest (whole when the context admits it; the '
@@ -2104,13 +2115,13 @@ class Session:
         status_end = included.find(b'\n### table ')
         status = included if status_end < 0 else included[:status_end + 1]   # the digest header and layer statuses
         base = head + included.decode('utf-8', errors='ignore') + ('' if len(included) == digest_total else
-               f'\n[... the digest continues; {digest_total - len(included)} more bytes did not fit this call\'s context; you read them whole in the reading parts ...]') + '\n----- END -----\n\n'
+               f'\n[... the digest continues; {digest_total - len(included)} more bytes did not fit this call\'s context; you read its legacy tables whole in the reading parts; its bedrock tables are retained on the box ...]') + '\n----- END -----\n\n'
         # Greg, 2026-09-28 (remove every pass that is not necessary): the digest head goes ONCE, with the analysis; the
-        # accounting and every ledger call carry the digest's header and layer statuses and refer to the rest, which the
-        # reading parts read whole and the merged notes above carry.
+        # accounting and every ledger call carry the digest's header and layer statuses and refer to the rest: the legacy
+        # tables the reading parts read whole and the merged notes above carry; the bedrock tables retained on the box.
         brief = head + status.decode('utf-8', errors='ignore') + (
-            f'\n[... the digest tables follow ({digest_total - len(status)} more bytes): you read them whole in the reading parts and '
-            'your merged notes above carry them; the analysis call carried the digest\'s first tables ...]\n----- END -----\n\n')
+            f'\n[... the digest tables follow ({digest_total - len(status)} more bytes): you read the legacy tables whole in the reading '
+            'parts and your merged notes above carry them; the bedrock tables are retained on the box; the analysis call carried the digest\'s first tables ...]\n----- END -----\n\n')
         digest_included = dict(bytes_total=digest_total, bytes_in_analysis_call=len(included), bytes_in_other_writing_calls=len(status))
         self.note('writing: the analysis')
         analysis = self.boss('write-analysis', base + 'TASK: write your run analysis now as the instruction asks (Markdown, no limit on length; '

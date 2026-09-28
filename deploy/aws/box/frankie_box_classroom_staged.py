@@ -96,7 +96,8 @@ def run(session,C,cache,*,root,staged,dialogue):
         principal=json.loads((session.work/'reading.json').read_bytes()) if (session.work/'reading.json').is_file() else {}
         staged_sources.append(dict(source_id='derivation-digest-reference',content=canonical(dict(
             source_id='derivation-digest-full.md',bytes=len(digest['content']),sha256=hashlib.sha256(digest['content']).hexdigest(),
-            read_whole_in=dict(phase='principal reading',status=principal.get('status'),parts=principal.get('parts'),
+            read_in=dict(phase='principal reading',read_as='header, layer statuses and legacy tables whole; bedrock tables retained on the box (Greg, 2026-09-28)',
+                         status=principal.get('status'),parts=principal.get('parts'),
                                corpus_sha256=principal.get('corpus_sha256'),merged_notes=principal.get('merged')),
             access='navigable by exact byte range from every classroom task (source navigation)'))))
     reading=staged.consume_sources(session,staged_sources,'principal','classroom-all-sources',
