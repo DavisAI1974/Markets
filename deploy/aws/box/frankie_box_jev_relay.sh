@@ -25,6 +25,7 @@ if not slots:
     raise SystemExit('no feed slots for ' + STAMP)
 work = SESSION / 'work'
 seen = {}
+dipole_sent = False
 
 
 def read(path, limit):
@@ -50,6 +51,13 @@ def changed(path):
 
 def dipole_material():
     candidates = [Path(os.environ['REQUEST_DIRECTORY']) / 'session-request.json'] if os.environ['REQUEST_DIRECTORY'] else []
+    # the principal names its request in work/verify.json (the prompt's path): found without REQUEST_DIRECTORY too
+    try:
+        prompt = json.loads((SESSION / 'work' / 'verify.json').read_bytes()).get('prompt', {}).get('path')
+        if prompt:
+            candidates.append(Path(prompt).parent / 'session-request.json')
+    except (OSError, ValueError, AttributeError):
+        pass
     candidates.append(SESSION / 'request' / 'session-request.json')
     for path in candidates:
         try:
@@ -70,8 +78,11 @@ for index, (key, url) in enumerate(slots):
         bundle['progress'] = json.loads(read(SESSION / 'progress.json', 200000) or 'null')
     except ValueError:
         pass
-    if index == 0:
+    if not dipole_sent:
+        # every bundle carries the dipole material until it has been found once (Greg, 2026-09-28: the request is
+        # written when the launch reaches its WAIT, after the relay starts; bundle 0 alone would miss it)
         bundle['dipole'] = dipole_material()
+        dipole_sent = bundle['dipole'].get('dipole_classroom') is not None
     size = len(json.dumps(bundle))
     for path in sorted((work / 'classroom').glob('*.json')) if (work / 'classroom').is_dir() else []:
         if size < CAP and changed(path):

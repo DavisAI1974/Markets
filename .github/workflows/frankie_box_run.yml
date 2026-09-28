@@ -181,7 +181,7 @@ jobs:
                   target, _, count = item[len('putrange:'):].rpartition(':')
                   if not re.fullmatch(r'[0-9]{1,4}', count) or not 0 < int(count) <= 2000:
                       raise SystemExit('putrange count must be 1..2000')
-                  items += ['put:%s/%04d.json' % (target, i) for i in range(int(count))]
+                  items += ['putslot:%s/%04d.json' % (target, i) for i in range(int(count))]
               # getprefix:<bucket>/<prefix> = a presigned GET for every object under clm-sidecar/<prefix> (read-only;
               # Jev's reports and checkpoints, whose numbering is not known in advance; Greg 2026-09-28)
               elif item.startswith('getprefix:'):
@@ -201,8 +201,25 @@ jobs:
           out = {}
           for item in items:
               bucket, key = item.split('/', 1)
-              if not re.fullmatch(r'(put:)?[a-z0-9.-]{3,63}', bucket) or not key or '..' in key:
+              if not re.fullmatch(r'(put:|putslot:)?[a-z0-9.-]{3,63}', bucket) or not key or '..' in key:
                   raise SystemExit('presign item must be bucket/key')
+              if item.startswith('putslot:'):
+                  # a putrange slot: a slot already written is skipped, never overwritten, so a restarted relay
+                  # continues from the first free slot in the order Jev reads them (Greg, 2026-09-28)
+                  bucket = bucket[len('putslot:'):]
+                  s3 = client(bucket)
+                  if not key.startswith('clm-sidecar/'):
+                      raise SystemExit('upload slots are for clm-sidecar/ only')
+                  try:
+                      s3.head_object(Bucket=bucket, Key=key)
+                      print(f'upload slot {bucket}/{key} already written; skipped')
+                      continue
+                  except s3.exceptions.ClientError:
+                      pass
+                  url = s3.generate_presigned_url('put_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=expires)
+                  print('::add-mask::' + url)
+                  out['put:' + key] = dict(bucket=bucket, url=url)
+                  continue
               if item.startswith('put:'):
                   # a one-object upload slot (the box role writes nothing in S3): only under clm-sidecar/, never
                   # over an existing object
