@@ -401,6 +401,25 @@ jobs:
           sets+=(--set "MARKETS_SHA=$GITHUB_SHA")
           python deploy/aws/ssm_run_sh.py --instance "$INSTANCE" --region "$REGION" --script "$SCRIPT" \
             --timeout "$RUN_TIMEOUT" --comment "$COMMENT" "${sets[@]}" | tee box-run-output.txt
+      - name: On cancel, stop the command on the box (Greg, 2026-09-28; a cancelled run never stopped its SSM command)
+        if: cancelled()
+        run: |
+          python - <<'PY'
+          import boto3, os, pathlib
+          ssm = boto3.client('ssm', region_name=os.environ['REGION'])
+          path = pathlib.Path('ssm-command.txt')
+          if path.exists():
+              command = path.read_text().strip()
+              ssm.cancel_command(CommandId=command, InstanceIds=[os.environ['INSTANCE']])
+              print('cancelled SSM command', command)
+          # a cycle launch runs python as a child of the shell: stop the process group itself too
+          if os.environ['SCRIPT'] == 'deploy/aws/box/frankie_box_cycle0.sh' and 'ACTION=launch' in os.environ['VARIABLES'].split():
+              body = pathlib.Path('deploy/aws/box/frankie_box_stop_cycle.sh').read_text()
+              sent = ssm.send_command(InstanceIds=[os.environ['INSTANCE']], DocumentName='AWS-RunShellScript',
+                                      Parameters=dict(commands=['TARGET=cycle REASON=workflow_cancelled\n' + body]),
+                                      Comment='stop cycle on workflow cancel')['Command']['CommandId']
+              print('sent frankie_box_stop_cycle.sh as', sent)
+          PY
       - name: Job summary = the box output
         if: always()
         run: |

@@ -69,6 +69,8 @@ def main():
                                TimeoutSeconds=min(max(args.timeout, 30), 2592000),
                                Comment=args.comment[:100])['Command']['CommandId']
     print('SSM command:', command)
+    with open('ssm-command.txt', 'w') as handle:     # the workflow's cancel step stops this command on the box
+        handle.write(command)
     deadline = time.time() + args.timeout + 120
     status = 'Pending'
     inv = {}
