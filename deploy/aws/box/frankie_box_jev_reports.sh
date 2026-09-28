@@ -15,6 +15,10 @@ for key in keys:
     if '/feed/' in key and os.environ['FEED'] != '1':
         print('--- %s (%s bytes; feed bundle, not printed)' % (key, size))
         continue
+    if key.endswith('/config.json') or '/code/' in key:
+        # config.json carries the presigned slot URLs (never printed); code/ is the committed sidecar code
+        print('--- %s (%s bytes; %s, not printed)' % (key, size, 'presigned URLs' if key.endswith('config.json') else 'code'))
+        continue
     data = urllib.request.urlopen(entries[key]['url'], timeout=120).read()
     if key.endswith('.gz'):
         data = gzip.decompress(data)
