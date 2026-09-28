@@ -16,6 +16,11 @@ endpoint.** The serverless reading lane must not be used: remove `/opt/frankie-b
 (`frankie_box_serverless_config.sh ACTION=remove`, moved aside, receipted). Without that file the session reads on
 the Pod. Also make sure the serverless endpoint has 0 minimum workers, so it cannot bill. Both steps only on Greg's go.
 The options below are superseded by this decision; they are kept for the record.
+**DONE 2026-09-28 ~10:04Z on Greg's go:**
+- `/opt/frankie-box/serverless.json` removed: run 36407405095 printed "moved aside (nothing deleted)". The session now
+  reads on the Pod.
+- Serverless endpoint `k1sqt0haffm61y` (frankie-reading-granite42, the only endpoint on the account): workersMin was
+  already 0 (workersMax 8), read back 0. New action: `frankie_serverless_reading.yml action=idle`, run 36407444443.
 The expensive Granite setup is what must not run again by accident. The Jev (CLM) work is fine.
 1. Move Granite to a cheaper option (Greg to choose if not already stated):
    - (a) serverless only, min workers 0, pay only while reading;
