@@ -11,7 +11,9 @@ case "$CODE_ROOT" in /opt/frankie-box/code/*) ;; *) echo "staged checkout under 
 case "$RUN" in /opt/frankie-box/work/runs/*) ;; *) echo "RUN must be under /opt/frankie-box/work/runs" >&2; exit 2;; esac
 export RUN WORKERS="${WORKERS:-16}" PYTHONPATH="$CODE_ROOT" PYTHONDONTWRITEBYTECODE=1
 cd "$CODE_ROOT"
-exec nice -n 5 /opt/frankie-box/venv/bin/python -B - <<'PY'
+# spawned workers re-import the main module, so the canary runs from a file, never from stdin
+SCRIPT=$(mktemp /tmp/parallel-journal-canary-XXXXXX.py)
+cat > "$SCRIPT" <<'PY'
 import json, os, time
 from pathlib import Path
 from types import SimpleNamespace
@@ -24,32 +26,38 @@ def load(path):
     value = json.loads(Path(path).read_bytes())
     return unpack(value) if isinstance(value, list) else value   # c15 driver files are tagged
 
-run = Path(os.environ['RUN'])
-witnesses = sorted(run.rglob('host-prefix.c15.json'))
-if not witnesses:
-    raise SystemExit('no host-prefix.c15.json under ' + str(run))
-files = load(witnesses[0])['files']
-receipt = load(files['receipt']['path'])
-print('snapshot', files['snapshot']['path'], 'journal_count', receipt['journal_count'], 'records', receipt['records_in_prefix'], flush=True)
-reader = FrankieCompactReader(files['snapshot']['path'], expected_count=receipt['journal_count'],
-                              expected_head_hash=receipt['journal_head_hash'], workers=int(os.environ['WORKERS']))
-builder = SimpleNamespace(_failed=False, chain=SimpleNamespace(next_cursor=receipt['records_in_prefix']), journal=reader)
-cutoff = receipt['records_in_prefix'] - 1
-summary, count, ordered, started = {}, 0, True, time.time()
-for payload in parallel_journal_prefix(builder, cutoff, summary):
-    ordered = ordered and payload['cursor'] == count
-    count += 1
-    if count % 200000 == 0:
-        print('... %d payloads, %.0f s' % (count, time.time() - started), flush=True)
-wall = time.time() - started
-result = dict(schema='FRANKIE_PARALLEL_JOURNAL_CANARY_V1', wall_seconds=round(wall, 1), workers=len(reader.worker_cpus),
-              payloads=count, expected_payloads=cutoff + 1, cursors_in_order=ordered and count == cutoff + 1,
-              summary=summary, worker_cpu_seconds=round(reader.worker_cpu_seconds, 1))
-serial = sorted(run.rglob('host-context-cache.c15.json'))
-if serial:
-    value = load(serial[0])
-    result['serial_receipt'] = {k: value.get(k) for k in ('journal_prefix_hash', 'journal_entries', 'input_hash', 'consumed_rows')}
-    result['summary_matches_serial'] = (value.get('journal_prefix_hash') == summary.get('journal_prefix_hash')
-                                        and value.get('journal_entries') == summary.get('journal_entries'))
-print('CANARY ' + json.dumps(result, sort_keys=True), flush=True)
+def main():
+    run = Path(os.environ['RUN'])
+    witnesses = sorted(run.rglob('host-prefix.c15.json'))
+    if not witnesses:
+        raise SystemExit('no host-prefix.c15.json under ' + str(run))
+    files = load(witnesses[0])['files']
+    receipt = load(files['receipt']['path'])
+    print('snapshot', files['snapshot']['path'], 'journal_count', receipt['journal_count'], 'records', receipt['records_in_prefix'], flush=True)
+    reader = FrankieCompactReader(files['snapshot']['path'], expected_count=receipt['journal_count'],
+                                  expected_head_hash=receipt['journal_head_hash'], workers=int(os.environ['WORKERS']))
+    builder = SimpleNamespace(_failed=False, chain=SimpleNamespace(next_cursor=receipt['records_in_prefix']), journal=reader)
+    cutoff = receipt['records_in_prefix'] - 1
+    summary, count, ordered, started = {}, 0, True, time.time()
+    for payload in parallel_journal_prefix(builder, cutoff, summary):
+        ordered = ordered and payload['cursor'] == count
+        count += 1
+        if count % 200000 == 0:
+            print('... %d payloads, %.0f s' % (count, time.time() - started), flush=True)
+    wall = time.time() - started
+    result = dict(schema='FRANKIE_PARALLEL_JOURNAL_CANARY_V1', wall_seconds=round(wall, 1), workers=len(reader.worker_cpus),
+                  payloads=count, expected_payloads=cutoff + 1, cursors_in_order=ordered and count == cutoff + 1,
+                  summary=summary, worker_cpu_seconds=round(reader.worker_cpu_seconds, 1))
+    serial = sorted(run.rglob('host-context-cache.c15.json'))
+    if serial:
+        value = load(serial[0])
+        result['serial_receipt'] = {k: value.get(k) for k in ('journal_prefix_hash', 'journal_entries', 'input_hash', 'consumed_rows')}
+        result['summary_matches_serial'] = (value.get('journal_prefix_hash') == summary.get('journal_prefix_hash')
+                                            and value.get('journal_entries') == summary.get('journal_entries'))
+    print('CANARY ' + json.dumps(result, sort_keys=True), flush=True)
+
+
+if __name__ == '__main__':
+    main()
 PY
+exec nice -n 5 /opt/frankie-box/venv/bin/python -B "$SCRIPT"
