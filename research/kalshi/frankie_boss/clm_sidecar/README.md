@@ -4,6 +4,12 @@ Greg, 2026-09-28: a quick version that sits by itself, learns from this Monday r
 a System One decision model (Stanford/NVIDIA CLM-8B on a frozen Qwen3-8B, Apache-2.0) can take Granite's decision
 calls. Rough by design. Nothing in the Frankie/BOSS runtime imports it or reads its outputs.
 
+## Where it is meant to go (D51, Greg 2026-09-28)
+A gate or filter on validated signals is where a System One model STARTS, not where it ends. It is meant to learn and
+be promoted per cell on forward evidence: GATE, then ADVISOR (predicts beside the incumbent, scored, never acted on),
+then DECIDER on the cells where it wins forward (out of sample, net of fee at maker and taker, paper then live). The
+same path applies to the trade-execution layer. This sidecar's forecast questions are the first ADVISOR-style scores.
+
 ## What it learns (both question sets, Greg's choice)
 All labels are computed by code from the real day's bedrock member rows (one row per F_LAST group). There is no
 synthetic data.

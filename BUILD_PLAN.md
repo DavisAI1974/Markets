@@ -73,7 +73,7 @@ That is how a real edge is kept, not thrown away.
 - **M. "They never stacked"** (l.124) + the `_markets_dipole_chunker_stack` concept (l.246) —
   the edge is in composing pieces others used singly.
 - **N. Order-flow DIVERGENCE + EXHAUSTION reversal detector (S36, `odcore/info_dipole.py`).** The raw
-  order-flow dipole `(buy−sell)/(buy+sell)` used NOT as a direction predictor but as a
+  order-flow dipole `(buy−sell)/(buy+sell)` used (for now; D51: a starting role, not the destination) NOT as a direction predictor but as a
   trend-continuation-vs-**FLIP** detector — the per-cell signal that fills the S35b "bleed" (the
   side-AGNOSTIC 128-dim coeff cannot encode direction). Frame: markets are mostly follow-the-leader (a
   trend = a flow) until the leader exhausts → new leader, usually opposite; the edge is detecting the
@@ -376,7 +376,8 @@ This is the order-flow dipole used the RIGHT way per Part E (raw level, not entr
 - **DISCIPLINE / what NOT to use:** the DIRECTIONAL probe (`cell_signal`/`DEPLOY`) is a TREND/base-rate
   ARTIFACT (Simpson's paradox on a 2-day trending window) — it shows +5..+11 "lift" that VANISHES under
   a window/forward sweep + temporal OOS + a detrended target. `DEPLOY_VALIDATED=False` — **do NOT trade
-  off it.** This REINFORCES Part E (the entropy dMI/dt flow is the wrong tool). The robust edge is the
+  off it** until it earns it: D51 (Greg, 2026-09-28) makes the gate its starting role, not its destination;
+  promotion to direction is per cell on forward evidence only (gate -> advisor -> decider). This REINFORCES Part E (the entropy dMI/dt flow is the wrong tool). The robust edge is the
   raw order-flow LEVEL divergence/flip read.
 - **NEXT (decisive, per `KICKOFF_2026-06-22_S36.md`):** net-of-cost backtest of the reversal gate **per
   cell** (a 64% hit-rate is only an EDGE if the moves beat fees+slippage; walk-forward); confirm on the

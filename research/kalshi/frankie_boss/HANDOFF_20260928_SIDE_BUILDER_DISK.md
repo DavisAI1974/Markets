@@ -120,3 +120,35 @@ Order after Greg's go:
    same CPUs (`frankie_box_bedrock_side.sh CPUS=1,...,15 SIBLINGS=1`, CODE_ROOT from the staging receipt).
 3. Restart ROOT on that same staged commit with the inputs above (legacy tables and sources reused; bedrock tables
    adopted from the side scratch).
+
+## UPDATE 2026-09-28 ~07:45Z: deployed, ROOT re-dispatched, CLM sidecar built
+- **Disk rescue ran (Greg's go).** The boothook measured the 461 GB: **plans.sqlite 44.4 GB, freq.sqlite 416.8 GB.** The
+  count pass filled the disk, as the review predicted. Those files were deleted; free disk was 461.3 GB afterwards.
+- **Lean writer deployed** (staged 60b8b8cd, side builder run 36386769736). All 18 bedrock tables were built and
+  inverse-proven in 24.6 min.
+  - bedrock.members: 1,535,939 rows, 1.0 GB, 18 min 10 s.
+  - Snapshot pass: 4 min 25 s, against 28 min 49 s on the old code.
+- **ROOT restart** (run 36389358724, 60b8b8cd) reused every layer and table, then stopped at assembly with `KeyError: 'kinds'`.
+  The resume receipt had no journal entry kinds. Fixed in 80f5c2c0. **5fb84365 was staged 07:40:24Z** and ROOT was
+  re-dispatched from it with the same inputs.
+- **CLM sidecar** (5fb84365; `research/kalshi/frankie_boss/clm_sidecar/README.md`): standalone and not wired in. The box
+  extract is queued behind ROOT (STAMP=monday-20260928a). After it finishes, dispatch the Pod step with
+  `DATASET_KEY=<manifest key> STAMP=monday-20260928a`.
+- **Decisions store drift (existing before this session, not fixed):** `DECISIONS.md` has lines the store lacks (for
+  example a second D49 on the CME trading day), so `store.py check --write` would silently drop them.
+  - D51 was added to the store, and its rendered line was appended to DECISIONS.md.
+  - Reconcile the drift by moving the md-only lines into the store before any `--write`.
+
+## Ideas, not directives (Greg, 2026-09-28)
+- If Granite still struggles, consider a System One decision model for its decision calls: TypeSafe **Jev** (closed,
+  API), or the open **Stanford/NVIDIA CLM-8B** (Apache-2.0, frozen Qwen3-8B plus trainable heads, so it can be
+  customised and pinned).
+  - An interpreter would render its typed decisions as text.
+  - Granite's prose roles (reading notes, merges, ledgers, narrative) would stay with an LLM.
+  - Map of Granite's roles against output types: see this session's analysis. The critic verdict, the classroom
+    claims, the dispositions and the accounting status are the bounded decisions.
+- The same model class fits the **trade-execution layer**: fire/hold, maker/taker, size bucket, cancel/replace.
+- **D51:** a gate is the STARTING role for these, and for the dipole direction map, not the destination. Promotion is
+  per cell on forward evidence: gate, then advisor, then decider. It is recorded in CLAUDE.md, BUILD_PLAN.md, the
+  decisions store and the signal_retest_registry policy. `odcore/info_dipole.py` is deliberately not edited: its bytes
+  are pinned in `DIPOLE_SHARED_CATALOG_20260922.json`, which principal inputs reads.

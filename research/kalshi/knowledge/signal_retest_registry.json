@@ -11,7 +11,8 @@
       "pass blind-wall and timestamp audits",
       "require forward evidence before restoring ownership"
     ],
-    "no_auto_resurrection": true
+    "no_auto_resurrection": true,
+    "starting_role_not_destination": "D51 (Greg, 2026-09-28): a gate/filter or SHADOW role is where a candidate STARTS, not its destination. Candidates are meant to learn and be promoted per cell on forward evidence: GATE (go/no-go on validated signals, logged against outcomes) -> ADVISOR (direction or size predicted beside the incumbent, scored, never acted on) -> DECIDER only on the cells where it wins forward, net of fee, paper then live; a gate everywhere else."
   },
   "candidates": [
     {
