@@ -230,7 +230,7 @@ def main():
     parser.add_argument('--source-pod', required=True)
     parser.add_argument('--runtime-configuration', required=True)
     parser.add_argument('--data-centers', default='')
-    parser.add_argument('--cost-ceiling', type=float, default=3.50)   # per hour; an H100 secure Pod, not the L40S's 1.25
+    parser.add_argument('--cost-ceiling', type=float, default=3.75)   # per hour; H100 secure Pods list 2.89-3.49 (2026-09-28), not the L40S's 1.25
     parser.add_argument('--wait-seconds', type=int, default=1800)
     parser.add_argument('--resume-pod', default='')
     parser.add_argument('--watch-pod', default='')

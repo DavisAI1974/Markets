@@ -18,7 +18,7 @@ on:
       cost_ceiling:
         description: 'Refuse a Pod priced above this per hour (the Pod is left as created and receipted; no stop)'
         required: false
-        default: '3.50'
+        default: '3.75'
       wait_seconds:
         description: 'Bootstrap watch horizon'
         required: false
