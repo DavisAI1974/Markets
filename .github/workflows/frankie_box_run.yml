@@ -50,7 +50,7 @@ concurrency:
   # Execution and staging share the serial lock. The explicit identity-bound pause
   # and CPU-affinity controls share a separate lock; neither can launch calculations. Inactive code staging has its own
   # lock (Greg, 2026-09-27): it only unpacks a new inactive checkout, so it need not wait behind a running ROOT.
-  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
+  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
   cancel-in-progress: false
 jobs:
   validate-staging-route:

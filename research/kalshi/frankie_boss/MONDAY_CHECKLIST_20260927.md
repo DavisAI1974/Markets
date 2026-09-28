@@ -31,6 +31,8 @@ work left on a single core; findings noted on the step's line before it runs.
 - [ ] Granite Pod up (fhiwwlouzyx6l2)
 - [ ] Launch (ACTION=launch; priming delivered in the first request; WAIT recorded)
 - [ ] Principal: reading
+      CPU probe while the principal runs (read-only, own lock): frankie_box_session_cpu.sh MODE=threads (per-thread
+      CPU, pins, classroom helper labels, latest files) or MODE=profile (20 s py-spy, heaviest functions per thread).
 - [ ] Principal: CLASSROOM (Dipole classroom)
 - [ ] Principal: TEACH (exhaustion teach-back)
 - [ ] Principal: writing
