@@ -116,3 +116,19 @@ model_calls 0), and the brain and docs carry them. Nothing needs rerunning:
 - the Monday runs never reached the principal.
 
 The rest of the Granite table waits on Greg. Next chat: `DROP_IN_20260928_GRANITE_DECOUPLE.md`.
+
+## Update: the build plan is the reference; unwired what is not in it (end of chat)
+**BUILD PLAN (reference for what runs): `research/kalshi/frankie_boss/artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`.**
+- Sheets: Read Me, Build Plans (A, B0, B1, B2_GATED), Components C01-C35, Roadmap, Experiment Arms, Gates, Sources, Preservation Audit, Change Log R4.
+- Granite in the plan:
+  - C35: Frankie's engine for the reading and the writing of his four files;
+  - C21-C24: the shadow critic, under a closed schema.
+- The classroom in the plan: C14/D5, the governed 19-dimension classroom with its 171 pairs, training-only.
+
+Unwired in commit 77948797, because each was added after R4:
+- the classroom scientific dialogue and the teacher discussion (config `classroom_scientific_dialogue: false`);
+- the joined teacher (`JOINED` refused);
+- the Granite teach-back (now code priming);
+- Jev and the CLM sidecar (not dispatched).
+
+Greg: rerun the Frankie part AND the classroom as r10. The step-by-step work instructions are in `DROP_IN_20260928_GRANITE_DECOUPLE.md`.

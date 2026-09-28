@@ -87,3 +87,43 @@ The rerun therefore runs, in order: verify, labels, engine, derive, reading, mer
 - The same Granite model plays every role, so agreement between roles is not independent confirmation.
 - `concurrent_teacher`: when the teacher fails to pickle it falls back to in-process. Keep that fallback, or make it a hard stop?
 - A full audit of anything still dropped or capped, across every process.
+
+## WORK INSTRUCTIONS FOR THE NEXT SESSION (do these, in order)
+The reference for what runs is the build plan, `research/kalshi/frankie_boss/artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`.
+- Sheets: Read Me, Build Plans, Components (C01-C35), Roadmap, Experiment Arms, Gates, Sources, Preservation Audit, Change Log R4.
+- Read it with openpyxl. Install it in the container first if it is missing: `pip install openpyxl`.
+- Anything not in it stays unwired unless Greg adds it to the plan.
+
+Every box step goes through `.github/workflows/frankie_box_run.yml`: inputs `script` and `variables`, dispatched on this branch.
+
+1. **Session start.**
+   - Run using-agent-skills.
+   - Fetch and check out `claude/frankie-monday-cycle-0-urozez`; confirm the tip is 77948797 or later.
+   - Read this drop-in and the build plan sheets Build Plans, Components and Gates.
+2. **Check what is running or billing (read-only), before anything else.** The earlier chat did not verify Pod state after stopping r9.
+   - The 4 A100 Pods from r6/r9 may still be up (about $6.36/h): BOSS kqp1qwzv6vo67a; readers x2vprjb4cs2ulu, mhj0jwod7yfdz5 and vbh922dqk8x2f9. Check them with the Runpod MCP (list pods) and `/opt/frankie-box/pods.json`.
+   - Check the box processes with `frankie_box_read_log.sh MODE=processes`.
+   - Report the state to Greg; never stop a Pod without his word.
+3. **Stage the tip, on Greg's go.** Script `deploy/aws/box/frankie_box_stage_code.sh`, variables `ACTION=stage`. Note the staged `CODE_ROOT` (`/opt/frankie-box/code/<sha>-<run>-1/markets`). Push nothing between staging and the dispatches below, or restage.
+4. **Build the r10 config.** Script `deploy/aws/box/frankie_box_cycle0.sh`, variables:
+   `ACTION=config CODE_ROOT=<staged> RUN_ID=monday-20211004-20260928-r10`
+   `PREPARED=/opt/frankie-box/work/trading-day-preparation/full-20211004-20260927-r6-48/prepared-configuration.json`
+   `PRINCIPAL=/opt/frankie-box/work/principal-inputs/full-20211004-20260928-v9-r2/principal-inputs-receipt.json`
+   `OUTPUT_ROOT=/opt/frankie-box/work/monday-run-config/full-20211004-20260928-r10`
+   Do not pass `JOINED`; it is refused. Confirm the config writes `classroom_scientific_dialogue: false`.
+5. **Launch, on Greg's go.** Same script, `ACTION=launch CODE_ROOT=<staged> CONFIGURATION=<r10 actual-host-configuration.json>`, timeout 43200.
+   - Attach the probe at launch and at every check-in: `frankie_box_progress.sh`, or `frankie_box_read_log.sh MODE=tail FILE=work/runs/monday-20211004-20260928-r10/host-progress/progress.json`.
+   - It prepares the context once (saved walk blocks and the concurrent teacher), builds a FRESH classroom package (the plan classroom, no shared knowledge), writes `execution/cycle-00/principal/session-request.json`, and stops at the WAIT (exit 3/4 is pending, not failure).
+6. **Principal (the Frankie part and the classroom).** Same script:
+   `ACTION=principal CODE_ROOT=<staged>`
+   `CALCULATIONS=/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48`
+   `REQUEST_DIRECTORY=/opt/frankie-box/work/runs/monday-20211004-20260928-r10/execution/cycle-00/principal`
+   Timeout 86400. Probe it. The stages are verify, labels, engine, derive, reading, merges, classroom (19 components and the summary), teach (code priming), writing and push.
+7. **Record, then the correction turn.** Use `ACTION=record TURN=initial`, then `ACTION=correction`, then `ACTION=record TURN=correction`. Take the variables from `frankie_box_cycle0.sh`: CONFIGURATION, CALCULATIONS and REQUEST_DIRECTORY. There is no scientific dialogue now; the correction is the plain classroom correction.
+8. **Do NOT dispatch:** Jev's relay, the CLM sidecar or the joined-teacher builder. They are unwired and not in the plan.
+9. Update this drop-in and the handoff with the run ids and probe readings, and push with `[skip ci]`.
+
+## Gotchas
+- A cycle0.sh dispatch refuses unless the staged commit equals the dispatch ref's tip.
+- Only ONE pending run per concurrency lock: a new box-run dispatch replaces a queued one.
+- r9's run dir (`/opt/frankie-box/work/runs/monday-20211004-20260928-r9`) is kept. Its walk blocks are saved in the journal's walk-cache and are reused by r10's walk: same journal, and the context walk declines duplicates.
