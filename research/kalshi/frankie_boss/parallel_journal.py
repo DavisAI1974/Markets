@@ -373,9 +373,17 @@ def parallel_walk(context):
             setattr(module, name, getattr(encoder, name))
     if teacher is not None:
         teacher.evidence_hash = _chain_hash_factory(teacher_hash)
+    # the R3 teacher's attachment: normalizer, targets and receipts across the CPUs (parallel_teacher.py)
+    teacher_class = getattr(teacher, 'JournalTeacherR3', None)
+    teacher_attach = teacher_class.attach if teacher_class is not None else None
+    if teacher_class is not None:
+        from .parallel_teacher import parallel_attach
+        teacher_class.attach = parallel_attach
     try:
         yield
     finally:
+        if teacher_class is not None:
+            teacher_class.attach = teacher_attach
         module.journal_prefix = original
         for name, value in zip(names, originals):
             setattr(module, name, value)
