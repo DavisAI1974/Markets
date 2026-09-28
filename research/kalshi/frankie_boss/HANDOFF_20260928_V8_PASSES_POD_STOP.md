@@ -11,6 +11,11 @@ Read first: `HANDOFF_20260928_TOKEN_STACKS.md` (the earlier record of the day).
 - No V8 canary.
 
 ## FIRST (Greg, 2026-09-28): switch the Granite Pod
+**Greg's decision (2026-09-28): Granite runs on a regular Pod, like the other jobs. NOT the expensive serverless
+endpoint.** The serverless reading lane must not be used: remove `/opt/frankie-box/serverless.json`
+(`frankie_box_serverless_config.sh ACTION=remove`, moved aside, receipted). Without that file the session reads on
+the Pod. Also make sure the serverless endpoint has 0 minimum workers, so it cannot bill. Both steps only on Greg's go.
+The options below are superseded by this decision; they are kept for the record.
 The expensive Granite setup is what must not run again by accident. The Jev (CLM) work is fine.
 1. Move Granite to a cheaper option (Greg to choose if not already stated):
    - (a) serverless only, min workers 0, pay only while reading;
