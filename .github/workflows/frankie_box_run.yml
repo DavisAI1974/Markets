@@ -423,7 +423,14 @@ jobs:
       - name: Job summary = the box output
         if: always()
         run: |
-          { echo "### $SCRIPT on $INSTANCE ($REGION), ref $GITHUB_SHA"; echo '```'; tail -c 60000 box-run-output.txt 2>/dev/null || echo "(no output)"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          # whole, never cut (Greg, 2026-09-28): a step summary holds up to 1 MiB; a larger output is named here and read
+          # whole in this job's log and in the box-run artifact
+          size=$(wc -c < box-run-output.txt 2>/dev/null || echo 0)
+          if [ "$size" -le 1000000 ]; then
+            { echo "### $SCRIPT on $INSTANCE ($REGION), ref $GITHUB_SHA"; echo '```'; cat box-run-output.txt 2>/dev/null || echo "(no output)"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            { echo "### $SCRIPT on $INSTANCE ($REGION), ref $GITHUB_SHA"; echo "The box output is $size bytes, over the 1 MiB step-summary limit: it is whole in this job's log (the 'Run the committed script on the box' step) and in the box-run artifact of this run."; } >> "$GITHUB_STEP_SUMMARY"
+          fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

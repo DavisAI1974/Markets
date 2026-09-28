@@ -145,8 +145,8 @@ report = dict(schema='FRANKIE_SESSION_CPU_V1', at=time.time(), seconds=round(ela
               sessions=[dict(pid=pid, command=command[:300]) for pid, command in sessions],
               processes=len(pids), process_cpu_percent={str(k): round(v, 1) for k, v in sorted(per_process.items(), key=lambda kv: -kv[1])},
               threads_total=len(rows), cores_busy=round(sum(r['cpu_percent'] for r in rows) / 100, 2),
-              single_core_hot=len([r for r in busy if r['cpu_percent'] >= 80]),
-              busiest=busy[:8], recent_files=recent[:4])
+              single_core_hot=[r for r in busy if r['cpu_percent'] >= 80],
+              busiest=busy, recent_files=recent)
 
 if mode == 'profile':
     out = Path('/opt/frankie-box/work/performance-session')
@@ -190,16 +190,15 @@ if mode == 'profile':
                     inclusive[frame] += weight
             if not total:
                 continue
-            def top(counter, n):
-                # compact rows (the SSM output is capped at 24,000 characters; every process must fit):
-                # 'file:line function percent'
-                return ['%s:%s %s %.1f' % ((frames[i].get('file') or '').rsplit('/', 1)[-1], frames[i].get('line'),
-                                           frames[i].get('name'), 100 * w / total) for i, w in counter.most_common(n)]
-            per_thread.append(dict(thread=(stream.get('name') or '')[:60], samples=total, leaf=top(leaves, 2), inclusive=top(inclusive, 4)))
+            def top(counter):
+                return [dict(function=frames[i].get('name'), file=(frames[i].get('file') or '')[-80:],
+                             line=frames[i].get('line'), percent=round(100 * w / total, 1))
+                        for i, w in counter.most_common(8)]
+            per_thread.append(dict(thread=stream.get('name'), samples=total, leaf=top(leaves), inclusive=top(inclusive)))
         per_thread.sort(key=lambda t: -t['samples'])
         # every sampled thread of every process (py-spy names each stream 'Process <pid> Thread <tid> ...'), so the
         # workers' stacks are read beside the main thread's
-        profiles.append(dict(pid=pid, path=str(path), streams=len(per_thread), threads=per_thread[:96]))
+        profiles.append(dict(pid=pid, path=str(path), streams=len(per_thread), threads=per_thread))   # every stream
     report['profile'] = profiles
-print(json.dumps(report, sort_keys=True, separators=(',', ':')))
+print(json.dumps(report, indent=1, sort_keys=True))    # whole: ssm_run_sh.py pages anything past 23,000 characters
 PY
