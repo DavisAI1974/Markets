@@ -126,4 +126,7 @@ Every box step goes through `.github/workflows/frankie_box_run.yml`: inputs `scr
 ## Gotchas
 - A cycle0.sh dispatch refuses unless the staged commit equals the dispatch ref's tip.
 - Only ONE pending run per concurrency lock: a new box-run dispatch replaces a queued one.
-- r9's run dir (`/opt/frankie-box/work/runs/monday-20211004-20260928-r9`) is kept. Its walk blocks are saved in the journal's walk-cache and are reused by r10's walk: same journal, and the context walk declines duplicates.
+- r9's run dir (`/opt/frankie-box/work/runs/monday-20211004-20260928-r9`) is kept.
+  - r9 ran code 222ac66b, which had no save code, so it left NO saved walk blocks. r10 does the first full walk and saves its blocks as it goes, into the journal's walk-cache.
+  - A stopped r10 resumes from them.
+  - The saved blocks need at least 30 GB free (`FRANKIE_WALK_CACHE_MIN_FREE_GB`).
