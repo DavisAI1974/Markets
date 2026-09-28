@@ -15,7 +15,7 @@ on:
         required: true
         default: 'inspect'
         type: choice
-        options: ['inspect', 'start', 'stop', 'terminate', 'restart']
+        options: ['inspect', 'list', 'start', 'stop', 'terminate', 'restart']
       wait_seconds:
         description: 'After an accepted start, poll the status transition for at most this long'
         required: false

@@ -78,13 +78,25 @@ def get_pod(key, pod_id):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pod', required=True)
-    parser.add_argument('--action', choices=('inspect', 'start', 'stop', 'terminate', 'restart'), default='inspect')
+    parser.add_argument('--action', choices=('inspect', 'list', 'start', 'stop', 'terminate', 'restart'), default='inspect')
     parser.add_argument('--wait-journal-key', default='')
     parser.add_argument('--wait-seconds', type=int, default=300)
     parser.add_argument('--retry-seconds', type=int, default=0)
     args = parser.parse_args()
     key = os.environ['RUNPOD_API_KEY']
 
+    if args.action == 'list':
+        # every Pod on the account with its status and hourly cost (read-only; Greg 2026-09-28: find anything billing)
+        status, data = control_call(key, 'GET', '/v2/pods')
+        if status != 200:
+            raise SystemExit('GET pods -> HTTP %d: %s' % (status, data[:2000].decode('utf-8', 'replace')))
+        pods = json.loads(data)
+        pods = pods.get('pods', pods) if isinstance(pods, dict) else pods
+        for p in pods:
+            print('POD %s status=%s cost=%s gpu=%s name=%s' % (p.get('id'), p.get('desiredStatus') or p.get('status'), p.get('costPerHr') or p.get('cost'),
+                                                           (p.get('gpu') or {}).get('id') if isinstance(p.get('gpu'), dict) else p.get('gpu'), p.get('name')))
+        print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_LIST_RECEIPT_V1', count=len(pods), at=int(time.time()))))
+        return
     pod = get_pod(key, args.pod)
     print('POD_STATE ' + json.dumps(scrub(pod), sort_keys=True))
     if args.action == 'inspect':
