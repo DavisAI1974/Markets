@@ -17,6 +17,7 @@ import json
 import multiprocessing
 import os
 from pathlib import Path
+import pickle
 import re
 import shutil
 import sqlite3
@@ -271,6 +272,7 @@ def _verify(job):
     lookup = _lookup_db(dictionary)
     prev_row, prev_values, prev_ints, prev_lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
     expected = iter(_source_rows(spec))
+    whole_derived = frozenset(c for c, mark in whole.items() if mark == '=')
     with Path(path).open('rb') as handle:
         handle.seek(offset)
         segment = handle.read(length).decode('utf-8')
@@ -280,7 +282,7 @@ def _verify(job):
     for i, line in enumerate(lines[:-1]):
         cells = TS._expanded(line, sep, kept)
         row = copy.deepcopy(constants)
-        derived_cols = {c for c, mark in whole.items() if mark == '='}
+        derived_cols = set(whole_derived)
         positional, paired = {}, {}
         for c, cell in zip(kept, cells):
             if cell == '?':
@@ -349,12 +351,7 @@ def _verify(job):
             raise ValueError('source rows shorter than table part') from error
         if not DG._same(DG._unflatten(row), dict(original)):
             raise ValueError(f'table {name} part row {i} does not round-trip')
-        for c, v in row.items():
-            prev_values[c] = v
-            if isinstance(v, int) and not isinstance(v, bool):
-                prev_ints[c] = v
-            if DG._int_list(v):
-                prev_lists[c] = v[0]
+        _fold((prev_values, prev_ints, prev_lists), row)
         prev_row = row
     if next(expected, None) is not None:
         raise ValueError('source rows longer than table part')
@@ -366,14 +363,12 @@ def _verify(job):
 
 def _checkpoint_key(name, specs):
     """A pass save point belongs to exactly this table's parts and this writer's code."""
-    import pickle
     return dict(schema='FRANKIE_PARALLEL_TABLE_PASSES_V1', name=name,
                 specs=hashlib.sha256(pickle.dumps(specs, protocol=4)).hexdigest(),
                 code=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
 
 
 def _load_checkpoint(scratch, key):
-    import pickle
     try:
         value = pickle.loads((scratch / 'passes.pkl').read_bytes())
     except (OSError, ValueError, EOFError, pickle.UnpicklingError):
@@ -382,7 +377,6 @@ def _load_checkpoint(scratch, key):
 
 
 def _save_checkpoint(scratch, key, passes):
-    import pickle
     tmp = scratch / 'passes.pkl.tmp'
     with tmp.open('wb') as handle:
         pickle.dump(dict(key=key, passes=passes), handle, protocol=4)
@@ -436,7 +430,8 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         for s in snaps:
             seeds.append((prev, dict(state[0]), dict(state[1]), dict(state[2])))
             if s['n']:
-                state[0].update(s['state'][0]); state[1].update(s['state'][1]); state[2].update(s['state'][2])
+                for folded, part in zip(state, s['state']):
+                    folded.update(part)
                 prev = s['last']
 
         def plan():
@@ -656,7 +651,6 @@ def sources_code():
     """The code whose change could change sources.sqlite or the rows read from it: the merge (MERGE_CODE, which also
     covers layer preparation), the per-layer copy, the row queries and readers. BedrockSources.__init__ is not keyed
     here: since b35e79b7 it differs only by the save-point identity it passes to _merge_sharded (2026-09-27)."""
-    import hashlib
     import inspect
     import frankie_box_digest_sources as S
     code = dict(S.merge_shard_key([])['code'])
