@@ -4,15 +4,16 @@
 # frankie_box_root_cpu.sh) with the heaviest functions per thread. No signals, no pinning, no writes except the
 # profile output under /opt/frankie-box/work/performance-session/.
 set -eu
-MODE="${MODE:-threads}"; SECONDS_WINDOW="${WINDOW:-10}"
+MODE="${MODE:-threads}"; SECONDS_WINDOW="${WINDOW:-10}"; TARGET_PID="${PID:-0}"
 case "$MODE" in threads|profile) ;; *) echo "MODE must be threads or profile" >&2; exit 2;; esac
+case "$TARGET_PID" in *[!0-9]*) echo "PID must be an integer" >&2; exit 2;; esac
 case "$SECONDS_WINDOW" in ''|*[!0-9]*) echo "WINDOW must be an integer" >&2; exit 2;; esac
 export PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1
-exec /opt/frankie-box/venv/bin/python -I -S -B - "$MODE" "$SECONDS_WINDOW" <<'PY'
+exec /opt/frankie-box/venv/bin/python -I -S -B - "$MODE" "$SECONDS_WINDOW" "$TARGET_PID" <<'PY'
 import collections, hashlib, io, json, os, subprocess, sys, time, urllib.request, zipfile
 from pathlib import Path
 
-mode, window = sys.argv[1], max(2, min(60, int(sys.argv[2])))
+mode, window, target = sys.argv[1], max(2, min(60, int(sys.argv[2]))), int(sys.argv[3])
 tick = os.sysconf('SC_CLK_TCK')
 
 def stat(path):
@@ -25,9 +26,15 @@ def comm(path):
     except OSError:
         return '?'
 
-# The principal session: frankie_box_boss_session.py, plus any spawn children it owns.
+# The principal session: frankie_box_boss_session.py, plus any spawn children it owns. PID=<n> probes any one
+# frankie-box Python process instead (e.g. a ROOT digest helper).
 sessions = []
-for proc in Path('/proc').iterdir():
+if target:
+    command = (Path('/proc') / str(target) / 'cmdline').read_bytes().replace(b'\0', b' ').decode(errors='replace')
+    if '/opt/frankie-box/' not in command or 'python' not in command:
+        raise SystemExit('PID must be a frankie-box Python process')
+    sessions.append((target, command))
+for proc in ([] if target else Path('/proc').iterdir()):
     if not proc.name.isdigit():
         continue
     try:
