@@ -64,3 +64,22 @@ Nothing is running or billing from this session.
   - The limit is per call: 131,072 tokens of context, about 87,000 of input per part.
   - Larger material is read whole, in consecutive parts. The Monday digest was read in 4 parts, and the shared research is read the same way.
   - What grows with size is the number of calls, which means cost and time. The bedrock's about 3.8 GB would be thousands of parts. That is why the bedrock is a teacher tool read by code, not a Frankie read.
+
+## Update: what Frankie's knowledge base holds, and the open role question (Greg, after the handoff)
+Greg: "Frankie gets all the calcs added to his knowledge base so the tables are redundant anyway. We want bedrock to
+keep some priming for his pump but maybe that was the wrong direction anyway. We'll have to look at what his exact role
+is and cater the prime to exactly that."
+
+What the brain entry holds, per `frankie_box_brain.write_entry`:
+- The derivation digest. Since V9 it carries the 5 legacy tables only; the bedrock tables are not rendered.
+- The accounting entry and the ledgers, `analysis.md`, `derive.md` (the status, producer and hash of every layer), and the comparison packet.
+- The classroom teach-back and the exhaustion/D teach-back.
+- The bedrock traversal receipt.
+- A listing of `work/derived` (names, bytes and sha256 only).
+- The frozen learned-structure files, via the frozen entry.
+
+So the bedrock layer CONTENTS are not in his knowledge base. What primes him from the bedrock is:
+- the exhaustion/D teach-back (facts computed by code: D-depth histogram, ancestry gaps, clock order, families, candidate lane);
+- the frozen learned-structure text for the four D/exhaustion layers.
+
+Open, before the next build: define Frankie's exact role, then cater the prime to it. That covers the teach-back facts, which frozen files, and whether the joined-teacher couplings feed him at all. The joined teacher build (dfe08ca7) stays unrun until then.
