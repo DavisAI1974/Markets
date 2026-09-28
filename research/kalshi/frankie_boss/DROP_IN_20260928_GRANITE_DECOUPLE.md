@@ -16,8 +16,27 @@ Rules:
 - Zero data dropped; no caps; no truncation; nothing normalized or averaged. Unknown or incomplete data is listed.
 - Duplicate data declines the run, with the reason.
 - Keys are secrets.
-Next: agree Frankie's role with Greg (the Granite table below), build the code side of it, then r10 on his go.
+Next: rerun the Frankie part AND the classroom as r10 on the build-plan wiring (Greg: "Unwire everything that isn't in
+the build plan and we rerun Frankie part in new chat"; "we'll have to rerun classroom too"), each step on Greg's go.
 ```
+
+## UNWIRED at the end of the chat (Greg: only what is in the build plan runs)
+The build plan is `research/kalshi/frankie_boss/artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`. Its Granite roles:
+- C35: Frankie's engine for reading the delivered evidence and writing the four files;
+- C21-C24: the shadow critic, under a closed schema;
+- C14/D5: the governed 19-dimension classroom with its 171 pairs, training-only.
+
+Unwired, because each was added after the plan (the code stays and is only disconnected):
+- **The scientific-teacher dialogue and the BOSS-teacher discussion** (added 2026-09-22):
+  - `run_actual_sunday_classroom` builds the classroom package WITHOUT shared knowledge unless the config says `classroom_scientific_dialogue: true`. The host config writes `false`.
+  - The adapter and `make_principal_adapter` accept a plan classroom that carries none.
+  - The principal still gets its shared-knowledge snapshot: in single-run mode it is Frankie's own knowledge manifest (brain entries plus the 18 preserved sections).
+  - Result: the box classroom takes the plain path (19 components on the reading lane, the summary on the BOSS), and the correction is the plain classroom correction, with no scientific request.
+- **The joined teacher data**: `ACTION=config JOINED=...` is refused.
+- **The Granite exhaustion/D teach-back**: now code-only priming.
+- **Jev's sit-in relay and the CLM sidecar**: never part of the principal; simply do not dispatch them.
+
+The rerun therefore runs, in order: verify, labels, engine, derive, reading, merges, the governed classroom, the teach priming (code), writing, push, the correction. The Granite role table below is a later proposal and does not apply to this rerun.
 
 ## Greg's direction this chat (the load-bearing part)
 - **Granite is a small piece of Frankie: a reasoning boost, nothing else.** Frankie is the system (code, calculations,
@@ -48,7 +67,8 @@ Next: agree Frankie's role with Greg (the Granite table below), build the code s
 4. **r9 is stopped and its data kept**, along with every fix since: the single-read walk, the concurrent teacher, the uncapped teacher, the parts-not-truncation notes, and the duplicate refusal. See the handoff.
 
 ## NEXT (in order, each on Greg's word)
-1. **Agree the Granite role table with Greg.** It is in the handoff under "Granite is a reasoning boost". The proposal:
+0. **The r10 rerun of the Frankie part and the classroom, on the plan wiring** (step 4 below), first.
+1. **Later, not for this rerun: agree the Granite role table with Greg.** It is in the handoff under "Granite is a reasoning boost". The proposal:
    - To code: the reading notes (the data is already exact), the merges (line dedupe), the classroom observation transcription, and the accounting entry plus the ten ledgers.
    - Stays Granite: novel findings, the run analysis, the correction turn, the scientific teacher, the BOSS teacher and Frankie's replies.
    - The whole-corpus staged re-reads before each role are replaced by inputs that code selects for each question.
@@ -60,8 +80,7 @@ Next: agree Frankie's role with Greg (the Granite table below), build the code s
    - `PRINCIPAL=/opt/frankie-box/work/principal-inputs/full-20211004-20260928-v9-r2/principal-inputs-receipt.json`
    - `RUN_ID=monday-20211004-20260928-r10`
    - `OUTPUT_ROOT=/opt/frankie-box/work/monday-run-config/full-20211004-20260928-r10`
-   - `JOINED=...` only if the joined teacher has run.
-   Then the launch and the principal, with probes, and Jev's relay pointed at r10's request dir. **Do not resend the dipole catalog.**
+   Then the launch and the principal, with probes on both. No Jev relay (unwired). **Do not resend the dipole catalog.**
 
 ## Open calls for Greg (carried)
 - Replacing the classroom's 171 pooled Pearson pairs in the grading key.

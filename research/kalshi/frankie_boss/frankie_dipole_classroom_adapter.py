@@ -44,7 +44,8 @@ class DipoleClassroomPrincipalAdapter(FrankiePrincipalAdapter):
         if shared_knowledge is not None:
             from .dipole_shared_knowledge import validate_descriptor
             shared_knowledge=validate_descriptor(shared_knowledge)
-            if self.classroom_package['pre_message'].get('shared_knowledge')!=shared_knowledge:
+            carried=self.classroom_package['pre_message'].get('shared_knowledge')
+            if carried is not None and carried!=shared_knowledge:      # a plan classroom carries none (no scientific dialogue)
                 raise ValueError('principal and teacher research snapshots differ')
         self.shared_knowledge=shared_knowledge
         # the joined teacher data (SPEC-joined-teachers.md): host configuration {directory, manifest_sha256}, re-hashed here;

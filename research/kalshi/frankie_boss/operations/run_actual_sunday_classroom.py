@@ -197,7 +197,10 @@ class ClassroomActualHost(base.ActualHost):
             history=self._history(index),
             prior_grade=prior_grade,
             learning_history=learned,
-            shared_knowledge=self._shared_knowledge(),
+            # the build plan (R4) classroom: the governed 19-dimension classroom only. The scientific-teacher dialogue and
+            # the teacher discussion (added after the plan) ride the shared knowledge only when the configuration says so
+            # (Greg, 2026-09-28: unwire everything that is not in the build plan)
+            shared_knowledge=self._shared_knowledge() if self.config.get('classroom_scientific_dialogue') is True else None,
         )
         if tuple(package["source"]["context_cursors"]) != tuple(
             self.cache.receipt["context_cursors"]

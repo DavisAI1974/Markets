@@ -131,7 +131,8 @@ def make_principal_adapter(*, binding, handoff_directory, expected_manifest_sha2
     if shared_knowledge is not None:
         from .dipole_shared_knowledge import validate_descriptor
         shared_knowledge=validate_descriptor(shared_knowledge)
-        if classroom_package['pre_message'].get('shared_knowledge')!=shared_knowledge:
+        carried=classroom_package['pre_message'].get('shared_knowledge')
+        if carried is not None and carried!=shared_knowledge:      # a plan classroom carries none (no scientific dialogue)
             raise ValueError('principal and classroom shared knowledge differ')
     elif classroom_package['pre_message'].get('shared_knowledge') is not None:
         raise ValueError('shared classroom knowledge requires an explicit principal binding')

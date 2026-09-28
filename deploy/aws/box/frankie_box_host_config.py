@@ -74,12 +74,12 @@ def build(prepared_path, principal_path, commit, run_id, output_root, completion
     for key in ('calculation_pins', 'shared_knowledge', 'principal_admission'):
         if key in principal:
             config[key] = principal[key]
+    # the build plan (R4): the classroom is the governed 19-dimension classroom; the scientific dialogue, the teacher
+    # discussion and the joined teacher data (added after the plan) stay unwired unless switched on here
+    config['classroom_scientific_dialogue'] = False
     config.pop('joined_teacher', None)
     if joined_manifest:
-        # the joined teacher data (SPEC-joined-teachers.md): read by both teachers through the scientific request
-        manifest = Path(joined_manifest).resolve()
-        config['joined_teacher'] = dict(directory=str(manifest.parent),
-                                        manifest_sha256=hashlib.sha256(manifest.read_bytes()).hexdigest())
+        raise SystemExit('the joined teacher data is unwired (not in the build plan R4); JOINED is refused')
     output.parent.mkdir(parents=True, exist_ok=True)
     output.mkdir(mode=0o700)
     path = output / 'actual-host-configuration.json'
