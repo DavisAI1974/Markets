@@ -99,6 +99,8 @@ def _code_identity():
                       ('document.per_second_rows', per_second_rows), ('document._bedrock_table_job', _bedrock_table_job),
                       ('parallel._source_rows', P._source_rows)):
         code[name] = hashlib.sha256(inspect.getsource(obj).encode()).hexdigest()
+    # the member path correction the parallel row reader applies (a module constant, so not in _source_rows' source)
+    code['parallel.MEMBER_LIST_PATHS'] = hashlib.sha256(json.dumps(sorted(P.MEMBER_LIST_PATHS.items())).encode()).hexdigest()
     return code
 
 

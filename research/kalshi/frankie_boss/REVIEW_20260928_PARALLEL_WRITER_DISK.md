@@ -107,3 +107,28 @@ boothook should:
    `passes.pkl`.
 
 The rest of the handoff stands: it is still a box power action, and it needs Greg's go.
+
+## 6. Status (later 2026-09-28): fixes built, then a second, independent review
+All of sections 3-5 are built: commits 24a7a4f7, and the follow-up commit carrying this section, on
+`claude/frankie-monday-continuation-qlkvqr`. The ask ladder is carried as `book_full.ask_levels_full[]#count`
+(Greg: the whole ladder was not intended). The handoff's UPDATE section lists what changed and the dispatch order.
+
+A fresh-context code-reviewer pass on 24a7a4f7 (read-only; it compared the new writer with `TS.write_table` on generic
+inline rows in its sandbox: 384/390 byte-identical, and every failure was the 1-row case below) found:
+- **Critical, fixed:** `_final` refused every table whose columns are all constant or derived (every 1-row table:
+  `bedrock.run`, `bedrock.matching_rule.*`). ROOT would have failed on its first bedrock table. The check now tests the
+  cells themselves; an empty row line is what the serial writer writes.
+- **Fixed:**
+  - `MEMBER_LIST_PATHS` is now in the table save key (`_code_identity`).
+  - A corrected column that meets a column already read now refuses on conflict instead of being silently overwritten.
+  - The coordinator's table-wide facts (`_seeds`, `_table_facts`, `_separator`) are named helpers keyed with their passes.
+  - Disk checks before the copy's header and dictionary, and before the proof's dictionary load.
+  - Queued parts check disk first (they fail fast after a `DiskReserve` stop).
+  - The unused plan bound is removed.
+  - The destination directory is created.
+  - `tests/test_digest_save_points.py` is updated to the legacy-key behaviour (not run: Greg's rule).
+- **Accepted, recorded:**
+  - Every bedrock table rebuilds this time, because its key carries the whole code identity. None was saved, so
+    nothing is lost.
+  - A fix to `_copy` after the copy is saved re-plans the table, because the dictionary and counts are deleted by
+    then. That is the price of the disk policy.

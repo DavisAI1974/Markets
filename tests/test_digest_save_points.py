@@ -107,10 +107,19 @@ def test_changed_context_database_is_rebuilt(tmp_path, written):
 def test_code_identity_change_rebuilds(tmp_path, written, monkeypatch):
     run(tmp_path, 'a')
     identity = D._code_identity()
-    monkeypatch.setattr(D, '_code_identity', lambda: dict(identity, changed='1'))
+    monkeypatch.setattr(D, '_code_identity', lambda: dict(identity, **{'frankie_box_digest_stream.py': 'changed'}))
     written.clear()
     run(tmp_path, 'b')
     assert len(written) == 5
+
+
+def test_a_bedrock_only_code_change_keeps_the_legacy_tables(tmp_path, written, monkeypatch):
+    run(tmp_path, 'a')
+    identity = D._code_identity()
+    monkeypatch.setattr(D, '_code_identity', lambda: dict(identity, **{'parallel._source_rows': 'changed'}))
+    written.clear()
+    run(tmp_path, 'b')
+    assert written == []
 
 
 def test_code_identity_covers_the_format_and_the_row_producing_code():

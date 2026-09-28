@@ -91,7 +91,12 @@ def _source_rows(spec):
                     value = S._decoded(payload)
                     if column in MEMBER_LIST_PATHS:
                         column, value = MEMBER_LIST_PATHS[column] + '#count', DG._leaf_count(value)
-                    flat[column] = DG._spell(value)
+                    value = DG._spell(value)
+                    if column in flat:            # only a corrected path can meet a column already read
+                        if not DG._same(flat[column], value):
+                            raise ValueError('conflicting reduced member column %s in group %s' % (column, key))
+                        continue
+                    flat[column] = value
                 yield DG._nest(flat)
             return
         excluded = spec['excluded']
@@ -194,6 +199,7 @@ def _plan(job):
     the held table for the merge to count only if the column is kept table-wide. Positions run over every candidate in
     row-major order, so the first-occurrence order of the kept candidates is the serial one."""
     spec, directory, columns, seed, first = job
+    _room(directory)
     prev, values, integers, lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
     width = len(columns)
     derived, constant = [True] * width, [True] * width
@@ -223,7 +229,7 @@ def _plan(job):
             entry[0] += count
             entry[1] = min(entry[1], position)
 
-    position, bound = 0, 0
+    position = 0
     for row in _source_rows(spec):
         flat = DG._flatten(dict(row))
         cells = DG._plan_row(flat, columns, prev, values, integers, lists)
@@ -239,10 +245,7 @@ def _plan(job):
                     add(key, count, at)
                 held[j] = {}
             if kind != 'lit':
-                spelled = json.dumps(text) if kind == 'str' else text
-                # the final cell is `@n` (at most 12 bytes), `S` text or `J` spelling: an upper bound of the row text
-                bound += max(len(spelled) + 1, 12) + 1
-                key = _digest(spelled)
+                key = _digest(json.dumps(text) if kind == 'str' else text)
                 if candidate:
                     entry = held[j].get(key)
                     if entry is None:
@@ -252,9 +255,7 @@ def _plan(job):
                 else:
                     add(key, 1, position)
                 position += 1
-                continue
-            bound += len(text) + 1
-            if DG._INT_CELL.fullmatch(text):
+            elif DG._INT_CELL.fullmatch(text):
                 k, _ = scale_state[j]
                 value, z = abs(int(text)), 0
                 if value:
@@ -269,7 +270,7 @@ def _plan(job):
                    ((j, key, count, at) for j, h in enumerate(held) for key, (count, at) in sorted(h.items())))
     db.commit()
     db.close()
-    return dict(derived=derived, constant=constant, scales=scale_state, bound=bound)
+    return dict(derived=derived, constant=constant, scales=scale_state)
 
 
 # ---- phase 3: merge (coordinator, digests only) ---------------------------------------------------------------------
@@ -327,6 +328,7 @@ def _final(job):
     lookup = _lookup_db(dictionary)
     has_space, named = False, start
     directory = Path(directory)
+    _room(directory)
     with (directory / 'rows.txt').open('w', encoding='utf-8', newline='\n') as rows, \
             (directory / 'names.txt').open('w', encoding='utf-8', newline='\n') as names:
         for i, row in enumerate(_source_rows(spec)):
@@ -357,9 +359,9 @@ def _final(job):
                 else:
                     out.append('J' + text)
             out = DG._collapse(out)
-            line = '\t'.join(out)
-            if line.count('\t') != len(out) - 1 or '\n' in line:
+            if any('\t' in cell or '\n' in cell for cell in out):
                 raise ValueError('a table cell holds a tab or a newline')
+            line = '\t'.join(out)          # empty when every column is constant or derived, as the serial writer writes it
             has_space = has_space or ' ' in line
             rows.write(line + '\n')
         for handle in (rows, names):
@@ -488,11 +490,11 @@ def _pass_code():
     import inspect
     import frankie_box_digest_sources as S
     base = [hashlib.sha256(Path(m.__file__).read_bytes()).hexdigest() for m in (TS, DG)]
-    passes = (('snapshot', (_readonly, _source_rows, _fold, _snapshot, S._decoded, S._compare_groups)),
-              ('plan', (_part_db, _digest, _plan)),
+    passes = (('snapshot', (_readonly, _source_rows, _fold, _snapshot, S._decoded, S._compare_groups, _seeds)),
+              ('plan', (_part_db, _digest, _plan, _table_facts)),
               ('merge', (_merge,)),
               ('final', (_lookup_db, _final)),
-              ('copy', (_copy,)))
+              ('copy', (_separator, _copy)))
     digest, out = hashlib.sha256(json.dumps([base, sorted(MEMBER_LIST_PATHS.items())]).encode()), {}
     for label, functions in passes:
         for function in functions:
@@ -531,11 +533,47 @@ def _save_checkpoint(scratch, key, code, passes):
     os.replace(tmp, scratch / 'passes.pkl')
 
 
+def _seeds(snaps):
+    """The table's columns (first-seen order over the parts), row count and first row, and each part's planner seed
+    (the previous row and the last value / integer / list head per column before the part), from the snapshots."""
+    columns = {}
+    for s in snaps:
+        for c in s['columns']:
+            columns.setdefault(c, None)
+    n = sum(s['n'] for s in snaps)
+    first = next((s['first'] for s in snaps if s['n']), None) or {}
+    seeds, state, prev = [], ({}, {}, {}), None
+    for s in snaps:
+        seeds.append((prev, dict(state[0]), dict(state[1]), dict(state[2])))
+        if s['n']:
+            for folded, part in zip(state, s['state']):
+                folded.update(part)
+            prev = s['last']
+    return list(columns), n, first, seeds
+
+
+def _table_facts(columns, n, planned):
+    """The derived ('=') and constant ('^') columns, the kept column indexes and the scales, as the serial pass decides
+    them over the whole table, from every part's flags and scale states."""
+    derived = {c: all(f['derived'][j] for f in planned) for j, c in enumerate(columns)}
+    constant = {c: all(f['constant'][j] for f in planned) for j, c in enumerate(columns)}
+    whole = {c: '=' if derived[c] else '^' for c in columns if n and (derived[c] or constant[c])}
+    kept = [j for j, c in enumerate(columns) if c not in whole]
+    scale_state = {j: [min(f['scales'][j][0] for f in planned), any(f['scales'][j][1] for f in planned)] for j in kept}
+    scales = {columns[j]: 10 ** k for j, (k, seen) in scale_state.items() if seen and k >= DG.SCALE_MIN}
+    return whole, kept, scales
+
+
+def _separator(finals):
+    return '\t' if any(f['has_space'] for f in finals) else ' '
+
+
 def _copy(destination, name, n, columns, whole, first, scales, sep, parts, sizes):
     """The table: header, constants, scales, the dictionary (each part's names in part order, numbers checked
     consecutive), then every part's rows. Each part's row text is deleted as soon as it is appended (the disk holds the
     table plus one part, never the table twice); an interrupted copy therefore reruns the final pass."""
     destination.unlink(missing_ok=True)       # an unsaved partial table from an interrupted copy
+    _room(destination.parent, sum((p / 'names.txt').stat().st_size for p in parts))   # the dictionary text, at most
     with destination.open('x', encoding='utf-8', newline='\n') as handle:
         handle.write(f'### table {name}: {n} rows, sep={"space" if sep == " " else "tab"}, columns: ')
         handle.write('\t'.join(whole.get(c, '') + c for c in columns) + '\n')
@@ -585,6 +623,7 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     the same scratch directory resumes at the first pass not saved under the current code. A pass's files are deleted
     only once the pass that reads them is saved."""
     destination = Path(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
     scratch = Path(scratch_directory)
     key, code = _checkpoint_key(name, specs), _pass_code()
     passes = _load_checkpoint(scratch, key, code) if scratch.is_dir() else None
@@ -632,31 +671,13 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     with _pool(cpus) as pool:
         _room(scratch)
         snaps = step('snapshot', lambda: list(pool.map(_snapshot, [(spec, str(p)) for spec, p in zip(specs, parts)])))
-        columns = {}
-        for s in snaps:
-            for c in s['columns']:
-                columns.setdefault(c, None)
-        columns = list(columns)
-        n = sum(s['n'] for s in snaps)
-        first = next((s['first'] for s in snaps if s['n']), None) or {}
-        seeds, state, prev = [], ({}, {}, {}), None
-        for s in snaps:
-            seeds.append((prev, dict(state[0]), dict(state[1]), dict(state[2])))
-            if s['n']:
-                for folded, part in zip(state, s['state']):
-                    folded.update(part)
-                prev = s['last']
+        columns, n, first, seeds = _seeds(snaps)
 
         def plan():
             drop('freq.sqlite')
             return list(pool.map(_plan, [(spec, str(p), columns, seed, first) for spec, p, seed in zip(specs, parts, seeds)]))
         planned = step('plan', plan)
-        derived = {c: all(f['derived'][j] for f in planned) for j, c in enumerate(columns)}
-        constant = {c: all(f['constant'][j] for f in planned) for j, c in enumerate(columns)}
-        whole = {c: '=' if derived[c] else '^' for c in columns if n and (derived[c] or constant[c])}
-        kept = [j for j, c in enumerate(columns) if c not in whole]
-        scale_state = {j: [min(f['scales'][j][0] for f in planned), any(f['scales'][j][1] for f in planned)] for j in kept}
-        scales = {columns[j]: 10 ** k for j, (k, seen) in scale_state.items() if seen and k >= DG.SCALE_MIN}
+        whole, kept, scales = _table_facts(columns, n, planned)
 
         numbering = step('merge', lambda: _merge(parts, dictionary, kept))
         drop('freq.sqlite')                   # numbered and saved: the parts' counts are no longer needed
@@ -670,7 +691,7 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         if sum(f['named'] for f in finals) != numbering['total']:
             raise ValueError('table %s: the parts named %d dictionary entries, the merge numbered %d'
                              % (name, sum(f['named'] for f in finals), numbering['total']))
-        sep = '\t' if any(f['has_space'] for f in finals) else ' '
+        sep = _separator(finals)
         sizes = [f['size'] for f in finals]
 
     copied = passes.get('copy')
@@ -696,6 +717,7 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
     if inverse.exists():
         shutil.rmtree(inverse)                # an interrupted proof is redone whole
     inverse.mkdir()
+    _room(inverse, 2 * (offsets[0] if offsets else destination.stat().st_size))   # the parsed dictionary, indexed
     vdb = sqlite3.connect(inverse / 'table.sqlite')
     with destination.open(encoding='utf-8', newline='') as reader:
         tokens = TS._Tokens(reader)

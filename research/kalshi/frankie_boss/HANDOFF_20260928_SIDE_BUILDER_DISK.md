@@ -111,6 +111,9 @@ What changed (branch `claude/frankie-monday-continuation-qlkvqr`):
   (the 461 GB byte split), deletes only those stage files, and marks itself done. `frankie_box_console.sh` also shows
   its lines.
 
+Second review (fresh context), all fixed in the follow-up commit: a Critical crash on 1-row tables (`bedrock.run`), plus
+key coverage, a conflict check and disk checks. See section 6 of the review.
+
 Order after Greg's go:
 1. Disk rescue (above). Then `frankie_box_disk_usage.sh` (read-only) for free disk.
 2. Stage the tip (`frankie_box_stage_code.sh ACTION=stage`), then relaunch the side builder from the SAME commit on the
