@@ -142,20 +142,23 @@ def plan_sources(sources, header_factory, token_counter, input_budget, *, bindin
                 fit = 0 if measure(0) else None
             else:
                 fit, fail = None, None
+                # The fixed wrapper/header tokens do not scale with the text: the rate counts the text's tokens only.
+                empty = measure(0)
+                wrap = empty[5] if empty is not None else 0
                 take = max(1, min(guess, rest))
                 for _ in range(12):
                     result = measure(take)
                     if result is not None:
                         fit = take if fit is None else max(fit, take)
-                        if fit == rest:
+                        if fit == rest or result[5] >= int(input_budget * 0.99):
                             break
                     else:
                         fail = take if fail is None else min(fail, take)
                     if fit is not None and fail is not None and fail - fit <= max(1, fit // 100):
                         break
                     if result is not None:
-                        rate = take / max(1, result[5])
-                        target = int(rate * input_budget * 0.995)
+                        rate = take / max(1, result[5] - wrap)
+                        target = int(rate * (input_budget - wrap) * 0.995)
                     else:
                         target = take // 2 if fit is None else fit + (fail - fit) // 2
                     low = fit + 1 if fit is not None else 1
@@ -199,21 +202,16 @@ def plan_sources(sources, header_factory, token_counter, input_budget, *, bindin
 _VALIDATED = {}
 
 
-def _part_index(manifest):
-    entry = _VALIDATED.get(id(manifest))
-    if entry is None or entry[0] is not manifest:
-        return None
-    return entry[3]
-
-
 def _validate_manifest(manifest):
-    entry = _VALIDATED.get(id(manifest))
+    """Validate once per manifest object (one slot); returns the part index by part_id."""
+    entry = _VALIDATED.get('last')
     if (entry is not None and entry[0] is manifest and isinstance(manifest, dict)
             and entry[1] == manifest.get("plan_hash") and entry[2] == len(manifest.get("parts") or ())):
-        return
+        return entry[3]
     _validate_manifest_full(manifest)
-    _VALIDATED[id(manifest)] = (manifest, manifest["plan_hash"], len(manifest["parts"]),
-                                {p["part_id"]: p for p in manifest["parts"]})
+    index = {p["part_id"]: p for p in manifest["parts"]}
+    _VALIDATED['last'] = (manifest, manifest["plan_hash"], len(manifest["parts"]), index)
+    return index
 
 
 def _validate_manifest_full(manifest):
@@ -274,10 +272,9 @@ def validate_part(manifest, part_id, receipt):
     The caller must construct provider_job from the retained real transport
     outcome. These pure checks do not independently authenticate a provider.
     """
-    _validate_manifest(manifest)
+    index = _validate_manifest(manifest)
     try:
-        index = _part_index(manifest)
-        part = index[part_id] if index is not None else next(p for p in manifest["parts"] if p["part_id"] == part_id)
+        part = index[part_id]
         if (receipt["part_id"] != part_id or receipt["binding"] != manifest["binding"]
                 or receipt["plan_hash"] != manifest["plan_hash"]
                 or receipt["source_offset"] != part["source_offset"]):

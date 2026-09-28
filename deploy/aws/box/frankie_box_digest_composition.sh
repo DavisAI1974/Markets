@@ -23,13 +23,33 @@ HEX = re.compile(r'^[0-9a-f]{16,}$')
 NUM = re.compile(r'^-?[0-9]+(\.[0-9]+)?([eE][-+]?[0-9]+)?$')
 
 def kind(cell):
+    """Classify a DIGEST_V6 cell by its grammar prefix (frankie_box_digest_render / digest_stream)."""
     if cell == '?': return 'absent'
-    if cell.startswith('='): return 'derived'
-    if cell.startswith('@') and cell[1:].isdigit(): return 'dict_ref'
-    if HEX.match(cell): return 'hex'
+    if cell in ('^', '='): return 'same_or_derived'
+    if cell == '-': return 'none'
+    if cell in ('T', 'F'): return 'bool'
+    head = cell[:1]
+    if head == '@' and cell[1:].isdigit(): return 'dict_ref'
+    if head in '+' or (head == '-' and cell[1:].replace('.', '', 1).isdigit()): return 'delta_or_negative'
+    if head == '~': return 'paired_offset'
+    if head in 'SJIKU' and len(cell) > 1: return {'S': 'string', 'J': 'json', 'I': 'int_list', 'K': 'positions', 'U': 'tuple'}[head]
+    if '/' in cell and cell.replace('/', '', 1).lstrip('-').isdigit(): return 'fraction'
+    if cell.isdigit():
+        return 'int_16plus_digits' if len(cell) >= 16 else 'int'
     if NUM.match(cell): return 'number'
-    if cell.startswith(('[', '{', '"')): return 'json'
-    return 'text'
+    return 'other'
+
+
+def expanded(line, sep, kept):
+    """Cells of one row matched to the kept columns; `^k` / `=k` runs expand to k single marks (TS._expanded)."""
+    if not kept:
+        return []
+    out = []
+    for cell in line.split(sep):
+        count = int(cell[1:]) if len(cell) > 1 and cell[0] in '^=' and cell[1:].isdigit() else 1
+        out.extend([(cell[0], True)] * count if count != 1 else [(cell, False)])
+    return out if len(out) == len(kept) else None
+
 
 t0 = time.time()
 tables, order = {}, []
@@ -42,9 +62,10 @@ with DIGEST.open('r', encoding='utf-8', errors='replace', newline='\n') as handl
             head = line[len('### table '):]
             name = head.split(':', 1)[0]
             sep = '\t' if 'sep=tab' in head else ' '
-            cols = head.split('columns: ', 1)[1].rstrip('\n').split('\t') if 'columns: ' in head else []
-            current = tables.setdefault(name, dict(name=name, bytes=0, header_bytes=0, rows=0, sep=sep, columns=cols,
-                                                    sample=[], header_lines=[]))
+            declared = head.split('columns: ', 1)[1].rstrip('\n').split('\t') if 'columns: ' in head else []
+            kept = [c for c in declared if c and c[0] not in '=^']
+            current = tables.setdefault(name, dict(name=name, bytes=0, header_bytes=0, rows=0, sep=sep, columns=kept,
+                                                    declared=len(declared), sample=[], header_lines=[], dict_sample=''))
             order.append(name)
             current['header_bytes'] += size
             current['bytes'] += size
@@ -66,6 +87,7 @@ with DIGEST.open('r', encoding='utf-8', errors='replace', newline='\n') as handl
             current['header_lines'].append(line[:12] + '... %d bytes' % size)
             if line.startswith('dictionary: '):
                 current['dictionary_bytes'] = current.get('dictionary_bytes', 0) + size
+                current['dict_sample'] = line[:2_000_000]
             continue
         current['rows'] += 1
         if current['rows'] % EVERY == 1:
@@ -80,17 +102,31 @@ for t in tables.values():
     per_col_bytes, per_col_tokens = defaultdict(int), defaultdict(int)
     kind_bytes, kind_tokens = defaultdict(int), defaultdict(int)
     sample_bytes = sample_tokens = 0
+    unmatched = 0
     for row in t['sample']:
-        cells = row.split(t['sep'])
         ids = tok.encode(row, add_special_tokens=False).ids
         sample_bytes += len(row.encode()) + 1
         sample_tokens += len(ids) + 1
-        for i, cell in enumerate(cells):
-            col = t['columns'][i] if i < len(t['columns']) else '#%d' % i
-            n = len(tok.encode(cell, add_special_tokens=False).ids) if cell else 0
-            b = len(cell.encode())
-            per_col_bytes[col] += b; per_col_tokens[col] += n
-            k = kind(cell); kind_bytes[k] += b; kind_tokens[k] += n
+        cells = expanded(row, t['sep'], t['columns'])
+        if cells is None:
+            unmatched += 1
+            continue
+        raw_cells = row.split(t['sep'])
+        position = 0
+        for cell in raw_cells:
+            # the tokens of each written cell, counted with its separator (the separator is its own token before digits)
+            n = len(tok.encode(t['sep'] + cell, add_special_tokens=False).ids) if cell else 1
+            b = len(cell.encode()) + 1
+            is_run = len(cell) > 1 and cell[0] in '^=' and cell[1:].isdigit()
+            width = int(cell[1:]) if is_run else 1
+            col = t['columns'][position] if position < len(t['columns']) else '#%d' % position
+            label = ('run(%s x%d from %s)' % (cell[0], width, col)) if is_run else col
+            per_col_bytes[label if not is_run else 'runs'] += b
+            per_col_tokens[label if not is_run else 'runs'] += n
+            k = 'run' if is_run else kind(cell)
+            kind_bytes[k] += b; kind_tokens[k] += n
+            position += width
+    t['unmatched'] = unmatched
     body_bytes = t['bytes'] - t['header_bytes']
     tpb = sample_tokens / sample_bytes if sample_bytes else 0.0
     scale = (body_bytes / sample_bytes) if sample_bytes else 0.0
@@ -98,7 +134,9 @@ for t in tables.values():
     report['tables'].append(dict(
         name=t['name'], rows=t['rows'], columns=len(t['columns']), bytes=t['bytes'], header_bytes=t['header_bytes'],
         dictionary_bytes=t.get('dictionary_bytes', 0), sample_rows=len(t['sample']), tokens_per_byte_sample=round(tpb, 4),
-        tokens_estimate=int(body_bytes * tpb) + int(t['header_bytes'] * 0.5),
+        dictionary_tokens_per_byte=round(len(tok.encode(t['dict_sample'], add_special_tokens=False).ids) / max(1, len(t['dict_sample'].encode())), 4) if t['dict_sample'] else None,
+        tokens_estimate=int(body_bytes * tpb) + int(t['header_bytes'] * ((len(tok.encode(t['dict_sample'], add_special_tokens=False).ids) / max(1, len(t['dict_sample'].encode()))) if t['dict_sample'] else 0.5)),
+        unmatched_sample_rows=t['unmatched'], declared_columns=t['declared'],
         top_columns=sorted(((c, int(per_col_tokens[c] * scale), per_col_bytes[c]) for c in per_col_tokens),
                            key=lambda x: -x[1])[:12],
         kinds={k: dict(tokens_est=int(kind_tokens[k] * scale), sample_bytes=kind_bytes[k]) for k in kind_tokens}))
@@ -116,8 +154,9 @@ print('TOTAL bytes %d, tokens_est %d, read %.0fs, tokenize %.0fs' % (total_bytes
       read_seconds, report['tokenize_seconds']))
 print('OTHER (non-table) bytes %d tokens_est %d' % (ob, report['other']['tokens_estimate']))
 for t in report['tables'][:25]:
-    print('TABLE %-40s rows %9d cols %4d bytes %12d tok_est %11d tpb %.3f dict %d' % (
-        t['name'], t['rows'], t['columns'], t['bytes'], t['tokens_estimate'], t['tokens_per_byte_sample'], t['dictionary_bytes']))
+    print('TABLE %-40s rows %9d kept %4d/%4d bytes %12d tok_est %11d tpb %.3f dict %d (tpb %s) unmatched %d' % (
+        t['name'], t['rows'], t['columns'], t['declared_columns'], t['bytes'], t['tokens_estimate'], t['tokens_per_byte_sample'],
+        t['dictionary_bytes'], t['dictionary_tokens_per_byte'], t['unmatched_sample_rows']))
     print('   kinds ' + json.dumps({k: v['tokens_est'] for k, v in sorted(t['kinds'].items(), key=lambda kv: -kv[1]['tokens_est'])}))
     print('   top columns ' + json.dumps(t['top_columns'][:8]))
 print('REPORT', out)

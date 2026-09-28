@@ -154,6 +154,7 @@ jobs:
         run: |
           echo "repository secrets set: RUNPOD_API_KEY=$HAS_RUNPOD_API_KEY FRANKIE_GITHUB_TOKEN=$HAS_FRANKIE_GITHUB_TOKEN DATABENTO_API_KEY=$HAS_DATABENTO_API_KEY AWS_PAIR=$HAS_AWS_PAIR"
       - name: Require the box Online in SSM (read-only)
+        if: inputs.script != 'deploy/aws/box/frankie_box_disk_rescue.sh' && inputs.script != 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
         run: |
           python - <<'PY'
           import boto3, os
@@ -180,7 +181,6 @@ jobs:
               bucket, key = item.split('/', 1)
               if not re.fullmatch(r'(put:)?[a-z0-9.-]{3,63}', bucket) or not key or '..' in key:
                   raise SystemExit('presign item must be bucket/key')
-              s3 = client(bucket)
               if item.startswith('put:'):
                   # a one-object upload slot (the box role writes nothing in S3): only under clm-sidecar/, never
                   # over an existing object
@@ -198,6 +198,7 @@ jobs:
                   out['put:' + key] = dict(bucket=bucket, url=url)
                   print(f'upload slot {bucket}/{key} expires_in={expires}s')
                   continue
+              s3 = client(bucket)
               head = s3.head_object(Bucket=bucket, Key=key)
               url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=expires)
               print('::add-mask::' + url)

@@ -307,18 +307,19 @@ def file_witness(path):
     path = Path(path)
     if path.is_symlink() or not path.is_file():
         raise ValueError('regular evidence file required')
-    stat = path.stat()
-    key = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns)
-    if key in _WITNESS_CACHE:
-        return dict(_WITNESS_CACHE[key])
-    count, hashed = 0, hashlib.sha256()
     with path.open('rb') as handle:
+        # identity of the OPENED file (no rename race); ctime cannot be set by user tools, unlike mtime
+        stat = os.fstat(handle.fileno())
+        key = (stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns)
+        if key in _WITNESS_CACHE:
+            return dict(_WITNESS_CACHE[key])
+        count, hashed = 0, hashlib.sha256()
         for block in iter(lambda: handle.read(8 * 1024 * 1024), b''):
             count += len(block)
             hashed.update(block)
+        after = os.fstat(handle.fileno())
     result = {'bytes': count, 'sha256': hashed.hexdigest()}
-    after = path.stat()
-    if (after.st_size, after.st_mtime_ns) == (stat.st_size, stat.st_mtime_ns):
+    if (after.st_size, after.st_mtime_ns, after.st_ctime_ns) == (stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns):
         _WITNESS_CACHE[key] = dict(result)
     return result
 
