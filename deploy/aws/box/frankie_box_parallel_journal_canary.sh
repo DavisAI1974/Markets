@@ -17,13 +17,19 @@ from pathlib import Path
 from types import SimpleNamespace
 from research.kalshi.frankie_boss.frankie_journal_reader import FrankieCompactReader
 from research.kalshi.frankie_boss.parallel_journal import parallel_journal_prefix
+from research.kalshi.frankie_boss.c15_journal import unpack
+
+
+def load(path):
+    value = json.loads(Path(path).read_bytes())
+    return unpack(value) if isinstance(value, list) else value   # c15 driver files are tagged
 
 run = Path(os.environ['RUN'])
 witnesses = sorted(run.rglob('host-prefix.c15.json'))
 if not witnesses:
     raise SystemExit('no host-prefix.c15.json under ' + str(run))
-files = json.loads(witnesses[0].read_bytes())['files']
-receipt = json.loads(Path(files['receipt']['path']).read_bytes())
+files = load(witnesses[0])['files']
+receipt = load(files['receipt']['path'])
 print('snapshot', files['snapshot']['path'], 'journal_count', receipt['journal_count'], 'records', receipt['records_in_prefix'], flush=True)
 reader = FrankieCompactReader(files['snapshot']['path'], expected_count=receipt['journal_count'],
                               expected_head_hash=receipt['journal_head_hash'], workers=int(os.environ['WORKERS']))
@@ -41,7 +47,7 @@ result = dict(schema='FRANKIE_PARALLEL_JOURNAL_CANARY_V1', wall_seconds=round(wa
               summary=summary, worker_cpu_seconds=round(reader.worker_cpu_seconds, 1))
 serial = sorted(run.rglob('host-context-cache.c15.json'))
 if serial:
-    value = json.loads(serial[0].read_bytes())
+    value = load(serial[0])
     result['serial_receipt'] = {k: value.get(k) for k in ('journal_prefix_hash', 'journal_entries', 'input_hash', 'consumed_rows')}
     result['summary_matches_serial'] = (value.get('journal_prefix_hash') == summary.get('journal_prefix_hash')
                                         and value.get('journal_entries') == summary.get('journal_entries'))
