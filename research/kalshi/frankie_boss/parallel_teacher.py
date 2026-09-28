@@ -23,6 +23,17 @@ parallel_attach returns the same dictionary, in the same order, with the same ch
   5. attachment_hash = evidence_hash(receipts) from each receipt's canonical bytes (computed in the worker by the pinned
      pack/canonical_tagged_bytes) joined in order.
 Identity normalizers (IdentityNormalizerR3) take the same path with receipt = normalizer.export(), as attach does.
+
+The raw streams (step 1) also run across the CPUs (Greg, 2026-09-28: "build the parallel raw streams"). Per receipt row the
+pinned iter_raw loops call three pure functions of a group window: the control's JournalTeacher._dynamics (64 and 1024
+groups) and R3's _absorption (which runs _dynamics again) and _cohort (64 and 1024 groups each). During step 1 those three
+are swapped for recorders (restored after) that return placeholders and queue the call; everything stateful (the group
+histories, pending groups, origins, DChain machines, ordinals, content chain, anchors) still runs in the parent, in
+order, on the pinned code. Queued calls go to spawn workers in batches: each batch carries every referenced group once
+(a per-batch table; a sliding window is a contiguous range of it) and the worker runs the pinned function on exactly the
+same groups. Each row's placeholders are replaced by the results as they arrive. Guard: the first two calls of every batch
+and every RAW_GUARD_EVERY-th call are also computed in the parent at call time with the pinned function and must equal
+the worker's result, or the run stops.
 Pinned files unchanged: c15_teacher_r3.py, c15_teacher.py, c15_normalizer.py, c15_normalizer_r3.py, dipole_target.py.
 """
 from concurrent.futures import ProcessPoolExecutor
@@ -35,6 +46,9 @@ import struct
 import sys
 
 GUARD_EVERY = 50_000
+RAW_GUARD_EVERY = 20_000
+RAW_BATCH_CALLS = 32_768
+RAW_MARK = '\x00parallel-raw:'
 
 
 def _modules():
@@ -159,6 +173,150 @@ def _chunk(job):
     return pickle.dumps(out, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+def _raw_batch(blob):
+    """One batch of the raw streams' window functions, the pinned functions on the same groups, in order."""
+    import pickle
+    from . import c15_teacher_r3 as T
+    tables, calls = pickle.loads(blob)
+    out = []
+    for token, kind, family, window, side, start in calls:
+        table = tables[family]
+        groups = (table[window[0]:window[0] + window[1]] if type(window) is tuple else [table[i] for i in window])
+        if kind == 'dynamics':
+            value = T.JournalTeacher._dynamics(groups, side)
+        elif kind == 'absorption':
+            value = T._absorption(groups, side)
+        else:
+            value = T._cohort(start, groups, side)
+        out.append((token, value))
+    return pickle.dumps(out, protocol=pickle.HIGHEST_PROTOCOL)
+
+
+class _RawStreams:
+    """Swaps JournalTeacher._dynamics, _absorption and _cohort (pure functions of a group window) for recorders during
+    the parent's pinned raw loop; the recorded calls run in spawn workers, batch by batch, while the loop goes on."""
+
+    def __init__(self, T, cpus):
+        self.T, self.cpus = T, cpus
+        self.calls, self.resolved, self.expected, self.pending = 0, 0, {}, deque()
+        self.where, self.early, self.rows = {}, {}, None
+        self._new_batch()
+
+    def _new_batch(self):
+        self.tables, self.index, self.batch = {'control': [], 'r3': []}, {'control': {}, 'r3': {}}, []
+
+    def __enter__(self):
+        T = self.T
+        self.original = (T.JournalTeacher.__dict__['_dynamics'], T._absorption, T._cohort)
+        dynamics, absorption, cohort = self.original[0].__func__, self.original[1], self.original[2]
+
+        def exact(kind, groups, side, start):
+            if kind == 'dynamics':
+                return dynamics(groups, side)
+            if kind == 'cohort':
+                return cohort(start, groups, side)
+            T.JournalTeacher._dynamics = self.original[0]      # _absorption runs the pinned _dynamics inside
+            try:
+                return absorption(groups, side)
+            finally:
+                T.JournalTeacher._dynamics = staticmethod(record_dynamics)
+
+        def record(kind, family, groups, side, start, width):
+            token = self.calls
+            self.calls += 1
+            if len(self.batch) < 2 or token % RAW_GUARD_EVERY == 0:
+                self.expected[token] = exact(kind, groups, side, start)
+            table, index = self.tables[family], self.index[family]
+            places = []
+            for group in groups:
+                at = index.get(id(group))
+                if at is None:
+                    at = index[id(group)] = len(table)
+                    table.append(group)
+                places.append(at)
+            contiguous = all(b == a + 1 for a, b in zip(places, places[1:]))
+            window = (places[0] if places else 0, len(places)) if contiguous else places
+            self.batch.append((token, kind, family, window, side, start))
+            if len(self.batch) >= RAW_BATCH_CALLS:
+                self._submit()
+            state = int(self.T.State.MISSING)
+            marks = [dict(value=0., state=state, mask=0, reason='%s%d.%s' % (RAW_MARK, token, slot))
+                     for slot in (('0', '1') if width == 2 else ('-',))]
+            return tuple(marks) if width == 2 else marks[0]
+
+        def record_dynamics(groups, side):
+            return record('dynamics', 'control', groups, side, None, 2)
+
+        def record_absorption(groups, side):
+            return record('absorption', 'r3', groups, side, None, 1)
+
+        def record_cohort(start, groups, side):
+            return record('cohort', 'r3', groups, side, start, 2)
+
+        import multiprocessing
+        self.pool = ProcessPoolExecutor(max_workers=self.cpus, mp_context=multiprocessing.get_context('spawn'))
+        T.JournalTeacher._dynamics = staticmethod(record_dynamics)
+        T._absorption, T._cohort = record_absorption, record_cohort
+        return self
+
+    def _submit(self):
+        import pickle
+        if not self.batch:
+            return
+        blob = pickle.dumps((self.tables, self.batch), protocol=pickle.HIGHEST_PROTOCOL)
+        self.pending.append(self.pool.submit(_raw_batch, blob))
+        self._new_batch()
+        while len(self.pending) > 2 * self.cpus:          # bounded: never the whole day's windows in flight
+            self._collect(self.pending.popleft())
+
+    def _collect(self, future):
+        import pickle
+        for token, value in pickle.loads(future.result()):
+            if token in self.expected:
+                expected = self.expected.pop(token)
+                if expected != value or (type(value) is dict and list(expected) != list(value)) or (
+                        type(value) is tuple and [list(v) for v in expected] != [list(v) for v in value]):
+                    raise ValueError('parallel teacher raw stream differs from the pinned function; run stopped')
+            if token in self.where:
+                self._resolve(token, value)
+            else:
+                self.early[token] = value
+
+    def place(self, rows, index):
+        """Record where row index's placeholders sit; results arriving later go straight into the row."""
+        self.rows = rows
+        for column, v in enumerate(rows[index][3]):
+            if type(v['reason']) is str and v['reason'].startswith(RAW_MARK):
+                token, slot = v['reason'][len(RAW_MARK):].split('.')
+                self.where.setdefault(int(token), []).append((index, column, slot))
+        for token in [t for t in self.early if t in self.where]:
+            self._resolve(token, self.early.pop(token))
+
+    def _resolve(self, token, value):
+        # the row's value is replaced exactly as attach builds it: control columns dict(v), R3 columns value/state/reason
+        for index, column, slot in self.where.pop(token):
+            v = value if slot == '-' else value[int(slot)]
+            self.rows[index][3][column] = ({k: v[k] for k in ('value', 'state', 'reason')} if 7 <= column < 13
+                                           else dict(v))
+        self.resolved += 1
+
+    def finish(self):
+        self._submit()
+        while self.pending:
+            self._collect(self.pending.popleft())
+        if self.expected or self.where or self.early or self.resolved != self.calls:
+            raise ValueError('parallel teacher raw call unresolved; run stopped')
+
+    def __exit__(self, *exc):
+        T = self.T
+        T.JournalTeacher._dynamics = self.original[0]
+        T._absorption, T._cohort = self.original[1], self.original[2]
+        for future in self.pending:
+            future.cancel()
+        self.pool.shutdown(wait=True, cancel_futures=True)
+        return False
+
+
 def _cpus():
     try:
         return max(1, len(os.sched_getaffinity(0)) - 1)
@@ -189,26 +347,33 @@ def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):
               'share', 'share', 'share', 'share', 'share', 'share', 'log_groups', 'log_count', 'log_ratio',
               'log_ticks', 'log_groups', 'log_ticks') if identity else ('z_score',) * 19)
     wanted = set(selected)
-    # 1. the pinned raw streams, in order, with the exact-row check (attach's own loop minus the normalizer)
+    # 1. the pinned raw streams, in order, with the exact-row check (attach's own loop minus the normalizer); the window
+    #    functions across the CPUs (_RawStreams)
     rows, processed = [], 0
-    for e, old, six in T._paired_raw(self.control, self.raw_teacher, evidence, as_of=as_of,
-                                     source_manifest_hash=source_manifest_hash):
-        processed += 1
-        if e['cursor'] in wanted:
-            item = selected_rows[e['cursor']]
-            if (set(item) not in (session_fields, set(e))
-                    or T.evidence_hash(item) != T.evidence_hash({k: e[k] for k in item})):
-                raise ValueError('context must match exact verified prefix row')
-        combined = [dict(v) for v in old]
-        combined[7:13] = [{k: v[k] for k in ('value', 'state', 'reason')} for v in six['columns']]
-        rows.append((e['cursor'] in wanted, e['receipt'] is not None, e['normalized']['instrument_id'], combined,
-                     e['normalized']['ts_recv_ns'], e['terminal_prefix_hash'], e['cursor'], six['evidence_content_hash']))
+    cpus = _cpus()
+    with _RawStreams(T, cpus) as streams:
+        for e, old, six in T._paired_raw(self.control, self.raw_teacher, evidence, as_of=as_of,
+                                         source_manifest_hash=source_manifest_hash):
+            processed += 1
+            if e['cursor'] in wanted:
+                item = selected_rows[e['cursor']]
+                if (set(item) not in (session_fields, set(e))
+                        or T.evidence_hash(item) != T.evidence_hash({k: e[k] for k in item})):
+                    raise ValueError('context must match exact verified prefix row')
+            combined = [dict(v) for v in old]
+            combined[7:13] = [{k: v[k] for k in ('value', 'state', 'reason')} for v in six['columns']]
+            rows.append((e['cursor'] in wanted, e['receipt'] is not None, e['normalized']['instrument_id'], combined,
+                         e['normalized']['ts_recv_ns'], e['terminal_prefix_hash'], e['cursor'],
+                         six['evidence_content_hash']))
+            streams.place(rows, len(rows) - 1)
+        streams.finish()
+    if any(type(v['reason']) is str and v['reason'].startswith(RAW_MARK) for row in rows for v in row[3]):
+        raise ValueError('parallel teacher raw placeholder left unresolved; run stopped')
     # 2. chunk-start states: attach's own restored copy, update() only
     config = self.normalizer.config
     instrument_ids = self.normalizer.config.instrument_ids
     base = (R.IdentityNormalizerR3(instrument_ids) if identity else
             R.NormalizerR3.restore(config, self.normalizer.export(), self.normalizer.state_hash))
-    cpus = _cpus()
     size = max(1, -(-len(rows) // (cpus * 2)))
     spec = dict(registry_id=f'boss/teacher/{T.CANDIDATE}:{self.candidate_digest}', target_names=T.CONTROL_COLUMNS,
                 target_units=units, builder_code_sha=builder_sha)
