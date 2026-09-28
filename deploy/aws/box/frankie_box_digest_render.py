@@ -29,7 +29,7 @@ import math
 import re
 from fractions import Fraction
 
-SCHEMA = 'DIGEST_V9'   # V9: `L` lists with `*k` runs, `*k` runs in `I` lists, dictionary entries spelled as cells (Greg, 2026-09-28, the reducer stacks on top of the 6-hour run's); V8: the table grammar below (Greg, 2026-09-28, every token stack that works, all additive); V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
+SCHEMA = 'DIGEST_V9'   # V9: `L` lists with `*k` runs, `*k` runs in `I` lists, dictionary entries spelled as cells, `"k` ditto cells, `$d` trailing-number deltas of strings (Greg, 2026-09-28, the reducer stacks on top of the 6-hour run's); V8: the table grammar below (Greg, 2026-09-28, every token stack that works, all additive); V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
 TABLE_GRAMMAR = 'DIGEST_V9'   # the table block grammar. V9: `L` lists, `*k` item runs, dictionary entries as cells. V7: `?k` runs of absent cells; deltas on every integer column whose name ends in
                               # recv_ns / event_ns and on group_index. V8 on top: keys-once objects (`shapes:`, `R` cells), packed digit
                               # lists (`P`), same-row integer references (`<i`), count columns derived as list lengths (`lengths:`), columns
@@ -418,6 +418,51 @@ def _read_list(body):
     return out
 
 
+_TRAILING = re.compile(r'(.*?)(\d+)', re.S)
+
+
+def _trailing(s):
+    """(prefix, number) of a string ending in a decimal number without a leading zero, else None."""
+    m = _TRAILING.fullmatch(s) if isinstance(s, str) else None
+    if m is None or (len(m.group(2)) > 1 and m.group(2)[0] == '0'):
+        return None
+    return m.group(1), int(m.group(2))
+
+
+def _string_step(prev, v):
+    """V9 `$<d>`: v is the previous row's string of this column with its trailing number moved by d (same prefix)."""
+    a, b = _trailing(prev), _trailing(v)
+    if a is None or b is None or a[0] != b[0] or b[1] == a[1]:
+        return None
+    return '$%+d' % (b[1] - a[1])
+
+
+def _string_stepped(prev, cell):
+    a = _trailing(prev)
+    if a is None or not re.fullmatch(r'\$[+-]\d+', cell) or a[1] + int(cell[1:]) < 0:
+        raise ValueError('a `$` cell needs a previous string ending in a number')
+    return a[0] + str(a[1] + int(cell[1:]))
+
+
+def _ditto(cells):
+    """V9 `"k`: k further copies of the cell just before it in the row, when cheaper than writing them (never after a run
+    mark); expand_cells repeats the preceding cell's text."""
+    out, i = [], 0
+    while i < len(cells):
+        c, j = cells[i], i
+        if c[:1] not in RUN_MARKS:
+            while j + 1 < len(cells) and cells[j + 1] == c:
+                j += 1
+        k = j - i
+        out.append(c)
+        if k and _cost('"%d' % k) < k * _cost(c):
+            out.append('"%d' % k)
+        else:
+            out.extend([c] * k)
+        i = j + 1
+    return out
+
+
 def _runs(texts):
     """k >= 2 equal consecutive spellings written once as `text*k` (V9, inside `I` lists)."""
     out, i = [], 0
@@ -650,6 +695,9 @@ def _plan_row(r, columns, prev_row, prev_values, prev_ints, prev_lists, facts=NO
             cell = ('lit', '%+d' % (v - prev_ints[c]))
         else:
             cell = _literal(v, c, r, prev_lists, facts.shapes.get(c), prev_values.get(c))
+            moved = _string_step(prev_values.get(c), v) if cell[0] == 'str' else None
+            if moved is not None and _cost(moved) < inline_cost('str', v):
+                cell = ('lit', moved)
         if _is_int(v) and cell[1][0] not in '=~':
             # V8 same-row reference: `<i` = the integer of this row's column i (an earlier column the parser holds
             # before any offset or derivation), written when cheaper than the cell it replaces
@@ -739,7 +787,7 @@ def finish_row(cells, kept, columns, scales, number):
             continue
         n = number(kind, text, candidate_key(kind, text))
         out.append(inline_cell(kind, text) if n is None else '@%d' % n)
-    return _collapse(out)
+    return _ditto(_collapse(out))
 
 
 def _constant_text(value):
@@ -856,6 +904,11 @@ def expand_cells(line, sep, kept):
         return []
     out = []
     for cell in line.split(sep):
+        if len(cell) > 1 and cell[0] == '"' and cell[1:].isdigit():     # V9 ditto: the preceding cell k more times
+            if not out or len(out) + int(cell[1:]) > len(kept):
+                raise ValueError('table row: a ditto cell without room or a preceding cell')
+            out.extend([out[-1]] * int(cell[1:]))
+            continue
         count = int(cell[1:]) if len(cell) > 1 and cell[0] in RUN_MARKS and cell[1:].isdigit() else 1
         if len(out) + count > len(kept):
             raise ValueError('table row expands beyond declared columns')
@@ -919,6 +972,8 @@ class RowDecoder:
                         v.append(v[-1] + int(d))
             elif cell.startswith('L'):
                 v = _read_list(cell[1:])
+            elif cell.startswith('$'):
+                v = _string_stepped(prev_values.get(c), cell)
             elif cell.startswith('P'):
                 v = _unpacked(cell, c, prev_lists)
             elif cell.startswith('R'):
@@ -1305,7 +1360,8 @@ def digest_header(receipt):
              'carry them; a repeated value is in the dictionary only when that is shorter than writing it each time; DIGEST_V9 on '
              'top: `L<item>,<item>,...` = a list of plain values, each item `-` T F an integer, a float, `S<text>` or `J<json>`, and '
              '`<item>*k` = that item k times in a row (`L` alone = the empty list); inside `I` a `<d>*k` = that difference k times in a '
-             'row; a dictionary entry `@n=` is spelled like a cell (`S<text>`, `J<json>` or `L...`)', '',
+             'row; a dictionary entry `@n=` is spelled like a cell (`S<text>`, `J<json>` or `L...`); `"k` = the cell just before it, k more '
+             'times; `$<d>` = the previous row\'s string in this column with its trailing number moved by d (same prefix)', '',
              f'Rows: {receipt["rows"]["path"]} ({receipt["rows"]["count"]} entries, kinds {receipt["rows"]["kinds"]}, head {receipt["rows"]["head"][:16]}...; '
              f'head equals the request source_hash: {receipt["rows"]["head_is_request_source_hash"]}).',
              f'INPUT records fed to the V4 adapter: {receipt["input_records"]}; legacy control rows projected: {receipt["legacy_rows"]}; '
