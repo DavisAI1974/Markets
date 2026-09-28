@@ -3,7 +3,10 @@
 
 ## FRANKIE / BOSS standing rules (Greg, 2026-09-16) -- MEMORY, read before touching Granite or the native context
 
-- **STATE 2026-09-28 08:0xZ: READ FIRST the last update in `research/kalshi/frankie_boss/HANDOFF_20260928_SIDE_BUILDER_DISK.md`.**
+- **STATE 2026-09-28 09:3xZ: READ FIRST `research/kalshi/frankie_boss/HANDOFF_20260928_TOKEN_STACKS.md`.** Branch
+  `claude/frankie-monday-continuation-qlkvqr`. DIGEST_V7 committed (additive on V1-V6), stacks canary measured ~26%
+  (V7 + keys-once), brain dedupe landed; principal HELD until the digest is shrunk; launch r3 and the Jev Pod in flight.
+- **STATE 2026-09-28 08:0xZ (superseded above): READ FIRST the last update in `research/kalshi/frankie_boss/HANDOFF_20260928_SIDE_BUILDER_DISK.md`.**
   Branch `claude/frankie-monday-continuation-qlkvqr`. ROOT (run 36393033592, 5fb84365) SUCCEEDED 07:56:39Z:
   `calculations_retained`, every saved layer and table reused. Next Monday step (principal inputs) needs Greg's go and
   a restage of the tip. The CLM sidecar extract runs behind it; then the Pod (go given).
