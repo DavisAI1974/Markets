@@ -46,10 +46,12 @@ import time
 from pathlib import Path
 from urllib.parse import urlencode
 
+from research.kalshi.frankie_boss import granite_bootstrap_stage as bootstrap_stage
 from research.kalshi.frankie_boss import granite_cloud_resume as resume
 from research.kalshi.frankie_boss import granite_run_artifacts as artifacts
 from research.kalshi.frankie_boss import granite_runpod_cloud as cloud
 from research.kalshi.frankie_boss import granite_runpod_cloud_control as control
+from research.kalshi.frankie_boss import granite_runpod_package as package
 from research.kalshi.frankie_boss.granite_runpod_probe import https_exchange
 from research.kalshi.frankie_boss.granite_startup_pins import validate_configuration, validate_url_freshness
 
@@ -125,7 +127,46 @@ def facts_of(pod, intent):
     return resume._pod_info(pod, intent)     # sanitized: id, name, image, status, dataCenterId, gpu, disk, mounts, cost
 
 
-def verify_source(source, configuration, now):
+def checkout_bundle(configuration):
+    """Greg, 2026-09-28 ("I approve the 3 pod run"): the new Pods boot the CHECKOUT's bootstrap
+    (granite_startup.MAX_NUM_SEQS = 3) instead of the reviewed bundle. Packages the committed files, stages them under
+    granite-bootstrap-open-run/<bundle sha>/ (stage_bundle: never overwrites, reads every byte back), presigns 6-day
+    GETs and returns the five environment values the Pod's own boot checks read, plus the configuration the startup
+    evidence is checked against. The source Pod and the reviewed JSON are only read."""
+    import tempfile
+    import boto3
+    from botocore.config import Config
+    directory = configuration['bootstrap_directory'] + '-seqs3'
+    here = Path(__file__).resolve().parents[1]
+    client = boto3.client('s3', region_name='us-east-1', config=Config(signature_version='s3v4',
+                          s3={'addressing_style': 'virtual'}, connect_timeout=5, read_timeout=30))
+    with tempfile.TemporaryDirectory(prefix='granite-bootstrap-') as scratch:
+        packed = Path(scratch) / 'package'
+        receipt = package.package(here, packed, runtime_directory=directory)
+        staged = bootstrap_stage.stage_bundle(client, packed, receipt['bundle_sha256'])
+    rows, digest = receipt['files'], receipt['bundle_sha256']
+    urls = {name: client.generate_presigned_url('get_object', ExpiresIn=518400, HttpMethod='GET',
+                                                Params={'Bucket': bootstrap_stage.BUCKET,
+                                                        'Key': bootstrap_stage.PREFIX + digest + '/' + name})
+            for name in staged['urls']}
+    command = cloud.bootstrap_command(rows, digest, bootstrap_stage.BUCKET, directory=directory, open_ended=True)
+    command_sha256 = hashlib.sha256(command.encode()).hexdigest()
+    startup_sha256 = next(row['sha256'] for row in rows if row['path'] == 'granite_startup.py')
+    overrides = {'RUNPOD_BUNDLE_SHA256': digest, 'SUPERVISOR_PROGRAM__APP_COMMAND': command,
+                 'RUNPOD_SUPERVISOR_COMMAND_SHA256': command_sha256, 'RP_BOOTSTRAP_URLS': json.dumps(urls, sort_keys=True),
+                 'GRANITE_BOOTSTRAP_SHA256': startup_sha256}
+    checked = validate_configuration(dict(configuration, files=rows, bundle_sha256=digest,
+                                          supervisor_command_sha256=command_sha256, bootstrap_directory=directory))
+    validate_url_freshness(overrides, checked, now=time.time())
+    record = dict(schema='FRANKIE_POD_CHECKOUT_BUNDLE_V1', bundle_sha256=digest, supervisor_command_sha256=command_sha256,
+                  granite_bootstrap_sha256=startup_sha256, bootstrap_directory=directory, files=rows,
+                  reviewed_bundle_sha256=configuration['bundle_sha256'], url_expiry_seconds=518400)
+    save('checkout-bundle.json', record)
+    print('CHECKOUT_BUNDLE ' + json.dumps({k: v for k, v in record.items() if k != 'files'}, sort_keys=True), flush=True)
+    return overrides, checked
+
+
+def verify_source(source, configuration, now, *, check_urls=True):
     environment = source['env']
     command_hash = hashlib.sha256(environment.get('SUPERVISOR_PROGRAM__APP_COMMAND', '').encode()).hexdigest()
     if (environment.get('RUNPOD_GRANITE_LIFETIME_SECONDS') != 'none'
@@ -135,7 +176,7 @@ def verify_source(source, configuration, now):
             or environment.get('GRANITE_MAX_MODEL_LEN') != str(configuration['service_context'])
             or environment.get('GRANITE_TRANSPORT_PROTOCOL', 'direct_v1') != configuration['transport_protocol']):
         raise SystemExit('source Pod environment differs from the reviewed runtime configuration')
-    expiry = validate_url_freshness(environment, configuration, now=now)
+    expiry = validate_url_freshness(environment, configuration, now=now) if check_urls else now + 518400
     if expiry - now < 3600:
         raise SystemExit('source bootstrap URLs expire within the hour; refresh them first')
     nonce = environment.get('RUNPOD_SMOKE_OWNER', '')
@@ -227,6 +268,8 @@ def main():
     parser.add_argument('--wait-seconds', type=int, default=1800)
     parser.add_argument('--resume-pod', default='')
     parser.add_argument('--watch-pod', default='')
+    parser.add_argument('--bundle-from-checkout', action='store_true',
+                        help='boot the checkout bootstrap (--max-num-seqs 3) instead of the reviewed bundle; source Pod only read')
     args = parser.parse_args()
     key = os.environ['RUNPOD_API_KEY']
     api = control.Runpod(key)
@@ -235,7 +278,11 @@ def main():
     source = api.request('GET', '/v2/pods/' + args.source_pod)
     if source.get('id') != args.source_pod:
         raise SystemExit('source Pod identity differs')
-    intent, expiry = verify_source(source, configuration, time.time())
+    # with the checkout bundle the source's own bootstrap URLs are replaced, so their expiry does not matter
+    intent, expiry = verify_source(source, configuration, time.time(), check_urls=not args.bundle_from_checkout)
+    if args.bundle_from_checkout:
+        overrides, configuration = checkout_bundle(configuration)
+        source = dict(source, env=dict(source['env'], **overrides))
     save('source-facts.json', facts_of(source, intent))
     print('SOURCE ' + json.dumps(dict(pod=source['id'], status=source.get('status'), env_keys=len(source['env']),
                                       bootstrap_urls_expire_utc=time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(expiry)))))
