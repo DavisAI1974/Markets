@@ -17,7 +17,8 @@ N_TRAIN, N_TEST = int(os.environ['TRAIN']), int(os.environ['TEST'])
 OUT = Path('/opt/frankie-box/work/clm-sidecar') / STAMP
 OUT.mkdir(parents=True, exist_ok=False)
 BUCKET, REGION = 'frankie-granite42-568968024170-us-east-1', 'us-east-1'
-# the box role writes only the host-delivery progress prefixes: the Monday day first, the granted 20211003 prefix second
+# the box role writes nothing in S3 (measured 2026-09-28: both prefixes refused); these attempts are kept, and
+# frankie_box_clm_sidecar_upload.sh uploads through a presigned PUT the runner signs
 KEYS = ['host-deliveries/%s/principal-response/cycle-00/progress/clm-sidecar/%s/dataset.jsonl.gz' % (day, STAMP)
         for day in ('20211004', '20211003')]
 # The columns the state is rendered from (the whole ask ladder and the FIFO queues are never read).

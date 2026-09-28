@@ -56,7 +56,7 @@ concurrency:
   # Pod run never holds the box-run lock (Greg, 2026-09-28).
   # Principal inputs (one single-core read of ROOT's retained evidence into a fresh root) has its own lock so it can
   # run beside the read-only CLM extract (Greg, 2026-09-28: run in parallel).
-  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh' || inputs.script == 'deploy/aws/box/frankie_box_console.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && format('clm-pod-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_principal_inputs.sh' && format('box-inputs-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
+  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh' || inputs.script == 'deploy/aws/box/frankie_box_console.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh' && format('clm-pod-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_principal_inputs.sh' && format('box-inputs-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_upload.sh' && format('clm-upload-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
   cancel-in-progress: false
 jobs:
   validate-staging-route:
@@ -178,9 +178,26 @@ jobs:
           out = {}
           for item in items:
               bucket, key = item.split('/', 1)
-              if not re.fullmatch(r'[a-z0-9.-]{3,63}', bucket) or not key or '..' in key:
+              if not re.fullmatch(r'(put:)?[a-z0-9.-]{3,63}', bucket) or not key or '..' in key:
                   raise SystemExit('presign item must be bucket/key')
               s3 = client(bucket)
+              if item.startswith('put:'):
+                  # a one-object upload slot (the box role writes nothing in S3): only under clm-sidecar/, never
+                  # over an existing object
+                  bucket = bucket[4:]
+                  s3 = client(bucket)
+                  if not key.startswith('clm-sidecar/'):
+                      raise SystemExit('upload slots are for clm-sidecar/ only')
+                  try:
+                      s3.head_object(Bucket=bucket, Key=key)
+                      raise SystemExit('upload slot refuses an existing object: ' + key)
+                  except s3.exceptions.ClientError:
+                      pass
+                  url = s3.generate_presigned_url('put_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=expires)
+                  print('::add-mask::' + url)
+                  out['put:' + key] = dict(bucket=bucket, url=url)
+                  print(f'upload slot {bucket}/{key} expires_in={expires}s')
+                  continue
               head = s3.head_object(Bucket=bucket, Key=key)
               url = s3.generate_presigned_url('get_object', Params={'Bucket': bucket, 'Key': key}, ExpiresIn=expires)
               print('::add-mask::' + url)
