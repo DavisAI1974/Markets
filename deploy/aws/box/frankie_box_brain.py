@@ -300,7 +300,7 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
         put('classroom.md', classroom.read_bytes(), classroom, "the Dipole classroom: Frankie's own teach-back of the 19-dimension surface for this cycle (case by case: set include false to keep it out)")
     teach = work / 'teach' / 'exhaustion-teachback.md'
     if teach.is_file():
-        put('exhaustion-teachback.md', teach.read_bytes(), teach, 'calculation findings: the exhaustion and D teach-back (the BOSS on its own bedrock facts and the frozen learned structure; numbers checked by code; Greg, 2026-09-21: All 3)')
+        put('exhaustion-teachback.md', teach.read_bytes(), teach, 'calculation findings: the exhaustion and D priming (facts computed by code from the bedrock files, and the frozen learned structure, whole; no model call since 2026-09-28)')
     bedrock = work / 'bedrock' / 'receipt.json'
     if bedrock.is_file():
         try:

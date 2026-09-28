@@ -108,3 +108,11 @@ the proposed owner:
 Principle: code does everything computable or transcribable. Granite gets a small, code-prepared question plus the exact
 rows it needs, and returns reasoning (hypotheses, mechanisms, disagreements, novel findings), which code then checks
 against the data. Nothing built; this is the role definition to agree first.
+
+## Update: the exhaustion/D priming is decoupled from Granite (Greg: "Decouple frankie from this part then")
+The `teach` stage is now code only: the facts are filed whole under `work/teach/` (schema FRANKIE_BOX_TEACH_PRIMING_V1,
+model_calls 0), and the brain and docs carry them. Nothing needs rerunning:
+- the only completed principal run (20211003 cycle 00, `root/cycle-00-response`) never ran the teach-back or the classroom;
+- the Monday runs never reached the principal.
+
+The rest of the Granite table waits on Greg. Next chat: `DROP_IN_20260928_GRANITE_DECOUPLE.md`.

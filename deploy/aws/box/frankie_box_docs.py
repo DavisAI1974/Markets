@@ -325,7 +325,7 @@ def build_docs(work, out, cycle):
     # rows); every bedrock layer file referenced by name, bytes and sha256 (its content is in the DIGEST_V6 tables).
     teach = work / 'teach' / 'exhaustion-teachback.md'
     if teach.is_file():
-        put('exhaustion-teachback.md', teach.read_bytes(), teach, "the exhaustion and D teach-back: the BOSS on its own bedrock facts and the frozen learned structure, every number checked against the facts by code (session code)")
+        put('exhaustion-teachback.md', teach.read_bytes(), teach, "the exhaustion and D priming: facts computed by code from the bedrock files and the frozen learned structure, whole; no model call (session code)")
     bedrock = work / 'bedrock'
     for name in ('receipt.json', 'result.json'):
         p = bedrock / name

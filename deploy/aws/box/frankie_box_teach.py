@@ -17,7 +17,8 @@ from pathlib import Path
 
 import sys
 
-SCHEMA = 'FRANKIE_BOX_TEACHBACK_V1'
+SCHEMA = 'FRANKIE_BOX_TEACHBACK_V1'          # the retired Granite teach-back (records filed before 2026-09-28 read as they were)
+CODE_SCHEMA = 'FRANKIE_BOX_TEACH_PRIMING_V1'   # the code-only priming (Greg, 2026-09-28: Granite is a reasoning boost only)
 FACTS_SCHEMA = 'FRANKIE_BOX_TEACH_FACTS_V1'
 TOPICS = ('exhaustion', 'd_depth', 'families', 'prebirth', 'clocks')
 FIELDS = ('what_it_is', 'how_this_cycle_shows_it', 'what_this_cycle_cannot_show', 'relation_to_dipole_state')
@@ -425,3 +426,10 @@ def markdown(record):
             lines += [f'**{field}**: {_line(a[topic][field])}', '']
     lines += ['## questions', ''] + [f'- {_line(q)}' for q in a.get('questions', [])] + ['', '## The facts the answer was checked against', '', record['facts_text'].rstrip('\n'), '']
     return '\n'.join(lines)
+
+
+def facts_markdown(record):
+    """The code-only priming as the brain carries it: the facts text and the frozen files, whole (no model answer)."""
+    return (f'# The exhaustion and D priming (cycle {record["cycle"]}; computed by code from this cycle\'s bedrock files; no model call)\n\n'
+            f'Facts sha256 {record["facts_sha256"]}; frozen files: ' + ', '.join(f'{f["source"]} ({f["layer"]})' for f in record.get('frozen', []))
+            + '\n\n' + record['facts_text'].rstrip('\n') + '\n')
