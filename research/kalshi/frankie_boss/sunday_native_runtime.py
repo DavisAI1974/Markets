@@ -15,7 +15,7 @@ import torch
 from .b1_reasoner import B1Config, B1Reasoner
 from .c15_journal import evidence_hash
 from .c15_normalizer import NormalizerConfig, SCALE_FLOORS
-from .c15_normalizer_r3 import NormalizerR3
+from .c15_normalizer_r3 import NormalizerR3, IdentityNormalizerR3
 from .c15_teacher_r3 import JournalTeacherR3
 from .context_session import ContextReceipt, ContextSessionRunner, journal_prefix
 from .forecast_heads import NativeForecastHeads
@@ -63,9 +63,9 @@ def initialize(builder, *, context_rows):
     native = B1Reasoner(NativeTrunk(NativeRegistry(extra_fields=SOURCE_EXTRA_FIELDS), **DEVELOPMENT['native']),
                         B1Config(**DEVELOPMENT['recurrence'])).double().eval()
     decoder = NativeForecastHeads(**DEVELOPMENT['decoder']).double().eval()
-    teacher = JournalTeacherR3({111313: 1000000}, normalizer=NormalizerR3(
-        NormalizerConfig(instrument_ids=(111313,), mode='UPDATING',
-                         n_norm=4096, n_warm=256, floors=SCALE_FLOORS, clip=8.0)))
+    # Nothing is normalized or averaged (Greg, standing; 2026-09-28): the teacher's targets are the raw values themselves,
+    # whole, through the identity normalizer (no window, no warm-up, no z-score, no clip).
+    teacher = JournalTeacherR3({111313: 1000000}, normalizer=IdentityNormalizerR3((111313,)))
     context = ContextSessionRunner(native, builder, entity=(1, 111313),
                                    t_ctx=context_rows, teacher=teacher)
     optimizer = torch.optim.AdamW(list(native.parameters())+list(decoder.parameters()),

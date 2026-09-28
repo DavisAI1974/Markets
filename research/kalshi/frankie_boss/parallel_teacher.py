@@ -2,10 +2,10 @@
 
 c15_teacher_r3.JournalTeacherR3.attach (pinned, unchanged) walks the complete prefix once, in order, on one core, and for
 EVERY context row (the Monday's context is the whole day) it
-  - observes 19 columns on the running NormalizerR3 (two statistics.median over a 4096-value window each: ~18 ms/row),
+  - observes 19 columns on the running NormalizerR3 (two statistics.median over its value window each: ~18 ms/row),
   - builds a DipoleTarget (tensors + canonical hash),
   - takes normalizer.receipt(): two source-file reads and evidence_hash(normalizer.export()) over all 19 windows of up to
-    4096 floats and their hex (~0.3-0.4 s/row measured on one core),
+    floats and their hex (~0.3-0.4 s/row measured on one core),
 then hashes the list of every receipt. Over the whole day that is days of one CPU.
 
 parallel_attach returns the same dictionary, in the same order, with the same checks:
@@ -46,6 +46,7 @@ import struct
 import sys
 
 GUARD_EVERY = 50_000
+FULL_HASH_CHECK_RECEIPTS = 2_000   # up to this many receipts the attachment hash is also recomputed whole (a check, no cap)
 RAW_GUARD_EVERY = 20_000
 RAW_BATCH_CALLS = 32_768
 RAW_MARK = '\x00parallel-raw:'
@@ -443,7 +444,7 @@ def finish(self, rows, processed, entity_hashes, spec, *, source_manifest_hash):
         raise ValueError('context cursor absent from complete prefix')
     # 5. evidence_hash(receipts) == sha256(prefix + canonical(pack(list))); pack(list) = ["list", [pack(r)...]]
     attachment = hashlib.sha256(DIGEST_PREFIX + b'["list",[' + b','.join(fragments) + b']]').hexdigest()
-    if len(receipts) <= 4096 and attachment != T.evidence_hash(receipts):
+    if len(receipts) <= FULL_HASH_CHECK_RECEIPTS and attachment != T.evidence_hash(receipts):
         raise ValueError('parallel teacher attachment hash differs; run stopped')
     return dict(targets=tuple(targets), raw=raw_rows, processed_records=processed,
                 context_cursors=selected, step_receipts=tuple(receipts),

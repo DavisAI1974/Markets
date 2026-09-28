@@ -66,10 +66,12 @@ def _finite(value):
 class NormalizerConfig:
     instrument_ids: tuple[int, ...]
     mode: str = "UPDATING"
-    n_norm: int = 4096
-    n_warm: int = 256
+    # No window cap, no warm-up and no clip unless a caller declares them (Greg, 2026-09-28: the old fixed window is out of
+    # the code; nothing is normalized or cut). None = every value of the day kept, nothing clipped.
+    n_norm: int | None = None
+    n_warm: int | None = None
     floors: tuple[float, ...] = SCALE_FLOORS
-    clip: float = 8.0
+    clip: float | None = None
 
     def __post_init__(self):
         if (type(self.instrument_ids) is not tuple or not self.instrument_ids
@@ -78,13 +80,16 @@ class NormalizerConfig:
             raise ValueError("declare unique nonnegative integer instrument IDs")
         if self.mode not in ("UPDATING", "FROZEN"):
             raise ValueError("mode must be UPDATING or FROZEN")
-        if (type(self.n_norm) is not int or type(self.n_warm) is not int
-                or not 1 <= self.n_warm <= self.n_norm):
-            raise ValueError("require 1 <= n_warm <= n_norm")
+        if self.n_norm is not None and type(self.n_norm) is not int or self.n_norm is not None and self.n_norm < 1:
+            raise ValueError("n_norm is None (no cap) or a positive integer")
+        if self.n_warm is not None and (type(self.n_warm) is not int or self.n_warm < 1
+                                        or (self.n_norm is not None and self.n_warm > self.n_norm)):
+            raise ValueError("n_warm is None or a positive integer no larger than n_norm")
         if (type(self.floors) is not tuple or len(self.floors) != len(COLUMNS)
-                or any(_finite(f) <= 0 for f in self.floors) or _finite(self.clip) <= 0):
-            raise ValueError("require positive floors for every column and clip")
-        if self.clip > 3.4028234663852886e38:
+                or any(_finite(f) <= 0 for f in self.floors)
+                or (self.clip is not None and _finite(self.clip) <= 0)):
+            raise ValueError("require positive floors for every column and a positive clip when one is declared")
+        if self.clip is not None and self.clip > 3.4028234663852886e38:
             raise ValueError("clip must fit finite float32 emission")
 
     def payload(self):
@@ -95,7 +100,7 @@ class NormalizerConfig:
                 "n_norm": self.n_norm, "n_warm": self.n_warm,
                 "floors": list(self.floors), "clip": self.clip,
                 "floors_hex": [float(v).hex() for v in self.floors],
-                "clip_hex": float(self.clip).hex()}
+                "clip_hex": None if self.clip is None else float(self.clip).hex()}
 
     @property
     def config_hash(self):
@@ -144,7 +149,7 @@ class Normalizer:
         if state != State.PRESENT:
             return NormalizedValue(0.0, state)
         key = instrument_id, column
-        if self._counts[key] < self.config.n_warm:
+        if self.config.n_warm is not None and self._counts[key] < self.config.n_warm:
             return NormalizedValue(0.0, State.MISSING, "NORM_WARMUP")
         values = self._windows[key]
         location = median(values)
@@ -157,7 +162,8 @@ class Normalizer:
         # Finite operands may overflow their subtraction even when the final
         # quotient is in range. Divide first only on that overflow path.
         z = delta / scale if math.isfinite(delta) else value / scale - location / scale
-        z = max(-self.config.clip, min(self.config.clip, z))
+        if self.config.clip is not None:
+            z = max(-self.config.clip, min(self.config.clip, z))
         emitted = struct.unpack("<f", struct.pack("<f", z))[0]
         return NormalizedValue(emitted, State.PRESENT, floor_bound=mad_scale <= floor)
 
@@ -232,7 +238,7 @@ class Normalizer:
                 raise ValueError("invalid checkpoint window identity or mode")
             values, count = row["values"], row["n_present"]
             if (type(values) is not list or type(count) is not int or count < 0
-                    or len(values) != min(count, config.n_norm)):
+                    or len(values) != (count if config.n_norm is None else min(count, config.n_norm))):
                 raise ValueError("invalid checkpoint window count")
             parsed = [_finite(v) for v in values]
             if row["values_hex"] != [v.hex() for v in parsed]:

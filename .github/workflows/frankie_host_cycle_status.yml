@@ -82,7 +82,7 @@ jobs:
           for o in objects[-6:]:
               age = (time.time() - o['LastModified'].timestamp()) / 60
               try:
-                  body = json.loads(s3.get_object(Bucket=bucket, Key=o['Key'])['Body'].read(4096))
+                  body = json.loads(s3.get_object(Bucket=bucket, Key=o['Key'])['Body'].read())
                   detail = ' '.join(f'{k}={body[k]!r}' for k in ('phase', 'step', 'note', 'files_written') if k in body)
               except Exception as error:
                   detail = 'unreadable ' + type(error).__name__
