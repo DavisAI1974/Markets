@@ -1,7 +1,8 @@
 name: Frankie retained Pod control
-# Operator-level inspect/start of the retained Granite Pod. The retained observer submits its one start
+# Operator-level inspect/start/stop of the retained Granite Pod. The retained observer submits its one start
 # and discards the provider's refusal body; this prints that body and, on acceptance, the status
-# transition and a receipt. Never stops, patches or deletes a Pod. Prints no environment value.
+# transition and a receipt. Stop (Greg, 2026-09-28) halts billing and keeps the Pod's disks for a later start;
+# never patches or deletes the retained Pod. Prints no environment value.
 on:
   workflow_dispatch:
     inputs:
@@ -10,11 +11,11 @@ on:
         required: false
         default: 'fhiwwlouzyx6l2'
       action:
-        description: 'inspect (read-only), start (submits the v2 start action once), or terminate (DELETE an EXITED replacement Pod; never the retained Pod)'
+        description: 'inspect (read-only), start (submits the v2 start action once), stop (halts billing, keeps the disks), or terminate (DELETE an EXITED replacement Pod; never the retained Pod)'
         required: true
         default: 'inspect'
         type: choice
-        options: ['inspect', 'start', 'terminate', 'restart']
+        options: ['inspect', 'start', 'stop', 'terminate', 'restart']
       wait_seconds:
         description: 'After an accepted start, poll the status transition for at most this long'
         required: false

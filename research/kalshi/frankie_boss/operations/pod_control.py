@@ -44,8 +44,8 @@ PRESERVED_PODS = {RETAINED_POD, 'g7y3g2w1kor4l3'}  # Both retained Pod/storage g
 RETRY_INTERVAL = 60
 
 
-def control_call(key, method, path, body=None):
-    connection = http.client.HTTPSConnection(CONTROL, timeout=20)
+def control_call(key, method, path, body=None, host=CONTROL):
+    connection = http.client.HTTPSConnection(host, timeout=20)
     try:
         raw = None if body is None else json.dumps(body, allow_nan=False).encode()
         connection.request(method, path, raw, {'Authorization': 'Bearer ' + key, 'Accept': 'application/json',
@@ -78,7 +78,7 @@ def get_pod(key, pod_id):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pod', required=True)
-    parser.add_argument('--action', choices=('inspect', 'start', 'terminate', 'restart'), default='inspect')
+    parser.add_argument('--action', choices=('inspect', 'start', 'stop', 'terminate', 'restart'), default='inspect')
     parser.add_argument('--wait-journal-key', default='')
     parser.add_argument('--wait-seconds', type=int, default=300)
     parser.add_argument('--retry-seconds', type=int, default=0)
@@ -138,6 +138,42 @@ def main():
         print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_RESTART_RECEIPT_V1', pod=args.pod, outcome='accepted', http_status=status,
                                           journal_key=args.wait_journal_key, key_seen_at=seen_at, submitted_at=submitted_at,
                                           transitions=transitions, final_status=last)))
+        return
+    if args.action == 'stop':
+        # Greg, 2026-09-28: stop the retained Pod (billing stops; the container disk and the /opt/ml volume stay, so a
+        # later `start` resumes the same Pod). Never deletes anything.
+        if pod.get('status') == 'EXITED':
+            print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_STOP_RECEIPT_V1', pod=args.pod, outcome='already_exited')))
+            return
+        submitted_at = time.time()
+        status, data = control_call(key, 'POST', '/v2/pods/' + args.pod + '/action', {'action': 'stop'})
+        route = 'api.runpod.io /v2 action'
+        if status not in (200, 201, 202, 204):
+            print('STOP_REFUSED %s HTTP %d body=%s' % (route, status, data[:2000].decode('utf-8', 'replace').strip()))
+            status, data = control_call(key, 'POST', '/v1/pods/' + args.pod + '/stop', host='rest.runpod.io')
+            route = 'rest.runpod.io /v1 stop'
+        text = data[:2000].decode('utf-8', 'replace')
+        if status not in (200, 201, 202, 204):
+            print('STOP_REFUSED %s HTTP %d body=%s' % (route, status, text.strip()))
+            print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_STOP_RECEIPT_V1', pod=args.pod, outcome='refused', http_status=status,
+                                              provider_body=text)))
+            raise SystemExit(2)
+        transitions, last = [], None
+        deadline = time.time() + args.wait_seconds
+        while time.time() < deadline:
+            current = get_pod(key, args.pod).get('status')
+            if current != last:
+                transitions.append(dict(at=time.time(), status=current))
+                print('POD_STATUS %s' % current)
+                last = current
+            if current == 'EXITED':
+                break
+            time.sleep(10)
+        print('RECEIPT ' + json.dumps(dict(schema='FRANKIE_POD_STOP_RECEIPT_V1', pod=args.pod, outcome='accepted', route=route,
+                                          http_status=status, submitted_at=submitted_at, transitions=transitions,
+                                          final_status=last, exited=last == 'EXITED')))
+        if last != 'EXITED':
+            raise SystemExit(2)
         return
     if args.action == 'terminate':
         if args.pod in PRESERVED_PODS:
