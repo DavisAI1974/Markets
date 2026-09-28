@@ -83,3 +83,28 @@ So the bedrock layer CONTENTS are not in his knowledge base. What primes him fro
 - the frozen learned-structure text for the four D/exhaustion layers.
 
 Open, before the next build: define Frankie's exact role, then cater the prime to it. That covers the teach-back facts, which frozen files, and whether the joined-teacher couplings feed him at all. The joined teacher build (dfe08ca7) stays unrun until then.
+
+## Update: Granite is a reasoning boost, not Frankie (Greg)
+Greg: "granite is supposed to only be a small piece of frankie and that is reasoning boost." Asked whether the bedrock
+priming must be wired to Granite: it does not. The teach stage's facts are computed by code, and Granite only restates
+them, under a check that refuses any number the code did not give it.
+
+Every Granite call in the principal today (`frankie_box_boss_session.py` and the classroom and scientific modules), with
+the proposed owner:
+
+| Call | What it does today | Proposed |
+|---|---|---|
+| reading (digest in parts) | writes notes that restate code-made tables | CODE (the data is already exact) |
+| merge levels | "preserve every line verbatim, reorder, remove exact duplicates" | CODE (line dedupe) |
+| teach (exhaustion/D) | restates code facts; foreign numbers refused | CODE |
+| classroom 19 components | transcribes every observation, plus pairs, plus novel findings | transcription CODE; novel findings GRANITE |
+| classroom summary | summary over the answers | GRANITE only if it reasons; otherwise CODE |
+| writing: accounting + ten ledgers | structured bookkeeping | CODE fills the structure |
+| writing: analysis | the narrative of the run | GRANITE (reasoning) |
+| correction turn | resolves the graded corrections | GRANITE (reasoning) |
+| scientific review, BOSS teacher, Frankie replies | mechanism and evidence reasoning | GRANITE (reasoning) |
+| staged readings before each role | each role reads the whole corpus in parts | replace with code-selected exact inputs per question |
+
+Principle: code does everything computable or transcribable. Granite gets a small, code-prepared question plus the exact
+rows it needs, and returns reasoning (hypotheses, mechanisms, disagreements, novel findings), which code then checks
+against the data. Nothing built; this is the role definition to agree first.
