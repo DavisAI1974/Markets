@@ -99,8 +99,14 @@ grading are built from data only, so he is never graded against his own claim.
 1. **The same model plays every role.** The code says it outright: "These are roles using the established model, not
    independent experiments." When both teachers and Frankie are Granite, their agreement is not independent
    confirmation. Only the data checks are. Keep it, or give a teacher a different model (the CLM-8B / Jev idea)?
-2. **Granite's read of the bedrock.** The teachers' code reads the layer files directly, with no size problem. Whether
-   Frankie also reads the 18 bedrock tables (about 3.8 GB rendered) waits on a one-to-two-minute token measurement after
-   the stacks.
+2. **The bedrock goes to the teachers, not Frankie (Greg, 2026-09-28).** The bedrock brings no new source: every layer is
+   the pinned producers' calculation over the same Monday tape Frankie ingests. So the teachers read the bedrock results
+   the box already computed (the layer files and ledgers, whole), joined per F_LAST group with the journal. They do not
+   re-run the producers (that would compute the same thing twice and could drift from the pinned producers), and nothing
+   is rendered into tables for them (the table text exists only for a model to read). Frankie keeps his current read.
+   The Granite-run scientific teacher cannot read 3.8 GB either; it gets the coupling results the BOSS teacher's code
+   computes over the bedrock, each result naming its rows so any one can be pulled whole.
+   Overlap to remove: the per-second roll20 in the legacy tables and the bedrock's `flow_substrate` rows both come from
+   the same tape; kept once, referenced from the other.
 3. **Pinned identities.** The classroom package, the teacher key and the binding hashes change. The next launch mints
    the new ones.
