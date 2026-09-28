@@ -16,6 +16,7 @@ import json
 import os
 import re
 import shutil
+import sys
 import time
 from pathlib import Path
 
@@ -605,6 +606,23 @@ def load(brain, cycle, *, snapshot=None, carried=None):
                 continue
             if not p.is_file():
                 members.append(dict(name=f'brain-cycle-{cyc}-{name}', treatment='brain entry file missing; not in the corpus'))
+                continue
+            if name == 'derivation-digest-full.md':
+                # Greg, 2026-09-28 (faster and smallest without changing the science): a carried digest is read as its map
+                # (frankie_box_digest_map: every line but table dictionaries and rows past the first three, those by exact
+                # byte range of this brain file, which the classroom tasks retrieve); its sha256 is checked in the same pass
+                sys.path.insert(0, str(Path(__file__).resolve().parent))
+                import frankie_box_digest_map as DM
+                label = f'{cyc}:{name}'                 # the classroom source id of this brain file (principal inputs catalog)
+                text, stats = DM.digest_map(p, label)
+                if stats['digest_sha256'] != e.get('sha256'):
+                    members.append(dict(name=f'brain-cycle-{cyc}-{name}', bytes=stats['digest_bytes'], treatment='brain entry bytes differ from its manifest; not in the corpus'))
+                    continue
+                parts.append(f"\n\n## Frankie's brain: cycle {cyc}, {name} ({e.get('kind', 'document')}; carried forward as its map, the whole "
+                             f"file (classroom source {label}) unchanged, sha256 {e['sha256'][:16]}; rows and dictionaries by exact byte range)\n\n" + text + '\n')
+                members.append(dict(name=f'brain-cycle-{cyc}-{name}', bytes=stats['digest_bytes'], sha256=e['sha256'],
+                                    treatment='brain: prior cycle derivation digest as its map; rows and dictionaries by exact byte range', map=stats))
+                carried[e['sha256']] = f'brain cycle {cyc} {name}'
                 continue
             data = p.read_bytes()
             if sha256_bytes(data) != e.get('sha256'):
