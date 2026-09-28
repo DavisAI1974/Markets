@@ -28,8 +28,11 @@ if not hashlib.sha256(raw).hexdigest().startswith('883975314d587437'):
     raise SystemExit('pinned Granite tokenizer differs')
 tok = Tokenizer.from_str(raw.decode())
 size = DIGEST.stat().st_size
+sha = hashlib.sha256()
 with DIGEST.open('rb') as handle:
-    digest_sha = hashlib.file_digest(handle, 'sha256').hexdigest()
+    for block in iter(lambda: handle.read(8 << 20), b''):
+        sha.update(block)
+digest_sha = sha.hexdigest()
 report = dict(schema='FRANKIE_DIGEST_CANARY_V1', digest=str(DIGEST), digest_bytes=size, digest_sha256=digest_sha,
               part_tokens=PART, read=os.environ['READ'], slices=[])
 print('digest', DIGEST, size, 'bytes sha256', digest_sha, flush=True)
