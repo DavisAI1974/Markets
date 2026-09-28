@@ -52,7 +52,7 @@ concurrency:
   # lock (Greg, 2026-09-27): it only unpacks a new inactive checkout, so it need not wait behind a running ROOT.
   # The bedrock side builder has its own lock (Greg, 2026-09-28): it reads a running ROOT's finished sources
   # read-only and writes only its own .digest-side-* scratch on idle cores.
-  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
+  group: ${{ (inputs.script == 'deploy/aws/box/frankie_box_progress.sh' || inputs.script == 'deploy/aws/box/frankie_box_read_log.sh' || inputs.script == 'deploy/aws/box/frankie_box_session_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_disk_usage.sh' || inputs.script == 'deploy/aws/box/frankie_box_console.sh') && format('box-progress-{0}', inputs.instance) || ((inputs.script == 'deploy/aws/box/frankie_box_pause_root.sh' || inputs.script == 'deploy/aws/box/frankie_box_root_cpu.sh' || inputs.script == 'deploy/aws/box/frankie_box_stop_side.sh' || inputs.script == 'deploy/aws/box/frankie_box_cleanup_side.sh') && format('box-pause-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_stage_code.sh' && format('box-stage-{0}', inputs.instance)) || (inputs.script == 'deploy/aws/box/frankie_box_bedrock_side.sh' && format('box-side-{0}', inputs.instance)) || format('box-run-{0}', inputs.instance) }}
   cancel-in-progress: false
 jobs:
   validate-staging-route:
@@ -225,7 +225,29 @@ jobs:
           else:
               raise SystemExit('EBS modification still pending; no filesystem change attempted')
           PY
+      - name: Read the box's system console log and status checks (EC2 API, read-only; no command on the box)
+        if: inputs.script == 'deploy/aws/box/frankie_box_console.sh'
+        run: |
+          python - <<'PY' | tee box-run-output.txt
+          import base64, boto3, os, re
+          ec2 = boto3.client('ec2', region_name=os.environ['REGION'])
+          iid = os.environ['INSTANCE']
+          for s in ec2.describe_instance_status(InstanceIds=[iid], IncludeAllInstances=True)['InstanceStatuses']:
+              print('state:', s['InstanceState']['Name'], 'system:', s['SystemStatus']['Status'],
+                    'instance:', s['InstanceStatus']['Status'], s['InstanceStatus'].get('Details'))
+          out = ec2.get_console_output(InstanceId=iid, Latest=True)
+          text = out.get('Output') or ''
+          try:
+              text = base64.b64decode(text, validate=True).decode('utf-8', 'replace')
+          except Exception:
+              pass
+          print('console timestamp:', out.get('Timestamp'), 'chars:', len(text))
+          hits = [l for l in text.splitlines() if re.search(r'(?i)out of memory|oom|killed process|no space|ext4-fs|i/o error|hung task|blocked for more', l)]
+          print('### matching lines (%d)' % len(hits)); print('\n'.join(hits[-200:]))
+          print('### console tail'); print(text[-30000:])
+          PY
       - name: Run the committed script on the box
+        if: inputs.script != 'deploy/aws/box/frankie_box_console.sh'
         run: |
           set -euo pipefail
           sets=()
