@@ -71,6 +71,7 @@ CONTRACT_PATH = 'research/kalshi/frankie_boss/sunday_20260915_package/FB/princip
 REGISTRY_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_registry_20260828.json'
 BYTES_PER_TOKEN = 1.6      # conservative for dense JSON evidence: the proven packet was 151 KB = 92,439 tokens
 CHUNK_BYTES = 140_000      # about 87k tokens at that rate, leaving the rest of the context to the BOSS's answer
+MIN_SPLIT_BYTES = 1024     # a reading piece is split for regeneration down to this size (Greg, 2026-09-28: every note complete)
 POLL_SECONDS = 10
 HTTP_TIMEOUT = 80
 STAGES = ('verify', 'labels', 'engine', 'derive', 'reading', 'classroom', 'teach', 'writing', 'push', 'correction')
@@ -1714,67 +1715,61 @@ class Session:
             self.note(f'docs: not built ({type(error).__name__}: {error}); the session continues')
 
     def _read_part_guarded(self, i, s, e, n, data, header, notes_dir):
-        """One part's notes, guarded (chat 6, cycle 0: part 4 had a retained note, but later merges ran away, refused and
-        dropped the group). A note that is empty, a refusal, an error or output-incomplete is retried ONCE; if the retry
-        is unusable too, the part is split in two halves on a line boundary and each half is read (no further split);
-        every attempt is kept beside the note (attempt-NNNN-*.md, never matched by the note-*.md glob)."""
+        """One part's notes, every note complete (Greg, 2026-09-28: no truncated notes; have messages regenerated). A note
+        that is empty, a refusal, an error, a runaway or output-incomplete is asked again once; still unusable, the range is
+        split in two halves on a line boundary and EACH HALF IS READ THE SAME WAY (again and again, down to MIN_SPLIT_BYTES),
+        so every piece's note comes back usable and whole. Notes are never cut (no runaway tail is removed): the part's note
+        is every piece's note in order. Every attempt is kept beside the note (attempt-NNNN-*.md, never matched by the
+        note-*.md glob). Each call is a durable job reused when its prompt is unchanged, so a stopped reading resumes."""
         docs = docs_module()
         label = f'read-{i:04d}' + getattr(self, '_reading_passes', {}).get(i, '')
         no_output = lambda o: '(no output: %s)' % o.get('error')
+        attempts = []
 
-        def ask(name, start, end, tag):
-            text = header.format(cycle=self.cycle, req=self.request['request_id'], i=i + 1, n=n, s=start, e=end) + \
-                (f'(This call reads {tag} of part {i + 1}; the other half is read in another call.)\n' if tag else '') + \
+        def ask(name, start, end):
+            piece = '' if (start, end) == (s, e) else (
+                f'(This call reads bytes {start}-{end} of part {i + 1}; the rest of the part is read in other calls.)\n')
+            text = header.format(cycle=self.cycle, req=self.request['request_id'], i=i + 1, n=n, s=start, e=end) + piece + \
                 data[start:end].decode('utf-8', errors='replace') + '\n----- PART ENDS -----\n'
             outcome = self.reader(name, text)
             body = outcome.get('text') or ''
-            return outcome, body, docs.note_verdict(body, outcome)
+            verdict = docs.note_verdict(body, outcome)
+            attempts.append((name, start, end, outcome, body, verdict))
+            return outcome, body, verdict
 
-        attempts = []
-        outcome, body, verdict = ask(label, s, e, '')
-        attempts.append((label, outcome, body, verdict))
-        if verdict:
-            self.note(f'{label}: note unusable ({verdict}); retrying once')
-            outcome, body, verdict = ask(f'{label}-retry', s, e, '')
-            attempts.append((f'{label}-retry', outcome, body, verdict))
-        halves = None
-        if verdict:
-            first, second = docs.split_range(data, s, e)
-            if first:
-                self.note(f'{label}: retry unusable ({verdict}); reading the part in two halves')
-                halves = []
-                for tag, (hs, he) in (('a', first), ('b', second)):
-                    o, b, v = ask(f'{label}-{tag}', hs, he, f'half {tag}')
-                    attempts.append((f'{label}-{tag}', o, b, v))
-                    halves.append((tag, hs, he, o, b, v))
-        for name, o, b, v in attempts:
-            write_text(notes_dir / f'attempt-{i:04d}-{name.split("-", 2)[-1] if name.count("-") > 1 else "first"}.md',
-                f'## {name} (bytes {s}-{e}) verdict {v or "usable"}\n\n{b or no_output(o)}\n')
-        def kept_text(b, v):
-            """What the note carries for the merge when an answer is kept as returned: a runaway tail is removed with a
-            marker (the full text stays in the attempt file); anything else is kept whole."""
-            if v in ('runaway', 'incomplete'):
-                return docs.deloop(b) or b
-            return b
-        if halves:
-            parts = []
-            for tag, hs, he, o, b, v in halves:
-                mark = f' [UNUSABLE: {v}; kept as returned]' if v else ''
-                parts.append(f'### Half {tag} (bytes {hs}-{he}){mark}\n\n{kept_text(b, v) or no_output(o)}')
-            note = f'## Notes on part {i + 1}/{n} (bytes {s}-{e}) read in two halves\n\n' + '\n\n'.join(parts) + '\n'
-            final = halves[-1][3]
-            unusable = [v for *_, v in halves if v]
+        def read_range(name, start, end):
+            outcome, body, verdict = ask(name, start, end)
+            if verdict:
+                self.note(f'{name}: note unusable ({verdict}); asking again')
+                outcome, body, verdict = ask(f'{name}-retry', start, end)
+            if not verdict:
+                return [(name, start, end, outcome, body, None)]
+            first, second = docs.split_range(data, start, end)
+            if first is None or end - start < MIN_SPLIT_BYTES:
+                return [(name, start, end, outcome, body, verdict)]
+            self.note(f'{name}: still unusable ({verdict}); regenerating from two halves ({first[0]}-{first[1]}, {second[0]}-{second[1]})')
+            return read_range(f'{name}-a', *first) + read_range(f'{name}-b', *second)
+
+        pieces = read_range(label, s, e)
+        for name, a, b, o, text, v in attempts:
+            write_text(notes_dir / f'attempt-{i:04d}-{name[len(label):].strip("-") or "first"}.md',
+                       f'## {name} (bytes {a}-{b}) verdict {v or "usable"}\n\n{text or no_output(o)}\n')
+        unusable = [v for *_, v in pieces if v]
+        if len(pieces) == 1:
+            name, a, b, outcome, body, verdict = pieces[0]
+            flag = f' [UNUSABLE: {verdict}; kept whole as returned]' if verdict else ''
+            note = f'## Notes on part {i + 1}/{n} (bytes {s}-{e}){flag}\n\n{body or no_output(outcome)}\n'
         else:
-            flag = f' [UNUSABLE: {verdict}; kept as returned]' if verdict else (' [OUTPUT INCOMPLETE]' if outcome.get('incomplete') else '')
-            note = f'## Notes on part {i + 1}/{n} (bytes {s}-{e}){flag}\n\n{kept_text(body, verdict) or no_output(outcome)}\n'
-            final = outcome
-            unusable = [verdict] if verdict else []
+            blocks = [f'### Piece {k}/{len(pieces)} (bytes {a}-{b})' + (f' [UNUSABLE: {v}; kept whole as returned]' if v else '') +
+                      f'\n\n{body or no_output(o)}' for k, (name, a, b, o, body, v) in enumerate(pieces, 1)]
+            note = f'## Notes on part {i + 1}/{n} (bytes {s}-{e}) read in {len(pieces)} pieces\n\n' + '\n\n'.join(blocks) + '\n'
+        final = pieces[-1][3]
         write_text(notes_dir / f'note-{i:04d}.md', note)
         if unusable:
-            self.note(f'{label}: still unusable after retry and split ({", ".join(unusable)}); kept as returned, marked')
+            self.note(f'{label}: {len(unusable)} piece(s) still unusable at {MIN_SPLIT_BYTES} bytes ({", ".join(unusable)}); kept whole, marked')
         return dict(part=i, job_id=final.get('job_id') or final.get('runpod_job_id'), lane='serverless' if self.serverless else 'pod',
                     incomplete=final.get('incomplete'), error=final.get('error'), attempts=len(attempts),
-                    halves=bool(halves), unusable=unusable)
+                    halves=len(pieces) > 1, pieces=[dict(start=a, end=b, name=name) for name, a, b, *_ in pieces], unusable=unusable)
 
     def _merge_prompt(self, joined, label):
         return (f'You are Frankie, the BOSS, principal for cycle {self.cycle} (request {self.request["request_id"]}). Below are your own notes '
