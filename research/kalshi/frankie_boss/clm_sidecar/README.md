@@ -46,7 +46,9 @@ rest" tables.
    - Optional variables: `STAMP`, `HORIZONS`, `TRAIN`, `TEST`.
    - It prints a manifest with the dataset's S3 key. It uses the box role's host-delivery progress prefix.
 2. **GPU Pod** (Greg's go: a new small Pod, always deleted). Run script `deploy/aws/box/frankie_box_clm_sidecar_pod.sh`.
-   - Variables: `DATASET_KEY=<key from step 1> STAMP=<same stamp> [MAX_MINUTES=150]`.
+   - Variables: `DATASET_KEY=<key from step 1> STAMP=<same stamp> [MAX_MINUTES=150] [CHECKPOINT_MINUTES=30]`.
+   - Every CHECKPOINT_MINUTES the Pod uploads its log, `progress.json` and any outputs so far, and the job prints a
+     CHECKPOINT (Pod state, system and container log tail, progress). A Pod that has not started in 30 min is deleted.
    - The runner picks a 40 GB+ GPU in stock, creates the Pod (image `vllm/vllm-openai:latest`) and passes presigned
      URLs.
    - The Pod runs `pod_bootstrap.sh`: vLLM Qwen3-8B pooling on :8090, `clm-serve` on :8700, then `learn.py`.

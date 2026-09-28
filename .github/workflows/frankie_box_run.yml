@@ -352,8 +352,9 @@ jobs:
           [[ "${v[STAMP]:-}" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo "STAMP required"; exit 1; }
           [[ "${v[DATASET_KEY]:-}" =~ ^(host-deliveries|clm-sidecar)/[A-Za-z0-9_./-]+$ ]] || { echo "DATASET_KEY required"; exit 1; }
           [[ "${v[MAX_MINUTES]:-150}" =~ ^[0-9]+$ ]] || { echo "MAX_MINUTES must be an integer"; exit 1; }
+          [[ "${v[CHECKPOINT_MINUTES]:-30}" =~ ^[0-9]+$ ]] || { echo "CHECKPOINT_MINUTES must be an integer"; exit 1; }
           python research/kalshi/frankie_boss/clm_sidecar/launch.py --dataset-key "${v[DATASET_KEY]}" --stamp "${v[STAMP]}" \
-            --max-minutes "${v[MAX_MINUTES]:-150}" 2>&1 | tee box-run-output.txt
+            --max-minutes "${v[MAX_MINUTES]:-150}" --checkpoint-minutes "${v[CHECKPOINT_MINUTES]:-30}" 2>&1 | tee box-run-output.txt
           { echo '### CLM sidecar report'; cat clm-sidecar-out/report.md 2>/dev/null || echo '(no report)'; } >> "$GITHUB_STEP_SUMMARY"
       - name: CLM sidecar Pod cleanup (always delete the Pod)
         if: always() && inputs.script == 'deploy/aws/box/frankie_box_clm_sidecar_pod.sh'
