@@ -292,9 +292,14 @@ def main():
                 bundle, used = join_bundle(bundle, feed, next_feed)
                 if bundle is None:
                     break                      # the remaining parts have not landed yet; read again next pass
-            if bundle.get('dipole') and bundle['dipole'].get('dipole_classroom') is not None and not dipole:
-                dipole = json.dumps(bundle['dipole']['dipole_classroom'])
-                log('dipole material: %d chars (whole)' % len(dipole))
+            # every piece of dipole material is kept whole, each labelled by its source: the shared file the relay was
+            # given (DIPOLE_FILE) and the request's own classroom attachment when a launch writes it
+            carried = bundle.get('dipole') or {}
+            if carried.get('dipole_classroom') is not None:
+                label = '%s %s' % (carried.get('source') or 'REQUEST ATTACHMENT dipole_classroom', carried.get('path'))
+                if label not in dipole:
+                    dipole += ('\n\n' if dipole else '') + '===== %s =====\n%s' % (label, json.dumps(carried['dipole_classroom']))
+                    log('dipole material: %s, %d chars in all (whole)' % (label, len(dipole)))
             for name, text in (bundle.get('classroom') or {}).items():
                 queue.append(dict(kind='classroom', name=name, text=text or ''))
             for answer in bundle.get('answers') or []:

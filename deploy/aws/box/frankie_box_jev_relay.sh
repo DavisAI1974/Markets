@@ -7,14 +7,20 @@
 # (clm_sidecar/sit_in.py) joins and checks. A bundle that fits is the unchanged JEV_FEED_BUNDLE_V1 object. The first bundle also carries the dipole classroom material from
 # the request (attachment.dipole_classroom). Jev's Pod reads the same slots. The box role writes nothing in S3, so the
 # runner signs the slots: dispatch with presign="putrange:frankie-granite42-568968024170-us-east-1/clm-sidecar/<STAMP>/feed:240"
-# presign_hours=12. Inputs: STAMP, SESSION (session root; default the Monday calculations root), REQUEST_DIRECTORY,
+# presign_hours=12. DIPOLE_FILE (Greg, 2026-09-28: "resend the earlier dipole info"): a JSON file under /opt/frankie-box
+# (e.g. <code root>/research/kalshi/frankie_boss/knowledge/DIPOLE_SHARED_CATALOG_20260922.json, the shared dipole catalog
+# the classroom loads) sent whole in the first bundle, labelled as that file, while the relay keeps looking for the
+# request's own attachment.dipole_classroom and sends that too once a launch writes it.
+# Inputs: STAMP, SESSION (session root; default the Monday calculations root), REQUEST_DIRECTORY,
 # RELAY_SECONDS (default 120), MAX_BUNDLE_BYTES (default 4000000). Ends when the slots run out or the session phase is final.
 set -eu
 : "${STAMP:?Jev stamp required}"; : "${MAP_URL:?presigned map required (presign putrange)}"
 case "$STAMP" in *[!A-Za-z0-9_.-]*|'') echo "invalid STAMP" >&2; exit 2;; esac
 export STAMP MAP_URL SESSION="${SESSION:-/opt/frankie-box/work/monday-calculations/full-20211004-20260927-r1-48}"
-export REQUEST_DIRECTORY="${REQUEST_DIRECTORY:-}" RELAY_SECONDS="${RELAY_SECONDS:-120}" MAX_BUNDLE_BYTES="${MAX_BUNDLE_BYTES:-4000000}"
+export DIPOLE_FILE="${DIPOLE_FILE:-}" REQUEST_DIRECTORY="${REQUEST_DIRECTORY:-}" RELAY_SECONDS="${RELAY_SECONDS:-120}" MAX_BUNDLE_BYTES="${MAX_BUNDLE_BYTES:-4000000}"
 case "$SESSION" in /opt/frankie-box/*) ;; *) echo "SESSION must be under /opt/frankie-box" >&2; exit 2;; esac
+case "$DIPOLE_FILE" in ''|/opt/frankie-box/*) ;; *) echo "DIPOLE_FILE must be under /opt/frankie-box" >&2; exit 2;; esac
+case "$DIPOLE_FILE" in *..*) echo "DIPOLE_FILE without .." >&2; exit 2;; esac
 exec nice -n 10 /usr/bin/python3 -B /dev/stdin <<'PY'
 import json, os, time, urllib.request
 from pathlib import Path
@@ -29,6 +35,7 @@ if not slots:
 work = SESSION / 'work'
 seen = {}
 dipole_sent = False
+file_sent = not os.environ['DIPOLE_FILE']
 
 
 def read(path):
@@ -88,6 +95,15 @@ while position < len(slots):
         # written when the launch reaches its WAIT, after the relay starts; bundle 0 alone would miss it)
         bundle['dipole'] = dipole_material()
         dipole_sent = bundle['dipole'].get('dipole_classroom') is not None
+    if not file_sent and not (bundle.get('dipole') or {}).get('dipole_classroom'):
+        # the earlier dipole material, whole, once (Greg: resend it now), in the field every Jev reader takes, labelled
+        # with its source; the relay goes on looking for the request's own attachment and sends that too
+        try:
+            bundle['dipole'] = dict(path=os.environ['DIPOLE_FILE'], source='DIPOLE_FILE (not a request attachment)',
+                                    dipole_classroom=json.loads(Path(os.environ['DIPOLE_FILE']).read_bytes()))
+            file_sent = True
+        except (OSError, ValueError) as error:
+            bundle['dipole_file_error'] = dict(path=os.environ['DIPOLE_FILE'], error='%s: %s' % (type(error).__name__, error))
     for path in sorted((work / 'classroom').glob('*.json')) if (work / 'classroom').is_dir() else []:
         if changed(path):
             bundle['classroom'][path.name] = read(path)
