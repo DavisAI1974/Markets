@@ -137,24 +137,21 @@ git fetch -q origin "$BR" 2>/dev/null && git checkout -q -B "$BR" FETCH_HEAD || 
 mkdir -p "$DEST"
 if [ "$DOCS_ONLY" != "1" ]; then for f in $FILES; do cp "$OUT/$f" "$DEST"/; done; fi
 if [ "$BRAIN_ONLY" != "1" ] && [ -d "$OUT/docs" ]; then mkdir -p "$DEST/docs-cycle-$CYCLE"; cp "$OUT"/docs/*.md "$OUT"/docs/docs-index.json "$DEST/docs-cycle-$CYCLE"/ && echo "docs: $(ls "$OUT"/docs | wc -l) files -> $DEST/docs-cycle-$CYCLE"; fi
-if [ -d "$ROOT/brain/cycle-$CYCLE" ]; then mkdir -p "$DEST/brain/cycle-$CYCLE"; cp "$ROOT/brain/cycle-$CYCLE"/* "$DEST/brain/cycle-$CYCLE"/ && echo "brain: cycle $CYCLE entry ($(ls "$ROOT/brain/cycle-$CYCLE" | wc -l) files) -> $DEST/brain/cycle-$CYCLE"; fi
+# Greg 2026-09-27/28: GitHub refuses a file over 100 MB (and a push over 2 GB). frankie_box_offload.py places every
+# brain file: under 90 MB as is, 90 MB up to 1 GiB gzipped when that is under 100 MB, anything larger as a pointer
+# <name>.s3.json with its bytes and sha256, the file itself uploaded to S3 under its sha256 (git = code, S3 = data) and
+# kept on the box. No plain copy of a large file is made in the clone. restore_from_git reads all three forms.
+OFFLOAD="$ROOT/venv/bin/python -B $CODE_ROOT/deploy/aws/box/frankie_box_offload.py"
+export DAY CYCLE
+if [ -d "$ROOT/brain/cycle-$CYCLE" ]; then $OFFLOAD copy "$ROOT/brain/cycle-$CYCLE" "$DEST/brain/cycle-$CYCLE" || exit 2; echo "brain: cycle $CYCLE entry ($(ls "$ROOT/brain/cycle-$CYCLE" | wc -l) files) -> $DEST/brain/cycle-$CYCLE"; fi
 # Preserve every prior run and each request's knowledge-base manifest in git as well as on the box.
 for part in history bases; do
   if [ -d "$ROOT/brain/$part" ]; then
-    mkdir -p "$DEST/brain/$part"
-    cp -a "$ROOT/brain/$part/." "$DEST/brain/$part/" || exit 2
+    $OFFLOAD copy "$ROOT/brain/$part" "$DEST/brain/$part" || exit 2
   fi
 done
-# Greg 2026-09-27: GitHub refuses a file over 100 MB. If a published file is 90 MB (94,371,840 bytes) or more, it is
-# committed gzipped as <name>.gz (-n: no name or time, so the same bytes give the same .gz); otherwise it is committed
-# as is. The box keeps every plain file; restore_from_git reads either form and checks the plain sha256.
-ZIP_AT=$((90 * 1024 * 1024)); GIT_MAX=$((100 * 1024 * 1024))
-find "$DEST" -type f ! -name '*.gz' -size +$((ZIP_AT - 1))c -print0 | while IFS= read -r -d '' f; do
-  gzip -n -f "$f" || exit 2
-  z=$(stat -c %s "$f.gz")
-  [ "$z" -lt "$GIT_MAX" ] || { echo "still over 100 MB zipped: ${f#"$DEST"/}.gz $z bytes; push refused"; exit 2; }
-  echo "zipped for git (90 MB or more): ${f#"$DEST"/} -> ${f#"$DEST"/}.gz $z bytes"
-done || exit 2
+# Any other large plain file in the clone (session documents): the same rule, in place.
+$OFFLOAD seal "$DEST" || exit 2
 git add "$DEST"
 if [ "$TURN" = "correction" ]; then MSG="root: cycle $CYCLE Frankie Dipole classroom correction response, host correction record and attestation (from Frankie's box i-035994afa8bdf66a5; the same session's turn 2)"; elif [ "$BRAIN_ONLY" = "1" ]; then MSG="root: cycle $CYCLE brain entry (derivation digest, accounting and ledgers, analysis; Frankie's calculation findings carried forward)"; elif [ "$DOCS_ONLY" = "1" ]; then MSG="root: cycle $CYCLE session documents as Markdown (reading notes, merges, merged notes, derivation digest, receipts; from Frankie's box)"; else MSG="root: cycle $CYCLE Frankie response, attestation, host session record, analysis, session documents (from Frankie's box i-035994afa8bdf66a5; request_sha256 per response.json)"; fi
 git -c user.name=frankie-box -c user.email=frankie-box@markets.local commit -q -m "$MSG" -m "Co-Authored-By: Codex <noreply@openai.com>" || echo "(nothing new to commit)"

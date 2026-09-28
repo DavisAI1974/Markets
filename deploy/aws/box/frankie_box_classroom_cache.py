@@ -22,8 +22,13 @@ def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
 def witness(path):
-    raw = Path(path).read_bytes()
-    return dict(bytes=len(raw), sha256=hashlib.sha256(raw).hexdigest())
+    # streamed (the derivation digest runs to many GB); same bytes and sha256 as hashing the whole file at once
+    hashed, size = hashlib.sha256(), 0
+    with Path(path).open('rb') as handle:
+        while block := handle.read(64 * 1024 * 1024):
+            hashed.update(block)
+            size += len(block)
+    return dict(bytes=size, sha256=hashed.hexdigest())
 
 def read(path):
     return json.loads(Path(path).read_bytes())

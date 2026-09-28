@@ -13,7 +13,9 @@ deleted; a changed manifest changes the corpus identity, so the corpus is rebuil
 import argparse
 import hashlib
 import json
+import os
 import re
+import shutil
 import time
 from pathlib import Path
 
@@ -96,15 +98,20 @@ def _checked_entry(directory, expected_hash=None):
     if expected_hash is not None and sha256_bytes(raw) != expected_hash:
         raise ValueError('knowledge manifest differs from pinned base')
     manifest = json.loads(raw)
+    included = []
     for entry in manifest.get('entries', []):
         if not entry.get('include'):
             continue
         name = entry.get('name', '')
         path = directory / name
         if (not name or Path(name).name != name or path.is_symlink() or not path.is_file()
-                or sha256_bytes(path.read_bytes()) != entry.get('sha256')
                 or path.stat().st_size != entry.get('bytes')):
             raise ValueError('included historical knowledge missing or changed: ' + name)
+        included.append((entry, path))
+    # streamed and hashed on threads (a digest runs to many GB); same check as before
+    for (entry, path), digest in zip(included, sha256_files([p for _, p in included])):
+        if digest != entry.get('sha256'):
+            raise ValueError('included historical knowledge missing or changed: ' + entry.get('name', ''))
     return manifest, sha256_bytes(raw)
 
 
@@ -249,10 +256,20 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
         (entry_dir / name).write_bytes(data)
         entries.append(dict(name=name, bytes=len(data), sha256=sha256_bytes(data), source=str(source), kind=kind, include=include))
 
+    def put_file(name, source, kind, include=True):
+        # streamed copy and hash in one pass (the digest runs to many GB; same bytes and entry as put)
+        hashed, size = hashlib.sha256(), 0
+        with Path(source).open('rb') as reader, (entry_dir / name).open('xb') as writer:
+            while block := reader.read(64 * 1024 * 1024):
+                writer.write(block)
+                hashed.update(block)
+                size += len(block)
+        entries.append(dict(name=name, bytes=size, sha256=hashed.hexdigest(), source=str(source), kind=kind, include=include))
+
     digest = work / 'derivation-digest-full.md'
     if not digest.is_file():
         raise FileNotFoundError(f'no derivation digest at {digest}; the brain entry needs the calculation findings')
-    put('derivation-digest-full.md', digest.read_bytes(), digest, 'calculation findings: the derivation digest, every layer of the pin')
+    put_file('derivation-digest-full.md', digest, 'calculation findings: the derivation digest, every layer of the pin')
     response = out / 'response.json'
     if response.is_file():
         doc = _lessons_doc(json.loads(response.read_bytes()))
@@ -324,12 +341,43 @@ def check(brain, cycle):
                 manifest = json.loads(m.read_bytes())
                 digest = next((e for e in manifest.get('entries', []) if e.get('name') == 'derivation-digest-full.md'), None)
                 ok = bool(digest) and (d / 'derivation-digest-full.md').is_file() and \
-                    sha256_bytes((d / 'derivation-digest-full.md').read_bytes()) == digest.get('sha256')
+                    _file_sha256(d / 'derivation-digest-full.md') == digest.get('sha256')
             except Exception:
                 ok = False
         if not ok:
             missing.append(cyc)
     return missing
+
+
+def _file_sha256(path):
+    with Path(path).open('rb') as handle:
+        return hashlib.file_digest(handle, 'sha256').hexdigest()
+
+
+def _restore_offloaded(pointer, entry, directory):
+    """A staged copy (a path under directory) of a file the pusher offloaded, taken from its box path or from S3, or
+    None; the bytes must match both the pointer and the manifest entry."""
+    if (pointer.get('schema') != 'FRANKIE_OFFLOADED_FILE_V1' or pointer.get('sha256') != entry.get('sha256')
+            or (entry.get('bytes') is not None and pointer.get('bytes') != entry.get('bytes'))):
+        return None
+    staged = Path(directory) / ('.restore-' + entry['name'])
+    staged.unlink(missing_ok=True)
+    box = pointer.get('box_path')
+    try:
+        if box and Path(box).is_file() and Path(box).stat().st_size == pointer['bytes']:
+            shutil.copyfile(box, staged)
+        elif pointer.get('uploaded') and pointer.get('key'):
+            import boto3
+            boto3.client('s3', region_name=pointer.get('region', 'us-east-1')).download_file(pointer['bucket'], pointer['key'], str(staged))
+        else:
+            return None
+        if staged.stat().st_size != pointer['bytes'] or _file_sha256(staged) != pointer['sha256']:
+            staged.unlink(missing_ok=True)
+            return None
+    except Exception:
+        staged.unlink(missing_ok=True)
+        return None
+    return staged
 
 
 def restore_from_git(brain, cycles, repo, day, remote='origin', branch_format='root/cycle-{cycle}-response'):
@@ -357,6 +405,8 @@ def restore_from_git(brain, cycles, repo, day, remote='origin', branch_format='r
             continue
         staged = {}
         bad = None
+        d = brain / f'cycle-{cyc}'
+        d.mkdir(parents=True, exist_ok=True)
         for e in manifest.get('entries', []):
             got = subprocess.run(['git', '-C', str(repo), 'show', f'FETCH_HEAD:{prefix}/{e["name"]}'], capture_output=True)
             if got.returncode:
@@ -365,17 +415,29 @@ def restore_from_git(brain, cycles, repo, day, remote='origin', branch_format='r
                 if not zipped.returncode:
                     import gzip
                     got = subprocess.CompletedProcess(zipped.args, 0, gzip.decompress(zipped.stdout), b'')
+            if got.returncode:
+                # a file too large for git is committed as <name>.s3.json (frankie_box_offload.py): the box copy or S3
+                pointer = subprocess.run(['git', '-C', str(repo), 'show', f'FETCH_HEAD:{prefix}/{e["name"]}.s3.json'], capture_output=True)
+                if not pointer.returncode:
+                    staged_path = _restore_offloaded(json.loads(pointer.stdout), e, d)
+                    if staged_path is not None:
+                        staged[e['name']] = staged_path
+                        continue
             if got.returncode or sha256_bytes(got.stdout) != e.get('sha256'):
                 bad = e['name']
                 break
             staged[e['name']] = got.stdout
         if bad:
+            for value in staged.values():
+                if isinstance(value, Path):
+                    value.unlink(missing_ok=True)
             result[cyc] = f'{bad} missing or not matching its sha256 on {branch}'
             continue
-        d = brain / f'cycle-{cyc}'
-        d.mkdir(parents=True, exist_ok=True)
         for name, data in staged.items():
-            (d / name).write_bytes(data)
+            if isinstance(data, Path):
+                os.replace(data, d / name)
+            else:
+                (d / name).write_bytes(data)
         (d / 'MANIFEST.json').write_bytes(show.stdout)
         result[cyc] = 'restored'
     return result

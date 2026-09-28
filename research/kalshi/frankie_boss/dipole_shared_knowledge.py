@@ -220,11 +220,35 @@ def load_snapshot(directory, expected_snapshot_hash):
     return Snapshot(directory, expected_snapshot_hash, catalog)
 
 
+_VERIFIED = {}
+
+
+def _disk_signature(directory):
+    """(inode, size, mtime) of the manifest and every source file: any write, replace or addition changes it."""
+    directory = Path(directory)
+    entries = [directory / "MANIFEST.json"] + sorted((directory / "sources").iterdir())
+    return tuple((str(p.name), p.stat().st_ino, p.stat().st_size, p.stat().st_mtime_ns) for p in entries)
+
+
 def _checked(snapshot):
     if not isinstance(snapshot, Snapshot):
         raise ValueError("verified shared knowledge Snapshot required")
-    # Recheck disk against the immutable external hash, not the caller's mutable dict.
-    return load_snapshot(snapshot.directory, snapshot.snapshot_hash)
+    # Recheck disk against the immutable external hash, not the caller's mutable dict. A full rehash is repeated only
+    # when the files changed since this process last verified them (read_source is called once per source; rehashing
+    # every source on every call made reading a snapshot quadratic in its size).
+    key = (str(snapshot.directory), snapshot.snapshot_hash)
+    try:
+        signature = _disk_signature(snapshot.directory)
+    except OSError:
+        signature = None
+    cached = _VERIFIED.get(key)
+    if signature is not None and cached is not None and cached[0] == signature:
+        # a fresh catalog copy each time: no caller shares the verified catalog object
+        return Snapshot(cached[1].directory, cached[1].snapshot_hash, json.loads(_canonical(cached[1].catalog)))
+    verified = load_snapshot(snapshot.directory, snapshot.snapshot_hash)
+    if signature is not None:
+        _VERIFIED[key] = (signature, verified)
+    return verified
 
 
 
