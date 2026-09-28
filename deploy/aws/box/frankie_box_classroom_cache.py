@@ -122,6 +122,21 @@ def identity(session, visible, module):
         evidence={n: witness(session.work / n) for n in ('merged-notes.md', 'reading.json', 'derivation-digest-full.md')
                   if (session.work / n).is_file()})
 
+# Stop-fix-restart (Greg, 2026-09-27): what decides reuse is the SCIENCE of an exchange (request, teacher message,
+# classroom binding, evidence, the serving and reading model identity), not the code bytes or the Pod id. A saved
+# exchange is reused only when its prompt is byte-identical to the prompt the current code sends, so a code fix
+# re-asks exactly the exchanges it changes and keeps every other one. Code and Pod identities are still recorded
+# (identity.json and identity-history.jsonl) as evidence.
+INFRASTRUCTURE = ('code', 'pod_id')
+
+
+def science(identity):
+    value = {k: v for k, v in identity.items() if k not in INFRASTRUCTURE}
+    if isinstance(value.get('engine'), dict):
+        value['engine'] = {k: v for k, v in value['engine'].items() if k != 'pod_id'}
+    return value
+
+
 class ClassroomCache:
     def __init__(self, directory, expected, writer=write, progress=None):
         self.writer = writer
@@ -133,11 +148,19 @@ class ClassroomCache:
         manifest = self.directory / 'identity.json'
         if self.directory.exists() and any(self.directory.iterdir()):
             try:
-                valid = read(manifest) == expected
-            except (OSError, ValueError):
-                valid = False
+                recorded = read(manifest)
+                valid = science(recorded) == science(expected)
+            except (OSError, ValueError, AttributeError):
+                recorded, valid = None, False
             if not valid:
-                preserve(self.directory, 'classroom request, teaching, code or execution identity changed')
+                preserve(self.directory, 'classroom request, teaching, evidence or model identity changed')
+            elif recorded != expected:
+                # Same science, new code or Pod: keep every saved exchange; record the old identity and adopt the new.
+                with (self.directory / 'identity-history.jsonl').open('a', encoding='utf-8') as history:
+                    history.write(json.dumps(dict(at=time.time(), identity=recorded), sort_keys=True) + '\n')
+                    history.flush()
+                    os.fsync(history.fileno())
+                preserve(manifest, 'classroom code or Pod identity changed; saved exchanges kept')
         self.directory.mkdir(parents=True, exist_ok=True)
         if not manifest.exists():
             write(manifest, expected)
@@ -155,7 +178,7 @@ class ClassroomCache:
             value = read(path)
             binding = value['cache_binding']
             payload = {k: v for k, v in value.items() if k != 'cache_binding'}
-            if binding != dict(identity_hash=digest(self.identity), prompt_hash=digest(prompt), payload_hash=digest(payload)):
+            if binding != dict(identity_hash=digest(science(self.identity)), prompt_hash=digest(prompt), payload_hash=digest(payload)):
                 raise ValueError('classroom answer binding differs')
             self._probe('read_verified', name)
             return value
@@ -165,7 +188,7 @@ class ClassroomCache:
             return None
 
     def save(self, name, prompt, payload):
-        value = dict(payload, cache_binding=dict(identity_hash=digest(self.identity),
+        value = dict(payload, cache_binding=dict(identity_hash=digest(science(self.identity)),
                      prompt_hash=digest(prompt), payload_hash=digest(payload)))
         path = self.directory / name
         if path.exists():
@@ -179,7 +202,7 @@ class ClassroomCache:
     def complete(self):
         try:
             receipt = read(self.directory / 'receipt.json')
-            if type(receipt) is not dict or receipt.get('identity') != self.identity:
+            if type(receipt) is not dict or type(receipt.get('identity')) is not dict or science(receipt['identity']) != science(self.identity):
                 return None
             for name in ('ledgers.json', 'classroom.md'):
                 if receipt['artifacts'][name] != witness(self.directory / name):

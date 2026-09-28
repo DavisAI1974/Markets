@@ -1754,7 +1754,7 @@ class Session:
             comp = C.component(visible, name)
             rights = [p['right'] for p in C.pairs_of(visible, name)]
             text = C.component_prompt(visible, name, cycle=self.cycle, request_id=rid, evidence_text=evidence_text)
-            text += '\nClassroom exchange identity: ' + cache_module.digest(cache.identity) + '\n'
+            text += '\nClassroom exchange identity: ' + cache_module.digest(cache_module.science(cache.identity)) + '\n'
             retained = cache.load(filename, text)
             if retained is not None:
                 return retained
@@ -1764,7 +1764,7 @@ class Session:
         results = self._fan_out('classroom', names, one)
         outputs = {r['name']: r['parsed'] for r in results}
         text = C.summary_prompt(visible, outputs, cycle=self.cycle, request_id=rid)
-        text += '\nClassroom exchange identity: ' + cache_module.digest(cache.identity) + '\n'
+        text += '\nClassroom exchange identity: ' + cache_module.digest(cache_module.science(cache.identity)) + '\n'
         _box_module('frankie_box_progress').for_session(self).update('classroom-summary', total=1, in_flight=1)
         summary = cache.load('summary.json', text)
         if summary is None:
