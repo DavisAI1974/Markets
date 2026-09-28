@@ -203,6 +203,17 @@ case "$ACTION" in
   preflight) preflight ;;
   verify) verify ;;
   start) start_session ;;
+  stop_session)
+    # Greg, 2026-09-28 ("the run is too expensive, stop immediately"): stops ONLY the session unit (its whole cgroup: the
+    # classroom and reading workers with it), receipted, and does NOT start it again. Every stage resumes from its
+    # receipts under session/work/ on a later start.
+    echo "### stop_session: stopping $UNIT (receipted, not restarted)"
+    if systemctl is-active --quiet "$UNIT.service"; then
+      systemctl stop "$UNIT.service" && echo "$UNIT stopped"
+      printf '{"schema":"FRANKIE_BOX_SESSION_STOP_RECEIPT_V1","at":%s,"unit":"%s","reason":"%s","phase_before":"%s"}\n' \
+        "$(date +%s)" "$UNIT" "${REASON:-operator stop}" "$(cat "$S/phase" 2>/dev/null || echo -)" > "$ROOT/receipts/session-stop-$(date +%s).json"
+    else echo "$UNIT was not running"; fi
+    systemctl is-active "$UNIT.service" || true ;;
   restart_session)
     # Stops ONLY the session unit (never the heartbeat, never a Pod or a box) to apply a session-code fix, with a receipt,
     # then starts it again; every stage resumes from its receipts under session/work/. An explicit operator action.
@@ -214,5 +225,5 @@ case "$ACTION" in
     else echo "$UNIT was not running"; fi
     systemctl reset-failed "$UNIT.service" 2>/dev/null
     start_session ;;
-  *) echo "ACTION must be start, status, preflight, verify, restart_session, fetch_correction, correction or derive_only"; exit 2 ;;
+  *) echo "ACTION must be start, status, preflight, verify, restart_session, stop_session, fetch_correction, correction or derive_only"; exit 2 ;;
 esac
