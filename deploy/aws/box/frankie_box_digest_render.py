@@ -29,8 +29,8 @@ import math
 import re
 from fractions import Fraction
 
-SCHEMA = 'DIGEST_V8'   # V8: the table grammar below (Greg, 2026-09-28, every token stack that works, all additive); V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
-TABLE_GRAMMAR = 'DIGEST_V8'   # the table block grammar. V7: `?k` runs of absent cells; deltas on every integer column whose name ends in
+SCHEMA = 'DIGEST_V9'   # V9: `L` lists with `*k` runs, `*k` runs in `I` lists, dictionary entries spelled as cells (Greg, 2026-09-28, the reducer stacks on top of the 6-hour run's); V8: the table grammar below (Greg, 2026-09-28, every token stack that works, all additive); V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
+TABLE_GRAMMAR = 'DIGEST_V9'   # the table block grammar. V9: `L` lists, `*k` item runs, dictionary entries as cells. V7: `?k` runs of absent cells; deltas on every integer column whose name ends in
                               # recv_ns / event_ns and on group_index. V8 on top: keys-once objects (`shapes:`, `R` cells), packed digit
                               # lists (`P`), same-row integer references (`<i`), count columns derived as list lengths (`lengths:`), columns
                               # ordered by presence, and the dictionary only where it pays
@@ -363,6 +363,89 @@ def _inner_literal(y):
     return 'J' + json.dumps(y, separators=(',', ':'), sort_keys=True)
 
 
+def _scalar_list(v):
+    return isinstance(v, list) and all(y is None or isinstance(y, (bool, int, float, str)) for y in v)
+
+
+def _list_item(y):
+    """One `L` item: an inner literal, a string bare (`S<text>`) only when it holds none of `,` `*` `;` tab newline."""
+    if isinstance(y, str):
+        return ('S' + y) if not any(ch in y for ch in ',*;\t\n') else ('J' + json.dumps(y))
+    return _inner_literal(y)
+
+
+def _list_cell(v):
+    """V9 `L`: a list of scalars, its items joined by `,`, k >= 2 equal consecutive items written once as `item*k`."""
+    items, i = [], 0
+    while i < len(v):
+        j = i
+        while j + 1 < len(v) and _same(v[j + 1], v[i]):
+            j += 1
+        text = _list_item(v[i])
+        items.append(text if j == i else '%s*%d' % (text, j - i + 1))
+        i = j + 1
+    return 'L' + ','.join(items)
+
+
+_LIST_ITEM = re.compile(r'[^,*]*')
+_LIST_RUN = re.compile(r'\*(\d+)')
+
+
+def _read_list(body):
+    out, pos = [], 0
+    while pos < len(body):
+        if body.startswith('J', pos):
+            _, end = _JSON.raw_decode(body, pos + 1)
+        else:
+            end = _LIST_ITEM.match(body, pos).end()
+        if end == pos:
+            raise ValueError('list cell: an empty item')
+        y, k = _scalar(body[pos:end]), 1
+        pos = end
+        m = _LIST_RUN.match(body, pos)
+        if m is not None:
+            k, pos = int(m.group(1)), m.end()
+            if k < 2:
+                raise ValueError('list cell: a run of %d' % k)
+        out.extend([y] * k)
+        if pos == len(body):
+            break
+        if body[pos] != ',':
+            raise ValueError('list cell: an item is followed by %r' % body[pos])
+        pos += 1
+        if pos == len(body):
+            raise ValueError('list cell: a trailing `,`')
+    return out
+
+
+def _runs(texts):
+    """k >= 2 equal consecutive spellings written once as `text*k` (V9, inside `I` lists)."""
+    out, i = [], 0
+    while i < len(texts):
+        j = i
+        while j + 1 < len(texts) and texts[j + 1] == texts[i]:
+            j += 1
+        out.append(texts[i] if j == i else '%s*%d' % (texts[i], j - i + 1))
+        i = j + 1
+    return out
+
+
+def entry_spelling(key):
+    """V9: a dictionary entry is spelled as its inline cell (`S`, `J` or `L`; the key is the value's JSON)."""
+    return inline_cell('str', json.loads(key)) if key.startswith('"') else inline_cell('json', key)
+
+
+def entry_value(text):
+    """The value of a dictionary entry spelled by entry_spelling."""
+    if text.startswith('L'):
+        return _read_list(text[1:])
+    if text.startswith('S'):
+        return text[1:]
+    if text.startswith('J'):
+        return json.loads(text[1:])
+    raise ValueError('dictionary entry spelling %r' % text[:24])
+
+
 def _objects_ref(prev_value):
     return prev_value[-1] if isinstance(prev_value, list) and prev_value and isinstance(prev_value[-1], dict) else None
 
@@ -528,7 +611,7 @@ def _literal(v, column, r, prev_lists, shape=None, prev_value=None):
             else:
                 return 'lit', 'K' + ','.join(str(i) for i in pos)      # positions in this row's order_ids
         first = ('%+d' % (v[0] - prev_lists[column])) if isinstance(prev_lists.get(column), int) else str(v[0])
-        listed = 'I' + ','.join([first] + ['%+d' % (b - a) for a, b in zip(v, v[1:])])   # first (as a delta from the previous row's first when one exists), then successive differences
+        listed = 'I' + ','.join([first] + _runs(['%+d' % (b - a) for a, b in zip(v, v[1:])]))   # first (as a delta from the previous row's first when one exists), then successive differences (V9: `d*k` runs)
         if len(v) > 1:
             packed = _packed(v, first)
             if _cost(packed) < _cost(listed):
@@ -604,6 +687,12 @@ def inline_cell(kind, text):
     """A dictionary candidate written inline (it does not repeat, or the dictionary would not pay)."""
     if kind == 'str':
         return ('S' + text) if ('\t' not in text and '\n' not in text) else ('J' + json.dumps(text))
+    if text.startswith('['):                  # V9: a list of scalars as `L` when that is cheaper than its JSON
+        v = json.loads(text)
+        if _scalar_list(v):
+            listed = _list_cell(v)
+            if _cost(listed) < _cost('J' + text):
+                return listed
     return 'J' + text
 
 
@@ -752,7 +841,7 @@ def read_dictionary(reader, add):
         k, equal, value = item.partition('=')
         if not equal or k != '@%d' % number:
             raise ValueError('dictionary numbering mismatch')
-        json.loads(value)
+        entry_value(value)
         add(number, value)
         number += 1
         if delimiter == '\n':
@@ -825,7 +914,11 @@ class RowDecoder:
                 parts = cell[1:].split(',')
                 v = [_list_start(parts[0], c, prev_lists)]
                 for d in parts[1:]:
-                    v.append(v[-1] + int(d))
+                    d, _, k = d.partition('*')
+                    for _ in range(int(k) if k else 1):
+                        v.append(v[-1] + int(d))
+            elif cell.startswith('L'):
+                v = _read_list(cell[1:])
             elif cell.startswith('P'):
                 v = _unpacked(cell, c, prev_lists)
             elif cell.startswith('R'):
@@ -917,7 +1010,7 @@ def render_table(name, rows, context=None):
     sep = ' ' if not any(' ' in cell for row in table for cell in row) else '\t'
     head = header_lines(name, len(rows), sep, columns, whole, flat[0] if flat else {}, scales, facts)
     if order:
-        head.append('dictionary: ' + '\t'.join('@%d=%s' % (i, key) for i, key in enumerate(order)))
+        head.append('dictionary: ' + '\t'.join('@%d=%s' % (i, entry_spelling(key)) for i, key in enumerate(order)))
     return '\n'.join(head + [sep.join(row) for row in table]) + '\n'
 
 
@@ -970,7 +1063,7 @@ def parse_table(block, context=None):
     reader = Lines(lines)
     h = Header(reader)
     dictionary = []
-    read_dictionary(reader, lambda number, text: dictionary.append(json.loads(text)))
+    read_dictionary(reader, lambda number, text: dictionary.append(entry_value(text)))
     cross = {c: CROSS_DERIVED[(h.name, c)] for c, mark in h.whole.items() if mark == '=' and (h.name, c) in CROSS_DERIVED and (context or {}).get(CROSS_DERIVED[(h.name, c)][0]) is not None}
     body = lines[reader.index:]
     if len(body) < h.n:
@@ -1209,7 +1302,10 @@ def digest_header(receipt):
              'integers as its first value (as in `I`) then each successive difference = one fixed-width decimal field + lo; `<i` in a '
              'row = the same integer as this row\'s column i (0-based over the header\'s columns); a column on the `lengths:` line '
              '(`name=list`) is the length of that list column, written `=` like any derived cell; columns are ordered by how many rows '
-             'carry them; a repeated value is in the dictionary only when that is shorter than writing it each time', '',
+             'carry them; a repeated value is in the dictionary only when that is shorter than writing it each time; DIGEST_V9 on '
+             'top: `L<item>,<item>,...` = a list of plain values, each item `-` T F an integer, a float, `S<text>` or `J<json>`, and '
+             '`<item>*k` = that item k times in a row (`L` alone = the empty list); inside `I` a `<d>*k` = that difference k times in a '
+             'row; a dictionary entry `@n=` is spelled like a cell (`S<text>`, `J<json>` or `L...`)', '',
              f'Rows: {receipt["rows"]["path"]} ({receipt["rows"]["count"]} entries, kinds {receipt["rows"]["kinds"]}, head {receipt["rows"]["head"][:16]}...; '
              f'head equals the request source_hash: {receipt["rows"]["head_is_request_source_hash"]}).',
              f'INPUT records fed to the V4 adapter: {receipt["input_records"]}; legacy control rows projected: {receipt["legacy_rows"]}; '

@@ -335,7 +335,7 @@ def _final(job):
             if part == index and entry >= named[0]:
                 if entry != named[0]:
                     raise ValueError('dictionary first occurrences out of order in part %d' % index)
-                names.write('@%d=%s\n' % (entry, key))
+                names.write('@%d=%s\n' % (entry, DG.entry_spelling(key)))
                 named[0] += 1
             return entry
 
@@ -381,7 +381,7 @@ def _verify(job):
         found = lookup.execute('SELECT payload FROM dictionary WHERE number=?', (number,)).fetchone()
         if found is None:
             raise ValueError('unknown dictionary entry')
-        return json.loads(found[0])
+        return DG.entry_value(found[0])
 
     decoder = DG.RowDecoder(header, entry, seed)
     expected = iter(_source_rows(spec))

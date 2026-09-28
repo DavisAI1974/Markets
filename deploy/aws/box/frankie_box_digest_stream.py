@@ -157,7 +157,7 @@ def _emit(handle, db, name, facts, n, whole, scales, first, sep):
         handle.write(line + '\n')
     found = False
     for number, key in db.execute('SELECT number, key FROM frequency WHERE number IS NOT NULL ORDER BY number'):
-        handle.write(('\t' if found else 'dictionary: ') + '@%d=%s' % (number, key))
+        handle.write(('\t' if found else 'dictionary: ') + '@%d=%s' % (number, DG.entry_spelling(key)))
         found = True
     if found:
         handle.write('\n')
@@ -220,7 +220,7 @@ def _verify(handle, db, expected_name, expected, context):
         found = db.execute('SELECT payload FROM dictionary WHERE number=?', (number,)).fetchone()
         if found is None:
             raise ValueError('unknown dictionary entry')
-        return json.loads(found[0])
+        return DG.entry_value(found[0])
 
     cross = {c: DG.CROSS_DERIVED[(h.name, c)] for c, mark in h.whole.items()
              if mark == '=' and (h.name, c) in DG.CROSS_DERIVED and (context or {}).get(DG.CROSS_DERIVED[(h.name, c)][0]) is not None}
