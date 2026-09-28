@@ -11,6 +11,26 @@ correlations, causations, patterns and couplings between the dipole and the othe
 
 ## The two teachers (existing roles, extended)
 
+Where the roles come from (the 2026-09-22 handoffs; the code matches them):
+- `CODEX_HANDOFF_20260922_CHAT15.md`, Greg's clarification: "The owner means the original BOSS teacher. Its original
+  purpose, representation supervision, mathematical targets, masks, controls and training responsibilities must remain.
+  Shared Dipole research, scientific assessment and collaboration are additions to that teaching system. Do not
+  repurpose it solely as a classroom reviewer. Both teaching functions should benefit from validated discoveries and full
+  prior learning. Teacher-to-teacher discussion remains required; the existing scientific teacher/Frankie exchange alone
+  must not be described as proof that two teachers have conversed." Implemented in ccb8b67f (BOSS scientific teacher ->
+  classroom teacher -> Frankie).
+- `CODEX_HANDOFF_20260922_CHAT14.md`: the classroom GRADING is a deterministic explanatory wrapper over the original
+  C15R3 math teacher, not a model of its own. "Both roles must be able to build on all supplied knowledge; preserve
+  failed/superseded ideas as labeled evidence rather than hiding them. All completed-cycle observations, lessons,
+  corrections and uncertainty should flow into subsequent conversations, not just novel findings."
+- `SPEC_CLASSROOM_SHARED_SCIENCE_20260922.md`: the separately prompted scientific-teacher role; both roles receive the
+  same shared research snapshot.
+
+So the two specialties are: (1) the original BOSS teacher, mathematics and representation supervision, with scientific
+research added; (2) the classroom scientific teacher, mechanism and evidence review. This spec keeps both and adds the
+joined data. CHAT14's carry-forward rule applies here in full: every completed cycle's observations, lessons,
+corrections, uncertainty and failed or superseded ideas (labelled) flow into the next conversation.
+
 1. **The BOSS teacher** (`boss_teacher_scientific`, the original teacher). Duties kept: the mathematical targets, masks,
    controls and training supervision. Extended: it builds and holds the JOINED, TIME-ALIGNED data (below) and runs the
    coupling search on it. It is the data specialist.
