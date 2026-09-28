@@ -22,14 +22,19 @@ work left on a single core; findings noted on the step's line before it runs.
 - [x] ROOT paused 01:05Z (Greg's go): pause-for-terminal-digest-62338.json, checkpoint 2,032,203 records verified,
       ROOT and its 14 helpers exited; orphan check 01:09Z: none
 - [x] First side builder (18 threads) stopped 01:06Z, nothing left alive
-- [ ] Side builder on CPUs 2-15 + siblings (28 threads), run 36364840364 from 4557b5de, started 01:09Z
-- [ ] Adopt ROOT's sources.sqlite + legacy tables 0-4 (run 36364858997)
+- [x] Adopted ROOT's sources.sqlite + legacy tables 0-4 (01:13Z, run 36364858997)
+- [x] Side builder on 28 threads died 02:03Z in bedrock.members (count pass): DISK FULL (56 part files ~8 GB each)
+- [x] Cleanup (Greg's go, item 1): 465 GB freed (dead side builds + ROOT's unsaved partial members table), 03:08Z
+- [x] Writer fixes: batched counts + caches (ce884139), lean disk: no source copy, stage files deleted as consumed
+      (1d6018f4), per-pass save points + fixed side scratch .digest-side-work (723e5020, staged run 36372947473)
+- [ ] Side builder on CPUs 1-15 + siblings (30 threads), run 36373163230 from 723e5020, started 03:19:53Z
+      (estimate ~2-2.5 h for all bedrock tables; checked every 15-20 min with free disk)
 - [ ] Restart ROOT on the staged commit, same inputs: reuses everything, assembles the document, writes
       calculations-receipt.json
 
 ## Downstream Monday
 - [x] Publication slice, Option 3: DROPPED (Greg, 2026-09-27: no validations, straight to staging)
-- [ ] Downstream runs from the newest staged commit (4557b5de now); earlier: staged dcef2467 (run 36360108539, 23:55Z; supersedes 39f64acf and 685155b6: principal inputs hashing
+- [ ] Downstream runs from the newest staged commit (723e5020 now; S3 offload + slow-path fixes e5cfc8a3 included); earlier: staged dcef2467 (run 36360108539, 23:55Z; supersedes 39f64acf and 685155b6: principal inputs hashing
       in parallel and staggered). Dispatch ref: claude/frankie-monday-run-dcef2467. CODE_ROOT:
       /opt/frankie-box/code/dcef2467df14fea3d3df2c9a37c4f36317defdd8-36360108539-1/markets
       (pack sha256 c288c5ce..., 3,693 files, active checkout unchanged)
