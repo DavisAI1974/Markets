@@ -1269,7 +1269,7 @@ class Session:
         # receipt and plan are moved aside under work/ (nothing deleted; its notes stay under their own notes-<sha> dir).
         identity = (f'{R.RENDER_VERSION}+{DG.SCHEMA}+{HR.SCHEMA}+tensors:{tensor_mode}'
                     f'+digest:{(sha256_bytes(digest_path.read_bytes())[:16] if digest_path.exists() else "none")}'
-                    f'+reading-policy:verified-parts-v2+digest-map-v1+brain:{brain_module().identity(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))}')
+                    f'+reading-policy:verified-parts-v2+brain:{brain_module().identity(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))}')
         receipt_path = self.work / 'reading-corpus.json'
         if corpus_path.exists() and receipt_path.exists():
             prior = load_json(receipt_path)
@@ -1366,28 +1366,19 @@ class Session:
         else:
             parts.append(data[marker:].decode('utf-8', errors='replace') if marker >= 0 else '')
             members.append(dict(name='producer-evidence block', treatment='payload not parseable; rendered raw'))
-        # Greg, 2026-09-28 ("do whatever is faster, and smallest without changing the science"): the digest (about 1.2B
-        # tokens, some 14,000 parts) is read as its MAP (frankie_box_digest_map): every line except table dictionaries and
-        # rows past the first three, which are listed by exact byte range of the unchanged file; the classroom tasks
-        # retrieve any range. One streaming pass also gives its bytes and sha256 (the file runs to GBs; never held whole).
-        import frankie_box_digest_map as DM
-        digest_map, map_stats = DM.digest_map(digest_path, 'derivation-digest-full.md') if digest_path.exists() else (None, None)
+        digest = digest_path.read_bytes() if digest_path.exists() else None
         brain_text, brain_members = brain_module().load(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None),
-                                                        carried={map_stats['digest_sha256']: "this cycle's derivation digest (below as its map; rows by exact byte range)"} if map_stats else None)
+                                                        carried={sha256_bytes(digest): "this cycle's derivation digest (below, whole)"} if digest is not None else None)
         if brain_text:
-            parts.append("\n\n## Frankie's brain: the calculation findings of the earlier cycles, carried forward whole, a derivation digest as its map with rows by exact byte range (Greg, 2026-09-21; 2026-09-28). "
+            parts.append("\n\n## Frankie's brain: the calculation findings of the earlier cycles, carried forward whole (Greg, 2026-09-21). "
                          'These are your own prior derivations and findings; read them as your own memory, compare this cycle\'s '
                          'derivations with them, and never mistake them for the delivered evidence.\n' + brain_text)
         members.extend(brain_members)
         self.note(f'brain: {sum(1 for m in brain_members if m["treatment"].startswith("brain: prior"))} prior-cycle documents in the corpus')
-        if map_stats is not None:
-            parts.append('\n\n## Frankie\'s own derivation of this cycle (the session code ran the pin producers on the cycle rows). '
-                         f'The whole digest is derivation-digest-full.md ({map_stats["digest_bytes"]} bytes, sha256 {map_stats["digest_sha256"]}) on the box, '
-                         'unchanged and complete. Below is its map: every line of it except each table\'s dictionary and its rows past '
-                         'the first three, which are listed by exact byte range; the classroom tasks read any range of it on demand '
-                         '(read_requests on source derivation-digest-full.md).\n\n' + digest_map + '\n')
-            members.append(dict(name='derivation-digest-full.md', bytes=map_stats['digest_bytes'], sha256=map_stats['digest_sha256'],
-                                treatment='map: every line but table dictionaries and rows past the first three, those by exact byte range', map=map_stats))
+        if digest is not None:
+            parts.append('\n\n## Frankie\'s own derivation of this cycle (the session code ran the pin producers on the cycle rows; whole)\n\n'
+                         + digest.decode('utf-8', errors='replace') + '\n')
+            members.append(dict(name='derivation-digest-full.md', bytes=len(digest), sha256=sha256_bytes(digest), treatment='text: rendered whole'))
         write_text(corpus_path, ''.join(parts))
         write_json(self.work / 'reading-corpus.json', dict(schema='FRANKIE_BOX_READING_CORPUS_V4', identity=identity, render=render_report, at=time.time(), limits='none',
                    prompt=dict(witness(prompt), path=str(prompt)), head_bytes=len(head), corpus=dict(witness(corpus_path), path=str(corpus_path)),
@@ -2098,8 +2089,7 @@ class Session:
         packets = self._packets_text()
         head = (f'You are Frankie, the BOSS: the principal session for cycle {self.cycle} of the {self.day} trading-day run, on your box '
                 f'i-035994afa8bdf66a5 (Greg Davis, 2026-09-21, option A). Request {self.request["request_id"]}, request_sha256 '
-                f'{self.request_sha256}. You have read the whole delivered evidence and your derivation\'s map (every line but the table '
-                'dictionaries and rows, which stay on the box by exact byte range and which your classroom tasks retrieved as they needed) in parts; your merged '
+                f'{self.request_sha256}. You have read the whole delivered evidence and your whole derivation in parts; your merged '
                 'notes follow, then the request instruction, then the packets the session code wrote for you (the comparison packet: '
                 'your derived layers beside the frozen learned-structure files; the session receipts packet: your own provider '
                 'invocations, what you read, the wall you kept), then your derivation digest (whole when the context admits it; the '
@@ -2114,13 +2104,13 @@ class Session:
         status_end = included.find(b'\n### table ')
         status = included if status_end < 0 else included[:status_end + 1]   # the digest header and layer statuses
         base = head + included.decode('utf-8', errors='ignore') + ('' if len(included) == digest_total else
-               f'\n[... the digest continues; {digest_total - len(included)} more bytes did not fit this call\'s context; you read its map in the reading parts and its rows by range in the classroom ...]') + '\n----- END -----\n\n'
+               f'\n[... the digest continues; {digest_total - len(included)} more bytes did not fit this call\'s context; you read them whole in the reading parts ...]') + '\n----- END -----\n\n'
         # Greg, 2026-09-28 (remove every pass that is not necessary): the digest head goes ONCE, with the analysis; the
-        # accounting and every ledger call carry the digest's header and layer statuses and refer to the rest, whose map the
-        # reading parts read (2026-09-28) and the merged notes above carry.
+        # accounting and every ledger call carry the digest's header and layer statuses and refer to the rest, which the
+        # reading parts read whole and the merged notes above carry.
         brief = head + status.decode('utf-8', errors='ignore') + (
-            f'\n[... the digest tables follow ({digest_total - len(status)} more bytes): you read their map in the reading parts, '
-            'your merged notes above carry it and your classroom tasks read rows by range; the analysis call carried the digest\'s first tables ...]\n----- END -----\n\n')
+            f'\n[... the digest tables follow ({digest_total - len(status)} more bytes): you read them whole in the reading parts and '
+            'your merged notes above carry them; the analysis call carried the digest\'s first tables ...]\n----- END -----\n\n')
         digest_included = dict(bytes_total=digest_total, bytes_in_analysis_call=len(included), bytes_in_other_writing_calls=len(status))
         self.note('writing: the analysis')
         analysis = self.boss('write-analysis', base + 'TASK: write your run analysis now as the instruction asks (Markdown, no limit on length; '
