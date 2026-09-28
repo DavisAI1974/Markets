@@ -126,6 +126,71 @@ def _each_member(derive, name, consume):
     _stream_layer(derive, name, {'member_rows': consume})
 
 
+# ---- the six layer streams, each in its own process (Greg, 2026-09-28: nothing on one CPU that need not be) -------
+# facts() used to stream the lifecycle sections, the three clock layers, the family geometry and the legacy structure
+# observables one after another on the main thread: six passes over many-GB gzip-json files, Python-decoded per row.
+# The streams are independent, so each runs in its own process and returns only what facts() keeps from it; the parent
+# combines them exactly as before. Same values, same order of use.
+def _job_sections(derive, names):
+    return _sections_rows(derive, names, ('lineage', 'recurrence'))
+
+
+def _job_clock(derive, name, field):
+    values = {}
+    _each_member(derive, name, lambda r: values.__setitem__(r.get('group_index'), r.get(field)))
+    return values
+
+
+def _job_evaluated(derive):
+    decided, basis = {}, Counter()
+    def evaluated(r):
+        decided[r.get('group_index')] = r.get('clocks.decision_ts_recv_ns')
+        basis[str(r.get('decision_basis'))] += 1
+    _each_member(derive, 'clock_model_evaluation', evaluated)
+    return decided, basis
+
+
+def _job_families(derive):
+    family_ids, sides = Counter(), Counter()
+    def described(r):
+        if r.get('structure.candidate_family_id') is not None:
+            family_ids[str(r.get('structure.candidate_family_id'))] += 1
+        if r.get('structure.side_string') is not None:
+            sides[str(r.get('structure.side_string'))] += 1
+    _each_member(derive, 'derived_d_family_geometry', described)
+    return family_ids, sides
+
+
+def _job_actions(derive):
+    actions = Counter()
+    def acted(g):
+        if g.get('action_string') is not None:
+            actions[str(g.get('action_string'))] += 1
+    _stream_layer(derive, 'legacy_structure_observables', {'groups': acted})
+    return actions
+
+
+def _streams(derive, names):
+    """The six streams at once, one spawn process each; results in the order facts() uses them. The functions come
+    from this module imported by name (the session loads it by path without registering it, so its own function
+    objects cannot be pickled)."""
+    from concurrent.futures import ProcessPoolExecutor
+    import multiprocessing
+    box = str(Path(__file__).resolve().parent)
+    if box not in sys.path:
+        sys.path.insert(0, box)
+    import frankie_box_teach as T
+    jobs = dict(sections=(T._job_sections, derive, names),
+                known=(T._job_clock, derive, 'clock_event_known_by', 'clocks.first_lawful_availability_ns'),
+                avail=(T._job_clock, derive, 'clock_feature_availability', 'clocks.first_lawful_availability_ns'),
+                evaluated=(T._job_evaluated, derive),
+                families=(T._job_families, derive),
+                actions=(T._job_actions, derive))
+    with ProcessPoolExecutor(max_workers=len(jobs), mp_context=multiprocessing.get_context('spawn')) as pool:
+        futures = {key: pool.submit(*job) for key, job in jobs.items()}
+        return {key: future.result() for key, future in futures.items()}
+
+
 def facts(work, brain, producers):
     """The pre-message facts, exact and small, from work/derive.json, the bedrock layer files (the pinned producers' own
     row shapes: recurrence gaps are mappings with gap_ns/from_node/to_node/recv_ns; lineage statuses are
@@ -143,7 +208,8 @@ def facts(work, brain, producers):
     for name in names:
         entry = (derive.get('layers') or {}).get(name) or {}
         layers[name] = dict(status=entry.get('status'), count=entry.get('count', 0), reason=entry.get('reason'))
-    section_rows = _sections_rows(derive, names, ('lineage', 'recurrence'))
+    streamed = _streams(derive, names)
+    section_rows = streamed['sections']
     lineage_rows = section_rows['lineage']
     depth = Counter(int(r.get('depth')) for r in lineage_rows if r.get('depth') is not None)
     status = Counter(str(r.get('status')) for r in lineage_rows)
@@ -169,13 +235,8 @@ def facts(work, brain, producers):
                     smallest_ns=min((g['gap_ns'] for g in every), default=None), largest_ns=max((g['gap_ns'] for g in every), default=None))
     derived_clocks = {name: layers.get(name, {}).get('status') == 'derived'
                       for name in ('clock_event_known_by', 'clock_feature_availability', 'clock_model_evaluation')}
-    known, avail, decided, basis = {}, {}, {}, Counter()
-    _each_member(derive, 'clock_event_known_by', lambda r: known.__setitem__(r.get('group_index'), r.get('clocks.first_lawful_availability_ns')))
-    _each_member(derive, 'clock_feature_availability', lambda r: avail.__setitem__(r.get('group_index'), r.get('clocks.first_lawful_availability_ns')))
-    def evaluated(r):
-        decided[r.get('group_index')] = r.get('clocks.decision_ts_recv_ns')
-        basis[str(r.get('decision_basis'))] += 1
-    _each_member(derive, 'clock_model_evaluation', evaluated)
+    known, avail = streamed['known'], streamed['avail']
+    decided, basis = streamed['evaluated']
     ordered, unknown, violations = 0, 0, []
     groups = sorted(set(known) | set(avail) | set(decided), key=lambda g: (g is None, g))
     for g in groups:
@@ -188,17 +249,8 @@ def facts(work, brain, producers):
             violations.append(dict(group_index=g, known_by_ns=k, availability_ns=a, evaluation_ns=e))
     clocks = dict(groups=len(groups), ordered=ordered, unknown=unknown, violations=violations, derived_clocks=derived_clocks,
                   rule=CLOCK_RULE, decision_basis=dict(sorted(basis.items())))
-    family_ids, sides, actions = Counter(), Counter(), Counter()
-    def described(r):
-        if r.get('structure.candidate_family_id') is not None:
-            family_ids[str(r.get('structure.candidate_family_id'))] += 1
-        if r.get('structure.side_string') is not None:
-            sides[str(r.get('structure.side_string'))] += 1
-    _each_member(derive, 'derived_d_family_geometry', described)
-    def acted(g):
-        if g.get('action_string') is not None:
-            actions[str(g.get('action_string'))] += 1
-    _stream_layer(derive, 'legacy_structure_observables', {'groups': acted})
+    family_ids, sides = streamed['families']
+    actions = streamed['actions']
     families = dict(distinct_family_ids=len(family_ids), family_id_counts=dict(sorted(family_ids.items())), side_strings=dict(sorted(sides.items())),
                     action_strings=[dict(action_string=k, count=v) for k, v in sorted(actions.items(), key=lambda kv: (-kv[1], kv[0]))])
     fed = bedrock.get('sections_fed') or {}

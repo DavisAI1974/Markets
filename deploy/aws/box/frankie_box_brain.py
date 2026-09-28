@@ -33,8 +33,13 @@ def sha256_files(paths):
     threads (hashlib releases the GIL)."""
     from concurrent.futures import ThreadPoolExecutor
     def one(path):
-        with Path(path).open('rb') as handle:
-            return hashlib.file_digest(handle, 'sha256').hexdigest()
+        # once per unchanged file per run (frankie_box_filehash.py): brain_ready, identity() and load() check the same
+        # prior entries, earlier cycles' GB digests among them (Greg, 2026-09-28)
+        try:
+            import frankie_box_filehash as F
+        except ImportError:
+            from deploy.aws.box import frankie_box_filehash as F
+        return F.sha256_file(path)
     paths = list(paths)
     if len(paths) < 2:
         return [one(p) for p in paths]
@@ -351,8 +356,7 @@ def check(brain, cycle):
 
 
 def _file_sha256(path):
-    with Path(path).open('rb') as handle:
-        return hashlib.file_digest(handle, 'sha256').hexdigest()
+    return sha256_files([path])[0]      # streamed, once per unchanged file per run
 
 
 def _restore_offloaded(pointer, entry, directory):

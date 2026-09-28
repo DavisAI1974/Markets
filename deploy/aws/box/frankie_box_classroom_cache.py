@@ -21,14 +21,19 @@ def _durable():
 def digest(value):
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
+def _filehash():
+    """The process-wide stat-keyed hash cache (frankie_box_filehash.py): each unchanged file is hashed once per run."""
+    try:
+        import frankie_box_filehash as F
+    except ImportError:
+        from deploy.aws.box import frankie_box_filehash as F
+    return F
+
+
 def witness(path):
-    # streamed (the derivation digest runs to many GB); same bytes and sha256 as hashing the whole file at once
-    hashed, size = hashlib.sha256(), 0
-    with Path(path).open('rb') as handle:
-        while block := handle.read(64 * 1024 * 1024):
-            hashed.update(block)
-            size += len(block)
-    return dict(bytes=size, sha256=hashed.hexdigest())
+    # streamed (the derivation digest runs to many GB); same bytes and sha256 as hashing the whole file at once; hashed
+    # once per unchanged file per run (the identity is taken by classroom(), classroom_ledgers() and correction())
+    return _filehash().witness(path)
 
 def read(path):
     return json.loads(Path(path).read_bytes())

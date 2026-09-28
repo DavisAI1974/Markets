@@ -30,10 +30,19 @@ def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def _filehash():
+    """The process-wide stat-keyed hash cache (frankie_box_filehash.py): each unchanged file is hashed once per run."""
+    try:
+        import frankie_box_filehash as F
+    except ImportError:
+        from deploy.aws.box import frankie_box_filehash as F
+    return F
+
+
 def sha256_file(path):
-    """The same sha256 as sha256_bytes(path.read_bytes()), streamed: the member ledger alone exceeds the box's RAM."""
-    with Path(path).open('rb') as handle:
-        return hashlib.file_digest(handle, 'sha256').hexdigest()
+    """The same sha256 as sha256_bytes(path.read_bytes()), streamed: the member ledger alone exceeds the box's RAM. Once
+    per unchanged file per run (docs() runs after reading, writing and correction over the same bedrock files)."""
+    return _filehash().sha256_file(path)
 
 
 def sha256_files(paths):

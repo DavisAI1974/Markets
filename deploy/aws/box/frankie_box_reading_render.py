@@ -634,6 +634,92 @@ class RenderReport:
     block_notes: list = field(default_factory=list)   # why an L9/L10 candidate was left as it was (empty when none was)
 
 
+# ---- the per-member and per-document passes across the box's CPUs (Greg, 2026-09-28) -------------------------------
+# decode + round trip (per member; a large .jsonl member per line chunk), containment (per document) and the JSON body
+# render with its per-character _wrap_json (per document) are pure functions of their inputs, so they run in spawn
+# worker processes and are joined in order. The shared-dictionary passes (weights/dedup, blocks) stay serial: their
+# result depends on member and document order. The text, report and proof are the same as the serial render's.
+PARALLEL_MIN_BYTES = 8_000_000      # below this the serial render is faster than starting workers
+JSONL_CHUNK_BYTES = 16_000_000
+
+
+def _cpus():
+    try:
+        return max(1, len(os.sched_getaffinity(0)))
+    except (AttributeError, OSError):
+        return os.cpu_count() or 1
+
+
+def _pool(initializer=None, initargs=()):
+    from concurrent.futures import ProcessPoolExecutor
+    import multiprocessing
+    return ProcessPoolExecutor(max_workers=_cpus(), mp_context=multiprocessing.get_context('spawn'),
+                               initializer=initializer, initargs=initargs)
+
+
+def _decode_task(name, raw):
+    docs, kinds = decode_member(name, raw)
+    return docs, kinds, encode_member(name, docs, kinds)
+
+
+def _decode_members(members, order):
+    """{name: (docs, kinds)} and {name: encode_member(name, docs, kinds)}: decode_member per member, a .jsonl member
+    above JSONL_CHUNK_BYTES per group of its nonblank lines (decode_member keeps exactly the nonblank lines, one document
+    each, and encode_member joins them with a newline after each: the groups' encodings concatenate to the member's)."""
+    tasks = []
+    for name in order:
+        raw = members[name]
+        if name.endswith('.jsonl') and len(raw) > JSONL_CHUNK_BYTES:
+            group, size = [], 0
+            for line in raw.split(b'\n'):
+                if not line.strip():
+                    continue
+                group.append(line)
+                size += len(line)
+                if size >= JSONL_CHUNK_BYTES:
+                    tasks.append((name, b'\n'.join(group)))
+                    group, size = [], 0
+            if group or not any(t[0] == name for t in tasks):
+                tasks.append((name, b'\n'.join(group)))
+        else:
+            tasks.append((name, raw))
+    decoded, encoded = {}, {}
+    with _pool() as pool:
+        for (name, _), (docs, kinds, raw) in zip(tasks, pool.map(_decode_task, [t[0] for t in tasks], [t[1] for t in tasks])):
+            entry = decoded.setdefault(name, ([], []))
+            entry[0].extend(docs)
+            entry[1].extend(kinds)
+            encoded.setdefault(name, []).append(raw)
+    return decoded, {name: b''.join(parts) for name, parts in encoded.items()}
+
+
+_BIG_STRINGS = None
+
+
+def _set_big_strings(big_strings):
+    global _BIG_STRINGS
+    _BIG_STRINGS = big_strings
+
+
+def _contain_batch(docs):
+    return [contain(d, _BIG_STRINGS) for d in docs]
+
+
+def _render_batch(docs):
+    return [str(d) if isinstance(d, DecodedText) else _render_json(d, indent=None) for d in docs]
+
+
+def _batches(items, n):
+    size = max(1, -(-len(items) // (n * 4)))
+    return [items[i:i + size] for i in range(0, len(items), size)]
+
+
+def _parallel_map(function, items, initializer=None, initargs=()):
+    """function over batches of items in worker processes, flattened back in order."""
+    with _pool(initializer, initargs) as pool:
+        return [value for batch in pool.map(function, _batches(items, _cpus())) for value in batch]
+
+
 def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None, known_files=None):
     """members: {name: bytes}. Returns (markdown_text, RenderReport). The plan needed for reconstruction is the
     decoded documents themselves (kept in memory by the caller through `plan`). known_files: {sha256: {path, checkout,
@@ -644,12 +730,19 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
     per = {}
     # decode every member first so the dictionary sees the forecast artifact before its hex copy
     order = sorted(members, key=lambda n: (0 if n.startswith('files/forecast') else 1 if n.startswith('files/state') else 2, n))
-    decoded = {}
-    for name in order:
-        docs, kinds = decode_member(name, members[name])
-        decoded[name] = (docs, kinds)
-        if encode_member(name, docs, kinds).rstrip(b'\n') != members[name].rstrip(b'\n'):
-            raise ValueError(f'{name}: decode/encode round trip differs')
+    parallel = sum(len(raw) for raw in members.values()) >= PARALLEL_MIN_BYTES and _cpus() > 1
+    decoded, encoded = {}, None
+    if parallel:
+        decoded, encoded = _decode_members(members, order)
+        for name in order:
+            if encoded[name].rstrip(b'\n') != members[name].rstrip(b'\n'):
+                raise ValueError(f'{name}: decode/encode round trip differs')
+    else:
+        for name in order:
+            docs, kinds = decode_member(name, members[name])
+            decoded[name] = (docs, kinds)
+            if encode_member(name, docs, kinds).rstrip(b'\n') != members[name].rstrip(b'\n'):
+                raise ValueError(f'{name}: decode/encode round trip differs')
     big_strings = []
     out = []
     for name in order:
@@ -672,8 +765,15 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
                 elif isinstance(x, (list, tuple)):
                     for v in x: collect(v)
             collect(d)
-    for name in order:
-        plan[name] = [contain(d, big_strings) for d in plan[name]]
+    if parallel and len(big_strings) > 1:
+        flat = [(name, d) for name in order for d in plan[name]]
+        contained = _parallel_map(_contain_batch, [d for _, d in flat], _set_big_strings, (big_strings,))
+        plan = {name: [] for name in order}
+        for (name, _), d in zip(flat, contained):
+            plan[name].append(d)
+    else:
+        for name in order:
+            plan[name] = [contain(d, big_strings) for d in plan[name]]
     blocks, block_notes = {}, []
     for name in order:
         blocks[name] = []
@@ -696,11 +796,15 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
                '{"$table": "<grammar>", "block", "rows", "columns"} = that list of rows as the named table block below its document '
                '(the derivation digest\'s table grammar, its legend in the digest header: header once, ^ = the cell above, ^k = k such cells, deltas, '
                '@n dictionary, n/d exact fractions, scales, and the V8/V9 forms R, P, O, I with *k runs, L lists, "k ditto, $d and ~d deltas), parsed back and checked equal.\n')
+    bodies = None
+    if parallel:
+        rendered = iter(_parallel_map(_render_batch, [d for name in order for d in plan[name]]))
+        bodies = {name: [next(rendered) for _ in plan[name]] for name in order}
     for name in order:
         raw = members[name]
         out.append(f'\n### member {name} ({len(raw)} bytes, sha256 {sha(raw)}, {len(plan[name])} document(s), whole)\n')
         for i, d in enumerate(plan[name]):
-            body = _render_json(d, indent=None) if not isinstance(d, DecodedText) else str(d)
+            body = bodies[name][i] if bodies is not None else (_render_json(d, indent=None) if not isinstance(d, DecodedText) else str(d))
             out.append(f'\n#### document {i}\n```json\n{body}\n```\n' if not isinstance(d, DecodedText) else f'\n#### document {i} (text)\n{body}\n')
             per[name].setdefault('rendered_bytes', 0)
             per[name]['rendered_bytes'] += len(body.encode('utf-8'))
@@ -715,7 +819,7 @@ def render(members, *, tensor_mode='identity', tokenizer=None, already_read=None
         # rendered tokens per member from the member section
         for name, (start, end) in _member_sections(text, order).items():
             per[name]['rendered_tokens'] = _tokens(tokenizer, text[start:end])
-    proof = reconstruct_proof(members, plan, decoded)
+    proof = reconstruct_proof(members, plan, decoded, encoded)
     report = RenderReport(members=per, dictionary_entries=len(dictionary.entries), refs=dictionary.refs, saved_bytes=dictionary.saved,
                           tensors=stats['tensors'], tensor_bytes=stats['tensor_bytes'], rendered_bytes=len(text.encode('utf-8')),
                           delivered_bytes=sum(len(b) for b in members.values()), proof=proof,
@@ -763,14 +867,15 @@ def _member_sections(text, order):
     return sections
 
 
-def reconstruct_proof(members, plan, decoded):
+def reconstruct_proof(members, plan, decoded, encoded=None):
     """The proof: every member's original bytes rebuild from the decoded documents (the render's source of truth
     after L1/L2, before the presentation passes, which only replace values by references to values already
-    rendered) and hash to the delivered sha256."""
+    rendered) and hash to the delivered sha256. encoded: the workers' encode_member of the same decoded documents
+    (the presentation passes build new containers and never change a decoded document), else encoded here."""
     proof = {}
     for name, raw in members.items():
         docs, kinds = decoded[name]
-        rebuilt = encode_member(name, docs, kinds)
+        rebuilt = encoded[name] if encoded is not None else encode_member(name, docs, kinds)
         ok = rebuilt.rstrip(b'\n') == raw.rstrip(b'\n')
         proof[name] = dict(delivered_sha256=sha(raw), rebuilt_sha256=sha(rebuilt.rstrip(b'\n') + (b'\n' if raw.endswith(b'\n') else b'')), exact=ok)
     proof['all_exact'] = all(v['exact'] for k, v in proof.items() if k != 'all_exact')

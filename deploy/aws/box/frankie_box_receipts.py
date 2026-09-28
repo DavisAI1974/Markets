@@ -26,11 +26,15 @@ def _load(path):
 
 
 def _witness(path):
+    """{bytes, sha256}, streamed and hashed once per unchanged file per run (frankie_box_filehash.py); None when absent."""
     path = Path(path)
     if not path.is_file():
         return None
-    data = path.read_bytes()
-    return dict(bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+    try:
+        import frankie_box_filehash as F
+    except ImportError:
+        from deploy.aws.box import frankie_box_filehash as F
+    return F.witness(path)
 
 
 def provider_invocations(work, exclude_prefixes=()):
@@ -39,25 +43,32 @@ def provider_invocations(work, exclude_prefixes=()):
     exclude_prefixes: job names left out by construction (the writing calls, whose prompts carry this packet: listing
     them would move the packet, and the writing gate with it, on every restart)."""
     work = Path(work)
-    out = []
+    jobs = []
     for lane, folder in (('boss', 'boss-jobs'), ('serverless', 'serverless-jobs')):
         base = work / folder
-        if not base.is_dir():
-            continue
-        for d in sorted(p for p in base.iterdir() if p.is_dir()):
-            request, outcome = _load(d / 'request.json') or {}, _load(d / 'outcome.json') or {}
-            job_name = request.get('name') or outcome.get('name') or d.name
-            if any(str(job_name).startswith(prefix) for prefix in exclude_prefixes):
-                continue
-            item = dict(lane=lane, name=job_name, job_directory=d.name,
-                        request_sha256=request.get('body_sha256'), request_bytes=request.get('body_bytes'),
-                        estimated_input_tokens=request.get('estimated_input_tokens'), max_tokens=request.get('max_tokens'),
-                        served_model_name=request.get('served_model_name'), pod_id=request.get('pod_id'), endpoint_id=request.get('endpoint_id') or outcome.get('endpoint_id'),
-                        job_id=outcome.get('job_id') or request.get('job_id') or outcome.get('runpod_job_id'), runpod_job_id=outcome.get('runpod_job_id'),
-                        worker_id=outcome.get('worker_id'), result=_witness(d / 'result.json'), model=outcome.get('model'), usage=outcome.get('usage'),
-                        incomplete=bool(outcome.get('incomplete')), error=outcome.get('error'), seconds=outcome.get('seconds'), submissions=outcome.get('submissions'))
-            out.append(item)
-    return out
+        if base.is_dir():
+            jobs.extend((lane, d) for d in sorted(p for p in base.iterdir() if p.is_dir()))
+
+    def one(job):
+        lane, d = job
+        request, outcome = _load(d / 'request.json') or {}, _load(d / 'outcome.json') or {}
+        job_name = request.get('name') or outcome.get('name') or d.name
+        if any(str(job_name).startswith(prefix) for prefix in exclude_prefixes):
+            return None
+        item = dict(lane=lane, name=job_name, job_directory=d.name,
+                    request_sha256=request.get('body_sha256'), request_bytes=request.get('body_bytes'),
+                    estimated_input_tokens=request.get('estimated_input_tokens'), max_tokens=request.get('max_tokens'),
+                    served_model_name=request.get('served_model_name'), pod_id=request.get('pod_id'), endpoint_id=request.get('endpoint_id') or outcome.get('endpoint_id'),
+                    job_id=outcome.get('job_id') or request.get('job_id') or outcome.get('runpod_job_id'), runpod_job_id=outcome.get('runpod_job_id'),
+                    worker_id=outcome.get('worker_id'), result=_witness(d / 'result.json'), model=outcome.get('model'), usage=outcome.get('usage'),
+                    incomplete=bool(outcome.get('incomplete')), error=outcome.get('error'), seconds=outcome.get('seconds'), submissions=outcome.get('submissions'))
+        return item
+
+    # every job directory read and its result hashed on its own thread (hashlib and file reads release the GIL), in the
+    # same order as the serial walk (Greg, 2026-09-28: about a thousand results of up to MBs each, one after another)
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max(1, min(16, len(jobs)))) as pool:
+        return [item for item in pool.map(one, jobs) if item is not None]
 
 
 def knowledge_retrieval(work, reading_ledger=None):

@@ -175,19 +175,24 @@ def sha256_bytes(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def _filehash():
+    """The process-wide stat-keyed hash cache (frankie_box_filehash.py): each unchanged file is hashed once per run."""
+    try:
+        import frankie_box_filehash as F
+    except ImportError:
+        from deploy.aws.box import frankie_box_filehash as F
+    return F
+
+
 def witness(path):
-    hashed, size = hashlib.sha256(), 0
-    with Path(path).open('rb') as source:
-        for block in iter(lambda: source.read(1024 * 1024), b''):
-            hashed.update(block)
-            size += len(block)
-    return dict(bytes=size, sha256=hashed.hexdigest())
+    """{bytes, sha256}, streamed; hashed once per unchanged file per run (the digest runs to GBs and is witnessed by
+    several phases)."""
+    return _filehash().witness(path)
 
 
 def _file_sha256(path):
-    """sha256 of a file, streamed (the digest runs to GBs; never held whole)."""
-    with open(path, 'rb') as source:
-        return hashlib.file_digest(source, 'sha256').hexdigest()
+    """sha256 of a file, streamed (the digest runs to GBs; never held whole); once per unchanged file per run."""
+    return _filehash().sha256_file(path)
 
 
 def write_json(path, value):
@@ -1510,7 +1515,12 @@ class Session:
         tokenizer = self._tokenizer()
         if tokenizer is not None:
             self._estimate_kind = 'exact tokens (pinned tokenizer)'
-            return sum(len(tokenizer.encode(text[i:i + (1 << 20)], add_special_tokens=False).ids) for i in range(0, len(text), 1 << 20)) + 16
+            slices = [text[i:i + (1 << 20)] for i in range(0, len(text), 1 << 20)]
+            if getattr(tokenizer, 'padding', None) is not None:     # batch padding would add pad ids: count one by one
+                return sum(len(tokenizer.encode(s, add_special_tokens=False).ids) for s in slices) + 16
+            # the same 1 MiB slices and encode, through encode_batch: it releases the GIL (encode holds it), so the pinned
+            # fan-out and preparation threads count tokens on their own CPUs instead of taking turns on one (Greg, 2026-09-28)
+            return sum(len(e.ids) for e in tokenizer.encode_batch(slices, add_special_tokens=False)) + 16
         self._estimate_kind = 'byte estimate'
         return int(len(text.encode('utf-8')) / BYTES_PER_TOKEN) + 64
 
@@ -2076,7 +2086,7 @@ class Session:
         """What the response is written from; writing runs again when any of it changed (a durable BOSS job whose prompt
         is unchanged is reused, so only the calls whose inputs moved cost anything)."""
         names = ('merged-notes.md', 'derivation-digest-full.md', 'labels.json') + PACKETS
-        inputs = {n: sha256_bytes((self.work / n).read_bytes()) for n in names if (self.work / n).is_file()}
+        inputs = {n: _file_sha256(self.work / n) for n in names if (self.work / n).is_file()}   # streamed, once per unchanged file (the digest is GBs)
         ledgers = self.work / 'classroom' / 'ledgers.json'
         if ledgers.is_file():
             inputs['classroom/ledgers.json'] = sha256_bytes(ledgers.read_bytes())

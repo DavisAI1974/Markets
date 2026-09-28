@@ -120,12 +120,23 @@ def _place(source, target, box_path):
     _pointer(source, target, box_path)
 
 
+def _each(function, jobs):
+    """function(*job) for every job, on threads (gzip/zlib, file copies and the S3 upload release the GIL), in walk
+    order for errors (Greg, 2026-09-28: every 90 MB..1 GiB brain file was gzipped one after another on each push)."""
+    from concurrent.futures import ThreadPoolExecutor
+    if len(jobs) < 2:
+        return [function(*job) for job in jobs]
+    with ThreadPoolExecutor(min(16, len(jobs))) as pool:
+        return list(pool.map(lambda job: function(*job), jobs))
+
+
 def copy(src, dst):
     src, dst = Path(src), Path(dst)
     if src.is_file():
         dst.parent.mkdir(parents=True, exist_ok=True)
         _place(src, dst, str(src.resolve()))
         return
+    jobs = []
     for base, dirs, names in os.walk(src):
         dirs.sort()
         rel = Path(base).relative_to(src)
@@ -133,10 +144,20 @@ def copy(src, dst):
         for name in sorted(names):
             path = Path(base) / name
             if path.is_file() and not path.is_symlink():
-                _place(path, dst / rel / name, str(path.resolve()))
+                jobs.append((path, dst / rel / name, str(path.resolve())))
+    _each(_place, jobs)
+
+
+def _seal_one(path):
+    if path.stat().st_size < GZIP_TRY and _gzip_fits(path, path):
+        path.unlink()
+        return
+    _pointer(path, path, None)
+    path.unlink()
 
 
 def seal(dst):
+    jobs = []
     for base, _dirs, names in os.walk(dst):
         if '/.git' in base or base.endswith('.git'):
             continue
@@ -145,11 +166,8 @@ def seal(dst):
             if (path.suffix == '.gz' or name.endswith('.s3.json') or not path.is_file() or path.is_symlink()
                     or path.stat().st_size < ZIP_AT):
                 continue
-            if path.stat().st_size < GZIP_TRY and _gzip_fits(path, path):
-                path.unlink()
-                continue
-            _pointer(path, path, None)
-            path.unlink()
+            jobs.append((path,))
+    _each(_seal_one, jobs)
 
 
 if __name__ == '__main__':

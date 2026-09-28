@@ -50,11 +50,45 @@ def summarize_content(name, data, limit=40):
     return out
 
 
+def _layer_summary(path):
+    """(count, fields) of one plain-JSON derived layer, or None when it cannot be read: what derived_layers keeps."""
+    try:
+        value = json.loads(Path(path).read_bytes())
+        count = None
+        if isinstance(value.get('count'), int):
+            count = value['count']
+        else:
+            for key in ('series', 'per_second', 'frames', 'groups'):
+                if isinstance(value.get(key), list):
+                    count = len(value[key])
+                    break
+        return count, sorted(k for k in value if k not in ('status', 'producer', 'reason'))[:30]
+    except Exception:
+        return None
+
+
+def _summaries(paths):
+    """_layer_summary of each path, each whole-file JSON load in its own spawn process (Greg, 2026-09-28: the legacy
+    layers of a whole day are GB-scale JSON; loading them one after another held one CPU). The session loads this
+    module by path, so the worker function is taken from the module imported by name."""
+    if len(paths) < 2:
+        return [_layer_summary(p) for p in paths]
+    import multiprocessing
+    import sys
+    from concurrent.futures import ProcessPoolExecutor
+    box = str(Path(__file__).resolve().parent)
+    if box not in sys.path:
+        sys.path.insert(0, box)
+    import frankie_box_compare as C
+    with ProcessPoolExecutor(max_workers=len(paths), mp_context=multiprocessing.get_context('spawn')) as pool:
+        return list(pool.map(C._layer_summary, paths))
+
+
 def derived_layers(work):
     """Every pin layer of derive.json with its status, producer, reason, digest and the count the derived file carries."""
     work = Path(work)
     receipt = json.loads((work / 'derive.json').read_bytes())
-    layers = {}
+    layers, plain = {}, []
     for name, entry in receipt['layers'].items():
         item = dict(status=entry.get('status'), producer=entry.get('producer'), reason=entry.get('reason'), sha256=entry.get('sha256'), bytes=entry.get('bytes'))
         if entry.get('encoding') == 'gzip-json':
@@ -64,19 +98,14 @@ def derived_layers(work):
             continue
         path = work / 'derived' / f'{name}.json'
         if path.is_file():
-            try:
-                value = json.loads(path.read_bytes())
-                if isinstance(value.get('count'), int):
-                    item['count'] = value['count']
-                else:
-                    for key in ('series', 'per_second', 'frames', 'groups'):
-                        if isinstance(value.get(key), list):
-                            item['count'] = len(value[key])
-                            break
-                item['fields'] = sorted(k for k in value if k not in ('status', 'producer', 'reason'))[:30]
-            except Exception:
-                pass
+            plain.append((name, path))
         layers[name] = item
+    for (name, _), summary in zip(plain, _summaries([str(path) for _, path in plain])):
+        if summary is not None:
+            count, fields = summary
+            if count is not None:
+                layers[name]['count'] = count
+            layers[name]['fields'] = fields
     return dict(pin_group=receipt.get('pin_group'), rows=receipt.get('rows', {}).get('count'), input_records=receipt.get('input_records'),
                 f_last_groups=receipt.get('f_last_groups'), failures=receipt.get('failure_count'), layers=layers)
 
