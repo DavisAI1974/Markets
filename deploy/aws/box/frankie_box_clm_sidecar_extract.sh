@@ -113,10 +113,12 @@ def labels_at(i):
 all_sorted = all(ts[k] is not None for k in range(n)) and all(ts[k] <= ts[k + 1] for k in range(n - 1))
 print('receive clock monotone: %s' % all_sorted, flush=True)
 # time-ordered split: learn on the first 70% of the day, score on the last 30%; the purge drops the train rows whose
-# forecast window reaches into the scored part (no label overlap across the boundary)
+# forecast window reaches into the scored part (no label overlap across the boundary). A label reads the first group
+# at or after ts + h; bounding against ts[cut - 1] keeps that group's index j < cut (against ts[cut], j == cut, the
+# first scored row, could leak into a train label)
 cut = int(n * 0.7)
 purge = max(HORIZONS) * 10**9
-train_idx = [i for i in range(1, cut) if ts[i] is not None and ts[cut] is not None and ts[i] + purge < ts[cut]]
+train_idx = [i for i in range(1, cut) if ts[i] is not None and ts[cut - 1] is not None and ts[i] + purge < ts[cut - 1]]
 test_idx = list(range(cut, n))
 rng = random.Random(20211004)
 train = sorted(rng.sample(train_idx, min(N_TRAIN, len(train_idx))))

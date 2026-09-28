@@ -6,6 +6,8 @@ import sys
 
 import pytest
 
+import pinned_producers
+
 BOX = Path(__file__).resolve().parents[1] / 'deploy/aws/box'
 
 
@@ -16,6 +18,7 @@ def test_complete_digest_row_and_dictionary_growth_has_bounded_memory(tmp_path, 
     code = r'''
 import hashlib, json, pathlib, resource, sqlite3, sys, tracemalloc
 sys.path.insert(0, sys.argv[1])
+import pinned_producers; pinned_producers.prepare_test_host()
 from frankie_box_digest_document import write_digest
 n = int(sys.argv[2])
 root = pathlib.Path(sys.argv[3]); root.mkdir()
@@ -60,7 +63,7 @@ print(json.dumps(dict(rows=n, distinct=distinct, python_peak_bytes=peak,
 '''
     records = []
     for rows in (4000, 40000):
-        result = subprocess.run([sys.executable, '-c', code, str(BOX), str(rows), str(tmp_path/str(rows))],
+        result = subprocess.run([sys.executable, '-c', code, str(BOX), str(rows), str(tmp_path/str(rows))], env=pinned_producers.env(),
                                 check=True, capture_output=True, text=True, timeout=300)
         records.append(json.loads(result.stdout))
     small, large = records

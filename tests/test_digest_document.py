@@ -8,6 +8,9 @@ from pathlib import Path
 import sys
 import pytest
 import test_frankie_box_digest_render as FX
+import pinned_producers
+
+pinned_producers.prepare_test_host()
 
 BOX = Path(__file__).resolve().parents[1] / 'deploy/aws/box'
 sys.path.insert(0, str(BOX))

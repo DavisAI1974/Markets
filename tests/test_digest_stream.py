@@ -94,7 +94,7 @@ def test_materializing_compatibility_wrappers_are_not_used(tmp_path, monkeypatch
 @pytest.mark.parametrize('mutation', ['truncate', 'extra', 'value', 'dictionary'])
 def test_inverse_refuses_corruption_and_keeps_evidence(tmp_path, mutation):
     mod = stream()
-    rows = [dict(x=i, word='alpha' if i % 2 else 'beta') for i in range(10)]
+    rows = [dict(x=i, word='alpha_repeated_value_one' if i % 2 else 'beta_repeated_value_two') for i in range(10)]   # long enough that the dictionary pays (V8 cutoff)
     path = tmp_path / 'table.txt'
     mod.write_table(path, 'proof', rows, tmp_path / 'scratch')
     text = path.read_text(encoding='utf-8')
@@ -105,7 +105,7 @@ def test_inverse_refuses_corruption_and_keeps_evidence(tmp_path, mutation):
     elif mutation == 'value':
         text = text.replace('0 @0', '99 @0', 1)
     else:
-        text = text.replace('@0="beta"', '@0="wrong"', 1)
+        text = text.replace('@0="beta_repeated_value_two"', '@0="wrong"', 1)
     path.write_text(text, encoding='utf-8')
     with pytest.raises((ValueError, KeyError, IndexError)):
         mod.verify_table(path, 'proof', rows, tmp_path / 'verify')

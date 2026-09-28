@@ -100,7 +100,8 @@ def main():
             path = side / ('table-%04d.txt' % ordinal)
             proof = P.write_table_parallel(path, name, P.split_specs(spec, 2 * len(cpus)),
                                            side / ('table-%04d' % ordinal), cpus,
-                                           progress=lambda table, phase: note(table, phase, ordinal=ordinal))
+                                           progress=lambda table, phase: note(table, phase, ordinal=ordinal),
+                                           reserve=int(os.environ.get('FRANKIE_DIGEST_DISK_RESERVE', P.DISK_RESERVE)))
             digest = D._witness(path)
             if D.TS._identity(path) != proof['verified_identity']:
                 raise ValueError('proved table changed before its byte witness')

@@ -17,7 +17,7 @@ jobs:
     timeout-minutes: 15
     env:
       PYTHONDONTWRITEBYTECODE: '1'
-      DIGEST_REFERENCE_PATH: /tmp/digest-reference-${{ github.run_id }}.py
+      DIGEST_REFERENCE_PATH: ${{ github.workspace }}/deploy/aws/box/frankie_box_digest_render.py   # the in-tree whole-table renderer: the streamed document must equal it byte for byte
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -26,10 +26,8 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install --no-cache-dir pytest==9.1.1
-      - name: Extract immutable compatibility oracle
-        run: |
-          git fetch --no-tags --depth=1 origin e297553a7c96dd615879e5aa8e5c5a0118aeaff2
-          git show e297553a7c96dd615879e5aa8e5c5a0118aeaff2:deploy/aws/box/frankie_box_digest_render.py > "$DIGEST_REFERENCE_PATH"
+      - name: Pinned producers worktree (the session loads them before any digest code)
+        run: bash deploy/aws/box/producers_checkout.sh
       - name: Verify streamed sources and full documents
         working-directory: tests
-        run: python -m pytest test_digest_sources.py test_digest_document.py test_digest_document_memory.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider
+        run: python -m pytest test_digest_sources.py test_digest_document.py test_digest_document_memory.py test_digest_parallel.py -q --rootdir=. --confcutdir=. --noconftest -p no:cacheprovider

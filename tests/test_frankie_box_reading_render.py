@@ -23,6 +23,7 @@ for name, rel in (('research', 'research'), ('research.kalshi', 'research/kalshi
 sys.path.insert(0, str(ROOT / 'deploy/aws/box'))
 import frankie_box_reading_render as R          # noqa: E402
 import frankie_box_stacked_text as ST           # noqa: E402
+import frankie_box_digest_render as DG          # noqa: E402
 from research.kalshi.frankie_boss import granite_context_stacked as stacked   # noqa: E402
 from research.kalshi.frankie_boss.c15_journal import pack                     # noqa: E402
 from research.kalshi.frankie_boss.causal_packet import canonical_bytes        # noqa: E402
@@ -77,7 +78,7 @@ def test_known_files_stacked_text_and_table_blocks_render_and_rebuild(tmp_path):
     import frankie_box_digest_render as DG
     table = text.split('#### block table-', 1)[1].split('```\n', 1)[1].split('```', 1)[0]
     assert DG._same(DG.parse_table(table)[1], points)
-    assert '"$table":"DIGEST_V5"' in text and '"columns":["t","p50","quantiles","side"]' in text
+    assert '"$table":"%s"' % DG.TABLE_GRAMMAR in text and '"columns":["t","p50","quantiles","side"]' in text
     # the snapshot text is rendered once (in the $decoded node) and the prompt contains it (L5 marker)
     assert text.count('"$stacked_text":"STACKED_TEXT_V1"') == 1 and '<<contains sha256:' in text   # once in a node (the legend names the key without its value)
     # the node carries the snapshot text's own digest (the proof that the block puts the text back ran before the
@@ -129,8 +130,7 @@ def test_a_tuple_of_dicts_becomes_a_table_block_and_says_so():
     rows = tuple(dict(time_ns=1633298400000000000 + i * 1000, observed=i % 2 == 0, quantiles=[5.4, 5.41, 5.42]) for i in range(20))
     blocks = []
     out = R._blocks_pass(dict(points=rows), blocks)
-    assert len(blocks) == 1 and blocks[0]['rows'] == 20 and out['points']['container'] == 'tuple' and out['points']['$table'] == 'DIGEST_V5'
-    import frankie_box_digest_render as DG
+    assert len(blocks) == 1 and blocks[0]['rows'] == 20 and out['points']['container'] == 'tuple' and out['points']['$table'] == DG.TABLE_GRAMMAR
     assert DG._same(DG.parse_table(blocks[0]['text'])[1], [dict(r) for r in rows])
 
 

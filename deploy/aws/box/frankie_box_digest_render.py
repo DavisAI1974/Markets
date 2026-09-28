@@ -23,19 +23,22 @@ from it (checked equal to the producer's float for every second).
 """
 from __future__ import annotations
 
+import copy
 import json
 import math
 import re
 from fractions import Fraction
 
-SCHEMA = 'DIGEST_V6'   # V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
-TABLE_GRAMMAR = 'DIGEST_V7'   # the table block grammar. V7 (Greg, 2026-09-28, every token stack that works): `?k` runs of absent cells;
-                              # deltas on every integer column whose name ends in recv_ns / event_ns and on group_index
+SCHEMA = 'DIGEST_V8'   # V8: the table grammar below (Greg, 2026-09-28, every token stack that works, all additive); V6: the bedrock tables (BR-5, 2026-09-21); V5: the sign of zero is a value (-0.0 never folds into 0.0), tuple cells, a self-checking parser
+TABLE_GRAMMAR = 'DIGEST_V8'   # the table block grammar. V7: `?k` runs of absent cells; deltas on every integer column whose name ends in
+                              # recv_ns / event_ns and on group_index. V8 on top: keys-once objects (`shapes:`, `R` cells), packed digit
+                              # lists (`P`), same-row integer references (`<i`), count columns derived as list lengths (`lengths:`), columns
+                              # ordered by presence, and the dictionary only where it pays
 BEDROCK_GROUP_KEY = ('group_index', 'ts_recv_ns', 'f_last_ts_recv_ns')
 FRACTION_DENOMINATOR = 1_000_000   # DIGEST_V4: a float spelled n/d only when float(n)/float(d) is that float exactly and the spelling is shorter
 SCALE_MIN, SCALE_MAX = 3, 9       # DIGEST_V4: a per-column power of ten every integer literal of the column divides by (declared once, checked)
 RUN_MARKS = ('^', '=', '?')       # DIGEST_V4: k consecutive identical mark cells collapse to `^k` / `=k`; V7 adds `?k` (no other cell
-                                  # starts with `?`); never `-`: `-3` is an integer
+                                  # starts with `?`, and no column name may); never `-`: `-3` is an integer
 
 DELTA_KEYS = ('ts_recv_ns', 'ts_event_ns', 'ts_recv', 'ts_event', 'second', 'price_raw_min', 'price_raw_max',
               'bid_depth_full', 'ask_depth_full', 'bid_order_count_full', 'ask_order_count_full',
@@ -162,7 +165,10 @@ def _equal_typed(value, stored):
     return type(value) is type(stored) and _same(value, stored)
 
 
-def _recompute(row, column, prev=None):
+def _recompute(row, column, prev=None, facts=None):
+    source = facts.lengths.get(column) if facts is not None else None
+    if source is not None:
+        return len(row[source])                     # V8 `lengths:` rule: the count IS the length of that list column
     spec = DERIVED.get(column)
     if spec:
         keys, fn = spec
@@ -179,9 +185,12 @@ def _is_derivable(column):
     return column in DERIVED or column in _ROW_DERIVED_INDEX or column in PREV_DERIVED or column.startswith(('action_counts.', 'side_counts.'))
 
 
-def _derived(row, column, prev=None):
+def _derived(row, column, prev=None, facts=None):
     """True when `column` of this flat row is rendered `=`: the stored value equals the recomputation exactly (for the
     adapter's book columns, a None stored where an input is None also counts, as the adapter writes it)."""
+    source = facts.lengths.get(column) if facts is not None else None
+    if source is not None:
+        return isinstance(row.get(source), list) and _is_int(row.get(column)) and row[column] == len(row[source])
     if not _is_derivable(column):
         return False
     try:
@@ -194,6 +203,10 @@ def _derived(row, column, prev=None):
     if column.startswith(('action_counts.', 'side_counts.')):
         return value is not None and value > 0 and _equal_typed(value, stored)
     return (value is None and stored is None) or (stored is not None and _equal_typed(value, stored))
+
+
+def _is_int(v):
+    return isinstance(v, int) and not isinstance(v, bool)
 
 
 def _absent_is_derived(row, column):
@@ -232,7 +245,256 @@ def _no_tuples(value):
     return True
 
 
-def _literal(v, column, r, prev_lists):
+# ---- DIGEST_V8 table grammar: ONE place for every writer, reader and verifier ----------------------------------------
+# (review 2026-09-28: the serial, streamed and parallel writers each carried their own cell finisher, header writer and
+# decoder; a grammar change in one could miss another. Every grammar decision now lives here; frankie_box_digest_stream
+# and frankie_box_digest_parallel only orchestrate, and their code identity keys this file.)
+
+_COST_RUN = re.compile(r'\d+|[A-Za-z]+|\s+|[^\dA-Za-z\s]+')
+
+
+def _cost(text):
+    """Estimated pinned-Granite tokens of a cell spelling (calibrated on the verified tokenizer, 2026-09-28: digit runs
+    split into tokens of up to three digits, letters about four to a token, punctuation about two). A pure function of
+    the text, so every writer makes the same choice; the choice changes only which exact spelling is written."""
+    if text.isdigit():                                     # fast paths, the same values the runs give
+        return -(-len(text) // 3)
+    if text[:1] in '+-<~@' and text[1:].isdigit():
+        return 1 + -(-(len(text) - 1) // 3)
+    total = 0
+    for m in _COST_RUN.finditer(text):
+        run = m.group()
+        if run[0].isdigit():
+            total += -(-len(run) // 3)
+        elif run[0].isalpha():
+            total += -(-len(run) // 4)
+        elif not run[0].isspace():
+            total += -(-len(run) // 2)
+    return max(total, 1)
+
+
+def check_column(name):
+    if not name or name[0] in '=^?' or '\t' in name or '\n' in name or '=' in name or ' ' in name:
+        raise ValueError(f'column name {name!r} cannot be spelled in a table header')
+
+
+def _spellable_key(key):
+    return isinstance(key, str) and bool(key) and not any(ch in key for ch in ',;=\t\n')
+
+
+class Facts:
+    """Table-wide facts the planner needs before the first cell and the header declares: the column order, the keys-once
+    shape of each list-of-objects column (V8 `shapes:`) and each count column that is the length of a list column (V8
+    `lengths:`)."""
+    __slots__ = ('columns', 'shapes', 'lengths')
+
+    def __init__(self, columns, shapes=None, lengths=None):
+        self.columns, self.shapes, self.lengths = list(columns), dict(shapes or {}), dict(lengths or {})
+
+
+NO_FACTS = Facts(())
+
+
+class Observer:
+    """Collects Facts over a table's rows in order (the snapshot pass). Mergeable in part order (the parallel writer):
+    presence counts add, shapes unite, length candidates intersect."""
+
+    def __init__(self):
+        self.presence = {}   # column -> rows carrying it, first-seen order
+        self.shapes = {}     # column -> set of object keys, or None when some list of objects there cannot be keys-once
+        self.lengths = {}    # column -> candidate list columns whose length it equals on every row carrying it
+
+    def add(self, flat):
+        by_length = {}
+        for c, v in flat.items():
+            if c not in self.presence:
+                check_column(c)
+                self.presence[c] = 0
+            self.presence[c] += 1
+            if isinstance(v, list):
+                if not _is_derivable(c):
+                    by_length.setdefault(len(v), set()).add(c)
+                if v and all(isinstance(x, dict) for x in v) and self.shapes.get(c, ()) is not None:
+                    if all(_spellable_key(k) for x in v for k in x) and _no_tuples(v):
+                        keys = self.shapes.setdefault(c, set())
+                        for x in v:
+                            keys.update(x)
+                    else:
+                        self.shapes[c] = None
+        for c, v in flat.items():
+            if _is_derivable(c) or (c in self.lengths and not self.lengths[c]):
+                continue
+            found = by_length.get(v, set()) if _is_int(v) and v >= 0 else set()
+            self.lengths[c] = (self.lengths[c] & found) if c in self.lengths else set(found)
+
+    def merge(self, other):
+        for c, count in other.presence.items():
+            self.presence[c] = self.presence.get(c, 0) + count
+        for c, keys in other.shapes.items():
+            mine = self.shapes.get(c, set())
+            self.shapes[c] = None if mine is None or keys is None else mine | keys
+        for c, found in other.lengths.items():
+            self.lengths[c] = (self.lengths[c] & found) if c in self.lengths else set(found)
+        return self
+
+    def facts(self):
+        # V8: columns ordered by how many rows carry them (most first; ties keep first-seen order), so the columns a row
+        # lacks sit together and collapse into one `?k` run; a table whose rows all carry every column keeps its order
+        first_seen = list(self.presence)
+        columns = sorted(first_seen, key=lambda c: -self.presence[c])
+        shapes = {c: tuple(sorted(keys)) for c, keys in self.shapes.items() if keys}
+        lengths = {c: min(found) for c, found in self.lengths.items() if found}
+        return Facts(columns, shapes, lengths)
+
+
+def _inner_literal(y):
+    if y is None:
+        return NONE
+    if y is True:
+        return TRUE
+    if y is False:
+        return FALSE
+    if isinstance(y, int):
+        return str(y)
+    if isinstance(y, float):
+        return 'nan' if math.isnan(y) else _float_text(y)
+    if isinstance(y, str):
+        return ('S' + y) if not any(ch in y for ch in ',;\t\n') else ('J' + json.dumps(y))
+    return 'J' + json.dumps(y, separators=(',', ':'), sort_keys=True)
+
+
+def _objects_ref(prev_value):
+    return prev_value[-1] if isinstance(prev_value, list) and prev_value and isinstance(prev_value[-1], dict) else None
+
+
+def _objects(v, shape, prev_value):
+    """V8 keys-once: a list of objects written `R` + objects joined by `;`, each object its values in the declared key
+    order joined by `,` (the keys are on the header's `shapes:` line, never on a row). Each value is read against the
+    previous object (the last object of the previous row's list for the first): `^` the same value, a signed delta for an
+    integer key ending in recv_ns / event_ns, `<i` the same integer as this object's key i, `?` absent; runs collapse."""
+    ref, objects = _objects_ref(prev_value), []
+    for x in v:
+        cells, seen = [], {}
+        for i, k in enumerate(shape):
+            if k not in x:
+                cells.append('?')
+                continue
+            y = x[k]
+            if ref is not None and k in ref and _same(ref[k], y):
+                text = SAME
+            elif ref is not None and _is_int(y) and _is_int(ref.get(k)) and k.endswith(DELTA_KEYS):
+                text = '%+d' % (y - ref[k])
+            else:
+                text = _inner_literal(y)
+            if _is_int(y):
+                at = seen.get(y)
+                if at is None:
+                    seen[y] = i
+                elif text != SAME and _cost(text) > _cost('<%d' % at):
+                    text = '<%d' % at
+            cells.append(text)
+        objects.append(','.join(_collapse(cells)))
+        ref = x
+    return 'R' + ';'.join(objects)
+
+
+_JSON = json.JSONDecoder()
+_INNER_CELL = re.compile(r'[^,;]*')
+
+
+def _read_objects(body, shape, prev_value):
+    groups, cells, pos = [], [], 0
+    while True:
+        if body.startswith('J', pos):
+            _, end = _JSON.raw_decode(body, pos + 1)
+        else:
+            end = _INNER_CELL.match(body, pos).end()
+        cells.append(body[pos:end])
+        pos = end
+        if pos == len(body):
+            groups.append(cells)
+            break
+        if body[pos] == ';':
+            groups.append(cells)
+            cells = []
+        elif body[pos] != ',':
+            raise ValueError('keys-once cell: a value is followed by %r' % body[pos])
+        pos += 1
+    ref, out = _objects_ref(prev_value), []
+    for group in groups:
+        cells = _expand(group)
+        if len(cells) != len(shape):
+            raise ValueError('keys-once cell: %d values for %d keys' % (len(cells), len(shape)))
+        x = {}
+        for k, text in zip(shape, cells):
+            if text == '?':
+                continue
+            if text == SAME:
+                if ref is None or k not in ref:
+                    raise ValueError('keys-once cell: `^` without a previous value')
+                y = copy.deepcopy(ref[k])
+            elif text.startswith('<'):
+                y = x[shape[int(text[1:])]]
+            elif text[0] in '+-' and len(text) > 1 and text[1:].isdigit() and k.endswith(DELTA_KEYS) and ref is not None and _is_int(ref.get(k)):
+                y = ref[k] + int(text)
+            else:
+                y = _scalar(text)
+            x[k] = y
+        out.append(x)
+        ref = x
+    return out
+
+
+def _scalar(text):
+    """A standalone scalar cell: `-` T F `S...` `J...` `nan`, an exact fraction, an integer, a float."""
+    if text == NONE:
+        return None
+    if text == TRUE:
+        return True
+    if text == FALSE:
+        return False
+    if text.startswith('S'):
+        return text[1:]
+    if text.startswith('J'):
+        return json.loads(text[1:])
+    if text == 'nan':
+        return float('nan')
+    if _FRACTION.fullmatch(text):
+        num, _, den = text.partition('/')
+        return float(int(num)) / float(int(den))
+    if _INT_CELL.fullmatch(text):
+        return int(text)
+    return float(text)
+
+
+_FRACTION = re.compile(r'-?\d+/\d+')
+
+
+def _packed(v, first):
+    """V8 packed digits (the stacked_v2 P form): `P<first>:<lo>:<width>:<digits>`, the successive differences as one
+    run of fixed-width decimal fields, each difference = field + lo."""
+    steps = [b - a for a, b in zip(v, v[1:])]
+    lo = min(steps)
+    width = max(1, len(str(max(steps) - lo)))
+    return 'P%s:%d:%d:%s' % (first, lo, width, ''.join(str(d - lo).zfill(width) for d in steps))
+
+
+def _unpacked(text, column, prev_lists):
+    first, lo, width, digits = text[1:].split(':')
+    lo, width = int(lo), int(width)
+    if width < 1 or len(digits) % width or not (digits.isdigit() or not digits):
+        raise ValueError('packed cell %r' % text[:40])
+    v = [_list_start(first, column, prev_lists)]
+    for i in range(0, len(digits), width):
+        v.append(v[-1] + int(digits[i:i + width]) + lo)
+    return v
+
+
+def _list_start(first, column, prev_lists):
+    return prev_lists[column] + int(first) if first[:1] in '+-' and _is_int(prev_lists.get(column)) else int(first)
+
+
+def _literal(v, column, r, prev_lists, shape=None, prev_value=None):
     """The inline text of a value that is neither derived, repeated from the previous row, nor a delta:
     (kind, text) with kind 'lit' (final), 'str' (a string; dictionary candidate) or 'json' (a JSON cell; candidate)."""
     if v is None:
@@ -251,6 +513,8 @@ def _literal(v, column, r, prev_lists):
         if not _no_tuples(list(v)):
             raise ValueError('a tuple nested in a tuple has no exact cell')     # render_layers / the caller leaves such a value as it was
         return 'lit', 'U' + json.dumps(list(v), separators=(',', ':'), sort_keys=True)   # DIGEST_V4: a tuple cell, parsed back as a tuple
+    if shape and isinstance(v, list) and v and all(isinstance(x, dict) and all(k in shape for k in x) for x in v):
+        return 'lit', _objects(v, shape, prev_value)
     if _int_list(v):
         if column in _DISPOSITION_LISTS and _int_list(r.get('order_ids')):
             index, pos = {}, []
@@ -264,7 +528,12 @@ def _literal(v, column, r, prev_lists):
             else:
                 return 'lit', 'K' + ','.join(str(i) for i in pos)      # positions in this row's order_ids
         first = ('%+d' % (v[0] - prev_lists[column])) if isinstance(prev_lists.get(column), int) else str(v[0])
-        return 'lit', 'I' + ','.join([first] + ['%+d' % (b - a) for a, b in zip(v, v[1:])])   # first (as a delta from the previous row's first when one exists), then successive differences
+        listed = 'I' + ','.join([first] + ['%+d' % (b - a) for a, b in zip(v, v[1:])])   # first (as a delta from the previous row's first when one exists), then successive differences
+        if len(v) > 1:
+            packed = _packed(v, first)
+            if _cost(packed) < _cost(listed):
+                return 'lit', packed
+        return 'lit', listed
     return 'json', json.dumps(v, separators=(',', ':'), sort_keys=True)
 
 
@@ -280,129 +549,379 @@ def _float_text(v):
     return text
 
 
-def _plan_row(r, columns, prev_row, prev_values, prev_ints, prev_lists):
+def _plan_row(r, columns, prev_row, prev_values, prev_ints, prev_lists, facts=NO_FACTS):
     """One row's cells before the dictionary pass: a list of (kind, text) and the state updates."""
-    cells = []
-    for c in columns:
+    cells, same_row = [], {}
+    for j, c in enumerate(columns):
         if c not in r:
             cells.append(('lit', '=' if _absent_is_derived(r, c) else '?'))
             continue
         v = r[c]
-        if _derived(r, c, prev_row):
-            cells.append(('lit', '='))
+        if _derived(r, c, prev_row, facts):
+            cell = ('lit', '=')
         elif c in prev_values and _same(prev_values[c], v):
-            cells.append(('lit', SAME))
-        elif c in PAIRED and isinstance(v, int) and not isinstance(v, bool) and isinstance(r.get(PAIRED[c]), int) and not isinstance(r.get(PAIRED[c]), bool):
-            cells.append(('lit', '~%+d' % (v - r[PAIRED[c]])))
-        elif c.endswith(DELTA_KEYS) and isinstance(v, int) and not isinstance(v, bool) and isinstance(prev_ints.get(c), int):
-            cells.append(('lit', '%+d' % (v - prev_ints[c])))
+            cell = ('lit', SAME)
+        elif c in PAIRED and _is_int(v) and _is_int(r.get(PAIRED[c])):
+            cell = ('lit', '~%+d' % (v - r[PAIRED[c]]))
+        elif c.endswith(DELTA_KEYS) and _is_int(v) and isinstance(prev_ints.get(c), int):
+            cell = ('lit', '%+d' % (v - prev_ints[c]))
         else:
-            cells.append(_literal(v, c, r, prev_lists))
+            cell = _literal(v, c, r, prev_lists, facts.shapes.get(c), prev_values.get(c))
+        if _is_int(v) and cell[1][0] not in '=~':
+            # V8 same-row reference: `<i` = the integer of this row's column i (an earlier column the parser holds
+            # before any offset or derivation), written when cheaper than the cell it replaces
+            at = same_row.get(v)
+            if at is None:
+                same_row[v] = j
+            elif cell[1] != SAME and _cost(cell[1]) > _cost('<%d' % at):
+                cell = ('lit', '<%d' % at)
+        cells.append(cell)
         prev_values[c] = v
-        if isinstance(v, int) and not isinstance(v, bool):
+        if _is_int(v):
             prev_ints[c] = v
         if _int_list(v):
             prev_lists[c] = v[0]
     return cells
 
 
+def fold(state, flat):
+    """The row-to-row state after a decoded (or planned) row: last value / integer / list head per column."""
+    values, ints, lists = state
+    for c, v in flat.items():
+        values[c] = v
+        if _is_int(v):
+            ints[c] = v
+        if _int_list(v):
+            lists[c] = v[0]
+
+
+def candidate_key(kind, text):
+    """The dictionary key of a planned cell that is not final ('str' / 'json'): its JSON spelling."""
+    return json.dumps(text) if kind == 'str' else text
+
+
+def inline_cell(kind, text):
+    """A dictionary candidate written inline (it does not repeat, or the dictionary would not pay)."""
+    if kind == 'str':
+        return ('S' + text) if ('\t' not in text and '\n' not in text) else ('J' + json.dumps(text))
+    return 'J' + text
+
+
+def inline_cost(kind, text):
+    return _cost(inline_cell(kind, text))
+
+
+def dictionary_pays(count, cost, number):
+    """V8 dictionary cutoff: a repeating value (inline spelling of estimated cost `cost`) goes to the dictionary as entry
+    `number` only when the entry plus `count` references cost fewer estimated tokens than `count` inline spellings (a
+    two-letter string stays inline). Decided once, at the value's first occurrence, so every writer numbers alike."""
+    ref = _cost('@%d' % number)
+    return count >= 2 and ref * count + ref + 1 + cost < cost * count
+
+
+def scale_step(state, text):
+    """One literal cell's effect on its column's scale state [k, seen] (DIGEST_V4 per-column power of ten)."""
+    if not _INT_CELL.fullmatch(text):
+        return
+    k = state[0]
+    value, z = abs(int(text)), 0
+    if value:
+        while value % 10 == 0 and z < k:
+            value //= 10
+            z += 1
+        k = min(k, z)
+    state[0], state[1] = k, True
+
+
+def scales_of(states, columns):
+    """{column: 10^k} from {column index: [k, seen]}."""
+    return {columns[j]: 10 ** k for j, (k, seen) in states.items() if seen and k >= SCALE_MIN}
+
+
+def finish_row(cells, kept, columns, scales, number):
+    """The written cells of one planned row: literals (scaled when the column has a scale), candidates as `@n` when
+    number(kind, text, key) gives their dictionary number (else inline), runs collapsed."""
+    out = []
+    for j in kept:
+        kind, text = cells[j]
+        if kind == 'lit':
+            scale = scales.get(columns[j])
+            out.append(_scaled(text, scale) if scale and _INT_CELL.fullmatch(text) else text)
+            continue
+        n = number(kind, text, candidate_key(kind, text))
+        out.append(inline_cell(kind, text) if n is None else '@%d' % n)
+    return _collapse(out)
+
+
+def _constant_text(value):
+    return ('U' + json.dumps(list(value), separators=(',', ':'), sort_keys=True)) if isinstance(value, tuple) \
+        else json.dumps(value, separators=(',', ':'), sort_keys=True)   # a tuple constant keeps its U mark
+
+
+def whole_marks(columns, n, derived, constant, cross=None):
+    """The header's whole-column marks: `=` derived on every row (or, cross, copied row for row from an earlier table),
+    `^` one value on every row (on the `constants:` line); such a column is omitted from the rows."""
+    cross = cross or {}
+    return {c: '=' if cross.get(c) or derived[c] else '^' for c in columns if cross.get(c) or (n and (derived[c] or constant[c]))}
+
+
+def header_lines(name, n, sep, columns, whole, first, scales, facts):
+    """The table's header lines before the dictionary: the column line, constants, scales, and the V8 shapes / lengths."""
+    head = [f'### table {name}: {n} rows, sep={"space" if sep == " " else "tab"}, columns: ' + '\t'.join(whole.get(c, '') + c for c in columns)]
+    constants = [c for c in columns if whole.get(c) == '^']
+    if constants:
+        head.append('constants: ' + '\t'.join('%s=%s' % (c, _constant_text(first[c])) for c in constants))
+    if scales:
+        head.append('scales: ' + '\t'.join('%s=%d' % (c, k) for c, k in scales.items()))
+    shapes = [c for c in columns if c in facts.shapes and c not in whole]
+    if shapes:
+        head.append('shapes: ' + '\t'.join('%s=%s' % (c, ','.join(facts.shapes[c])) for c in shapes))
+    lengths = [c for c in columns if c in facts.lengths and whole.get(c) != '^']
+    if lengths:
+        head.append('lengths: ' + '\t'.join('%s=%s' % (c, facts.lengths[c]) for c in lengths))
+    return head
+
+
+class Lines:
+    """A header reader over a list of lines (the in-memory parser), with the streaming reader's interface."""
+
+    def __init__(self, lines, start=0):
+        self.lines, self.index = lines, start
+
+    def starts(self, prefix):
+        return self.index < len(self.lines) and self.lines[self.index].startswith(prefix)
+
+    def skip(self, prefix):
+        if not self.starts(prefix):
+            raise ValueError('expected ' + prefix)
+        self.lines[self.index] = self.lines[self.index][len(prefix):]
+
+    def take(self, delimiters='\n'):
+        if self.index >= len(self.lines):
+            raise ValueError('truncated table (missing delimiter)')
+        line = self.lines[self.index]
+        if delimiters != '\n':
+            cut = [p for p in (line.find(d) for d in delimiters if d != '\n') if p >= 0]
+            if cut:
+                self.lines[self.index] = line[min(cut) + 1:]
+                return line[:min(cut)], line[min(cut)]
+        self.index += 1
+        return line, '\n'
+
+
+class Header:
+    """A parsed table header (every line before the dictionary)."""
+
+    def __init__(self, reader):
+        line, _ = reader.take()
+        m = re.fullmatch(r'### table (\S+): (\d+) rows, (?:sep=(space|tab), )?columns: (.*)', line)
+        if m is None:
+            raise ValueError('table header expected')
+        self.name, self.n = m.group(1), int(m.group(2))
+        self.sep = ' ' if m.group(3) == 'space' else '\t'
+        declared = m.group(4).split('\t') if m.group(4) else []
+        self.columns = [c[1:] if c[:1] in '=^' else c for c in declared]
+        self.whole = {c[1:]: c[0] for c in declared if c[:1] in '=^'}
+        self.kept = [c for c in self.columns if c not in self.whole]
+        self.constants, self.scales, shapes, lengths = {}, {}, {}, {}
+        for prefix, into in (('constants: ', self.constants), ('scales: ', self.scales), ('shapes: ', shapes), ('lengths: ', lengths)):
+            if reader.starts(prefix):
+                reader.skip(prefix)
+                text, _ = reader.take()
+                for item in text.split('\t'):
+                    k, _, value = item.partition('=')
+                    if prefix == 'constants: ':
+                        into[k] = tuple(json.loads(value[1:])) if value.startswith('U') else json.loads(value)
+                    elif prefix == 'scales: ':
+                        into[k] = int(value)
+                    elif prefix == 'shapes: ':
+                        into[k] = tuple(value.split(','))
+                    else:
+                        into[k] = value
+        self.facts = Facts(self.columns, shapes, lengths)
+
+
+def read_dictionary(reader, add):
+    """The `dictionary:` line, one entry at a time (never the whole line held): add(number, json_text)."""
+    if not reader.starts('dictionary: '):
+        return 0
+    reader.skip('dictionary: ')
+    number = 0
+    while True:
+        item, delimiter = reader.take('\t\n')
+        k, equal, value = item.partition('=')
+        if not equal or k != '@%d' % number:
+            raise ValueError('dictionary numbering mismatch')
+        json.loads(value)
+        add(number, value)
+        number += 1
+        if delimiter == '\n':
+            return number
+
+
+def expand_cells(line, sep, kept):
+    """A row line's cells with every `^k` / `=k` / `?k` run expanded, checked against the kept column count."""
+    if not kept:
+        if line:
+            raise ValueError('constant-only table carries unexpected cells')
+        return []
+    out = []
+    for cell in line.split(sep):
+        count = int(cell[1:]) if len(cell) > 1 and cell[0] in RUN_MARKS and cell[1:].isdigit() else 1
+        if len(out) + count > len(kept):
+            raise ValueError('table row expands beyond declared columns')
+        out.extend([cell[0]] * count if count != 1 else [cell])
+    if len(out) != len(kept):
+        raise ValueError(f'table row: {len(out)} cells for {len(kept)} columns')
+    return out
+
+
+class RowDecoder:
+    """Decodes a table's row lines in order: entry(number) gives a dictionary value (a fresh object); seed is the
+    row-to-row state before the first line (previous row, last values / integers / list heads), for a part."""
+
+    def __init__(self, header, entry, seed=None):
+        self.h, self.entry = header, entry
+        prev_row, values, ints, lists = seed or (None, {}, {}, {})
+        self.prev_row, self.state = prev_row, (dict(values), dict(ints), dict(lists))
+        self.index = {c: j for j, c in enumerate(header.columns)}
+        self.order = _derived_order(header.columns, header.facts)
+
+    def decode(self, line, cross=None):
+        """The flat row of one line; cross = {column: value} of the cross-table derived columns for this row."""
+        h = self.h
+        prev_values, prev_ints, prev_lists = self.state
+        cells = expand_cells(line, h.sep, h.kept)
+        row = copy.deepcopy(h.constants)
+        cross = cross or {}
+        for c, v in cross.items():
+            row[c] = copy.deepcopy(v)
+        derived_cols = {c for c, mark in h.whole.items() if mark == '=' and c not in cross}
+        refs, positional, paired = [], {}, {}
+        for c, cell in zip(h.kept, cells):
+            if cell == '?':
+                continue
+            if cell == '=':
+                derived_cols.add(c)
+                continue
+            if cell == SAME:
+                if c not in prev_values:
+                    raise ValueError(f'table {h.name}: `^` in column {c} with no previous value')
+                v = copy.deepcopy(prev_values[c])
+            elif cell.startswith('@'):
+                v = self.entry(int(cell[1:]))
+            elif cell.startswith('<'):
+                refs.append((c, int(cell[1:])))
+                continue
+            elif cell.startswith('~'):
+                paired[c] = int(cell[1:])      # resolved once every literal and reference of the row is in, whatever the column order
+                continue
+            elif cell.startswith('K'):
+                positional[c] = [int(i) for i in cell[1:].split(',')] if cell[1:] else []
+                continue
+            elif cell.startswith('U'):
+                v = tuple(json.loads(cell[1:]))
+            elif cell.startswith('I'):
+                parts = cell[1:].split(',')
+                v = [_list_start(parts[0], c, prev_lists)]
+                for d in parts[1:]:
+                    v.append(v[-1] + int(d))
+            elif cell.startswith('P'):
+                v = _unpacked(cell, c, prev_lists)
+            elif cell.startswith('R'):
+                if c not in h.facts.shapes:
+                    raise ValueError(f'table {h.name}: keys-once cell in column {c} without a declared shape')
+                v = _read_objects(cell[1:], h.facts.shapes[c], prev_values.get(c))
+            elif cell.startswith('+') or (cell.startswith('-') and c.endswith(DELTA_KEYS) and isinstance(prev_ints.get(c), int) and re.fullmatch(r'-\d+', cell)):
+                v = prev_ints[c] + int(cell) * h.scales.get(c, 1)
+            elif re.fullmatch(r'-?\d+', cell):
+                v = int(cell) * h.scales.get(c, 1)
+            else:
+                v = _scalar(cell)
+            row[c] = v
+        for c, at in refs:                      # in column order: a reference names an earlier column
+            source = h.columns[at]
+            if source not in row or not _is_int(row[source]):
+                raise ValueError(f'table {h.name}: {c} refers to column {at}, which this row does not hold as an integer')
+            row[c] = row[source]
+        for c, offset in paired.items():
+            if PAIRED[c] not in row:
+                raise ValueError(f'table {h.name}: {c} is an offset from {PAIRED[c]}, which this row does not carry')
+            row[c] = row[PAIRED[c]] + offset
+        for c, pos in positional.items():
+            row[c] = [row['order_ids'][i] for i in pos]
+        for c in self.order:
+            if c in derived_cols:
+                value = _recompute(row, c, self.prev_row, h.facts)
+                if c.startswith(('action_counts.', 'side_counts.')) and c not in h.facts.lengths and value == 0:
+                    continue   # the producer's Counter holds no zero entries: the key is absent
+                row[c] = value
+        fold(self.state, row)
+        self.prev_row = row
+        return row
+
+
+def plan_table(flat, facts):
+    """Every row planned in order (the in-memory writer)."""
+    prev_row, values, ints, lists, planned = None, {}, {}, {}, []
+    for r in flat:
+        planned.append(_plan_row(r, facts.columns, prev_row, values, ints, lists, facts))
+        prev_row = r
+    return planned
+
+
 def render_table(name, rows, context=None):
     """rows: list of dicts (nested dicts flattened). Returns the text block. Two passes: the first plans every cell and
     counts the strings and JSON cells; the second writes them, a value through the dictionary only when it REPEATS in
-    this table (`@n`), inline otherwise (`S<text>` for a string, `J<json>` for a JSON cell). A column derived on EVERY
-    row is declared once in the header (`=name`) and omitted from the rows; a column holding one value on every row is
-    declared `^name` with its value on the `constants:` line and omitted too."""
+    this table and the dictionary pays (`@n`), inline otherwise (`S<text>` for a string, `J<json>` for a JSON cell). A
+    column derived on EVERY row is declared once in the header (`=name`) and omitted from the rows; a column holding one
+    value on every row is declared `^name` with its value on the `constants:` line and omitted too."""
     flat = [_flatten(r) for r in rows]
-    columns = []
+    observer = Observer()
     for r in flat:
-        for k in r:
-            if k not in columns:
-                columns.append(k)
-    for k in columns:
-        if not k or k[0] in '=^' or '\t' in k or '\n' in k or '=' in k or ' ' in k:
-            raise ValueError(f'column name {k!r} cannot be spelled in a table header')
-    prev_row, prev_values, prev_ints, prev_lists, planned = None, {}, {}, {}, []
-    for r in flat:
-        planned.append(_plan_row(r, columns, prev_row, prev_values, prev_ints, prev_lists))
-        prev_row = r
-    whole = {}
+        observer.add(r)
+    facts = observer.facts()
+    columns = facts.columns
+    planned = plan_table(flat, facts)
+    cross, derived, constant = {}, {}, {}
     for j, c in enumerate(columns):
         source = (context or {}).get(CROSS_DERIVED.get((name, c), (None, None))[0])
-        if source is not None and len(source) == len(flat) and all(c in r and _same(r[c], _flatten(src).get(CROSS_DERIVED[(name, c)][1], object())) for r, src in zip(flat, source)):
-            whole[c] = '='
-        elif flat and all(cells[j][1] == '=' for cells in planned):
-            whole[c] = '='
-        elif flat and all(c in r for r in flat) and all(_same(r[c], flat[0][c]) for r in flat):
-            whole[c] = '^'
+        cross[c] = source is not None and len(source) == len(flat) and all(c in r and _same(r[c], _flatten(src).get(CROSS_DERIVED[(name, c)][1], object())) for r, src in zip(flat, source))
+        derived[c] = all(cells[j][1] == '=' for cells in planned)
+        constant[c] = all(c in r for r in flat) and all(_same(r[c], flat[0][c]) for r in flat)
+    whole = whole_marks(columns, len(flat), derived, constant, cross)
     kept = [j for j, c in enumerate(columns) if c not in whole]
     counts = {}
     for cells in planned:
         for j in kept:
             kind, text = cells[j]
             if kind != 'lit':
-                key = json.dumps(text) if kind == 'str' else text
+                key = candidate_key(kind, text)
                 counts[key] = counts.get(key, 0) + 1
-    scales = _scales(planned, kept, columns)
-    dictionary, order, table = {}, [], []
+    states = {j: [SCALE_MAX, False] for j in kept}
     for cells in planned:
-        out = []
         for j in kept:
-            kind, text = cells[j]
-            if kind == 'lit':
-                scale = scales.get(columns[j])
-                out.append(_scaled(text, scale) if scale and _INT_CELL.fullmatch(text) else text)
-                continue
-            key = json.dumps(text) if kind == 'str' else text
-            if counts[key] >= 2:
-                if key not in dictionary:
-                    dictionary[key] = len(order)
-                    order.append(key)
-                out.append('@%d' % dictionary[key])
-            elif kind == 'str':
-                out.append(('S' + text) if ('\t' not in text and '\n' not in text) else ('J' + key))
-            else:
-                out.append('J' + text)
-        table.append(_collapse(out))
+            if cells[j][0] == 'lit':
+                scale_step(states[j], cells[j][1])
+    scales = scales_of(states, columns)
+    numbers, order = {}, []
+
+    def number(kind, text, key):
+        if key not in numbers:
+            numbers[key] = len(order) if dictionary_pays(counts[key], inline_cost(kind, text), len(order)) else None
+            if numbers[key] is not None:
+                order.append(key)
+        return numbers[key]
+
+    table = [finish_row(cells, kept, columns, scales, number) for cells in planned]
     sep = ' ' if not any(' ' in cell for row in table for cell in row) else '\t'
-    lines = [sep.join(row) for row in table]
-    head = [f'### table {name}: {len(rows)} rows, sep={"space" if sep == " " else "tab"}, columns: ' + '\t'.join(whole.get(c, '') + c for c in columns)]
-    constants = [c for c in columns if whole.get(c) == '^']
-    if constants:
-        head.append('constants: ' + '\t'.join('%s=%s' % (c, ('U' + json.dumps(list(flat[0][c]), separators=(',', ':'), sort_keys=True)) if isinstance(flat[0][c], tuple)
-                                                       else json.dumps(flat[0][c], separators=(',', ':'), sort_keys=True)) for c in constants))   # a tuple constant keeps its U mark
-    if scales:
-        head.append('scales: ' + '\t'.join('%s=%d' % (c, k) for c, k in scales.items()))
+    head = header_lines(name, len(rows), sep, columns, whole, flat[0] if flat else {}, scales, facts)
     if order:
         head.append('dictionary: ' + '\t'.join('@%d=%s' % (i, key) for i, key in enumerate(order)))
-    return '\n'.join(head + lines) + '\n'
+    return '\n'.join(head + [sep.join(row) for row in table]) + '\n'
 
 
 _INT_CELL = re.compile(r'[+-]?\d+')
-
-
-def _scales(planned, kept, columns):
-    """DIGEST_V4 per-column scale: when every integer literal of a column (absolute or signed delta) is a multiple of
-    10^k, k >= SCALE_MIN, the column is declared `scales: name=10^k` once and its cells are written divided by it."""
-    scales = {}
-    for j in kept:
-        k, seen = SCALE_MAX, False
-        for cells in planned:
-            kind, text = cells[j]
-            if kind != 'lit' or not _INT_CELL.fullmatch(text):
-                continue
-            value = abs(int(text))
-            if value == 0:
-                seen = True
-                continue
-            z = 0
-            while value % 10 == 0 and z < k:
-                value //= 10; z += 1
-            k, seen = min(k, z), True
-            if k < SCALE_MIN:
-                break
-        if seen and k >= SCALE_MIN:
-            scales[columns[j]] = 10 ** k
-    return scales
 
 
 def _scaled(text, scale):
@@ -411,7 +930,7 @@ def _scaled(text, scale):
 
 
 def _collapse(cells):
-    """DIGEST_V4: k >= 2 consecutive identical `^` or `=` cells become one `^k` / `=k` cell."""
+    """DIGEST_V4: k >= 2 consecutive identical `^` or `=` cells become one `^k` / `=k` cell (V7: `?k`)."""
     out, i = [], 0
     while i < len(cells):
         j = i
@@ -434,122 +953,37 @@ def _expand(cells):
     return out
 
 
-def _derived_order(columns):
-    """Derived columns are recomputed after the literal ones: the adapter's book columns and the character counts
-    first (they read literals only), then ROW_DERIVED in its declared order (a rule may read an earlier rule), then
-    the rules that also read the previous row."""
-    first = [c for c in columns if c in DERIVED or c.startswith(('action_counts.', 'side_counts.'))]
-    rest = sorted((c for c in columns if c in _ROW_DERIVED_INDEX), key=_ROW_DERIVED_INDEX.get)
-    return first + rest + [c for c in columns if c in PREV_DERIVED]
+def _derived_order(columns, facts=NO_FACTS):
+    """Derived columns are recomputed after the literal ones: the V8 lengths first (they read decoded lists only), then
+    the adapter's book columns and the character counts (they read literals only), then ROW_DERIVED in its declared
+    order (a rule may read an earlier rule), then the rules that also read the previous row."""
+    lengths = [c for c in columns if c in facts.lengths]
+    first = [c for c in columns if c not in facts.lengths and (c in DERIVED or c.startswith(('action_counts.', 'side_counts.')))]
+    rest = sorted((c for c in columns if c not in facts.lengths and c in _ROW_DERIVED_INDEX), key=_ROW_DERIVED_INDEX.get)
+    return lengths + first + rest + [c for c in columns if c not in facts.lengths and c in PREV_DERIVED]
 
 
 def parse_table(block, context=None):
-    import copy
     lines = block.split('\n')
     if lines and lines[-1] == '':
         lines.pop()                        # the block's final newline only; an empty row line (every column constant or derived) stays
-    m = re.match(r'### table (\S+): (\d+) rows, (?:sep=(space|tab), )?columns: (.*)$', lines[0])
-    if m is None:
-        raise ValueError('table header expected')
-    name, n = m.group(1), int(m.group(2))
-    sep = ' ' if m.group(3) == 'space' else '\t'
-    declared = m.group(4).split('\t') if m.group(4) else []
-    columns = [c.lstrip('=^') for c in declared]
-    whole = {c.lstrip('=^'): c[0] for c in declared if c[:1] in '=^'}
-    kept = [c for c in columns if c not in whole]
-    idx, constants, dictionary, scales = 1, {}, [], {}
-    if idx < len(lines) and lines[idx].startswith('constants: '):
-        for item in lines[idx][len('constants: '):].split('\t'):
-            k, _, val = item.partition('=')
-            constants[k] = tuple(json.loads(val[1:])) if val.startswith('U') else json.loads(val)
-        idx += 1
-    if idx < len(lines) and lines[idx].startswith('scales: '):
-        for item in lines[idx][len('scales: '):].split('\t'):
-            k, _, val = item.partition('=')
-            scales[k] = int(val)
-        idx += 1
-    if idx < len(lines) and lines[idx].startswith('dictionary: '):
-        for item in lines[idx][len('dictionary: '):].split('\t'):
-            k, _, val = item.partition('=')
-            dictionary.append(json.loads(val))
-        idx += 1
-    rows, prev_row, prev_values, prev_ints, prev_lists = [], None, {}, {}, {}
-    cross = {c: CROSS_DERIVED[(name, c)] for c, mark in whole.items() if mark == '=' and (name, c) in CROSS_DERIVED and (context or {}).get(CROSS_DERIVED[(name, c)][0]) is not None}
-    if len(lines) < idx + n:
-        raise ValueError(f'table {name}: {n} rows declared, {len(lines) - idx} present')
-    for i, line in enumerate(lines[idx:idx + n]):
-        cells = _expand(line.split(sep)) if kept else []
-        if len(cells) != len(kept):
-            raise ValueError(f'table {name} row {i}: {len(cells)} cells for {len(kept)} columns')
-        row, derived_cols, positional, paired = {}, set(c for c, mark in whole.items() if mark == '=' and c not in cross), {}, {}
-        for c in constants:
-            row[c] = copy.deepcopy(constants[c])
-        for c, (table, column) in cross.items():
-            row[c] = copy.deepcopy(_flatten(context[table][i])[column])
-        for c, cell in zip(kept, cells):
-            if cell == '?':
-                continue
-            if cell == NONE:
-                v = None
-            elif cell == TRUE:
-                v = True
-            elif cell == FALSE:
-                v = False
-            elif cell == '=':
-                derived_cols.add(c); continue
-            elif cell == SAME:
-                v = copy.deepcopy(prev_values[c])
-            elif cell.startswith('@'):
-                v = copy.deepcopy(dictionary[int(cell[1:])])
-            elif cell.startswith('S'):
-                v = cell[1:]
-            elif cell.startswith('J'):
-                v = json.loads(cell[1:])
-            elif cell.startswith('U'):
-                v = tuple(json.loads(cell[1:]))
-            elif cell.startswith('K'):
-                positional[c] = [int(i) for i in cell[1:].split(',')] if cell[1:] else []; continue
-            elif cell.startswith('I'):
-                parts = cell[1:].split(',')
-                start = prev_lists[c] + int(parts[0]) if parts[0][:1] in '+-' and isinstance(prev_lists.get(c), int) else int(parts[0])
-                v = [start]
-                for d in parts[1:]:
-                    v.append(v[-1] + int(d))
-            elif cell.startswith('~'):
-                paired[c] = int(cell[1:]); continue      # resolved once every literal of the row is in, whatever the column order
-            elif cell == 'nan':
-                v = float('nan')
-            elif re.fullmatch(r'-?\d+/\d+', cell):
-                num, _, den = cell.partition('/')
-                v = float(int(num)) / float(int(den))      # DIGEST_V4 exact fraction: the IEEE division that is the float
-            elif cell.startswith('+') or (cell.startswith('-') and c.endswith(DELTA_KEYS) and isinstance(prev_ints.get(c), int) and re.fullmatch(r'-\d+', cell)):
-                v = prev_ints[c] + int(cell) * scales.get(c, 1)
-            elif re.fullmatch(r'-?\d+', cell):
-                v = int(cell) * scales.get(c, 1)
-            else:
-                v = float(cell)
-            row[c] = v
-        for c, offset in paired.items():
-            if PAIRED[c] not in row:
-                raise ValueError(f'table {name} row {i}: {c} is an offset from {PAIRED[c]}, which this row does not carry')
-            row[c] = row[PAIRED[c]] + offset
-        for c, pos in positional.items():
-            row[c] = [row['order_ids'][i] for i in pos]
-        for c in _derived_order(columns):
-            if c in derived_cols:
-                value = _recompute(row, c, prev_row)
-                if c.startswith(('action_counts.', 'side_counts.')) and value == 0:
-                    continue   # the producer's Counter holds no zero entries: the key is absent
-                row[c] = value
-        for c, v in row.items():
-            prev_values[c] = v
-            if isinstance(v, int) and not isinstance(v, bool):
-                prev_ints[c] = v
-            if _int_list(v):
-                prev_lists[c] = v[0]
+    reader = Lines(lines)
+    h = Header(reader)
+    dictionary = []
+    read_dictionary(reader, lambda number, text: dictionary.append(json.loads(text)))
+    cross = {c: CROSS_DERIVED[(h.name, c)] for c, mark in h.whole.items() if mark == '=' and (h.name, c) in CROSS_DERIVED and (context or {}).get(CROSS_DERIVED[(h.name, c)][0]) is not None}
+    body = lines[reader.index:]
+    if len(body) < h.n:
+        raise ValueError(f'table {h.name}: {h.n} rows declared, {len(body)} present')
+    decoder = RowDecoder(h, lambda number: copy.deepcopy(dictionary[number]))
+    rows = []
+    for i, line in enumerate(body[:h.n]):
+        try:
+            row = decoder.decode(line, {c: _flatten(context[t][i])[col] for c, (t, col) in cross.items()})
+        except ValueError as err:
+            raise ValueError(f'table {h.name} row {i}: {err}') from err
         rows.append(_unflatten(row))
-        prev_row = row
-    return name, rows
+    return h.name, rows
 
 
 def _unflatten(flat):
@@ -766,7 +1200,16 @@ def digest_header(receipt):
              '`bedrock.first_last.<section>` = the exact first and last book of each day-segment-phase, `bedrock.matching_rule.<section>` = '
              'the one rule the mirror pairs were formed under, and the mirror\'s own rows as `bedrock.lifecycle.mirror`; a mapping cell whose '
              'keys the header cannot spell (a dot, a space, `=`), or an empty mapping, is one JSON string '
-             'cell; the three whole ledgers stay on the box under work/bedrock/ledgers/, witnessed by name, bytes and sha256 in the bundle index)', '',
+             'cell; the three whole ledgers stay on the box under work/bedrock/ledgers/, witnessed by name, bytes and sha256 in the bundle index); '
+             'DIGEST_V8 on top (every earlier form still applies): a column on the `shapes:` line (`name=k1,k2,...`) holds lists of '
+             'objects written keys-once, `R` + the objects joined by `;`, each object its values in that key order joined by `,`, each '
+             'value read against the previous object (for the first, the last object of the previous row\'s list): `^` the same value, a '
+             'signed delta for an integer key ending in recv_ns / event_ns, `<i` the same integer as key i of this object, `?` absent, '
+             '`^k` / `?k` runs, else `-` T F an integer, a float, `S<text>` or `J<json>`; `P<first>:<lo>:<width>:<digits>` = a list of '
+             'integers as its first value (as in `I`) then each successive difference = one fixed-width decimal field + lo; `<i` in a '
+             'row = the same integer as this row\'s column i (0-based over the header\'s columns); a column on the `lengths:` line '
+             '(`name=list`) is the length of that list column, written `=` like any derived cell; columns are ordered by how many rows '
+             'carry them; a repeated value is in the dictionary only when that is shorter than writing it each time', '',
              f'Rows: {receipt["rows"]["path"]} ({receipt["rows"]["count"]} entries, kinds {receipt["rows"]["kinds"]}, head {receipt["rows"]["head"][:16]}...; '
              f'head equals the request source_hash: {receipt["rows"]["head_is_request_source_hash"]}).',
              f'INPUT records fed to the V4 adapter: {receipt["input_records"]}; legacy control rows projected: {receipt["legacy_rows"]}; '

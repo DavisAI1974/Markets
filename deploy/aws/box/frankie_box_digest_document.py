@@ -227,8 +227,11 @@ def open_sources(bedrock_entries, layers_root):
 
 
 def write_digest(destination, receipt, layers, prices, frames, structures, roll, first, buys, sells,
-                 *, bedrock_entries, scratch_directory):
+                 *, bedrock_entries, scratch_directory, disk_reserve=None):
     """Fresh destination only; all scratch retained, even after publication failure.
+
+    disk_reserve: the bytes the parallel table writer keeps free on the scratch filesystem (a setting: the argument,
+    else FRANKIE_DIGEST_DISK_RESERVE, else frankie_box_digest_parallel.DISK_RESERVE, 32 GiB on the box).
 
     Caller-owned flow arrays remain a separate memory boundary. Production layer
     files are independently pinned; only table/column metadata and one row/cell
@@ -338,8 +341,9 @@ def write_digest(destination, receipt, layers, prices, frames, structures, roll,
                         stages.append(dict(name=saved['name'], rows=saved['rows'], path=Path(saved['path']), digest=saved['digest']))
                         continue
                     path = scratch / ('table-%04d.txt' % ordinal)
+                    reserve = disk_reserve if disk_reserve is not None else int(os.environ.get('FRANKIE_DIGEST_DISK_RESERVE', P.DISK_RESERVE))
                     proof = P.write_table_parallel(path, name, P.split_specs(spec, len(cpus)),
-                                                   scratch / ('table-%04d' % ordinal), cpus)
+                                                   scratch / ('table-%04d' % ordinal), cpus, reserve=reserve)
                     digest = _witness(path)
                     if TS._identity(path) != proof['verified_identity']:
                         raise ValueError('proved table changed before its byte witness')

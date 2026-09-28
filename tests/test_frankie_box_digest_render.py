@@ -309,12 +309,12 @@ def _bedrock_files():
 
 
 def test_v6_schema_and_header_name_the_bedrock_tables():
-    assert DG.SCHEMA == 'DIGEST_V6'
+    assert DG.SCHEMA == 'DIGEST_V8'
     receipt = dict(rows=dict(path='p', count=2, kinds={}, head='h' * 64, head_is_request_source_hash=True), input_records=1, legacy_rows=1, f_last_groups=1,
                    failure_count=0, pin_group='legacy_observable_crosswalk', layers={})
     text = DG.digest_text(receipt, {}, [], [], [], [], 0, [], [], bedrock=_bedrock_files())
     head = text.split('## Layer status')[0]
-    assert head.startswith('# Derivation digest DIGEST_V6 ')
+    assert head.startswith('# Derivation digest DIGEST_V8 ')
     assert 'bedrock.members' in head and 'bedrock.lifecycle.<section>' in head and 'bedrock.layers' in head and 'bedrock.run' in head and '#count' in head
     without = DG.digest_text(receipt, {}, [], [], [], [], 0, [], [])
     assert '## Bedrock' not in without and '### table bedrock.' not in without

@@ -8,6 +8,9 @@ import sys
 
 import pytest
 import test_frankie_box_digest_render as FX
+import pinned_producers
+
+pinned_producers.prepare_test_host()
 
 DG = FX.DG
 MODULES = Path(__file__).resolve().parents[1] / 'deploy/aws/box'
@@ -175,6 +178,7 @@ def test_fresh_process_source_rows_and_distinct_groups_have_bounded_memory(tmp_p
     code = r'''
 import hashlib, json, pathlib, resource, sys, tracemalloc
 sys.path.insert(0, sys.argv[1])
+import pinned_producers; pinned_producers.prepare_test_host()
 from frankie_box_digest_sources import BedrockSources
 n = int(sys.argv[2])
 root = pathlib.Path(sys.argv[3]); root.mkdir()
@@ -196,7 +200,7 @@ print(json.dumps(dict(rows=n, python_peak_bytes=peak,
 '''
     records = []
     for n in (4000, 40000):
-        result = subprocess.run([sys.executable, '-c', code, str(MODULES), str(n), str(tmp_path/str(n))],
+        result = subprocess.run([sys.executable, '-c', code, str(MODULES), str(n), str(tmp_path/str(n))], env=pinned_producers.env(),
                                 check=True, capture_output=True, text=True, timeout=180)
         records.append(json.loads(result.stdout))
     with capsys.disabled():
