@@ -8,6 +8,15 @@ one with only the marked changes:
   ALL LEVELS   the cohorts (control _columns, R3 _cohort) take every level of the anchor side, not the top three; the
                dynamics and absorption count an order at any rank, not only rank <= 3; R3's history view keeps every
                level and every order of each observation.
+  WHOLE DAY    (Greg, 2026-09-28: "change the teacher code then to not stop"; "shouldn't teacher be ingesting the same
+               amount of info as Frankie?") the long horizon no longer stops at 1,024 groups: control columns 4 and 6 and
+               R3 columns 8, 10 and 12 cover EVERY group of the day so far (Frankie's context is the whole day). They are
+               kept as running totals per side, one group's work per row (a whole-day window recomputed per row would be
+               quadratic). A group that would have invalidated a window (missing reference, reset, unknown-side book
+               event, unreconciled fill, scope boundary) restarts the running totals after it, since in an unbounded window
+               it would otherwise make every later value INVALID for the rest of the day; until 1,024 groups have
+               accumulated since the start or a restart the long columns are WINDOW_SHORT, as the pinned rule. The 64-group
+               columns are unchanged.
   UNKNOWN      a trade whose side is unknown no longer invalidates the window: the anchor comes from the known-side
                trades, and the unknown trades' count and volume are carried on column 0 of the control's raw row
                (keys unknown_side_trades, unknown_side_volume) and on each R3 column (same keys). A book event (not a
@@ -83,10 +92,11 @@ def control_columns(self, e, history, origins, key, machines, ordinal):
                 if cumulative * 10 >= 9 * total:
                     raw[1] = value(math.log1p(max(0, (now - order['priority_recv_ns']) / 1e9))); break
         raw[2] = value(sum((o['size'] / total) ** 2 for o in cohort)) if total > 0 else value(state=State.INVALID, reason='LEVEL_INTEGRITY')
+    long = _control_long(self, key, history)                                     # WHOLE DAY: every group, running totals
     if anchor is not None and healthy:
-        for k, bi, mi in ((64, 3, 5), (1024, 4, 6)):
-            if len(window) >= k:
-                raw[bi], raw[mi] = self._dynamics(window[-k:], side)
+        if len(window) >= 64:
+            raw[3], raw[5] = self._dynamics(window[-64:], side)
+        raw[4], raw[6] = long.values(side)
     machine = machines.setdefault(key, C.DChain(tick_raw=self.ticks[key[1]]))
     dout = machine.advance_synthetic(C.DObservation(ordinal, e['source_member_index'], e['session_id'],
         anchor, levels[0]['price_raw'] if levels else None, bool(healthy)))
@@ -252,39 +262,279 @@ def _cohort_tail(cohort, start, groups):
 _PINNED = dict(r3_cohort_tail=_cohort_tail)
 
 
-def r3_iter_raw_unknown(pinned_iter_raw):
-    """R3 iter_raw with the unknown-side trade count and volume of the anchor window carried on every column."""
-    def iter_raw(self, evidence, *, as_of, source_manifest_hash):
-        history = {}
-        for e, row in pinned_iter_raw(self, _Tee(evidence, history), as_of=as_of, source_manifest_hash=source_manifest_hash):
-            counts = history.pop('last', (0, 0))
-            row = dict(row, columns=[dict(v, unknown_side_trades=counts[0], unknown_side_volume=counts[1]) for v in row['columns']])
-            yield e, row
-    return iter_raw
+# ---- WHOLE DAY: running totals per side ----------------------------------------------------------------------------
+def _dynamics_group(group, side):
+    """One group's share of the pinned _dynamics (changed as above): (bad reason or None, added, removed, modifies, lost).
+    The pinned window result is bad if any group is bad, else the sums over its groups."""
+    added = removed = modifies = lost = 0
+    pending_fills = {}
+    for e in group:
+        m = e['normalized']; effect = e['effect']; before = e['order_before']; after = e['order_after']
+        if effect['missing_reference'] or m['action'] == 'R' or (m['action'] == 'A' and effect['removed']):
+            return 'MISSING_REFERENCE_OR_RESET', 0, 0, 0, 0
+        if m['action'] in ('N', 'T'):
+            continue
+        if m['side'] not in ('A', 'B'):
+            return 'UNKNOWN_SIDE', 0, 0, 0, 0
+        oid = m['order_id']
+        if m['action'] == 'F':
+            if before is None:
+                return 'MISSING_REFERENCE', 0, 0, 0, 0
+            pending_fills[oid] = pending_fills.get(oid, 0) + m['size']
+            continue
+        if oid in pending_fills:
+            economic_removed = (before['size'] if before else 0) - (after['size'] if after else 0)
+            if (m['action'] not in ('C', 'M') or before is None
+                    or (after is not None and (before['price_raw'], before['side']) != (after['price_raw'], after['side']))
+                    or economic_removed != pending_fills[oid]):
+                return 'UNRECONCILED_FILL', 0, 0, 0, 0
+            del pending_fills[oid]
+        if 'rank_before' not in e or 'rank_after' not in e:
+            return 'RANK_UNAVAILABLE', 0, 0, 0, 0
+        old_in = before is not None and before['side'] == side and e['rank_before'] is not None
+        new_in = after is not None and after['side'] == side and e['rank_after'] is not None
+        if m['action'] == 'M' and old_in:
+            modifies += 1; lost += int(effect['priority_lost'])
+        old = before['size'] if old_in else 0; new = after['size'] if new_in else 0
+        delta = new - old
+        added += max(0, delta); removed += max(0, -delta)
+    if pending_fills:
+        return 'UNRECONCILED_FILL', 0, 0, 0, 0
+    return None, added, removed, modifies, lost
 
 
-class _Tee:
-    """Passes evidence through unchanged and keeps, per instrument, the last 64 groups' trades to count unknown sides."""
-    def __init__(self, evidence, out):
-        from collections import defaultdict, deque
-        self.evidence, self.out = evidence, out
-        self.groups = defaultdict(lambda: deque(maxlen=64))
-        self.pending = defaultdict(list)
+def _absorption_group(group, side):
+    """One group's share of the pinned _absorption's removed and fills (valid only when its dynamics share is)."""
+    removed = fills = 0
+    pending = {}
+    for e in group:
+        m = e['normalized']
+        action, oid = m['action'], m['order_id']
+        if action == 'F':
+            pending[oid] = pending.get(oid, 0) + m['size']
+            continue
+        if action in ('T', 'N'):
+            continue
+        before, after = e['order_before'], e['order_after']
+        old_in = before is not None and before['side'] == side and e['rank_before'] is not None
+        new_in = after is not None and after['side'] == side and e['rank_after'] is not None
+        old = before['size'] if old_in else 0
+        new = after['size'] if new_in else 0
+        removed += max(0, old - new)
+        matched = pending.pop(oid, 0)
+        if old_in:
+            fills += matched
+    return removed, fills
 
-    def __iter__(self):
-        for e in self.evidence:
-            m = e['normalized']
-            key = m['publisher_id'], m['instrument_id']
-            if m['action'] == 'T':
-                self.pending[key].append(m)
-            if e['receipt'] is not None:
-                self.groups[key].append(self.pending.pop(key, []))
-                trades = [t for g in self.groups[key] for t in g]
-                _, _, count, volume = _flow(trades)
-                self.out['last'] = (count, volume)
+
+class _SideTotals:
+    """Running totals of one side since the day's start or the last restart (WHOLE DAY)."""
+    def __init__(self):
+        self.groups = 0
+        self.added = self.removed = self.modifies = self.lost = 0
+        self.abs_removed = self.abs_fills = 0
+
+    def add(self, group, side):
+        bad, added, removed, modifies, lost = _dynamics_group(group, side)
+        if bad is not None:
+            self.__init__()                      # restart after a group that would have invalidated the window
+            return
+        self.groups += 1
+        self.added += added; self.removed += removed; self.modifies += modifies; self.lost += lost
+        r, f = _absorption_group(group, side)
+        self.abs_removed += r; self.abs_fills += f
+
+
+class _Long:
+    """Per instrument: running totals for both sides, fed each new group once."""
+    def __init__(self):
+        self.sides = dict(A=_SideTotals(), B=_SideTotals())
+        self.seen = None
+
+    def feed(self, group):
+        if group is not self.seen:
+            for side, totals in self.sides.items():
+                totals.add(group, side)
+            self.seen = group
+
+    def values(self, side):
+        C, _ = _modules()
+        value, State = C.value, C.State
+        t = self.sides[side]
+        if t.groups < C.K_LONG:
+            short = value(state=State.MISSING, reason='WINDOW_SHORT')
+            return short, dict(short)
+        return (value(math.log1p(t.added) - math.log1p(t.removed)),
+                value(t.lost / t.modifies) if t.modifies else value(state=State.MISSING, reason='NO_MODIFIES'))
+
+    def absorption(self, side):
+        _, T = _modules()
+        t = self.sides[side]
+        if t.groups < 1024:
+            return T._missing('WINDOW_SHORT')
+        if not t.abs_removed:
+            return T._missing('NO_REMOVALS')
+        if not 0 <= t.abs_fills <= t.abs_removed:
+            return T._invalid('UNRECONCILED_FILL')
+        return T._value(t.abs_fills / t.abs_removed)
+
+
+_CONTROL_LONG = None
+
+
+def _control_long(teacher, key, history):
+    """The running totals of this pass's history for this instrument: keyed by the pass's own history deque (a new one
+    every iter_raw), so a later preparation never continues an earlier one's totals."""
+    global _CONTROL_LONG
+    import weakref
+    if _CONTROL_LONG is None:
+        _CONTROL_LONG = weakref.WeakKeyDictionary()
+    long = _CONTROL_LONG.get(history)
+    if long is None:
+        long = _CONTROL_LONG[history] = _Long()
+    if history:
+        long.feed(history[-1])
+    return long
+
+
+class _Cohort:
+    """The R3 cohort from the day's start (or the last restart) followed forward over every later group, per side
+    (WHOLE DAY): the pinned _cohort with its start at the first group and its window every group since."""
+    def __init__(self, start, side):
+        observation = start['observation']
+        orders = {o['order_id']: o for o in observation['orders']}
+        self.cohort = {oid: orders[oid]['size'] for level in observation['levels'][side] for oid in level['order_ids']}
+        self.scope = start['source_member_index'], start['session_id']
+        self.alive, self.current, self.groups = set(self.cohort), dict(self.cohort), 0
+
+    def add(self, group):
+        """None when the group was followed; else the pinned invalid reason (the caller restarts from this group)."""
+        pending = {}
+        for e in group:
+            m, effect = e['normalized'], e['effect']
+            oid, action = m['order_id'], m['action']
+            if (e['source_member_index'], e['session_id']) != self.scope:
+                return 'SCOPE_BOUNDARY'
+            if action == 'R':
+                return 'RESET'
+            if oid not in self.alive:
+                continue
+            if effect['missing_reference'] or (action == 'A' and effect['removed']):
+                return 'MISSING_REFERENCE'
+            if action == 'F':
+                pending[oid] = pending.get(oid, 0) + m['size']
+                continue
+            if oid in pending:
+                before, after = e['order_before'], e['order_after']
+                if (action not in ('C', 'M') or before is None
+                        or (after is not None and (before['price_raw'], before['side']) != (after['price_raw'], after['side']))
+                        or before['size'] - (after['size'] if after else 0) != pending.pop(oid)):
+                    return 'UNRECONCILED_FILL'
+            if action in ('C', 'M'):
+                after = e['order_after']
+                if action == 'C' or after is None or after['size'] == 0:
+                    self.alive.remove(oid)
+                    self.current[oid] = 0
+                else:
+                    self.current[oid] = after['size']
+        if pending:
+            return 'UNRECONCILED_FILL'
+        self.groups += 1
+        return None
+
+    def values(self):
+        _, T = _modules()
+        if self.groups < 1024:
+            return (T._missing('WINDOW_SHORT'),) * 2
+        total = sum(self.cohort.values())
+        if not total:
+            return (T._missing('COHORT_EMPTY'),) * 2
+        return (T._value(sum(self.cohort[oid] for oid in self.alive) / total),
+                T._value(sum(min(size, self.current[oid]) for oid, size in self.cohort.items()) / total))
+
+
+class _R3Long:
+    def __init__(self):
+        self.totals = _Long()
+        self.cohorts = dict(A=None, B=None)
+
+    def feed(self, group, previous):
+        self.totals.feed(group)
+        for side in ('A', 'B'):
+            cohort = self.cohorts[side]
+            if cohort is None:
+                if previous is not None and previous[-1].get('observation') is not None:
+                    self.cohorts[side] = _Cohort(previous[-1], side)
+                    cohort = self.cohorts[side]
+                else:
+                    continue
+            if cohort.add(group) is not None:
+                # restart: the cohort from this group's end, followed from the next group on
+                self.cohorts[side] = _Cohort(group[-1], side) if group[-1].get('observation') is not None else None
+
+
+def r3_iter_raw(self, evidence, *, as_of, source_manifest_hash):
+    """The pinned RawJournalTeacherR3.iter_raw with the long horizon over the whole day (WHOLE DAY), the unknown-side
+    trades carried (UNKNOWN) and the short horizon unchanged; the content chain, checks and row shape are the pinned ones."""
+    from collections import defaultdict, deque
+    _, T = _modules()
+    if type(as_of) is not int or as_of < 0:
+        raise ValueError('nonnegative as_of required')
+    for identity in (source_manifest_hash,):
+        if (type(identity) is not str or len(identity) != 64
+                or any(c not in '0123456789abcdef' for c in identity)):
+            raise ValueError('declare source and expected prefix hashes')
+    candidate = self.candidate_digest
+    history = defaultdict(lambda: deque(maxlen=65))           # the short horizon (64 groups and the one before)
+    longs = defaultdict(_R3Long)
+    pending = defaultdict(list)
+    publishers = {}
+    content = T.evidence_hash(dict(candidate=candidate, source=source_manifest_hash))
+    last_recv = -1
+    for cursor, e in enumerate(evidence):
+        if type(e['cursor']) is not int or e['cursor'] != cursor:
+            raise ValueError('complete prefix requires every cursor from zero')
+        m = e['normalized']
+        previous_publisher = publishers.setdefault(m['instrument_id'], m['publisher_id'])
+        if previous_publisher != m['publisher_id']:
+            raise ValueError('unresolvable publisher scope in instrument-owned book')
+        if m['ts_recv_ns'] > as_of:
+            raise ValueError('future teacher evidence')
+        if m['ts_recv_ns'] < last_recv:
+            raise ValueError('receive-time regression')
+        last_recv = m['ts_recv_ns']
+        content = T.evidence_hash(dict(previous=content, evidence=e))
+        key = m['publisher_id'], m['instrument_id']
+        pending[key].append(T._history_row(e))
+        values = [T._missing('NOT_F_LAST') for _ in T.COLUMNS]
+        unknown = (0, 0)
+        if e['receipt'] is not None:
+            previous = history[key][-1] if history[key] else None
+            group = pending.pop(key)
+            history[key].append(group)
+            longs[key].feed(group, previous)
+            groups = list(history[key])
+            trades = [x['normalized'] for g in groups[-64:] for x in g if x['normalized']['action'] == 'T']
+            _, _, count, volume = _flow(trades)
+            unknown = (count, volume)
+            side, missing = T._anchor(groups)
+            obs = e['observation']
+            crossed = (obs['levels']['A'] and obs['levels']['B'] and
+                       obs['levels']['B'][0]['price_raw'] >= obs['levels']['A'][0]['price_raw'])
+            if missing is None and (any(obs['integrity'].values()) or crossed):
+                missing = T._invalid('LEVEL_INTEGRITY')
+            if missing is not None:
+                values = [dict(missing) for _ in T.COLUMNS]
             else:
-                self.out['last'] = (0, 0)
-            yield e
+                values[0] = T._absorption(groups[-64:], side) if len(groups) >= 64 else T._missing('WINDOW_SHORT')
+                values[2], values[4] = (T._cohort(groups[-65][-1], groups[-64:], side)
+                                        if len(groups) > 64 else (T._missing('WINDOW_SHORT'),) * 2)
+                values[1] = longs[key].totals.absorption(side)                                  # WHOLE DAY
+                cohort = longs[key].cohorts[side]
+                values[3], values[5] = cohort.values() if cohort is not None else (T._missing('WINDOW_SHORT'),) * 2
+        values = [dict(v, unknown_side_trades=unknown[0], unknown_side_volume=unknown[1]) for v in values]
+        yield e, dict(cursor=cursor, source_prefix_hash=e['terminal_prefix_hash'],
+                      as_of_ts_recv_ns=last_recv, evidence_content_hash=content, columns=values)
 
 
 def apply():
@@ -295,7 +545,7 @@ def apply():
     C.JournalTeacher._columns = control_columns
     C.JournalTeacher._dynamics = staticmethod(control_dynamics)
     T._anchor, T._absorption, T._cohort, T._history_row = r3_anchor, r3_absorption, r3_cohort, r3_history_row
-    T.RawJournalTeacherR3.iter_raw = r3_iter_raw_unknown(_SAVED[-1][6])
+    T.RawJournalTeacherR3.iter_raw = r3_iter_raw
     return CHANGES_SHA256
 
 
