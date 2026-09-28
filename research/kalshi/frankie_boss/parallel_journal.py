@@ -21,14 +21,127 @@ from collections import deque
 from concurrent.futures import ProcessPoolExecutor
 from contextlib import contextmanager
 import multiprocessing
+from pathlib import Path
 import sys
 
 import hashlib
+import json
 import re
+import sqlite3
+import time
+import zlib
 
 from .c15_journal import SCHEMA, evidence_hash, pack
 from .causal_packet import canonical_bytes
 from .frankie_journal_reader import FrankieCompactReader, _assign_cpu, _read_block
+from .compact_journal import FORMAT, MAX_BYTES, MAX_ROWS, _field, _orders
+from .verified_journal_reader import DIGEST_PREFIX, canonical_tagged_bytes, decode_tagged
+
+
+# ---- one parse per entry (Greg, 2026-09-28: "Correct the code to send it out again. It's extremely important") -----
+# r7's whole-process profile: each block worker spent ~38% in json encoding, ~27% in json decoding, ~17% in the tagged
+# decode and partition checks. Per entry the pinned reader (frankie_journal_reader._read_block, unchanged and pinned):
+#   decode_block: json.loads of the whole block -> tree; body = canonical_tagged_bytes(tree); sha256(prefix+body)==digest
+#   verified_partition: tree2 = json.loads(body); envelope = decode_tagged(tree2); canonical_tagged_bytes(tree2)==body;
+#                       sha256(prefix+body)==digest again; ordinal/schema/kind/previous continuity
+# and then this module's pairing packed both records (pack) and the teacher pass packed and encoded every payload again.
+# For a tree that came from json.loads, json.dumps(json.loads(json.dumps(tree))) == json.dumps(tree) and
+# json.loads(json.dumps(tree)) == tree, so the second decode, the second encode and the repeated digest are the same
+# computation over the same bytes: _read_block_fast keeps the tree, encodes it once (the body, whose digest it checks),
+# decodes the envelope from that tree and runs every other check of the pinned pair. Because pack(decode_tagged(node))
+# == node and canonical_tagged_bytes == canonical_bytes on pack output (verified_journal_reader's own docstring),
+#   pack(x) == pack(y)                    <=>  node(x) == node(y)                         (the pairing check)
+#   canonical_bytes(pack(payload))        ==   canonical_tagged_bytes(payload node)       (the teacher's chain bytes)
+#   evidence_hash(entry)                  ==   the entry's digest                          (lead and summary hashes)
+#   evidence_hash(7-field context row)    ==   sha256(prefix + canonical_tagged_bytes(['dict', [[k, node_k]...]]))
+# Each worker's FIRST block is also read by the pinned _read_block and every one of these values is recomputed the
+# original way; any difference stops the run.
+def _decode_block_trees(blob):
+    """compact_journal.decode_block with the same checks, keeping each record's tagged tree beside its body."""
+    if type(blob) is not bytes or len(blob) > MAX_BYTES:
+        raise ValueError('compressed block exceeds byte bound')
+    try:
+        decoder = zlib.decompressobj(31)
+        raw = decoder.decompress(blob, MAX_BYTES + 1)
+        if len(raw) > MAX_BYTES or not decoder.eof or decoder.unused_data or decoder.unconsumed_tail:
+            raise ValueError('truncated, trailing or oversized block')
+        version, dictionary, records = json.loads(raw)
+        if (version != FORMAT or type(dictionary) is not list or type(records) is not list
+                or not 0 < len(records) <= MAX_ROWS):
+            raise ValueError('invalid block schema')
+        rows, total = [], 0
+        for ordinal, kind, tree, indices, digest, size in records:
+            if type(size) is not int or not 0 < size <= MAX_BYTES:
+                raise ValueError('invalid reconstructed size')
+            total += size
+            if total > MAX_BYTES:
+                raise ValueError('reconstruction exceeds byte bound')
+            if indices is not None:
+                orders = _orders(tree)
+                if (orders != ['list', []] or type(indices) is not list
+                        or any(type(i) is not int or not 0 <= i < len(dictionary) for i in indices)):
+                    raise ValueError('invalid order references')
+                orders[1] = [dictionary[i] for i in indices]
+            body = canonical_tagged_bytes(tree)
+            if len(body) != size or hashlib.sha256(DIGEST_PREFIX+body).hexdigest() != digest:
+                raise ValueError('reconstructed body identity differs')
+            rows.append((ordinal, kind, tree, body, digest))
+        return rows
+    except (zlib.error, TypeError, KeyError, IndexError, StopIteration, RecursionError) as exc:
+        raise ValueError('invalid compressed journal block') from exc
+
+
+def _read_block_fast(path, index):
+    """frankie_journal_reader._read_block's entries and checks, one parse per entry; also each entry's tree and digest."""
+    start, length, previous, head = index
+    started = time.process_time()
+    db = sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro', uri=True)
+    try:
+        row = db.execute('SELECT count,body,sha256,previous,head FROM blocks WHERE start=?', (start,)).fetchone()
+    finally:
+        db.close()
+    if (row is None or (row[0], row[3], row[4]) != (length, previous, head)
+            or hashlib.sha256(row[1]).hexdigest() != row[2]):
+        raise ValueError('compact block identity differs')
+    rows = _decode_block_trees(row[1])
+    if len(rows) != length or rows[-1][4] != head:
+        raise ValueError('compact block coverage differs')
+    entries, trees, digests, count = [], [], [], start
+    for ordinal, kind, tree, body, digest in rows:
+        envelope = decode_tagged(tree)
+        if (type(envelope) is not dict or ordinal != count or envelope.get('ordinal') != ordinal
+                or envelope.get('schema') != SCHEMA or envelope.get('kind') != kind
+                or envelope.get('previous_hash') != previous):
+            raise ValueError('evidence journal continuity or hash mismatch')
+        previous, count = digest, count + 1
+        entries.append(envelope); trees.append(tree); digests.append(digest)
+    return entries, trees, digests, time.process_time() - started
+
+
+def _tagged_hash(node):
+    return hashlib.sha256(DIGEST_PREFIX + canonical_tagged_bytes(node)).hexdigest()
+
+
+def _context_node(payload_node):
+    return ['dict', [[k, _field(payload_node, k)] for k in CONTEXT_FIELDS]]
+
+
+_GUARDED = [False]      # per worker process: its first block is checked against the pinned reader
+
+
+def _guard(path, index, entries, trees, digests):
+    """The pinned reader and the original computations on this worker's first block; any difference stops the run."""
+    original, _ = _read_block(path, index)
+    if original != entries:
+        raise ValueError('fast block reader differs from the pinned reader; run stopped')
+    for entry, tree, digest in zip(entries, trees, digests):
+        payload, node = entry['payload'], _field(tree, 'payload')
+        if (evidence_hash(entry) != digest or pack(payload) != node
+                or canonical_bytes(pack(payload)) != canonical_tagged_bytes(node)):
+            raise ValueError('fast journal hashes differ from the original computation; run stopped')
+        if entry['kind'] == 'APPLIED' and (evidence_hash({k: payload[k] for k in CONTEXT_FIELDS})
+                                           != _tagged_hash(_context_node(node))):
+            raise ValueError('fast context row hash differs from the original computation; run stopped')
 
 
 def _same_record(applied, pending):
@@ -43,56 +156,63 @@ CONTEXT_FIELDS = ('cursor', 'raw_record', 'normalized', 'source_member_index', '
                   'terminal_prefix_hash')
 
 
-def _subset_hash(payload, entity):
-    """evidence_hash of the 7-field context row for the session's entity (the teacher's exact-row check hashes it on
-    both sides, c15_teacher_r3.py:349); None for other entities."""
-    m = payload['normalized']
-    if entity is None or (m['publisher_id'], m['instrument_id']) != entity:
-        return None
-    return evidence_hash({k: payload[k] for k in CONTEXT_FIELDS})
-
-
 def _prefix_block(path, index, through_cursor, mode='full', entity=None):
     """Decode and verify one block (the reader's task), then pair and select exactly as journal_prefix does.
     mode 'context': ship only CONTEXT_FIELDS; mode 'teacher': ship the full payload and its canonical bytes; both also
     ship the entity's 7-field row hash."""
-    entries, cpu = _read_block(path, index)
+    entries, trees, digests, cpu = _read_block_fast(path, index)
+    if not _GUARDED[0]:
+        _GUARDED[0] = True
+        _guard(path, index, entries, trees, digests)
     lead, tail, pending, first_input, expected, applied = None, None, None, None, None, 0
-    payloads, last = [], None
-    for position, entry in enumerate(entries):
-        payload = entry['payload']
+    payloads, last, pending_node = [], None, None
+
+    def subset(payload, node):
+        m = payload['normalized']
+        if entity is None or (m['publisher_id'], m['instrument_id']) != entity:
+            return None
+        return _tagged_hash(_context_node(node))
+
+    for position, (entry, tree, digest) in enumerate(zip(entries, trees, digests)):
+        payload, node = entry['payload'], _field(tree, 'payload')
         if entry['kind'] == 'INPUT':
             if pending is not None or (expected is not None and payload['cursor'] != expected):
                 raise ValueError('journal input cursor gap or unprocessed submission')
             if first_input is None:
                 first_input = payload['cursor']
-            pending = payload
+            pending, pending_node = payload, node
         elif entry['kind'] == 'APPLIED':
             if pending is None:
                 if position != 0:
                     raise ValueError('journal applied record differs from submitted evidence')
-                lead = dict(payload=payload, envelope_hash=evidence_hash(entry), entries=entry['ordinal'] + 1,
-                            canonical=canonical_bytes(pack(payload)) if mode == 'teacher' else None,
-                            subset=_subset_hash(payload, entity) if mode != 'full' else None)
+                lead = dict(payload=payload, envelope_hash=digest, entries=entry['ordinal'] + 1,
+                            canonical=canonical_tagged_bytes(node) if mode == 'teacher' else None,
+                            subset=subset(payload, node) if mode != 'full' else None)
                 expected = payload['cursor'] + 1
                 continue
-            if not _same_record(payload, pending):
+            # _same_record: pack(raw_record) == pack(record) is the same comparison as their tagged nodes
+            applied_record, submitted_record = _field(node, 'raw_record'), _field(pending_node, 'record')
+            if applied_record is None or submitted_record is None:
+                raise KeyError('raw_record' if applied_record is None else 'record')      # as payload[...] would
+            if not (payload['cursor'] == pending['cursor']
+                    and applied_record == submitted_record
+                    and all(payload[k] == pending[k] for k in ('source_member_index', 'session_id'))):
                 raise ValueError('journal applied record differs from submitted evidence')
             applied += 1
             expected = payload['cursor'] + 1
-            pending = None
+            pending = pending_node = None
             if payload['cursor'] <= through_cursor:
                 if mode == 'context':
-                    payloads.append(({k: payload[k] for k in CONTEXT_FIELDS}, _subset_hash(payload, entity)))
+                    payloads.append(({k: payload[k] for k in CONTEXT_FIELDS}, subset(payload, node)))
                 elif mode == 'teacher':
-                    payloads.append((payload, canonical_bytes(pack(payload)), _subset_hash(payload, entity)))
+                    payloads.append((payload, canonical_tagged_bytes(node), subset(payload, node)))
                 else:
                     payloads.append(payload)
-                last = entry
+                last = (entry, digest)
         else:
             raise ValueError('failed or unknown journal entry cannot be mapped as complete')
     tail = pending
-    summary = None if last is None else (evidence_hash(last), last['ordinal'] + 1)
+    summary = None if last is None else (last[1], last[0]['ordinal'] + 1)
     return dict(count=len(entries), lead=lead, first_input=first_input, applied=applied, payloads=payloads,
                 tail=tail, summary=summary, cpu=cpu)
 
