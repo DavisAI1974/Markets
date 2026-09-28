@@ -5,6 +5,7 @@
 set -eu
 : "${STAMP:?extract stamp required}"; : "${MAP_URL:?presigned map required (presign input)}"
 case "$STAMP" in *[!A-Za-z0-9_.-]*|'') echo "invalid STAMP" >&2; exit 2;; esac
+export STAMP MAP_URL
 exec /usr/bin/python3 -B - <<'PY'
 import hashlib, json, os, urllib.request
 from pathlib import Path
