@@ -1,7 +1,10 @@
 # Jev's relay (Greg, 2026-09-28: Jev sits in with Frankie through classroom and they talk "more than every 30 min").
 # READ-ONLY on the running principal session: every RELAY_SECONDS it bundles what is new in the session (phase, note,
 # progress, work/classroom/*.json, each finished model call's name and answer text) and PUTs the bundle to the next
-# presigned slot clm-sidecar/<STAMP>/feed/NNNN.json. The first bundle also carries the dipole classroom material from
+# presigned slot clm-sidecar/<STAMP>/feed/NNNN.json. Nothing is cut (Greg, 2026-09-28: no file, answer or note is
+# truncated): every file and answer goes whole; a bundle larger than MAX_BUNDLE_BYTES (the size of one slot object, not
+# a data cap) is written as JEV_FEED_PART_V1 parts over consecutive slots (bundle sha256, part i of n) that the reader
+# (clm_sidecar/sit_in.py) joins and checks. A bundle that fits is the unchanged JEV_FEED_BUNDLE_V1 object. The first bundle also carries the dipole classroom material from
 # the request (attachment.dipole_classroom). Jev's Pod reads the same slots. The box role writes nothing in S3, so the
 # runner signs the slots: dispatch with presign="putrange:frankie-granite42-568968024170-us-east-1/clm-sidecar/<STAMP>/feed:240"
 # presign_hours=12. Inputs: STAMP, SESSION (session root; default the Monday calculations root), REQUEST_DIRECTORY,
@@ -28,13 +31,12 @@ seen = {}
 dipole_sent = False
 
 
-def read(path, limit):
+def read(path):
+    # whole, never cut
     try:
-        data = path.read_bytes()
+        return path.read_bytes().decode('utf-8', errors='replace')
     except OSError:
         return None
-    text = data[:limit].decode('utf-8', errors='replace')
-    return text if len(data) <= limit else text + '\n[... truncated at %d of %d bytes]' % (limit, len(data))
 
 
 def changed(path):
@@ -70,12 +72,15 @@ def dipole_material():
     return dict(path=None, dipole_classroom=None, note='no dipole_classroom attachment found in the request')
 
 
-for index, (key, url) in enumerate(slots):
-    phase = (read(SESSION / 'phase', 200) or '').strip()
+import hashlib
+position = 0
+while position < len(slots):
+    index = position
+    phase = (read(SESSION / 'phase') or '').strip()
     bundle = dict(schema='JEV_FEED_BUNDLE_V1', stamp=STAMP, index=index, at=time.time(), phase=phase,
-                  note=(read(SESSION / 'note', 1000) or '').strip(), progress=None, classroom={}, answers=[])
+                  note=(read(SESSION / 'note') or '').strip(), progress=None, classroom={}, answers=[])
     try:
-        bundle['progress'] = json.loads(read(SESSION / 'progress.json', 200000) or 'null')
+        bundle['progress'] = json.loads(read(SESSION / 'progress.json') or 'null')
     except ValueError:
         pass
     if not dipole_sent:
@@ -83,27 +88,38 @@ for index, (key, url) in enumerate(slots):
         # written when the launch reaches its WAIT, after the relay starts; bundle 0 alone would miss it)
         bundle['dipole'] = dipole_material()
         dipole_sent = bundle['dipole'].get('dipole_classroom') is not None
-    size = len(json.dumps(bundle))
     for path in sorted((work / 'classroom').glob('*.json')) if (work / 'classroom').is_dir() else []:
-        if size < CAP and changed(path):
-            text = read(path, 400000)
-            bundle['classroom'][path.name] = text
-            size += len(text or '')
+        if changed(path):
+            bundle['classroom'][path.name] = read(path)
     for outcome in sorted((work / 'boss-jobs').glob('*/outcome.json'), key=lambda p: p.stat().st_mtime) if (work / 'boss-jobs').is_dir() else []:
-        if size < CAP and changed(outcome):
+        if changed(outcome):
             try:
                 value = json.loads(outcome.read_bytes())
             except (OSError, ValueError):
                 continue
-            answer = dict(job=outcome.parent.name, name=value.get('name'), incomplete=value.get('incomplete'),
-                          error=value.get('error'), text=(value.get('text') or '')[:60000])
-            bundle['answers'].append(answer)
-            size += len(answer['text'])
+            bundle['answers'].append(dict(job=outcome.parent.name, name=value.get('name'), incomplete=value.get('incomplete'),
+                                          error=value.get('error'), text=value.get('text') or ''))
     raw = json.dumps(bundle, sort_keys=True).encode()
-    request = urllib.request.Request(url, data=raw, method='PUT')
-    with urllib.request.urlopen(request, timeout=300) as response:
-        print('feed %04d phase=%s classroom=%d answers=%d bytes=%d http=%d' % (
-            index, phase, len(bundle['classroom']), len(bundle['answers']), len(raw), response.status), flush=True)
+    if len(raw) <= CAP:
+        objects = [raw]
+    else:
+        # too big for one slot object: consecutive JEV_FEED_PART_V1 parts, joined and checked by the reader
+        text, digest = raw.decode(), hashlib.sha256(raw).hexdigest()
+        step = max(1, CAP // 2)
+        chunks = [text[i:i + step] for i in range(0, len(text), step)]
+        objects = [json.dumps(dict(schema='JEV_FEED_PART_V1', stamp=STAMP, index=index, part=i, parts=len(chunks),
+                                   sha256=digest, bytes=len(raw), data=chunk), sort_keys=True).encode()
+                   for i, chunk in enumerate(chunks)]
+    if position + len(objects) > len(slots):
+        raise SystemExit('bundle %04d needs %d slots, %d left: dispatch the relay again with more slots (nothing was cut)'
+                         % (index, len(objects), len(slots) - position))
+    for number, data in enumerate(objects):
+        request = urllib.request.Request(slots[position][1], data=data, method='PUT')
+        with urllib.request.urlopen(request, timeout=300) as response:
+            print('feed %04d phase=%s classroom=%d answers=%d bytes=%d part=%d/%d http=%d' % (
+                position, phase, len(bundle['classroom']), len(bundle['answers']), len(data), number + 1, len(objects),
+                response.status), flush=True)
+        position += 1
     if phase in FINAL:
         print('session phase %s is final; relay ends' % phase, flush=True)
         break

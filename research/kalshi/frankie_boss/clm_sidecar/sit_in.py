@@ -14,6 +14,12 @@ Each turn takes the next new thing Frankie produced (a classroom answer first, e
 Every REPORT_MINUTES the report lists every turn individually (topic, agree, the disagreement, settled/open, the
 question and Frankie's reply) plus a short synthesis. Nothing Jev writes goes into Frankie's session; Frankie's replies
 to Jev are recorded here only. Rough by design; zero synthetic data (every input is the run's own material).
+
+Nothing is cut (Greg, 2026-09-28): the dipole material, Frankie's answers, the queue and the report go whole. Jev's model
+has a 32,768-token context, so anything longer than one Jev prompt is READ IN PIECES: every piece of it becomes notes
+(read_whole), notes are folded again until they fit, and the answer is written from the notes. Every queued item is
+discussed (classroom items first, then reading notes oldest first). Oversize relay bundles arrive as JEV_FEED_PART_V1
+parts over consecutive slots and are joined and checked (sha256) here.
 """
 import gzip
 import hashlib
@@ -28,8 +34,7 @@ import urllib.request
 
 CONTEXT = 131072                 # Granite's only context; output = the remaining context (Greg, 2026-09-16)
 JEV_CONTEXT = 32768
-DIPOLE_CHARS = 60000             # the dipole material each Jev prompt carries (Qwen3-8B context)
-ANSWER_CHARS = 20000
+JEV_PIECE_CHARS = 60000          # one piece of material per Jev prompt (~20k tokens of 32,768, room for the reply)
 
 
 def log(*parts):
@@ -54,7 +59,9 @@ def put(url, data, content_type='application/octet-stream'):
 
 def jev(prompt, max_tokens=2048):
     """Jev's own model: Qwen3-8B chat served on this Pod."""
-    body = json.dumps(dict(model='jev', messages=[dict(role='user', content=prompt[:JEV_CONTEXT * 3])],
+    if len(prompt) > JEV_CONTEXT * 3:
+        raise ValueError('Jev prompt of %d chars does not fit; the caller reads it in pieces (nothing is cut)' % len(prompt))
+    body = json.dumps(dict(model='jev', messages=[dict(role='user', content=prompt)],
                            temperature=0, max_tokens=max_tokens, chat_template_kwargs=dict(enable_thinking=False))).encode()
     request = urllib.request.Request(os.environ.get('JEV_CHAT_URL', 'http://127.0.0.1:8091/v1/chat/completions'),
                                      data=body, headers={'Content-Type': 'application/json'})
@@ -92,7 +99,7 @@ def frankie(prompt, pod):
             if status == 404:
                 status, raw = call('POST', path, body)
                 if status != 202:
-                    return None, 'job create refused: HTTP %d %s' % (status, raw[:200])
+                    return None, 'job create refused: HTTP %d %s' % (status, raw.decode('utf-8', errors='replace'))
             elif status == 200:
                 state = json.loads(raw)
                 if state.get('state') == 'completed':
@@ -119,6 +126,43 @@ def parse_json(text):
         return None
 
 
+def read_whole(material, purpose):
+    """Every piece of material read by Jev into notes; notes folded until they fit one piece. Never truncated."""
+    text = material or ''
+    rounds = 0
+    while len(text) > JEV_PIECE_CHARS:
+        pieces = [text[i:i + JEV_PIECE_CHARS] for i in range(0, len(text), JEV_PIECE_CHARS)]
+        notes = []
+        for number, piece in enumerate(pieces, 1):
+            notes.append('[piece %d/%d] ' % (number, len(pieces)) + jev(
+                'You are Jev. Read piece %d of %d of the material below for this purpose: %s\nWrite notes that keep '
+                'every number, name and relation that bears on it, in full; say what the piece covers.\n\nPIECE:\n%s'
+                % (number, len(pieces), purpose, piece)))
+        text = '\n\n'.join(notes)
+        rounds += 1
+        log('read %d chars in %d pieces (round %d) -> %d chars of notes' % (len(material or ''), len(pieces), rounds, len(text)))
+    return text
+
+
+def join_bundle(first, feed, position):
+    """A JEV_FEED_PART_V1 bundle: every part from consecutive slots, joined and checked; None until all have landed."""
+    parts = [first]
+    while len(parts) < first['parts']:
+        if position + len(parts) >= len(feed):
+            raise ValueError('bundle parts run past the feed slots')
+        part = get_json(feed[position + len(parts)])
+        if part is None:
+            return None, 0
+        if (part.get('schema') != 'JEV_FEED_PART_V1' or part.get('sha256') != first['sha256']
+                or part.get('part') != len(parts) or part.get('parts') != first['parts']):
+            raise ValueError('feed part %d out of order for bundle %s' % (len(parts), first['sha256']))
+        parts.append(part)
+    raw = ''.join(p['data'] for p in parts).encode()
+    if hashlib.sha256(raw).hexdigest() != first['sha256'] or len(raw) != first['bytes']:
+        raise ValueError('joined feed bundle differs from its sha256')
+    return json.loads(raw), len(parts)
+
+
 def is_classroom(item):
     name = (item.get('name') or '').lower()
     return item.get('kind') == 'classroom' or any(word in name for word in ('classroom', 'component', 'summary', 'science',
@@ -135,12 +179,16 @@ def main():
     while True:
         # 1. read every feed bundle the relay has written since the last pass
         while next_feed < len(feed):
-            bundle = get_json(feed[next_feed])
+            bundle, used = get_json(feed[next_feed]), 1
             if bundle is None:
                 break
-            if bundle.get('dipole') and bundle['dipole'].get('dipole_classroom') is not None:
-                dipole = json.dumps(bundle['dipole']['dipole_classroom'])[:DIPOLE_CHARS]
-                log('dipole material: %d chars' % len(dipole))
+            if bundle.get('schema') == 'JEV_FEED_PART_V1':
+                bundle, used = join_bundle(bundle, feed, next_feed)
+                if bundle is None:
+                    break                      # the remaining parts have not landed yet; read again next pass
+            if bundle.get('dipole') and bundle['dipole'].get('dipole_classroom') is not None and not dipole:
+                dipole = json.dumps(bundle['dipole']['dipole_classroom'])
+                log('dipole material: %d chars (whole)' % len(dipole))
             for name, text in (bundle.get('classroom') or {}).items():
                 queue.append(dict(kind='classroom', name=name, text=text or ''))
             for answer in bundle.get('answers') or []:
@@ -148,26 +196,31 @@ def main():
                     queue.append(dict(kind='answer', name=answer.get('name'), text=answer['text']))
             log('feed %04d phase=%s queue=%d' % (next_feed, bundle.get('phase'), len(queue)))
             final = bundle.get('phase') in ('pushed', 'done', 'complete', 'completed', 'refused', 'failed', 'stopped')
-            next_feed += 1
-        # 2. one discussion turn on the most useful new item: classroom first, else the latest reading note
-        item = next((q for q in queue if is_classroom(q)), None) or (queue[-1] if queue else None)
+            next_feed += used
+        # 2. one discussion turn per item, every item: classroom first, then the reading notes oldest first
+        item = next((q for q in queue if is_classroom(q)), None) or (queue[0] if queue else None)
         if item is not None:
-            queue = [q for q in queue if q is not item and is_classroom(q)]   # only the newest reading note is discussed
+            queue = [q for q in queue if q is not item]
             pod = pods[pod_turn % len(pods)]
             pod_turn += 1
             topic = item.get('name') or item['kind']
-            frankie_text = item['text'][:ANSWER_CHARS]
+            frankie_text = item['text']
             turn = dict(at=time.time(), topic=topic, kind=item['kind'], pod=pod)
             try:
+                purpose = 'the Dipole classroom topic "%s" for the Monday 2021-10-04 natural gas trading day' % topic
+                material = read_whole(dipole, purpose) if dipole else '(not received yet)'
                 turn['student'] = jev('You are Jev, a student in the Dipole classroom for the Monday 2021-10-04 natural gas '
-                                      'trading day. Topic: %s.\nAnswer it yourself from the dipole classroom material below: '
-                                      'what the dipole components and their pair relations show, with the numbers you rely '
-                                      'on.\n\nDIPOLE MATERIAL:\n%s' % (topic, dipole or '(not received yet)'))
+                                      'trading day. Topic: %s.\nAnswer it yourself from the dipole classroom material below '
+                                      '(read whole; notes where it was longer than one prompt): what the dipole components '
+                                      'and their pair relations show, with the numbers you rely on.\n\nDIPOLE MATERIAL:\n%s'
+                                      % (topic, material))
+                # the three texts whole in one comparison document; read in pieces when it is longer than one prompt
+                comparison = read_whole('STUDENT:\n%s\n\nFRANKIE:\n%s\n\nDIPOLE MATERIAL:\n%s' % (turn['student'], frankie_text, material),
+                                        'comparing the STUDENT and FRANKIE answers against the DIPOLE MATERIAL on ' + purpose)
                 observed = jev('You are Jev, the classroom observer. Compare the STUDENT answer and FRANKIE\'s answer on the '
-                               'topic "%s" against the DIPOLE MATERIAL. Return JSON only: {"agree": true|false, '
-                               '"disagreements": [..], "evidence": [..numbers from the material..], '
-                               '"question_for_frankie": "one pointed question"}.\n\nSTUDENT:\n%s\n\nFRANKIE:\n%s\n\n'
-                               'DIPOLE MATERIAL:\n%s' % (topic, turn['student'][:8000], frankie_text[:12000], dipole[:30000]))
+                               'topic "%s" against the DIPOLE MATERIAL (below whole, or as notes read from every piece). '
+                               'Return JSON only: {"agree": true|false, "disagreements": [..], "evidence": [..numbers from '
+                               'the material..], "question_for_frankie": "one pointed question"}.\n\n%s' % (topic, comparison))
                 turn['observer'] = parse_json(observed) or dict(raw=observed)
                 question = turn['observer'].get('question_for_frankie') or 'Which dipole evidence most supports your answer?'
                 turn['frankie_reply'], turn['frankie_error'] = frankie(
@@ -175,11 +228,11 @@ def main():
                     'with a classroom observer. Your answer on "%s":\n%s\n\nThe observer asks: %s\nAnswer directly, '
                     'citing the dipole evidence; say plainly if you would change your answer.' % (topic, frankie_text, question), pod)
                 closing = jev('You are Jev, the classroom observer. Frankie replied to your question "%s":\n%s\n\nReturn JSON '
-                              'only: {"settled": true|false, "why": "one sentence"}.' % (question, (turn['frankie_reply'] or
-                                                                                       turn['frankie_error'] or '')[:12000]))
+                              'only: {"settled": true|false, "why": "one sentence"}.' % (question, read_whole(
+                                  turn['frankie_reply'] or turn['frankie_error'] or '', 'Frankie\'s reply to: ' + question)))
                 turn['closing'] = parse_json(closing) or dict(raw=closing)
             except Exception as error:  # noqa: BLE001  -- a failed turn is recorded, never hidden
-                turn['error'] = '%s: %s' % (type(error).__name__, str(error)[:300])
+                turn['error'] = '%s: %s' % (type(error).__name__, error)
             turns.append(turn)
             log('turn %d topic=%s agree=%s settled=%s' % (len(turns), topic, (turn.get('observer') or {}).get('agree'),
                                                          (turn.get('closing') or {}).get('settled')))
@@ -189,14 +242,16 @@ def main():
             rows = ['| # | topic | kind | agree | settled | disagreement | question | Frankie replied |', '|---|---|---|---|---|---|---|---|']
             for number, turn in enumerate(window, window_start + 1):
                 observer, closing = turn.get('observer') or {}, turn.get('closing') or {}
+                cell = lambda value: str(value).replace('|', '/').replace('\n', ' ')   # whole, one table line
                 rows.append('| %d | %s | %s | %s | %s | %s | %s | %s |' % (
-                    number, str(turn['topic'])[:50], turn['kind'], observer.get('agree'), closing.get('settled'),
-                    str((observer.get('disagreements') or [''])[0])[:120].replace('|', '/'),
-                    str(observer.get('question_for_frankie', ''))[:120].replace('|', '/'),
-                    'yes' if turn.get('frankie_reply') else (turn.get('frankie_error') or turn.get('error') or 'no')[:60]))
+                    number, cell(turn['topic']), turn['kind'], observer.get('agree'), closing.get('settled'),
+                    cell('; '.join(str(d) for d in observer.get('disagreements') or [])),
+                    cell(observer.get('question_for_frankie', '')),
+                    'yes' if turn.get('frankie_reply') else cell(turn.get('frankie_error') or turn.get('error') or 'no')))
             synthesis = jev('Summarize for the operator, in under 200 words, what Jev learned in this window from the '
                             'classroom turns below: where Jev and Frankie agree, where they differ, what stayed open, and '
-                            'what to look at next. Name turns by number.\n\n' + '\n'.join(rows)) if window else 'No turns yet.'
+                            'what to look at next. Name turns by number.\n\n' + read_whole(
+                                '\n'.join(rows), 'the classroom turns table for the operator summary')) if window else 'No turns yet.'
             report = '# Jev sit-in report %d (%s)\n\nFeed bundles read: %d. Turns this window: %d (total %d).\n\n%s\n\n## Turns\n\n%s\n' % (
                 report_index, time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), next_feed, len(window), len(turns),
                 synthesis, '\n'.join(rows))
