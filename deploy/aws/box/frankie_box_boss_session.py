@@ -1313,15 +1313,16 @@ class Session:
         else:
             parts.append(data[marker:].decode('utf-8', errors='replace') if marker >= 0 else '')
             members.append(dict(name='producer-evidence block', treatment='payload not parseable; rendered raw'))
-        brain_text, brain_members = brain_module().load(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))
+        digest = digest_path.read_bytes() if digest_path.exists() else None
+        brain_text, brain_members = brain_module().load(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None),
+                                                        carried={sha256_bytes(digest): "this cycle's derivation digest (below, whole)"} if digest is not None else None)
         if brain_text:
             parts.append("\n\n## Frankie's brain: the calculation findings of the earlier cycles, carried forward whole (Greg, 2026-09-21). "
                          'These are your own prior derivations and findings; read them as your own memory, compare this cycle\'s '
                          'derivations with them, and never mistake them for the delivered evidence.\n' + brain_text)
         members.extend(brain_members)
         self.note(f'brain: {sum(1 for m in brain_members if m["treatment"].startswith("brain: prior"))} prior-cycle documents in the corpus')
-        if digest_path.exists():
-            digest = digest_path.read_bytes()
+        if digest is not None:
             parts.append('\n\n## Frankie\'s own derivation of this cycle (the session code ran the pin producers on the cycle rows; whole)\n\n'
                          + digest.decode('utf-8', errors='replace') + '\n')
             members.append(dict(name='derivation-digest-full.md', bytes=len(digest), sha256=sha256_bytes(digest), treatment='text: rendered whole'))

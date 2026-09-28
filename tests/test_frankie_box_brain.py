@@ -309,3 +309,23 @@ def test_capture_refuses_unlisted_symlink_without_copying_it(cycle0, tmp_path):
         brain.capture_base(b, 'f' * 64)
     assert link.is_symlink() and outside.read_text() == 'unrelated private contents'
     assert not list((b / 'history').glob('entry-*'))
+
+
+def test_load_carries_identical_bytes_once(cycle0, tmp_path):
+    """Greg, 2026-09-28 (dedupe): the session-doc copy of the digest and a later cycle's identical digest are one-line
+    references to the first copy, and a digest identical to the current cycle's (passed as carried) is not repeated."""
+    work, out = cycle0
+    (out / 'docs').mkdir()
+    (out / 'docs' / 'derivation-digest-full.md').write_bytes((work / 'derivation-digest-full.md').read_bytes())
+    b = tmp_path / 'brain'
+    brain.write_entry(work, out, b, '00')
+    brain.write_entry(work, out, b, '01')
+    text, members = brain.load(b, '02')
+    assert text.count('legacy_price: derived 57027 rows') == 1
+    same = [m for m in members if m['treatment'].startswith('brain: same bytes as brain cycle 00 derivation-digest-full.md')]
+    assert [m['name'] for m in same] == ['brain-cycle-00-session-doc-derivation-digest-full.md', 'brain-cycle-01-derivation-digest-full.md',
+                                         'brain-cycle-01-session-doc-derivation-digest-full.md']
+    digest_sha = hashlib.sha256((work / 'derivation-digest-full.md').read_bytes()).hexdigest()
+    text, members = brain.load(b, '02', carried={digest_sha: "this cycle's derivation digest"})
+    assert 'legacy_price: derived 57027 rows' not in text and "the same bytes as this cycle's derivation digest" in text
+    assert 'our analysis' not in text and text.count('observed: the run went so.') == 1   # distinct entries still whole, once

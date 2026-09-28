@@ -557,9 +557,23 @@ def identity(brain, cycle, *, snapshot=None):
     return h.hexdigest()[:16]
 
 
-def load(brain, cycle, *, snapshot=None):
-    """(text, members): the included, digest-verified entries of every earlier cycle as corpus text plus member records."""
+def load(brain, cycle, *, snapshot=None, carried=None):
+    """(text, members): the included, digest-verified entries of every earlier cycle as corpus text plus member records.
+    carried: {sha256: where} of content the corpus already holds (the current cycle's digest). An entry whose manifest
+    sha256 is already carried, or equal to an earlier entry's, is written once: later copies are a one-line reference
+    to the first (Greg, 2026-09-28: dedupe; identical bytes are read by the model once) and are not re-read from disk."""
     parts, members = [], []
+    carried = dict(carried or {})
+
+    def reference(label, e):
+        """A one-line pointer for bytes already in the corpus, or None when the bytes are new."""
+        where = carried.get(e.get('sha256'))
+        if where is None:
+            return None
+        parts.append(f"\n\n## Frankie's brain: {label}: the same bytes as {where} (sha256 {e['sha256'][:16]}, {e.get('bytes')} bytes); "
+                     'carried once, not repeated\n')
+        members.append(dict(name=label, bytes=e.get('bytes'), sha256=e['sha256'], treatment=f'brain: same bytes as {where}; carried once (dedupe by sha256)'))
+        return where
     fm, fd = (None, None) if snapshot else frozen_entry(brain)
     if fm:
         parts.append("\n\n## Frankie's brain: the frozen learned structure, the files the request's knowledge layers name (delivered by path; "
@@ -571,18 +585,23 @@ def load(brain, cycle, *, snapshot=None):
             if not e.get('include'):
                 members.append(dict(name=f'brain-frozen-{name}', bytes=e.get('bytes'), treatment=f'frozen file excluded: {e.get("reason", "include false")}'))
                 continue
+            if reference(f'brain-frozen-{name}', e):
+                continue
             data = p.read_bytes() if p.is_file() else None
             if data is None or sha256_bytes(data) != e.get('sha256'):
                 members.append(dict(name=f'brain-frozen-{name}', treatment='frozen file missing or changed since its manifest; not in the corpus'))
                 continue
             parts.append(f"\n### {e['source']} (layers: {', '.join(e.get('layers', []))}; sha256 {e['sha256'][:16]})\n\n" + data.decode('utf-8', errors='replace') + '\n')
             members.append(dict(name=f'brain-frozen-{name}', bytes=len(data), sha256=e['sha256'], treatment='brain: frozen learned-structure file, whole'))
+            carried[e['sha256']] = f'the frozen file {e["source"]}'
     for cyc, manifest, d in (snapshot_entries(brain, snapshot) if snapshot else entries_before(brain, cycle)):
         for e in manifest.get('entries', []):
             name = e.get('name', '')
             p = d / name
             if not e.get('include'):
                 members.append(dict(name=f'brain-cycle-{cyc}-{name}', bytes=e.get('bytes'), sha256=e.get('sha256'), treatment='brain entry excluded by its manifest (include false); not in the corpus'))
+                continue
+            if reference(f'brain-cycle-{cyc}-{name}', e):
                 continue
             if not p.is_file():
                 members.append(dict(name=f'brain-cycle-{cyc}-{name}', treatment='brain entry file missing; not in the corpus'))
@@ -594,6 +613,7 @@ def load(brain, cycle, *, snapshot=None):
             parts.append(f"\n\n## Frankie's brain: cycle {cyc}, {name} ({e.get('kind', 'document')}; carried forward whole, sha256 {e['sha256'][:16]})\n\n"
                          + data.decode('utf-8', errors='replace') + '\n')
             members.append(dict(name=f'brain-cycle-{cyc}-{name}', bytes=len(data), sha256=e['sha256'], treatment='brain: prior cycle calculation findings, whole'))
+            carried[e['sha256']] = f'brain cycle {cyc} {name}'
     return ''.join(parts), members
 
 
