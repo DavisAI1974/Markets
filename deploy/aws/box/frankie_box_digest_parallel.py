@@ -98,7 +98,23 @@ def _fold(state, flat):
 
 
 def _part_db(directory):
-    return sqlite3.connect(Path(directory) / 'part.sqlite')
+    # Part databases are scratch (a failed table is rebuilt from scratch), so no journal and no fsync per commit; a
+    # 1 GiB page cache per helper keeps the per-cell dictionary upserts off the disk (profile 2026-09-28: the count
+    # pass sat at 37% CPU in disk wait with the default 2 MB cache on 28 helpers).
+    db = sqlite3.connect(Path(directory) / 'part.sqlite')
+    db.execute('PRAGMA journal_mode=OFF')
+    db.execute('PRAGMA synchronous=OFF')
+    db.execute('PRAGMA temp_store=MEMORY')
+    db.execute('PRAGMA cache_size=-1048576')
+    return db
+
+
+def _lookup_db(path):
+    """Read-only shared dictionary, memory-mapped so every helper reads it through the one page cache."""
+    db = sqlite3.connect(Path(path).resolve().as_uri() + '?mode=ro', uri=True)
+    db.execute('PRAGMA mmap_size=274877906944')
+    db.execute('PRAGMA cache_size=-262144')
+    return db
 
 
 # ---- phase 1: snapshot ---------------------------------------------------------------------------------------------
@@ -161,13 +177,29 @@ def _count(job):
     scale_state = {j: [DG.SCALE_MAX, False] for j in kept}
     db = _part_db(directory)
     position = 0
+    # Counts are gathered in memory and upserted in batches: a key already in the table keeps its first position
+    # (an earlier batch saw it first), a new key gets its first position within the batch; same table as one upsert
+    # per cell.
+    batch = {}
+
+    def flush():
+        db.executemany('INSERT INTO frequency(key, count, first) VALUES (?, ?, ?) '
+                       'ON CONFLICT(key) DO UPDATE SET count=count+excluded.count',
+                       ((k, v[0], v[1]) for k, v in sorted(batch.items())))
+        batch.clear()
+
     for cells in TS._rows(db, 'plans'):
         for j in kept:
             kind, text = cells[j]
             if kind != 'lit':
                 key = json.dumps(text) if kind == 'str' else text
-                db.execute('INSERT INTO frequency(key, count, first) VALUES (?, 1, ?) '
-                           'ON CONFLICT(key) DO UPDATE SET count=count+1', (key, position))
+                entry = batch.get(key)
+                if entry is None:
+                    batch[key] = [1, position]
+                    if len(batch) >= 2000000:
+                        flush()
+                else:
+                    entry[0] += 1
                 position += 1
             elif DG._INT_CELL.fullmatch(text):
                 k, _ = scale_state[j]
@@ -178,6 +210,8 @@ def _count(job):
                         z += 1
                     k = min(k, z)
                 scale_state[j] = [k, True]
+    if batch:
+        flush()
     db.commit()
     db.close()
     return scale_state
@@ -188,7 +222,7 @@ def _count(job):
 def _final(job):
     directory, kept, columns, scales, dictionary = job
     db = _part_db(directory)
-    lookup = sqlite3.connect(Path(dictionary).resolve().as_uri() + '?mode=ro', uri=True)
+    lookup = _lookup_db(dictionary)
     has_space = False
     for i, cells in enumerate(TS._rows(db, 'plans')):
         out = []
@@ -234,7 +268,7 @@ def _verify(job):
     (path, offset, length, count, directory, header, dictionary, seed) = job
     name, columns, whole, kept, constants, scales, sep = header
     db = _part_db(directory)
-    lookup = sqlite3.connect(Path(dictionary).resolve().as_uri() + '?mode=ro', uri=True)
+    lookup = _lookup_db(dictionary)
     prev_row, prev_values, prev_ints, prev_lists = seed[0], dict(seed[1]), dict(seed[2]), dict(seed[3])
     expected = TS._rows(db, 'source')
     with Path(path).open('rb') as handle:
@@ -366,6 +400,9 @@ def write_table_parallel(destination, name, specs, scratch_directory, cpus, prog
         scales = {columns[j]: 10 ** k for j, (k, seen) in scale_state.items() if seen and k >= DG.SCALE_MIN}
         dictionary = scratch / 'dictionary.sqlite'
         g = sqlite3.connect(dictionary)
+        # the coordinator's merge of every part's counts runs on one core: scratch database, big cache, no journal
+        for pragma in ('journal_mode=OFF', 'synchronous=OFF', 'temp_store=MEMORY', 'cache_size=-16777216'):
+            g.execute('PRAGMA ' + pragma)
         g.execute('CREATE TABLE frequency (key TEXT PRIMARY KEY, count INTEGER NOT NULL, number INTEGER UNIQUE)')
         for p in parts:
             g.execute('ATTACH DATABASE ? AS part', (str(p / 'part.sqlite'),))
