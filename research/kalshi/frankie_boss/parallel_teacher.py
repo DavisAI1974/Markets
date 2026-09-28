@@ -309,8 +309,8 @@ class _RawStreams:
         # the row's value is replaced exactly as attach builds it: control columns dict(v), R3 columns value/state/reason
         for index, column, slot in self.where.pop(token):
             v = value if slot == '-' else value[int(slot)]
-            self.rows[index][3][column] = ({k: v[k] for k in ('value', 'state', 'reason')} if 7 <= column < 13
-                                           else dict(v))
+            # every carried key kept (incomplete lists, unknown-side counts); R3's model-side mask left out as attach does
+            self.rows[index][3][column] = ({k: x for k, x in v.items() if k != 'mask'} if 7 <= column < 13 else dict(v))
         self.resolved += 1
 
     def finish(self):
@@ -378,7 +378,7 @@ def parallel_attach(self, evidence, context, *, as_of, source_manifest_hash):
                         or T.evidence_hash(item) != T.evidence_hash({k: e[k] for k in item})):
                     raise ValueError('context must match exact verified prefix row')
             combined = [dict(v) for v in old]
-            combined[7:13] = [{k: v[k] for k in ('value', 'state', 'reason')} for v in six['columns']]
+            combined[7:13] = [{k: x for k, x in v.items() if k != 'mask'} for v in six['columns']]   # every carried key kept
             rows.append((e['cursor'] in wanted, e['receipt'] is not None, e['normalized']['instrument_id'], combined,
                          e['normalized']['ts_recv_ns'], e['terminal_prefix_hash'], e['cursor'],
                          six['evidence_content_hash']))
