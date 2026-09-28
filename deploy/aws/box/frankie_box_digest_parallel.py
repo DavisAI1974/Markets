@@ -10,7 +10,7 @@ what the serial writer produces. frankie_box_digest_stream and frankie_box_diges
 Row sources are described, not passed: ('members', database, group keys) or ('rows', database, query, parameters,
 excluded, start, count), so each helper reads its own range of a finished sources.sqlite read-only.
 """
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import copy
 import hashlib
 import json
@@ -564,6 +564,30 @@ def saved_sources(entries, layers_root):
     return None
 
 
+def _file_witness(path):
+    digest, size = hashlib.sha256(), 0
+    with open(path, 'rb') as reader:
+        while chunk := reader.read(8 << 20):
+            digest.update(chunk)
+            size += len(chunk)
+    return size, digest.hexdigest()
+
+
+def _published_meta(name, pin, receipts, witness):
+    """The metadata fields of a published gzip-json layer, by the walk _prepare_published uses (small metadata members
+    decompressed, row arrays located from the range receipts, never inflated); the pin's bytes and sha256 checked."""
+    import frankie_box_digest_sources as S
+    size, sha = witness.result()
+    if size != pin['bytes'] or sha != pin['sha256']:
+        raise ValueError('compressed projected layer witness differs')
+    path = Path(pin['path'])
+    projection = path.resolve().parent.parent
+    if projection not in receipts:
+        receipts[projection] = S._range_receipts(projection)
+    document, _ = S._published_layout(path, name, receipts[projection])
+    return {key: document[key] for key in sorted(document) if key in S.META_FIELDS}
+
+
 def _plain_meta(pin):
     """The metadata fields of a plain (not gzip-json) pinned layer, streamed (row arrays skipped), bytes and sha256
     checked against the pin: the same fields BedrockSources._read keeps (last duplicate key wins)."""
@@ -610,12 +634,17 @@ class ReopenedSources:
         metadata, first_verdict = [], False
         recorded = {ordinal: json.loads(zlib.decompress(p) if isinstance(p, bytes) else p)
                     for ordinal, p in self.db.execute('SELECT ordinal, payload FROM layer_index')}
+        receipts, found = {}, {}
+        for index, pin in enumerate(entries.values()):
+            if pin.get('encoding') == 'gzip-json':
+                found[index] = S._reusable_prepared(index, pin, self.root)
+        with ThreadPoolExecutor(8) as pool:     # pin witnesses of the layers without a receipt, hashed in parallel
+            hashes = {index: pool.submit(_file_witness, pin['path']) for index, pin in enumerate(entries.values())
+                      if index in found and found[index] is None}
         for index, (name, pin) in enumerate(entries.items()):
             if pin.get('encoding') == 'gzip-json':
-                prepared = S._reusable_prepared(index, pin, self.root)
-                if prepared is None:
-                    raise ValueError('reused sources need the prepared layer receipt of layer %d (%s)' % (index, name))
-                meta = prepared['meta']
+                # no receipt in reach: the same layout walk ROOT prepared it with (metadata members only)
+                meta = found[index]['meta'] if found[index] is not None else _published_meta(name, pin, receipts, hashes[index])
             else:
                 # plain layers were prepared in place (no receipt); their metadata is re-read from the pinned file
                 meta = _plain_meta(pin)
