@@ -42,7 +42,7 @@ def test_bootstrap_uses_real_file_receipt_and_explicit_generation_limits(tmp_pat
     assert args[0:3]==['python3','-m','vllm.entrypoints.openai.api_server']
     assert args[args.index('--model')+1]==str(tmp_path)
     assert args[args.index('--max-model-len')+1]=='131072'
-    assert args[args.index('--max-num-seqs')+1]=='1'
+    assert args[args.index('--max-num-seqs')+1]=='3'
     assert '--trust-remote-code' not in args
     assert '--enable-lora' not in args
     assert '--speculative-config' not in args
