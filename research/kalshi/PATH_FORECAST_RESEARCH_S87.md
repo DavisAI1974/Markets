@@ -24,9 +24,10 @@ The forecast predicts CONTINUATION / HOLD-LENGTH, never price.
   — the predictability concentrates in the exact cells we trade (release days, Hormuz-vol days).
 - **First-seconds order flow.** OFI predicts returns over seconds-to-a-minute, decays fast — a TIMING /
   continuation feature, not a multi-minute forecaster, and much is contemporaneous not predictive (arXiv
-  2507.22712). Consistent with our own DEPLOY_VALIDATED=False (imbalance = detector, not direction oracle).
+  2507.22712). Consistent with our own S36 crypto measurement (DEPLOY_VALIDATED=False on that data); dipole
+  direction stays open research (D51).
 - **Mostly NOISE:** multi-minute LEVEL forecasting on ordinary non-event periods; any single-window result;
-  directional maps from signed flow.
+  directional maps from signed flow as measured so far (S36 crypto; not a limit: D51).
 
 ## The methods (ranked implementability x honesty)
 

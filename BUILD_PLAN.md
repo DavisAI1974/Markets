@@ -73,7 +73,7 @@ That is how a real edge is kept, not thrown away.
 - **M. "They never stacked"** (l.124) + the `_markets_dipole_chunker_stack` concept (l.246) —
   the edge is in composing pieces others used singly.
 - **N. Order-flow DIVERGENCE + EXHAUSTION reversal detector (S36, `odcore/info_dipole.py`).** The raw
-  order-flow dipole `(buy−sell)/(buy+sell)` used (for now; D51: a starting role, not the destination) NOT as a direction predictor but as a
+  order-flow dipole `(buy−sell)/(buy+sell)` used here as a
   trend-continuation-vs-**FLIP** detector — the per-cell signal that fills the S35b "bleed" (the
   side-AGNOSTIC 128-dim coeff cannot encode direction). Frame: markets are mostly follow-the-leader (a
   trend = a flow) until the leader exhausts → new leader, usually opposite; the edge is detecting the
@@ -373,11 +373,11 @@ This is the order-flow dipole used the RIGHT way per Part E (raw level, not entr
   `divergence(buy_vol, sell_vol, price_drift)` → `{imb_level, aligned_flow, confirms, opposing,
   exhausting, expect∈{reversal,flip_risk,weakening,continue}, reversal_conviction}`. Reusable in the
   pre-window stage AND stacked into `odcore/fingerprint.py` per cell.
-- **DISCIPLINE / what NOT to use:** the DIRECTIONAL probe (`cell_signal`/`DEPLOY`) is a TREND/base-rate
+- **What the S36 directional probe measured (a scoped finding, not a limit; D51: dipole direction is open research):**
+  on that data the DIRECTIONAL probe (`cell_signal`/`DEPLOY`) was a TREND/base-rate
   ARTIFACT (Simpson's paradox on a 2-day trending window) — it shows +5..+11 "lift" that VANISHES under
-  a window/forward sweep + temporal OOS + a detrended target. `DEPLOY_VALIDATED=False` — **do NOT trade
-  off it** until it earns it: D51 (Greg, 2026-09-28) makes the gate its starting role, not its destination;
-  promotion to direction is per cell on forward evidence only (gate -> advisor -> decider). This REINFORCES Part E (the entropy dMI/dt flow is the wrong tool). The robust edge is the
+  a window/forward sweep + temporal OOS + a detrended target, so `DEPLOY_VALIDATED=False` for that map as
+  measured; money on any direction signal waits for forward evidence per cell, as for every signal. This REINFORCES Part E (the entropy dMI/dt flow is the wrong tool). The robust edge is the
   raw order-flow LEVEL divergence/flip read.
 - **NEXT (decisive, per `KICKOFF_2026-06-22_S36.md`):** net-of-cost backtest of the reversal gate **per
   cell** (a 64% hit-rate is only an EDGE if the moves beat fees+slippage; walk-forward); confirm on the

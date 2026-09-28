@@ -1267,9 +1267,9 @@ we periodically pull back out. All portable numpy; validated per-cell.
 - **`odcore/info_dipole.py`** — signed order-flow features + `divergence()`: the 2-factor
   DIVERGENCE (flow opposes price → ~65% reversal) + EXHAUSTION (imbalance collapsing toward 0.5 =
   leader weakening) read. The FILTER in the filter/timing split. Also provisional `cell_signal`/`DEPLOY`
-  — **`DEPLOY_VALIDATED=False`, never trade the directional map** (S36 robustness: trend artifacts).
-  **That is its CURRENT role, not its destination (D51, Greg 2026-09-28):** it starts as a gate/filter and is
-  meant to learn toward direction, promoted per cell on forward evidence only (gate -> advisor -> decider).
+  — `DEPLOY_VALIDATED=False` records one measurement (S36, thin crypto 1-min data, a 2-day trending window: the
+  directional lifts did not survive that robustness sweep). It is NOT a limit on dipole direction research (D51,
+  Greg 2026-09-28): direction is open to explore; like every signal, money waits for forward evidence per cell.
 - **`odcore/incremental.py`** — `RollingFlow`, O(1)/tick bit-faithful incremental operator (1.7µs/tick)
   for hot-path use.
 - **`odcore/fingerprint.py`** — per-cell fingerprint encoder (verbatim ports of the live micro-feature
@@ -1304,18 +1304,18 @@ in the live doc. Full detail: `S36_NETCOST_BACKTEST_FINDINGS.md`, `SESSION_HANDO
   toward 0.5 (leader weakening; the MOVE toward balance, NOT the discrete crossing, which is a coin
   flip). Combined: oppose+exhaust 64% reversal > oppose+strengthen 58% > with-trend+exhaust 52% >
   with-trend+strengthen 49% (healthiest trend).
-- **Discipline (load-bearing):** the signed flow is NOT a direct direction predictor — apparent
-  directional lifts were trend/base-rate artifacts (Simpson's on a trending window) and died under
-  window/forward sweep + temporal OOS + detrended targets. `DEPLOY_VALIDATED=False`; never trade the
-  directional `cell_signal` map. The DIVERGENCE/FLIP read is the robust edge; static `imb_level` is
-  the detector (differential flows are not).
-- **Gate first is the starting role, not the destination (D51, Greg 2026-09-28).** The S36 lesson is that
-  UNEARNED direction claims were artifacts, not that direction can never be learned. Anything held to a
-  gate/filter role (this map, a System One decision model such as CLM-8B, a trade-execution gate) is meant
-  to learn and be promoted PER CELL on forward evidence: (1) GATE on validated signals, every call logged
-  against the outcome; (2) ADVISOR predicting direction or size beside the incumbent, scored against named
-  benchmarks, never acted on; (3) DECIDER only on the cells where it wins forward (out of sample,
-  leakage-gated, net of fee at maker and taker, paper then live), still a gate everywhere else.
+- **What S36 measured (a finding, scoped to its data, not a limit):** on thin crypto 1-min data over a 2-day
+  trending window, the apparent directional lifts of the signed flow were trend/base-rate artifacts (Simpson's
+  on a trending window) and died under window/forward sweep + temporal OOS + detrended targets, so
+  `DEPLOY_VALIDATED=False` for that `cell_signal` map as measured. The DIVERGENCE/FLIP read was the robust
+  edge there; static `imb_level` was the detector (differential flows were not).
+- **Dipole direction is OPEN research (D51, Greg 2026-09-28): no limit on what we look for.** Greg: *"I don't
+  want to limit it before we push the boundaries on the possibilities. I want to find out all sorts of new and
+  amazing things about dipole."* Explore direction, magnitude, timing and anything else the dipole can carry,
+  on NG MBO/L1 and beyond. The only gates are the ones every signal already has before MONEY rides on it
+  (leakage gate, per cell, net of fee, provisional until live). Roles are a ladder, not a ceiling: a signal or
+  model (this map, a System One model such as CLM-8B, a trade-execution gate) can start as a gate, move to
+  advisor (predicts beside the incumbent, scored) and become the decider on the cells where it wins forward.
 - **Net-of-cost (S36b, per cell):** the 64% does NOT clear a 10bps round-trip pooled; the flow gate
   adds ~+3bps/trade over blind trend-following and clears walk-forward-robustly only on specific cells
   (btc_bybit sell/buy). Direction is the easy part — the edge is SIZE-vs-FEE (the same finding Kalshi
