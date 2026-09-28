@@ -72,6 +72,31 @@ REGISTRY_PATH = 'research/kalshi/agents/frankie_native_raw_mbo_ingestion_layer_r
 BYTES_PER_TOKEN = 1.6      # conservative for dense JSON evidence: the proven packet was 151 KB = 92,439 tokens
 CHUNK_BYTES = 140_000      # about 87k tokens at that rate, leaving the rest of the context to the BOSS's answer
 MIN_SPLIT_BYTES = 1024     # a reading piece is split for regeneration down to this size (Greg, 2026-09-28: every note complete)
+
+
+def _packs(text, limit):
+    """The whole text as packs of at most limit UTF-8 bytes, cut on line boundaries (a line longer than a pack is cut
+    between characters); every byte in order, nothing dropped (Greg, 2026-09-28: multiple notes a little under the limit)."""
+    packs, current, size = [], [], 0
+    for line in text.splitlines(keepends=True):
+        data = line.encode('utf-8')
+        while len(data) > limit:
+            if current:
+                packs.append(''.join(current))
+                current, size = [], 0
+            cut = limit
+            while cut > 0 and (data[cut] & 0xC0) == 0x80:
+                cut -= 1
+            packs.append(data[:cut].decode('utf-8'))
+            data = data[cut:]
+        if size + len(data) > limit and current:
+            packs.append(''.join(current))
+            current, size = [], 0
+        current.append(data.decode('utf-8'))
+        size += len(data)
+    if current or not packs:
+        packs.append(''.join(current))
+    return packs
 POLL_SECONDS = 10
 HTTP_TIMEOUT = 80
 STAGES = ('verify', 'labels', 'engine', 'derive', 'reading', 'classroom', 'teach', 'writing', 'push', 'correction')
@@ -259,7 +284,7 @@ class Session:
 
     def note(self, text):
         with self._lock:                        # worker threads note too (the classroom fan-out); one writer at a time
-            (self.dir / 'note').write_text(text.replace('\n', ' ')[:400] + '\n', encoding='utf-8')
+            (self.dir / 'note').write_text(text.replace('\n', ' ') + '\n', encoding='utf-8')
             print(time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()), text, flush=True)
 
     def refuse(self, why):
@@ -453,7 +478,7 @@ class Session:
             self.refuse(f'Pod {self.pod_id} health not reachable: {type(error).__name__} (the Pod must be RUNNING and the '
                         'service booted; a Pod start is Greg\'s word)')
         if code != 200 or body != b'{"status":"ok"}':
-            self.refuse(f'Pod {self.pod_id} health HTTP {code}: {body[:80]!r} (booting, or not the retained service)')
+            self.refuse(f'Pod {self.pod_id} health HTTP {code}: {body!r} (booting, or not the retained service)')
         live = [self.pod_id]
         for pod in pods[1:]:                # the extra Pods: a healthy one joins the reading lane, any other is noted and left out
             try:
@@ -506,7 +531,7 @@ class Session:
             self.refuse(f'{SERVERLESS_KEY_PARAMETER} is not an API key shape ({len(key)} chars); not printed')
         status, health = self._serverless_exchange('GET', f'/v2/{endpoint}/health', None, key)
         if status != 200 or not isinstance(health, dict):
-            self.refuse(f'serverless endpoint {endpoint} health HTTP {status}: {str(health)[:120]}')
+            self.refuse(f'serverless endpoint {endpoint} health HTTP {status}: {str(health)}')
         config_hash = sha256_bytes(json.dumps(dict(endpoint_id=endpoint, served_model_name=self.served_model, context=CONTEXT,
                                                    transport_protocol='runpod_serverless_v2'), sort_keys=True).encode())
         self.serverless = dict(endpoint_id=endpoint, key=key, workers=workers, config_hash=config_hash,
@@ -514,7 +539,7 @@ class Session:
         write_json(self.work / 'engine-serverless.json', dict(schema='FRANKIE_BOX_SERVERLESS_LANE_V1', at=time.time(), endpoint_id=endpoint,
                    workers=workers, served_model_name=self.served_model, context=CONTEXT, transport_protocol='runpod_serverless_v2',
                    config_hash=config_hash, health=health, credential=SERVERLESS_KEY_PARAMETER + ' (in memory only, never written)'))
-        self.note(f'reading lane: serverless endpoint {endpoint}, up to {workers} workers; health {json.dumps(health.get("workers", health))[:120]}')
+        self.note(f'reading lane: serverless endpoint {endpoint}, up to {workers} workers; health {json.dumps(health.get("workers", health))}')
         return self.serverless
 
     @staticmethod
@@ -546,7 +571,7 @@ class Session:
             try:
                 return response.status, json.loads(data) if data else None
             except ValueError:
-                return response.status, text[:2000]
+                return response.status, text
         finally:
             connection.close()
 
@@ -609,7 +634,7 @@ class Session:
                 raise RuntimeError(f'{name}: two submissions already recorded; not submitting a third')
             status, reply = self._serverless_exchange('POST', f'/v2/{endpoint}/run', body, key)
             if status != 200 or not isinstance(reply, dict) or not reply.get('id'):
-                raise ConnectionError(f'serverless run refused: HTTP {status} {str(reply)[:200]}')
+                raise ConnectionError(f'serverless run refused: HTTP {status} {str(reply)}')
             submissions += 1
             job = dict(id=reply['id'], submitted_at=time.time(), submissions=submissions, status=reply.get('status'))
             write_json(job_path, job)
@@ -652,7 +677,7 @@ class Session:
                     write_json(outcome_path, outcome)
                     return outcome
                 if phase in ('FAILED', 'CANCELLED', 'TIMED_OUT'):
-                    outcome = dict(schema='FRANKIE_BOX_SERVERLESS_JOB_OUTCOME_V1', name=name, error=f'remote job {phase}: {str(state.get("error"))[:400]}',
+                    outcome = dict(schema='FRANKIE_BOX_SERVERLESS_JOB_OUTCOME_V1', name=name, error=f'remote job {phase}: {str(state.get("error"))}',
                                    control={k: v for k, v in state.items() if k != 'output'}, text=None, incomplete=False, model=None,
                                    runpod_job_id=job['id'], endpoint_id=endpoint, submissions=submissions)
                     write_json(outcome_path, outcome)
@@ -761,7 +786,7 @@ class Session:
                 if status == 404:
                     status, raw = https_exchange_jobs(pod, 'POST', path, body, key, HTTP_TIMEOUT)
                     if status != 202:
-                        raise ValueError(f'job create refused: HTTP {status} {raw[:200]!r}')
+                        raise ValueError(f'job create refused: HTTP {status} {raw!r}')
                     self._observe(directory, 'accepted')
                     time.sleep(POLL_SECONDS)
                     continue
@@ -812,7 +837,7 @@ class Session:
         outcome = dict(schema='FRANKIE_BOX_BOSS_JOB_OUTCOME_V1', name=name, result_status=result_status, incomplete=False)
         if result_status != 200:
             outcome.update(error=f'service HTTP {result_status}', text=None, model=None,
-                           body=result[:4000].decode('utf-8', errors='replace'))
+                           body=result.decode('utf-8', errors='replace'))
             return outcome
         try:
             outcome.update(text=final_text(result, self.served_model), model=self._model(result))
@@ -1246,7 +1271,7 @@ class Session:
             digest = sha256_bytes(section.encode('utf-8'))
             entry = ledger['values'].get(digest)
             if entry and entry.get('cycle') != self.cycle:
-                title = section.split('\n', 1)[0][:160]
+                title = section.split('\n', 1)[0]
                 out.append(f'{title}\n{{"$read": "{digest}", "cycle": "{entry["cycle"]}", "bytes": {len(section.encode("utf-8"))}}} (this section was read whole in cycle {entry["cycle"]}; its notes are carried below)\n\n')
                 replaced += 1
             else:
@@ -1308,7 +1333,7 @@ class Session:
         try:
             head_rendered, head_report = HR.render(head_text)      # raises when parse(render) != text: then the head is read verbatim
         except Exception as err:
-            head_rendered, head_report = head_text, dict(schema='HEAD_TEXT_V1', refused=f'{type(err).__name__}: {str(err)[:200]}', verbatim=True)
+            head_rendered, head_report = head_text, dict(schema='HEAD_TEXT_V1', refused=f'{type(err).__name__}: {str(err)}', verbatim=True)
             self.note(f'HEAD_TEXT_V1 refused ({type(err).__name__}); the head is read verbatim')
         parts, members = [head_rendered], [dict(name='head', bytes=len(head), rendered_bytes=len(head_rendered.encode('utf-8')),
                                                  treatment='request head: ledgered sections, then HEAD_TEXT_V1 (tables, repeated lines); parse-back checked', report=head_report)]
@@ -1818,8 +1843,8 @@ class Session:
                                     repairs=repairs, estimated_input_tokens=estimate, usage=outcome.get('usage'))
             except C.ClassroomOutput as error:
                 last = str(error)
-                self.note(f'{attempt}: {last[:200]}' + ('; asking once more' if attempt == name else ''))
-        self.refuse(f'{name}: the BOSS\'s classroom answer was unusable twice ({(last or "")[:300]}); nothing filed')
+                self.note(f'{attempt}: {last}' + ('; asking once more' if attempt == name else ''))
+        self.refuse(f'{name}: the BOSS\'s classroom answer was unusable twice ({last or ""}); nothing filed')
 
     def classroom(self):
         """Turn 1 of the Dipole classroom (Greg, 2026-09-21: option 1). The 19 component answers fan out on the reading
@@ -1882,7 +1907,7 @@ class Session:
             built = C.assemble(visible, outputs, summary['parsed'])
             report = C.validate(visible, built['ledgers'])
         except ValueError as error:
-            self.refuse(f'classroom: the assembled ledgers did not validate ({str(error)[:300]}); nothing filed; the parsed answers stay under {d}')
+            self.refuse(f'classroom: the assembled ledgers did not validate ({str(error)}); nothing filed; the parsed answers stay under {d}')
         cache.publish(built['ledgers'], C.render_markdown(built['ledgers'], built['dropped_findings']),
             dict(schema='FRANKIE_BOX_CLASSROOM_RECEIPT_V1', at=time.time(), report=report, composition=C.COMPOSITION,
                  dropped_findings=built['dropped_findings'], calls=[r['call'] for r in results] + [summary['call']],
@@ -2119,48 +2144,72 @@ class Session:
         packets = self._packets_text()
         retained = self._bedrock_retained()
         bedrock = '; the bedrock tables are retained on the box' if retained else ''
-        head = (f'You are Frankie, the BOSS: the principal session for cycle {self.cycle} of the {self.day} trading-day run, on your box '
-                f'i-035994afa8bdf66a5 (Greg Davis, 2026-09-21, option A). Request {self.request["request_id"]}, request_sha256 '
-                f'{self.request_sha256}. You have read the whole delivered evidence and your derivation (its header, layer statuses and legacy '
-                f'tables, whole{bedrock}) in parts; your merged '
-                'notes follow, then the request instruction, then the packets the session code wrote for you (the comparison packet: '
-                'your derived layers beside the frozen learned-structure files; the session receipts packet: your own provider '
-                'invocations, what you read, the wall you kept), then your derivation digest (whole when the context admits it; the '
-                'bytes included are recorded in the receipt).\n\n'
-                '----- MERGED NOTES -----\n' + notes + '\n----- REQUEST INSTRUCTION -----\n' + instruction + '\n' + packets + '----- DERIVATION DIGEST -----\n')
-        # The only limit is the service context (131,072 tokens): the digest fills what the context leaves after the
-        # notes and the instruction, from its start, and the receipt records how much of it that was.
-        room = max(0, CHUNK_BYTES - len(head.encode('utf-8')) - 2000)
+        intro = (f'You are Frankie, the BOSS: the principal session for cycle {self.cycle} of the {self.day} trading-day run, on your box '
+                 f'i-035994afa8bdf66a5 (Greg Davis, 2026-09-21, option A). Request {self.request["request_id"]}, request_sha256 '
+                 f'{self.request_sha256}. You have read the whole delivered evidence and your derivation (its header, layer statuses and legacy '
+                 f'tables, whole{bedrock}) in parts; your merged '
+                 'notes follow (whole, or one pack of them when they are longer than one call: every pack is given in its own call and '
+                 'every answer is kept), then the request instruction, then the packets the session code wrote for you (the comparison '
+                 'packet: your derived layers beside the frozen learned-structure files; the session receipts packet: your own provider '
+                 'invocations, what you read, the wall you kept), then your derivation digest\'s header and layer statuses (its legacy '
+                 'tables you read whole in the reading parts, and your notes carry them).\n\n')
+        # Greg, 2026-09-28: nothing cut. The notes go whole, in packs a little under the context limit when they are longer
+        # than one call (every pack its own call, every answer kept); the digest's header and layer statuses go in every call
+        # (its tables were read whole in the reading and the notes carry them; no partial table prefix is included); a
+        # cut-off answer (output incomplete) is regenerated from its pack in halves until it comes back whole.
         digest_total = digest_path.stat().st_size
-        with digest_path.open('rb') as source:              # only the bytes a call carries (the digest runs to GBs)
-            included = source.read(room)
-        status_end = included.find(b'\n### table ')
-        status = included if status_end < 0 else included[:status_end + 1]   # the digest header and layer statuses
-        base = head + included.decode('utf-8', errors='ignore') + ('' if len(included) == digest_total else
-               f'\n[... the digest continues; {digest_total - len(included)} more bytes did not fit this call\'s context; you read its legacy tables whole in the reading parts{bedrock} ...]') + '\n----- END -----\n\n'
-        # Greg, 2026-09-28 (remove every pass that is not necessary): the digest head goes ONCE, with the analysis; the
-        # accounting and every ledger call carry the digest's header and layer statuses and refer to the rest: the legacy
-        # tables the reading parts read whole and the merged notes above carry; the bedrock tables retained on the box.
-        brief = head + status.decode('utf-8', errors='ignore') + (
-            f'\n[... the digest tables follow ({digest_total - len(status)} more bytes): you read the legacy tables whole in the reading '
-            f'parts and your merged notes above carry them{bedrock}; the analysis call carried the digest\'s first tables ...]\n----- END -----\n\n')
-        digest_included = dict(bytes_total=digest_total, bytes_in_analysis_call=len(included), bytes_in_other_writing_calls=len(status))
+        with digest_path.open('rb') as source:
+            status = b''
+            while True:
+                block = source.read(1 << 20)
+                if not block:
+                    break
+                status += block
+                at = status.find(b'\n### table ')
+                if at >= 0:
+                    status = status[:at + 1]
+                    break
+        tail = ('\n----- REQUEST INSTRUCTION -----\n' + instruction + '\n' + packets + '----- DERIVATION DIGEST (header and layer statuses) -----\n'
+                + status.decode('utf-8', errors='replace') + f'\n[the digest tables follow ({digest_total - len(status)} more bytes): you read the legacy '
+                f'tables whole in the reading parts and your merged notes carry them{bedrock}]\n----- END -----\n\n')
+
+        def frame(pack, k, count):
+            label = '----- MERGED NOTES -----\n' if count == 1 else f'----- MERGED NOTES, PACK {k}/{count} (the other packs are given in other calls) -----\n'
+            return intro + label + pack + tail
+
+        digest_included = dict(bytes_total=digest_total, bytes_in_every_writing_call=len(status), tables='read whole in the reading parts')
+
+        def written(name, task):
+            """Every outcome for one writing task over the notes packs, each complete (regenerated from halves when cut)."""
+            room = CHUNK_BYTES - len((intro + tail + task).encode('utf-8')) - 4000        # a little under the limit
+            if room < 20000:
+                raise RuntimeError(f'{name}: the fixed parts of the prompt leave {room} bytes for notes; nothing is cut, so this stops')
+            packs = _packs(notes, room)
+            outcomes = []
+            for k, pack in enumerate(packs, 1):
+                outcomes += self._boss_complete(f'{name}' + ('' if len(packs) == 1 else f'-pack-{k:03d}'),
+                                                lambda piece, k=k: frame(piece, k, len(packs)) + task, pack)
+            return outcomes
+
         self.note('writing: the analysis')
-        analysis = self.boss('write-analysis', base + 'TASK: write your run analysis now as the instruction asks (Markdown, no limit on length; '
+        analyses = written('write-analysis', 'TASK: write your run analysis now as the instruction asks (Markdown, no limit on length; '
                              'cite the retained section hashes from your notes exactly; separate observed results from interpretation; '
                              'name failures, unavailable observations, uncertainties and next lessons; do not claim later cycles or learning '
-                             'steps have completed). WHAT THIS SESSION FILES into the response, and nothing else: this analysis text as the '
+                             'steps have completed). When your notes arrive in packs, write the analysis of THIS pack; every pack\'s analysis '
+                             'is kept, in order. WHAT THIS SESSION FILES into the response, and nothing else: this analysis text as the '
                              f'first lesson, then ONE accounting entry (ledger "{CALCULATION_ACCOUNTING_LEDGER}"), then the ten output ledgers '
                              f'({", ".join(OUTPUT_LEDGERS)}), each written in its own later call. No other entry is filed (no classroom '
                              'lesson, no run_analysis entry): never describe any other entry as written or filed; anything else you want '
                              'recorded goes into this analysis text itself. THE EXHAUSTION AND D TEACH-BACK filed earlier in this session (work/teach/, '
                              'not in this call\'s context) is appended by the session to this analysis as its own section; do not restate '
                              'it, refer to it.')
-        analysis_md = (analysis.get('text') or f'(the BOSS produced no analysis: {analysis.get("error")})') + \
-            ('\n\n[OUTPUT INCOMPLETE: the BOSS reached its output bound; kept as produced]\n' if analysis.get('incomplete') else '\n')
+        analysis = analyses[-1]
+        analysis_md = '\n\n'.join(((f'## Analysis, part {k} of {len(analyses)}\n\n' if len(analyses) > 1 else '') +
+                                    (o.get('text') or f'(the BOSS produced no analysis: {o.get("error")})'))
+                                   for k, o in enumerate(analyses, 1)) + '\n'
         analysis_md = analysis_md.rstrip('\n') + self._teach_section() + '\n'     # a section of the analysis text; response.json gains no key
         self.note('writing: the calculation accounting')
-        accounting = self.boss('write-accounting', brief + f'TASK: write the ONE accounting entry: a JSON object whose "ledger" field is '
+        accounting_entry = self._json_entries(written('write-accounting', f'TASK: write the ONE accounting entry: a JSON object whose "ledger" field is '
                                f'"{CALCULATION_ACCOUNTING_LEDGER}", with a "layers" list carrying EVERY layer of this cycle\'s pin '
                                f'({", ".join(derive["layers"])}) as {{"layer", "status": derived|compared|could_not, "where" (the derivation '
                                'file), "compared_with" (retained sections or frozen learned-structure layers and what differed), "reason"}}; '
@@ -2172,8 +2221,8 @@ class Session:
                                'derived and could not compare. THE BEDROCK (Greg, 2026-09-21): '
                                'a bedrock layer is accounted for like a pinned one, with its own status and reason, '
                                'exactly as the derivation digest files it (a could_not layer carries the measured reason, never an empty '
-                               'derived). Output JSON only.')
-        accounting_entry = self._json_entry(accounting, CALCULATION_ACCOUNTING_LEDGER)
+                               'derived). When your notes arrive in packs, file the entry from THIS pack; every pack\'s entry is kept. Output JSON only.'),
+                               CALCULATION_ACCOUNTING_LEDGER)
         accounting_entry['harness_derivation'] = {name: dict(status=v['status'], producer=v.get('producer'), reason=v.get('reason'), sha256=v['sha256'])
                                                   for name, v in derive['layers'].items()}
         for name in derive['layers']:
@@ -2185,14 +2234,14 @@ class Session:
         for name in OUTPUT_LEDGERS:
             self.note(f'writing: ledger {name}')
             description = registry.get(name)
-            outcome = self.boss(f'write-{name}', brief + f'TASK: file the append-only output ledger "{name}" of the native ingestion registry for '
+            ledgers.append(self._json_entries(written(f'write-{name}', f'TASK: file the append-only output ledger "{name}" of the native ingestion registry for '
                                 f'this cycle as ONE JSON object whose "ledger" field is "{name}"' +
-                                (f'. The registry describes it as: {json.dumps(description)[:3000]}' if description else '') +
+                                (f'. The registry describes it as: {json.dumps(description)}' if description else '') +
                                 '. Fill it from your notes, the derivation digest and the packets above only' +
                                 (' (THE SESSION RECEIPTS PACKET above is observed fact for this ledger: your own provider invocations, what you read, the wall you kept; '
                                  'cite its rows, never say no observed fact exists when the packet carries one)' if name in RECEIPT_LEDGERS else '') +
-                                '; a ledger you cannot fill is filed with its "reason", never omitted. Output JSON only.')
-            ledgers.append(self._json_entry(outcome, name))
+                                '; a ledger you cannot fill is filed with its "reason", never omitted. When your notes arrive in packs, file the '
+                                'ledger from THIS pack; every pack\'s object is kept. Output JSON only.'), name))
         contract = self.request['attachment']['feedback_contract']
         session_id = f'boss:frankie-box:i-035994afa8bdf66a5:cycle-{self.cycle}'
         engine = load_json(self.work / 'engine.json')
@@ -2237,6 +2286,37 @@ class Session:
                    classroom=classroom_receipt['report'], inputs=self._writing_inputs(), packets=[n for n in PACKETS if (self.work / n).is_file()]))
         self.note(f'written: four files, response_sha256 {response_sha256[:16]}, {len(response["lessons"])} lessons, the four classroom ledgers')
         self.docs()
+
+    def _boss_complete(self, name, make_prompt, text, depth=0):
+        """Every outcome for one BOSS call over text, each complete (Greg, 2026-09-28: have messages regenerated). An output
+        cut off at the output bound (output incomplete: the input left too little room) is regenerated from the text in two
+        halves on a line boundary, again, down to MIN_SPLIT_BYTES; every outcome is kept, in order. Each call is a durable
+        job reused when its prompt is unchanged, so a stopped session resumes without paying again."""
+        outcome = self.boss(name, make_prompt(text))
+        if not outcome.get('incomplete'):
+            return [outcome]
+        raw = text.encode('utf-8')
+        first, second = docs_module().split_range(raw, 0, len(raw))
+        if first is None or len(raw) < MIN_SPLIT_BYTES or depth >= 16:
+            self.note(f'{name}: output incomplete at {len(raw)} bytes of input; kept whole, marked')
+            return [outcome]
+        self.note(f'{name}: output incomplete; regenerating from two halves of its notes ({len(raw)} bytes)')
+        return (self._boss_complete(f'{name}-a', make_prompt, raw[:first[1]].decode('utf-8', errors='replace'), depth + 1) +
+                self._boss_complete(f'{name}-b', make_prompt, raw[second[0]:].decode('utf-8', errors='replace'), depth + 1))
+
+    def _json_entries(self, outcomes, name):
+        """One ledger entry from every outcome: a single outcome is the entry as before; several (notes packs, or halves
+        regenerated after a cut-off answer) are all kept whole: the entry carries every part's object under "parts", and
+        list fields present in the parts (e.g. "layers") are joined in order so the entry reads as one."""
+        entries = [self._json_entry(o, name) for o in outcomes]
+        if len(entries) == 1:
+            return entries[0]
+        merged = dict(ledger=name, parts=entries, parts_note=f'filed from {len(entries)} complete answers over the notes packs; every part whole')
+        for entry in entries:
+            for key, value in entry.items():
+                if isinstance(value, list):
+                    merged.setdefault(key, []).extend(value)
+        return merged
 
     @staticmethod
     def _json_entry(outcome, name):
@@ -2300,7 +2380,7 @@ class Session:
         except Exception as err:                       # an unexpected error is a refusal with a receipt, never a silent stuck phase
             import traceback
             traceback.print_exc()
-            self.refuse(f'{stage}: {type(err).__name__}: {str(err)[:300]}')
+            self.refuse(f'{stage}: {type(err).__name__}: {str(err)}')
         finally:
             preparation = getattr(self, '_preparation_workers', None)
             if preparation is not None:
