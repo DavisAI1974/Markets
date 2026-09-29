@@ -1,7 +1,8 @@
-name: Frankie box control (status or start one EC2 box)
+name: Frankie box control (status, start or stop one EC2 box)
 # Greg, 2026-09-21 04:4xZ: "Use the ingest runner as Frankie's box, start it." Starts (or only describes) one
 # EC2 instance with deploy/aws/ec2_host.py and tags it KeepRunning=true so the idle guard leaves it alone.
-# Never stops, resizes or terminates anything. Dispatch only.
+# Stop (Greg, 2026-09-29: "Stop everything including boxes") stops one instance and waits for stopped; the disks stay.
+# Never resizes or terminates anything. Dispatch only.
 on:
   workflow_dispatch:
     inputs:
@@ -14,11 +15,11 @@ on:
         required: false
         default: 'us-east-1'
       action:
-        description: 'status (read-only) or start'
+        description: 'status (read-only), start, or stop (keeps the disks)'
         required: true
         default: 'status'
         type: choice
-        options: ['status', 'start']
+        options: ['status', 'start', 'stop']
       keep_running:
         description: 'start only: tag KeepRunning=true after the start'
         required: false
@@ -52,6 +53,9 @@ jobs:
         if: inputs.action == 'start'
         continue-on-error: true
         run: python deploy/aws/ec2_host.py --instance "$INSTANCE" --region "$REGION" --hourly 2.02 start
+      - name: Stop (waits for stopped; the volumes are kept)
+        if: inputs.action == 'stop'
+        run: python deploy/aws/ec2_host.py --instance "$INSTANCE" --region "$REGION" --hourly 2.02 stop
       - name: Tag KeepRunning=true
         if: inputs.action == 'start' && inputs.keep_running == 'true'
         run: |
