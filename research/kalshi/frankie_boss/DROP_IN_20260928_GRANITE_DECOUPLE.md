@@ -32,6 +32,26 @@ Next: confirm SPEC-decouple-granite.md with Greg (r10 uses only Granite's origin
 the build plan and we rerun Frankie part in new chat"; "we'll have to rerun classroom too"), each step on Greg's go.
 ```
 
+## The two teachers are TIED TOGETHER (Greg, 2026-09-28/29: state this in the handoff)
+The two teacher specialists come from the 2026-09-22 handoffs (CODEX_HANDOFF_20260922_CHAT14.md and CHAT15.md):
+1. **The original BOSS teacher.** Its mathematics, representation supervision, targets, masks and controls are kept. Scientific research is added to it.
+2. **The classroom scientific teacher.** It covers mechanism and evidence.
+
+They are tied together; they exchange specialties:
+- The BOSS teacher hands over what it measured.
+- The scientific teacher hands back mechanism readings, challenges and proposed tests.
+- Each turn builds on the other's findings, and new discoveries from the exchange are recorded as the teachers' own findings.
+- Frankie's findings (his independent and novel ones included) reach both teachers as claims, never truth (the three rules: his decision process withheld, graded outcomes kept out of lesson material, his findings are claims).
+
+Where it lives:
+- `SPEC-joined-teachers.md`;
+- the exchange: `dipole_teacher_discussion.py` and `deploy/aws/box/frankie_box_teacher_discussion.py`;
+- the joined data both teachers read: `frankie_box_joined_teacher.py` and `dipole_joined_teacher.py` (dfe08ca7).
+
+**Current wiring:** built and tied, but switched OFF for r10 by the build-plan unwiring (77948797), because the exchange was added after the Excel plan R4.
+- `classroom_scientific_dialogue: false` in the host config, and `JOINED` is refused.
+- To turn it on: add the tied teachers to the Excel build plan, set the switch to true, and allow `JOINED`. That is Greg's call next chat.
+
 ## UNWIRED at the end of the chat (Greg: only what is in the build plan runs)
 The build plan is `research/kalshi/frankie_boss/artifacts/Frankie_BOSS_Build_Plan_R4_20260921.xlsx`. Its Granite roles:
 - C35: Frankie's engine for reading the delivered evidence and writing the four files;
