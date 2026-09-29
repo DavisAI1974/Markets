@@ -1,5 +1,13 @@
 # KALSHI TRADING — file index
 
+## 2026-09-29 — Day selection for the experiment (30 Tue/Wed trading days)
+- `research/kalshi/frankie_boss/DAY_SELECTION_20260929.md` - the proposal: every late-Sep/October Tue/Wed of 2021-2026
+  per day, the matching facts and tolerances, the proposed 30, the box facts dispatch, the staging plan, Greg's questions.
+- `research/kalshi/frankie_boss/operations/day_selection_candidates.py` + `blocks/DAY_SELECTION_CANDIDATES_20260929.json` -
+  the candidate table from committed metadata only (canonical object manifest + the NG last-trade rule); tolerances are arguments.
+- `deploy/aws/box/frankie_box_day_facts.py/.sh` - per-day facts of candidate days (records, trades, prices, per hour,
+  instrument continuity, snapshot, gaps) and the staged block manifests, on Frankie's box by presigned GETs; lock `box-facts-*`. Not run.
+
 ## 2026-09-20 — Frankie/BOSS launch day: the Pod that could not start, the replacement, the operator workflows
 
 ### The bedrock build (2026-09-21, chat 7; Greg: "All 3"; plan BR-0..BR-7 built, every task one commit with its tests; nothing has run)

@@ -1,0 +1,3080 @@
+{
+ "coverage": {
+  "approved_range": {
+   "end": "2026-08-20",
+   "start": "2021-08-20"
+  },
+  "first_partition": "20210820",
+  "last_partition": "20260819",
+  "manifest_sha256": "5739bce85d9bfbbe6c59d000bc411b424d7752b98a309725161d44e6d1d3dc2e",
+  "objects": 1565
+ },
+ "filters": {
+  "front_month": "X",
+  "holidays": [],
+  "pair_unit": "the Tuesday and Wednesday of one week, both eligible, same front contract",
+  "roll_window_business_days": [
+   -5,
+   1
+  ],
+  "weekdays": [
+   "Tue",
+   "Wed"
+  ],
+  "window": [
+   "0922",
+   "1031"
+  ]
+ },
+ "presign": "bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211004.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211005.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211006.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211011.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211012.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211013.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211018.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211019.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221003.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221004.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221005.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221010.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221011.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221012.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221017.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221018.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221019.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231002.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231003.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231004.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231009.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231010.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231011.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231016.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231017.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231018.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20240901_20241001/glbx-mdp3-20240930.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241001.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241002.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241007.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241008.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241009.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241014.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241015.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241016.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20250901_20251001/glbx-mdp3-20250929.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20250901_20251001/glbx-mdp3-20250930.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251001.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251006.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251007.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251008.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251013.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251014.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251015.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251020.mbo.dbn.zst bento-568968024170-us-east-2-an/nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251021.mbo.dbn.zst",
+ "proposed": [
+  "20211005",
+  "20211006",
+  "20211012",
+  "20211013",
+  "20211019",
+  "20221004",
+  "20221005",
+  "20221011",
+  "20221012",
+  "20221018",
+  "20221019",
+  "20231003",
+  "20231004",
+  "20231010",
+  "20231011",
+  "20231017",
+  "20231018",
+  "20241001",
+  "20241002",
+  "20241008",
+  "20241009",
+  "20241015",
+  "20241016",
+  "20250930",
+  "20251001",
+  "20251007",
+  "20251008",
+  "20251014",
+  "20251015",
+  "20251021"
+ ],
+ "proposed_count": 30,
+ "proposed_partitions": [
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211004.mbo.dbn.zst",
+   "partition": "20211004"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211005.mbo.dbn.zst",
+   "partition": "20211005"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211006.mbo.dbn.zst",
+   "partition": "20211006"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211011.mbo.dbn.zst",
+   "partition": "20211011"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211012.mbo.dbn.zst",
+   "partition": "20211012"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211013.mbo.dbn.zst",
+   "partition": "20211013"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211018.mbo.dbn.zst",
+   "partition": "20211018"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211019.mbo.dbn.zst",
+   "partition": "20211019"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221003.mbo.dbn.zst",
+   "partition": "20221003"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221004.mbo.dbn.zst",
+   "partition": "20221004"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221005.mbo.dbn.zst",
+   "partition": "20221005"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221010.mbo.dbn.zst",
+   "partition": "20221010"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221011.mbo.dbn.zst",
+   "partition": "20221011"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221012.mbo.dbn.zst",
+   "partition": "20221012"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221017.mbo.dbn.zst",
+   "partition": "20221017"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221018.mbo.dbn.zst",
+   "partition": "20221018"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221019.mbo.dbn.zst",
+   "partition": "20221019"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231002.mbo.dbn.zst",
+   "partition": "20231002"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231003.mbo.dbn.zst",
+   "partition": "20231003"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231004.mbo.dbn.zst",
+   "partition": "20231004"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231009.mbo.dbn.zst",
+   "partition": "20231009"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231010.mbo.dbn.zst",
+   "partition": "20231010"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231011.mbo.dbn.zst",
+   "partition": "20231011"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231016.mbo.dbn.zst",
+   "partition": "20231016"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231017.mbo.dbn.zst",
+   "partition": "20231017"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231018.mbo.dbn.zst",
+   "partition": "20231018"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20240901_20241001/glbx-mdp3-20240930.mbo.dbn.zst",
+   "partition": "20240930"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241001.mbo.dbn.zst",
+   "partition": "20241001"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241002.mbo.dbn.zst",
+   "partition": "20241002"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241007.mbo.dbn.zst",
+   "partition": "20241007"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241008.mbo.dbn.zst",
+   "partition": "20241008"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241009.mbo.dbn.zst",
+   "partition": "20241009"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241014.mbo.dbn.zst",
+   "partition": "20241014"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241015.mbo.dbn.zst",
+   "partition": "20241015"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241016.mbo.dbn.zst",
+   "partition": "20241016"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20250901_20251001/glbx-mdp3-20250929.mbo.dbn.zst",
+   "partition": "20250929"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20250901_20251001/glbx-mdp3-20250930.mbo.dbn.zst",
+   "partition": "20250930"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251001.mbo.dbn.zst",
+   "partition": "20251001"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251006.mbo.dbn.zst",
+   "partition": "20251006"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251007.mbo.dbn.zst",
+   "partition": "20251007"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251008.mbo.dbn.zst",
+   "partition": "20251008"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251013.mbo.dbn.zst",
+   "partition": "20251013"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251014.mbo.dbn.zst",
+   "partition": "20251014"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251015.mbo.dbn.zst",
+   "partition": "20251015"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251020.mbo.dbn.zst",
+   "partition": "20251020"
+  },
+  {
+   "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251021.mbo.dbn.zst",
+   "partition": "20251021"
+  }
+ ],
+ "rows": [
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 4,
+   "day": "20210922",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -4 business days from NGV21 last trade 2021-09-28 (window -5..+1)",
+    "front contract NGV21 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV21",
+   "front_last_trade": "2021-09-28",
+   "head_bytes": 12459020,
+   "head_bytes_vs_day1": 0.344,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": -4,
+    "contract": "NGV21",
+    "date": "2021-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 17092095,
+     "key": "nymex/ng_mbo_5y_v0/native/20210901_20211001/glbx-mdp3-20210921.mbo.dbn.zst",
+     "partition": "20210921",
+     "role": "tail",
+     "sha256": "c51e73bf54dd41f42919979789d3c9ec9304eabad14dcdaa97ca774f55898689"
+    },
+    {
+     "bytes": 12459020,
+     "key": "nymex/ng_mbo_5y_v0/native/20210901_20211001/glbx-mdp3-20210922.mbo.dbn.zst",
+     "partition": "20210922",
+     "role": "head",
+     "sha256": "9cdaf41cf2f65dbbcecf8132ea1a42ecfd2ad68129cd714be55b4f73099af07f"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 17092095,
+   "week_pair_eligible": false,
+   "week_partner": "20210921",
+   "weekday": "Wed",
+   "year": 2021
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 0,
+   "day": "20210928",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: +0 business days from NGV21 last trade 2021-09-28 (window -5..+1)",
+    "front contract NGV21 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV21",
+   "front_last_trade": "2021-09-28",
+   "head_bytes": 51542823,
+   "head_bytes_vs_day1": 1.424,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": 0,
+    "contract": "NGV21",
+    "date": "2021-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 23542089,
+     "key": "nymex/ng_mbo_5y_v0/native/20210901_20211001/glbx-mdp3-20210927.mbo.dbn.zst",
+     "partition": "20210927",
+     "role": "tail",
+     "sha256": "d23c9d7fcc88539e277a235364eb5e7f921bdf4d953c9ed3a592a0c8c6b25ba2"
+    },
+    {
+     "bytes": 51542823,
+     "key": "nymex/ng_mbo_5y_v0/native/20210901_20211001/glbx-mdp3-20210928.mbo.dbn.zst",
+     "partition": "20210928",
+     "role": "head",
+     "sha256": "dffffe268ea76d69c3256df10ce15cad2c033bbdd5e1e07c8058c36b4506b745"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 23542089,
+   "week_pair_eligible": false,
+   "week_partner": "20210929",
+   "weekday": "Tue",
+   "year": 2021
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 20,
+   "day": "20210929",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: +1 business days from NGV21 last trade 2021-09-28 (window -5..+1)"
+   ],
+   "front_contract": "NGX21",
+   "front_last_trade": "2021-10-27",
+   "head_bytes": 31251732,
+   "head_bytes_vs_day1": 0.863,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": 1,
+    "contract": "NGV21",
+    "date": "2021-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 51542823,
+     "key": "nymex/ng_mbo_5y_v0/native/20210901_20211001/glbx-mdp3-20210928.mbo.dbn.zst",
+     "partition": "20210928",
+     "role": "tail",
+     "sha256": "dffffe268ea76d69c3256df10ce15cad2c033bbdd5e1e07c8058c36b4506b745"
+    },
+    {
+     "bytes": 31251732,
+     "key": "nymex/ng_mbo_5y_v0/native/20210901_20211001/glbx-mdp3-20210929.mbo.dbn.zst",
+     "partition": "20210929",
+     "role": "head",
+     "sha256": "7aaec0981aea0c02ca3c820ae2776b7696086f6ee6303019499ecc581e86f2a6"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 51542823,
+   "week_pair_eligible": false,
+   "week_partner": "20210928",
+   "weekday": "Wed",
+   "year": 2021
+  },
+  {
+   "already_in": 1,
+   "business_days_to_front_last_trade": 16,
+   "day": "20211005",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX21",
+   "front_last_trade": "2021-10-27",
+   "head_bytes": 36192430,
+   "head_bytes_vs_day1": 1.0,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 5,
+    "contract": "NGV21",
+    "date": "2021-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 34300424,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211004.mbo.dbn.zst",
+     "partition": "20211004",
+     "role": "tail",
+     "sha256": "8ed47cc0a68cf40cae9fde45e158142978076e60d3f9fc7cf940196babfddc0a"
+    },
+    {
+     "bytes": 36192430,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211005.mbo.dbn.zst",
+     "partition": "20211005",
+     "role": "head",
+     "sha256": "a4a12f9578da762412884e7f559a123361eaa3a153bec0db59dfb3ba6224a874"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 34300424,
+   "week_pair_eligible": true,
+   "week_partner": "20211006",
+   "weekday": "Tue",
+   "year": 2021
+  },
+  {
+   "already_in": 2,
+   "business_days_to_front_last_trade": 15,
+   "day": "20211006",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX21",
+   "front_last_trade": "2021-10-27",
+   "head_bytes": 39566060,
+   "head_bytes_vs_day1": 1.093,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 6,
+    "contract": "NGV21",
+    "date": "2021-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 36192430,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211005.mbo.dbn.zst",
+     "partition": "20211005",
+     "role": "tail",
+     "sha256": "a4a12f9578da762412884e7f559a123361eaa3a153bec0db59dfb3ba6224a874"
+    },
+    {
+     "bytes": 39566060,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211006.mbo.dbn.zst",
+     "partition": "20211006",
+     "role": "head",
+     "sha256": "a6766a1c92eb6cf224fd2c71c070090bf85b5e2453c5dc322a2050c2ea4fbc44"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 36192430,
+   "week_pair_eligible": true,
+   "week_partner": "20211005",
+   "weekday": "Wed",
+   "year": 2021
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 11,
+   "day": "20211012",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX21",
+   "front_last_trade": "2021-10-27",
+   "head_bytes": 25309137,
+   "head_bytes_vs_day1": 0.699,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 10,
+    "contract": "NGV21",
+    "date": "2021-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 24934018,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211011.mbo.dbn.zst",
+     "partition": "20211011",
+     "role": "tail",
+     "sha256": "1a488783ac48130148f9da5c16696078fb01363e5ee849d11456d66832d576a8"
+    },
+    {
+     "bytes": 25309137,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211012.mbo.dbn.zst",
+     "partition": "20211012",
+     "role": "head",
+     "sha256": "cd7948d1609b74d4c5dc783e235983ce46bba2266c859e96b21501cc99c77257"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 24934018,
+   "week_pair_eligible": true,
+   "week_partner": "20211013",
+   "weekday": "Tue",
+   "year": 2021
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 10,
+   "day": "20211013",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX21",
+   "front_last_trade": "2021-10-27",
+   "head_bytes": 23294893,
+   "head_bytes_vs_day1": 0.644,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -10,
+    "contract": "NGX21",
+    "date": "2021-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 25309137,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211012.mbo.dbn.zst",
+     "partition": "20211012",
+     "role": "tail",
+     "sha256": "cd7948d1609b74d4c5dc783e235983ce46bba2266c859e96b21501cc99c77257"
+    },
+    {
+     "bytes": 23294893,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211013.mbo.dbn.zst",
+     "partition": "20211013",
+     "role": "head",
+     "sha256": "36fa3f16e58e14c94251ad1e5999477981b0d861007e2580ea78265918ce57b9"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 25309137,
+   "week_pair_eligible": true,
+   "week_partner": "20211012",
+   "weekday": "Wed",
+   "year": 2021
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 6,
+   "day": "20211019",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX21",
+   "front_last_trade": "2021-10-27",
+   "head_bytes": 21910551,
+   "head_bytes_vs_day1": 0.605,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -6,
+    "contract": "NGX21",
+    "date": "2021-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 25084280,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211018.mbo.dbn.zst",
+     "partition": "20211018",
+     "role": "tail",
+     "sha256": "b9df4e99b48d06123d3527f343bfb38e5f23259fa1f160754d4fe8ceddda0f80"
+    },
+    {
+     "bytes": 21910551,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211019.mbo.dbn.zst",
+     "partition": "20211019",
+     "role": "head",
+     "sha256": "5196d9ea2570410bb82f64e6c418df907fe7cdec0702e4c43843ba8ba9bd904e"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 25084280,
+   "week_pair_eligible": false,
+   "week_partner": "20211020",
+   "weekday": "Tue",
+   "year": 2021
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 5,
+   "day": "20211020",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -5 business days from NGX21 last trade 2021-10-27 (window -5..+1)"
+   ],
+   "front_contract": "NGX21",
+   "front_last_trade": "2021-10-27",
+   "head_bytes": 22735364,
+   "head_bytes_vs_day1": 0.628,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -5,
+    "contract": "NGX21",
+    "date": "2021-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 21910551,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211019.mbo.dbn.zst",
+     "partition": "20211019",
+     "role": "tail",
+     "sha256": "5196d9ea2570410bb82f64e6c418df907fe7cdec0702e4c43843ba8ba9bd904e"
+    },
+    {
+     "bytes": 22735364,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211020.mbo.dbn.zst",
+     "partition": "20211020",
+     "role": "head",
+     "sha256": "bb2114aa03869eb40e18b98559372473f867c683ae53e372de185ee43ed7c394"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 21910551,
+   "week_pair_eligible": false,
+   "week_partner": "20211019",
+   "weekday": "Wed",
+   "year": 2021
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 1,
+   "day": "20211026",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -1 business days from NGX21 last trade 2021-10-27 (window -5..+1)"
+   ],
+   "front_contract": "NGX21",
+   "front_last_trade": "2021-10-27",
+   "head_bytes": 24918228,
+   "head_bytes_vs_day1": 0.688,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -1,
+    "contract": "NGX21",
+    "date": "2021-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 20631481,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211025.mbo.dbn.zst",
+     "partition": "20211025",
+     "role": "tail",
+     "sha256": "3662fca1f281d6c26d529d9ff0273a58d0bb0582d8567906d24a66db5357f46f"
+    },
+    {
+     "bytes": 24918228,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211026.mbo.dbn.zst",
+     "partition": "20211026",
+     "role": "head",
+     "sha256": "bf126d627b43f983855f375ce5914cc8976ee9caa002d0e13d31eab30cf45c81"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 20631481,
+   "week_pair_eligible": false,
+   "week_partner": "20211027",
+   "weekday": "Tue",
+   "year": 2021
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 0,
+   "day": "20211027",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: +0 business days from NGX21 last trade 2021-10-27 (window -5..+1)"
+   ],
+   "front_contract": "NGX21",
+   "front_last_trade": "2021-10-27",
+   "head_bytes": 27371146,
+   "head_bytes_vs_day1": 0.756,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 0,
+    "contract": "NGX21",
+    "date": "2021-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 24918228,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211026.mbo.dbn.zst",
+     "partition": "20211026",
+     "role": "tail",
+     "sha256": "bf126d627b43f983855f375ce5914cc8976ee9caa002d0e13d31eab30cf45c81"
+    },
+    {
+     "bytes": 27371146,
+     "key": "nymex/ng_mbo_5y_v0/native/20211001_20211101/glbx-mdp3-20211027.mbo.dbn.zst",
+     "partition": "20211027",
+     "role": "head",
+     "sha256": "ee5208731978fbaa8b1555ca445a259bf3eabf661282ed0bb19479e22afcb86d"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 24918228,
+   "week_pair_eligible": false,
+   "week_partner": "20211026",
+   "weekday": "Wed",
+   "year": 2021
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 1,
+   "day": "20220927",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -1 business days from NGV22 last trade 2022-09-28 (window -5..+1)",
+    "front contract NGV22 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV22",
+   "front_last_trade": "2022-09-28",
+   "head_bytes": 23430627,
+   "head_bytes_vs_day1": 0.647,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": -1,
+    "contract": "NGV22",
+    "date": "2022-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 22607228,
+     "key": "nymex/ng_mbo_5y_v0/native/20220901_20221001/glbx-mdp3-20220926.mbo.dbn.zst",
+     "partition": "20220926",
+     "role": "tail",
+     "sha256": "e0624f3dcd870d9b5006239864088acf78bfcefd15e391410899af16b71ab011"
+    },
+    {
+     "bytes": 23430627,
+     "key": "nymex/ng_mbo_5y_v0/native/20220901_20221001/glbx-mdp3-20220927.mbo.dbn.zst",
+     "partition": "20220927",
+     "role": "head",
+     "sha256": "b8b22af29572b191919fb61e86667674171d3eedb28f46710aa109dd7aefff7d"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 22607228,
+   "week_pair_eligible": false,
+   "week_partner": "20220928",
+   "weekday": "Tue",
+   "year": 2022
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 0,
+   "day": "20220928",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: +0 business days from NGV22 last trade 2022-09-28 (window -5..+1)",
+    "front contract NGV22 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV22",
+   "front_last_trade": "2022-09-28",
+   "head_bytes": 25202848,
+   "head_bytes_vs_day1": 0.696,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": 0,
+    "contract": "NGV22",
+    "date": "2022-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 23430627,
+     "key": "nymex/ng_mbo_5y_v0/native/20220901_20221001/glbx-mdp3-20220927.mbo.dbn.zst",
+     "partition": "20220927",
+     "role": "tail",
+     "sha256": "b8b22af29572b191919fb61e86667674171d3eedb28f46710aa109dd7aefff7d"
+    },
+    {
+     "bytes": 25202848,
+     "key": "nymex/ng_mbo_5y_v0/native/20220901_20221001/glbx-mdp3-20220928.mbo.dbn.zst",
+     "partition": "20220928",
+     "role": "head",
+     "sha256": "d7ec64d5e6f09c9facc1fe29870f84b1fad408c0945550866e5ed49672e66f40"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 23430627,
+   "week_pair_eligible": false,
+   "week_partner": "20220927",
+   "weekday": "Wed",
+   "year": 2022
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 17,
+   "day": "20221004",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX22",
+   "front_last_trade": "2022-10-27",
+   "head_bytes": 28802266,
+   "head_bytes_vs_day1": 0.796,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 4,
+    "contract": "NGV22",
+    "date": "2022-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 25375981,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221003.mbo.dbn.zst",
+     "partition": "20221003",
+     "role": "tail",
+     "sha256": "75b83085cd5b801c9ce1ba180990e96e4cb944bb74f83d60db8c89d107a8b742"
+    },
+    {
+     "bytes": 28802266,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221004.mbo.dbn.zst",
+     "partition": "20221004",
+     "role": "head",
+     "sha256": "e9ca8adb0e15df1e8af6f1784385775b8fc2c12be5775aec7b1aab1f1a737750"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 25375981,
+   "week_pair_eligible": true,
+   "week_partner": "20221005",
+   "weekday": "Tue",
+   "year": 2022
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 16,
+   "day": "20221005",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX22",
+   "front_last_trade": "2022-10-27",
+   "head_bytes": 23163109,
+   "head_bytes_vs_day1": 0.64,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 5,
+    "contract": "NGV22",
+    "date": "2022-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 28802266,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221004.mbo.dbn.zst",
+     "partition": "20221004",
+     "role": "tail",
+     "sha256": "e9ca8adb0e15df1e8af6f1784385775b8fc2c12be5775aec7b1aab1f1a737750"
+    },
+    {
+     "bytes": 23163109,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221005.mbo.dbn.zst",
+     "partition": "20221005",
+     "role": "head",
+     "sha256": "7b2c6a8dc82bab50fe6e650fda5259a820ce52d24423b15b34de0fb8397c2bc6"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 28802266,
+   "week_pair_eligible": true,
+   "week_partner": "20221004",
+   "weekday": "Wed",
+   "year": 2022
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 12,
+   "day": "20221011",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX22",
+   "front_last_trade": "2022-10-27",
+   "head_bytes": 22761904,
+   "head_bytes_vs_day1": 0.629,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 9,
+    "contract": "NGV22",
+    "date": "2022-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 21770634,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221010.mbo.dbn.zst",
+     "partition": "20221010",
+     "role": "tail",
+     "sha256": "ff844ddd8da14cb916c05f5f4cab244e9142ac89738455a8a294235c8d1ee80e"
+    },
+    {
+     "bytes": 22761904,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221011.mbo.dbn.zst",
+     "partition": "20221011",
+     "role": "head",
+     "sha256": "85dbbe8f64dcdb8e50d4483387c8d0a196d6bfffd10e2cab82f0565a86619a2d"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 21770634,
+   "week_pair_eligible": true,
+   "week_partner": "20221012",
+   "weekday": "Tue",
+   "year": 2022
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 11,
+   "day": "20221012",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX22",
+   "front_last_trade": "2022-10-27",
+   "head_bytes": 21225960,
+   "head_bytes_vs_day1": 0.586,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 10,
+    "contract": "NGV22",
+    "date": "2022-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": 22761904,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221011.mbo.dbn.zst",
+     "partition": "20221011",
+     "role": "tail",
+     "sha256": "85dbbe8f64dcdb8e50d4483387c8d0a196d6bfffd10e2cab82f0565a86619a2d"
+    },
+    {
+     "bytes": 21225960,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221012.mbo.dbn.zst",
+     "partition": "20221012",
+     "role": "head",
+     "sha256": "cfb246be789fa1d66b0cb893af89de9fe26bd9ded6feb99370c0ef8abb2e44e6"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 22761904,
+   "week_pair_eligible": true,
+   "week_partner": "20221011",
+   "weekday": "Wed",
+   "year": 2022
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 7,
+   "day": "20221018",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX22",
+   "front_last_trade": "2022-10-27",
+   "head_bytes": 24542624,
+   "head_bytes_vs_day1": 0.678,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -7,
+    "contract": "NGX22",
+    "date": "2022-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 21933619,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221017.mbo.dbn.zst",
+     "partition": "20221017",
+     "role": "tail",
+     "sha256": "8b84adbc2635f321ee75bb4a319131e80b4a6f705493b04be6fb7709400fa870"
+    },
+    {
+     "bytes": 24542624,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221018.mbo.dbn.zst",
+     "partition": "20221018",
+     "role": "head",
+     "sha256": "34b08cb997a77618248fb551c281ca607926c27bb927dd75ce0b4617602fa118"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 21933619,
+   "week_pair_eligible": true,
+   "week_partner": "20221019",
+   "weekday": "Tue",
+   "year": 2022
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 6,
+   "day": "20221019",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX22",
+   "front_last_trade": "2022-10-27",
+   "head_bytes": 20410005,
+   "head_bytes_vs_day1": 0.564,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -6,
+    "contract": "NGX22",
+    "date": "2022-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 24542624,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221018.mbo.dbn.zst",
+     "partition": "20221018",
+     "role": "tail",
+     "sha256": "34b08cb997a77618248fb551c281ca607926c27bb927dd75ce0b4617602fa118"
+    },
+    {
+     "bytes": 20410005,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221019.mbo.dbn.zst",
+     "partition": "20221019",
+     "role": "head",
+     "sha256": "86565f518529da856baa738f9f241e8403615778dc52ef6899a3bd5ddf6b39a6"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 24542624,
+   "week_pair_eligible": true,
+   "week_partner": "20221018",
+   "weekday": "Wed",
+   "year": 2022
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 2,
+   "day": "20221025",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -2 business days from NGX22 last trade 2022-10-27 (window -5..+1)"
+   ],
+   "front_contract": "NGX22",
+   "front_last_trade": "2022-10-27",
+   "head_bytes": 6030792,
+   "head_bytes_vs_day1": 0.167,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -2,
+    "contract": "NGX22",
+    "date": "2022-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 14923931,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221024.mbo.dbn.zst",
+     "partition": "20221024",
+     "role": "tail",
+     "sha256": "4dacbb3c870d984f011ad792c2e9de4bf7ddc12f9b6338947a5e2f0bb6c927f8"
+    },
+    {
+     "bytes": 6030792,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221025.mbo.dbn.zst",
+     "partition": "20221025",
+     "role": "head",
+     "sha256": "b09c569726f578812498ed676b6e2cbc6d693c0eaade7d1c71e41025e693a8dd"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 14923931,
+   "week_pair_eligible": false,
+   "week_partner": "20221026",
+   "weekday": "Tue",
+   "year": 2022
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 1,
+   "day": "20221026",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -1 business days from NGX22 last trade 2022-10-27 (window -5..+1)"
+   ],
+   "front_contract": "NGX22",
+   "front_last_trade": "2022-10-27",
+   "head_bytes": 21393493,
+   "head_bytes_vs_day1": 0.591,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -1,
+    "contract": "NGX22",
+    "date": "2022-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 6030792,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221025.mbo.dbn.zst",
+     "partition": "20221025",
+     "role": "tail",
+     "sha256": "b09c569726f578812498ed676b6e2cbc6d693c0eaade7d1c71e41025e693a8dd"
+    },
+    {
+     "bytes": 21393493,
+     "key": "nymex/ng_mbo_5y_v0/native/20221001_20221101/glbx-mdp3-20221026.mbo.dbn.zst",
+     "partition": "20221026",
+     "role": "head",
+     "sha256": "536c76fbc957a596c012490c1c5cffa4d1f230e3a1776051c2a9bd4d92978827"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 6030792,
+   "week_pair_eligible": false,
+   "week_partner": "20221025",
+   "weekday": "Wed",
+   "year": 2022
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 1,
+   "day": "20230926",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -1 business days from NGV23 last trade 2023-09-27 (window -5..+1)",
+    "front contract NGV23 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV23",
+   "front_last_trade": "2023-09-27",
+   "head_bytes": 15527135,
+   "head_bytes_vs_day1": 0.429,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": -1,
+    "contract": "NGV23",
+    "date": "2023-09-27"
+   },
+   "partitions": [
+    {
+     "bytes": 12442762,
+     "key": "nymex/ng_mbo_5y_v0/native/20230901_20231001/glbx-mdp3-20230925.mbo.dbn.zst",
+     "partition": "20230925",
+     "role": "tail",
+     "sha256": "92970afb7912f8d5c9810028652df127d705ab07d1727a151f6ab7433c31a141"
+    },
+    {
+     "bytes": 15527135,
+     "key": "nymex/ng_mbo_5y_v0/native/20230901_20231001/glbx-mdp3-20230926.mbo.dbn.zst",
+     "partition": "20230926",
+     "role": "head",
+     "sha256": "3d64870b750b23b31046979ac0637d7da41afc4dde382944999c9fcbe8e07a5d"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 12442762,
+   "week_pair_eligible": false,
+   "week_partner": "20230927",
+   "weekday": "Tue",
+   "year": 2023
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 0,
+   "day": "20230927",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: +0 business days from NGV23 last trade 2023-09-27 (window -5..+1)",
+    "front contract NGV23 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV23",
+   "front_last_trade": "2023-09-27",
+   "head_bytes": 14657243,
+   "head_bytes_vs_day1": 0.405,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": 0,
+    "contract": "NGV23",
+    "date": "2023-09-27"
+   },
+   "partitions": [
+    {
+     "bytes": 15527135,
+     "key": "nymex/ng_mbo_5y_v0/native/20230901_20231001/glbx-mdp3-20230926.mbo.dbn.zst",
+     "partition": "20230926",
+     "role": "tail",
+     "sha256": "3d64870b750b23b31046979ac0637d7da41afc4dde382944999c9fcbe8e07a5d"
+    },
+    {
+     "bytes": 14657243,
+     "key": "nymex/ng_mbo_5y_v0/native/20230901_20231001/glbx-mdp3-20230927.mbo.dbn.zst",
+     "partition": "20230927",
+     "role": "head",
+     "sha256": "677d4cd627d1dfe7656c8d54ae192dab26e0ed40efe7e059ad7efa65bb715e9a"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 15527135,
+   "week_pair_eligible": false,
+   "week_partner": "20230926",
+   "weekday": "Wed",
+   "year": 2023
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 18,
+   "day": "20231003",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX23",
+   "front_last_trade": "2023-10-27",
+   "head_bytes": 14701450,
+   "head_bytes_vs_day1": 0.406,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 4,
+    "contract": "NGV23",
+    "date": "2023-09-27"
+   },
+   "partitions": [
+    {
+     "bytes": 13590194,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231002.mbo.dbn.zst",
+     "partition": "20231002",
+     "role": "tail",
+     "sha256": "bff6f27b43b8b90f3b7d86d2248c423e0d5962968b3a612b46d8376141a15e8c"
+    },
+    {
+     "bytes": 14701450,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231003.mbo.dbn.zst",
+     "partition": "20231003",
+     "role": "head",
+     "sha256": "b1240d9ca4abe5189d6e066c610530c069fd3602b82590f9b520a512b4366313"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 13590194,
+   "week_pair_eligible": true,
+   "week_partner": "20231004",
+   "weekday": "Tue",
+   "year": 2023
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 17,
+   "day": "20231004",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX23",
+   "front_last_trade": "2023-10-27",
+   "head_bytes": 16033680,
+   "head_bytes_vs_day1": 0.443,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 5,
+    "contract": "NGV23",
+    "date": "2023-09-27"
+   },
+   "partitions": [
+    {
+     "bytes": 14701450,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231003.mbo.dbn.zst",
+     "partition": "20231003",
+     "role": "tail",
+     "sha256": "b1240d9ca4abe5189d6e066c610530c069fd3602b82590f9b520a512b4366313"
+    },
+    {
+     "bytes": 16033680,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231004.mbo.dbn.zst",
+     "partition": "20231004",
+     "role": "head",
+     "sha256": "92479c9824acbe01472160255e47f734d3b223b2fa0a39d0dd30b82f5c659156"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 14701450,
+   "week_pair_eligible": true,
+   "week_partner": "20231003",
+   "weekday": "Wed",
+   "year": 2023
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 13,
+   "day": "20231010",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX23",
+   "front_last_trade": "2023-10-27",
+   "head_bytes": 16234972,
+   "head_bytes_vs_day1": 0.449,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 9,
+    "contract": "NGV23",
+    "date": "2023-09-27"
+   },
+   "partitions": [
+    {
+     "bytes": 18621395,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231009.mbo.dbn.zst",
+     "partition": "20231009",
+     "role": "tail",
+     "sha256": "b15567af5000833fdc8df4408ddbe19487999669319c2439af04278892629fe4"
+    },
+    {
+     "bytes": 16234972,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231010.mbo.dbn.zst",
+     "partition": "20231010",
+     "role": "head",
+     "sha256": "54e126ade66a37a09cae32057fc6058c21389b7a79f3ce4020e2dad91f7224a6"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 18621395,
+   "week_pair_eligible": true,
+   "week_partner": "20231011",
+   "weekday": "Tue",
+   "year": 2023
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 12,
+   "day": "20231011",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX23",
+   "front_last_trade": "2023-10-27",
+   "head_bytes": 20324989,
+   "head_bytes_vs_day1": 0.562,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 10,
+    "contract": "NGV23",
+    "date": "2023-09-27"
+   },
+   "partitions": [
+    {
+     "bytes": 16234972,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231010.mbo.dbn.zst",
+     "partition": "20231010",
+     "role": "tail",
+     "sha256": "54e126ade66a37a09cae32057fc6058c21389b7a79f3ce4020e2dad91f7224a6"
+    },
+    {
+     "bytes": 20324989,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231011.mbo.dbn.zst",
+     "partition": "20231011",
+     "role": "head",
+     "sha256": "a6f9e51c0ac903d7582db4ca5111084b2f03b2826593e2c9031a1af3ab3c7912"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 16234972,
+   "week_pair_eligible": true,
+   "week_partner": "20231010",
+   "weekday": "Wed",
+   "year": 2023
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 8,
+   "day": "20231017",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX23",
+   "front_last_trade": "2023-10-27",
+   "head_bytes": 14484156,
+   "head_bytes_vs_day1": 0.4,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -8,
+    "contract": "NGX23",
+    "date": "2023-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 15401414,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231016.mbo.dbn.zst",
+     "partition": "20231016",
+     "role": "tail",
+     "sha256": "b2585afd3659ff057be783b9dc043fe7241b2c2e5ebb9eac092f9304e32063fa"
+    },
+    {
+     "bytes": 14484156,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231017.mbo.dbn.zst",
+     "partition": "20231017",
+     "role": "head",
+     "sha256": "189f85d015131362092a5f1e5cf023d27c3b89adecbb54752a1dff5b3b87221b"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 15401414,
+   "week_pair_eligible": true,
+   "week_partner": "20231018",
+   "weekday": "Tue",
+   "year": 2023
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 7,
+   "day": "20231018",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX23",
+   "front_last_trade": "2023-10-27",
+   "head_bytes": 12867663,
+   "head_bytes_vs_day1": 0.356,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -7,
+    "contract": "NGX23",
+    "date": "2023-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 14484156,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231017.mbo.dbn.zst",
+     "partition": "20231017",
+     "role": "tail",
+     "sha256": "189f85d015131362092a5f1e5cf023d27c3b89adecbb54752a1dff5b3b87221b"
+    },
+    {
+     "bytes": 12867663,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231018.mbo.dbn.zst",
+     "partition": "20231018",
+     "role": "head",
+     "sha256": "bc6cf8dff8662d540e36f1b73579bf97c8eb597cd9fdc8f83723dd6d35d68d7f"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 14484156,
+   "week_pair_eligible": true,
+   "week_partner": "20231017",
+   "weekday": "Wed",
+   "year": 2023
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 3,
+   "day": "20231024",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -3 business days from NGX23 last trade 2023-10-27 (window -5..+1)"
+   ],
+   "front_contract": "NGX23",
+   "front_last_trade": "2023-10-27",
+   "head_bytes": 5969278,
+   "head_bytes_vs_day1": 0.165,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -3,
+    "contract": "NGX23",
+    "date": "2023-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 11950893,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231023.mbo.dbn.zst",
+     "partition": "20231023",
+     "role": "tail",
+     "sha256": "2ef12303b20edc76b5ab3dc88ea97a55417e0184a60958802e800df5ddd9eb09"
+    },
+    {
+     "bytes": 5969278,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231024.mbo.dbn.zst",
+     "partition": "20231024",
+     "role": "head",
+     "sha256": "b0f03601b67e14a7640b85ad7c0039b8d7509ca5a55bb215eed6a89ef6ce3233"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 11950893,
+   "week_pair_eligible": false,
+   "week_partner": "20231025",
+   "weekday": "Tue",
+   "year": 2023
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 2,
+   "day": "20231025",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -2 business days from NGX23 last trade 2023-10-27 (window -5..+1)"
+   ],
+   "front_contract": "NGX23",
+   "front_last_trade": "2023-10-27",
+   "head_bytes": 12276270,
+   "head_bytes_vs_day1": 0.339,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -2,
+    "contract": "NGX23",
+    "date": "2023-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 5969278,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231024.mbo.dbn.zst",
+     "partition": "20231024",
+     "role": "tail",
+     "sha256": "b0f03601b67e14a7640b85ad7c0039b8d7509ca5a55bb215eed6a89ef6ce3233"
+    },
+    {
+     "bytes": 12276270,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231025.mbo.dbn.zst",
+     "partition": "20231025",
+     "role": "head",
+     "sha256": "211b2654e30e9598ab47ccd2636b026cca5da1b3ea27116c88f31d5c34779a50"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 5969278,
+   "week_pair_eligible": false,
+   "week_partner": "20231024",
+   "weekday": "Wed",
+   "year": 2023
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 20,
+   "day": "20231031",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "front contract NGZ23 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGZ23",
+   "front_last_trade": "2023-11-28",
+   "head_bytes": 24796357,
+   "head_bytes_vs_day1": 0.685,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 2,
+    "contract": "NGX23",
+    "date": "2023-10-27"
+   },
+   "partitions": [
+    {
+     "bytes": 14888651,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231030.mbo.dbn.zst",
+     "partition": "20231030",
+     "role": "tail",
+     "sha256": "026f7aac8f7749f836ee4835ea87761aaa3d50a93e9f7e1aa0550bd18a3f8963"
+    },
+    {
+     "bytes": 24796357,
+     "key": "nymex/ng_mbo_5y_v0/native/20231001_20231101/glbx-mdp3-20231031.mbo.dbn.zst",
+     "partition": "20231031",
+     "role": "head",
+     "sha256": "39489304e706add9f52c66ec6fe385c7bb4c9ed1e9358e378e96244e3135987c"
+    }
+   ],
+   "role": "discovery",
+   "tail_partition_bytes": 14888651,
+   "week_pair_eligible": false,
+   "week_partner": "20231101",
+   "weekday": "Tue",
+   "year": 2023
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 2,
+   "day": "20240924",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -2 business days from NGV24 last trade 2024-09-26 (window -5..+1)",
+    "front contract NGV24 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV24",
+   "front_last_trade": "2024-09-26",
+   "head_bytes": 19053772,
+   "head_bytes_vs_day1": 0.526,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": -2,
+    "contract": "NGV24",
+    "date": "2024-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 22903088,
+     "key": "nymex/ng_mbo_5y_v0/native/20240901_20241001/glbx-mdp3-20240923.mbo.dbn.zst",
+     "partition": "20240923",
+     "role": "tail",
+     "sha256": "4d9447ba68f17f7d8e663e34a440f6f2f4d4c63e9b9839b76d6333c1c0359d6d"
+    },
+    {
+     "bytes": 19053772,
+     "key": "nymex/ng_mbo_5y_v0/native/20240901_20241001/glbx-mdp3-20240924.mbo.dbn.zst",
+     "partition": "20240924",
+     "role": "head",
+     "sha256": "d727fefa356bf1fdf39c22d0740f58595421cf38d756bdac5212688a9fbd4cb4"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 22903088,
+   "week_pair_eligible": false,
+   "week_partner": "20240925",
+   "weekday": "Tue",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 1,
+   "day": "20240925",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -1 business days from NGV24 last trade 2024-09-26 (window -5..+1)",
+    "front contract NGV24 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV24",
+   "front_last_trade": "2024-09-26",
+   "head_bytes": 18948486,
+   "head_bytes_vs_day1": 0.524,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": -1,
+    "contract": "NGV24",
+    "date": "2024-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 19053772,
+     "key": "nymex/ng_mbo_5y_v0/native/20240901_20241001/glbx-mdp3-20240924.mbo.dbn.zst",
+     "partition": "20240924",
+     "role": "tail",
+     "sha256": "d727fefa356bf1fdf39c22d0740f58595421cf38d756bdac5212688a9fbd4cb4"
+    },
+    {
+     "bytes": 18948486,
+     "key": "nymex/ng_mbo_5y_v0/native/20240901_20241001/glbx-mdp3-20240925.mbo.dbn.zst",
+     "partition": "20240925",
+     "role": "head",
+     "sha256": "c65cf149eaeaece001c5a07d78b75b4698b72e89e83269b5836a0621922969c4"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 19053772,
+   "week_pair_eligible": false,
+   "week_partner": "20240924",
+   "weekday": "Wed",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 20,
+   "day": "20241001",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX24",
+   "front_last_trade": "2024-10-29",
+   "head_bytes": 20509128,
+   "head_bytes_vs_day1": 0.567,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 3,
+    "contract": "NGV24",
+    "date": "2024-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 20360768,
+     "key": "nymex/ng_mbo_5y_v0/native/20240901_20241001/glbx-mdp3-20240930.mbo.dbn.zst",
+     "partition": "20240930",
+     "role": "tail",
+     "sha256": "fc6eca336d69175ee3afb4d74737810aa97c2dc4c423754b1e858932a284a772"
+    },
+    {
+     "bytes": 20509128,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241001.mbo.dbn.zst",
+     "partition": "20241001",
+     "role": "head",
+     "sha256": "813972f620afc8cc5a0f388224c44983ed616c4f084f3217c851a103d92485b2"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 20360768,
+   "week_pair_eligible": true,
+   "week_partner": "20241002",
+   "weekday": "Tue",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 19,
+   "day": "20241002",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX24",
+   "front_last_trade": "2024-10-29",
+   "head_bytes": 18569552,
+   "head_bytes_vs_day1": 0.513,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 4,
+    "contract": "NGV24",
+    "date": "2024-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 20509128,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241001.mbo.dbn.zst",
+     "partition": "20241001",
+     "role": "tail",
+     "sha256": "813972f620afc8cc5a0f388224c44983ed616c4f084f3217c851a103d92485b2"
+    },
+    {
+     "bytes": 18569552,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241002.mbo.dbn.zst",
+     "partition": "20241002",
+     "role": "head",
+     "sha256": "461faa58b7215287dcb9b6f0c4b7532645f0f0b224d01d54027521b0c23c0126"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 20509128,
+   "week_pair_eligible": true,
+   "week_partner": "20241001",
+   "weekday": "Wed",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 15,
+   "day": "20241008",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX24",
+   "front_last_trade": "2024-10-29",
+   "head_bytes": 14620557,
+   "head_bytes_vs_day1": 0.404,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 8,
+    "contract": "NGV24",
+    "date": "2024-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 17224899,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241007.mbo.dbn.zst",
+     "partition": "20241007",
+     "role": "tail",
+     "sha256": "2c5fdb71ab8fece7485166f80d6d25db601b266edabd3ef9d7d63a6a4fffdf01"
+    },
+    {
+     "bytes": 14620557,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241008.mbo.dbn.zst",
+     "partition": "20241008",
+     "role": "head",
+     "sha256": "64e139951c8953a11f293de51bf4e91272cebe15232dc3754a3d34ef24174de9"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 17224899,
+   "week_pair_eligible": true,
+   "week_partner": "20241009",
+   "weekday": "Tue",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 14,
+   "day": "20241009",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX24",
+   "front_last_trade": "2024-10-29",
+   "head_bytes": 16871730,
+   "head_bytes_vs_day1": 0.466,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 9,
+    "contract": "NGV24",
+    "date": "2024-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 14620557,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241008.mbo.dbn.zst",
+     "partition": "20241008",
+     "role": "tail",
+     "sha256": "64e139951c8953a11f293de51bf4e91272cebe15232dc3754a3d34ef24174de9"
+    },
+    {
+     "bytes": 16871730,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241009.mbo.dbn.zst",
+     "partition": "20241009",
+     "role": "head",
+     "sha256": "b83ed3d61c232277b900c78f49764caff65c8daaebf8c763bf84ae38e6d20323"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 14620557,
+   "week_pair_eligible": true,
+   "week_partner": "20241008",
+   "weekday": "Wed",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 10,
+   "day": "20241015",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX24",
+   "front_last_trade": "2024-10-29",
+   "head_bytes": 16554619,
+   "head_bytes_vs_day1": 0.457,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -10,
+    "contract": "NGX24",
+    "date": "2024-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 13167179,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241014.mbo.dbn.zst",
+     "partition": "20241014",
+     "role": "tail",
+     "sha256": "c2b064ba8c44a9767b8c9d800b96a3a98bb9d78faca0b2cb344092c4b59b8903"
+    },
+    {
+     "bytes": 16554619,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241015.mbo.dbn.zst",
+     "partition": "20241015",
+     "role": "head",
+     "sha256": "0bd78f2ee83fa78aec217e7be6da09239eac00e64e90862acffccc4ab3e9edc2"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 13167179,
+   "week_pair_eligible": true,
+   "week_partner": "20241016",
+   "weekday": "Tue",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 9,
+   "day": "20241016",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX24",
+   "front_last_trade": "2024-10-29",
+   "head_bytes": 16653944,
+   "head_bytes_vs_day1": 0.46,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -9,
+    "contract": "NGX24",
+    "date": "2024-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 16554619,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241015.mbo.dbn.zst",
+     "partition": "20241015",
+     "role": "tail",
+     "sha256": "0bd78f2ee83fa78aec217e7be6da09239eac00e64e90862acffccc4ab3e9edc2"
+    },
+    {
+     "bytes": 16653944,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241016.mbo.dbn.zst",
+     "partition": "20241016",
+     "role": "head",
+     "sha256": "59eb56e32eb221268f854db4e67cdfb95de73d7f31b65a48a4224ea3d71149ba"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 16554619,
+   "week_pair_eligible": true,
+   "week_partner": "20241015",
+   "weekday": "Wed",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 5,
+   "day": "20241022",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -5 business days from NGX24 last trade 2024-10-29 (window -5..+1)"
+   ],
+   "front_contract": "NGX24",
+   "front_last_trade": "2024-10-29",
+   "head_bytes": 22749632,
+   "head_bytes_vs_day1": 0.629,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -5,
+    "contract": "NGX24",
+    "date": "2024-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 17464032,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241021.mbo.dbn.zst",
+     "partition": "20241021",
+     "role": "tail",
+     "sha256": "83ff9f458a2726e99774ea1251926e83337340c88feb42cfc2e05877cc81cc55"
+    },
+    {
+     "bytes": 22749632,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241022.mbo.dbn.zst",
+     "partition": "20241022",
+     "role": "head",
+     "sha256": "15b0795612b375c378b733a90383b7445689f69554dc8b2b3fad56105b60d13a"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 17464032,
+   "week_pair_eligible": false,
+   "week_partner": "20241023",
+   "weekday": "Tue",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 4,
+   "day": "20241023",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -4 business days from NGX24 last trade 2024-10-29 (window -5..+1)"
+   ],
+   "front_contract": "NGX24",
+   "front_last_trade": "2024-10-29",
+   "head_bytes": 18717892,
+   "head_bytes_vs_day1": 0.517,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -4,
+    "contract": "NGX24",
+    "date": "2024-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 22749632,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241022.mbo.dbn.zst",
+     "partition": "20241022",
+     "role": "tail",
+     "sha256": "15b0795612b375c378b733a90383b7445689f69554dc8b2b3fad56105b60d13a"
+    },
+    {
+     "bytes": 18717892,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241023.mbo.dbn.zst",
+     "partition": "20241023",
+     "role": "head",
+     "sha256": "5ff09f83a769aeda76b47def63d5faeffb6eee2afb12b884884627568b7c3b01"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 22749632,
+   "week_pair_eligible": false,
+   "week_partner": "20241022",
+   "weekday": "Wed",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 0,
+   "day": "20241029",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: +0 business days from NGX24 last trade 2024-10-29 (window -5..+1)"
+   ],
+   "front_contract": "NGX24",
+   "front_last_trade": "2024-10-29",
+   "head_bytes": 17614310,
+   "head_bytes_vs_day1": 0.487,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 0,
+    "contract": "NGX24",
+    "date": "2024-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 24923992,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241028.mbo.dbn.zst",
+     "partition": "20241028",
+     "role": "tail",
+     "sha256": "15f29f91879f685fd6e0a783d9124e6633dcd366253f4839e948bf4f99174bdc"
+    },
+    {
+     "bytes": 17614310,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241029.mbo.dbn.zst",
+     "partition": "20241029",
+     "role": "head",
+     "sha256": "151059c336b6967087b718669c43ad63333defa51c381144a771fbf1cf6beb2b"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 24923992,
+   "week_pair_eligible": false,
+   "week_partner": "20241030",
+   "weekday": "Tue",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 20,
+   "day": "20241030",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: +1 business days from NGX24 last trade 2024-10-29 (window -5..+1)",
+    "front contract NGZ24 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGZ24",
+   "front_last_trade": "2024-11-27",
+   "head_bytes": 17728225,
+   "head_bytes_vs_day1": 0.49,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 1,
+    "contract": "NGX24",
+    "date": "2024-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 17614310,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241029.mbo.dbn.zst",
+     "partition": "20241029",
+     "role": "tail",
+     "sha256": "151059c336b6967087b718669c43ad63333defa51c381144a771fbf1cf6beb2b"
+    },
+    {
+     "bytes": 17728225,
+     "key": "nymex/ng_mbo_5y_v0/native/20241001_20241101/glbx-mdp3-20241030.mbo.dbn.zst",
+     "partition": "20241030",
+     "role": "head",
+     "sha256": "af88f54f96a1ee5cf218a100ac783458c76857107cec76b8c5ec1df9a5b4d222"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 17614310,
+   "week_pair_eligible": false,
+   "week_partner": "20241029",
+   "weekday": "Wed",
+   "year": 2024
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 3,
+   "day": "20250923",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -3 business days from NGV25 last trade 2025-09-26 (window -5..+1)",
+    "front contract NGV25 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV25",
+   "front_last_trade": "2025-09-26",
+   "head_bytes": 8397915,
+   "head_bytes_vs_day1": 0.232,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": -3,
+    "contract": "NGV25",
+    "date": "2025-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 15707887,
+     "key": "nymex/ng_mbo_5y_v0/native/20250901_20251001/glbx-mdp3-20250922.mbo.dbn.zst",
+     "partition": "20250922",
+     "role": "tail",
+     "sha256": "88b7103c15cfdb5498482eb085ee3d921bc3d2e8950596fdc347317e8e45e43b"
+    },
+    {
+     "bytes": 8397915,
+     "key": "nymex/ng_mbo_5y_v0/native/20250901_20251001/glbx-mdp3-20250923.mbo.dbn.zst",
+     "partition": "20250923",
+     "role": "head",
+     "sha256": "9b052a1d98bff7a6a75ed6f29d01a2cc1bc325fc26f8306a94bfb57645968475"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 15707887,
+   "week_pair_eligible": false,
+   "week_partner": "20250924",
+   "weekday": "Tue",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 2,
+   "day": "20250924",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "roll window: -2 business days from NGV25 last trade 2025-09-26 (window -5..+1)",
+    "front contract NGV25 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV25",
+   "front_last_trade": "2025-09-26",
+   "head_bytes": 6173344,
+   "head_bytes_vs_day1": 0.171,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": -2,
+    "contract": "NGV25",
+    "date": "2025-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 8397915,
+     "key": "nymex/ng_mbo_5y_v0/native/20250901_20251001/glbx-mdp3-20250923.mbo.dbn.zst",
+     "partition": "20250923",
+     "role": "tail",
+     "sha256": "9b052a1d98bff7a6a75ed6f29d01a2cc1bc325fc26f8306a94bfb57645968475"
+    },
+    {
+     "bytes": 6173344,
+     "key": "nymex/ng_mbo_5y_v0/native/20250901_20251001/glbx-mdp3-20250924.mbo.dbn.zst",
+     "partition": "20250924",
+     "role": "head",
+     "sha256": "394c861d6c57ece39a77a2b737b4bf7c54824594a4de9215a6b73517f7582b33"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 8397915,
+   "week_pair_eligible": false,
+   "week_partner": "20250923",
+   "weekday": "Wed",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 21,
+   "day": "20250930",
+   "eligible": true,
+   "event": null,
+   "excluded_because": [],
+   "front_contract": "NGX25",
+   "front_last_trade": "2025-10-29",
+   "head_bytes": 19045003,
+   "head_bytes_vs_day1": 0.526,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": 2,
+    "contract": "NGV25",
+    "date": "2025-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 19141301,
+     "key": "nymex/ng_mbo_5y_v0/native/20250901_20251001/glbx-mdp3-20250929.mbo.dbn.zst",
+     "partition": "20250929",
+     "role": "tail",
+     "sha256": "aa6eb170960f597171fee1b8ec62150b35b4dd28fc0919c5ea29d5f8a012b509"
+    },
+    {
+     "bytes": 19045003,
+     "key": "nymex/ng_mbo_5y_v0/native/20250901_20251001/glbx-mdp3-20250930.mbo.dbn.zst",
+     "partition": "20250930",
+     "role": "head",
+     "sha256": "fe6faeb233f97d545f088505c14128329ac8344dc333ec488eece2b926a843ea"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 19141301,
+   "week_pair_eligible": true,
+   "week_partner": "20251001",
+   "weekday": "Tue",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 20,
+   "day": "20251001",
+   "eligible": true,
+   "event": "US federal shutdown: CFTC COT publication suspended 2025-10-01..11-12 (committed, CLAUDE.md S97)",
+   "excluded_because": [],
+   "front_contract": "NGX25",
+   "front_last_trade": "2025-10-29",
+   "head_bytes": 25685127,
+   "head_bytes_vs_day1": 0.71,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 3,
+    "contract": "NGV25",
+    "date": "2025-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 19045003,
+     "key": "nymex/ng_mbo_5y_v0/native/20250901_20251001/glbx-mdp3-20250930.mbo.dbn.zst",
+     "partition": "20250930",
+     "role": "tail",
+     "sha256": "fe6faeb233f97d545f088505c14128329ac8344dc333ec488eece2b926a843ea"
+    },
+    {
+     "bytes": 25685127,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251001.mbo.dbn.zst",
+     "partition": "20251001",
+     "role": "head",
+     "sha256": "421727d7b68051fb96a168cf7cdb3050d9c4379d82334158d692bbbe78603336"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 19045003,
+   "week_pair_eligible": true,
+   "week_partner": "20250930",
+   "weekday": "Wed",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 16,
+   "day": "20251007",
+   "eligible": true,
+   "event": "US federal shutdown: CFTC COT publication suspended 2025-10-01..11-12 (committed, CLAUDE.md S97)",
+   "excluded_because": [],
+   "front_contract": "NGX25",
+   "front_last_trade": "2025-10-29",
+   "head_bytes": 24241781,
+   "head_bytes_vs_day1": 0.67,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 7,
+    "contract": "NGV25",
+    "date": "2025-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 21667445,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251006.mbo.dbn.zst",
+     "partition": "20251006",
+     "role": "tail",
+     "sha256": "6d5778fd109c3af94c9d806666ca93d038227f87df77c1957447ada22d94a6a7"
+    },
+    {
+     "bytes": 24241781,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251007.mbo.dbn.zst",
+     "partition": "20251007",
+     "role": "head",
+     "sha256": "144fc913ab508851e488b0b2fde5bf5ef0b5acc007b9e3411172635de325ae7f"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 21667445,
+   "week_pair_eligible": true,
+   "week_partner": "20251008",
+   "weekday": "Tue",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 15,
+   "day": "20251008",
+   "eligible": true,
+   "event": "US federal shutdown: CFTC COT publication suspended 2025-10-01..11-12 (committed, CLAUDE.md S97)",
+   "excluded_because": [],
+   "front_contract": "NGX25",
+   "front_last_trade": "2025-10-29",
+   "head_bytes": 26681679,
+   "head_bytes_vs_day1": 0.737,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 8,
+    "contract": "NGV25",
+    "date": "2025-09-26"
+   },
+   "partitions": [
+    {
+     "bytes": 24241781,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251007.mbo.dbn.zst",
+     "partition": "20251007",
+     "role": "tail",
+     "sha256": "144fc913ab508851e488b0b2fde5bf5ef0b5acc007b9e3411172635de325ae7f"
+    },
+    {
+     "bytes": 26681679,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251008.mbo.dbn.zst",
+     "partition": "20251008",
+     "role": "head",
+     "sha256": "dff98730f9ff8850bc427047aaa5e3687666a249f820d1e98ca67be5fd314986"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 24241781,
+   "week_pair_eligible": true,
+   "week_partner": "20251007",
+   "weekday": "Wed",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 11,
+   "day": "20251014",
+   "eligible": true,
+   "event": "US federal shutdown: CFTC COT publication suspended 2025-10-01..11-12 (committed, CLAUDE.md S97)",
+   "excluded_because": [],
+   "front_contract": "NGX25",
+   "front_last_trade": "2025-10-29",
+   "head_bytes": 19550137,
+   "head_bytes_vs_day1": 0.54,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -11,
+    "contract": "NGX25",
+    "date": "2025-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 17671247,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251013.mbo.dbn.zst",
+     "partition": "20251013",
+     "role": "tail",
+     "sha256": "66082e376940ef1a3b343469121b4e1cff4245d3dbd058e1b38ac83379cf7677"
+    },
+    {
+     "bytes": 19550137,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251014.mbo.dbn.zst",
+     "partition": "20251014",
+     "role": "head",
+     "sha256": "6ed042fade78c77df2bd2e4641dcf42d391b46caedc6d7cb34bef13fee105ba9"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 17671247,
+   "week_pair_eligible": true,
+   "week_partner": "20251015",
+   "weekday": "Tue",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 10,
+   "day": "20251015",
+   "eligible": true,
+   "event": "US federal shutdown: CFTC COT publication suspended 2025-10-01..11-12 (committed, CLAUDE.md S97)",
+   "excluded_because": [],
+   "front_contract": "NGX25",
+   "front_last_trade": "2025-10-29",
+   "head_bytes": 17766902,
+   "head_bytes_vs_day1": 0.491,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -10,
+    "contract": "NGX25",
+    "date": "2025-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 19550137,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251014.mbo.dbn.zst",
+     "partition": "20251014",
+     "role": "tail",
+     "sha256": "6ed042fade78c77df2bd2e4641dcf42d391b46caedc6d7cb34bef13fee105ba9"
+    },
+    {
+     "bytes": 17766902,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251015.mbo.dbn.zst",
+     "partition": "20251015",
+     "role": "head",
+     "sha256": "ff0e8a6c98977994f1e6682f60070eb5a81f8a564fff8238b06f61818fd4ae29"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 19550137,
+   "week_pair_eligible": true,
+   "week_partner": "20251014",
+   "weekday": "Wed",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 6,
+   "day": "20251021",
+   "eligible": true,
+   "event": "US federal shutdown: CFTC COT publication suspended 2025-10-01..11-12 (committed, CLAUDE.md S97)",
+   "excluded_because": [],
+   "front_contract": "NGX25",
+   "front_last_trade": "2025-10-29",
+   "head_bytes": 32271843,
+   "head_bytes_vs_day1": 0.892,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -6,
+    "contract": "NGX25",
+    "date": "2025-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 29534696,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251020.mbo.dbn.zst",
+     "partition": "20251020",
+     "role": "tail",
+     "sha256": "31eef85dbae750b87e4f934bec98c69ab4fff50a1db642f31268e8b84a831bbd"
+    },
+    {
+     "bytes": 32271843,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251021.mbo.dbn.zst",
+     "partition": "20251021",
+     "role": "head",
+     "sha256": "d33e80ec38bbb24c56197e74ddd77a64722831fb24db1c8a1a276ee2dd546a89"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 29534696,
+   "week_pair_eligible": false,
+   "week_partner": "20251022",
+   "weekday": "Tue",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 5,
+   "day": "20251022",
+   "eligible": false,
+   "event": "US federal shutdown: CFTC COT publication suspended 2025-10-01..11-12 (committed, CLAUDE.md S97)",
+   "excluded_because": [
+    "roll window: -5 business days from NGX25 last trade 2025-10-29 (window -5..+1)"
+   ],
+   "front_contract": "NGX25",
+   "front_last_trade": "2025-10-29",
+   "head_bytes": 31938757,
+   "head_bytes_vs_day1": 0.882,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -5,
+    "contract": "NGX25",
+    "date": "2025-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 32271843,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251021.mbo.dbn.zst",
+     "partition": "20251021",
+     "role": "tail",
+     "sha256": "d33e80ec38bbb24c56197e74ddd77a64722831fb24db1c8a1a276ee2dd546a89"
+    },
+    {
+     "bytes": 31938757,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251022.mbo.dbn.zst",
+     "partition": "20251022",
+     "role": "head",
+     "sha256": "16aa516e539c2a69c1e61a1b1cf974be7d37caec6e250fd9203389e2ea970f76"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 32271843,
+   "week_pair_eligible": false,
+   "week_partner": "20251021",
+   "weekday": "Wed",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 1,
+   "day": "20251028",
+   "eligible": false,
+   "event": "US federal shutdown: CFTC COT publication suspended 2025-10-01..11-12 (committed, CLAUDE.md S97)",
+   "excluded_because": [
+    "roll window: -1 business days from NGX25 last trade 2025-10-29 (window -5..+1)"
+   ],
+   "front_contract": "NGX25",
+   "front_last_trade": "2025-10-29",
+   "head_bytes": 28071472,
+   "head_bytes_vs_day1": 0.776,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -1,
+    "contract": "NGX25",
+    "date": "2025-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 28044328,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251027.mbo.dbn.zst",
+     "partition": "20251027",
+     "role": "tail",
+     "sha256": "8c97ff200fed2e23076816683aba7bd7fd6b56f60508c5e67417376af4142e70"
+    },
+    {
+     "bytes": 28071472,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251028.mbo.dbn.zst",
+     "partition": "20251028",
+     "role": "head",
+     "sha256": "de8239eadf17a1869839acfe1355e32c4302463b5469790234adae82ce30942a"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 28044328,
+   "week_pair_eligible": false,
+   "week_partner": "20251029",
+   "weekday": "Tue",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 0,
+   "day": "20251029",
+   "eligible": false,
+   "event": "US federal shutdown: CFTC COT publication suspended 2025-10-01..11-12 (committed, CLAUDE.md S97)",
+   "excluded_because": [
+    "roll window: +0 business days from NGX25 last trade 2025-10-29 (window -5..+1)"
+   ],
+   "front_contract": "NGX25",
+   "front_last_trade": "2025-10-29",
+   "head_bytes": 23506353,
+   "head_bytes_vs_day1": 0.649,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 0,
+    "contract": "NGX25",
+    "date": "2025-10-29"
+   },
+   "partitions": [
+    {
+     "bytes": 28071472,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251028.mbo.dbn.zst",
+     "partition": "20251028",
+     "role": "tail",
+     "sha256": "de8239eadf17a1869839acfe1355e32c4302463b5469790234adae82ce30942a"
+    },
+    {
+     "bytes": 23506353,
+     "key": "nymex/ng_mbo_5y_v0/native/20251001_20251101/glbx-mdp3-20251029.mbo.dbn.zst",
+     "partition": "20251029",
+     "role": "head",
+     "sha256": "31c256ce5ad72ef805200ad8cffaa240b83b87e5e222bf29a5732dcf330a2b10"
+    }
+   ],
+   "role": "confirmation",
+   "tail_partition_bytes": 28071472,
+   "week_pair_eligible": false,
+   "week_partner": "20251028",
+   "weekday": "Wed",
+   "year": 2025
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 4,
+   "day": "20260922",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20260921 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20260922 not on S3 (the pull covers 20210820..20260819)",
+    "roll window: -4 business days from NGV26 last trade 2026-09-28 (window -5..+1)",
+    "front contract NGV26 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV26",
+   "front_last_trade": "2026-09-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": -4,
+    "contract": "NGV26",
+    "date": "2026-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20260921",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20260922",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20260923",
+   "weekday": "Tue",
+   "year": 2026
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 3,
+   "day": "20260923",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20260922 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20260923 not on S3 (the pull covers 20210820..20260819)",
+    "roll window: -3 business days from NGV26 last trade 2026-09-28 (window -5..+1)",
+    "front contract NGV26 is not the X month (days 1-2 trade the X contract)"
+   ],
+   "front_contract": "NGV26",
+   "front_last_trade": "2026-09-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": -3,
+    "contract": "NGV26",
+    "date": "2026-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20260922",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20260923",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20260922",
+   "weekday": "Wed",
+   "year": 2026
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 21,
+   "day": "20260929",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20260928 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20260929 not on S3 (the pull covers 20210820..20260819)",
+    "roll window: +1 business days from NGV26 last trade 2026-09-28 (window -5..+1)"
+   ],
+   "front_contract": "NGX26",
+   "front_last_trade": "2026-10-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": 1,
+    "contract": "NGV26",
+    "date": "2026-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20260928",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20260929",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20260930",
+   "weekday": "Tue",
+   "year": 2026
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 20,
+   "day": "20260930",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20260929 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20260930 not on S3 (the pull covers 20210820..20260819)"
+   ],
+   "front_contract": "NGX26",
+   "front_last_trade": "2026-10-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "late September",
+   "nearest_last_trade": {
+    "business_days_from": 2,
+    "contract": "NGV26",
+    "date": "2026-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20260929",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20260930",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20260929",
+   "weekday": "Wed",
+   "year": 2026
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 16,
+   "day": "20261006",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20261005 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20261006 not on S3 (the pull covers 20210820..20260819)"
+   ],
+   "front_contract": "NGX26",
+   "front_last_trade": "2026-10-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 6,
+    "contract": "NGV26",
+    "date": "2026-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261005",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261006",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20261007",
+   "weekday": "Tue",
+   "year": 2026
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 15,
+   "day": "20261007",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20261006 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20261007 not on S3 (the pull covers 20210820..20260819)"
+   ],
+   "front_contract": "NGX26",
+   "front_last_trade": "2026-10-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 7,
+    "contract": "NGV26",
+    "date": "2026-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261006",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261007",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20261006",
+   "weekday": "Wed",
+   "year": 2026
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 11,
+   "day": "20261013",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20261012 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20261013 not on S3 (the pull covers 20210820..20260819)"
+   ],
+   "front_contract": "NGX26",
+   "front_last_trade": "2026-10-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 11,
+    "contract": "NGV26",
+    "date": "2026-09-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261012",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261013",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20261014",
+   "weekday": "Tue",
+   "year": 2026
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 10,
+   "day": "20261014",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20261013 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20261014 not on S3 (the pull covers 20210820..20260819)"
+   ],
+   "front_contract": "NGX26",
+   "front_last_trade": "2026-10-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -10,
+    "contract": "NGX26",
+    "date": "2026-10-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261013",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261014",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20261013",
+   "weekday": "Wed",
+   "year": 2026
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 6,
+   "day": "20261020",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20261019 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20261020 not on S3 (the pull covers 20210820..20260819)"
+   ],
+   "front_contract": "NGX26",
+   "front_last_trade": "2026-10-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -6,
+    "contract": "NGX26",
+    "date": "2026-10-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261019",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261020",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20261021",
+   "weekday": "Tue",
+   "year": 2026
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 5,
+   "day": "20261021",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20261020 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20261021 not on S3 (the pull covers 20210820..20260819)",
+    "roll window: -5 business days from NGX26 last trade 2026-10-28 (window -5..+1)"
+   ],
+   "front_contract": "NGX26",
+   "front_last_trade": "2026-10-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -5,
+    "contract": "NGX26",
+    "date": "2026-10-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261020",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261021",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20261020",
+   "weekday": "Wed",
+   "year": 2026
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 1,
+   "day": "20261027",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20261026 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20261027 not on S3 (the pull covers 20210820..20260819)",
+    "roll window: -1 business days from NGX26 last trade 2026-10-28 (window -5..+1)"
+   ],
+   "front_contract": "NGX26",
+   "front_last_trade": "2026-10-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": -1,
+    "contract": "NGX26",
+    "date": "2026-10-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261026",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261027",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20261028",
+   "weekday": "Tue",
+   "year": 2026
+  },
+  {
+   "already_in": null,
+   "business_days_to_front_last_trade": 0,
+   "day": "20261028",
+   "eligible": false,
+   "event": null,
+   "excluded_because": [
+    "partition 20261027 not on S3 (the pull covers 20210820..20260819)",
+    "partition 20261028 not on S3 (the pull covers 20210820..20260819)",
+    "roll window: +0 business days from NGX26 last trade 2026-10-28 (window -5..+1)"
+   ],
+   "front_contract": "NGX26",
+   "front_last_trade": "2026-10-28",
+   "head_bytes": null,
+   "head_bytes_vs_day1": null,
+   "month_window": "October",
+   "nearest_last_trade": {
+    "business_days_from": 0,
+    "contract": "NGX26",
+    "date": "2026-10-28"
+   },
+   "partitions": [
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261027",
+     "role": "tail",
+     "sha256": null
+    },
+    {
+     "bytes": null,
+     "key": null,
+     "partition": "20261028",
+     "role": "head",
+     "sha256": null
+    }
+   ],
+   "role": "outside the assigned years",
+   "tail_partition_bytes": null,
+   "week_pair_eligible": false,
+   "week_partner": "20261027",
+   "weekday": "Wed",
+   "year": 2026
+  }
+ ],
+ "schema": "FRANKIE_DAY_SELECTION_CANDIDATES_V1",
+ "source": "committed canonical object manifest + CME NG last-trade rule; no raw bytes read"
+}

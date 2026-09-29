@@ -39,13 +39,16 @@ def load_env_file(path):
             os.environ[m.group(1)] = m.group(2).strip()
 
 
-def count_records(raw, day):
+def count_records(raw, day, halt_utc_hour=HALT_UTC_HOUR):
+    # halt_utc_hour: 21 under EDT (the default; every October day), 22 under EST (early November to mid March). A caller
+    # staging a day outside EDT passes 17:00 America/New_York in UTC (frankie_box_day_facts.py does), and the block
+    # manifest's halt_utc_hour must be that same hour for every partition of the block.
     import io
     from contextlib import ExitStack
     import databento_dbn as dbn
     import zstandard as zstd
     from mbo_source import _decompressed
-    halt = int(dt.datetime(int(day[:4]), int(day[4:6]), int(day[6:]), HALT_UTC_HOUR, tzinfo=dt.timezone.utc).timestamp() * 1e9)
+    halt = int(dt.datetime(int(day[:4]), int(day[4:6]), int(day[6:]), halt_utc_hour, tzinfo=dt.timezone.utc).timestamp() * 1e9)
     count=before=groups=0
     first=last=None
     instruments=set();flags=bytearray();metadata=None
