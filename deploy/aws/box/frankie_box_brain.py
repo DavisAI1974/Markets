@@ -21,6 +21,27 @@ import time
 from pathlib import Path
 
 SCHEMA = 'FRANKIE_BOX_BRAIN_ENTRY_V1'
+# Entries are keyed by DAY and cycle (Greg, 2026-09-29: "Sun and Monday cycles should be separate even though Sunday's
+# hours were included in Monday run"): <brain>/<YYYYMMDD>-cycle-<NN>/. The older key <brain>/cycle-<NN>/ (no day; the
+# 20211003 Sunday entry on the box) is still read, labelled day unknown. A cycle reads EVERY entry written so far, from
+# every day and every cycle, except its own day+cycle (Greg: the cycles replay the day and restart earlier, so his
+# reasoning may carry later data; only the actual run data ahead of time is walled, and that is the cycle being run).
+ENTRY_GLOBS = ('cycle-*', '[0-9]' * 8 + '-cycle-*')
+
+
+def entry_name(day, cycle):
+    """<YYYYMMDD>-cycle-<NN> with a day, the older cycle-<NN> without one."""
+    if day is None:
+        return f'cycle-{cycle}'
+    if not re.fullmatch('[0-9]{8}', str(day)):
+        raise ValueError('brain entry day must be YYYYMMDD')
+    return f'{day}-cycle-{cycle}'
+
+
+def parse_entry_name(name):
+    """(day or None, cycle) of an entry directory name, or None when the name is not an entry."""
+    match = re.fullmatch(r'(?:([0-9]{8})-)?cycle-([0-9]+)', name)
+    return (match.group(1), match.group(2)) if match else None
 ACCOUNTING_NAME = 'accounting-and-ledgers.md'
 
 
@@ -134,7 +155,7 @@ def capture_base(brain, request_identity):
         return snapshot
     history = _require_real_path(brain / 'history')
     history.mkdir(parents=True, exist_ok=True)
-    candidates = list(brain.glob('cycle-*/MANIFEST.json')) + list(history.glob('*/MANIFEST.json'))
+    candidates = [m for pattern in ENTRY_GLOBS for m in brain.glob(pattern + '/MANIFEST.json')] + list(history.glob('*/MANIFEST.json'))
     frozen = brain / FROZEN_DIR / 'MANIFEST.json'
     if frozen.is_file():
         candidates.append(frozen)
@@ -148,7 +169,7 @@ def capture_base(brain, request_identity):
             shutil.copytree(path.parent, destination)
         _checked_entry(destination, digest)
         entries[digest] = dict(path=str(destination.relative_to(brain)), sha256=digest,
-                               cycle=manifest.get('cycle'), source_schema=manifest.get('schema'))
+                               cycle=manifest.get('cycle'), day=manifest.get('day'), source_schema=manifest.get('schema'))
     value = dict(schema='FRANKIE_ACCUMULATED_KNOWLEDGE_BASE_V1', request_identity=request_identity,
                  entries=list(entries.values()), rule='all previously stored intact knowledge; immutable for this request')
     snapshot.parent.mkdir(parents=True, exist_ok=True)
@@ -167,7 +188,8 @@ def snapshot_entries(brain, snapshot):
         if not path.is_relative_to(brain / 'history'):
             raise ValueError('knowledge base entry is outside retained history')
         manifest, digest = _checked_entry(path, entry['sha256'])
-        yield ('prior-run-' + digest[:16] + '-cycle-' + str(entry.get('cycle')), manifest, path)
+        day = entry.get('day') or manifest.get('day')
+        yield ('prior-run-' + digest[:16] + ('-' + str(day) if day else '') + '-cycle-' + str(entry.get('cycle')), manifest, path)
 
 
 def pin_session_base(brain, request_identity, receipt_path):
@@ -208,7 +230,7 @@ def pin_session_base(brain, request_identity, receipt_path):
     return snapshot
 
 
-def write_entry(work, out, brain, cycle, include_analysis=True, principal_directory=None, calcs_only=False):
+def write_entry(work, out, brain, cycle, include_analysis=True, principal_directory=None, calcs_only=False, day=None):
     """Write <brain>/cycle-<cycle>/ from the session's work and out directories. Returns the manifest.
 
     calcs_only (Greg, 2026-09-29: the Monday calculations never reached the brain because no principal finished): the
@@ -220,7 +242,7 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
     Every entry lists what it did not find under "unavailable" (unknown or incomplete data is listed, never dropped)."""
     if calcs_only and principal_directory is not None:
         raise ValueError('a calculations-only entry takes no principal directory')
-    work, out, entry_dir = Path(work), Path(out), Path(brain) / f'cycle-{cycle}'
+    work, out, entry_dir = Path(work), Path(out), Path(brain) / entry_name(day, cycle)
     if not (work / 'derivation-digest-full.md').is_file():
         raise FileNotFoundError('the brain entry needs the calculation findings')
     final_files = {}
@@ -361,7 +383,7 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
     if principal_directory is None:
         absent('final classroom exchange (request, answers, correction, receipt, transcript, grade)', 'principal directory',
                'no principal directory given: the classroom has not been corrected and graded for this cycle')
-    manifest = dict(schema=SCHEMA, cycle=cycle, at=time.time(), entries=entries, unavailable=unavailable,
+    manifest = dict(schema=SCHEMA, cycle=cycle, day=day, at=time.time(), entries=entries, unavailable=unavailable,
                     entry_kind='calculations_only' if calcs_only else 'session',
                     knowledge_status=('classroom_final_pending_target_outcomes' if final_files else 'session_findings'),
                     native_learning_performed=False if final_files else None,
@@ -423,13 +445,16 @@ def export_calculations(work, day, cycle, root=EXPERIMENT_ROOT):
     return manifest
 
 
-def check(brain, cycle):
-    """The earlier cycles WITHOUT a usable brain entry (no manifest, or the digest missing or not matching). Empty = ready."""
+def check(brain, cycle, day=None):
+    """The earlier cycles of this day WITHOUT a usable brain entry (no manifest, or the digest missing or not matching).
+    Empty = ready. Looks for <day>-cycle-<NN> first, then the older cycle-<NN>."""
     brain = Path(brain)
     missing = []
     for n in range(int(cycle)):
         cyc = f'{n:02d}'
-        d = brain / f'cycle-{cyc}'
+        d = brain / entry_name(day, cyc)
+        if day is not None and not (d / 'MANIFEST.json').is_file():
+            d = brain / f'cycle-{cyc}'
         m = d / 'MANIFEST.json'
         ok = False
         if m.is_file():
@@ -477,7 +502,7 @@ def _restore_offloaded(pointer, entry, directory):
 
 def restore_from_git(brain, cycles, repo, day, remote='origin', branch_format='root/cycle-{cycle}-response'):
     """Restore the named cycles' entries from their published branches (a fetch into FETCH_HEAD; the checkout is never
-    moved). Returns {cycle: 'restored' | reason}. Files land under <brain>/cycle-<NN>/ only when the manifest and every
+    moved). Returns {cycle: 'restored' | reason}. Files land under <brain>/<day>-cycle-<NN>/ only when the manifest and every
     listed file arrive and match their sha256."""
     import subprocess
     brain, repo = Path(brain), Path(repo)
@@ -500,7 +525,7 @@ def restore_from_git(brain, cycles, repo, day, remote='origin', branch_format='r
             continue
         staged = {}
         bad = None
-        d = brain / f'cycle-{cyc}'
+        d = brain / entry_name(day, cyc)
         d.mkdir(parents=True, exist_ok=True)
         for e in manifest.get('entries', []):
             got = subprocess.run(['git', '-C', str(repo), 'show', f'FETCH_HEAD:{prefix}/{e["name"]}'], capture_output=True)
@@ -621,38 +646,46 @@ def frozen_entry(brain):
         return None, None
 
 
-def entries_before(brain, cycle):
-    """(cycle, manifest, entry_dir) for every earlier cycle's entry, in cycle order."""
+def entries_before(brain, cycle, day=None):
+    """(label, manifest, entry_dir) for every entry written so far, from every day and every cycle, EXCEPT this run's own
+    day+cycle (Greg, 2026-09-29: the cycles replay the day and restart earlier, so his reasoning may carry later data;
+    only the actual run data ahead of time is walled, and that is the cycle being run). Sorted by day (older key first,
+    day unknown) then cycle. Without a day (an older caller) the older rule's own-slot exclusion applies to cycle-<NN>."""
     brain = Path(brain)
     found = []
     if not brain.is_dir():
         return found
-    for d in sorted(brain.glob('cycle-*')):
-        cyc = d.name[len('cycle-'):]
+    own = entry_name(day, cycle)
+    for d in sorted({p for pattern in ENTRY_GLOBS for p in brain.glob(pattern) if p.is_dir()}):
+        parsed = parse_entry_name(d.name)
         m = d / 'MANIFEST.json'
-        if m.is_file() and cyc.isdigit() and int(cyc) < int(cycle):
-            try:
-                found.append((cyc, json.loads(m.read_bytes()), d))
-            except Exception:
-                continue
-    return found
+        if parsed is None or not m.is_file() or d.name == own:
+            continue
+        try:
+            manifest = json.loads(m.read_bytes())
+        except Exception:
+            continue
+        entry_day, cyc = parsed
+        label = f'{entry_day}-cycle-{cyc}' if entry_day else f'cycle-{cyc} (day not recorded)'
+        found.append(((entry_day or '', int(cyc)), label, manifest, d))
+    return [(label, manifest, d) for _, label, manifest, d in sorted(found, key=lambda x: x[0])]
 
 
-def identity(brain, cycle, *, snapshot=None):
+def identity(brain, cycle, *, snapshot=None, day=None):
     """A short digest of every included prior entry (name + sha256): part of the corpus identity."""
     h = hashlib.sha256()
     fm, _ = (None, None) if snapshot else frozen_entry(brain)
     for e in (fm or {}).get('entries', []):
         if e.get('include'):
             h.update(f'frozen/{e["name"]}/{e["sha256"]}\n'.encode())
-    for cyc, manifest, d in (snapshot_entries(brain, snapshot) if snapshot else entries_before(brain, cycle)):
+    for cyc, manifest, d in (snapshot_entries(brain, snapshot) if snapshot else entries_before(brain, cycle, day)):
         for e in manifest.get('entries', []):
             if e.get('include'):
                 h.update(f'{cyc}/{e["name"]}/{e["sha256"]}\n'.encode())
     return h.hexdigest()[:16]
 
 
-def load(brain, cycle, *, snapshot=None, carried=None):
+def load(brain, cycle, *, snapshot=None, carried=None, day=None):
     """(text, members): the included, digest-verified entries of every earlier cycle as corpus text plus member records.
     carried: {sha256: where} of content the corpus already holds (the current cycle's digest). An entry whose manifest
     sha256 is already carried, or equal to an earlier entry's, is written once: later copies are a one-line reference
@@ -689,7 +722,7 @@ def load(brain, cycle, *, snapshot=None, carried=None):
             parts.append(f"\n### {e['source']} (layers: {', '.join(e.get('layers', []))}; sha256 {e['sha256'][:16]})\n\n" + data.decode('utf-8', errors='replace') + '\n')
             members.append(dict(name=f'brain-frozen-{name}', bytes=len(data), sha256=e['sha256'], treatment='brain: frozen learned-structure file, whole'))
             carried[e['sha256']] = f'the frozen file {e["source"]}'
-    for cyc, manifest, d in (snapshot_entries(brain, snapshot) if snapshot else entries_before(brain, cycle)):
+    for cyc, manifest, d in (snapshot_entries(brain, snapshot) if snapshot else entries_before(brain, cycle, day)):
         for e in manifest.get('entries', []):
             name = e.get('name', '')
             p = d / name
@@ -736,9 +769,11 @@ def main():
     p.add_argument('--cycle', required=True)
     p.add_argument('--principal-directory')
     p.add_argument('--calcs-only', action='store_true', help='only the calculation findings (no principal has finished)')
+    p.add_argument('--day', default=None, help='YYYYMMDD: key the entry <day>-cycle-<NN> (days never share a slot)')
     a = p.parse_args()
-    m = write_entry(a.work, a.out, a.brain, a.cycle, principal_directory=a.principal_directory, calcs_only=a.calcs_only)
-    print(f"brain entry cycle {a.cycle}: {len(m['entries'])} documents in {Path(a.brain) / ('cycle-' + a.cycle)}")
+    m = write_entry(a.work, a.out, a.brain, a.cycle, principal_directory=a.principal_directory, calcs_only=a.calcs_only,
+                    day=a.day)
+    print(f"brain entry day {a.day} cycle {a.cycle}: {len(m['entries'])} documents in {Path(a.brain) / entry_name(a.day, a.cycle)}")
     for e in m['entries']:
         print(f"  {e['name']}: {e.get('bytes')} bytes, include {e['include']}")
     for u in m['unavailable']:

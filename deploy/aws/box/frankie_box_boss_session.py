@@ -1136,7 +1136,7 @@ class Session:
         # receipt and plan are moved aside under work/ (nothing deleted; its notes stay under their own notes-<sha> dir).
         identity = (f'{R.RENDER_VERSION}+{DG.SCHEMA}+{HR.SCHEMA}+tensors:{tensor_mode}'
                     f'+digest:{(_file_sha256(digest_path)[:16] if digest_path.exists() else "none")}'
-                    f'+reading-policy:verified-parts-v2+digest-read:legacy-v1+brain:{brain_module().identity(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None))}')
+                    f'+reading-policy:verified-parts-v2+digest-read:legacy-v1+brain:{brain_module().identity(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None), day=self.day)}')
         receipt_path = self.work / 'reading-corpus.json'
         if corpus_path.exists() and receipt_path.exists():
             prior = load_json(receipt_path)
@@ -1239,7 +1239,7 @@ class Session:
         # unchanged file on the box (frankie_box_digest_read). One streaming pass gives the whole file's bytes and sha256.
         import frankie_box_digest_read as DR
         digest_text_read, digest_stats = DR.legacy_read(digest_path) if digest_path.exists() else (None, None)
-        brain_text, brain_members = brain_module().load(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None),
+        brain_text, brain_members = brain_module().load(BRAIN_DIR, self.cycle, snapshot=getattr(self, 'knowledge_base', None), day=self.day,
                                                         carried={digest_stats['digest_sha256']: "this cycle's derivation digest (below: its legacy tables, whole)"} if digest_stats else None)
         if brain_text:
             parts.append("\n\n## Frankie's brain: the calculation findings of the earlier cycles, carried forward whole, a derivation digest as its header, layer statuses and legacy tables (Greg, 2026-09-21; 2026-09-28). "
@@ -1519,8 +1519,9 @@ class Session:
     def brain_entry(self):
         """Retain this cycle\'s findings before publication; failure refuses the push."""
         try:
-            m = brain_module().write_entry(self.work, self.out, BRAIN_DIR, self.cycle)
-            self.note(f'brain: cycle {self.cycle} entry written, {len(m["entries"])} documents in {BRAIN_DIR / ("cycle-" + self.cycle)}')
+            m = brain_module().write_entry(self.work, self.out, BRAIN_DIR, self.cycle, day=self.day)
+            self.note(f'brain: day {self.day} cycle {self.cycle} entry written, {len(m["entries"])} documents in '
+                      f'{BRAIN_DIR / brain_module().entry_name(self.day, self.cycle)}; {len(m["unavailable"])} listed unavailable')
         except Exception as error:
             raise RuntimeError(f'brain findings were not retained: {type(error).__name__}: {error}') from error
         # the second copy of the calculations, for the experiments (Greg, 2026-09-29); never blocks Frankie's cycle
@@ -2126,11 +2127,11 @@ class Session:
                       f'({len(fm["layers"])} layers); excluded: ' + (', '.join(e['source'] for e in fm['entries'] if not e.get('include')) or 'none'))
         else:
             self.note(f'brain: no historical prompt import at {prompt}; existing retained brain knowledge remains available')
-        missing = brain.check(BRAIN_DIR, self.cycle)
+        missing = brain.check(BRAIN_DIR, self.cycle, self.day)
         if missing:
             restored = brain.restore_from_git(BRAIN_DIR, missing, MARKETS, self.day)
             self.note('brain: restore from git: ' + ', '.join(f'cycle {c}: {r}' for c, r in restored.items()))
-            missing = brain.check(BRAIN_DIR, self.cycle)
+            missing = brain.check(BRAIN_DIR, self.cycle, self.day)
         present = [f'cycle-{n:02d}' for n in range(int(self.cycle)) if f'{n:02d}' not in missing]
         self.note(f'brain: earlier cycles present {present or "none needed" if int(self.cycle) == 0 else present}; missing {missing or "none"}')
         if missing:

@@ -24,7 +24,7 @@ if [ "$DOCS_ONLY" = "1" ]; then
   mkdir -p "$ROOT/tmp"
   if [ "$BRAIN_ONLY" = "1" ] && [ -n "${FINAL_PRINCIPAL:-}" ]; then
     "$ROOT/venv/bin/python" -B "$CODE_ROOT/deploy/aws/box/frankie_box_brain.py" --work "$WORKDIR" \
-      --out "$OUT" --brain "$ROOT/brain" --cycle "$CYCLE" --principal-directory "$FINAL_PRINCIPAL" || exit 2
+      --out "$OUT" --brain "$ROOT/brain" --cycle "$CYCLE" --day "$DAY" --principal-directory "$FINAL_PRINCIPAL" || exit 2
   else
   git -C "$ROOT/markets" fetch -q --depth 1 origin "$BASE" && git -C "$ROOT/markets" show FETCH_HEAD:deploy/aws/box/frankie_box_docs.py > "$ROOT/tmp/frankie_box_docs.py" || { echo "cannot fetch frankie_box_docs.py from $BASE"; exit 2; }
   echo "docs module from $BASE $(git -C "$ROOT/markets" rev-parse --short FETCH_HEAD), sha256 $(sha256sum "$ROOT/tmp/frankie_box_docs.py" | cut -c1-16); work $WORKDIR"
@@ -143,7 +143,10 @@ if [ "$BRAIN_ONLY" != "1" ] && [ -d "$OUT/docs" ]; then mkdir -p "$DEST/docs-cyc
 # kept on the box. No plain copy of a large file is made in the clone. restore_from_git reads all three forms.
 OFFLOAD="$ROOT/venv/bin/python -B $CODE_ROOT/deploy/aws/box/frankie_box_offload.py"
 export DAY CYCLE
-if [ -d "$ROOT/brain/cycle-$CYCLE" ]; then $OFFLOAD copy "$ROOT/brain/cycle-$CYCLE" "$DEST/brain/cycle-$CYCLE" || exit 2; echo "brain: cycle $CYCLE entry ($(ls "$ROOT/brain/cycle-$CYCLE" | wc -l) files) -> $DEST/brain/cycle-$CYCLE"; fi
+# the entry is keyed <day>-cycle-<NN> on the box (days never share a slot, Greg 2026-09-29); an entry written by older code
+# sits at cycle-<NN>. Either is published under runs/<day>/root/brain/cycle-<NN>/ (the day is already in the git path).
+BRAIN_ENTRY="$ROOT/brain/$DAY-cycle-$CYCLE"; [ -d "$BRAIN_ENTRY" ] || BRAIN_ENTRY="$ROOT/brain/cycle-$CYCLE"
+if [ -d "$BRAIN_ENTRY" ]; then $OFFLOAD copy "$BRAIN_ENTRY" "$DEST/brain/cycle-$CYCLE" || exit 2; echo "brain: day $DAY cycle $CYCLE entry ($(ls "$BRAIN_ENTRY" | wc -l) files) -> $DEST/brain/cycle-$CYCLE"; fi
 # Preserve every prior run and each request's knowledge-base manifest in git as well as on the box.
 for part in history bases; do
   if [ -d "$ROOT/brain/$part" ]; then
