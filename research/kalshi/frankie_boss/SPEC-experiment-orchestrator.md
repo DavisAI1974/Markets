@@ -28,6 +28,9 @@ Status: SPEC. Nothing is built beyond the per-cycle calculation export (f751ccbe
     `deploy/aws/box/frankie_box_scientific_dialogue.py` (it sends teacher turns to Granite).
   - Until the search exists the tied teachers stay unwired; the full run's classroom runs with the BOSS teacher and
     Frankie's code only (config `classroom_scientific_dialogue: false`).
+- **Data access (Greg, 2026-09-29):** both teachers read every bit of Frankie's ingest data (the journal, every book
+  level) and every calculation layer directly, except the files Frankie generates himself to reason toward forecasts
+  (R09); no teacher data is built a second or third time. Full text: `SPEC-scientific-teacher.md`, "Data access".
 - **Consequence for this spec:** step 7 has no Granite pass; the classroom arm is code (teacher + classroom package +
   Frankie's classroom code + the scientific teacher's turn from the search). It does not run the launch, so there is
   no critic, no Granite and no Pod on any experiment day: the whole experiment is CPU only.

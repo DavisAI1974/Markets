@@ -39,6 +39,20 @@ do with classroom anymore").
    the scientific teacher answers back; each turn builds on the other's. A new discovery from the exchange is filed as
    the teachers' own finding, scoped, with its days named. Frankie is taught from the exchange.
 
+## Data access for both teachers (Greg, 2026-09-29): read Frankie's data directly, build nothing twice
+Greg: "We decided the[y] should read every bit of the frankie ingest data except the files that he generated himself
+to reason how to build forecasts. If they read every single bit of info like that we won't have to build th[at] info 2
+more times."
+- Both teachers (the BOSS teacher and the scientific teacher, the experiment's search) read Frankie's data where it
+  already is: the sealed compact journal of the ingest (every event, every book level, fills, unknown-side trades) and
+  every calculation layer the derive stage wrote (the exported calculation JSON and derive.json). Read-only, whole.
+- Kept from them, and only these: the files Frankie generates himself to reason toward forecasts - his reading notes
+  and merges, his analysis, his response and ledgers, his classroom answers, his priming and his brain entries (rule
+  R09: his decision process is withheld). Jev's claims reach the scientific teacher as claims, labelled (R11).
+- No separate teacher data build: nothing re-derives the journal or the calculations into a second or third copy. A
+  teacher that needs a view computes it from those two sources at read time (for the search: DuckDB over the journal's
+  SQLite and the calculation JSON, no copy written).
+
 ## Tied together, separate roles (rule R12)
 - The BOSS teacher never becomes a reviewer only and never rewrites its targets from a discussion (CHAT15 handoff).
 - The scientific teacher never grades Frankie: fact grading stays the deterministic classroom grade.

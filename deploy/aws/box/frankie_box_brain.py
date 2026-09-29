@@ -208,8 +208,18 @@ def pin_session_base(brain, request_identity, receipt_path):
     return snapshot
 
 
-def write_entry(work, out, brain, cycle, include_analysis=True, principal_directory=None):
-    """Write <brain>/cycle-<cycle>/ from the session's work and out directories. Returns the manifest."""
+def write_entry(work, out, brain, cycle, include_analysis=True, principal_directory=None, calcs_only=False):
+    """Write <brain>/cycle-<cycle>/ from the session's work and out directories. Returns the manifest.
+
+    calcs_only (Greg, 2026-09-29: the Monday calculations never reached the brain because no principal finished): the
+    entry takes ONLY the calculation findings of work/ (derivation digest, derivation receipt, comparison, bedrock
+    receipt, derived-file witness). Everything a principal writes (response ledgers, analysis, classroom teach-back,
+    priming, session documents, final classroom exchange) is listed under "unavailable" with the reason, never taken
+    from whatever an earlier run left in the directories. A later full entry for the same cycle archives this one with
+    a move receipt (nothing deleted).
+    Every entry lists what it did not find under "unavailable" (unknown or incomplete data is listed, never dropped)."""
+    if calcs_only and principal_directory is not None:
+        raise ValueError('a calculations-only entry takes no principal directory')
     work, out, entry_dir = Path(work), Path(out), Path(brain) / f'cycle-{cycle}'
     if not (work / 'derivation-digest-full.md').is_file():
         raise FileNotFoundError('the brain entry needs the calculation findings')
@@ -257,6 +267,11 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
     _archive_entry(brain, entry_dir)
     entry_dir.mkdir(parents=True, exist_ok=False)
     entries = []
+    unavailable = []
+    CALCS_ONLY_REASON = 'calculations-only entry: written from the calculations before any principal finished'
+
+    def absent(name, source, reason='not written by the session'):
+        unavailable.append(dict(name=name, source=str(source), reason=CALCS_ONLY_REASON if calcs_only else reason))
 
     def put(name, data, source, kind, include=True):
         (entry_dir / name).write_bytes(data)
@@ -277,13 +292,19 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
         raise FileNotFoundError(f'no derivation digest at {digest}; the brain entry needs the calculation findings')
     put_file('derivation-digest-full.md', digest, 'calculation findings: the derivation digest, every layer of the pin')
     response = out / 'response.json'
-    if response.is_file():
+    if response.is_file() and not calcs_only:
         doc = _lessons_doc(json.loads(response.read_bytes()))
         if doc:
             put(ACCOUNTING_NAME, doc.encode('utf-8'), response, 'calculation findings: the accounting entry and the output ledgers')
+        else:
+            absent(ACCOUNTING_NAME, response, 'the response carries no lessons')
+    else:
+        absent(ACCOUNTING_NAME, response)
     analysis = out / 'analysis.md'
-    if analysis.is_file():
+    if analysis.is_file() and not calcs_only:
         put('analysis.md', analysis.read_bytes(), analysis, 'the run analysis', include_analysis)
+    else:
+        absent('analysis.md', analysis)
     derive = work / 'derive.json'
     if derive.is_file():
         try:
@@ -296,12 +317,16 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
     if comparison.is_file():
         put('comparison.md', comparison.read_bytes(), comparison, 'calculation findings: the comparison packet (derived layers beside the frozen learned-structure files)')
     classroom = work / 'classroom' / 'classroom.md'
-    if classroom.is_file():
+    if calcs_only or not classroom.is_file():
+        absent('classroom.md', classroom)
+    else:
         put('classroom.md', classroom.read_bytes(), classroom, "the Dipole classroom: Frankie's own teach-back of the 19-dimension surface for this cycle (case by case: set include false to keep it out)")
     # The bedrock-built exhaustion/D priming is gone (the bedrock is the teachers' logic helper, never Frankie's knowledge
     # base; Greg, 2026-09-29). The brain carries only the small code priming (no bedrock in it).
     priming = work / 'teach' / 'priming.md'
-    if priming.is_file():
+    if calcs_only or not priming.is_file():
+        absent('priming.md', priming)
+    else:
         put('priming.md', priming.read_bytes(), priming, 'the small priming: where exhaustion and D are learned (the classroom) and the frozen files for them, by name and digest; no bedrock; code only')
     bedrock = work / 'bedrock' / 'receipt.json'
     if bedrock.is_file():
@@ -319,13 +344,25 @@ def write_entry(work, out, brain, cycle, include_analysis=True, principal_direct
                '| file | bytes | sha256 |\n|---|---:|---|\n' + '\n'.join(f"| {f['name']} | {f['bytes']} | {f['sha256']} |" for f in files) + '\n')
         put('derived-files.md', doc.encode('utf-8'), derived, 'witness of the derived files (their content is in the digest)', False)
     docs = out / 'docs'
-    if docs.is_dir():
+    if calcs_only:
+        absent('session-doc-*.md', docs)
+    elif docs.is_dir():
         for path in sorted(docs.glob('*.md')):
             put('session-doc-' + path.name, path.read_bytes(), path,
                 'session document: retained whole for subsequent runs')
     for name, (data, source) in final_files.items():
-        put(name, data, source, 'host-recorded final correction, grading and retained exchange; target outcomes remain pending')
-    manifest = dict(schema=SCHEMA, cycle=cycle, at=time.time(), entries=entries,
+        if name == 'final-host-grade.json':
+            # rule R10 (CLASSROOM_RULES_V1, confirmed): graded outcomes stay out of the lesson material; the next cycle
+            # carries WHERE Frankie was corrected (the teacher's correction request, kept included), never the answer
+            # key or the exhaustive grade. Kept whole in the entry on record, out of his next reading.
+            put(name, data, source, 'host grade: on record only, never read by Frankie (rule R10)', include=False)
+        else:
+            put(name, data, source, 'host-recorded final correction and retained exchange; target outcomes remain pending')
+    if principal_directory is None:
+        absent('final classroom exchange (request, answers, correction, receipt, transcript, grade)', 'principal directory',
+               'no principal directory given: the classroom has not been corrected and graded for this cycle')
+    manifest = dict(schema=SCHEMA, cycle=cycle, at=time.time(), entries=entries, unavailable=unavailable,
+                    entry_kind='calculations_only' if calcs_only else 'session',
                     knowledge_status=('classroom_final_pending_target_outcomes' if final_files else 'session_findings'),
                     native_learning_performed=False if final_files else None,
                     cycle_complete=False if final_files else None,
@@ -698,11 +735,14 @@ def main():
     p.add_argument('--brain', required=True)
     p.add_argument('--cycle', required=True)
     p.add_argument('--principal-directory')
+    p.add_argument('--calcs-only', action='store_true', help='only the calculation findings (no principal has finished)')
     a = p.parse_args()
-    m = write_entry(a.work, a.out, a.brain, a.cycle, principal_directory=a.principal_directory)
+    m = write_entry(a.work, a.out, a.brain, a.cycle, principal_directory=a.principal_directory, calcs_only=a.calcs_only)
     print(f"brain entry cycle {a.cycle}: {len(m['entries'])} documents in {Path(a.brain) / ('cycle-' + a.cycle)}")
     for e in m['entries']:
-        print(f"  {e['name']}: {e['bytes']} bytes, include {e['include']}")
+        print(f"  {e['name']}: {e.get('bytes')} bytes, include {e['include']}")
+    for u in m['unavailable']:
+        print(f"  UNAVAILABLE {u['name']}: {u['reason']}")
 
 
 if __name__ == '__main__':
