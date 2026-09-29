@@ -67,7 +67,7 @@ DATA = WORK / 'experiment-data'
 SEARCH = WORK / 'experiment-search'
 ROWS_FILE = 'host-dipole-classroom-source.c15.json'
 MONDAY = '20211004'                      # the gold standard: never re-ingested
-MONDAY_RECOVERY = 'research/kalshi/frankie_boss/blocks/MONDAY_RECOVERY_RECEIPT_20260922.json'   # its ingest was recovered
+MONDAY_RECOVERY = '/opt/frankie-box/work/sealed-recovery-35796793428/recovery-receipt.json'   # its ingest was recovered; checkpoint beside it
 CYCLE = '00'
 BATCH = 5                                # the teacher's Dipole rows: 1 day in 5 (Greg, 2026-09-29)
 CLASS_OF_WEEKDAY = {0: 'monday', 1: 'midweek', 2: 'midweek', 3: 'thursday', 4: 'friday'}
@@ -436,9 +436,18 @@ class Run:
 
     def data(self, e):
         target = DATA / e['day'] / ('cycle-' + CYCLE)
-        if (target / 'MANIFEST.json').is_file():
-            return self.record('data', e['day'], 'reused', target=str(target), manifest_sha256=sha256_file(target / 'MANIFEST.json'))
         root = self.receipt('root', e['day'])
+        if (target / 'MANIFEST.json').is_file():
+            # an existing export is reused only when it was built from THIS run's ROOT of the day; one from another ROOT
+            # (an earlier or partial run) is a second export of the day: declined with both named, never reused blind
+            made_from = (json.loads((target / 'MANIFEST.json').read_bytes()).get('directories') or {}).get('root')
+            ours = (root or {}).get('calculations')
+            if ours and made_from and str(Path(made_from)) != str(Path(ours)):
+                return self.record('data', e['day'], 'refused', target=str(target), exported_from=made_from, this_root=ours,
+                                   reason='the day was exported from another ROOT; duplicate data declines the day (move '
+                                          'that export aside with a receipt, or name its ROOT in the plan)')
+            return self.record('data', e['day'], 'reused', target=str(target), exported_from=made_from,
+                               manifest_sha256=sha256_file(target / 'MANIFEST.json'))
         ing = self.receipt('ingest', e['day'])
         if not (root and root['status'] in FINISHED and ing and ing['status'] in FINISHED):
             return self.record('data', e['day'], 'waiting', reason='the day has no ROOT or no sealed ingest yet')

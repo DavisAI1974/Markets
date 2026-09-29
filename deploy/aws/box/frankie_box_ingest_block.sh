@@ -9,8 +9,8 @@
 # days in order, each its own journal, each after the first opening with the book the one before it closed with: Greg,
 # 2026-09-29 "ingest wed separately so it's there when we need it right after"), OPENING_RECEIPT (the prior trading day's
 # sealed ingest receipt for the FIRST day of the list when that day opens at the prior halt: $ROOT/work/ingest-*/
-# ingestion-receipt.json, or Monday's committed research/kalshi/frankie_boss/blocks/MONDAY_RECOVERY_RECEIPT_20260922.json;
-# see opening_book.py), WORKERS (default 31: the parent keeps a CPU),
+# ingestion-receipt.json, or Monday's recovery receipt on the box, $ROOT/work/sealed-recovery-*/recovery-receipt.json,
+# whose checkpoint sits beside it; see opening_book.py), WORKERS (default 31: the parent keeps a CPU),
 # CANARY (default 20000), MARKETS_SHA (the DISPATCHED COMMIT; frankie_box_run.yml sets it from GITHUB_SHA: the box checks out
 # that commit, never a branch name, and refuses a HEAD that differs; the chat-9 ship review), CYCLE (00).
 # Order (the chat-9 ship review): the cycle units are checked idle BEFORE the checkout moves (a running session lazy-loads
@@ -20,6 +20,9 @@
 set -u
 ROOT=/opt/frankie-box; CYCLE="${CYCLE:-00}"; ACTION="${ACTION:-status}"; WORKERS="${WORKERS:-31}"; CANARY="${CANARY:-20000}"
 MARKETS_SHA="${MARKETS_SHA:-}"
+# an ingest names its day(s) explicitly: the default (Monday) is for status only, so a dispatch that forgets MANIFEST
+# never ingests Monday a second time (the gold standard; the read-only audit of 2026-09-29)
+[ "$ACTION" != ingest ] || [ -n "${MANIFEST:-}" ] || { echo "ACTION=ingest requires MANIFEST (the day list); refused"; exit 2; }
 MANIFEST="${MANIFEST:-research/kalshi/frankie_boss/blocks/BLOCK_20211004_SOURCE_MANIFEST.json}"
 MANIFESTS="$MANIFEST"; OPENING_RECEIPT="${OPENING_RECEIPT:-}"
 case "$MARKETS_SHA" in ""|*[!0-9a-f]*) echo "MARKETS_SHA must be the dispatched commit (frankie_box_run.yml sets it from GITHUB_SHA)"; exit 2;; esac
@@ -35,9 +38,8 @@ done
 if [ "$COUNT" -gt 1 ]; then case "$ACTION" in fetch|ingest) ;; *) echo "a MANIFEST list is for fetch and ingest only"; exit 2;; esac; fi
 case "$OPENING_RECEIPT" in
   "") ;;
-  research/kalshi/frankie_boss/blocks/MONDAY_RECOVERY_RECEIPT_*.json) OPENING_RECEIPT="$ROOT/markets/$OPENING_RECEIPT" ;;
-  "$ROOT"/work/ingest-*/ingestion-receipt.json) ;;
-  *) echo "OPENING_RECEIPT must be a sealed ingest's $ROOT/work/ingest-*/ingestion-receipt.json or a committed blocks/MONDAY_RECOVERY_RECEIPT_*.json"; exit 2;;
+  "$ROOT"/work/ingest-*/ingestion-receipt.json|"$ROOT"/work/sealed-recovery-*/recovery-receipt.json) ;;
+  *) echo "OPENING_RECEIPT must be a sealed ingest's $ROOT/work/ingest-*/ingestion-receipt.json or a recovery's $ROOT/work/sealed-recovery-*/recovery-receipt.json (its checkpoint beside it)"; exit 2;;
 esac
 case "$OPENING_RECEIPT" in *..*) echo "OPENING_RECEIPT must not contain .."; exit 2;; esac
 case "$WORKERS" in ""|*[!0-9]*) echo "WORKERS must be an integer"; exit 2;; esac

@@ -721,7 +721,7 @@ class Session:
             if (any(container[k] != expected['container'][k] for k in ('path', 'bytes', 'sha256'))
                     or container['count'] != expected['journal_count']
                     or container['head'] != expected['journal_hash']
-                    or len(records) != expected['record_count']
+                    or len(records) + len(container.get('inputs_without_observation') or []) != expected['record_count']
                     or pin.get('source_binding') != expected['source']):
                 raise ValueError('Monday calculation inputs differ from the pinned complete source')
         if source is not None and not self.source_binding:
@@ -749,6 +749,8 @@ class Session:
         B = _box_module('frankie_box_bedrock')
         prices, frames, structures, failures = [B.RowSpool(derived / '.rows' / (name + '.jsonl'))
                                                for name in ('prices', 'frames', 'structures', 'failures')]
+        for missing in container.get('inputs_without_observation') or []:     # listed, never passed over (no data dropped)
+            failures.append(dict(missing, error='INPUT entry carries no MBO record the producers can read'))
         legacy_count = 0
         previous_book = None
         probe = _box_module('frankie_box_progress').for_session(self)
@@ -1045,13 +1047,22 @@ class Session:
         B = _box_module('frankie_box_bedrock')
         records = B.RowSpool(self.work / 'derived' / '.rows' / ('input-' + uuid.uuid4().hex + '.jsonl'))
         kinds = {}
+        # Greg, 2026-09-29 (no data is dropped): an INPUT entry whose record cannot be found, or a bytes-valued field the
+        # JSON spool cannot carry, is listed here (entry position and field name), never passed over silently; the
+        # caller counts listed entries beside the spooled ones and carries them as failures of the day, not a refusal
+        without_observation, bytes_fields = [], {}
         def take(kind, payload):
             kinds[kind] = kinds.get(kind, 0) + 1
             if kind != 'INPUT':
                 return
             observation = self._find_observation(payload)
-            if observation is not None:
-                records.append({k: v for k, v in observation.items() if not isinstance(v, (bytes, bytearray))})
+            if observation is None:
+                without_observation.append(dict(input_entry=kinds[kind] - 1, cursor=(payload or {}).get('cursor') if isinstance(payload, dict) else None))
+                return
+            for k, v in observation.items():
+                if isinstance(v, (bytes, bytearray)):
+                    bytes_fields[k] = bytes_fields.get(k, 0) + 1
+            records.append({k: v for k, v in observation.items() if not isinstance(v, (bytes, bytearray))})
         probe = _box_module('frankie_box_progress').for_session(self)
         if layout == 'compact' and self.source_binding:
             # Metadata-only extraction after every canonical row is verified. The
@@ -1074,6 +1085,8 @@ class Session:
                     take(envelope.get('kind'), envelope.get('payload', envelope))
         records.close()
         container['kinds'] = kinds
+        container['inputs_without_observation'] = without_observation
+        container['bytes_fields_not_spooled'] = bytes_fields
         container['record_spool'] = dict(path=str(records.path), **witness(records.path))
         return records, container
 

@@ -14,9 +14,12 @@ Two prior receipts are read:
   BOSS_BLOCK_INGESTION_RECEIPT_V1                an ingest by operations/ingest_block_sources.py (Tuesday for Wednesday):
                                                   the checkpoint sits beside the receipt; the day's end is its partial
                                                   member (member_key, take)
-  FRANKIE_SEALED_INGESTION_RECOVERY_RECEIPT_V1   Monday 20211004 (its ingest was recovered, blocks/MONDAY_RECOVERY_*):
-                                                  the checkpoint sits beside the container; the day's end is the partial
-                                                  member of the committed manifest named by its manifest_hash
+  FRANKIE_SEALED_INGESTION_RECOVERY_RECEIPT_V1   Monday 20211004 (its ingest was recovered): the receipt ON THE BOX,
+                                                  /opt/frankie-box/work/sealed-recovery-35796793428/recovery-receipt.json
+                                                  (committed copy: blocks/MONDAY_RECOVERY_RECEIPT_20260922.json), with
+                                                  its checkpoint beside it (sealed_recovery_run writes both there); the
+                                                  day's end is the partial member of the committed manifest named by its
+                                                  manifest_hash
 The caller restores the state with mbo_resume_state.restore_adapter_state (its own validation and exact round trip)
 and zeroes the two counters, so the day's counts are the day's own records while its book is the real book.
 """
@@ -71,7 +74,7 @@ def load(receipt_path):
         if receipt.get('status') != 'complete':
             raise ValueError('the prior recovery receipt is not complete')
         artifact = receipt['artifacts']['checkpoint']
-        checkpoint = Path(receipt['container']['path']).parent / artifact['file']
+        checkpoint = receipt_path.parent / artifact['file']      # sealed_recovery_run writes it beside its receipt
         checkpoint_sha256 = artifact['sha256']
         manifest_path, manifest = _manifest_by_hash(receipt['manifest_hash'])
         partial = list(manifest.get('partial_members') or [])

@@ -355,8 +355,9 @@ def _cell_job(args):
     steps, idx = _JOB['steps'], _JOB['cells'][(cell_col, cell_value)]
     pick = (lambda v: v) if idx is None else (lambda v: v[idx])
     sx = pick(steps[tx][x])
-    if sx.size < 2:
-        return part, 0, 0
+    if sx.size < 2:     # listed in the MANIFEST (cells_not_counted), never passed over silently (Greg, 2026-09-29)
+        return part, 0, 0, dict(cell=[cell_col, str(cell_value)], transform=tx, series=x, steps=int(sx.size),
+                                reason='fewer than 2 steps of this series in this cell: no step pair to count')
     fx = transforms(sx)
     count = beyond = 0
     with open(part + '.tmp', 'w') as out:
@@ -372,7 +373,7 @@ def _cell_job(args):
                 count += 1
                 beyond += row['beyond_chance']
     os.replace(part + '.tmp', part)
-    return part, count, beyond
+    return part, count, beyond, None
 
 
 def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, workers=8, transform_names=None):
@@ -424,9 +425,11 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
             for tx in transform_names for x in names]
     _JOB.update(steps=steps, cells=cell_index)
     started = time.time()
-    parts, count, beyond = [], 0, 0
+    parts, count, beyond, not_counted = [], 0, 0, []
     with context.Pool(workers) as pool:
-        for part, n_rows, n_beyond in pool.imap_unordered(_cell_job, jobs):
+        for part, n_rows, n_beyond, short in pool.imap_unordered(_cell_job, jobs):
+            if short:
+                not_counted.append(short)
             parts.append(part)
             count += n_rows
             beyond += n_beyond
@@ -441,6 +444,7 @@ def search(day, cycle, day_role, lags, frozen, log, root=ROOT, data_root=None, w
                                     module_sha256=sha256_file(Path(T.__file__)),
                                     unclassified_steps=unclassified),
                     couplings=dict(parts=part_pins, rows=count, beyond_chance=beyond, jobs=len(jobs), workers=workers),
+                    cells_not_counted=sorted(not_counted, key=lambda d: (d['cell'], d['transform'], d['series'])),
                     not_searched=[dict(item=a, what=b) for a, b in NOT_SEARCHED],
                     rule='counts per pair, cell, lag and day; never pooled across days; never a coefficient or an average '
                          'as the finding (D37); a confirmation day runs only the frozen survivor list',
@@ -471,7 +475,7 @@ def main():
     m = search(a.day, a.cycle, a.day_role, a.lags, a.frozen_survivors, lambda text: print(text, flush=True),
                workers=a.workers, transform_names=[t for t in (a.transforms or '').split(',') if t] or None)
     print(json.dumps(dict(target=str(ROOT / a.day / ('cycle-' + a.cycle) / a.day_role), couplings=m['couplings'],
-                          leakage_failed=[g['series'] for g in m['leakage'] if g['passed'] is False],
+                          leakage_failed=[g.get('source', g.get('series')) for g in m['leakage'] if g['passed'] is False],
                           not_searched=m['not_searched']), indent=1))
 
 
