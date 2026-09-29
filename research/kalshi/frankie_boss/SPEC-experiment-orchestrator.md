@@ -28,7 +28,7 @@ Not called:
    - Results are reported as counts, never coefficients or averages (D37).
    - The leakage gate (`odcore/leakage.py`) runs on every target.
    - Start from the joined-teacher builder (dfe08ca7): its sign-step coupling and cells, pointed at the journal and the calculation JSON instead of the bedrock.
-7. **Survivors** (the Granite pass below is superseded by `SPEC-decouple-granite.md`; survivors go to symbolic regression and confirmation):
+7. **Survivors** (the Granite pass below is REMOVED per `SPEC-decouple-granite.md`: it is not an original plan role; survivors go to symbolic regression and confirmation; the classroom arm stays, it is the plan classroom):
    - symbolic regression (`odcore/symbolic.py`);
    - then one short Granite reasoning pass over the survivor list (mechanisms, novel findings). This is the only model use.
 8. **Confirmation:** the frozen survivor list is run on the confirmation days, untouched until then. Any trade idea is judged per cell, net of fees at maker and taker.

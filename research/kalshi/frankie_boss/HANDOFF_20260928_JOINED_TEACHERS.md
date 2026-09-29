@@ -133,14 +133,19 @@ Unwired in commit 77948797, because each was added after R4:
 
 Greg: rerun the Frankie part AND the classroom as r10. The step-by-step work instructions are in `DROP_IN_20260928_GRANITE_DECOUPLE.md`.
 
-## Update 2026-09-29: decouple Granite from Frankie. READ `SPEC-decouple-granite.md` FIRST
-Greg: "We are decoupling granite from granite. It adds nothing." It is read as decoupling Granite from Frankie; confirm that reading first.
-- The spec is a DRAFT that Greg may still tweak in the next chat.
-- It covers:
-  - every Granite call and its code replacement;
-  - the build plan's B1 no-Granite path as the operational arm;
-  - r10 HELD until the spec is settled;
-  - the open points: the classroom without a model student, the grading key, the host recorder path, the Excel plan, and the Pods.
+## Update 2026-09-29: Granite ONLY in its original build-plan roles. READ `SPEC-decouple-granite.md` FIRST
+Greg: "we want the roles we originally gave it, but only there."
+- The kept roles, from the Excel build plan R4:
+  - C35: Frankie's engine for reading the delivered evidence and writing the four files;
+  - C21-C24: the B2 shadow critic under a closed schema;
+  - C14: the governed classroom, answered through C35.
+- Decoupled everywhere else:
+  - the teach-back is code;
+  - the scientific dialogue, teacher discussion and joined teacher are unwired;
+  - Jev and the CLM sidecar are not dispatched;
+  - the experiment's Granite pass is removed.
+- r10 uses only those roles, so it is not held.
+- The spec is a draft Greg may still tweak in the next chat. It supersedes the first draft of that file (full decoupling).
 - Also this chat:
   - the experiment orchestrator spec (`SPEC-experiment-orchestrator.md`), with the classroom arm on the first and the last two discovery days;
-  - the per-cycle calculation export for the experiments (f751ccbe, `frankie_box_export_calcs.sh`).
+  - the per-cycle calculation export (f751ccbe, `frankie_box_export_calcs.sh`).
