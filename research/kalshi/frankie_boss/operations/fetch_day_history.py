@@ -31,10 +31,12 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import http.client
 import json
 import os
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
@@ -182,6 +184,49 @@ def http_get(url, params=None, timeout=120, headers=None):
         return r.status, r.read()
 
 
+# Retry with backoff (2026-09-29, run 36557302661: EIA answered 429 to DEMO_KEY and the Internet Archive refused or timed
+# out 120 CDX listings, each recorded as a gap at the first failure). A transient failure (HTTP 429/5xx, connection
+# refused/reset, timeout) is now retried: 5 tries, waiting 20, 60, 120, 300 s between them. A request that still fails
+# is raised and recorded as a gap, exactly as before; a non-transient HTTP status (404, 400, 403 ...) is never retried.
+# Each source has a total wait budget so a host that stays down cannot run the job past its timeout; once spent, a
+# failure is recorded at once (the gap names it). The Internet Archive is also paced (one request per IA_PACE_S).
+RETRY_WAITS_S = (20, 60, 120, 300)
+RETRY_STATUSES = frozenset({429, 500, 502, 503, 504})
+RETRY_BUDGET_S = dict(eia=3600, archive=3600)
+IA_PACE_S = 3.0                                   # the Internet Archive refuses connections when polled faster
+_retry_spent = dict.fromkeys(RETRY_BUDGET_S, 0)
+# A wall-clock budget for the whole fetch (the workflow sets it below its job timeout): once passed, a request is not
+# made and is recorded as a gap naming why, so every family still closes its receipt before the job is stopped.
+_T0 = time.monotonic()
+DEADLINE_S = float(os.environ.get('DAY_HISTORY_DEADLINE_S') or 0)
+
+
+def http_get_retry(url, params=None, timeout=120, headers=None, what='', budget='eia'):
+    """http_get with retry-and-backoff on transient failures; `what` is the log label (never the URL: it may hold a key)."""
+    for attempt in range(len(RETRY_WAITS_S) + 1):
+        if DEADLINE_S and time.monotonic() - _T0 > DEADLINE_S:
+            raise RuntimeError(f'not requested: the fetch wall-clock budget of {DEADLINE_S:.0f} s is spent')
+        if budget == 'archive':
+            time.sleep(IA_PACE_S)
+        try:
+            return http_get(url, params, timeout, headers)
+        except urllib.error.HTTPError as exc:
+            if exc.code not in RETRY_STATUSES:
+                raise
+            last = exc
+        except (urllib.error.URLError, http.client.HTTPException, ConnectionError, TimeoutError, OSError) as exc:
+            last = exc
+        if attempt == len(RETRY_WAITS_S):
+            raise RuntimeError(f'{last!r} after {attempt + 1} tries') from last
+        wait = RETRY_WAITS_S[attempt]
+        if _retry_spent[budget] + wait > RETRY_BUDGET_S[budget]:
+            raise RuntimeError(f'{last!r} after {attempt + 1} tries (the {budget} retry budget of '
+                               f'{RETRY_BUDGET_S[budget]} s is spent)') from last
+        _retry_spent[budget] += wait
+        print(f'RETRY {what}: try {attempt + 1} failed {last!r}; waiting {wait} s', flush=True)
+        time.sleep(wait)
+
+
 def redact(url):
     return url.split('api_key=')[0] + ('api_key=<redacted>' if 'api_key=' in url else '')
 
@@ -217,7 +262,8 @@ def eia_key():
 def eia_paged(route, params):
     rows, offset = [], 0
     while True:
-        status, raw = http_get(f'{EIA_API}/{route}/data/', dict(params, api_key=eia_key(), length=5000, offset=offset))
+        status, raw = http_get_retry(f'{EIA_API}/{route}/data/', dict(params, api_key=eia_key(), length=5000, offset=offset),
+                                     what=f'EIA {route} offset {offset}', budget='eia')
         resp = json.loads(raw)['response']
         rows.extend(resp['data'])
         offset += len(resp['data'])
@@ -280,8 +326,9 @@ def fetch_consensus(out):
             lo, hi = (p - dt.timedelta(days=6)).strftime('%Y%m%d'), (p + dt.timedelta(days=8)).strftime('%Y%m%d')
             url = 'https://web.archive.org/cdx/search/cdx'
             try:
-                _, raw = http_get(url, {'url': page, 'from': lo, 'to': hi, 'output': 'json',
-                                        'fl': 'timestamp,original,statuscode,digest,length'}, timeout=90)
+                _, raw = http_get_retry(url, {'url': page, 'from': lo, 'to': hi, 'output': 'json',
+                                              'fl': 'timestamp,original,statuscode,digest,length'}, timeout=90,
+                                        what=f'CDX {name} {pr}', budget='archive')
                 listing = json.loads(raw or b'[]')
             except Exception as exc:
                 rec.gap(pr, f'{name}: CDX listing failed {exc!r}')
@@ -295,11 +342,10 @@ def fetch_consensus(out):
                     continue
                 raw_url = f"https://web.archive.org/web/{s['timestamp']}id_/{s['original']}"
                 try:
-                    _, html = http_get(raw_url, timeout=90)
+                    _, html = http_get_retry(raw_url, timeout=90, what=f"snapshot {name} {s['timestamp']}", budget='archive')
                     rec.save(f"snapshots/{name}/{pr}/{s['timestamp']}.html", html, url=raw_url)
                 except Exception as exc:
                     rec.gap(pr, f"{name}: snapshot {s['timestamp']} failed {exc!r}")
-                time.sleep(1.0)                                # politeness to the Internet Archive
     rec.close()
 
 

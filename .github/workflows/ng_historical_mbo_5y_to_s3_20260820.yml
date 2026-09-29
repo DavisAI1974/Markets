@@ -149,17 +149,40 @@ jobs:
     # same steps as frankie_day_history.yml action=fetch; uploads under frankie/day_history/<run_id>/ only.
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.mode == 'day_history' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 300
+    timeout-minutes: 355
     env:
       PYTHONPATH: research/kalshi
-      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
       FAMILIES: ${{ inputs.families }}
+      # the fetch stops making requests after 330 min (each then recorded as a gap) so every receipt closes and uploads
+      DAY_HISTORY_DEADLINE_S: '19800'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: python -m pip install --no-cache-dir requests boto3==1.42.23
+      - name: EIA key (the repository secret, else SSM /markets/EIA_API_KEY in us-east-2; never printed)
+        # Run 36557302661 ran with the secret empty and fell back to DEMO_KEY (EIA answered 429). The key of record is the
+        # SSM SecureString (KEYS.md). Masked before it reaches GITHUB_ENV; the step fails if no key is found at all.
+        env:
+          EIA_SECRET: ${{ secrets.EIA_API_KEY }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: us-east-2
+          AWS_EC2_METADATA_DISABLED: 'true'
+        run: |
+          set -euo pipefail
+          case ",$FAMILIES," in *,all,*|*,storage,*|*,eia930,*) ;; *) echo "EIA key: not needed for $FAMILIES"; exit 0;; esac
+          if [ -n "$EIA_SECRET" ]; then
+            key="$EIA_SECRET"; src='repository secret EIA_API_KEY'
+          else
+            key="$(python -c "import boto3; print(boto3.client('ssm', region_name='us-east-2').get_parameter(Name='/markets/EIA_API_KEY', WithDecryption=True)['Parameter']['Value'])")"
+            src='SSM /markets/EIA_API_KEY (us-east-2)'
+          fi
+          if [ -z "$key" ]; then echo "EIA key: none found (secret empty, SSM empty); refusing to run on DEMO_KEY"; exit 1; fi
+          echo "::add-mask::$key"
+          echo "EIA_API_KEY=$key" >> "$GITHUB_ENV"
+          echo "EIA key: $src, length ${#key}"
       - run: |
           set -euo pipefail
           case "$FAMILIES" in *[!a-z0-9_,]*) echo "families must be a comma list of names"; exit 2;; esac
