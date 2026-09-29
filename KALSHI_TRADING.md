@@ -1,5 +1,13 @@
 # KALSHI TRADING — file index
 
+## 2026-09-29 — Frankie's 13 historical points attached to each trading day
+- `research/kalshi/frankie_boss/operations/frankie_day_external.py` - FRANKIE_DAY_EXTERNAL_V1: the day file builder, the
+  staging check and THE as-of reader (`AsOfReader`, refuses past its cutoff); `search_series` for the search.
+- `deploy/aws/box/frankie_box_day_external.sh/.py` - builds the day files on the box from the day-history and curve pulls
+  and attaches them (beside the sealed ingest, S3 `frankie/day_external/<day>/`, a listed brain attachment). Not run.
+- `research/kalshi/frankie_boss/operations/fetch_day_history.py`, `HISTORICAL_DATA_PLAN_20260929.md` - the sources and
+  the per-day availability (section 7: Tue/Wed 20211005/06).
+
 ## 2026-09-29 — Day selection for the experiment (30 Tue/Wed trading days)
 - `research/kalshi/frankie_boss/DAY_SELECTION_20260929.md` - the proposal: every late-Sep/October Tue/Wed of 2021-2026
   per day, the matching facts and tolerances, the proposed 30, the box facts dispatch, the staging plan, Greg's questions.

@@ -335,3 +335,75 @@ Local equivalents: `python3.12 research/kalshi/frankie_boss/operations/fetch_day
    new build beside it under `frankie/day_history/`?
 4. EIA-930 and storage: the current vintage is all the API gives; the as-printed storage number comes from Wayback. Is
    the current vintage acceptable for EIA-930 hourly (no first-published record exists)?
+
+## 7. Tuesday 20211005 and Wednesday 20211006: the day file, attached (built 2026-09-29, not run)
+
+Greg, 2026-09-29: the two ingests PAUSE after sealing until the 13 points are in ("no point in not taking full advantage
+of this run"); "we should somehow still attach whatever doesn't get run with this tues and wed to their historical
+data". Inputs now being pulled: `frankie/day_history/36557302661/` (run 36557302661, the free sources) and
+`nymex/ng_fut_parent_v0/{definition,statistics,mbo}/native/` (run 36557305485, the NG.FUT parent).
+
+### What was built
+- `research/kalshi/frankie_boss/operations/frankie_day_external.py`: `Build(src, history_prefix, day).run()` writes the
+  day file (FRANKIE_DAY_EXTERNAL_V1); `check_day_file(body)` is the staging check (refuses a row with no integer
+  `published_ns`, or one at/after the halt); `AsOfReader(body, cutoff_ns)` / `AsOfReader.open(path, cutoff_ns, receipt)` is
+  THE one reader: `.point(name)` refuses (LeakRefused) a point holding any value past the cutoff, `.until(name, t_ns)`
+  returns the rows known at t_ns (and how many are not yet known) and refuses a t_ns past the cutoff;
+  `search_series(reader)` gives the search its series. This interface is stable (the classroom / BOSS-teacher build
+  reads through it).
+- `deploy/aws/box/frankie_box_day_external.sh` + `.py`: fetch through the presigned map, build both days side by side,
+  attach (below). ACTION=link re-attaches an existing run (after an ingest seals).
+- Attachment, per day, permanently and by the DAY KEY: (1) hard links beside the sealed ingest
+  (`<ingest dir>/day-external.json` + `day-external-receipt.json`), when exactly one sealed ingest of the day exists;
+  (2) S3 `frankie/day_external/<day>/day-external.json` + `day-external-receipt.json` through presigned PUT slots (an
+  existing object is skipped, never overwritten); (3) Frankie's brain: a listed attachment `<brain>/<day>-external/
+  MANIFEST.json` (name, sha256, S3 key), which the brain loader never reads into his corpus (it reads only cycle and
+  lessons entries); frankie_box_brain.py is not edited.
+- Wired readers (additive edits, none of them a pinned file): the search (`frankie_box_experiment_search.py`: the day
+  file's series on the day's causal axis, each through its leakage gate); the experiment ROOT
+  (`frankie_box_experiment_root.py`: the file, its sha256 and S3 key in the source binding and the calculations receipt,
+  `absent` listed otherwise); the day-data export (`frankie_box_experiment_data.py`: the file and its receipt linked as
+  ingest data, `external` in the MANIFEST); the scientific teacher sees them through the search outputs.
+- `frankie_box_run.yml`: getprefix also for `frankie/day_history/` and `nymex/ng_fut_parent_v0/` (read-only), put slots
+  also under `frankie/day_external/` (skip if present), and the lock `box-external-<instance>`.
+
+### The dispatch (step 2; on Greg's go, after the two pulls finish and both ingests seal; restage the tip first)
+`frankie_box_run.yml`:
+- script: `deploy/aws/box/frankie_box_day_external.sh`
+- variables: `CODE_ROOT=<the staged checkout of the dispatched commit> DAYS=20211005,20211006 RUN=tuewed-20211005-1 HISTORY_RUN=36557302661 BRAIN=/opt/frankie-box/brain WORKERS=2`
+- presign: `getprefix:bento-568968024170-us-east-2-an/frankie/day_history/36557302661/ getprefix:bento-568968024170-us-east-2-an/nymex/ng_fut_parent_v0/ put:bento-568968024170-us-east-2-an/frankie/day_external/20211005/day-external.json put:bento-568968024170-us-east-2-an/frankie/day_external/20211005/day-external-receipt.json put:bento-568968024170-us-east-2-an/frankie/day_external/20211006/day-external.json put:bento-568968024170-us-east-2-an/frankie/day_external/20211006/day-external-receipt.json`
+- presign_hours: `6`; timeout: `10800`
+- probe: `frankie_box_read_log.sh MODE=tail FILE=work/day-external/tuewed-20211005-1/<day>/day-external-receipt.json`
+If an ingest had not sealed yet: `ACTION=link` with the same DAYS/RUN/HISTORY_RUN/BRAIN and the same four put slots.
+
+### Per point, per day: who reads it this run, and who has it attached but unused
+
+Both days are the same in this respect (20211005: COT report 2021-09-28, storage prints 09-30 before / 10-07 next;
+20211006: the same reports and prints, one day later).
+
+| # | point | in the day file as | used this run by | attached but unused by, and what each needs |
+|---|---|---|---|---|
+| 1 | cot.managed_money_net_pctile_1y | cot.023651 | search (series) -> scientific teacher | BOSS teacher, classroom package, Jev, Frankie's reading: each needs to call AsOfReader at its own cutoff and render/consume the point (pinned teacher: a swap module beside JournalTeacherR3, never an edit) |
+| 2 | weather_forecast.forecast_gw_hdd | mos.gw_by_cycle, mos.raw | search (GFS/NAM D, GFS D+1, MEX D+3 per cycle) | the same four; other horizons and models are in the file, not yet series |
+| 3 | cot.managed_money_net_chg_wow | cot.023651 | search | as 1 |
+| 4 | cot.managed_money_net_pctile_3y | cot.023651 (2018-start build) | search | as 1 |
+| 5 | grid_stack.bas.US48.wind_mwh | eia930.us48, eia930.hourly | search (hourly) | as 1; the six other BAs are in eia930.hourly, not yet series |
+| 6 | squeeze_watch.sessions_since_prompt_expiry | calendar.sessions_since_prompt_expiry | search (constant within the day) | as 1 |
+| 7 | grid_stack.bas.US48.est_gas_burn_bcfd | eia930.us48 (hourly rate, an estimate) | search | as 1 |
+| 8 | cot.ice.ld1.managed_money_net_pctile_1y | cot.023391 | search | as 1 (the other ICE codes are in the file) |
+| 9 | model_disagreement.summary.max_abs_spread_gw_hdd | mos.disagreement_by_cycle | search | as 1 |
+| 10 | weather.gw_hdd | weather.gw_daily, weather.obs_hourly | search (gw_hdd per gas day; hourly tmpf per weighted station) | as 1 |
+| 11 | EIA weekly storage | storage.weekly | search (level, weekly change, vs 5-year) | as 1; the as-printed values need the extractor (below) |
+| 12 | storage estimate vs actual | storage.estimate_captures (pages only) | nobody yet: the values are not extracted | everyone: the extractor over the saved TradingEconomics/investing/EIA pages (next build), then it is a point like 11 |
+| 13 | the futures curve | curve.definitions, .statistics, .trades, .settled_shape, .traded_shape | search (settled and traded front, c1, slopes, curvature, front-next spread) | as 1; per-month trade prices and open interest are in the file, not yet series |
+
+### Open (listed, not done)
+- The classroom package (`prepare_integrated_cycle`), the pinned BOSS teacher (JournalTeacherR3), Jev's material and
+  Frankie's reading: not wired. Each finds the file by the day key (ingest directory, S3 key, brain attachment) and reads
+  it through `AsOfReader` at its own cutoff; the pinned teacher needs a swap module beside it (another agent is building
+  the classroom / BOSS-teacher side).
+- Point 12 values: the extractor of the archived pages.
+- `squeeze_watch.calendar_front_next_spread_chg_3d`: needs three prior sessions' settlements; the pull holds two UTC
+  partitions per day (listed in the file's missing list).
+- The orchestrator's `data`/`search` stages already pass the ingest directory, so the file rides along; the teacher-only
+  step (not built) should read it the same way.

@@ -47,6 +47,9 @@ CATALOG = (
     ('ingest', '**/ingestion-receipt.json', INCLUDE, 'the ingestion receipt: record and journal counts, journal sha256, packing'),
     ('ingest', '**/completion.json', INCLUDE, 'the ingest completion: record_count, journal_count, journal_hash, groups'),
     ('ingest', '**/builder-checkpoint.c15.json', INCLUDE, 'the builder state at completion'),
+    ('ingest', '**/day-external.json', INCLUDE, "Frankie's 13 historical points of the day (FRANKIE_DAY_EXTERNAL_V1), "
+     'attached beside the sealed ingest; read through its as-of reader'),
+    ('ingest', '**/day-external-receipt.json', INCLUDE, 'the day file receipt: sha256, S3 day key, inputs, missing list'),
     ('ingest', '**/*.json', INCLUDE, 'ingest receipts (canary, proofs, manifests)'),
     # AUTHORSHIP: the Monday launch authorship the ROOT requires (/opt/frankie-box/work/monday-launch/<r>/)
     ('authorship', '**/*.json', INCLUDE, 'the launch authorship receipt and its companions'),
@@ -174,7 +177,12 @@ def export(day, cycle, dirs, root=ROOT):
                              % (item['source'], error))
         item['bytes'] = destination.stat().st_size
         item['sha256'] = _sha256(destination)
-    manifest = dict(schema=SCHEMA, day=str(day), cycle=str(cycle), at=time.time(),
+    ext = [f for f in files if f['stage'] == 'ingest' and Path(f['path']).name == 'day-external.json']
+    external = (dict(status='attached', path='ingest/' + ext[0]['path'], sha256=ext[0]['sha256'], bytes=ext[0]['bytes'])
+                if len(ext) == 1 else
+                dict(status='absent' if not ext else 'more than one (listed in files)',
+                     s3_key='frankie/day_external/%s/day-external.json' % day))
+    manifest = dict(schema=SCHEMA, day=str(day), cycle=str(cycle), at=time.time(), external=external,
                     directories={k: (str(v) if v else None) for k, v in dirs.items()},
                     files=files, excluded=excluded, missing=missing, unclaimed=notes[0]['unclaimed'],
                     counts=dict(files=len(files), bytes=sum(f['bytes'] for f in files), excluded=len(excluded),

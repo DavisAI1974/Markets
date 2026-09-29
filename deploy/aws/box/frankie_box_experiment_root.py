@@ -92,6 +92,21 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
             raise ValueError('completion.json %s differs from the ingestion receipt' % key)
     container = dict(path=str(journal), bytes=receipt['journal_bytes'], sha256=receipt['journal_sha256'],
                      count=receipt['journal_count'], head=receipt['journal_hash'])
+    # Frankie's 13 historical points attached beside the sealed ingest (FRANKIE_DAY_EXTERNAL_V1, Greg 2026-09-29):
+    # named with its sha256 in the binding and the calculations receipt; the ROOT does not read it (the search and the
+    # teachers do), and its absence is listed, never a reason to stop the day.
+    ext_path, ext_receipt = directory / 'day-external.json', directory / 'day-external-receipt.json'
+    if ext_path.is_file() and ext_receipt.is_file():
+        want = json.loads(ext_receipt.read_bytes())
+        have = _sha256_file(ext_path)
+        if have != want.get('sha256'):
+            raise ValueError('day-external.json beside the ingest differs from its receipt')
+        external = dict(status='attached', path=str(ext_path), sha256=have, bytes=ext_path.stat().st_size,
+                        receipt=str(ext_receipt), receipt_sha256=_sha256_file(ext_receipt), s3_key=want.get('s3_key'),
+                        missing=len(want.get('missing') or []))
+    else:
+        external = dict(status='absent', expected=str(ext_path), s3_key='frankie/day_external/%s/day-external.json' % day,
+                        reason='not attached beside the ingest when the ROOT ran (frankie_box_day_external.sh ACTION=link)')
     manifest = dict(manifest_hash=receipt['manifest_hash'],
                     note='the day manifest by hash; its members are in the ingestion receipt (the bedrock traversal, which '
                          'needs the whole manifest, is off in the experiment)')
@@ -110,7 +125,7 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
                    calculation_pins=witness(output / 'calculation-pins.json'), container=container, manifest=manifest,
                    record_count=receipt['record_count'], journal_count=receipt['journal_count'],
                    journal_hash=receipt['journal_hash'], day_role=day_role, partial_members=partial_members,
-                   tail_members=tail_members, opening_book=opening_book)
+                   tail_members=tail_members, opening_book=opening_book, external=external)
     save_new(output / 'source-binding.json', binding)
     from frankie_box_boss_session import Session
     session = Session(output, day, '00', None)
@@ -130,7 +145,7 @@ def calculate_day(commit, receipt_path, receipt_sha256, day, day_role, output_ro
                 root_processes=result.get('root_processes'),
                 not_run=[dict(process=k, reason='switched off for the experiment (Greg, 2026-09-29)')
                          for k, v in (result.get('root_processes') or {}).items() if v == 'skipped'],
-                failure_count=failures, opening_book=opening_book,
+                failure_count=failures, opening_book=opening_book, external=external,
                 failures_note=(None if not failures else 'records a producer could not use; each listed with its index '
                                'and error in derive.json / work/derived/.rows/failures.jsonl; every other record calculated'),
                 model_calls=0, source_replays=0, source_writes=0,

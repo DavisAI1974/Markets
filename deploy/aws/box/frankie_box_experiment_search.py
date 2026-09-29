@@ -13,6 +13,9 @@ on the axis AS OF the moment it was knowable, never later information:
   trades      (root/work/derived/.rows/prices.jsonl)      last trade price and size known at the group close;
   per-second  (legacy_native_signed_flow, legacy_per_second_roll20)  buy, sell and roll20 of second s, known at the
               start of second s+1.
+  external    (ingest/day-external.json, FRANKIE_DAY_EXTERNAL_V1)  Frankie's 13 historical points (COT, MOS per cycle,
+              EIA-930 hourly, observed weather, storage, the calendar count, the futures curve per settlement and per
+              trade), each known from its own publication stamp, read through the file's as-of reader at the halt.
 Receive clocks can run backwards, so the axis time is the running maximum of the frames' ts_recv_ns (order is the
 spool's order, which is the ROOT's ordinal order). Alignment is a DuckDB ASOF join (value known_at <= axis time).
 Every series passes odcore.leakage.assert_no_leakage in its own row order before it is searched: its value as of a
@@ -260,6 +263,25 @@ def build_series(day_dir, log):
             asof('roll20', known, {'value': [float('nan') if v is None else v for v in values]})
     else:
         notes.append(dict(source='legacy_per_second_roll20', missing=str(roll_path)))
+    # Frankie's 13 historical points (FRANKIE_DAY_EXTERNAL_V1, Greg 2026-09-29: "everyone who sees his ingest should
+    # see these data points too"): the day file attached beside the sealed ingest, exported with the ingest, read
+    # through its one as-of reader at the day's halt (a value past it is refused, never filtered), each point a series
+    # known from its own publication stamp; the leakage gate runs on each as on every other source.
+    external = day_dir / 'ingest' / 'day-external.json'
+    external_receipt = day_dir / 'ingest' / 'day-external-receipt.json'
+    if external.is_file():
+        from research.kalshi.frankie_boss.operations.frankie_day_external import AsOfReader, search_series
+        body = json.loads(external.read_bytes())
+        reader = AsOfReader.open(external, body['halt_ns'], external_receipt if external_receipt.is_file() else None)
+        ext, absent = search_series(reader)
+        sources.append(dict(source='external', path=str(external), sha256=sha256_file(external), schema=body.get('schema'),
+                            receipt=str(external_receipt) if external_receipt.is_file() else None,
+                            series=sorted(ext), absent=absent, missing=body.get('missing')))
+        for name, (known, values) in sorted(ext.items()):
+            asof('external.' + name, np.asarray(known, dtype=np.float64), {'value': values})
+    else:
+        notes.append(dict(source='external', missing=str(external),
+                          reason="no day file of Frankie's 13 points beside the ingest (frankie_box_day_external.sh)"))
     cells, unused = {}, []
     for k, v in text_cols.items():
         (cells.__setitem__(k, v) if k.endswith(CELL_NAMES) else unused.append(k))
